@@ -706,7 +706,6 @@ private:
                         mod_api& mod, rdp_api& rdp,
                         const Translation::language_t & lang,
                         const bool bogus_refresh_rect,
-                        const bool allow_using_multiple_monitors, // TODO duplicate monitor_count ?
                         const uint32_t monitor_count,
                         GeneralCaps const & client_general_caps,
                         const char (& client_name)[128]
@@ -757,8 +756,8 @@ private:
             sp_vc_params.real_alternate_shell = this->real_alternate_shell.c_str();
             sp_vc_params.real_working_dir = this->real_working_dir.c_str();
             sp_vc_params.lang = lang;
-            sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && allow_using_multiple_monitors && (monitor_count > 1));
-            sp_vc_params.show_maximized = (!remote_program);
+            sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && monitor_count);
+            sp_vc_params.show_maximized = !remote_program;
 
 
             this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
@@ -955,7 +954,6 @@ private:
             SessionReactor& session_reactor,
             GeneralCaps const & client_general_caps,
             const char (& client_name)[128],
-            const bool allow_using_multiple_monitors,
             const uint32_t monitor_count,
             const bool bogus_refresh_rect,
             const Translation::language_t & lang
@@ -968,7 +966,6 @@ private:
                         mod_rdp, rdp,
                         lang,
                         bogus_refresh_rect,
-                        allow_using_multiple_monitors,
                         monitor_count,
                         client_general_caps,
                         client_name);
@@ -1715,7 +1712,6 @@ private:
             const ModRdpVariables & vars,
             RailCaps const & client_rail_caps,
             const char (& client_name)[128],
-            const bool allow_using_multiple_monitors,
             const uint32_t monitor_count,
             const bool bogus_refresh_rect,
             const Translation::language_t & lang)
@@ -1745,7 +1741,6 @@ private:
                             mod_rdp, rdp,
                             lang,
                             bogus_refresh_rect,
-                            allow_using_multiple_monitors,
                             monitor_count,
                             client_general_caps,
                             client_name);
@@ -1779,7 +1774,6 @@ private:
                             mod_rdp, rdp,
                             lang,
                             bogus_refresh_rect,
-                            allow_using_multiple_monitors,
                             monitor_count,
                             client_general_caps,
                             client_name);
@@ -1875,7 +1869,6 @@ private:
 
     std::string target_host;
 
-    const bool allow_using_multiple_monitors; // TODO duplicate monitor_count ?
     const uint32_t monitor_count;
 
     Transport & trans;
@@ -2049,8 +2042,7 @@ public:
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , target_host(mod_rdp_params.target_host)
-        , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
-        , monitor_count(info.cs_monitor.monitorCount)
+        , monitor_count(mod_rdp_params.allow_using_multiple_monitors ? info.cs_monitor.monitorCount : 0)
         , trans(trans)
         , stc(trans, this->encrypt, this->negociation_result)
         , front(front)
@@ -2222,7 +2214,6 @@ public:
                                 *this, *this,
                                 this->lang,
                                 this->bogus_refresh_rect,
-                                this->allow_using_multiple_monitors,
                                 this->monitor_count,
                                 this->client_general_caps,
                                 this->client_name);
@@ -2832,8 +2823,7 @@ public:
                     this->front, *this, *this, this->stc,
                     this->asynchronous_tasks, this->session_reactor,
                     this->client_general_caps, this->client_name,
-                    this->allow_using_multiple_monitors, this->monitor_count,
-                    this->bogus_refresh_rect, this->lang);
+                    this->monitor_count, this->bogus_refresh_rect, this->lang);
 #endif
             }
             // Clipboard is a Clipboard PDU
@@ -3026,7 +3016,6 @@ public:
                                                 this->vars,
                                                 this->client_rail_caps,
                                                 this->client_name,
-                                                this->allow_using_multiple_monitors,
                                                 this->monitor_count,
                                                 this->bogus_refresh_rect,
                                                 this->lang);
@@ -3046,10 +3035,7 @@ public:
                             else
 #endif
                             if (this->front.can_be_start_capture()) {
-                                if (this->bogus_refresh_rect
-                                 && this->allow_using_multiple_monitors
-                                 && this->monitor_count > 1
-                                ) {
+                                if (this->bogus_refresh_rect && this->monitor_count) {
                                     this->rdp_suppress_display_updates();
                                     this->rdp_allow_display_updates(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
                                 }
@@ -6190,10 +6176,7 @@ public:
             this->delayed_start_capture = false;
 
             if (this->front.can_be_start_capture()) {
-                if (this->bogus_refresh_rect
-                 && this->allow_using_multiple_monitors
-                 && this->monitor_count > 1
-                ) {
+                if (this->bogus_refresh_rect && this->monitor_count) {
                     this->rdp_suppress_display_updates();
                     this->rdp_allow_display_updates(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
                 }
