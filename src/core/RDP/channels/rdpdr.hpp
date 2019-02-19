@@ -604,14 +604,16 @@ public:
 
     void receive(InStream & stream) {
         // // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4)
-        ::check_throw(stream, 20, "RDPDR::DeviceAnnounceHeader_Recv (0)", ERR_RDPDR_PDU_TRUNCATED);
+        ::check_throw(stream, 20,
+            "RDPDR::DeviceAnnounceHeader_Recv (0)", ERR_RDPDR_PDU_TRUNCATED);
         this->DeviceType_ = RDPDR_DTYP(stream.in_uint32_le());
         this->DeviceId_   = stream.in_uint32_le();
 
         stream.in_copy_bytes(this->PreferredDosName_, 8);
 
         this->device_data.sz = stream.in_uint32_le();
-        ::check_throw(stream, this->device_data.sz, "RDPDR::DeviceAnnounceHeader_Recv (1)", ERR_RDPDR_PDU_TRUNCATED);
+        ::check_throw(stream, this->device_data.sz,
+            "RDPDR::DeviceAnnounceHeader_Recv (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->device_data.p = std::make_unique<uint8_t[]>(this->device_data.sz);
         stream.in_copy_bytes(this->device_data.p.get(), this->device_data.sz);
@@ -1097,17 +1099,10 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 20;  // DeviceId(4) + FileId(4) + CompletionId(4) +
-                                           //     MajorFunction(4) + MinorFunction(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceIORequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // DeviceId(4) + FileId(4) + CompletionId(4)
+        //   + MajorFunction(4) + MinorFunction(4)
+        ::check_throw(stream, 20,
+            "RDPDR::DeviceIORequest", ERR_RDPDR_PDU_TRUNCATED);
 
         this->DeviceId_      = stream.in_uint32_le();
         this->FileId_        = stream.in_uint32_le();
@@ -1330,55 +1325,38 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // DesiredAccess(4) + AllocationSize(8) +
-                                           //     FileAttributes(4) + SharedAccess(4) +
-                                           //     CreateDisposition(4) + CreateOptions(4) +
-                                           //     PathLength(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceCreateRequest (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
-
+        // DesiredAccess(4) + AllocationSize(8)
+        //   + FileAttributes(4) + SharedAccess(4)
+        //   + CreateDisposition(4) + CreateOptions(4)
+        //   + PathLength(4)
+        ::check_throw(stream, 32,
+            "RDPDR::DeviceCreateRequest", ERR_RDPDR_PDU_TRUNCATED);
         this->DesiredAccess_     = stream.in_uint32_le();
         this->AllocationSize_    = stream.in_uint64_le();
         this->FileAttributes_    = stream.in_uint32_le();
         this->SharedAccess_      = stream.in_uint32_le();
         this->CreateDisposition_ = stream.in_uint32_le();
         this->CreateOptions_     = stream.in_uint32_le();
-
         this->PathLength_UTF16 = stream.in_uint32_le();
 
+        // TODO: create specialized helper for READ and convert UTF16 string
         if (this->PathLength_UTF16) {
-            {
-                const unsigned expected = this->PathLength_UTF16;   // Path(variable)
-
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated DeviceCreateRequest (1): expected=%u remains=%zu",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
-                }
-            }
-
+            // Path(variable)
+            ::check_throw(stream, this->PathLength_UTF16,
+                "RDPDR::DeviceCreateRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
             uint8_t const * const Path_unicode_data = stream.get_current();
 
-            this->PathLength_UTF8 = ::UTF16toUTF8(Path_unicode_data, this->PathLength_UTF16, this->Path_,
-                65536);
+            this->PathLength_UTF8 = ::UTF16toUTF8(Path_unicode_data,
+                            this->PathLength_UTF16, this->Path_, 65536);
             if (this->PathLength_UTF8) {
                 this->PathLength_UTF8--;
             }
-
+            // TODO: not sure we should normalize path the unix way here
             for (size_t i = 0; i < this->PathLength_UTF8; i++) {
                 if ('\\' == this->Path_[i]) {
                     this->Path_[i] = '/';
                 }
             }
-
             stream.in_skip_bytes(PathLength_UTF16);
         }
     }
@@ -1482,17 +1460,10 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // Padding(32)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceCloseRequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
-
+        // TODO: somewhat misleading because DeviceIORequestHeader of 24 bytes has already been read.
+        // Padding(32)
+        ::check_throw(stream, 32,
+            "RDPDR::DeviceCloseRequest", ERR_RDPDR_PDU_TRUNCATED);
         stream.in_skip_bytes(32);   // Padding(32)
     }
 
@@ -1578,17 +1549,9 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;  // Length(4) + Offset(8)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceReadRequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
-
+        // Length(4) + Offset(8) + Padding(20)
+        ::check_throw(stream, 32,
+            "RDPDR::DeviceReadRequest", ERR_RDPDR_PDU_TRUNCATED);
         this->Length_ = stream.in_uint32_le();
         this->Offset_ = stream.in_uint64_le();
         stream.in_skip_bytes(20);
@@ -1702,33 +1665,25 @@ struct DeviceWriteRequest {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceWriteRequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // Length(4) + Offset(8) + Padding(20)
+        ::check_throw(stream, 32,
+            "RDPDR::DeviceWriteRequest", ERR_RDPDR_PDU_TRUNCATED);
         this->Length = stream.in_uint32_le();
         this->Offset = stream.in_uint64_le();
         stream.in_skip_bytes(20);
-        {
-            int exp = this->Length;
-            if (exp > 1600-56) {
-                exp = 1600-56;
-            }
-            const unsigned expected = exp;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceWriteRequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+// TODO: improve Length check: should take care of fragmentation
+// also 1600 is really a negociated value and we should use actual value
+
+//        {
+//            int exp = this->Length;
+//            if (exp > 1600-56) {
+//                exp = 1600-56;
+//            }
+            // Length(variable)
+//            ::check_throw(stream, exp,
+//                "RDPDR::DeviceWriteRequest", ERR_RDPDR_PDU_TRUNCATED);
+//        }
         this->WriteData = stream.get_current();
     }
 
