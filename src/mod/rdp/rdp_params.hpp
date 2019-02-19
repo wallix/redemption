@@ -157,7 +157,15 @@ struct ModRDPParams
 
     const char * device_id = "";
 
-    PrimaryDrawingOrdersSupport primary_drawing_orders_support{TS_NEG_MEM3BLT_INDEX};
+    PrimaryDrawingOrdersSupport primary_drawing_orders_support{
+        TS_NEG_MEM3BLT_INDEX,
+        TS_NEG_INDEX_INDEX,
+        TS_NEG_DSTBLT_INDEX,
+        TS_NEG_PATBLT_INDEX,
+        TS_NEG_SCRBLT_INDEX,
+        TS_NEG_MEMBLT_INDEX,
+        TS_NEG_LINETO_INDEX,
+    };
 
     bool enable_persistent_disk_bitmap_cache = false;
     bool enable_cache_waiting_list = false;

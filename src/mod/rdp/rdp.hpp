@@ -3513,45 +3513,13 @@ public:
                 confirm_active_pdu.emit_capability_set(bitmap_caps);
 
                 OrderCaps order_caps;
-                order_caps.numberFonts                                   = 0;
-                order_caps.orderFlags                                    = /*0x2a*/
-                                                                            NEGOTIATEORDERSUPPORT   /* 0x02 */
-                                                                        | ZEROBOUNDSDELTASSUPPORT /* 0x08 */
-                                                                        | COLORINDEXSUPPORT       /* 0x20 */
-                                                                        | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
-                                                                        ;
-
-
-                OrdersIndexes const extra_idx[]{
-                    TS_NEG_MEM3BLT_INDEX,
-                    TS_NEG_DRAWNINEGRID_INDEX,
-                    TS_NEG_MULTIDSTBLT_INDEX,
-                    TS_NEG_MULTIPATBLT_INDEX,
-                    TS_NEG_MULTISCRBLT_INDEX,
-                    TS_NEG_MULTIOPAQUERECT_INDEX,
-                    TS_NEG_POLYGON_SC_INDEX,
-                    TS_NEG_POLYGON_CB_INDEX,
-                    TS_NEG_POLYLINE_INDEX,
-                    TS_NEG_ELLIPSE_SC_INDEX,
-                    TS_NEG_ELLIPSE_CB_INDEX,
-                };
-                for (auto idx : extra_idx) {
-                    order_caps.orderSupport[idx] = this->primary_drawing_orders_support.has(idx);
-                }
-
-                //order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]         = 1;
-                order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
-                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
-                order_caps.orderSupport[UnusedIndex3]                    = 1;
-                order_caps.orderSupport[UnusedIndex5]                    = 1;
-                order_caps.textFlags                                     = 0x06a1;
-                order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
-                order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
+                order_caps.numberFonts = 0;
+                order_caps.orderFlags  = /*0x2a*/
+                                         NEGOTIATEORDERSUPPORT   /* 0x02 */
+                                       | ZEROBOUNDSDELTASSUPPORT /* 0x08 */
+                                       | COLORINDEXSUPPORT       /* 0x20 */
+                                       | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
+                                       ;
 
                 // Apparently, these primary drawing orders are supported
                 // by both rdesktop and xfreerdp :
@@ -3565,33 +3533,40 @@ public:
                 // intersect with client order capabilities
                 // which may not be supported by clients.
 
-                enum OrdersIndexes idxs[] = {
-                      TS_NEG_DSTBLT_INDEX
-                    , TS_NEG_PATBLT_INDEX
-                    , TS_NEG_SCRBLT_INDEX
-                    , TS_NEG_MEMBLT_INDEX
-                    , TS_NEG_MEM3BLT_INDEX
-                    , TS_NEG_DRAWNINEGRID_INDEX
-                    , TS_NEG_LINETO_INDEX
-                    // , TS_NEG_MULTI_DRAWNINEGRID_INDEX
-                    // , TS_NEG_SAVEBITMAP_INDEX
-                    , TS_NEG_MULTIDSTBLT_INDEX
-                    , TS_NEG_MULTIPATBLT_INDEX
-                    , TS_NEG_MULTISCRBLT_INDEX
-                    , TS_NEG_MULTIOPAQUERECT_INDEX
-                    // , TS_NEG_FAST_INDEX_INDEX
-                    , TS_NEG_POLYGON_SC_INDEX
-                    , TS_NEG_POLYGON_CB_INDEX
-                    , TS_NEG_POLYLINE_INDEX
-                    // , TS_NEG_FAST_GLYPH_INDEX
-                    , TS_NEG_ELLIPSE_SC_INDEX
-                    , TS_NEG_ELLIPSE_CB_INDEX
-                    , TS_NEG_INDEX_INDEX
+                OrdersIndexes const order_idxs[]{
+                    TS_NEG_DSTBLT_INDEX,
+                    TS_NEG_PATBLT_INDEX,
+                    TS_NEG_SCRBLT_INDEX,
+                    TS_NEG_MEMBLT_INDEX,
+                    TS_NEG_MEM3BLT_INDEX,
+                    // TS_NEG_DRAWNINEGRID_INDEX,
+                    TS_NEG_LINETO_INDEX,
+                    // TS_NEG_MULTI_DRAWNINEGRID_INDEX,
+                    // TS_NEG_SAVEBITMAP_INDEX,
+                    TS_NEG_MULTIDSTBLT_INDEX,
+                    TS_NEG_MULTIPATBLT_INDEX,
+                    TS_NEG_MULTISCRBLT_INDEX,
+                    TS_NEG_MULTIOPAQUERECT_INDEX,
+                    // TS_NEG_FAST_GLYPH_INDEX,
+                    TS_NEG_POLYGON_SC_INDEX,
+                    TS_NEG_POLYGON_CB_INDEX,
+                    TS_NEG_POLYLINE_INDEX,
+                    // TS_NEG_FAST_GLYPH_INDEX,
+                    TS_NEG_ELLIPSE_SC_INDEX,
+                    TS_NEG_ELLIPSE_CB_INDEX,
+                    TS_NEG_INDEX_INDEX,
                 };
-
-                for (auto idx : idxs){
-                    order_caps.orderSupport[idx] &= this->client_order_caps.orderSupport[idx];
+                for (auto idx : order_idxs) {
+                    order_caps.orderSupport[idx] = this->primary_drawing_orders_support.has(idx)
+                        && this->client_order_caps.orderSupport[idx] ? 1 : 0;
                 }
+
+                order_caps.orderSupport[UnusedIndex3] = 1;
+                order_caps.orderSupport[UnusedIndex5] = 1;
+                order_caps.textFlags                  = 0x06a1;
+                order_caps.orderSupportExFlags        = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
+                order_caps.textANSICodePage           = 0x4e4; // Windows-1252 codepage is passed (latin-1)
+
 
                 if (bool(this->verbose & RDPVerbose::capabilities) && !order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
