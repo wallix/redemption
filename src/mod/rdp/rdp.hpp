@@ -735,26 +735,22 @@ private:
         {
             FrontAPI& front;
             const CHANNELS::ChannelDef& channel;
-            const RDPVerbose verbose;
+            const bool verbose;
 
         public:
             explicit ToClientSender(
                 FrontAPI& front,
                 const CHANNELS::ChannelDef& channel,
-                RDPVerbose verbose)
+                bool verbose) noexcept
             : front(front)
             , channel(channel)
             , verbose(verbose)
             {}
 
             void operator()(uint32_t total_length, uint32_t flags,
-                const uint8_t* chunk_data, uint32_t chunk_data_length)
-                    override
+                const uint8_t* chunk_data, uint32_t chunk_data_length) override
             {
-                if (bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
-                 && (this->channel.name == channel_names::cliprdr
-                  || this->channel.name == channel_names::rdpdr
-                )) {
+                if (this->verbose) {
                     const bool send              = true;
                     const bool from_or_to_client = true;
                     ::msgdump_c(send, from_or_to_client, total_length, flags,
@@ -766,7 +762,10 @@ private:
             }
         };
 
-        return std::make_unique<ToClientSender>(front, *channel, this->verbose);
+        bool const verbose
+          = bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
+          && (channel_name == channel_names::cliprdr || channel_name == channel_names::rdpdr);
+        return std::make_unique<ToClientSender>(front, *channel, verbose);
     }
 
     inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc) {
@@ -805,21 +804,17 @@ private:
         class ToServerSender : public VirtualChannelDataSender
         {
             ServerTransportContext & stc;
-            CHANNELS::ChannelNameId channel_name;
-            uint16_t        channel_id;
-            bool            show_protocol;
-
-            const RDPVerbose verbose;
+            const uint16_t channel_id;
+            const bool     show_protocol;
+            const bool     verbose;
 
         public:
             explicit ToServerSender(
                 ServerTransportContext & stc,
-                CHANNELS::ChannelNameId channel_name,
                 uint16_t channel_id,
                 bool show_protocol,
-                RDPVerbose verbose)
+                bool verbose) noexcept
             : stc(stc)
-            , channel_name(channel_name)
             , channel_id(channel_id)
             , show_protocol(show_protocol)
             , verbose(verbose)
@@ -832,10 +827,7 @@ private:
                     flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
                 }
 
-                if (bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
-                 && (this->channel_name == channel_names::cliprdr
-                  || this->channel_name == channel_names::rdpdr
-                )) {
+                if (verbose) {
                     const bool send              = true;
                     const bool from_or_to_client = false;
                     ::msgdump_c(send, from_or_to_client, total_length, flags,
@@ -843,17 +835,20 @@ private:
                 }
 
                 CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-                virtual_channel_pdu.send_to_server(this->stc, this->channel_id, total_length, flags, chunk_data,
-                    chunk_data_length);
+                virtual_channel_pdu.send_to_server(this->stc, this->channel_id,
+                    total_length, flags, chunk_data, chunk_data_length);
             }
         };
 
+        bool const verbose
+          = bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
+          && (channel_name == channel_names::cliprdr || channel_name == channel_names::rdpdr);
+
         return std::make_unique<ToServerSender>(
             stc,
-            channel_name,
             channel->chanid,
             (channel->flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
-            this->verbose);
+            verbose);
     }
 
 
@@ -1445,7 +1440,7 @@ public:
             ((r & 0xFF000000) >> 24),
             ((r & 0x00FF0000) >> 16),
             ((r & 0x0000FF00) >> 8),
-                r & 0x000000FF
+              r & 0x000000FF
             );
 
         bool has_target = (mod_rdp_params.target_application && *mod_rdp_params.target_application);
