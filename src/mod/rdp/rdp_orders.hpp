@@ -105,11 +105,11 @@ private:
     const RDPVerbose verbose;
 
 public:
-    size_t recv_bmp_cache_count;
-    size_t recv_order_count;
+    size_t recv_bmp_cache_count = 0;
+    size_t recv_order_count = 0;
 
-    size_t recv_ninegrid_bmp_cache_count;
-    size_t recv_ninegrid_order_count;
+    // size_t recv_ninegrid_bmp_cache_count = 0;
+    // size_t recv_ninegrid_order_count = 0;
 
 private:
     std::string target_host;
@@ -135,10 +135,6 @@ public:
                  , byte_ptr_cast(""))
     , global_palette(BGRPalette::classic_332())
     , verbose(verbose)
-    , recv_bmp_cache_count(0)
-    , recv_order_count(0)
-    , recv_ninegrid_bmp_cache_count(0)
-    , recv_ninegrid_order_count(0)
     , target_host(target_host)
 #ifndef __EMSCRIPTEN__
     , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)

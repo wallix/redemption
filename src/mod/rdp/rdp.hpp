@@ -2140,11 +2140,10 @@ class mod_rdp : public mod_api, public rdp_api
 
     RedirectionInfo & redir_info;
 
+    const bool disconnect_on_logon_user_change;
     const RdpLogonInfo logon_info;
 
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
-
-    std::string target_host;
 
     const uint32_t monitor_count;
 
@@ -2181,8 +2180,6 @@ class mod_rdp : public mod_api, public rdp_api
 
     Pointer cursors[32];
 
-    Random& gen;
-
     const RDPVerbose verbose;
     const BmpCache::Verbose cache_verbose;
 
@@ -2206,7 +2203,7 @@ class mod_rdp : public mod_api, public rdp_api
     const bool enable_remotefx;
     uint8_t remoteFx_codec_id = 0;
 
-    PrimaryDrawingOrdersSupport primary_drawing_orders_support;
+    const PrimaryDrawingOrdersSupport primary_drawing_orders_support;
 
     uint32_t frameInProgress = false;
     uint32_t currentFrameId = 0;
@@ -2227,9 +2224,6 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::string * error_message;
 
-    const bool                 disconnect_on_logon_user_change;
-    const std::chrono::seconds open_session_timeout;
-
     SessionReactor& session_reactor;
     SessionReactor::GraphicFdPtr fd_event;
 
@@ -2237,8 +2231,6 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::string end_session_reason;
     std::string end_session_message;
-
-    //uint64_t total_data_received;
 
     bool deactivation_reactivation_in_progress = false;
 
@@ -2259,8 +2251,7 @@ class mod_rdp : public mod_api, public rdp_api
     BmpCacheRev2_Cache_NumEntries()
     { return std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>{{ 120, 120, 2553, 0, 0 }}; }
 
-    time_t beginning;
-    bool   session_disconnection_logged = false;
+    std::chrono::seconds session_time_start;
 
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
@@ -2272,11 +2263,11 @@ class mod_rdp : public mod_api, public rdp_api
     MultiFragmentUpdateCaps client_multi_fragment_update_caps;
 
     GeneralCaps const        client_general_caps;
-    BitmapCaps const         client_bitmap_caps;
-    OrderCaps const          client_order_caps;
-    BmpCacheCaps const       client_bmp_cache_caps;
-    BmpCache2Caps const      client_bmp_cache_2_caps;
-    OffScreenCacheCaps const client_off_screen_cache_caps;
+    // BitmapCaps const         client_bitmap_caps;
+    // OrderCaps const          client_order_caps;
+    // BmpCacheCaps const       client_bmp_cache_caps;
+    // BmpCache2Caps const      client_bmp_cache_2_caps;
+    // OffScreenCacheCaps const client_off_screen_cache_caps;
     GlyphCacheCaps const     client_glyph_cache_caps;
     RailCaps const           client_rail_caps;
     WindowListCaps const     client_window_list_caps;
@@ -2290,6 +2281,33 @@ class mod_rdp : public mod_api, public rdp_api
 #ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
 #endif
+
+    static constexpr auto order_indexes_supported() noexcept
+    {
+        return std::array{
+            TS_NEG_DSTBLT_INDEX,
+            TS_NEG_PATBLT_INDEX,
+            TS_NEG_SCRBLT_INDEX,
+            TS_NEG_MEMBLT_INDEX,
+            TS_NEG_MEM3BLT_INDEX,
+            // TS_NEG_DRAWNINEGRID_INDEX,
+            TS_NEG_LINETO_INDEX,
+            // TS_NEG_MULTI_DRAWNINEGRID_INDEX,
+            // TS_NEG_SAVEBITMAP_INDEX,
+            TS_NEG_MULTIDSTBLT_INDEX,
+            TS_NEG_MULTIPATBLT_INDEX,
+            TS_NEG_MULTISCRBLT_INDEX,
+            TS_NEG_MULTIOPAQUERECT_INDEX,
+            // TS_NEG_FAST_GLYPH_INDEX,
+            TS_NEG_POLYGON_SC_INDEX,
+            TS_NEG_POLYGON_CB_INDEX,
+            TS_NEG_POLYLINE_INDEX,
+            // TS_NEG_FAST_GLYPH_INDEX,
+            TS_NEG_ELLIPSE_SC_INDEX,
+            TS_NEG_ELLIPSE_CB_INDEX,
+            TS_NEG_INDEX_INDEX,
+        };
+    }
 
 public:
     using Verbose = RDPVerbose;
@@ -2311,9 +2329,9 @@ public:
     )
         : channels(channels_authorizations, mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor)
         , redir_info(redir_info)
+        , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
-        , target_host(mod_rdp_params.target_host)
         , monitor_count(mod_rdp_params.allow_using_multiple_monitors ? info.cs_monitor.monitorCount : 0)
         , trans(trans)
         , rdp_input(trans, this->encrypt, bool(mod_rdp_params.verbose & RDPVerbose::input))
@@ -2323,7 +2341,6 @@ public:
                 , report_error_from_reporter(report_message))
         , key_flags(mod_rdp_params.key_flags)
         , last_key_flags_sent(key_flags)
-        , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , authentifier(authentifier)
@@ -2340,20 +2357,29 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , enable_remotefx(mod_rdp_params.enable_remotefx)
-        , primary_drawing_orders_support(mod_rdp_params.primary_drawing_orders_support)
+        , primary_drawing_orders_support(
+            mod_rdp_params.primary_drawing_orders_support &
+            [](auto& order_support){
+                PrimaryDrawingOrdersSupport client_support;
+                for (auto idx : order_indexes_supported()) {
+                    if (order_support[idx]) {
+                        client_support |= idx;
+                    }
+                }
+                return client_support;
+            }(info.order_caps.orderSupport))
+        // info.order_caps.orderSupport
 #ifndef __EMSCRIPTEN__
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
 #endif
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , error_message(mod_rdp_params.error_message)
-        , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
-        , open_session_timeout(mod_rdp_params.open_session_timeout)
         , session_reactor(session_reactor)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
-        , beginning(timeobj.get_time().tv_sec)
+        , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
@@ -2361,11 +2387,11 @@ public:
         , client_large_pointer_caps(info.large_pointer_caps)
         , client_multi_fragment_update_caps(info.multi_fragment_update_caps)
         , client_general_caps(info.general_caps)
-        , client_bitmap_caps(info.bitmap_caps)
-        , client_order_caps(info.order_caps)
-        , client_bmp_cache_caps(info.bmp_cache_caps)
-        , client_bmp_cache_2_caps(info.bmp_cache_2_caps)
-        , client_off_screen_cache_caps(info.off_screen_cache_caps)
+        // , client_bitmap_caps(info.bitmap_caps)
+        // , client_order_caps(info.order_caps)
+        // , client_bmp_cache_caps(info.bmp_cache_caps)
+        // , client_bmp_cache_2_caps(info.bmp_cache_2_caps)
+        // , client_off_screen_cache_caps(info.off_screen_cache_caps)
         , client_glyph_cache_caps(info.glyph_cache_caps)
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
@@ -2393,7 +2419,9 @@ public:
         this->negociation_result.front_width = info.screen_info.width;
         this->negociation_result.front_height = info.screen_info.height;
 
-        this->init_negociate_event_(info, timeobj, mod_rdp_params, program, directory);
+        this->init_negociate_event_(
+            info, gen, timeobj, mod_rdp_params, program, directory,
+            mod_rdp_params.open_session_timeout);
 
     }   // mod_rdp
 
@@ -3705,32 +3733,8 @@ public:
                 // intersect with client order capabilities
                 // which may not be supported by clients.
 
-                OrdersIndexes const order_idxs[]{
-                    TS_NEG_DSTBLT_INDEX,
-                    TS_NEG_PATBLT_INDEX,
-                    TS_NEG_SCRBLT_INDEX,
-                    TS_NEG_MEMBLT_INDEX,
-                    TS_NEG_MEM3BLT_INDEX,
-                    // TS_NEG_DRAWNINEGRID_INDEX,
-                    TS_NEG_LINETO_INDEX,
-                    // TS_NEG_MULTI_DRAWNINEGRID_INDEX,
-                    // TS_NEG_SAVEBITMAP_INDEX,
-                    TS_NEG_MULTIDSTBLT_INDEX,
-                    TS_NEG_MULTIPATBLT_INDEX,
-                    TS_NEG_MULTISCRBLT_INDEX,
-                    TS_NEG_MULTIOPAQUERECT_INDEX,
-                    // TS_NEG_FAST_GLYPH_INDEX,
-                    TS_NEG_POLYGON_SC_INDEX,
-                    TS_NEG_POLYGON_CB_INDEX,
-                    TS_NEG_POLYLINE_INDEX,
-                    // TS_NEG_FAST_GLYPH_INDEX,
-                    TS_NEG_ELLIPSE_SC_INDEX,
-                    TS_NEG_ELLIPSE_CB_INDEX,
-                    TS_NEG_INDEX_INDEX,
-                };
-                for (auto idx : order_idxs) {
-                    order_caps.orderSupport[idx] = this->primary_drawing_orders_support.has(idx)
-                        && this->client_order_caps.orderSupport[idx] ? 1 : 0;
+                for (auto idx : order_indexes_supported()) {
+                    order_caps.orderSupport[idx] = this->primary_drawing_orders_support.has(idx);
                 }
 
                 order_caps.orderSupport[UnusedIndex3] = 1;
@@ -3743,8 +3747,6 @@ public:
                 if (bool(this->verbose & RDPVerbose::capabilities) && !order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
                     LOG(LOG_INFO, "MemBlt Primary Drawing Order is disabled.");
                 }
-
-                order_caps.orderSupportExFlags &= this->client_order_caps.orderSupportExFlags;
 
                 // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
                 //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
@@ -5083,8 +5085,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon");
             RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
 
-            process_logon_info(char_ptr_cast(liv1.Domain),
-                char_ptr_cast(liv1.UserName));
+            this->process_logon_info(char_ptr_cast(liv1.Domain), char_ptr_cast(liv1.UserName));
 
             this->front.send_savesessioninfo();
 
@@ -5096,8 +5097,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon long");
             RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
 
-            process_logon_info(char_ptr_cast(liv2.Domain),
-                char_ptr_cast(liv2.UserName));
+            this->process_logon_info(char_ptr_cast(liv2.Domain), char_ptr_cast(liv2.UserName));
 
             this->front.send_savesessioninfo();
 
@@ -6038,8 +6038,9 @@ public:
 private:
     void log_disconnection(time_t now, bool enable_verbose)
     {
-        if (!this->session_disconnection_logged) {
-            double seconds = ::difftime(now, this->beginning);
+        if (this->session_time_start.count()) {
+            double seconds = ::difftime(now, this->session_time_start.count());
+            this->session_time_start = std::chrono::seconds::zero();
 
             char extra[1024];
             snprintf(extra, sizeof(extra), "%d:%02d:%02d",
@@ -6057,10 +6058,7 @@ private:
             arc_info.ApplicationProtocol = "rdp";
             arc_info.endTime = long(seconds);
 
-
             this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-            this->session_disconnection_logged = true;
 
             LOG_IF(enable_verbose, LOG_INFO, "%s", info);
         }
@@ -6209,8 +6207,9 @@ public:
 
 private:
     void init_negociate_event_(
-        const ClientInfo & info, TimeObj & timeobj, const ModRDPParams & mod_rdp_params,
-        char const* program, char const* directory);
+        const ClientInfo & info, Random & gen, TimeObj & timeobj,
+        const ModRDPParams & mod_rdp_params, char const* program, char const* directory,
+        const std::chrono::seconds open_session_timeout);
 };
 
 #undef IF_ENABLE_METRICS

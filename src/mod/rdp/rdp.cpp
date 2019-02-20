@@ -28,10 +28,14 @@ struct Private_RdpNegociation
 {
     RdpNegociation rdp_negociation;
     SessionReactor::GraphicEventPtr graphic_event;
+    const std::chrono::seconds open_session_timeout;
 
     template<class... Ts>
-    explicit Private_RdpNegociation(char const* program, char const* directory, Ts&&... xs)
-      : rdp_negociation(static_cast<Ts&&>(xs)...)
+    explicit Private_RdpNegociation(
+        std::chrono::seconds open_session_timeout,
+        char const* program, char const* directory, Ts&&... xs)
+    : rdp_negociation(static_cast<Ts&&>(xs)...)
+    , open_session_timeout(open_session_timeout)
     {
         this->rdp_negociation.set_program(program, directory);
     }
@@ -40,8 +44,9 @@ struct Private_RdpNegociation
 };
 
 void mod_rdp::init_negociate_event_(
-    const ClientInfo & info, TimeObj & timeobj, const ModRDPParams & mod_rdp_params,
-    char const* program, char const* directory)
+    const ClientInfo & info, Random & gen, TimeObj & timeobj,
+    const ModRDPParams & mod_rdp_params, char const* program, char const* directory,
+    const std::chrono::seconds open_session_timeout)
 {
     auto check_error = [this](
         auto /*ctx*/, jln::ExitR er,
@@ -88,13 +93,13 @@ void mod_rdp::init_negociate_event_(
 
     this->fd_event = this->session_reactor
     .create_graphic_fd_event(this->trans.get_fd(), jln::emplace<Private_RdpNegociation>(
-        program, directory,
+        open_session_timeout, program, directory,
         this->channels.channels_authorizations, this->channels.mod_channel_list,
         this->channels.auth_channel, this->channels.checkout_channel,
         this->decrypt, this->encrypt, this->logon_info,
         this->channels.enable_auth_channel,
         this->trans, this->front, info, this->redir_info,
-        this->gen, timeobj, mod_rdp_params, this->report_message,
+        gen, timeobj, mod_rdp_params, this->report_message,
         this->channels.file_system_drive_manager.has_managed_drive()
 #ifndef __EMSCRIPTEN__
         || this->channels.session_probe.enabled
@@ -103,7 +108,8 @@ void mod_rdp::init_negociate_event_(
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
     .on_action(jln::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
-    .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd, RdpNegociation& rdp_negociation){
+    .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd, Private_RdpNegociation& private_rdp_negociation){
+        RdpNegociation& rdp_negociation = private_rdp_negociation;
         gdi_clear_screen(gd, this->get_dim());
         LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
         rdp_negociation.start_negociation();
@@ -142,7 +148,7 @@ void mod_rdp::init_negociate_event_(
                 return ctx.need_more_data();
             });
         })
-        .set_or_disable_timeout(this->open_session_timeout, [this](
+        .set_or_disable_timeout(private_rdp_negociation.open_session_timeout, [this](
             JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&, RdpNegociation&
         ){
             if (this->error_message) {
