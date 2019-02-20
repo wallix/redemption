@@ -948,9 +948,9 @@ public:
         // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
 
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
-//         if (bool(this->verbose & VNCVerbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
-//         }
+        }
 
         IF_ENABLE_METRICS(key_pressed());
 
@@ -1020,9 +1020,9 @@ public:
     }
 
     void send_keyevent(uint8_t down_flag, uint32_t key) {
-//         if (bool(this->verbose & VNCVerbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
-//         }
+        }
         StaticOutStream<8> stream;
         stream.out_uint8(4);
         stream.out_uint8(down_flag); /* down/up flag */
