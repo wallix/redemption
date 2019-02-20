@@ -986,9 +986,9 @@ void KeymapSym::synchronize(uint16_t param1)
 
 void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 {
-    if (this->verbose){
+//     if (this->verbose){
         LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=0x%04x, keyCode=0x%04x flags=0x%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
-    }
+//     }
 
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
 
@@ -1089,21 +1089,11 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 //                    return;
 //                }
 
-            if (keyboardFlags & KBDFLAGS_EXTENDED) {
-                switch (keyCode) {
-                    case 0x5c:
-                        this->push_sym(0xff5b);
-                        break;
-                    case 0x5b:
-                        this->push_sym(0xff5b);
-                        break;
-                }
-            }
+
 
             if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
                 || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
                 || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
-                || (extendedKeyCode == 0x35)
                 ){
 
                 //------------------------------------------------------------------------
@@ -1164,9 +1154,6 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                         case 0x4c:
                             this->push_sym(0);
                             break;
-                        case 0x35:
-                            this->push_sym(0xffaf);
-                            break;
                         /* kEYPAD HOME */
                         case 0x47:
                             this->push_sym(0xFF50);
@@ -1174,10 +1161,24 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                         default:
                             break;
                     }
-
                 } // if numlock OFF
             }
-            else {
+            else if ( (keyboardFlags & KBDFLAGS_EXTENDED) && ((extendedKeyCode == 0x5c) || (extendedKeyCode == 0x5b) || (extendedKeyCode == 0x35)) ) {
+                switch (keyCode) {
+                    /* WINDOWS RIGHT */
+                    case 0x5c:
+                        this->push_sym(0xff5c);
+                        break;
+                    /* WINDOWS LEFT */
+                    case 0x5b:
+                        this->push_sym(0xff5b);
+                        break;
+                    /* kEYPAD SLASH */
+                    case 0x35:
+                        this->push_sym(0xffaf);
+                        break;
+                }
+            } else {
                 //--------------------
                 // NOT KEYPAD Specific
                 //--------------------

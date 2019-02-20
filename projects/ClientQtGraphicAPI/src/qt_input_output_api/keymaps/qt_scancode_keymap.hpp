@@ -315,7 +315,7 @@ private:
             case Qt::Key_Left       : this->scanCode = 0x4B; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Left"); break; //  L ARROW
             case Qt::Key_Down       : this->scanCode = 0x50; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Down"); break; //  D ARROW
             case Qt::Key_Right      : this->scanCode = 0x4D; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Right"); break; //  R ARROW
-            case Qt::Key_Meta       : this->scanCode = 0x5c; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Meta"); break; //  R WINDOW
+            case Qt::Key_Meta       : this->scanCode = 0x5b; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Meta"); break; //  R and L WINDOW
             case Qt::Key_Menu       : this->scanCode = 0x5D; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Menu"); break; //  MENU APPS
 	    case Qt::Key_Home       : this->scanCode = 0x47; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Home"); break; //  HOME
     //------------------------------------------------------------------------------------------------------------------------
