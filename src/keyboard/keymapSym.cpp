@@ -1099,7 +1099,7 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 //------------------------------------------------------------------------
                 // KEYPAD : Keypad keys whose meaning depends on Numlock are handled apart
                 //------------------------------------------------------------------------
-                if (!(keyboardFlags & KBDFLAGS_EXTENDED)) {
+//                 if (!(keyboardFlags & KBDFLAGS_EXTENDED)) {
                     if ((this->key_flags & NUMLOCK)) {
                         // if numlock is activated, keys are printable characters (logical SHIFT mode)
                         layout = &this->keylayout_WORK_shift_sym;
@@ -1114,7 +1114,7 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                         }
                         this->push_sym(ksym);
                     }
-                } // if numlock ON
+//                 } // if numlock ON
                 else {
                     // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
                     switch (extendedKeyCode){
@@ -1157,6 +1157,10 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                         /* kEYPAD HOME */
                         case 0x47:
                             this->push_sym(0xFF50);
+                            break;
+                        /* kEYPAD INSER */
+                        case 0x52:
+                            this->push_sym(0xff63);
                             break;
                         default:
                             break;
