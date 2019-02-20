@@ -12,6 +12,7 @@ host      = "127.0.0.1"
 localhost = "127.0.1.1"
 port      = 1344
 file_path = ""
+max_data_file_size_to_read = 0
 
 
 #Parsing
@@ -23,81 +24,110 @@ parser.add_argument('--host', '-s', dest='host', type=str, required=False,
                     help='set host')
 parser.add_argument('--local', '-l', dest='localhost', type=str, required=False,
                     help='set localhost')
+parser.add_argument('--max', '-m', dest='max_data_file_size_to_read', type=int, required=False,
+                    help='set max data file offset size to analyse')
 
 args = parser.parse_args()
 
+file_path = args.file_path
 if args.host:
     host = args.host
 if args.localhost:
     localhost = args.localhost
+if args.max_data_file_size_to_read:
+    max_data_file_size_to_read = args.max_data_file_size_to_read
 
 
-#Get file data
-file_path = args.file_path
+
+#Get file info
+
+size_to_read = os.path.getsize(file_path)
+
+print str(size_to_read)
+
+if max_data_file_size_to_read != 0:
+    if size_to_read > max_data_file_size_to_read:
+        size_to_read = max_data_file_size_to_read
+
+print str(size_to_read)
+
 file_path_list = file_path.split("/")
 filename  = file_path_list[len(file_path_list)-1]
-req_body = len(localhost) + len(filename) + 102
+
 f = open(file_path, "rb")
-size_to_read = os.path.getsize(file_path)
-#if size_to_read > 1024:
-#   size_to_read = 1024
 
 
 
 #Socket connection
 socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-socket.connect((host, port))
-print "Connection on {}".format(host+":"+str(port))
+try:
+    socket.connect((host, port))
+    print "Connection on {}".format(host+":"+str(port))
+except:
+    print "Error can't connect on {}".format(host+":"+str(port))
+
 
 
 #Write request
-httpRequest   = "GET http://"+localhost+"/"+filename+" HTTP/1.1\r\n"
-httpRequest  += "Host: "+localhost+"\r\n" 
-httpRequest  += "\r\n"
+def write_request(filename, localhost, host, port):
+    httpRequest   = "GET http://"+localhost+"/"+filename+" HTTP/1.1\r\n"
+    httpRequest  += "Host: "+localhost+"\r\n" 
+    httpRequest  += "\r\n"
 
-httpResponse  = "HTTP/1.1 200 OK\r\n"
-httpResponse += "Transfer-Encoding: chunked\r\n"
-httpResponse += "Content-Length: 0\r\n" # "+str(size_to_read)+"
-httpResponse += "\r\n"
+    httpResponse  = "HTTP/1.1 200 OK\r\n"
+    httpResponse += "Transfer-Encoding: chunked\r\n"
+    httpResponse += "Content-Length: 0\r\n" 
+    httpResponse += "\r\n"
 
-icapRequest   = "RESPMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n"
-icapRequest  += "Allow: 204\r\n"   
-icapRequest  += "Connection: close\r\n"
-icapRequest  += "Host: "+host+"\r\n"
-icapRequest  += "Encapsulated: req-hdr=0, res-hdr="+str(len(httpRequest))+", res-body="+str(len(httpRequest) + (len(httpResponse)))+"\r\n" # 
-icapRequest  += "\r\n"
+    icapRequest   = "RESPMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n"
+    icapRequest  += "Allow: 204\r\n"   
+    #icapRequest  += "Preview: 4096\r\n"
+    icapRequest  += "Connection: close\r\n"
+    icapRequest  += "Host: "+host+"\r\n"
+    icapRequest  += "Encapsulated: req-hdr=0, res-hdr="+str(len(httpRequest))+", res-body="+str(len(httpRequest) + (len(httpResponse)))+"\r\n" 
+    icapRequest  += "\r\n"
 
-request = icapRequest + httpRequest + httpResponse
+    request = icapRequest + httpRequest + httpResponse
+    return request
+
+
+
+#Send and chunk
+def send_chunk(f, socket, size_to_read):
+
+    content    = b""
+
+    while size_to_read > 1024:
+        
+        size_to_read -= 1024
+        #print str(size_to_read)
+        content = "400\r\n"+f.read(1024)+"\r\n"
+        #print content
+        socket.send(content)
+
+    endchunklen = str(hex(size_to_read).split('x')[-1])+"\r\n"
+    content = endchunklen + f.read(size_to_read) + "\r\n\r\n\r\n0\r\n\r\n"
+    socket.send(content)
+   # print content
+    size_to_read = 0
+    #print str(size_to_read)
+    f.close()
+    
+
+
+
+request = write_request(filename, localhost, host, port)
+socket.send(request.encode("utf-8"))
 
 print ""
 print "send:"
-request_lines = request.split("\r\n");
+request_lines = request.split("\r\n")
 for line in request_lines:
     print("    "+line)
 print ""
 
+send_chunk(f, socket, size_to_read)
 
-#Send request and chunk
-socket.send(request.encode("utf-8"))
-
-if size_to_read < 4096:
-    size_to_read = 4096
-
-content    = b""
-chunklen   = "400\r\n"
-chunk_end  = "\r\n\r\n0\r\n\r\n"
-
-while size_to_read > 1024:
-    size_to_read -= 1024
-    content = f.read(1024)
-    socket.send(chunklen+content+"\r\n")
-
-endchunklen = str(hex(size_to_read).split('x')[-1])+"\r\n"
-content = b""
-content = f.read(size_to_read)
-socket.send(endchunklen+content+"\r\n")
-
-socket.send(chunk_end.encode("utf-8"))
 
 
 # Receive response
@@ -105,18 +135,30 @@ msg_recu = b""
 response = b""
 step = 0
 
-while msg_recu != b"0\r\n\r\n" and step < 50:
+while msg_recu != b"0\r\n\r\n" and step < 500:
     msg_recu = socket.recv(1024)
     step += 1
 
-    if msg_recu != b"":    
-       response += msg_recu
+    if msg_recu != b"":  
+        if msg_recu == "ICAP/1.0 100 Continue\r\n\r\n":
+            print msg_recu
+        else:
+            response += msg_recu
 
 if response:
+    print "Got a response"
+    response_lines = response.split("\r\n")
+    
+    if response_lines[0] == "ICAP/1.0 204 Unmodified":
+        print "File is accepted, path: \"" + file_path + "\""
+    else:
+        print "File is rejected, path: \"" + file_path + "\""
+    print ""
     print("rcv:")
-    response_lines = response.split("\r\n");
     for line in response_lines:
         print("    "+line)
+
+
 
 #Socket disconnection
 print "Close connection to {}".format(host+":"+str(port))

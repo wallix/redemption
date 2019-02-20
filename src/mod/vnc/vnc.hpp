@@ -8,7 +8,7 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
-h
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -955,7 +955,7 @@ public:
         IF_ENABLE_METRICS(key_pressed());
 
         if (0x45 == param1) {
-            this->keymapSym.toggle_num_lock(keymap->is_num_locked());
+           this->keymapSym.toggle_num_lock(keymap->is_num_locked());
         }
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
@@ -963,6 +963,7 @@ public:
         if (this->server_is_apple) {
             this->apple_keyboard_translation(device_flags, param1, downflag);
         } else {
+
             this->keyMapSym_event(device_flags, param1, downflag);
         }
     } // rdp_input_scancode
@@ -972,7 +973,9 @@ public:
     }
 
     void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {
+
         this->keymapSym.event(device_flags, param1);
+
         uint32_t const key {this->keymapSym.get_sym()};
 
         if (key > 0) {

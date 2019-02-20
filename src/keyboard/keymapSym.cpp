@@ -987,7 +987,7 @@ void KeymapSym::synchronize(uint16_t param1)
 void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 {
     if (this->verbose){
-        LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x, keyCode=%04x flags=%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
+        LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=0x%04x, keyCode=0x%04x flags=0x%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
     }
 
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
@@ -1448,6 +1448,12 @@ void KeymapSym::toggle_num_lock(bool on)
     if (((this->key_flags & NUMLOCK) == NUMLOCK) != on) {
         this->key_flags ^= NUMLOCK;
     }
+
+//     if (this->key_flags & NUMLOCK) {
+//         LOG(LOG_INFO, "!!!!! NUMLOCK is on !!!!!");
+//     } else {
+//         LOG(LOG_INFO, "!!!!! NUMLOCK is off !!!!!");
+//     }
 }
 
 bool KeymapSym::is_left_shift_pressed() const

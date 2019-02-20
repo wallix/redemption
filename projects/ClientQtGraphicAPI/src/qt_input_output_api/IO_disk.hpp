@@ -114,6 +114,7 @@ public:
         if(inFile.is_open()) {
             inFile.ignore(offset);
             inFile.read(data.as_charp(), data.size());
+            inFile.close();
         }
     }
 
