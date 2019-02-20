@@ -380,11 +380,7 @@ private:
         if (!this->kbd_stream.has_room(1)) {
             this->flush();
         }
-        if (this->keyboard_input_mask_hidden) {
-            this->hidden_masked_char_count++;
-        } else {
-            this->kbd_stream.out_uint8('*');
-        }
+        this->hidden_masked_char_count++;
     }
 
     void write_keys(uint32_t uchar) {
@@ -438,10 +434,9 @@ public:
     }
 
     void flush() {
-        if (this->kbd_stream.get_offset() || (!this->keyboard_input_mask_hidden && this->hidden_masked_char_count)) {
-            while (this->hidden_masked_char_count) {
-                this->kbd_stream.out_uint8('*');
-                this->hidden_masked_char_count--;
+        if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
+            if (this->hidden_masked_char_count){
+                this->kbd_stream.out_copy_bytes(byte_ptr_cast("********"), 8);
             }
             this->hidden_masked_char_count = 0;
             LOG(LOG_INFO, R"x(type="KBD input" data="%.*s")x",
@@ -502,11 +497,7 @@ class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
         if (!this->kbd_stream.has_room(1)) {
             this->flush();
         }
-        if (this->keyboard_input_mask_hidden) {
-            this->hidden_masked_char_count++;
-        } else {
-            this->kbd_stream.out_uint8('*');
-        }
+        this->hidden_masked_char_count++;
     }
 
     void write_keys(uint32_t uchar) {
@@ -561,10 +552,9 @@ private:
 
 public:
     void flush() {
-        if (this->kbd_stream.get_offset() || (!this->keyboard_input_mask_hidden && this->hidden_masked_char_count)) {
-            while (this->hidden_masked_char_count) {
-                this->kbd_stream.out_uint8('*');
-                this->hidden_masked_char_count--;
+        if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
+            if (this->hidden_masked_char_count) {
+                this->kbd_stream.out_copy_bytes(byte_ptr_cast("********"), 8);
             }
             this->hidden_masked_char_count = 0;
 
@@ -1177,7 +1167,6 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
     const bool key_markers_hidden_state;
     const bool log_only_relevant_clipboard_activities;
 
-    bool keyboard_input_mask_hidden = false;
     int hidden_masked_char_count = 0;
 
 public:
@@ -1262,11 +1251,7 @@ private:
         if (!this->kbd_stream.has_room(1)) {
             this->send_kbd();
         }
-        if (this->keyboard_input_mask_hidden) {
-            this->hidden_masked_char_count++;
-        } else {
-            this->kbd_stream.out_uint8('*');
-        }
+        this->hidden_masked_char_count++;
     }
 
     void write_keys(uint32_t uchar) {
@@ -1354,10 +1339,9 @@ private:
     }
 
     void send_kbd() {
-          if (this->kbd_stream.get_offset() || (!this->keyboard_input_mask_hidden && this->hidden_masked_char_count)) {
-            while (this->hidden_masked_char_count) {
-                this->kbd_stream.out_uint8('*');
-                this->hidden_masked_char_count--;
+          if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
+            if (this->hidden_masked_char_count) {
+                this->kbd_stream.out_copy_bytes(byte_ptr_cast("********"), 8);
             }
             this->hidden_masked_char_count = 0;
             this->formatted_message.assign("KBD_INPUT", {
