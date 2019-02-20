@@ -713,9 +713,8 @@ private:
                     array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
                 proxy_managed_drive_prefix, this->verbose);
         }
-    }   // configure_proxy_managed_drives
+    }
 
-    public:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
         CHANNELS::ChannelNameId channel_name, FrontAPI& front) const
     {
@@ -752,12 +751,9 @@ private:
                 const uint8_t* chunk_data, uint32_t chunk_data_length)
                     override
             {
-                if ((
-                    bool(this->verbose & RDPVerbose::cliprdr_dump)
-                    && this->channel.name == channel_names::cliprdr
-                ) || (
-                    bool(this->verbose & RDPVerbose::rdpdr_dump)
-                    && this->channel.name == channel_names::rdpdr
+                if (bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
+                 && (this->channel.name == channel_names::cliprdr
+                  || this->channel.name == channel_names::rdpdr
                 )) {
                     const bool send              = true;
                     const bool from_or_to_client = true;
@@ -770,12 +766,10 @@ private:
             }
         };
 
-        auto to_client_sender = std::make_unique<ToClientSender>(front, *channel, this->verbose);
-
-        return std::unique_ptr<VirtualChannelDataSender>(std::move(to_client_sender));
+        return std::make_unique<ToClientSender>(front, *channel, this->verbose);
     }
 
-    inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc, SessionReactor & session_reactor) {
+    inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc) {
         assert(!this->clipboard_to_client_sender
             && !this->clipboard_to_server_sender);
 
@@ -783,21 +777,20 @@ private:
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
         BaseVirtualChannel::Params base_params(this->report_message);
-        base_params.exchanged_data_limit      = this->max_clipboard_data;
-        base_params.verbose                   = this->verbose;
+        base_params.exchanged_data_limit = this->max_clipboard_data;
+        base_params.verbose              = this->verbose;
 
         ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->disable_clipboard_log_syslog, this->disable_clipboard_log_wrm, this->log_only_relevant_clipboard_activities);
 
-        this->clipboard_virtual_channel =
-            std::make_unique<ClipboardVirtualChannel>(
-                this->clipboard_to_client_sender.get(),
-                this->clipboard_to_server_sender.get(),
-                front,
-                false,
-                "",
-                session_reactor,
-                base_params,
-                cvc_params);
+        this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
+            this->clipboard_to_client_sender.get(),
+            this->clipboard_to_server_sender.get(),
+            front,
+            false,
+            "",
+            this->session_reactor,
+            base_params,
+            cvc_params);
     }
 
 
@@ -833,20 +826,15 @@ private:
             {}
 
             void operator()(uint32_t total_length, uint32_t flags,
-                const uint8_t* chunk_data, uint32_t chunk_data_length)
-                    override {
-                CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-
+                const uint8_t* chunk_data, uint32_t chunk_data_length
+            ) override {
                 if (this->show_protocol) {
                     flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
                 }
 
-                if ((
-                    bool(this->verbose & RDPVerbose::cliprdr_dump)
-                    && this->channel_name == channel_names::cliprdr
-                ) || (
-                    bool(this->verbose & RDPVerbose::rdpdr_dump)
-                    && this->channel_name == channel_names::rdpdr
+                if (bool(this->verbose & (RDPVerbose::cliprdr_dump | RDPVerbose::rdpdr_dump))
+                 && (this->channel_name == channel_names::cliprdr
+                  || this->channel_name == channel_names::rdpdr
                 )) {
                     const bool send              = true;
                     const bool from_or_to_client = false;
@@ -854,28 +842,23 @@ private:
                         chunk_data, chunk_data_length);
                 }
 
+                CHANNELS::VirtualChannelPDU virtual_channel_pdu;
                 virtual_channel_pdu.send_to_server(this->stc, this->channel_id, total_length, flags, chunk_data,
                     chunk_data_length);
             }
         };
 
-        std::unique_ptr<ToServerSender> to_server_sender =
-            std::make_unique<ToServerSender>(
-                stc,
-                channel_name,
-                channel->chanid,
-                (channel->flags &
-                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
-                this->verbose);
-
-        return std::unique_ptr<VirtualChannelDataSender>(std::move(to_server_sender));
+        return std::make_unique<ToServerSender>(
+            stc,
+            channel_name,
+            channel->chanid,
+            (channel->flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
+            this->verbose);
     }
 
 
     std::unique_ptr<VirtualChannelDataSender> create_to_server_asynchronous_sender(CHANNELS::ChannelNameId channel_name, ServerTransportContext & stc, AsynchronousTaskContainer & asynchronous_tasks)
     {
-        auto to_server_sender =  create_to_server_synchronous_sender(channel_name, stc);
-
         class ToServerAsynchronousSender : public VirtualChannelDataSender
         {
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
@@ -886,7 +869,7 @@ private:
 
         public:
             explicit ToServerAsynchronousSender(
-                std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender,
+                std::unique_ptr<VirtualChannelDataSender>&& to_server_synchronous_sender,
                 AsynchronousTaskContainer& asynchronous_tasks,
                 RDPVerbose verbose)
             : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
@@ -895,7 +878,7 @@ private:
             {}
 
             VirtualChannelDataSender& SynchronousSender() override {
-                return *(to_server_synchronous_sender.get());
+                return *to_server_synchronous_sender;
             }
 
             void operator()(
@@ -913,7 +896,7 @@ private:
         };
 
         return std::make_unique<ToServerAsynchronousSender>(
-            std::move(to_server_sender),
+            create_to_server_synchronous_sender(channel_name, stc),
             asynchronous_tasks,
             this->verbose);
     }
@@ -989,12 +972,12 @@ private:
 #endif
     }
 
+public:
 #ifndef __EMSCRIPTEN__
     inline void create_session_probe_virtual_channel(
                     FrontAPI& front,
                     ServerTransportContext stc,
                     AsynchronousTaskContainer & asynchronous_tasks,
-                    SessionReactor& session_reactor,
                     mod_api& mod, rdp_api& rdp,
                     const Translation::language_t & lang,
                     const bool bogus_refresh_rect,
@@ -1053,7 +1036,7 @@ private:
 
 
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
-                session_reactor,
+                this->session_reactor,
                 this->session_probe_to_server_sender.get(),
                 front,
                 mod,
@@ -1064,6 +1047,7 @@ private:
                 sp_vc_params);
     }
 
+private:
     inline void create_remote_programs_virtual_channel(
                     FrontAPI& front,
                     ServerTransportContext & stc,
@@ -1126,7 +1110,7 @@ public:
         ServerTransportContext & stc
     ) {
         if (!this->clipboard_virtual_channel) {
-            this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
+            this->create_clipboard_virtual_channel(front, stc);
         }
 
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
@@ -1243,7 +1227,6 @@ public:
         rdp_api& rdp,
         ServerTransportContext & stc,
         AsynchronousTaskContainer & asynchronous_tasks,
-        SessionReactor& session_reactor,
         GeneralCaps const & client_general_caps,
         const char (& client_name)[128],
         const uint32_t monitor_count,
@@ -1254,7 +1237,7 @@ public:
         if (!this->session_probe_virtual_channel) {
             this->create_session_probe_virtual_channel(
                     front, stc,
-                    asynchronous_tasks, session_reactor,
+                    asynchronous_tasks,
                     mod_rdp, rdp,
                     lang,
                     bogus_refresh_rect,
@@ -1317,7 +1300,7 @@ public:
                             ServerTransportContext & stc) {
 
         if (!this->clipboard_virtual_channel) {
-            this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
+            this->create_clipboard_virtual_channel(front, stc);
         }
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
 
@@ -1981,7 +1964,6 @@ public:
         mod_api & mod_rdp,
         rdp_api& rdp,
         AsynchronousTaskContainer & asynchronous_tasks,
-        SessionReactor& session_reactor,
         GeneralCaps const & client_general_caps,
         const ModRdpVariables & vars,
         RailCaps const & client_rail_caps,
@@ -1993,7 +1975,7 @@ public:
         assert(this->session_probe.enabled);
         if (this->session_probe_launcher){
             if (!this->clipboard_virtual_channel) {
-                this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
+                this->create_clipboard_virtual_channel(front, stc);
             }
             ClipboardVirtualChannel& cvc = *this->clipboard_virtual_channel;
             cvc.set_session_probe_launcher(this->session_probe_launcher.get());
@@ -2011,7 +1993,7 @@ public:
             if (!this->session_probe_virtual_channel) {
                 this->create_session_probe_virtual_channel(
                     front, stc,
-                    asynchronous_tasks, session_reactor,
+                    asynchronous_tasks,
                     mod_rdp, rdp,
                     lang,
                     bogus_refresh_rect,
@@ -2044,7 +2026,7 @@ public:
             if (!this->session_probe_virtual_channel) {
                 this->create_session_probe_virtual_channel(
                     front, stc,
-                    asynchronous_tasks, session_reactor,
+                    asynchronous_tasks,
                     mod_rdp, rdp,
                     lang,
                     bogus_refresh_rect,
@@ -2481,7 +2463,7 @@ public:
                             this->trans, this->encrypt, this->negociation_result};
                         this->channels.create_session_probe_virtual_channel(
                                 this->front, stc,
-                                this->asynchronous_tasks, this->session_reactor,
+                                this->asynchronous_tasks,
                                 *this, *this,
                                 this->lang,
                                 this->bogus_refresh_rect,
@@ -3034,7 +3016,7 @@ public:
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
                     this->front, *this, *this, stc,
-                    this->asynchronous_tasks, this->session_reactor,
+                    this->asynchronous_tasks,
                     this->client_general_caps, this->client_name,
                     this->monitor_count, this->bogus_refresh_rect, this->lang);
 #endif
@@ -3234,7 +3216,6 @@ public:
                                         *this,
                                         *this,
                                         this->asynchronous_tasks,
-                                        this->session_reactor,
                                         this->client_general_caps,
                                         this->vars,
                                         this->client_rail_caps,
