@@ -2687,23 +2687,23 @@ public:
 
             switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
             case FastPath::UpdateType::ORDERS:
-                this->front.begin_update();
+                drawable.begin_update();
                 this->orders.process_orders(
                     stream, true, drawable,
                     this->negociation_result.front_width, this->negociation_result.front_height);
-                this->front.end_update();
+                drawable.end_update();
                 break;
 
             case FastPath::UpdateType::BITMAP:
-                this->front.begin_update();
+                drawable.begin_update();
                 this->process_bitmap_updates(stream, true, drawable);
-                this->front.end_update();
+                drawable.end_update();
                 break;
 
             case FastPath::UpdateType::PALETTE:
-                this->front.begin_update();
+                drawable.begin_update();
                 this->process_palette(stream, true);
-                this->front.end_update();
+                drawable.end_update();
                 break;
 
             case FastPath::UpdateType::SYNCHRONIZE:
@@ -2895,7 +2895,7 @@ public:
                 if (this->frameInProgress) {
                     // some servers don't send frame end markers, so send acks when we receive
                     // a new frame and the previous one was not acked
-                    this->front.end_update();
+                    drawable.end_update();
 
                     LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
                     this->rdp_input.send_pdu_type2(
@@ -2908,12 +2908,12 @@ public:
 
                 this->frameInProgress = true;
                 this->currentFrameId = frameId;
-                this->front.begin_update();
+                drawable.begin_update();
                 break;
             case SURFACECMD_FRAMEACTION_END:
                 LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
                 this->frameInProgress = false;
-                this->front.end_update();
+                drawable.end_update();
                 this->rdp_input.send_pdu_type2(
                     PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
                     [frameId](StreamSize<32>, OutStream & ostream) {
@@ -3264,22 +3264,22 @@ public:
                                         switch (gur.update_type) {
                                         case RDP_UPDATE_ORDERS:
                                             if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
-                                            this->front.begin_update();
+                                            drawable.begin_update();
                                             this->orders.process_orders(sdata.payload, false,
                                                 drawable, this->negociation_result.front_width, this->negociation_result.front_height);
-                                            this->front.end_update();
+                                            drawable.end_update();
                                             break;
                                         case RDP_UPDATE_BITMAP:
                                             if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
-                                            this->front.begin_update();
+                                            drawable.begin_update();
                                             this->process_bitmap_updates(sdata.payload, false, drawable);
-                                            this->front.end_update();
+                                            drawable.end_update();
                                             break;
                                         case RDP_UPDATE_PALETTE:
                                             if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
-                                            this->front.begin_update();
+                                            drawable.begin_update();
                                             this->process_palette(sdata.payload, false);
-                                            this->front.end_update();
+                                            drawable.end_update();
                                             break;
                                         case RDP_UPDATE_SYNCHRONIZE:
                                             if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "RDP_UPDATE_SYNCHRONIZE");}
