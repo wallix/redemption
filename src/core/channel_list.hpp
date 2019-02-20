@@ -400,16 +400,11 @@ namespace CHANNELS {
                         hexdump_av_d(stream.get_bytes());
                     }
                 },
-                [&](StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) {
-                    SEC::Sec_Send(sec_header, packet_data, packet_size, 0, crypt_context, encryptionLevel);
-
-                },
+                SEC::write_sec_send_fn{0, crypt_context, encryptionLevel},
                 [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                     MCS_SendData(mcs_header, userId, channelId, 1, 3, packet_size, MCS::PER_ENCODING);
                 },
-                [&](StreamSize<256>, OutStream & x224_header, std::size_t packet_size) {
-                    X224::DT_TPDU_Send(x224_header, packet_size);
-                }
+                X224::write_x224_dt_tpdu_fn{}
             );
         }
     };  // struct VirtualChannelPDU

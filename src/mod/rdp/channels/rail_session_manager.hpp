@@ -167,7 +167,8 @@ public:
         }
     }
 
-    void disable_graphics_update(bool disable) {
+    void disable_graphics_update(bool disable)
+    {
         this->graphics_update_disabled = disable;
 
         if (bool(this->verbose & RDPVerbose::rail)) {
