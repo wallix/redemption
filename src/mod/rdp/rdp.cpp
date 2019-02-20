@@ -23,25 +23,27 @@ Author(s): Jonathan Poelen
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
 
-
-struct Private_RdpNegociation
+namespace
 {
-    RdpNegociation rdp_negociation;
-    SessionReactor::GraphicEventPtr graphic_event;
-    const std::chrono::seconds open_session_timeout;
-
-    template<class... Ts>
-    explicit Private_RdpNegociation(
-        std::chrono::seconds open_session_timeout,
-        char const* program, char const* directory, Ts&&... xs)
-    : rdp_negociation(static_cast<Ts&&>(xs)...)
-    , open_session_timeout(open_session_timeout)
+    struct PrivateRdpNegociation
     {
-        this->rdp_negociation.set_program(program, directory);
-    }
+        RdpNegociation rdp_negociation;
+        SessionReactor::GraphicEventPtr graphic_event;
+        const std::chrono::seconds open_session_timeout;
 
-    operator RdpNegociation& () noexcept { return rdp_negociation; }
-};
+        template<class... Ts>
+        explicit PrivateRdpNegociation(
+            std::chrono::seconds open_session_timeout,
+            char const* program, char const* directory, Ts&&... xs)
+        : rdp_negociation(static_cast<Ts&&>(xs)...)
+        , open_session_timeout(open_session_timeout)
+        {
+            this->rdp_negociation.set_program(program, directory);
+        }
+    };
+
+    using PrivateRdpNegociationPtr = std::unique_ptr<PrivateRdpNegociation>;
+}
 
 void mod_rdp::init_negociate_event_(
     const ClientInfo & info, Random & gen, TimeObj & timeobj,
@@ -50,7 +52,7 @@ void mod_rdp::init_negociate_event_(
 {
     auto check_error = [this](
         auto /*ctx*/, jln::ExitR er,
-        gdi::GraphicApi&, RdpNegociation& rdp_negociation
+        gdi::GraphicApi&, PrivateRdpNegociationPtr& private_rdp_negociation
     ){
         if (er.status != jln::ExitR::Exception) {
             return er.to_result();
@@ -68,7 +70,7 @@ void mod_rdp::init_negociate_event_(
 
         const char * statestr = "UNKNOWN_STATE";
         const char * statedescr = "Unknown state.";
-        switch (rdp_negociation.get_state()) {
+        switch (private_rdp_negociation->rdp_negociation.get_state()) {
             #define CASE(e, trkey)                      \
                 case RdpNegociation::State::e:          \
                     statestr = "RDP_" #e;               \
@@ -92,7 +94,7 @@ void mod_rdp::init_negociate_event_(
     };
 
     this->fd_event = this->session_reactor
-    .create_graphic_fd_event(this->trans.get_fd(), jln::emplace<Private_RdpNegociation>(
+    .create_graphic_fd_event(this->trans.get_fd(), std::make_unique<PrivateRdpNegociation>(
         open_session_timeout, program, directory,
         this->channels.channels_authorizations, this->channels.mod_channel_list,
         this->channels.auth_channel, this->channels.checkout_channel,
@@ -108,17 +110,15 @@ void mod_rdp::init_negociate_event_(
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
     .on_action(jln::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
-    .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd, Private_RdpNegociation& private_rdp_negociation){
-        RdpNegociation& rdp_negociation = private_rdp_negociation;
+    .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd, PrivateRdpNegociationPtr& private_rdp_negociation){
         gdi_clear_screen(gd, this->get_dim());
         LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-        rdp_negociation.start_negociation();
+        private_rdp_negociation->rdp_negociation.start_negociation();
 
         return ctx.replace_action([this](
-            JLN_TOP_CTX ctx, gdi::GraphicApi&, Private_RdpNegociation& private_rdp_negociation
+            JLN_TOP_CTX ctx, gdi::GraphicApi&, PrivateRdpNegociationPtr& private_rdp_negociation
         ){
-            RdpNegociation& rdp_negociation = private_rdp_negociation;
-            bool const is_finish = rdp_negociation.recv_data(this->buf);
+            bool const is_finish = private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
             // RdpNego::recv_next_data set a new fd if tls
             int const fd = this->trans.get_fd();
@@ -130,10 +130,10 @@ void mod_rdp::init_negociate_event_(
                 return ctx.need_more_data();
             }
 
-            this->negociation_result = rdp_negociation.get_result();
+            this->negociation_result = private_rdp_negociation->rdp_negociation.get_result();
             this->rdp_input.set_negociation(this->negociation_result);
             if (this->buf.remaining()) {
-                private_rdp_negociation.graphic_event = ctx.get_reactor().create_graphic_event()
+                private_rdp_negociation->graphic_event = ctx.get_reactor().create_graphic_event()
                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                     this->draw_event_impl(this->session_reactor.get_current_time().tv_sec, gd);
                 }));
@@ -142,14 +142,17 @@ void mod_rdp::init_negociate_event_(
             // TODO replace_event()
             return ctx.disable_timeout()
             .replace_exit(jln::propagate_exit())
-            .replace_action([this](auto ctx, gdi::GraphicApi& gd, Private_RdpNegociation& private_rdp_negociation){
-                private_rdp_negociation.graphic_event.reset();
+            .replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd, PrivateRdpNegociationPtr& private_rdp_negociation){
+                private_rdp_negociation.reset();
                 this->draw_event(ctx.get_current_time().tv_sec, gd);
-                return ctx.need_more_data();
+                return ctx.replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd, PrivateRdpNegociationPtr&){
+                    this->draw_event(ctx.get_current_time().tv_sec, gd);
+                    return ctx.need_more_data();
+                });
             });
         })
-        .set_or_disable_timeout(private_rdp_negociation.open_session_timeout, [this](
-            JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&, RdpNegociation&
+        .set_or_disable_timeout(private_rdp_negociation->open_session_timeout, [this](
+            JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&, PrivateRdpNegociationPtr&
         ){
             if (this->error_message) {
                 *this->error_message = "Logon timer expired!";

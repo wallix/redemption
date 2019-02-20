@@ -2284,6 +2284,15 @@ class mod_rdp : public mod_api, public rdp_api
 
     static constexpr auto order_indexes_supported() noexcept
     {
+        // Apparently, these primary drawing orders are supported
+        // by both rdesktop and xfreerdp :
+        // TS_NEG_DSTBLT_INDEX
+        // TS_NEG_PATBLT_INDEX
+        // TS_NEG_SCRBLT_INDEX
+        // TS_NEG_MEMBLT_INDEX
+        // TS_NEG_LINETO_INDEX
+        // others orders may not be supported.
+
         return std::array{
             TS_NEG_DSTBLT_INDEX,
             TS_NEG_PATBLT_INDEX,
@@ -3720,15 +3729,6 @@ public:
                                        | COLORINDEXSUPPORT       /* 0x20 */
                                        | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
                                        ;
-
-                // Apparently, these primary drawing orders are supported
-                // by both rdesktop and xfreerdp :
-                // TS_NEG_DSTBLT_INDEX
-                // TS_NEG_PATBLT_INDEX
-                // TS_NEG_SCRBLT_INDEX
-                // TS_NEG_MEMBLT_INDEX
-                // TS_NEG_LINETO_INDEX
-                // others orders may not be supported.
 
                 // intersect with client order capabilities
                 // which may not be supported by clients.
