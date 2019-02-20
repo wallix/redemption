@@ -988,9 +988,9 @@ void KeymapSym::synchronize(uint16_t param1)
 void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 {
 
-    if (this->verbose){
+//     if (this->verbose){
         LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x, keyCode=%04x flags=%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
-    }
+//     }
 
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
 
@@ -1092,29 +1092,32 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
                 || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
                 ){
+
                 //------------------------------------------------------------------------
                 // KEYPAD : Keypad keys whose meaning depends on Numlock are handled apart
                 //------------------------------------------------------------------------
-                if ((this->key_flags & NUMLOCK)) {
-                    // if numlock is activated, keys are printable characters (logical SHIFT mode)
-                    layout = &this->keylayout_WORK_shift_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK shift (1)");
+                if (!(keyboardFlags & KBDFLAGS_EXTENDED)) {
+                    if ((this->key_flags & NUMLOCK)) {
+                        // if numlock is activated, keys are printable characters (logical SHIFT mode)
+                        layout = &this->keylayout_WORK_shift_sym;
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "Use KEYLAYOUT WORK shift (1)");
+                        }
+                        // Translate the scancode to an unicode char
+                        uint8_t sym = map[extendedKeyCode];
+                        uint32_t ksym = (*layout)[sym];
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
+                        }
+                        this->push_sym(ksym);
                     }
-                    // Translate the scancode to an unicode char
-                    uint8_t sym = map[extendedKeyCode];
-                    uint32_t ksym = (*layout)[sym];
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-                    }
-                    this->push_sym(ksym);
                 } // if numlock ON
                 else {
                     // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
                     switch (extendedKeyCode){
                         /* kEYPAD LEFT ARROW */
                         case 0x4b:
-                                this->push_sym(0xFF51);
+                            this->push_sym(0xFF51);
                             break;
                         /* kEYPAD UP ARROW */
                         case 0x48:
@@ -1127,10 +1130,6 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                         /* kEYPAD DOWN ARROW */
                         case 0x50:
                             this->push_sym(0xFF54);
-                            break;
-                        /* kEYPAD HOME */
-                        case 0x47:
-                            this->push_sym(0xFF50);
                             break;
                         /* kEYPAD PGUP */
                         case 0x49:
@@ -1148,13 +1147,39 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                         case 0x53:
                             this->push_sym(0xFFFF);
                             break;
+                        /* kEYPAD EMPTY 5 */
+                        case 0x4c:
+                            this->push_sym(0);
+                            break;
+                        /* kEYPAD HOME */
+                        case 0x47:
+                            this->push_sym(0xFF50);
+                            break;
+                        /* kEYPAD INSER */
+                        case 0x52:
+                            this->push_sym(0xff63);
+                            break;
                         default:
                             break;
                     }
-
                 } // if numlock OFF
             }
-            else {
+            else if ( (keyboardFlags & KBDFLAGS_EXTENDED) && ((extendedKeyCode == 0x5c) || (extendedKeyCode == 0x5b) || (extendedKeyCode == 0x35)) ) {
+                switch (keyCode) {
+                    /* WINDOWS RIGHT */
+                    case 0x5c:
+                        this->push_sym(0xff5c);
+                        break;
+                    /* WINDOWS LEFT */
+                    case 0x5b:
+                        this->push_sym(0xff5b);
+                        break;
+                    /* kEYPAD SLASH */
+                    case 0x35:
+                        this->push_sym(0xffaf);
+                        break;
+                }
+            } else {
                 //--------------------
                 // NOT KEYPAD Specific
                 //--------------------
