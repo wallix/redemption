@@ -317,6 +317,7 @@ private:
             case Qt::Key_Right      : this->scanCode = 0x4D; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Right"); break; //  R ARROW
             case Qt::Key_Meta       : this->scanCode = 0x5c; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Meta"); break; //  R WINDOW
             case Qt::Key_Menu       : this->scanCode = 0x5D; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Menu"); break; //  MENU APPS
+	    case Qt::Key_Home       : this->scanCode = 0x47; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Home"); break; //  HOME
     //------------------------------------------------------------------------------------------------------------------------
         //---------------------------------------------
         //    Not mod neither char keys NOT Extended
@@ -339,7 +340,7 @@ private:
             case Qt::Key_ScrollLock           : this->scanCode = 0x46; this->qKeyName = std::string("ScrollLock"); break; //  SCROLL
             case Qt::Key_Pause                : this->scanCode = 0xE1; this->qKeyName = std::string("Pause"); break; //  PAUSE
             case Qt::Key_Tab                  : this->scanCode = 0x0F; this->qKeyName = std::string("Tab"); break; //  TAB
-            case Qt::Key_Home                 : this->scanCode = 0x47; this->qKeyName = std::string("Home"); break; //  HOME
+            
             case Qt::Key_MediaStop            : this->scanCode = 0x24; this->qKeyName = std::string("MediaStop"); break; //
             case Qt::Key_MediaPrevious        : this->scanCode = 0x10; this->qKeyName = std::string("MediaPrevious"); break; //
             case Qt::Key_MediaNext            : this->scanCode = 0x19; this->qKeyName = std::string("MediaNext"); break; //
