@@ -1089,8 +1089,6 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 //                    return;
 //                }
 
-
-
             if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
                 || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
                 || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
