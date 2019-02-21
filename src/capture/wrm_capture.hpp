@@ -699,8 +699,6 @@ class WrmCaptureImpl :
             }
         }
 
-        void enable_kbd_input_mask(bool) override {}
-
         bool kbd_input(const timeval & now, uint32_t uchar) override {
             return this->GraphicToFile::kbd_input(now, uchar);
         }
