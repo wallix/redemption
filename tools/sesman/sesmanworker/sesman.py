@@ -1784,15 +1784,12 @@ class Sesman():
         Logger().info(u"Stop session done.")
         if self.shared.get(u"module") == u"close":
             if close_box and self.back_selector:
-                try:
-                    self.send_data({ u'module': u'close_back',
-                                     u'selector' : u'False' })
-                    while True:
-                        _status, _error = self.receive_data()
-                        if _status and self.shared.get(u'selector') == MAGICASK:
-                            return None, "Go back to selector"
-                except Exception:
-                    _status, _error = False, "End of Session"
+                self.send_data({ u'module': u'close_back',
+                                 u'selector' : u'False' })
+                while True:
+                    _status, _error = self.receive_data()
+                    if _status and self.shared.get(u'selector') == MAGICASK:
+                        return None, "Go back to selector"
             else:
                 self.send_data({u'module': u'close'})
         # Error
@@ -1919,8 +1916,13 @@ class Sesman():
                 u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
                 u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
                 u'enable_nla': 'enable_nla',
-                u'enable_kerberos': 'enable_kerberos',
+                u'enable_kerberos': 'enable_kerberos'
+                },
+            'session_log': {
                 u'keyboard_input_masking_level': 'keyboard_input_masking_level'
+                },
+            'video': {
+                u'disable_keyboard_log': 'disable_keyboard_log'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',
@@ -1947,7 +1949,10 @@ class Sesman():
                 u'session_probe_smart_launcher_short_delay' : 'smart_launcher_short_delay',
                 u'session_probe_enable_crash_dump' : 'enable_crash_dump',
                 u'session_probe_handle_usage_limit' : 'handle_usage_limit',
-                u'session_probe_memory_usage_limit' : 'memory_usage_limit'
+                u'session_probe_memory_usage_limit' : 'memory_usage_limit',
+                u'session_probe_ignore_ui_less_processes_during_end_of_session_check': 'ignore_ui_less_processes_during_end_of_session_check',
+                u'session_probe_childless_window_as_unidentified_input_field': 'childless_window_as_unidentified_input_field',
+                u'session_probe_windows_of_these_applications_as_unidentified_input_field': 'windows_of_these_applications_as_unidentified_input_field',
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',
@@ -2016,7 +2021,11 @@ class Sesman():
 
     def parse_app(self, value):
         acc_name, sep, app_name = value.rpartition('@')
-        return acc_name, app_name
+        if acc_name:
+            acc, sep, dom = acc_name.rpartition('@')
+            if sep:
+                return acc, dom, app_name
+        return acc_name, '', app_name
 
     def check_application(self, effective_target, flags, exe_or_file):
         kv = {
@@ -2030,22 +2039,23 @@ class Sesman():
             app_right, app_params = app_right_params
             kv = self._complete_app_infos(kv, app_right, app_params)
             return kv
-        acc_name, app_name = self.parse_app(exe_or_file)
+        acc_name, dom_name, app_name = self.parse_app(exe_or_file)
         if not app_name or not acc_name:
             Logger().debug("check_application: Parsing failed")
             return kv
         app_rights = self.engine.get_proxy_user_rights(['RDP'], app_name)
-        app_rights = self.engine.filter_app_rights(app_rights, acc_name, app_name)
+        Logger().debug("check_application: app rights len = %s" % len(app_rights))
+        app_rights = self.engine.filter_app_rights(app_rights, acc_name, dom_name, app_name)
         app_params = None
         app_right = None
-        Logger().debug("check_application: app rights len = %s" % len(app_rights))
+        Logger().debug("check_application: after filter app rights len = %s" % len(app_rights))
         for ar in app_rights:
-            if not self.engine.check_effective_target(ar, effective_target):
-                Logger().debug("check_application: jump server not compatible")
-                continue
             _status, _infos = self.engine.check_target(ar, self.pid, None)
             if _status != APPROVAL_ACCEPTED:
                 Logger().debug("check_application: approval not accepted")
+                continue
+            if not self.engine.check_effective_target(ar, effective_target):
+                Logger().debug("check_application: jump server not compatible")
                 continue
             _deconnection_time = _infos.get('deconnection_time')
             if (_deconnection_time != u"-"
@@ -2055,8 +2065,11 @@ class Sesman():
                 _timeclose = int(mktime(_tt))
                 if _timeclose != self.shared.get('timeclose'):
                     Logger().debug("check_application: timeclose different")
-                    self.engine.release_target(ar)
                     continue
+            _status, _error = self.engine.checkout_target(ar)
+            if not _status:
+                Logger().debug("check_application: Checkout target failed")
+                continue
             app_params = self.engine.get_app_params(ar, effective_target)
             if app_params is None:
                 self.engine.release_target(ar)
