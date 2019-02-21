@@ -161,9 +161,9 @@ public:
         return ClientRedemption::init_mod();
     }
 
-    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
+    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
+            LOG(LOG_INFO, "server_resize to (%d, %u, %u)", width, height, bpp);
         }
         return this->qt_graphic.server_resize(width, height, bpp);
     }
@@ -203,7 +203,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    using ClientRedemptionAPI::draw;
+    using gdi::GraphicApi::draw;
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->qt_graphic.draw(cmd, clip, color_ctx);

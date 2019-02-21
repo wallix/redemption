@@ -70,7 +70,6 @@ public:
     virtual void set_mem_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
     virtual void show_screen(uint32_t  /*unused*/) {}
     virtual void clear_remote_app_screen() {}
-
 };
 
 
