@@ -429,7 +429,7 @@ RED_AUTO_TEST_CASE(TestPattern)
                 this->message = message;
             }
         } report_message;
-        PatternsChecker checker(
+        Capture::PatternsChecker checker(
             report_message, PatternParams{i ? nullptr : ".de.", i ? ".de." : nullptr, 0});
 
         auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
@@ -468,7 +468,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -528,7 +528,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -575,7 +575,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -622,7 +622,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -675,7 +675,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -732,7 +732,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta(now, trans, false, meta_params);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -837,8 +837,8 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, meta_params);
-        SessionLogAgent log_agent(meta, meta_params);
+        Capture::SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionLogAgent log_agent(meta, meta_params);
 
         log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
         log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
@@ -868,7 +868,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, true, meta_params);
+        Capture::SessionMeta meta(now, trans, true, meta_params);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -2261,7 +2261,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
     } report_message;
 
     timeval const time = {0, 0};
-    SessionLogKbd kbd_capture(report_message);
+    Capture::SessionLogKbd kbd_capture(report_message);
 
     {
         kbd_capture.kbd_input(time, 'a');
@@ -2315,7 +2315,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
     } report_message;
 
     timeval const now = {0, 0};
-    SessionLogKbd kbd_capture(report_message);
+    Capture::SessionLogKbd kbd_capture(report_message);
 
     {
         kbd_capture.kbd_input(now, 't');
@@ -2347,7 +2347,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
         }
     } report_message;
 
-    PatternKbd kbd_capture(&report_message, "$kbd:abcd", nullptr);
+    Capture::PatternKbd kbd_capture(&report_message, "$kbd:abcd", nullptr);
 
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
     unsigned pattern_count = 0;
@@ -2378,7 +2378,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         }
     } report_message;
 
-    PatternKbd kbd_capture(&report_message, "$kbd:ab/cd", nullptr);
+    Capture::PatternKbd kbd_capture(&report_message, "$kbd:ab/cd", nullptr);
 
     char const str[] = "abcdab/cdaa";
     unsigned pattern_count = 0;

@@ -15,6 +15,18 @@
 #include "capture/params_from_ini.hpp"
 #include "capture/wrm_meta_chunk.hpp"
 
+#include "capture/capture_params.hpp"
+#include "capture/drawable_params.hpp"
+#include "capture/full_video_params.hpp"
+#include "capture/kbd_log_params.hpp"
+#include "capture/meta_params.hpp"
+#include "capture/ocr_params.hpp"
+#include "capture/pattern_params.hpp"
+#include "capture/png_params.hpp"
+#include "capture/sequenced_video_params.hpp"
+#include "capture/video_params.hpp"
+#include "capture/wrm_params.hpp"
+
 #include "capture/capture.hpp"
 #include "capture/cryptofile.hpp"
 #include "capture/save_state_chunk.hpp"
@@ -1168,7 +1180,7 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     return -1;
 }
 
-inline void get_joint_visibility_rect(
+inline void get_join_visibility_rect(
     Rect & out_max_image_frame_rect,
     Rect & out_min_image_frame_rect,
     Dimension & out_max_screen_dim,
@@ -2267,7 +2279,7 @@ extern "C" {
                 Rect      max_joint_visibility_rect;
                 Rect      min_joint_visibility_rect;
                 try {
-                    get_joint_visibility_rect(
+                    get_join_visibility_rect(
                         max_joint_visibility_rect,
                         min_joint_visibility_rect,
                         max_screen_dim,

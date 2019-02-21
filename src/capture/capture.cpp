@@ -64,6 +64,18 @@
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_extractor_builder.hpp"
 
+#include "capture/capture_params.hpp"
+#include "capture/drawable_params.hpp"
+#include "capture/full_video_params.hpp"
+#include "capture/kbd_log_params.hpp"
+#include "capture/meta_params.hpp"
+#include "capture/ocr_params.hpp"
+#include "capture/pattern_params.hpp"
+#include "capture/png_params.hpp"
+#include "capture/sequenced_video_params.hpp"
+#include "capture/video_params.hpp"
+#include "capture/wrm_params.hpp"
+
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
 #include "capture/utils/match_finder.hpp"
@@ -81,6 +93,8 @@ class SequencedVideoCaptureImpl {};
 using std::begin;
 using std::end;
 
+namespace
+{
 
 class PatternSearcher
 {
@@ -235,56 +249,51 @@ public:
         return has_notify;
     }
 
-    template<class Report>
-    bool test_uchar(uint32_t uchar, Report report)
-    {
-        uint8_t utf8_char[5];
-        size_t const char_len = UTF32toUTF8(uchar, utf8_char, 4u);
-        return this->test_uchar(utf8_char, char_len, report);
-    }
-
     bool is_empty() const {
         return this->regexes_filter.empty();
     }
 };
 
+} // anonymous namespace
 
-enum class FilteringSlash{ No, Yes };
-using filter_slash = std::integral_constant<FilteringSlash, FilteringSlash::Yes>;
-using nofilter_slash = std::integral_constant<FilteringSlash, FilteringSlash::No>;
-template<class Utf8CharFn, class NoPrintableFn, class FilterSlash>
-void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
-                         NoPrintableFn no_printable_fn, FilterSlash filter_slash)
+namespace
 {
-    switch (uchar)
+    enum class FilteringSlash{ No, Yes };
+    using filter_slash = std::integral_constant<FilteringSlash, FilteringSlash::Yes>;
+    using nofilter_slash = std::integral_constant<FilteringSlash, FilteringSlash::No>;
+    template<class Utf8CharFn, class NoPrintableFn, class FilterSlash>
+    void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
+                            NoPrintableFn no_printable_fn, FilterSlash filter_slash)
     {
-        case '/':
-            if (filter_slash == FilteringSlash::Yes) {
-                no_printable_fn(cstr_array_view("//"));
-            }
-            else {
-                utf32_char_fn(uchar);
-            }
-            break;
-        #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
-        Case(0x00000008, "/<backspace>");
-        Case(0x00000009, "/<tab>");
-        Case(0x0000000D, "/<enter>");
-        Case(0x0000001B, "/<escape>");
-        Case(0x0000007F, "/<delete>");
-        Case(0x00002190, "/<left>");
-        Case(0x00002191, "/<up>");
-        Case(0x00002192, "/<right>");
-        Case(0x00002193, "/<down>");
-        Case(0x00002196, "/<home>");
-        Case(0x00002198, "/<end>");
-        #undef Case
-        default: utf32_char_fn(uchar);
+        switch (uchar)
+        {
+            case '/':
+                if (filter_slash == FilteringSlash::Yes) {
+                    no_printable_fn(cstr_array_view("//"));
+                }
+                else {
+                    utf32_char_fn(uchar);
+                }
+                break;
+            #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
+            Case(0x00000008, "/<backspace>");
+            Case(0x00000009, "/<tab>");
+            Case(0x0000000D, "/<enter>");
+            Case(0x0000001B, "/<escape>");
+            Case(0x0000007F, "/<delete>");
+            Case(0x00002190, "/<left>");
+            Case(0x00002191, "/<up>");
+            Case(0x00002192, "/<right>");
+            Case(0x00002193, "/<down>");
+            Case(0x00002196, "/<home>");
+            Case(0x00002198, "/<end>");
+            #undef Case
+            default: utf32_char_fn(uchar);
+        }
     }
-}
+} // anonymous namespace
 
-
-class PatternKbd final : public gdi::KbdInputApi
+class Capture::PatternKbd final : public gdi::KbdInputApi
 {
     ReportMessageApi * report_message;
     PatternSearcher pattern_kill;
@@ -365,8 +374,7 @@ private:
 };
 
 
-
-class SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
+class Capture::SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 {
     uint8_t kbd_buffer[1024];
     OutStream kbd_stream;
@@ -475,7 +483,7 @@ namespace {
 }
 
 
-class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
+class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
 {
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
@@ -584,9 +592,7 @@ public:
 };
 
 
-
-
-class PatternsChecker : noncopyable
+class Capture::PatternsChecker : ::noncopyable
 {
     utils::MatchFinder::NamedRegexArray regexes_filter_kill;
     utils::MatchFinder::NamedRegexArray regexes_filter_notify;
@@ -631,7 +637,7 @@ private:
 };
 
 
-class PngCapture : public gdi::CaptureApi
+class Capture::PngCapture : public gdi::CaptureApi
 {
 protected:
     OutFilenameSequenceTransport trans;
@@ -757,7 +763,7 @@ public:
     }
 };
 
-class PngCaptureRT : public PngCapture
+class Capture::PngCaptureRT : public PngCapture
 {
     uint32_t num_start;
     unsigned png_limit;
@@ -866,10 +872,10 @@ public:
 };
 
 namespace {
-    template<std::size_t N>
-    inline bool cstr_equal(char const (&s1)[N], array_view_const_char s2) {
-        return N - 1 == s2.size() && std::equal(s1, s1 + N - 1, begin(s2));
-    }
+
+template<std::size_t N>
+inline bool cstr_equal(char const (&s1)[N], array_view_const_char s2) {
+    return N - 1 == s2.size() && std::equal(s1, s1 + N - 1, begin(s2));
 }
 
 inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_char data, MetaParams meta_params)
@@ -1144,6 +1150,8 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
     }
 }
 
+} // anonymous namespace
+
 namespace {
     constexpr array_view_const_char session_meta_kbd_prefix() noexcept { return cstr_array_view("[Kbd]"); }
     constexpr array_view_const_char session_meta_kbd_suffix() noexcept { return cstr_array_view("\n"); }
@@ -1161,7 +1169,7 @@ namespace {
 *
 * + for new video file
 */
-class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, public gdi::CaptureProbeApi
+class Capture::SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
@@ -1365,7 +1373,8 @@ private:
     }
 };
 
-class SessionLogAgent : public gdi::CaptureProbeApi
+
+class Capture::SessionLogAgent : public gdi::CaptureProbeApi
 {
     KeyQvalueFormatter line;
     SessionMeta & session_meta;
@@ -1389,7 +1398,8 @@ public:
     }
 };
 
-class MetaCaptureImpl
+
+class Capture::MetaCaptureImpl
 {
 public:
     OutFileTransport meta_trans;
@@ -1436,7 +1446,7 @@ public:
 };
 
 
-class TitleCaptureImpl : public gdi::CaptureApi, public gdi::CaptureProbeApi
+class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
     OcrTitleExtractorBuilder ocr_title_extractor_builder;
     AgentTitleExtractor agent_title_extractor;
@@ -1522,64 +1532,89 @@ public:
 };
 
 
-
-void Capture::Graphic::draw(RDP::FrameMarker const & cmd)
+class Capture::Graphic
 {
-    for (gdi::GraphicApi & gd : this->gds) {
-        gd.draw(cmd);
-    }
-
-    if (cmd.action == RDP::FrameMarker::FrameEnd) {
-        for (gdi::CaptureApi & cap : this->caps) {
-            cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
+public:
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
+    {
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.set_pointer(cache_idx, cursor, mode);
         }
     }
-}
 
-void Capture::Graphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
-{
-    for (gdi::GraphicApi & gd : this->gds){
-        gd.set_pointer(cache_idx, cursor, mode);
+    void set_palette(BGRPalette const & palette)
+    {
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.set_palette(palette);
+        }
     }
-}
 
-void Capture::Graphic::set_palette(BGRPalette const & palette)
-{
-    for (gdi::GraphicApi & gd : this->gds){
-        gd.set_palette(palette);
+    void sync()
+    {
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.sync();
+        }
     }
-}
 
-void Capture::Graphic::sync()
-{
-    for (gdi::GraphicApi & gd : this->gds){
-        gd.sync();
+    void set_row(std::size_t rownum, const uint8_t * data, size_t data_length)
+    {
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.set_row(rownum, data, data_length);
+        }
     }
-}
 
-void Capture::Graphic::set_row(std::size_t rownum, const uint8_t * data, size_t data_length)
-{
-    for (gdi::GraphicApi & gd : this->gds){
-        gd.set_row(rownum, data, data_length);
+    void begin_update()
+    {
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.begin_update();
+        }
     }
-}
 
-void Capture::Graphic::begin_update()
-{
-    for (gdi::GraphicApi & gd : this->gds){
-        gd.begin_update();
+    void end_update()
+    {
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.end_update();
+        }
     }
-}
 
-void Capture::Graphic::end_update()
-{
-    for (gdi::GraphicApi & gd : this->gds){
-        gd.end_update();
+    template<class... Ts>
+    void draw(Ts const & ... args)
+    {
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.draw(args...);
+        }
     }
-}
+
+    void draw(RDP::FrameMarker const & cmd)
+    {
+        for (gdi::GraphicApi & gd : this->gds) {
+            gd.draw(cmd);
+        }
+
+        if (cmd.action == RDP::FrameMarker::FrameEnd) {
+            for (gdi::CaptureApi & cap : this->caps) {
+                cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
+            }
+        }
+    }
+
+public:
+    MouseTrace const & mouse;
+    const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds;
+    const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps;
+
+    explicit Graphic(
+        MouseTrace const & mouse,
+        const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds,
+        const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps) noexcept
+    : mouse(mouse)
+    , gds(gds)
+    , caps(caps)
+    {}
+};
 
 
-void Capture::TitleChangedFunctions::notify_title_changed(
+void Capture::NotifyTitleChanged::notify_title_changed(
     timeval const & now, array_view_const_char title
 ) {
     if (this->capture.patterns_checker) {
@@ -1609,17 +1644,17 @@ void Capture::NotifyMetaIfNextVideo::notify_next_video(
 
 
 Capture::Capture(
-    const CaptureParams capture_params,
-    const DrawableParams drawable_params,
-    bool capture_wrm, const WrmParams wrm_params,
-    bool capture_png, const PngParams png_params,
-    bool capture_pattern_checker, const PatternParams pattern_params,
-    bool capture_ocr, const OcrParams ocr_params,
-    bool capture_video, const SequencedVideoParams /*sequenced_video_params*/,
-    bool capture_video_full, const FullVideoParams full_video_params,
-    bool capture_meta, const MetaParams meta_params,
-    bool capture_kbd, const KbdLogParams kbd_log_params,
-    const VideoParams video_params,
+    const CaptureParams& capture_params,
+    const DrawableParams& drawable_params,
+    bool capture_wrm, const WrmParams& wrm_params,
+    bool capture_png, const PngParams& png_params,
+    bool capture_pattern_checker, const PatternParams& pattern_params,
+    bool capture_ocr, const OcrParams& ocr_params,
+    bool capture_video, const SequencedVideoParams& /*sequenced_video_params*/,
+    bool capture_video_full, const FullVideoParams& full_video_params,
+    bool capture_meta, const MetaParams& meta_params,
+    bool capture_kbd, const KbdLogParams& kbd_log_params,
+    const VideoParams& video_params,
     UpdateProgressData * update_progress_data,
     Rect const & crop_rect)
 : is_replay_mod(!capture_params.report_message)
@@ -1942,6 +1977,41 @@ void Capture::set_row(size_t rownum, const uint8_t * data, size_t data_length)
     }
 }
 
+void Capture::sync()
+{
+    if (this->capture_drawable) {
+        this->graphic_api->sync();
+    }
+}
+
+bool Capture::kbd_input(timeval const & now, uint32_t uchar)
+{
+    bool ret = true;
+    for (gdi::KbdInputApi & kbd : this->kbds) {
+        ret &= kbd.kbd_input(now, uchar);
+    }
+    return ret;
+}
+
+void Capture::enable_kbd_input_mask(bool enable)
+{
+    for (gdi::KbdInputApi & kbd : this->kbds) {
+        kbd.enable_kbd_input_mask(enable);
+    }
+}
+
+bool Capture::has_graphic_api() const
+{
+    return static_cast<bool>(this->graphic_api);
+}
+
+void Capture::add_graphic(gdi::GraphicApi & gd)
+{
+    if (this->capture_drawable) {
+        this->gds.emplace_back(gd);
+    }
+}
+
 Capture::Microseconds Capture::periodic_snapshot(
     timeval const & now,
     int cursor_x, int cursor_y,
@@ -2007,79 +2077,144 @@ void Capture::visibility_rects_event(Rect rect) {
     (void)retval;
 }
 
-Rect Capture::get_joint_visibility_rect() const
+
+struct Capture::WindowRecord
+{
+    uint32_t window_id;
+    uint32_t fields_present_flags;
+    uint32_t style;
+    uint8_t show_state;
+    int32_t visible_offset_x;
+    int32_t visible_offset_y;
+
+    std::string title_info;
+
+    WindowRecord(
+        uint32_t window_id, uint32_t fields_present_flags,
+        uint32_t style, uint8_t show_state,
+        int32_t visible_offset_x, int32_t visible_offset_y,
+        std::string title_info) noexcept
+    : window_id(window_id)
+    , fields_present_flags(fields_present_flags)
+    , style(style)
+    , show_state(show_state)
+    , visible_offset_x(visible_offset_x)
+    , visible_offset_y(visible_offset_y)
+    , title_info(std::move(title_info))
+    {}
+};
+
+struct Capture::WindowVisibilityRectRecord
+{
+    uint32_t window_id;
+    Rect rect;
+
+    WindowVisibilityRectRecord(uint32_t window_id, Rect rect) noexcept
+    : window_id(window_id)
+    , rect(rect)
+    {}
+};
+
+Rect Capture::get_join_visibility_rect() const
 {
     if (this->verbose) {
-        LOG(LOG_INFO, "Capture::get_joint_visibility_rect(): ...");
+        LOG(LOG_INFO, "Capture::get_join_visibility_rect(): ...");
     }
 
-    Rect joint_visibility_rect;
+    Rect join_visibility_rect;
 
-    std::for_each(
-            this->windows.cbegin(),
-            this->windows.cend(),
-            [&joint_visibility_rect, this](const WindowRecord& window) {
-                std::for_each(
-                        this->window_visibility_rects.cbegin(),
-                        this->window_visibility_rects.cend(),
-                        [&joint_visibility_rect, window, this](
-                            const WindowVisibilityRectRecord& window_visibility_rect
-                        ) {
-                            if (window.window_id != window_visibility_rect.window_id) {
-                                return;
-                            }
-
-                            assert(window.fields_present_flags &
-                                   RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
-
-                            if (
-                                // Window is not IME icon.
-                                0 != strcasecmp(window.title_info.c_str(), "CiceroUIWndFrame-TF_FloatingLangBar_WndTitle") &&
-                                ((((window.style & WS_DISABLED) || (window.style & WS_SYSMENU) || (window.style & WS_VISIBLE)) &&
-                                  !(window.style & WS_ICONIC) &&
-                                  (window.show_state != SW_FORCEMINIMIZE) &&
-                                  (window.show_state != SW_HIDE) &&
-                                  (window.show_state != SW_MINIMIZE)) ||
-                                 // window is ctreated before recording starts
-                                 (!window.style && !window.show_state))) {
-                                    if (this->verbose) {
-                                        LOG(LOG_INFO,
-                                            "Capture::get_joint_visibility_rect(): + Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
-                                            window.title_info,
-                                            window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
-                                            window.show_state, window.style);
-                                    }
-
-                                    joint_visibility_rect =
-                                        joint_visibility_rect.disjunct(
-                                            window_visibility_rect.rect.offset(
-                                                    window.visible_offset_x,
-                                                    window.visible_offset_y
-                                                ));
-                            }
-                            else if (this->verbose) {
-                                LOG(LOG_INFO,
-                                    "Capture::get_joint_visibility_rect():   Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
-                                    window.title_info,
-                                    window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
-                                    window.show_state, window.style);
-                            }
-                        }
-                    );
+    for (const WindowRecord& window : this->windows) {
+        for (const WindowVisibilityRectRecord& window_visibility_rect : this->window_visibility_rects) {
+            if (window.window_id != window_visibility_rect.window_id) {
+                continue;
             }
-        );
+
+            assert(window.fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
+
+            if (
+                // Window is not IME icon.
+                0 != strcasecmp(window.title_info.c_str(), "CiceroUIWndFrame-TF_FloatingLangBar_WndTitle") &&
+                ((((window.style & WS_DISABLED) || (window.style & WS_SYSMENU) || (window.style & WS_VISIBLE)) &&
+                    !(window.style & WS_ICONIC) &&
+                    (window.show_state != SW_FORCEMINIMIZE) &&
+                    (window.show_state != SW_HIDE) &&
+                    (window.show_state != SW_MINIMIZE)) ||
+                    // window is ctreated before recording starts
+                    (!window.style && !window.show_state))
+            ) {
+                if (this->verbose) {
+                    LOG(LOG_INFO,
+                        "Capture::get_join_visibility_rect(): + Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
+                        window.title_info,
+                        window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
+                        window.show_state, window.style);
+                }
+
+                join_visibility_rect =
+                    join_visibility_rect.disjunct(
+                        window_visibility_rect.rect.offset(
+                                window.visible_offset_x,
+                                window.visible_offset_y
+                            ));
+            }
+            else if (this->verbose) {
+                LOG(LOG_INFO,
+                    "Capture::get_join_visibility_rect():   Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
+                    window.title_info,
+                    window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
+                    window.show_state, window.style);
+            }
+        }
+    }
 
     if (this->verbose) {
-        LOG(LOG_INFO, "Capture::get_joint_visibility_rect(): Done.");
+        LOG(LOG_INFO, "Capture::get_join_visibility_rect(): Done.");
     }
 
-    return joint_visibility_rect;
+    return join_visibility_rect;
 }
 
-void Capture::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
+template<class... Ts>
+void Capture::draw_impl(const Ts & ... args)
+{
+    if (this->capture_drawable) {
+        this->graphic_api->draw(args...);
+    }
+}
+
+void Capture::draw(RDP::FrameMarker    const & cmd) { this->draw_impl(cmd); }
+void Capture::draw(RDPDestBlt          const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
+void Capture::draw(RDPMultiDstBlt      const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
+void Capture::draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPScrBlt           const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
+void Capture::draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
+void Capture::draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
+void Capture::draw(RDPBitmapData       const & cmd, Bitmap const & bmp) { this->draw_impl(cmd, bmp); }
+void Capture::draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) { this->draw_impl(cmd, clip, bmp);}
+void Capture::draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) { this->draw_impl(cmd, clip, color_ctx, bmp); }
+void Capture::draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+
+void Capture::draw(const RDP::RAIL::WindowIcon                     & cmd) { this->draw_impl(cmd); }
+void Capture::draw(const RDP::RAIL::CachedIcon                     & cmd) { this->draw_impl(cmd); }
+void Capture::draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) { this->draw_impl(cmd); }
+void Capture::draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) { this->draw_impl(cmd); }
+void Capture::draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) { this->draw_impl(cmd); }
+
+void Capture::draw(RDPColCache   const & cmd) { this->draw_impl(cmd); }
+void Capture::draw(RDPBrushCache const & cmd) { this->draw_impl(cmd); }
+
+void Capture::draw(const RDP::RAIL::NewOrExistingWindow & cmd)
 {
     if (this->verbose) {
-        LOG(LOG_INFO, "Capture::draw_impl(NewOrExistingWindow): ...");
+        LOG(LOG_INFO, "Capture::draw(NewOrExistingWindow): ...");
 
         cmd.log(LOG_INFO);
     }
@@ -2100,15 +2235,16 @@ void Capture::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
         (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
          RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
          RDP::RAIL::WINDOW_ORDER_FIELD_TITLE |
-         RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) {
+         RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)
+    ) {
         std::vector<WindowRecord>::iterator iter =
             std::find_if(
-                    this->windows.begin(),
-                    this->windows.end(),
-                    [window_id](WindowRecord& window) -> bool {
-                        return (window.window_id == window_id);
-                    }
-                );
+                this->windows.begin(),
+                this->windows.end(),
+                [window_id](WindowRecord& window) -> bool {
+                    return (window.window_id == window_id);
+                }
+            );
         if (iter != this->windows.end()) {
             if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_STYLE) {
                 iter->style = style;
@@ -2142,12 +2278,12 @@ void Capture::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
 
     if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY) {
         this->window_visibility_rects.erase(
-                std::remove_if(
-                    this->window_visibility_rects.begin(),
-                    this->window_visibility_rects.end(),
-                    [window_id](WindowVisibilityRectRecord& window_visibility_rect) {
-                            return (window_visibility_rect.window_id == window_id);
-                        }),
+            std::remove_if(
+                this->window_visibility_rects.begin(),
+                this->window_visibility_rects.end(),
+                [window_id](WindowVisibilityRectRecord& window_visibility_rect) {
+                    return (window_visibility_rect.window_id == window_id);
+                }),
                 this->window_visibility_rects.end()
             );
 
@@ -2159,19 +2295,19 @@ void Capture::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
         }
     }
 
-    Rect joint_visibility_rect = this->get_joint_visibility_rect();
+    Rect join_visibility_rect = this->get_join_visibility_rect();
 
-    this->visibility_rects_event(joint_visibility_rect);
+    this->visibility_rects_event(join_visibility_rect);
 
     if (this->verbose) {
-        LOG(LOG_INFO, "Capture::draw_impl(NewOrExistingWindow): Done.");
+        LOG(LOG_INFO, "Capture::draw(NewOrExistingWindow): Done.");
     }
 }
 
-void Capture::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
+void Capture::draw(const RDP::RAIL::DeletedWindow & cmd)
 {
     if (this->verbose) {
-        LOG(LOG_INFO, "Capture::draw_impl(DeletedWindow): ...");
+        LOG(LOG_INFO, "Capture::draw(DeletedWindow): ...");
 
         cmd.log(LOG_INFO);
     }
@@ -2188,7 +2324,7 @@ void Capture::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
                         if (window.window_id == window_id) {
                             if (this->verbose) {
                                 LOG(LOG_INFO,
-                                    "Capture::draw_impl(DeletedWindow): Title=\"%s\"", window.title_info.c_str());
+                                    "Capture::draw(DeletedWindow): Title=\"%s\"", window.title_info.c_str());
                             }
                             return true;
                         }
@@ -2207,16 +2343,16 @@ void Capture::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
             this->window_visibility_rects.end()
         );
 
-    Rect joint_visibility_rect = this->get_joint_visibility_rect();
+    Rect join_visibility_rect = this->get_join_visibility_rect();
 
-    this->visibility_rects_event(joint_visibility_rect);
+    this->visibility_rects_event(join_visibility_rect);
 
     if (this->verbose) {
-        LOG(LOG_INFO, "Capture::draw_impl(DeletedWindow): Done.");
+        LOG(LOG_INFO, "Capture::draw(DeletedWindow): Done.");
     }
 }
 
-void Capture::draw_impl(const RDP::RAIL::NonMonitoredDesktop & cmd)
+void Capture::draw(const RDP::RAIL::NonMonitoredDesktop & cmd)
 {
     if (this->capture_drawable) {
         this->graphic_api->draw(cmd);
@@ -2225,8 +2361,51 @@ void Capture::draw_impl(const RDP::RAIL::NonMonitoredDesktop & cmd)
     }
 }
 
-void Capture::set_pointer_display() {
+void  Capture::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
+{
+    if (this->capture_drawable) {
+        this->graphic_api->set_pointer(cache_idx, cursor, mode);
+    }
+}
+
+void Capture::set_palette(const BGRPalette & palette)
+{
+    if (this->capture_drawable) {
+        this->graphic_api->set_palette(palette);
+    }
+}
+
+void Capture::set_pointer_display()
+{
     if (this->capture_drawable) {
         this->gd_drawable->show_mouse_cursor(false);
+    }
+}
+
+void Capture::external_breakpoint()
+{
+    for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
+        obj.external_breakpoint();
+    }
+}
+
+void Capture::external_time(timeval const & now)
+{
+    for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
+        obj.external_time(now);
+    }
+}
+
+void Capture::session_update(const timeval & now, array_view_const_char message)
+{
+    for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+        cap_prob.session_update(now, message);
+    }
+}
+
+void Capture::possible_active_window_change()
+{
+    for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+        cap_prob.possible_active_window_change();
     }
 }

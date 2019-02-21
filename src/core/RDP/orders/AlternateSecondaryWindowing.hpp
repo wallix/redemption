@@ -253,7 +253,7 @@ public:
         this->Width_  = stream.in_uint16_le();
         this->Height_ = stream.in_uint16_le();
 
-        const uint16_t CbColorTable = 
+        const uint16_t CbColorTable =
             ((this->Bpp_ == 1) || (this->Bpp_ == 4) || (this->Bpp_ == 8))
             ? ::in_uint16_le_throw(stream, "IconInfo (1)", ERR_RAIL_PDU_TRUNCATED)
             : 0;
@@ -1419,6 +1419,7 @@ public:
 
     void ShowState(uint8_t ShowState_) { this->ShowState_ = ShowState_; }
 
+    // TODO returns std::string const&
     const char * TitleInfo() const { return this->title_info.c_str(); }
 
     void TitleInfo(const char * TitleInfo_) { this->title_info = TitleInfo_; }
@@ -1519,6 +1520,7 @@ public:
 
     void VisibleOffsetY(int32_t VisibleOffsetY_) { this->VisibleOffsetY_ = VisibleOffsetY_; }
 
+    // TODO array_view
     uint16_t NumVisibilityRects() const { return this->NumVisibilityRects_; }
 
     void NumVisibilityRects(uint16_t NumVisibilityRects_) {
@@ -1527,6 +1529,7 @@ public:
         this->visibility_rects.resize(this->NumVisibilityRects_);
     }
 
+    // TODO array_view
     Rectangle VisibilityRects(uint16_t idx_visibility_rect) const {
         if (idx_visibility_rect < this->visibility_rects.size()) {
             return this->visibility_rects[idx_visibility_rect];

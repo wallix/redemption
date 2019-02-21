@@ -91,6 +91,7 @@ struct CaptureApi : private noncopyable
 struct ExternalCaptureApi : private noncopyable
 {
     virtual void external_breakpoint() = 0;
+    // TODO removed const&
     virtual void external_time(timeval const & now) = 0;
 
     virtual ~ExternalCaptureApi() = default;

@@ -33,6 +33,7 @@ struct CaptureProbeApi : private noncopyable
 {
     virtual ~CaptureProbeApi() = default;
 
+    // TODO removed const&
     virtual void session_update(timeval const & now, array_view_const_char message) = 0;
     virtual void possible_active_window_change() = 0;
 };

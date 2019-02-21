@@ -59,7 +59,7 @@ struct Rect {
 
     Rect() = default;
 
-    Rect(int16_t left, int16_t top, uint16_t width, uint16_t height)
+    Rect(int16_t left, int16_t top, uint16_t width, uint16_t height) noexcept
         : x(left), y(top), cx(width), cy(height)
     {
         // fast detection of overflow, works for valid width/height range 0..4096
