@@ -1,0 +1,1 @@
+/usr/bin/c++   -g   CMakeFiles/clientqtgraphicapi.dir/ClientQtGraphicAPI.cpp.o CMakeFiles/clientqtgraphicapi.dir/main.cpp.o  -o clientqtgraphicapi -rdynamic -lQtCore -lQtGui 

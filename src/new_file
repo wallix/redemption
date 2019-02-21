@@ -1,0 +1,49 @@
+acl/module_manager/create_module_vnc.cpp:                    mod->metrics->log(ctx.get_current_time());
+acl/module_manager/create_module_rdp.cpp:                    mod->metrics->log(ctx.get_current_time());
+mod/rdp/rdp.hpp:# define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
+mod/rdp/rdp_metrics.hpp:        this->metrics->set_protocol("v1.0", this->rdp_protocol_name, COUNT_FIELD);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(SERVER_TOTAL_OTHERS_CHANNEL_DATA, len);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(CLIENT_TOTAL_OTHERS_CHANNEL_DATA, len);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(SERVER_TOTAL_RAIL_CHANNEL_DATA, len);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(CLIENT_TOTAL_RAIL_CHANNEL_DATA, len);
+mod/rdp/rdp_metrics.hpp:            this->metrics->add_to_current_data(SERVER_DISK_REDIR_CHANNEL_DATA, length);
+mod/rdp/rdp_metrics.hpp:                            this->metrics->add_to_current_data(FILES_READ_COUNT, 1);
+mod/rdp/rdp_metrics.hpp:                        this->metrics->add_to_current_data(TOTAL_READ_DATA, drr.Length());
+mod/rdp/rdp_metrics.hpp:                            this->metrics->add_to_current_data(FILES_WRITE_COUNT, 1);
+mod/rdp/rdp_metrics.hpp:                        this->metrics->add_to_current_data(TOTAL_FILES_WRITTEN_DATA, dwr.Length);
+mod/rdp/rdp_metrics.hpp:                                this->metrics->add_to_current_data(FILES_RENAME_COUNT, 1);
+mod/rdp/rdp_metrics.hpp:                                this->metrics->add_to_current_data(FILES_OR_FOLDERS_DELEDTE_COUNT, 1);
+mod/rdp/rdp_metrics.hpp:            this->metrics->add_to_current_data(CLIENT_DISK_REDIR_CHANNEL_DATA, length);
+mod/rdp/rdp_metrics.hpp:            this->metrics->add_to_current_data(SERVER_CLIPBOARD_CHANNEL_DATA, length);
+mod/rdp/rdp_metrics.hpp:            this->metrics->add_to_current_data(CLIENT_CLIPBOARD_CHANNEL_DATA, length);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(SERVER_MAIN_CHANNEL_DATA, len);
+mod/rdp/rdp_metrics.hpp:            this->metrics->add_to_current_data(MOUSE_DISPLACEMENT, x_shift + y_shift);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(KEYS_PRESSED, 1);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(RIGHT_CLICK, 1);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(LEFT_CLICK, 1);
+mod/rdp/rdp_metrics.hpp:        this->metrics->add_to_current_data(CLIENT_MAIN_CHANNEL_DATA, len);
+mod/rdp/rdp_metrics.hpp:                    this->metrics->add_to_current_data(nb_copy_text, 1);
+mod/rdp/rdp_metrics.hpp:                    this->metrics->add_to_current_data(nb_copy_image, 1);
+mod/rdp/rdp_metrics.hpp:                        this->metrics->add_to_current_data(nb_copy_file, 1);
+mod/rdp/rdp_metrics.hpp:                this->metrics->add_to_current_data(nb_paste_text, 1);
+mod/rdp/rdp_metrics.hpp:                this->metrics->add_to_current_data(nb_paste_image, 1);
+mod/rdp/rdp_metrics.hpp:                    this->metrics->add_to_current_data(nb_paste_file, 1);
+mod/rdp/rdp_metrics.hpp:                this->metrics->add_to_current_data(total_data_paste, header.dataLen());
+mod/rdp/rdp_metrics.hpp:                this->metrics->add_to_current_data(total_data_paste, header.dataLen());
+mod/rdp/rdp_metrics.hpp:            this->metrics->add_to_current_data(
+mod/vnc/vnc_metrics.hpp:        this->metrics->set_protocol("v1.0", this->vnc_protocol_name, COUNT_FIELD);
+mod/vnc/vnc_metrics.hpp:        this->metrics->add_to_current_data(DATA_FROM_CLIENT, len);
+mod/vnc/vnc_metrics.hpp:        this->metrics->add_to_current_data(DATA_FROM_SERVER, len);
+mod/vnc/vnc_metrics.hpp:        this->metrics->add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
+mod/vnc/vnc_metrics.hpp:        this->metrics->add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
+mod/vnc/vnc_metrics.hpp:            this->metrics->add_to_current_data(MOUSE_MOVE, x_shift + y_shift);
+mod/vnc/vnc_metrics.hpp:        this->metrics->add_to_current_data(KEY_PRESSED, 1);
+mod/vnc/vnc_metrics.hpp:        this->metrics->add_to_current_data(RIGHT_CLICK, 1);
+mod/vnc/vnc_metrics.hpp:        this->metrics->add_to_current_data(LEFT_CLICK, 1);
+mod/vnc/vnc.hpp:# define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
+mod/metrics.hpp:            "%s/%s_metrics-%s-%s.logmetrics",
+mod/metrics.hpp:            "%s/%s_metrics-%s-%s.logindex",
+lib/iametrics.cpp:        metrics->set_protocol(version, protocol_name, nbitems);
+lib/iametrics.cpp:        metrics->log(tv_now);
+lib/iametrics.cpp:        if (index < metrics->count_data()) {
+lib/iametrics.cpp:            metrics->add_to_current_data(index, value);
