@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 ##
-# Copyright (c) 2011 WALLIX, SARL. All rights reserved.
+# Copyright (c) 2017 WALLIX. All rights reserved.
 # Licensed computer software. Property of WALLIX.
-# Product name: WALLIX Admin Bastion V 2.x
+# Product Name: WALLIX Bastion v6.0
 # Author(s): Christophe Grosjean
 # Id: $Id$
 # URL: $URL$
@@ -90,27 +90,27 @@ class TestMotd(unittest.TestCase):
 
     def test_with_motd_en(self):
         message = cut_message(
-          "Welcome on Wallix AdminBastion\n"
+          "Welcome on WALLIX Bastion\n"
           "--\n"
           "Your actions could be recorded and stored in electronic format.\n"
-          "Please contact your AdminBastion administrator for more precisions.\n")
+          "Please contact your Bastion administrator for more information.\n")
         self.assertEquals(
-            "Welcome on Wallix AdminBastion<br>"
+            "Welcome on WALLIX Bastion<br>"
             "--<br>"
             "Your actions could be recorded and stored in electronic format.<br>"
-            "Please contact your AdminBastion administrator for more precisions.<br>",
+            "Please contact your Bastion administrator for more information.<br>",
             message)
 
     def test_with_motd_fr(self):
         message = cut_message(
-            u"Bienvenue sur Wallix AdminBastion\n"
+            u"Bienvenue sur WALLIX Bastion\n"
             u"--\n"
             u"Vos actions sont susceptibles d'être enregistrées et conservées sous format électronique.\n"
-            u"Merci de contacter l'administrateur AdminBastion pour plus d'informations.\n", 75)
+            u"Merci de contacter l'administrateur Bastion pour plus d'informations.\n", 75)
         self.assertEquals(
-            u"Bienvenue sur Wallix AdminBastion<br>"
+            u"Bienvenue sur WALLIX Bastion<br>"
             u"--<br>"
             u"Vos actions sont susceptibles d'être enregistrées et conservées sous format<br>"
             u"électronique.<br>"
-            u"Merci de contacter l'administrateur AdminBastion pour plus d'informations.<br>",
+            u"Merci de contacter l'administrateur Bastion pour plus d'informations.<br>",
             message)

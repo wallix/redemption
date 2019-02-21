@@ -681,7 +681,7 @@ class Sesman():
             else:
                 # PASSWORD based Authentication
                 is_otp = wab_login.startswith('_OTP_')
-                is_challenge = bool(self.engine.get_challenge())
+                is_challenge = bool(self.engine.challenge)
                 method = ((is_otp and "OTP") or (is_challenge and "Challenge") or "Password")
                 self.rdplog.log("AUTHENTICATION_TRY", method=method)
                 if ((self.shared.get(u'password') == MAGICASK
@@ -1174,57 +1174,6 @@ class Sesman():
             duration = 3600
         return duration
 
-    @staticmethod
-    def _get_tf_flags(ticketfields):
-        flag = 0
-        field = ticketfields.get("description")
-        if field is not None:
-            flag += 0x01
-            if field == APPREQ_REQUIRED:
-                flag += 0x02
-        field = ticketfields.get("ticket")
-        if field is not None:
-            flag += 0x04
-            if field == APPREQ_REQUIRED:
-                flag += 0x08
-        field = ticketfields.get("duration")
-        if field is not None:
-            flag += 0x10
-            if field == APPREQ_REQUIRED:
-                flag += 0x20
-        return flag
-
-    # 'request_fields':{
-    #     '<name>': {
-    #         'label': str, # translated field to be displayed by the clients
-    #         'type': 'str'|'int'|'datetime'|'duration',
-    #         'mandatory': bool,
-    #         'min': int,
-    #         'max': int
-    # }, ...}
-
-    MAP_FIELD_FLAG = {
-        'description': 0x01,
-        'ticket': 0x04,
-        'duration': 0x10
-    }
-
-    @staticmethod
-    def _get_rf_flags(request_fields):
-        flag = 0
-        if not request_fields:
-            return flag
-        for key, value in request_fields.iteritems():
-            bitset = Sesman.MAP_FIELD_FLAG.get(key)
-            if bitset is not None:
-                flag += bitset
-                flag += (bitset << 1) if value.get('mandatory') else 0
-        return flag
-
-    @staticmethod
-    def _get_rf_duration_max(request_fields):
-        return request_fields.get('duration', {}).get('max', 0)
-
     def interactive_display_waitinfo(self, status, infos):
         show_message = infos.get('message') or ''
         target = infos.get('target')
@@ -1235,20 +1184,28 @@ class Sesman():
                    u'display_message' : MAGICASK,
                    u'waitinforeturn' : MAGICASK
                    }
-        flag = 0
-        duration_max = infos.get("duration_max") or 0
         ticketfields = infos.get("ticket_fields")
+        flag = 0
         if ticketfields:
-            flag = self._get_tf_flags(ticketfields)
-        request_fields = infos.get('request_fields')
-        if request_fields:
-            flag = self._get_rf_flags(request_fields)
-            # duration_max is in minutes
-            duration_max =  self._get_rf_duration_max(request_fields) / 60
+            field = ticketfields.get("description")
+            if field is not None:
+                flag += 0x01
+                if field == APPREQ_REQUIRED:
+                    flag += 0x02
+            field = ticketfields.get("ticket")
+            if field is not None:
+                flag += 0x04
+                if field == APPREQ_REQUIRED:
+                    flag += 0x08
+            field = ticketfields.get("duration")
+            if field is not None:
+                flag += 0x10
+                if field == APPREQ_REQUIRED:
+                    flag += 0x20
         if status == APPROVAL_NONE:
             tosend["showform"] = True
             tosend["formflag"] = flag
-            tosend["duration_max"] = duration_max
+            tosend["duration_max"] = infos.get("duration_max") or 0
         else:
             tosend["showform"] = False
         self.send_data(tosend)
@@ -1376,7 +1333,6 @@ class Sesman():
             kv[u'proto_dest'] = proto_info.protocol
             kv[u'target_str'] = target_login_info.get_target_str()
 
-            # Depecrated, credentials checkout is made by check_target
             _status, _error = self.engine.checkout_target(selected_target)
             if not _status:
                 self.send_data({
@@ -1492,13 +1448,13 @@ class Sesman():
                     physical_target = None
                     break
 
-                cstatus, infos = self.engine.check_target(physical_target,
-                                                          self.pid,
-                                                          None)
-                if cstatus != APPROVAL_ACCEPTED:
-                    Logger().info("Jump server unavailable (%s)"
-                                  % infos.get('message'))
-                    _status = False
+                _status, _error = self.engine.checkout_target(physical_target)
+                if not _status:
+                    if _error is None:
+                        self.send_data({u'rejected': TR(u"start_session_failed")})
+                        Logger().info("License Error")
+                        break
+                    Logger().info("Account locked on jump server, %s." % _error)
                     continue
 
                 physical_proto_info = self.engine.get_target_protocols(physical_target)
@@ -2113,7 +2069,11 @@ class Sesman():
 
     def parse_app(self, value):
         acc_name, sep, app_name = value.rpartition('@')
-        return acc_name, app_name
+        if acc_name:
+            acc, sep, dom = acc_name.rpartition('@')
+            if sep:
+                return acc, dom, app_name
+        return acc_name, '', app_name
 
     def check_application(self, effective_target, flags, exe_or_file):
         kv = {
@@ -2127,22 +2087,23 @@ class Sesman():
             app_right, app_params = app_right_params
             kv = self._complete_app_infos(kv, app_right, app_params)
             return kv
-        acc_name, app_name = self.parse_app(exe_or_file)
+        acc_name, dom_name, app_name = self.parse_app(exe_or_file)
         if not app_name or not acc_name:
             Logger().debug("check_application: Parsing failed")
             return kv
         app_rights = self.engine.get_proxy_user_rights(['RDP'], app_name)
-        app_rights = self.engine.filter_app_rights(app_rights, acc_name, app_name)
+        Logger().debug("check_application: app rights len = %s" % len(app_rights))
+        app_rights = self.engine.filter_app_rights(app_rights, acc_name, dom_name, app_name)
         app_params = None
         app_right = None
-        Logger().debug("check_application: app rights len = %s" % len(app_rights))
+        Logger().debug("check_application: after filter app rights len = %s" % len(app_rights))
         for ar in app_rights:
-            if not self.engine.check_effective_target(ar, effective_target):
-                Logger().debug("check_application: jump server not compatible")
-                continue
             _status, _infos = self.engine.check_target(ar, self.pid, None)
             if _status != APPROVAL_ACCEPTED:
                 Logger().debug("check_application: approval not accepted")
+                continue
+            if not self.engine.check_effective_target(ar, effective_target):
+                Logger().debug("check_application: jump server not compatible")
                 continue
             _deconnection_time = _infos.get('deconnection_time')
             if (_deconnection_time != u"-"
@@ -2152,8 +2113,11 @@ class Sesman():
                 _timeclose = int(mktime(_tt))
                 if _timeclose != self.shared.get('timeclose'):
                     Logger().debug("check_application: timeclose different")
-                    self.engine.release_target(ar)
                     continue
+            _status, _error = self.engine.checkout_target(ar)
+            if not _status:
+                Logger().debug("check_application: Checkout target failed")
+                continue
             app_params = self.engine.get_app_params(ar, effective_target)
             if app_params is None:
                 self.engine.release_target(ar)
