@@ -915,7 +915,8 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
 
         // TODO used string_id: switch (sid(order)) { case "string"_sid: ... }
         if (cstr_equal("PASSWORD_TEXT_BOX_GET_FOCUS", order)
-         || cstr_equal("UAC_PROMPT_BECOME_VISIBLE", order)) {
+         || cstr_equal("UAC_PROMPT_BECOME_VISIBLE", order)
+         || cstr_equal("UNIDENTIFIED_INPUT_FIELD_GET_FOCUS", order)) {
             line_with_1_var("status");
         }
         else if (cstr_equal("INPUT_LANGUAGE", order)) {
