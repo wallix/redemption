@@ -33,168 +33,6 @@ struct FakeFront::D
     CHANNELS::ChannelDefArray cl;
 };
 
-void FakeFront::draw(RDP::FrameMarker    const & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(RDPDestBlt          const & cmd, Rect clip)
-{
-    d->gd->draw(cmd, clip);
-}
-
-void FakeFront::draw(RDPMultiDstBlt      const & cmd, Rect clip)
-{
-    d->gd->draw(cmd, clip);
-}
-
-void FakeFront::draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPScrBlt           const & cmd, Rect clip)
-{
-    d->gd->draw(cmd, clip);
-}
-
-void FakeFront::draw(RDP::RDPMultiScrBlt const & cmd, Rect clip)
-{
-    d->gd->draw(cmd, clip);
-}
-
-void FakeFront::draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
-{
-    d->gd->draw(cmd, clip, color_ctx);
-}
-
-void FakeFront::draw(RDPBitmapData       const & cmd, Bitmap const & bmp)
-{
-    d->gd->draw(cmd, bmp);
-}
-
-void FakeFront::draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp)
-{
-    d->gd->draw(cmd, clip, bmp);
-}
-
-void FakeFront::draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp)
-{
-    d->gd->draw(cmd, clip, color_ctx, bmp);
-}
-
-void FakeFront::draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
-{
-    d->gd->draw(cmd, clip, color_ctx, gly_cache);
-}
-
-void FakeFront::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
-{
-    d->gd->draw(cmd, content);
-}
-
-void FakeFront::draw(const RDP::RAIL::NewOrExistingWindow            & cmd)
-{
-    d->gd->draw(cmd);
-}
-void FakeFront::draw(const RDP::RAIL::WindowIcon                     & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(const RDP::RAIL::CachedIcon                     & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(const RDP::RAIL::DeletedWindow                  & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(const RDP::RAIL::DeletedNotificationIcons       & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(const RDP::RAIL::NonMonitoredDesktop            & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(RDPColCache   const & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::draw(RDPBrushCache const & cmd)
-{
-    d->gd->draw(cmd);
-}
-
-void FakeFront::set_palette(const BGRPalette &)
-{
-}
-
-void FakeFront::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
-{
-    d->gd->set_pointer(cache_idx, cursor, mode);
-}
-
-void FakeFront::sync()
-{
-}
-
 const CHANNELS::ChannelDefArray & FakeFront::get_channel_list(void) const
 {
     return d->cl;
@@ -206,14 +44,6 @@ void FakeFront::send_to_channel(
 {
 }
 
-void FakeFront::begin_update()
-{
-}
-
-void FakeFront::end_update()
-{
-}
-
 FakeFront::ResizeResult FakeFront::server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp)
 {
     this->d->gd.resize(width, height);
@@ -222,6 +52,11 @@ FakeFront::ResizeResult FakeFront::server_resize(uint16_t width, uint16_t height
 }
 
 FakeFront::operator ConstImageDataView() const
+{
+    return d->gd;
+}
+
+gdi::GraphicApi& FakeFront::gd() noexcept
 {
     return d->gd;
 }

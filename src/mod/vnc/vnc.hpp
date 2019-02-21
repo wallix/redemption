@@ -39,6 +39,7 @@
 #include "core/session_reactor.hpp"
 
 #include "gdi/screen_functions.hpp"
+#include "gdi/graphic_api.hpp"
 
 #include "keyboard/keymap2.hpp"
 #include "keyboard/keymapSym.hpp"
@@ -2526,10 +2527,10 @@ private:
             return false;
         }
 
-        this->front.set_palette(this->palette_update_ctx.get_palette());
-        this->front.begin_update();
+        drawable.set_palette(this->palette_update_ctx.get_palette());
+        drawable.begin_update();
         drawable.draw(RDPColCache(0, this->palette_update_ctx.get_palette()));
-        this->front.end_update();
+        drawable.end_update();
 
         return true;
     } // lib_palette_update

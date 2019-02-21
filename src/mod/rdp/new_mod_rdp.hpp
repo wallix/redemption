@@ -36,10 +36,12 @@ class Transport;
 class RedirectionInfo;
 class Random;
 class RDPMetrics;
+namespace gdi { class GraphicApi; };
 
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     SessionReactor& session_reactor,
+    gdi::GraphicApi& gd,
     FrontAPI& front,
     const ClientInfo& info,
     RedirectionInfo& redir_info,

@@ -38,13 +38,15 @@ class Font;
 class InStream;
 class WindowListCaps;
 namespace CHANNELS { class ChannelDef; }
+namespace gdi { class GraphicApi; }
 
 enum { PTRFLAGS_EX_DOUBLE_CLICK = 0xFFFF };
 enum {BORDER_WIDTH_HEIGHT = 3 };
 
 class ClientExecute : public windowing_api
 {
-          FrontAPI             * front_   = nullptr;
+          FrontAPI             & front_;
+          gdi::GraphicApi      & drawable_;
           mod_api              * mod_     = nullptr;
     const CHANNELS::ChannelDef * channel_ = nullptr;
     const Font                 * font_    = nullptr;
@@ -159,7 +161,7 @@ class ClientExecute : public windowing_api
 
 public:
     ClientExecute(
-        SessionReactor& session_reactor, FrontAPI & front,
+        SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
         WindowListCaps const & window_list_caps, bool verbose);
 
     ~ClientExecute();
@@ -225,7 +227,7 @@ private:
     void draw_maximize_box(bool mouse_over, const Rect r);
 
     void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_);
-    
+
     void check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message);
 
 public:

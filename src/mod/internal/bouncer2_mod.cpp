@@ -29,9 +29,9 @@
 
 Bouncer2Mod::Bouncer2Mod(
     SessionReactor& session_reactor,
-    FrontAPI & front, uint16_t width, uint16_t height,
+    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Font const & font)
-: InternalMod(front, width, height, font, Theme{})
+: InternalMod(drawable, front, width, height, font, Theme{})
 , dancing_rect(0,0,100,100)
 , session_reactor(session_reactor)
 , timer(session_reactor.create_graphic_timer()

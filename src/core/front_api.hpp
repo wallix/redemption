@@ -24,15 +24,17 @@
 
 #pragma once
 
-#include "gdi/graphic_api.hpp"
+#include "gdi/screen_info.hpp"
+#include "core/channel_list.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 namespace CHANNELS {
     class ChannelDefArray;
     class ChannelDef;
 }
 
-class FrontAPI : public gdi::GraphicApi
+class FrontAPI : noncopyable
 {
 public:
     virtual bool can_be_start_capture() = 0;
@@ -71,4 +73,6 @@ public:
 
     /// \return  -1 is an error
     virtual int get_keylayout() const { return -1; }
+
+    virtual ~FrontAPI() = default;
 };

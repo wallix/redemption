@@ -23,11 +23,11 @@
 #include "RAIL/client_execute.hpp"
 
 LocallyIntegrableMod::LocallyIntegrableMod(
-    SessionReactor& session_reactor, FrontAPI & front,
+    SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
     uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & rail_client_execute,
     Theme const & theme)
-: InternalMod(front, front_width, front_height, font, theme)
+: InternalMod(drawable, front, front_width, front_height, font, theme)
 , rail_client_execute(rail_client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)
@@ -204,12 +204,12 @@ void LocallyIntegrableMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk,
     size_t length, uint32_t flags)
 {
-    if (this->rail_enabled && this->rail_client_execute 
+    if (this->rail_enabled && this->rail_client_execute
     && front_channel_name == CHANNELS::channel_names::rail) {
 
         this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
     }
-    else if (this->rail_enabled && this->rail_client_execute 
+    else if (this->rail_enabled && this->rail_client_execute
     && front_channel_name == CHANNELS::channel_names::drdynvc) {
 
         this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);

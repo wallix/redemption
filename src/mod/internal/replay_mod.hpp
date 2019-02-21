@@ -38,6 +38,7 @@ class ReplayMod : public mod_api
 
     uint16_t front_width;
     uint16_t front_height;
+    gdi::GraphicApi & drawable;
     FrontAPI& front;
 
     class Reader;
@@ -57,6 +58,7 @@ public:
     using Verbose = FileToGraphic::Verbose;
 
     ReplayMod( SessionReactor& session_reactor
+             , gdi::GraphicApi & drawable
              , FrontAPI & front
              , const char * replay_path
              , uint16_t width
@@ -67,13 +69,14 @@ public:
              , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture)
     : ReplayMod(
-        session_reactor, front, replay_path, width, height, auth_error_message,
+        session_reactor, drawable, front, replay_path, width, height, auth_error_message,
         wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop,
         play_video_with_corrupted_bitmap, debug_capture)
     {
     }
 
     ReplayMod( SessionReactor& session_reactor
+             , gdi::GraphicApi & drawable
              , FrontAPI & front
              , const char * replay_path
              , uint16_t width

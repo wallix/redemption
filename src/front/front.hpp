@@ -77,6 +77,7 @@
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
 #include "gdi/clip_from_cmd.hpp"
+#include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/bitfu.hpp"
@@ -102,9 +103,9 @@
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 
-class Front : public FrontAPI
+class Front : public FrontAPI, public gdi::GraphicApi
 {
-    using FrontAPI::draw;
+    using gdi::GraphicApi::draw;
 
     // for printf with %p
     using voidp = void const *;

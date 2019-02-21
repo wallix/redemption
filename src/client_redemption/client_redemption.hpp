@@ -33,6 +33,8 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
+#include "gdi/graphic_api.hpp"
+
 #include "mod/internal/replay_mod.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
@@ -63,7 +65,7 @@
 
 
 
-class ClientRedemption : public ClientRedemptionAPI
+class ClientRedemption : public ClientRedemptionAPI, public gdi::GraphicApi
 {
 
 public:
@@ -230,7 +232,7 @@ public:
         , _callback(this)
         , session_reactor(session_reactor)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
+        , rail_client_execute(session_reactor, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)
@@ -411,6 +413,7 @@ public:
                 this->unique_mod = new_mod_rdp(
                     *this->socket
                   , session_reactor
+                  , *this
                   , *this
                   , this->config.info
                   , ini.get_ref<cfg::mod_rdp::redir_info>()
@@ -715,6 +718,7 @@ public:
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->session_reactor
               , *this
+              , *this
               , this->config._movie_full_path.c_str()
               , 0             //this->config.info.width
               , 0             //this->config.info.height
@@ -996,7 +1000,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    using ClientRedemptionAPI::draw;
+    using gdi::GraphicApi::draw;
 
     virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->config.is_pre_loading) {

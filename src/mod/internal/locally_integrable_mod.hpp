@@ -30,7 +30,7 @@ class LocallyIntegrableMod : public InternalMod
 {
 public:
     LocallyIntegrableMod(SessionReactor& session_reactor,
-                         FrontAPI & front,
+                         gdi::GraphicApi & drawable, FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & rail_client_execute,
                          Theme const & theme);

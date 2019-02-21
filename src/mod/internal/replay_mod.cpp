@@ -32,6 +32,7 @@
 #include "transport/mwrm_reader.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/genfstat.hpp"
+#include "gdi/graphic_api.hpp"
 
 struct ReplayMod::Reader
 {
@@ -103,7 +104,7 @@ struct ReplayMod::Reader
     }
 
     REDEMPTION_CXX_NODISCARD
-    bool server_resize(FrontAPI& front)
+    bool server_resize(gdi::GraphicApi & drawable, FrontAPI& front)
     {
         bool is_resized = false;
         switch (front.server_resize(
@@ -125,7 +126,7 @@ struct ReplayMod::Reader
                 throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
         }
 
-        this->reader.add_consumer(&front, nullptr, nullptr, nullptr, nullptr, nullptr);
+        this->reader.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
         front.can_be_start_capture();
         return is_resized;
     }
@@ -133,6 +134,7 @@ struct ReplayMod::Reader
 
 ReplayMod::ReplayMod(
     SessionReactor& session_reactor
+  , gdi::GraphicApi & drawable
   , FrontAPI & front
   , const char * replay_path
   , uint16_t width
@@ -148,6 +150,7 @@ ReplayMod::ReplayMod(
 : auth_error_message(auth_error_message)
 , front_width(width)
 , front_height(height)
+, drawable(drawable)
 , front(front)
 , internal_reader(std::make_unique<Reader>(
     Reader::Path{replay_path}, begin_read, end_read, balise_time_frame, play_video_with_corrupted_bitmap, debug_capture))
@@ -158,7 +161,7 @@ ReplayMod::ReplayMod(
 , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
 , session_reactor(session_reactor)
 {
-    if (this->internal_reader->server_resize(front)) {
+    if (this->internal_reader->server_resize(drawable, front)) {
         this->front_width  = this->internal_reader->reader.info.width;
         this->front_height = this->internal_reader->reader.info.height;
     }
@@ -253,7 +256,7 @@ time_t ReplayMod::get_real_time_movie_begin()
     return this->internal_reader->in_trans.get_meta_line().start_time;
 }
 
-void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & /*gd*/)
+void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & gd)
 {
     // TODO use system constants for sizes
     if (!this->sync_setted) {
@@ -302,7 +305,7 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & /*gd*/)
                         this->play_video_with_corrupted_bitmap,
                         this->internal_reader->debug_capture);
 
-                    if (this->internal_reader->server_resize(this->front)) {
+                    if (this->internal_reader->server_resize(this->drawable, this->front)) {
                         this->front_width  = this->internal_reader->reader.info.width;
                         this->front_height = this->internal_reader->reader.info.height;
                     }
@@ -314,7 +317,7 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & /*gd*/)
                     this->timer->set_delay(std::chrono::seconds(1));
 
                     this->disconnect(tvtime().tv_sec);
-                    this->front.sync();
+                    gd.sync();
 
                     if (!this->wait_for_escape) {
                         this->session_reactor.set_next_event(BACK_EVENT_STOP);

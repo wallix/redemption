@@ -31,6 +31,7 @@
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "core/stream_throw_helpers.hpp"
+#include "gdi/graphic_api.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/bitmap_from_file.hpp"
@@ -51,16 +52,17 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
 ClientExecute::ClientExecute(
-    SessionReactor& session_reactor, FrontAPI & front,
+    SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
     WindowListCaps const & window_list_caps, bool verbose)
-: front_(&front)
+: front_(front)
+, drawable_(drawable)
 , wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin)))
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , verbose(verbose)
 , session_reactor(session_reactor)
 {
-}   // ClientExecute
+}
 
 ClientExecute::~ClientExecute()
 {
@@ -69,9 +71,8 @@ ClientExecute::~ClientExecute()
 
 void ClientExecute::set_verbose(bool verbose)
 {
-    this->verbose = this->verbose |  verbose;
+    this->verbose = this->verbose | verbose;
 }
-
 
 void ClientExecute::enable_remote_program(bool enable)
 {
@@ -149,7 +150,6 @@ Rect ClientExecute::get_auxiliary_window_rect() const
 
     return this->auxiliary_window_rect;
 }
-
 
 void ClientExecute::update_rects()
 {
@@ -259,7 +259,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
 
     RDPOpaqueRect order(this->resize_hosted_desktop_box_rect, bg_color);
 
-    this->front_->draw(order, r, depth);
+    this->drawable_.draw(order, r, depth);
 
     if (this->enable_resizing_hosted_desktop_) {
         Rect rect = this->resize_hosted_desktop_box_rect;
@@ -272,7 +272,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect.x  -= 4;
@@ -283,7 +283,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect.x  -= 2;
@@ -294,7 +294,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect.x  -= 4;
@@ -305,7 +305,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
     }
     else {
@@ -319,7 +319,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect.x  += 2;
@@ -330,7 +330,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect.x  -= 3;
@@ -341,7 +341,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect.x  += 4;
@@ -352,7 +352,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
     }
 }   // draw_resize_hosted_desktop_box
@@ -365,7 +365,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
 
     RDPOpaqueRect order(this->maximize_box_rect, bg_color);
 
-    this->front_->draw(order, r, depth);
+    this->drawable_.draw(order, r, depth);
 
     if (this->maximized) {
         Rect rect = this->maximize_box_rect;
@@ -378,7 +378,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect = rect.shrink(1);
@@ -386,7 +386,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         {
             RDPOpaqueRect order(rect, bg_color);
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect = this->maximize_box_rect;
@@ -399,7 +399,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect = rect.shrink(1);
@@ -407,7 +407,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         {
             RDPOpaqueRect order(rect, bg_color);
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
     }
     else {
@@ -421,7 +421,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
 
         rect = rect.shrink(1);
@@ -429,7 +429,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
         {
             RDPOpaqueRect order(rect, bg_color);
 
-            this->front_->draw(order, r, depth);
+            this->drawable_.draw(order, r, depth);
         }
     }
 }   // draw_maximize_box
@@ -447,9 +447,9 @@ void ClientExecute::input_invalidate(const Rect r)
     {
         RDPOpaqueRect order(this->title_bar_icon_rect, encode_color24()(WHITE));
 
-        this->front_->draw(order, r, gdi::ColorCtx::depth24());
+        this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
 
-        this->front_->draw(
+        this->drawable_.draw(
             RDPMemBlt(
                 0,
                 Rect(this->title_bar_icon_rect.x + 3,
@@ -467,10 +467,10 @@ void ClientExecute::input_invalidate(const Rect r)
     {
         RDPOpaqueRect order(this->title_bar_rect, encode_color24()(WHITE));
 
-        this->front_->draw(order, r, gdi::ColorCtx::depth24());
+        this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
 
         if (this->font_) {
-            gdi::server_draw_text(*this->front_,
+            gdi::server_draw_text(this->drawable_,
                                     *this->font_,
                                     this->title_bar_rect.x + 1,
                                     this->title_bar_rect.y + 3,
@@ -490,10 +490,10 @@ void ClientExecute::input_invalidate(const Rect r)
     {
         RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(WHITE));
 
-        this->front_->draw(order, r, gdi::ColorCtx::depth24());
+        this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
 
         if (this->font_) {
-            gdi::server_draw_text(*this->front_,
+            gdi::server_draw_text(this->drawable_,
                                     *this->font_,
                                     this->minimize_box_rect.x + 12,
                                     this->minimize_box_rect.y + 3,
@@ -511,10 +511,10 @@ void ClientExecute::input_invalidate(const Rect r)
     {
         RDPOpaqueRect order(this->close_box_rect, encode_color24()(WHITE));
 
-        this->front_->draw(order, r, gdi::ColorCtx::depth24());
+        this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
 
         if (this->font_) {
-            gdi::server_draw_text(*this->front_,
+            gdi::server_draw_text(this->drawable_,
                                     *this->font_,
                                     this->close_box_rect.x + 13,
                                     this->close_box_rect.y + 3,
@@ -527,7 +527,7 @@ void ClientExecute::input_invalidate(const Rect r)
         }
     }
 
-    this->front_->sync();
+    this->drawable_.sync();
 }   // input_invalidate
 
 void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_)
@@ -581,7 +581,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
             smmipdu.log(LOG_INFO);
         }
 
-        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
                                         flags);
     }
 
@@ -637,7 +637,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
             smssoepdu.log(LOG_INFO);
         }
 
-        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
                                         flags);
     }   // if (move_size_type)
 
@@ -668,7 +668,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         ||  this->south.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
-                    this->front_->set_pointer(0, size_NS_pointer(), SetPointerMode::Insert);
+                    this->drawable_.set_pointer(0, size_NS_pointer(), SetPointerMode::Insert);
             }
         }
         else if (this->north_west_north.contains_pt(xPos, yPos)
@@ -677,14 +677,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  this->south_east_east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
-                    this->front_->set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
+                    this->drawable_.set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
             }
         }
         else if (this->west.contains_pt(xPos, yPos)
              ||  this->east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
-                    this->front_->set_pointer(0, size_WE_pointer(), SetPointerMode::Insert);
+                    this->drawable_.set_pointer(0, size_WE_pointer(), SetPointerMode::Insert);
             }
         }
         else if (this->south_west_west.contains_pt(xPos, yPos)
@@ -693,7 +693,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  this->north_east_north.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
-                    this->front_->set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
+                    this->drawable_.set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
             }
         }
         else if ((this->title_bar_rect.contains_pt(xPos, yPos))
@@ -703,7 +703,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  (this->close_box_rect.contains_pt(xPos, yPos))) {
             if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
                 this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
-                this->front_->set_pointer(0, normal_pointer(), SetPointerMode::Insert);
+                this->drawable_.set_pointer(0, normal_pointer(), SetPointerMode::Insert);
             }
         }
         else {
@@ -786,17 +786,17 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                         this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) {
                 this->draw_resize_hosted_desktop_box(true, this->resize_hosted_desktop_box_rect);
 
-                this->front_->sync();
+                this->drawable_.sync();
 
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX;
             }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
             else if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
                 RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor{0xCBCACA}));
 
-                this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
+                this->drawable_.draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
                 if (this->font_) {
-                    gdi::server_draw_text(*this->front_,
+                    gdi::server_draw_text(this->drawable_,
                                             *this->font_,
                                             this->minimize_box_rect.x + 12,
                                             this->minimize_box_rect.y + 3,
@@ -808,24 +808,24 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                             );
                 }
 
-                this->front_->sync();
+                this->drawable_.sync();
 
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MINIMIZEBOX;
             }   // else if (this->minimize_box_rect.contains_pt(xPos, yPos))
             else if (this->maximize_box_rect.contains_pt(xPos, yPos)) {
                 this->draw_maximize_box(true, this->maximize_box_rect);
 
-                this->front_->sync();
+                this->drawable_.sync();
 
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_MAXIMIZEBOX;
             }   // else if (this->maximize_box_rect.contains_pt(xPos, yPos))
             else if (this->close_box_rect.contains_pt(xPos, yPos)) {
                 RDPOpaqueRect order(this->close_box_rect, encode_color24()(BGRColor{0x2311E8}));
 
-                this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
+                this->drawable_.draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
                 if (this->font_) {
-                    gdi::server_draw_text(*this->front_,
+                    gdi::server_draw_text(this->drawable_,
                                             *this->font_,
                                             this->close_box_rect.x + 13,
                                             this->close_box_rect.y + 3,
@@ -837,7 +837,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                             );
                 }
 
-                this->front_->sync();
+                this->drawable_.sync();
 
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_CLOSEBOX;
             }   // else if (this->close_box_rect.contains_pt(xPos, yPos))
@@ -998,7 +998,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
                 }
 
-                this->front_->draw(order);
+                this->drawable_.draw(order);
 
                 this->update_widget();
 
@@ -1011,16 +1011,16 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos),
                 this->resize_hosted_desktop_box_rect);
 
-            this->front_->sync();
+            this->drawable_.sync();
         }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button) {
             if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
                 RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(BGRColor{0xCBCACA}));
 
-                this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
+                this->drawable_.draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
                 if (this->font_) {
-                    gdi::server_draw_text(*this->front_,
+                    gdi::server_draw_text(this->drawable_,
                                             *this->font_,
                                             this->minimize_box_rect.x + 12,
                                             this->minimize_box_rect.y + 3,
@@ -1032,15 +1032,15 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                             );
                 }
 
-                this->front_->sync();
+                this->drawable_.sync();
             }
             else {
                 RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(WHITE));
 
-                this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
+                this->drawable_.draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
                 if (this->font_) {
-                    gdi::server_draw_text(*this->front_,
+                    gdi::server_draw_text(this->drawable_,
                                             *this->font_,
                                             this->minimize_box_rect.x + 12,
                                             this->minimize_box_rect.y + 3,
@@ -1052,22 +1052,22 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                             );
                 }
 
-                this->front_->sync();
+                this->drawable_.sync();
             }
         }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button) {
             this->draw_maximize_box(this->maximize_box_rect.contains_pt(xPos, yPos), this->maximize_box_rect);
 
-            this->front_->sync();
+            this->drawable_.sync();
         }   // else if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button) {
             if (this->close_box_rect.contains_pt(xPos, yPos)) {
                 RDPOpaqueRect order(this->close_box_rect, encode_color24()(BGRColor{0x2311E8}));
 
-                this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
+                this->drawable_.draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
                 if (this->font_) {
-                    gdi::server_draw_text(*this->front_,
+                    gdi::server_draw_text(this->drawable_,
                                             *this->font_,
                                             this->close_box_rect.x + 13,
                                             this->close_box_rect.y + 3,
@@ -1079,15 +1079,15 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                             );
                 }
 
-                this->front_->sync();
+                this->drawable_.sync();
             }
             else {
                 RDPOpaqueRect order(this->close_box_rect, encode_color24()(WHITE));
 
-                this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
+                this->drawable_.draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
                 if (this->font_) {
-                    gdi::server_draw_text(*this->front_,
+                    gdi::server_draw_text(this->drawable_,
                                             *this->font_,
                                             this->close_box_rect.x + 13,
                                             this->close_box_rect.y + 3,
@@ -1099,7 +1099,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                             );
                 }
 
-                this->front_->sync();
+                this->drawable_.sync();
             }
         }   // else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button)
     }   // else if (SlowPath::PTRFLAGS_MOVE == pointerFlags)
@@ -1111,7 +1111,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
             this->draw_resize_hosted_desktop_box(false, this->resize_hosted_desktop_box_rect);
 
-            this->front_->sync();
+            this->drawable_.sync();
 
             if (this->enable_resizing_hosted_desktop_) {
                 this->update_widget();
@@ -1123,10 +1123,10 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             {
                 RDPOpaqueRect order(this->minimize_box_rect, encode_color24()(WHITE));
 
-                this->front_->draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
+                this->drawable_.draw(order, this->minimize_box_rect, gdi::ColorCtx::depth24());
 
                 if (this->font_) {
-                    gdi::server_draw_text(*this->front_,
+                    gdi::server_draw_text(this->drawable_,
                                             *this->font_,
                                             this->minimize_box_rect.x + 12,
                                             this->minimize_box_rect.y + 3,
@@ -1138,7 +1138,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                             );
                 }
 
-                this->front_->sync();
+                this->drawable_.sync();
             }
 
             if (this->minimize_box_rect.contains_pt(xPos, yPos)) {
@@ -1183,7 +1183,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
                 }
 
-                this->front_->draw(order);
+                this->drawable_.draw(order);
                 this->on_delete_window();
 
                 if (this->mod_) {
@@ -1202,7 +1202,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
             this->draw_maximize_box(false, this->maximize_box_rect);
 
-            this->front_->sync();
+            this->drawable_.sync();
 
             if (this->maximize_box_rect.contains_pt(xPos, yPos)) {
                 this->maximize_restore_window();
@@ -1214,10 +1214,10 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             {
                 RDPOpaqueRect order(this->close_box_rect, encode_color24()(WHITE));
 
-                this->front_->draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
+                this->drawable_.draw(order, this->close_box_rect, gdi::ColorCtx::depth24());
 
                 if (this->font_) {
-                    gdi::server_draw_text(*this->front_,
+                    gdi::server_draw_text(this->drawable_,
                                             *this->font_,
                                             this->close_box_rect.x + 13,
                                             this->close_box_rect.y + 3,
@@ -1229,7 +1229,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                             );
                 }
 
-                this->front_->sync();
+                this->drawable_.sync();
             }
 
             if (this->close_box_rect.contains_pt(xPos, yPos)) {
@@ -1301,8 +1301,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     smssoepdu.log(LOG_INFO);
                 }
 
-                this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
-                                                flags);
+                this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size, flags);
 
                 this->move_size_initialized = false;
             }   // if (0 != move_size_type)
@@ -1344,7 +1343,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
                 }
 
-                this->front_->draw(order);
+                this->drawable_.draw(order);
             }
 
             if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
@@ -1404,7 +1403,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (3)", out_s.get_offset() - 1);
                 }
 
-                this->front_->draw(order);
+                this->drawable_.draw(order);
             }
 
             this->update_widget();
@@ -1490,7 +1489,7 @@ void ClientExecute::adjust_window_to_mod() {
             LOG(LOG_INFO, "ClientExecute::adjust_window_to_mod: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
         }
 
-        this->front_->draw(order);
+        this->drawable_.draw(order);
     }
 
     this->update_widget();
@@ -1569,7 +1568,7 @@ void ClientExecute::maximize_restore_window()
                 LOG(LOG_INFO, "ClientExecute::maximize_restore_window: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         this->update_widget();
@@ -1633,7 +1632,7 @@ void ClientExecute::maximize_restore_window()
                 LOG(LOG_INFO, "ClientExecute::maximize_restore_window: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         this->update_widget();
@@ -1666,7 +1665,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
         return;
     }
 
-    this->channel_ = this->front_->get_channel_list().get_by_name(channel_names::rail);
+    this->channel_ = this->front_.get_channel_list().get_by_name(channel_names::rail);
     if (!this->channel_) return;
 
     {
@@ -1714,7 +1713,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             }
         }
 
-        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
                                         flags);
     }
 
@@ -1746,7 +1745,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             server_system_parameters_update_pdu.log(LOG_INFO);
         }
 
-        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
                                         flags);
     }
 
@@ -1778,7 +1777,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             server_system_parameters_update_pdu.log(LOG_INFO);
         }
 
-        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
                                         flags);
     }
 }   // ready
@@ -1817,7 +1816,7 @@ void ClientExecute::reset(bool soft)
             LOG(LOG_INFO, "ClientExecute::reset: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
         }
 
-        this->front_->draw(order);
+        this->drawable_.draw(order);
         this->on_delete_window();
 
         this->internal_module_window_created = false;
@@ -1843,7 +1842,7 @@ void ClientExecute::check_is_unit_throw(uint32_t total_length, uint32_t flags, I
         LOG(LOG_ERR, "ClientExecute::%s unexpected fragmentation flags=%.4x", message, flags);
         throw Error(ERR_RDP_DATA_CHANNEL_FRAGMENTATION);
     }
-    
+
     // orderLength(2)
     if (!chunk.in_check_rem(2)) {
         LOG(LOG_ERR, "Truncated ClientExecute::%s::orderLength: expected=2 remains=%zu", message, chunk.in_remain());
@@ -1887,7 +1886,7 @@ void ClientExecute::process_client_activate_pdu(uint32_t total_length, uint32_t 
                 LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         {
@@ -1908,7 +1907,7 @@ void ClientExecute::process_client_activate_pdu(uint32_t total_length, uint32_t 
                 LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
     }
 }   // process_client_activate_pdu
@@ -1981,7 +1980,7 @@ void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
             server_get_application_id_response_pdu.log(LOG_INFO);
         }
 
-        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
                                         flags);
 
         server_execute_result_sent = true;
@@ -2052,7 +2051,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uin
                         LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
                     }
 
-                    this->front_->draw(order);
+                    this->drawable_.draw(order);
                 }
 
                 {
@@ -2097,7 +2096,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uin
                         LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
                     }
 
-                    this->front_->draw(order);
+                    this->drawable_.draw(order);
                     this->on_delete_window();
                 }
 
@@ -2159,7 +2158,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uin
                     LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
                 }
 
-                this->front_->draw(order);
+                this->drawable_.draw(order);
                 this->on_new_or_existing_window(adjusted_window_rect);
 
                 if (this->mod_) {
@@ -2190,7 +2189,7 @@ void ClientExecute::on_new_or_existing_window(Rect const & window_rect)
         for (Rect const & rect : sub_region.rects) {
             RDPOpaqueRect order(rect, encode_color24()(BLACK));
 
-            this->front_->draw(order, rect, depth);
+            this->drawable_.draw(order, rect, depth);
         }
     }
 
@@ -2204,7 +2203,7 @@ void ClientExecute::on_delete_window()
     auto const depth = gdi::ColorCtx::depth24();
     RDPOpaqueRect order(this->protocol_window_rect, encode_color24()(BLACK));
 
-    this->front_->draw(order, this->protocol_window_rect, depth);
+    this->drawable_.draw(order, this->protocol_window_rect, depth);
 
     this->protocol_window_rect.empty();
 }   // on_delete_window
@@ -2262,7 +2261,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         {
@@ -2311,7 +2310,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
             this->on_new_or_existing_window(adjusted_window_rect);
         }
 
@@ -2330,7 +2329,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         {
@@ -2351,7 +2350,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         {
@@ -2372,7 +2371,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         this->internal_module_window_created = true;
@@ -2544,7 +2543,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
 
             order.header.FieldsPresentFlags(
                         RDP::RAIL::WINDOW_ORDER_ICON
@@ -2558,7 +2557,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         if (this->mod_) {
@@ -2653,7 +2652,7 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
                 LOG(LOG_INFO, "ClientExecute::process_client_window_move_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->front_->draw(order);
+            this->drawable_.draw(order);
         }
 
         int move_size_type = 0;
@@ -2704,7 +2703,7 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
                 smssoepdu.log(LOG_INFO);
             }
 
-            this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+            this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
                                             flags);
 
             this->move_size_initialized = false;
@@ -2968,7 +2967,7 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect)
             LOG(LOG_INFO, "ClientExecute::dialog_box_create: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
         }
 
-        this->front_->draw(order);
+        this->drawable_.draw(order);
     }
 
     this->auxiliary_window_rect = this->window_rect;
@@ -2994,7 +2993,7 @@ void ClientExecute::destroy_auxiliary_window()
             LOG(LOG_INFO, "ClientExecute::destroy_auxiliary_window: Send DeletedWindow to client: size=%zu", out_s.get_offset() - 1);
         }
 
-        this->front_->draw(order);
+        this->drawable_.draw(order);
     }
 
     this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;

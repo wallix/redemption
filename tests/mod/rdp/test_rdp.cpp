@@ -199,16 +199,17 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
         mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
       );
 
-    auto mod = new_mod_rdp(t, session_reactor, front, info,
+    auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, authentifier, report_message, ini, nullptr);
+        channels_authorizations, mod_rdp_params, authentifier, report_message, ini,
+        nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
-    execute_negociate_mod(session_reactor, *mod, front);
+    execute_negociate_mod(session_reactor, *mod, front.gd());
     for (int count = 0; count < 38; ++count) {
-        execute_graphics_event(session_reactor, front);
+        execute_graphics_event(session_reactor, front.gd());
     }
 
     //front.dump_png("trace_w2008_");

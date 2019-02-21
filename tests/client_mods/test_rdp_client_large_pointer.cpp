@@ -125,14 +125,15 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
         mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
       );
 
-    auto mod = new_mod_rdp(t, session_reactor, front, info,
+    auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, authentifier, report_message, ini, nullptr);
+        channels_authorizations, mod_rdp_params, authentifier, report_message,
+        ini, nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
-    execute_mod(session_reactor, *mod, front, 72);
+    execute_mod(session_reactor, *mod, front.gd(), 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_disabled_");
 }
@@ -228,14 +229,15 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
         mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
       );
 
-    auto mod = new_mod_rdp(t, session_reactor, front, info,
+    auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, authentifier, report_message, ini, nullptr);
+        channels_authorizations, mod_rdp_params, authentifier, report_message,
+        ini, nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
-    execute_mod(session_reactor, *mod, front, 72);
+    execute_mod(session_reactor, *mod, front.gd(), 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_enabled_");
 }

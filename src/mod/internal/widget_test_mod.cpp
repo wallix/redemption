@@ -24,6 +24,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/session_reactor.hpp"
+#include "gdi/graphic_api.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/bitmap.hpp"
@@ -36,14 +37,14 @@
 // Pimpl
 struct WidgetTestMod::WidgetTestModPrivate
 {
-    WidgetTestModPrivate(SessionReactor& session_reactor, WidgetTestMod& mod)
+    WidgetTestModPrivate(SessionReactor& session_reactor, WidgetTestMod& /*mod*/)
       : session_reactor(session_reactor)
     {
         LOG(LOG_DEBUG, "WidgetTestModPrivate");
-        this->timer = this->session_reactor.create_graphic_timer(std::ref(mod))
+        this->timer = this->session_reactor.create_graphic_timer()
         .set_delay(std::chrono::seconds(0))
-        .on_action([](auto ctx, gdi::GraphicApi& gd, WidgetTestMod& mod){
-            update_lock update_lock{mod.front};
+        .on_action([](auto ctx, gdi::GraphicApi& gd){
+            update_lock update_lock{gd};
             int y = 10;
             for (auto s : {
                 // "/home/jpoelen/rawdisk2/Laksaman_14.rbf",
@@ -90,8 +91,9 @@ struct WidgetTestMod::WidgetTestModPrivate
 
 WidgetTestMod::WidgetTestMod(
     SessionReactor& session_reactor,
-    FrontAPI & front, uint16_t width, uint16_t height, Font const & font)
-: InternalMod(front, width, height, font, Theme{})
+    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+    Font const & font)
+: InternalMod(drawable, front, width, height, font, Theme{})
 , d(std::make_unique<WidgetTestModPrivate>(session_reactor, *this))
 {
     front.server_resize(width, height, BitsPerPixel{8});
@@ -124,7 +126,7 @@ void WidgetTestMod::refresh(Rect clip)
 
 void WidgetTestMod::draw_event(time_t /*now*/, gdi::GraphicApi& gd)
 {
-    update_lock<decltype(this->front)> update_lock{this->front};
+    update_lock update_lock{gd};
 
     auto mono_palette = [&](BGRColor const& color) {
         BGRColor d[256];

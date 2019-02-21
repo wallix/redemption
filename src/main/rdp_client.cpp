@@ -169,7 +169,7 @@ int main(int argc, char** argv)
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
         return run_test_client(
-            is_vnc ? "VNC" : "RDP", session_reactor, *mod, front,
+            is_vnc ? "VNC" : "RDP", session_reactor, *mod, gdi::null_gd(),
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 
@@ -257,7 +257,7 @@ int main(int argc, char** argv)
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, session_reactor, front, client_info, redir_info,
+                trans, session_reactor, gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
                 channels_authorizations, mod_rdp_params, authentifier, report_message, ini, nullptr);

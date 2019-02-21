@@ -71,7 +71,7 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi
 public:
     SelectorMod(
         SelectorModVariables vars, SessionReactor& session_reactor,
-        FrontAPI & front, uint16_t width, uint16_t height,
+        gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);
 

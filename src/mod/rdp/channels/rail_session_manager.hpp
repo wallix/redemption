@@ -49,7 +49,7 @@ class RemoteProgramsSessionManager final
 , public RemoteProgramsWindowIdManager
 , public windowing_api
 {
-    FrontAPI & front;
+    gdi::GraphicApi & front;
     mod_api  & mod;
 
     Translation::language_t lang;
@@ -134,7 +134,7 @@ public:
 
     explicit RemoteProgramsSessionManager(
         SessionReactor& session_reactor,
-        FrontAPI& front, mod_api& mod, Translation::language_t lang,
+        gdi::GraphicApi& front, mod_api& mod, Translation::language_t lang,
         Font const & font, Theme const & theme, AuthApi & authentifier,
         char const * session_probe_window_title,
         not_null_ptr<ClientExecute> rail_client_execute,

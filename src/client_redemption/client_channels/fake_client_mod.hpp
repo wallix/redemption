@@ -297,6 +297,7 @@ public:
         return this->fake_mod.index_in;
     }
 
+    // TODO ??????
     FakeRDPChannelsMod::PDUData * stream() {
         if (this->fake_mod.index_out < 10) {
             this->fake_mod.index_out++;
@@ -306,45 +307,10 @@ public:
         return nullptr;
     }
 
-    void draw(RDP::FrameMarker    const & cmd) override { (void) cmd; }
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { (void) cmd; (void) clip; (void) color_ctx; (void) bmp; }
-    void draw(RDPDestBlt          const & cmd, Rect clip) override { (void) cmd; (void) clip; }
-    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { (void) cmd; (void) clip; }
-    void draw(RDPScrBlt           const & cmd, Rect clip) override { (void) cmd; (void) clip; }
-    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override { (void) cmd; (void) clip; }
-    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { (void) cmd; (void) clip; (void) bmp; }
-    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { (void) cmd; (void) bmp; }
-    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { (void) cmd; (void) bmp; (void) clip; (void)color_ctx; }
-    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { (void) cmd; (void) clip; (void) gly_cache; (void) color_ctx;}
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(uint16_t /*width*/, uint16_t /*height*/, BitsPerPixel /*bpp*/) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & /*cmd*/) override {}
-    void draw(const RDP::RAIL::WindowIcon & /*cmd*/) override {}
-    void draw(const RDP::RAIL::CachedIcon & /*cmd*/) override {}
-    void draw(const RDP::RAIL::DeletedWindow & /*cmd*/) override {}
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*cmd*/) override {}
-    void draw(const RDP::RAIL::DeletedNotificationIcons & /*cmd*/) override {}
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*cmd*/) override {}
-    void draw(const RDP::RAIL::NonMonitoredDesktop & /*cmd*/) override {}
-
-    void draw(RDPColCache   const & /*cmd*/) override {}
-    void draw(RDPBrushCache const & /*cmd*/) override {}
-
-    void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
 };
 
 

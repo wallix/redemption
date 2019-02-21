@@ -645,7 +645,7 @@ struct mod_rdp_channels
     }
 
     void init_remote_program_and_session_probe(
-        FrontAPI& front,
+        gdi::GraphicApi& gd,
         mod_api & mod_rdp,
         const ModRDPParams & mod_rdp_params,
         AuthApi & authentifier,
@@ -670,10 +670,10 @@ struct mod_rdp_channels
 #ifndef __EMSCRIPTEN__
         if (this->remote_program) {
             if (this->session_probe.enabled) {
-                this->init_remote_program_with_session_probe(front, mod_rdp, mod_rdp_params, authentifier);
+                this->init_remote_program_with_session_probe(gd, mod_rdp, mod_rdp_params, authentifier);
             }
             else {
-                this->init_remote_program_without_session_probe(front, mod_rdp, mod_rdp_params, authentifier);
+                this->init_remote_program_without_session_probe(gd, mod_rdp, mod_rdp_params, authentifier);
             }
         }
         else { // ! this->remote_program
@@ -687,8 +687,8 @@ struct mod_rdp_channels
 #else
         this->init_no_remote_program_no_session_probe(info, mod_rdp_params, program, directory);
         (void)authentifier;
-        (void)front;
         (void)mod_rdp;
+        (void)gd;
 #endif
     }
 
@@ -1426,7 +1426,7 @@ public:
     }
 
     void init_remote_program_with_session_probe(
-        FrontAPI& front,
+        gdi::GraphicApi& gd,
         mod_api & mod_rdp,
         const ModRDPParams & mod_rdp_params,
         AuthApi & authentifier)
@@ -1519,19 +1519,18 @@ public:
 
         this->remote_programs_session_manager =
             std::make_unique<RemoteProgramsSessionManager>(
-                session_reactor, front, mod_rdp, mod_rdp_params.lang,
+                session_reactor, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, authentifier,
                 session_probe_window_title,
                 mod_rdp_params.rail_client_execute,
                 mod_rdp_params.rail_disconnect_message_delay,
                 this->verbose
             );
-
     }
 
 
     void init_remote_program_without_session_probe(
-        FrontAPI& front,
+        gdi::GraphicApi& gd,
         mod_api & mod_rdp,
         const ModRDPParams & mod_rdp_params,
         AuthApi & authentifier)
@@ -1567,7 +1566,7 @@ public:
         }
 
         this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-            session_reactor, front, mod_rdp, mod_rdp_params.lang,
+            session_reactor, gd, mod_rdp, mod_rdp_params.lang,
             mod_rdp_params.font, mod_rdp_params.theme, authentifier,
             session_probe_window_title,
             mod_rdp_params.rail_client_execute,
@@ -2301,6 +2300,7 @@ public:
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
+      , gdi::GraphicApi & gd
       , FrontAPI & front
       , const ClientInfo & info
       , RedirectionInfo & redir_info
@@ -2400,7 +2400,7 @@ public:
         char directory[512] = {};
 
         this->channels.init_remote_program_and_session_probe(
-            front, *this, mod_rdp_params, this->authentifier, info, program, directory);
+            gd, *this, mod_rdp_params, this->authentifier, info, program, directory);
 
         this->negociation_result.front_width = info.screen_info.width;
         this->negociation_result.front_height = info.screen_info.height;
@@ -2702,7 +2702,7 @@ public:
 
             case FastPath::UpdateType::PALETTE:
                 drawable.begin_update();
-                this->process_palette(stream, true);
+                this->process_palette(drawable, stream, true);
                 drawable.end_update();
                 break;
 
@@ -3278,7 +3278,7 @@ public:
                                         case RDP_UPDATE_PALETTE:
                                             if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
                                             drawable.begin_update();
-                                            this->process_palette(sdata.payload, false);
+                                            this->process_palette(drawable, sdata.payload, false);
                                             drawable.end_update();
                                             break;
                                         case RDP_UPDATE_SYNCHRONIZE:
@@ -3404,7 +3404,7 @@ public:
                             uint32_t sessionId = sctrl.payload.in_uint32_le();
 
                             (void)sessionId;
-                            this->send_confirm_active();
+                            this->send_confirm_active(drawable);
                             this->send_synchronise();
                             this->send_control(RDP_CTL_COOPERATE);
                             this->send_control(RDP_CTL_REQUEST_CONTROL);
@@ -3647,13 +3647,13 @@ public:
 
     // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
-    void send_confirm_active() {
+    void send_confirm_active(gdi::GraphicApi& drawable) {
         if (bool(this->verbose & RDPVerbose::capabilities)){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
         this->rdp_input.send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
-            [this](StreamSize<65536>, OutStream & stream) {
+            [this, &drawable](StreamSize<65536>, OutStream & stream) {
                 RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
 
                 confirm_active_pdu.emit_begin(this->rdp_input.get_share_id());
@@ -3748,7 +3748,7 @@ public:
 
                     if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
-                            this->front,
+                            drawable,
                             this->BmpCacheRev2_Cache_NumEntries()[0], nb_bytes_per_pixel(this->orders.bpp) * 16 * 16, false,
                             this->BmpCacheRev2_Cache_NumEntries()[1], nb_bytes_per_pixel(this->orders.bpp) * 32 * 32, false,
                             this->BmpCacheRev2_Cache_NumEntries()[2], nb_bytes_per_pixel(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
@@ -3764,7 +3764,7 @@ public:
 
                     if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
-                            this->front,
+                            drawable,
                             0x258, nb_bytes_per_pixel(this->orders.bpp) * 0x100,  false,
                             0x12c, nb_bytes_per_pixel(this->orders.bpp) * 0x400,  false,
                             0x106, nb_bytes_per_pixel(this->orders.bpp) * 0x1000, false,
@@ -4072,13 +4072,13 @@ public:
         }
     }
 
-    void process_palette(InStream & stream, bool fast_path) {
+    void process_palette(gdi::GraphicApi & drawable, InStream & stream, bool fast_path) {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "mod_rdp::process_palette");
         }
 
         RDP::UpdatePaletteData_Recv(stream, fast_path, this->orders.global_palette);
-        this->front.set_palette(this->orders.global_palette);
+        drawable.set_palette(this->orders.global_palette);
 
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "mod_rdp::process_palette done");

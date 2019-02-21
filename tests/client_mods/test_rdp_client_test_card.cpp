@@ -37,6 +37,6 @@ RED_AUTO_TEST_CASE(TestShowTestCard)
 
 
     SessionReactor session_reactor;
-    TestCardMod mod(session_reactor, front, screen_info.width, screen_info.height, global_font());
-    RED_CHECK_NO_THROW(mod.draw_event(time(nullptr), front));
+    TestCardMod mod(session_reactor, front.gd(), front, screen_info.width, screen_info.height, global_font());
+    RED_CHECK_NO_THROW(mod.draw_event(time(nullptr), front.gd()));
 }

@@ -28,16 +28,18 @@
 
 InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
-    SessionReactor& session_reactor, FrontAPI & front,
+    SessionReactor& session_reactor, gdi::GraphicApi & drawable, FrontAPI & front,
     uint16_t width, uint16_t height, Rect const widget_rect,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme)
-    : LocallyIntegrableMod(session_reactor, front, width, height, font, rail_client_execute, theme)
+    : LocallyIntegrableMod(session_reactor, drawable, front, width, height, font,
+        rail_client_execute, theme)
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
     , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
-    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->challenge, front, front, font, theme)
+    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->challenge,
+        drawable, front, font, theme)
     , challenge(
-        front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+        drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this,
         this->ask_device, this->ask_login, this->ask_password,
         theme,

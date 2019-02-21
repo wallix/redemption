@@ -35,9 +35,9 @@
 
 TestCardMod::TestCardMod(
     SessionReactor& session_reactor,
-    FrontAPI & front, uint16_t width, uint16_t height,
+    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Font const & font, bool unit_test)
-: InternalMod(front, width, height, font, Theme{})
+: InternalMod(drawable, front, width, height, font, Theme{})
 , palette332(BGRPalette::classic_332())
 , font(font)
 , unit_test(unit_test)

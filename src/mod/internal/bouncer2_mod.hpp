@@ -44,7 +44,7 @@ class Bouncer2Mod : public InternalMod
 public:
     Bouncer2Mod(
          SessionReactor& session_reactor,
-         FrontAPI & front, uint16_t width, uint16_t height,
+         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
          Font const & font);
 
     ~Bouncer2Mod() override;

@@ -36,8 +36,8 @@
 
 void ModuleManager::create_mod_vnc(
     AuthApi& authentifier, ReportMessageApi& report_message,
-    Inifile& ini, FrontAPI& front, ClientInfo const& client_info, ClientExecute& rail_client_execute,
-    Keymap2::KeyFlags key_flags)
+    Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
+    ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags)
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
 
@@ -158,6 +158,7 @@ void ModuleManager::create_mod_vnc(
             auto* host_mod = new RailModuleHostMod(
                 ini,
                 this->session_reactor,
+                drawable,
                 front,
                 client_info.screen_info.width,
                 client_info.screen_info.height,

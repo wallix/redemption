@@ -120,14 +120,15 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
       );
 
-    auto mod = new_mod_rdp(t, session_reactor, front, info,
+    auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, authentifier, report_message, ini, nullptr);
+        channels_authorizations, mod_rdp_params, authentifier, report_message,
+        ini, nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
-    execute_mod(session_reactor, *mod, front, 8);
+    execute_mod(session_reactor, *mod, front.gd(), 8);
 
     RED_CHECK_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");

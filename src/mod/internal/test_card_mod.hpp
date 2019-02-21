@@ -43,7 +43,7 @@ class TestCardMod : public InternalMod
 public:
     TestCardMod(
         SessionReactor& session_reactor,
-        FrontAPI & front, uint16_t width, uint16_t height,
+        gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Font const & font, bool unit_test = true);
 
     void rdp_input_invalidate(Rect /*rect*/) override

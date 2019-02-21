@@ -27,14 +27,16 @@
 
 FlatWaitMod::FlatWaitMod(
     FlatWaitModVariables vars, SessionReactor& session_reactor,
-    FrontAPI & front, uint16_t width, uint16_t height,
-    Rect const widget_rect, const char * caption, const char * message, time_t /*now*/,
+    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+    Rect const widget_rect, const char * caption, const char * message,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme,
     bool showform, uint32_t flag
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height, font, rail_client_execute, theme)
-    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget, front, front, font, theme)
-    , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+    : LocallyIntegrableMod(session_reactor, drawable, front, width, height, font,
+        rail_client_execute, theme)
+    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
+        drawable, front, font, theme)
+    , wait_widget(drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this, caption, message, 0, &this->language_button,
         font, theme, language(vars), showform, flag, vars.get<cfg::context::duration_max>())
     , vars(vars)

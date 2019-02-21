@@ -234,7 +234,7 @@ RED_AUTO_TEST_CASE(TestFront)
       );
 
     auto mod = new_mod_rdp(
-        t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        t, session_reactor, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, authentifier, report_message, ini, metrics);
 
     // incoming connexion data

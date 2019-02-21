@@ -458,8 +458,9 @@ public:
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)
-        , rail_client_execute(session_reactor, front, this->front.client_info.window_list_caps,
-                         ini.get<cfg::debug::mod_internal>() & 1)
+        , rail_client_execute(session_reactor, front, front,
+            this->front.client_info.window_list_caps,
+            ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
         this->mod = &this->no_mod;
@@ -513,7 +514,7 @@ private:
     }
 
 public:
-    void new_mod(ModuleIndex target_module, time_t now, AuthApi & authentifier, ReportMessageApi & report_message) override
+    void new_mod(ModuleIndex target_module, time_t /*now*/, AuthApi & authentifier, ReportMessageApi & report_message) override
     {
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
@@ -559,6 +560,7 @@ public:
             this->set_mod(new Bouncer2Mod(
                 this->session_reactor,
                 this->front,
+                this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
                 this->load_font()
@@ -571,6 +573,7 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
             this->set_mod(new ReplayMod(
                 this->session_reactor,
+                this->front,
                 this->front,
                 [this]{
                     auto movie_path = this->ini.get<cfg::video::replay_path>().to_string()
@@ -597,6 +600,7 @@ public:
             this->set_mod(new WidgetTestMod(
                 this->session_reactor,
                 this->front,
+                this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
                 this->load_font()
@@ -607,6 +611,7 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
             this->set_mod(new TestCardMod(
                 this->session_reactor,
+                this->front,
                 this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
@@ -624,6 +629,7 @@ public:
             this->set_mod(new SelectorMod(
                 this->ini,
                 this->session_reactor,
+                this->front,
                 this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
@@ -654,6 +660,7 @@ public:
                 this->ini,
                 this->session_reactor,
                 this->front,
+                this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
                 this->rail_client_execute.adjust_rect(get_widget_rect(
@@ -661,7 +668,6 @@ public:
                     this->front.client_info.screen_info.height,
                     this->front.client_info.cs_monitor
                 )),
-                now,
                 this->rail_client_execute,
                 this->load_font(),
                 this->load_theme(),
@@ -678,6 +684,7 @@ public:
                 this->set_mod(new InteractiveTargetMod(
                     this->ini,
                     this->session_reactor,
+                    this->front,
                     this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
@@ -703,6 +710,7 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
+                    this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
@@ -713,7 +721,6 @@ public:
                     caption,
                     message,
                     button,
-                    now,
                     this->rail_client_execute,
                     this->load_font(),
                     this->load_theme()
@@ -731,6 +738,7 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
+                    this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
@@ -741,7 +749,6 @@ public:
                     caption,
                     message,
                     button,
-                    now,
                     this->rail_client_execute,
                     this->load_font(),
                     this->load_theme()
@@ -765,6 +772,7 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
+                    this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
@@ -775,7 +783,6 @@ public:
                     caption,
                     message,
                     button,
-                    now,
                     this->rail_client_execute,
                     this->load_font(),
                     this->load_theme(),
@@ -796,6 +803,7 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
+                    this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
                     this->rail_client_execute.adjust_rect(get_widget_rect(
@@ -805,7 +813,6 @@ public:
                     )),
                     caption,
                     message,
-                    now,
                     this->rail_client_execute,
                     this->load_font(),
                     this->load_theme(),
@@ -847,6 +854,7 @@ public:
                 username,
                 "", // password
                 this->front,
+                this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
                 this->rail_client_execute.adjust_rect(get_widget_rect(
@@ -854,7 +862,6 @@ public:
                     this->front.client_info.screen_info.height,
                     this->front.client_info.cs_monitor
                 )),
-                now,
                 this->rail_client_execute,
                 this->load_font(),
                 this->load_theme()
@@ -900,7 +907,7 @@ public:
         case MODULE_RDP:
             this->create_mod_rdp(
                 authentifier, report_message, this->ini,
-                this->front, this->front.client_info,
+                this->front, this->front, this->front.client_info,
                 this->rail_client_execute, this->front.keymap.key_flags,
                 this->server_auto_reconnect_packet);
             break;
@@ -908,7 +915,7 @@ public:
         case MODULE_VNC:
             this->create_mod_vnc(
                 authentifier, report_message, this->ini,
-                this->front, this->front.client_info,
+                this->front, this->front, this->front.client_info,
                 this->rail_client_execute, this->front.keymap.key_flags);
             break;
 
@@ -980,13 +987,13 @@ private:
 
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,
-        Inifile& ini, FrontAPI& front, ClientInfo client_info,
+        Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info,
         ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
         std::array<uint8_t, 28>& server_auto_reconnect_packet);
 
     void create_mod_vnc(
         AuthApi& authentifier, ReportMessageApi& report_message,
-        Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
+        Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
         ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags);
 
     Font& load_font()

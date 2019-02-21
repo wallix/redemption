@@ -27,7 +27,8 @@ class WidgetTestMod : public InternalMod
 {
 public:
     WidgetTestMod(SessionReactor& session_reactor,
-        FrontAPI & front, uint16_t width, uint16_t height, Font const & font);
+        gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+        Font const & font);
 
     ~WidgetTestMod() override;
 

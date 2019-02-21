@@ -24,13 +24,13 @@
 
 
 InternalMod::InternalMod(
-    FrontAPI & front, uint16_t front_width, uint16_t front_height,
+    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t front_width, uint16_t front_height,
     Font const & font, Theme const & theme
 )
     : front_width(front_width)
     , front_height(front_height)
     , front(front)
-    , screen(front, font, nullptr, theme)
+    , screen(drawable, font, nullptr, theme)
 {
     this->screen.set_wh(front_width, front_height);
 }

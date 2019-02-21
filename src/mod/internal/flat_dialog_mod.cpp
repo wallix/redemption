@@ -28,17 +28,18 @@
 
 FlatDialogMod::FlatDialogMod(
     FlatDialogModVariables vars, SessionReactor& session_reactor,
-    FrontAPI & front, uint16_t width, uint16_t height,
+    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
-    const char * cancel_text, time_t /*now*/, ClientExecute & rail_client_execute,
+    const char * cancel_text, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, ChallengeOpt has_challenge
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height, font, rail_client_execute, theme)
+    : LocallyIntegrableMod(session_reactor, drawable, front, width, height, font,
+        rail_client_execute, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
-        front, front, font, theme)
+        drawable, front, font, theme)
     , dialog_widget(
-        front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+        drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this, caption, message, &this->language_button, theme, font,
         TR(trkeys::OK, language(vars)),
         cancel_text, has_challenge)

@@ -37,6 +37,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/front_api.hpp"
+#include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitmap.hpp"
@@ -223,10 +224,10 @@ enum {
                     type = stream.in_uint16_le();
                     switch (type) {
                     case 1:
-                        this->front.begin_update();
+                        gd.begin_update();
                         break;
                     case 2:
-                        this->front.end_update();
+                        gd.end_update();
                         break;
                     case 3:
                     {
@@ -324,7 +325,7 @@ enum {
                         stream.in_skip_bytes(32 * (32 * 3)); // data
                         stream.in_skip_bytes(32 * (32 / 8)); // mask
                         // TODO: we just ignore cursor data for now. Fix that later
-                        this->front.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
+                        gd.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
                     }
                     break;
                     default:

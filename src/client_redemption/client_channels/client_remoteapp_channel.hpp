@@ -29,6 +29,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/channel_list.hpp"
+#include "gdi/graphic_api.hpp"
 
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
