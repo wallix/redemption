@@ -163,6 +163,8 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
             // TODO this should be an error, no need to commute two times to TLS
             return Transport::TlsResult::Fail;
     }
+
+    REDEMPTION_UNREACHABLE();
 }
 
 bool SocketTransport::disconnect()
