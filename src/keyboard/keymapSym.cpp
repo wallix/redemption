@@ -1096,24 +1096,21 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 //------------------------------------------------------------------------
                 // KEYPAD : Keypad keys whose meaning depends on Numlock are handled apart
                 //------------------------------------------------------------------------
-                if (!(keyboardFlags & KBDFLAGS_EXTENDED)) {
-                    if ((this->key_flags & NUMLOCK)) {
-                        // if numlock is activated, keys are printable characters (logical SHIFT mode)
-                        layout = &this->keylayout_WORK_shift_sym;
-                        if (this->verbose) {
-                            LOG(LOG_INFO, "Use KEYLAYOUT WORK shift (1)");
-                        }
-                        // Translate the scancode to an unicode char
-                        uint8_t sym = map[extendedKeyCode];
-                        uint32_t ksym = (*layout)[sym];
-                        if (this->verbose) {
-                            LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-                        }
-                        this->push_sym(ksym);
+                if ((this->key_flags & NUMLOCK) && !(keyboardFlags & KBDFLAGS_EXTENDED)) {
+                    // if numlock is activated, keys are printable characters (logical SHIFT mode)
+                    layout = &this->keylayout_WORK_shift_sym;
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Use KEYLAYOUT WORK shift (1)");
                     }
-                } // if numlock ON
-                else {
-                    // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
+                    // Translate the scancode to an unicode char
+                    uint8_t sym = map[extendedKeyCode];
+                    uint32_t ksym = (*layout)[sym];
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
+                    }
+                    this->push_sym(ksym);
+                } else {
+
                     switch (extendedKeyCode){
                         /* kEYPAD LEFT ARROW */
                         case 0x4b:
@@ -1162,7 +1159,7 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                         default:
                             break;
                     }
-                } // if numlock OFF
+                } // if numlock ON
             }
             else if ( (keyboardFlags & KBDFLAGS_EXTENDED) && ((extendedKeyCode == 0x5c) || (extendedKeyCode == 0x5b) || (extendedKeyCode == 0x35)) ) {
                 switch (keyCode) {
