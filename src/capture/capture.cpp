@@ -1523,7 +1523,7 @@ public:
 
 
 
-void Capture::Graphic::draw_impl(RDP::FrameMarker const & cmd)
+void Capture::Graphic::draw(RDP::FrameMarker const & cmd)
 {
     for (gdi::GraphicApi & gd : this->gds) {
         gd.draw(cmd);
@@ -1533,6 +1533,48 @@ void Capture::Graphic::draw_impl(RDP::FrameMarker const & cmd)
         for (gdi::CaptureApi & cap : this->caps) {
             cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
         }
+    }
+}
+
+void Capture::Graphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
+{
+    for (gdi::GraphicApi & gd : this->gds){
+        gd.set_pointer(cache_idx, cursor, mode);
+    }
+}
+
+void Capture::Graphic::set_palette(BGRPalette const & palette)
+{
+    for (gdi::GraphicApi & gd : this->gds){
+        gd.set_palette(palette);
+    }
+}
+
+void Capture::Graphic::sync()
+{
+    for (gdi::GraphicApi & gd : this->gds){
+        gd.sync();
+    }
+}
+
+void Capture::Graphic::set_row(std::size_t rownum, const uint8_t * data, size_t data_length)
+{
+    for (gdi::GraphicApi & gd : this->gds){
+        gd.set_row(rownum, data, data_length);
+    }
+}
+
+void Capture::Graphic::begin_update()
+{
+    for (gdi::GraphicApi & gd : this->gds){
+        gd.begin_update();
+    }
+}
+
+void Capture::Graphic::end_update()
+{
+    for (gdi::GraphicApi & gd : this->gds){
+        gd.end_update();
     }
 }
 
