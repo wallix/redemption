@@ -212,6 +212,10 @@ class GraphicToFile
 
     const bool remote_app;
 
+    bool kbd_input_mask_enabled;
+
+    int hidden_masked_char_count = 0;
+
 public:
     enum class SendInput { NO, YES };
 
@@ -240,6 +244,7 @@ public:
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(remote_app ? 5 : (bool(this->compression_bullder.get_algorithm()) ? 4 : 3))
     , remote_app(remote_app)
+    , kbd_input_mask_enabled{false}
     {
         if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
@@ -276,14 +281,32 @@ public:
 
     bool kbd_input(const timeval & now, uint32_t uchar) override {
         (void)now;
-        if (keyboard_buffer_32.has_room(sizeof(uint32_t))) {
-            keyboard_buffer_32.out_uint32_le(uchar);
+        if (!this->kbd_input_mask_enabled) {
+            if (keyboard_buffer_32.has_room(sizeof(uint32_t))) {
+                keyboard_buffer_32.out_uint32_le(uchar);
+            }
+        }
+        else {
+            this->hidden_masked_char_count++;
         }
         return true;
     }
 
-    void enable_kbd_input_mask(bool) override {}
+    void enable_kbd_input_mask(bool enable) override {
+        if (this->kbd_input_mask_enabled != enable) {
+            this->flush_kdb();
+            this->kbd_input_mask_enabled = enable;
+        }
+    }
 
+private:
+    void flush_kdb() {
+        if (keyboard_buffer_32.get_offset()) {
+            this->send_timestamp_chunk();
+        }
+    }
+
+public:
     void send_meta_chunk()
     {
         const BmpCache::cache_ & c0 = this->bmp_cache.get_cache(0);
@@ -351,8 +374,16 @@ public:
 
             payload.out_uint8(ignore_time_interval ? 1 : 0);
 
-            payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.get_offset());
-            keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
+            if (0 == this->hidden_masked_char_count) {
+                payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.get_offset());
+                keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
+            }
+            else {
+                assert(GTF_SIZE_KEYBUF_REC >= 8);
+                for (int i = 0; i < 8; ++i) {
+                    payload.out_uint32_le('*');
+                }
+            }
         }
 
         wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP, payload.get_offset(), 1);
@@ -845,8 +876,6 @@ public:
         }
     } nc;
 
-    bool kbd_input_mask_enabled;
-
     Rect image_frame_rect;
 
     WrmCaptureImpl(
@@ -878,7 +907,6 @@ public:
     )
     , nc(this->graphic_to_file, capture_params.now,
         wrm_params.frame_interval, wrm_params.break_interval)
-    , kbd_input_mask_enabled{false}
     {}
 
 public:
@@ -897,11 +925,11 @@ public:
 
     // shadow text
     bool kbd_input(const timeval& now, uint32_t uchar) override {
-        return this->graphic_to_file.kbd_input(now, this->kbd_input_mask_enabled?'*':uchar);
+        return this->graphic_to_file.kbd_input(now, uchar);
     }
 
     void enable_kbd_input_mask(bool enable) override {
-        this->kbd_input_mask_enabled = enable;
+        this->graphic_to_file.enable_kbd_input_mask(enable);
     }
 
     void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {
