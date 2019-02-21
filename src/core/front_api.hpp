@@ -49,9 +49,9 @@ public:
         instant_done = 2,
         remoteapp = 3
     };
-    virtual ResizeResult server_resize(int width, int height, BitsPerPixel bpp) = 0;
+    virtual ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) = 0;
 
-    virtual void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) {}
+    virtual void update_pointer_position(uint16_t x, uint16_t y) { (void)x; (void)y; }
 
     virtual void set_keyboard_indicators(uint16_t LedFlags) { (void)LedFlags; }
 

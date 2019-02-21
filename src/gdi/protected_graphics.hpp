@@ -23,6 +23,7 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/clip_from_cmd.hpp"
+#include "gdi/subrect4.hpp"
 #include "utils/sugar/array_view.hpp"
 
 #include <array>
@@ -30,22 +31,6 @@
 
 namespace gdi
 {
-
-using subrect4_t = std::array<Rect, 4>;
-inline subrect4_t subrect4(const Rect rect, const Rect & protected_rect)
-{
-    const Rect inter = rect.intersect(protected_rect);
-    return {{
-        // top
-        Rect(rect.x, rect.y, rect.cx, inter.y - rect.y),
-        // right
-        Rect(inter.right(), inter.y, rect.right() - inter.right(), inter.cy),
-        // bottom
-        Rect(rect.x, inter.bottom(), rect.cx, rect.bottom() - inter.bottom()),
-        // left
-        Rect(rect.x, inter.y, inter.x - rect.x, inter.cy)
-    }};
-}
 
 class ProtectedGraphics : public gdi::GraphicApi
 {

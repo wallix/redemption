@@ -1184,12 +1184,6 @@ RED_AUTO_TEST_CASE(TestClearTargetFiles)
 
 #ifndef REDEMPTION_NO_FFMPEG
 
-#define RED_CHECK_FILESIZE(fsize, size, filename)         \
-    RED_CHECK_MESSAGE(                                    \
-        size == fsize,                                    \
-        "check " << size << " == filesize(\"" << filename \
-        << "\") failed [" << size << " != " << fsize << "]")
-
 RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
 {
     const struct CheckFiles {
@@ -1232,15 +1226,8 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
 
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk-meta.meta", "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n");
 
-    bool remove_files = !getenv("TestAppRecorderChunkMeta");
-
     for (auto x: fileinfo) {
-        auto fsize = filesize(x.filename);
-        if (x.size != fsize) {
-            auto size = x.size2 ? x.size2 : x.size;
-            RED_CHECK_FILESIZE(fsize, size, x.filename);
-        }
-        if (remove_files) { ::unlink(x.filename); }
+        RED_CHECK_FILE_SIZE_AND_CLEAN2(x.filename, x.size, x.size2);
     }
 }
 
@@ -1280,12 +1267,8 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize)
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-resize-0.mwrm\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    bool remove_files = !getenv("TestAppRecorderResize");
-
     for (auto x: fileinfo) {
-        auto fsize = filesize(x.filename);
-        RED_CHECK_FILESIZE(fsize, x.size, x.filename);
-        if (remove_files) { ::unlink(x.filename); }
+        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
     }
 }
 
@@ -1325,12 +1308,8 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize1)
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-resize-1.mwrm\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    bool remove_files = !getenv("TestAppRecorderResize1");
-
     for (auto x: fileinfo) {
-        auto fsize = filesize(x.filename);
-        RED_CHECK_FILESIZE(fsize, x.size, x.filename);
-        if (remove_files) { ::unlink(x.filename); }
+        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
     }
 }
 #endif

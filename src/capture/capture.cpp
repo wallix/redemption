@@ -50,7 +50,6 @@
 #include "utils/fileutils.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/png.hpp"
-#include "utils/region.hpp"
 #include "utils/stream.hpp"
 #include "utils/timestamp_tracer.hpp"
 
@@ -59,6 +58,7 @@
 
 #include "gdi/capture_probe_api.hpp"
 #include "gdi/capture_api.hpp"
+#include "gdi/subrect4.hpp"
 #include "gdi/kbd_input_api.hpp"
 
 #include "capture/title_extractors/agent_title_extractor.hpp"
@@ -1833,20 +1833,25 @@ Capture::~Capture()
     }
 }
 
-void Capture::resize(uint16_t width, uint16_t height) {
+void Capture::resize(uint16_t width, uint16_t height)
+{
     if (this->sequenced_video_capture_obj || this->full_video_capture_obj) {
-        if ((this->gd_drawable->width() != width) ||
-            (this->gd_drawable->height() != height)) {
-            SubRegion region;
-            region.add_rect(Rect(0, 0, this->gd_drawable->width(), this->gd_drawable->height()));
-            region.subtract_rect(Rect(0, 0, width, height));
-
-            for (Rect const & rect : region.rects) {
-                this->gd_drawable->draw(RDPOpaqueRect(rect, encode_color24()(BLACK)), rect, gdi::ColorCtx::depth24());
+        if (this->gd_drawable->width() != width || this->gd_drawable->height() != height) {
+            gdi::subrect4_t subrect4 = gdi::subrect4(
+                Rect(0, 0, this->gd_drawable->width(), this->gd_drawable->height()),
+                Rect(0, 0, width, height)
+            );
+            for (Rect const & rect : subrect4) {
+                if (!rect.isempty()) {
+                    this->gd_drawable->draw(
+                        RDPOpaqueRect(rect, encode_color24()(BLACK)),
+                        rect, gdi::ColorCtx::depth24()
+                    );
+                }
             }
         }
 
-        return;
+        return ;
     }
 
     if (this->capture_drawable) {

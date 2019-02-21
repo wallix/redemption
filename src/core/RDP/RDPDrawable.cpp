@@ -158,6 +158,10 @@ RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height)
     this->default_pointer.initialize(p);
 }
 
+void RDPDrawable::resize(uint16_t width, uint16_t height)
+{
+    this->drawable.resize(width, height);
+}
 
 void RDPDrawable::draw(RDPColCache   const & /*cmd*/)
 {}

@@ -22,6 +22,8 @@
 
 #include "utils/sugar/noncopyable.hpp"
 
+#include <cstdint>
+
 namespace gdi {
 
 struct ResizeApi : private noncopyable

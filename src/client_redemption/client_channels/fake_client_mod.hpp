@@ -192,40 +192,6 @@ class FakeClientOutputGraphic : public ClientRemoteAppGraphicAPI {
 public:
     FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientRemoteAppGraphicAPI(controller, config, 0, 0) {}
 
-//     void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
-//
-//     void dropScreen() override {}
-//     void dropScreen(uint32_t /*unused*/) override {}
-//
-//     void show_screen() override {}
-//     void show_screen(uint32_t /*unused*/) override {}
-//
-//     void reset_cache(int w,  int h) override { (void)w; (void)h; }
-//
-//     void create_screen() override {}
-//     void create_replay_screen() override {}
-//
-//     void close() override {}
-
-//     void set_screen_size(int x, int y) override { (void)x; (void)y; }
-//     void set_screen_size(uint32_t /*unused*/, int x, int y) override { (void)x; (void)y; }
-
-//     void update_screen() override {}
-//
-//     void init_form() override {}
-
-
-    // TODO bpp -> gdi::Depth
-//     FrontAPI::ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override
-//     {
-//         (void)width;
-//         (void)height;
-//         (void)bpp;
-//         return FrontAPI::ResizeResult::done;
-//     }
-
-//     using ClientOutputGraphicAPI::draw;
-
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPDestBlt          const & /*cmd*/, Rect /*clip*/) override {}
@@ -363,7 +329,7 @@ public:
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
-    ResizeResult server_resize(int  /*width*/, int  /*height*/, BitsPerPixel /*bpp*/) override { return ResizeResult::instant_done;}
+    ResizeResult server_resize(uint16_t /*width*/, uint16_t /*height*/, BitsPerPixel /*bpp*/) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
 
     void draw(const RDP::RAIL::NewOrExistingWindow & /*cmd*/) override {}

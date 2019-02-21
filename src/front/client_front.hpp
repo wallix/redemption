@@ -94,14 +94,13 @@ public:
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override { }
 
 
-    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
+    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override
+    {
         this->screen_info.width = width;
         this->screen_info.height = height;
         this->screen_info.bpp = bpp;
         if (this->verbose) {
-            LOG(LOG_INFO, "--------- ClientFront ------------------");
-            LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
-            LOG(LOG_INFO, "========================================\n");
+            LOG(LOG_INFO, "ClientFront::server_resize(width=%u, height=%u, bpp=%d", width, height, bpp);
         }
         return ResizeResult::instant_done;
     }
@@ -116,9 +115,7 @@ public:
     void send_to_channel( const CHANNELS::ChannelDef & /*channel*/, const uint8_t * /*data*/, std::size_t
                          /*length*/, std::size_t /*chunk_size*/, int /*flags*/) override {
         if (this->verbose) {
-            LOG(LOG_INFO, "--------- ClientFront ------------------");
-            LOG(LOG_INFO, "send_to_channel");
-            LOG(LOG_INFO, "========================================\n");
+            LOG(LOG_INFO, "ClientFront::send_to_channel");
         }
     }
 

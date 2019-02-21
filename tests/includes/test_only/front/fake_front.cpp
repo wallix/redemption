@@ -214,7 +214,7 @@ void FakeFront::end_update()
 {
 }
 
-FakeFront::ResizeResult FakeFront::server_resize(int width, int height, BitsPerPixel bpp)
+FakeFront::ResizeResult FakeFront::server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp)
 {
     this->d->gd.resize(width, height);
     this->d->screen_info.bpp = bpp;

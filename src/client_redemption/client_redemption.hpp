@@ -1174,9 +1174,10 @@ public:
 		this->draw_impl(no_log{}, cmd, content);
 	}
 
-    virtual ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
+    virtual ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override
+    {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
+            LOG(LOG_INFO, "server_resize to (%u, %u, %d)", width, height, bpp);
         }
         return ResizeResult::instant_done;
     }

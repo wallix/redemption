@@ -833,4 +833,3 @@ public:
     // TODO set_palette unimplemented
     void set_palette(const BGRPalette& /*unused*/) override {}
 };
-

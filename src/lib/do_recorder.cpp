@@ -1538,13 +1538,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         png_params.rt_display = ini.get<cfg::video::rt_display>();
 
                         RDPDrawable rdp_drawable{
-//                            player.screen_rect.cx, player.screen_rect.cy};
                             max_screen_dim.w, max_screen_dim.h};
 
                         DrawableParams const drawable_params{
-//                            player.screen_rect.cx,
                             max_screen_dim.w,
-//                            player.screen_rect.cy,
                             max_screen_dim.h,
                             &rdp_drawable
                         };

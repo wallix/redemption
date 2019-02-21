@@ -29,11 +29,12 @@
 #include "gdi/image_frame_api.hpp"
 #include "gdi/resize_api.hpp"
 
+
 #include "utils/drawable_pointer.hpp"
 #include "utils/drawable.hpp"
 
 
-class RDPDrawable
+class RDPDrawable final
 : public gdi::GraphicApi, public gdi::ImageFrameApi, public gdi::ResizeApi
 {
     using Color = Drawable::Color;
@@ -43,11 +44,12 @@ class RDPDrawable
     uint16_t save_mouse_x;
     uint16_t save_mouse_y;
 public:
+    // TODO private
     int mouse_cursor_pos_x;
     int mouse_cursor_pos_y;
+private:
     int mouse_cursor_hotspot_x;
     int mouse_cursor_hotspot_y;
-private:
     bool dont_show_mouse_cursor;
     const DrawablePointer * current_pointer;
     DrawablePointer dynamic_pointer;
@@ -63,10 +65,7 @@ private:
 public:
     RDPDrawable(const uint16_t width, const uint16_t height);
 
-    void resize(uint16_t width, uint16_t height) override
-    {
-        this->drawable.resize(width, height);
-    }
+    void resize(uint16_t width, uint16_t height) override;
 
     ConstImageView get_image_view() const override
     {
@@ -116,13 +115,6 @@ public:
     size_t pix_len() const noexcept
     {
         return this->drawable.pix_len();
-    }
-
-    void set_mouse_cursor_pos(int x, int y)
-    {
-        this->mouse_cursor_pos_x = x;
-        this->mouse_cursor_pos_y = y;
-
     }
 
     void show_mouse_cursor(bool x)
@@ -211,6 +203,12 @@ public:
     void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) override {}
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
+
+    void set_mouse_cursor_pos(uint16_t x, uint16_t y)
+    {
+        this->mouse_cursor_pos_x = x;
+        this->mouse_cursor_pos_y = y;
+    }
 
     void set_palette(const BGRPalette & palette) override
     {

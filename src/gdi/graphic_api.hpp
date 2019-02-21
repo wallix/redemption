@@ -376,20 +376,11 @@ public:
 
     void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
 
-    static gdi::NullGraphic & instance()
-    {
-        static gdi::NullGraphic gd;
-        return gd;
-    }
-
 public:
     NullGraphic() = default;
 };
 
-inline gdi::GraphicApi & null_gd() noexcept
-{
-    return gdi::NullGraphic::instance();
-}
+gdi::GraphicApi& null_gd() noexcept;
 
 
 struct TextMetrics

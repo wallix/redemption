@@ -3429,14 +3429,6 @@ public:
                             this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
                                 (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
 
-/*
-                            LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->orders.bpp);
-                            if (-1 == this->front.server_resize(this->front_width, this->front_height, this->orders.bpp)){
-                                LOG(LOG_ERR, "Resize not available on older clients,"
-                                    " change client resolution to match server resolution");
-                                throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
-                            }
-*/
                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
                         }
                         break;

@@ -39,9 +39,17 @@ namespace
         }
         height = font.max_height();
     }
+
+    gdi::NullGraphic gd;
 } // namespace
 
-namespace gdi {
+namespace gdi
+{
+
+gdi::GraphicApi & null_gd() noexcept
+{
+    return gd;
+}
 
 TextMetrics::TextMetrics(const Font & font, const char * unicode_text)
 {

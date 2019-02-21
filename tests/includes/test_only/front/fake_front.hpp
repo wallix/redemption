@@ -113,7 +113,7 @@ public:
 
     void end_update() override;
 
-    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override;
+    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override;
 
     void update_pointer_position(uint16_t, uint16_t) override {}
 

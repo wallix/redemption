@@ -798,7 +798,7 @@ public:
         }
     }
 
-    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override
+    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override
     {
         ResizeResult res = ResizeResult::no_need;
 

@@ -48,7 +48,7 @@ struct TestGraphic
     void trace_mouse();
     void clear_mouse();
     void show_mouse_cursor(bool display);
-    void set_mouse_cursor_pos(int x, int y);
+    void set_mouse_cursor_pos(uint16_t x, uint16_t y);
 
     MutableImageDataView get_mutable_image_view();
 

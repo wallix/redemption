@@ -895,7 +895,8 @@ protected:
 public:
     using RDPSerializer::set_pointer;
 
-    void update_pointer_position(uint16_t xPos, uint16_t yPos) {
+    void update_pointer_position(uint16_t xPos, uint16_t yPos)
+    {
         if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
         }
@@ -914,4 +915,3 @@ public:
         }
     }
 };
-
