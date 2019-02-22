@@ -200,7 +200,10 @@ public:
         return true;
     }
 
-    void enable_kbd_input_mask(bool /*enable*/) override {}
+    void enable_kbd_input_mask(bool enable) override {
+        send_wrm_chunk(this->trans, WrmChunkType::KBD_INPUT_MASK, sizeof(uint8_t), 1);
+        this->trans.send((enable ? "\1" : "\0"), 1);
+    }
 
     void send_meta_chunk()
     {
@@ -535,8 +538,6 @@ class WrmCaptureImpl :
             }
         }
 
-        void enable_kbd_input_mask(bool /*unused*/) override {}
-
         bool kbd_input(const timeval & now, uint32_t uchar) override {
             return this->GraphicToFile::kbd_input(now, uchar);
         }
@@ -772,6 +773,8 @@ public:
 
     void enable_kbd_input_mask(bool enable) override {
         this->kbd_input_mask_enabled = enable;
+
+        this->graphic_to_file.enable_kbd_input_mask(enable);
     }
 
     void send_timestamp_chunk(timeval const & now, bool ignore_time_interval) {

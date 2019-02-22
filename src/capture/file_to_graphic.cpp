@@ -170,6 +170,7 @@ bool FileToGraphic::next_order()
                 case WrmChunkType::SAVE_STATE:
                 case WrmChunkType::RESET_CHUNK:
                 case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:
+                case WrmChunkType::KBD_INPUT_MASK:
                     this->statistics.internal_order_read_len += this->chunk_size; break;
                 default: ;
             }
@@ -822,6 +823,17 @@ void FileToGraphic::interpret_order()
 
         this->stream.in_skip_bytes(this->stream.in_remain());
     break;
+
+    case WrmChunkType::KBD_INPUT_MASK:
+        {
+            const bool enable = (this->stream.in_uint8() ? true : false);
+
+            for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
+                kbd->enable_kbd_input_mask(enable);
+            }
+        }
+    break;
+
     default:
         LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
         throw Error(ERR_WRM);
