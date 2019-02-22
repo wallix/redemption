@@ -138,3 +138,63 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 }
 
 
+//// With ALTGr
+//// AltGR down
+//KeymapSym::event(keyboardFlags=0x0100, keyCode=0x0038 flags=0x00a0)
+//KeymapSym::push_sym(sym=0000ffea) nbuf_sym=0
+//KeymapSym::event(keyboardFlags=0x0000, keyCode=0x000b flags=0x00a0)
+//KeymapSym::push_sym(sym=00000040) nbuf_sym=0
+//// AltGR up
+//KeymapSym::event(keyboardFlags=0x8000, keyCode=0x000b flags=0x00a0)
+//KeymapSym::push_sym(sym=00000040) nbuf_sym=0
+
+//KeymapSym::event(keyboardFlags=0x8100, keyCode=0x0038 flags=0x00a0)
+//KeymapSym::push_sym(sym=0000ffea) nbuf_sym=0
+
+//// With CTRL+Alt
+//// CTRL down
+//KeymapSym::event(keyboardFlags=0x0000, keyCode=0x001d flags=0x00a0)
+//KeymapSym::push_sym(sym=0000ffe3) nbuf_sym=0
+//// ALT down
+//KeymapSym::event(keyboardFlags=0x0000, keyCode=0x0038 flags=0x00a0)
+//KeymapSym::push_sym(sym=0000ffe9) nbuf_sym=0
+//// 0 down
+//KeymapSym::event(keyboardFlags=0x0000, keyCode=0x000b flags=0x00a0)
+//KeymapSym::push_sym(sym=000000e0) nbuf_sym=0
+//// 0 up 
+//KeymapSym::event(keyboardFlags=0x8000, keyCode=0x000b flags=0x00a0)
+//// -> I get an agrave, the target server translate that to an arobas
+//KeymapSym::push_sym(sym=000000e0) nbuf_sym=0
+
+//// CTRL up
+//KeymapSym::event(keyboardFlags=0x8000, keyCode=0x001d flags=0x00a0)
+//KeymapSym::push_sym(sym=0000ffe3) nbuf_sym=0
+//// ALT up
+//KeymapSym::event(keyboardFlags=0x8000, keyCode=0x0038 flags=0x00a0)
+//KeymapSym::push_sym(sym=0000ffe9) nbuf_sym=0
+
+
+RED_AUTO_TEST_CASE(TestKeymapSymEuro)
+{
+    KeymapSym keymap;
+    const int layout = 0x040C;
+    keymap.init_layout_sym(layout);
+
+    keymap.event(0x8000, 0x000f);
+    RED_CHECK_EQUAL(0xff09, keymap.get_sym());
+    keymap.event(0x0000, 0x001d);
+    RED_CHECK_EQUAL(0xffe3, keymap.get_sym());
+    keymap.event(0x0000, 0x0038);
+    RED_CHECK_EQUAL(0xffe9, keymap.get_sym());
+    keymap.event(0x0000, 0x0012);
+    // I get an E, which means the translation is done by target VNC server not here
+    RED_CHECK_EQUAL(0x65, keymap.get_sym());
+    keymap.event(0x8000, 0x0012);
+    RED_CHECK_EQUAL(0x65, keymap.get_sym());
+    keymap.event(0x8000, 0x001d);
+    RED_CHECK_EQUAL(0xffe3, keymap.get_sym());
+    keymap.event(0x8000, 0x0038);
+    RED_CHECK_EQUAL(0xffe9, keymap.get_sym());
+    keymap.event(0x8000, 0x0038);
+    RED_CHECK_EQUAL(0xffe9, keymap.get_sym());
+}

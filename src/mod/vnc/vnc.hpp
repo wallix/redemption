@@ -954,10 +954,6 @@ public:
 
         IF_ENABLE_METRICS(key_pressed());
 
-//         if (0x45 == param1) {
-//            this->keymapSym.toggle_num_lock(keymap->is_num_locked());
-//         }
-
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
         if (this->server_is_apple) {
