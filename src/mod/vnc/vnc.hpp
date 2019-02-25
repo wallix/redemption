@@ -938,7 +938,7 @@ public:
     } // rdp_input_mouse
 
     void rdp_input_scancode(
-        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * keymap
+        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/
     ) override {
         if (this->state != UP_AND_RUNNING) {
             return;
@@ -960,7 +960,6 @@ public:
         if (this->server_is_apple) {
             this->apple_keyboard_translation(device_flags, param1, downflag);
         } else {
-
             this->keyMapSym_event(device_flags, param1, downflag);
         }
     } // rdp_input_scancode

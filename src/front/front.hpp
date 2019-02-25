@@ -892,10 +892,6 @@ public:
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override
     {
         this->orders.graphics_update_pdu().update_pointer_position(xPos, yPos);
-        //if (  this->capture
-        //   && (this->capture_state == CAPTURE_STATE_STARTED)) {
-        //    this->capture->update_pointer_position(xPos, yPos);
-        //}
     }
 
     // ===========================================================================
@@ -3802,7 +3798,7 @@ private:
                 sdata_in.payload.in_skip_bytes(3);
 
                 // numberOfAreas * (left(2) + top(2) + right(2) + bottom(2))
-                ::check_throw(sdata_in.payload, numberOfAreas * 8, 
+                ::check_throw(sdata_in.payload, numberOfAreas * 8,
                                                    "Front::process_data::Refresh rect PDU data", ERR_RDP_DATA_TRUNCATED);
 
                 auto rects_raw = std::make_unique<Rect[]>(numberOfAreas);
