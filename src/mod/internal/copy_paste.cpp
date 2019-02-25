@@ -112,7 +112,7 @@ bool CopyPaste::ready(FrontAPI & front)
     if (this->channel_) {
         StaticOutStream<256> out_s_cb_clip_caps;
 
-        RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+        RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, /*RDPECLIP::CB_USE_LONG_FORMAT_NAMES*/0);
         RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(1);
         RDPECLIP::CliprdrHeader clip_header(RDPECLIP::CB_CLIP_CAPS, 0, clip_cap_pdu.size() + general_cap_set.size());
 
@@ -153,7 +153,7 @@ void CopyPaste::paste(WidgetEdit & edit)
     else {
         this->paste_edit_ = &edit;
 
-        RDPECLIP::FormatDataRequestPDU pdu;
+        RDPECLIP::FormatDataRequestPDU pdu(RDPECLIP::CF_UNICODETEXT);
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, pdu.size());
 
         StaticOutStream<256> out_s;
@@ -176,7 +176,7 @@ void CopyPaste::copy(const char * s, size_t n)
     RDPECLIP::FormatListPDUEx format_list_pdu;
     format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
 
-    const bool use_long_format_names = true;
+    const bool use_long_format_names = false;
     const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
     RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
