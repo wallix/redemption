@@ -2151,7 +2151,8 @@ class mod_rdp : public mod_api, public rdp_api
         WAITING_CTL_COOPERATE,
         WAITING_GRANT_CONTROL_COOPERATE,
         WAITING_FONT_MAP,
-        UP_AND_RUNNING
+        UP_AND_RUNNING,
+        DISCONNECTED,
     } connection_finalization_state = EARLY;
 
     Pointer cursors[32];
@@ -2204,9 +2205,6 @@ class mod_rdp : public mod_api, public rdp_api
     SessionReactor::GraphicFdPtr fd_event;
 
     SessionReactor::TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
-
-    std::string end_session_reason;
-    std::string end_session_message;
 
     bool deactivation_reactivation_in_progress = false;
 
@@ -2421,11 +2419,8 @@ public:
         }
 #endif
 
-        if (!this->end_session_reason.empty()
-        &&  !this->end_session_message.empty()) {
-            this->report_message.report(
-                this->end_session_reason.c_str(),
-                this->end_session_message.c_str());
+        if (DISCONNECTED == this->connection_finalization_state) {
+            this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
         }
 
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -2955,8 +2950,7 @@ public:
             const char * reason = MCS::get_reason(mcs.reason);
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
 
-            this->end_session_reason.clear();
-            this->end_session_message.clear();
+            this->connection_finalization_state = DISCONNECTED;
 
 #ifndef __EMSCRIPTEN__
             if ((!this->channels.session_probe_virtual_channel
@@ -3351,6 +3345,7 @@ public:
                                 }
                             }
                             break;
+                        case DISCONNECTED: break;
                         }
                         break;
                     case PDUTYPE_DEMANDACTIVEPDU:
@@ -3538,9 +3533,6 @@ public:
                         "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
 
                     this->report_message.report(reason, e.errmsg());
-
-                    this->end_session_reason.clear();
-                    this->end_session_message.clear();
                 }
 
                 if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
@@ -3595,6 +3587,7 @@ public:
                 }
 
                 if (UP_AND_RUNNING != this->connection_finalization_state &&
+                    DISCONNECTED != this->connection_finalization_state &&
                     !this->already_upped_and_running) {
                     const char * statedescr = TR(trkeys::err_mod_rdp_connected, this->lang);
                     str_append(
@@ -5005,8 +4998,9 @@ public:
                 *this->error_message = "Unauthorized logon user change detected!";
             }
 
-            this->end_session_reason  = "OPEN_SESSION_FAILED";
-            this->end_session_message = "Unauthorized logon user change detected.";
+            this->connection_finalization_state = DISCONNECTED;
+
+            this->report_message.report("OPEN_SESSION_FAILED", "Unauthorized logon user change detected.");
 
             LOG(LOG_ERR,
                 "Unauthorized logon user change detected on %s (%s%s%s) -> (%s%s%s). "
@@ -5027,8 +5021,6 @@ public:
 #endif
 
         this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
-        this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
-        this->end_session_message = "OK.";
 
         this->fd_event->disable_timeout();
 
@@ -5995,6 +5987,7 @@ public:
             if (bool(this->verbose & RDPVerbose::basic_trace)){
                 LOG(LOG_INFO, "mod_rdp::disconnect()");
             }
+            this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
             // this->send_shutdown_request();
             // this->draw_event(time(nullptr));
             this->send_disconnect_ultimatum();
@@ -6038,6 +6031,7 @@ private:
         }
 
         if (!this->mcs_disconnect_provider_ultimatum_pdu_received) {
+            this->connection_finalization_state = DISCONNECTED;
             this->rdp_input.send_data_request([](StreamSize<256>, OutStream & mcs_data) {
                 MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
             });
@@ -6150,9 +6144,6 @@ public:
 
     void sespro_ending_in_progress() override
     {
-        this->end_session_reason.clear();
-        this->end_session_message.clear();
-
         this->authentifier.disconnect_target();
         this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
 
