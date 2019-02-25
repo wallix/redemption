@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # cd /var/lib/jenkins/jobs/redemption-future/workspace
-cd $(realpath "$0")/../..
+cd $(realpath -m "$0/../..")
 
 if ! [[ $PWD =~ ^/var/lib/jenkins/jobs/* ]]; then
   echo 'Please, run script on Jenkins.'
