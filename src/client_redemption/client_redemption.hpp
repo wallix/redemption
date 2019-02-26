@@ -396,7 +396,7 @@ public:
                     mod_rdp_params.rail_client_execute = &(this->rail_client_execute);
                     mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
-                    mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
+                    mod_rdp_params.session_probe_params.use_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
                     this->config.info.cs_monitor = GCC::UserData::CSMonitor{};
 
                     this->clientRemoteAppChannel.set_configuration(
@@ -1248,8 +1248,9 @@ private:
         }
     }
 
+    // TODO color_ctx isn't used
     template<class WithLog, class Order, class... Ts>
-    void draw_impl(WithLog with_log, Order& order, Rect clip, gdi::ColorCtx color_ctx, Ts&... others)
+    void draw_impl(WithLog with_log, Order& order, Rect clip, gdi::ColorCtx /*color_ctx*/, Ts&... others)
     {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
             if constexpr (with_log) { /*NOLINT*/

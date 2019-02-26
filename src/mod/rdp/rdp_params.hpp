@@ -25,6 +25,7 @@
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/channel_names.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
+#include "mod/rdp/params/rdp_session_probe_params.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
@@ -59,6 +60,8 @@ using ModRdpVariables = vcfg::variables<
 
 struct ModRDPParams
 {
+    ModRdpSessionProbeParams session_probe_params;
+
     const char * target_user;
     const char * target_password;
     const char * target_host;
@@ -73,8 +76,6 @@ struct ModRDPParams
     bool enable_fastpath = true;           // If true, fast-path must be supported.
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
-    bool enable_session_probe = false;
-    bool session_probe_enable_launch_mask = true;
     bool enable_remotefx = false;
 
     bool disable_clipboard_log_syslog = false;
@@ -82,47 +83,9 @@ struct ModRDPParams
     bool disable_file_system_log_syslog = false;
     bool disable_file_system_log_wrm = false;
 
-    bool                         session_probe_use_clipboard_based_launcher = false;
-    std::chrono::milliseconds    session_probe_launch_timeout {};
-    std::chrono::milliseconds    session_probe_launch_fallback_timeout {};
-    bool                         session_probe_start_launch_timeout_timer_only_after_logon = true;
-    SessionProbeOnLaunchFailure  session_probe_on_launch_failure = SessionProbeOnLaunchFailure::disconnect_user;
-    std::chrono::milliseconds    session_probe_keepalive_timeout {};
-    SessionProbeOnKeepaliveTimeout session_probe_on_keepalive_timeout = SessionProbeOnKeepaliveTimeout::disconnect_user;
-    bool                         session_probe_end_disconnected_session = false;
-    bool                         session_probe_customize_executable_name = false;
-    std::chrono::milliseconds    session_probe_disconnected_application_limit {};
-    std::chrono::milliseconds    session_probe_disconnected_session_limit {};
-    std::chrono::milliseconds    session_probe_idle_session_limit {};
-    const char *                 session_probe_exe_or_file = "";
-    const char *                 session_probe_arguments = "";
-    bool                         session_probe_enable_log = false;
-    bool                         session_probe_enable_log_rotation = true;
-
-    SessionProbeClipboardBasedLauncher::Params session_probe_clipboard_based_launcher;
-
-    bool                         session_probe_allow_multiple_handshake = false;
-
-    bool                         session_probe_enable_crash_dump = false;
-
-    uint32_t                     session_probe_handle_usage_limit = 0;
-    uint32_t                     session_probe_memory_usage_limit = 0;
-
-    bool                         session_probe_ignore_ui_less_processes_during_end_of_session_check = true;
-
-    bool                         session_probe_childless_window_as_unidentified_input_field = true;
-
-    bool                         session_probe_public_session = false;
-
     Transport  * persistent_key_list_transport = nullptr;
 
     int key_flags;
-
-    const char * session_probe_extra_system_processes               = "";
-    const char * session_probe_outbound_connection_monitoring_rules = "";
-    const char * session_probe_process_monitoring_rules             = "";
-
-    const char * session_probe_windows_of_these_applications_as_unidentified_input_field = "";
 
     bool         ignore_auth_channel = false;
     CHANNELS::ChannelNameId auth_channel;
@@ -214,8 +177,6 @@ struct ModRDPParams
 
     std::chrono::milliseconds rail_disconnect_message_delay {};
 
-    bool use_session_probe_to_launch_remote_program = true;
-
     bool bogus_ios_rdpdr_virtual_channel = true;
 
     bool enable_rdpdr_data_analysis = true;
@@ -264,6 +225,7 @@ struct ModRDPParams
         auto str_or_none = [](std::string const * str) -> char const * { return str ? str->c_str() : "<none>"; };
         auto from_sec = [](std::chrono::seconds sec) -> unsigned { return sec.count(); };
         auto from_millisec = [](std::chrono::milliseconds millisec) -> unsigned { return millisec.count(); };
+        auto str = [](std::reference_wrapper<std::string const> x) -> std::string const& { return x; };
 
 #define RDP_PARAMS_LOG(format, get, member) \
     LOG(LOG_INFO, "ModRDPParams " #member "=" format, get (this->member))
@@ -284,41 +246,41 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_remotefx);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_session_probe);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_launch_mask);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_session_probe);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_launch_mask);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_use_clipboard_based_launcher);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_launch_timeout);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_launch_fallback_timeout);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_start_launch_timeout_timer_only_after_logon);
-        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_on_launch_failure);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_keepalive_timeout);
-        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_on_keepalive_timeout);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_end_disconnected_session);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_disconnected_application_limit);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_disconnected_session_limit);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_idle_session_limit);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_customize_executable_name);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log_rotation);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.use_clipboard_based_launcher);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.launch_timeout);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.launch_fallback_timeout);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.start_launch_timeout_timer_only_after_logon);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc.on_launch_failure);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.keepalive_timeout);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc.on_keepalive_timeout);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.end_disconnected_session);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.disconnected_application_limit);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.disconnected_session_limit);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.idle_session_limit);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.customize_executable_name);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.enable_log);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.enable_log_rotation);
 
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher.clipboard_initialization_delay_ms);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher.start_delay_ms);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher.long_delay_ms);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher.short_delay_ms);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.start_delay_ms);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.long_delay_ms);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.short_delay_ms);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_allow_multiple_handshake);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.allow_multiple_handshake);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_crash_dump);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.enable_crash_dump);
 
-        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_handle_usage_limit);
-        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_memory_usage_limit);
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_params.vc.handle_usage_limit);
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_params.vc.memory_usage_limit);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_ignore_ui_less_processes_during_end_of_session_check);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.ignore_ui_less_processes_during_end_of_session_check);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_childless_window_as_unidentified_input_field);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.childless_window_as_unidentified_input_field);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_public_session);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.is_public_session);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);
@@ -330,13 +292,13 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_extra_system_processes);
+        RDP_PARAMS_LOG("\"%s\"", str,                   session_probe_params.vc.extra_system_processes);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_outbound_connection_monitoring_rules);
+        RDP_PARAMS_LOG("\"%s\"", str,                   session_probe_params.vc.outbound_connection_monitoring_rules);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_process_monitoring_rules);
+        RDP_PARAMS_LOG("\"%s\"", str,                   session_probe_params.vc.process_monitoring_rules);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_windows_of_these_applications_as_unidentified_input_field);
+        RDP_PARAMS_LOG("\"%s\"", str,                   session_probe_params.vc.windows_of_these_applications_as_unidentified_input_field);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel.c_str());
@@ -416,7 +378,7 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%u",     from_millisec,         rail_disconnect_message_delay);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             use_session_probe_to_launch_remote_program);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.use_to_launch_remote_program);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_ios_rdpdr_virtual_channel);
 

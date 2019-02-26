@@ -443,78 +443,25 @@ struct mod_rdp_channels
             std::string arguments;
             const bool customize_executable_name;
 
-            struct VirtualChannelParams
-            {
-                const std::chrono::milliseconds   launch_timeout;
-                const std::chrono::milliseconds   launch_fallback_timeout;
-                const bool                        start_launch_timeout_timer_only_after_logon;
-                const SessionProbeOnLaunchFailure on_launch_failure;
-                const std::chrono::milliseconds   keepalive_timeout;
-                const SessionProbeOnKeepaliveTimeout on_keepalive_timeout;
-                const bool                        end_disconnected_session;
-                const std::chrono::milliseconds   disconnected_application_limit;
-                const std::chrono::milliseconds   disconnected_session_limit;
-                const std::chrono::milliseconds   idle_session_limit;
-                const bool                        log_enabled;
-                const bool                        log_rotation_enabled;
-                const bool                        allow_multiple_handshake;
-                const bool                        enable_crash_dump;
-                const uint32_t                    handle_usage_limit;
-                const uint32_t                    memory_usage_limit;
-                const bool                        ignore_ui_less_processes_during_end_of_session_check;
-                const bool                        childless_window_as_unidentified_input_field;
-                // TODO: see if target_informations really belongs here or in structure above
-                const bool                        public_session;
-                // TODO: see if target_informations really belongs here or in structure above
-                std::string                       target_informations;
-                const std::string                 extra_system_processes;
-                const std::string                 outbound_connection_monitoring_rules;
-                const std::string                 process_monitoring_rules;
-                const std::string                 windows_of_these_applications_as_unidentified_input_field;
+            ModRdpSessionProbeParams::VirtualChannelParams vc;
 
-                VirtualChannelParams(const ModRDPParams & mod_rdp_params)
-                    : launch_timeout(mod_rdp_params.session_probe_launch_timeout)
-                    , launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
-                    , start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
-                    , on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
-                    , keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
-                    , on_keepalive_timeout(mod_rdp_params.session_probe_on_keepalive_timeout)
-                    , end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
-                    , disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
-                    , disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
-                    , idle_session_limit(mod_rdp_params.session_probe_idle_session_limit)
-                    , log_enabled(mod_rdp_params.session_probe_enable_log)
-                    , log_rotation_enabled(mod_rdp_params.session_probe_enable_log_rotation)
-                    , allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
-                    , enable_crash_dump(mod_rdp_params.session_probe_enable_crash_dump)
-                    , handle_usage_limit(mod_rdp_params.session_probe_handle_usage_limit)
-                    , memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
-                    , ignore_ui_less_processes_during_end_of_session_check(mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
-                    , childless_window_as_unidentified_input_field(mod_rdp_params.session_probe_childless_window_as_unidentified_input_field)
-                    , public_session(mod_rdp_params.session_probe_public_session)
-                    , extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
-                    , outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
-                    , process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
-                    , windows_of_these_applications_as_unidentified_input_field(mod_rdp_params.session_probe_windows_of_these_applications_as_unidentified_input_field)
+            std::string target_informations;
 
-                {}
-            } vc;
-
-            SessionProbeStartParams(const ModRDPParams & mod_rdp_params)
-            : enabled(mod_rdp_params.enable_session_probe)
-            , used_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
-            , arguments(mod_rdp_params.session_probe_arguments)
-            , customize_executable_name(mod_rdp_params.session_probe_customize_executable_name)
-            , vc(mod_rdp_params)
+            SessionProbeStartParams(ModRdpSessionProbeParams const& sespro_params)
+            : enabled(sespro_params.enable_session_probe)
+            , used_to_launch_remote_program(sespro_params.use_to_launch_remote_program)
+            , arguments(sespro_params.arguments)
+            , customize_executable_name(sespro_params.customize_executable_name)
+            , vc(sespro_params.vc)
             {}
         } params;
 
         SessionProbe(ModRDPParams const& mod_rdp_params)
         : session_probe_clipboard_based_launcher(
-            mod_rdp_params.session_probe_clipboard_based_launcher)
-        , params(mod_rdp_params)
+            mod_rdp_params.session_probe_params.clipboard_based_launcher)
+        , params(mod_rdp_params.session_probe_params)
         , mod_rdp_params_session_probe_use_clipboard_based_launcher(
-            mod_rdp_params.session_probe_use_clipboard_based_launcher)
+            mod_rdp_params.session_probe_params.use_clipboard_based_launcher)
         , session_probe_use_clipboard_based_launcher(
             this->mod_rdp_params_session_probe_use_clipboard_based_launcher
             && (!mod_rdp_params.target_application || !*mod_rdp_params.target_application)
@@ -522,11 +469,19 @@ struct mod_rdp_channels
             || !mod_rdp_params.alternate_shell[0]
             || mod_rdp_params.remote_program))
         , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
+        , exe_or_file(mod_rdp_params.session_probe_params.exe_or_file)
         {}
 
         const bool mod_rdp_params_session_probe_use_clipboard_based_launcher;
         const bool session_probe_use_clipboard_based_launcher;
         const bool experimental_fix_too_long_cookie;
+        const std::string exe_or_file;
+
+        struct ChannelParams
+        {
+            std::string real_alternate_shell;
+            std::string real_working_dir;
+        } channel_params;
     } session_probe;
 #endif
 
@@ -545,9 +500,6 @@ struct mod_rdp_channels
     WindowsExecuteShellParams client_execute;
 
     WindowsExecuteShellParams real_client_execute;
-
-    std::string real_alternate_shell;
-    std::string real_working_dir;
 
     data_size_type max_clipboard_data = 0;
     data_size_type max_rdpdr_data     = 0;
@@ -1011,8 +963,8 @@ public:
         sp_vc_params.session_probe_disconnected_application_limit = this->session_probe.params.vc.disconnected_application_limit;
         sp_vc_params.session_probe_disconnected_session_limit = this->session_probe.params.vc.disconnected_session_limit;
         sp_vc_params.session_probe_idle_session_limit =  this->session_probe.params.vc.idle_session_limit;
-        sp_vc_params.session_probe_enable_log = this->session_probe.params.vc.log_enabled;
-        sp_vc_params.session_probe_enable_log_rotation = this->session_probe.params.vc.log_rotation_enabled;
+        sp_vc_params.session_probe_enable_log = this->session_probe.params.vc.enable_log;
+        sp_vc_params.session_probe_enable_log_rotation = this->session_probe.params.vc.enable_log_rotation;
         sp_vc_params.session_probe_allow_multiple_handshake = this->session_probe.params.vc.allow_multiple_handshake;
         sp_vc_params.session_probe_enable_crash_dump = this->session_probe.params.vc.enable_crash_dump;
         sp_vc_params.session_probe_handle_usage_limit = this->session_probe.params.vc.handle_usage_limit;
@@ -1023,13 +975,13 @@ public:
         sp_vc_params.session_probe_outbound_connection_monitoring_rules = this->session_probe.params.vc.outbound_connection_monitoring_rules.c_str();
         sp_vc_params.session_probe_process_monitoring_rules = this->session_probe.params.vc.process_monitoring_rules.c_str();
         sp_vc_params.session_probe_windows_of_these_applications_as_unidentified_input_field = this->session_probe.params.vc.windows_of_these_applications_as_unidentified_input_field.c_str();
-        sp_vc_params.target_informations = this->session_probe.params.vc.target_informations.c_str();
+        sp_vc_params.target_informations = this->session_probe.params.target_informations.c_str();
 
 
         sp_vc_params.front_width = stc.negociation_result.front_width;
         sp_vc_params.front_height = stc.negociation_result.front_height;
-        sp_vc_params.real_alternate_shell = this->real_alternate_shell.c_str();
-        sp_vc_params.real_working_dir = this->real_working_dir.c_str();
+        sp_vc_params.real_alternate_shell = this->session_probe.channel_params.real_alternate_shell.c_str();
+        sp_vc_params.real_working_dir = this->session_probe.channel_params.real_working_dir.c_str();
         sp_vc_params.lang = lang;
         sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && monitor_count);
         sp_vc_params.show_maximized = !remote_program;
@@ -1460,11 +1412,11 @@ public:
                     "${USER}", mod_rdp_params.target_application_account,
                     "${PASSWORD}", mod_rdp_params.target_application_password);
 
-                this->real_alternate_shell = mod_rdp_params.alternate_shell;
+                this->session_probe.channel_params.real_alternate_shell = mod_rdp_params.alternate_shell;
                 if (!shell_arguments.empty()) {
-                    str_append(this->real_alternate_shell, ' ', shell_arguments);
+                    str_append(this->session_probe.channel_params.real_alternate_shell, ' ', shell_arguments);
                 }
-                this->real_working_dir     = mod_rdp_params.shell_working_dir;
+                this->session_probe.channel_params.real_working_dir     = mod_rdp_params.shell_working_dir;
             }
             else {
                 mod_rdp_channels::replace_shell_arguments(this->real_client_execute.arguments,
@@ -1487,12 +1439,12 @@ public:
 
             if (use_client_provided_remoteapp
             || !this->session_probe.params.used_to_launch_remote_program) {
-                this->real_alternate_shell = "[None]";
+                this->session_probe.channel_params.real_alternate_shell = "[None]";
                 this->real_client_execute.exe_or_file = mod_rdp_params.client_execute.exe_or_file;
                 this->real_client_execute.working_dir = mod_rdp_params.client_execute.working_dir;
             }
 
-            this->client_execute.exe_or_file = mod_rdp_params.session_probe_exe_or_file;
+            this->client_execute.exe_or_file = this->session_probe.exe_or_file;
 
             // Executable file name of SP.
             char exe_var_str[16] {};
@@ -1501,17 +1453,17 @@ public:
             }
 
             // Target informations
-            str_assign(this->session_probe.params.vc.target_informations, mod_rdp_params.target_application, ':');
-            if (!this->session_probe.params.vc.public_session) {
-                this->session_probe.params.vc.target_informations += this->primary_user_id;
+            str_assign(this->session_probe.params.target_informations, mod_rdp_params.target_application, ':');
+            if (!this->session_probe.params.vc.is_public_session) {
+                this->session_probe.params.target_informations += this->primary_user_id;
             }
 
             std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
 
             std::string cookie_param
-              = this->session_probe.params.vc.target_informations.empty()
+              = this->session_probe.params.target_informations.empty()
               ? std::string()
-              : str_concat("/#", this->session_probe.params.vc.target_informations, ' ');
+              : str_concat("/#", this->session_probe.params.target_informations, ' ');
 
             mod_rdp_channels::replace_probe_arguments(this->session_probe.params.arguments,
                 "${EXE_VAR}", exe_var_str,
@@ -1596,9 +1548,9 @@ public:
         }
 
         // Target informations
-        str_assign(this->session_probe.params.vc.target_informations, mod_rdp_params.target_application, ':');
-        if (!this->session_probe.params.vc.public_session) {
-            this->session_probe.params.vc.target_informations += this->primary_user_id;
+        str_assign(this->session_probe.params.target_informations, mod_rdp_params.target_application, ':');
+        if (!this->session_probe.params.vc.is_public_session) {
+            this->session_probe.params.target_informations += this->primary_user_id;
         }
 
         if (this->session_probe.mod_rdp_params_session_probe_use_clipboard_based_launcher
@@ -1616,15 +1568,15 @@ public:
                 return std::string{};
             }
 
-            if (this->session_probe.params.vc.target_informations.empty()) {
+            if (this->session_probe.params.target_informations.empty()) {
                 return std::string{};
             }
 
             if (this->session_probe.experimental_fix_too_long_cookie
-             && this->session_probe.params.vc.target_informations.length() > 20
+             && this->session_probe.params.target_informations.length() > 20
             ){
                 SslSha1 sha1;
-                sha1.update(this->session_probe.params.vc.target_informations);
+                sha1.update(this->session_probe.params.target_informations);
 
                 uint8_t sig[SslSha1::DIGEST_LENGTH];
                 sha1.final(sig);
@@ -1640,7 +1592,7 @@ public:
                 return std::string(clipboard_based_launcher_cookie);
             }
 
-            return str_concat("/#", this->session_probe.params.vc.target_informations, ' ');
+            return str_concat("/#", this->session_probe.params.target_informations, ' ');
         }();
 
         mod_rdp_channels::replace_probe_arguments(this->session_probe.params.arguments,
@@ -1650,7 +1602,7 @@ public:
             "${CBSPL_VAR} ", this->session_probe.session_probe_use_clipboard_based_launcher ? "CD %TMP%&" : ""
         );
 
-        std::string alternate_shell = mod_rdp_params.session_probe_exe_or_file;
+        std::string alternate_shell = this->session_probe.exe_or_file;
 
         if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
             alternate_shell.erase(0, 2);
@@ -1665,16 +1617,16 @@ public:
                 get_alternate_shell_arguments::Account{mod_rdp_params.target_application_account},
                 get_alternate_shell_arguments::Password{mod_rdp_params.target_application_password});
 
-            this->real_alternate_shell = shell_arguments.empty()
+            this->session_probe.channel_params.real_alternate_shell = shell_arguments.empty()
                 ? std::string(mod_rdp_params.alternate_shell)
                 : str_concat(mod_rdp_params.alternate_shell, ' ', shell_arguments);
-            this->real_working_dir     = mod_rdp_params.shell_working_dir;
+            this->session_probe.channel_params.real_working_dir     = mod_rdp_params.shell_working_dir;
         }
         else if (mod_rdp_params.use_client_provided_alternate_shell
             && info.alternate_shell[0] && !info.remote_program
         ) {
-            this->real_alternate_shell = info.alternate_shell;
-            this->real_working_dir     = info.working_dir;
+            this->session_probe.channel_params.real_alternate_shell = info.alternate_shell;
+            this->session_probe.channel_params.real_working_dir     = info.working_dir;
         }
         else if (this->session_probe.session_probe_use_clipboard_based_launcher) {
             this->session_probe.session_probe_launcher =
@@ -2292,7 +2244,7 @@ public:
         , report_message(report_message)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
 #ifndef __EMSCRIPTEN__
-        , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
+        , session_probe_enable_launch_mask(mod_rdp_params.session_probe_params.enable_launch_mask)
 #endif
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)

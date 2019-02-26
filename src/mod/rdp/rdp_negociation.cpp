@@ -342,11 +342,11 @@ RdpNegociation::RdpNegociation(
         )
     , trans(trans)
     , password_printing_mode(mod_rdp_params.password_printing_mode)
-    , enable_session_probe(mod_rdp_params.enable_session_probe)
+    , enable_session_probe(mod_rdp_params.session_probe_params.enable_session_probe)
     , enable_remotefx(mod_rdp_params.enable_remotefx)
     , rdp_compression(mod_rdp_params.rdp_compression)
     , session_probe_use_clipboard_based_launcher(
-        mod_rdp_params.session_probe_use_clipboard_based_launcher
+        mod_rdp_params.session_probe_params.use_clipboard_based_launcher
         && (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application))
         && (!mod_rdp_params.use_client_provided_alternate_shell
         || !info.alternate_shell[0] || info.remote_program)

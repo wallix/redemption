@@ -139,12 +139,15 @@ namespace trkeys
     TR_KV(note_duration_format, "Format: [hours]h[mins]m", "Format: [heures]h[mins]m");
     TR_KV(note_required, "(*) required fields", "(*) champs requis");
     TR_KV(confirm, "Confirm", "Confirmer");
+    // TODO TR_KV_FMT
     TR_KV(fmt_field_required,
         "Error: %s field is required.",
         "Erreur: le champ %s est requis.");
+    // TODO TR_KV_FMT
     TR_KV(fmt_invalid_format,
         "Error: %s invalid format.",
         "Erreur: format %s invalide.");
+    // TODO TR_KV_FMT
     TR_KV(fmt_toohigh_duration,
         "Error: %s is too high (max: %d minutes).",
         "Erreur: %s trop haute (max: %d minutes).");
@@ -159,6 +162,7 @@ namespace trkeys
         "Another user connected to the resource, so your connection was lost.",
         "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."
     );
+    // TODO TR_KV_FMT
     TR_KV(process_interrupted_security_policies,
         "The process '%s' was interrupted in accordance with security policies.",
         "Le processus '%s' a été interrompu conformément aux politiques de sécurité."

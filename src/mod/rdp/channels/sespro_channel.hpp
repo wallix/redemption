@@ -1685,8 +1685,7 @@ public:
                             parameters_[1].c_str());
                         REDEMPTION_DIAGNOSTIC_POP
 
-                        std::string string_message = message;
-                        this->mod.display_osd_message(string_message);
+                        this->mod.display_osd_message(message);
                     }
                     else {
                         message_format_invalid = true;
