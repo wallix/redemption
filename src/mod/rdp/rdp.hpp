@@ -1707,8 +1707,7 @@ public:
                 char (&program)[512],
                 char (&directory)[512])
     {
-        if (mod_rdp_params.target_application  && (*mod_rdp_params.target_application)) {
-
+        if (mod_rdp_params.target_application && *mod_rdp_params.target_application) {
             std::string shell_arguments = get_alternate_shell_arguments(
                 mod_rdp_params.shell_arguments,
                 get_alternate_shell_arguments::App{mod_rdp_params.target_application},
@@ -1723,22 +1722,17 @@ public:
 
             strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
             program[sizeof(program) - 1] = 0;
-            strncpy(directory, std::string(mod_rdp_params.shell_working_dir).c_str(), sizeof(directory) - 1);
+            strncpy(directory, mod_rdp_params.shell_working_dir, sizeof(directory) - 1);
             directory[sizeof(directory) - 1] = 0;
         }
-        else {
-            if (mod_rdp_params.use_client_provided_alternate_shell
-            && info.alternate_shell[0]
-            && !info.remote_program
-            ) {
-                std::string alternate_shell = info.alternate_shell;
-                std::string working_dir = info.working_dir;
-
-                strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
-                program[sizeof(program) - 1] = 0;
-                strncpy(directory, working_dir.c_str(), sizeof(directory) - 1);
-                directory[sizeof(directory) - 1] = 0;
-            }
+        else if (mod_rdp_params.use_client_provided_alternate_shell
+              && info.alternate_shell[0]
+              && !info.remote_program
+        ) {
+            strncpy(program, info.alternate_shell, sizeof(program) - 1);
+            program[sizeof(program) - 1] = 0;
+            strncpy(directory, info.working_dir, sizeof(directory) - 1);
+            directory[sizeof(directory) - 1] = 0;
         }
     }
 
