@@ -830,8 +830,7 @@ public:
         // to find out the reason.
         // TODO add error management
         BIO * sbio = BIO_new_socket(sck, BIO_NOCLOSE);
-        SSL * ssl = SSL_new(ctx);
-        this->allocated_ssl = ssl;
+        this->allocated_ssl = SSL_new(ctx);
 
         // get public_key
         {
@@ -862,18 +861,29 @@ public:
             EVP_PKEY_free(pkey);
         }
 
-        SSL_set_bio(ssl, sbio, sbio);
+        SSL_set_bio(this->allocated_ssl, sbio, sbio);
 
-        int r = SSL_accept(ssl);
+        int r = SSL_accept(this->allocated_ssl);
         if(r <= 0)
         {
             return tls_ctx_print_error("enable_server_tls", "SSL accept error", nullptr);
         }
-
-        this->io = ssl;
+        this->io = this->allocated_ssl;
         this->tls = true;
 
-        LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(ssl));
+        LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(this->allocated_ssl));
+
+        // TODO: the commented code belows shows the list of all enabled cipher suite on server, 
+        // We could enable it but put that under some configuration variable.
+//        int priority = 0;
+//        while(1){
+//            const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);
+//            if (not cipher_name) { break; }
+//            priority++;
+//            LOG(LOG_INFO, "TLSContext::Server cipher %d: %s", priority, cipher_name);
+//        }
+
+        LOG(LOG_INFO, "TLSContext::Negociated cipher used %s", SSL_CIPHER_get_name(SSL_get_current_cipher(this->allocated_ssl)));
 
         return true;
     }
