@@ -35,6 +35,7 @@
 #include "mod/rdp/channels/channel_file.hpp"
 #include "core/session_reactor.hpp"
 #include "core/clipboard_virtual_channels_params.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <memory>
 
@@ -183,16 +184,9 @@ public:
         RDPECLIP::CliprdrHeader header;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(8 /* msgType(2) + msgFlags(2) + dataLen(4) */)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_client_message: "
-                        "Truncated msgType, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
+            /* msgType(2) + msgFlags(2) + dataLen(4) */
+            ::check_throw(chunk, 8, "ClipboardVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
             header.recv(chunk);
-
             this->clip_data.client_data.message_type = header.msgType();
         }
 
@@ -460,14 +454,8 @@ public:
         RDPECLIP::CliprdrHeader header;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(8 /* msgType(2) + msgFlags(2) + dataLen(4) */)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_server_message: "
-                        "Truncated msgType, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
+            /* msgType(2) + msgFlags(2) + dataLen(4) */
+            ::check_throw(chunk, 8, "ClipboardVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
             header.recv(chunk);
 
             this->clip_data.server_data.message_type = header.msgType();

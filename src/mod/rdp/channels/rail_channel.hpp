@@ -29,6 +29,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 class FrontAPI;
 
@@ -359,17 +360,9 @@ private:
     bool process_client_language_profile_information_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            // TODO: fix that, see "check_is_unit_throw" in client_execute
-            // orderLength(2)
-            ::check_throw(chunk, 2, "RemoteProgramsVirtualChannel::process_client_language_profile_information_pdu::orderLength", ERR_RDP_DATA_TRUNCATED);
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_language_profile_information_pdu");
 
         LanguageProfileInformationPDU lpipdu;
-
         lpipdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -500,7 +493,6 @@ public:
         }
 
         InStream  chunk(chunk_data, chunk_data_length);
-
 
         // TODO: see that, order type lifetime seems much too long and not controlled
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
