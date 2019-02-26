@@ -383,8 +383,7 @@ public:
 
     struct Params
     {
-        uninit_checked<std::chrono::milliseconds> session_probe_launch_timeout;
-        uninit_checked<std::chrono::milliseconds> session_probe_launch_fallback_timeout;
+        uninit_checked<std::chrono::milliseconds> session_probe_effective_launch_timeout;
         uninit_checked<std::chrono::milliseconds> session_probe_keepalive_timeout;
 
         uninit_checked<SessionProbeOnKeepaliveTimeout> session_probe_on_keepalive_timeout;
@@ -446,23 +445,12 @@ public:
         Random & gen,
         const BaseVirtualChannel::Params & base_params,
         const Params& params)
-    : BaseVirtualChannel(nullptr,
-                         to_server_sender_,
-                         base_params)
-    , session_probe_effective_launch_timeout(
-            (params.session_probe_on_launch_failure ==
-             SessionProbeOnLaunchFailure::disconnect_user) ?
-            params.session_probe_launch_timeout :
-            params.session_probe_launch_fallback_timeout
-        )
-    , param_session_probe_keepalive_timeout(
-          params.session_probe_keepalive_timeout)
-    , param_session_probe_on_keepalive_timeout(
-          params.session_probe_on_keepalive_timeout)
-    , param_session_probe_on_launch_failure(
-          params.session_probe_on_launch_failure)
-    , param_session_probe_end_disconnected_session(
-          params.session_probe_end_disconnected_session)
+    : BaseVirtualChannel(nullptr, to_server_sender_, base_params)
+    , session_probe_effective_launch_timeout(params.session_probe_effective_launch_timeout)
+    , param_session_probe_keepalive_timeout(params.session_probe_keepalive_timeout)
+    , param_session_probe_on_keepalive_timeout(params.session_probe_on_keepalive_timeout)
+    , param_session_probe_on_launch_failure(params.session_probe_on_launch_failure)
+    , param_session_probe_end_disconnected_session(params.session_probe_end_disconnected_session)
     , param_target_informations(params.target_informations)
     , param_front_width(params.front_width)
     , param_front_height(params.front_height)
@@ -500,13 +488,10 @@ public:
     {
         if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
-                "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
-                    "timeout=%lld fallback_timeout=%lld"
+                "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
                     " effective_timeout=%lld on_launch_failure=%d",
-                ms2ll(params.session_probe_launch_timeout),
-                ms2ll(params.session_probe_launch_fallback_timeout),
                 ms2ll(this->session_probe_effective_launch_timeout),
-                static_cast<int>(this->param_session_probe_on_launch_failure));
+                this->param_session_probe_on_launch_failure);
         }
 
         this->front.session_probe_started(false);

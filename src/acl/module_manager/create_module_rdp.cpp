@@ -118,9 +118,11 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.session_probe_params.use_clipboard_based_launcher
                                                         = ini.get<cfg::mod_rdp::session_probe_use_clipboard_based_launcher>();
-    mod_rdp_params.session_probe_params.vc.launch_timeout        = ini.get<cfg::mod_rdp::session_probe_launch_timeout>();
-    mod_rdp_params.session_probe_params.vc.launch_fallback_timeout
-                                                        = ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>();
+    mod_rdp_params.session_probe_params.vc.effective_launch_timeout
+        = (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>()
+            == SessionProbeOnLaunchFailure::disconnect_user)
+        ? ini.get<cfg::mod_rdp::session_probe_launch_timeout>()
+        : ini.get<cfg::mod_rdp::session_probe_launch_fallback_timeout>();
     mod_rdp_params.session_probe_params.vc.start_launch_timeout_timer_only_after_logon
                                                         = ini.get<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon>();
     mod_rdp_params.session_probe_params.vc.on_launch_failure     = ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();

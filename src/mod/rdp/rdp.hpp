@@ -954,8 +954,7 @@ public:
 
         SessionProbeVirtualChannel::Params sp_vc_params;
 
-        sp_vc_params.session_probe_launch_timeout = this->session_probe.params.vc.launch_timeout;
-        sp_vc_params.session_probe_launch_fallback_timeout = this->session_probe.params.vc.launch_fallback_timeout;
+        sp_vc_params.session_probe_effective_launch_timeout = this->session_probe.params.vc.effective_launch_timeout;
         sp_vc_params.session_probe_keepalive_timeout = this->session_probe.params.vc.keepalive_timeout;
         sp_vc_params.session_probe_on_keepalive_timeout = this->session_probe.params.vc.on_keepalive_timeout;
         sp_vc_params.session_probe_on_launch_failure = this->session_probe.params.vc.on_launch_failure;

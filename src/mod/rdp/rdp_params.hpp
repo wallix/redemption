@@ -250,8 +250,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_launch_mask);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.use_clipboard_based_launcher);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.launch_timeout);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.launch_fallback_timeout);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.effective_launch_timeout);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.start_launch_timeout_timer_only_after_logon);
         RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc.on_launch_failure);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.keepalive_timeout);
