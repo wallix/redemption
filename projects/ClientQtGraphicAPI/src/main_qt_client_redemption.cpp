@@ -99,6 +99,7 @@ public:
 
                 this->qt_graphic.reset_cache(this->config.info.screen_info.width, this->config.info.screen_info.height);
                 this->qt_graphic.create_screen();
+
             } else {
                 this->qt_graphic.reset_cache(this->qt_graphic.screen_max_width, this->qt_graphic.screen_max_height);
             }
