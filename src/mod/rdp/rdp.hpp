@@ -442,8 +442,10 @@ struct mod_rdp_channels
             const bool used_to_launch_remote_program;
             std::string arguments;
             const bool customize_executable_name;
+            bool is_public_session;
+            bool start_launch_timeout_timer_only_after_logon;
 
-            ModRdpSessionProbeParams::VirtualChannelParams vc;
+            SessionProbeVirtualChannelParams vc;
 
             std::string target_informations;
 
@@ -452,6 +454,9 @@ struct mod_rdp_channels
             , used_to_launch_remote_program(sespro_params.use_to_launch_remote_program)
             , arguments(sespro_params.arguments)
             , customize_executable_name(sespro_params.customize_executable_name)
+            , is_public_session(sespro_params.is_public_session)
+            , start_launch_timeout_timer_only_after_logon(
+                sespro_params.start_launch_timeout_timer_only_after_logon)
             , vc(sespro_params.vc)
             {}
         } params;
@@ -954,26 +959,7 @@ public:
 
         SessionProbeVirtualChannel::Params sp_vc_params;
 
-        sp_vc_params.session_probe_effective_launch_timeout = this->session_probe.params.vc.effective_launch_timeout;
-        sp_vc_params.session_probe_keepalive_timeout = this->session_probe.params.vc.keepalive_timeout;
-        sp_vc_params.session_probe_on_keepalive_timeout = this->session_probe.params.vc.on_keepalive_timeout;
-        sp_vc_params.session_probe_on_launch_failure = this->session_probe.params.vc.on_launch_failure;
-        sp_vc_params.session_probe_end_disconnected_session = this->session_probe.params.vc.end_disconnected_session;
-        sp_vc_params.session_probe_disconnected_application_limit = this->session_probe.params.vc.disconnected_application_limit;
-        sp_vc_params.session_probe_disconnected_session_limit = this->session_probe.params.vc.disconnected_session_limit;
-        sp_vc_params.session_probe_idle_session_limit =  this->session_probe.params.vc.idle_session_limit;
-        sp_vc_params.session_probe_enable_log = this->session_probe.params.vc.enable_log;
-        sp_vc_params.session_probe_enable_log_rotation = this->session_probe.params.vc.enable_log_rotation;
-        sp_vc_params.session_probe_allow_multiple_handshake = this->session_probe.params.vc.allow_multiple_handshake;
-        sp_vc_params.session_probe_enable_crash_dump = this->session_probe.params.vc.enable_crash_dump;
-        sp_vc_params.session_probe_handle_usage_limit = this->session_probe.params.vc.handle_usage_limit;
-        sp_vc_params.session_probe_memory_usage_limit = this->session_probe.params.vc.memory_usage_limit;
-        sp_vc_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = this->session_probe.params.vc.ignore_ui_less_processes_during_end_of_session_check;
-        sp_vc_params.session_probe_childless_window_as_unidentified_input_field = this->session_probe.params.vc.childless_window_as_unidentified_input_field;
-        sp_vc_params.session_probe_extra_system_processes = this->session_probe.params.vc.extra_system_processes.c_str();
-        sp_vc_params.session_probe_outbound_connection_monitoring_rules = this->session_probe.params.vc.outbound_connection_monitoring_rules.c_str();
-        sp_vc_params.session_probe_process_monitoring_rules = this->session_probe.params.vc.process_monitoring_rules.c_str();
-        sp_vc_params.session_probe_windows_of_these_applications_as_unidentified_input_field = this->session_probe.params.vc.windows_of_these_applications_as_unidentified_input_field.c_str();
+        sp_vc_params.sespro_params = this->session_probe.params.vc;
         sp_vc_params.target_informations = this->session_probe.params.target_informations.c_str();
 
 
@@ -1453,7 +1439,7 @@ public:
 
             // Target informations
             str_assign(this->session_probe.params.target_informations, mod_rdp_params.target_application, ':');
-            if (!this->session_probe.params.vc.is_public_session) {
+            if (!this->session_probe.params.is_public_session) {
                 this->session_probe.params.target_informations += this->primary_user_id;
             }
 
@@ -1548,7 +1534,7 @@ public:
 
         // Target informations
         str_assign(this->session_probe.params.target_informations, mod_rdp_params.target_application, ':');
-        if (!this->session_probe.params.vc.is_public_session) {
+        if (!this->session_probe.params.is_public_session) {
             this->session_probe.params.target_informations += this->primary_user_id;
         }
 
@@ -1909,7 +1895,7 @@ public:
             }
 
             this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
-            if (!this->session_probe.params.vc.start_launch_timeout_timer_only_after_logon) {
+            if (!this->session_probe.params.start_launch_timeout_timer_only_after_logon) {
                 this->session_probe_virtual_channel->start_launch_timeout_timer();
             }
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
@@ -1941,7 +1927,7 @@ public:
                     client_name);
             }
 
-            if (!this->session_probe.params.vc.start_launch_timeout_timer_only_after_logon) {
+            if (!this->session_probe.params.start_launch_timeout_timer_only_after_logon) {
                 this->session_probe_virtual_channel->start_launch_timeout_timer();
             }
             if (this->remote_program) {
@@ -4927,7 +4913,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe_virtual_channel
-        && this->channels.session_probe.params.vc.start_launch_timeout_timer_only_after_logon) {
+        && this->channels.session_probe.params.start_launch_timeout_timer_only_after_logon) {
             this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
         }
 #endif
@@ -4990,7 +4976,7 @@ public:
             }
 
             if (this->channels.session_probe_virtual_channel
-            && this->channels.session_probe.params.vc.start_launch_timeout_timer_only_after_logon) {
+            && this->channels.session_probe.params.start_launch_timeout_timer_only_after_logon) {
                 this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
             }
 #endif

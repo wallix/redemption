@@ -31,13 +31,8 @@
 #include "core/session_reactor.hpp"
 
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
-    public:
-    struct Params {
-        std::chrono::milliseconds   clipboard_initialization_delay_ms{};
-        std::chrono::milliseconds   start_delay_ms{};
-        std::chrono::milliseconds   long_delay_ms{};
-        std::chrono::milliseconds   short_delay_ms{};
-    };
+public:
+    using Params = SessionProbeClipboardBasedLauncherParams;
 
     private:
     enum class State {

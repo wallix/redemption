@@ -27,6 +27,7 @@
 #include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "mod/rdp/channels/sespro_channel_params.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/parse_server_message.hpp"
@@ -56,239 +57,6 @@ enum {
     OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001
 };
 
-class ExtraSystemProcesses
-{
-    std::vector<std::string> processes;
-
-public:
-    explicit ExtraSystemProcesses(const char * comme_separated_processes) {
-        if (comme_separated_processes) {
-            const char * process = comme_separated_processes;
-
-            while (*process) {
-                if ((*process == ',') || (*process == '\t') || (*process == ' ')) {
-                    process++;
-                    continue;
-                }
-
-                char const * process_begin = process;
-
-                const char * process_separator = strchr(process, ',');
-
-                std::string name_string(process_begin, (process_separator ? process_separator - process_begin : ::strlen(process_begin)));
-
-                this->processes.push_back(std::move(name_string));
-
-                if (!process_separator) {
-                    break;
-                }
-
-                process = process_separator + 1;
-            }
-        }
-    }
-
-    bool get(
-        size_t index,
-        std::string & out__name
-    ) {
-        if (this->processes.size() <= index) {
-            out__name.clear();
-
-            return false;
-        }
-
-        out__name = this->processes[index];
-
-        return true;
-    }
-};
-
-
-class OutboundConnectionMonitorRules
-{
-    struct outbound_connection_monitor_rule
-    {
-        unsigned type;
-        std::string address;
-        std::string port_range;
-        std::string description;
-    };
-
-    std::vector<outbound_connection_monitor_rule> rules;
-
-public:
-    explicit OutboundConnectionMonitorRules(
-        const char * comme_separated_monitoring_rules
-    ) {
-        if (comme_separated_monitoring_rules) {
-            const char * rule = comme_separated_monitoring_rules;
-
-            char const RULE_PREFIX_ALLOW[]  = "$allow:";
-            char const RULE_PREFIX_NOTIFY[] = "$notify:";
-            char const RULE_PREFIX_DENY[]   = "$deny:";
-
-            while (*rule) {
-                if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
-                    rule++;
-                    continue;
-                }
-
-                char const * rule_begin = rule;
-
-                unsigned uType = 1; // Deny
-                if (strcasestr(rule, RULE_PREFIX_ALLOW) == rule)
-                {
-                    uType  = 2;                             // Allow
-                    rule  += sizeof(RULE_PREFIX_ALLOW) - 1;
-                }
-                else if (strcasestr(rule, RULE_PREFIX_NOTIFY) == rule)
-                {
-                    uType  = 0;                             // Notify
-                    rule  += sizeof(RULE_PREFIX_NOTIFY) - 1;
-                }
-                else if (strcasestr(rule, RULE_PREFIX_DENY) == rule)
-                {
-                    uType  = 1;                             // Deny
-                    rule  += sizeof(RULE_PREFIX_DENY) - 1;
-                }
-
-                const char * rule_separator = strchr(rule, ',');
-
-                std::string description_string(rule_begin, (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
-
-                std::string rule_string(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
-
-                const char * rule_c_str = rule_string.c_str();
-
-                const char * info_separator = strchr(rule_c_str, ':');
-
-                if (info_separator)
-                {
-                    std::string host_address_or_subnet(rule_c_str, info_separator - rule_c_str);
-
-                    this->rules.push_back({
-                        uType, std::move(host_address_or_subnet), std::string(info_separator + 1),
-                        std::move(description_string)
-                    });
-                }
-
-                if (!rule_separator) {
-                    break;
-                }
-
-                rule = rule_separator + 1;
-            }
-        }
-    }
-
-    bool get(
-        size_t index,
-        unsigned int & out__type,
-        std::string & out__host_address_or_subnet,
-        std::string & out__port_range,
-        std::string & out__description
-    ) {
-        if (this->rules.size() <= index) {
-            out__type = 0;
-            out__host_address_or_subnet.clear();
-            out__port_range.clear();
-            out__description.clear();
-
-            return false;
-        }
-
-        out__type                   = this->rules[index].type;
-        out__host_address_or_subnet = this->rules[index].address;
-        out__port_range             = this->rules[index].port_range;
-        out__description            = this->rules[index].description;
-
-        return true;
-    }
-};
-
-
-class ProcessMonitorRules
-{
-    struct process_monitor_rule
-    {
-        unsigned    type;
-        std::string pattern;
-        std::string description;
-    };
-
-    std::vector<process_monitor_rule> rules;
-
-public:
-    explicit ProcessMonitorRules(const char * comme_separated_rules)
-    {
-        if (comme_separated_rules) {
-            const char * rule = comme_separated_rules;
-
-            char const RULE_PREFIX_NOTIFY[] = "$notify:";
-            char const RULE_PREFIX_DENY[]   = "$deny:";
-
-            while (*rule) {
-                if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
-                    rule++;
-                    continue;
-                }
-
-                char const * rule_begin = rule;
-
-                unsigned uType = 1; // Deny
-                if (strcasestr(rule, RULE_PREFIX_NOTIFY) == rule)
-                {
-                    uType  = 0;                             // Notify
-                    rule  += sizeof(RULE_PREFIX_NOTIFY) - 1;
-                }
-                else if (strcasestr(rule, RULE_PREFIX_DENY) == rule)
-                {
-                    uType  = 1;                             // Deny
-                    rule  += sizeof(RULE_PREFIX_DENY) - 1;
-                }
-
-                const char * rule_separator = strchr(rule, ',');
-
-                std::string description_string(rule_begin, (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
-
-                std::string pattern(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
-
-                this->rules.push_back({
-                    uType, std::move(pattern), std::move(description_string)
-                });
-
-                if (!rule_separator) {
-                    break;
-                }
-
-                rule = rule_separator + 1;
-            }
-        }
-    }
-
-    bool get(
-        size_t index,
-        unsigned int & out__type,
-        std::string & out__pattern,
-        std::string & out__description
-    ) {
-        if (this->rules.size() <= index) {
-            out__type = 0;
-            out__pattern.clear();
-            out__description.clear();
-
-            return false;
-        }
-
-        out__type                   = this->rules[index].type;
-        out__pattern                = this->rules[index].pattern;
-        out__description            = this->rules[index].description;
-
-        return true;
-    }
-};
-
 
 class SessionProbeVirtualChannel final : public BaseVirtualChannel
 {
@@ -297,29 +65,14 @@ private:
     bool session_probe_keep_alive_received = true;
     bool session_probe_ready               = false;
 
+    const SessionProbeVirtualChannelParams sespro_params;
+
     bool session_probe_launch_timeout_timer_started = false;
-
-    const std::chrono::milliseconds session_probe_effective_launch_timeout;
-
-    const std::chrono::milliseconds param_session_probe_keepalive_timeout;
-
-    const SessionProbeOnKeepaliveTimeout param_session_probe_on_keepalive_timeout;
-
-    const SessionProbeOnLaunchFailure param_session_probe_on_launch_failure;
-
-    const bool     param_session_probe_end_disconnected_session;
 
     std::string    param_target_informations;
 
     const uint16_t param_front_width;
     const uint16_t param_front_height;
-
-    const std::chrono::milliseconds param_session_probe_disconnected_application_limit;
-    const std::chrono::milliseconds param_session_probe_disconnected_session_limit;
-    const std::chrono::milliseconds param_session_probe_idle_session_limit;
-
-    const bool param_session_probe_enable_log;
-    const bool param_session_probe_enable_log_rotation;
 
     std::string param_real_alternate_shell;
     std::string param_real_working_dir;
@@ -330,28 +83,12 @@ private:
 
     const bool param_show_maximized;
 
-    const bool param_allow_multiple_handshake;
-
-    const bool param_enable_crash_dump;
-
-    const uint32_t param_handle_usage_limit;
-    const uint32_t param_memory_usage_limit;
-
-    const bool param_session_probe_ignore_ui_less_processes_during_end_of_session_check;
-
-    const bool param_session_probe_childless_window_as_unidentified_input_field;
-
     FrontAPI& front;
 
     mod_api& mod;
     rdp_api& rdp;
 
     FileSystemVirtualChannel& file_system_virtual_channel;
-
-    ExtraSystemProcesses           extra_system_processes;
-    OutboundConnectionMonitorRules outbound_connection_monitor_rules;
-    ProcessMonitorRules            process_monitor_rules;
-    ExtraSystemProcesses           windows_of_these_applications_as_unidentified_input_field;
 
     bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
 
@@ -383,48 +120,15 @@ public:
 
     struct Params
     {
-        uninit_checked<std::chrono::milliseconds> session_probe_effective_launch_timeout;
-        uninit_checked<std::chrono::milliseconds> session_probe_keepalive_timeout;
-
-        uninit_checked<SessionProbeOnKeepaliveTimeout> session_probe_on_keepalive_timeout;
-
-        uninit_checked<SessionProbeOnLaunchFailure> session_probe_on_launch_failure;
-
-        uninit_checked<bool> session_probe_end_disconnected_session;
+        SessionProbeVirtualChannelParams sespro_params;
 
         uninit_checked<const char*> target_informations;
 
         uninit_checked<uint16_t> front_width;
         uninit_checked<uint16_t> front_height;
 
-        uninit_checked<std::chrono::milliseconds> session_probe_disconnected_application_limit;
-        uninit_checked<std::chrono::milliseconds> session_probe_disconnected_session_limit;
-        uninit_checked<std::chrono::milliseconds> session_probe_idle_session_limit;
-
-        uninit_checked<bool> session_probe_enable_log;
-        uninit_checked<bool> session_probe_enable_log_rotation;
-
         uninit_checked<const char*> real_alternate_shell;
         uninit_checked<const char*> real_working_dir;
-
-        uninit_checked<const char*> session_probe_extra_system_processes;
-
-        uninit_checked<const char*> session_probe_outbound_connection_monitoring_rules;
-
-        uninit_checked<const char*> session_probe_process_monitoring_rules;
-
-        uninit_checked<const char*> session_probe_windows_of_these_applications_as_unidentified_input_field;
-
-        uninit_checked<bool> session_probe_allow_multiple_handshake;
-
-        uninit_checked<bool> session_probe_enable_crash_dump;
-
-        uninit_checked<uint32_t> session_probe_handle_usage_limit;
-        uninit_checked<uint32_t> session_probe_memory_usage_limit;
-
-        uninit_checked<bool> session_probe_ignore_ui_less_processes_during_end_of_session_check;
-
-        uninit_checked<bool> session_probe_childless_window_as_unidentified_input_field;
 
         uninit_checked<Translation::language_t> lang;
 
@@ -432,7 +136,7 @@ public:
 
         uninit_checked<bool> show_maximized;
 
-        explicit Params() {}
+        explicit Params() noexcept {}
     };
 
     explicit SessionProbeVirtualChannel(
@@ -446,43 +150,19 @@ public:
         const BaseVirtualChannel::Params & base_params,
         const Params& params)
     : BaseVirtualChannel(nullptr, to_server_sender_, base_params)
-    , session_probe_effective_launch_timeout(params.session_probe_effective_launch_timeout)
-    , param_session_probe_keepalive_timeout(params.session_probe_keepalive_timeout)
-    , param_session_probe_on_keepalive_timeout(params.session_probe_on_keepalive_timeout)
-    , param_session_probe_on_launch_failure(params.session_probe_on_launch_failure)
-    , param_session_probe_end_disconnected_session(params.session_probe_end_disconnected_session)
+    , sespro_params(params.sespro_params)
     , param_target_informations(params.target_informations)
     , param_front_width(params.front_width)
     , param_front_height(params.front_height)
-    , param_session_probe_disconnected_application_limit(
-        params.session_probe_disconnected_application_limit)
-    , param_session_probe_disconnected_session_limit(
-        params.session_probe_disconnected_session_limit)
-    , param_session_probe_idle_session_limit(
-        params.session_probe_idle_session_limit)
-    , param_session_probe_enable_log(params.session_probe_enable_log)
-    , param_session_probe_enable_log_rotation(params.session_probe_enable_log_rotation)
     , param_real_alternate_shell(params.real_alternate_shell)
     , param_real_working_dir(params.real_working_dir)
     , param_lang(params.lang)
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , param_show_maximized(params.show_maximized)
-    , param_allow_multiple_handshake(params.session_probe_allow_multiple_handshake)
-    , param_enable_crash_dump(params.session_probe_enable_crash_dump)
-    , param_handle_usage_limit(params.session_probe_handle_usage_limit)
-    , param_memory_usage_limit(params.session_probe_memory_usage_limit)
-    , param_session_probe_ignore_ui_less_processes_during_end_of_session_check(params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
-    , param_session_probe_childless_window_as_unidentified_input_field(params.session_probe_childless_window_as_unidentified_input_field)
     , front(front)
     , mod(mod)
     , rdp(rdp)
     , file_system_virtual_channel(file_system_virtual_channel)
-    , extra_system_processes(params.session_probe_extra_system_processes)
-    , outbound_connection_monitor_rules(
-          params.session_probe_outbound_connection_monitoring_rules)
-    , process_monitor_rules(
-          params.session_probe_process_monitoring_rules)
-    , windows_of_these_applications_as_unidentified_input_field(params.session_probe_windows_of_these_applications_as_unidentified_input_field)
     , gen(gen)
     , session_reactor(session_reactor)
     {
@@ -490,8 +170,8 @@ public:
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
                     " effective_timeout=%lld on_launch_failure=%d",
-                ms2ll(this->session_probe_effective_launch_timeout),
-                this->param_session_probe_on_launch_failure);
+                ms2ll(this->sespro_params.effective_launch_timeout),
+                this->sespro_params.on_launch_failure);
         }
 
         this->front.session_probe_started(false);
@@ -506,7 +186,7 @@ public:
 
     void start_launch_timeout_timer()
     {
-        if ((this->session_probe_effective_launch_timeout.count() > 0) &&
+        if ((this->sespro_params.effective_launch_timeout.count() > 0) &&
             !this->session_probe_ready) {
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
@@ -514,10 +194,10 @@ public:
 
             if (!this->session_probe_launch_timeout_timer_started) {
                 this->session_probe_timer = this->session_reactor.create_timer()
-                .set_delay(this->session_probe_effective_launch_timeout)
+                .set_delay(this->sespro_params.effective_launch_timeout)
                 .on_action([this](JLN_TIMER_CTX ctx){
                     this->process_event_launch();
-                    return ctx.ready_to(this->session_probe_effective_launch_timeout);
+                    return ctx.ready_to(this->sespro_params.effective_launch_timeout);
                 });
                 this->session_probe_launch_timeout_timer_started = true;
             }
@@ -534,7 +214,7 @@ protected:
 public:
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer) {
-            this->session_probe_timer->set_delay(this->session_probe_effective_launch_timeout);
+            this->session_probe_timer->set_delay(this->sespro_params.effective_launch_timeout);
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
@@ -579,14 +259,14 @@ public:
                     "Session Probe keep alive requested");
         }
 
-        this->session_probe_timer->set_delay(this->param_session_probe_keepalive_timeout);
+        this->session_probe_timer->set_delay(this->sespro_params.keepalive_timeout);
     }
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
 
     void process_event_launch()
     {
-        LOG(((this->param_session_probe_on_launch_failure ==
+        LOG(((this->sespro_params.on_launch_failure ==
                 SessionProbeOnLaunchFailure::disconnect_user) ?
                 LOG_ERR : LOG_WARNING),
             "SessionProbeVirtualChannel::process_event: "
@@ -607,7 +287,7 @@ public:
             this->mod.disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
 
-        if (this->param_session_probe_on_launch_failure
+        if (this->sespro_params.on_launch_failure
          != SessionProbeOnLaunchFailure::ignore_and_continue) {
             throw Error(err_id);
         }
@@ -647,11 +327,11 @@ public:
                 }
 
                 if (SessionProbeOnKeepaliveTimeout::disconnect_user ==
-                    this->param_session_probe_on_keepalive_timeout) {
+                    this->sespro_params.on_keepalive_timeout) {
                     this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
                 }
                 else if (SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait ==
-                            this->param_session_probe_on_keepalive_timeout) {
+                            this->sespro_params.on_keepalive_timeout) {
 
                     if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                         const bool disable_input_event     = true;
@@ -801,7 +481,7 @@ public:
                         "SessionProbeVirtualChannel::process_server_message: "
                             "Session Probe reconnection detect.");
 
-                    if (!this->param_allow_multiple_handshake &&
+                    if (!this->sespro_params.allow_multiple_handshake &&
                         (this->reconnection_cookie != remote_reconnection_cookie)) {
                         this->report_message.report("SESSION_PROBE_RECONNECTION", "");
                     }
@@ -844,7 +524,7 @@ public:
 
                 this->rdp.sespro_launch_process_ended();
 
-                if (this->param_session_probe_keepalive_timeout.count() > 0) {
+                if (this->sespro_params.keepalive_timeout.count() > 0) {
                     send_client_message([](OutStream & out_s) {
                             const char cstr[] = "Request=Keep-Alive";
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
@@ -857,10 +537,10 @@ public:
                     }
 
                     this->session_probe_timer = this->session_reactor.create_timer()
-                    .set_delay(this->param_session_probe_keepalive_timeout)
+                    .set_delay(this->sespro_params.keepalive_timeout)
                     .on_action([this](auto ctx){
                         this->process_event_ready();
-                        return ctx.ready_to(this->param_session_probe_keepalive_timeout);
+                        return ctx.ready_to(this->sespro_params.keepalive_timeout);
                     });
                 }
 
@@ -872,7 +552,7 @@ public:
                 {
                     uint32_t options = 0;
 
-                    if (this->param_session_probe_ignore_ui_less_processes_during_end_of_session_check) {
+                    if (this->sespro_params.ignore_ui_less_processes_during_end_of_session_check) {
                         options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
                     }
 
@@ -899,7 +579,7 @@ public:
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
 
-                        if (this->param_session_probe_childless_window_as_unidentified_input_field) {
+                        if (this->sespro_params.childless_window_as_unidentified_input_field) {
                             const char cstr[] = "Yes";
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
@@ -928,7 +608,7 @@ public:
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
 
-                        if (this->param_session_probe_end_disconnected_session) {
+                        if (this->sespro_params.end_disconnected_session) {
                             const char cstr[] = "Yes";
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
@@ -942,9 +622,9 @@ public:
                     unsigned int const disconnect_session_limit =
                         (this->param_real_alternate_shell.empty() ?
                          // Normal RDP session
-                         this->param_session_probe_disconnected_session_limit.count() :
+                         this->sespro_params.disconnected_session_limit.count() :
                          // Application session
-                         this->param_session_probe_disconnected_application_limit.count());
+                         this->sespro_params.disconnected_application_limit.count());
 
                     if (disconnect_session_limit) {
                         send_client_message([disconnect_session_limit](OutStream & out_s) {
@@ -963,7 +643,7 @@ public:
                     }
                 }
 
-                if (this->param_session_probe_idle_session_limit.count()) {
+                if (this->sespro_params.idle_session_limit.count()) {
                     send_client_message([this](OutStream & out_s) {
                             {
                                 const char cstr[] = "IdleSessionLimit=";
@@ -973,7 +653,7 @@ public:
                             {
                                 char cstr[128];
                                 int len = std::snprintf(cstr, sizeof(cstr), "%lld",
-                                    ms2ll(this->param_session_probe_idle_session_limit));
+                                    ms2ll(this->sespro_params.idle_session_limit));
                                 out_s.out_copy_bytes(cstr, size_t(len));
                             }
                         });
@@ -1006,7 +686,7 @@ public:
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
 
-                        if (this->param_enable_crash_dump) {
+                        if (this->sespro_params.enable_crash_dump) {
                             const char cstr[] = "Yes";
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
@@ -1025,8 +705,8 @@ public:
                         {
                             char cstr[128];
                             std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%u",
-                                this->param_handle_usage_limit,
-                                this->param_memory_usage_limit);
+                                this->sespro_params.handle_usage_limit,
+                                this->sespro_params.memory_usage_limit);
                             out_s.out_copy_bytes(cstr, strlen(cstr));
                         }
                 });
@@ -1136,7 +816,7 @@ public:
                         std::string name;
 
                         const bool result =
-                            this->extra_system_processes.get(proc_index, name);
+                            this->sespro_params.extra_system_processes.get(proc_index, name);
 
                         {
                             const int error_code = (result ? 0 : -1);
@@ -1175,7 +855,7 @@ public:
                         std::string  description;
 
                         const bool result =
-                            this->outbound_connection_monitor_rules.get(
+                            this->sespro_params.outbound_connection_monitor_rules.get(
                                 rule_index, type, host_address_or_subnet, port_range,
                                 description);
 
@@ -1215,7 +895,7 @@ public:
                         std::string  description;
 
                         const bool result =
-                            this->process_monitor_rules.get(
+                            this->sespro_params.process_monitor_rules.get(
                                 rule_index, type, pattern, description);
 
                         {
@@ -1253,7 +933,7 @@ public:
                         std::string name;
 
                         const bool result =
-                            this->windows_of_these_applications_as_unidentified_input_field.get(app_index, name);
+                            this->sespro_params.windows_of_these_applications_as_unidentified_input_field.get(app_index, name);
 
                         {
                             const int error_code = (result ? 0 : -1);
@@ -1306,14 +986,14 @@ public:
                     unsigned(major), unsigned(minor));
             }
 
-            if (this->param_session_probe_enable_log) {
+            if (this->sespro_params.enable_log) {
                 send_client_message([this](OutStream & out_s) {
                         {
                             const char cstr[] = "EnableLog=Yes";
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         }
 
-                        if (this->param_session_probe_enable_log_rotation) {
+                        if (this->sespro_params.enable_log_rotation) {
                             if (0x0103 <= this->other_version) {
                                 out_s.out_uint8('\x01');
 
@@ -1688,7 +1368,7 @@ public:
                         std::string  description;
 
                         const bool result =
-                            this->outbound_connection_monitor_rules.get(
+                            this->sespro_params.outbound_connection_monitor_rules.get(
                                 ::strtoul(parameters_[0].c_str(), nullptr, 10),
                                 type, host_address_or_subnet, port_range,
                                 description);
@@ -1767,7 +1447,7 @@ public:
                         std::string  pattern;
                         std::string  description;
                         const bool result =
-                            this->process_monitor_rules.get(
+                            this->sespro_params.process_monitor_rules.get(
                                 ::strtoul(parameters_[0].c_str(), nullptr, 10),
                                 type, pattern, description);
 
