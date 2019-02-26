@@ -1500,13 +1500,14 @@ public:
                 ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
             }
 
-            std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
-
             // Target informations
             str_assign(this->session_probe.params.vc.target_informations, mod_rdp_params.target_application, ':');
             if (!this->session_probe.params.vc.public_session) {
                 this->session_probe.params.vc.target_informations += this->primary_user_id;
             }
+
+            std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
+
             std::string cookie_param
               = this->session_probe.params.vc.target_informations.empty()
               ? std::string()
@@ -1649,97 +1650,53 @@ public:
             "${CBSPL_VAR} ", this->session_probe.session_probe_use_clipboard_based_launcher ? "CD %TMP%&" : ""
         );
 
-        if (mod_rdp_params.target_application
-        && (*mod_rdp_params.target_application)) {
+        std::string alternate_shell = mod_rdp_params.session_probe_exe_or_file;
+
+        if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
+            alternate_shell.erase(0, 2);
+        }
+
+        str_append(alternate_shell, ' ', this->session_probe.params.arguments);
+
+        if (mod_rdp_params.target_application && *mod_rdp_params.target_application) {
             std::string shell_arguments = get_alternate_shell_arguments(
                 mod_rdp_params.shell_arguments,
                 get_alternate_shell_arguments::App{mod_rdp_params.target_application},
                 get_alternate_shell_arguments::Account{mod_rdp_params.target_application_account},
                 get_alternate_shell_arguments::Password{mod_rdp_params.target_application_password});
 
-            std::string alternate_shell(mod_rdp_params.alternate_shell);
-
-            if (!shell_arguments.empty()) {
-                str_append(alternate_shell, ' ', shell_arguments);
-            }
-
-            this->real_alternate_shell = std::move(alternate_shell);
+            this->real_alternate_shell = shell_arguments.empty()
+                ? std::string(mod_rdp_params.alternate_shell)
+                : str_concat(mod_rdp_params.alternate_shell, ' ', shell_arguments);
             this->real_working_dir     = mod_rdp_params.shell_working_dir;
-
-            alternate_shell = mod_rdp_params.session_probe_exe_or_file;
-
-            if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
-                alternate_shell.erase(0, 2);
-            }
-
-            str_append(alternate_shell, ' ', this->session_probe.params.arguments);
-
-            strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
-            program[sizeof(program) - 1] = 0;
-            //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
-
-            const char * session_probe_working_dir = "%TMP%";
-            strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
-            directory[sizeof(directory) - 1] = 0;
-
+        }
+        else if (mod_rdp_params.use_client_provided_alternate_shell
+            && info.alternate_shell[0] && !info.remote_program
+        ) {
+            this->real_alternate_shell = info.alternate_shell;
+            this->real_working_dir     = info.working_dir;
+        }
+        else if (this->session_probe.session_probe_use_clipboard_based_launcher) {
             this->session_probe.session_probe_launcher =
-                std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
+                std::make_unique<SessionProbeClipboardBasedLauncher>(
+                    session_reactor,
+                    mod_rdp, alternate_shell.c_str(),
+                    this->session_probe.session_probe_clipboard_based_launcher,
+                    this->verbose);
+
+            return ;
         }
-        else {
-            if (mod_rdp_params.use_client_provided_alternate_shell
-                && info.alternate_shell[0] && !info.remote_program
-            ) {
-                this->real_alternate_shell = info.alternate_shell;
-                this->real_working_dir     = info.working_dir;
 
-                std::string alternate_shell = mod_rdp_params.session_probe_exe_or_file;
+        strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
+        program[sizeof(program) - 1] = 0;
+        //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
 
-                if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
-                    alternate_shell.erase(0, 2);
-                }
+        const char * session_probe_working_dir = "%TMP%";
+        strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
+        directory[sizeof(directory) - 1] = 0;
 
-                str_append(alternate_shell, ' ', this->session_probe.params.arguments);
-
-                strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
-                program[sizeof(program) - 1] = 0;
-                //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
-
-                const char * session_probe_working_dir = "%TMP%";
-                strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
-                directory[sizeof(directory) - 1] = 0;
-
-                this->session_probe.session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
-            }
-            else {
-                std::string alternate_shell(mod_rdp_params.session_probe_exe_or_file);
-
-                if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
-                    alternate_shell.erase(0, 2);
-                }
-
-                str_append(alternate_shell, ' ', this->session_probe.params.arguments);
-
-                if (this->session_probe.session_probe_use_clipboard_based_launcher) {
-                    this->session_probe.session_probe_launcher = std::make_unique<SessionProbeClipboardBasedLauncher>(
-                            session_reactor,
-                            mod_rdp, alternate_shell.c_str(),
-                            this->session_probe.session_probe_clipboard_based_launcher,
-                            this->verbose);
-                }
-                else {
-                    strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
-                    program[sizeof(program) - 1] = 0;
-                    //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
-
-                    const char * session_probe_working_dir = "%TMP%";
-                    strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
-                    directory[sizeof(directory) - 1] = 0;
-
-                    this->session_probe.session_probe_launcher =
-                        std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
-                }
-            }
-        }
+        this->session_probe.session_probe_launcher =
+            std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
     }
 #endif
 
