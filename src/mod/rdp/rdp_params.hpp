@@ -156,11 +156,17 @@ struct ModRDPParams
 
     bool adjust_performance_flags_for_recording = false;
 
+    struct RemoteAppParams
+    {
+        WindowsExecuteShellParams client_execute;
+        bool use_client_provided_remoteapp = false;
+    };
+
     ClientExecute * rail_client_execute = nullptr;
+    std::chrono::milliseconds rail_disconnect_message_delay {};
 
-    WindowsExecuteShellParams client_execute;
+    RemoteAppParams remote_app_params;
 
-    bool use_client_provided_remoteapp = false;
     bool should_ignore_first_client_execute = false;
 
     bool remote_program          = false;
@@ -180,7 +186,6 @@ struct ModRDPParams
 
     const char * load_balance_info = "";
 
-    std::chrono::milliseconds rail_disconnect_message_delay {};
 
     bool bogus_ios_rdpdr_virtual_channel = true;
 
@@ -359,13 +364,13 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    rail_client_execute);
 
-        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    client_execute.flags);
+        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    remote_app_params.client_execute.flags);
 
-        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute.exe_or_file.c_str());
-        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute.working_dir.c_str());
-        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute.arguments.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.exe_or_file.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.working_dir.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.arguments.c_str());
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             use_client_provided_remoteapp);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             remote_app_params.use_client_provided_remoteapp);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             should_ignore_first_client_execute);
 

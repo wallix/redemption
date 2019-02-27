@@ -595,14 +595,38 @@ struct mod_rdp_channels
 
 #ifndef __EMSCRIPTEN__
         if (this->remote_program) {
+            char session_probe_window_title[32] = { 0 };
+            uint32_t const r = this->gen.rand32();
+
+            snprintf(session_probe_window_title,
+                sizeof(session_probe_window_title),
+                "%X%X%X%X",
+                (r & 0xFF000000) >> 24,
+                (r & 0x00FF0000) >> 16,
+                (r & 0x0000FF00) >> 8,
+                 r & 0x000000FF
+            );
+
             if (this->session_probe.params.enable_session_probe) {
                 this->init_remote_program_with_session_probe(
-                    gd, mod_rdp, mod_rdp_params, mod_rdp_params.application_params, authentifier);
+                    mod_rdp_params.remote_app_params,
+                    mod_rdp_params.application_params,
+                    session_probe_window_title);
             }
             else {
                 this->init_remote_program_without_session_probe(
-                    gd, mod_rdp, mod_rdp_params, mod_rdp_params.application_params, authentifier);
+                    mod_rdp_params.remote_app_params,
+                    mod_rdp_params.application_params);
             }
+
+            this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
+                this->session_reactor, gd, mod_rdp, mod_rdp_params.lang,
+                mod_rdp_params.font, mod_rdp_params.theme, authentifier,
+                session_probe_window_title,
+                mod_rdp_params.rail_client_execute,
+                mod_rdp_params.rail_disconnect_message_delay,
+                this->verbose
+            );
         }
         else { // ! this->remote_program
             if (this->session_probe.params.enable_session_probe) {
@@ -1344,27 +1368,14 @@ public:
     }
 
     void init_remote_program_with_session_probe(
-        gdi::GraphicApi& gd,
-        mod_api & mod_rdp,
-        const ModRDPParams & mod_rdp_params,
+        const ModRDPParams::RemoteAppParams & remote_app_params,
         const ModRDPParams::ApplicationParams & application_params,
-        AuthApi & authentifier)
+        char const* session_probe_window_title)
     {
-        char session_probe_window_title[32] = { 0 };
-        uint32_t const r = this->gen.rand32();
-
-        snprintf(session_probe_window_title,
-            sizeof(session_probe_window_title),
-            "%X%X%X%X",
-            ((r & 0xFF000000) >> 24),
-            ((r & 0x00FF0000) >> 16),
-            ((r & 0x0000FF00) >> 8),
-              r & 0x000000FF
-            );
-
         bool has_target = (application_params.target_application && *application_params.target_application);
-        bool use_client_provided_remoteapp = (mod_rdp_params.use_client_provided_remoteapp
-                                            && not mod_rdp_params.client_execute.exe_or_file.empty());
+        bool use_client_provided_remoteapp
+          = (remote_app_params.use_client_provided_remoteapp
+          && not remote_app_params.client_execute.exe_or_file.empty());
 
         if (has_target) {
             if (this->session_probe.params.used_to_launch_remote_program) {
@@ -1387,8 +1398,8 @@ public:
             this->session_probe.session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
         }
         else if (use_client_provided_remoteapp) {
-            this->real_client_execute.arguments = mod_rdp_params.client_execute.arguments;
-            this->real_client_execute.flags     = mod_rdp_params.client_execute.flags;
+            this->real_client_execute.arguments = remote_app_params.client_execute.arguments;
+            this->real_client_execute.flags     = remote_app_params.client_execute.flags;
             this->client_execute.flags          = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
             this->session_probe.session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
         }
@@ -1398,8 +1409,8 @@ public:
              || !this->session_probe.params.used_to_launch_remote_program
             ) {
                 this->session_probe.channel_params.real_alternate_shell = "[None]";
-                this->real_client_execute.exe_or_file = mod_rdp_params.client_execute.exe_or_file;
-                this->real_client_execute.working_dir = mod_rdp_params.client_execute.working_dir;
+                this->real_client_execute.exe_or_file = remote_app_params.client_execute.exe_or_file;
+                this->real_client_execute.working_dir = remote_app_params.client_execute.working_dir;
             }
 
             this->client_execute.exe_or_file = this->session_probe.params.exe_or_file;
@@ -1430,60 +1441,25 @@ public:
                 "${TITLE_VAR} ", title_param.c_str(),
                 "/${COOKIE_VAR} ", cookie_param.c_str(),
                 "${CBSPL_VAR} ", "");
-
         }
-
-        this->remote_programs_session_manager =
-            std::make_unique<RemoteProgramsSessionManager>(
-                session_reactor, gd, mod_rdp, mod_rdp_params.lang,
-                mod_rdp_params.font, mod_rdp_params.theme, authentifier,
-                session_probe_window_title,
-                mod_rdp_params.rail_client_execute,
-                mod_rdp_params.rail_disconnect_message_delay,
-                this->verbose
-            );
     }
 
 
     void init_remote_program_without_session_probe(
-        gdi::GraphicApi& gd,
-        mod_api & mod_rdp,
-        const ModRDPParams & mod_rdp_params,
-        const ModRDPParams::ApplicationParams & application_params,
-        AuthApi & authentifier)
+        const ModRDPParams::RemoteAppParams & remote_app_params,
+        const ModRDPParams::ApplicationParams & application_params)
     {
-        char session_probe_window_title[32] = { 0 };
-        uint32_t const r = this->gen.rand32();
-
-        snprintf(session_probe_window_title,
-            sizeof(session_probe_window_title),
-            "%X%X%X%X",
-            ((r & 0xFF000000) >> 24),
-            ((r & 0x00FF0000) >> 16),
-            ((r & 0x0000FF00) >> 8),
-              r & 0x000000FF
-            );
-
         if (application_params.target_application && *application_params.target_application) {
             this->client_execute.exe_or_file = application_params.alternate_shell;
             this->client_execute.arguments   = get_shell_arguments(application_params);
             this->client_execute.working_dir = application_params.shell_working_dir;
             this->client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
         }
-        else if (mod_rdp_params.use_client_provided_remoteapp
-            && not mod_rdp_params.client_execute.exe_or_file.empty()
+        else if (remote_app_params.use_client_provided_remoteapp
+            && not remote_app_params.client_execute.exe_or_file.empty()
         ) {
-            this->client_execute     = mod_rdp_params.client_execute;
+            this->client_execute = remote_app_params.client_execute;
         }
-
-        this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-            session_reactor, gd, mod_rdp, mod_rdp_params.lang,
-            mod_rdp_params.font, mod_rdp_params.theme, authentifier,
-            session_probe_window_title,
-            mod_rdp_params.rail_client_execute,
-            mod_rdp_params.rail_disconnect_message_delay,
-            this->verbose
-        );
     }
 
 

@@ -232,20 +232,21 @@ void ModuleManager::create_mod_rdp(
                                                             ((ini.get<cfg::video::capture_flags>() &
                                                             (CaptureFlags::wrm | CaptureFlags::ocr)) !=
                                                             CaptureFlags::none));
-    mod_rdp_params.rail_client_execute               = &rail_client_execute;
+    mod_rdp_params.rail_params.rail_client_execute               = &rail_client_execute;
 
-    mod_rdp_params.client_execute                      = rail_client_execute.get_client_execute();
+    mod_rdp_params.rail_params.client_execute                      = rail_client_execute.get_client_execute();
 
     mod_rdp_params.should_ignore_first_client_execute  = rail_client_execute.should_ignore_first_client_execute();
 
-    mod_rdp_params.remote_program                      = (client_info.remote_program
-                                                       && ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
-                                                       && ((mod_rdp_params.target_application
-                                                       && (*mod_rdp_params.target_application))
-                                                        || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
-                                                            && not mod_rdp_params.client_execute.exe_or_file.empty())));
+    mod_rdp_params.remote_program
+      = (client_info.remote_program
+        && ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
+        && ((mod_rdp_params.application_params.target_application
+          && *mod_rdp_params.application_params.target_application)
+         || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
+         && not mod_rdp_params.rail_params.client_execute.exe_or_file.empty())));
     mod_rdp_params.remote_program_enhanced             = client_info.remote_program_enhanced;
-    mod_rdp_params.use_client_provided_remoteapp       = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
+    mod_rdp_params.rail_params.use_client_provided_remoteapp       = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
     mod_rdp_params.clean_up_32_bpp_cursor              = ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();
 
@@ -253,7 +254,7 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.load_balance_info                   = ini.get<cfg::mod_rdp::load_balance_info>().c_str();
 
-    mod_rdp_params.rail_disconnect_message_delay       = ini.get<cfg::context::rail_disconnect_message_delay>();
+    mod_rdp_params.rail_params.rail_disconnect_message_delay       = ini.get<cfg::context::rail_disconnect_message_delay>();
 
     mod_rdp_params.session_probe_params.used_to_launch_remote_program
                                                         = ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
