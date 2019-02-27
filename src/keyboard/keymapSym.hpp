@@ -46,7 +46,7 @@ struct KeymapSym
     enum :  uint16_t {
             VNC_LEFT_ALT  = 0xffe9,
             VNC_RIGHT_ALT = 0xffea,
-            VNC_LEFT_CTRL = 0xffe3, 
+            VNC_LEFT_CTRL = 0xffe3,
     };
 
     enum {
@@ -119,7 +119,15 @@ struct KeymapSym
     KeyLayout_t keylayout_WORK_capslock_sym;
     KeyLayout_t keylayout_WORK_shiftcapslock_sym;
 
-    explicit KeymapSym(int verbose = 0);
+    bool remove_server_alt_state_for_char;
+    bool apple_server;
+
+    int keylayout;
+
+    bool remove_state_mode;
+    bool add_state_mode;
+
+    explicit KeymapSym(int verbose, bool remove_server_alt_state_for_char, bool apple_server);
 
     void synchronize(uint16_t param1);
 
@@ -191,5 +199,9 @@ struct KeymapSym
 
 
     void init_layout_sym(int keyb);
+
+    bool is_remove_state_mode();
+
+    bool is_add_state_mode();
 
 }; // STRUCT - KeymapSym

@@ -257,7 +257,7 @@ public:
     , width(front_width)
     , height(front_height)
     , verbose(verbose)
-    , keymapSym(static_cast<uint32_t>(verbose & VNCVerbose::keymap))
+    , keymapSym(static_cast<uint32_t>(verbose & VNCVerbose::keymap),   remove_server_alt_state_for_char, server_is_apple)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
@@ -975,21 +975,26 @@ public:
         uint32_t const key {this->keymapSym.get_sym()};
 
         if (key > 0) {
-            if (this->remove_server_alt_state_for_char && this->keymapSym.is_right_alt_pressed()
-             && (key == '#'
-              || key == '{'
-              || key == '['
-              || key == '|'
-              || key == '`'
-              || key == '\\'
-              || key == '^'
-              || key == '@'
-              || key == ']'
-              || key == '}'
-            )) {
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, KeymapSym::VNC_RIGHT_ALT);
-                this->send_keyevent(downflag, key);
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, KeymapSym::VNC_RIGHT_ALT);
+
+            if (this->keymapSym.is_remove_state_mode() && this->keymapSym.is_add_state_mode()) {
+
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, key);
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, this->keymapSym.get_sym());
+                this->send_keyevent(downflag, this->keymapSym.get_sym());
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, this->keymapSym.get_sym());
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, this->keymapSym.get_sym());
+
+            } else if (this->keymapSym.is_remove_state_mode()) {
+
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, key);
+                this->send_keyevent(downflag, this->keymapSym.get_sym());
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, this->keymapSym.get_sym());
+
+            } else if (this->keymapSym.is_add_state_mode()) {
+
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, key);
+                this->send_keyevent(downflag, this->keymapSym.get_sym());
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, this->keymapSym.get_sym());
 
             } else
             if (this->left_ctrl_pressed) {

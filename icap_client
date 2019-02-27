@@ -100,17 +100,13 @@ def send_chunk(f, socket, size_to_read):
     while size_to_read > 1024:
         
         size_to_read -= 1024
-        #print str(size_to_read)
         content = "400\r\n"+f.read(1024)+"\r\n"
-        #print content
         socket.send(content)
 
     endchunklen = str(hex(size_to_read).split('x')[-1])+"\r\n"
     content = endchunklen + f.read(size_to_read) + "\r\n\r\n\r\n0\r\n\r\n"
     socket.send(content)
-   # print content
     size_to_read = 0
-    #print str(size_to_read)
     f.close()
     
 

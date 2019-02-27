@@ -565,7 +565,7 @@ public:
         switch (e->button()) {
             case Qt::LeftButton:
                 if (this->main_tab) {
-                    this->main_tab->account_index_to_drop = this->accountData.index+1;
+                    this->main_tab->account_index_to_drop = this->accountData.index;
                     this->main_tab->drop_account();
                     this->main_tab->account_index_to_drop = -1;
                     this->main_tab->setCursor(Qt::ArrowCursor);
@@ -604,7 +604,7 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
-    QtIconAccount * icons[15];
+    QtIconAccount * icons[35];
     QFormLayout lay;
 
 
@@ -942,7 +942,7 @@ public:
     void drop_account() override {
         if (this->account_index_to_drop !=  -1) {
             this->targetPicked(this->account_index_to_drop);
-            this->account_index_to_drop = -1;
+//             this->account_index_to_drop = -1;
         }
     }
 

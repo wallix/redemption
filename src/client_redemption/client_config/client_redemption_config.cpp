@@ -455,9 +455,9 @@ void ClientConfig::setAccountData(ClientRedemptionConfig & config)  {
             line = "";
         }
 
-        if (config._accountNB < int(config._accountData.size())) {
-            config._accountNB = accountNB;
-        }
+//         if (config._accountNB < int(config._accountData.size())) {
+//             config._accountNB = accountNB;
+//         }
     }
 }
 
