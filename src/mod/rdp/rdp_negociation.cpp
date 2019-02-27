@@ -346,7 +346,7 @@ RdpNegociation::RdpNegociation(
     , enable_remotefx(mod_rdp_params.enable_remotefx)
     , rdp_compression(mod_rdp_params.rdp_compression)
     , session_probe_use_clipboard_based_launcher(
-        mod_rdp_params.session_probe_params.use_clipboard_based_launcher
+        mod_rdp_params.session_probe_params.used_clipboard_based_launcher
         && (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application))
         && (!mod_rdp_params.use_client_provided_alternate_shell
         || !info.alternate_shell[0] || info.remote_program)

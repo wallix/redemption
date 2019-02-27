@@ -116,7 +116,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.enable_session_probe                = ini.get<cfg::mod_rdp::enable_session_probe>();
     mod_rdp_params.session_probe_params.enable_launch_mask    = ini.get<cfg::mod_rdp::session_probe_enable_launch_mask>();
 
-    mod_rdp_params.session_probe_params.use_clipboard_based_launcher
+    mod_rdp_params.session_probe_params.used_clipboard_based_launcher
                                                         = ini.get<cfg::mod_rdp::session_probe_use_clipboard_based_launcher>();
     mod_rdp_params.session_probe_params.vc.effective_launch_timeout
         = (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>()
@@ -255,7 +255,7 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.rail_disconnect_message_delay       = ini.get<cfg::context::rail_disconnect_message_delay>();
 
-    mod_rdp_params.session_probe_params.use_to_launch_remote_program
+    mod_rdp_params.session_probe_params.used_to_launch_remote_program
                                                         = ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
 
     mod_rdp_params.bogus_ios_rdpdr_virtual_channel     = ini.get<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel>();

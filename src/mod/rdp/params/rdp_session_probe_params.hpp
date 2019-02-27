@@ -21,16 +21,20 @@
 
 #pragma once
 
-#include "configs/autogen/enums.hpp"
 #include "mod/rdp/channels/sespro_channel_params.hpp"
 
-#include <chrono>
 #include <string>
-#include <cstdint>
 
 
 struct ModRdpSessionProbeParams
 {
+    std::string exe_or_file {};
+    std::string arguments {};
+
+    SessionProbeClipboardBasedLauncherParams clipboard_based_launcher {};
+
+    SessionProbeVirtualChannelParams vc {};
+
     bool is_public_session = false;
 
     bool start_launch_timeout_timer_only_after_logon = true;
@@ -39,15 +43,8 @@ struct ModRdpSessionProbeParams
     bool enable_launch_mask = true;
 
 
-    bool use_to_launch_remote_program = true;
-    bool use_clipboard_based_launcher = false;
+    bool used_to_launch_remote_program = true;
+    bool used_clipboard_based_launcher = false;
 
     bool customize_executable_name = false;
-
-    SessionProbeClipboardBasedLauncherParams clipboard_based_launcher {};
-
-    std::string exe_or_file {};
-    std::string arguments {};
-
-    SessionProbeVirtualChannelParams vc;
 };

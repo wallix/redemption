@@ -248,7 +248,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_session_probe);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_launch_mask);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.use_clipboard_based_launcher);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.used_clipboard_based_launcher);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.effective_launch_timeout);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.start_launch_timeout_timer_only_after_logon);
         RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc.on_launch_failure);
@@ -376,7 +376,7 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%u",     from_millisec,         rail_disconnect_message_delay);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.use_to_launch_remote_program);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.used_to_launch_remote_program);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_ios_rdpdr_virtual_channel);
 

@@ -434,53 +434,22 @@ struct mod_rdp_channels
     {
         std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
-        SessionProbeClipboardBasedLauncher::Params session_probe_clipboard_based_launcher;
-
-        struct SessionProbeStartParams
-        {
-            const bool enabled;
-            const bool used_to_launch_remote_program;
-            std::string arguments;
-            const bool customize_executable_name;
-            bool is_public_session;
-            bool start_launch_timeout_timer_only_after_logon;
-
-            SessionProbeVirtualChannelParams vc;
-
-            std::string target_informations;
-
-            SessionProbeStartParams(ModRdpSessionProbeParams const& sespro_params)
-            : enabled(sespro_params.enable_session_probe)
-            , used_to_launch_remote_program(sespro_params.use_to_launch_remote_program)
-            , arguments(sespro_params.arguments)
-            , customize_executable_name(sespro_params.customize_executable_name)
-            , is_public_session(sespro_params.is_public_session)
-            , start_launch_timeout_timer_only_after_logon(
-                sespro_params.start_launch_timeout_timer_only_after_logon)
-            , vc(sespro_params.vc)
-            {}
-        } params;
+        ModRdpSessionProbeParams params;
 
         SessionProbe(ModRDPParams const& mod_rdp_params)
-        : session_probe_clipboard_based_launcher(
-            mod_rdp_params.session_probe_params.clipboard_based_launcher)
-        , params(mod_rdp_params.session_probe_params)
-        , mod_rdp_params_session_probe_use_clipboard_based_launcher(
-            mod_rdp_params.session_probe_params.use_clipboard_based_launcher)
-        , session_probe_use_clipboard_based_launcher(
-            this->mod_rdp_params_session_probe_use_clipboard_based_launcher
+        : params(mod_rdp_params.session_probe_params)
+        , session_probe_used_clipboard_based_launcher(
+            mod_rdp_params.session_probe_params.used_clipboard_based_launcher
             && (!mod_rdp_params.target_application || !*mod_rdp_params.target_application)
             && (!mod_rdp_params.use_client_provided_alternate_shell
-            || !mod_rdp_params.alternate_shell[0]
-            || mod_rdp_params.remote_program))
+             || !mod_rdp_params.alternate_shell[0]
+             || mod_rdp_params.remote_program))
         , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
-        , exe_or_file(mod_rdp_params.session_probe_params.exe_or_file)
         {}
 
-        const bool mod_rdp_params_session_probe_use_clipboard_based_launcher;
-        const bool session_probe_use_clipboard_based_launcher;
+        const bool session_probe_used_clipboard_based_launcher;
         const bool experimental_fix_too_long_cookie;
-        const std::string exe_or_file;
+        std::string target_informations;
 
         struct ChannelParams
         {
@@ -631,7 +600,7 @@ struct mod_rdp_channels
 
 #ifndef __EMSCRIPTEN__
         if (this->remote_program) {
-            if (this->session_probe.params.enabled) {
+            if (this->session_probe.params.enable_session_probe) {
                 this->init_remote_program_with_session_probe(gd, mod_rdp, mod_rdp_params, authentifier);
             }
             else {
@@ -639,7 +608,7 @@ struct mod_rdp_channels
             }
         }
         else { // ! this->remote_program
-            if (this->session_probe.params.enabled) {
+            if (this->session_probe.params.enable_session_probe) {
                 this->init_no_remote_program_with_session_probe(mod_rdp, info, mod_rdp_params, program, directory);
             } // ! this->session_probe.enabled
             else  {
@@ -922,7 +891,7 @@ private:
                 fsvc_params);
 #ifndef __EMSCRIPTEN__
         if (this->file_system_to_server_sender) {
-            if (this->session_probe.params.enabled || this->use_application_driver) {
+            if (this->session_probe.params.enable_session_probe || this->use_application_driver) {
                 this->file_system_virtual_channel->enable_session_probe_drive();
             }
         }
@@ -960,7 +929,7 @@ public:
         SessionProbeVirtualChannel::Params sp_vc_params;
 
         sp_vc_params.sespro_params = this->session_probe.params.vc;
-        sp_vc_params.target_informations = this->session_probe.params.target_informations.c_str();
+        sp_vc_params.target_informations = this->session_probe.target_informations.c_str();
 
 
         sp_vc_params.front_width = stc.negociation_result.front_width;
@@ -1421,15 +1390,15 @@ public:
         }
 
         if (has_target || use_client_provided_remoteapp){
-
             if (use_client_provided_remoteapp
-            || !this->session_probe.params.used_to_launch_remote_program) {
+             || !this->session_probe.params.used_to_launch_remote_program
+            ) {
                 this->session_probe.channel_params.real_alternate_shell = "[None]";
                 this->real_client_execute.exe_or_file = mod_rdp_params.client_execute.exe_or_file;
                 this->real_client_execute.working_dir = mod_rdp_params.client_execute.working_dir;
             }
 
-            this->client_execute.exe_or_file = this->session_probe.exe_or_file;
+            this->client_execute.exe_or_file = this->session_probe.params.exe_or_file;
 
             // Executable file name of SP.
             char exe_var_str[16] {};
@@ -1438,26 +1407,26 @@ public:
             }
 
             // Target informations
-            str_assign(this->session_probe.params.target_informations, mod_rdp_params.target_application, ':');
+            str_assign(this->session_probe.target_informations, mod_rdp_params.target_application, ':');
             if (!this->session_probe.params.is_public_session) {
-                this->session_probe.params.target_informations += this->primary_user_id;
+                this->session_probe.target_informations += this->primary_user_id;
             }
 
             std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
 
             std::string cookie_param
-              = this->session_probe.params.target_informations.empty()
+              = this->session_probe.target_informations.empty()
               ? std::string()
-              : str_concat("/#", this->session_probe.params.target_informations, ' ');
+              : str_concat("/#", this->session_probe.target_informations, ' ');
 
-            mod_rdp_channels::replace_probe_arguments(this->session_probe.params.arguments,
+            this->client_execute.working_dir = "%TMP%";
+            this->client_execute.arguments   = this->session_probe.params.arguments;
+            mod_rdp_channels::replace_probe_arguments(this->client_execute.arguments,
                 "${EXE_VAR}", exe_var_str,
                 "${TITLE_VAR} ", title_param.c_str(),
                 "/${COOKIE_VAR} ", cookie_param.c_str(),
                 "${CBSPL_VAR} ", "");
 
-            this->client_execute.arguments   = this->session_probe.params.arguments;
-            this->client_execute.working_dir = "%TMP%";
         }
 
         this->remote_programs_session_manager =
@@ -1533,35 +1502,33 @@ public:
         }
 
         // Target informations
-        str_assign(this->session_probe.params.target_informations, mod_rdp_params.target_application, ':');
+        str_assign(this->session_probe.target_informations, mod_rdp_params.target_application, ':');
         if (!this->session_probe.params.is_public_session) {
-            this->session_probe.params.target_informations += this->primary_user_id;
+            this->session_probe.target_informations += this->primary_user_id;
         }
 
-        if (this->session_probe.mod_rdp_params_session_probe_use_clipboard_based_launcher
+        if (this->session_probe.params.used_clipboard_based_launcher
             && mod_rdp_params.target_application && *mod_rdp_params.target_application
         ) {
-            assert(!this->session_probe.session_probe_use_clipboard_based_launcher);
-
             LOG(LOG_WARNING, "mod_rdp: "
                 "Clipboard based Session Probe launcher is not compatible with application. "
                 "Falled back to using AlternateShell based launcher.");
         }
 
         std::string cookie_param = [&]() -> std::string {
-            if (this->session_probe.session_probe_use_clipboard_based_launcher){
+            if (this->session_probe.session_probe_used_clipboard_based_launcher){
                 return std::string{};
             }
 
-            if (this->session_probe.params.target_informations.empty()) {
+            if (this->session_probe.target_informations.empty()) {
                 return std::string{};
             }
 
             if (this->session_probe.experimental_fix_too_long_cookie
-             && this->session_probe.params.target_informations.length() > 20
+             && this->session_probe.target_informations.length() > 20
             ){
                 SslSha1 sha1;
-                sha1.update(this->session_probe.params.target_informations);
+                sha1.update(this->session_probe.target_informations);
 
                 uint8_t sig[SslSha1::DIGEST_LENGTH];
                 sha1.final(sig);
@@ -1577,23 +1544,24 @@ public:
                 return std::string(clipboard_based_launcher_cookie);
             }
 
-            return str_concat("/#", this->session_probe.params.target_informations, ' ');
+            return str_concat("/#", this->session_probe.target_informations, ' ');
         }();
 
-        mod_rdp_channels::replace_probe_arguments(this->session_probe.params.arguments,
+        std::string arguments = this->session_probe.params.arguments;
+        mod_rdp_channels::replace_probe_arguments(arguments,
             "${EXE_VAR}", exe_var_str,
             "${TITLE_VAR} ", "",
             "/${COOKIE_VAR} ", cookie_param.c_str(),
-            "${CBSPL_VAR} ", this->session_probe.session_probe_use_clipboard_based_launcher ? "CD %TMP%&" : ""
+            "${CBSPL_VAR} ", this->session_probe.session_probe_used_clipboard_based_launcher ? "CD %TMP%&" : ""
         );
 
-        std::string alternate_shell = this->session_probe.exe_or_file;
+        std::string alternate_shell = this->session_probe.params.exe_or_file;
 
         if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
             alternate_shell.erase(0, 2);
         }
 
-        str_append(alternate_shell, ' ', this->session_probe.params.arguments);
+        str_append(alternate_shell, ' ', arguments);
 
         if (mod_rdp_params.target_application && *mod_rdp_params.target_application) {
             std::string shell_arguments = get_alternate_shell_arguments(
@@ -1613,12 +1581,12 @@ public:
             this->session_probe.channel_params.real_alternate_shell = info.alternate_shell;
             this->session_probe.channel_params.real_working_dir     = info.working_dir;
         }
-        else if (this->session_probe.session_probe_use_clipboard_based_launcher) {
+        else if (this->session_probe.session_probe_used_clipboard_based_launcher) {
             this->session_probe.session_probe_launcher =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                     session_reactor,
                     mod_rdp, alternate_shell.c_str(),
-                    this->session_probe.session_probe_clipboard_based_launcher,
+                    this->session_probe.params.clipboard_based_launcher,
                     this->verbose);
 
             return ;
@@ -1864,7 +1832,7 @@ public:
         const bool bogus_refresh_rect,
         const Translation::language_t & lang)
     {
-        assert(this->session_probe.params.enabled);
+        assert(this->session_probe.params.enable_session_probe);
         if (this->session_probe.session_probe_launcher){
             if (!this->clipboard_virtual_channel) {
                 this->create_clipboard_virtual_channel(front, stc);
@@ -2063,10 +2031,6 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::string& close_box_extra_message_ref;
 
-#ifndef __EMSCRIPTEN__
-    const bool session_probe_enable_launch_mask;
-#endif
-
     const bool enable_fastpath;                    // choice of programmer
     const bool enable_fastpath_server_update;      // choice of programmer
     const bool enable_glyph_cache;
@@ -2228,9 +2192,6 @@ public:
         , authentifier(authentifier)
         , report_message(report_message)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
-#ifndef __EMSCRIPTEN__
-        , session_probe_enable_launch_mask(mod_rdp_params.session_probe_params.enable_launch_mask)
-#endif
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
@@ -2310,7 +2271,7 @@ public:
 
     ~mod_rdp() override {
 #ifndef __EMSCRIPTEN__
-        if (this->channels.session_probe.params.enabled) {
+        if (this->channels.session_probe.params.enable_session_probe) {
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
             this->disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
@@ -2345,7 +2306,7 @@ public:
 
             if (this->first_scancode && !(device_flags & 0x8000)) {
 #ifndef __EMSCRIPTEN__
-                if (this->channels.session_probe.params.enabled) {
+                if (this->channels.session_probe.params.enable_session_probe) {
                     if (!this->channels.session_probe_virtual_channel) {
                         ServerTransportContext stc{
                             this->trans, this->encrypt, this->negociation_result};
@@ -3094,7 +3055,7 @@ public:
 
                             if (!this->already_upped_and_running) {
 #ifndef __EMSCRIPTEN__
-                                if (this->channels.session_probe.params.enabled) {
+                                if (this->channels.session_probe.params.enable_session_probe) {
                                     ServerTransportContext stc{
                                         this->trans, this->encrypt, this->negociation_result};
                                     this->channels.do_enable_session_probe(
@@ -3116,8 +3077,8 @@ public:
                             }
 
 #ifndef __EMSCRIPTEN__
-                            if (this->channels.session_probe.params.enabled
-                             && this->session_probe_enable_launch_mask
+                            if (this->channels.session_probe.params.enable_session_probe
+                             && this->channels.session_probe.params.enable_launch_mask
                             ) {
                                 this->delayed_start_capture = true;
 
@@ -3456,7 +3417,7 @@ public:
                 this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
 #ifndef __EMSCRIPTEN__
-                if (this->channels.session_probe.params.enabled) {
+                if (this->channels.session_probe.params.enable_session_probe) {
                     const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
                     this->disable_input_event_and_graphics_update(
@@ -4923,9 +4884,9 @@ public:
         this->fd_event->disable_timeout();
 
 #ifndef __EMSCRIPTEN__
-        if (this->channels.session_probe.params.enabled) {
+        if (this->channels.session_probe.params.enable_session_probe) {
             const bool disable_input_event     = true;
-            const bool disable_graphics_update = this->session_probe_enable_launch_mask;
+            const bool disable_graphics_update = this->channels.session_probe.params.enable_launch_mask;
             this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
@@ -4968,9 +4929,9 @@ public:
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
 #ifndef __EMSCRIPTEN__
-            if (this->channels.session_probe.params.enabled) {
+            if (this->channels.session_probe.params.enable_session_probe) {
                 const bool disable_input_event     = true;
-                const bool disable_graphics_update = this->session_probe_enable_launch_mask;
+                const bool disable_graphics_update = this->channels.session_probe.params.enable_launch_mask;
                 this->disable_input_event_and_graphics_update(
                     disable_input_event, disable_graphics_update);
             }

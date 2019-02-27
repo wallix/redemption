@@ -40,6 +40,7 @@ exe headlessclient :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -160,6 +161,7 @@ exe rdpproxy :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -257,6 +259,7 @@ exe rdpclient :
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -544,6 +547,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -794,6 +798,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -872,6 +877,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -919,6 +925,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -2330,6 +2337,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -2457,6 +2465,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -2585,6 +2594,7 @@ test-run tests/core/test_session_server :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -2659,6 +2669,7 @@ test-run tests/front/test_front :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -4010,6 +4021,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4028,6 +4040,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4073,6 +4086,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -4125,6 +4139,7 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
@@ -5291,6 +5306,7 @@ obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
+obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/parse_extra_orders.o : $(REDEMPTION_SRC_PATH)/mod/rdp/parse_extra_orders.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
