@@ -128,7 +128,7 @@ struct CSNet {
     };
 
     struct {
-        char name[8];
+        char name[8]; // TODO ChannelNameId
         uint32_t options;
     } channelDefArray[32];
 

@@ -956,10 +956,11 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     if (!this->remote_program && channel_item.name == channel_names::rail) {
                         continue;
                     }
-                    else if (this->channels_authorizations.is_authorized(channel_item.name) ||
-                                ((channel_item.name == channel_names::rdpdr ||
-                                channel_item.name == channel_names::rdpsnd) &&
-                                this->has_managed_drive)
+
+                    if (this->channels_authorizations.is_authorized(channel_item.name)
+                     || ((channel_item.name == channel_names::rdpdr
+                       || channel_item.name == channel_names::rdpsnd)
+                      && this->has_managed_drive)
                     ) {
                         switch (channel_item.name) {
                             case channel_names::cliprdr: has_cliprdr_channel = true; break;
@@ -989,7 +990,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::rdpdr.c_str());
                     cs_net.channelDefArray[cs_net.channelCount].options =
-                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                         | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                     CHANNELS::ChannelDef def;
                     def.name = channel_names::rdpdr;
@@ -1007,7 +1008,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::cliprdr.c_str());
                     cs_net.channelDefArray[cs_net.channelCount].options =
-                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                         | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                         | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL;
                     CHANNELS::ChannelDef def;
@@ -1027,7 +1028,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::rdpsnd.c_str());
                     cs_net.channelDefArray[cs_net.channelCount].options =
-                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                          GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                         | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP;
                     CHANNELS::ChannelDef def;
                     def.name = channel_names::rdpsnd;
@@ -1574,6 +1575,23 @@ void RdpNegociation::send_client_info_pdu()
                             );
     infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
     infoPacket.flags |= this->info_packet_extra_flags;
+    if (bool(this->rdp_compression)) {
+        infoPacket.flags |= INFO_COMPRESSION;
+        infoPacket.flags &= ~CompressionTypeMask;
+        infoPacket.flags |= (static_cast<unsigned>(this->rdp_compression) - 1) << 9;
+    }
+
+    if (this->enable_session_probe) {
+        infoPacket.flags &= ~INFO_MAXIMIZESHELL;
+    }
+
+    if (this->remote_program) {
+        infoPacket.flags |= INFO_RAIL;
+
+        // if (this->remote_program_enhanced) {
+        //    infoPacket.flags |= INFO_HIDEF_RAIL_SUPPORTED;
+        // }
+    }
 
     if (this->perform_automatic_reconnection) {
         InStream in_s(this->server_auto_reconnect_packet_ref.data(),
@@ -1630,26 +1648,7 @@ void RdpNegociation::send_client_info_pdu()
     this->send_data_request(
         GCC::MCS_GLOBAL_CHANNEL,
         [this, &infoPacket](StreamSize<1024>, OutStream & stream) {
-            if (bool(this->rdp_compression)) {
-                infoPacket.flags |= INFO_COMPRESSION;
-                infoPacket.flags &= ~CompressionTypeMask;
-                infoPacket.flags |= (static_cast<unsigned>(this->rdp_compression) - 1) << 9;
-            }
-
-            if (this->enable_session_probe) {
-                infoPacket.flags &= ~INFO_MAXIMIZESHELL;
-            }
-
-            if (this->remote_program) {
-                infoPacket.flags |= INFO_RAIL;
-
-                // if (this->remote_program_enhanced) {
-                //    infoPacket.flags |= INFO_HIDEF_RAIL_SUPPORTED;
-                // }
-            }
-
             infoPacket.emit(stream);
-
         },
         SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->negociation_result.encryptionLevel}
     );
