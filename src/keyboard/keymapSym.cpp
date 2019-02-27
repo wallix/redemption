@@ -988,9 +988,9 @@ void KeymapSym::synchronize(uint16_t param1)
 void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 {
 
-//     if (this->verbose){
+    if (this->verbose){
         LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x, keyCode=%04x flags=%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
-//     }
+    }
 
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
 
