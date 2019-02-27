@@ -1116,9 +1116,9 @@ void KeymapSym::synchronize(uint16_t param1)
 
 void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 {
-//     if (this->verbose){
+    if (this->verbose){
         LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=0x%04x, keyCode=0x%04x flags=0x%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
-//     }
+    }
 
     this->remove_state_mode = false;
     this->add_state_mode    = false;
@@ -1371,9 +1371,9 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 //----------------------------------------
                 uint8_t sym = map[extendedKeyCode];
                 uint32_t ksym = (*layout)[sym];
-//                 if (this->verbose){
+                if (this->verbose){
                     LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-//                 }
+                }
                 if ((ksym == 0xFE52 ) || (ksym == 0xFE57) || /*(ksym == 0x60)||*/ (ksym == 0x7E)) {
                     //-------------------------------------------------
                     // ksym is NOT in Printable unicode character range
