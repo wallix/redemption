@@ -47,4 +47,6 @@ struct ModRdpSessionProbeParams
     bool used_clipboard_based_launcher = false;
 
     bool customize_executable_name = false;
+
+    bool fix_too_long_cookie  = true;
 };

@@ -434,7 +434,17 @@ struct mod_rdp_channels
     {
         std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
-        ModRdpSessionProbeParams params;
+        const ModRdpSessionProbeParams params;
+
+        std::string target_informations;
+
+        struct ChannelParams
+        {
+            std::string real_alternate_shell;
+            std::string real_working_dir;
+        } channel_params;
+
+        const bool session_probe_used_clipboard_based_launcher;
 
         SessionProbe(ModRDPParams const& mod_rdp_params)
         : params(mod_rdp_params.session_probe_params)
@@ -444,18 +454,7 @@ struct mod_rdp_channels
             && (!mod_rdp_params.use_client_provided_alternate_shell
              || !mod_rdp_params.alternate_shell[0]
              || mod_rdp_params.remote_program))
-        , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
         {}
-
-        const bool session_probe_used_clipboard_based_launcher;
-        const bool experimental_fix_too_long_cookie;
-        std::string target_informations;
-
-        struct ChannelParams
-        {
-            std::string real_alternate_shell;
-            std::string real_working_dir;
-        } channel_params;
     } session_probe;
 #endif
 
@@ -1524,7 +1523,7 @@ public:
                 return std::string{};
             }
 
-            if (this->session_probe.experimental_fix_too_long_cookie
+            if (this->session_probe.params.fix_too_long_cookie
              && this->session_probe.target_informations.length() > 20
             ){
                 SslSha1 sha1;

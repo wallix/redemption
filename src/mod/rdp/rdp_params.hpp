@@ -185,7 +185,6 @@ struct ModRDPParams
     std::chrono::milliseconds remoteapp_bypass_legal_notice_timeout {};
 
     bool experimental_fix_input_event_sync = true;
-    bool experimental_fix_too_long_cookie  = true;
 
     bool log_only_relevant_clipboard_activities = true;
     bool split_domain = false;
@@ -386,7 +385,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%u",     from_millisec,         remoteapp_bypass_legal_notice_timeout);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_input_event_sync);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_too_long_cookie);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.fix_too_long_cookie);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             log_only_relevant_clipboard_activities);
 
