@@ -67,9 +67,6 @@ struct ModRDPParams
     const char * target_host;
     const char * client_address;
 
-    const char * primary_user_id = "";
-    const char * target_application = "";
-
     bool enable_tls = true;
     bool enable_nla = true;
     bool enable_krb = false;
@@ -92,15 +89,23 @@ struct ModRDPParams
 
     CHANNELS::ChannelNameId checkout_channel;
 
-    // Application Bastion
-    const char * alternate_shell = "";
-    const char * shell_arguments = "";
-    const char * shell_working_dir = "";
+    struct ApplicationParams
+    {
+        const char * primary_user_id = "";
+        const char * target_application = "";
 
-    bool         use_client_provided_alternate_shell = false;
+        // Application Bastion
+        const char * alternate_shell = "";
+        const char * shell_arguments = "";
+        const char * shell_working_dir = "";
 
-    const char * target_application_account = "";
-    const char * target_application_password = "";
+        bool         use_client_provided_alternate_shell = false;
+
+        const char * target_application_account = "";
+        const char * target_application_password = "";
+    };
+
+    ApplicationParams application_params;
 
     RdpCompression rdp_compression = RdpCompression::none;
 
@@ -233,8 +238,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    target_host);
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    client_address);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             primary_user_id);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             target_application);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.primary_user_id);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.target_application);
 
         RDP_PARAMS_LOG("%" PRIx32, RDP_PARAMS_LOG_GET,  primary_drawing_orders_support.as_uint());
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_tls);
@@ -302,12 +307,12 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             checkout_channel.c_str());
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             alternate_shell);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             shell_arguments);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             shell_working_dir);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             use_client_provided_alternate_shell);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             target_application_account);
-        RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        target_application_password);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.alternate_shell);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.shell_arguments);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.shell_working_dir);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             application_params.use_client_provided_alternate_shell);
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.target_application_account);
+        RDP_PARAMS_LOG("\"%s\"", hidden_or_null,        application_params.target_application_password);
 
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, rdp_compression);
 

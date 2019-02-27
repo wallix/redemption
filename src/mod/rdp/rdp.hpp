@@ -102,7 +102,6 @@ class RDPMetrics;
 
 #include "mod/mod_api.hpp"
 
-#include "mod/rdp/alternate_shell.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/drdynvc_channel.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
@@ -450,9 +449,9 @@ struct mod_rdp_channels
         : params(mod_rdp_params.session_probe_params)
         , session_probe_used_clipboard_based_launcher(
             mod_rdp_params.session_probe_params.used_clipboard_based_launcher
-            && (!mod_rdp_params.target_application || !*mod_rdp_params.target_application)
-            && (!mod_rdp_params.use_client_provided_alternate_shell
-             || !mod_rdp_params.alternate_shell[0]
+            && (!mod_rdp_params.application_params.target_application || !*mod_rdp_params.application_params.target_application)
+            && (!mod_rdp_params.application_params.use_client_provided_alternate_shell
+             || !mod_rdp_params.application_params.alternate_shell[0]
              || mod_rdp_params.remote_program))
         {}
     } session_probe;
@@ -462,8 +461,6 @@ struct mod_rdp_channels
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
     std::string proxy_managed_drive_prefix;
-
-    const char *                      primary_user_id;
 
 #ifndef __EMSCRIPTEN__
     bool should_ignore_first_client_execute = false;
@@ -531,7 +528,7 @@ struct mod_rdp_channels
         channels_authorizations(std::move(channels_authorizations))
     , report_message(report_message)
     , gen(gen)
-    , enable_auth_channel(mod_rdp_params.alternate_shell[0]
+    , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
     , auth_channel([&]{
         switch (mod_rdp_params.auth_channel) {
@@ -550,12 +547,11 @@ struct mod_rdp_channels
 #ifndef __EMSCRIPTEN__
     , session_probe(mod_rdp_params)
 #endif
-    , use_application_driver(mod_rdp_params.alternate_shell
-        && !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
+    , use_application_driver(mod_rdp_params.application_params.alternate_shell
+        && !::strncasecmp(mod_rdp_params.application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
     , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
     , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
     , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
-    , primary_user_id(mod_rdp_params.primary_user_id)
 #ifndef __EMSCRIPTEN__
     , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
     , remote_program(mod_rdp_params.remote_program)
@@ -600,18 +596,22 @@ struct mod_rdp_channels
 #ifndef __EMSCRIPTEN__
         if (this->remote_program) {
             if (this->session_probe.params.enable_session_probe) {
-                this->init_remote_program_with_session_probe(gd, mod_rdp, mod_rdp_params, authentifier);
+                this->init_remote_program_with_session_probe(
+                    gd, mod_rdp, mod_rdp_params, mod_rdp_params.application_params, authentifier);
             }
             else {
-                this->init_remote_program_without_session_probe(gd, mod_rdp, mod_rdp_params, authentifier);
+                this->init_remote_program_without_session_probe(
+                    gd, mod_rdp, mod_rdp_params, mod_rdp_params.application_params, authentifier);
             }
         }
         else { // ! this->remote_program
             if (this->session_probe.params.enable_session_probe) {
-                this->init_no_remote_program_with_session_probe(mod_rdp, info, mod_rdp_params, program, directory);
+                this->init_no_remote_program_with_session_probe(
+                    mod_rdp, info, mod_rdp_params.application_params, program, directory);
             } // ! this->session_probe.enabled
             else  {
-                this->init_no_remote_program_no_session_probe(info, mod_rdp_params, program, directory);
+                this->init_no_remote_program_no_session_probe(
+                    info, mod_rdp_params.application_params, program, directory);
             } // this->session_probe.enabled
         } // this->remote_program
 #else
@@ -1315,13 +1315,21 @@ public:
         }
     }
 
-    static void replace_shell_arguments(std::string & text_with_tags,
-                                        char const* marker1, char const* replacement1,
-                                        char const* marker2, char const* replacement2,
-                                        char const* marker3, char const* replacement3){
-        mod_rdp_channels::replace(text_with_tags, marker1, replacement1);
-        mod_rdp_channels::replace(text_with_tags, marker2, replacement2);
-        mod_rdp_channels::replace(text_with_tags, marker3, replacement3);
+    static void replace_shell_arguments(
+        std::string & text_with_tags,
+        ModRDPParams::ApplicationParams const& application_params
+    ){
+        mod_rdp_channels::replace(text_with_tags, "${APPID}", application_params.target_application);
+        mod_rdp_channels::replace(text_with_tags, "${USER}", application_params.target_application_account);
+        mod_rdp_channels::replace(text_with_tags, "${PASSWORD}", application_params.target_application_password);
+    }
+
+    static std::string get_shell_arguments(
+        ModRDPParams::ApplicationParams const& application_params)
+    {
+        std::string shell_arguments = application_params.shell_arguments;
+        replace_shell_arguments(shell_arguments, application_params);
+        return shell_arguments;
     }
 
     static void replace_probe_arguments(std::string & text_with_tags,
@@ -1339,6 +1347,7 @@ public:
         gdi::GraphicApi& gd,
         mod_api & mod_rdp,
         const ModRDPParams & mod_rdp_params,
+        const ModRDPParams::ApplicationParams & application_params,
         AuthApi & authentifier)
     {
         char session_probe_window_title[32] = { 0 };
@@ -1353,29 +1362,25 @@ public:
               r & 0x000000FF
             );
 
-        bool has_target = (mod_rdp_params.target_application && *mod_rdp_params.target_application);
+        bool has_target = (application_params.target_application && *application_params.target_application);
         bool use_client_provided_remoteapp = (mod_rdp_params.use_client_provided_remoteapp
                                             && not mod_rdp_params.client_execute.exe_or_file.empty());
 
         if (has_target) {
             if (this->session_probe.params.used_to_launch_remote_program) {
-                std::string shell_arguments = mod_rdp_params.shell_arguments;
-                mod_rdp_channels::replace_shell_arguments(shell_arguments,
-                    "${APPID}", mod_rdp_params.target_application,
-                    "${USER}", mod_rdp_params.target_application_account,
-                    "${PASSWORD}", mod_rdp_params.target_application_password);
+                this->session_probe.channel_params.real_alternate_shell = application_params.alternate_shell;
 
-                this->session_probe.channel_params.real_alternate_shell = mod_rdp_params.alternate_shell;
+                std::string shell_arguments = get_shell_arguments(application_params);
+
                 if (!shell_arguments.empty()) {
                     str_append(this->session_probe.channel_params.real_alternate_shell, ' ', shell_arguments);
                 }
-                this->session_probe.channel_params.real_working_dir     = mod_rdp_params.shell_working_dir;
+
+                this->session_probe.channel_params.real_working_dir     = application_params.shell_working_dir;
             }
             else {
-                mod_rdp_channels::replace_shell_arguments(this->real_client_execute.arguments,
-                    "${APPID}", mod_rdp_params.target_application,
-                    "${USER}", mod_rdp_params.target_application_account,
-                    "${PASSWORD}", mod_rdp_params.target_application_password);
+                mod_rdp_channels::replace_shell_arguments(
+                    this->real_client_execute.arguments, application_params);
                 this->real_client_execute.flags       = 0;
             }
             this->client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
@@ -1406,9 +1411,9 @@ public:
             }
 
             // Target informations
-            str_assign(this->session_probe.target_informations, mod_rdp_params.target_application, ':');
+            str_assign(this->session_probe.target_informations, application_params.target_application, ':');
             if (!this->session_probe.params.is_public_session) {
-                this->session_probe.target_informations += this->primary_user_id;
+                this->session_probe.target_informations += application_params.primary_user_id;
             }
 
             std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
@@ -1444,6 +1449,7 @@ public:
         gdi::GraphicApi& gd,
         mod_api & mod_rdp,
         const ModRDPParams & mod_rdp_params,
+        const ModRDPParams::ApplicationParams & application_params,
         AuthApi & authentifier)
     {
         char session_probe_window_title[32] = { 0 };
@@ -1458,16 +1464,10 @@ public:
               r & 0x000000FF
             );
 
-        if (mod_rdp_params.target_application && *mod_rdp_params.target_application) {
-            std::string shell_arguments = get_alternate_shell_arguments(
-                mod_rdp_params.shell_arguments,
-                get_alternate_shell_arguments::App{mod_rdp_params.target_application},
-                get_alternate_shell_arguments::Account{mod_rdp_params.target_application_account},
-                get_alternate_shell_arguments::Password{mod_rdp_params.target_application_password});
-
-            this->client_execute.exe_or_file = mod_rdp_params.alternate_shell;
-            this->client_execute.arguments   = std::move(shell_arguments);
-            this->client_execute.working_dir = mod_rdp_params.shell_working_dir;
+        if (application_params.target_application && *application_params.target_application) {
+            this->client_execute.exe_or_file = application_params.alternate_shell;
+            this->client_execute.arguments   = get_shell_arguments(application_params);
+            this->client_execute.working_dir = application_params.shell_working_dir;
             this->client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
         }
         else if (mod_rdp_params.use_client_provided_remoteapp
@@ -1490,7 +1490,7 @@ public:
     void init_no_remote_program_with_session_probe(
         mod_api & mod_rdp,
         const ClientInfo & info,
-        const ModRDPParams & mod_rdp_params,
+        const ModRDPParams::ApplicationParams & application_params,
         char (&program)[512],
         char (&directory)[512])
     {
@@ -1501,13 +1501,13 @@ public:
         }
 
         // Target informations
-        str_assign(this->session_probe.target_informations, mod_rdp_params.target_application, ':');
+        str_assign(this->session_probe.target_informations, application_params.target_application, ':');
         if (!this->session_probe.params.is_public_session) {
-            this->session_probe.target_informations += this->primary_user_id;
+            this->session_probe.target_informations += application_params.primary_user_id;
         }
 
         if (this->session_probe.params.used_clipboard_based_launcher
-            && mod_rdp_params.target_application && *mod_rdp_params.target_application
+            && application_params.target_application && *application_params.target_application
         ) {
             LOG(LOG_WARNING, "mod_rdp: "
                 "Clipboard based Session Probe launcher is not compatible with application. "
@@ -1562,19 +1562,15 @@ public:
 
         str_append(alternate_shell, ' ', arguments);
 
-        if (mod_rdp_params.target_application && *mod_rdp_params.target_application) {
-            std::string shell_arguments = get_alternate_shell_arguments(
-                mod_rdp_params.shell_arguments,
-                get_alternate_shell_arguments::App{mod_rdp_params.target_application},
-                get_alternate_shell_arguments::Account{mod_rdp_params.target_application_account},
-                get_alternate_shell_arguments::Password{mod_rdp_params.target_application_password});
+        if (application_params.target_application && *application_params.target_application) {
+            std::string shell_arguments = get_shell_arguments(application_params);
 
             this->session_probe.channel_params.real_alternate_shell = shell_arguments.empty()
-                ? std::string(mod_rdp_params.alternate_shell)
-                : str_concat(mod_rdp_params.alternate_shell, ' ', shell_arguments);
-            this->session_probe.channel_params.real_working_dir     = mod_rdp_params.shell_working_dir;
+                ? std::string(application_params.alternate_shell)
+                : str_concat(application_params.alternate_shell, ' ', shell_arguments);
+            this->session_probe.channel_params.real_working_dir     = application_params.shell_working_dir;
         }
-        else if (mod_rdp_params.use_client_provided_alternate_shell
+        else if (application_params.use_client_provided_alternate_shell
             && info.alternate_shell[0] && !info.remote_program
         ) {
             this->session_probe.channel_params.real_alternate_shell = info.alternate_shell;
@@ -1607,18 +1603,14 @@ public:
 
     void init_no_remote_program_no_session_probe(
                 const ClientInfo & info,
-                const ModRDPParams & mod_rdp_params,
+                const ModRDPParams::ApplicationParams & application_params,
                 char (&program)[512],
                 char (&directory)[512])
     {
-        if (mod_rdp_params.target_application && *mod_rdp_params.target_application) {
-            std::string shell_arguments = get_alternate_shell_arguments(
-                mod_rdp_params.shell_arguments,
-                get_alternate_shell_arguments::App{mod_rdp_params.target_application},
-                get_alternate_shell_arguments::Account{mod_rdp_params.target_application_account},
-                get_alternate_shell_arguments::Password{mod_rdp_params.target_application_password});
+        if (application_params.target_application && *application_params.target_application) {
+            std::string shell_arguments = get_shell_arguments(application_params);
 
-            std::string alternate_shell(mod_rdp_params.alternate_shell);
+            std::string alternate_shell(application_params.alternate_shell);
 
             if (!shell_arguments.empty()) {
                 str_append(alternate_shell, ' ', shell_arguments);
@@ -1626,10 +1618,10 @@ public:
 
             strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
             program[sizeof(program) - 1] = 0;
-            strncpy(directory, mod_rdp_params.shell_working_dir, sizeof(directory) - 1);
+            strncpy(directory, application_params.shell_working_dir, sizeof(directory) - 1);
             directory[sizeof(directory) - 1] = 0;
         }
-        else if (mod_rdp_params.use_client_provided_alternate_shell
+        else if (application_params.use_client_provided_alternate_shell
               && info.alternate_shell[0]
               && !info.remote_program
         ) {

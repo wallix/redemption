@@ -97,8 +97,8 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.device_id                           = ini.get<cfg::globals::device_id>().c_str();
 
-    mod_rdp_params.primary_user_id                     = ini.get<cfg::globals::primary_user_id>().c_str();
-    mod_rdp_params.target_application                  = ini.get<cfg::globals::target_application>().c_str();
+    mod_rdp_params.application_params.primary_user_id                     = ini.get<cfg::globals::primary_user_id>().c_str();
+    mod_rdp_params.application_params.target_application                  = ini.get<cfg::globals::target_application>().c_str();
 
     //mod_rdp_params.enable_tls                          = true;
     if (!mod_rdp_params.target_password[0]) {
@@ -185,12 +185,12 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
     mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
     mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());
-    mod_rdp_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-    mod_rdp_params.shell_arguments                     = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
-    mod_rdp_params.shell_working_dir                   = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
-    mod_rdp_params.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
-    mod_rdp_params.target_application_account          = ini.get<cfg::globals::target_application_account>().c_str();
-    mod_rdp_params.target_application_password         = ini.get<cfg::globals::target_application_password>().c_str();
+    mod_rdp_params.application_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
+    mod_rdp_params.application_params.shell_arguments                     = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
+    mod_rdp_params.application_params.shell_working_dir                   = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
+    mod_rdp_params.application_params.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
+    mod_rdp_params.application_params.target_application_account          = ini.get<cfg::globals::target_application_account>().c_str();
+    mod_rdp_params.application_params.target_application_password         = ini.get<cfg::globals::target_application_password>().c_str();
     mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
     mod_rdp_params.error_message                       = &ini.get_ref<cfg::context::auth_error_message>();
     mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
