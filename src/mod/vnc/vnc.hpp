@@ -1043,9 +1043,9 @@ public:
 
                     case 0x0b:
                         if (this->keymapSym.is_alt_pressed()) {
-                            this->send_keyevent(0, 0xffe9);
+                            this->send_keyevent(0, this->keymapSym.is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
                             this->send_keyevent(downflag, 0xa4); /* @ */
-                            this->send_keyevent(1, 0xffe9);
+                            this->send_keyevent(1, this->keymapSym.is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
                         } else {
                             this->keyMapSym_event(device_flags, param1, downflag);
                         }
@@ -1053,11 +1053,11 @@ public:
 
                     case 0x04:
                         if (this->keymapSym.is_alt_pressed()) {
-                            this->send_keyevent(0, 0xffe9);
+                            this->send_keyevent(0, this->keymapSym.is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
                             this->send_keyevent(1, 0xffe2);
                             this->send_keyevent(downflag, 0xa4); /* # */
                             this->send_keyevent(0, 0xffe2);
-                            this->send_keyevent(1, 0xffe9);
+                            this->send_keyevent(1, this->keymapSym.is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
                         } else {
                             this->keyMapSym_event(device_flags, param1, downflag);
                         }
