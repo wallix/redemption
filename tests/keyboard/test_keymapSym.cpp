@@ -30,7 +30,7 @@
 
 RED_AUTO_TEST_CASE(TestKeymapSym)
 {
-    KeymapSym keymap;
+    KeymapSym keymap(0, false, false);
     const int layout = 0x040C;
     keymap.init_layout_sym(layout);
 
@@ -161,7 +161,7 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 //// 0 down
 //KeymapSym::event(keyboardFlags=0x0000, keyCode=0x000b flags=0x00a0)
 //KeymapSym::push_sym(sym=000000e0) nbuf_sym=0
-//// 0 up 
+//// 0 up
 //KeymapSym::event(keyboardFlags=0x8000, keyCode=0x000b flags=0x00a0)
 //// -> I get an agrave, the target server translate that to an arobas
 //KeymapSym::push_sym(sym=000000e0) nbuf_sym=0
@@ -176,7 +176,7 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 
 RED_AUTO_TEST_CASE(TestKeymapSymEuro)
 {
-    KeymapSym keymap;
+    KeymapSym keymap(0, false, false);
     const int layout = 0x040C;
     keymap.init_layout_sym(layout);
 
