@@ -52,21 +52,16 @@ protected:
     ReportMessageApi & report_message;
     const RDPVerbose verbose;
 
-private:
-    const data_size_type exchanged_data_limit;
-          data_size_type exchanged_data                        = 0;
-          bool           exchanged_data_limit_reached_reported = false;
-
 public:
     // TODO: move that to BaseVirtualChannelConstructor
     struct Params
     {
         ReportMessageApi & report_message;
-        uninit_checked<data_size_type> exchanged_data_limit;
-        uninit_checked<RDPVerbose> verbose;
+        RDPVerbose verbose;
 
-        explicit Params(ReportMessageApi & report_message)
+        explicit Params(ReportMessageApi & report_message, RDPVerbose verbose)
           : report_message(report_message)
+          , verbose(verbose)
         {}
     };
 
@@ -79,7 +74,6 @@ protected:
     , to_server_sender(to_server_sender_)
     , report_message(params.report_message)
     , verbose(params.verbose)
-    , exchanged_data_limit(params.exchanged_data_limit)
     {}
 
 public:
@@ -136,20 +130,7 @@ public:
     }
 
 protected:
-    inline void update_exchanged_data(uint32_t data_length)
-    {
-        this->exchanged_data += data_length;
-
-        if (this->exchanged_data_limit
-        && !this->exchanged_data_limit_reached_reported
-        && (this->exchanged_data > this->exchanged_data_limit))
-        {
-            this->report_message.report(
-                this->get_reporting_reason_exchanged_data_limit_reached(),
-                "");
-
-            this->exchanged_data_limit_reached_reported = true;
-        }
-    }
+    inline void update_exchanged_data(uint32_t /*data_length*/)
+    {}
 };  // class BaseVirtualChannel
 

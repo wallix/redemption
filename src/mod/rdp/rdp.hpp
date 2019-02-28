@@ -502,8 +502,6 @@ private:
         const bool disable_log_wrm;
         const bool log_only_relevant_activities;
 
-        const data_size_type max_data = 0;
-
         Clipboard(ModRDPParams::ClipboardParams const& clipboard_params)
         : disable_log_syslog(clipboard_params.disable_log_syslog)
         , disable_log_wrm(clipboard_params.disable_log_wrm)
@@ -518,8 +516,6 @@ private:
         const bool bogus_ios_rdpdr_virtual_channel;
 
         const bool enable_rdpdr_data_analysis;
-
-        const data_size_type max_rdpdr_data = 0;
 
         FileSystem(ModRDPParams::FileSystemParams const& file_system_params)
         : disable_log_syslog(file_system_params.disable_log_syslog)
@@ -573,11 +569,6 @@ public:
 
         friend class mod_rdp_channels;
     } drive;
-
-    struct Drdynvc
-    {
-        const data_size_type max_data = 0;
-    } drdynvc;
 
 
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
@@ -798,9 +789,7 @@ private:
         this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
-        BaseVirtualChannel::Params base_params(this->report_message);
-        base_params.exchanged_data_limit = this->clipboard.max_data;
-        base_params.verbose              = this->verbose;
+        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
 
         ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->clipboard.disable_log_syslog, this->clipboard.disable_log_wrm, this->clipboard.log_only_relevant_activities);
 
@@ -926,10 +915,7 @@ private:
         this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
         this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
 
-        DynamicChannelVirtualChannel::Params dcvc_params(this->report_message);
-
-        dcvc_params.exchanged_data_limit = this->drdynvc.max_data;
-        dcvc_params.verbose              = this->verbose;
+        DynamicChannelVirtualChannel::Params dcvc_params(this->report_message, this->verbose);
 
         this->dynamic_channel_virtual_channel =
             std::make_unique<DynamicChannelVirtualChannel>(
@@ -953,9 +939,7 @@ private:
                                             : nullptr);
         this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
 
-        BaseVirtualChannel::Params base_params(this->report_message);
-        base_params.exchanged_data_limit = this->file_system.max_rdpdr_data;
-        base_params.verbose = this->verbose;
+        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
 
         FileSystemVirtualChannelParams fsvc_params;
 
@@ -1014,9 +998,7 @@ public:
 
         FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
 
-        BaseVirtualChannel::Params base_params(this->report_message);
-        base_params.exchanged_data_limit = static_cast<data_size_type>(-1);
-        base_params.verbose  = this->verbose;
+        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
 
         SessionProbeVirtualChannel::Params sp_vc_params;
 
@@ -1058,9 +1040,7 @@ private:
         this->remote_programs_to_server_sender =
             this->create_to_server_synchronous_sender(channel_names::rail, stc);
 
-        BaseVirtualChannel::Params base_params(this->report_message);
-        base_params.exchanged_data_limit = 0;
-        base_params.verbose  = this->verbose;
+        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
 
         RemoteProgramsVirtualChannelParams remote_programs_virtual_channel_params;
 

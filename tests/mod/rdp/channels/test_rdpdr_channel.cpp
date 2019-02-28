@@ -38,9 +38,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
     NullReportMessage report_message;
 
-    BaseVirtualChannel::Params base_params(report_message);
-    base_params.exchanged_data_limit         = 0;
-    base_params.verbose                      = verbose;
+    BaseVirtualChannel::Params base_params(report_message, verbose);
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = true;
@@ -49,8 +47,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     file_system_virtual_channel_params.print_authorized             = true;
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = true;
-    
-    
+
+
     FileSystemDriveManager file_system_drive_manager;
 
     mkdir("/tmp/export", 0664); file_system_drive_manager.enable_drive("export", "/tmp", verbose);
@@ -81,9 +79,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    BaseVirtualChannel::Params base_params(report_message);
-    base_params.exchanged_data_limit         = 0;
-    base_params.verbose                      = verbose;
+    BaseVirtualChannel::Params base_params(report_message, verbose);
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = false;
@@ -123,9 +119,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    BaseVirtualChannel::Params base_params(report_message);
-    base_params.exchanged_data_limit         = 0;
-    base_params.verbose                      = verbose;
+    BaseVirtualChannel::Params base_params(report_message, verbose);
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = true;
@@ -134,7 +128,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     file_system_virtual_channel_params.print_authorized             = false;
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = true;
-    
+
     FileSystemDriveManager file_system_drive_manager;
 
     mkdir("/tmp/export", 0664); file_system_drive_manager.enable_drive("export", "/tmp", verbose);
@@ -165,9 +159,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    BaseVirtualChannel::Params base_params(report_message);
-    base_params.exchanged_data_limit         = 0;
-    base_params.verbose                      = verbose;
+    BaseVirtualChannel::Params base_params(report_message, verbose);
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = false;
@@ -189,11 +181,11 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     TestToServerSender to_server_sender(t);
 
     SessionReactor session_reactor;
-    
+
     const char * client_name                  = "rzh";
     uint32_t     random_number                = 5245;
     const char * proxy_managed_drive_prefix   = "";
-    
+
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
@@ -208,9 +200,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    BaseVirtualChannel::Params base_params(report_message);
-    base_params.exchanged_data_limit         = 0;
-    base_params.verbose                      = verbose;
+    BaseVirtualChannel::Params base_params(report_message, verbose);
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = true;
@@ -232,11 +222,11 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     TestToServerSender to_server_sender(t);
 
     SessionReactor session_reactor;
-    
+
     const char * client_name                  = "rzh";
     uint32_t     random_number                = 5245;
     const char * proxy_managed_drive_prefix   = "";
-    
+
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
@@ -251,9 +241,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    BaseVirtualChannel::Params base_params(report_message);
-    base_params.exchanged_data_limit         = 0;
-    base_params.verbose                      = verbose;
+    BaseVirtualChannel::Params base_params(report_message, verbose);
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = true;
@@ -275,11 +263,11 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     TestToServerSender to_server_sender(t);
 
     SessionReactor session_reactor;
-    
+
     const char * client_name                  = "rzh";
     uint32_t     random_number                = 5245;
     const char * proxy_managed_drive_prefix   = "";
-    
+
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
@@ -294,9 +282,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    BaseVirtualChannel::Params base_params(report_message);
-    base_params.exchanged_data_limit         = 0;
-    base_params.verbose                      = verbose;
+    BaseVirtualChannel::Params base_params(report_message, verbose);
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = true;
@@ -315,11 +301,11 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     TestToServerSender to_server_sender(t);
 
     SessionReactor session_reactor;
-    
+
     const char * client_name                  = "rzh";
     uint32_t     random_number                = 5245;
     const char * proxy_managed_drive_prefix   = "";
-    
+
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);

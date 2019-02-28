@@ -74,9 +74,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
 {
     NullReportMessage report;
-    BaseVirtualChannel::Params params(report);
-    params.exchanged_data_limit = 10;
-    params.verbose = RDPVerbose::none;
+    BaseVirtualChannel::Params params(report, RDPVerbose::none);
     FakeBaseVirtualChannel channel(params);
     const uint32_t streamID = 1;
 
@@ -118,10 +116,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestReceive)
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
 {
     NullReportMessage report;
-    BaseVirtualChannel::Params params(report);
-    data_size_type max_clipboard_data = 0;
-    params.exchanged_data_limit = max_clipboard_data;
-    params.verbose = RDPVerbose::none;
+    BaseVirtualChannel::Params params(report, RDPVerbose::none);
     FakeBaseVirtualChannel channel(params);
 
     ClientFormatDataRequestSendBack sender(RDPVerbose::none, &channel);
@@ -319,10 +314,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 
     NullReportMessage report;
-    BaseVirtualChannel::Params params(report);
-    data_size_type max_clipboard_data = 0;
-    params.exchanged_data_limit = max_clipboard_data;
-    params.verbose = RDPVerbose::none;
+    BaseVirtualChannel::Params params(report, RDPVerbose::none);
     FakeBaseVirtualChannel channel(params);
 
     ClientFormatListSendBack sender(&channel);
@@ -342,10 +334,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 RED_AUTO_TEST_CASE(TestCliprdrChannelServerFormatDataRequestSendBack) {
 
     NullReportMessage report;
-    BaseVirtualChannel::Params params(report);
-    data_size_type max_clipboard_data = 0;
-    params.exchanged_data_limit = max_clipboard_data;
-    params.verbose = RDPVerbose::none;
+    BaseVirtualChannel::Params params(report, RDPVerbose::none);
     FakeBaseVirtualChannel channel(params);
 
     ServerFormatDataRequestSendBack sender(RDPVerbose::none, &channel);
@@ -365,10 +354,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerFormatDataRequestSendBack) {
 RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
 
     NullReportMessage report;
-    BaseVirtualChannel::Params params(report);
-    data_size_type max_clipboard_data = 0;
-    params.exchanged_data_limit = max_clipboard_data;
-    params.verbose = RDPVerbose::none;
+    BaseVirtualChannel::Params params(report, RDPVerbose::none);
     FakeBaseVirtualChannel channel(params);
     const bool use_long_format_name = true;
     const int cCapabilitiesSets = 1;
@@ -421,10 +407,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
 RED_AUTO_TEST_CASE(TestCliprdrChannelServerFormatListSendBack) {
 
     NullReportMessage report;
-    BaseVirtualChannel::Params params(report);
-    data_size_type max_clipboard_data = 0;
-    params.exchanged_data_limit = max_clipboard_data;
-    params.verbose = RDPVerbose::none;
+    BaseVirtualChannel::Params params(report, RDPVerbose::none);
     FakeBaseVirtualChannel channel(params);
 
     ServerFormatListSendBack sender(&channel);
