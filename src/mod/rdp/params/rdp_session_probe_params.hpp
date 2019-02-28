@@ -44,4 +44,6 @@ struct ModRdpSessionProbeParams
     bool customize_executable_name = false;
 
     bool fix_too_long_cookie = true;
+
+    SessionProbeVirtualChannelParams vc_params {};
 };

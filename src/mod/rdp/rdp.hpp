@@ -447,30 +447,41 @@ struct mod_rdp_channels
             std::string real_working_dir;
         } channel_params;
 
-        SessionProbe(ModRDPParams const& rdp_params)
-        : enable_session_probe(rdp_params.session_probe_params.enable_session_probe)
-        , used_to_launch_remote_program(
-            rdp_params.session_probe_params.used_to_launch_remote_program)
-        , enable_launch_mask(
-            rdp_params.session_probe_params.enable_launch_mask && this->enable_session_probe)
-        , session_probe_channel_params(rdp_params.session_probe_channel_params)
+        SessionProbe(ModRdpSessionProbeParams const& sespro_params)
+        : enable_session_probe(sespro_params.enable_session_probe)
+        , used_to_launch_remote_program(sespro_params.used_to_launch_remote_program)
+        , enable_launch_mask(sespro_params.enable_launch_mask && this->enable_session_probe)
+        , session_probe_channel_params(sespro_params.vc_params)
         {}
     } session_probe;
+
+    struct RemoteApp
+    {
+        const bool enable_remote_program;
+        const bool remote_program_enhanced;
+        const bool should_ignore_first_client_execute;
+
+        const std::chrono::milliseconds bypass_legal_notice_delay;
+        const std::chrono::milliseconds bypass_legal_notice_timeout;
+
+        WindowsExecuteShellParams client_execute;
+        WindowsExecuteShellParams real_client_execute;
+
+        RemoteApp(ModRDPParams::RemoteAppParams const& remote_app_params)
+        : enable_remote_program(remote_app_params.enable_remote_program)
+        , remote_program_enhanced(remote_app_params.remote_program_enhanced)
+        , should_ignore_first_client_execute(
+            remote_app_params.should_ignore_first_client_execute)
+        , bypass_legal_notice_delay(remote_app_params.bypass_legal_notice_delay)
+        , bypass_legal_notice_timeout(remote_app_params.bypass_legal_notice_timeout)
+        {}
+    } remote_app;
 #endif
 
     const bool use_application_driver;
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
     std::string proxy_managed_drive_prefix;
-
-#ifndef __EMSCRIPTEN__
-    bool should_ignore_first_client_execute = false;
-#endif
-
-
-    WindowsExecuteShellParams client_execute;
-
-    WindowsExecuteShellParams real_client_execute;
 
     data_size_type max_clipboard_data = 0;
     data_size_type max_rdpdr_data     = 0;
@@ -495,9 +506,6 @@ struct mod_rdp_channels
     std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
 
     std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
-
-    const bool remote_program;
-    const bool remote_program_enhanced;
 
     std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_server_sender;
@@ -546,18 +554,14 @@ struct mod_rdp_channels
     , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
     , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
 #ifndef __EMSCRIPTEN__
-    , session_probe(mod_rdp_params)
+    , session_probe(mod_rdp_params.session_probe_params)
+    , remote_app(mod_rdp_params.remote_app_params)
 #endif
     , use_application_driver(mod_rdp_params.application_params.alternate_shell
         && !::strncasecmp(mod_rdp_params.application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
     , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
     , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
     , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
-#ifndef __EMSCRIPTEN__
-    , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
-    , remote_program(mod_rdp_params.remote_program)
-    , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
-#endif
     , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
     , verbose(verbose)
     , session_reactor(session_reactor)
@@ -595,7 +599,7 @@ struct mod_rdp_channels
         // There should be a way to prepare some objects useful for the remaining work to do
 
 #ifndef __EMSCRIPTEN__
-        if (this->remote_program) {
+        if (this->remote_app.enable_remote_program) {
             char session_probe_window_title[32] = { 0 };
             uint32_t const r = this->gen.rand32();
 
@@ -625,8 +629,8 @@ struct mod_rdp_channels
                 this->session_reactor, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, authentifier,
                 session_probe_window_title,
-                mod_rdp_params.rail_client_execute,
-                mod_rdp_params.rail_disconnect_message_delay,
+                mod_rdp_params.remote_app_params.rail_client_execute,
+                mod_rdp_params.remote_app_params.rail_disconnect_message_delay,
                 this->verbose
             );
         }
@@ -963,19 +967,18 @@ public:
         sp_vc_params.real_working_dir = this->session_probe.channel_params.real_working_dir.c_str();
         sp_vc_params.lang = lang;
         sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && monitor_count);
-        sp_vc_params.show_maximized = !remote_program;
-
+        sp_vc_params.show_maximized = !this->remote_app.enable_remote_program;
 
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
-                this->session_reactor,
-                this->session_probe_to_server_sender.get(),
-                front,
-                mod,
-                rdp,
-                file_system_virtual_channel,
-                this->gen,
-                base_params,
-                sp_vc_params);
+            this->session_reactor,
+            this->session_probe_to_server_sender.get(),
+            front,
+            mod,
+            rdp,
+            file_system_virtual_channel,
+            this->gen,
+            base_params,
+            sp_vc_params);
     }
 
 private:
@@ -1001,19 +1004,19 @@ private:
         remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
             this->session_probe.used_to_launch_remote_program;
 
-        remote_programs_virtual_channel_params.client_execute = this->client_execute;
-        remote_programs_virtual_channel_params.client_execute_2 = this->real_client_execute;
+        remote_programs_virtual_channel_params.client_execute = this->remote_app.client_execute;
+        remote_programs_virtual_channel_params.client_execute_2 = this->remote_app.real_client_execute;
 
         remote_programs_virtual_channel_params.rail_session_manager               =
             this->remote_programs_session_manager.get();
 
         remote_programs_virtual_channel_params.should_ignore_first_client_execute =
-            this->should_ignore_first_client_execute;
+            this->remote_app.should_ignore_first_client_execute;
 
         remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
             (client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
         remote_programs_virtual_channel_params.client_supports_enhanced_remoteapp =
-            this->remote_program_enhanced;
+            this->remote_app.remote_program_enhanced;
 
 
         this->remote_programs_virtual_channel =
@@ -1394,16 +1397,16 @@ public:
             }
             else {
                 mod_rdp_channels::replace_shell_arguments(
-                    this->real_client_execute.arguments, application_params);
-                this->real_client_execute.flags       = 0;
+                    this->remote_app.real_client_execute.arguments, application_params);
+                this->remote_app.real_client_execute.flags       = 0;
             }
-            this->client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+            this->remote_app.client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
             this->session_probe.session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
         }
         else if (use_client_provided_remoteapp) {
-            this->real_client_execute.arguments = remote_app_params.client_execute.arguments;
-            this->real_client_execute.flags     = remote_app_params.client_execute.flags;
-            this->client_execute.flags          = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+            this->remote_app.real_client_execute.arguments = remote_app_params.client_execute.arguments;
+            this->remote_app.real_client_execute.flags     = remote_app_params.client_execute.flags;
+            this->remote_app.client_execute.flags          = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
             this->session_probe.session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
         }
 
@@ -1412,11 +1415,11 @@ public:
              || !session_probe_params.used_to_launch_remote_program
             ) {
                 this->session_probe.channel_params.real_alternate_shell = "[None]";
-                this->real_client_execute.exe_or_file = remote_app_params.client_execute.exe_or_file;
-                this->real_client_execute.working_dir = remote_app_params.client_execute.working_dir;
+                this->remote_app.real_client_execute.exe_or_file = remote_app_params.client_execute.exe_or_file;
+                this->remote_app.real_client_execute.working_dir = remote_app_params.client_execute.working_dir;
             }
 
-            this->client_execute.exe_or_file = session_probe_params.exe_or_file;
+            this->remote_app.client_execute.exe_or_file = session_probe_params.exe_or_file;
 
             // Executable file name of SP.
             char exe_var_str[16] {};
@@ -1437,9 +1440,9 @@ public:
               ? std::string()
               : str_concat("/#", this->session_probe.target_informations, ' ');
 
-            this->client_execute.working_dir = "%TMP%";
-            this->client_execute.arguments   = session_probe_params.arguments;
-            mod_rdp_channels::replace_probe_arguments(this->client_execute.arguments,
+            this->remote_app.client_execute.working_dir = "%TMP%";
+            this->remote_app.client_execute.arguments   = session_probe_params.arguments;
+            mod_rdp_channels::replace_probe_arguments(this->remote_app.client_execute.arguments,
                 "${EXE_VAR}", exe_var_str,
                 "${TITLE_VAR} ", title_param.c_str(),
                 "/${COOKIE_VAR} ", cookie_param.c_str(),
@@ -1453,15 +1456,15 @@ public:
         const ModRDPParams::ApplicationParams & application_params)
     {
         if (application_params.target_application && *application_params.target_application) {
-            this->client_execute.exe_or_file = application_params.alternate_shell;
-            this->client_execute.arguments   = get_shell_arguments(application_params);
-            this->client_execute.working_dir = application_params.shell_working_dir;
-            this->client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+            this->remote_app.client_execute.exe_or_file = application_params.alternate_shell;
+            this->remote_app.client_execute.arguments   = get_shell_arguments(application_params);
+            this->remote_app.client_execute.working_dir = application_params.shell_working_dir;
+            this->remote_app.client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
         }
         else if (remote_app_params.use_client_provided_remoteapp
             && not remote_app_params.client_execute.exe_or_file.empty()
         ) {
-            this->client_execute = remote_app_params.client_execute;
+            this->remote_app.client_execute = remote_app_params.client_execute;
         }
     }
 
@@ -1845,7 +1848,7 @@ public:
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
             this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
 
-            if (this->remote_program) {
+            if (this->remote_app.enable_remote_program) {
 
                 if (!this->remote_programs_virtual_channel) {
                     this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
@@ -1873,7 +1876,7 @@ public:
 
             this->session_probe_virtual_channel->start_launch_timeout_timer();
 
-            if (this->remote_program) {
+            if (this->remote_app.enable_remote_program) {
                 if (!this->remote_programs_virtual_channel) {
                     this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
                 }
@@ -1893,7 +1896,7 @@ public:
         const ModRdpVariables & vars,
         RailCaps const & client_rail_caps
     ) {
-        if (this->remote_program) {
+        if (this->remote_app.enable_remote_program) {
             if (!this->remote_programs_virtual_channel) {
                 this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
             }
@@ -1914,7 +1917,7 @@ public:
         const ModRdpVariables & vars,
         RailCaps const & client_rail_caps
     ) {
-        if (this->remote_program) {
+        if (this->remote_app.enable_remote_program) {
             if (!this->remote_programs_virtual_channel) {
                 this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
             }
@@ -1935,7 +1938,7 @@ public:
         const ModRdpVariables & vars,
         RailCaps const & client_rail_caps
     ) {
-        if (this->remote_program) {
+        if (this->remote_app.enable_remote_program) {
             if (!this->remote_programs_virtual_channel) {
                 this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
             }
@@ -2023,12 +2026,6 @@ class mod_rdp : public mod_api, public rdp_api
     uint32_t currentFrameId = 0;
 
     bool delayed_start_capture = false;
-
-
-#ifndef __EMSCRIPTEN__
-    const std::chrono::milliseconds   remoteapp_bypass_legal_notice_delay;
-    const std::chrono::milliseconds   remoteapp_bypass_legal_notice_timeout;
-#endif
 
     const bool                        experimental_fix_input_event_sync;
 
@@ -2187,10 +2184,6 @@ public:
                 return client_support;
             }(info.order_caps.orderSupport))
         // info.order_caps.orderSupport
-#ifndef __EMSCRIPTEN__
-        , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
-        , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
-#endif
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , error_message(mod_rdp_params.error_message)
         , session_reactor(session_reactor)
@@ -3670,7 +3663,7 @@ public:
                 confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
 #ifndef __EMSCRIPTEN__
-                if (this->channels.remote_program) {
+                if (this->channels.remote_app.enable_remote_program) {
                     RailCaps rail_caps = this->client_rail_caps;
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
@@ -4949,36 +4942,36 @@ public:
 #ifndef __EMSCRIPTEN__
                 if ((RDP::LOGON_MSG_SESSION_CONTINUE != lei.ErrorNotificationType) &&
                     (RDP::LOGON_WARNING >= lei.ErrorNotificationData) &&
-                    this->channels.remote_program
+                    this->channels.remote_app.enable_remote_program
                 ) {
                     if ((0 != lei.ErrorNotificationType) ||
                         (RDP::LOGON_FAILED_OTHER != lei.ErrorNotificationData) ||
-                        (!this->remoteapp_bypass_legal_notice_delay.count())
+                        (!this->channels.remote_app.bypass_legal_notice_delay.count())
                     ) {
                         this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->session_reactor.create_timer()
-                            .on_action(jln::sequencer(
-                                    [this](JLN_TIMER_CTX ctx) {
-                                        LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
-                                        this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
-                                        this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
+                        .on_action(jln::sequencer(
+                            [this](JLN_TIMER_CTX ctx) {
+                                LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
+                                this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
+                                this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
 
-                                        if (this->remoteapp_bypass_legal_notice_timeout.count()) {
-                                            ctx.set_delay(this->remoteapp_bypass_legal_notice_timeout);
+                                if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
+                                    ctx.set_delay(this->channels.remote_app.bypass_legal_notice_timeout);
 
-                                            return ctx.next();
-                                        }
-                                        return ctx.terminate();
-                                    },
-                                    [this](JLN_TIMER_CTX ctx) {
-                                        this->on_remoteapp_redirect_user_screen(this->authentifier, RDP::LOGON_FAILED_OTHER);
+                                    return ctx.next();
+                                }
+                                return ctx.terminate();
+                            },
+                            [this](JLN_TIMER_CTX ctx) {
+                                this->on_remoteapp_redirect_user_screen(this->authentifier, RDP::LOGON_FAILED_OTHER);
 
-                                        return ctx.terminate();
-                                    }
-                                ))
-                            .set_delay(this->remoteapp_bypass_legal_notice_delay);
+                                return ctx.terminate();
+                            }
+                        ))
+                        .set_delay(this->channels.remote_app.bypass_legal_notice_delay);
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
