@@ -186,8 +186,9 @@ public:
 
     void start_launch_timeout_timer()
     {
-        if ((this->sespro_params.effective_launch_timeout.count() > 0) &&
-            !this->session_probe_ready) {
+        if (this->sespro_params.effective_launch_timeout.count() > 0
+         && !this->session_probe_ready
+        ) {
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
             }

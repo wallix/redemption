@@ -347,8 +347,8 @@ RdpNegociation::RdpNegociation(
     , rdp_compression(mod_rdp_params.rdp_compression)
     , session_probe_use_clipboard_based_launcher(
         mod_rdp_params.session_probe_params.used_clipboard_based_launcher
-        && (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application))
-        && (!mod_rdp_params.use_client_provided_alternate_shell
+        && (!mod_rdp_params.application_params.target_application || !(*mod_rdp_params.application_params.target_application))
+        && (!mod_rdp_params.application_params.use_client_provided_alternate_shell
         || !info.alternate_shell[0] || info.remote_program)
         )
     , remote_program(mod_rdp_params.remote_program)
@@ -1647,7 +1647,7 @@ void RdpNegociation::send_client_info_pdu()
 
     this->send_data_request(
         GCC::MCS_GLOBAL_CHANNEL,
-        [this, &infoPacket](StreamSize<1024>, OutStream & stream) {
+        [&infoPacket](StreamSize<1024>, OutStream & stream) {
             infoPacket.emit(stream);
         },
         SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->negociation_result.encryptionLevel}

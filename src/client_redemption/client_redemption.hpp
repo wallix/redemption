@@ -395,7 +395,6 @@ public:
                     mod_rdp_params.remote_program = true;
                     mod_rdp_params.rail_client_execute = &(this->rail_client_execute);
                     mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
-                    mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.session_probe_params.used_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
                     this->config.info.cs_monitor = GCC::UserData::CSMonitor{};
 
