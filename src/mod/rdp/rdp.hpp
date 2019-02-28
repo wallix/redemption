@@ -815,7 +815,7 @@ private:
 
         class ToServerSender : public VirtualChannelDataSender
         {
-            ServerTransportContext & stc;
+            ServerTransportContext stc;
             const uint16_t channel_id;
             const bool     show_protocol;
             const bool     verbose;
