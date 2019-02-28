@@ -76,12 +76,12 @@ def write_request(filename, localhost, host, port):
 
     httpResponse  = "HTTP/1.1 200 OK\r\n"
     httpResponse += "Transfer-Encoding: chunked\r\n"
-    httpResponse += "Content-Length: 0\r\n" 
+    httpResponse += "Content-Length: "+str(0)+"\r\n" 
     httpResponse += "\r\n"
 
     icapRequest   = "RESPMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n"
     icapRequest  += "Allow: 204\r\n"   
-    #icapRequest  += "Preview: 4096\r\n"
+#    icapRequest  += "Preview: "+str(1031)+"\r\n"
     icapRequest  += "Connection: close\r\n"
     icapRequest  += "Host: "+host+"\r\n"
     icapRequest  += "Encapsulated: req-hdr=0, res-hdr="+str(len(httpRequest))+", res-body="+str(len(httpRequest) + (len(httpResponse)))+"\r\n" 
@@ -96,18 +96,25 @@ def write_request(filename, localhost, host, port):
 def send_chunk(f, socket, size_to_read):
 
     content    = b""
+    print "data remaining "+str(size_to_read)+" !!!!"
 
     while size_to_read > 1024:
         
         size_to_read -= 1024
         content = "400\r\n"+f.read(1024)+"\r\n"
         socket.send(content)
-
+        print content
+    #else:
     endchunklen = str(hex(size_to_read).split('x')[-1])+"\r\n"
     content = endchunklen + f.read(size_to_read) + "\r\n\r\n\r\n0\r\n\r\n"
     socket.send(content)
     size_to_read = 0
     f.close()
+    print "len content = "+str(len(content))
+    
+    return size_to_read
+    
+    
     
 
 
@@ -122,22 +129,24 @@ for line in request_lines:
     print("    "+line)
 print ""
 
-send_chunk(f, socket, size_to_read)
 
+size_to_read = send_chunk(f, socket, size_to_read)
 
+ 
 
 # Receive response
 msg_recu = b""
 response = b""
 step = 0
 
-while msg_recu != b"0\r\n\r\n" and step < 500:
+while msg_recu != b"0\r\n\r\n" and step < 50:
     msg_recu = socket.recv(1024)
     step += 1
 
     if msg_recu != b"":  
         if msg_recu == "ICAP/1.0 100 Continue\r\n\r\n":
             print msg_recu
+            size_to_read = send_chunk(f, socket, size_to_read)
         else:
             response += msg_recu
 
@@ -146,9 +155,9 @@ if response:
     response_lines = response.split("\r\n")
     
     if response_lines[0] == "ICAP/1.0 204 Unmodified":
-        print "File is accepted, path: \"" + file_path + "\""
+        print "File is ACCEPTED, path: \"" + file_path + "\""
     else:
-        print "File is rejected, path: \"" + file_path + "\""
+        print "File is REJECTED, path: \"" + file_path + "\""
     print ""
     print("rcv:")
     for line in response_lines:
