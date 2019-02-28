@@ -102,7 +102,7 @@ void mod_rdp::init_negociate_event_(
         this->channels.enable_auth_channel,
         this->trans, this->front, info, this->redir_info,
         gen, timeobj, mod_rdp_params, this->report_message,
-        this->channels.file_system_drive_manager.has_managed_drive()
+        this->channels.drive.file_system_drive_manager.has_managed_drive()
 #ifndef __EMSCRIPTEN__
         || this->channels.session_probe.enable_session_probe
 #endif

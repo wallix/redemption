@@ -84,8 +84,15 @@ struct ModRDPParams
 
     ClipboardParams clipboard_params;
 
-    bool disable_file_system_log_syslog = false;
-    bool disable_file_system_log_wrm = false;
+    struct FileSystemParams
+    {
+        bool disable_log_syslog = false;
+        bool disable_log_wrm = false;
+        bool bogus_ios_rdpdr_virtual_channel = true;
+        bool enable_rdpdr_data_analysis = true;
+    };
+
+    FileSystemParams file_system_params;
 
     Transport  * persistent_key_list_transport = nullptr;
 
@@ -154,8 +161,13 @@ struct ModRDPParams
     bool bogus_sc_net_size = true;
     bool bogus_refresh_rect = true;
 
-    const char * proxy_managed_drives = "";
-    const char * proxy_managed_drive_prefix = "";
+    struct DriveParams
+    {
+        const char * proxy_managed_drives = "";
+        const char * proxy_managed_prefix = "";
+    };
+
+    DriveParams drive_params;
 
     Translation::language_t lang = Translation::EN;
 
@@ -196,11 +208,6 @@ struct ModRDPParams
     std::string& close_box_extra_message_ref;
 
     const char * load_balance_info = "";
-
-
-    bool bogus_ios_rdpdr_virtual_channel = true;
-
-    bool enable_rdpdr_data_analysis = true;
 
     bool experimental_fix_input_event_sync = true;
 
@@ -298,8 +305,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_wrm);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_syslog);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_wrm);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.disable_log_syslog);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.disable_log_wrm);
 
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    persistent_key_list_transport);
 
@@ -354,7 +361,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_refresh_rect);
 
-        RDP_PARAMS_LOG("%s",     s_or_none,             proxy_managed_drives);
+        RDP_PARAMS_LOG("%s",     s_or_none,             drive_params.proxy_managed_drives);
+        RDP_PARAMS_LOG("%s",     s_or_none,             drive_params.proxy_managed_prefix);
 
         auto to_lang = [](Translation::language_t lang) {
             return
@@ -393,9 +401,9 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.used_to_launch_remote_program);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_ios_rdpdr_virtual_channel);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.bogus_ios_rdpdr_virtual_channel);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_rdpdr_data_analysis);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.enable_rdpdr_data_analysis);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.bypass_legal_notice_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.bypass_legal_notice_timeout);

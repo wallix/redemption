@@ -153,10 +153,10 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.session_probe_params.is_public_session        = ini.get<cfg::mod_rdp::session_probe_public_session>();
 
-    mod_rdp_params.disable_clipboard_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
-    mod_rdp_params.disable_clipboard_log_wrm           = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
-    mod_rdp_params.disable_file_system_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
-    mod_rdp_params.disable_file_system_log_wrm         = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
+    mod_rdp_params.clipboard_params.disable_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
+    mod_rdp_params.clipboard_params.disable_log_wrm           = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
+    mod_rdp_params.file_system_params.disable_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
+    mod_rdp_params.file_system_params.disable_log_wrm         = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
     mod_rdp_params.session_probe_params.vc_params.extra_system_processes =
         ExtraSystemProcesses(
             ini.get<cfg::context::session_probe_extra_system_processes>().c_str());
@@ -219,8 +219,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.bogus_sc_net_size                   = ini.get<cfg::mod_rdp::bogus_sc_net_size>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();
 
-    mod_rdp_params.proxy_managed_drives                = ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
-    mod_rdp_params.proxy_managed_drive_prefix          = app_path(AppPath::DriveRedirection);
+    mod_rdp_params.drive_params.proxy_managed_drives                = ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
+    mod_rdp_params.drive_params.proxy_managed_prefix          = app_path(AppPath::DriveRedirection);
 
     mod_rdp_params.lang                                = language(ini);
 
@@ -259,9 +259,9 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.used_to_launch_remote_program
                                                         = ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
 
-    mod_rdp_params.bogus_ios_rdpdr_virtual_channel     = ini.get<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel>();
+    mod_rdp_params.file_system_params.bogus_ios_rdpdr_virtual_channel     = ini.get<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel>();
 
-    mod_rdp_params.enable_rdpdr_data_analysis          = ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
+    mod_rdp_params.file_system_params.enable_rdpdr_data_analysis          = ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
 
     mod_rdp_params.remote_app_params.bypass_legal_notice_delay = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay>();
     mod_rdp_params.remote_app_params.bypass_legal_notice_timeout
@@ -269,7 +269,7 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.experimental_fix_input_event_sync   = ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
     mod_rdp_params.session_probe_params.fix_too_long_cookie    = ini.get<cfg::mod_rdp::experimental_fix_too_long_cookie>();
-    mod_rdp_params.log_only_relevant_clipboard_activities
+    mod_rdp_params.clipboard_params.log_only_relevant_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
 

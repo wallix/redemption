@@ -351,7 +351,7 @@ RdpNegociation::RdpNegociation(
         && (!mod_rdp_params.application_params.use_client_provided_alternate_shell
         || !info.alternate_shell[0] || info.remote_program)
         )
-    , remote_program(mod_rdp_params.remote_program)
+    , remote_program(mod_rdp_params.remote_app_params.enable_remote_program)
     , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
     , cs_monitor(info.cs_monitor)

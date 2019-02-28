@@ -236,7 +236,7 @@ int main(int argc, char** argv)
     std::string allow_channels                = "*";
     mod_rdp_params.allow_channels             = &allow_channels;
     mod_rdp_params.deny_channels              = nullptr;
-    mod_rdp_params.enable_rdpdr_data_analysis = false;
+    mod_rdp_params.file_system_params.enable_rdpdr_data_analysis = false;
     mod_rdp_params.load_balance_info          = load_balance_info.c_str();
     mod_rdp_params.server_cert_check          = static_cast<ServerCertCheck>(cert_check);
 

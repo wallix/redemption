@@ -386,15 +386,15 @@ public:
                 std::string allow_channels                     = "*";
                 mod_rdp_params.allow_channels                  = &allow_channels;
                 mod_rdp_params.deny_channels = nullptr;
-                mod_rdp_params.enable_rdpdr_data_analysis = false;
+                mod_rdp_params.file_system_params.enable_rdpdr_data_analysis = false;
 
                 const bool is_remote_app = this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
 
                 if (is_remote_app) {
                     this->rail_client_execute.enable_remote_program(true);
-                    mod_rdp_params.remote_program = true;
-                    mod_rdp_params.rail_client_execute = &(this->rail_client_execute);
-                    mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
+                    mod_rdp_params.remote_app_params.enable_remote_program = true;
+                    mod_rdp_params.remote_app_params.rail_client_execute = &(this->rail_client_execute);
+                    mod_rdp_params.remote_app_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
                     mod_rdp_params.session_probe_params.used_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
                     this->config.info.cs_monitor = GCC::UserData::CSMonitor{};
 

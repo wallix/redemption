@@ -407,15 +407,21 @@ public:
     SessionReactor& session_reactor;
 };
 
-struct mod_rdp_channels
+class mod_rdp_channels
 {
+public:
 #ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
 #endif
     CHANNELS::ChannelDefArray mod_channel_list;
+
     const ChannelsAuthorizations channels_authorizations;
+
+private:
     ReportMessageApi & report_message;
     Random & gen;
+
+public:
     const bool enable_auth_channel;
     const CHANNELS::ChannelNameId auth_channel;
     int auth_channel_flags      = 0;
@@ -423,17 +429,22 @@ struct mod_rdp_channels
     const CHANNELS::ChannelNameId checkout_channel;
     int checkout_channel_flags  = 0;
     int checkout_channel_chanid = 0;
-    const bool bogus_ios_rdpdr_virtual_channel;
 
 #ifndef __EMSCRIPTEN__
+
+public:
     struct SessionProbe
     {
         const bool enable_session_probe;
-        const bool used_to_launch_remote_program;
         const bool enable_launch_mask;
 
+    private:
+        const bool used_to_launch_remote_program;
+
+    public:
         std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
+    private:
         const SessionProbeVirtualChannelParams session_probe_channel_params;
 
         std::string target_informations;
@@ -444,26 +455,34 @@ struct mod_rdp_channels
             std::string real_working_dir;
         } channel_params;
 
+    public:
         SessionProbe(ModRdpSessionProbeParams const& sespro_params)
         : enable_session_probe(sespro_params.enable_session_probe)
-        , used_to_launch_remote_program(sespro_params.used_to_launch_remote_program)
         , enable_launch_mask(sespro_params.enable_launch_mask && this->enable_session_probe)
+        , used_to_launch_remote_program(sespro_params.used_to_launch_remote_program)
         , session_probe_channel_params(sespro_params.vc_params)
         {}
+
+        friend class mod_rdp_channels;
     } session_probe;
 
     struct RemoteApp
     {
         const bool enable_remote_program;
+
+    private:
         const bool remote_program_enhanced;
         const bool should_ignore_first_client_execute;
 
+    public:
         const std::chrono::milliseconds bypass_legal_notice_delay;
         const std::chrono::milliseconds bypass_legal_notice_timeout;
 
+    private:
         WindowsExecuteShellParams client_execute;
         WindowsExecuteShellParams real_client_execute;
 
+    public:
         RemoteApp(ModRDPParams::RemoteAppParams const& remote_app_params)
         : enable_remote_program(remote_app_params.enable_remote_program)
         , remote_program_enhanced(remote_app_params.remote_program_enhanced)
@@ -472,8 +491,11 @@ struct mod_rdp_channels
         , bypass_legal_notice_delay(remote_app_params.bypass_legal_notice_delay)
         , bypass_legal_notice_timeout(remote_app_params.bypass_legal_notice_timeout)
         {}
+
+        friend class mod_rdp_channels;
     } remote_app;
 
+private:
     struct Clipboard
     {
         const bool disable_log_syslog;
@@ -488,15 +510,75 @@ struct mod_rdp_channels
         , log_only_relevant_activities(clipboard_params.log_only_relevant_activities)
         {}
     } clipboard;
-#endif
 
-    const bool use_application_driver;
-    const bool disable_file_system_log_syslog;
-    const bool disable_file_system_log_wrm;
-    std::string proxy_managed_drive_prefix;
+    struct FileSystem
+    {
+        const bool disable_log_syslog;
+        const bool disable_log_wrm;
+        const bool bogus_ios_rdpdr_virtual_channel;
 
-    data_size_type max_rdpdr_data     = 0;
-    data_size_type max_drdynvc_data   = 0;
+        const bool enable_rdpdr_data_analysis;
+
+        const data_size_type max_rdpdr_data = 0;
+
+        FileSystem(ModRDPParams::FileSystemParams const& file_system_params)
+        : disable_log_syslog(file_system_params.disable_log_syslog)
+        , disable_log_wrm(file_system_params.disable_log_wrm)
+        , bogus_ios_rdpdr_virtual_channel(file_system_params.bogus_ios_rdpdr_virtual_channel)
+        , enable_rdpdr_data_analysis(file_system_params.enable_rdpdr_data_analysis)
+        {}
+    } file_system;
+
+public:
+    class Drive
+    {
+        const bool use_application_driver;
+        const std::string proxy_managed_prefix;
+
+    public:
+        FileSystemDriveManager file_system_drive_manager;
+
+        Drive(
+            ModRDPParams::ApplicationParams const& application_params,
+            ModRDPParams::DriveParams const& drive_params,
+            RDPVerbose verbose)
+        : use_application_driver(
+            application_params.alternate_shell
+         && !::strncasecmp(application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
+        , proxy_managed_prefix(drive_params.proxy_managed_prefix)
+        {
+            if (drive_params.proxy_managed_drives && *drive_params.proxy_managed_drives) {
+                if (bool(verbose & RDPVerbose::connection)) {
+                    LOG(LOG_INFO, "Proxy managed drives=\"%s\"",
+                        drive_params.proxy_managed_drives);
+                }
+
+                for (auto & r : get_line(drive_params.proxy_managed_drives, ',')) {
+                    auto const trimmed_range = trim(r);
+
+                    if (trimmed_range.empty()) continue;
+
+                    if (bool(verbose & RDPVerbose::connection)) {
+                        LOG(LOG_INFO, "Proxy managed drive=\"%.*s\"",
+                            int(trimmed_range.size()), trimmed_range.begin());
+                    }
+
+                    this->file_system_drive_manager.enable_drive(
+                        FileSystemDriveManager::DriveName(
+                            array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
+                        this->proxy_managed_prefix, verbose);
+                }
+            }
+        }
+
+        friend class mod_rdp_channels;
+    } drive;
+
+    struct Drdynvc
+    {
+        const data_size_type max_data = 0;
+    } drdynvc;
+
 
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
@@ -513,29 +595,31 @@ struct mod_rdp_channels
 
     std::unique_ptr<DynamicChannelVirtualChannel> dynamic_channel_virtual_channel;
 
-#ifndef __EMSCRIPTEN__
     std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
 
+public:
     std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
 
+private:
     std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_server_sender;
 
     std::unique_ptr<RemoteProgramsVirtualChannel> remote_programs_virtual_channel;
 
+public:
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
+
 #endif
 
-    FileSystemDriveManager file_system_drive_manager;
-
+private:
     RDPECLIP::CliprdrLogState cliprdrLogStatus;
     rdpdr::RdpDrStatus rdpdrLogStatus;
 
-    const bool enable_rdpdr_data_analysis;
     const RDPVerbose verbose;
 
     SessionReactor & session_reactor;
 
+public:
     mod_rdp_channels(
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
@@ -560,25 +644,16 @@ struct mod_rdp_channels
         }
         }())
     , checkout_channel(mod_rdp_params.checkout_channel)
-    , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
 #ifndef __EMSCRIPTEN__
     , session_probe(mod_rdp_params.session_probe_params)
     , remote_app(mod_rdp_params.remote_app_params)
     , clipboard(mod_rdp_params.clipboard_params)
+    , file_system(mod_rdp_params.file_system_params)
+    , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
 #endif
-    , use_application_driver(mod_rdp_params.application_params.alternate_shell
-        && !::strncasecmp(mod_rdp_params.application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
-    , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
-    , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
-    , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
-    , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
     , verbose(verbose)
     , session_reactor(session_reactor)
-    {
-        if (mod_rdp_params.proxy_managed_drives && *mod_rdp_params.proxy_managed_drives) {
-            this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives, mod_rdp_params.proxy_managed_drive_prefix);
-        }
-    }
+    {}
 
     void DLP_antivirus_check_channels_files() {
         this->clipboard_virtual_channel.get()->DLP_antivirus_check_channels_files();
@@ -654,7 +729,8 @@ struct mod_rdp_channels
             }
         }
 #else
-        this->init_no_remote_program_no_session_probe(info, mod_rdp_params, program, directory);
+        this->init_no_remote_program_no_session_probe(
+            info, mod_rdp_params.application_params, program, directory);
         (void)authentifier;
         (void)mod_rdp;
         (void)gd;
@@ -662,28 +738,6 @@ struct mod_rdp_channels
     }
 
 private:
-    void configure_proxy_managed_drives(const char * proxy_managed_drives, const char * proxy_managed_drive_prefix) {
-        if (bool(this->verbose & RDPVerbose::connection)) {
-            LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
-        }
-
-        for (auto & r : get_line(proxy_managed_drives, ',')) {
-            auto const trimmed_range = trim(r);
-
-            if (trimmed_range.empty()) continue;
-
-            if (bool(this->verbose & RDPVerbose::connection)) {
-                LOG(LOG_INFO, "Proxy managed drive=\"%.*s\"",
-                    int(trimmed_range.size()), trimmed_range.begin());
-            }
-
-            this->file_system_drive_manager.enable_drive(
-                FileSystemDriveManager::DriveName(
-                    array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
-                proxy_managed_drive_prefix, this->verbose);
-        }
-    }
-
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
         CHANNELS::ChannelNameId channel_name, FrontAPI& front) const
     {
@@ -874,7 +928,7 @@ private:
 
         DynamicChannelVirtualChannel::Params dcvc_params(this->report_message);
 
-        dcvc_params.exchanged_data_limit = this->max_drdynvc_data;
+        dcvc_params.exchanged_data_limit = this->drdynvc.max_data;
         dcvc_params.verbose              = this->verbose;
 
         this->dynamic_channel_virtual_channel =
@@ -894,13 +948,13 @@ private:
         assert(!this->file_system_to_client_sender && !this->file_system_to_server_sender);
 
         this->file_system_to_client_sender = (((client_general_caps.os_major != OSMAJORTYPE_IOS)
-                                                || !this->bogus_ios_rdpdr_virtual_channel)
+                                                || !this->file_system.bogus_ios_rdpdr_virtual_channel)
                                             ? this->create_to_client_sender(channel_names::rdpdr, front)
                                             : nullptr);
         this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
 
         BaseVirtualChannel::Params base_params(this->report_message);
-        base_params.exchanged_data_limit = this->max_rdpdr_data;
+        base_params.exchanged_data_limit = this->file_system.max_rdpdr_data;
         base_params.verbose = this->verbose;
 
         FileSystemVirtualChannelParams fsvc_params;
@@ -911,25 +965,25 @@ private:
         fsvc_params.print_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT);
         fsvc_params.serial_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
         fsvc_params.smart_card_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
-        fsvc_params.dont_log_data_into_syslog = this->disable_file_system_log_syslog;
-        fsvc_params.dont_log_data_into_wrm = this->disable_file_system_log_wrm;
+        fsvc_params.dont_log_data_into_syslog = this->file_system.disable_log_syslog;
+        fsvc_params.dont_log_data_into_wrm = this->file_system.disable_log_wrm;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.session_reactor,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
-                this->file_system_drive_manager,
+                this->drive.file_system_drive_manager,
                 front,
                 false,
                 "",
                 client_name,
                 ::getpid(),
-                this->proxy_managed_drive_prefix.c_str(),
+                this->drive.proxy_managed_prefix.c_str(),
                 base_params,
                 fsvc_params);
 #ifndef __EMSCRIPTEN__
         if (this->file_system_to_server_sender) {
-            if (this->session_probe.enable_session_probe || this->use_application_driver) {
+            if (this->session_probe.enable_session_probe || this->drive.use_application_driver) {
                 this->file_system_virtual_channel->enable_session_probe_drive();
             }
         }
@@ -1301,9 +1355,9 @@ public:
                             AsynchronousTaskContainer & asynchronous_tasks,
                             GeneralCaps const & client_general_caps,
                             const char (& client_name)[128]) {
-        if (!this->enable_rdpdr_data_analysis
+        if (!this->file_system.enable_rdpdr_data_analysis
         &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
-        &&  !this->file_system_drive_manager.has_managed_drive()) {
+        &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
@@ -1639,9 +1693,9 @@ public:
                                     GeneralCaps const & client_general_caps,
                                     const char (& client_name)[128])
     {
-        if (!this->enable_rdpdr_data_analysis
+        if (!this->file_system.enable_rdpdr_data_analysis
         &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
-        &&  !this->file_system_drive_manager.has_managed_drive()) {
+        &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
@@ -1838,7 +1892,7 @@ public:
 
             fsvc.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
 
-            this->file_system_drive_manager.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
+            this->drive.file_system_drive_manager.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
 
             if (!this->session_probe_virtual_channel) {
                 this->create_session_probe_virtual_channel(
