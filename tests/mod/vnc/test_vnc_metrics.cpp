@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
               , 24h
               , 5s
               );
-    VNCMetrics metrics(&m);
+    VNCMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("vnc_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("vnc_metrics-v1.0-2018-08-02.logindex");
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle2)
                 , 24h
                 , 3s
                 );
-        VNCMetrics metrics(&m);
+        VNCMetrics metrics(m);
 
         auto const logmetrics1 = wd.add_file("vnc_metrics-v1.0-2018-08-02.logmetrics");
         auto const logindex1 = wd.add_file("vnc_metrics-v1.0-2018-08-02.logindex");
@@ -176,7 +176,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
           , 24h
           , 5s
           );
-    VNCMetrics metrics(&m);
+    VNCMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("vnc_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("vnc_metrics-v1.0-2018-08-02.logindex");

@@ -68,7 +68,7 @@ private:
 
     const char * vnc_protocol_name = "vnc";
 
-    Metrics * metrics;
+    Metrics& metrics;
 
 
     // VNC context Info
@@ -79,26 +79,26 @@ private:
 
 public:
 
-    VNCMetrics(Metrics * metrics) : metrics(metrics)
+    VNCMetrics(Metrics& metrics) : metrics(metrics)
     {
-        this->metrics->set_protocol("v1.0", this->vnc_protocol_name, COUNT_FIELD);
+        this->metrics.set_protocol("v1.0", this->vnc_protocol_name, COUNT_FIELD);
         LOG(LOG_INFO, "starting VNC Metrics");
     }
 
     void data_from_client(long int len) {
-        this->metrics->add_to_current_data(DATA_FROM_CLIENT, len);
+        this->metrics.add_to_current_data(DATA_FROM_CLIENT, len);
     }
 
     void data_from_server(long int len) {
-        this->metrics->add_to_current_data(DATA_FROM_SERVER, len);
+        this->metrics.add_to_current_data(DATA_FROM_SERVER, len);
     }
 
     void clipboard_data_from_client(long int len) {
-        this->metrics->add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
+        this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
     }
 
     void clipboard_data_from_server(long int len) {
-        this->metrics->add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
+        this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
     }
 
     void mouse_move(const int x, const int y) {
@@ -111,21 +111,21 @@ public:
             if (y_shift < 0) {
                 y_shift *=  -1;
             }
-            this->metrics->add_to_current_data(MOUSE_MOVE, x_shift + y_shift);
+            this->metrics.add_to_current_data(MOUSE_MOVE, x_shift + y_shift);
         }
         this->last_x = x;
         this->last_y = y;
     }
 
     void key_pressed() {
-        this->metrics->add_to_current_data(KEY_PRESSED, 1);
+        this->metrics.add_to_current_data(KEY_PRESSED, 1);
     }
 
     void right_click() {
-        this->metrics->add_to_current_data(RIGHT_CLICK, 1);
+        this->metrics.add_to_current_data(RIGHT_CLICK, 1);
     }
 
     void left_click() {
-        this->metrics->add_to_current_data(LEFT_CLICK, 1);
+        this->metrics.add_to_current_data(LEFT_CLICK, 1);
     }
 };

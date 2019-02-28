@@ -124,7 +124,7 @@ class RDPMetrics
 
     const char * rdp_protocol_name = "rdp";
 
-    Metrics * metrics;
+    Metrics& metrics;
 
     // RDP context Info
     int last_x = -1;
@@ -138,31 +138,31 @@ class RDPMetrics
 
 
 public:
-    RDPMetrics(Metrics * metrics) : metrics(metrics)
+    RDPMetrics(Metrics& metrics) : metrics(metrics)
     {
-        this->metrics->set_protocol("v1.0", this->rdp_protocol_name, COUNT_FIELD);
+        this->metrics.set_protocol("v1.0", this->rdp_protocol_name, COUNT_FIELD);
         LOG(LOG_INFO, "starting RDP Metrics");
     }
 
     void server_other_channel_data(long int len) {
-        this->metrics->add_to_current_data(SERVER_TOTAL_OTHERS_CHANNEL_DATA, len);
+        this->metrics.add_to_current_data(SERVER_TOTAL_OTHERS_CHANNEL_DATA, len);
     }
 
     void client_other_channel_data(long int len) {
-        this->metrics->add_to_current_data(CLIENT_TOTAL_OTHERS_CHANNEL_DATA, len);
+        this->metrics.add_to_current_data(CLIENT_TOTAL_OTHERS_CHANNEL_DATA, len);
     }
 
     void server_rail_channel_data(long int len) {
-        this->metrics->add_to_current_data(SERVER_TOTAL_RAIL_CHANNEL_DATA, len);
+        this->metrics.add_to_current_data(SERVER_TOTAL_RAIL_CHANNEL_DATA, len);
     }
 
     void client_rail_channel_data(long int len) {
-        this->metrics->add_to_current_data(CLIENT_TOTAL_RAIL_CHANNEL_DATA, len);
+        this->metrics.add_to_current_data(CLIENT_TOTAL_RAIL_CHANNEL_DATA, len);
     }
 
     void set_server_rdpdr_metrics(InStream chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->metrics->add_to_current_data(SERVER_DISK_REDIR_CHANNEL_DATA, length);
+            this->metrics.add_to_current_data(SERVER_DISK_REDIR_CHANNEL_DATA, length);
 
             rdpdr::SharedHeader header;
             header.receive(chunk);
@@ -178,9 +178,9 @@ public:
                         rdpdr::DeviceReadRequest drr;
                         drr.receive(chunk);
                         if (drr.Offset() == 0) {
-                            this->metrics->add_to_current_data(FILES_READ_COUNT, 1);
+                            this->metrics.add_to_current_data(FILES_READ_COUNT, 1);
                         }
-                        this->metrics->add_to_current_data(TOTAL_READ_DATA, drr.Length());
+                        this->metrics.add_to_current_data(TOTAL_READ_DATA, drr.Length());
                         break;
                     }
 
@@ -189,9 +189,9 @@ public:
                         rdpdr::DeviceWriteRequest dwr;
                         dwr.receive(chunk);
                         if (dwr.Offset == 0) {
-                            this->metrics->add_to_current_data(FILES_WRITE_COUNT, 1);
+                            this->metrics.add_to_current_data(FILES_WRITE_COUNT, 1);
                         }
-                        this->metrics->add_to_current_data(TOTAL_FILES_WRITTEN_DATA, dwr.Length);
+                        this->metrics.add_to_current_data(TOTAL_FILES_WRITTEN_DATA, dwr.Length);
                         break;
                     }
 
@@ -202,10 +202,10 @@ public:
 
                         switch (sdsir.FsInformationClass()) {
                             case rdpdr::FileRenameInformation:
-                                this->metrics->add_to_current_data(FILES_RENAME_COUNT, 1);
+                                this->metrics.add_to_current_data(FILES_RENAME_COUNT, 1);
                                 break;
                             case rdpdr::FileDispositionInformation:
-                                this->metrics->add_to_current_data(FILES_OR_FOLDERS_DELEDTE_COUNT, 1);
+                                this->metrics.add_to_current_data(FILES_OR_FOLDERS_DELEDTE_COUNT, 1);
                                 break;
                         }
                         break;
@@ -217,13 +217,13 @@ public:
 
     void set_client_rdpdr_metrics(InStream const & /*chunk*/, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->metrics->add_to_current_data(CLIENT_DISK_REDIR_CHANNEL_DATA, length);
+            this->metrics.add_to_current_data(CLIENT_DISK_REDIR_CHANNEL_DATA, length);
         }
     }
 
     void set_server_cliprdr_metrics(InStream chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->metrics->add_to_current_data(SERVER_CLIPBOARD_CHANNEL_DATA, length);
+            this->metrics.add_to_current_data(SERVER_CLIPBOARD_CHANNEL_DATA, length);
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
@@ -261,7 +261,7 @@ public:
 
     void set_client_cliprdr_metrics(InStream chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->metrics->add_to_current_data(CLIENT_CLIPBOARD_CHANNEL_DATA, length);
+            this->metrics.add_to_current_data(CLIENT_CLIPBOARD_CHANNEL_DATA, length);
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
@@ -318,7 +318,7 @@ public:
     }
 
     void server_main_channel_data(long int len) {
-        this->metrics->add_to_current_data(SERVER_MAIN_CHANNEL_DATA, len);
+        this->metrics.add_to_current_data(SERVER_MAIN_CHANNEL_DATA, len);
     }
 
     void mouse_event(int device_flags, const int x, const int y)
@@ -346,26 +346,26 @@ public:
             if (y_shift < 0) {
                 y_shift *= -1;
             }
-            this->metrics->add_to_current_data(MOUSE_DISPLACEMENT, x_shift + y_shift);
+            this->metrics.add_to_current_data(MOUSE_DISPLACEMENT, x_shift + y_shift);
         }
         this->last_x = x;
         this->last_y = y;
     }
 
     void right_click_pressed() {
-        this->metrics->add_to_current_data(RIGHT_CLICK, 1);
+        this->metrics.add_to_current_data(RIGHT_CLICK, 1);
     }
 
     void left_click_pressed() {
-        this->metrics->add_to_current_data(LEFT_CLICK, 1);
+        this->metrics.add_to_current_data(LEFT_CLICK, 1);
     }
 
     void key_pressed() {
-        this->metrics->add_to_current_data(KEYS_PRESSED, 1);
+        this->metrics.add_to_current_data(KEYS_PRESSED, 1);
     }
 
     void client_main_channel_data(long int len) {
-        this->metrics->add_to_current_data(CLIENT_MAIN_CHANNEL_DATA, len);
+        this->metrics.add_to_current_data(CLIENT_MAIN_CHANNEL_DATA, len);
     }
 
 private:
@@ -384,16 +384,16 @@ private:
                 case RDPECLIP::CF_LOCALE:
                 case RDPECLIP::CF_UNICODETEXT:
                 case RDPECLIP::CF_OEMTEXT:
-                    this->metrics->add_to_current_data(nb_copy_text, 1);
+                    this->metrics.add_to_current_data(nb_copy_text, 1);
                     return;
                 case RDPECLIP::CF_METAFILEPICT:
-                    this->metrics->add_to_current_data(nb_copy_image, 1);
+                    this->metrics.add_to_current_data(nb_copy_image, 1);
                     return;
                 default:
                     // TODO string_view
                     if (format_name_local.format_name() == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
                         this->file_contents_format_ID = formatID;
-                        this->metrics->add_to_current_data(nb_copy_file, 1);
+                        this->metrics.add_to_current_data(nb_copy_file, 1);
                         return;
                     }
                     break;
@@ -413,15 +413,15 @@ private:
             case RDPECLIP::CF_UNICODETEXT:
             case RDPECLIP::CF_DSPTEXT:
             case RDPECLIP::CF_LOCALE:
-                this->metrics->add_to_current_data(nb_paste_text, 1);
+                this->metrics.add_to_current_data(nb_paste_text, 1);
                 break;
             case RDPECLIP::CF_METAFILEPICT:
             case RDPECLIP::CF_DSPMETAFILEPICT:
-                this->metrics->add_to_current_data(nb_paste_image, 1);
+                this->metrics.add_to_current_data(nb_paste_image, 1);
                 break;
             default:
                 if (this->file_contents_format_ID == this->last_formatID){
-                    this->metrics->add_to_current_data(nb_paste_file, 1);
+                    this->metrics.add_to_current_data(nb_paste_file, 1);
                 }
                 break;
         }
@@ -437,11 +437,11 @@ private:
             case RDPECLIP::CF_UNICODETEXT:
             case RDPECLIP::CF_DSPTEXT:
             case RDPECLIP::CF_LOCALE:
-                this->metrics->add_to_current_data(total_data_paste, header.dataLen());
+                this->metrics.add_to_current_data(total_data_paste, header.dataLen());
                 break;
             case RDPECLIP::CF_METAFILEPICT:
             case RDPECLIP::CF_DSPMETAFILEPICT:
-                this->metrics->add_to_current_data(total_data_paste, header.dataLen());
+                this->metrics.add_to_current_data(total_data_paste, header.dataLen());
                 break;
             default:
                 break;
@@ -460,7 +460,7 @@ private:
             chunk.in_skip_bytes(4);             // streamId(4 bytes)
             uint32_t nPositionLow = chunk.in_uint32_le();
             uint64_t nPositionHigh = chunk.in_uint32_le();
-            this->metrics->add_to_current_data(
+            this->metrics.add_to_current_data(
                 total_data_paste, nPositionLow + (nPositionHigh << 32));
         }
     }

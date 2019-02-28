@@ -52,21 +52,25 @@ void ModuleManager::create_mod_vnc(
 #ifndef __EMSCRIPTEN__
         struct ModVNCWithMetrics : public mod_vnc
         {
-            std::unique_ptr<Metrics> metrics = nullptr;
-            std::unique_ptr<VNCMetrics> protocol_metrics = nullptr;
-            SessionReactor::TimerPtr metrics_timer;
+            struct ModMetrics : Metrics
+            {
+                using Metrics::Metrics;
 
+                VNCMetrics protocol_metrics{*this};
+            };
+
+            std::unique_ptr<ModMetrics> metrics;
+            SessionReactor::TimerPtr metrics_timer;
             using mod_vnc::mod_vnc;
         };
 
         bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
-        std::unique_ptr<Metrics> metrics;
-        std::unique_ptr<VNCMetrics> protocol_metrics;
+        std::unique_ptr<ModVNCWithMetrics::ModMetrics> metrics;
 
         if (enable_metrics) {
-            metrics = std::make_unique<Metrics>(
+            metrics = std::make_unique<ModVNCWithMetrics::ModMetrics>(
                 ini.get<cfg::metrics::log_dir_path>().to_string(),
                 ini.get<cfg::context::session_id>(),
                 hmac_user(
@@ -86,8 +90,6 @@ void ModuleManager::create_mod_vnc(
                 this->timeobj.get_time(),
                 ini.get<cfg::metrics::log_file_turnover_interval>(),
                 ini.get<cfg::metrics::log_interval>());
-
-            protocol_metrics = std::make_unique<VNCMetrics>(metrics.get());
         }
 #else
         using ModVNCWithMetrics = mod_rdp;
@@ -123,16 +125,15 @@ void ModuleManager::create_mod_vnc(
             (client_info.remote_program ? &rail_client_execute : nullptr),
             ini,
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
-            enable_metrics ? protocol_metrics.get() : nullptr
+            enable_metrics ? &metrics->protocol_metrics : nullptr
         );
 
         if (enable_metrics) {
             new_mod->metrics = std::move(metrics);
-            new_mod->protocol_metrics = std::move(protocol_metrics);
             new_mod->metrics_timer = session_reactor.create_timer()
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action([mod = new_mod.get()](JLN_TIMER_CTX ctx){
-                    mod->metrics->log(ctx.get_current_time());
+                .on_action([metrics = new_mod->metrics.get()](JLN_TIMER_CTX ctx){
+                    metrics->log(ctx.get_current_time());
                     return ctx.ready();
                 })
             ;

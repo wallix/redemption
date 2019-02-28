@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
           , 24h
           , 5s
           );
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2)
                 , 24h
                 , 3s
                 );
-        RDPMetrics metrics(&m);
+        RDPMetrics metrics(m);
 
         auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
         auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -174,7 +174,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement)
              , 24h
              , 5s
              );
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -278,7 +278,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
                 , 24h
                 , 5s
                 );
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -370,7 +370,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
                 , 5s
                 );
 
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -480,7 +480,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
                 , 5s
                 );
 
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -573,7 +573,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
                 , 5s
                 );
 
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -704,7 +704,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
                 , 5s
                 );
 
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -823,7 +823,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
             , 5s
             );
 
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
@@ -958,7 +958,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
                 , 5s
                 );
 
-    RDPMetrics metrics(&m);
+    RDPMetrics metrics(m);
 
     auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
