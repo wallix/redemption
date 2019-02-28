@@ -443,16 +443,8 @@ struct mod_rdp_channels
             std::string real_working_dir;
         } channel_params;
 
-        const bool session_probe_used_clipboard_based_launcher;
-
         SessionProbe(ModRDPParams const& mod_rdp_params)
         : params(mod_rdp_params.session_probe_params)
-        , session_probe_used_clipboard_based_launcher(
-            mod_rdp_params.session_probe_params.used_clipboard_based_launcher
-            && (!mod_rdp_params.application_params.target_application || !*mod_rdp_params.application_params.target_application)
-            && (!mod_rdp_params.application_params.use_client_provided_alternate_shell
-             || !mod_rdp_params.application_params.alternate_shell[0]
-             || mod_rdp_params.remote_program))
         {}
     } session_probe;
 #endif
@@ -628,16 +620,16 @@ struct mod_rdp_channels
                 this->verbose
             );
         }
-        else { // ! this->remote_program
+        else {
             if (this->session_probe.params.enable_session_probe) {
                 this->init_no_remote_program_with_session_probe(
                     mod_rdp, info, mod_rdp_params.application_params, program, directory);
-            } // ! this->session_probe.enabled
+            }
             else  {
                 this->init_no_remote_program_no_session_probe(
                     info, mod_rdp_params.application_params, program, directory);
-            } // this->session_probe.enabled
-        } // this->remote_program
+            }
+        }
 #else
         this->init_no_remote_program_no_session_probe(info, mod_rdp_params, program, directory);
         (void)authentifier;
@@ -1490,8 +1482,15 @@ public:
                 "Falled back to using AlternateShell based launcher.");
         }
 
+        bool const used_clipboard_based_launcher =
+            this->session_probe.params.used_clipboard_based_launcher
+         && (!application_params.target_application || !*application_params.target_application)
+         && (!application_params.use_client_provided_alternate_shell
+          || !application_params.alternate_shell[0]
+        );
+
         std::string cookie_param = [&]() -> std::string {
-            if (this->session_probe.session_probe_used_clipboard_based_launcher){
+            if (used_clipboard_based_launcher){
                 return std::string{};
             }
 
@@ -1527,7 +1526,7 @@ public:
             "${EXE_VAR}", exe_var_str,
             "${TITLE_VAR} ", "",
             "/${COOKIE_VAR} ", cookie_param.c_str(),
-            "${CBSPL_VAR} ", this->session_probe.session_probe_used_clipboard_based_launcher ? "CD %TMP%&" : ""
+            "${CBSPL_VAR} ", used_clipboard_based_launcher ? "CD %TMP%&" : ""
         );
 
         std::string alternate_shell = this->session_probe.params.exe_or_file;
@@ -1552,7 +1551,7 @@ public:
             this->session_probe.channel_params.real_alternate_shell = info.alternate_shell;
             this->session_probe.channel_params.real_working_dir     = info.working_dir;
         }
-        else if (this->session_probe.session_probe_used_clipboard_based_launcher) {
+        else if (used_clipboard_based_launcher) {
             this->session_probe.session_probe_launcher =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                     session_reactor,
@@ -2232,7 +2231,6 @@ public:
         this->init_negociate_event_(
             info, gen, timeobj, mod_rdp_params, program, directory,
             mod_rdp_params.open_session_timeout);
-
     }   // mod_rdp
 
 
