@@ -61,6 +61,7 @@ using ModRdpVariables = vcfg::variables<
 struct ModRDPParams
 {
     ModRdpSessionProbeParams session_probe_params;
+    SessionProbeVirtualChannelParams session_probe_channel_params {};
 
     const char * target_user;
     const char * target_password;
@@ -258,34 +259,33 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_launch_mask);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.used_clipboard_based_launcher);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.effective_launch_timeout);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.start_launch_timeout_timer_only_after_logon);
-        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc.on_launch_failure);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.keepalive_timeout);
-        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc.on_keepalive_timeout);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.end_disconnected_session);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.disconnected_application_limit);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.disconnected_session_limit);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc.idle_session_limit);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_channel_params.effective_launch_timeout);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_channel_params.on_launch_failure);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_channel_params.keepalive_timeout);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_channel_params.on_keepalive_timeout);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_channel_params.end_disconnected_session);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_channel_params.disconnected_application_limit);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_channel_params.disconnected_session_limit);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_channel_params.idle_session_limit);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.customize_executable_name);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.enable_log);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.enable_log_rotation);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_channel_params.enable_log);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_channel_params.enable_log_rotation);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.start_delay_ms);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.long_delay_ms);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.short_delay_ms);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.allow_multiple_handshake);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_channel_params.allow_multiple_handshake);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.enable_crash_dump);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_channel_params.enable_crash_dump);
 
-        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_params.vc.handle_usage_limit);
-        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_params.vc.memory_usage_limit);
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_channel_params.handle_usage_limit);
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_channel_params.memory_usage_limit);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.ignore_ui_less_processes_during_end_of_session_check);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_channel_params.ignore_ui_less_processes_during_end_of_session_check);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc.childless_window_as_unidentified_input_field);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_channel_params.childless_window_as_unidentified_input_field);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.is_public_session);
 
@@ -299,13 +299,13 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
 
-        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc.extra_system_processes.to_string());
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_channel_params.extra_system_processes.to_string());
 
-        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc.outbound_connection_monitor_rules.to_string());
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_channel_params.outbound_connection_monitor_rules.to_string());
 
-        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc.process_monitor_rules.to_string());
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_channel_params.process_monitor_rules.to_string());
 
-        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc.windows_of_these_applications_as_unidentified_input_field.to_string());
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_channel_params.windows_of_these_applications_as_unidentified_input_field.to_string());
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel.c_str());
