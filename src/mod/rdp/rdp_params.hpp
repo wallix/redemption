@@ -75,8 +75,15 @@ struct ModRDPParams
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
 
-    bool disable_clipboard_log_syslog = false;
-    bool disable_clipboard_log_wrm = false;
+    struct ClipboardParams
+    {
+        bool disable_log_syslog = false;
+        bool disable_log_wrm = false;
+        bool log_only_relevant_activities = true;
+    };
+
+    ClipboardParams clipboard_params;
+
     bool disable_file_system_log_syslog = false;
     bool disable_file_system_log_wrm = false;
 
@@ -197,7 +204,6 @@ struct ModRDPParams
 
     bool experimental_fix_input_event_sync = true;
 
-    bool log_only_relevant_clipboard_activities = true;
     bool split_domain = false;
 
     RDPVerbose verbose;
@@ -289,8 +295,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.is_public_session);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_wrm);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_file_system_log_wrm);
@@ -397,7 +403,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_input_event_sync);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.fix_too_long_cookie);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             log_only_relevant_clipboard_activities);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.log_only_relevant_activities);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

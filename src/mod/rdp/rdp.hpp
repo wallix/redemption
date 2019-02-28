@@ -423,9 +423,6 @@ struct mod_rdp_channels
     const CHANNELS::ChannelNameId checkout_channel;
     int checkout_channel_flags  = 0;
     int checkout_channel_chanid = 0;
-    const bool disable_clipboard_log_syslog;
-    const bool disable_clipboard_log_wrm;
-    const bool log_only_relevant_clipboard_activities;
     const bool bogus_ios_rdpdr_virtual_channel;
 
 #ifndef __EMSCRIPTEN__
@@ -476,6 +473,21 @@ struct mod_rdp_channels
         , bypass_legal_notice_timeout(remote_app_params.bypass_legal_notice_timeout)
         {}
     } remote_app;
+
+    struct Clipboard
+    {
+        const bool disable_log_syslog;
+        const bool disable_log_wrm;
+        const bool log_only_relevant_activities;
+
+        const data_size_type max_data = 0;
+
+        Clipboard(ModRDPParams::ClipboardParams const& clipboard_params)
+        : disable_log_syslog(clipboard_params.disable_log_syslog)
+        , disable_log_wrm(clipboard_params.disable_log_wrm)
+        , log_only_relevant_activities(clipboard_params.log_only_relevant_activities)
+        {}
+    } clipboard;
 #endif
 
     const bool use_application_driver;
@@ -483,7 +495,6 @@ struct mod_rdp_channels
     const bool disable_file_system_log_wrm;
     std::string proxy_managed_drive_prefix;
 
-    data_size_type max_clipboard_data = 0;
     data_size_type max_rdpdr_data     = 0;
     data_size_type max_drdynvc_data   = 0;
 
@@ -549,13 +560,11 @@ struct mod_rdp_channels
         }
         }())
     , checkout_channel(mod_rdp_params.checkout_channel)
-    , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
-    , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
-    , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
     , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
 #ifndef __EMSCRIPTEN__
     , session_probe(mod_rdp_params.session_probe_params)
     , remote_app(mod_rdp_params.remote_app_params)
+    , clipboard(mod_rdp_params.clipboard_params)
 #endif
     , use_application_driver(mod_rdp_params.application_params.alternate_shell
         && !::strncasecmp(mod_rdp_params.application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
@@ -736,10 +745,10 @@ private:
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
         BaseVirtualChannel::Params base_params(this->report_message);
-        base_params.exchanged_data_limit = this->max_clipboard_data;
+        base_params.exchanged_data_limit = this->clipboard.max_data;
         base_params.verbose              = this->verbose;
 
-        ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->disable_clipboard_log_syslog, this->disable_clipboard_log_wrm, this->log_only_relevant_clipboard_activities);
+        ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->clipboard.disable_log_syslog, this->clipboard.disable_log_wrm, this->clipboard.log_only_relevant_activities);
 
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
