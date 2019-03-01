@@ -6,6 +6,7 @@ try:
     from wabengine.common.exception import AuthenticationFailed
     from wabengine.common.exception import AuthenticationChallenged
     from wabengine.common.exception import MultiFactorAuthentication
+    from wabengine.common.exception import AuthenticationUpdatePwd
     from wabengine.common.exception import LicenseException
     from wabengine.common.exception import MustChangePassword
     from wabengine.common.exception import AccountLocked
@@ -373,6 +374,8 @@ class Engine(object):
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
+        except AuthenticationUpdatePwd as aup:
+            self.challenge = aup_to_challenge(aup, wab_login)
         except AuthenticationChallenged as e:
             self.challenge = wchallenge_to_challenge(e.challenge)
         except MultiFactorAuthentication as mfa:
@@ -1708,7 +1711,7 @@ class Challenge(object):
         self.recall = recall
 
 
-def wchallenge_to_challenge(challenge, previous_token=None):
+def wchallenge_to_challenge(challenge):
     """ Convert Challenge from bastion to internal Challenge
 
     param challenge: Challenge from bastion
@@ -1724,7 +1727,7 @@ def wchallenge_to_challenge(challenge, previous_token=None):
         echos=[challenge.promptEcho],
         username=challenge.username,
         challenge=challenge,
-        token=getattr(challenge, "mfa_token", previous_token)
+        token=getattr(challenge, "mfa_token", None)
     )
 
 
@@ -1757,6 +1760,39 @@ def mfa_to_challenge(mfa):
         username=mfa.username,
         token=mfa.token,
         recall=recall
+    )
+
+
+def aup_to_challenge(aup, username):
+    """ Convert AuthenticationUpdatePassword from bastion
+    to internal Challenge
+
+    param aup: AuthenticationUpdatePassword from bastion
+    param username: Provided username to set in challenge
+    :rtype: Challenge
+    :return: a converted Challenge
+    """
+    aup.challenge.username = username
+    if aup.challenge.message_id == 1:
+        message = (u"You must change your password")
+    elif aup.challenge.message_id == 2:
+        message = (u"Please enter the password a second time")
+    elif aup.challenge.message_id == 3:
+        message = (u"The two given password do not match")
+    elif aup.challenge.message_id == 4:
+        message = (u"The given password does not meet the password "
+                   "policy requirements")
+    else:
+        message = aup.challenge.message
+    return Challenge(
+        challenge_type="AUP",
+        title="= Update Password =",
+        message="",
+        fields=[message],
+        echos=[aup.challenge.promptEcho],
+        username=aup.challenge.username,
+        challenge=aup.challenge,
+        token=getattr(aup.challenge, "mfa_token", None)
     )
 
 
