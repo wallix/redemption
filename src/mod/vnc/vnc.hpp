@@ -836,12 +836,8 @@ public:
             (this->server_use_long_format_names ? RDPECLIP::CB_USE_LONG_FORMAT_NAMES : 0));
 
         if (bool(this->verbose & VNCVerbose::clipboard)) {
-            if (this->server_use_long_format_names){
-                LOG(LOG_INFO, "Server use long format name");
-            }
-            else {
-                LOG(LOG_INFO, "Server use short format name");
-            }
+            LOG(LOG_INFO, "Server use %s format name",
+                this->server_use_long_format_names ? "long":"short");
         }
 
         RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(1);
