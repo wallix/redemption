@@ -134,13 +134,14 @@ RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
         {UP,   16, 4, 'a'},
         {UP,   0x2A, 4, 0xffe1},
         {DOWN, 0x3A, 0, 0},   // CAPSLOCK OFF
-        {UP,   0x3A, 0, 0},
+        {UP,   0x3A, 4, 0},
     };
     for (auto k: keys){
-        LOG(LOG_INFO, "%u", k.code);
-        keymap.event(k.flags, k.code);
-        RED_CHECK_EQUAL(k.rflags, keymap.key_flags);
-        RED_CHECK_EQUAL(k.rkey, keymap.get_sym());
+        BOOST_TEST_CONTEXT(+k.code){
+            keymap.event(k.flags, k.code);
+            RED_CHECK_EQUAL(k.rflags, keymap.key_flags);
+            RED_CHECK_EQUAL(k.rkey, keymap.get_sym());
+        }
     }
     RED_CHECK_EQUAL(0, keymap.nb_sym_available());
 }
