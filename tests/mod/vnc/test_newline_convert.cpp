@@ -18,7 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#define RED_TEST_MODULE TestStrUtils
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
@@ -28,52 +27,52 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter0)
 {
     {
         char s[] = "toto";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "toto"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "toto");
     }
 
     {
         char s[] = "\r\ntoto";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "\ntoto"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\ntoto");
     }
 
     {
         char s[] = "toto\r\n";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "toto\n"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "toto\n");
     }
 
     {
         char s[] = "to\r\nto";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "to\nto"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "to\nto");
     }
 
     {
         char s[] = "\r\nto\r\nto";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "\nto\nto"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\nto\nto");
     }
 
     {
         char s[] = "to\r\nto\r\n";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "to\nto\n"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "to\nto\n");
     }
 
     {
         char s[] = "\r\nto\r\nto\r\n";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "\nto\nto\n"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\nto\nto\n");
     }
 
     {
         char s[] = "to\r\nto\r\n!";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "to\nto\n!"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "to\nto\n!");
     }
 
     {
         char s[] = "\r\nto\r\nto\r\n!";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "\nto\nto\n!"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\nto\nto\n!");
     }
 
     {
         char s[] = "\r\n\r\nto\r\n\r\nto\r\n\r\n";
-        RED_CHECK(!strcmp(in_place_windows_to_linux_newline_convert(s), "\n\nto\n\nto\n\n"));
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\n\nto\n\nto\n\n");
     }
 }
 
@@ -81,50 +80,42 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter1)
 {
     {
         char s[] = "";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == s);
-        RED_CHECK(s == "");
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "");
     }
 
     {
         char s[] = "\r\r";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == s);
-        RED_CHECK(s == "\r\r");
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\r\r");
     }
 
     {
         char s[] = "\n\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == s);
-        RED_CHECK(s == "\n\n");
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\n\n");
     }
 
     {
         char s[] = "\r \n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == s);
-        RED_CHECK(s == "\r \n");
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\r \n");
     }
 
     {
         char s[] = "\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == s);
-        RED_CHECK(s == "\n");
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\n");
     }
 
     {
         char s[] = "\r\n\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == s);
-        RED_CHECK(s == "\n\n");
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\n\n");
     }
 
     {
         char s[] = "\r\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == s);
-        RED_CHECK(s == "\r\n");
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\r\n");
     }
 
     {
         char s[] = "\n\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == s);
-        RED_CHECK(s == "\n\n");
+        RED_CHECK_EQ(in_place_windows_to_linux_newline_convert(s), "\n\n");
     }
 }
 
@@ -137,49 +128,49 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter1)
 //    {
 //        char   s[5] = "toto";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto"));
+//        RED_CHECK(s == "toto");
 //        RED_CHECK(result_size == 5);
 //    }
 //
 //    {
 //        char s[7] = "toto\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto\r\n"));
+//        RED_CHECK(s == "toto\r\n");
 //        RED_CHECK(result_size == 7);
 //    }
 //
 //    {
 //        char s[7] = "\ntoto";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "\r\ntoto"));
+//        RED_CHECK(s == "\r\ntoto");
 //        RED_CHECK(result_size == 7);
 //    }
 //
 //    {
 //        char s[7] = "to\nto";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "to\r\nto"));
+//        RED_CHECK(s == "to\r\nto");
 //        RED_CHECK(result_size == 7);
 //    }
 //
 //    {
 //        char s[9] = "\nto\nto";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "\r\nto\r\nto"));
+//        RED_CHECK(s == "\r\nto\r\nto");
 //        RED_CHECK(result_size == 9);
 //    }
 //
 //    {
 //        char s[11] = "\nto\nto\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "\r\nto\r\nto\r\n"));
+//        RED_CHECK(s == "\r\nto\r\nto\r\n");
 //        RED_CHECK(result_size == 11);
 //    }
 //
 //    {
 //        char s[17] = "\n\nto\n\nto\n\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "\r\n\r\nto\r\n\r\nto\r\n\r\n"));
+//        RED_CHECK(s == "\r\n\r\nto\r\n\r\nto\r\n\r\n");
 //        RED_CHECK(result_size == 17);
 //    }
 //}
@@ -193,56 +184,56 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter1)
 //    {
 //        char s[6] = "toto\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto"));
+//        RED_CHECK(s == "toto");
 //        RED_CHECK(result_size == 7);
 //    }
 //
 //    {
 //        char s[7] = "toto\n\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto\r\n"));
+//        RED_CHECK(s == "toto\r\n");
 //        RED_CHECK(result_size == 9);
 //    }
 //
 //    {
 //        char s[8] = "toto\n\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto\r\n"));
+//        RED_CHECK(s == "toto\r\n");
 //        RED_CHECK(result_size == 9);
 //    }
 //
 //    {
 //        char s[9] = "toto\n\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto\r\n\r\n"));
+//        RED_CHECK(s == "toto\r\n\r\n");
 //        RED_CHECK(result_size == 9);
 //    }
 //
 //    {
 //        char s[10] = "toto\n\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto\r\n\r\n"));
+//        RED_CHECK(s == "toto\r\n\r\n");
 //        RED_CHECK(result_size == 9);
 //    }
 //
 //    {
 //        char s[7] = "\n\ntoto";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "\r\n\r\nto"));
+//        RED_CHECK(s == "\r\n\r\nto");
 //        RED_CHECK(result_size == 9);
 //    }
 //
 //    {
 //        char s[9] = "\n\ntoto";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "\r\n\r\ntoto"));
+//        RED_CHECK(s == "\r\n\r\ntoto");
 //        RED_CHECK(result_size == 9);
 //    }
 //
 //    {
 //        char s[7] = "\ntoto\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "\r\ntoto"));
+//        RED_CHECK(s == "\r\ntoto");
 //        RED_CHECK(result_size == 9);
 //    }
 //}
@@ -274,14 +265,14 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter1)
 //    {
 //        char s[9] = "toto\n\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto\r\n\r\n"));
+//        RED_CHECK(s == "toto\r\n\r\n");
 //        RED_CHECK(result_size == 9);
 //    }
 //
 //    {
 //        char s[10] = "toto\n\n";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "toto\r\n\r\n"));
+//        RED_CHECK(s == "toto\r\n\r\n");
 //        RED_CHECK(result_size == 9);
 //    }
 //
@@ -294,7 +285,7 @@ RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter1)
 //    {
 //        char s[9] = "\n\ntoto";
 //        RED_CHECK((in_place_linux_to_windows_newline_convert(s, sizeof(s), cancel_if_buffer_too_small, result_size) == s);
-//        RED_CHECK(s == "\r\n\r\ntoto"));
+//        RED_CHECK(s == "\r\n\r\ntoto");
 //        RED_CHECK(result_size == 9);
 //    }
 //

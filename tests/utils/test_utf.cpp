@@ -23,7 +23,6 @@
 
 */
 
-#define RED_TEST_MODULE TestLul
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/utf.hpp"

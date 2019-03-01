@@ -18,7 +18,6 @@
    Author(s): Clément Moroldo
 */
 
-#define RED_TEST_MODULE TestCLIPRDRChannelchannel
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "client_redemption/client_channels/fake_client_mod.hpp"

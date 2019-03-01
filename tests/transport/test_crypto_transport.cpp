@@ -19,7 +19,6 @@
 
 */
 
-#define RED_TEST_MODULE TestInCryptoTransport
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "transport/crypto_transport.hpp"

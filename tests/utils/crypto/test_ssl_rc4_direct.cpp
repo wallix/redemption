@@ -1,4 +1,3 @@
-#define RED_TEST_MODULE TestRc4
 
 #include "utils/crypto/ssl_rc4_direct.hpp"
 

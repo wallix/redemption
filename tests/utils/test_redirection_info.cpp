@@ -20,7 +20,6 @@
 
 */
 
-#define RED_TEST_MODULE TestRedirectionInfo
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/redirection_info.hpp"

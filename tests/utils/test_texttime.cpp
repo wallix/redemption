@@ -18,7 +18,6 @@
 *   Author(s): Clément Moroldo, Christophe Grosjean
 */
 
-#define RED_TEST_MODULE TestTexttime
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/timeval_ops.hpp"

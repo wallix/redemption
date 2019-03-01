@@ -1,4 +1,3 @@
-#define RED_TEST_MODULE TestAes
 
 #include "utils/crypto/ssl_aes_direct.hpp"
 

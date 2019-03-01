@@ -18,7 +18,6 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define RED_TEST_MODULE TestBER
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/nla/asn1/ber.hpp"

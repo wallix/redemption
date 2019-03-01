@@ -19,7 +19,6 @@
 */
 
 
-#define RED_TEST_MODULE TestCLIPRDRChannel
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "test_only/get_file_contents.hpp"

@@ -26,7 +26,7 @@ Author(s): Jonathan Poelen
 # define BOOST_TEST_MODULE RED_TEST_MODULE
 #endif
 
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/version.hpp>
 
 

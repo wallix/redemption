@@ -20,7 +20,6 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define RED_TEST_MODULE TestKeyValuePairs
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/key_qvalue_pairs.hpp"

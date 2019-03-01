@@ -18,7 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
-#define RED_TEST_MODULE TestGCC
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/sugar/array_view.hpp"

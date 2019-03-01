@@ -20,7 +20,6 @@
 
 */
 
-#define RED_TEST_MODULE TestRdp
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.

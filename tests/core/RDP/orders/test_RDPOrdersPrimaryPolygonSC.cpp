@@ -22,7 +22,6 @@
   Using lib boost functions for testing
 */
 
-#define RED_TEST_MODULE TestOrderPolygonSC
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"

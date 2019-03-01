@@ -18,7 +18,6 @@
 *   Author(s): Clément Moroldo
 */
 
-#define RED_TEST_MODULE TestRDPMetrics
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/fileutils.hpp"

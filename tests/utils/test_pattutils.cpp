@@ -18,7 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#define RED_TEST_MODULE TestPattUtils
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/pattutils.hpp"

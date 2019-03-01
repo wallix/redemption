@@ -20,7 +20,6 @@
    Unit tests for Acl Serializer
 */
 
-#define RED_TEST_MODULE TestAclSerializer
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 

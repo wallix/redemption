@@ -22,7 +22,6 @@
    Using lib boost functions, some tests need to be added
 */
 
-#define RED_TEST_MODULE TestStream
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 

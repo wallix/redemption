@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define RED_TEST_MODULE TestFlatWabCloseMod
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "configs/config.hpp"

@@ -19,7 +19,6 @@
 
 */
 
-#define RED_TEST_MODULE TestInteractiveTargetMod
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "configs/config.hpp"

@@ -20,7 +20,6 @@
    T.124 Generic Conference Control (GCC) Unit Test
 */
 
-#define RED_TEST_MODULE TestSC_NET
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 

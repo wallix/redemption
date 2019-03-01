@@ -18,7 +18,6 @@
 *   Author(s): Jonathan Poelen
 */
 
-#define RED_TEST_MODULE TestSnappyCompressionTransport
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/compression_transport_builder.hpp"

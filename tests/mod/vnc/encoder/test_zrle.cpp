@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 */
 
-#define RED_TEST_MODULE TestVNCZrleEncoder
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"

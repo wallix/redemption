@@ -18,7 +18,6 @@
    Author(s): David Fort
 
 */
-#define RED_TEST_MODULE remoteFx
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"

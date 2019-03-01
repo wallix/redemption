@@ -20,7 +20,6 @@
    Unit test for mouse cursor primitives
 */
 
-#define RED_TEST_MODULE TestCursor
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "gdi/graphic_api.hpp"

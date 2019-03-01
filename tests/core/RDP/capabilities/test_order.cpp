@@ -21,7 +21,6 @@
    Using lib boost functions for testing
 */
 
-#define RED_TEST_MODULE TestCapabilityOrder
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 

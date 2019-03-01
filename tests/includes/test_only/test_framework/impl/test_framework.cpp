@@ -25,9 +25,6 @@ extern "C" inline int sigaction(
 {
     return 0;
 };
-#else
-# define BOOST_AUTO_TEST_MAIN
-# define BOOST_TEST_DYN_LINK
 #endif
 
 // #define BOOST_TEST_ALTERNATIVE_INIT_API

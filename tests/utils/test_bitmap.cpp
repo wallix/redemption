@@ -21,7 +21,6 @@
    Unit test for bitmap class (mostly tests of compression/decompression)
 */
 
-#define RED_TEST_MODULE TestBitmap
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/data_test_case.hpp"
 

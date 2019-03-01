@@ -19,16 +19,6 @@
 
 */
 
-// #define RED_TEST_MODULE TestReplayMod
-// #include "test_framework/redemption_unit_tests.hpp"
-//
-//
-// #include "mod/internal/replay_mod.hpp"
-//
-// RED_AUTO_TEST_CASE(TestXXX)
-// {
-// }
-
 #include "mod/internal/replay_mod.hpp"
 
 int main(){}

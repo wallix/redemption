@@ -19,7 +19,6 @@
 
 */
 
-#define RED_TEST_MODULE TestDoRecorder
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "lib/do_recorder.hpp"

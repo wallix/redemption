@@ -21,7 +21,6 @@
     Unit test to writing RDP orders to file and rereading them
 */
 
-#define RED_TEST_MODULE TestRdpClientWab
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "acl/auth_api.hpp"

@@ -20,7 +20,6 @@
    Unit test to RDP DrawNineGridCache object
    Using lib boost functions for testing
 */
-#define RED_TEST_MODULE CapabilityDrawNineGridCacheEmit
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 

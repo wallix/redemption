@@ -22,7 +22,6 @@
 
 */
 
-#define RED_TEST_MODULE TestRdpClientTestCard
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "mod/internal/test_card_mod.hpp"

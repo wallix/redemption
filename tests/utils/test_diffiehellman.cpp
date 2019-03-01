@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#define RED_TEST_MODULE TestDiffieHellman
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/diffiehellman.hpp"

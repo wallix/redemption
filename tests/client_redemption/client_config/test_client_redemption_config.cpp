@@ -21,7 +21,6 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define RED_TEST_MODULE TestClientRedemptionConfig
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 

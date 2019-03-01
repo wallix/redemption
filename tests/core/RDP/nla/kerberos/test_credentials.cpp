@@ -18,7 +18,6 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#define RED_TEST_MODULE TestkrbCredentials
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 

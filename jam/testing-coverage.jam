@@ -98,6 +98,8 @@ lib libunit_test :
     $(CXXFLAGS_TEST)
     <link>shared
     # <cxxflags>-frtti
+    # <define>BOOST_AUTO_TEST_MAIN
+    <define>BOOST_TEST_DYN_LINK
 ;
 
 constant TEST_DEPENDENCIES :
@@ -125,7 +127,7 @@ rule test-run ( target : source : requirements * : )
         ;
     }
 
-    unit-test $(target) : $(source) : $(TEST_DEPENDENCIES) $(requirements) ;
+    unit-test $(target) : $(source) : $(TEST_DEPENDENCIES) $(requirements) <define>RED_TEST_MODULE=$(source) ;
 
     if ! <covflag>nocover in $(requirements)
     {

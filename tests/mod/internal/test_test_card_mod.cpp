@@ -19,14 +19,6 @@
 
 */
 
-// #define RED_TEST_MODULE TestXXX
-// #include "test_framework/redemption_unit_tests.hpp"
-
-
 #include "mod/internal/test_card_mod.hpp"
 
 int main(){}
-
-// RED_AUTO_TEST_CASE(TestXXX)
-// {
-// }

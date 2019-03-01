@@ -20,14 +20,6 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-// #define RED_TEST_MODULE TestXXXXXXXXXX
-// #include "test_framework/redemption_unit_tests.hpp"
-//
-//
-// RED_AUTO_TEST_CASE(TestXXXXXXXXX)
-// {
-// }
-
 #include "mod/internal/flat_wait_mod.hpp"
 
 int main(){}

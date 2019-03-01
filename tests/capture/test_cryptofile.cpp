@@ -20,7 +20,6 @@
    Unit test of Verifier module
 */
 
-#define RED_TEST_MODULE TestVerifier
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 

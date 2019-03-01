@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 */
 
-#define RED_TEST_MODULE TestBitmapCodecs
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/error.hpp"

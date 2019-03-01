@@ -19,7 +19,6 @@
  *              Meng Tan
  */
 
-#define RED_TEST_MODULE TestWidgetNumberEdit
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 

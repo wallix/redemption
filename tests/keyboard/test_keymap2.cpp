@@ -23,7 +23,6 @@
 */
 
 
-#define RED_TEST_MODULE TestKeymap
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "keyboard/keymap2.hpp"

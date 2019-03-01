@@ -18,7 +18,6 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#define RED_TEST_MODULE TestIDManager
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/id_manager.hpp"

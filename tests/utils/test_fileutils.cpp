@@ -19,7 +19,6 @@
 
 */
 
-#define RED_TEST_MODULE TestFileUtils
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/fileutils.hpp"

@@ -1,4 +1,3 @@
-#define RED_TEST_MODULE TestAes
 
 #include "system/ssl_aes.hpp"
 

@@ -1,4 +1,3 @@
-#define RED_TEST_MODULE TestMd4
 
 #include "utils/crypto/ssl_md4_direct.hpp"
 

@@ -19,7 +19,6 @@
 
 */
 
-#define RED_TEST_MODULE TestXXX
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/caches/brushcache.hpp"

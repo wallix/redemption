@@ -1,4 +1,3 @@
-#define RED_TEST_MODULE TestSha256
 
 
 #include "system/ssl_sha256.hpp"
