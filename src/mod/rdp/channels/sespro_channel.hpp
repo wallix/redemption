@@ -77,7 +77,7 @@ private:
     std::string param_real_alternate_shell;
     std::string param_real_working_dir;
 
-    Translation::language_t param_lang;
+    Translator tr;
 
     const bool param_bogus_refresh_rect_ex;
 
@@ -156,7 +156,7 @@ public:
     , param_front_height(params.front_height)
     , param_real_alternate_shell(params.real_alternate_shell)
     , param_real_working_dir(params.real_working_dir)
-    , param_lang(params.lang)
+    , tr(params.lang)
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , param_show_maximized(params.show_maximized)
     , front(front)
@@ -1343,13 +1343,9 @@ public:
 
                         char message[4096];
 
-                        REDEMPTION_DIAGNOSTIC_PUSH
-                        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-                        std::snprintf(message, sizeof(message),
-                            TR(trkeys::process_interrupted_security_policies,
-                                this->param_lang),
+                        this->tr.fmt(message, sizeof(message),
+                            trkeys::process_interrupted_security_policies,
                             parameters_[1].c_str());
-                        REDEMPTION_DIAGNOSTIC_POP
 
                         this->mod.display_osd_message(message);
                     }
@@ -1420,13 +1416,9 @@ public:
                                 else {
                                     char message[4096];
 
-                                    REDEMPTION_DIAGNOSTIC_PUSH
-                                    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-                                    std::snprintf(message, sizeof(message),
-                                        TR(trkeys::process_interrupted_security_policies,
-                                           this->param_lang),
+                                    this->tr.fmt(message, sizeof(message),
+                                        trkeys::process_interrupted_security_policies,
                                         parameters_[1].c_str());
-                                    REDEMPTION_DIAGNOSTIC_POP
 
                                     std::string string_message = message;
                                     this->mod.display_osd_message(string_message);
@@ -1495,13 +1487,9 @@ public:
                                 else {
                                     char message[4096];
 
-                                    REDEMPTION_DIAGNOSTIC_PUSH
-                                    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-                                    std::snprintf(message, sizeof(message),
-                                                TR(trkeys::process_interrupted_security_policies,
-                                                this->param_lang),
-                                                parameters_[1].c_str());
-                                    REDEMPTION_DIAGNOSTIC_POP
+                                    this->tr.fmt(message, sizeof(message),
+                                        trkeys::process_interrupted_security_policies,
+                                        parameters_[1].c_str());
 
                                     this->mod.display_osd_message(message);
                                 }

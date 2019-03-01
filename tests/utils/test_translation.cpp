@@ -28,6 +28,13 @@ RED_AUTO_TEST_CASE(TestTranslation)
 {
     Translation::language_t lang = Translation::EN;
 
+    {
+        constexpr std::size_t n = 128;
+        char s[n]{};
+        TR_fmt(s, n, trkeys::fmt_field_required, lang, "'XY'");
+        RED_CHECK_EQUAL(s, "Error: 'XY' field is required.");
+    }
+
     RED_CHECK_EQUAL(TR(trkeys::login, lang),             "Login");
     RED_CHECK_EQUAL(TR(trkeys::password, lang),          "Password");
     RED_CHECK_EQUAL(TR(trkeys::diagnostic, lang),        "Diagnostic");

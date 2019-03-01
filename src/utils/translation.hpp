@@ -22,7 +22,9 @@
 #pragma once
 
 #include "configs/autogen/enums.hpp" // Language
+#include "cxx/diagnostic.hpp"
 
+#include <cstdio>
 
 namespace trkeys
 {
@@ -35,6 +37,25 @@ namespace trkeys
     TR_PROTECTED_KV(password, "Password", "Mot de passe");
 
 #undef TR_PROTECTED_KV
+
+    template<class T> struct TrKeyFmt
+    {
+        const char * translations[2];
+    };
+
+#define TR_KV_FMT(name, en, fr)                      \
+    struct TrKeyFmt##_##name                         \
+    {                                                \
+        template<class... Ts>                        \
+        static auto check_printf_result(             \
+            char* s, std::size_t n, Ts const& ... xs \
+        ) {                                          \
+            (void)std::snprintf(s, n, en, xs...);    \
+            (void)std::snprintf(s, n, fr, xs...);    \
+            return int();                            \
+        }                                            \
+    };                                               \
+    constexpr TrKeyFmt<TrKeyFmt##_##name> name{{en, fr}}
 
 #define TR_KV(name, en, fr) constexpr TrKey name{{en, fr}}
     TR_KV(login, "Login", "Login");
@@ -139,16 +160,13 @@ namespace trkeys
     TR_KV(note_duration_format, "Format: [hours]h[mins]m", "Format: [heures]h[mins]m");
     TR_KV(note_required, "(*) required fields", "(*) champs requis");
     TR_KV(confirm, "Confirm", "Confirmer");
-    // TODO TR_KV_FMT
-    TR_KV(fmt_field_required,
+    TR_KV_FMT(fmt_field_required,
         "Error: %s field is required.",
         "Erreur: le champ %s est requis.");
-    // TODO TR_KV_FMT
-    TR_KV(fmt_invalid_format,
+    TR_KV_FMT(fmt_invalid_format,
         "Error: %s invalid format.",
         "Erreur: format %s invalide.");
-    // TODO TR_KV_FMT
-    TR_KV(fmt_toohigh_duration,
+    TR_KV_FMT(fmt_toohigh_duration,
         "Error: %s is too high (max: %d minutes).",
         "Erreur: %s trop haute (max: %d minutes).");
     TR_KV(information, "Information", "Information");
@@ -162,8 +180,7 @@ namespace trkeys
         "Another user connected to the resource, so your connection was lost.",
         "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."
     );
-    // TODO TR_KV_FMT
-    TR_KV(process_interrupted_security_policies,
+    TR_KV_FMT(process_interrupted_security_policies,
         "The process '%s' was interrupted in accordance with security policies.",
         "Le processus '%s' a été interrompu conformément aux politiques de sécurité."
     );
@@ -325,6 +342,7 @@ namespace trkeys
         "Échec lors de la connexion de la session sur la cible."
     );
 #undef TR_KV
+#undef TR_KV_FMT
 } // namespace trkeys
 
 class Inifile;
@@ -375,6 +393,16 @@ public:
     {
         return k.translations[this->lang];
     }
+
+    template<class T, class... Ts>
+    auto translate_fmt(char* s, std::size_t n, trkeys::TrKeyFmt<T> k, Ts const&... xs) const
+    -> decltype(T::check_printf_result(s, n, xs...))
+    {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        return std::snprintf(s, n, k.translations[this->lang], xs...);
+        REDEMPTION_DIAGNOSTIC_POP
+    }
 };
 
 #define TRANSLATIONCONF Translation::getInstance()
@@ -389,6 +417,13 @@ inline const char * TR(trkeys::TrKey k, Translation::language_t lang)
 {
     TRANSLATIONCONF.set_lang(lang);
     return TRANSLATIONCONF.translate(k);
+}
+
+template<class T, class... Ts>
+int TR_fmt(char* s, std::size_t n, trkeys::TrKeyFmt<T> k, Translation::language_t lang, Ts const&... xs)
+{
+    TRANSLATIONCONF.set_lang(lang);
+    return TRANSLATIONCONF.translate_fmt(s, n, k, xs...);
 }
 
 // implementation in config.cpp
@@ -409,14 +444,20 @@ struct Translator
       : lang(language(ini))
     {}
 
-    char const * operator()(trkeys::TrKey_password const & t) const
+    char const * operator()(trkeys::TrKey_password const & k) const
     {
-        return TR(t, this->lang);
+        return TR(k, this->lang);
     }
 
-    char const * operator()(trkeys::TrKey const & t) const
+    char const * operator()(trkeys::TrKey const & k) const
     {
-        return TR(t, this->lang);
+        return TR(k, this->lang);
+    }
+
+    template<class T, class... Ts>
+    int fmt(char* s, std::size_t n, trkeys::TrKeyFmt<T> k, Ts const&... xs) const
+    {
+        return TR_fmt(s, n, k, this->lang, xs...);
     }
 
 private:

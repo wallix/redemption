@@ -23,7 +23,6 @@
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
 #include "keyboard/keymap2.hpp"
-#include "cxx/diagnostic.hpp"
 
 
 FlatForm::FlatForm(
@@ -68,14 +67,9 @@ FlatForm::FlatForm(
     , confirm(drawable, *this, this, TR(trkeys::confirm, lang), group_id,
                 theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
                 6, 2)
+    , tr(lang)
     , flags(flags)
     , duration_max(duration_max)
-    , generic_warning(TR(trkeys::fmt_field_required, lang))
-    , format_warning(TR(trkeys::fmt_invalid_format, lang))
-    , toohigh_warning(TR(trkeys::fmt_toohigh_duration, lang))
-    , field_comment(TR(trkeys::comment, lang))
-    , field_ticket(TR(trkeys::ticket, lang))
-    , field_duration(TR(trkeys::duration, lang))
     , warning_buffer()
 {
     this->set_bg_color(theme.global.bgcolor);
@@ -207,129 +201,124 @@ void FlatForm::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
 
 void FlatForm::notify(Widget* widget, NotifyApi::notify_event_t event)
 {
-    if ((widget->group_id == this->confirm.group_id) &&
-        (NOTIFY_COPY != event) &&
-        (NOTIFY_CUT != event) &&
-        (NOTIFY_PASTE != event)) {
+    if ((widget->group_id == this->confirm.group_id)
+     && (NOTIFY_COPY != event)
+     && (NOTIFY_CUT != event)
+     && (NOTIFY_PASTE != event)
+    ) {
         if (NOTIFY_SUBMIT == event) {
             this->check_confirmation();
         }
     }
+    else if ((NOTIFY_COPY == event)
+          || (NOTIFY_CUT == event)
+          || (NOTIFY_PASTE == event)
+    ) {
+        if (this->notifier) {
+            this->notifier->notify(widget, event);
+        }
+    }
     else {
-        if ((NOTIFY_COPY == event) ||
-            (NOTIFY_CUT == event) ||
-            (NOTIFY_PASTE == event)) {
-            if (this->notifier) {
-                this->notifier->notify(widget, event);
-            }
-        }
-        else {
-            WidgetParent::notify(widget, event);
-        }
+        WidgetParent::notify(widget, event);
     }
 }
 
-void FlatForm::set_warning_buffer(const char * field, const char * format)
+template<class T, class... Ts>
+void FlatForm::set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs)
 {
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-    std::sprintf(this->warning_buffer, format, field);
-    REDEMPTION_DIAGNOSTIC_POP
+    tr.fmt(this->warning_buffer, sizeof(this->warning_buffer), k, xs...);
     this->warning_msg.set_text(this->warning_buffer);
 }
 
-void FlatForm::set_warning_buffer_duration(const char * field, int duration, const char * format)
+namespace
 {
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-        std::sprintf(this->warning_buffer, format, field, duration);
-    REDEMPTION_DIAGNOSTIC_POP
-    this->warning_msg.set_text(this->warning_buffer);
-}
-
-
-unsigned long FlatForm::check_duration(const char * duration)
-{
-    unsigned long res = 0;
-    unsigned long hours = 0;
-    unsigned long minutes = 0;
-    char * end_p = nullptr;
-    try {
-        long d = strtoul(duration, &end_p, 10);
-        if (*end_p == 'h') {
-            res = (d > 0);
-            hours = d;
-            end_p++;
-            d = strtoul(end_p, &end_p, 10);
-            if (*end_p == 'm') {
-                res |= (d > 0);
+    unsigned long check_duration(const char * duration)
+    {
+        unsigned long res = 0;
+        unsigned long hours = 0;
+        unsigned long minutes = 0;
+        char * end_p = nullptr;
+        try {
+            long d = strtoul(duration, &end_p, 10);
+            if (*end_p == 'h') {
+                res = (d > 0);
+                hours = d;
+                end_p++;
+                d = strtoul(end_p, &end_p, 10);
+                if (*end_p == 'm') {
+                    res |= (d > 0);
+                    minutes = d;
+                    end_p++;
+                }
+                else if (d > 0) {
+                    res = 0;
+                }
+            }
+            else if (*end_p == 'm') {
+                res = (d > 0);
                 minutes = d;
                 end_p++;
             }
-            else if (d > 0) {
-                res = 0;
-            }
         }
-        else if (*end_p == 'm') {
-            res = (d > 0);
-            minutes = d;
-            end_p++;
+        catch (...) {
+            res = 0;
         }
+        if (res && *end_p != 0) {
+            res = 0;
+        }
+        if (res > 0) {
+            res = hours * 60 + minutes;
+        }
+        return res;
     }
-    catch (...) {
-        res = 0;
-    }
-    if (res && *end_p != 0) {
-        res = 0;
-    }
-    if (res > 0) {
-        res = hours * 60 + minutes;
-    }
-    return res;
+
 }
 
 void FlatForm::check_confirmation()
 {
     if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
         ((this->flags & DURATION_MANDATORY) == DURATION_MANDATORY) &&
-        (this->duration_edit.num_chars == 0)) {
-        this->set_warning_buffer(this->field_duration, this->generic_warning);
+        (this->duration_edit.num_chars == 0)
+    ) {
+        this->set_warning_buffer(trkeys::fmt_field_required, tr(trkeys::duration));
         this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
         this->rdp_input_invalidate(this->get_rect());
         return;
     }
+
     if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
         (this->duration_edit.num_chars != 0)) {
-        long res = this->check_duration(this->duration_edit.get_text());
+        long res = check_duration(this->duration_edit.get_text());
         // res is duration in hours.
         if ((res <= 0) || (res > this->duration_max)) {
             if (res <= 0) {
                 this->duration_edit.set_text("");
-                this->set_warning_buffer(this->field_duration, this->format_warning);
+                this->set_warning_buffer(trkeys::fmt_invalid_format, tr(trkeys::duration));
             }
             else {
-                this->set_warning_buffer_duration(
-                    this->field_duration,
-                    this->duration_max,
-                    this->toohigh_warning);
+                this->set_warning_buffer(trkeys::fmt_toohigh_duration, tr(trkeys::duration), this->duration_max);
             }
             this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
             this->rdp_input_invalidate(this->get_rect());
             return;
         }
     }
+
     if (((this->flags & TICKET_DISPLAY) == TICKET_DISPLAY) &&
         ((this->flags & TICKET_MANDATORY) == TICKET_MANDATORY) &&
-        (this->ticket_edit.num_chars == 0)) {
-        this->set_warning_buffer(this->field_ticket, this->generic_warning);
+        (this->ticket_edit.num_chars == 0)
+    ) {
+        this->set_warning_buffer(trkeys::fmt_field_required, tr(trkeys::ticket));
         this->set_widget_focus(&this->ticket_edit, focus_reason_mousebutton1);
         this->rdp_input_invalidate(this->get_rect());
         return;
     }
+
     if (((this->flags & COMMENT_DISPLAY) == COMMENT_DISPLAY) &&
         ((this->flags & COMMENT_MANDATORY) == COMMENT_MANDATORY) &&
-        (this->comment_edit.num_chars == 0)) {
-        this->set_warning_buffer(this->field_comment, this->generic_warning);
+        (this->comment_edit.num_chars == 0)
+    ) {
+        this->set_warning_buffer(trkeys::fmt_field_required, tr(trkeys::comment));
         this->set_widget_focus(&this->comment_edit, focus_reason_mousebutton1);
         this->rdp_input_invalidate(this->get_rect());
         return;

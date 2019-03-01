@@ -44,6 +44,8 @@ public:
     WidgetLabel      notes;
     WidgetFlatButton confirm;
 
+    Translator tr;
+
     int flags;
     int duration_max;
 
@@ -56,13 +58,6 @@ public:
         DURATION_DISPLAY   = 0x10,
         DURATION_MANDATORY = 0x20,
     };
-
-    const char * generic_warning;
-    const char * format_warning;
-    const char * toohigh_warning;
-    const char * field_comment;
-    const char * field_ticket;
-    const char * field_duration;
 
     char warning_buffer[512];
 
@@ -78,19 +73,15 @@ public:
 
     ~FlatForm() override;
 
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
+
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
     void notify(Widget* widget, NotifyApi::notify_event_t event) override;
 
-    void set_warning_buffer(const char * field, const char * format);
-
-    void set_warning_buffer_duration(const char * field, int duration,
-                                     const char * format);
-
-
-    unsigned long check_duration(const char * duration);
+private:
+    template<class T, class... Ts>
+    void set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs);
 
     void check_confirmation();
-
-    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
 };
