@@ -1653,13 +1653,15 @@ class Engine(object):
 
     def get_account_login(self, right, check_in_creds=True):
         login = right['account_login']
-        if check_in_creds:
-            login = (self.checkout.get_target_login(right)
-                     or right['account_login'])
         try:
             domain = right['domain_name']
         except:
             domain = ""
+        if check_in_creds:
+            login = (self.checkout.get_target_login(right)
+                     or login)
+            domain = (self.checkout.get_target_domain(right)
+                      or domain)
         if not login and right['domain_cn'] == AM_IL_DOMAIN:
             # Interactive Login
             return login

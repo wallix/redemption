@@ -19,6 +19,7 @@ try:
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
     CRED_INDEX = "credentials"
+    CRED_DATA_DOMAIN = "domain_name"
 except Exception as e:
     import traceback
     tracelog = traceback.format_exc()
@@ -33,6 +34,7 @@ except Exception as e:
             CRED_DATA_PRIVATE_KEY,
             CRED_DATA_SSH_CERTIFICATE,
             CRED_DATA_LOGIN,
+            CRED_DATA_DOMAIN,
             CRED_DATA_ACCOUNT_UID,
             CRED_INDEX,
         )
@@ -64,6 +66,14 @@ class CheckoutEngine(object):
                                                            ({}, {}))
         login = credentials.get(CRED_DATA_LOGIN)
         return login
+
+    def get_target_domain(self, right):
+        # Logger().debug("CHECKOUTENGINE get_target_login")
+        target_uid = right['target_uid']
+        tright, credentials = self.session_credentials.get(target_uid,
+                                                           ({}, {}))
+        domain = credentials.get(CRED_DATA_DOMAIN)
+        return domain
 
     def get_target_passwords(self, right):
         # Logger().debug("CHECKOUTENGINE get_target_passwords")
