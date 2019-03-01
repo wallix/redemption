@@ -926,7 +926,7 @@ public:
     } // rdp_input_mouse
 
     //==============================================================================================================
-    void rdp_input_scancode( long param1
+    void rdp_input_scancode( long keycode
                                    , long param2
                                    , long device_flags
                                    , long param4
@@ -946,9 +946,9 @@ public:
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
         }
 
-        if (0x45 == param1) {
-            this->keymapSym.toggle_num_lock(keymap->is_num_locked());
-        }
+//        if (0x45 == param1) {
+//            this->keymapSym.toggle_num_lock(keymap->is_num_locked());
+//        }
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
@@ -973,24 +973,29 @@ public:
         int key = this->keymapSym.get_sym();
 
         if (key > 0) {
+            LOG(LOG_INFO, "key=%.4x downflag=%u", key, downflag);
+            if (this->remove_server_alt_state_for_char 
+            && this->keymapSym.is_right_alt_pressed() 
+            && (key == 0x23  // #
+            || key == 0x7b   // {
+            || key == 0x5b   // [
+            || key == 0x7c   // |
+            || key == 0x60   // `
+            || key == 0x5c   // \ beware removing trailing blank after slash!
+            || key == 0x5e   // ^
+//            || key == 0x20AC // €
+            || key == 0x40   // @
+            || key == 0x5d   // ]
+            || key == 0x7d   // }
+            || key == 0x7e   // ~ 
+            )) {
+                LOG(LOG_INFO, "right alt pressed key=%.4x", key);
 
-            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed() &&
-                    (  key == 0x23                          // #
-                    || key == 0x7b                     // {
-                    || key == 0x5b                    // [
-                    || key == 0x7c                   // |
-                    || key == 0x60                  // `
-                    || key == 0x5c                 // \
-                    || key == 0x5e                // ^
-                    || key == 0x40               // @
-                    || key == 0x5d              // ]
-                    || key == 0x7d             // }
-                )) {
-
-                    this->send_keyevent(0, 0xffe9);
+                    this->send_keyevent(0, 0xffea); // up
                     this->send_keyevent(downflag, key);
-                    this->send_keyevent(1, 0xffe9);
-            } else
+                    this->send_keyevent(1, 0xffea); // down
+            }
+            else 
             if (this->left_ctrl_pressed) {
                 if (key == 0xfe03) {
                     // alt gr => left ctrl is ignored
