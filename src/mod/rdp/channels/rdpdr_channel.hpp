@@ -33,6 +33,7 @@
 #include "utils/strutils.hpp"
 #include "mod/rdp/channels/channel_file.hpp"
 #include "core/file_system_virtual_channel_params.hpp"
+#include "core/stream_throw_helpers.hpp"
 #include <deque>
 
 #include <map>
@@ -440,22 +441,13 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             (void)total_length;
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
             {
-                assert(
-                    !this->length_of_remaining_device_data_to_be_processed);
-                assert(
-                    !this->length_of_remaining_device_data_to_be_skipped);
+                assert(!this->length_of_remaining_device_data_to_be_processed);
+                assert(!this->length_of_remaining_device_data_to_be_skipped);
 
-                {
-                    const unsigned int expected = 4;    // DeviceCount(4)
-                    if (!chunk.in_check_rem(expected)) {
-                        LOG(LOG_ERR,
-                            "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
-                                "Truncated DR_DEVICELIST_ANNOUNCE, "
-                                "need=%u remains=%zu",
-                            expected, chunk.in_remain());
-                        throw Error(ERR_RDP_DATA_TRUNCATED);
-                    }
-                }
+                // DeviceCount(4)
+                ::check_throw(chunk, 4,
+                    "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request",
+                    ERR_RDP_DATA_TRUNCATED);
 
                 uint32_t DeviceCount = chunk.in_uint32_le();
 
@@ -718,72 +710,23 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 uint32_t flags, InStream& chunk) {
             (void)total_length;
             (void)flags;
-            {
-                const unsigned int expected = 4;    // DeviceCount(4)
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
-                            "Truncated DR_DEVICELIST_REMOVE (1), "
-                            "need=%u remains=%zu",
-                        expected, chunk.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
+
+            // DeviceCount(4)
+            ::check_throw(chunk, 4,
+                "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove (1)",
+                ERR_RDP_DATA_TRUNCATED);
 
             const uint32_t DeviceCount = chunk.in_uint32_le();
-
-            {
-                const unsigned int expected = DeviceCount *
-                                              4 // DeviceId(4)
-                                            ;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove: "
-                            "Truncated DR_DEVICELIST_REMOVE (2), "
-                            "need=%u remains=%zu",
-                        expected, chunk.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
-
-            auto remove_device =
-                    [](device_announce_collection_type& device_announces,
-                        const uint32_t DeviceId) -> bool {
-                bool device_removed = false;
-
-                for (auto iter = device_announces.begin();
-                     iter != device_announces.end(); ++iter) {
-
-                    InStream header_stream(iter->data.get(),
-                            rdpdr::SharedHeader::size() +
-                            12  // DeviceCount(4) + DeviceType(4) + DeviceId(4)
-                        );
-
-                    header_stream.in_skip_bytes(
-                            rdpdr::SharedHeader::size() +
-                            8  // DeviceCount(4) + DeviceType(4)
-                        );
-
-                    const uint32_t current_device_id =
-                        header_stream.in_uint32_le();
-
-                    if (DeviceId == current_device_id) {
-                        unordered_erase(device_announces, iter);
-                        device_removed = true;
-                        break;
-                    }
-                }
-
-                return device_removed;
-            };
 
             const uint32_t max_number_of_removable_device = 128;
 
             uint8_t client_drive_device_list_remove_data[
-                      64    // > rdpdr::SharedHeader::size()
-                    + 4     // DeviceCount(4)
-                    + 4     // DeviceId(4)
-                    * max_number_of_removable_device
+                    // > rdpdr::SharedHeader::size()
+                    64    
+                    // DeviceCount(4)
+                    + 4     
+                    // DeviceId(4)
+                    + 4 * max_number_of_removable_device
                 ];
             OutStream client_drive_device_list_remove_stream(
                 client_drive_device_list_remove_data);
@@ -796,23 +739,37 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
             client_message_header.emit(client_drive_device_list_remove_stream);
 
-            const auto device_count_offset =
-                client_drive_device_list_remove_stream.get_offset();
+            const auto device_count_offset = client_drive_device_list_remove_stream.get_offset();
 
-            client_drive_device_list_remove_stream.out_clear_bytes(
-                    4   // DeviceCount(4)
-                );
+            // DeviceCount(4)
+            client_drive_device_list_remove_stream.out_clear_bytes(4);
 
-            for (uint32_t device_index = 0; device_index < DeviceCount;
-                 device_index++) {
+            // DeviceId(4) 
+            ::check_throw(chunk, DeviceCount * 4,
+                "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove (2)",
+                ERR_RDP_DATA_TRUNCATED);
+
+            for (uint32_t device_index = 0; device_index < DeviceCount; device_index++) {
                 const uint32_t DeviceId = chunk.in_uint32_le();
 
-                if (!remove_device(this->device_announces, DeviceId) &&
-                    (number_of_removable_device < max_number_of_removable_device)) {
-                    client_drive_device_list_remove_stream.out_uint32_le(
-                        DeviceId);
-                    number_of_removable_device++;
+                bool device_removed = false;
+                for (auto iter = this->device_announces.begin(); iter != this->device_announces.end(); ++iter) {
+                    // DeviceCount(4) + DeviceType(4) + DeviceId(4)
+                    InStream header_stream(iter->data.get(), rdpdr::SharedHeader::size() + 12);
+                    // DeviceCount(4) + DeviceType(4)
+                    header_stream.in_skip_bytes(rdpdr::SharedHeader::size() + 8);
+                    const uint32_t current_device_id = header_stream.in_uint32_le();
+                    if (DeviceId == current_device_id) {
+                        unordered_erase(this->device_announces, iter);
+                        device_removed = true;
+                        break;
+                    }
+                }
 
+                if (!device_removed 
+                && (number_of_removable_device < max_number_of_removable_device)) {
+                    client_drive_device_list_remove_stream.out_uint32_le(DeviceId);
+                    number_of_removable_device++;
                     this->remove_known_device(DeviceId);
                 }
             }
