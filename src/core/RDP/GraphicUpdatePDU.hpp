@@ -154,14 +154,12 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                        , StaticOutReservedStreamHelper<1024, 65536-1024> & data_common
                        // TODO enum Verbose
                        , uint32_t verbose) {
-    if (verbose & 4) {
-        LOG( LOG_INFO
-           , "send_server_update: fastpath_support=%s compression_support=%s shareId=%u "
-             "encryptionLevel=%d initiator=%u type=%u data_extra=%u"
-           , (fastpath_support ? "yes" : "no"), (compression_support ? "yes" : "no"), shareId
-           , encryptionLevel, initiator, type, data_extra
-           );
-    }
+    LOG_IF(verbose & 4, LOG_INFO
+      , "send_server_update: fastpath_support=%s compression_support=%s shareId=%u "
+        "encryptionLevel=%d initiator=%u type=%u data_extra=%u"
+      , (fastpath_support ? "yes" : "no"), (compression_support ? "yes" : "no"), shareId
+      , encryptionLevel, initiator, type, data_extra
+    );
 
     assert(!compression_support || mppc_enc);
 
@@ -314,9 +312,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     static_assert(SERVER_UPDATE_POINTER_POSITION + 1 == SERVER_UPDATE_POINTER_NEW );
                     uint16_t const updateType = update_type_table[type - SERVER_UPDATE_POINTER_COLOR];
 
-                    if (updateType == RDP_POINTER_NEW) {
-                        LOG(LOG_INFO, "Send Slow-Path New Pointer Update");
-                    }
+                    LOG_IF(updateType == RDP_POINTER_NEW, LOG_INFO, "Send Slow-Path New Pointer Update");
 
                     StaticOutStream<64> data;
 
@@ -338,9 +334,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                           , log_condition, verbose);
     }
 
-    if (verbose & 4) {
-        LOG(LOG_INFO, "send_server_update done");
-    }
+    LOG_IF(verbose & 4, LOG_INFO, "send_server_update done");
 }   // send_server_update
 
 
@@ -480,21 +474,15 @@ public:
     ~GraphicsUpdatePDU() = default;
 
     void init_orders() {
-        if (bool(this->verbose & Verbose::internal_buffer)) {
-            LOG( LOG_INFO
-               , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%d"
-               , this->userid
-               , this->shareid);
-        }
+        LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+          , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%d"
+          , this->userid, this->shareid);
     }
 
     void init_bitmaps() {
-        if (bool(this->verbose & Verbose::internal_buffer)) {
-            LOG( LOG_INFO
-               , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%d"
-               , this->userid
-               , this->shareid);
-        }
+        LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+          , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%d"
+          , this->userid, this->shareid);
 
         this->stream_bitmaps.out_uint16_le(RDP_UPDATE_BITMAP);  // updateType (2 bytes)
         this->offset_bitmap_count = this->stream_bitmaps.get_offset();
@@ -510,10 +498,8 @@ public:
 protected:
     void flush_orders() override {
         if (this->order_count > 0){
-            if (bool(this->verbose & Verbose::internal_buffer)) {
-                LOG( LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%zu"
-                   , this->order_count);
-            }
+            LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO,
+                "GraphicsUpdatePDU::flush_orders: order_count=%zu", this->order_count);
 
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
@@ -528,11 +514,9 @@ protected:
 
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (bool(this->verbose & Verbose::internal_buffer)) {
-                LOG( LOG_INFO
-                   , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%zu offset=%" PRIu32
-                   , this->bitmap_count, this->offset_bitmap_count);
-            }
+            LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+              , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%zu offset=%" PRIu32
+              , this->bitmap_count, this->offset_bitmap_count);
             this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);
 
             ::send_server_update( this->trans, this->fastpath_support, this->compression
@@ -833,9 +817,8 @@ protected:
 
 
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%d)", cache_idx);
-        }
+        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+            "GraphicsUpdatePDU::send_pointer(cache_idx=%d)", cache_idx);
 
         if (this->send_new_pointer) {
             StaticOutReservedStreamHelper<1024, 65536-1024> stream;
@@ -856,9 +839,8 @@ protected:
                                 , 0, stream, underlying_cast(this->verbose));
         }
 
-        if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer done");
-        }
+        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+            "GraphicsUpdatePDU::send_pointer done");
     }   // void send_pointer(int cache_idx, const Pointer & cursor)
 
 
@@ -875,9 +857,8 @@ protected:
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
     void cached_pointer_update(int cache_idx) override {
-        if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%d)", cache_idx);
-        }
+        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+            "GraphicsUpdatePDU::set_pointer(cache_idx=%d)", cache_idx);
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         stream.get_data_stream().out_uint16_le(cache_idx);
@@ -887,9 +868,8 @@ protected:
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_CACHED
                             , 0, stream, underlying_cast(this->verbose));
 
-        if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer done");
-        }
+        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+            "GraphicsUpdatePDU::set_pointer done");
     }   // void cached_pointer_update(int cache_idx)
 
 public:
@@ -897,9 +877,8 @@ public:
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos)
     {
-        if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
-        }
+        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+            "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
         stream.get_data_stream().out_uint16_le(xPos);
@@ -910,8 +889,7 @@ public:
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_POSITION
                             , 0, stream, underlying_cast(this->verbose));
 
-        if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::update_pointer_position done");
-        }
+        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+            "GraphicsUpdatePDU::update_pointer_position done");
     }
 };

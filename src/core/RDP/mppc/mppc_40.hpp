@@ -523,9 +523,7 @@ private:
      */
     void compress_40(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size)
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "compress_40");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "compress_40");
 
         if (uncompressed_data_size >= RDP_40_HIST_BUF_LEN) {
             LOG(LOG_ERR, "compress_40: input stream too large, max=%d got=%u",
@@ -654,9 +652,7 @@ private:
 
                 this->hash_tab_mgr.reset();
 
-                if (this->verbose) {
-                    LOG(LOG_INFO, "Unable to undo changes made in hash table.");
-                }
+                LOG_IF(this->verbose, LOG_INFO, "Unable to undo changes made in hash table.");
             }
 
             return;

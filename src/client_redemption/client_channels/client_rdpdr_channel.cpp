@@ -157,41 +157,36 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
 
             switch (header.packet_id) {
                 case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "SERVER >> RDPDR Channel: Server Announce Request");
 
                     this->process_server_annnounce_request(chunk);
                     break;
 
                 case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "SERVER >> RDPDR Channel: Server Core Capability Request");
 
                     this->process_core_server_capabilities(chunk);
                     break;
 
                 case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Client ID Confirm");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "SERVER >> RDPDR Channel: Server Client ID Confirm");
 
                     this->process_core_clientID_confirm();
                     break;
 
                 case rdpdr::PAKID_CORE_DEVICE_REPLY:
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "SERVER >> RDPDR Channel: Server Device Announce Response");
 
                     this->process_core_device_reply(chunk);
                     break;
 
                 case rdpdr::PAKID_CORE_USER_LOGGEDON:
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server User Logged On");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "SERVER >> RDPDR Channel: Server User Logged On");
                     break;
 
                 case rdpdr::PAKID_CORE_DEVICE_IOREQUEST:
@@ -211,9 +206,8 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
             switch (header.packet_id) {
                 case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                 {
-                    if (bool(this->verbose & RDPVerbose::printer)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Announce Request ");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::printer), LOG_INFO,
+                        "SERVER >> RDPDR PRINTER: Server Announce Request ");
                 }
                     break;
 
@@ -232,20 +226,14 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
                         }
                     }
 
-                    if (bool(this->verbose & RDPVerbose::printer)) {
-                        if (driveEnable) {
-                            LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Core Capability Request - Drive Capability Enable");
-                        } else {
-                            LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Core Capability Request - Drive Not Allowed");
-                        }
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::printer), LOG_INFO,
+                        "SERVER >> RDPDR PRINTER: Server Core Capability Request - Drive %s", driveEnable ? "Capability Enable" : "Not Allowed");
                 }
                     break;
 
                 case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
-                    if (bool(this->verbose & RDPVerbose::printer)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server User Logged On");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::printer), LOG_INFO,
+                        "SERVER >> RDPDR PRINTER: Server User Logged On");
                     break;
 
                 case rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY:
@@ -259,17 +247,16 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
                         this->drives_created = false;
                         LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                     }
-                    if (bool(this->verbose & RDPVerbose::printer)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Device Announce Response ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::printer), LOG_INFO,
+                        "SERVER >> RDPDR PRINTER: Server Device Announce Response ID=%x Hres=%x",
+                        sdar.DeviceId(), sdar.ResultCode());
                 }
                     break;
 
                 case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
                 {
-                    if (bool(this->verbose & RDPVerbose::printer)) {
-                        LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Server Client ID Confirm");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::printer), LOG_INFO,
+                        "SERVER >> RDPDR PRINTER: Server Client ID Confirm");
                 }
                     break;
 
@@ -290,21 +277,18 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
                     switch (deviceIORequest.MajorFunction()) {
 
                         case rdpdr::IRP_MJ_CREATE:
-                            if (bool(this->verbose & RDPVerbose::printer)) {
-                                LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Create Request");
-                            }
+                            LOG_IF(bool(this->verbose & RDPVerbose::printer), LOG_INFO,
+                                "SERVER >> RDPDR PRINTER: Device I/O Create Request");
                             break;
 
                         case rdpdr::IRP_MJ_READ:
-                            if (bool(this->verbose & RDPVerbose::printer)) {
-                                LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Read Request");
-                            }
+                            LOG_IF(bool(this->verbose & RDPVerbose::printer), LOG_INFO,
+                                "SERVER >> RDPDR PRINTER: Device I/O Read Request");
                             break;
 
                         case rdpdr::IRP_MJ_CLOSE:
-                            if (bool(this->verbose & RDPVerbose::printer)) {
-                                LOG(LOG_INFO, "SERVER >> RDPDR PRINTER: Device I/O Close Request");
-                            }
+                            LOG_IF(bool(this->verbose & RDPVerbose::printer), LOG_INFO,
+                                "SERVER >> RDPDR PRINTER: Device I/O Close Request");
                             break;
 
                         default:
@@ -347,9 +331,8 @@ void ClientRDPDRChannel::FremoveDriveDevice(const DeviceData * devices, const si
                                         , CHANNELS::CHANNEL_FLAG_LAST  |
                                         CHANNELS::CHANNEL_FLAG_FIRST
                                         );
-    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-        LOG(LOG_INFO, "CLIENT >> RDPDR: Client Drive Device List Remove");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+        "CLIENT >> RDPDR: Client Drive Device List Remove");
 }
 
 void ClientRDPDRChannel::process_server_annnounce_request(InStream & chunk) {
@@ -377,9 +360,8 @@ void ClientRDPDRChannel::process_server_annnounce_request(InStream & chunk) {
                                         , total_length
                                         , this->channel_flags
                                         );
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+            "CLIENT >> RDPDR Channel: Client Announce Reply");
     }
 
     {
@@ -402,9 +384,8 @@ void ClientRDPDRChannel::process_server_annnounce_request(InStream & chunk) {
                                             , total_length
                                             , this->channel_flags
                                             );
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+            "CLIENT >> RDPDR Channel: Client Name Request");
     }
 }
 
@@ -499,9 +480,8 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
                                             , CHANNELS::CHANNEL_FLAG_LAST |
                                             CHANNELS::CHANNEL_FLAG_FIRST
                                             );
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Core Capability Response");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+            "CLIENT >> RDPDR Channel: Client Core Capability Response");
     }
 
     {
@@ -536,7 +516,7 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
                     , const_cast<char*>("\x00\x61\x00\x00") /*NOLINT*/ // nPName
                     , const_cast<char*>("\x61\x00") /*NOLINT*/   // DriverName
                     , const_cast<char*>("\x00\x61\x00\x61\x00\x61\x00\x00") /*NOLINT*/ // PrintName
-                    , nullptr 
+                    , nullptr
                     );
                 dahp.emit(out_stream);
             } else {
@@ -556,9 +536,8 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
                                         , total_length
                                         , this->channel_flags
                                         );
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+            "CLIENT >> RDPDR Channel: Client Device List Announce Request");
     }
 }
 
@@ -572,9 +551,9 @@ void ClientRDPDRChannel::process_core_device_reply(InStream & chunk) {
         this->drives_created = false;
         LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
     }
-//     if (bool(this->verbose & RDPVerbose::rdpdr)) {
-//         LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
-//     }
+//     LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+//         "SERVER >> RDPDR Channel: Server Device Announce Response ID=%x Hres=%x",
+//         sdar.DeviceId(), sdar.ResultCode());
 }
 
 void ClientRDPDRChannel::process_iorequest_lock_control(rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream) {
@@ -645,9 +624,8 @@ void ClientRDPDRChannel::process_iorequest_create(InStream & chunk, rdpdr::Devic
                                         , this->channel_flags
                                         );
 
-    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Create Response");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+        "CLIENT >> RDPDR: Device I/O Create Response");
 }
 
 void ClientRDPDRChannel::process_iorequest_query_information(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id) {
@@ -657,9 +635,8 @@ void ClientRDPDRChannel::process_iorequest_query_information(InStream & chunk, r
     switch (sdqir.FsInformationClass()) {
 
         case rdpdr::FileBasicInformation:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Basic Query Information Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Basic Query Information Request");
             {
 
             std::string file_to_request = this->paths.at(id);
@@ -687,16 +664,14 @@ void ClientRDPDRChannel::process_iorequest_query_information(InStream & chunk, r
                 chunk_to_send,
                 out_stream.get_offset(),
                 this->channel_flags);
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
             }
             break;
 
         case rdpdr::FileStandardInformation:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Standard Information Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Query Standard Information Request");
             {
             deviceIOResponse.emit(out_stream);
 
@@ -719,16 +694,14 @@ void ClientRDPDRChannel::process_iorequest_query_information(InStream & chunk, r
                                                 , out_stream.get_offset()
                                                 , this->channel_flags
                                                 );
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
             }
             break;
 
         case rdpdr::FileAttributeTagInformation:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Request");
             {
                 std::string file_to_request = this->paths.at(id);
                 if (!(this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
@@ -757,9 +730,8 @@ void ClientRDPDRChannel::process_iorequest_query_information(InStream & chunk, r
                                                     , this->channel_flags
                                                     );
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query File Attribute Tag Information Response");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "CLIENT >> RDPDR: Device I/O Query File Attribute Tag Information Response");
             }
             break;
 
@@ -782,9 +754,8 @@ void ClientRDPDRChannel::process_iorequest_close(rdpdr::DeviceIOResponse &  devi
                                        , out_stream.get_offset()
                                        , this->channel_flags
                                        );
-    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+        "CLIENT >> RDPDR: Device I/O Close Response");
 }
 
 void ClientRDPDRChannel::process_iorequest_read(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id) {
@@ -820,9 +791,8 @@ void ClientRDPDRChannel::process_iorequest_read(InStream & chunk, rdpdr::DeviceI
                                         , out_stream.get_capacity() - 20
                                         , {ReadData.get(), size_t(portion_length)}
                                         , 0);
-    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+        "CLIENT >> RDPDR: Device I/O Read Response");
 }
 
 void ClientRDPDRChannel::process_iorequest_directory_control(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id, uint32_t minor_function) {
@@ -830,9 +800,8 @@ void ClientRDPDRChannel::process_iorequest_directory_control(InStream & chunk, r
     switch (minor_function) {
 
         case rdpdr::IRP_MN_QUERY_DIRECTORY:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Directory Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Query Directory Request");
             {
             std::string slash("/");
             std::string asterix("*");
@@ -978,16 +947,14 @@ void ClientRDPDRChannel::process_iorequest_directory_control(InStream & chunk, r
                                                     , out_stream.get_offset()
                                                     , this->channel_flags
                                                 );
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Directory Response");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "CLIENT >> RDPDR: Device I/O Query Directory Response");
             }
             break;
 
         case rdpdr::IRP_MN_NOTIFY_CHANGE_DIRECTORY:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Notify Change Directory Request");
             {
                 rdpdr::ServerDriveNotifyChangeDirectoryRequest sdncdr;
                 sdncdr.receive(chunk);
@@ -1121,9 +1088,8 @@ void ClientRDPDRChannel::process_iorequest_query_volume_information(InStream & c
                                         , this->channel_flags
                                         );
 
-    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+        "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
 }
 
 void ClientRDPDRChannel::provess_iorequest_write(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id) {
@@ -1157,9 +1123,8 @@ void ClientRDPDRChannel::provess_iorequest_write(InStream & chunk, rdpdr::Device
                                         , out_stream.get_offset()
                                         , this->channel_flags
                                         );
-    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Response");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+        "SERVER >> RDPDR: Device I/O Write Response");
 }
 
 void ClientRDPDRChannel::process_iorequest_set_information(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id) {
@@ -1245,9 +1210,8 @@ void ClientRDPDRChannel::process_iorequest_set_information(InStream & chunk, rdp
                                     , out_stream.get_offset()
                                     , this->channel_flags
                                     );
-    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-        LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+        "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
 }
 
 void ClientRDPDRChannel::process_iorequest_device_control(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream) {
@@ -1302,9 +1266,8 @@ void ClientRDPDRChannel::process_iorequest_device_control(InStream & chunk, rdpd
                                         , this->channel_flags
                                         );
 
-    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-        LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Client Drive Control Response");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+        "CLIENT >> RDPDR: Device I/O Client Drive Control Response");
 }
 
 void ClientRDPDRChannel::process_core_device_iorequest(InStream & chunk) {
@@ -1325,17 +1288,15 @@ void ClientRDPDRChannel::process_core_device_iorequest(InStream & chunk) {
     switch (deviceIORequest.MajorFunction()) {
 
         case rdpdr::IRP_MJ_LOCK_CONTROL:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Lock Control Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Lock Control Request");
 
             this->process_iorequest_lock_control(deviceIOResponse, out_stream);
             break;
 
         case rdpdr::IRP_MJ_CREATE:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Create Request");
 
             this->process_iorequest_create(chunk, deviceIOResponse, out_stream, id);
             break;
@@ -1345,17 +1306,15 @@ void ClientRDPDRChannel::process_core_device_iorequest(InStream & chunk) {
             break;
 
         case rdpdr::IRP_MJ_CLOSE:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Close Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Close Request");
 
             this->process_iorequest_close(deviceIOResponse, out_stream, id);
             break;
 
         case rdpdr::IRP_MJ_READ:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Read Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Read Request");
 
             this->process_iorequest_read(chunk, deviceIOResponse, out_stream, id);
             break;
@@ -1365,33 +1324,29 @@ void ClientRDPDRChannel::process_core_device_iorequest(InStream & chunk) {
             break;
 
         case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query Volume Information Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Query Volume Information Request");
 
             this->process_iorequest_query_volume_information(chunk, deviceIOResponse, out_stream, id);
             break;
 
         case rdpdr::IRP_MJ_WRITE:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Write Request");
 
             this->provess_iorequest_write(chunk, deviceIOResponse, out_stream, id);
             break;
 
         case rdpdr::IRP_MJ_SET_INFORMATION:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Server Drive Set Information Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Server Drive Set Information Request");
 
             this->process_iorequest_set_information(chunk, deviceIOResponse, out_stream, id);
             break;
 
         case rdpdr::IRP_MJ_DEVICE_CONTROL:
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Control Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "SERVER >> RDPDR: Device I/O Client Drive Control Request");
 
             this->process_iorequest_device_control(chunk, deviceIOResponse, out_stream);
             break;

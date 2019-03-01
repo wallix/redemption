@@ -159,9 +159,7 @@ struct ShareFlow_Recv
         }
 
         //LOG(LOG_INFO, "PDUTypeFlow=%u", this->pduTypeFlow);
-        if (stream.in_remain()) {
-            LOG(LOG_INFO, "trailing bytes in FlowPDU, remains %zu bytes", stream.in_remain());
-        }
+        LOG_IF(stream.in_remain(), LOG_INFO, "trailing bytes in FlowPDU, remains %zu bytes", stream.in_remain());
     }
 }; // END CLASS ShareFlow_Recv
 

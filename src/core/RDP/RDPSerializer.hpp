@@ -224,15 +224,13 @@ public:
         // To support 64x64 32-bit bitmap.
         size_t const max_packet_size = std::min(this->stream_orders.get_capacity(), this->max_data_block_size);
         size_t const used_size = this->stream_orders.get_offset();
-        if (bool(this->verbose & Verbose::internal_buffer)) {
-            LOG( LOG_INFO
-               , "<Serializer %p> RDPSerializer::reserve_order[%zu](%zu) used=%zu free=%zu"
-               , static_cast<void*>(this)
-               , this->order_count
-               , asked_size, used_size
-               , max_packet_size - used_size - SERIALIZER_HEADER_SIZE
-               );
-        }
+        LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+          , "<Serializer %p> RDPSerializer::reserve_order[%zu](%zu) used=%zu free=%zu"
+          , static_cast<void*>(this)
+          , this->order_count
+          , asked_size, used_size
+          , max_packet_size - used_size - SERIALIZER_HEADER_SIZE);
+
         if (asked_size + SERIALIZER_HEADER_SIZE > max_packet_size) {
             LOG( LOG_ERR
                , "(asked size (%zu) + HEADER_SIZE (%zu) = %zu) > order batch capacity (%zu)"
@@ -439,11 +437,10 @@ public:
 
         using is_RDPMemBlt = std::is_same<RDPMemBlt, MemBlt>;
 
-        if (bool(this->verbose & Verbose::bmp_cache)) {
-            LOG(LOG_INFO,
-                "RDPSerializer: draw %s, cache_id=%u cache_index=%u in_wait_list=%s",
-                is_RDPMemBlt() ? "MemBlt" : "Mem3Blt", cache_id, cache_idx, (in_wait_list ? "true" : "false"));
-        }
+        LOG_IF(bool(this->verbose & Verbose::bmp_cache), LOG_INFO
+          , "RDPSerializer: draw %s, cache_id=%u cache_index=%u in_wait_list=%s"
+          , is_RDPMemBlt() ? "MemBlt" : "Mem3Blt", cache_id, cache_idx
+          , (in_wait_list ? "true" : "false"));
 
         if ((res >> 24) == BmpCache::ADDED_TO_CACHE) {
             this->emit_bmp_cache(cache_id, cache_idx, in_wait_list);
@@ -531,16 +528,14 @@ public:
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
 
-                    if (bool(this->verbose & Verbose::primary_orders)) {
-                        LOG(LOG_INFO,
-                            "RDPSerializer::draw(RDPGlyphIndex, ...): "
-                                "Experimental support of "
-                                "the distance between two consecutive glyphs "
-                                "indicated by delta bytes in "
-                                "GlyphIndex Primary Drawing Order. "
-                                "delta=%u",
-                            delta);
-                    }
+                    LOG_IF(bool(this->verbose & Verbose::primary_orders), LOG_INFO,
+                        "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                        "Experimental support of "
+                        "the distance between two consecutive glyphs "
+                        "indicated by delta bytes in "
+                        "GlyphIndex Primary Drawing Order. "
+                        "delta=%u",
+                        delta);
                 }
             }
             else if (new_cmd.data[i] == 0xFE) {
@@ -551,26 +546,22 @@ public:
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
 
-                    if (bool(this->verbose & Verbose::primary_orders)) {
-                        LOG(LOG_INFO,
-                            "RDPSerializer::draw(RDPGlyphIndex, ...): "
-                                "Experimental support of "
-                                "the distance between two consecutive fragments "
-                                "indicated by delta bytes in "
-                                "GlyphIndex Primary Drawing Order. "
-                                "delta=%u",
-                            delta);
-                    }
+                    LOG_IF(bool(this->verbose & Verbose::primary_orders), LOG_INFO,
+                        "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                            "Experimental support of "
+                            "the distance between two consecutive fragments "
+                            "indicated by delta bytes in "
+                            "GlyphIndex Primary Drawing Order. "
+                            "delta=%u",
+                        delta);
                 }
 
-                if (bool(this->verbose & Verbose::primary_orders)) {
-                    LOG(LOG_INFO,
-                        "RDPSerializer::draw(RDPGlyphIndex, ...): "
-                            "Experimental support of USE (0xFE) operation byte in "
-                            "GlyphIndex Primary Drawing Order. "
-                            "fragment_index=%u",
-                        fragment_index);
-                }
+                LOG_IF(bool(this->verbose & Verbose::primary_orders), LOG_INFO,
+                    "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                        "Experimental support of USE (0xFE) operation byte in "
+                        "GlyphIndex Primary Drawing Order. "
+                        "fragment_index=%u",
+                    fragment_index);
             }
             else if (new_cmd.data[i] == 0xFF) {
                 i++;
@@ -578,14 +569,12 @@ public:
                 const uint8_t fragment_index = new_cmd.data[i++];
                 const uint8_t fragment_size  = new_cmd.data[i++];
 
-                if (bool(this->verbose & Verbose::primary_orders)) {
-                    LOG(LOG_INFO,
-                        "RDPSerializer::draw(RDPGlyphIndex, ...): "
-                            "Experimental support of ADD (0xFF) operation byte in "
-                            "GlyphIndex Primary Drawing Order. "
-                            "fragment_index=%u fragment_size=%u",
-                        fragment_index, fragment_size);
-                }
+                LOG_IF(bool(this->verbose & Verbose::primary_orders), LOG_INFO,
+                    "RDPSerializer::draw(RDPGlyphIndex, ...): "
+                        "Experimental support of ADD (0xFF) operation byte in "
+                        "GlyphIndex Primary Drawing Order. "
+                        "fragment_index=%u fragment_size=%u",
+                    fragment_index, fragment_size);
 
                 assert(i == new_cmd.data_len);
             }
@@ -742,16 +731,14 @@ public:
         size_t const max_packet_size = std::min(this->stream_bitmaps.get_capacity(), this->max_data_block_size);
         // TODO QuickFix, should set a max packet size according to RDP compression version of client, proxy and server
         size_t const used_size       = this->stream_bitmaps.get_offset();
-        if (bool(this->verbose & Verbose::internal_buffer)) {
-            LOG( LOG_INFO
-               , "<Serializer %p> RDPSerializer::reserve_bitmap[%zu](%zu) used=%zu free=%zu"
-               , static_cast<void*>(this)
-               , this->bitmap_count
-               , asked_size
-               , used_size
-               , max_packet_size - used_size - SERIALIZER_HEADER_SIZE
-               );
-        }
+        LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+          , "<Serializer %p> RDPSerializer::reserve_bitmap[%zu](%zu) used=%zu free=%zu"
+          , static_cast<void*>(this)
+          , this->bitmap_count
+          , asked_size
+          , used_size
+          , max_packet_size - used_size - SERIALIZER_HEADER_SIZE);
+
         if (asked_size + SERIALIZER_HEADER_SIZE > max_packet_size) {
             LOG( LOG_ERR
                , "(asked size (%zu) + HEADER_SIZE (%zu) = %zu) > image batch capacity (%zu)"

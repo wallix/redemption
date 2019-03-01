@@ -617,9 +617,7 @@ public:
 static inline void insert_n_bits_60(uint8_t n, uint32_t data,
     uint8_t * outputBuffer, uint8_t & bits_left, uint16_t & opb_index, bool verbose)
 {
-    if (verbose) {
-        LOG(LOG_INFO, "data=%u bit=%u", data, n);
-    }
+    LOG_IF(verbose, LOG_INFO, "data=%u bit=%u", data, n);
 
     assert(bits_left > 0);
 
@@ -730,10 +728,9 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
 private:
     void compress_60(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size)
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "compress_60: uncompressed_data_size=%u historyOffset=%u",
-                uncompressed_data_size, this->historyOffset);
-        }
+        LOG_IF(this->verbose, LOG_INFO,
+            "compress_60: uncompressed_data_size=%u historyOffset=%u",
+            uncompressed_data_size, this->historyOffset);
 
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wtype-limits")
@@ -767,9 +764,7 @@ private:
             this->historyOffset =  RDP_60_HIST_BUF_MIDDLE;
             this->flagsHold     |= PACKET_AT_FRONT;
             this->hash_tab_mgr.reset();
-            if (this->verbose) {
-                LOG(LOG_INFO, "compress_60: flagsHold |= PACKET_AT_FRONT");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "compress_60: flagsHold |= PACKET_AT_FRONT");
         }
 
         // add/append new data to historyBuffer
@@ -836,27 +831,21 @@ private:
                 // encode copy_offset and insert into output buffer
                 uint32_t copy_offset = offset - previous_match;
 
-                if (this->verbose) {
-                    LOG(LOG_INFO, "LoM=%u copy_offset=%u", lom, copy_offset);
-                }
+                LOG_IF(this->verbose, LOG_INFO, "LoM=%u copy_offset=%u", lom, copy_offset);
 
                 int offsetCacheIndex;
                 int LUTIndex;
                 if ((offsetCacheIndex = cache_find(this->offsetCache, copy_offset)) != -1) {
                     assert((offsetCacheIndex >= 0) && (offsetCacheIndex <= 3));
 
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "offsetCacheIndex=%d", offsetCacheIndex);
-                    }
+                    LOG_IF(this->verbose, LOG_INFO, "offsetCacheIndex=%d", offsetCacheIndex);
 
                     if (offsetCacheIndex != 0) {
                         cache_swap(this->offsetCache, offsetCacheIndex);
                     }
 
                     LUTIndex = offsetCacheIndex + 289;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
-                    }
+                    LOG_IF(this->verbose, LOG_INFO, "LUTIndex=%d", LUTIndex);
 
                     ::insert_n_bits_60(HuffLenLEC[LUTIndex], HuffCodeLEC[LUTIndex],
                         this->outputBuffer, bits_left, opb_index, this->verbose);
@@ -869,22 +858,16 @@ private:
                     assert((CopyOffsetBaseLUT[LUTIndex] == (copy_offset + 1)) ||
                         ((CopyOffsetBaseLUT[LUTIndex] < (copy_offset + 1)) &&
                          (CopyOffsetBaseLUT[LUTIndex + 1] > (copy_offset + 1))));
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
-                    }
+                    LOG_IF(this->verbose, LOG_INFO, "LUTIndex=%d", LUTIndex);
                     int HuffmanIndex = LUTIndex + 257;
                     ::insert_n_bits_60(HuffLenLEC[HuffmanIndex], HuffCodeLEC[HuffmanIndex],
                         this->outputBuffer, bits_left, opb_index, this->verbose);
 
                     int ExtraBitsLength = CopyOffsetBitsLUT[LUTIndex];
                     if (ExtraBitsLength) {
-                        if (this->verbose) {
-                            LOG(LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
-                        }
+                        LOG_IF(this->verbose, LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
                         int ExtraBits   = copy_offset & ((1 << ExtraBitsLength) - 1);
-                        if (this->verbose) {
-                            LOG(LOG_INFO, "ExtraBits=%d", ExtraBits);
-                        }
+                        LOG_IF(this->verbose, LOG_INFO, "ExtraBits=%d", ExtraBits);
                         ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
                             bits_left, opb_index, this->verbose);
                     }
@@ -894,21 +877,15 @@ private:
                 LUTIndex = indexOfEqualOrSmallerEntry<uint16_t>(lom, LOMBaseLUT);
                 assert((LOMBaseLUT[LUTIndex] == lom) ||
                     ((LOMBaseLUT[LUTIndex] < lom) && (LOMBaseLUT[LUTIndex + 1] > lom)));
-                if (this->verbose) {
-                    LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);
-                }
+                LOG_IF(this->verbose, LOG_INFO, "LUTIndex=%d", LUTIndex);
                 ::insert_n_bits_60(HuffLenLOM[LUTIndex], HuffCodeLOM[LUTIndex],
                     this->outputBuffer, bits_left, opb_index, this->verbose);
 
                 int ExtraBitsLength = LOMBitsLUT[LUTIndex];
                 if (ExtraBitsLength) {
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
-                    }
+                    LOG_IF(this->verbose, LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
                     int ExtraBits   = (lom - 2) & ((1 << ExtraBitsLength) - 1);
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "ExtraBits=%d", ExtraBits);
-                    }
+                    LOG_IF(this->verbose, LOG_INFO, "ExtraBits=%d", ExtraBits);
                     ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
                         bits_left, opb_index, this->verbose);
                 }
@@ -925,9 +902,7 @@ private:
         ::encode_literal_60(256, this->outputBuffer, bits_left, opb_index, this->verbose);
 
         if (opb_index >= uncompressed_data_size) {
-            if (this->verbose) {
-                LOG(LOG_INFO, "compress_60: opb_index >= uncompressed_data_size");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "compress_60: opb_index >= uncompressed_data_size");
             if (!this->hash_tab_mgr.undo_last_changes()) {
                 ::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
                 this->historyOffset = 0;
@@ -935,18 +910,14 @@ private:
                 ::memset(this->offsetCache, 0, RDP_60_OFFSET_CACHE_SIZE);
 
                 if (this->flagsHold & PACKET_AT_FRONT) {
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "compress_60: this->flagsHold & PACKET_AT_FRONT");
-                    }
+                    LOG_IF(this->verbose, LOG_INFO, "compress_60: this->flagsHold & PACKET_AT_FRONT");
                     this->flagsHold &= ~PACKET_AT_FRONT;
                 }
                 this->flagsHold |= PACKET_FLUSHED;
 
                 this->hash_tab_mgr.reset();
 
-                if (this->verbose) {
-                    LOG(LOG_INFO, "compress_60: Unable to undo changes made in hash table.");
-                }
+                LOG_IF(this->verbose, LOG_INFO, "compress_60: Unable to undo changes made in hash table.");
             }
             else{
                 ::memcpy(this->offsetCache, saved_offset_cache, sizeof(this->offsetCache));

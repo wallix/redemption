@@ -160,9 +160,8 @@ private:
         end += 2;
 
         uint16_t bitmap_count = stream.in_uint16_le();
-        if (bool(this->verbose & Verbose::from_disk)) {
-            LOG(LOG_INFO, "BmpCachePersister::preload_from_disk: bitmap_count=%u", bitmap_count);
-        }
+        LOG_IF(bool(this->verbose & Verbose::from_disk), LOG_INFO,
+            "BmpCachePersister::preload_from_disk: bitmap_count=%u", bitmap_count);
 
         BGRPalette original_palette = BGRPalette::classic_332();
 
@@ -196,12 +195,10 @@ private:
             if (bmp_cache.get_cache(cache_id).persistent()) {
                 map_key key(sig);
 
-                if (bool(this->verbose & Verbose::bmp_info)) {
-                    LOG( LOG_INFO,
-                        "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u",
-                        key.str(), original_info.bpp,
-                        original_info.width, original_info.height, bmp_size);
-                }
+                LOG_IF(bool(this->verbose & Verbose::bmp_info), LOG_INFO,
+                    "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u",
+                    key.str(), original_info.bpp,
+                    original_info.width, original_info.height, bmp_size);
 
                 assert(this->bmp_map[cache_id][key].is_valid() == false);
 
@@ -246,9 +243,8 @@ public:
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
-                if (bool(this->verbose & Verbose::bmp_info)) {
-                    LOG(LOG_INFO, "BmpCachePersister: bitmap found. key=\"%s\"", key.str());
-                }
+                LOG_IF(bool(this->verbose & Verbose::bmp_info), LOG_INFO,
+                    "BmpCachePersister: bitmap found. key=\"%s\"", key.str());
 
                 if (this->bmp_cache.get_cache(cache_id).size() > cache_index) {
                     this->bmp_cache.put(cache_id, cache_index, it->second, sig->sig_32[0], sig->sig_32[1]);
@@ -256,8 +252,9 @@ public:
 
                 this->bmp_map[cache_id].erase(it);
             }
-            else if (bool(this->verbose & Verbose::bmp_info)) {
-                LOG(LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str());
+            else {
+                LOG_IF(bool(this->verbose & Verbose::bmp_info),
+                    LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str());
             }
         }
     }
@@ -308,9 +305,8 @@ private:
         end += 2;
 
         uint16_t bitmap_count = stream.in_uint16_le();
-        if (bool(verbose & Verbose::from_disk)) {
-            LOG(LOG_INFO, "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
-        }
+        LOG_IF(bool(verbose & Verbose::from_disk), LOG_INFO,
+            "BmpCachePersister::load_from_disk: bitmap_count=%u", bitmap_count);
 
         BGRPalette original_palette = BGRPalette::classic_332();
 
@@ -439,11 +435,9 @@ private:
 
                 map_key key(sig);
 
-                if (bool(verbose & Verbose::bmp_info)) {
-                    LOG( LOG_INFO
-                       , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key.str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
-                }
+                LOG_IF(bool(verbose & Verbose::bmp_info), LOG_INFO
+                  , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                  , key.str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
 
                 stream.out_copy_bytes(sig, 8);
                 stream.out_uint8(safe_int(bmp.bpp()));

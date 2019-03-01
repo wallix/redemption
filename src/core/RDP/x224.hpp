@@ -673,12 +673,10 @@ namespace X224
                     // cookie can't be larger than header (HEADER_LEN + LI + 1 = 230)
                     memcpy(this->cookie, stream.get_data() + 11, this->cookie_len);
                     this->cookie[this->cookie_len] = 0;
-                    if (verbose){
-                        LOG(LOG_INFO, "cookie: %s [%.2x][%.2x]",
-                            this->cookie,
-                            unsigned(this->cookie[this->cookie_len-2]),
-                            unsigned(this->cookie[this->cookie_len-1]));
-                    }
+                    LOG_IF(verbose, LOG_INFO, "cookie: %s [%.2x][%.2x]",
+                        this->cookie,
+                        unsigned(this->cookie[this->cookie_len-2]),
+                        unsigned(this->cookie[this->cookie_len-1]));
                     break;
                 }
             }
@@ -686,9 +684,7 @@ namespace X224
 
             // 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
             if (end_of_header - stream.get_current() >= 8){
-                if (verbose){
-                    LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
-                }
+                LOG_IF(verbose, LOG_INFO, "Found RDP Negotiation Request Structure");
                 this->rdp_neg_type = stream.in_uint8();
                 this->rdp_neg_flags = stream.in_uint8();
                 this->rdp_neg_length = stream.in_uint16_le();
@@ -699,32 +695,27 @@ namespace X224
                     stream.in_skip_bytes(end_of_header - stream.get_current());
                 }
                 else {
-
                     if (this->rdp_neg_type != X224::RDP_NEG_REQ){
                         LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
                             this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_requestedProtocols);
                         throw Error(ERR_X224);
                     }
 
-                    if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_RDP){
-                        LOG(LOG_INFO, "CR Recv: PROTOCOL RDP");
-                    }
-                    if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS){
-                        LOG(LOG_INFO, "CR Recv: PROTOCOL TLS");
-                    }
-                    if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID){
-                        LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID");
-                    }
-                    if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX){
-                        LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
-                    }
-                    if (this->rdp_neg_requestedProtocols
-                    & ~(X224::PROTOCOL_RDP
-                       |X224::PROTOCOL_TLS
-                       |X224::PROTOCOL_HYBRID
-                       |X224::PROTOCOL_HYBRID_EX)){
-                        LOG(LOG_INFO, "CR Recv: Unknown protocol flags %x", this->rdp_neg_requestedProtocols);
-                    }
+                    LOG_IF(this->rdp_neg_requestedProtocols & X224::PROTOCOL_RDP,
+                        LOG_INFO, "CR Recv: PROTOCOL RDP");
+                    LOG_IF(this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS,
+                        LOG_INFO, "CR Recv: PROTOCOL TLS");
+                    LOG_IF(this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID,
+                        LOG_INFO, "CR Recv: PROTOCOL HYBRID");
+                    LOG_IF(this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX,
+                        LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
+                    LOG_IF(this->rdp_neg_requestedProtocols
+                        & ~(X224::PROTOCOL_RDP
+                           |X224::PROTOCOL_TLS
+                           |X224::PROTOCOL_HYBRID
+                           |X224::PROTOCOL_HYBRID_EX),
+                        LOG_INFO, "CR Recv: Unknown protocol flags %x",
+                        this->rdp_neg_requestedProtocols);
                 }
             }
             // 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
@@ -1025,10 +1016,8 @@ namespace X224
                     throw Error(ERR_X224);
                 }
 
-                if (verbose){
-                    LOG(LOG_INFO, "Found RDP Negotiation %s Structure",
-                        (this->rdp_neg_type == X224::RDP_NEG_RSP)?"Response":"Failure");
-                }
+                LOG_IF(verbose, LOG_INFO, "Found RDP Negotiation %s Structure",
+                    (this->rdp_neg_type == X224::RDP_NEG_RSP)?"Response":"Failure");
                 //NEGTYPE=2 NEGFLAGS=0 NEGLENGTH=8 NEGCODE=1
                 this->rdp_neg_flags = stream.in_uint8();
                 this->rdp_neg_length = stream.in_uint16_le();

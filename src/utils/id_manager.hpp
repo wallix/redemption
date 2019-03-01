@@ -116,11 +116,8 @@ private:
         this->dest_to_src[dest_id] = {src_id, true};
         this->src_to_dest[src_id]  = dest_id;
 
-        if (this->verbose) {
-            LOG(LOG_INFO,
-                "IDManager::map_src_id(...): src_id=0x%X dest_id=0x%X",
-                src_id, dest_id);
-        }
+        LOG_IF(this->verbose, LOG_INFO,
+            "IDManager::map_src_id(...): src_id=0x%X dest_id=0x%X", src_id, dest_id);
 
         return dest_id;
     }
@@ -133,10 +130,8 @@ public:
 
         this->dest_to_src[dest_id] = {0, false};
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "IDManager::reg_dest_only_id(...): dest_id=0x%X",
-                dest_id);
-        }
+        LOG_IF(this->verbose, LOG_INFO,
+            "IDManager::reg_dest_only_id(...): dest_id=0x%X", dest_id);
 
         return dest_id;
     }
@@ -147,11 +142,8 @@ public:
             if (!iter->second.second) {
                 this->dest_to_src.erase(iter);
 
-                if (this->verbose) {
-                    LOG(LOG_INFO,
-                        "IDManager::unreg_dest_only_id(...): dest_id=0x%X",
-                        dest_id);
-                }
+                LOG_IF(this->verbose, LOG_INFO,
+                    "IDManager::unreg_dest_only_id(...): dest_id=0x%X", dest_id);
 
                 return;
             }
@@ -175,17 +167,13 @@ public:
         if (this->src_to_dest.end() != iter) {
             this->dest_to_src.erase(iter->second);
 
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "IDManager::unreg_src_id(...): dest_id=0x%X", iter->second);
-            }
+            LOG_IF(this->verbose, LOG_INFO,
+                "IDManager::unreg_src_id(...): dest_id=0x%X", iter->second);
 
             this->src_to_dest.erase(iter);
 
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "IDManager::unreg_src_id(...): src_id=0x%X", src_id);
-            }
+            LOG_IF(this->verbose, LOG_INFO,
+                "IDManager::unreg_src_id(...): src_id=0x%X", src_id);
 
             return;
         }

@@ -3077,23 +3077,20 @@ namespace LIC
             this->validClientMessage.wBlobType = stream.in_uint16_le();
             this->validClientMessage.wBlobLen = stream.in_uint16_le();
 
-            if (this->validClientMessage.dwStateTransition != ST_NO_TRANSITION) {
-                LOG(LOG_ERR, "Unexpected dwStateTransition in Licence ErrorAlert_Recv expected ST_NO_TRANSITION, got %u",
-                    this->validClientMessage.dwStateTransition);
-            }
+            LOG_IF(this->validClientMessage.dwStateTransition != ST_NO_TRANSITION,
+                LOG_ERR, "Unexpected dwStateTransition in Licence ErrorAlert_Recv expected ST_NO_TRANSITION, got %u",
+                this->validClientMessage.dwStateTransition);
+
             // Ignore Blog Type if BlobLen is 0
-            if ((this->validClientMessage.wBlobLen != 0)
-            && (this->validClientMessage.wBlobType != LIC::BB_ERROR_BLOB)){
-                LOG(LOG_ERR, "Unexpected BlobType in Licence ErrorAlert_Recv expected BB_ERROR_BLOB, got %u",
-                    this->validClientMessage.wBlobType);
-            }
-            if (this->validClientMessage.wBlobLen != 0){
-                LOG(LOG_ERR, "Unexpected BlobLen in Licence ErrorAlert_Recv expected empty blob, got %u bytes",
-                    this->validClientMessage.wBlobLen);
-            }
-            if (stream.in_remain()){
-                LOG(LOG_ERR, "Licence ErrorAlert_Recv : unparsed data %zu", stream.in_remain());
-            }
+            LOG_IF(this->validClientMessage.wBlobLen != 0 && this->validClientMessage.wBlobType != LIC::BB_ERROR_BLOB,
+                LOG_ERR, "Unexpected BlobType in Licence ErrorAlert_Recv expected BB_ERROR_BLOB, got %u",
+                this->validClientMessage.wBlobType);
+
+            LOG_IF(this->validClientMessage.wBlobLen != 0,
+                LOG_ERR, "Unexpected BlobLen in Licence ErrorAlert_Recv expected empty blob, got %u bytes",
+                this->validClientMessage.wBlobLen);
+
+            LOG_IF(stream.in_remain(), LOG_ERR, "Licence ErrorAlert_Recv : unparsed data %zu", stream.in_remain());
 
             // wBlobType in Licence ErrorAlert_Recv is not 4 on windows 2000 or Windows XP... (content looks like garbage)
             if ((this->validClientMessage.dwStateTransition != ST_NO_TRANSITION)

@@ -367,9 +367,7 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
             memcpy(transparent_dest, matches[0].first, match_size);
             transparent_dest[match_size] = 0;
 
-            if (verbose) {
-                LOG(LOG_INFO, "Match found: %s", transparent_dest);
-            }
+            LOG_IF(verbose, LOG_INFO, "Match found: %s", transparent_dest);
 
             return 0;
         }

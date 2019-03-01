@@ -565,9 +565,8 @@ public:
                 this->front.client_info.screen_info.height,
                 this->load_font()
             ));
-            if (bool(this->verbose & Verbose::new_mod)) {
-                LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
-            }
+            LOG_IF(bool(this->verbose & Verbose::new_mod),
+                LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
             break;
         case MODULE_INTERNAL_TEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
@@ -591,9 +590,8 @@ public:
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             ));
-            if (bool(this->verbose & Verbose::new_mod)) {
-                LOG(LOG_INFO, "ModuleManager::internal module 'test' ready");
-            }
+            LOG_IF(bool(this->verbose & Verbose::new_mod),
+                LOG_INFO, "ModuleManager::internal module 'test' ready");
             break;
         case MODULE_INTERNAL_WIDGETTEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
@@ -642,9 +640,8 @@ public:
                 this->load_font(),
                 this->load_theme()
             ));
-            //if (bool(this->verbose & Verbose::new_mod)) {
-                LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
-            //}
+            LOG_IF(bool(this->verbose & Verbose::new_mod),
+                LOG_INFO, "ModuleManager::internal module 'selector' ready");
             break;
         case MODULE_INTERNAL_CLOSE:
         case MODULE_INTERNAL_CLOSE_BACK: {
@@ -872,9 +869,7 @@ public:
 
         case MODULE_XUP: {
             const char * name = "XUP Target";
-            if (bool(this->verbose & Verbose::new_mod)) {
-                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
-            }
+            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
 
             unique_fd client_sck = this->connect_to_target_host(
                 report_message, trkeys::authentification_x_fail, "XUP");
@@ -1017,9 +1012,7 @@ private:
         }
 
         auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
-        if (this->ini.get<cfg::debug::config>()) {
-            LOG(LOG_INFO, "LOAD_THEME: %s", theme_name);
-        }
+        LOG_IF(this->ini.get<cfg::debug::config>(), LOG_INFO, "LOAD_THEME: %s", theme_name);
 
         ::load_theme(this->_theme, theme_name);
 

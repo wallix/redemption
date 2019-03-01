@@ -171,12 +171,11 @@ struct ClientInfo
         this->rdp5_performanceflags |= performance_flags_force_present;
         this->rdp5_performanceflags &= ~performance_flags_force_not_present;
 
-        if (verbose){
-            LOG(LOG_INFO,
-                "client info: performance flags before=0x%08X after=0x%08X default=0x%08X present=0x%08X not-present=0x%08X",
-                infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags, performance_flags_default,
-                performance_flags_force_present, performance_flags_force_not_present);
-        }
+        LOG_IF(verbose, LOG_INFO,
+            "client info: performance flags before=0x%08X after=0x%08X default=0x%08X present=0x%08X not-present=0x%08X",
+            infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags,
+            performance_flags_default, performance_flags_force_present,
+            performance_flags_force_not_present);
 
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL

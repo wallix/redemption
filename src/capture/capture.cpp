@@ -2115,9 +2115,7 @@ struct Capture::WindowVisibilityRectRecord
 
 Rect Capture::get_join_visibility_rect() const
 {
-    if (this->verbose) {
-        LOG(LOG_INFO, "Capture::get_join_visibility_rect(): ...");
-    }
+    LOG_IF(this->verbose, LOG_INFO, "Capture::get_join_visibility_rect(): ...");
 
     Rect join_visibility_rect;
 
@@ -2140,13 +2138,11 @@ Rect Capture::get_join_visibility_rect() const
                     // window is ctreated before recording starts
                     (!window.style && !window.show_state))
             ) {
-                if (this->verbose) {
-                    LOG(LOG_INFO,
-                        "Capture::get_join_visibility_rect(): + Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
-                        window.title_info,
-                        window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
-                        window.show_state, window.style);
-                }
+                LOG_IF(this->verbose, LOG_INFO,
+                    "Capture::get_join_visibility_rect(): + Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
+                    window.title_info,
+                    window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
+                    window.show_state, window.style);
 
                 join_visibility_rect =
                     join_visibility_rect.disjunct(
@@ -2155,8 +2151,8 @@ Rect Capture::get_join_visibility_rect() const
                                 window.visible_offset_y
                             ));
             }
-            else if (this->verbose) {
-                LOG(LOG_INFO,
+            else {
+                LOG_IF(this->verbose, LOG_INFO,
                     "Capture::get_join_visibility_rect():   Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
                     window.title_info,
                     window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
@@ -2165,9 +2161,7 @@ Rect Capture::get_join_visibility_rect() const
         }
     }
 
-    if (this->verbose) {
-        LOG(LOG_INFO, "Capture::get_join_visibility_rect(): Done.");
-    }
+    LOG_IF(this->verbose, LOG_INFO, "Capture::get_join_visibility_rect(): Done.");
 
     return join_visibility_rect;
 }
@@ -2297,9 +2291,7 @@ void Capture::draw(const RDP::RAIL::NewOrExistingWindow & cmd)
 
     this->visibility_rects_event(join_visibility_rect);
 
-    if (this->verbose) {
-        LOG(LOG_INFO, "Capture::draw(NewOrExistingWindow): Done.");
-    }
+    LOG_IF(this->verbose, LOG_INFO, "Capture::draw(NewOrExistingWindow): Done.");
 }
 
 void Capture::draw(const RDP::RAIL::DeletedWindow & cmd)
@@ -2320,10 +2312,8 @@ void Capture::draw(const RDP::RAIL::DeletedWindow & cmd)
             std::remove_if(this->windows.begin(), this->windows.end(),
                 [window_id, this](WindowRecord& window) {
                         if (window.window_id == window_id) {
-                            if (this->verbose) {
-                                LOG(LOG_INFO,
-                                    "Capture::draw(DeletedWindow): Title=\"%s\"", window.title_info.c_str());
-                            }
+                            LOG_IF(this->verbose, LOG_INFO,
+                                "Capture::draw(DeletedWindow): Title=\"%s\"", window.title_info.c_str());
                             return true;
                         }
 
@@ -2345,9 +2335,7 @@ void Capture::draw(const RDP::RAIL::DeletedWindow & cmd)
 
     this->visibility_rects_event(join_visibility_rect);
 
-    if (this->verbose) {
-        LOG(LOG_INFO, "Capture::draw(DeletedWindow): Done.");
-    }
+    LOG_IF(this->verbose, LOG_INFO, "Capture::draw(DeletedWindow): Done.");
 }
 
 void Capture::draw(const RDP::RAIL::NonMonitoredDesktop & cmd)

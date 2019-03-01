@@ -836,9 +836,7 @@ struct InfoPacket {
         stream.out_unistr(this->AlternateShell);
         stream.out_unistr(this->WorkingDir);
 
-        if(!this->rdp5_support){
-            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
-        }
+        LOG_IF(!this->rdp5_support, LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
         // EXTRA INFORMATIONS
         if (this->rdp5_support){
             LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s", this->flags, this->Domain, this->UserName);

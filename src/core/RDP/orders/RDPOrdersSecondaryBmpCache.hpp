@@ -484,29 +484,21 @@ class RDPBmpCache {
         case 0:
         case 1:
             if (use_bitmap_comp){
-                if (this->verbose){
-                    LOG(LOG_INFO, "/* BMP Cache compressed V1*/");
-                }
+                LOG_IF(this->verbose, LOG_INFO, "/* BMP Cache compressed V1*/");
                 this->emit_v1_compressed(session_color_depth, stream, use_compact_packets);
             }
             else {
-                if (this->verbose){
-                    LOG(LOG_INFO, "/* BMP Cache raw V1 */");
-                }
+                LOG_IF(this->verbose, LOG_INFO, "/* BMP Cache raw V1 */");
                 this->emit_raw_v1(stream);
             }
         break;
         default:
             if (use_bitmap_comp){
-                if (this->verbose){
-                    LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
-                }
+                LOG_IF(this->verbose, LOG_INFO, "/* BMP Cache compressed V2 */");
                 this->emit_v2_compressed(session_color_depth, stream);
             }
             else {
-                if (this->verbose){
-                    LOG(LOG_INFO, "/* BMP Cache raw V2 */");
-                }
+                LOG_IF(this->verbose, LOG_INFO, "/* BMP Cache raw V2 */");
                 this->emit_raw_v2(stream);
             }
         }
@@ -539,9 +531,7 @@ class RDPBmpCache {
 
         uint32_t offset_compression_header = stream.get_offset();
         if (!use_compact_packets){
-            if (this->verbose){
-                LOG(LOG_INFO, "/* Use compression headers */");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "/* Use compression headers */");
             stream.out_clear_bytes(2); /* pad */
             stream.out_uint16_le(0); // placeholder for bufsize
             stream.out_uint16_le(this->bmp.bmp_size() / this->bmp.cy());

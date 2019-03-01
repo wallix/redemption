@@ -113,9 +113,7 @@ void MatchFinder::configure_regexes(
         array_view_char av{rng.begin(), rng.end()};
         av.data()[av.size()] = '\0';
 
-        if (verbose) {
-            LOG(LOG_INFO, "filter=\"%s\"", av.data());
-        }
+        LOG_IF(verbose, LOG_INFO, "filter=\"%s\"", av.data());
 
         PatternValue const pattern_value = get_pattern_value(av);
         if (not pattern_value.pattern.empty() && (
@@ -129,9 +127,7 @@ void MatchFinder::configure_regexes(
         }
     }
 
-    if (verbose) {
-        LOG(LOG_INFO, "filter number=%u", filter_number);
-    }
+    LOG_IF(verbose, LOG_INFO, "filter number=%u", filter_number);
 
     if (filter_number) {
         std::string capturing_regex;
@@ -139,9 +135,7 @@ void MatchFinder::configure_regexes(
         NamedRegex * pregex = regexes_filter_ref.begin();
         for (unsigned i = 0; i < filter_number; i++) {
             auto & filter = filters[i];
-            if (verbose) {
-                LOG(LOG_INFO, "Regex=\"%s\"", filter.filter);
-            }
+            LOG_IF(verbose, LOG_INFO, "Regex=\"%s\"", filter.filter);
 
             pregex->name = filter.filter;
             pregex->is_exact_search

@@ -394,9 +394,8 @@ public:
         switch (header.orderType()) {
 
             case TS_RAIL_ORDER_HANDSHAKE:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
                 {
                 //this->impl_graphic->screen->hide();
 
@@ -408,9 +407,8 @@ public:
                 break;
 
             case TS_RAIL_ORDER_SYSPARAM:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                 {
                 ServerSystemParametersUpdatePDU sspu;
                 sspu.receive(stream);
@@ -435,9 +433,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;;
@@ -458,9 +455,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;;
@@ -479,9 +475,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;;
@@ -500,9 +495,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;;
@@ -524,9 +518,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;;
@@ -545,9 +538,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;
@@ -569,9 +561,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;
@@ -590,9 +581,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;;
@@ -611,9 +601,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;;
@@ -632,9 +621,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;;
@@ -657,9 +645,8 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                     }
                     {
                     StaticOutStream<32> out_stream;
@@ -681,9 +668,8 @@ public:
                                                   CHANNELS::CHANNEL_FLAG_FIRST |
                                                   CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
                     }
                     {
                     StaticOutStream<32> out_stream;
@@ -701,9 +687,8 @@ public:
                                                     CHANNELS::CHANNEL_FLAG_FIRST |
                                                     CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                   );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
                     }
 //                     {
 //                     StaticOutStream<32> out_stream;;
@@ -759,18 +744,16 @@ public:
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-                    if (bool(this->verbose & RDPVerbose::rail)) {
-                        LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_EXEC");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                        "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_EXEC");
                     }
                 }
                 }
                 break;
 
             case TS_RAIL_ORDER_HANDSHAKE_EX:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE_EX");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE_EX");
                 break;
 
 //             case TS_RAIL_ORDER_CLIENTSTATUS:
@@ -778,9 +761,8 @@ public:
 //                 break;
 
             case TS_RAIL_ORDER_GET_APPID_RESP:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_RESP");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_RESP");
                 {
                 ServerGetApplicationIDResponsePDU sgaior;
                 sgaior.receive(stream);
@@ -807,9 +789,8 @@ public:
                 break;
 
             case TS_RAIL_ORDER_EXEC_RESULT:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_EXEC_RESULT");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_EXEC_RESULT");
                 {
                     ServerExecuteResultPDU res_pdu;
                     res_pdu.receive(stream);
@@ -821,16 +802,15 @@ public:
                 break;
 
             case TS_RAIL_ORDER_LANGBARINFO:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_LANGBARINFO");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_LANGBARINFO");
 
                 break;
 
             default:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_WARNING, "SERVER >> RAIL CHANNEL DEFAULT 0x%04x %s", header.orderType(), get_RAIL_orderType_name(header.orderType()));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_WARNING,
+                    "SERVER >> RAIL CHANNEL DEFAULT 0x%04x %s",
+                    header.orderType(), get_RAIL_orderType_name(header.orderType()));
                 break;
         }
     }

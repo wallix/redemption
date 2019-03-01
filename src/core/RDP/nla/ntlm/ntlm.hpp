@@ -105,9 +105,7 @@ public:
         array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
     ) override
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
         if (!this->context) {
             this->context = std::make_unique<NTLMContext>(
@@ -239,9 +237,7 @@ public:
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
-        if (this->context->verbose) {
-            LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
-        }
+        LOG_IF(this->context->verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
 
         // data_out [signature][data_buffer]
 
@@ -267,9 +263,7 @@ public:
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
-        if (this->context->verbose & 0x400) {
-            LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
-        }
+        LOG_IF(this->context->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
         if (data_in.size() < cbMaxSignature) {
             return SEC_E_INVALID_TOKEN;

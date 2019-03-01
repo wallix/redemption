@@ -620,9 +620,9 @@ public:
     }
 
     RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
-    
+
     uint32_t DeviceId() const { return this->DeviceId_; }
-    
+
     const char * PreferredDosName() const {
         return ::char_ptr_cast(this->PreferredDosName_);
     }
@@ -1389,11 +1389,11 @@ public:
 
     void log() const {
         LOG(LOG_INFO, "     Device Create Request:");
-        if (this->CreateOptions_ & smb2::FILE_DIRECTORY_FILE) {
-            LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_Directory_Access_Mask_name(this->DesiredAccess_));
-        } else {
-            LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_File_Pipe_Printer_Access_Mask_name(this->DesiredAccess_));
-        }
+        LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s",
+            this->DesiredAccess_,
+            (this->CreateOptions_ & smb2::FILE_DIRECTORY_FILE)
+             ? smb2::get_Directory_Access_Mask_name(this->DesiredAccess_)
+             : smb2::get_File_Pipe_Printer_Access_Mask_name(this->DesiredAccess_));
         LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize_);
         fscc::log_file_attributes(this->FileAttributes_);
         LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess_,  smb2::get_ShareAccess_name(this->SharedAccess_));

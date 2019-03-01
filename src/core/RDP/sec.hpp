@@ -718,12 +718,10 @@ enum {
                 throw Error(ERR_SEC);
             }
             uint32_t basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
-            if (0 == (basicSecurityHeader & SEC::SEC_INFO_PKT)){
-                LOG(LOG_INFO, "SEC_INFO_PKT expected, got %x", basicSecurityHeader);
-            }
-            if (0 == (basicSecurityHeader & SEC::SEC_ENCRYPT)){
-                LOG(LOG_INFO, "SEC_ENCRYPT expected, got %x", basicSecurityHeader);
-            }
+            LOG_IF(0 == (basicSecurityHeader & SEC::SEC_INFO_PKT),
+                LOG_INFO, "SEC_INFO_PKT expected, got %x", basicSecurityHeader);
+            LOG_IF(0 == (basicSecurityHeader & SEC::SEC_ENCRYPT),
+                LOG_INFO, "SEC_ENCRYPT expected, got %x", basicSecurityHeader);
             return basicSecurityHeader;
         }())
         , signature(stream.get_current(), 8)

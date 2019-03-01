@@ -111,18 +111,14 @@ public:
         , class_name_log(class_name_log)
         , set_password_cb(std::move(set_password_cb))
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "%s:: Initialization", this->class_name_log);
-        }
+        LOG_IF(this->verbose, LOG_INFO, "%s:: Initialization", this->class_name_log);
         this->set_credentials(user, domain, pass, hostname);
     }
 
 protected:
     void init_public_key()
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "%s::ntlm_init", this->class_name_log);
-        }
+        LOG_IF(this->verbose, LOG_INFO, "%s::ntlm_init", this->class_name_log);
 
         // ============================================
         /* Get Public Key From TLS Layer and hostname */
@@ -135,9 +131,7 @@ protected:
 
     void credssp_send()
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspServer::send");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::send");
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         this->trans.send(ts_request_emit.get_bytes());
@@ -146,9 +140,7 @@ protected:
 protected:
     void set_credentials(uint8_t const* user, uint8_t const* domain,
                          uint8_t const* pass, uint8_t const* hostname) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient::set_credentials");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::set_credentials");
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
@@ -173,9 +165,7 @@ protected:
         SecInterface secInter, const char* pszPrincipal,
         Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient::InitSecurityInterface");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::InitSecurityInterface");
 
         this->table.reset();
 
@@ -261,9 +251,7 @@ protected:
     }
 
     SEC_STATUS credssp_encrypt_public_key_echo() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
         array_view_u8 public_key = this->PublicKey.av();
@@ -290,9 +278,7 @@ protected:
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
 
         Array Buffer;
 
@@ -351,9 +337,7 @@ protected:
     }
 
     void credssp_buffer_free() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspServer::buffer_free");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
         this->ts_request.negoTokens.init(0);
         this->ts_request.pubKeyAuth.init(0);
         this->ts_request.authInfo.init(0);
@@ -407,9 +391,7 @@ public:
     }
 
     SEC_STATUS credssp_encrypt_ts_credentials() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient::encrypt_ts_credentials");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::encrypt_ts_credentials");
         this->credssp_encode_ts_credentials();
 
         StaticOutStream<65536> ts_credentials_send;
@@ -425,9 +407,7 @@ private:
 
     Res sm_credssp_client_authenticate_start()
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient::client_authenticate");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::client_authenticate");
 
         this->init_public_key();
 
@@ -505,9 +485,7 @@ private:
             //             LOG(LOG_ERR, "Sending Authentication Token");
             //             hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
             // #endif
-            if (this->verbose) {
-                LOG(LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
 
             this->credssp_send();
             this->credssp_buffer_free();
@@ -518,9 +496,7 @@ private:
         }
 
         if (status != SEC_I_CONTINUE_NEEDED) {
-            if (this->verbose) {
-                LOG(LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
 
             this->client_auth_data.state = ClientAuthenticateData::Final;
             return Res::Ok;
@@ -538,9 +514,7 @@ private:
         // LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
         // hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
         // #endif
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
         this->client_auth_data.input_buffer.copy(this->ts_request.negoTokens);
 
         return Res::Ok;
@@ -549,9 +523,7 @@ private:
     Res sm_credssp_client_authenticate_stop(InStream & in_stream)
     {
         /* Encrypted Public Key +1 */
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
         this->ts_request.recv(in_stream);
 
@@ -574,9 +546,9 @@ private:
             LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
             return Res::Err;
         }
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
-        }
+
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
+
         this->credssp_send();
 
         /* Free resources */
@@ -646,9 +618,7 @@ public:
     using rdpCredsspBase::set_credentials;
 
     SEC_STATUS credssp_decrypt_ts_credentials() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
 
         if (this->ts_request.authInfo.size() < 1) {
             LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
@@ -687,9 +657,7 @@ private:
 
     Res sm_credssp_server_authenticate_start()
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspServer::server_authenticate");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::server_authenticate");
         // TODO
         // sspi_GlobalInit();
 

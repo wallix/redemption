@@ -65,9 +65,8 @@ public:
         this->screen_info.width = width;
         this->screen_info.height = height;
         this->screen_info.bpp = bpp;
-        if (this->verbose) {
-            LOG(LOG_INFO, "ClientFront::server_resize(width=%u, height=%u, bpp=%d", width, height, bpp);
-        }
+        LOG_IF(this->verbose, LOG_INFO,
+            "ClientFront::server_resize(width=%u, height=%u, bpp=%d", width, height, bpp);
         return ResizeResult::instant_done;
     }
 
@@ -75,9 +74,7 @@ public:
 
     void send_to_channel( const CHANNELS::ChannelDef & /*channel*/, const uint8_t * /*data*/, std::size_t
                          /*length*/, std::size_t /*chunk_size*/, int /*flags*/) override {
-        if (this->verbose) {
-            LOG(LOG_INFO, "ClientFront::send_to_channel");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "ClientFront::send_to_channel");
     }
 
     void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) override {}

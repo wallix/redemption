@@ -553,9 +553,7 @@ private:
     void compress_50(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint16_t max_compressed_data_size)
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "compress_50");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "compress_50");
 
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wtype-limits")
@@ -688,9 +686,7 @@ private:
 
                 this->hash_tab_mgr.reset();
 
-                if (this->verbose) {
-                    LOG(LOG_INFO, "Unable to undo changes made in hash table.");
-                }
+                LOG_IF(this->verbose, LOG_INFO, "Unable to undo changes made in hash table.");
             }
             return;
         }

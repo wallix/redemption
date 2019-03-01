@@ -86,15 +86,11 @@ public:
         , connected(false)
         , verbose(verbose)
     {
-        if (bool(this->verbose & Verbose::state)) {
-            LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
-        }
+        LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
     }
 
     ~KeepAlive() {
-        if (bool(this->verbose & Verbose::state)) {
-            LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
-        }
+        LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "KEEP ALIVE DESTRUCTOR");
     }
 
     bool is_started() {
@@ -103,9 +99,7 @@ public:
 
     void start(time_t now) {
         this->connected = true;
-        if (bool(this->verbose & Verbose::state)) {
-            LOG(LOG_INFO, "auth::start_keep_alive");
-        }
+        LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "auth::start_keep_alive");
         this->timeout    = now + 2 * this->grace_delay;
         this->renew_time = now + this->grace_delay;
     }
@@ -132,9 +126,8 @@ public:
             if (this->wait_answer
                 && !ini.is_asked<cfg::context::keepalive>()
                 && ini.get<cfg::context::keepalive>()) {
-                if (bool(this->verbose & Verbose::state)) {
-                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-                }
+                LOG_IF(bool(this->verbose & Verbose::state),
+                    LOG_INFO, "auth::keep_alive ACL incoming event");
                 this->timeout    = now + 2*this->grace_delay;
                 this->renew_time = now + this->grace_delay;
                 this->wait_answer = false;
@@ -174,15 +167,11 @@ public:
     , last_activity_time(start)
     , verbose(verbose)
     {
-        if (bool(this->verbose & Verbose::state)) {
-            LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
-        }
+        LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "INACTIVITY CONSTRUCTOR");
     }
 
     ~Inactivity() {
-        if (bool(this->verbose & Verbose::state)) {
-            LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
-        }
+        LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "INACTIVITY DESTRUCTOR");
     }
 
     bool check_user_activity(time_t now, bool & has_user_activity) {
@@ -319,17 +308,13 @@ public:
         , verbose(verbose)
     {
         std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
-        if (bool(this->verbose & Verbose::state)) {
-            LOG(LOG_INFO, "auth::AclSerializer");
-        }
+        LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "auth::AclSerializer");
     }
 
     ~AclSerializer()
     {
         this->auth_trans.disconnect();
-        if (bool(this->verbose & Verbose::state)) {
-            LOG(LOG_INFO, "auth::~AclSerializer");
-        }
+        LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "auth::~AclSerializer");
     }
 
     void report(const char * reason, const char * message) override
@@ -535,9 +520,7 @@ public:
         auto& log_path = this->ini.get<cfg::session_log::log_path>();
         DateDirFromFilename d(log_path);
 
-        if (!d.has_date()) {
-            LOG(LOG_WARNING, "AclSerializer::start_session_log: failed to extract date");
-        }
+        LOG_IF(!d.has_date(), LOG_WARNING, "AclSerializer::start_session_log: failed to extract date");
 
         const int groupid = ini.get<cfg::video::capture_groupid>();
         std::string hash_path = this->ini.get<cfg::video::hash_path>().to_string();
@@ -931,9 +914,8 @@ private:
             e += buf_sz;
 
             if (bool(this->verbose & Verbose::buffer)) {
-                if (this->has_next_buffer){
-                    LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (receive)");
-                }
+                LOG_IF(this->has_next_buffer,
+                    LOG_INFO, "ACL SERIALIZER : multi buffer (receive)");
                 LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %" PRIdPTR, this->e - this->p);
             }
         }
@@ -960,9 +942,8 @@ public:
                 }
                 else if (reader.consume_ask()) {
                     field.ask();
-                    if (bool(this->verbose & Verbose::variable)) {
-                        LOG(LOG_INFO, "receiving ASK '%s'", string_from_authid(authid).data());
-                    }
+                    LOG_IF(bool(this->verbose & Verbose::variable), LOG_INFO,
+                        "receiving ASK '%s'", string_from_authid(authid).data());
                 }
                 else {
                     reader.hexdump();
@@ -999,9 +980,8 @@ public:
             std::snprintf(this->session_id, sizeof(this->session_id), "%s",
                           this->ini.get<cfg::context::session_id>().c_str());
         }
-        if (bool(this->verbose & Verbose::buffer)){
-            LOG(LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>());
-        }
+        LOG_IF(bool(this->verbose & Verbose::buffer),
+            LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>());
     }
 
 private:
@@ -1046,9 +1026,9 @@ private:
         }
 
         void send_buffer() {
-            if (bool(this->verbose & Verbose::buffer)){
-                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %d", this->buf.sz - HEADER_SIZE);
-            }
+            LOG_IF(bool(this->verbose & Verbose::buffer),
+                LOG_INFO, "ACL SERIALIZER : Data size without header (send) %d",
+                this->buf.sz - HEADER_SIZE);
             OutStream stream(this->buf.data, HEADER_SIZE);
             stream.out_uint16_be(this->buf.flags);
             stream.out_uint16_be(this->buf.sz - HEADER_SIZE);
@@ -1060,9 +1040,8 @@ private:
     private:
         enum { MULTIBUF = 1 };
         void new_buffer() {
-            if (bool(this->verbose & Verbose::buffer)){
-                LOG(LOG_INFO, "ACL SERIALIZER : multi buffer (send)");
-            }
+            LOG_IF(bool(this->verbose & Verbose::buffer),
+                LOG_INFO, "ACL SERIALIZER : multi buffer (send)");
             this->buf.flags |= MULTIBUF;
             this->send_buffer();
         }
@@ -1070,9 +1049,10 @@ private:
 
 public:
     void send_acl_data() {
-        if (bool(this->verbose & Verbose::variable)){
-            LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %zu", this->ini.changed_field_size());
-        }
+        LOG_IF(bool(this->verbose & Verbose::variable),
+            LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %zu",
+            this->ini.changed_field_size());
+
         if (this->ini.changed_field_size()) {
             auto const password_printing_mode = this->ini.get<cfg::debug::password>();
 
@@ -1085,9 +1065,8 @@ public:
                     buffers.push('\n');
                     if (field.is_asked()) {
                         buffers.push("ASK\n"_av);
-                        if (bool(this->verbose & Verbose::variable)) {
-                            LOG(LOG_INFO, "sending %.*s=ASK", int(key.size()), key.data());
-                        }
+                        LOG_IF(bool(this->verbose & Verbose::variable),
+                            LOG_INFO, "sending %.*s=ASK", int(key.size()), key.data());
                     }
                     else {
                         auto val = field.to_string_view();
@@ -1096,9 +1075,9 @@ public:
                         buffers.push('\n');
                         array_view_const_char display_val = field.is_loggable()
                           ? val : get_printable_password(val, password_printing_mode);
-                        if (bool(this->verbose & Verbose::variable)) {
-                            LOG(LOG_INFO, "sending %.*s=%.*s", int(key.size()), key.data(), int(display_val.size()), display_val.data());
-                        }
+                        LOG_IF(bool(this->verbose & Verbose::variable),
+                            LOG_INFO, "sending %.*s=%.*s", int(key.size()), key.data(),
+                            int(display_val.size()), display_val.data());
                     }
                 }
 

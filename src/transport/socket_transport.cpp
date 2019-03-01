@@ -58,9 +58,8 @@ SocketTransport::SocketTransport(
     , recv_timeout(recv_timeout)
     , verbose(verbose)
 {
-    if (bool(verbose)) {
-        LOG(LOG_INFO, "SocketTransport: recv_timeout=%zu", size_t(recv_timeout.count()));
-    }
+    LOG_IF(bool(verbose), LOG_INFO,
+        "SocketTransport: recv_timeout=%zu", size_t(recv_timeout.count()));
 
     strncpy(this->ip_address, ip_address, sizeof(this->ip_address)-1);
     this->ip_address[127] = 0;
@@ -74,11 +73,9 @@ SocketTransport::~SocketTransport()
 
     this->tls.reset();
 
-    if (bool(verbose)) {
-        LOG( LOG_INFO
-           , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
-           , this->name, this->sck, this->total_received, this->total_sent);
-    }
+    LOG_IF(bool(verbose), LOG_INFO
+      , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
+      , this->name, this->sck, this->total_received, this->total_sent);
 }
 
 bool SocketTransport::has_pending_data() const
@@ -199,9 +196,8 @@ bool SocketTransport::connect()
 
 size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
-    if (bool(this->verbose & Verbose::dump)) {
-        LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
-    }
+    LOG_IF(bool(this->verbose & Verbose::dump), LOG_INFO,
+        "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
 
     ssize_t const res = this->tls ? this->tls->privpartial_recv_tls(buffer, len) : socket_recv_partial(this->sck, buffer, len);
 
@@ -224,9 +220,8 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
 
 SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t len)
 {
-    if (bool(this->verbose & Verbose::dump)) {
-        LOG(LOG_INFO, "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
-    }
+    LOG_IF(bool(this->verbose & Verbose::dump), LOG_INFO,
+        "Socket %s (%d) receiving %zu bytes", this->name, this->sck, len);
 
     ssize_t res = this->tls ? tls_recv_all(*this->tls, buffer, len) : socket_recv_all(this->sck, this->name, buffer, len, this->recv_timeout);
     //std::cout << "res=" << int(res) << " len=" << int(len) <<  std::endl;

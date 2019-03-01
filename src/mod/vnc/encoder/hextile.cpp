@@ -188,17 +188,16 @@ namespace
         {
             if (this->r.isempty())
             {
-                if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                    LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (empty)");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                    "Hextile::hexTileraw Encoder done (empty)");
                 return EncoderState::Exit;
             }
 
             size_t last_remaining = 0;
             while (buf.remaining()){
-                if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                    "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu",
+                    this->r, this->tile, this->cx_remain, this->cy_remain);
                 if (buf.remaining() == last_remaining){
                     LOG(LOG_ERR, "Hextile Stalled: Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
                     assert(buf.remaining() != last_remaining);
@@ -213,21 +212,19 @@ namespace
                 if (tileType & hextileRaw){
                     size_t raw_length = this->tile.cx * this->tile.cy * this->Bpp;
                     if (buf.remaining() < raw_length + 1){
-                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                            LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %u)", raw_length+1, buf.remaining());
-                        }
+                        LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                            "Hextile::hexTileraw need more data %zu (has %u)",
+                            raw_length+1, buf.remaining());
                         return EncoderState::NeedMoreData;
                     }
                     const uint8_t * raw(buf.av().data()+1);
                     this->draw_tile(raw, drawable);
-                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                        LOG(LOG_INFO, "consumed raw tile_bytes %zu", raw_length+1);
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                        "consumed raw tile_bytes %zu", raw_length+1);
                     buf.advance(raw_length + 1);
                     if (not this->next_tile()){
-                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                            LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (raw)");
-                        }
+                        LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                            "Hextile::hexTileraw Encoder done (raw)");
                         return EncoderState::Exit;
                     }
                     continue;
@@ -241,9 +238,9 @@ namespace
 
                 const size_t header_bytes = type_bytes + any_subrect_bytes + hextile_bg_bytes + hextile_fg_bytes;
                 if (buf.remaining() < header_bytes){
-                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %hu)", header_bytes, buf.remaining());
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                        "Hextile::hexTileraw need more data %zu (has %hu)",
+                        header_bytes, buf.remaining());
                     return EncoderState::NeedMoreData;
                 }
 
@@ -264,9 +261,9 @@ namespace
                 const size_t tile_bytes = header_bytes + subrects_bytes;
 
                 if (buf.remaining() < tile_bytes){
-                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %u)", tile_bytes, buf.remaining());
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                        "Hextile::hexTileraw need more data %zu (has %u)",
+                        tile_bytes, buf.remaining());
                     return EncoderState::NeedMoreData; // finished decoding
                 }
 
@@ -282,9 +279,9 @@ namespace
                 memcpy(&tile_data[64*this->Bpp], tile_data, 64*this->Bpp);
                 memcpy(&tile_data[128*this->Bpp], tile_data, 128*this->Bpp);
 
-                if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                    "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu",
+                    this->r, this->tile, this->cx_remain, this->cy_remain);
 
                 for (size_t q = 0 ; q < nSubRects ; q++){
 
@@ -299,9 +296,8 @@ namespace
                     const uint8_t w = ((wh >> 4) & 0xF) + 1;
                     const uint8_t h = (wh & 0xF) + 1;
 
-                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                        LOG(LOG_INFO, "Hextile::subrect (%d, %d, %d, %d) color=%u", x, y, w, h, this->fgPixel);
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                        "Hextile::subrect (%d, %d, %d, %d) color=%u", x, y, w, h, this->fgPixel);
 
                     if (x + w > 16 || y + h > 16) {
                         LOG(LOG_ERR, "Hextile::subrect (%d, %d, %d, %d) : bad subrect coordinates", x, y, w, h);
@@ -322,22 +318,19 @@ namespace
                 }
 
                 this->draw_tile(tile_data, drawable);
-                if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                    LOG(LOG_INFO, "consumed tile_bytes %zu", tile_bytes);
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                    "consumed tile_bytes %zu", tile_bytes);
                 buf.advance(tile_bytes);
 
 
                 if (not this->next_tile()){
-                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                        LOG(LOG_INFO, "Hextile::hexTileraw Encoder done");
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                        "Hextile::hexTileraw Encoder done");
                     return EncoderState::Exit;
                 }
             }
-            if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                LOG(LOG_INFO, "Hextile::hexTileraw need more data (has %hu)", buf.remaining());
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder), LOG_INFO,
+                "Hextile::hexTileraw need more data (has %hu)", buf.remaining());
             return EncoderState::NeedMoreData; // finished decoding
         }
 

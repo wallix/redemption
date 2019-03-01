@@ -439,20 +439,18 @@ public:
         this->storage.reserve(this->size_elements);
         this->lite_storage.reserve(this->size_lite_elements);
 
-        if (bool(this->verbose & Verbose::life)) {
-            LOG( LOG_INFO
-                , "BmpCache: %s bpp=%" PRIu8 " number_of_cache=%" PRIu8 " use_waiting_list=%s "
-                    "cache_0(%zu, %" PRIu16 ", %s) cache_1(%zu, %" PRIu16 ", %s) cache_2(%zu, %" PRIu16 ", %s) "
-                    "cache_3(%zu, %" PRIu16 ", %s) cache_4(%zu, %" PRIu16 ", %s)"
-                , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
-                , this->caches[0].size(), this->caches[0].bmp_size(), (caches[0].persistent() ? "yes" : "no")
-                , this->caches[1].size(), this->caches[1].bmp_size(), (caches[1].persistent() ? "yes" : "no")
-                , this->caches[2].size(), this->caches[2].bmp_size(), (caches[2].persistent() ? "yes" : "no")
-                , this->caches[3].size(), this->caches[3].bmp_size(), (caches[3].persistent() ? "yes" : "no")
-                , this->caches[4].size(), this->caches[4].bmp_size(), (caches[4].persistent() ? "yes" : "no")
-                );
-        }
+        LOG_IF(bool(this->verbose & Verbose::life), LOG_INFO
+            , "BmpCache: %s bpp=%" PRIu8 " number_of_cache=%" PRIu8 " use_waiting_list=%s "
+                "cache_0(%zu, %" PRIu16 ", %s) cache_1(%zu, %" PRIu16 ", %s) cache_2(%zu, %" PRIu16 ", %s) "
+                "cache_3(%zu, %" PRIu16 ", %s) cache_4(%zu, %" PRIu16 ", %s)"
+            , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+            , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
+            , this->caches[0].size(), this->caches[0].bmp_size(), (caches[0].persistent() ? "yes" : "no")
+            , this->caches[1].size(), this->caches[1].bmp_size(), (caches[1].persistent() ? "yes" : "no")
+            , this->caches[2].size(), this->caches[2].bmp_size(), (caches[2].persistent() ? "yes" : "no")
+            , this->caches[3].size(), this->caches[3].bmp_size(), (caches[3].persistent() ? "yes" : "no")
+            , this->caches[4].size(), this->caches[4].bmp_size(), (caches[4].persistent() ? "yes" : "no")
+            );
 
         if (this->number_of_cache > MAXIMUM_NUMBER_OF_CACHES) {
             LOG( LOG_ERR, "BmpCache: %s number_of_cache(%u) > %u"
@@ -667,15 +665,11 @@ public:
 
         const uint32_t cache_index_32 = cache.get_cache_index(e_compare);
         if (cache_index_32 != cache_range<cache_element>::invalid_cache_index) {
-            if (bool(this->verbose & Verbose::persistent)) {
-                if (persistent) {
-                    LOG( LOG_INFO
-                        , "BmpCache: %s use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache"
-                        , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                        , e_compare.sha1[0], e_compare.sha1[1], e_compare.sha1[2], e_compare.sha1[3]
-                        , e_compare.sha1[4], e_compare.sha1[5], e_compare.sha1[6], e_compare.sha1[7]);
-                }
-            }
+            LOG_IF(bool(this->verbose & Verbose::persistent) && persistent, LOG_INFO
+              , "BmpCache: %s use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache"
+              , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+              , e_compare.sha1[0], e_compare.sha1[1], e_compare.sha1[2], e_compare.sha1[3]
+              , e_compare.sha1[4], e_compare.sha1[5], e_compare.sha1[6], e_compare.sha1[7]);
             cache[cache_index_32].stamp = ++this->stamp;
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
@@ -704,24 +698,22 @@ public:
                 id_real     =  MAXIMUM_NUMBER_OF_CACHES;
                 id          |= IN_WAIT_LIST;
 
-                if (bool(this->verbose & Verbose::persistent)) {
-                    LOG( LOG_INFO, "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list."
-                        , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                        , le_compare.sha1[0], le_compare.sha1[1], le_compare.sha1[2], le_compare.sha1[3]
-                        , le_compare.sha1[4], le_compare.sha1[5], le_compare.sha1[6], le_compare.sha1[7]);
-                }
+                LOG_IF(bool(this->verbose & Verbose::persistent), LOG_INFO
+                  , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list."
+                  , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+                  , le_compare.sha1[0], le_compare.sha1[1], le_compare.sha1[2], le_compare.sha1[3]
+                  , le_compare.sha1[4], le_compare.sha1[5], le_compare.sha1[6], le_compare.sha1[7]);
             }
             else {
                 this->waiting_list.remove(le_compare);
                 this->waiting_list[cache_index_32].reset();
 
-                if (bool(this->verbose & Verbose::persistent)) {
-                    LOG( LOG_INFO
-                        , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u"
-                        , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                        , le_compare.sha1[0], le_compare.sha1[1], le_compare.sha1[2], le_compare.sha1[3]
-                        , le_compare.sha1[4], le_compare.sha1[5], le_compare.sha1[6], le_compare.sha1[7], oldest_cidx);
-                }
+                LOG_IF(bool(this->verbose & Verbose::persistent), LOG_INFO
+                  , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u"
+                  , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
+                  , le_compare.sha1[0], le_compare.sha1[1], le_compare.sha1[2], le_compare.sha1[3]
+                  , le_compare.sha1[4], le_compare.sha1[5], le_compare.sha1[6], le_compare.sha1[7]
+                  , oldest_cidx);
             }
         }
 

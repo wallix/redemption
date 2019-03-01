@@ -355,9 +355,7 @@ private:
                 throw;
             }
 
-            if (bool(this->verbose)) {
-                LOG(LOG_INFO, "receive error %u : end of transport", e.id);
-            }
+            LOG_IF(bool(this->verbose), LOG_INFO, "receive error %u : end of transport", e.id);
             // receive error, end of transport
             return false;
         }
@@ -486,9 +484,7 @@ inline void load_hash(
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
 
-    if (verbose) {
-        LOG(LOG_INFO, "%s", infile_version == WrmVersion::v1 ? "Hash data v1" : "Hash data v2 or higher");
-    }
+    LOG_IF(verbose, LOG_INFO, "%s", infile_version == WrmVersion::v1 ? "Hash data v1" : "Hash data v2 or higher");
     MwrmReader reader(in_hash_fb);
     reader.set_header({infile_version, infile_is_checksumed});
     reader.read_meta_hash_line(hash_line);
@@ -633,10 +629,8 @@ static inline int check_encrypted_or_checksumed(
     /*****************
     * Load file hash *
     *****************/
-    if (verbose) {
-        LOG(LOG_INFO, "Load file hash. Is encrypted %d. Is checksumed: %d",
-            infile_is_encrypted, reader.get_header().has_checksum);
-    }
+    LOG_IF(verbose, LOG_INFO, "Load file hash. Is encrypted %d. Is checksumed: %d",
+        infile_is_encrypted, reader.get_header().has_checksum);
     MetaLine hash_line {};
 
     std::string const full_hash_path = hash_path + input_filename;
@@ -721,9 +715,7 @@ static inline int check_encrypted_or_checksumed(
     * Rewite stat info *
     ********************/
     if (!wrm_stat_is_ok) {
-        if (verbose) {
-            LOG(LOG_INFO, "%s", "Update mwrm file");
-        }
+        LOG_IF(verbose, LOG_INFO, "%s", "Update mwrm file");
 
         has_mismatch_stat_hash = true;
 
@@ -772,15 +764,11 @@ static inline int check_encrypted_or_checksumed(
             return 1;
         }
 
-        if (verbose) {
-            LOG(LOG_INFO, "%s", "Update mwrm file, done");
-        }
+        LOG_IF(verbose, LOG_INFO, "%s", "Update mwrm file, done");
     }
 
     if (has_mismatch_stat_hash) {
-        if (verbose) {
-            LOG(LOG_INFO, "%s", "Update hash file");
-        }
+        LOG_IF(verbose, LOG_INFO, "%s", "Update hash file");
 
         auto const full_hash_path_tmp = full_hash_path + ".tmp";
         auto * const hash_filename = full_hash_path_tmp.c_str();
@@ -835,9 +823,7 @@ static inline int check_encrypted_or_checksumed(
             return 1;
         }
 
-        if (verbose) {
-            LOG(LOG_INFO, "%s", "Update hash file, done");
-        }
+        LOG_IF(verbose, LOG_INFO, "%s", "Update hash file, done");
     }
 
     std::cout << "No error detected during the data verification.\n" << std::endl;

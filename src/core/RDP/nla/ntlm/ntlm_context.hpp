@@ -151,9 +151,7 @@ public:
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
         memset(this->MessageIntegrityCheck, 0x00, sizeof(this->MessageIntegrityCheck));
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Init");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Init");
     }
 
     NTLMContext(NTLMContext const &) = delete;
@@ -164,9 +162,7 @@ public:
      */
     void ntlm_generate_timestamp()
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext TimeStamp");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext TimeStamp");
         uint8_t ZeroTimestamp[8] = {};
 
         if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
@@ -187,9 +183,7 @@ public:
     void ntlm_generate_client_challenge()
     {
         // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Generate Client Challenge");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Client Challenge");
         this->rand.random(this->ClientChallenge, 8);
 
     }
@@ -199,9 +193,7 @@ public:
     // server method
     void ntlm_generate_server_challenge()
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Generate Server Challenge");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Server Challenge");
         this->rand.random(this->ServerChallenge, 8);
     }
     // client method
@@ -223,9 +215,7 @@ public:
 
     // client method ??
     void ntlm_generate_exported_session_key() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Generate Exported Session Key");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Exported Session Key");
         this->rand.random(this->ExportedSessionKey, 16);
     }
 
@@ -241,9 +231,7 @@ public:
                           array_view_const_u8 user,
                           array_view_const_u8 domain,
                           uint8_t (&buff)[SslMd5::DIGEST_LENGTH]) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext NTOWFv2 Hash");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext NTOWFv2 Hash");
         SslHMAC_Md5 hmac_md5(hash);
 
         auto unique_userup = std::make_unique<uint8_t[]>(user.size());
@@ -270,9 +258,7 @@ public:
                  array_view_const_u8 user,
                  array_view_const_u8 domain,
                  array_view_u8 buff) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext NTOWFv2");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext NTOWFv2");
         SslMd4 md4;
         uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
 
@@ -318,9 +304,8 @@ public:
     void ntlmv2_compute_response_from_challenge(array_view_const_u8 pass,
                                                 array_view_const_u8 user,
                                                 array_view_const_u8 domain) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Compute response from challenge");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response from challenge");
+
         uint8_t ResponseKeyNT[16] = {};
         uint8_t ResponseKeyLM[16] = {};
         this->NTOWFv2(pass, user, domain, make_array_view(ResponseKeyNT));
@@ -356,9 +341,7 @@ public:
         //                       Concat(ServerChallenge, temp))
 
         uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Compute response: NtProofStr");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: NtProofStr");
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
 
         this->ntlm_get_server_challenge();
@@ -368,9 +351,7 @@ public:
 
         // NtChallengeResponse = Concat(NtProofStr, temp)
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Compute response: NtChallengeResponse");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: NtChallengeResponse");
         auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
         // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
         NtChallengeResponse.reset();
@@ -378,21 +359,15 @@ public:
         NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
         NtChallengeResponse.mark_end();
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "Compute response: NtChallengeResponse Ready");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
 
         unique_temp.reset();
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "Compute response: temp buff successfully deleted");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "Compute response: temp buff successfully deleted");
         // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
         //                                         Concat(ServerChallenge, ClientChallenge))
         // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Compute response: LmChallengeResponse");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: LmChallengeResponse");
         auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
         // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
         SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
@@ -406,9 +381,7 @@ public:
         LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
         LmChallengeResponse.mark_end();
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Compute response: SessionBaseKey");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: SessionBaseKey");
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
         SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
@@ -433,9 +406,7 @@ public:
         // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
 
         // generate NONCE(16) exportedsessionkey
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Encrypt RandomSessionKey");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Encrypt RandomSessionKey");
         this->ntlm_generate_exported_session_key();
         this->ntlm_rc4k(this->SessionBaseKey, 16,
                         this->ExportedSessionKey, this->EncryptedRandomSessionKey);
@@ -449,9 +420,7 @@ public:
     // session base key computed with Responses.
     void ntlm_decrypt_exported_session_key() {
         auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Decrypt RandomSessionKey");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Decrypt RandomSessionKey");
         memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.get_data(),
                AuthEncryptedRSK.size());
         this->ntlm_rc4k(this->SessionBaseKey, 16,
@@ -591,9 +560,7 @@ public:
 
     // server check nt response
     bool ntlm_check_nt_response_from_authenticate(array_view_const_u8 hash) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Check NtResponse");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Check NtResponse");
         auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
         auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
@@ -628,9 +595,7 @@ public:
 
     // Server check lm response
     bool ntlm_check_lm_response_from_authenticate(array_view_const_u8 hash) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Check LmResponse");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Check LmResponse");
         auto & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
         auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
@@ -658,9 +623,7 @@ public:
 
     // server compute Session Base Key
     void ntlm_compute_session_base_key(array_view_const_u8 hash) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Compute Session Base Key");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute Session Base Key");
         auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
         auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
@@ -982,9 +945,7 @@ public:
 
     // READ WRITE FUNCTIONS
     SEC_STATUS write_negotiate(Array& output_buffer) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Write Negotiate");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Negotiate");
         this->ntlm_client_build_negotiate();
         StaticOutStream<65535> out_stream;
         this->NEGOTIATE_MESSAGE.emit(out_stream);
@@ -998,9 +959,7 @@ public:
     }
 
     SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Read Negotiate");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Negotiate");
         InStream in_stream(input_buffer);
         this->NEGOTIATE_MESSAGE.recv(in_stream);
         if (!this->ntlm_check_nego()) {
@@ -1015,9 +974,7 @@ public:
     }
 
     SEC_STATUS write_challenge(Array& output_buffer) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Write Challenge");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Challenge");
         this->ntlm_server_build_challenge();
         StaticOutStream<65535> out_stream;
         this->CHALLENGE_MESSAGE.emit(out_stream);
@@ -1032,9 +989,7 @@ public:
     }
 
     SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Read Challenge");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Challenge");
         InStream in_stream(input_buffer);
         this->CHALLENGE_MESSAGE.recv(in_stream);
         this->SavedChallengeMessage.init(in_stream.get_offset());
@@ -1045,9 +1000,7 @@ public:
     }
 
     SEC_STATUS write_authenticate(Array& output_buffer) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Write Authenticate");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Authenticate");
         SEC_WINNT_AUTH_IDENTITY & id = this->identity;
         this->ntlm_client_build_authenticate(id.Password.av(),
                                              id.User.av(),
@@ -1077,9 +1030,7 @@ public:
     }
 
     SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "NTLMContext Read Authenticate");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Authenticate");
         InStream in_stream(input_buffer);
         this->AUTHENTICATE_MESSAGE.recv(in_stream);
         if (this->AUTHENTICATE_MESSAGE.has_mic) {

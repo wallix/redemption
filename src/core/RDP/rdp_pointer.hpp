@@ -765,7 +765,7 @@ inline Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t he
     size_t source_mask_offset_line = (minheight-1) * ::nbbytes(width);
     memset(cursor.data, 0xAA, sizeof(cursor.data));
 
-//       LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
+    // LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
     for (size_t y = 0 ; y < minheight ; y++){
         for (size_t x = 0 ; x < 32 ; x++){
             const size_t target_offset = target_offset_line +x*3;
@@ -782,13 +782,13 @@ inline Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t he
             const unsigned red = (pixel >> red_shift) & red_max;
             const unsigned green = (pixel >> green_shift) & green_max;
             const unsigned blue = (pixel >> blue_shift) & blue_max;
-//               LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
+            // LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
             cursor.data[target_offset] = (red << 3) | (red >> 2);
             cursor.data[target_offset+1] = (green << 2) | (green >> 4);
             cursor.data[target_offset+2] = (blue << 3) | (blue >> 2);
         }
         for (size_t xx = 0 ; xx < 4 ; xx++){
-//                LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
+            // LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
             if (xx < ::nbbytes(width)){
                 cursor.mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
             }
@@ -819,13 +819,9 @@ inline Pointer pointer_loader_2(InStream & stream)
     uint16_t dlen     = stream.in_uint16_le();
     uint16_t mlen     = stream.in_uint16_le();
 
-    if (dlen > Pointer::DATA_SIZE){
-        LOG(LOG_ERR, "Corrupted recording: recorded mouse data length too large");
-    }
+    LOG_IF(dlen > Pointer::DATA_SIZE, LOG_ERR, "Corrupted recording: recorded mouse data length too large");
+    LOG_IF(mlen > Pointer::MASK_SIZE, LOG_ERR, "Corrupted recording: recorded mouse data mask too large");
 
-    if (mlen > Pointer::MASK_SIZE){
-        LOG(LOG_ERR, "Corrupted recording: recorded mouse data mask too large");
-    }
     auto data = stream.in_uint8p(dlen);
     auto mask = stream.in_uint8p(mlen);
     const BGRPalette palette = BGRPalette::classic_332();
@@ -842,13 +838,9 @@ inline Pointer pointer_loader_32x32(InStream & stream)
     const uint16_t dlen     = 32 * 32 * nb_bytes_per_pixel(data_bpp);
     uint16_t mlen           = 32 * ::nbbytes(32);
 
-    if (dlen > Pointer::DATA_SIZE){
-        LOG(LOG_ERR, "Corrupted recording: recorded mouse data length too large");
-    }
+    LOG_IF(dlen > Pointer::DATA_SIZE, LOG_ERR, "Corrupted recording: recorded mouse data length too large");
+    LOG_IF(mlen > Pointer::MASK_SIZE, LOG_ERR, "Corrupted recording: recorded mouse data mask too large");
 
-    if (mlen > Pointer::MASK_SIZE){
-        LOG(LOG_ERR, "Corrupted recording: recorded mouse data mask too large");
-    }
     auto data = stream.in_uint8p(dlen);
     auto mask = stream.in_uint8p(mlen);
     const BGRPalette palette = BGRPalette::classic_332();
@@ -1314,4 +1306,3 @@ inline Pointer system_default_pointer()
     /* 0ba0 */ "--------------------------------"
     , 10, 10);
 }
-

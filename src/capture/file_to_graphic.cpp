@@ -484,14 +484,12 @@ void FileToGraphic::interpret_order()
                 this->ignore_frame_in_timeval = true;
             }
 
-            if (bool(this->verbose & Verbose::timestamp)) {
-                LOG( LOG_INFO, "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
-                    , static_cast<unsigned long>(this->record_now.tv_sec)
-                    , static_cast<unsigned long>(this->record_now.tv_usec)
-                    , this->mouse_x
-                    , this->mouse_y);
-            }
-
+            LOG_IF(bool(this->verbose & Verbose::timestamp), LOG_INFO,
+                "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
+                , static_cast<unsigned long>(this->record_now.tv_sec)
+                , static_cast<unsigned long>(this->record_now.tv_usec)
+                , this->mouse_x
+                , this->mouse_y);
 
             auto const input_data = this->stream.get_current();
             auto const input_len = this->stream.in_remain();
@@ -693,9 +691,7 @@ void FileToGraphic::interpret_order()
     break;
     case WrmChunkType::POINTER:
     {
-        if (bool(this->verbose & Verbose::rdp_orders)){
-            LOG(LOG_INFO, "POINTER");
-        }
+        LOG_IF(bool(this->verbose & Verbose::rdp_orders), LOG_INFO, "POINTER");
 
         this->mouse_x         = this->stream.in_uint16_le();
         this->mouse_y         = this->stream.in_uint16_le();
@@ -726,9 +722,7 @@ void FileToGraphic::interpret_order()
     break;
     case WrmChunkType::POINTER2:
     {
-        if (bool(this->verbose & Verbose::rdp_orders)){
-            LOG(LOG_INFO, "POINTER2");
-        }
+        LOG_IF(bool(this->verbose & Verbose::rdp_orders), LOG_INFO, "POINTER2");
 
         size_t start_offset = this->stream.get_offset();
         this->mouse_x = this->stream.in_uint16_le();
@@ -843,9 +837,7 @@ void FileToGraphic::interpret_order()
 
 void FileToGraphic::process_windowing( InStream & stream, const RDP::AltsecDrawingOrderHeader & header)
 {
-    if (bool(this->verbose & Verbose::probe)) {
-        LOG(LOG_INFO, "rdp_orders::process_windowing");
-    }
+    LOG_IF(bool(this->verbose & Verbose::probe), LOG_INFO, "rdp_orders::process_windowing");
 
     const uint32_t FieldsPresentFlags = [&]{
         InStream stream2(stream.get_current(), stream.in_remain());
@@ -881,9 +873,8 @@ void FileToGraphic::process_windowing( InStream & stream, const RDP::AltsecDrawi
 void FileToGraphic::process_window_information(
     InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/, uint32_t FieldsPresentFlags)
 {
-    if (bool(this->verbose & Verbose::probe)) {
-        LOG(LOG_INFO, "rdp_orders::process_window_information");
-    }
+    LOG_IF(bool(this->verbose & Verbose::probe), LOG_INFO,
+        "rdp_orders::process_window_information");
 
     switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
                                  | RDP::RAIL::WINDOW_ORDER_ICON /*NOLINT*/
@@ -942,9 +933,8 @@ void FileToGraphic::process_window_information(
 void FileToGraphic::process_notification_icon_information(
     InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/, uint32_t FieldsPresentFlags)
 {
-    if (bool(this->verbose & Verbose::probe)) {
-        LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
-    }
+    LOG_IF(bool(this->verbose & Verbose::probe), LOG_INFO,
+        "rdp_orders::process_notification_icon_information");
 
     switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
                                  | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
@@ -975,9 +965,8 @@ void FileToGraphic::process_notification_icon_information(
 void FileToGraphic::process_desktop_information(
     InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/, uint32_t FieldsPresentFlags)
 {
-    if (bool(this->verbose & Verbose::probe)) {
-        LOG(LOG_INFO, "rdp_orders::process_desktop_information");
-    }
+    LOG_IF(bool(this->verbose & Verbose::probe), LOG_INFO,
+        "rdp_orders::process_desktop_information");
 
     if (FieldsPresentFlags & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_NONE) {
         RDP::RAIL::NonMonitoredDesktop order;
@@ -1014,10 +1003,9 @@ void FileToGraphic::instant_play_client(std::chrono::microseconds endin_frame)
 
         if (this->next_order()) {
 
-            if (bool(this->verbose & Verbose::play)) {
-                LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
-                , unsigned(this->record_now.tv_sec), this->total_orders_count);
-            }
+            LOG_IF(bool(this->verbose & Verbose::play), LOG_INFO,
+                "replay TIMESTAMP (first timestamp) = %u order=%u\n",
+                unsigned(this->record_now.tv_sec), this->total_orders_count);
 
             this->interpret_order();
 
@@ -1045,8 +1033,7 @@ void FileToGraphic::snapshot_play()
 
 void FileToGraphic::log_play() const
 {
-    if (bool(this->verbose & Verbose::play)) {
-        LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
-            , unsigned(this->record_now.tv_sec), this->total_orders_count);
-    }
+    LOG_IF(bool(this->verbose & Verbose::play), LOG_INFO,
+        "replay TIMESTAMP (first timestamp) = %u order=%u\n",
+        unsigned(this->record_now.tv_sec), this->total_orders_count);
 }

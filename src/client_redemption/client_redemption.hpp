@@ -903,9 +903,8 @@ public:
     }
 
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) override {
-        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
-            LOG(LOG_INFO, "RDP::RAIL::ActivelyMonitoredDesktop");
-        }
+        LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
+            "RDP::RAIL::ActivelyMonitoredDesktop");
         //cmd.log(LOG_INFO);
 
         this->clientRemoteAppChannel.draw(cmd);
@@ -921,45 +920,39 @@ public:
     }
 
     void draw(const RDP::RAIL::DeletedWindow            & cmd) override {
-        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
-            LOG(LOG_INFO, "RDP::RAIL::DeletedWindow");
-        }
+        LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
+            "RDP::RAIL::DeletedWindow");
         //cmd.log(LOG_INFO);
         this->clientRemoteAppChannel.draw(cmd);
     }
 
     void draw(const RDP::RAIL::WindowIcon            &  /*unused*/) override {
-        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
-            LOG(LOG_INFO, "RDP::RAIL::WindowIcon");
-        }
+        LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
+            "RDP::RAIL::WindowIcon");
 //         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::CachedIcon            &  /*unused*/) override {
-        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
-            LOG(LOG_INFO, "RDP::RAIL::CachedIcon");
-        }
+        LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
+            "RDP::RAIL::CachedIcon");
 //         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::NewOrExistingNotificationIcons            & cmd) override {
-        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
-            LOG(LOG_INFO, "RDP::RAIL::NewOrExistingNotificationIcons");
-        }
+        LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
+            "RDP::RAIL::NewOrExistingNotificationIcons");
         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::DeletedNotificationIcons            & cmd) override {
-        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
-            LOG(LOG_INFO, "RDP::RAIL::DeletedNotificationIcons");
-        }
+        LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
+            "RDP::RAIL::DeletedNotificationIcons");
         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
-        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
-            LOG(LOG_INFO, "RDP::RAIL::NonMonitoredDesktop");
-        }
+        LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
+            "RDP::RAIL::NonMonitoredDesktop");
         cmd.log(LOG_INFO);
     }
 

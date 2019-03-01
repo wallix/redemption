@@ -236,9 +236,8 @@
 
         if (this->_waiting_for_data) {
 
-            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO, "SERVER >> Process server next part PDU data");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "SERVER >> Process server next part PDU data");
             this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
         } else {
             if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
@@ -251,9 +250,8 @@
             switch (header.msgType()) {
 
                 case RDPECLIP::CB_CLIP_CAPS:
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Clipboard Capabilities PDU");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "SERVER >> CB Channel: Clipboard Capabilities PDU");
                     this->process_capabilities(chunk);
                 break;
 
@@ -268,9 +266,8 @@
     //    MUST be set to CB_MONITOR_READY (0x0001), while the msgFlags field MUST be set to 0x0000.
 
                 case RDPECLIP::CB_MONITOR_READY:
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Monitor Ready PDU");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "SERVER >> CB Channel: Monitor Ready PDU");
 
                     this->process_monitor_ready();
                 break;
@@ -311,36 +308,32 @@
     // the msgFlags field of the clipHeader must contain the CB_ASCII_NAMES (0x0004) flag.
 
                 case RDPECLIP::CB_FORMAT_LIST:
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "SERVER >> CB Channel: Format List PDU");
 
-                    if (header.dataLen() > chunk.in_remain()) {
-                        LOG(LOG_WARNING, "Server Format List PDU data length(%u) longer than chunk(%zu)", header.dataLen(), chunk.in_remain());
-                    }
+                    LOG_IF(header.dataLen() > chunk.in_remain(), LOG_WARNING,
+                        "Server Format List PDU data length(%u) longer than chunk(%zu)",
+                        header.dataLen(), chunk.in_remain());
 
                     this->process_format_list(chunk, header.msgFlags());
                 break;
 
                 case RDPECLIP::CB_LOCK_CLIPDATA:
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Lock Clipboard Data PDU");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "SERVER >> CB Channel: Lock Clipboard Data PDU");
                 break;
 
                 case RDPECLIP::CB_UNLOCK_CLIPDATA:
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Unlock Clipboard Data PDU");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "SERVER >> CB Channel: Unlock Clipboard Data PDU");
                 break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
                     if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
                         LOG(LOG_WARNING, "SERVER >> CB Channel: Format Data Response PDU FAILED");
                     } else {
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU");
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                            "SERVER >> CB Channel: Format Data Response PDU");
 
                         if(this->_requestedFormatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
                             this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
@@ -353,17 +346,15 @@
                 break;
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "SERVER >> CB Channel: Format Data Request PDU");
 
                     this->process_format_data_request(chunk);
                 break;
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "SERVER >> CB Channel: File Contents Resquest PDU");
 
                     this->process_filecontents_request(chunk);
                 break;
@@ -372,9 +363,8 @@
                     if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
                         LOG(LOG_WARNING, "SERVER >> CB Channel: File Contents Response PDU FAILED");
                     } else {
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                            "SERVER >> CB Channel: File Contents Response PDU");
 
                         if (this->_requestedFormatId == ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW) {
                             this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
@@ -387,9 +377,8 @@
                 break;
 
                 default:
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> Default Process server PDU data");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "SERVER >> Default Process server PDU data");
                     this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
 
                 break;
@@ -543,9 +532,8 @@
                                                   , total_length_FormatContentRequestPDU
                                                   , this->channel_flags
                                                   );
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "CLIENT >> CB channel: File Contents Resquest PDU SIZE");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "CLIENT >> CB channel: File Contents Resquest PDU SIZE");
 
                     this->empty_buffer();
                 }
@@ -556,9 +544,8 @@
                 switch (this->file_content_flag) {
 
                     case RDPECLIP::FILECONTENTS_SIZE:
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU SIZE ");
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                            "SERVER >> CB Channel: File Contents Response PDU SIZE ");
 
                         {
                         if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -593,9 +580,8 @@
                                                               , this->channel_flags
                                                               );
 
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Request PDU RANGE ");
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                            "CLIENT >> CB Channel: File Contents Request PDU RANGE ");
                         }
                         break;
 
@@ -605,9 +591,8 @@
 
                             cb_filesList.itemslist[cb_filesList.lindexToRequest].size = cb_buffers.sizeTotal;
                             cb_filesList.streamIDToRequest = chunk.in_uint32_le();
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU RANGE");
-                            }
+                            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                                "SERVER >> CB Channel: File Contents Response PDU RANGE");
                         }
 
                         this->clientIOClipboardAPI->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name
@@ -656,9 +641,8 @@
                                                                         , this->channel_flags
                                                                         );
 
-                                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Request PDU SIZE ");
-                                }
+                                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                                    "CLIENT >> CB Channel: File Contents Request PDU SIZE ");
                             }
 
                             std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
@@ -681,7 +665,6 @@
                     }
 
                 }  else {
-
                     LOG(LOG_WARNING, "SERVER >> CB channel: unknown CB Format = %x", this->_requestedFormatId);
                 }
             break;
@@ -701,9 +684,8 @@
                                         , out_stream_unlock.get_offset()
                                         , this->channel_flags
                                         );
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO, "CLIENT >> CB channel: Unlock Clipboard Data PDU");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "CLIENT >> CB channel: Unlock Clipboard Data PDU");
     }
 
     void ClientCLIPRDRChannel::send_textBuffer_to_clipboard(bool is_utf16) {
@@ -819,9 +801,8 @@
                                                 , this->channel_flags
                                                 );
 
-            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "CLIENT >> CB Channel: Clipboard Capabilities PDU");
         }
 
         {
@@ -845,9 +826,8 @@
                         , this->channel_flags
                         );
 
-            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO, "CLIENT >> CB Channel: Format List PDU");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "CLIENT >> CB Channel: Format List PDU");
         }
     }
 
@@ -906,9 +886,8 @@
                                         , out_stream.get_offset()
                                         , this->channel_flags
                                         );
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO, "CLIENT >> CB Channel: Format List Response PDU");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "CLIENT >> CB Channel: Format List Response PDU");
 
         RDPECLIP::CliprdrHeader lockClipboardDataHeader(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
         RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
@@ -922,9 +901,8 @@
                                         , out_stream_lock.get_offset()
                                         , this->channel_flags
                                         );
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "CLIENT >> CB Channel: Lock Clipboard Data PDU");
 
         RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
         RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(formatID);
@@ -938,9 +916,8 @@
                                         , out_streamRequest.get_offset()
                                         , this->channel_flags
                                         );
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Request PDU");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "CLIENT >> CB Channel: Format Data Request PDU");
 
         this->paste_data_request_time = tvtime();
     }
@@ -953,9 +930,8 @@
 
         if (type_id == chunk.in_uint32_le()) {
 
-            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "CLIENT >> CB Channel: Format Data Response PDU");
 
             switch(type_id) {
 
@@ -1052,9 +1028,8 @@
                                                         );
 
                     data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
-                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
 
                     for (int i = 1; i < this->clientIOClipboardAPI->get_citems_number(); i++) {
 
@@ -1086,9 +1061,8 @@
                                                         );
 
                         data_sent += RDPECLIP::FileDescriptor::size();
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                            "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
                     }
                 }
                 break;
@@ -1123,9 +1097,8 @@
                                                 , this->channel_flags
                                                 );
 
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU SIZE");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "CLIENT >> CB Channel: File Contents Response PDU SIZE");
             }
             break;
 
@@ -1152,9 +1125,8 @@
                     , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                 );
 
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "CLIENT >> CB Channel: File Contents Response PDU RANGE");
             }
             break;
         }

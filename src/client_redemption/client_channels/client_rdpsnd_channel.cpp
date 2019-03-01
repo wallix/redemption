@@ -233,9 +233,8 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
 
         if (!(this->wave_data_to_wait)) {
 
-            if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                "SERVER >> RDPEA: Wave PDU");
 
             LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 1");
 
@@ -268,9 +267,8 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                                                 , out_stream.get_offset()
                                                 , this->channel_flags
                                                 );
-            if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                "CLIENT >> RDPEA: Wave Confirm PDU");
         }
 
     } else {
@@ -281,9 +279,8 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
 
             case rdpsnd::SNDC_FORMATS:
                 {
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: Server Audio Formats and Version PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "SERVER >> RDPEA: Server Audio Formats and Version PDU");
 
                 rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
                 safsvh.receive(chunk);
@@ -329,9 +326,8 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                                                 , this->channel_flags
                                                 );
 
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
 
                 StaticOutStream<32> quality_stream;
 
@@ -349,17 +345,15 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                                                 , this->channel_flags
                                                 );
 
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "CLIENT >> RDPEA: Quality Mode PDU");
                 }
                 break;
 
             case rdpsnd::SNDC_TRAINING:
                 {
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: Training PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "SERVER >> RDPEA: Training PDU");
 
                 rdpsnd::TrainingPDU train;
                 train.receive(chunk);
@@ -380,17 +374,15 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                                                 , this->channel_flags
                                                 );
 
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "CLIENT >> RDPEA: Training Confirm PDU");
                 }
                 break;
 
             case rdpsnd::SNDC_WAVE:
                 {
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: Wave Info PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "SERVER >> RDPEA: Wave Info PDU");
 
                 this->wave_data_to_wait = header.BodySize - 8;
                 rdpsnd::WaveInfoPDU wi;
@@ -407,15 +399,13 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                 break;
 
             case rdpsnd::SNDC_CLOSE:
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: Close PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "SERVER >> RDPEA: Close PDU");
                 break;
 
             case rdpsnd::SNDC_SETVOLUME:
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETVOLUME PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "SERVER >> RDPEA: SNDC_SETVOLUME PDU");
                 {
                 rdpsnd::VolumePDU v;
                 v.receive(chunk);
@@ -423,9 +413,8 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                 break;
 
             case rdpsnd::SNDC_SETPITCH:
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_SETPITCH PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "SERVER >> RDPEA: SNDC_SETPITCH PDU");
                 {
                 rdpsnd::PitchPDU p;
                 p.receive(chunk);
@@ -441,9 +430,8 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
 //                         break;
 
             case rdpsnd::SNDC_QUALITYMODE:
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_QUALITYMODE PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "SERVER >> RDPEA: SNDC_QUALITYMODE PDU");
                 {
                 rdpsnd::QualityModePDU qm;
                 qm.receive(chunk);
@@ -451,9 +439,8 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                 break;
 
             case rdpsnd::SNDC_WAVE2:
-                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-                    LOG(LOG_INFO, "SERVER >> RDPEA: SNDC_WAVE2 PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
+                    "SERVER >> RDPEA: SNDC_WAVE2 PDU");
                 {
                 this->wave_data_to_wait = header.BodySize - 12;
                 rdpsnd::Wave2PDU w2;
@@ -474,7 +461,6 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
     }
 }
 
-    void ClientRDPSNDChannel::set_api(ClientOutputSoundAPI * impl_sound) {
-        this->impl_sound = impl_sound;
-    }
-
+void ClientRDPSNDChannel::set_api(ClientOutputSoundAPI * impl_sound) {
+    this->impl_sound = impl_sound;
+}
