@@ -76,7 +76,7 @@ public:
     : value(bit(i))
     {}
 
-    bool has(E idx) const noexcept { return this->value & bit(idx); }
+    bool test(E idx) const noexcept { return this->value & bit(idx); }
     void set(E idx) noexcept { this->value |= bit(idx); }
     void clear(E idx) noexcept { this->value &= ~bit(idx); }
 

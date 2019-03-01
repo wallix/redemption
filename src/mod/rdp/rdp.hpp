@@ -3565,7 +3565,7 @@ public:
                 // which may not be supported by clients.
 
                 for (auto idx : order_indexes_supported()) {
-                    order_caps.orderSupport[idx] = this->primary_drawing_orders_support.has(idx);
+                    order_caps.orderSupport[idx] = this->primary_drawing_orders_support.test(idx);
                 }
 
                 order_caps.orderSupport[UnusedIndex3] = 1;
@@ -3744,7 +3744,7 @@ public:
                     }
                 }
 
-                if (this->primary_drawing_orders_support.has(TS_NEG_DRAWNINEGRID_INDEX)) {
+                if (this->primary_drawing_orders_support.test(TS_NEG_DRAWNINEGRID_INDEX)) {
                     DrawNineGridCacheCaps ninegrid_caps(DRAW_NINEGRID_SUPPORTED, 0xffff, 256);
                     confirm_active_pdu.emit_capability_set(ninegrid_caps);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
