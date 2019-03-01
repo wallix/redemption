@@ -28,8 +28,8 @@ exe-js js_client :
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/gdi/screen_functions.bc
+  src/mod/rdp/channels/sespro_channel_params.bc
   src/mod/rdp/new_mod_rdp.bc
-  src/mod/rdp/parse_extra_orders.bc
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
   src/utils/bitmap.bc
@@ -95,8 +95,8 @@ objjs src/core/error.bc : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKT
 objjs src/core/font.bc : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
+objjs src/mod/rdp/channels/sespro_channel_params.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
-objjs src/mod/rdp/parse_extra_orders.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/parse_extra_orders.cpp ;
 objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;

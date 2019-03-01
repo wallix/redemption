@@ -144,15 +144,18 @@ struct RdpClient
         mod_rdp_params.enable_tls                 = false;
         mod_rdp_params.enable_nla                 = false;
         mod_rdp_params.enable_fastpath            = true;
-        mod_rdp_params.enable_mem3blt             = true;
         mod_rdp_params.enable_new_pointer         = true;
         mod_rdp_params.enable_glyph_cache         = true;
-        mod_rdp_params.enable_ninegrid_bitmap     = true;
         std::string allow_channels                = "*";
         mod_rdp_params.allow_channels             = &allow_channels;
         mod_rdp_params.deny_channels              = nullptr;
-        mod_rdp_params.enable_rdpdr_data_analysis = false;
         mod_rdp_params.server_cert_check          = ServerCertCheck::always_succeed;
+        mod_rdp_params.primary_drawing_orders_support -= TS_NEG_INDEX_INDEX;
+        mod_rdp_params.primary_drawing_orders_support -= TS_NEG_DSTBLT_INDEX;
+        mod_rdp_params.primary_drawing_orders_support -= TS_NEG_PATBLT_INDEX;
+        mod_rdp_params.primary_drawing_orders_support += TS_NEG_POLYLINE_INDEX;
+        mod_rdp_params.primary_drawing_orders_support += TS_NEG_MULTISCRBLT_INDEX;
+        mod_rdp_params.primary_drawing_orders_support += TS_NEG_MULTIOPAQUERECT_INDEX;
 
         if (verbose > 128) {
             mod_rdp_params.log();
@@ -161,7 +164,7 @@ struct RdpClient
         const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
         this->mod = new_mod_rdp(
-            browser_trans, session_reactor, front, client_info, redir_info, lcg_gen,
+            browser_trans, session_reactor, front, front, client_info, redir_info, lcg_gen,
             lcg_timeobj, channels_authorizations,
             mod_rdp_params, authentifier, report_message, ini, nullptr);
         front.set_mod(this->mod.get());

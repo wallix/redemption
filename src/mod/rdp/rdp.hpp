@@ -410,27 +410,24 @@ public:
 class mod_rdp_channels
 {
 public:
-#ifndef __EMSCRIPTEN__
-    RDPMetrics * metrics;
-#endif
     CHANNELS::ChannelDefArray mod_channel_list;
 
     const ChannelsAuthorizations channels_authorizations;
 
-private:
-    ReportMessageApi & report_message;
-    Random & gen;
-
 public:
     const bool enable_auth_channel;
     const CHANNELS::ChannelNameId auth_channel;
+    const CHANNELS::ChannelNameId checkout_channel;
+#ifndef __EMSCRIPTEN__
     int auth_channel_flags      = 0;
     int auth_channel_chanid     = 0;
-    const CHANNELS::ChannelNameId checkout_channel;
     int checkout_channel_flags  = 0;
     int checkout_channel_chanid = 0;
+    RDPMetrics * metrics;
 
-#ifndef __EMSCRIPTEN__
+private:
+    ReportMessageApi & report_message;
+    Random & gen;
 
 public:
     struct SessionProbe
@@ -600,8 +597,6 @@ private:
 public:
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
-#endif
-
 private:
     RDPECLIP::CliprdrLogState cliprdrLogStatus;
     rdpdr::RdpDrStatus rdpdrLogStatus;
@@ -614,15 +609,9 @@ public:
     mod_rdp_channels(
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
-        ReportMessageApi & report_message, Random & gen, [[maybe_unused]] RDPMetrics * metrics,
+        ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         SessionReactor & session_reactor)
-    :
-    #ifndef __EMSCRIPTEN__
-        metrics(metrics),
-    #endif
-        channels_authorizations(std::move(channels_authorizations))
-    , report_message(report_message)
-    , gen(gen)
+    : channels_authorizations(std::move(channels_authorizations))
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
     , auth_channel([&]{
@@ -635,13 +624,14 @@ public:
         }
         }())
     , checkout_channel(mod_rdp_params.checkout_channel)
-#ifndef __EMSCRIPTEN__
+    , metrics(metrics)
+    , report_message(report_message)
+    , gen(gen)
     , session_probe(mod_rdp_params.session_probe_params)
     , remote_app(mod_rdp_params.remote_app_params)
     , clipboard(mod_rdp_params.clipboard_params)
     , file_system(mod_rdp_params.file_system_params)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
-#endif
     , verbose(verbose)
     , session_reactor(session_reactor)
     {}
@@ -673,7 +663,6 @@ public:
         // one to prepare part of the context, the other used to prepare the remaining context.
         // There should be a way to prepare some objects useful for the remaining work to do
 
-#ifndef __EMSCRIPTEN__
         if (this->remote_app.enable_remote_program) {
             char session_probe_window_title[32] = { 0 };
             uint32_t const r = this->gen.rand32();
@@ -719,13 +708,6 @@ public:
                     info, mod_rdp_params.application_params, program, directory);
             }
         }
-#else
-        this->init_no_remote_program_no_session_probe(
-            info, mod_rdp_params.application_params, program, directory);
-        (void)authentifier;
-        (void)mod_rdp;
-        (void)gd;
-#endif
     }
 
 private:
@@ -965,17 +947,14 @@ private:
                 this->drive.proxy_managed_prefix.c_str(),
                 base_params,
                 fsvc_params);
-#ifndef __EMSCRIPTEN__
         if (this->file_system_to_server_sender) {
             if (this->session_probe.enable_session_probe || this->drive.use_application_driver) {
                 this->file_system_virtual_channel->enable_session_probe_drive();
             }
         }
-#endif
     }
 
 public:
-#ifndef __EMSCRIPTEN__
     inline void create_session_probe_virtual_channel(
                     FrontAPI& front,
                     ServerTransportContext stc,
@@ -1071,7 +1050,6 @@ private:
                 base_params,
                 remote_programs_virtual_channel_params);
     }
-#endif
 
 public:
     // TODO: make that private again when callers will be moved to channels
@@ -1194,8 +1172,6 @@ public:
         authentifier.set_pm_request(checkout_channel_message.c_str());
     }
 
-
-#ifndef __EMSCRIPTEN__
     void process_session_probe_event(
         const CHANNELS::ChannelDef & session_probe_channel,
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
@@ -1270,7 +1246,6 @@ public:
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
 
     }   // send_to_mod_rail_channel
-#endif
 
     void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
                             FrontAPI& front,
@@ -1286,13 +1261,11 @@ public:
             RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
         }
 
-#ifndef __EMSCRIPTEN__
         if (this->session_probe.session_probe_launcher) {
             if (!this->session_probe.session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
                 return;
             }
         }
-#endif
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -1375,8 +1348,6 @@ public:
         }
     }
 
-
-#ifndef __EMSCRIPTEN__
     static void replace(std::string & text_with_tags, char const* marker, char const* replacement){
         size_t pos = 0;
         auto const marker_len = strlen(marker);
@@ -1631,8 +1602,6 @@ public:
         this->session_probe.session_probe_launcher =
             std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
     }
-#endif
-
 
     void init_no_remote_program_no_session_probe(
                 const ClientInfo & info,
@@ -1724,6 +1693,7 @@ public:
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
+#endif
 
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
@@ -1731,6 +1701,7 @@ public:
         size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
+#ifndef __EMSCRIPTEN__
         if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
             InStream clone(chunk, chunk_size);
             rdpsnd::streamLogClient(clone, flags);
@@ -1740,6 +1711,7 @@ public:
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
             channel.log(-1u);
         }
+#endif
 
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
@@ -1785,9 +1757,11 @@ public:
             while (remaining_data_length);
         }
 
+#ifndef __EMSCRIPTEN__
         if (bool(this->verbose & RDPVerbose::channels)) {
             LOG(LOG_INFO, "mod_rdp::send_to_channel done");
         }
+#endif
     }
 
     void send_to_mod_channel(
@@ -1806,6 +1780,7 @@ public:
             return;
         }
 
+#ifndef __EMSCRIPTEN__
         if (bool(this->verbose & RDPVerbose::channels)) {
             mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
@@ -1816,13 +1791,8 @@ public:
                 this->send_to_mod_cliprdr_channel(chunk, length, flags, front, stc);
                 break;
             case channel_names::rail:
-#ifndef __EMSCRIPTEN__
                 IF_ENABLE_METRICS(client_rail_channel_data(length));
                 this->send_to_mod_rail_channel(chunk, length, flags, front, stc, vars, client_rail_caps);
-#else
-                (void)vars;
-                (void)client_rail_caps;
-#endif
                 break;
             case channel_names::rdpdr:
                 IF_ENABLE_METRICS(set_client_rdpdr_metrics(chunk.clone(), length, flags));
@@ -1837,6 +1807,15 @@ public:
                 IF_ENABLE_METRICS(client_other_channel_data(length));
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
         }
+#else
+        this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+        (void)front;
+        (void)asynchronous_tasks;
+        (void)client_general_caps;
+        (void)vars;
+        (void)client_rail_caps;
+        (void)client_name;
+#endif
     }
 
 #ifndef __EMSCRIPTEN__
@@ -1992,6 +1971,12 @@ public:
             LOG(LOG_WARNING, "mod_rdp::sespro_rail_exec_result(): Current session has no Remote Program Virtual Channel");
         }
     }
+#else
+    template<class... Ts>
+    mod_rdp_channels(Ts&&...) noexcept
+    : channels_authorizations()
+    , enable_auth_channel(false)
+    {}
 #endif
 };
 
@@ -2144,7 +2129,9 @@ class mod_rdp : public mod_api, public rdp_api
         // TS_NEG_LINETO_INDEX
         // others orders may not be supported.
 
-        return std::array{
+        return [](auto... xs) noexcept {
+            return std::array<OrdersIndexes, sizeof...(xs)>{xs...};
+        }(
             TS_NEG_DSTBLT_INDEX,
             TS_NEG_PATBLT_INDEX,
             TS_NEG_SCRBLT_INDEX,
@@ -2165,8 +2152,8 @@ class mod_rdp : public mod_api, public rdp_api
             // TS_NEG_FAST_GLYPH_INDEX,
             TS_NEG_ELLIPSE_SC_INDEX,
             TS_NEG_ELLIPSE_CB_INDEX,
-            TS_NEG_INDEX_INDEX,
-        };
+            TS_NEG_INDEX_INDEX
+        );
     }
 
 public:
@@ -2267,8 +2254,12 @@ public:
         char program[512] = {};
         char directory[512] = {};
 
+#ifndef __EMSCRIPTEN__
         this->channels.init_remote_program_and_session_probe(
             gd, *this, mod_rdp_params, this->authentifier, info, program, directory);
+#else
+        (void)gd;
+#endif
 
         this->negociation_result.front_width = info.screen_info.width;
         this->negociation_result.front_height = info.screen_info.height;
@@ -2419,6 +2410,7 @@ public:
     // Method used by session to transmit sesman answer for auth_channel
     // TODO: move to channels
     void send_auth_channel_data(const char * string_data) override {
+#ifndef __EMSCRIPTEN__
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
         StaticOutStream<65536> stream_data;
@@ -2433,11 +2425,15 @@ public:
                                           , this->channels.auth_channel_flags
                                           , stream_data.get_data()
                                           , stream_data.get_offset());
+#else
+        (void)string_data;
+#endif
     }
 
 private:
     // TODO: move to channels (and also remains here as it is mod API)
     void send_checkout_channel_data(const char * string_data) override {
+#ifndef __EMSCRIPTEN__
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
         StaticOutStream<65536> stream_data;
@@ -2456,6 +2452,9 @@ private:
           , this->channels.checkout_channel_flags
           , stream_data.get_data()
           , stream_data.get_offset());
+#else
+        (void)string_data;
+#endif
     }
 
 public:
@@ -2861,6 +2860,7 @@ public:
             int flags = sec.payload.in_uint32_le();
             size_t chunk_size = sec.payload.in_remain();
 
+#ifndef __EMSCRIPTEN__
             // If channel name is our virtual channel, then don't send data to front
             if (mod_channel.name == this->channels.auth_channel && this->channels.enable_auth_channel) {
                 ServerTransportContext stc{
@@ -2871,7 +2871,6 @@ public:
                 this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
             }
             else if (mod_channel.name == channel_names::sespro) {
-#ifndef __EMSCRIPTEN__
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
@@ -2879,7 +2878,6 @@ public:
                     this->asynchronous_tasks,
                     this->client_general_caps, this->client_name,
                     this->monitor_count, this->bogus_refresh_rect, this->lang);
-#endif
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
@@ -2889,14 +2887,12 @@ public:
                 this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc);
             }
             else if (mod_channel.name == channel_names::rail) {
-#ifndef __EMSCRIPTEN__
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_rail_event(
                     mod_channel, sec.payload, length, flags, chunk_size,
                     this->front, stc, this->vars, this->client_rail_caps);
-#endif
             }
             else if (mod_channel.name == channel_names::rdpdr) {
                 IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
@@ -2914,6 +2910,11 @@ public:
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 this->channels.process_unknown_channel_event(mod_channel, sec.payload, length, flags, chunk_size, this->front);
             }
+#else
+            if (const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel.name)) {
+                front.send_to_channel(*front_channel, sec.payload.get_current(), length, chunk_size, flags);
+            }
+#endif
 
             sec.payload.in_skip_bytes(sec.payload.in_remain());
 
@@ -5435,7 +5436,7 @@ public:
     }
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
-        std::size_t const channel_data_size
+        [[maybe_unused]] std::size_t const channel_data_size
           = rdp_input.send_input(time, message_type, device_flags, param1, param2);
 
         IF_ENABLE_METRICS(client_main_channel_data(channel_data_size));
@@ -5935,7 +5936,9 @@ private:
 
 public:
     void DLP_antivirus_check_channels_files() override {
+#ifndef __EMSCRIPTEN__
         this->channels.DLP_antivirus_check_channels_files();
+#endif
     }
 
     windowing_api* get_windowing_api() const {

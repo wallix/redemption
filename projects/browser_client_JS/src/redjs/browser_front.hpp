@@ -26,6 +26,7 @@ Author(s): Jonathan Poelen
 
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
+#include "gdi/graphic_api.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
 #include <vector>
@@ -40,7 +41,7 @@ namespace redjs
 
 class ImageData;
 
-class BrowserFront : public FrontAPI
+class BrowserFront : public FrontAPI, public gdi::GraphicApi
 {
 public:
     BrowserFront(uint16_t width, uint16_t height, ScreenInfo& screen_info, OrderCaps& order_caps, RDPVerbose verbose);
@@ -89,7 +90,7 @@ public:
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) override;
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & /*content*/) override;
 
-    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override;
+    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override;
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
 

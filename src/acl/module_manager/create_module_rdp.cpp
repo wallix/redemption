@@ -109,7 +109,6 @@ void ModuleManager::create_mod_rdp(
     }
     mod_rdp_params.enable_krb                          = ini.get<cfg::mod_rdp::enable_kerberos>();
     mod_rdp_params.enable_fastpath                     = ini.get<cfg::mod_rdp::fast_path>();
-    //mod_rdp_params.enable_mem3blt                      = true;
     //mod_rdp_params.enable_new_pointer                  = true;
     mod_rdp_params.enable_glyph_cache                  = ini.get<cfg::globals::glyph_cache>();
 

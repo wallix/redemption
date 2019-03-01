@@ -510,7 +510,7 @@ void BrowserFront::draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::
 void BrowserFront::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) { }
 
 
-BrowserFront::ResizeResult BrowserFront::server_resize(int width, int height, BitsPerPixel bpp)
+BrowserFront::ResizeResult BrowserFront::server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp)
 {
     this->width = width;
     this->height = height;
