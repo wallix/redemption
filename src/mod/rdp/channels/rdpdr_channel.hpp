@@ -3291,4 +3291,3 @@ private:
         this->disable_client_sender = true;
     }
 };  // class FileSystemVirtualChannel
-

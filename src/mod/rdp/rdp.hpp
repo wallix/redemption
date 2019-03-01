@@ -1758,9 +1758,7 @@ public:
         }
 
 #ifndef __EMSCRIPTEN__
-        if (bool(this->verbose & RDPVerbose::channels)) {
-            LOG(LOG_INFO, "mod_rdp::send_to_channel done");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO, "mod_rdp::send_to_channel done");
 #endif
     }
 
@@ -2580,24 +2578,18 @@ public:
                 break;
 
             case FastPath::UpdateType::PTR_NULL:
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "Process pointer null (Fast)");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer null (Fast)");
                 drawable.set_pointer(0, null_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
                 break;
 
             case FastPath::UpdateType::PTR_DEFAULT:
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "Process pointer default (Fast)");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer default (Fast)");
                 drawable.set_pointer(0, system_normal_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
                 break;
 
             case FastPath::UpdateType::PTR_POSITION:
                 {
-                    if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                        LOG(LOG_INFO, "Process pointer position (Fast)");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer position (Fast)");
 
                     /* xPos(2) + yPos(2) */
                     // TODO: there was a break instead of a throw here, see why.
@@ -2632,17 +2624,13 @@ public:
 
 
             case FastPath::UpdateType::COLOR:
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "Process pointer color (Fast)");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer color (Fast)");
 //                 this->process_color_pointer_pdu(stream, drawable);
                 this->process_new_pointer_pdu(BitsPerPixel{24}, stream, drawable);
                 break;
 
             case FastPath::UpdateType::CACHED:
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "Process pointer cached (Fast)");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer cached (Fast)");
                 this->process_cached_pointer_pdu(stream, drawable);
                 break;
 
@@ -2841,9 +2829,7 @@ public:
         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->negociation_result.encryptionLevel);
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
             // TODO: this should move to channels
-            if (bool(this->verbose & RDPVerbose::channels)) {
-                LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
 
             int num_channel_src = this->channels.mod_channel_list.get_index_by_id(mcs.channelId);
             if (num_channel_src == -1) {
@@ -2927,9 +2913,7 @@ public:
                 sec.payload.in_skip_bytes(next_packet - sec.payload.get_data());
 
                 if  (peekFlowPDU(sec.payload)){
-                    if (bool(this->verbose & RDPVerbose::connection)) {
-                        LOG(LOG_WARNING, "FlowPDU TYPE");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_WARNING, "FlowPDU TYPE");
                     ShareFlow_Recv sflow(sec.payload);
                     // ignoring
                     // if (sctrl.flow_pdu_type == FLOW_TEST_PDU) {
@@ -2944,15 +2928,11 @@ public:
                     //sctrl.log();
                     next_packet += sctrl.totalLength;
 
-                    if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                        LOG(LOG_WARNING, "LOOPING on PDUs: %u", unsigned(sctrl.totalLength));
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_WARNING, "LOOPING on PDUs: %u", unsigned(sctrl.totalLength));
 
                     switch (sctrl.pduType) {
                     case PDUTYPE_DATAPDU:
-                        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                            LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_WARNING, "PDUTYPE_DATAPDU");
                         switch (this->connection_finalization_state){
                         case EARLY:
                         {
@@ -3836,19 +3816,13 @@ public:
         switch (message_type) {
         // Cached Pointer Update (section 2.2.9.1.1.4.6)
         case RDP_POINTER_CACHED:
-            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer cached");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer cached");
             this->process_cached_pointer_pdu(stream, drawable);
-            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer cached done");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer cached done");
             break;
         // Color Pointer Update (section 2.2.9.1.1.4.4)
         case RDP_POINTER_COLOR:
-            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer color");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer color");
 //             this->process_color_pointer_pdu(stream, drawable);
             this->process_new_pointer_pdu(BitsPerPixel{24}, stream, drawable);
             if (bool(this->verbose & RDPVerbose::graphics_pointer)){
@@ -3857,16 +3831,12 @@ public:
             break;
         // New Pointer Update (section 2.2.9.1.1.4.5)
         case RDP_POINTER_NEW:
-            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer new");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer new");
             if (enable_new_pointer) {
                 BitsPerPixel data_bpp = checked_int{stream.in_uint16_le()}; /* data bpp */
                 this->process_new_pointer_pdu(data_bpp, stream, drawable);
             }
-            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer new done");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer new done");
             break;
         // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
         // ---------------------------------------------------------------
@@ -3914,9 +3884,7 @@ public:
         // containing the new x-coordinates and y-coordinates of the pointer.
         case RDP_POINTER_MOVE:
             {
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "Process pointer position");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer position");
 
                 //  xPos(2) + yPos(2)
                 // TODO: see why there was break instead of throw here
@@ -3936,16 +3904,12 @@ public:
     }
 
     void process_palette(gdi::GraphicApi & drawable, InStream & stream, bool fast_path) {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "mod_rdp::process_palette");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "mod_rdp::process_palette");
 
         RDP::UpdatePaletteData_Recv(stream, fast_path, this->orders.global_palette);
         drawable.set_palette(this->orders.global_palette);
 
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "mod_rdp::process_palette done");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "mod_rdp::process_palette done");
     }
 
     // 2.2.5.1.1 Set Error Info PDU Data (TS_SET_ERROR_INFO_PDU)
@@ -5278,9 +5242,7 @@ public:
     }   // process_server_caps
 
     void send_control(int action) {
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_rdp::send_control");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "mod_rdp::send_control");
 
         this->rdp_input.send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
@@ -5302,16 +5264,12 @@ public:
             }
         );
 
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_rdp::send_control done");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "mod_rdp::send_control done");
     }
 
     void send_persistent_key_list() {
 #ifndef __EMSCRIPTEN__
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "mod_rdp::send_persistent_key_list");
 
         uint16_t totalEntriesCache[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
 
@@ -5389,9 +5347,7 @@ public:
             }
         }
 
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list done");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "mod_rdp::send_persistent_key_list done");
 #endif
     }   // send_persistent_key_list
 
@@ -5616,9 +5572,7 @@ public:
     //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
     void process_new_pointer_pdu(BitsPerPixel data_bpp, InStream & stream, gdi::GraphicApi & drawable) {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "mod_rdp::process_new_pointer_pdu");
 
 //         InStream stream_to_log = stream.clone();
 //           ::hexdump(stream.get_data(), stream.in_remain());

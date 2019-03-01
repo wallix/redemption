@@ -189,9 +189,7 @@ public:
         if (this->sespro_params.effective_launch_timeout.count() > 0
          && !this->session_probe_ready
         ) {
-            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
 
             if (!this->session_probe_launch_timeout_timer_started) {
                 this->session_probe_timer = this->session_reactor.create_timer()
@@ -1053,9 +1051,7 @@ public:
 
             this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                LOG(LOG_INFO, "%s", info);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
             this->session_probe_ending_in_progress = true;
         }
@@ -1089,9 +1085,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1112,9 +1106,7 @@ public:
 
                     this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                        LOG(LOG_INFO, "%s", info);
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                     if (parameters_.size() == 1) {
                         this->front.set_focus_on_password_textbox(
@@ -1139,9 +1131,7 @@ public:
 
                     this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                        LOG(LOG_INFO, "%s", info);
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                     if (parameters_.size() == 1) {
                         this->front.set_focus_on_unidentified_input_field(
@@ -1167,9 +1157,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                         this->front.set_consent_ui_visible(!::strcasecmp(parameters_[0].c_str(), "yes"));
                     }
@@ -1194,9 +1182,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                         this->front.set_keylayout(
                             ::strtol(parameters_[0].c_str(), nullptr, 16));
@@ -1222,9 +1208,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1248,9 +1232,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                         LOG(LOG_ERR,
                             "Session Probe failed to run startup application: %s", info);
@@ -1281,9 +1263,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                         LOG(LOG_ERR,
                             "Session Probe failed to run startup application: %s", info);
@@ -1312,9 +1292,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1337,9 +1315,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                         char message[4096];
 
@@ -1402,9 +1378,7 @@ public:
                                     message);
                             }
 
-                            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                                LOG(LOG_INFO, "%s", info);
-                            }
+                            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                             if (deny) {
                                 if (::strtoul(parameters_[5].c_str(), nullptr, 10)) {
@@ -1473,9 +1447,7 @@ public:
                                     message);
                             }
 
-                            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                                LOG(LOG_INFO, "%s", info);
-                            }
+                            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                             if (deny) {
                                 if (::strtoul(parameters_[3].c_str(), nullptr, 10)) {
@@ -1517,9 +1489,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1542,9 +1512,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1567,9 +1535,7 @@ public:
 
                         this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;

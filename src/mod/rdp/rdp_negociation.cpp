@@ -254,9 +254,7 @@ void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, c
     // TODO system time
     this->report_message.log6(this->message.str(), arc_info, tvtime());
 
-    if (bool(this->verbose & RDPVerbose::basic_trace)) {
-        LOG(LOG_INFO, "%s", this->message.str());
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", this->message.str());
 
     std::string message = str_concat(type.data, '=', description.data);
     this->front.session_update(message);
@@ -676,9 +674,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 
                         /* Generate a client random, and determine encryption keys */
                         this->gen.random(this->client_random, SEC_RANDOM_SIZE);
-                        if (bool(this->verbose & RDPVerbose::security)) {
-                            LOG(LOG_INFO, "mod_rdp: Generate client random");
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "mod_rdp: Generate client random");
 
                         ssllib ssl;
 
@@ -760,9 +756,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
         }
     }
 
-    if (bool(this->verbose & RDPVerbose::connection)) {
-        LOG(LOG_INFO, "mod_rdp::Channel Connection");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_INFO, "mod_rdp::Channel Connection");
 
     // Channel Connection
     // ------------------
@@ -1355,9 +1349,7 @@ bool RdpNegociation::get_license(InStream & stream)
 
         switch (flic.tag) {
         case LIC::LICENSE_REQUEST:
-            if (bool(this->verbose & RDPVerbose::license)) {
-                LOG(LOG_INFO, "Rdp::License Request");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "Rdp::License Request");
             {
                 LIC::LicenseRequest_Recv lic(sec.payload);
                 uint8_t null_data[48]{};
@@ -1536,9 +1528,7 @@ bool RdpNegociation::get_license(InStream & stream)
 // TODO same in mod_rdp
 template<class... WriterData>
 void RdpNegociation::send_data_request(uint16_t channelId, WriterData... writer_data) {
-    if (bool(this->verbose & RDPVerbose::basic_trace)) {
-        LOG(LOG_INFO, "send data request");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "send data request");
 
     write_packets(
         this->trans,
@@ -1553,9 +1543,7 @@ void RdpNegociation::send_data_request(uint16_t channelId, WriterData... writer_
         },
         X224::write_x224_dt_tpdu_fn{}
     );
-    if (bool(this->verbose & RDPVerbose::basic_trace)) {
-        LOG(LOG_INFO, "send data request done");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "send data request done");
 }
 
 void RdpNegociation::send_client_info_pdu()

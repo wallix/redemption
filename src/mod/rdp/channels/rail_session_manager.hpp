@@ -266,9 +266,7 @@ public:
                 this->drawable->draw(order);
             }
             else {
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(WindowIcon): Order bloacked.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(WindowIcon): Order bloacked.");
             }
         }
     }
@@ -280,9 +278,7 @@ public:
                 this->drawable->draw(order);
             }
             else {
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(CachedIcon): Order bloacked.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(CachedIcon): Order bloacked.");
             }
         }
     }
@@ -298,18 +294,14 @@ public:
                 this->drawable->draw(order);
             }
             else {
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedWindow): Order bloacked.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedWindow): Order bloacked.");
             }
         }
 
         if (window_is_blocked) {
             this->unregister_server_window(window_id);
 
-            if (bool(this->verbose & RDPVerbose::rail)) {
-                LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedWindow): Remove window 0x%X from blocked windows list.", window_id);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedWindow): Remove window 0x%X from blocked windows list.", window_id);
 
             this->blocked_server_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
         }
@@ -376,9 +368,7 @@ public:
                                                       | CHANNELS::CHANNEL_FLAG_LAST
                                                       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
-                        if (bool(this->verbose & RDPVerbose::rail)) {
-                            LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow): Window 0x%X is minimized.", window_id);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow): Window 0x%X is minimized.", window_id);
                     }
                 }
                 else {
@@ -399,9 +389,7 @@ public:
 
                         this->front.draw(order);
 
-                        if (bool(this->verbose & RDPVerbose::rail)) {
-                            LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow): Window 0x%X is deletec.", window_id);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow): Window 0x%X is deletec.", window_id);
                     }
                 }
 
@@ -409,9 +397,7 @@ public:
 
                 window_is_blocked = true;
 
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow): Window 0x%X is blocked.", window_id);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow): Window 0x%X is blocked.", window_id);
 
                 this->dialog_box_create(DialogBoxType::SPLASH_SCREEN);
 
@@ -425,9 +411,7 @@ public:
                 this->drawable->draw(order);
             }
             else {
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Order bloacked.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingWindow): Order bloacked.");
             }
         }
     }
@@ -439,9 +423,7 @@ public:
                 this->drawable->draw(order);
             }
             else {
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingNotificationIcons): Order bloacked.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(NewOrExistingNotificationIcons): Order bloacked.");
             }
         }
     }
@@ -453,9 +435,7 @@ public:
                 this->drawable->draw(order);
             }
             else {
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
             }
         }
     }
@@ -476,9 +456,7 @@ public:
                      order.NumWindowIds());
             }
             else {
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
             }
         }
 

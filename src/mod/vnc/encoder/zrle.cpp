@@ -79,9 +79,7 @@ namespace
         , zd(zd)
         , verbose(verbose)
         {
-            if (bool(this->verbose & VNCVerbose::zrle_trace)) {
-                LOG(LOG_INFO, "New VNC::Encoder::ZRLE %d (%d %d %u %u)", bpp, r.x, r.y, r.cx, r.cy);
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::zrle_trace), LOG_INFO, "New VNC::Encoder::ZRLE %d (%d %d %u %u)", bpp, r.x, r.y, r.cx, r.cy);
         }
 
         EncoderState operator()(Buf64k & buf, gdi::GraphicApi & drawable)
@@ -94,9 +92,7 @@ namespace
                 return EncoderState::Exit;
             }
 
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "zrle consuming data  %zu", buf.av().size());
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "zrle consuming data  %zu", buf.av().size());
 //                hexdump_d(buf.av().data(), buf.av().size());
             switch (this->state) {
             case ZrleState::Header:
@@ -115,12 +111,8 @@ namespace
                     hexdump_d(buf.av().data(), sz);
                 }
                 buf.advance(sz);
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%hu", this->zlib_compressed_data_length, buf.remaining());
-                }
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "Zrle::EncoderReady::zrle remaining data  %zu", buf.av().size());
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%hu", this->zlib_compressed_data_length, buf.remaining());
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Zrle::EncoderReady::zrle remaining data  %zu", buf.av().size());
                 this->state = ZrleState::Data;
                 return EncoderState::Ready;
             }
@@ -135,9 +127,7 @@ namespace
                         hexdump_d(buf.av().data(), buf.remaining());
                     }
                     buf.advance(buf.remaining());
-                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                        LOG(LOG_INFO, "Zrle::Encoder::NeedMoreData::zrle remaining data  %zu", buf.av().size());
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Zrle::Encoder::NeedMoreData::zrle remaining data  %zu", buf.av().size());
                     return EncoderState::NeedMoreData;
                 }
                 size_t interesting_part = this->zlib_compressed_data_length - this->accumulator.size();
@@ -167,9 +157,7 @@ namespace
                 this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, drawable);
 
                 this->state = ZrleState::Exit;
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "Zrle::Encoder::Exit remaining data  %zu", buf.av().size());
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Zrle::Encoder::Exit remaining data  %zu", buf.av().size());
                 return EncoderState::Exit;
             }
             default:
@@ -177,9 +165,7 @@ namespace
                 break;
             }
 
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "Zrle::Encoder Error remaining data  %zu", buf.av().size());
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Zrle::Encoder Error remaining data  %zu", buf.av().size());
 
             LOG(LOG_ERR, "VNC Encoding: ZRLE, unexpected encoding stream exit");
             throw Error(ERR_VNC_ZRLE_PROTOCOL);
@@ -442,9 +428,7 @@ namespace
 
         void rawTile(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
         {
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
 
             const uint16_t tile_data_length = this->tile.cx * this->tile.cy * this->Bpp;
 
@@ -467,9 +451,7 @@ namespace
         //        +----------------+--------+------------------+
         void solidTile(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
         {
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "VNC Encoding: ZRLE, Solid tile (single color)");
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Encoding: ZRLE, Solid tile (single color)");
             const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
 
             auto const color_context= gdi::ColorCtx::depth16();
@@ -513,9 +495,7 @@ namespace
 
         void packedPalette(uint8_t subencoding, InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
         {
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "VNC Encoding: ZRLE, Packed palette types, palette size=%d", subencoding);
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Encoding: ZRLE, Packed palette types, palette size=%d", subencoding);
 
             uint8_t         tile_data[64*64*4];    // max raw tile size with 32 bpp
             const uint8_t * tile_data_p = tile_data;
@@ -638,9 +618,7 @@ namespace
         //        Where r is floor((runLength - 1) / 255).
         void plainRLE(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
         {
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
 
             uint8_t    tile_data[4*64*64];    // max size with 32 bpp
             uint8_t  * tmp_tile_data = tile_data;
@@ -716,9 +694,7 @@ namespace
 
         void paletteRLE(uint8_t subencoding, InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
         {
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
 
             const uint16_t   palette_size  = (subencoding & 0x7F) * this->Bpp;
 
@@ -786,4 +762,3 @@ Encoder zrle_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect, Zdecompress
 
 } // namespace Encoder
 } // namespace VNC
-

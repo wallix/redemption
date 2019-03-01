@@ -409,4 +409,3 @@ namespace CHANNELS {
         }
     };  // struct VirtualChannelPDU
 }   // namespace CHANNELS
-

@@ -276,12 +276,8 @@ public:
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "Creation of new mod 'VNC'");
-        }
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "server_is_apple=%s", (server_is_apple ? "yes" : "no"));
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "server_is_apple=%s", (server_is_apple ? "yes" : "no"));
 
         ::time(&this->beginning);
 
@@ -807,9 +803,7 @@ public:
 
     void initial_clear_screen(gdi::GraphicApi & drawable)
     {
-        if (bool(this->verbose & VNCVerbose::connection)) {
-            LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
 
         // set almost null cursor, this is the little dot cursor
         drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
@@ -835,9 +829,7 @@ public:
         this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
-        if (bool(this->verbose & VNCVerbose::connection)) {
-            LOG(LOG_INFO, "VNC screen cleaning ok\n");
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "VNC screen cleaning ok\n");
 
         RDPECLIP::GeneralCapabilitySet general_caps(
             RDPECLIP::CB_CAPS_VERSION_1,
@@ -949,9 +941,7 @@ public:
         // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
 
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
 
         IF_ENABLE_METRICS(key_pressed());
 
@@ -1021,9 +1011,7 @@ public:
     }
 
     void send_keyevent(uint8_t down_flag, uint32_t key) {
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
         StaticOutStream<8> stream;
         stream.out_uint8(4);
         stream.out_uint8(down_flag); /* down/up flag */
@@ -1284,9 +1272,7 @@ protected:
         if (this->state == UP_AND_RUNNING) {
             if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    if (bool(this->verbose & VNCVerbose::clipboard)) {
-                        LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
 
                     const size_t utf8_data_length =
                         data_length / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes + 1;
@@ -1298,9 +1284,7 @@ protected:
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
                 else {
-                    if (bool(this->verbose & VNCVerbose::clipboard)) {
-                        LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
 
                     const size_t latin1_data_length = data_length / sizeof(uint16_t) + 1;
                     std::unique_ptr<uint8_t[]> latin1_data(new uint8_t[latin1_data_length]);
@@ -1313,9 +1297,7 @@ protected:
             }
             else {
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    if (bool(this->verbose & VNCVerbose::clipboard)) {
-                        LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
 
                     const size_t utf8_data_length = data_length * 2 + 1;
                     auto utf8_data = std::make_unique<uint8_t[]>(utf8_data_length);
@@ -1327,9 +1309,7 @@ protected:
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
                 else {
-                    if (bool(this->verbose & VNCVerbose::clipboard)) {
-                        LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> Latin-1");
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> Latin-1");
 
                     client_cut_text(::char_ptr_cast(data));
                 }
@@ -1611,9 +1591,7 @@ protected:
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & gd) override
     {
-        if (bool(this->verbose & VNCVerbose::draw_event)) {
-            LOG(LOG_INFO, "vnc::draw_event");
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 
         this->server_data_buf.read_from(this->t);
 
@@ -1626,9 +1604,7 @@ public:
         uint64_t const data_server_after = this->server_data_buf.remaining();
         IF_ENABLE_METRICS(data_from_server(data_server_before - data_server_after));
 
-        if (bool(this->verbose & VNCVerbose::draw_event)) {
-            LOG(LOG_INFO, "Remaining in buffer : %" PRIu64, data_server_after);
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "Remaining in buffer : %" PRIu64, data_server_after);
 
         this->check_timeout();
     }
@@ -1643,9 +1619,7 @@ private:
             return false;
 
         case UP_AND_RUNNING:
-            if (bool(this->verbose & VNCVerbose::draw_event)) {
-                LOG(LOG_INFO, "state=UP_AND_RUNNING");
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "state=UP_AND_RUNNING");
 
             try {
                 while (this->up_and_running_ctx.run(this->server_data_buf, gd, *this)) {
@@ -1668,9 +1642,7 @@ private:
 
         case WAIT_SECURITY_TYPES:
             {
-                if (bool(this->verbose & VNCVerbose::connection)) {
-                    LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "state=WAIT_SECURITY_TYPES");
 
                 size_t const protocol_version_len = 12;
 
@@ -1729,9 +1701,7 @@ private:
             return true;
 
         case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM:
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "Receiving VNC Server Random");
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Receiving VNC Server Random");
 
             {
                 if (!this->password_ctx.run(this->server_data_buf)) {
@@ -1748,9 +1718,7 @@ private:
                 rfbDes(random_buf, random_buf);
                 rfbDes(random_buf + 8, random_buf + 8);
 
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "Sending Password");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Sending Password");
                 this->t.send(random_buf, 16);
                 IF_ENABLE_METRICS(data_from_client(16));
             }
@@ -1760,15 +1728,11 @@ private:
         case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE:
             {
                 // sec result
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "Waiting for password ack");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
                 if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                     if (status) {
-                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "vnc password ok\n");
-                        }
+                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "vnc password ok\n");
                     }
                     else {
                         LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
@@ -1798,15 +1762,11 @@ private:
 
         case WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE:
             {
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "Waiting for password ack");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
                 if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                     if (status) {
-                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "MS LOGON password ok\n");
-                        }
+                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "MS LOGON password ok\n");
                     }
                     else {
                         LOG(LOG_INFO, "MS LOGON password FAILED. Reason: %.*s",
@@ -2074,32 +2034,24 @@ private:
 
             switch (this->front.server_resize(this->width, this->height, this->bpp)){
             case FrontAPI::ResizeResult::instant_done:
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "no resizing needed");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "no resizing needed");
                 // no resizing needed
                 this->state = DO_INITIAL_CLEAR_SCREEN;
                 break;
             case FrontAPI::ResizeResult::remoteapp:
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "resizing remoteapp");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "resizing remoteapp");
                 if (this->rail_client_execute) {
                     this->rail_client_execute->adjust_window_to_mod();
                 }
                 // RZ: Continue with FrontAPI::ResizeResult::no_need
                 REDEMPTION_CXX_FALLTHROUGH;
             case FrontAPI::ResizeResult::no_need:
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "no resizing needed");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "no resizing needed");
                 // no resizing needed
                 this->state = DO_INITIAL_CLEAR_SCREEN;
                 break;
             case FrontAPI::ResizeResult::done:
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "resizing done");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "resizing done");
                 // resizing done
                 this->state = WAIT_CLIENT_UP_AND_RUNNING;
                 break;
@@ -2278,9 +2230,7 @@ private:
                         this->cy = stream.in_uint16_be();
                         this->encoding = stream.in_sint32_be();
 
-                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
-                        }
+                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
 
                         --this->num_recs;
 
@@ -2677,9 +2627,7 @@ private:
             this->remaining_data_length = this->data_length;
             buf.advance(7);
 
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", this->data_length);
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", this->data_length);
 
             this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
 
@@ -2821,9 +2769,7 @@ private:
         CHANNELS::ChannelNameId mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags)
     {
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_vnc::send_to_front_channel");
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::send_to_front_channel");
 
         const CHANNELS::ChannelDef * front_channel =
             this->front.get_channel_list().get_by_name(mod_channel_name);
@@ -2841,9 +2787,7 @@ public:
         uint32_t flags
     ) override
     {
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::send_to_mod_channel");
 
         if (this->state != UP_AND_RUNNING) {
             return;
@@ -2852,9 +2796,7 @@ public:
         if (front_channel_name == channel_names::cliprdr) {
             this->clipboard_send_to_vnc_server(chunk, length, flags);
         }
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_vnc::send_to_mod_channel done");
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::send_to_mod_channel done");
     } // send_to_mod_channel
 
 private:
@@ -3348,9 +3290,7 @@ private:
                 assert(this->to_vnc_clipboard_data_size);
 
                 // Virtual channel data span in multiple Virtual Channel PDUs.
-                if (bool(this->verbose & VNCVerbose::clipboard)) {
-                    LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc_server: an other trunk");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::clipboard_send_to_vnc_server: an other trunk");
 
                 if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) != 0) {
                     LOG(LOG_ERR, "mod_vnc::clipboard_send_to_vnc_server: flag CHANNEL_FLAG_FIRST unexpected");
@@ -3413,18 +3353,14 @@ private:
             }
             break;
         }
-        if (bool(this->verbose & VNCVerbose::clipboard)) {
-            LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc_server: done");
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::clipboard_send_to_vnc_server: done");
     } // clipboard_send_to_vnc_server
 
     // Front calls this member function when it became up and running.
 public:
     void rdp_input_up_and_running() override {
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "Client up and running");
-            }
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
             this->state = DO_INITIAL_CLEAR_SCREEN;
             this->wait_client_up_and_running_event = this->session_reactor.create_graphic_event()
             .on_action([this](auto ctx, gdi::GraphicApi & drawable){

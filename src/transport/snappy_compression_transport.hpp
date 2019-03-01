@@ -232,4 +232,3 @@ public:
         this->target_transport.timestamp(now);
     }
 };  // class SnappyCompressionOutTransport
-

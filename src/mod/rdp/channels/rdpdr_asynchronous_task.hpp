@@ -185,9 +185,7 @@ public:
         try {
             auto number_of_bytes_read = rdpdr_in_file_read(this->file_descriptor, out_stream.get_current(), number_of_bytes_to_read);
             out_stream.out_skip_bytes(number_of_bytes_read);
-            if (bool(this->verbose & RDPVerbose::asynchronous_task)) {
-                LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%zu", number_of_bytes_read);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::asynchronous_task), LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesRead=%zu", number_of_bytes_read);
             this->Offset += number_of_bytes_read;
             this->remaining_number_of_bytes_to_read -= number_of_bytes_read;
             if (0 == this->remaining_number_of_bytes_to_read) {
