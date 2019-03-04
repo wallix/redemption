@@ -383,9 +383,6 @@ public:
                 mod_rdp_params.enable_glyph_cache              = true;
 //                 mod_rdp_params.enable_ninegrid_bitmap          = true;
                 mod_rdp_params.enable_remotefx 				   = this->config.enable_remotefx;
-                std::string allow_channels                     = "*";
-                mod_rdp_params.allow_channels                  = &allow_channels;
-                mod_rdp_params.deny_channels = nullptr;
                 mod_rdp_params.file_system_params.enable_rdpdr_data_analysis = false;
 
                 const bool is_remote_app = this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
@@ -404,10 +401,7 @@ public:
                         this->config.rDPRemoteAppConfig);
                 }
 
-                const ChannelsAuthorizations channels_authorizations(
-                    mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
-                    mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
-                  );
+                const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
                 this->unique_mod = new_mod_rdp(
                     *this->socket

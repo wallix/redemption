@@ -155,9 +155,6 @@ struct ModRDPParams
 
     uint32_t password_printing_mode = 0;
 
-    const std::string * allow_channels = nullptr;
-    const std::string * deny_channels = nullptr;
-
     bool bogus_sc_net_size = true;
     bool bogus_refresh_rect = true;
 
@@ -245,7 +242,6 @@ struct ModRDPParams
         auto hidden_or_null = [](bool x) -> char const * { return x ? "<hidden>" : "<null>"; };
         auto s_or_null = [](char const * s) -> char const * { return s ? s : "<null>"; };
         auto s_or_none = [](char const * s) -> char const * { return s ? s : "<none>"; };
-        auto str_or_none = [](std::string const * str) -> char const * { return str ? str->c_str() : "<none>"; };
         auto from_sec = [](std::chrono::seconds sec) -> unsigned { return sec.count(); };
         auto from_millisec = [](std::chrono::milliseconds millisec) -> unsigned { return millisec.count(); };
 
@@ -353,9 +349,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             persist_bitmap_cache_on_disk);
 
         RDP_PARAMS_LOG("%u",     RDP_PARAMS_LOG_GET,    password_printing_mode);
-
-        RDP_PARAMS_LOG("%s",     str_or_none,           allow_channels);
-        RDP_PARAMS_LOG("%s",     str_or_none,           deny_channels);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_sc_net_size);
 

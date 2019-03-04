@@ -146,9 +146,6 @@ struct RdpClient
         mod_rdp_params.enable_fastpath            = true;
         mod_rdp_params.enable_new_pointer         = true;
         mod_rdp_params.enable_glyph_cache         = true;
-        std::string allow_channels                = "*";
-        mod_rdp_params.allow_channels             = &allow_channels;
-        mod_rdp_params.deny_channels              = nullptr;
         mod_rdp_params.server_cert_check          = ServerCertCheck::always_succeed;
         mod_rdp_params.primary_drawing_orders_support -= TS_NEG_INDEX_INDEX;
         mod_rdp_params.primary_drawing_orders_support -= TS_NEG_DSTBLT_INDEX;

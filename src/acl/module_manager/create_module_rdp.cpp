@@ -272,15 +272,10 @@ void ModuleManager::create_mod_rdp(
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
 
-
-    mod_rdp_params.allow_channels                      = &(ini.get<cfg::mod_rdp::allow_channels>());
-    mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
-
     const ChannelsAuthorizations channels_authorizations(
-        mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
-        mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
-      );
-
+        ini.get<cfg::mod_rdp::allow_channels>(),
+        ini.get<cfg::mod_rdp::deny_channels>()
+    );
 
     try {
         const char * const name = "RDP Target";
