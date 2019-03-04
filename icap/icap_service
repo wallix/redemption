@@ -1,0 +1,142 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# kate: space-indent on; tab-width 4; indent-width 4; replace-tabs on; eol unix;
+
+
+
+import socket
+import argparse
+import select
+import sys
+import os
+import Queue
+from icap_file_request import ICAPFileRequest
+
+
+
+def msg_received(client):
+    receive_data = ""
+    message = ""
+    ender = ""        
+
+    while ender != "0\r\n":
+        receive_data = client.recv(255)
+        if receive_data != "":
+            ender = receive_data[-3:]
+            message += receive_data
+            receive_data = ""
+
+    if message != "":
+
+        sequence = (message+" ").split("0\r\n")
+
+        for tram in sequence:
+            
+            if tram != " ":
+
+                msg_type = tram[0]
+                data = tram[1:(len(message)-3)]
+
+                if msg_type == "0": #new_file_type_code:
+                    info = data.split("\r\n")
+                    file_id   = info[0]
+                    file_name = info[1]
+                    file_size = info[2]
+
+                    print "New file id="+file_id+" name="+file_name+" size="+file_size
+
+                    file_to_check = ICAPFileRequest(host, localhost)
+                    file_list[file_id] = file_to_check
+                    file_list[file_id].start(file_name, int(file_size))
+                    
+                elif msg_type == "1": #data_file_type_code:
+
+                    file_id = data[0]
+                    data_file = data[1:]
+                    #print "file id="+file_id+" data_size="+str(len(data_file))+" data:"
+
+                    res = ""
+                    if file_list[file_id].open:
+                        res = file_list[file_id].receive_data(data_file, len(data_file))
+                    else:
+                        res = "CLOSED"
+                        
+                    if res != "WAIT":
+                        del file_list[file_id]
+                        print "File (id="+file_id+") closed"
+                        
+                        client.send(res+"0\r\n")
+                        client.close()
+                        
+                        print "resultat="+res
+
+
+
+if __name__ == '__main__':
+    
+    host      = "127.0.0.1"
+    localhost = "127.0.1.1"
+    socket_path = "socket/redemption-icap-service-sock"
+
+    parser = argparse.ArgumentParser(description='Parameters for icap_client:')
+
+    parser.add_argument('--host', '-s', dest='host', type=str, required=False,
+                        help='set host')
+    parser.add_argument('--local', '-l', dest='localhost', type=str, required=False,
+                        help='set localhost')
+    parser.add_argument('--dir', '-d', dest='socket_path', type=str, required=False,
+                        help='set socket path')
+
+    args = parser.parse_args()
+    if args.host:
+        host = args.host
+    if args.localhost:
+        localhost = args.localhost
+    if args.socket_path:
+        socket_path = args.socket_path
+    
+    try:
+        os.unlink(socket_path)
+    except OSError:
+        if os.path.exists(socket_path):
+            raise
+
+    file_list  = {}
+
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(socket_path)
+    s.listen(100)
+
+    inputs = [ s ]
+    outputs = [ ]
+    message_queues = {}
+
+    while inputs:
+        readable, writable, exceptional = select.select(inputs, outputs, inputs)
+
+        for sock in readable:
+
+            if sock is s:
+                
+                client, address = s.accept()
+                print "Connection"
+                inputs.append(client)
+
+                message_queues[client] = Queue.Queue()
+
+            else:
+                msg_received(client)
+
+                del message_queues[client]
+                index = inputs.index(client)
+                del inputs[index]
+
+
+        
+
+        
+
+
+
+    

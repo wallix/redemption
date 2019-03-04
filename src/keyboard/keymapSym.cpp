@@ -1008,10 +1008,6 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
 
-//     uint16_t keyboardFlags_pos = keyboardFlags;
-//     if (keyboardFlags_pos & KBDFLAGS_EXTENDED) {
-//         keyboardFlags_pos -=  KBDFLAGS_EXTENDED;
-//     }
     uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
     if ((keyboardFlags & KBDFLAGS_EXTENDED) && (keyCode == LEFT_ALT)) {
         extendedKeyCode = RIGHT_ALT;
@@ -1468,7 +1464,7 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 //                                         case '@':
 //                                             if (this->is_alt_pressed()) {
 //                                                 this->remove_state_mode = true;
-//                                                 this->push_sym(this->is_right_alt_pressed() ? KS_Alt_R : KS_Alt_LL);
+//                                                 this->push_sym(this->is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
 //                                                 this->push_sym(0xa4); /* @ */
 //                                                 this->push_sym(this->is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
 //                                             } else {

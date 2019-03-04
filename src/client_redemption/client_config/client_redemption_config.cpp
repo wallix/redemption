@@ -455,9 +455,9 @@ void ClientConfig::setAccountData(ClientRedemptionConfig & config)  {
             line = "";
         }
 
-//         if (config._accountNB < int(config._accountData.size())) {
-//             config._accountNB = accountNB;
-//         }
+        if (config._accountNB < int(config._accountData.size())) {
+            config._accountNB = accountNB;
+        }
     }
 }
 
@@ -471,7 +471,7 @@ void ClientConfig::writeAccoundData(const std::string& ip, const std::string& na
         std::string title(ip + " - " + name);
 
         for (int i = 0; i < config._accountNB; i++) {
-            if (config._accountData[i].title == title) {
+            if (config._accountData[i].ip == ip && config._accountData[i].name == name) {
                 alreadySet = true;
                 config._last_target_index = i;
                 config._accountData[i].pwd  = pwd;

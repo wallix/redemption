@@ -565,7 +565,7 @@ public:
         switch (e->button()) {
             case Qt::LeftButton:
                 if (this->main_tab) {
-                    this->main_tab->account_index_to_drop = this->accountData.index;
+                    this->main_tab->account_index_to_drop = this->accountData.index+1;
                     this->main_tab->drop_account();
                     this->main_tab->account_index_to_drop = -1;
                     this->main_tab->setCursor(Qt::ArrowCursor);
