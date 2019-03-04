@@ -160,10 +160,8 @@ public:
 
             out_stream.out_uint32_le(this->total_number_of_bytes_to_read);  // length(4)
 
-            if (bool(this->verbose & RDPVerbose::asynchronous_task)) {
-                LOG(LOG_INFO, "RdpdrDriveReadTask::run: Length=%u",
-                    this->remaining_number_of_bytes_to_read);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::asynchronous_task), LOG_INFO,
+                "RdpdrDriveReadTask::run: Length=%u", this->remaining_number_of_bytes_to_read);
 
             out_flags |= CHANNELS::CHANNEL_FLAG_FIRST;
 
@@ -175,10 +173,8 @@ public:
         const uint32_t number_of_bytes_to_read =
             std::min<uint32_t>(out_stream.tailroom(), this->remaining_number_of_bytes_to_read);
 
-        if (bool(this->verbose & RDPVerbose::asynchronous_task)) {
-            LOG(LOG_INFO, "RdpdrDriveReadTask::run: NumberOfBytesToRead=%u",
-                number_of_bytes_to_read);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::asynchronous_task), LOG_INFO,
+            "RdpdrDriveReadTask::run: NumberOfBytesToRead=%u", number_of_bytes_to_read);
 
         rdpdr_in_file_seek(this->file_descriptor, this->Offset, SEEK_SET);
 

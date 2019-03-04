@@ -249,26 +249,22 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         bool add_known_device(uint32_t DeviceId, rdpdr::RDPDR_DTYP DeviceType, const char* PreferredDosName) {
             for (device_info_type const & info : this->device_info_inventory) {
                 if (info.device_id == DeviceId) {
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO,
-                            "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                                "\"%s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") is already"
-                                " in the device list. Old=\"%s\" (DeviceType=%" PRIu32 ")",
-                            PreferredDosName, DeviceId, underlying_cast(DeviceType),
-                            info.preferred_dos_name.c_str(), underlying_cast(info.device_type));
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device:"
+                        " \"%s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") is already"
+                        " in the device list. Old=\"%s\" (DeviceType=%" PRIu32 ")",
+                        PreferredDosName, DeviceId, underlying_cast(DeviceType),
+                        info.preferred_dos_name.c_str(), underlying_cast(info.device_type));
 
                     return false;
                 }
             }
 
             this->device_info_inventory.push_back({ DeviceId, DeviceType, PreferredDosName });
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                        "Add \"%s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") to known device list.",
-                    PreferredDosName, DeviceId, underlying_cast(DeviceType));
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device:"
+                " Add \"%s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") to known device list.",
+                PreferredDosName, DeviceId, underlying_cast(DeviceType));
 
             return true;
         }
@@ -334,13 +330,10 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             for (auto iter = this->device_info_inventory.begin();
                  iter != this->device_info_inventory.end(); ++iter) {
                 if (iter->device_id == DeviceId) {
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO,
-                            "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device: "
-                                "Remove \"%s\"(DeviceId=%" PRIu32 ") from known device list.",
-                            iter->preferred_dos_name,
-                            DeviceId);
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device:"
+                        " Remove \"%s\"(DeviceId=%" PRIu32 ") from known device list.",
+                        iter->preferred_dos_name, DeviceId);
 
                     unordered_erase(this->device_info_inventory, iter);
 
@@ -451,12 +444,10 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
                 uint32_t DeviceCount = chunk.in_uint32_le();
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
-                            "DeviceCount=%" PRIu32,
-                        DeviceCount);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request:"
+                    " DeviceCount=%" PRIu32,
+                    DeviceCount);
 
                 this->remaining_device_announce_request_header_stream.rewind();
             }
@@ -477,12 +468,10 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         this->remaining_device_announce_request_header_stream.out_copy_bytes(
                             chunk.get_current(), chunk.in_remain());
 
-                        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                            LOG(LOG_INFO,
-                                "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
-                                    "%zu byte(s) of request header are saved.",
-                                this->remaining_device_announce_request_header_stream.get_offset());
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                            "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request:"
+                            " %zu byte(s) of request header are saved.",
+                            this->remaining_device_announce_request_header_stream.get_offset());
 
                         break;
                     }
@@ -533,15 +522,12 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
                     this->remaining_device_announce_request_header_stream.rewind();
 
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO,
-                            "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
-                                "DeviceType=%s(%" PRIu32 ") DeviceId=%" PRIu32 " "
-                                "PreferredDosName=\"%s\" DeviceDataLength=%" PRIu32,
-                            rdpdr::get_DeviceType_name(static_cast<rdpdr::RDPDR_DTYP>(DeviceType)),
-                            DeviceType, DeviceId, PreferredDosName,
-                            DeviceDataLength);
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request:"
+                        " DeviceType=%s(%" PRIu32 ") DeviceId=%" PRIu32
+                        " PreferredDosName=\"%s\" DeviceDataLength=%" PRIu32,
+                        rdpdr::get_DeviceType_name(static_cast<rdpdr::RDPDR_DTYP>(DeviceType)),
+                        DeviceType, DeviceId, PreferredDosName, DeviceDataLength);
 
                     if (((DeviceType == rdpdr::RDPDR_DTYP_FILESYSTEM) &&
                          this->param_file_system_authorized) ||
@@ -722,9 +708,9 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
             uint8_t client_drive_device_list_remove_data[
                     // > rdpdr::SharedHeader::size()
-                    64    
+                    64
                     // DeviceCount(4)
-                    + 4     
+                    + 4
                     // DeviceId(4)
                     + 4 * max_number_of_removable_device
                 ];
@@ -744,7 +730,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             // DeviceCount(4)
             client_drive_device_list_remove_stream.out_clear_bytes(4);
 
-            // DeviceId(4) 
+            // DeviceId(4)
             ::check_throw(chunk, DeviceCount * 4,
                 "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove (2)",
                 ERR_RDP_DATA_TRUNCATED);
@@ -766,7 +752,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                     }
                 }
 
-                if (!device_removed 
+                if (!device_removed
                 && (number_of_removable_device < max_number_of_removable_device)) {
                     client_drive_device_list_remove_stream.out_uint32_le(DeviceId);
                     number_of_removable_device++;
@@ -1070,12 +1056,9 @@ public:
                 rdpdr::GeneralCapabilitySet::size(Version));
 
             if (need_enable_user_loggedon_pdu) {
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_general_capability_set: "
-                            "Allow the server to send a "
-                            "Server User Logged On packet.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_general_capability_set:"
+                    " Allow the server to send a Server User Logged On packet.");
 
                 general_capability_set.set_extendedPDU(
                     general_capability_set.extendedPDU() |
@@ -1083,13 +1066,11 @@ public:
             }
 
             if (need_deny_asyncio) {
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_general_capability_set: "
-                            "Deny user to send multiple simultaneous "
-                            "read or write requests on the same file from "
-                            "a redirected file system.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_general_capability_set:"
+                    " Deny user to send multiple simultaneous"
+                    " read or write requests on the same file from"
+                    " a redirected file system.");
 
                 general_capability_set.set_extraFlags1(
                     general_capability_set.extraFlags1() &
@@ -1130,11 +1111,9 @@ public:
         }
 
         const uint16_t numCapabilities = chunk.in_uint16_le();
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            LOG(LOG_INFO,
-                "FileSystemVirtualChannel::process_client_core_capability_response: "
-                    "numCapabilities=%u", numCapabilities);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+            "FileSystemVirtualChannel::process_client_core_capability_response:"
+            " numCapabilities=%u", numCapabilities);
 
         chunk.in_skip_bytes(2); // Padding(2)
 
@@ -1160,13 +1139,10 @@ public:
             const uint16_t CapabilityLength = chunk.in_uint16_le();
             const uint32_t Version          = chunk.in_uint32_le();
 
-            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                LOG(LOG_INFO,
-                    "FileSystemVirtualChannel::process_client_core_capability_response: "
-                        "CapabilityType=0x%04X CapabilityLength=%u "
-                        "Version=0x%X",
-                    CapabilityType, CapabilityLength, Version);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                "FileSystemVirtualChannel::process_client_core_capability_response:"
+                " CapabilityType=0x%04X CapabilityLength=%u Version=0x%X",
+                CapabilityType, CapabilityLength, Version);
 
             switch (CapabilityType) {
                 case rdpdr::CAP_GENERAL_TYPE:
@@ -1187,11 +1163,9 @@ public:
             if ((CapabilityType == rdpdr::CAP_DRIVE_TYPE) &&
                 (Version == rdpdr::DRIVE_CAPABILITY_VERSION_02)) {
                 this->device_capability_version_02_supported = true;
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_core_capability_response: "
-                            "Client supports DRIVE_CAPABILITY_VERSION_02.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_core_capability_response:"
+                    " Client supports DRIVE_CAPABILITY_VERSION_02.");
             }
         }
 
@@ -1323,14 +1297,12 @@ public:
             break;
 
             default:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
-                            "Undecoded FsInformationClass - %s(0x%X)",
-                        rdpdr::ServerDriveQueryDirectoryRequest::get_FsInformationClass_name(
-                            FsInformationClass),
-                        FsInformationClass);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_WARNING,
+                    "FileSystemVirtualChannel::process_client_drive_directory_control_response:"
+                    " Undecoded FsInformationClass - %s(0x%X)",
+                    rdpdr::ServerDriveQueryDirectoryRequest::get_FsInformationClass_name(
+                        FsInformationClass),
+                    FsInformationClass);
             break;
         }
 
@@ -1406,14 +1378,12 @@ public:
             break;
 
             default:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::process_client_drive_query_information_response: "
-                            "Undecoded FsInformationClass - %s(0x%X)",
-                        rdpdr::ServerDriveQueryInformationRequest::get_FsInformationClass_name(
-                            FsInformationClass),
-                        FsInformationClass);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_WARNING,
+                    "FileSystemVirtualChannel::process_client_drive_query_information_response:"
+                    " Undecoded FsInformationClass - %s(0x%X)",
+                    rdpdr::ServerDriveQueryInformationRequest::get_FsInformationClass_name(
+                        FsInformationClass),
+                    FsInformationClass);
             break;
         }
 
@@ -1500,14 +1470,11 @@ public:
             break;
 
             default:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::process_client_drive_query_volume_information_response: "
-                            "Undecoded FsInformationClass - %s(0x%X)",
-                        rdpdr::get_FsInformationClass_name(
-                            FsInformationClass),
-                        FsInformationClass);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_WARNING,
+                    "FileSystemVirtualChannel::process_client_drive_query_volume_information_response:"
+                    " Undecoded FsInformationClass - %s(0x%X)",
+                    rdpdr::get_FsInformationClass_name(FsInformationClass),
+                    FsInformationClass);
             break;
         }
 
@@ -1581,25 +1548,21 @@ public:
         const uint32_t     extra_data    = request_iter->extra_data;
         const std::string& file_path     = request_iter->file_path;
 
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            LOG(LOG_INFO,
-                "FileSystemVirtualChannel::process_client_drive_io_response: "
-                    "FileId=%u MajorFunction=%s(0x%08X) extra_data=0x%X "
-                    "file_path=\"%s\"",
-                FileId,
-                rdpdr::get_MajorFunction_name(MajorFunction),
-                MajorFunction, extra_data, file_path.c_str());
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+            "FileSystemVirtualChannel::process_client_drive_io_response:"
+            " FileId=%u MajorFunction=%s(0x%08X) extra_data=0x%X"
+            " file_path=\"%s\"",
+            FileId,
+            rdpdr::get_MajorFunction_name(MajorFunction),
+            MajorFunction, extra_data, file_path);
 
         switch (MajorFunction)
         {
             case rdpdr::IRP_MJ_CREATE:
             {
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_drive_io_response: "
-                            "Create request.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_drive_io_response:"
+                    " Create request.");
 
                 rdpdr::DeviceCreateResponse device_create_response;
 
@@ -1658,15 +1621,13 @@ public:
                     if (p_device_name) {
                         std::string target_file_name = *p_device_name + file_path;
 
-                        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                            LOG(LOG_INFO,
-                                "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                    "Add \"%s\" to known file list. "
-                                    "DeviceId=%" PRIu32 " FileId=%" PRIu32,
-                                target_file_name,
-                                this->client_device_io_response.DeviceId(),
-                                device_create_response.FileId());
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                            "FileSystemVirtualChannel::process_client_drive_io_response:"
+                            " Add \"%s\" to known file list."
+                            " DeviceId=%" PRIu32 " FileId=%" PRIu32,
+                            target_file_name,
+                            this->client_device_io_response.DeviceId(),
+                            device_create_response.FileId());
 
                         this->device_io_target_info_inventory.push_back({
                             this->client_device_io_response.DeviceId(),
@@ -1694,11 +1655,9 @@ public:
 
             case rdpdr::IRP_MJ_CLOSE:
             {
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_drive_io_response: "
-                            "Close request.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_drive_io_response:"
+                    " Close request.");
 
                 if (this->device_io_target_info_inventory.end() != target_iter) {
                     rdpdr::RDPDR_DTYP const device_type =
@@ -1729,12 +1688,10 @@ public:
                                         digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
                                         digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
 
-                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                        LOG(LOG_INFO,
-                                            "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                                "File reading. Length=%" PRId64 " SHA-256=%s",
-                                            target_iter->end_of_file, digest_s);
-                                    }
+                                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                                        "FileSystemVirtualChannel::process_client_drive_io_response:"
+                                        " File reading. Length=%" PRId64 " SHA-256=%s",
+                                        target_iter->end_of_file, digest_s);
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
                                     auto const info = key_qvalue_pairs({
@@ -1876,15 +1833,13 @@ public:
                         }
                     }
 
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO,
-                            "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                "Remove \"%s\" from known file list. "
-                                "DeviceId=%" PRIu32 " FileId=%" PRIu32 " EndOfFile=%" PRId64,
-                            file_path.c_str(),
-                            this->client_device_io_response.DeviceId(),
-                            FileId, target_iter->end_of_file);
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "FileSystemVirtualChannel::process_client_drive_io_response:"
+                        " Remove \"%s\" from known file list."
+                        " DeviceId=%" PRIu32 " FileId=%" PRIu32 " EndOfFile=%" PRId64,
+                        file_path.c_str(),
+                        this->client_device_io_response.DeviceId(),
+                        FileId, target_iter->end_of_file);
 
                     unordered_erase(this->device_io_target_info_inventory, target_iter);
                 }
@@ -1908,12 +1863,10 @@ public:
 
                 request_iter->remaining = Length;
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_drive_io_response: "
-                            "Read request. Length=%" PRIu32,
-                        Length);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_drive_io_response:"
+                    " Read request. Length=%" PRIu32,
+                    Length);
 
                 if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     this->update_exchanged_data(Length);
@@ -1949,11 +1902,9 @@ public:
             break;
 
             case rdpdr::IRP_MJ_WRITE:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_drive_io_response: "
-                            "Write request.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_drive_io_response:"
+                    " Write request.");
 
                 if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     if (this->device_io_target_info_inventory.end() != target_iter) {
@@ -2071,14 +2022,11 @@ public:
             break;
 
             default:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::process_client_drive_io_response: "
-                            "Undecoded Drive I/O Response - "
-                            "MajorFunction=%s(0x%08X)",
-                        rdpdr::get_MajorFunction_name(MajorFunction),
-                        MajorFunction);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_WARNING,
+                    "FileSystemVirtualChannel::process_client_drive_io_response:"
+                    " Undecoded Drive I/O Response - MajorFunction=%s(0x%08X)",
+                    rdpdr::get_MajorFunction_name(MajorFunction),
+                    MajorFunction);
             break;
         }   // switch (MajorFunction)
 
@@ -2116,12 +2064,10 @@ public:
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
             override
     {
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            LOG(LOG_INFO,
-                "FileSystemVirtualChannel::process_client_message: "
-                    "total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%" PRIu32,
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+            "FileSystemVirtualChannel::process_client_message:"
+            " total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%" PRIu32,
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
             const bool send              = false;
@@ -2182,11 +2128,9 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_message: "
-                            "Client Device List Announce Request");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_message:"
+                    " Client Device List Announce Request");
 
                 send_message_to_server =
                     this->process_client_device_list_announce_request(
@@ -2216,11 +2160,9 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_message: "
-                            "Client Drive I/O Response");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_message:"
+                    " Client Drive I/O Response");
 
                 send_message_to_server =
                     this->process_client_drive_io_response(
@@ -2231,11 +2173,9 @@ public:
                 assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_message: "
-                            "Client Core Capability Response");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_message:"
+                    " Client Core Capability Response");
 
                 send_message_to_server =
                     this->process_client_core_capability_response(
@@ -2246,11 +2186,9 @@ public:
                 assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_message: "
-                            "Client Drive Device List Remove");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_client_message:"
+                    " Client Drive Device List Remove");
 
                 this->device_redirection_manager.process_client_drive_device_list_remove(
                     total_length, flags, chunk);
@@ -2266,21 +2204,16 @@ public:
             case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
             case rdpdr::PacketId::PAKID_PRN_USING_XPS:
             default:
-                if (bool(this->verbose & RDPVerbose::rdpdr) &&
-                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::process_client_message: "
-                            "Undecoded PDU - "
-                            "Component=%s(0x%" PRIX16 ") PacketId=%s(0x%" PRIX16 ")",
-                        rdpdr::SharedHeader::get_Component_name(
-                            this->server_message_header.component),
-                        static_cast<uint16_t>(
-                            this->server_message_header.component),
-                        rdpdr::SharedHeader::get_PacketId_name(
-                            this->server_message_header.packet_id),
-                        static_cast<uint16_t>(
-                            this->server_message_header.packet_id));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr)
+                    && (flags & CHANNELS::CHANNEL_FLAG_FIRST), LOG_WARNING,
+                    "FileSystemVirtualChannel::process_client_message: "
+                        "Undecoded PDU - Component=%s(0x%" PRIX16 ") PacketId=%s(0x%" PRIX16 ")",
+                    rdpdr::SharedHeader::get_Component_name(
+                        this->server_message_header.component),
+                    static_cast<uint16_t>(this->server_message_header.component),
+                    rdpdr::SharedHeader::get_PacketId_name(
+                        this->server_message_header.packet_id),
+                    static_cast<uint16_t>(this->server_message_header.packet_id));
             break;
         }   // switch (this->client_message_header.packet_id)
 
@@ -2696,13 +2629,11 @@ public:
                         );
                 StaticOutStream<65536> out_stream;
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Send proxy-managed Server Drive Query Information Request. "
-                            "FilePath=\"%s\"",
-                        file_path);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Send proxy-managed Server Drive Query Information Request. "
+                        "FilePath=\"%s\"",
+                    file_path);
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     shared_header.log(LOG_INFO);
@@ -2741,11 +2672,9 @@ public:
         switch (this->server_device_io_request.MajorFunction())
         {
             case rdpdr::IRP_MJ_CREATE:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Device Create Request");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Device Create Request");
 
                 send_message_to_client =
                     this->process_server_create_drive_request(
@@ -2753,11 +2682,9 @@ public:
             break;
 
             case rdpdr::IRP_MJ_CLOSE:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Device Close Request");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Device Close Request");
             break;
 
             case rdpdr::IRP_MJ_READ:
@@ -2776,12 +2703,10 @@ public:
                 offset    = chunk.in_uint64_le();
                 remaining = length;
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Read request. Length=%u Offset=%" PRIu64,
-                        length, offset);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Read request. Length=%u Offset=%" PRIu64,
+                    length, offset);
             break;
 
             case rdpdr::IRP_MJ_WRITE:
@@ -2802,12 +2727,10 @@ public:
                 offset    = chunk.in_uint64_le();
                 remaining = length;
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Write Request. Length=%" PRIu32 " Offset=%" PRIu64,
-                        length, offset);
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Write Request. Length=%" PRIu32 " Offset=%" PRIu64,
+                    length, offset);
 
                 chunk.in_skip_bytes(20);    // Padding(20)
 
@@ -2855,11 +2778,9 @@ public:
 
             case rdpdr::IRP_MJ_QUERY_VOLUME_INFORMATION:
             {
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Query volume information request");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Query volume information request");
 
                 rdpdr::ServerDriveQueryVolumeInformationRequest
                     server_drive_query_volume_information_request;
@@ -2878,11 +2799,9 @@ public:
 
             case rdpdr::IRP_MJ_QUERY_INFORMATION:
             {
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Server Drive Query Information Request");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Server Drive Query Information Request");
 
                 rdpdr::ServerDriveQueryInformationRequest
                     server_drive_query_information_request;
@@ -2900,11 +2819,9 @@ public:
             case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
                 if (this->server_device_io_request.MinorFunction() ==
                     rdpdr::IRP_MN_QUERY_DIRECTORY) {
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        LOG(LOG_INFO,
-                            "FileSystemVirtualChannel::process_server_drive_io_request: "
-                                "Server Drive Query Directory Request");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                        "FileSystemVirtualChannel::process_server_drive_io_request: "
+                            "Server Drive Query Directory Request");
 
                     rdpdr::ServerDriveQueryDirectoryRequest
                         server_drive_query_directory_request;
@@ -2924,11 +2841,9 @@ public:
 
             case rdpdr::IRP_MJ_SET_INFORMATION:
             {
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Server Drive Set Information Request");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Server Drive Set Information Request");
 
                 rdpdr::ServerDriveSetInformationRequest
                     server_drive_set_information_request;
@@ -2957,12 +2872,10 @@ public:
 
                         int64_t EndOfFile = chunk.in_sint64_le();
 
-                        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                            LOG(LOG_INFO,
-                                "FileSystemVirtualChannel::process_server_drive_io_request: "
-                                    "EndOfFile=%" PRId64,
-                                EndOfFile);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                            "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                "EndOfFile=%" PRId64,
+                            EndOfFile);
 
                         if (this->device_io_target_info_inventory.end() != target_iter) {
                             target_iter->end_of_file = EndOfFile;
@@ -2991,12 +2904,10 @@ public:
                         if (device_name) {
                             file_path =
                                 *device_name + rdp_file_rename_information.FileName();
-                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                LOG(LOG_INFO,
-                                    "FileSystemVirtualChannel::process_server_drive_io_request: "
-                                        "FileName=\"%s\"",
-                                    file_path.c_str());
-                            }
+                            LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                                "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                    "FileName=\"%s\"",
+                                file_path);
                         }
                     }
                     break;
@@ -3005,19 +2916,17 @@ public:
             break;
 
             default:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Undecoded Drive I/O Request - "
-                            "MajorFunction=%s(0x%08X) "
-                            "MinorFunction=%s(0x%08X)",
-                        rdpdr::get_MajorFunction_name(
-                            this->server_device_io_request.MajorFunction()),
-                        this->server_device_io_request.MajorFunction(),
-                        rdpdr::get_MinorFunction_name(
-                            this->server_device_io_request.MinorFunction()),
-                        this->server_device_io_request.MinorFunction());
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_WARNING,
+                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                        "Undecoded Drive I/O Request - "
+                        "MajorFunction=%s(0x%08X) "
+                        "MinorFunction=%s(0x%08X)",
+                    rdpdr::get_MajorFunction_name(
+                        this->server_device_io_request.MajorFunction()),
+                    this->server_device_io_request.MajorFunction(),
+                    rdpdr::get_MinorFunction_name(
+                        this->server_device_io_request.MinorFunction()),
+                    this->server_device_io_request.MinorFunction());
             break;
         }   // switch (this->server_device_io_request.MajorFunction())
 
@@ -3064,12 +2973,10 @@ public:
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
             override
     {
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            LOG(LOG_INFO,
-                "FileSystemVirtualChannel::process_server_message: "
-                    "total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%" PRIu32,
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+            "FileSystemVirtualChannel::process_server_message: "
+                "total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%" PRIu32,
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
             const bool send              = false;
@@ -3105,11 +3012,9 @@ public:
                 assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_message: "
-                            "Server Client ID Confirm");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_message: "
+                        "Server Client ID Confirm");
 
                 send_message_to_client =
                     this->process_server_client_id_confirm(total_length,
@@ -3120,22 +3025,18 @@ public:
                 assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_message: "
-                            "Server Device Announce Response");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_message: "
+                        "Server Device Announce Response");
 
                 this->device_redirection_manager.process_server_device_announce_response(
                     total_length, flags, chunk);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_message: "
-                            "Server Drive I/O Request");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_message: "
+                        "Server Drive I/O Request");
 
                 send_message_to_client =
                     this->process_server_drive_io_request(total_length,
@@ -3146,22 +3047,18 @@ public:
                 assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_message: "
-                            "Server Core Capability Request");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_message: "
+                        "Server Core Capability Request");
             break;
 
             case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
                 assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_message: "
-                            "Server User Logged On");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_message: "
+                        "Server User Logged On");
 
                 if (!this->user_logged_on) {
                     this->file_system_drive_manager.announce_drive(
@@ -3180,11 +3077,9 @@ public:
                 assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-                if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_server_message: "
-                            "Server Printer Set XPS Mode");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
+                    "FileSystemVirtualChannel::process_server_message: "
+                        "Server Printer Set XPS Mode");
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -3194,21 +3089,18 @@ public:
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE:
             case rdpdr::PacketId::PAKID_PRN_CACHE_DATA:
             default:
-                if (bool(this->verbose & RDPVerbose::rdpdr) &&
-                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-                    LOG(LOG_WARNING,
-                        "FileSystemVirtualChannel::process_server_message: "
-                            "Undecoded PDU - "
-                            "Component=%s(0x%" PRIX16 ") PacketId=%s(0x%" PRIX16 ")",
-                        rdpdr::SharedHeader::get_Component_name(
-                            this->server_message_header.component),
-                        static_cast<uint16_t>(
-                            this->server_message_header.component),
-                        rdpdr::SharedHeader::get_PacketId_name(
-                            this->server_message_header.packet_id),
-                        static_cast<uint16_t>(
-                            this->server_message_header.packet_id));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rdpdr)
+                    && (flags & CHANNELS::CHANNEL_FLAG_FIRST),
+                    LOG_WARNING,
+                    "FileSystemVirtualChannel::process_server_message: "
+                        "Undecoded PDU - "
+                        "Component=%s(0x%" PRIX16 ") PacketId=%s(0x%" PRIX16 ")",
+                    rdpdr::SharedHeader::get_Component_name(
+                        this->server_message_header.component),
+                    static_cast<uint16_t>(this->server_message_header.component),
+                    rdpdr::SharedHeader::get_PacketId_name(
+                        this->server_message_header.packet_id),
+                    static_cast<uint16_t>(this->server_message_header.packet_id));
             break;
         }   // switch (this->server_message_header.packet_id)
 

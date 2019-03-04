@@ -86,9 +86,8 @@ namespace
         {
             if (this->r.isempty())
             {
-                if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                    LOG(LOG_INFO, "Hextile::zrle Encoder done (empty rect)");
-                }
+                LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder),
+                    LOG_INFO, "Hextile::zrle Encoder done (empty rect)");
                 return EncoderState::Exit;
             }
 
@@ -373,9 +372,8 @@ namespace
                 } // switch subencoding
 
                 if (not this->next_tile()){
-                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                        LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (raw) %zu", uncompressed_data_buffer.in_remain());
-                    }
+                    LOG_IF(bool(this->verbose & VNCVerbose::hextile_encoder),
+                        LOG_INFO, "Hextile::hexTileraw Encoder done (raw) %zu", uncompressed_data_buffer.in_remain());
                     return;
                 }
             } // while

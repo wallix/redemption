@@ -129,11 +129,9 @@ struct ClipboardCapabilitiesReceive {
             }
         }
 
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_%s_message: "
-                    "Clipboard Capabilities PDU", clip_data.provider_name);
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_%s_message: "
+                "Clipboard Capabilities PDU", clip_data.provider_name);
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
         assert(1 == cCapabilitiesSets);
@@ -198,11 +196,9 @@ struct FilecontentsRequestReceive {
 struct ClientFilecontentsRequestSendBack {
 
     ClientFilecontentsRequestSendBack(const RDPVerbose verbose, uint32_t dwFlags, uint32_t streamID, BaseVirtualChannel * base_channel) {
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_client_filecontents_request: "
-                    "Requesting the contents of server file is denied.");
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_client_filecontents_request: "
+                "Requesting the contents of server file is denied.");
 
         StaticOutStream<256> out_stream;
 
@@ -244,11 +240,9 @@ struct ClientFilecontentsRequestSendBack {
 struct ServerFilecontentsRequestSendBack {
 
     ServerFilecontentsRequestSendBack(const RDPVerbose verbose, uint32_t dwFlags, uint32_t streamID, BaseVirtualChannel * base_channel) {
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_server_filecontents_request: "
-                    "Requesting the contents of server file is denied.");
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_server_filecontents_request: "
+                "Requesting the contents of server file is denied.");
 
         StaticOutStream<256> out_stream;
 
@@ -301,24 +295,20 @@ struct FormatDataRequestReceive {
 
         clip_data.requestedFormatId = chunk.in_uint32_le();
 
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_%s_format_data_request_pdu: "
-                    "requestedFormatId=%s(%u)", clip_side_data.provider_name,
-                RDPECLIP::get_FormatId_name(clip_data.requestedFormatId),
-                clip_data.requestedFormatId);
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_%s_format_data_request_pdu: "
+                "requestedFormatId=%s(%u)", clip_side_data.provider_name,
+            RDPECLIP::get_FormatId_name(clip_data.requestedFormatId),
+            clip_data.requestedFormatId);
     }
 };
 
 struct ServerFormatDataRequestSendBack {
 
     ServerFormatDataRequestSendBack(const RDPVerbose verbose, BaseVirtualChannel * base_channel) {
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
-                        "Client to server Clipboard operation is not allowed.");
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                "Client to server Clipboard operation is not allowed.");
 
         StaticOutStream<256> out_stream;
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
@@ -339,11 +329,9 @@ struct ClientFormatDataRequestSendBack {
     const uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
     ClientFormatDataRequestSendBack(const RDPVerbose verbose, BaseVirtualChannel * base_channel) {
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                    "Serveur to client Clipboard operation is not allowed.");
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
+                "Serveur to client Clipboard operation is not allowed.");
 
         StaticOutStream<256> out_stream;
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
@@ -630,11 +618,9 @@ struct ServerFormatDataResponseReceive {
 struct ServerMonitorReadySendBack {
 
     ServerMonitorReadySendBack(const RDPVerbose verbose, const bool current_use_long_format_names, BaseVirtualChannel * base_channel) {
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
-                    "Send Clipboard Capabilities PDU.");
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
+                "Send Clipboard Capabilities PDU.");
 
         RDPECLIP::GeneralCapabilitySet general_cap_set(
             RDPECLIP::CB_CAPS_VERSION_1,
@@ -655,11 +641,9 @@ struct ServerMonitorReadySendBack {
             caps_stream.get_data(),
             caps_stream.get_offset());
 
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
-                    "Send Format List PDU.");
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
+                "Send Format List PDU.");
 
         RDPECLIP::FormatListPDUEx format_list_pdu;
         format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
@@ -694,14 +678,12 @@ struct ServerFormatListReceive {
     ServerFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
         if (!client_use_long_format_names ||
             !server_use_long_format_names) {
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                        "Short Format Name%s variant of Format List PDU is used "
-                        "for exchanging updated format names.",
-                    ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)"
+            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::process_server_format_list_pdu: "
+                    "Short Format Name%s variant of Format List PDU is used "
+                    "for exchanging updated format names.",
+                ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)"
                                                            : ""));
-            }
 
             for (uint32_t remaining_data_length = in_header.dataLen();
                  remaining_data_length; ) {
@@ -724,13 +706,11 @@ struct ServerFormatListReceive {
                     chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
 
-                if (bool(verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                            "formatId=%s(%u) wszFormatName=\"%s\"",
-                        RDPECLIP::get_FormatId_name(formatId), formatId,
-                        utf8_string);
-                }
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
+                        "formatId=%s(%u) wszFormatName=\"%s\"",
+                    RDPECLIP::get_FormatId_name(formatId), formatId,
+                    utf8_string);
 
                 format_name_inventory[formatId] = ::char_ptr_cast(utf8_string);
 
@@ -750,12 +730,10 @@ struct ServerFormatListReceive {
             }
         }
         else {
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                        "Long Format Name variant of Format List PDU is used "
-                        "for exchanging updated format names.");
-            }
+            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::process_server_format_list_pdu: "
+                    "Long Format Name variant of Format List PDU is used "
+                    "for exchanging updated format names.");
 
             const size_t max_length_of_format_name = 256;
 
@@ -778,12 +756,10 @@ struct ServerFormatListReceive {
                     chunk.get_current(), adjusted_format_name_length,
                     utf8_string, size_of_utf8_string);
 
-                if (bool(verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                            "formatId=%s(%u) wszFormatName=\"%s\"",
-                        RDPECLIP::get_FormatId_name(formatId), formatId, utf8_string);
-                }
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
+                        "formatId=%s(%u) wszFormatName=\"%s\"",
+                    RDPECLIP::get_FormatId_name(formatId), formatId, utf8_string);
 
                 format_name_inventory[formatId] = ::char_ptr_cast(utf8_string);
 
@@ -812,14 +788,11 @@ struct ClientFormatListReceive {
     ClientFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
         if (!client_use_long_format_names ||
             !server_use_long_format_names) {
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                        "Short Format Name%s variant of Format List PDU is used "
-                        "for exchanging updated format names.",
-                    ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)"
-                                                           : ""));
-            }
+            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                    "Short Format Name%s variant of Format List PDU is used "
+                    "for exchanging updated format names.",
+                ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)" : ""));
 
             for (uint32_t remaining_data_length = in_header.dataLen();
                  remaining_data_length; ) {
@@ -850,13 +823,10 @@ struct ClientFormatListReceive {
                     chunk.get_current(), format_name_length, utf8_string,
                     size_of_utf8_string);
 
-                if (bool(verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                            "formatId=%s(%u) wszFormatName=\"%s\"",
-                        RDPECLIP::get_FormatId_name(formatId), formatId,
-                        utf8_string);
-                }
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                        "formatId=%s(%u) wszFormatName=\"%s\"",
+                    RDPECLIP::get_FormatId_name(formatId), formatId, utf8_string);
 
                 format_name_inventory[formatId] = ::char_ptr_cast(utf8_string);
 
@@ -876,12 +846,10 @@ struct ClientFormatListReceive {
             }
         }
         else {
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                        "Long Format Name variant of Format List PDU is used "
-                        "for exchanging updated format names.");
-            }
+            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                    "Long Format Name variant of Format List PDU is used "
+                    "for exchanging updated format names.");
 
             for (uint32_t remaining_data_length = in_header.dataLen();
                  remaining_data_length; ) {
@@ -916,13 +884,10 @@ struct ClientFormatListReceive {
                     chunk.get_current(), adjusted_format_name_length,
                     utf8_string, size_of_utf8_string);
 
-                if (bool(verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                            "formatId=%s(%u) wszFormatName=\"%s\"",
-                        RDPECLIP::get_FormatId_name(formatId), formatId,
-                        utf8_string);
-                }
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
+                        "formatId=%s(%u) wszFormatName=\"%s\"",
+                    RDPECLIP::get_FormatId_name(formatId), formatId, utf8_string);
 
                 format_name_inventory[formatId] = ::char_ptr_cast(utf8_string);
 
@@ -999,11 +964,9 @@ struct LockClipDataReceive {
 
            clip_receiver_side_data.clipDataId  = chunk.in_uint32_le();
 
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_%s_message: "
-                        "clipDataId=%u", clip_sender_side_data.provider_name, clip_receiver_side_data.clipDataId);
-            }
+            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::process_%s_message: "
+                    "clipDataId=%u", clip_sender_side_data.provider_name, clip_receiver_side_data.clipDataId);
 
             clip_receiver_side_data.file_stream_data_inventory[clip_receiver_side_data.clipDataId] = ClipboardSideData::file_info_inventory_type();
         }
@@ -1028,11 +991,9 @@ struct UnlockClipDataReceive {
 
             uint32_t const clipDataId = chunk.in_uint32_le();
 
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_%s_message: "
-                        "clipDataId=%u",clip_sender_side_data.provider_name, clipDataId);
-            }
+            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::process_%s_message: "
+                    "clipDataId=%u",clip_sender_side_data.provider_name, clipDataId);
 
             clip_receiver_side_data.file_stream_data_inventory.erase(clipDataId);
         }

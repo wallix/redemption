@@ -24,11 +24,10 @@ PrimaryDrawingOrdersSupport parse_extra_orders(char const* extra_orders, RDPVerb
 {
     PrimaryDrawingOrdersSupport orders_support;
 
-    if (bool(rdp_verbose & RDPVerbose::basic_trace)) {
-        LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
-    }
+    LOG_IF(bool(rdp_verbose & RDPVerbose::basic_trace), LOG_INFO,
+        "RDP Extra orders=\"%s\"", extra_orders);
 
-    bool verbose = bool(rdp_verbose & RDPVerbose::capabilities);
+    const bool verbose = bool(rdp_verbose & RDPVerbose::capabilities);
 
     char * end;
     char const * p = extra_orders;
