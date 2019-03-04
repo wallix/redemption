@@ -1172,9 +1172,8 @@ public:
 
     virtual ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override
     {
-        if (bool(this->config.verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "server_resize to (%u, %u, %d)", width, height, bpp);
-        }
+        LOG_IF(bool(this->config.verbose & RDPVerbose::graphics), LOG_INFO,
+            "server_resize to (%u, %u, %d)", width, height, bpp);
         return ResizeResult::instant_done;
     }
 

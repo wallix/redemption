@@ -216,7 +216,7 @@ private:
             LOG(LOG_ERR, "RemoteProgramsVirtualChannel::%s unexpected fragmentation flags=%.4x", message, flags);
             throw Error(ERR_RDP_DATA_CHANNEL_FRAGMENTATION);
         }
-        
+
         // orderLength(2)
         if (!chunk.in_check_rem(2)) {
             LOG(LOG_ERR, "Truncated RemoteProgramsVirtualChannel::%s::orderLength: expected=2 remains=%zu", message, chunk.in_remain());
@@ -269,11 +269,9 @@ private:
             !this->first_client_execute_ignored) {
             this->first_client_execute_ignored = true;
 
-            if (bool(this->verbose & RDPVerbose::rail)) {
-                LOG(LOG_INFO,
-                    "RemoteProgramsVirtualChannel::process_client_execute_pdu: "
-                        "First Client Execute PDU ignored.");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                "RemoteProgramsVirtualChannel::process_client_execute_pdu: "
+                    "First Client Execute PDU ignored.");
 
             return false;
         }
@@ -287,12 +285,10 @@ private:
             const char* remoteapplicationprogram =
                 (exe_of_file + sizeof(DUMMY_REMOTEAPP ":") - 1);
 
-            if (bool(this->verbose & RDPVerbose::rail)) {
-                LOG(LOG_INFO,
-                    "RemoteProgramsVirtualChannel::process_client_execute_pdu: "
-                        "remoteapplicationprogram=\"%s\"",
-                    remoteapplicationprogram);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                "RemoteProgramsVirtualChannel::process_client_execute_pdu: "
+                    "remoteapplicationprogram=\"%s\"",
+                remoteapplicationprogram);
 
             this->vars.set_acl<cfg::context::auth_notify>("rail_exec");
             this->vars.set_acl<cfg::context::auth_notify_rail_exec_flags>(cepdu.get_client_execute().flags);
@@ -478,12 +474,10 @@ public:
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length) override
     {
-        if (bool(this->verbose & RDPVerbose::rail)) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::process_client_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+            "RemoteProgramsVirtualChannel::process_client_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%u",
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::rail_dump)) {
             const bool send              = false;
@@ -506,11 +500,9 @@ public:
         switch (this->client_order_type)
         {
             case TS_RAIL_ORDER_ACTIVATE:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Activate PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Activate PDU");
 
                 send_message_to_server =
                     this->process_client_activate_pdu(
@@ -518,11 +510,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_CLIENTSTATUS:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Information PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Information PDU");
 
                 send_message_to_server =
                     this->process_client_information_pdu(
@@ -530,11 +520,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_COMPARTMENTINFO:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Compartment Status Information PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Compartment Status Information PDU");
 
                 send_message_to_server =
                     this->process_client_compartment_status_information_pdu(
@@ -542,11 +530,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_CLOAK:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Window Cloak State Change PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Window Cloak State Change PDU");
 
                 send_message_to_server =
                     this->process_client_window_cloak_state_change_pdu(
@@ -554,11 +540,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_EXEC:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Execute PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Execute PDU");
 
                 send_message_to_server =
                     this->process_client_execute_pdu(
@@ -568,11 +552,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_GET_APPID_REQ:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Get Application ID PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Get Application ID PDU");
 
                 send_message_to_server =
                     this->process_client_get_application_id_pdu(
@@ -580,11 +562,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_HANDSHAKE:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Handshake PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Handshake PDU");
 
                 send_message_to_server =
                     this->process_client_handshake_pdu(
@@ -592,11 +572,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_LANGBARINFO:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Language Bar Information PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Language Bar Information PDU");
 
                 send_message_to_server =
                     this->process_client_language_bar_information_pdu(
@@ -604,11 +582,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_LANGUAGEIMEINFO:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Language Profile Information PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Language Profile Information PDU");
 
                 send_message_to_server =
                     this->process_client_language_profile_information_pdu(
@@ -616,11 +592,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_NOTIFY_EVENT:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Notify Event PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Notify Event PDU");
 
                 send_message_to_server =
                     this->process_client_notify_event_pdu(
@@ -628,11 +602,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_SYSCOMMAND:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client System Command PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client System Command PDU");
 
                 send_message_to_server =
                     this->process_client_system_command_pdu(
@@ -640,11 +612,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_SYSPARAM:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client System Parameters Update PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client System Parameters Update PDU");
 
                 send_message_to_server =
                     this->process_client_system_parameters_update_pdu(
@@ -652,11 +622,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_SYSMENU:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client System Menu PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client System Menu PDU");
 
                 send_message_to_server =
                     this->process_client_system_menu_pdu(
@@ -664,11 +632,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_WINDOWMOVE:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Client Window Move PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Client Window Move PDU");
 
                 send_message_to_server =
                     this->process_client_window_move_pdu(
@@ -678,13 +644,11 @@ public:
             default:
                 assert(false);
 
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_client_message: "
-                            "Delivering unprocessed messages %s(%u) to server.",
-                        get_RAIL_orderType_name(this->client_order_type),
-                        static_cast<unsigned>(this->client_order_type));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_client_message: "
+                        "Delivering unprocessed messages %s(%u) to server.",
+                    get_RAIL_orderType_name(this->client_order_type),
+                    static_cast<unsigned>(this->client_order_type));
             break;
         }   // switch (this->client_order_type)
 
@@ -712,7 +676,7 @@ public:
     bool process_server_execute_result_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-    
+
         // TODO: see use of is_auth_application, looks like it is used for
         // executionflow control. We should avoid to do that
         bool is_auth_application = false;
@@ -734,13 +698,11 @@ public:
                     }
             );
         if (this->launch_pending_apps.end() != iter) {
-            if (bool(this->verbose & RDPVerbose::rail)) {
-                LOG(LOG_INFO,
-                    "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
-                        "Bastion Application found. OriginalExeOrFile=\"%s\" "
-                        "ExeOrFile=\"%s\"",
-                    iter->OriginalExeOrFile(), serpdu.ExeOrFile());
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
+                    "Bastion Application found. OriginalExeOrFile=\"%s\" "
+                    "ExeOrFile=\"%s\"",
+                iter->OriginalExeOrFile(), serpdu.ExeOrFile());
 
             serpdu.ExeOrFile(iter->OriginalExeOrFile());
 
@@ -987,12 +949,10 @@ public:
     {
         (void)out_asynchronous_task;
 
-        if (bool(this->verbose & RDPVerbose::rail)) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::process_server_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+            "RemoteProgramsVirtualChannel::process_server_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%u",
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::rail_dump)) {
             const bool send              = false;
@@ -1014,11 +974,9 @@ public:
         switch (this->server_order_type)
         {
             case TS_RAIL_ORDER_COMPARTMENTINFO:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server Compartment Status Information PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server Compartment Status Information PDU");
 
                 send_message_to_client =
                     this->process_server_compartment_status_information_pdu(
@@ -1026,11 +984,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_EXEC_RESULT:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server Execute Result PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server Execute Result PDU");
 
                 send_message_to_client =
                     this->process_server_execute_result_pdu(
@@ -1038,11 +994,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_GET_APPID_RESP:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server Get Application ID Response PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server Get Application ID Response PDU");
 
                 send_message_to_client =
                     this->process_server_get_application_id_response_pdu(
@@ -1050,11 +1004,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_HANDSHAKE:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server Handshake PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server Handshake PDU");
 
                 send_message_to_client =
                     this->process_server_handshake_pdu(
@@ -1062,11 +1014,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_HANDSHAKE_EX:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server HandshakeEx PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server HandshakeEx PDU");
 
                 send_message_to_client =
                     this->process_server_handshake_ex_pdu(
@@ -1074,11 +1024,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_LANGBARINFO:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server Language Bar Information PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server Language Bar Information PDU");
 
                 send_message_to_client =
                     this->process_server_language_bar_information_pdu(
@@ -1086,11 +1034,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_LOCALMOVESIZE:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server Move/Size Start/End PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server Move/Size Start/End PDU");
 
                 send_message_to_client =
                     this->process_server_move_size_start_or_end_pdu(
@@ -1098,11 +1044,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_MINMAXINFO:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server Min Max Info PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server Min Max Info PDU");
 
                 send_message_to_client =
                     this->process_server_min_max_info_pdu(
@@ -1110,11 +1054,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_SYSPARAM:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server System Parameters Update PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server System Parameters Update PDU");
 
                 send_message_to_client =
                     this->process_server_system_parameters_update_pdu(
@@ -1122,11 +1064,9 @@ public:
             break;
 
             case TS_RAIL_ORDER_ZORDER_SYNC:
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Server Z-Order Sync Information PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Server Z-Order Sync Information PDU");
 
                 send_message_to_client =
                     this->process_server_z_order_sync_information_pdu(
@@ -1136,13 +1076,11 @@ public:
             default:
                 assert(false);
 
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::process_server_message: "
-                            "Delivering unprocessed messages %s(%u) to client.",
-                        get_RAIL_orderType_name(this->server_order_type),
-                        static_cast<unsigned>(this->server_order_type));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::process_server_message: "
+                        "Delivering unprocessed messages %s(%u) to client.",
+                    get_RAIL_orderType_name(this->server_order_type),
+                    static_cast<unsigned>(this->server_order_type));
             break;
         }   // switch (this->server_order_type)
 
@@ -1163,17 +1101,15 @@ public:
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
             const char* exe_or_file, const char* working_dir,
             const char* arguments, const char* account, const char* password) override {
-        if (bool(this->verbose & RDPVerbose::rail)) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::auth_rail_exec: "
-                    "original_exe_or_file=\"%s\" "
-                    "exe_or_file=\"%s\" "
-                    "working_dir=\"%s\" "
-                    "arguments=\"%s\" "
-                    "account=\"%s\" "
-                    "flags=%u",
-                original_exe_or_file, exe_or_file, working_dir, arguments, account, flags);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+            "RemoteProgramsVirtualChannel::auth_rail_exec: "
+                "original_exe_or_file=\"%s\" "
+                "exe_or_file=\"%s\" "
+                "working_dir=\"%s\" "
+                "arguments=\"%s\" "
+                "account=\"%s\" "
+                "flags=%u",
+            original_exe_or_file, exe_or_file, working_dir, arguments, account, flags);
 
         launch_pending_apps.emplace_back(LaunchPendingApp(original_exe_or_file, exe_or_file, flags));
 
@@ -1209,11 +1145,9 @@ public:
                         false,  // Show maximized
                         flags
                     );
-                if (bool(this->verbose & RDPVerbose::rail)) {
-                    LOG(LOG_INFO,
-                        "RemoteProgramsVirtualChannel::auth_rail_exec: "
-                            "Send to Session Probe - Execure");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+                    "RemoteProgramsVirtualChannel::auth_rail_exec: "
+                        "Send to Session Probe - Execure");
         }
         else {
             StaticOutStream<1024> out_s;
@@ -1255,14 +1189,12 @@ public:
 
     void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
             uint16_t exec_result) override {
-        if (bool(this->verbose & RDPVerbose::rail)) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::auth_rail_exec_cancel: "
-                    "exec_result=%u "
-                    "original_exe_or_file=\"%s\" "
-                    "flags=%u",
-                exec_result, original_exe_or_file, flags);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+            "RemoteProgramsVirtualChannel::auth_rail_exec_cancel: "
+                "exec_result=%u "
+                "original_exe_or_file=\"%s\" "
+                "flags=%u",
+            exec_result, original_exe_or_file, flags);
 
         StaticOutStream<1024> out_s;
         RAILPDUHeader header;
@@ -1301,15 +1233,13 @@ public:
 
     void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
         uint16_t exec_result, uint32_t raw_result) override {
-        if (bool(this->verbose & RDPVerbose::rail)) {
-            LOG(LOG_INFO,
-                "RemoteProgramsVirtualChannel::sespro_rail_exec_result: "
-                    "exec_result=%u "
-                    "raw_result=%u "
-                    "exe_or_file=\"%s\" "
-                    "flags=%u",
-                exec_result, raw_result, exe_or_file, flags);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+            "RemoteProgramsVirtualChannel::sespro_rail_exec_result: "
+                "exec_result=%u "
+                "raw_result=%u "
+                "exe_or_file=\"%s\" "
+                "flags=%u",
+            exec_result, raw_result, exe_or_file, flags);
 
         StaticOutStream<1024> out_s;
         RAILPDUHeader header;

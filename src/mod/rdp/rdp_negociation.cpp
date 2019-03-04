@@ -367,10 +367,8 @@ RdpNegociation::RdpNegociation(
         ::memcpy(this->autoReconnectCookie, info.autoReconnectCookie, sizeof(this->autoReconnectCookie));
     }
 
-    if (bool(this->verbose & RDPVerbose::basic_trace)) {
-        LOG(LOG_INFO, "enable_session_probe=%s",
-            (this->enable_session_probe ? "yes" : "no"));
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+        "enable_session_probe=%s", (this->enable_session_probe ? "yes" : "no"));
 
     strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
 
@@ -499,9 +497,7 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
 
 bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 {
-    if (bool(this->verbose & RDPVerbose::security)){
-        LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "mod_rdp::Basic Settings Exchange");
 
     {
         X224::DT_TPDU_Recv x224(x224_data);
@@ -728,11 +724,11 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                     /* We assume that the channel_id array is confirmed in the same order
                         that it has been sent. If there are any channels not confirmed, they're
                         going to be the last channels on the array sent in MCS Connect Initial */
-                    if (bool(this->verbose & RDPVerbose::channels)){
-                        LOG(LOG_INFO, "server_channels_count=%" PRIu16 " sent_channels_count=%zu",
-                            sc_net.channelCount,
-                            this->mod_channel_list.size());
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
+                        "server_channels_count=%" PRIu16 " sent_channels_count=%zu",
+                        sc_net.channelCount,
+                        this->mod_channel_list.size());
+
                     for (uint32_t index = 0; index < sc_net.channelCount; index++) {
                         if (bool(this->verbose & RDPVerbose::channels)){
                             this->mod_channel_list[index].log(index);
@@ -793,9 +789,9 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
     //    |-------MCS Channel Join Request PDU--------------------> |
     //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-    if (bool(this->verbose & RDPVerbose::connection)){
-        LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_INFO,
+        "Send MCS::ErectDomainRequest");
+
     write_packets(
         this->trans,
         [](StreamSize<256>, OutStream & mcs_header){
@@ -805,9 +801,9 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
         X224::write_x224_dt_tpdu_fn{}
     );
 
-    if (bool(this->verbose & RDPVerbose::connection)){
-        LOG(LOG_INFO, "Send MCS::AttachUserRequest");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_INFO,
+        "Send MCS::AttachUserRequest");
+
     write_packets(
         this->trans,
         [](StreamSize<256>, OutStream & mcs_data){
@@ -817,9 +813,9 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
         X224::write_x224_dt_tpdu_fn{}
     );
 
-    if (bool(this->verbose & RDPVerbose::connection)){
-        LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange end");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::connection), LOG_INFO,
+        "mod_rdp::Basic Settings Exchange end");
+
     return true;
 }
 
@@ -1105,9 +1101,8 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
 bool RdpNegociation::channel_connection_attach_user(InStream & stream)
 {
-    if (bool(this->verbose & RDPVerbose::channels)){
-        LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
+        "mod_rdp::Channel Connection Attach User");
 
     X224::DT_TPDU_Recv x224(stream);
     InStream & mcs_cjcf_data = x224.payload;
@@ -1126,9 +1121,8 @@ bool RdpNegociation::channel_connection_attach_user(InStream & stream)
     }
 
     for (size_t index = 0; index < num_channels+2; index++) {
-        if (bool(this->verbose & RDPVerbose::channels)){
-            LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
+            "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
         write_packets(
             this->trans,
             [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
@@ -1158,9 +1152,8 @@ bool RdpNegociation::channel_join_confirm(InStream & x224_data)
         InStream & mcs_cjcf_data = x224.payload;
         MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
         // TODO If mcs.result is negative channel is not confirmed and should be removed from mod_channel list
-        if (bool(this->verbose & RDPVerbose::channels)){
-            LOG(LOG_INFO, "cjcf[%zu] = %" PRIu16, this->send_channel_index, mcs.channelId);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
+            "cjcf[%zu] = %" PRIu16, this->send_channel_index, mcs.channelId);
     }
 
     ++this->send_channel_index;
@@ -1168,9 +1161,8 @@ bool RdpNegociation::channel_join_confirm(InStream & x224_data)
         return false;
     }
 
-    if (bool(this->verbose & RDPVerbose::channels)){
-        LOG(LOG_INFO, "mod_rdp::Channel Join Confirme end");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
+        "mod_rdp::Channel Join Confirme end");
 
     // RDP Security Commencement
     // -------------------------
@@ -1201,15 +1193,12 @@ bool RdpNegociation::channel_join_confirm(InStream & x224_data)
 
     // Client                                                     Server
     //    |------Security Exchange PDU ---------------------------> |
-    if (bool(this->verbose & RDPVerbose::security)){
-        LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
+        "mod_rdp::RDP Security Commencement");
 
     if (this->negociation_result.encryptionLevel){
-        if (bool(this->verbose & RDPVerbose::security)){
-            LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
-                this->server_public_key_len);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
+            "mod_rdp::SecExchangePacket keylen=%u", this->server_public_key_len);
 
         this->send_data_request(
             GCC::MCS_GLOBAL_CHANNEL,
@@ -1232,9 +1221,8 @@ bool RdpNegociation::channel_join_confirm(InStream & x224_data)
     // Client                                                     Server
     //    |------ Client Info PDU      ---------------------------> |
 
-    if (bool(this->verbose & RDPVerbose::security)){
-        LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
+        "mod_rdp::Secure Settings Exchange");
 
     this->send_client_info_pdu();
     return true;
@@ -1242,9 +1230,7 @@ bool RdpNegociation::channel_join_confirm(InStream & x224_data)
 
 bool RdpNegociation::get_license(InStream & stream)
 {
-    if (bool(this->verbose & RDPVerbose::license)){
-        LOG(LOG_INFO, "mod_rdp::Licensing");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "mod_rdp::Licensing");
 
     bool r = false;
 
@@ -1409,9 +1395,9 @@ bool RdpNegociation::get_license(InStream & stream)
             );
             break;
         case LIC::PLATFORM_CHALLENGE:
-            if (bool(this->verbose & RDPVerbose::license)){
-                LOG(LOG_INFO, "Rdp::Platform Challenge");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO,
+                "Rdp::Platform Challenge");
+
             {
                 LIC::PlatformChallenge_Recv lic(sec.payload);
 
@@ -1468,9 +1454,7 @@ bool RdpNegociation::get_license(InStream & stream)
             break;
         case LIC::NEW_LICENSE:
             {
-                if (bool(this->verbose & RDPVerbose::license)){
-                    LOG(LOG_INFO, "Rdp::New License");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO, "Rdp::New License");
 
                 LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
@@ -1483,9 +1467,9 @@ bool RdpNegociation::get_license(InStream & stream)
             break;
         case LIC::UPGRADE_LICENSE:
             {
-                if (bool(this->verbose & RDPVerbose::license)){
-                    LOG(LOG_INFO, "Rdp::Upgrade License");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO,
+                    "Rdp::Upgrade License");
+
                 LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
                 LOG(LOG_WARNING, "Upgraded license not saved");
@@ -1493,9 +1477,9 @@ bool RdpNegociation::get_license(InStream & stream)
             break;
         case LIC::ERROR_ALERT:
             {
-                if (bool(this->verbose & RDPVerbose::license)){
-                    LOG(LOG_INFO, "Rdp::Get license status");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::license), LOG_INFO,
+                    "Rdp::Get license status");
+
                 LIC::ErrorAlert_Recv lic(sec.payload);
                 if ((lic.validClientMessage.dwErrorCode != LIC::STATUS_VALID_CLIENT)
                  || (lic.validClientMessage.dwStateTransition != LIC::ST_NO_TRANSITION)){
@@ -1548,9 +1532,8 @@ void RdpNegociation::send_data_request(uint16_t channelId, WriterData... writer_
 
 void RdpNegociation::send_client_info_pdu()
 {
-    if (bool(this->verbose & RDPVerbose::basic_trace)){
-        LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+        "mod_rdp::send_client_info_pdu");
 
     InfoPacket infoPacket( this->negociation_result.use_rdp5
                             , this->logon_info.domain()
@@ -1601,15 +1584,13 @@ void RdpNegociation::send_client_info_pdu()
 
         SslHMAC_Md5 hmac_md5(make_array_view(server_auto_reconnect_packet.ArcRandomBits));
         if (!this->nego.enhanced_rdp_security_is_in_effect()) {
-            if (bool(this->verbose & RDPVerbose::basic_trace)){
-                LOG(LOG_INFO, "Use client random");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+                "Use client random");
             hmac_md5.update(make_array_view(this->client_random));
         }
         else {
-            if (bool(this->verbose & RDPVerbose::basic_trace)){
-                LOG(LOG_INFO, "Use NULL client random");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+                "Use NULL client random");
             uint8_t tmp_client_random[32] = { 0 };
             hmac_md5.update(make_array_view(tmp_client_random));
         }
@@ -1645,7 +1626,6 @@ void RdpNegociation::send_client_info_pdu()
         infoPacket.log("Send data request", this->password_printing_mode, !this->enable_session_probe);
     }
 
-    if (bool(this->verbose & RDPVerbose::basic_trace)){
-        LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
-    }
+    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
+        "mod_rdp::send_client_info_pdu done");
 }

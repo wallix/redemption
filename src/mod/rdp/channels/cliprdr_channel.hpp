@@ -94,10 +94,8 @@ protected:
 
 public:
     void empty_client_clipboard() {
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::empty_client_clipboard");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::empty_client_clipboard");
 
         RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
             RDPECLIP::CB_RESPONSE__NONE_, 0);
@@ -166,12 +164,10 @@ public:
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length) override
     {
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_client_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_client_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%u",
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
             const bool send              = false;
@@ -289,34 +285,28 @@ public:
             break;
 
             case RDPECLIP::CB_LOCK_CLIPDATA: {
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_client_message: "
-                            "Lock Clipboard Data PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_client_message: "
+                        "Lock Clipboard Data PDU");
                 LockClipDataReceive receiver(this->clip_data.server_data, this->clip_data.client_data, chunk, this->verbose, header);
             }
             break;
 
             case RDPECLIP::CB_UNLOCK_CLIPDATA: {
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_client_message: "
-                            "Unlock Clipboard Data PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_client_message: "
+                        "Unlock Clipboard Data PDU");
                 UnlockClipDataReceive receive(this->clip_data.server_data, this->clip_data.client_data, chunk, this->verbose, header);
 //                     this->clip_data.server_data.file_stream_data_inventory.erase(receive.clipDataId);
             }
             break;
 
             default:
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_client_message: "
-                            "Delivering unprocessed messages %s(%u) to server.",
-                        RDPECLIP::get_msgType_name(this->clip_data.client_data.message_type),
-                        static_cast<unsigned>(this->clip_data.client_data.message_type));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_client_message: "
+                        "Delivering unprocessed messages %s(%u) to server.",
+                    RDPECLIP::get_msgType_name(this->clip_data.client_data.message_type),
+                    static_cast<unsigned>(this->clip_data.client_data.message_type));
             break;
         }   // switch (this->client_message_type)
 
@@ -343,24 +333,20 @@ public:
         }
 
         if (!this->params.clipboard_up_authorized) {
-            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
-                        "Client to server Clipboard operation is not allowed.");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                    "Client to server Clipboard operation is not allowed.");
 
             ServerFormatDataRequestSendBack sender(this->verbose, this);
 
             return false;
         }
 
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
-                    "requestedFormatId=%s(%u)",
-                RDPECLIP::get_FormatId_name(this->clip_data.requestedFormatId ),
-                this->clip_data.requestedFormatId );
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                "requestedFormatId=%s(%u)",
+            RDPECLIP::get_FormatId_name(this->clip_data.requestedFormatId ),
+            this->clip_data.requestedFormatId );
 
         return true;
     }   // process_server_format_data_request_pdu
@@ -435,12 +421,10 @@ public:
     {
         (void)out_asynchronous_task;
 
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_server_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_server_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%u",
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
             const bool send              = false;
@@ -478,11 +462,9 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "File Contents Request PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "File Contents Request PDU");
                 FilecontentsRequestReceive receiver(this->clip_data.server_data, chunk, this->verbose, header.dataLen());
 
                 if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
@@ -498,11 +480,9 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "File Contents Response PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "File Contents Response PDU");
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
@@ -526,11 +506,9 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Format Data Request PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "Format Data Request PDU");
 
                 send_message_to_client =
                     this->process_server_format_data_request_pdu(
@@ -538,11 +516,9 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Format Data Response PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "Format Data Response PDU");
 
                 send_message_to_client =
                     this->process_server_format_data_response_pdu(
@@ -555,11 +531,9 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_LIST:
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Format List PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "Format List PDU");
 
                 send_message_to_client =
                     this->process_server_format_list_pdu(
@@ -573,11 +547,9 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Format List Response PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "Format List Response PDU");
 
                 if (this->clipboard_initialize_notifier) {
                     if (!this->clipboard_initialize_notifier->on_clipboard_initialize()) {
@@ -592,22 +564,18 @@ public:
             break;
 
             case RDPECLIP::CB_LOCK_CLIPDATA: {
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Lock Clipboard Data PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "Lock Clipboard Data PDU");
 
                 LockClipDataReceive receiver(this->clip_data.client_data, this->clip_data.server_data, chunk, this->verbose, header);
             }
             break;
 
             case RDPECLIP::CB_MONITOR_READY: {
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Monitor Ready PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "Monitor Ready PDU");
 
                 if (this->proxy_managed) {
                     this->clip_data.client_data.use_long_format_names = true;
@@ -625,23 +593,19 @@ public:
             break;
 
             case RDPECLIP::CB_UNLOCK_CLIPDATA: {
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Unlock Clipboard Data PDU");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "Unlock Clipboard Data PDU");
                 UnlockClipDataReceive receive(this->clip_data.client_data, this->clip_data.server_data, chunk, this->verbose, header);
             }
             break;
 
             default:
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Delivering unprocessed messages %s(%u) to client.",
-                        RDPECLIP::get_msgType_name(this->clip_data.server_data.message_type),
-                        static_cast<unsigned>(this->clip_data.server_data.message_type));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::process_server_message: "
+                        "Delivering unprocessed messages %s(%u) to client.",
+                    RDPECLIP::get_msgType_name(this->clip_data.server_data.message_type),
+                    static_cast<unsigned>(this->clip_data.server_data.message_type));
             break;
         }   // switch (this->server_message_type)
 

@@ -171,12 +171,10 @@ public:
     {
         this->graphics_update_disabled = disable;
 
-        if (bool(this->verbose & RDPVerbose::rail)) {
-            LOG(LOG_INFO,
-                "RemoteProgramsSessionManager::disable_graphics_update: "
-                    "graphics_update_disabled=%s",
-                (this->graphics_update_disabled ? "yes" : "no"));
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
+            "RemoteProgramsSessionManager::disable_graphics_update: "
+                "graphics_update_disabled=%s",
+            (this->graphics_update_disabled ? "yes" : "no"));
 
         if (!disable) {
             if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->dialog_box_window_id) {

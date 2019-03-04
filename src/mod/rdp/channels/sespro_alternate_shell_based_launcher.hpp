@@ -48,10 +48,8 @@ public:
     bool on_clipboard_monitor_ready() override { return false; }
 
     bool on_drive_access() override {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeAlternateShellBasedLauncher :=> on_drive_access");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeAlternateShellBasedLauncher :=> on_drive_access");
 
         if (this->stopped) {
             return false;
@@ -65,10 +63,8 @@ public:
     }
 
     bool on_device_announce_responded() override {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeAlternateShellBasedLauncher :=> on_device_announce_responded");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeAlternateShellBasedLauncher :=> on_device_announce_responded");
 
         if (this->stopped) {
             return false;
@@ -82,10 +78,8 @@ public:
     }
 
     bool on_drive_redirection_initialize() override {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeAlternateShellBasedLauncher :=> on_drive_redirection_initialize");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeAlternateShellBasedLauncher :=> on_drive_redirection_initialize");
 
         this->drive_redirection_initialized = true;
 
@@ -96,10 +90,8 @@ public:
         (void)offset;
         (void)length;
 
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeAlternateShellBasedLauncher :=> on_image_read");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeAlternateShellBasedLauncher :=> on_image_read");
 
         if (this->stopped) {
             return false;
@@ -141,10 +133,8 @@ public:
     void stop(bool bLaunchSuccessful, error_type& id_ref) override {
         id_ref = NO_ERROR;
 
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeAlternateShellBasedLauncher :=> stop");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeAlternateShellBasedLauncher :=> stop");
 
         this->stopped = true;
 

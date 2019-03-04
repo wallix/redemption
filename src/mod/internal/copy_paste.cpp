@@ -102,9 +102,7 @@ namespace
 
 bool CopyPaste::ready(FrontAPI & front)
 {
-    if (this->verbose) {
-        LOG(LOG_INFO, "CopyPaste::ready");
-    }
+    LOG_IF(this->verbose, LOG_INFO, "CopyPaste::ready");
 
     this->front_ = &front;
     this->channel_ = front.get_channel_list().get_by_name(channel_names::cliprdr);
@@ -321,9 +319,8 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
             break;
         }
         default:
-            if (this->verbose) {
-                LOG(LOG_INFO, "CopyPaste::send_to_mod_channel msgType=%u", unsigned(rp.msgType()));
-            }
+            LOG_IF(this->verbose, LOG_INFO,
+                "CopyPaste::send_to_mod_channel msgType=%u", unsigned(rp.msgType()));
             break;
     }
 }

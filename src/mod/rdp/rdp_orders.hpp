@@ -447,12 +447,10 @@ private:
 #else
         (void)gd;
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG( LOG_INFO
-               , "rdp_orders_process_bmpcache bitmap id=%d idx=%d cx=%" PRIu16 " cy=%" PRIu16
-                 " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8
-               , bmp.id, bmp.idx, bmp.bmp.cx(), bmp.bmp.cy(), bmp.bmp.bmp_size(), bmp.bmp.bpp(), this->bpp);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO,
+            "rdp_orders_process_bmpcache bitmap id=%d idx=%d cx=%" PRIu16 " cy=%" PRIu16
+            " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8,
+            bmp.id, bmp.idx, bmp.bmp.cx(), bmp.bmp.cy(), bmp.bmp.bmp_size(), bmp.bmp.bpp(), this->bpp);
 #endif
     }
 
@@ -544,7 +542,7 @@ public:
 
             uint8_t class_ = (drawing_order.control_flags & (STANDARD | SECONDARY));
             if (class_ == SECONDARY) {
-                if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "Alternate secondary order"); }
+                LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "Alternate secondary order");
 
                 RDP::AltsecDrawingOrderHeader header(drawing_order.control_flags);
                 switch (header.orderType) {
@@ -574,15 +572,15 @@ public:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                 case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                    if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "TS_CACHE_BITMAP XXX secondary order"); }
+                    LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "TS_CACHE_BITMAP XXX secondary order");
                     this->process_bmpcache(stream, header, gd);
                     break;
                 case TS_CACHE_COLOR_TABLE:
-                    if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "TS_CACHE_COLOR_TABLE secondary order"); }
+                    LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "TS_CACHE_COLOR_TABLE secondary order");
                     this->process_colormap(stream, header, gd);
                     break;
                 case TS_CACHE_GLYPH:
-                    if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "TS_CACHE_GLYPH secondary order"); }
+                    LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "TS_CACHE_GLYPH secondary order");
                     this->process_glyphcache(stream, header);
                     //hexdump_d(order_start, stream.p - order_start);
                     break;
@@ -746,9 +744,7 @@ public:
             }
             processed++;
         }
-        if (bool(this->verbose & RDPVerbose::graphics)){
-            LOG(LOG_INFO, "process_orders done");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "process_orders done");
         return 0;
     }   // int process_orders(uint8_t bpp, Stream & stream, bool fast_path, gdi::GraphicApi & gd)
 };

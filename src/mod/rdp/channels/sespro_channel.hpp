@@ -166,13 +166,11 @@ public:
     , gen(gen)
     , session_reactor(session_reactor)
     {
-        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-            LOG(LOG_INFO,
-                "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
-                    " effective_timeout=%lld on_launch_failure=%d",
-                ms2ll(this->sespro_params.effective_launch_timeout),
-                this->sespro_params.on_launch_failure);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+            "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
+                " effective_timeout=%lld on_launch_failure=%d",
+            ms2ll(this->sespro_params.effective_launch_timeout),
+            this->sespro_params.on_launch_failure);
 
         this->front.session_probe_started(false);
         this->front.set_focus_on_password_textbox(false);
@@ -215,10 +213,8 @@ public:
         if (!this->session_probe_ready && this->session_probe_timer) {
             this->session_probe_timer->set_delay(this->sespro_params.effective_launch_timeout);
 
-            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::give_additional_launch_time");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                "SessionProbeVirtualChannel::give_additional_launch_time");
         }
     }
 
@@ -252,11 +248,9 @@ public:
                 out_s.get_data(), out_s.get_offset());
         }
 
-        if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
-            LOG(LOG_INFO,
-                "SessionProbeVirtualChannel::request_keep_alive: "
-                    "Session Probe keep alive requested");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
+            "SessionProbeVirtualChannel::request_keep_alive: "
+                "Session Probe keep alive requested");
 
         this->session_probe_timer->set_delay(this->sespro_params.keepalive_timeout);
     }
@@ -292,12 +286,10 @@ public:
         }
 
         if (need_full_screen_update) {
-            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::process_event: "
-                        "Force full screen update. Rect=(0, 0, %u, %u)",
-                    this->param_front_width, this->param_front_height);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                "SessionProbeVirtualChannel::process_event: "
+                    "Force full screen update. Rect=(0, 0, %u, %u)",
+                this->param_front_width, this->param_front_height);
             this->mod.rdp_input_invalidate(Rect(0, 0,
                 this->param_front_width, this->param_front_height));
         }
@@ -387,12 +379,10 @@ public:
     {
         (void)out_asynchronous_task;
 
-        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-            LOG(LOG_INFO,
-                "SessionProbeVirtualChannel::process_server_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+            "SessionProbeVirtualChannel::process_server_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%u",
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::sesprobe_dump)) {
             const bool send              = false;
@@ -420,11 +410,8 @@ public:
         while (this->server_message.back() == '\0') {
             this->server_message.pop_back();
         }
-        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-            LOG(LOG_INFO,
-                "SessionProbeVirtualChannel::process_server_message: \"%s\"",
-                this->server_message.c_str());
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+            "SessionProbeVirtualChannel::process_server_message: \"%s\"", this->server_message);
 
         // TODO string_view
         std::string              order_;
@@ -442,10 +429,9 @@ public:
         if (!::strcasecmp(order_.c_str(), "Options") && !parameters_.empty()) {
             this->options = ::strtoul(parameters_[0].c_str(), nullptr, 10);
 
-            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: Options=0x%X",
-                    this->options);
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                "SessionProbeVirtualChannel::process_server_message: Options=0x%X",
+                this->options);
         }
         else if (!::strcasecmp(order_.c_str(), "Request") && !parameters_.empty()) {
             if (!::strcasecmp(parameters_[0].c_str(), "Hello")) {
@@ -458,14 +444,12 @@ public:
                     remote_reconnection_cookie =
                         ::strtoul(parameters_[1].c_str(), nullptr, 10);
                 }
+
                 if (bool(this->verbose & RDPVerbose::sesprobe)) {
                     LOG(LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
                             "LocalCookie=0x%X RemoteCookie=0x%X",
                         this->reconnection_cookie, remote_reconnection_cookie);
-                }
-
-                if (bool(this->verbose & RDPVerbose::sesprobe)) {
                     LOG(LOG_INFO, "SessionProbeVirtualChannel::process_server_message: Options=0x%X",
                         this->options);
                 }
@@ -501,12 +485,10 @@ public:
                     const bool disable_graphics_update = false;
                     if (this->mod.disable_input_event_and_graphics_update(
                             disable_input_event, disable_graphics_update)) {
-                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO,
-                                "SessionProbeVirtualChannel::process_server_message: "
-                                    "Force full screen update. Rect=(0, 0, %u, %u)",
-                                this->param_front_width, this->param_front_height);
-                        }
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                            "SessionProbeVirtualChannel::process_server_message: "
+                                "Force full screen update. Rect=(0, 0, %u, %u)",
+                            this->param_front_width, this->param_front_height);
                         if (this->param_bogus_refresh_rect_ex) {
                             this->mod.rdp_suppress_display_updates();
                             this->mod.rdp_allow_display_updates(0, 0,
@@ -529,11 +511,9 @@ public:
                             out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                         });
 
-                    if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
-                        LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_event: "
-                                "Session Probe keep alive requested");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
+                        "SessionProbeVirtualChannel::process_event: "
+                            "Session Probe keep alive requested");
 
                     this->session_probe_timer = this->session_reactor.create_timer()
                     .set_delay(this->sespro_params.keepalive_timeout)
@@ -715,12 +695,10 @@ public:
                 const bool disable_graphics_update = false;
                 if (this->mod.disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update)) {
-                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                        LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_server_message: "
-                                "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->param_front_width, this->param_front_height);
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                        "SessionProbeVirtualChannel::process_server_message: "
+                            "Force full screen update. Rect=(0, 0, %u, %u)",
+                        this->param_front_width, this->param_front_height);
                     if (this->param_bogus_refresh_rect_ex) {
                         this->mod.rdp_suppress_display_updates();
                         this->mod.rdp_allow_display_updates(0, 0,
@@ -785,11 +763,9 @@ public:
                 this->start_application_query_processed = true;
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Disconnection-Reconnection")) {
-                if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                    LOG(LOG_INFO,
-                        "SessionProbeVirtualChannel::process_server_message: "
-                            "Disconnection-Reconnection required.");
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                    "SessionProbeVirtualChannel::process_server_message: "
+                        "Disconnection-Reconnection required.");
 
                 this->disconnection_reconnection_required = true;
 
@@ -978,12 +954,10 @@ public:
 
             this->other_version = ((major << 8) | minor);
 
-            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::process_server_message: "
-                        "OtherVersion=%u.%u",
-                    unsigned(major), unsigned(minor));
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                "SessionProbeVirtualChannel::process_server_message: "
+                    "OtherVersion=%u.%u",
+                unsigned(major), unsigned(minor));
 
             if (this->sespro_params.enable_log) {
                 send_client_message([this](OutStream & out_s) {
@@ -1014,11 +988,9 @@ public:
         }
         else if (!::strcasecmp(order_.c_str(), "KeepAlive") && !parameters_.empty() &&
                  !::strcasecmp(parameters_[0].c_str(), "OK")) {
-            if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
-                LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::process_server_message: "
-                        "Recevied Keep-Alive from Session Probe.");
-            }
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
+                "SessionProbeVirtualChannel::process_server_message: "
+                    "Recevied Keep-Alive from Session Probe.");
             this->session_probe_keep_alive_received = true;
 
             if (this->client_input_disabled_because_session_probe_keepalive_is_missing) {

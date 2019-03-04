@@ -103,23 +103,19 @@ public:
         this->params.long_delay_ms                     = std::max(this->params.long_delay_ms, std::chrono::milliseconds(500));
         this->params.short_delay_ms                    = std::max(this->params.short_delay_ms, std::chrono::milliseconds(50));
 
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher: "
-                    "clipboard_initialization_delay_ms=%lld "
-                    "start_delay_ms=%lld "
-                    "long_delay_ms=%lld "
-                    "short_delay_ms=%lld",
-                ms2ll(this->params.clipboard_initialization_delay_ms), ms2ll(this->params.start_delay_ms),
-                ms2ll(this->params.long_delay_ms), ms2ll(this->params.short_delay_ms));
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher: "
+                "clipboard_initialization_delay_ms=%lld "
+                "start_delay_ms=%lld "
+                "long_delay_ms=%lld "
+                "short_delay_ms=%lld",
+            ms2ll(this->params.clipboard_initialization_delay_ms), ms2ll(this->params.start_delay_ms),
+            ms2ll(this->params.long_delay_ms), ms2ll(this->params.short_delay_ms));
     }
 
     bool on_clipboard_initialize() override {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_clipboard_initialize");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_clipboard_initialize");
 
         if (this->state != State::START) {
             return false;
@@ -153,10 +149,8 @@ public:
     }
 
     bool on_drive_access() override {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_drive_access");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_drive_access");
 
         if (this->state != State::START) {
             return false;
@@ -174,10 +168,8 @@ public:
     }
 
     bool on_device_announce_responded() override {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_device_announce_responded");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_device_announce_responded");
 
         if (this->state != State::START) {
             return false;
@@ -195,10 +187,8 @@ public:
     }
 
     bool on_drive_redirection_initialize() override {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_drive_redirection_initialize");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_drive_redirection_initialize");
 
         this->drive_redirection_initialized = true;
 
@@ -207,18 +197,14 @@ public:
 
     bool on_event()
     {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> on_event - %d",
-                static_cast<int>(this->state));
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_event - %d", int(this->state));
 
         switch (this->state) {
             case State::START:
                 if (!this->clipboard_initialized) {
-                    if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-                        LOG(LOG_INFO,
-                            "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
-                    }
+                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+                        "SessionProbeClipboardBasedLauncher :=> launcher managed cliprdr initialization");
 
                     if (this->cliprdr_channel) {
                         this->cliprdr_channel->disable_to_client_sender();
@@ -303,10 +289,8 @@ public:
         (void)offset;
         (void)length;
 
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_image_read");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_image_read");
 
         this->image_readed = true;
 
@@ -322,10 +306,8 @@ public:
     }
 
     bool on_server_format_data_request() override {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_server_format_data_request");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_server_format_data_request");
 
         StaticOutStream<1024> out_s;
         size_t alternate_shell_length = this->alternate_shell.length() + 1;
@@ -355,10 +337,8 @@ public:
 
     bool on_server_format_list() override
     {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_server_format_list");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_server_format_list");
 
         this->delay_format_list_received = true;
 
@@ -533,10 +513,8 @@ public:
 
     bool on_server_format_list_response() override
     {
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_server_format_list_response");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> on_server_format_list_response");
 
         if (this->params.start_delay_ms.count()) {
             if (!this->delay_executed) {
@@ -656,10 +634,8 @@ public:
     void stop(bool bLaunchSuccessful, error_type& id_ref) override {
         id_ref = NO_ERROR;
 
-        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
-            LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> stop");
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
+            "SessionProbeClipboardBasedLauncher :=> stop");
 
         this->state = State::STOP;
         this->event.reset();

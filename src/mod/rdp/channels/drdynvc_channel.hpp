@@ -53,12 +53,10 @@ public:
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length) override
     {
-        if (bool(this->verbose & RDPVerbose::drdynvc)) {
-            LOG(LOG_INFO,
-                "DynamicChannelVirtualChannel::process_client_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
+            "DynamicChannelVirtualChannel::process_client_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%u",
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::drdynvc_dump)) {
             const bool send              = false;
@@ -93,13 +91,11 @@ public:
             default:
 //                assert(false);
 
-                if (bool(this->verbose & RDPVerbose::drdynvc)) {
-                    LOG(LOG_INFO,
-                        "DynamicChannelVirtualChannel::process_client_message: "
-                            "Delivering unprocessed messages %s(%u) to server.",
-                        drdynvc::get_DCVC_Cmd_name(Cmd),
-                        static_cast<unsigned>(Cmd));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
+                    "DynamicChannelVirtualChannel::process_client_message: "
+                        "Delivering unprocessed messages %s(%u) to server.",
+                    drdynvc::get_DCVC_Cmd_name(Cmd),
+                    static_cast<unsigned>(Cmd));
             break;
         }   // switch (Cmd)
 
@@ -114,12 +110,10 @@ public:
         uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask> & /*out_asynchronous_task*/) override
     {
-        if (bool(this->verbose & RDPVerbose::drdynvc)) {
-            LOG(LOG_INFO,
-                "DynamicChannelVirtualChannel::process_server_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
-                total_length, flags, chunk_data_length);
-        }
+        LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
+            "DynamicChannelVirtualChannel::process_server_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%u",
+            total_length, flags, chunk_data_length);
 
         if (bool(this->verbose & RDPVerbose::drdynvc_dump)) {
             const bool send              = false;
@@ -154,13 +148,11 @@ public:
             default:
 //                assert(false);
 
-                if (bool(this->verbose & RDPVerbose::drdynvc)) {
-                    LOG(LOG_INFO,
-                        "DynamicChannelVirtualChannel::process_server_message: "
-                            "Delivering unprocessed messages %s(%u) to client.",
-                        drdynvc::get_DCVC_Cmd_name(Cmd),
-                        static_cast<unsigned>(Cmd));
-                }
+                LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
+                    "DynamicChannelVirtualChannel::process_server_message: "
+                        "Delivering unprocessed messages %s(%u) to client.",
+                    drdynvc::get_DCVC_Cmd_name(Cmd),
+                    static_cast<unsigned>(Cmd));
             break;
         }   // switch (Cmd)
 

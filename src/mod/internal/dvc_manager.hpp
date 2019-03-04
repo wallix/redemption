@@ -42,18 +42,14 @@ public:
 
     bool ready(FrontAPI & front)
     {
-        if (this->verbose) {
-            LOG(LOG_INFO, "DVCManager::ready");
-        }
+        LOG_IF(this->verbose, LOG_INFO, "DVCManager::ready");
 
         this->front_ = &front;
 
         this->channel_ = front.get_channel_list().get_by_name(channel_names::drdynvc);
 
         if (this->channel_) {
-            if (this->verbose) {
-                LOG(LOG_INFO, "DVCManager::ready: Channel");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "DVCManager::ready: Channel");
 
             StaticOutStream<256> out_s;
             drdynvc::DVCCapabilitiesRequestPDU DVCCapsReqPDU;
@@ -73,11 +69,9 @@ public:
 
     void send_to_mod_drdynvc_channel(size_t length, InStream & chunk, uint32_t flags)
     {
-        if (this->verbose) {
-            LOG(LOG_INFO,
-                "DVCManager::send_to_mod_drdynvc_channel: "
-                    "total_length=%zu flags=0x%08X chunk_data_length=%zu",
-                length, flags, chunk.get_capacity());
-        }
+        LOG_IF(this->verbose, LOG_INFO,
+            "DVCManager::send_to_mod_drdynvc_channel: "
+                "total_length=%zu flags=0x%08X chunk_data_length=%zu",
+            length, flags, chunk.get_capacity());
     }
 };
