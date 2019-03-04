@@ -501,22 +501,24 @@ function getScanCode(kevt)
         }
     }
 
-	// Field present in Firefox and Internet Explorer
-	// Managing num pad characters apart
-	if ("1234567890.,/*-+".indexOf(curKey) === -1) // General case
-	{
-        switch (kevt.location) {
-        case KeyboardEvent.DOM_KEY_LOCATION_NUMPAD:
-            return keymap['numpad' + kevt.key];
-        case KeyboardEvent.DOM_KEY_LOCATION_RIGHT:
-            if (curKey === 'Control') {
-                return keymap['numpad' + curKey];
-            }
-        default: return keymap[curKey];
-        }
-    }
+    return keymap[curKey];
 
-    return 0;
+    // // Field present in Firefox and Internet Explorer
+    // // Managing num pad characters apart
+    // if ("1234567890.,/*-+".indexOf(curKey) === -1) // General case
+    // {
+    //     switch (kevt.location) {
+    //     case KeyboardEvent.DOM_KEY_LOCATION_NUMPAD:
+    //         return keymap['numpad' + kevt.key];
+    //     case KeyboardEvent.DOM_KEY_LOCATION_RIGHT:
+    //         if (curKey === 'Control') {
+    //             return keymap['numpad' + curKey];
+    //         }
+    //     default: return keymap[curKey];
+    //     }
+    // }
+    //
+    // return 0;
 };
 
 

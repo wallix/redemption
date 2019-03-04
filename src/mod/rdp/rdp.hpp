@@ -1722,8 +1722,8 @@ public:
     }
 #else
     template<class... Ts>
-    mod_rdp_channels(Ts&&...) noexcept
-    : channels_authorizations()
+    mod_rdp_channels(const ChannelsAuthorizations & channels_authorizations, Ts&&...) noexcept
+    : channels_authorizations(channels_authorizations)
     , enable_auth_channel(false)
     {}
 #endif

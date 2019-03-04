@@ -106,7 +106,7 @@ void mod_rdp::init_negociate_event_(
         this->channels.drive.file_system_drive_manager.has_managed_drive()
         || this->channels.session_probe.enable_session_probe
 #else
-        true
+        false
 #endif
     ))
     .set_timeout(std::chrono::milliseconds(0))

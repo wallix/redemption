@@ -153,6 +153,7 @@ struct RdpClient
         mod_rdp_params.primary_drawing_orders_support += TS_NEG_POLYLINE_INDEX;
         mod_rdp_params.primary_drawing_orders_support += TS_NEG_MULTISCRBLT_INDEX;
         mod_rdp_params.primary_drawing_orders_support += TS_NEG_MULTIOPAQUERECT_INDEX;
+        mod_rdp_params.ignore_auth_channel = true;
 
         if (verbose > 128) {
             mod_rdp_params.log();
