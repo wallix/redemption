@@ -133,7 +133,6 @@ void mod_rdp::init_negociate_event_(
             }
 
             this->negociation_result = private_rdp_negociation->rdp_negociation.get_result();
-            this->rdp_input.set_negociation(this->negociation_result);
             if (this->buf.remaining()) {
                 private_rdp_negociation->graphic_event = ctx.get_reactor().create_graphic_event()
                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
