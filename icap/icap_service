@@ -19,8 +19,9 @@ def msg_received(client):
     message = ""
     ender = ""        
 
-    while ender != "0\r\n":
+    while ender != "0\r\n" :
         receive_data = client.recv(255)
+
         if receive_data != "":
             ender = receive_data[-3:]
             message += receive_data
@@ -43,7 +44,7 @@ def msg_received(client):
                     file_name = info[1]
                     file_size = info[2]
 
-                    print "New file id="+file_id+" name="+file_name+" size="+file_size
+                    #print "New file id="+file_id+" name="+file_name+" size="+file_size
 
                     file_to_check = ICAPFileRequest(host, localhost)
                     file_list[file_id] = file_to_check
@@ -106,32 +107,31 @@ if __name__ == '__main__':
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind(socket_path)
-    s.listen(100)
+    
 
     inputs = [ s ]
-    outputs = [ ]
-    message_queues = {}
+    outputs = []
+    #message_queues = {}
 
     while inputs:
         readable, writable, exceptional = select.select(inputs, outputs, inputs)
-
+      
         for sock in readable:
 
-            if sock is s:
-                
-                client, address = s.accept()
-                print "Connection"
-                inputs.append(client)
+            print "socket in readable"
 
-                message_queues[client] = Queue.Queue()
+            if sock is s:
+                print "socket server read"
+                
+                s.listen(100)
+                client, address = s.accept()
+                inputs.append(client)
 
             else:
                 msg_received(client)
 
-                del message_queues[client]
                 index = inputs.index(client)
                 del inputs[index]
-
 
         
 
