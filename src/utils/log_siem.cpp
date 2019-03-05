@@ -26,8 +26,8 @@ Author(s): Jonathan Poelen
 
 namespace
 {
-    static char g_psid[32] = "42";
-    static char g_username[256] = "";
+    char g_psid[32] = "42";
+    char g_username[256] = "";
 }
 
 namespace log_proxy

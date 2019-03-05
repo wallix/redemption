@@ -125,27 +125,24 @@ struct IconMovieData {
 };
 
 // VNC mod
-struct ModVNCParamsData {
-    bool is_apple;
+struct ModVNCParamsData
+{
     Theme      theme;
     WindowListCaps windowListCaps;
-    std::string vnc_encodings;
+    std::string vnc_encodings = "5,16,0,1,-239";
+    std::vector<UserProfil> userProfils;
     int keylayout = 0x040C;
     int width = 800;
     int height = 600;
+    int current_user_profil = 0;
 
     bool enable_tls = false;
     bool enable_nla = false;
     bool enable_sound = false;
     bool enable_shared_clipboard = false;
+    bool is_apple = false;
 
-    std::vector<UserProfil> userProfils;
-    int current_user_profil = 0;
-
-    ModVNCParamsData()
-        : is_apple(false)
-        , vnc_encodings("5,16,0,1,-239")
-    {}
+    ModVNCParamsData() = default;
 };
 
 struct ModRDPParamsData
@@ -258,30 +255,30 @@ public:
 
 
     std::vector<AccountData> _accountData;
+    size_t  _last_target_index = 0;
     int  _accountNB = 0;
     bool _save_password_account = false;
-    size_t  _last_target_index = 0;
 
     int current_user_profil = 0;
 
     uint8_t mod_state = MOD_RDP;
 
-    bool enable_shared_clipboard = true;
-    bool enable_remotefx = false;
-
-    bool                 is_pre_loading = false;
-    bool                 is_recording = false;
-    bool                 is_spanning = false;
-
     int rdp_width = 800;
     int rdp_height = 600;
 
-    bool                 is_full_capturing = false;
-    bool                 is_full_replaying = false;
-    std::string          full_capture_file_name;
-    bool                 is_replaying = false;
-    bool                 is_loading_replay_mod = false;
-    bool                 connected = false;
+    std::string full_capture_file_name;
+    bool        is_full_capturing = false;
+    bool        is_full_replaying = false;
+    bool        is_replaying = false;
+    bool        is_loading_replay_mod = false;
+    bool        connected = false;
+
+    bool enable_shared_clipboard = true;
+    bool enable_remotefx = false;
+
+    bool is_pre_loading = false;
+    bool is_recording = false;
+    bool is_spanning = false;
 
     std::string _movie_name;
     std::string _movie_dir;
@@ -325,4 +322,4 @@ void writeAccoundData(const std::string& ip, const std::string& name, const std:
 bool read_line(const int fd, std::string & line);
 time_t get_movie_time_length(const char * mwrm_filename);
 
-}
+} // namespace ClientConfig

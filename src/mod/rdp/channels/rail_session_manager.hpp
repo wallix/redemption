@@ -307,7 +307,7 @@ public:
 
     void draw(RDP::RAIL::NewOrExistingWindow const & order) override {
 // LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow)");
-        const char *   title_info        = order.TitleInfo();
+        const std::string& title_info    = order.TitleInfo();
         const uint32_t window_id         = order.header.WindowId();
               bool     window_is_blocked = (window_id == this->blocked_server_window_id);
         const bool     window_is_new     = (RDP::RAIL::WINDOW_ORDER_STATE_NEW & order.header.FieldsPresentFlags());
@@ -335,10 +335,10 @@ public:
             const char*  blocked_window_title        = this->session_probe_window_title.c_str();
             const size_t blocked_window_title_length = this->session_probe_window_title.length();
 
-            const size_t title_info_length = ::strlen(title_info);
+            const size_t title_info_length = title_info.size();
 
             if ((title_info_length >= blocked_window_title_length) &&
-                !::strcmp(title_info + (title_info_length - blocked_window_title_length), blocked_window_title)) {
+                !::strcmp(title_info.c_str() + (title_info_length - blocked_window_title_length), blocked_window_title)) {
                 if (window_is_new) {
                     {
                         RAILPDUHeader rpduh;

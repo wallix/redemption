@@ -123,7 +123,7 @@ namespace
         // 1111 1[xxx]  invalid value
         4,
     };
-}
+} // anonymous namespace
 
 // UTF8CharNbBytes:
 // ----------------

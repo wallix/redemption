@@ -177,7 +177,7 @@ private:
 
 public:
     RdpNegociation(
-        std::reference_wrapper<const ChannelsAuthorizations> authorization_channels,
+        std::reference_wrapper<const ChannelsAuthorizations> channels_authorizations,
         CHANNELS::ChannelDefArray& mod_channel_list,
         const CHANNELS::ChannelNameId auth_channel,
         const CHANNELS::ChannelNameId checkout_channel,

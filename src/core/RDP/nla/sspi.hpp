@@ -80,7 +80,7 @@ public:
 
     void copy(const_bytes_view source, uint32_t offset = 0) {
         assert(this->size() >= source.size() + offset);
-        if (source.size()) {
+        if (!source.empty()) {
             memcpy(this->avbuf.data() + offset, source.data(), source.size());
         }
     }

@@ -251,7 +251,7 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
 
 SocketTransport::AsyncBuf::AsyncBuf(const uint8_t* data, std::size_t len)
 : data([](const uint8_t* data, std::size_t len){
-        uint8_t * tmp = new uint8_t[len];
+        uint8_t * tmp = new uint8_t[len]; /*NOLINT*/
         memcpy(tmp, data, len);
         return tmp;
     }(data, len))

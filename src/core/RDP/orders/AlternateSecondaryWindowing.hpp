@@ -1419,8 +1419,7 @@ public:
 
     void ShowState(uint8_t ShowState_) { this->ShowState_ = ShowState_; }
 
-    // TODO returns std::string const&
-    const char * TitleInfo() const { return this->title_info.c_str(); }
+    std::string const& TitleInfo() const { return this->title_info; }
 
     void TitleInfo(const char * TitleInfo_) { this->title_info = TitleInfo_; }
 

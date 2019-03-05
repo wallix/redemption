@@ -373,7 +373,7 @@ void ClientConfig::writeCustomKeyConfig(ClientRedemptionConfig & config)  {
 
 // TODO PERF very inneficient. replace to get_file_contents()
 bool ClientConfig::read_line(const int fd, std::string & line) {
-    line = "";
+    line.clear();
     if (fd < 0) {
         return false;
     }
@@ -384,10 +384,10 @@ bool ClientConfig::read_line(const int fd, std::string & line) {
         if (size == 1) {
             if (c[0] == '\n') {
                 return true;
-            } else {
-                line += c[0];
             }
-        } else {
+            line += c[0];
+        }
+        else {
             return false;
         }
     }
@@ -451,8 +451,6 @@ void ClientConfig::setAccountData(ClientRedemptionConfig & config)  {
             if (line.compare(0, pos, "port") == 0) {
                 config._accountData.back().port = std::stoi(info);
             }
-
-            line = "";
         }
 
         if (config._accountNB < int(config._accountData.size())) {
@@ -460,8 +458,6 @@ void ClientConfig::setAccountData(ClientRedemptionConfig & config)  {
         }
     }
 }
-
-
 
 
 void ClientConfig::writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port, ClientRedemptionConfig & config)  {
@@ -590,8 +586,6 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
                 if (not_reading_current_profil) {
                     str_append(to_write, '\n', ligne);
                 }
-
-                ligne.clear();
             }
         }
 
@@ -834,8 +828,6 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
                     read_id = -1;
                 }
             }
-
-            line = "";
         }
     }
 }

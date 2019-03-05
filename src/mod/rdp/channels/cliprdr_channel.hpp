@@ -250,9 +250,10 @@ public:
                         const bool is_from_remote_session = false;
                         this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
 
-                        for (RDPECLIP::FileDescriptor file : receiver.files_descriptors) {
-                            this->clip_data.file_descr_list.push_back(file);
-                        }
+                        this->clip_data.file_descr_list.insert(
+                            this->clip_data.file_descr_list.end(),
+                            receiver.files_descriptors.begin(),
+                            receiver.files_descriptors.end());
                     }
 
                     send_message_to_server = true;
@@ -369,9 +370,10 @@ public:
             this->verbose
         );
 
-        for (RDPECLIP::FileDescriptor file : receiver.files_descriptors) {
-            this->clip_data.file_descr_list.push_back(file);
-        }
+        this->clip_data.file_descr_list.insert(
+            this->clip_data.file_descr_list.end(),
+            receiver.files_descriptors.begin(),
+            receiver.files_descriptors.end());
 
         const bool is_from_remote_session = true;
         this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);

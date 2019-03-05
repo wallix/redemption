@@ -22,17 +22,16 @@
 
 struct FileSystemVirtualChannelParams {
 
-        bool file_system_read_authorized = false;
-        bool file_system_write_authorized = false;
+    bool file_system_read_authorized = false;
+    bool file_system_write_authorized = false;
 
-        bool parallel_port_authorized     = false;
-        bool print_authorized             = false;
-        bool serial_port_authorized       = false;
-        bool smart_card_authorized        = false;
+    bool parallel_port_authorized     = false;
+    bool print_authorized             = false;
+    bool serial_port_authorized       = false;
+    bool smart_card_authorized        = false;
 
-        bool dont_log_data_into_syslog    = false;
-        bool dont_log_data_into_wrm       = false;
+    bool dont_log_data_into_syslog    = false;
+    bool dont_log_data_into_wrm       = false;
 
-        explicit FileSystemVirtualChannelParams(){}
-    };
-
+    explicit FileSystemVirtualChannelParams() = default;
+};

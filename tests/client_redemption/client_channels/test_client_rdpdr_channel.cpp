@@ -584,6 +584,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
+    RED_REQUIRE(pdu_data);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);

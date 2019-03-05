@@ -155,7 +155,7 @@ struct SessionProbeVirtualChannelParams
 
     bool end_disconnected_session = false;
 
-    explicit SessionProbeVirtualChannelParams() {}
+    explicit SessionProbeVirtualChannelParams() = default;
 };
 
 

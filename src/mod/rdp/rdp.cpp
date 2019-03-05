@@ -43,7 +43,7 @@ namespace
     };
 
     using PrivateRdpNegociationPtr = std::unique_ptr<PrivateRdpNegociation>;
-}
+} // anonymous namespace
 
 void mod_rdp::init_negociate_event_(
     const ClientInfo & info, Random & gen, TimeObj & timeobj,

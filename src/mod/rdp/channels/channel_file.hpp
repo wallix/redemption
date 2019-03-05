@@ -34,15 +34,15 @@ private:
     std::string dir_path;
     std::string filename;
     std::string file_path;
-    unique_fd fd;
-    size_t total_file_size;
-    size_t current_file_size ;
+    unique_fd fd = invalid_fd();
+    size_t total_file_size = 0;
+    size_t current_file_size = 0;
 
-    bool valid;
+    uint32_t streamID = 0;
 
-    uint32_t streamID;
+    bool valid = false;
 
-    uint8_t direction;
+    uint8_t direction = NONE;
 
 public:
 
@@ -59,15 +59,8 @@ public:
 //     , valid(false)
 //     {}
 
-    ChannelFile(const std::string & dir_path)
-    : dir_path(dir_path)
-
-    , fd(invalid_fd())
-    , total_file_size(0)
-    , current_file_size(0)
-    , valid(false)
-    , streamID(0)
-    , direction(NONE)
+    ChannelFile(std::string dir_path) noexcept
+    : dir_path(std::move(dir_path))
     {}
 
 //     void operator=(const ChannelFile & channel_file) {

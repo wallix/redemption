@@ -456,11 +456,11 @@ void TS_RFX_CODEC_QUANT::recv(InStream & stream) {
     lh2 = val & 0xF;  val >>= 4;
     hl2 = val & 0xF;  val >>= 4;
     hh2 = val & 0xF;  val >>= 4;
-    lh1 = val & 0xF;  val >>= 4;
+    lh1 = val & 0xF;  val >>= 4; /*NOLINT*/
 
     val = stream.in_uint8();
     hl1 = val & 0xF;  val >>= 4;
-    hh1 = val & 0xF;  val >>= 4;
+    hh1 = val & 0xF;  val >>= 4; /*NOLINT*/
 }
 
 void TS_RFX_CODEC_QUANT::send(OutStream & /*stream*/) {

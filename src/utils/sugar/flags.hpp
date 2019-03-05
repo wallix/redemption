@@ -160,7 +160,7 @@ inline namespace flags_operators
 
     template<class E> constexpr std::enable_if_t<is_enum_flag<E>::value, flags_t<E>>
     operator^(E lhs, E rhs) noexcept { return flags_t<E>(lhs) ^ rhs; }
-}
+} // namespace flags_operators
 
 }
 

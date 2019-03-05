@@ -45,4 +45,4 @@ inline subrect4_t subrect4(const Rect rect, const Rect & exclude_rect)
     }};
 }
 
-}
+} // namespace gdi

@@ -820,7 +820,7 @@ void FileToGraphic::interpret_order()
 
     case WrmChunkType::KBD_INPUT_MASK:
         {
-            const bool enable = (this->stream.in_uint8() ? true : false);
+            const bool enable = this->stream.in_uint8();
 
             for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
                 kbd->enable_kbd_input_mask(enable);

@@ -19,7 +19,7 @@
 */
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 static inline uint8_t CLIP(int32_t X)
 {

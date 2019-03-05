@@ -2091,14 +2091,14 @@ struct Capture::WindowRecord
         uint32_t window_id, uint32_t fields_present_flags,
         uint32_t style, uint8_t show_state,
         int32_t visible_offset_x, int32_t visible_offset_y,
-        std::string title_info) noexcept
+        std::string const& title_info) noexcept
     : window_id(window_id)
     , fields_present_flags(fields_present_flags)
     , style(style)
     , show_state(show_state)
     , visible_offset_x(visible_offset_x)
     , visible_offset_y(visible_offset_y)
-    , title_info(std::move(title_info))
+    , title_info(title_info)
     {}
 };
 
@@ -2221,7 +2221,7 @@ void Capture::draw(const RDP::RAIL::NewOrExistingWindow & cmd)
     uint8_t  const  show_state           = cmd.ShowState();
     int32_t  const  visible_offset_x     = cmd.VisibleOffsetX();
     int32_t  const  visible_offset_y     = cmd.VisibleOffsetY();
-    char     const* title_info           = cmd.TitleInfo();
+    std::string const& title_info        = cmd.TitleInfo();
 
     if (fields_present_flags &
         (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
@@ -2229,14 +2229,13 @@ void Capture::draw(const RDP::RAIL::NewOrExistingWindow & cmd)
          RDP::RAIL::WINDOW_ORDER_FIELD_TITLE |
          RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)
     ) {
-        std::vector<WindowRecord>::iterator iter =
-            std::find_if(
-                this->windows.begin(),
-                this->windows.end(),
-                [window_id](WindowRecord& window) -> bool {
-                    return (window.window_id == window_id);
-                }
-            );
+        auto iter = std::find_if(
+            this->windows.begin(),
+            this->windows.end(),
+            [window_id](WindowRecord& window) -> bool {
+                return (window.window_id == window_id);
+            }
+        );
         if (iter != this->windows.end()) {
             if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_STYLE) {
                 iter->style = style;

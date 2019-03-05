@@ -124,8 +124,8 @@ struct ModRDPParams
     RdpCompression rdp_compression = RdpCompression::none;
 
     std::string *        error_message = nullptr;
-    bool                 disconnect_on_logon_user_change = false;
     std::chrono::seconds open_session_timeout {};
+    bool                 disconnect_on_logon_user_change = false;
 
     bool               server_cert_store = true;
     ServerCertCheck    server_cert_check = ServerCertCheck::fails_if_no_match_and_succeed_if_no_know;

@@ -510,9 +510,9 @@ private:
 			"SATELLITE", "BROADBAND_HIGH", "WAN", "LAN"
     	};
 
-    	if (type >= std::size(types))
-    		return "<unknown(greater than 6)>";
-    	return types[type];
+    	return (type >= std::size(types))
+            ? "<unknown(greater than 6)>"
+            : types[type];
     }
 
 public:

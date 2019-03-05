@@ -47,7 +47,7 @@ struct RemoteProgramsVirtualChannelParams
     uninit_checked<bool> client_supports_handshakeex_pdu;
     uninit_checked<bool> client_supports_enhanced_remoteapp;
 
-    explicit RemoteProgramsVirtualChannelParams() {}
+    explicit RemoteProgramsVirtualChannelParams() = default;
 };
 
 

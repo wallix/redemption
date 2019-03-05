@@ -136,7 +136,7 @@ public:
 
         uninit_checked<bool> show_maximized;
 
-        explicit Params() noexcept {}
+        explicit Params() = default;
     };
 
     explicit SessionProbeVirtualChannel(
