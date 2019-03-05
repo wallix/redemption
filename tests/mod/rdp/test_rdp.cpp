@@ -193,10 +193,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    const ChannelsAuthorizations channels_authorizations(
-        mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
-        mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
-      );
+    const ChannelsAuthorizations channels_authorizations{};
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,

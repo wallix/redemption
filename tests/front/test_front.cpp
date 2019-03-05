@@ -227,10 +227,7 @@ RED_AUTO_TEST_CASE(TestFront)
     front.clear_channels();
     NullAuthentifier authentifier;
     class RDPMetrics * metrics = nullptr;
-    const ChannelsAuthorizations channels_authorizations(
-        mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
-        mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
-      );
+    const ChannelsAuthorizations channels_authorizations{};
 
     auto mod = new_mod_rdp(
         t, session_reactor, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
