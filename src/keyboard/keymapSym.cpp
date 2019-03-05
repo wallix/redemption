@@ -922,124 +922,6 @@
 //    Hyper_R                          65518     0xffee
 //    Delete                           65535     0xffff
 
-enum KS_Symbols {
-
-    XK_EuroSign = 0x20AC,
-
-    KS_BackSpace                        =     0xff08,
-    KS_Tab                              =     0xff09,
-    KS_Linefeed                         =     0xff0a,
-    KS_Clear                            =     0xff0b,
-    KS_Return                           =     0xff0d,
-    KS_Pause                            =     0xff13,
-    KS_Scroll_Lock                      =     0xff14,
-    KS_Sys_Req                          =     0xff15,
-    KS_Escape                           =     0xff1b,
-    KS_Multi_key                        =     0xff20,
-    KS_Kanji                            =     0xff21,
-    KS_Home                             =     0xff50,
-    KS_Left                             =     0xff51,
-    KS_Up                               =     0xff52,
-    KS_Right                            =     0xff53,
-    KS_Down                             =     0xff54,
-    KS_Prior                            =     0xff55,
-    KS_Next                             =     0xff56,
-    KS_End                              =     0xff57,
-    KS_Begin                            =     0xff58,
-    KS_Win_L                            =     0xff5b,
-    KS_Win_R                            =     0xff5c,
-
-    KS_App                              =     0xff5d,
-    KS_Select                           =     0xff60,
-    KS_Print                            =     0xff61,
-    KS_Execute                          =     0xff62,
-    KS_Insert                           =     0xff63,
-    KS_Undo                             =     0xff65,
-    KS_Redo                             =     0xff66,
-    KS_Menu                             =     0xff67,
-    KS_Find                             =     0xff68,
-    KS_Cancel                           =     0xff69,
-    KS_Help                             =     0xff6a,
-    KS_Break                            =     0xff6b,
-    KS_Hebrew_switch                    =     0xff7e,
-    KS_Num_Lock                         =     0xff7f,
-    KS_KP_Space                         =     0xff80,
-    KS_KP_Tab                           =     0xff89,
-    KS_KP_Enter                         =     0xff8d,
-    KS_KP_F1                            =     0xff91,
-    KS_KP_F2                            =     0xff92,
-    KS_KP_F3                            =     0xff93,
-    KS_KP_F4                            =     0xff94,
-    KS_KP_Multiply                      =     0xffaa,
-    KS_KP_Add                           =     0xffab,
-    KS_KP_Separator                     =     0xffac,
-    KS_KP_Subtract                      =     0xffad,
-    KS_KP_Decimal                       =     0xffae,
-    KS_KP_Divide                        =     0xffaf,
-    KS_KP_0                             =     0xffb0,
-    KS_KP_1                             =     0xffb1,
-    KS_KP_2                             =     0xffb2,
-    KS_KP_3                             =     0xffb3,
-    KS_KP_4                             =     0xffb4,
-    KS_KP_5                             =     0xffb5,
-    KS_KP_6                             =     0xffb6,
-    KS_KP_7                             =     0xffb7,
-    KS_KP_8                             =     0xffb8,
-    KS_KP_9                             =     0xffb9,
-    KS_KP_Equal                         =     0xffbd,
-    KS_F1                               =     0xffbe,
-    KS_F2                               =     0xffbf,
-    KS_F3                               =     0xffc0,
-    KS_F4                               =     0xffc1,
-    KS_F5                               =     0xffc2,
-    KS_F6                               =     0xffc3,
-    KS_F7                               =     0xffc4,
-    KS_F8                               =     0xffc5,
-    KS_F9                               =     0xffc6,
-    KS_F10                              =     0xffc7,
-    KS_L1                               =     0xffc8,
-    KS_L2                               =     0xffc9,
-    KS_L3                               =     0xffca,
-    KS_L4                               =     0xffcb,
-    KS_L5                               =     0xffcc,
-    KS_L6                               =     0xffcd,
-    KS_L7                               =     0xffce,
-    KS_L8                               =     0xffcf,
-    KS_L9                               =     0xffd0,
-    KS_L10                              =     0xffd1,
-    KS_R1                               =     0xffd2,
-    KS_R2                               =     0xffd3,
-    KS_R3                               =     0xffd4,
-    KS_R4                               =     0xffd5,
-    KS_R5                               =     0xffd6,
-    KS_R6                               =     0xffd7,
-    KS_R7                               =     0xffd8,
-    KS_R8                               =     0xffd9,
-    KS_R9                               =     0xffda,
-    KS_R10                              =     0xffdb,
-    KS_R11                              =     0xffdc,
-    KS_R12                              =     0xffdd,
-    KS_F33                              =     0xffde,
-    KS_R14                              =     0xffdf,
-    KS_R15                              =     0xffe0,
-    KS_Shift_L                          =     0xffe1,
-    KS_Shift_R                          =     0xffe2,
-    KS_Control_L                        =     0xffe3,
-    KS_Control_R                        =     0xffe4,
-    KS_Caps_Lock                        =     0xffe5,
-    KS_Shift_Lock                       =     0xffe6,
-    KS_Meta_L                           =     0xffe7,
-    KS_Meta_R                           =     0xffe8,
-    KS_Alt_L = 0xffe9,
-    KS_Alt_R = 0xffea,
-    KS_Super_L                          =     0xffeb,
-    KS_Super_R                          =     0xffec,
-    KS_Hyper_L                          =     0xffed,
-    KS_Hyper_R                          =     0xffee,
-    KS_Delete = 0xffff
-
-};
-
 // using namespace std;
 
 KeymapSym::KeymapSym(int verbose)
@@ -1209,11 +1091,10 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
                 || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
                 ){
-
                 //------------------------------------------------------------------------
                 // KEYPAD : Keypad keys whose meaning depends on Numlock are handled apart
                 //------------------------------------------------------------------------
-                if ((this->key_flags & NUMLOCK) && !(keyboardFlags & KBDFLAGS_EXTENDED)) {
+                if ((this->key_flags & NUMLOCK)) {
                     // if numlock is activated, keys are printable characters (logical SHIFT mode)
                     layout = &this->keylayout_WORK_shift_sym;
                     if (this->verbose) {
@@ -1226,75 +1107,53 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                         LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
                     }
                     this->push_sym(ksym);
-                } else {
-
+                } // if numlock ON
+                else {
+                    // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
                     switch (extendedKeyCode){
                         /* kEYPAD LEFT ARROW */
                         case 0x4b:
-                            this->push_sym(KS_Left);
+                                this->push_sym(0xFF51);
                             break;
                         /* kEYPAD UP ARROW */
                         case 0x48:
-                            this->push_sym(KS_Up);
+                            this->push_sym(0xFF52);
                             break;
                         /* kEYPAD RIGHT ARROW */
                         case 0x4d:
-                            this->push_sym(KS_Right);
+                            this->push_sym(0xFF53);
                             break;
                         /* kEYPAD DOWN ARROW */
                         case 0x50:
-                            this->push_sym(KS_Down);
-                            break;
-                        /* kEYPAD PGUP */
-                        case 0x49:
-                            this->push_sym(KS_Prior);
-                            break;
-                        /* kEYPAD PGDOWN */
-                        case 0x51:
-                            this->push_sym(KS_Next);
-                            break;
-                        /* kEYPAD END */
-                        case 0x4F:
-                            this->push_sym(KS_End);
-                            break;
-                        /* kEYPAD DELETE */
-                        case 0x53:
-                            this->push_sym(KS_Delete);
-                            break;
-                        /* kEYPAD EMPTY 5 */
-                        case 0x4c:
-                            this->push_sym(0);
+                            this->push_sym(0xFF54);
                             break;
                         /* kEYPAD HOME */
                         case 0x47:
-                            this->push_sym(KS_Home);
+                            this->push_sym(0xFF50);
                             break;
-                        /* kEYPAD INSER */
-                        case 0x52:
-                            this->push_sym(KS_Insert);
+                        /* kEYPAD PGUP */
+                        case 0x49:
+                            this->push_sym(0xFF55);
+                            break;
+                        /* kEYPAD PGDOWN */
+                        case 0x51:
+                            this->push_sym(0xFF56);
+                            break;
+                        /* kEYPAD END */
+                        case 0x4F:
+                            this->push_sym(0xFF57);
+                            break;
+                        /* kEYPAD DELETE */
+                        case 0x53:
+                            this->push_sym(0xFFFF);
                             break;
                         default:
                             break;
                     }
-                } // if numlock ON
+
+                } // if numlock OFF
             }
-            else if ( (keyboardFlags & KBDFLAGS_EXTENDED)
-                && ((extendedKeyCode == 0x5c) || (extendedKeyCode == 0x5b) || (extendedKeyCode == 0x35)) ) {
-                switch (keyCode) {
-                    /* WINDOWS RIGHT */
-                    case 0x5c:
-                        this->push_sym(KS_Win_R);
-                        break;
-                    /* WINDOWS LEFT */
-                    case 0x5b:
-                        this->push_sym(KS_Win_L);
-                        break;
-                    /* kEYPAD SLASH */
-                    case 0x35:
-                        this->push_sym(KS_KP_Divide);
-                        break;
-                }
-            } else {
+            else {
                 //--------------------
                 // NOT KEYPAD Specific
                 //--------------------
