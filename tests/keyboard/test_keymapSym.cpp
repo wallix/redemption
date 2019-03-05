@@ -124,6 +124,9 @@ RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
     // TODO: use symbolic names for layouts, below 0x040C is french layout
     keymap.init_layout_sym(0x040C);
 
+    // Le CAPSLOCK n'est pas transmis mais affecte le rang clavier
+    // est-ce que c'est bien ce qu'il fut faire ?
+
     check_key_events keys[] = {
         {DOWN, 0x3A, 4, 0},  // CAPSLOCK ON
         {UP,   0x3A, 4, 0},
@@ -134,10 +137,15 @@ RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
         {UP,   16, 4, 'a'},
         {UP,   0x2A, 4, 0xffe1},
         {DOWN, 0x3A, 0, 0},   // CAPSLOCK OFF
-        {UP,   0x3A, 4, 0},
+        {UP,   0x3A, 0, 0},
     };
+    size_t i = 0;
     for (auto k: keys){
-        BOOST_TEST_CONTEXT(+k.code){
+        i++;
+        BOOST_TEST_CONTEXT("Loop " << i << ": " 
+                   << std::hex << static_cast<uint16_t>(k.flags) << ", "
+                   << std::dec << +k.code << ", " 
+                   << std::hex << k.rflags << ", " << k.rkey){
             keymap.event(k.flags, k.code);
             RED_CHECK_EQUAL(k.rflags, keymap.key_flags);
             RED_CHECK_EQUAL(k.rkey, keymap.get_sym());

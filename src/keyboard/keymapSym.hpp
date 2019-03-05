@@ -52,6 +52,8 @@ struct KeymapSym
          , RIGHT_ALT   = 0xB8
     };
 
+
+
     // keyboard info
     int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
 
@@ -94,8 +96,6 @@ struct KeymapSym
         DEADKEY_GRAVE,
         DEADKEY_TILDE
     };
-
-
 
     uint32_t verbose;
 
@@ -175,12 +175,16 @@ struct KeymapSym
 
     bool is_left_alt_pressed() const;
 
-    // altgr
+    // altgr key or ctrl+alt
+    bool is_altgr_pressed() const;
+
+    // altgr key
     bool is_right_alt_pressed() const;
 
     bool is_alt_pressed() const;
 
-
     void init_layout_sym(int keyb);
+
+    const KeyLayout_t * select_layout();
 
 }; // STRUCT - KeymapSym

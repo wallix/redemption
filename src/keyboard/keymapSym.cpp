@@ -25,10 +25,234 @@
 #include <cstring>
 #include <cstdio>
 
+enum KS_Symbols {
+
+    XK_EuroSign                         =     0x20AC,
+
+//    BackSpace                        65288     0xff08
+    KS_BackSpace                        =     0xff08,
+//    Tab                              65289     0xff09
+    KS_Tab                              =     0xff09,
+//    Linefeed                         65290     0xff0a
+    KS_Linefeed                         =     0xff0a,
+//    Clear                            65291     0xff0b
+    KS_Clear                            =     0xff0b,
+//    Return                           65293     0xff0d
+    KS_Return                           =     0xff0d,
+//    Pause                            65299     0xff13
+    KS_Pause                            =     0xff13,
+//    Scroll_Lock                      65300     0xff14
+    KS_Scroll_Lock                      =     0xff14,
+//    Sys_Req                          65301     0xff15
+    KS_Sys_Req                          =     0xff15,
+//    Escape                           65307     0xff1b
+    KS_Escape                           =     0xff1b,
+//    Multi_key                        65312     0xff20
+    KS_Multi_key                        =     0xff20,
+//    Kanji                            65313     0xff21
+    KS_Kanji                            =     0xff21,
+//    Home                             65360     0xff50
+    KS_Home                             =     0xff50,
+//    Left                             65361     0xff51
+    KS_Left                             =     0xff51,
+//    Up                               65362     0xff52
+    KS_Up                               =     0xff52,
+//    Right                            65363     0xff53
+    KS_Right                            =     0xff53,
+//    Down                             65364     0xff54
+    KS_Down                             =     0xff54,
+//    Prior                            65365     0xff55
+    KS_Prior                            =     0xff55,
+//    Next                             65366     0xff56
+    KS_Next                             =     0xff56,
+//    End                              65367     0xff57
+    KS_End                              =     0xff57,
+//    Begin                            65368     0xff58
+    KS_Begin                            =     0xff58,
+//    Win_L                            65371     0xff5b
+    KS_Win_L                            =     0xff5b,
+//    Win_R                            65372     0xff5c
+    KS_Win_R                            =     0xff5c,
+//    App                              65373     0xff5d
+    KS_App                              =     0xff5d,
+//    Select                           65376     0xff60
+    KS_Select                           =     0xff60,
+//    Print                            65377     0xff61
+    KS_Print                            =     0xff61,
+//    Execute                          65378     0xff62
+    KS_Execute                          =     0xff62,
+//    Insert                           65379     0xff63
+    KS_Insert                           =     0xff63,
+//    Undo                             65381     0xff65
+    KS_Undo                             =     0xff65,
+//    Redo                             65382     0xff66
+    KS_Redo                             =     0xff66,
+//    Menu                             65383     0xff67
+    KS_Menu                             =     0xff67,
+//    Find                             65384     0xff68
+    KS_Find                             =     0xff68,
+//    Cancel                           65385     0xff69
+    KS_Cancel                           =     0xff69,
+//    Help                             65386     0xff6a
+    KS_Help                             =     0xff6a,
+//    Break                            65387     0xff6b
+    KS_Break                            =     0xff6b,
+//    Hebrew_switch                    65406     0xff7e
+    KS_Hebrew_switch                    =     0xff7e,
+//    Num_Lock                         65407     0xff7f
+    KS_Num_Lock                         =     0xff7f,
+//    KP_Space                         65408     0xff80
+    KS_KP_Space                         =     0xff80,
+//    KP_Tab                           65417     0xff89
+    KS_KP_Tab                           =     0xff89,
+//    KP_Enter                         65421     0xff8d
+    KS_KP_Enter                         =     0xff8d,
+//    KP_F1                            65425     0xff91
+    KS_KP_F1                            =     0xff91,
+//    KP_F2                            65426     0xff92
+    KS_KP_F2                            =     0xff92,
+//    KP_F3                            65427     0xff93
+    KS_KP_F3                            =     0xff93,
+//    KP_F4                            65428     0xff94
+    KS_KP_F4                            =     0xff94,
+//    KP_Multiply                      65450     0xffaa
+    KS_KP_Multiply                      =     0xffaa,
+//    KP_Add                           65451     0xffab
+    KS_KP_Add                           =     0xffab,
+//    KP_Separator                     65452     0xffac
+    KS_KP_Separator                     =     0xffac,
+//    KP_Subtract                      65453     0xffad
+    KS_KP_Subtract                      =     0xffad,
+//    KP_Decimal                       65454     0xffae
+    KS_KP_Decimal                       =     0xffae,
+//    KP_Divide                        65455     0xffaf
+    KS_KP_Divide                        =     0xffaf,
+//    KP_0                             65456     0xffb0
+    KS_KP_0                             =     0xffb0,
+//    KP_1                             65457     0xffb1
+    KS_KP_1                             =     0xffb1,
+//    KP_2                             65458     0xffb2
+    KS_KP_2                             =     0xffb2,
+//    KP_3                             65459     0xffb3
+    KS_KP_3                             =     0xffb3,
+//    KP_4                             65460     0xffb4
+    KS_KP_4                             =     0xffb4,
+//    KP_5                             65461     0xffb5
+    KS_KP_5                             =     0xffb5,
+//    KP_6                             65462     0xffb6
+    KS_KP_6                             =     0xffb6,
+//    KP_7                             65463     0xffb7
+    KS_KP_7                             =     0xffb7,
+//    KP_8                             65464     0xffb8
+    KS_KP_8                             =     0xffb8,
+//    KP_9                             65465     0xffb9
+    KS_KP_9                             =     0xffb9,
+//    KP_Equal                         65469     0xffbd
+    KS_KP_Equal                         =     0xffbd,
+//    F1                               65470     0xffbe
+    KS_F1                               =     0xffbe,
+//    F2                               65471     0xffbf
+    KS_F2                               =     0xffbf,
+//    F3                               65472     0xffc0
+    KS_F3                               =     0xffc0,
+//    F4                               65473     0xffc1
+    KS_F4                               =     0xffc1,
+//    F5                               65474     0xffc2
+    KS_F5                               =     0xffc2,
+//    F6                               65475     0xffc3
+    KS_F6                               =     0xffc3,
+//    F7                               65476     0xffc4
+    KS_F7                               =     0xffc4,
+//    F8                               65477     0xffc5
+    KS_F8                               =     0xffc5,
+//    F9                               65478     0xffc6
+    KS_F9                               =     0xffc6,
+//    F10                              65479     0xffc7
+    KS_F10                              =     0xffc7,
+//    L1                               65480     0xffc8
+    KS_L1                               =     0xffc8,
+//    L2                               65481     0xffc9
+    KS_L2                               =     0xffc9,
+//    L3                               65482     0xffca
+    KS_L3                               =     0xffca,
+//    L4                               65483     0xffcb
+    KS_L4                               =     0xffcb,
+//    L5                               65484     0xffcc
+    KS_L5                               =     0xffcc,
+//    L6                               65485     0xffcd
+    KS_L6                               =     0xffcd,
+//    L7                               65486     0xffce
+    KS_L7                               =     0xffce,
+ //    L8                               65487     0xffcf
+    KS_L8                               =     0xffcf,
+//    L9                               65488     0xffd0
+    KS_L9                               =     0xffd0,
+//    L10                              65489     0xffd1
+    KS_L10                              =     0xffd1,
+//    R1                               65490     0xffd2
+    KS_R1                               =     0xffd2,
+//    R2                               65491     0xffd3
+    KS_R2                               =     0xffd3,
+//    R3                               65492     0xffd4
+    KS_R3                               =     0xffd4,
+//    R4                               65493     0xffd5
+    KS_R4                               =     0xffd5,
+//    R5                               65494     0xffd6
+    KS_R5                               =     0xffd6,
+//    R6                               65495     0xffd7
+    KS_R6                               =     0xffd7,
+//    R7                               65496     0xffd8
+    KS_R7                               =     0xffd8,
+//    R8                               65497     0xffd9
+    KS_R8                               =     0xffd9,
+//    R9                               65498     0xffda
+    KS_R9                               =     0xffda,
+//    R10                              65499     0xffdb
+    KS_R10                              =     0xffdb,
+//    R11                              65500     0xffdc
+    KS_R11                              =     0xffdc,
+//    R12                              65501     0xffdd
+    KS_R12                              =     0xffdd,
+//    F33                              65502     0xffde
+    KS_F33                              =     0xffde,
+//    R14                              65503     0xffdf
+    KS_R14                              =     0xffdf,
+//    R15                              65504     0xffe0
+    KS_R15                              =     0xffe0,
+//    Shift_L                          65505     0xffe1
+    KS_Shift_L                          =     0xffe1,
+//    Shift_R                          65506     0xffe2
+    KS_Shift_R                          =     0xffe2,
+//    Control_L                        65507     0xffe3
+    KS_Control_L                        =     0xffe3,
+//    Control_R                        65508     0xffe4
+    KS_Control_R                        =     0xffe4,
+//    Caps_Lock                        65509     0xffe5
+    KS_Caps_Lock                        =     0xffe5,
+//    Shift_Lock                       65510     0xffe6
+    KS_Shift_Lock                       =     0xffe6,
+//    Meta_L                           65511     0xffe7
+    KS_Meta_L                           =     0xffe7,
+//    Meta_R                           65512     0xffe8
+    KS_Meta_R                           =     0xffe8,
+//    Alt_L                            65513     0xffe9
+    KS_Alt_L                            =     0xffe9,
+//    Alt_R                            65514     0xffea
+    KS_Alt_R                            =     0xffea,
+//    Super_L                          65515     0xffeb
+    KS_Super_L                          =     0xffeb,
+//    Super_R                          65516     0xffec
+    KS_Super_R                          =     0xffec,
+//    Hyper_L                          65517     0xffed
+    KS_Hyper_L                          =     0xffed,
+//    Hyper_R                          65518     0xffee
+    KS_Hyper_R                          =     0xffee,
+
+    KS_Delete                           =     0xffff
+};
 
 // KEYSYMS
 // =======
-
 //    space                               32     0x0020
 //    exclam                              33     0x0021
 //    quotedbl                            34     0x0022
@@ -229,7 +453,6 @@
 //    Scedilla                           426     0x01aa
 //    Tcaron                             427     0x01ab
 //    Zacute                             428     0x01ac
-
 //    Zcaron                             430     0x01ae
 //    Zabovedot                          431     0x01af
 //    aogonek                            433     0x01b1
@@ -811,117 +1034,6 @@
 //    hebrew_resh                       3320     0x0cf8
 //    hebrew_shin                       3321     0x0cf9
 //    hebrew_taf                        3322     0x0cfa
-//    BackSpace                        65288     0xff08
-//    Tab                              65289     0xff09
-//    Linefeed                         65290     0xff0a
-//    Clear                            65291     0xff0b
-//    Return                           65293     0xff0d
-//    Pause                            65299     0xff13
-//    Scroll_Lock                      65300     0xff14
-//    Sys_Req                          65301     0xff15
-//    Escape                           65307     0xff1b
-//    Multi_key                        65312     0xff20
-//    Kanji                            65313     0xff21
-//    Home                             65360     0xff50
-//    Left                             65361     0xff51
-//    Up                               65362     0xff52
-//    Right                            65363     0xff53
-//    Down                             65364     0xff54
-//    Prior                            65365     0xff55
-//    Next                             65366     0xff56
-//    End                              65367     0xff57
-//    Begin                            65368     0xff58
-//    Win_L                            65371     0xff5b
-//    Win_R                            65372     0xff5c
-
-//    App                              65373     0xff5d
-//    Select                           65376     0xff60
-//    Print                            65377     0xff61
-//    Execute                          65378     0xff62
-//    Insert                           65379     0xff63
-//    Undo                             65381     0xff65
-//    Redo                             65382     0xff66
-//    Menu                             65383     0xff67
-//    Find                             65384     0xff68
-//    Cancel                           65385     0xff69
-//    Help                             65386     0xff6a
-//    Break                            65387     0xff6b
-//    Hebrew_switch                    65406     0xff7e
-//    Num_Lock                         65407     0xff7f
-//    KP_Space                         65408     0xff80
-//    KP_Tab                           65417     0xff89
-//    KP_Enter                         65421     0xff8d
-//    KP_F1                            65425     0xff91
-//    KP_F2                            65426     0xff92
-//    KP_F3                            65427     0xff93
-//    KP_F4                            65428     0xff94
-//    KP_Multiply                      65450     0xffaa
-//    KP_Add                           65451     0xffab
-//    KP_Separator                     65452     0xffac
-//    KP_Subtract                      65453     0xffad
-//    KP_Decimal                       65454     0xffae
-//    KP_Divide                        65455     0xffaf
-//    KP_0                             65456     0xffb0
-//    KP_1                             65457     0xffb1
-//    KP_2                             65458     0xffb2
-//    KP_3                             65459     0xffb3
-//    KP_4                             65460     0xffb4
-//    KP_5                             65461     0xffb5
-//    KP_6                             65462     0xffb6
-//    KP_7                             65463     0xffb7
-//    KP_8                             65464     0xffb8
-//    KP_9                             65465     0xffb9
-//    KP_Equal                         65469     0xffbd
-//    F1                               65470     0xffbe
-//    F2                               65471     0xffbf
-//    F3                               65472     0xffc0
-//    F4                               65473     0xffc1
-//    F5                               65474     0xffc2
-//    F6                               65475     0xffc3
-//    F7                               65476     0xffc4
-//    F8                               65477     0xffc5
-//    F9                               65478     0xffc6
-//    F10                              65479     0xffc7
-//    L1                               65480     0xffc8
-//    L2                               65481     0xffc9
-//    L3                               65482     0xffca
-//    L4                               65483     0xffcb
-//    L5                               65484     0xffcc
-//    L6                               65485     0xffcd
-//    L7                               65486     0xffce
-//    L8                               65487     0xffcf
-//    L9                               65488     0xffd0
-//    L10                              65489     0xffd1
-//    R1                               65490     0xffd2
-//    R2                               65491     0xffd3
-//    R3                               65492     0xffd4
-//    R4                               65493     0xffd5
-//    R5                               65494     0xffd6
-//    R6                               65495     0xffd7
-//    R7                               65496     0xffd8
-//    R8                               65497     0xffd9
-//    R9                               65498     0xffda
-//    R10                              65499     0xffdb
-//    R11                              65500     0xffdc
-//    R12                              65501     0xffdd
-//    F33                              65502     0xffde
-//    R14                              65503     0xffdf
-//    R15                              65504     0xffe0
-//    Shift_L                          65505     0xffe1
-//    Shift_R                          65506     0xffe2
-//    Control_L                        65507     0xffe3
-//    Control_R                        65508     0xffe4
-//    Caps_Lock                        65509     0xffe5
-//    Shift_Lock                       65510     0xffe6
-//    Meta_L                           65511     0xffe7
-//    Meta_R                           65512     0xffe8
-//    Alt_L                            65513     0xffe9
-//    Alt_R                            65514     0xffea
-//    Super_L                          65515     0xffeb
-//    Super_R                          65516     0xffec
-//    Hyper_L                          65517     0xffed
-//    Hyper_R                          65518     0xffee
-//    Delete                           65535     0xffff
 
 // using namespace std;
 
@@ -943,6 +1055,44 @@ KeymapSym::KeymapSym(int verbose)
     this->last_sym = 0;
 }
 
+// [MS-RDPBCGR] - 2.2.8.1.2.2.5 Fast-Path Synchronize Event
+//  (TS_FP_SYNC_EVENT)
+// ========================================================
+
+// The TS_FP_SYNC_EVENT structure is the fast-path variant of the TS_SYNC_EVENT
+//  (section 2.2.8.1.1.3.1.1.5) structure.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  eventHeader  |
+// +---------------+
+
+// eventHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
+//  the same as the eventHeader byte field, specified in section 2.2.8.1.2.2.
+//  The eventCode bitfield (3 bits in size) MUST be set to
+//  FASTPATH_INPUT_EVENT_SYNC (3). The eventFlags bitfield (5 bits in size)
+//  contains flags indicating the "on" status of the keyboard toggle keys.
+
+// +--------------------------------------+------------------------------------+
+// | 5-Bit Codes                          | Meaning                            |
+// +--------------------------------------+------------------------------------+
+// | 0x01 FASTPATH_INPUT_SYNC_SCROLL_LOCK | Indicates that the Scroll Lock     |
+// |                                      | indicator light SHOULD be on.      |
+// +--------------------------------------+------------------------------------+
+// | 0x02 FASTPATH_INPUT_SYNC_NUM_LOCK    | Indicates that the Num Lock        |
+// |                                      | indicator light SHOULD be on.      |
+// +--------------------------------------+------------------------------------+
+// | 0x04 FASTPATH_INPUT_SYNC_CAPS_LOCK   | Indicates that the Caps Lock       |
+// |                                      | indicator light SHOULD be on.      |
+// +--------------------------------------+------------------------------------+
+// | 0x08 FASTPATH_INPUT_SYNC_KANA_LOCK   | Indicates that the Kana Lock       |
+// |                                      | indicator light SHOULD be on.      |
+// +--------------------------------------+------------------------------------+
+
+
+// TODO: synchronize is not called, we currently have a direct change of key_flags from vnc
 void KeymapSym::synchronize(uint16_t param1)
 {
     this->key_flags = param1 & 0x07;
@@ -953,6 +1103,39 @@ void KeymapSym::synchronize(uint16_t param1)
     this->keys_down[RIGHT_CTRL] = 0;
     this->keys_down[LEFT_ALT] = 0;
     this->keys_down[RIGHT_ALT] = 0;
+}
+
+const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
+{
+    // pick the LAYOUT to use (depending on current keyboard state)
+    //----------------------------------------
+    // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
+    if ((this->is_ctrl_pressed() && this->is_left_alt_pressed())
+    || (this->is_right_alt_pressed())) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "Altgr Layout");
+        }
+        return &this->keylayout_WORK_altgr_sym;
+    }
+    if (this->is_shift_pressed() && this->is_caps_locked()){
+        if (this->verbose) {
+            LOG(LOG_INFO, "Shift Capslock Layout");
+        }
+        return &this->keylayout_WORK_shiftcapslock_sym;
+    }
+    if (this->is_shift_pressed()){
+        if (this->verbose) {
+            LOG(LOG_INFO, "Use KEYLAYOUT WORK shift");
+        }
+        return &this->keylayout_WORK_shift_sym;
+    }
+    if (this->is_caps_locked()) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "Use KEYLAYOUT WORK capslock");
+        }
+        return &this->keylayout_WORK_capslock_sym;
+    }
+    return &this->keylayout_WORK_noshift_sym;
 }
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
@@ -987,6 +1170,27 @@ void KeymapSym::synchronize(uint16_t param1)
 
 void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 {
+    enum {
+           SCROLLLOCK  = 0x01
+         , NUMLOCK     = 0x02
+         , CAPSLOCK    = 0x04
+         , FLG_SHIFT   = 0x08
+         , FLG_CTRL    = 0x10
+         , FLG_ALT     = 0x20
+         , FLG_WINDOWS = 0x40
+         , FLG_ALTGR   = 0x80
+    };
+
+    LOG(LOG_INFO, ">>>>>> Enter KeymapSym::event(keyboardFlags=%04x (%s%s), keyCode=%04x flags=%04x (%s %s %s %s %s %s %s))",
+        keyboardFlags, (keyboardFlags & KBDFLAGS_RELEASE)?"UP":"DOWN",(keyboardFlags & KBDFLAGS_EXTENDED)?" EXT":"",
+        keyCode, unsigned(this->key_flags),
+        (this->key_flags & SCROLLLOCK)?"SCR ":"",
+        (this->key_flags & NUMLOCK)?"NUM ":"",
+        (this->key_flags & CAPSLOCK)?"CAPS ":"",
+        (this->key_flags & FLG_SHIFT)?"SHIFT ":"",
+        (this->key_flags & FLG_ALT)?"ALT ":"",
+        (this->key_flags & FLG_WINDOWS)?"WIN ":"",
+        (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
 
      if (this->verbose){
         LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x, keyCode=%04x flags=%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
@@ -1020,14 +1224,14 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
     //----------------
     // Lock keys
     //----------------
+        // These keys are managed internally by proxy and never
+        // transmitted to target system
         case 0x3A: // capslock
             if (this->keys_down[extendedKeyCode]){
                 this->key_flags ^= CAPSLOCK;
             }
             break;
-//        case 0x45: // numlock: is really managed externally in vnc through toggle
-        // case below never called
-        case 0xC5: // numlock
+        case 0x45: // numlock
             if (this->keys_down[extendedKeyCode]){
                 this->key_flags ^= NUMLOCK;
             }
@@ -1037,15 +1241,58 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 this->key_flags ^= SCROLLLOCK;
             }
             break;
-    //----------------
-    // Modifier keys
-    //----------------
-        // Not used (VNC server handles those keys state)
+ 
+            //--------------------------------------------------------
+            // KEYPAD : Keypad keys whose meaning depends on Numlock 
+            //          are handled apart by the code below
+            //          47 48 49 4B 4C 4D 4F 50 51 52 53
+            //--------------------------------------------------------
+            /* KP_4 or KEYPAD LEFT ARROW */
+        case 0x4b:
+                this->push_sym((this->key_flags & NUMLOCK)?'4':0xFF51);
+            break;
+        /* KP_8 or kEYPAD UP ARROW */
+        case 0x48:
+            this->push_sym((this->key_flags & NUMLOCK)?'8':0xFF52);
+            break;
+        /* KP_6 or KEYPAD RIGHT ARROW */
+        case 0x4d:
+            this->push_sym((this->key_flags & NUMLOCK)?'6':0xFF53);
+            break;
+        /* KP_2 or KEYPAD DOWN ARROW */
+        case 0x50:
+            this->push_sym((this->key_flags & NUMLOCK)?'2':0xFF54);
+            break;
+        /* Kp_9 or KEYPAD PGUP */
+        case 0x49:
+            this->push_sym((this->key_flags & NUMLOCK)?'9':0xFF55);
+            break;
+        /* KP_3 or kEYPAD PGDOWN */
+        case 0x51:
+            this->push_sym((this->key_flags & NUMLOCK)?'3':0xFF56);
+            break;
+        /* KP_1 or KEYPAD END */
+        case 0x4F:
+            this->push_sym((this->key_flags & NUMLOCK)?'1':0xFF57);
+            break;
+        /* kEYPAD EMPTY 5 */
+        case 0x4c:
+            this->push_sym((this->key_flags & NUMLOCK)?'5':0);
+            break;
+        /* kEYPAD HOME */
+        case 0x47:
+            this->push_sym((this->key_flags & NUMLOCK)?'7':0xFF50);
+            break;
+        /* KP_0 or kEYPAD INSER */
+        case 0x52:
+            this->push_sym((this->key_flags & NUMLOCK)?'0':0xFF63);
+            break;
 
     //----------------
     // All other keys
     //----------------
-        default: // all other codes
+        default:
+        {
             // This table translates the RDP scancodes to X11 scancodes :
             //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
             //  - the second block (128-255) give codes for the extended keys that have a meaningful one
@@ -1109,10 +1356,8 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 // |  1D  |  5Bx | 38 |           39           |  38x  |  5Cx |  5Dx |  1Dx  |  | 4Bx| 50x| 4Dx|  |    52   | 53 |     |
 // +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
 
-
 // KEYBOARD MAP WITH X KSYM LAYOUT SCANCODES
 // -----------------------------------------
-
 // +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
 // | 09 |  | 43 | 44 | 45 | 46 |  | 47 | 48 | 49 | 4A |  | 4B | 4C | 5F | 60 |  | 37 | 4E | 6DX   |
 // +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
@@ -1129,201 +1374,27 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 // |  25  |  73X | 40 |           41           |  71X  |  74X |  75X |  6DX  |  | 64X| 68X| 66X|  |    5A   | 5B |     |
 // +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
 
+            const KeyLayout_t * layout = this->select_layout();
 
-//    Pause                            65299     0xff13
-//    Scroll_Lock                      65300     0xff14
-//    Sys_Req                          65301     0xff15
-//    Escape                           65307     0xff1b
-//    Multi_key                        65312     0xff20
-//    Kanji                            65313     0xff21
-//    Home                             65360     0xff50
-//    Left                             65361     0xff51
-//    Up                               65362     0xff52
-//    Right                            65363     0xff53
-//    Down                             65364     0xff54
-//    Prior                            65365     0xff55
-//    Next                             65366     0xff56
-//    End                              65367     0xff57
-//    Begin                            65368     0xff58
-//    Win_L                            65371     0xff5b
-//    Win_R                            65372     0xff5c
+            /* KP_ POINT or kEYPAD DELETE */
+            if (extendedKeyCode == 0x53){
+                if (this->key_flags & NUMLOCK){
+                    // This one has to be localized
+                    layout = &this->keylayout_WORK_shift_sym;
+                    uint8_t sym = map[extendedKeyCode];
+                    uint32_t ksym = (*layout)[sym];
+                    this->push_sym(ksym);
+                }
+                else {
+                    this->push_sym(0xFFFF);
+                }
+                break;
+            }
 
-//    0x00     0x--50,  0x--52,  0x--55,  0x--51,     0x0,  0x--53,  0x--57, // 60 - 67
-//    0x--54,  0x--56,  0x--63,  0x--ff,  0x--8d,  0x--e4,  0x--13,  0x--61, // 68 - 6F
-//    0x--af,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
-//    0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,    // 78 - 7F
-
-
-    enum {
-        EXT_KEY_HOME         = 0x61, // HOME = 0xFF50
-        EXT_KEY_ARROW_UP     = 0x62, // UP   = 0xFF52
-        EXT_KEY_PAGE_UP      = 0x63, // PRIOR = 0xFF55
-        EXT_KEY_ARROW_LEFT   = 0x64, // LEFT  = 0xFF51
-        EXT_KEY_UNKNOWN1     = 0x65, // 0
-        EXT_KEY_ARROW_RIGHT  = 0x66, // RIGHT = 0xFF53
-        EXT_KEY_END          = 0x67, // END   = 0xFF57
-        EXT_KEY_ARROW_DOWN   = 0x68, // DOWN  = 0xFF54
-        EXT_KEY_PAGE_DOWN    = 0x69, // NEXT  = 0xFF56
-        EXT_KEY_INSERT       = 0x6A, // INSERT = 0xFF63
-        EXT_KEY_DELETE       = 0x6B, // DEL    = 0xFFFF
-        EXT_KEY_KP_ENTER     = 0x6C, // KP_ENTER = 0xff8d
-        EXT_KEY_CTRL_RIGHT   = 0x6D, // Control_R = 0xffe4
-        EXT_KEY_PAUSE        = 0x6E, // PAUSE = 0xff13
-        EXT_KEY_PRINTSCR     = 0x6F, // PRINT_SCREEN = 0xff61
-        EXT_KEY_KP_SLASH     = 0x70, // KP_Divide = 0xffaf
-        EXT_KEY_ALT_GR_RIGHT = 0x71, // 0xfe03
-        EXT_KEY_UNKNOWN4     = 0x72, 
-        EXT_KEY_WINDOWS_LEFT = 0x73,  // 0xffeb
-        EXT_KEY_WINDOWS_RIGHT = 0x74, // 0xffec
-        EXT_KEY_WINDOWS_MENU = 0x75,  // 0xFF67
-    };
-
-            const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
             if (this->verbose) {
                 LOG(LOG_INFO, "Use KEYLAYOUT WORK no shift");
             }
 
-            // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
-//                if (is_ctrl_pressed() && is_alt_pressed()
-//                && ((extendedKeyCode == 0xcf)||(extendedKeyCode == 83))){
-                //    Delete                           65535     0xffff
-//                    this->push_sym(0xFFFF);
-//                    return;
-//                }
-
-            // Numlock keys
-            if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
-                || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
-                || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
-                ){
-
-                //------------------------------------------------------------------------
-                // KEYPAD : Keypad keys whose meaning depends on Numlock are handled apart
-                //------------------------------------------------------------------------
-                if ((this->key_flags & NUMLOCK) && !(keyboardFlags & KBDFLAGS_EXTENDED)) {
-                    // if numlock is activated, keys are printable characters (logical SHIFT mode)
-                    layout = &this->keylayout_WORK_shift_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK shift (1)");
-                    }
-                    // Translate the scancode to an unicode char
-                    uint8_t sym = map[extendedKeyCode];
-                    uint32_t ksym = (*layout)[sym];
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-                    }
-                    this->push_sym(ksym);
-                } else {
-
-                    switch (extendedKeyCode){
-                        /* kEYPAD LEFT ARROW */
-                        case 0x4b:
-                            this->push_sym(0xFF51);
-                            break;
-                        /* kEYPAD UP ARROW */
-                        case 0x48:
-                            this->push_sym(0xFF52);
-                            break;
-                        /* kEYPAD RIGHT ARROW */
-                        case 0x4d:
-                            this->push_sym(0xFF53);
-                            break;
-                        /* kEYPAD DOWN ARROW */
-                        case 0x50:
-                            this->push_sym(0xFF54);
-                            break;
-                        /* kEYPAD PGUP */
-                        case 0x49:
-                            this->push_sym(0xFF55);
-                            break;
-                        /* kEYPAD PGDOWN */
-                        case 0x51:
-                            this->push_sym(0xFF56);
-                            break;
-                        /* kEYPAD END */
-                        case 0x4F:
-                            this->push_sym(0xFF57);
-                            break;
-                        /* kEYPAD DELETE */
-                        case 0x53:
-                            this->push_sym(0xFFFF);
-                            break;
-                        /* kEYPAD EMPTY 5 */
-                        case 0x4c:
-                            this->push_sym(0);
-                            break;
-                        /* kEYPAD HOME */
-                        case 0x47:
-                            this->push_sym(0xFF50);
-                            break;
-                        /* kEYPAD INSER */
-                        case 0x52:
-                            this->push_sym(0xff63);
-                            break;
-                        default:
-                            break;
-                    }
-                } // if numlock ON
-            } // not Numlock Keys
-            else if ((keyboardFlags & KBDFLAGS_EXTENDED) 
-            && (   (extendedKeyCode == 0x5b) // win left
-                || (extendedKeyCode == 0x5c) // win right
-                || (extendedKeyCode == 0x5d) // win app menu
-                || (extendedKeyCode == 0x35)) // Keypad slash
-                ) {
-                switch (keyCode) {
-                    /* WINDOWS LEFT */
-                    case 0x5b:
-                        this->push_sym(0xffeb);
-                        break;
-                    /* WINDOWS RIGHT */
-                    case 0x5c:
-                        this->push_sym(0xffec);
-                        break;
-                    /* WINDOWS MENU */
-                    case 0x5d:
-                        this->push_sym(0xff67);
-                        break;
-                    /* kEYPAD SLASH */
-                    case 0x35:
-                        this->push_sym(0xffaf);
-                        break;
-                }
-            } else {
-                //--------------------
-                // NOT KEYPAD Specific
-                //--------------------
-                if (this->verbose){
-                    LOG(LOG_INFO, "Key not from keypad: %#x", extendedKeyCode);
-                }
-                // SET the LAYOUT to use (depending on current keyboard state)
-                //----------------------------------------
-                // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
-                // if ( (this->is_ctrl_pressed() && this->is_alt_pressed()) ||
-                if (this->is_alt_pressed()) {
-                    layout = &this->keylayout_WORK_altgr_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK Altgr");
-                    }
-                }
-                else if (this->is_shift_pressed() && this->is_caps_locked()){
-                    layout = &this->keylayout_WORK_shiftcapslock_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK shiftcapslock");
-                    }
-                }
-                else if (this->is_shift_pressed()){
-                    layout = &this->keylayout_WORK_shift_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK shift (2)");
-                    }
-                }
-                else if (this->is_caps_locked()) {
-                    layout = &this->keylayout_WORK_capslock_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK capslock");
-                    }
-                }
                 // Translate the scancode to a KeySym
                 //----------------------------------------
                 uint8_t sym = map[extendedKeyCode];
@@ -1331,6 +1402,7 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 if (this->verbose){
                     LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
                 }
+                LOG(LOG_INFO, "+++extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
                 if ((ksym == 0xFE52 ) // DEADKEYS 
                 || (ksym == 0xFE57) 
                 || (ksym == 0x60) 
@@ -1626,5 +1698,9 @@ bool KeymapSym::is_alt_pressed() const
     return is_right_alt_pressed() || is_left_alt_pressed();
 }
 
+bool KeymapSym::is_altgr_pressed() const
+{
+    return ((this->is_ctrl_pressed() && this->is_left_alt_pressed()) || (this->is_right_alt_pressed()));
+}
 
 #include "keyboard/keymapsymlayouts.hpp"
