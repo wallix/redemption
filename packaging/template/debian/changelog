@@ -1,3 +1,9 @@
+redemption (1.1.137%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix disabling keyboard input data in metadata of session.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 05 Mar 2019 15:20:01 +0200
+
 redemption (1.1.135%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
