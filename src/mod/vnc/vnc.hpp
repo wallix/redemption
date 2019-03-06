@@ -1025,7 +1025,9 @@ public:
 
         int key = this->keymapSym.get_sym();
         while (key){
-            LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u", key, key, keycode, downflag);
+            if (bool(this->verbose & VNCVerbose::keymap_stack)) {
+                LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u", key, key, keycode, downflag);
+            }
             if (this->remove_server_alt_state_for_char 
             && this->keymapSym.is_altgr_pressed() 
             && (key == 0x65))
