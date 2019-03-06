@@ -1154,7 +1154,6 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
             (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
      }
 
-
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
 
 //    uint16_t keyboardFlags_pos = keyboardFlags;

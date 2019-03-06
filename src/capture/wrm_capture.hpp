@@ -383,6 +383,7 @@ public:
                 for (int i = 0; i < 8; ++i) {
                     payload.out_uint32_le('*');
                 }
+                this->hidden_masked_char_count = 0;
             }
         }
 
