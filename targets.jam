@@ -174,6 +174,8 @@ exe rdpproxy :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/ws_transport.o
+  <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2350,6 +2352,8 @@ test-run tests/core/test_mainloop :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/ws_transport.o
+  <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2478,6 +2482,8 @@ test-run tests/core/test_session :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/ws_transport.o
+  <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2607,6 +2613,8 @@ test-run tests/core/test_session_server :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/ws_transport.o
+  <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4871,6 +4879,13 @@ test-run tests/utils/test_asynchronous_task_manager :
 :
   <covfile>src/utils/asynchronous_task_manager.hpp
 ;
+test-run tests/utils/test_base64 :
+  $(REDEMPTION_TEST_PATH)/utils/test_base64.cpp
+:
+  <library>src/utils/base64.o
+  <covfile>src/utils/base64.cpp
+  <covfile>src/utils/base64.hpp
+;
 test-run tests/utils/test_bitfu :
   $(REDEMPTION_TEST_PATH)/utils/test_bitfu.cpp
 :
@@ -5335,6 +5350,8 @@ obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.c
 obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
 obj src/transport/replay_transport.o : $(REDEMPTION_SRC_PATH)/transport/replay_transport.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
+obj src/transport/ws_transport.o : $(REDEMPTION_SRC_PATH)/transport/ws_transport.cpp ;
+obj src/utils/base64.o : $(REDEMPTION_SRC_PATH)/utils/base64.cpp ;
 obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
 obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
@@ -5938,6 +5955,8 @@ alias test_update_lock : tests/utils/sugar/test_update_lock ;
 alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
 alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
+alias test_base64 : tests/utils/test_base64 ;
+alias test_base64.coverage : tests/utils/test_base64.coverage ;
 alias test_bitfu : tests/utils/test_bitfu ;
 alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
 alias test_bitmap : tests/utils/test_bitmap ;
@@ -6414,6 +6433,7 @@ alias tests/utils/sugar.norec :
 ;
 alias tests/utils.norec :
   tests/utils/test_asynchronous_task_manager
+  tests/utils/test_base64
   tests/utils/test_bitfu
   tests/utils/test_bitmap
   tests/utils/test_bitmap_data_allocator

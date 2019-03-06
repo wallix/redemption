@@ -126,7 +126,7 @@ const createRdpClient = (function(Module) {
         const send_data = function() {
             const out = rdpclient.getSendingData()
             if (out.length) {
-                // console.log("send " + out.length + " bytes")
+                console.log("send " + out.length + " bytes")
                 const cb = events.socketSend;
                 if (cb) {
                     cb(out);
@@ -222,6 +222,7 @@ const createRdpClient = (function(Module) {
                 cb1(event);
             }
 
+            console.log("receive " + event.data.byteLength + " bytes")
             rdpclient.addReceivingData(event.data);
             const now = Date.now();
             const timeout = rdpclient.updateTime();
@@ -616,7 +617,8 @@ function removeEvents(elem, events)
 function run()
 {
     rdpclient = createRdpClient(
-        "ws://localhost:8080",
+        "ws://localhost:3389",
+        // "ws://localhost:8080",
         ecanvas.width,
         ecanvas.height,
         user_input.value,

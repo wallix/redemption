@@ -30,6 +30,7 @@
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
 #include "transport/socket_transport.hpp"
+#include "transport/ws_transport.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/colors.hpp"
 #include "utils/file.hpp"
@@ -75,7 +76,7 @@ public:
 
         SessionReactor session_reactor;
 
-        SocketTransport front_trans(
+        WsTransport front_trans(
             "RDP Client", std::move(sck), "", 0, std::chrono::milliseconds(ini.get<cfg::client::recv_timeout>()),
             to_verbose_flags(this->ini.get<cfg::debug::front>())
         );

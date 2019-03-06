@@ -233,43 +233,6 @@ public:
 
     CryptoContext() = default;
 
-    size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
-    {
-        const uint8_t _base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        unsigned int bits = 0;
-        int nbits = 0;
-        char base64tbl[256];
-        size_t nbytes = 0;
-
-        memset(base64tbl, -1, sizeof base64tbl);
-
-        for (unsigned i = 0; _base64chars[i]; i++) {
-            base64tbl[_base64chars[i]] = i;
-        }
-
-        base64tbl[int('.')] = 62;
-        base64tbl[int('-')] = 62;
-        base64tbl[int('_')] = 63;
-
-        for (; *txt; ++txt) {
-            char const v = base64tbl[static_cast<uint8_t>(*txt)];
-            if (v >= 0) {
-                bits <<= 6;
-                bits += v;
-                nbits += 6;
-                if (nbits >= 8) {
-                    if (nbytes < bufsiz) {
-                        *buffer++ = (bits >> (nbits - 8));
-                    }
-                    nbytes++;
-                    nbits -= 8;
-                }
-            }
-        }
-
-        return nbytes;
-    }
-
     class key_data : private const_bytes_view
     {
         static constexpr std::size_t key_length = CRYPTO_KEY_LENGTH;
