@@ -938,18 +938,12 @@ public:
             return;
         }
 
-        // AltGr or Alt are catched by Appel OS
+        // AltGr or Alt are catched by Apple OS
 
         // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
-
-        // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, keycode=%ld)", device_flags, keycode);
         }
-
-//        if (0x45 == keycode) {
-//            this->keymapSym.toggle_num_lock(keymap->is_num_locked());
-//        }
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
 
@@ -1031,8 +1025,7 @@ public:
 
         int key = this->keymapSym.get_sym();
         while (key){
-            this->remove_server_alt_state_for_char = false;
-
+            LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u", key, key, keycode, downflag);
             if (this->remove_server_alt_state_for_char 
             && this->keymapSym.is_altgr_pressed() 
             && (key == 0x65))
@@ -1056,7 +1049,6 @@ public:
                     this->remove_modifiers();
                     switch (key){
                     case 0x65:
-                        LOG(LOG_INFO, "Sending Euro, the windows way");
                         this->send_keyevent(1, 0xffe3);
                         this->send_keyevent(1, 0xffe9);
                         this->send_keyevent(downflag, 0x65);
@@ -1099,6 +1091,9 @@ public:
         this->event.set_trigger_time(1000);
     }
 
+    // TODO: this should use the same method to take care of modifiers that 
+    // the non apple targets are using. We need to set an apple target to
+    // check behavior
     void apple_keyboard_translation(int device_flags, long keycode, uint8_t downflag) {
 
         switch (this->keylayout) {
