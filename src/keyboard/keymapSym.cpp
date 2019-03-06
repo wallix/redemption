@@ -23,11 +23,196 @@
 #include "keyboard/keymapSym.hpp"
 #include "utils/log.hpp"
 #include <cstring>
+#include <cstdio>
 
+enum KS_Symbols {
+
+    XK_EuroSign                         =     0x20AC,
+
+    KS_Bksp  = 0xff08,
+    KS_Tab   = 0xff09,
+//    Linefeed                         65290     0xff0a
+    KS_Linefeed                         =     0xff0a,
+//    Clear                            65291     0xff0b
+    KS_Clear                            =     0xff0b,
+    KS_Ret   = 0xff0d,
+    KS_Pause = 0xff13,
+//    Scroll_Lock                      65300     0xff14
+    KS_Scroll_Lock                      =     0xff14,
+//    Sys_Req                          65301     0xff15
+    KS_Sys_Req                          =     0xff15,
+    KS_Esc =     0xff1b,
+//    Multi_key                        65312     0xff20
+    KS_Multi_key                        =     0xff20,
+//    Kanji                            65313     0xff21
+    KS_Kanji                            =     0xff21,
+    KS_Home =  0xff50,
+    KS_Left =  0xff51,
+    KS_Up   =  0xff52,
+    KS_Right = 0xff53,
+    KS_Down  = 0xff54,
+    KS_Prior = 0xff55,
+    KS_Next  = 0xff56,
+    KS_End   = 0xff57,
+//    Begin                            65368     0xff58
+    KS_Begin                            =     0xff58,
+//    Select                           65376     0xff60
+    KS_Select                           =     0xff60,
+    KS_Print                            =     0xff61,
+//    Execute                          65378     0xff62
+    KS_Execute                          =     0xff62,
+    KS_Ins =  0xff63,
+//    Undo                             65381     0xff65
+    KS_Undo                             =     0xff65,
+//    Redo                             65382     0xff66
+    KS_Redo                             =     0xff66,
+    KS_Menu = 0xff67,
+//    Find                             65384     0xff68
+    KS_Find                             =     0xff68,
+//    Cancel                           65385     0xff69
+    KS_Cancel                           =     0xff69,
+//    Help                             65386     0xff6a
+    KS_Help                             =     0xff6a,
+//    Break                            65387     0xff6b
+    KS_Break                            =     0xff6b,
+//    Hebrew_switch                    65406     0xff7e
+    KS_Hebrew_switch                    =     0xff7e,
+//    Num_Lock                         65407     0xff7f
+    KS_Num_Lock                         =     0xff7f,
+//    KP_Space                         65408     0xff80
+    KS_KP_Space                         =     0xff80,
+//    KP_Tab                           65417     0xff89
+    KS_KP_Tab                           =     0xff89,
+    KS_KP_Enter  = 0xff8d,
+//    KP_F1                            65425     0xff91
+    KS_KP_F1                            =     0xff91,
+//    KP_F2                            65426     0xff92
+    KS_KP_F2                            =     0xff92,
+//    KP_F3                            65427     0xff93
+    KS_KP_F3                            =     0xff93,
+//    KP_F4                            65428     0xff94
+    KS_KP_F4                            =     0xff94,
+//    KP_Multiply                      65450     0xffaa
+    KS_KP_Mul = 0xffaa,
+    KS_KP_Add = 0xffab,
+//    KP_Separator                     65452     0xffac
+    KS_KP_Separator                     =     0xffac,
+//    KP_Subtract                      65453     0xffad
+    KS_KP_Subtract                      =     0xffad,
+//    KP_Decimal                       65454     0xffae
+    KS_KP_Decimal                       =     0xffae,
+//    KP_Divide                        65455     0xffaf
+    KS_KP_Divide                        =     0xffaf,
+    KS_KP_0 = 0xffb0,
+    KS_KP_1 = 0xffb1,
+    KS_KP_2 = 0xffb2,
+    KS_KP_3 = 0xffb3,
+    KS_KP_4 = 0xffb4,
+    KS_KP_5 = 0xffb5,
+    KS_KP_6 = 0xffb6,
+    KS_KP_7 = 0xffb7,
+    KS_KP_8 = 0xffb8,
+    KS_KP_9 = 0xffb9,
+    KS_KP_Equal = 0xffbd,
+//    F1                               65470     0xffbe
+    KS_F1                               =     0xffbe,
+//    F2                               65471     0xffbf
+    KS_F2                               =     0xffbf,
+//    F3                               65472     0xffc0
+    KS_F3                               =     0xffc0,
+//    F4                               65473     0xffc1
+    KS_F4                               =     0xffc1,
+//    F5                               65474     0xffc2
+    KS_F5                               =     0xffc2,
+//    F6                               65475     0xffc3
+    KS_F6                               =     0xffc3,
+//    F7                               65476     0xffc4
+    KS_F7                               =     0xffc4,
+//    F8                               65477     0xffc5
+    KS_F8                               =     0xffc5,
+//    F9                               65478     0xffc6
+    KS_F9                               =     0xffc6,
+//    F10                              65479     0xffc7
+    KS_F10                              =     0xffc7,
+//    L1                               65480     0xffc8
+    KS_L1                               =     0xffc8,
+//    L2                               65481     0xffc9
+    KS_L2                               =     0xffc9,
+//    L3                               65482     0xffca
+    KS_L3                               =     0xffca,
+//    L4                               65483     0xffcb
+    KS_L4                               =     0xffcb,
+//    L5                               65484     0xffcc
+    KS_L5                               =     0xffcc,
+//    L6                               65485     0xffcd
+    KS_L6                               =     0xffcd,
+//    L7                               65486     0xffce
+    KS_L7                               =     0xffce,
+ //    L8                               65487     0xffcf
+    KS_L8                               =     0xffcf,
+//    L9                               65488     0xffd0
+    KS_L9                               =     0xffd0,
+//    L10                              65489     0xffd1
+    KS_L10                              =     0xffd1,
+//    R1                               65490     0xffd2
+    KS_R1                               =     0xffd2,
+//    R2                               65491     0xffd3
+    KS_R2                               =     0xffd3,
+//    R3                               65492     0xffd4
+    KS_R3                               =     0xffd4,
+//    R4                               65493     0xffd5
+    KS_R4                               =     0xffd5,
+//    R5                               65494     0xffd6
+    KS_R5                               =     0xffd6,
+//    R6                               65495     0xffd7
+    KS_R6                               =     0xffd7,
+//    R7                               65496     0xffd8
+    KS_R7                               =     0xffd8,
+//    R8                               65497     0xffd9
+    KS_R8                               =     0xffd9,
+//    R9                               65498     0xffda
+    KS_R9                               =     0xffda,
+//    R10                              65499     0xffdb
+    KS_R10                              =     0xffdb,
+//    R11                              65500     0xffdc
+    KS_R11                              =     0xffdc,
+//    R12                              65501     0xffdd
+    KS_R12                              =     0xffdd,
+//    F33                              65502     0xffde
+    KS_F33                              =     0xffde,
+//    R14                              65503     0xffdf
+    KS_R14                              =     0xffdf,
+//    R15                              65504     0xffe0
+    KS_R15                              =     0xffe0,
+//    Shift_L                          65505     0xffe1
+    KS_Shift_L                          =     0xffe1,
+    KS_Shift_R  =  0xffe2,
+    KS_Ctrl_L   =  0xffe3,
+    KS_Ctrl_R   =  0xffe4,
+    KS_Caps_Lock =  0xffe5,
+//    Shift_Lock                       65510     0xffe6
+    KS_Shift_Lock                       =     0xffe6,
+//    Meta_L                           65511     0xffe7
+    KS_Meta_L                           =     0xffe7,
+//    Meta_R                           65512     0xffe8
+    KS_Meta_R                           =     0xffe8,
+    KS_Alt_L  =   0xffe9,
+    KS_Alt_Gr =   0xffea,
+//    App                              65373     0xff5d
+    KS_App                              =     0xff5d,
+    KS_Win_L = 0xffeb, // Actually Super_L, Win_L is 0xff5b but doesn' t work with VNC
+    KS_Win_R = 0xffec, // Actually Super_R, Win_L is 0xff5c but doesn' t work with VNC 
+
+//    Hyper_L                          65517     0xffed
+    KS_Hyper_L                          =     0xffed,
+//    Hyper_R                          65518     0xffee
+    KS_Hyper_R                          =     0xffee,
+
+    KS_Del = 0xffff
+};
 
 // KEYSYMS
 // =======
-
 //    space                               32     0x0020
 //    exclam                              33     0x0021
 //    quotedbl                            34     0x0022
@@ -228,7 +413,6 @@
 //    Scedilla                           426     0x01aa
 //    Tcaron                             427     0x01ab
 //    Zacute                             428     0x01ac
-
 //    Zcaron                             430     0x01ae
 //    Zabovedot                          431     0x01af
 //    aogonek                            433     0x01b1
@@ -489,7 +673,7 @@
 //    Cyrillic_en                       1742     0x06ce
 //    Cyrillic_o                        1743     0x06cf
 //    Cyrillic_pe                       1744     0x06d0
-//    Cyrillic_ya                       1745     0x06d1
+//    Cyrillic_ya                       1745     0x06d17f
 //    Cyrillic_er                       1746     0x06d2
 //    Cyrillic_es                       1747     0x06d3
 //    Cyrillic_te                       1748     0x06d4
@@ -553,7 +737,7 @@
 //    Greek_iotaaccent                  1972     0x07b4
 //    Greek_iotadieresis                1973     0x07b5
 //    Greek_iotaaccentdieresis          1974     0x07b6
-//    Greek_omicronaccent               1975     0x07b7
+//    Greek_omicronaccent               1975     0x07b77f
 //    Greek_upsilonaccent               1976     0x07b8
 //    Greek_upsilondieresis             1977     0x07b9
 //    Greek_upsilonaccentdieresis       1978     0x07ba
@@ -810,117 +994,6 @@
 //    hebrew_resh                       3320     0x0cf8
 //    hebrew_shin                       3321     0x0cf9
 //    hebrew_taf                        3322     0x0cfa
-//    BackSpace                        65288     0xff08
-//    Tab                              65289     0xff09
-//    Linefeed                         65290     0xff0a
-//    Clear                            65291     0xff0b
-//    Return                           65293     0xff0d
-//    Pause                            65299     0xff13
-//    Scroll_Lock                      65300     0xff14
-//    Sys_Req                          65301     0xff15
-//    Escape                           65307     0xff1b
-//    Multi_key                        65312     0xff20
-//    Kanji                            65313     0xff21
-//    Home                             65360     0xff50
-//    Left                             65361     0xff51
-//    Up                               65362     0xff52
-//    Right                            65363     0xff53
-//    Down                             65364     0xff54
-//    Prior                            65365     0xff55
-//    Next                             65366     0xff56
-//    End                              65367     0xff57
-//    Begin                            65368     0xff58
-//    Win_L                            65371     0xff5b
-//    Win_R                            65372     0xff5c
-
-//    App                              65373     0xff5d
-//    Select                           65376     0xff60
-//    Print                            65377     0xff61
-//    Execute                          65378     0xff62
-//    Insert                           65379     0xff63
-//    Undo                             65381     0xff65
-//    Redo                             65382     0xff66
-//    Menu                             65383     0xff67
-//    Find                             65384     0xff68
-//    Cancel                           65385     0xff69
-//    Help                             65386     0xff6a
-//    Break                            65387     0xff6b
-//    Hebrew_switch                    65406     0xff7e
-//    Num_Lock                         65407     0xff7f
-//    KP_Space                         65408     0xff80
-//    KP_Tab                           65417     0xff89
-//    KP_Enter                         65421     0xff8d
-//    KP_F1                            65425     0xff91
-//    KP_F2                            65426     0xff92
-//    KP_F3                            65427     0xff93
-//    KP_F4                            65428     0xff94
-//    KP_Multiply                      65450     0xffaa
-//    KP_Add                           65451     0xffab
-//    KP_Separator                     65452     0xffac
-//    KP_Subtract                      65453     0xffad
-//    KP_Decimal                       65454     0xffae
-//    KP_Divide                        65455     0xffaf
-//    KP_0                             65456     0xffb0
-//    KP_1                             65457     0xffb1
-//    KP_2                             65458     0xffb2
-//    KP_3                             65459     0xffb3
-//    KP_4                             65460     0xffb4
-//    KP_5                             65461     0xffb5
-//    KP_6                             65462     0xffb6
-//    KP_7                             65463     0xffb7
-//    KP_8                             65464     0xffb8
-//    KP_9                             65465     0xffb9
-//    KP_Equal                         65469     0xffbd
-//    F1                               65470     0xffbe
-//    F2                               65471     0xffbf
-//    F3                               65472     0xffc0
-//    F4                               65473     0xffc1
-//    F5                               65474     0xffc2
-//    F6                               65475     0xffc3
-//    F7                               65476     0xffc4
-//    F8                               65477     0xffc5
-//    F9                               65478     0xffc6
-//    F10                              65479     0xffc7
-//    L1                               65480     0xffc8
-//    L2                               65481     0xffc9
-//    L3                               65482     0xffca
-//    L4                               65483     0xffcb
-//    L5                               65484     0xffcc
-//    L6                               65485     0xffcd
-//    L7                               65486     0xffce
-//    L8                               65487     0xffcf
-//    L9                               65488     0xffd0
-//    L10                              65489     0xffd1
-//    R1                               65490     0xffd2
-//    R2                               65491     0xffd3
-//    R3                               65492     0xffd4
-//    R4                               65493     0xffd5
-//    R5                               65494     0xffd6
-//    R6                               65495     0xffd7
-//    R7                               65496     0xffd8
-//    R8                               65497     0xffd9
-//    R9                               65498     0xffda
-//    R10                              65499     0xffdb
-//    R11                              65500     0xffdc
-//    R12                              65501     0xffdd
-//    F33                              65502     0xffde
-//    R14                              65503     0xffdf
-//    R15                              65504     0xffe0
-//    Shift_L                          65505     0xffe1
-//    Shift_R                          65506     0xffe2
-//    Control_L                        65507     0xffe3
-//    Control_R                        65508     0xffe4
-//    Caps_Lock                        65509     0xffe5
-//    Shift_Lock                       65510     0xffe6
-//    Meta_L                           65511     0xffe7
-//    Meta_R                           65512     0xffe8
-//    Alt_L                            65513     0xffe9
-//    Alt_R                            65514     0xffea
-//    Super_L                          65515     0xffeb
-//    Super_R                          65516     0xffec
-//    Hyper_L                          65517     0xffed
-//    Hyper_R                          65518     0xffee
-//    Delete                           65535     0xffff
 
 // using namespace std;
 
@@ -942,6 +1015,44 @@ KeymapSym::KeymapSym(int verbose)
     this->last_sym = 0;
 }
 
+// [MS-RDPBCGR] - 2.2.8.1.2.2.5 Fast-Path Synchronize Event
+//  (TS_FP_SYNC_EVENT)
+// ========================================================
+
+// The TS_FP_SYNC_EVENT structure is the fast-path variant of the TS_SYNC_EVENT
+//  (section 2.2.8.1.1.3.1.1.5) structure.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  eventHeader  |
+// +---------------+
+
+// eventHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
+//  the same as the eventHeader byte field, specified in section 2.2.8.1.2.2.
+//  The eventCode bitfield (3 bits in size) MUST be set to
+//  FASTPATH_INPUT_EVENT_SYNC (3). The eventFlags bitfield (5 bits in size)
+//  contains flags indicating the "on" status of the keyboard toggle keys.
+
+// +--------------------------------------+------------------------------------+
+// | 5-Bit Codes                          | Meaning                            |
+// +--------------------------------------+------------------------------------+
+// | 0x01 FASTPATH_INPUT_SYNC_SCROLL_LOCK | Indicates that the Scroll Lock     |
+// |                                      | indicator light SHOULD be on.      |
+// +--------------------------------------+------------------------------------+
+// | 0x02 FASTPATH_INPUT_SYNC_NUM_LOCK    | Indicates that the Num Lock        |
+// |                                      | indicator light SHOULD be on.      |
+// +--------------------------------------+------------------------------------+
+// | 0x04 FASTPATH_INPUT_SYNC_CAPS_LOCK   | Indicates that the Caps Lock       |
+// |                                      | indicator light SHOULD be on.      |
+// +--------------------------------------+------------------------------------+
+// | 0x08 FASTPATH_INPUT_SYNC_KANA_LOCK   | Indicates that the Kana Lock       |
+// |                                      | indicator light SHOULD be on.      |
+// +--------------------------------------+------------------------------------+
+
+
+// TODO: synchronize is not called, we currently have a direct change of key_flags from vnc
 void KeymapSym::synchronize(uint16_t param1)
 {
     this->key_flags = param1 & 0x07;
@@ -952,6 +1063,39 @@ void KeymapSym::synchronize(uint16_t param1)
     this->keys_down[RIGHT_CTRL] = 0;
     this->keys_down[LEFT_ALT] = 0;
     this->keys_down[RIGHT_ALT] = 0;
+}
+
+const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
+{
+    // pick the LAYOUT to use (depending on current keyboard state)
+    //----------------------------------------
+    // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
+    if ((this->is_ctrl_pressed() && this->is_left_alt_pressed())
+    || (this->is_right_alt_pressed())) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "Altgr Layout");
+        }
+        return &this->keylayout_WORK_altgr_sym;
+    }
+    if (this->is_shift_pressed() && this->is_caps_locked()){
+        if (this->verbose) {
+            LOG(LOG_INFO, "Shift Capslock Layout");
+        }
+        return &this->keylayout_WORK_shiftcapslock_sym;
+    }
+    if (this->is_shift_pressed()){
+        if (this->verbose) {
+            LOG(LOG_INFO, "Use KEYLAYOUT WORK shift");
+        }
+        return &this->keylayout_WORK_shift_sym;
+    }
+    if (this->is_caps_locked()) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "Use KEYLAYOUT WORK capslock");
+        }
+        return &this->keylayout_WORK_capslock_sym;
+    }
+    return &this->keylayout_WORK_noshift_sym;
 }
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
@@ -986,38 +1130,63 @@ void KeymapSym::synchronize(uint16_t param1)
 
 void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
 {
+    enum {
+           SCROLLLOCK  = 0x01
+         , NUMLOCK     = 0x02
+         , CAPSLOCK    = 0x04
+         , FLG_SHIFT   = 0x08
+         , FLG_CTRL    = 0x10
+         , FLG_ALT     = 0x20
+         , FLG_WINDOWS = 0x40
+         , FLG_ALTGR   = 0x80
+    };
 
-    if (this->verbose){
-        LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x, keyCode=%04x flags=%04x)", keyboardFlags, keyCode, unsigned(this->key_flags));
-    }
+     if (this->verbose){
+        LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x (%s%s), keyCode=%04x flags=%04x (%s %s %s %s %s %s %s))",
+            keyboardFlags, (keyboardFlags & KBDFLAGS_RELEASE)?"UP":"DOWN",(keyboardFlags & KBDFLAGS_EXTENDED)?" EXT":"",
+            keyCode, unsigned(this->key_flags),
+            (this->key_flags & SCROLLLOCK)?"SCR ":"",
+            (this->key_flags & NUMLOCK)?"NUM ":"",
+            (this->key_flags & CAPSLOCK)?"CAPS ":"",
+            (this->key_flags & FLG_SHIFT)?"SHIFT ":"",
+            (this->key_flags & FLG_ALT)?"ALT ":"",
+            (this->key_flags & FLG_WINDOWS)?"WIN ":"",
+            (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
+     }
 
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
 
-    uint16_t keyboardFlags_pos = keyboardFlags;
-    if (keyboardFlags_pos & KBDFLAGS_EXTENDED) {
-        keyboardFlags_pos -=  KBDFLAGS_EXTENDED;
-    }
-    uint8_t extendedKeyCode = keyCode|((keyboardFlags_pos >> 1)&0x80);
+//    uint16_t keyboardFlags_pos = keyboardFlags;
+//    if (keyboardFlags_pos & KBDFLAGS_EXTENDED) {
+//        keyboardFlags_pos -=  KBDFLAGS_EXTENDED;
+//    }
+//    uint8_t extendedKeyCode = keyCode|((keyboardFlags_pos >> 1)&0x80);
+
+    // Commented code above is disabling all extended codes, putting them back
+    uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
+
     // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
     this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
     // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
     if (is_ctrl_pressed() && is_alt_pressed()
-    && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
+    && ((extendedKeyCode == 0xCF)||(extendedKeyCode == 0x53))){
     //    Delete                           65535     0xffff
-        extendedKeyCode = 211;
+        extendedKeyCode = 0xD3;
     }
 
     switch (extendedKeyCode){
     //----------------
     // Lock keys
     //----------------
+        // These keys are managed internally by proxy and never
+        // transmitted to target system
         case 0x3A: // capslock
             if (this->keys_down[extendedKeyCode]){
                 this->key_flags ^= CAPSLOCK;
             }
             break;
-        case 0xC5: // numlock
+        case 0x45: // numlock
             if (this->keys_down[extendedKeyCode]){
                 this->key_flags ^= NUMLOCK;
             }
@@ -1027,18 +1196,63 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 this->key_flags ^= SCROLLLOCK;
             }
             break;
-    //----------------
-    // Modifier keys
-    //----------------
-        // Not used (VNC server handles those keys state)
+ 
+            //--------------------------------------------------------
+            // KEYPAD : Keypad keys whose meaning depends on Numlock 
+            //          are handled apart by the code below
+            //          47 48 49 4B 4C 4D 4F 50 51 52 53
+            //--------------------------------------------------------
+            /* KP_4 or KEYPAD LEFT ARROW */
+        case 0x4b:
+                this->push_sym((this->key_flags & NUMLOCK)?KS_KP_4:KS_Left);
+            break;
+        /* KP_8 or kEYPAD UP ARROW */
+        case 0x48:
+            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_8:KS_Up);
+            break;
+        /* KP_6 or KEYPAD RIGHT ARROW */
+        case 0x4d:
+            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_6:KS_Right);
+            break;
+        /* KP_2 or KEYPAD DOWN ARROW */
+        case 0x50:
+            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_2:KS_Down);
+            break;
+        /* Kp_9 or KEYPAD PGUP */
+        case 0x49:
+            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_9:KS_Prior);
+            break;
+        /* KP_3 or kEYPAD PGDOWN */
+        case 0x51:
+            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_3:KS_Next);
+            break;
+        /* KP_1 or KEYPAD END */
+        case 0x4F:
+            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_1:KS_End);
+            break;
+        /* kEYPAD EMPTY 5 */
+        case 0x4c:
+            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_5:0);
+            break;
+        /* kEYPAD HOME */
+        case 0x47:
+            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_7:KS_Home);
+            break;
+        /* KP_0 or kEYPAD INSER */
+        case 0x52:
+            this->push_sym((this->key_flags & NUMLOCK)?'0':0xFF63);
+            break;
 
     //----------------
     // All other keys
     //----------------
-        default: // all other codes
+        default:
+        {
             // This table translates the RDP scancodes to X11 scancodes :
             //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
             //  - the second block (128-255) give codes for the extended keys that have a meaningful one
+            // as in this code extended bit is cleared: it won't work
+
             uint8_t map[256] =  {
                 0x00, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, // 0x00 - 0x07
                 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, // 0x08 - 0x0f
@@ -1074,306 +1288,257 @@ void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xf0 - 0xf7
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
             } ;
-            const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
+
+            // Maps RDP Scancode to X11 code syms matrix
+            // -----------------------------------------
+            // The actual code to use will be looked-up in keyboard mapping tables
+
+// KEYBOARD MAP WITH RDP SCANCODES
+// -------------------------------
+// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
+// | 01 |  | 3B | 3C | 3D | 3E |  | 3F | 40 | 41 | 42 |  | 43 | 44 | 57 | 58 |  | 37 | 46 | 1D+45 |
+// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
+//                                     ***  keycodes suffixed by 'x' are extended ***
+// +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +--------------------+
+// | 29 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0A | 0B | 0C | 0D |   0E   |  | 52x| 47x| 49x|  | 45 | 35x| 37 | 4A  |
+// +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+-----+
+// |  0F  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1A | 1B |      |  | 53x| 4Fx| 51x|  | 47 | 48 | 49 |     |
+// +------------------------------------------------------------------+  1C  |  +----+----+----+  +----+----+----| 4E  |
+// |  3A   | 1E | 1F | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 2B |     |                    | 4B | 4C | 4D |     |
+// +-------------------------------------------------------------------------+       +----+       +----+----+----+-----+
+// |  2A | 56 | 2C | 2D | 2E | 2F | 30 | 31 | 32 | 33 | 34 | 35 |     36     |       | 48x|       | 4F | 50 | 51 |     |
+// +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 1Cx |
+// |  1D  |  5Bx | 38 |           39           |  38x  |  5Cx |  5Dx |  1Dx  |  | 4Bx| 50x| 4Dx|  |    52   | 53 |     |
+// +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
+
+// KEYBOARD MAP WITH X KSYM LAYOUT SCANCODES
+// -----------------------------------------
+// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
+// | 09 |  | 43 | 44 | 45 | 46 |  | 47 | 48 | 49 | 4A |  | 4B | 4C | 5F | 60 |  | 37 | 4E | 6DX   |
+// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
+//                                     ***  keycodes suffixed by 'x' are extended ***
+// +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +--------------------+
+// | 31 | 0A | 0B | 0C | 0D | 0E | 0F | 10 | 11 | 12 | 13 | 14 | 15 |   16   |  | 6AX| 61X| 63X|  | 4D | 70X| 3F | 52  |
+// +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+-----+
+// |  17  | 18 | 19 | 1A | 1B | 1C | 1D | 1E | 1F | 20 | 21 | 22 | 23 |      |  | 6BX| 67X| 69X|  | 4F | 50 | 51 |     |
+// +------------------------------------------------------------------+  24  |  +----+----+----+  +----+----+----| 56  |
+// |  42   | 26 | 27 | 28 | 29 | 2A | 2B | 2C | 2D | 2E | 2F | 30 | 33 |     |                    | 53 | 54 | 55 |     |
+// +-------------------------------------------------------------------------+       +----+       +----+----+----+-----+
+// |  32 | 56 | 34 | 35 | 36 | 37 | 38 | 39 | 3A | 3B | 3C | 3D |     3E     |       | 62X|       | 57 | 58 | 59 |     |
+// +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 6CX |
+// |  25  |  73X | 40 |           41           |  71X  |  74X |  75X |  6DX  |  | 64X| 68X| 66X|  |    5A   | 5B |     |
+// +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
+
+            const KeyLayout_t * layout = this->select_layout();
+
+            /* KP_ POINT or kEYPAD DELETE */
+            if (extendedKeyCode == 0x53){
+                if (this->key_flags & NUMLOCK){
+                    // This one has to be localized
+                    layout = &this->keylayout_WORK_shift_sym;
+                    uint8_t sym = map[extendedKeyCode];
+                    uint32_t ksym = (*layout)[sym];
+                    this->push_sym(ksym);
+                }
+                else {
+                    this->push_sym(0xFFFF);
+                }
+                break;
+            }
+
             if (this->verbose) {
                 LOG(LOG_INFO, "Use KEYLAYOUT WORK no shift");
             }
 
-            // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
-//                if (is_ctrl_pressed() && is_alt_pressed()
-//                && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
-                //    Delete                           65535     0xffff
-//                    this->push_sym(0xFFFF);
-//                    return;
-//                }
-
-            if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
-                || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
-                || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
-                ){
-                //------------------------------------------------------------------------
-                // KEYPAD : Keypad keys whose meaning depends on Numlock are handled apart
-                //------------------------------------------------------------------------
-                if ((this->key_flags & NUMLOCK)) {
-                    // if numlock is activated, keys are printable characters (logical SHIFT mode)
-                    layout = &this->keylayout_WORK_shift_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK shift (1)");
-                    }
-                    // Translate the scancode to an unicode char
-                    uint8_t sym = map[extendedKeyCode];
-                    uint32_t ksym = (*layout)[sym];
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-                    }
-                    this->push_sym(ksym);
-                } // if numlock ON
-                else {
-                    // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
-                    switch (extendedKeyCode){
-                        /* kEYPAD LEFT ARROW */
-                        case 0x4b:
-                                this->push_sym(0xFF51);
-                            break;
-                        /* kEYPAD UP ARROW */
-                        case 0x48:
-                            this->push_sym(0xFF52);
-                            break;
-                        /* kEYPAD RIGHT ARROW */
-                        case 0x4d:
-                            this->push_sym(0xFF53);
-                            break;
-                        /* kEYPAD DOWN ARROW */
-                        case 0x50:
-                            this->push_sym(0xFF54);
-                            break;
-                        /* kEYPAD HOME */
-                        case 0x47:
-                            this->push_sym(0xFF50);
-                            break;
-                        /* kEYPAD PGUP */
-                        case 0x49:
-                            this->push_sym(0xFF55);
-                            break;
-                        /* kEYPAD PGDOWN */
-                        case 0x51:
-                            this->push_sym(0xFF56);
-                            break;
-                        /* kEYPAD END */
-                        case 0x4F:
-                            this->push_sym(0xFF57);
-                            break;
-                        /* kEYPAD DELETE */
-                        case 0x53:
-                            this->push_sym(0xFFFF);
-                            break;
-                        default:
-                            break;
-                    }
-
-                } // if numlock OFF
+            // Translate the scancode to a KeySym
+            //----------------------------------------
+            uint8_t sym = map[extendedKeyCode];
+            uint32_t ksym = (*layout)[sym];
+            if (this->verbose){
+                LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
+            }
+            if ((ksym == 0xFE52 ) // DEADKEYS 
+            || (ksym == 0xFE57) 
+            || (ksym == 0x60) 
+            || (ksym == 0x7E)) {
+                //-------------------------------------------------
+                // ksym is NOT in Printable unicode character range
+                //-------------------------------------------------
+                // That is, A dead key (0xFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
+                // The flag is set accordingly
+                switch (extendedKeyCode){
+                    case 0x1A:
+                        this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
+                        break;
+                    case 0x08:
+                        this->dead_key = DEADKEY_GRAVE;
+                        break;
+                    case 0x03:
+                        this->dead_key = DEADKEY_TILDE;
+                        break;
+                    default:
+                        break;
+                } // Switch extendedKeyCode
             }
             else {
-                //--------------------
-                // NOT KEYPAD Specific
-                //--------------------
-                if (this->verbose){
-                    LOG(LOG_INFO, "Key not from keypad: %#x", extendedKeyCode);
-                }
-                // SET the LAYOUT to use (depending on current keyboard state)
-                //----------------------------------------
-                // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
-                // if ( (this->is_ctrl_pressed() && this->is_alt_pressed()) ||
-                if (this->is_alt_pressed()) {
-                    layout = &this->keylayout_WORK_altgr_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK Altgr");
-                    }
-                }
-                else if (this->is_shift_pressed() && this->is_caps_locked()){
-                    layout = &this->keylayout_WORK_shiftcapslock_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK shiftcapslock");
-                    }
-                }
-                else if (this->is_shift_pressed()){
-                    layout = &this->keylayout_WORK_shift_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK shift (2)");
-                    }
-                }
-                else if (this->is_caps_locked()) {
-                    layout = &this->keylayout_WORK_capslock_sym;
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Use KEYLAYOUT WORK capslock");
-                    }
-                }
-                // Translate the scancode to a KeySym
-                //----------------------------------------
-                uint8_t sym = map[extendedKeyCode];
-                uint32_t ksym = (*layout)[sym];
-                if (this->verbose){
-                    LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-                }
-                if ((ksym == 0xFE52 ) || (ksym == 0xFE57) || (ksym == 0x60) || (ksym == 0x7E)) {
-                    //-------------------------------------------------
-                    // ksym is NOT in Printable unicode character range
-                    //-------------------------------------------------
-                    // That is, A dead key (0xFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
-                    // The flag is set accordingly
-                    switch (extendedKeyCode){
-                        case 0x1A:
-                            this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
+                //-------------------------------------------------
+                // ksym is in Printable character range.
+                //-------------------------------------------------
+                if (this->dead_key != DEADKEY_NONE){
+                    switch (dead_key){
+                        case DEADKEY_CIRC:
+                            switch (ksym){
+                                case 'a':
+                                    this->push_sym(0xE2); // unicode for â (acirc)
+                                    break;
+                                case 'A':
+                                    this->push_sym(0xC2); // unicode for Â (Acirc)
+                                    break;
+                                case 'e':
+                                    this->push_sym(0xEA); // unicode for ê (ecirc)
+                                    break;
+                                case 'E':
+                                    this->push_sym(0xCA); // unicode for Ê (Ecirc)
+                                    break;
+                                case 'i':
+                                    this->push_sym(0xEE); // unicode for î (icirc)
+                                    break;
+                                case 'I':
+                                    this->push_sym(0xCE); // unicode for Î (Icirc)
+                                    break;
+                                case 'o':
+                                    this->push_sym(0xF4); // unicode for ô (ocirc)
+                                    break;
+                                case 'O':
+                                    this->push_sym(0xD4); // unicode for Ô (Ocirc)
+                                    break;
+                                case 'u':
+                                    this->push_sym(0xFB); // unicode for û (ucirc)
+                                    break;
+                                case 'U':
+                                    this->push_sym(0xDB); // unicode for Û (Ucirc)
+                                    break;
+                                case ' ':
+                                    this->push_sym(0x5E); // unicode for ^ (caret)
+                                    break;
+                                default:
+                                    this->push_sym(ksym); // unmodified unicode
+                                    break;
+                            }
                             break;
-                        case 0x08:
-                            this->dead_key = DEADKEY_GRAVE;
+
+                        case DEADKEY_UML:
+                            switch (ksym){
+                                case 'a':
+                                    this->push_sym(0xE4); // unicode for ä (auml)
+                                    break;
+                                case 'A':
+                                    this->push_sym(0xC4); // unicode for Ä (Auml)
+                                    break;
+                                case 'e':
+                                    this->push_sym(0xEB); // unicode for ë (euml)
+                                    break;
+                                case 'E':
+                                    this->push_sym(0xCB); // unicode for Ë (Euml)
+                                    break;
+                                case 'i':
+                                    this->push_sym(0xEF); // unicode for ï (iuml)
+                                    break;
+                                case 'I':
+                                    this->push_sym(0xCF); // unicode for Ï (Iuml)
+                                    break;
+                                case 'o':
+                                    this->push_sym(0xF6); // unicode for ö (ouml)
+                                    break;
+                                case 'O':
+                                    this->push_sym(0xD6); // unicode for Ö (Ouml)
+                                    break;
+                                case 'u':
+                                    this->push_sym(0xFC); // unicode for ü (uuml)
+                                    break;
+                                case 'U':
+                                    this->push_sym(0xDC); // unicode for Ü (Uuml)
+                                    break;
+                                case ' ':
+                                    this->push_sym(0xA8); // unicode for " (umlaut)
+                                    break;
+                                default:
+                                    this->push_sym(ksym); // unmodified unicode
+                                    break;
+                            }
                             break;
-                        case 0x03:
-                            this->dead_key = DEADKEY_TILDE;
+                        case DEADKEY_GRAVE:
+                            switch (ksym){
+                                case 'a':
+                                    this->push_sym(0xE0); // unicode for à (agrave)
+                                    break;
+                                case 'A':
+                                    this->push_sym(0xC0); // unicode for À (Agrave)
+                                    break;
+                                case 'e':
+                                    this->push_sym(0xE8); // unicode for è (egrave)
+                                    break;
+                                case 'E':
+                                    this->push_sym(0xC8); // unicode for È (Egrave)
+                                    break;
+                                case 'i':
+                                    this->push_sym(0xEC); // unicode for ì (igrave)
+                                    break;
+                                case 'I':
+                                    this->push_sym(0xCC); // unicode for Ì (Igrave)
+                                    break;
+                                case 'o':
+                                    this->push_sym(0xF2); // unicode for ò (ograve)
+                                    break;
+                                case 'O':
+                                    this->push_sym(0xD2); // unicode for Ò (Ograve)
+                                    break;
+                                case 'u':
+                                    this->push_sym(0xF9); // unicode for ù (ugrave)
+                                    break;
+                                case 'U':
+                                    this->push_sym(0xD9); // unicode for Ù (Ugrave)
+                                    break;
+                                case ' ':
+                                    this->push_sym(0x60); // unicode for ` (backquote)
+                                    break;
+                                default:
+                                    this->push_sym(ksym); // unmodified unicode
+                                    break;
+                            }
+                            break;
+                        case DEADKEY_TILDE:
+                            switch (ksym){
+                                case 'n':
+                                    this->push_sym(0xF1); // unicode for ~n (ntilde)
+                                    break;
+                                case 'N':
+                                    this->push_sym(0xD1); // unicode for ~N (Ntilde)
+                                    break;
+                                case ' ':
+                                    this->push_sym(0x7E); // unicode for ~ (tilde)
+                                    break;
+                                default:
+                                    this->push_sym(ksym); // unmodified unicode
+                                    break;
+                            }
                             break;
                         default:
+                            this->push_sym(ksym); // unmodified unicode
                             break;
-                    } // Switch extendedKeyCode
-                }
-                else {
-                    //-------------------------------------------------
-                    // ksym is in Printable character range.
-                    //-------------------------------------------------
-                    if (this->dead_key != DEADKEY_NONE){
-                        switch (dead_key){
-                            case DEADKEY_CIRC:
-                                switch (ksym){
-                                    case 'a':
-                                        this->push_sym(0xE2); // unicode for â (acirc)
-                                        break;
-                                    case 'A':
-                                        this->push_sym(0xC2); // unicode for Â (Acirc)
-                                        break;
-                                    case 'e':
-                                        this->push_sym(0xEA); // unicode for ê (ecirc)
-                                        break;
-                                    case 'E':
-                                        this->push_sym(0xCA); // unicode for Ê (Ecirc)
-                                        break;
-                                    case 'i':
-                                        this->push_sym(0xEE); // unicode for î (icirc)
-                                        break;
-                                    case 'I':
-                                        this->push_sym(0xCE); // unicode for Î (Icirc)
-                                        break;
-                                    case 'o':
-                                        this->push_sym(0xF4); // unicode for ô (ocirc)
-                                        break;
-                                    case 'O':
-                                        this->push_sym(0xD4); // unicode for Ô (Ocirc)
-                                        break;
-                                    case 'u':
-                                        this->push_sym(0xFB); // unicode for û (ucirc)
-                                        break;
-                                    case 'U':
-                                        this->push_sym(0xDB); // unicode for Û (Ucirc)
-                                        break;
-                                    case ' ':
-                                        this->push_sym(0x5E); // unicode for ^ (caret)
-                                        break;
-                                    default:
-                                        this->push_sym(ksym); // unmodified unicode
-                                        break;
-                                }
-                                break;
-
-                            case DEADKEY_UML:
-                                switch (ksym){
-                                    case 'a':
-                                        this->push_sym(0xE4); // unicode for ä (auml)
-                                        break;
-                                    case 'A':
-                                        this->push_sym(0xC4); // unicode for Ä (Auml)
-                                        break;
-                                    case 'e':
-                                        this->push_sym(0xEB); // unicode for ë (euml)
-                                        break;
-                                    case 'E':
-                                        this->push_sym(0xCB); // unicode for Ë (Euml)
-                                        break;
-                                    case 'i':
-                                        this->push_sym(0xEF); // unicode for ï (iuml)
-                                        break;
-                                    case 'I':
-                                        this->push_sym(0xCF); // unicode for Ï (Iuml)
-                                        break;
-                                    case 'o':
-                                        this->push_sym(0xF6); // unicode for ö (ouml)
-                                        break;
-                                    case 'O':
-                                        this->push_sym(0xD6); // unicode for Ö (Ouml)
-                                        break;
-                                    case 'u':
-                                        this->push_sym(0xFC); // unicode for ü (uuml)
-                                        break;
-                                    case 'U':
-                                        this->push_sym(0xDC); // unicode for Ü (Uuml)
-                                        break;
-                                    case ' ':
-                                        this->push_sym(0xA8); // unicode for " (umlaut)
-                                        break;
-                                    default:
-                                        this->push_sym(ksym); // unmodified unicode
-                                        break;
-                                }
-                                break;
-                            case DEADKEY_GRAVE:
-                                switch (ksym){
-                                    case 'a':
-                                        this->push_sym(0xE0); // unicode for à (agrave)
-                                        break;
-                                    case 'A':
-                                        this->push_sym(0xC0); // unicode for À (Agrave)
-                                        break;
-                                    case 'e':
-                                        this->push_sym(0xE8); // unicode for è (egrave)
-                                        break;
-                                    case 'E':
-                                        this->push_sym(0xC8); // unicode for È (Egrave)
-                                        break;
-                                    case 'i':
-                                        this->push_sym(0xEC); // unicode for ì (igrave)
-                                        break;
-                                    case 'I':
-                                        this->push_sym(0xCC); // unicode for Ì (Igrave)
-                                        break;
-                                    case 'o':
-                                        this->push_sym(0xF2); // unicode for ò (ograve)
-                                        break;
-                                    case 'O':
-                                        this->push_sym(0xD2); // unicode for Ò (Ograve)
-                                        break;
-                                    case 'u':
-                                        this->push_sym(0xF9); // unicode for ù (ugrave)
-                                        break;
-                                    case 'U':
-                                        this->push_sym(0xD9); // unicode for Ù (Ugrave)
-                                        break;
-                                    case ' ':
-                                        this->push_sym(0x60); // unicode for ` (backcote)
-                                        break;
-                                    default:
-                                        this->push_sym(ksym); // unmodified unicode
-                                        break;
-                                }
-                                break;
-                            case DEADKEY_TILDE:
-                                switch (ksym){
-                                    case 'n':
-                                        this->push_sym(0xF1); // unicode for ~n (ntilde)
-                                        break;
-                                    case 'N':
-                                        this->push_sym(0xD1); // unicode for ~N (Ntilde)
-                                        break;
-                                    case ' ':
-                                        this->push_sym(0x7E); // unicode for ~ (tilde)
-                                        break;
-                                    default:
-                                        this->push_sym(ksym); // unmodified unicode
-                                        break;
-                                }
-                                break;
-                            default:
-                                this->push_sym(ksym); // unmodified unicode
-                                break;
-                        } // Switch DEAD_KEY
-                        // if event is a Make (mandatory because a BREAK on a modifier key would also reset this flag)
-                        if (this->keys_down[extendedKeyCode])
-                        {
-                            this->dead_key = DEADKEY_NONE;
-                        }
-                    } // Is a dead Key
-                    else {
-                        // If previous key wasn't a dead key, simply push
-                        this->push_sym(ksym);
+                    } // Switch DEAD_KEY
+                    // if event is a Make (mandatory because a BREAK on a modifier key would also reset this flag)
+                    if (this->keys_down[extendedKeyCode])
+                    {
+                        this->dead_key = DEADKEY_NONE;
                     }
-                } // END if PRINTABLE / else
-            } // END if KEYPAD specific / else
+                } // Is a dead Key
+                else {
+                    // If previous key wasn't a dead key, simply push
+                    this->push_sym(ksym);
+                }
+            } // END if PRINTABLE / else
+        } // END if KEYPAD specific / else
         break;
     } // END SWITCH : ExtendedKeyCode
 
@@ -1487,1493 +1652,9 @@ bool KeymapSym::is_alt_pressed() const
     return is_right_alt_pressed() || is_left_alt_pressed();
 }
 
-
-void KeymapSym::init_layout_sym(int keyb)
+bool KeymapSym::is_altgr_pressed() const
 {
-    // %s/^[^"]*"[^"]*"[^"]*"\([^:]*\):.*$/\1/
+    return ((this->is_ctrl_pressed() && this->is_left_alt_pressed()) || (this->is_right_alt_pressed()));
+}
 
-    // DEFAULT KEYMAP
-    const KeyLayout_t DEFAULT_noshift_sym = {
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-            0x37,    0x38,    0x39,    0x30,    0xdf,  0xfe51,  0xff08,  0xff09,
-            0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69,
-            0x6f,    0x70,    0xfc,    0x2b,  0xff0d,  0xffe3,    0x61,    0x73,
-            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-            0xe4,  0xfe52,  0xffe1,    0x23,    0x79,    0x78,    0x63,    0x76,
-            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-    } ;
-
-    const KeyLayout_t DEFAULT_shift_sym = {
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,  0xff1b,    0x21,    0x22,    0xa7,    0x24,    0x25,    0x26,
-            0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20,
-            0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49,
-            0x4f,    0x50,    0xdc,    0x2a,  0xff0d,  0xffe3,    0x41,    0x53,
-            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6,
-            0xc4,    0xb0,  0xffe1,    0x27,    0x59,    0x58,    0x43,    0x56,
-            0x42,    0x4e,    0x4d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-    } ;
-
-    const KeyLayout_t DEFAULT_altgr_sym = {
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,  0xff1b,    0xb9,    0xb2,    0xb3,    0xbc,    0xbd,    0xac,
-            0x7b,    0x5b,    0x5d,    0x7d,    0x5c,  0xfe5b,  0xff08,  0xff09,
-            0x40,   0x1b3,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd,
-            0xf8,    0xfe,  0xfe57,  0xfe53,  0xff0d,  0xffe3,    0xe6,    0xdf,
-            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,  0xfe59,
-            0xfe52,    0xac,  0xffe1,  0xfe50,    0xab,    0xbb,    0xa2,   0xad2,
-            0xad3,    0x6e,    0xb5,   0x8a3,    0xb7,  0xfe60,  0xffe2,  0xffaa,
-            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-    } ;
-
-    const KeyLayout_t DEFAULT_capslock_sym = {
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-            0x37,    0x38,    0x39,    0x30,    0xdf,  0xfe51,  0xff08,  0xff09,
-            0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49,
-            0x4f,    0x50,    0xdc,    0x2b,  0xff0d,  0xffe3,    0x41,    0x53,
-            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6,
-            0xc4,  0xfe52,  0xffe1,    0x23,    0x59,    0x58,    0x43,    0x56,
-            0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-    } ;
-
-    const KeyLayout_t DEFAULT_shiftcapslock_sym = {
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-    } ;
-
-    // Intialize the WORK tables
-    for(int i=0 ; i < 128 ; i++) {
-        keylayout_WORK_noshift_sym[i] = DEFAULT_noshift_sym[i] ;
-        keylayout_WORK_shift_sym[i] = DEFAULT_shift_sym[i] ;
-        keylayout_WORK_altgr_sym[i] = DEFAULT_altgr_sym[i] ;
-        keylayout_WORK_capslock_sym[i] = DEFAULT_capslock_sym[i] ;
-        keylayout_WORK_shiftcapslock_sym[i] = DEFAULT_shiftcapslock_sym[i] ;
-    }
-
-    switch (keyb){
-
-        case 0x0407: // GERMAN
-        {
-                const KeyLayout_t x0407_noshift_sym = {
-                                    0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
-                                    0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36, // 08 - 0F
-                                0x37,    0x38,    0x39,    0x30,    0xdf,  0xfe51,  0xff08,  0xff09, // 10 - 17
-                                0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69, // 18 - 1F
-                                0x6f,    0x70,    0xfc,    0x2b,  0xff0d,  0xffe3,    0x61,    0x73, // 20 - 27
-                                0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6, // 28 - 2F
-                                0xe4,  0xfe52,  0xffe1,    0x23,    0x79,    0x78,    0x63,    0x76, // 30 - 37
-                                0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa, // 38 - 3F
-                                0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2, // 40 - 47
-                                0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95, // 48 - 4F
-                                0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c, // 50 - 57
-                                0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8, // 58 - 5F
-                                0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57, // 60 - 67
-                                0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
-                                0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
-                                    0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0, // 78 - 7F
-                };
-                const KeyLayout_t x0407_shift_sym = {
-                                    0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
-                                    0x0,  0xff1b,    0x21,    0x22,    0xa7,    0x24,    0x25,    0x26, // 08 - 0F
-                                0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20, // 10 - 17
-                                0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49, // 18 - 1F
-                                0x4f,    0x50,    0xdc,    0x2a,  0xff0d,  0xffe3,    0x41,    0x53, // 20 - 27
-                                0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6, // 28 - 2F
-                                0xc4,    0xb0,  0xffe1,    0x27,    0x59,    0x58,    0x43,    0x56, // 30 - 37
-                                0x42,    0x4e,    0x4d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa, // 38 - 3F
-                                0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2, // 40 - 47
-                                0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7, // 48 - 4F
-                                0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1, // 50 - 57
-                                0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8, // 58 - 5F
-                                0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57, // 60 - 67
-                                0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
-                                0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
-                                    0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb, // 78 - 7F
-                };
-                const KeyLayout_t x0407_altgr_sym = {
-                                    0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
-                                    0x0,  0xff1b,    0xb9,    0xb2,    0xb3,    0xbc,    0xbd,    0xac, // 08 - 0F
-                                0x7b,    0x5b,    0x5d,    0x7d,    0x5c,  0xfe5b,  0xff08,  0xff09, // 10 - 17
-                                0x40,   0x1b3,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd, // 18 - 1F
-                                0xf8,    0xfe,  0xfe57,  0xfe53,  0xff0d,  0xffe3,    0xe6,    0xdf, // 20 - 27
-                                0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,  0xfe59, // 28 - 2F
-                                0xfe52,    0xac,  0xffe1,  0xfe50,    0xab,    0xbb,    0xa2,   0xad2, // 30 - 37
-                                0xad3,    0x6e,    0xb5,   0x8a3,    0xb7,  0xfe60,  0xffe2,  0xffaa, // 38 - 3F
-                                0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2, // 40 - 47
-                                0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95, // 48 - 4F
-                                0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c, // 50 - 57
-                                0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8, // 58 - 5F
-                                0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57, // 60 - 67
-                                0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0, // 68 - 6F
-                                0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
-                                    0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0, // 78 - 7F
-                };
-                const KeyLayout_t x0407_capslock_sym = {
-                                    0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
-                                    0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36, // 08 - 0F
-                                0x37,    0x38,    0x39,    0x30,    0xdf,  0xfe51,  0xff08,  0xff09, // 10 - 17
-                                0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49, // 18 - 1F
-                                0x4f,    0x50,    0xdc,    0x2b,  0xff0d,  0xffe3,    0x41,    0x53, // 20 - 27
-                                0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6, // 28 - 2F
-                                0xc4,  0xfe52,  0xffe1,    0x23,    0x59,    0x58,    0x43,    0x56, // 30 - 37
-                                0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa, // 38 - 3F
-                                0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2, // 40 - 47
-                                0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95, // 48 - 4F
-                                0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c, // 50 - 57
-                                0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8, // 58 - 5F
-                                0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57, // 60 - 67
-                                0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
-                                0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
-                                    0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0, // 78 - 7F
-                };
-                const KeyLayout_t x0407_shiftcapslock_sym = {
-                                    0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
-                                    0x0,  0xff1b,    0x21,    0x22,    0xa7,    0x24,    0x25,    0x26, // 08 - 0F
-                                0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20, // 10 - 17
-                                0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69, // 18 - 1F
-                                0x6f,    0x70,    0xfc,    0x2a,  0xff0d,  0xffe3,    0x61,    0x73, // 20 - 27
-                                0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6, // 28 - 2F
-                                0xe4,    0xb0,  0xffe1,    0x27,    0x79,    0x78,    0x63,    0x76, // 30 - 37
-                                0x62,    0x6e,    0x6d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa, // 38 - 3F
-                                0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2, // 40 - 47
-                                0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7, // 48 - 4F
-                                0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1, // 50 - 57
-                                0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8, // 58 - 5F
-                                0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57, // 60 - 67
-                                0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
-                                0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
-                                    0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb, // 78 - 7F
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x0407_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x0407_noshift_sym[i] ;
-                    }
-                    if (x0407_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x0407_shift_sym[i] ;
-                    }
-                    if (x0407_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x0407_altgr_sym[i] ;
-                    }
-                    if (x0407_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x0407_capslock_sym[i] ;
-                    }
-                    if (x0407_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x0407_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x0409: // United States
-        {
-                const KeyLayout_t x0409_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0x5b,    0x5d,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x3b,
-                            0x27,    0x60,  0xffe1,    0x5c,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-
-                };
-                const KeyLayout_t x0409_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x40,    0x23,    0x24,    0x25,    0x5e,
-                            0x26,    0x2a,    0x28,    0x29,    0x5f,    0x2b,  0xff08,  0xfe20,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,    0x7b,    0x7d,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x3a,
-                            0x22,    0x7e,  0xffe1,    0x7c,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x3c,    0x3e,    0x3f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x0409_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0x5b,    0x5d,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x3b,
-                            0x27,    0x60,  0xffe1,    0x5c,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0409_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,    0x5b,    0x5d,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x3b,
-                            0x27,    0x60,  0xffe1,    0x5c,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0409_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x40,    0x23,    0x24,    0x25,    0x5e,
-                            0x26,    0x2a,    0x28,    0x29,    0x5f,    0x2b,  0xff08,  0xfe20,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0x7b,    0x7d,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x3a,
-                            0x22,    0x7e,  0xffe1,    0x7c,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x3c,    0x3e,    0x3f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x0409_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x0409_noshift_sym[i] ;
-                    }
-                    if (x0409_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x0409_shift_sym[i] ;
-                    }
-                    if (x0409_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x0409_altgr_sym[i] ;
-                    }
-                    if (x0409_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x0409_capslock_sym[i] ;
-                    }
-                    if (x0409_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x0409_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x040c: // French
-        {
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-// | 01 |  | 3B | 3C | 3D | 3E |  | 3F | 40 | 41 | 42 |  | 43 | 44 | 57 | 58 |  | 37 | 46 | 1D+45 |
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-//                                     ***  keycodes suffixed by 'x' are extended ***
-// +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +--------------------+
-// | 29 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0A | 0B | 0C | 0D |   0E   |  | 52x| 47x| 49x|  | 45 | 35x| 37 | 4A  |
-// +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+-----+
-// |  0F  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1A | 1B |      |  | 53x| 4Fx| 51x|  | 47 | 48 | 49 |     |
-// +------------------------------------------------------------------+  1C  |  +----+----+----+  +----+----+----| 4E  |
-// |  3A   | 1E | 1F | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 2B |     |                    | 4B | 4C | 4D |     |
-// +-------------------------------------------------------------------------+       +----+       +----+----+----+-----+
-// |  2A | 56 | 2C | 2D | 2E | 2F | 30 | 31 | 32 | 33 | 34 | 35 |     36     |       | 48x|       | 4F | 50 | 51 |     |
-// +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 1Cx |
-// |  1D  |  5Bx | 38 |           39           |  38x  |  5Cx |  5Dx |  1Dx  |  | 4Bx| 50x| 4Dx|  |    52   | 53 |     |
-// +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
-
-                const KeyLayout_t x040c_noshift_sym = {
-                                    0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
-                                    0x0,  0xff1b,    0x26,    0xe9,    0x22,    0x27,    0x28,    0x2d, // 08 - 0F
-                                0xe8,    0x5f,    0xe7,    0xe0,    0x29,    0x3d,  0xff08,  0xff09, // 10 - 17
-                                0x61,    0x7a,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69, // 18 - 1F
-                                0x6f,    0x70,  0xfe52,    0x24,  0xff0d,  0xffe3,    0x71,    0x73, // 20 - 27
-                                0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x6d, // 28 - 2F
-                                0xf9,    0xb2,  0xffe1,    0x2a,    0x77,    0x78,    0x63,    0x76, // 30 - 37
-                                0x62,    0x6e,    0x2c,    0x3b,    0x3a,    0x21,  0xffe2,  0xffaa, // 38 - 3F
-                                0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2, // 40 - 47
-                                0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95, // 48 - 4F
-                                0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c, // 50 - 57
-                                0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8, // 58 - 5F
-                                0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57, // 60 - 67
-                                0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
-                                0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
-                                    0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0, // 78 - 7F
-                };
-                const KeyLayout_t x040c_shift_sym = {
-                                    0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, //
-                                    0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                                0x37,    0x38,    0x39,    0x30,    0xb0,    0x2b,  0xff08,  0xfe20,
-                                0x41,    0x5a,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                                0x4f,    0x50,  0xfe57,    0xa3,  0xff0d,  0xffe3,    0x51,    0x53,
-                                0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x4d,
-                                0x25,    0x7e,  0xffe1,    0xb5,    0x57,    0x58,    0x43,    0x56,
-                                0x42,    0x4e,    0x3f,    0x2e,    0x2f,    0xa7,  0xffe2,  0xffaa,
-                                0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                                0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                                0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                                0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                                0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                                0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                                0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                    0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x040c_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x26,    0xc9,    0x22,    0x27,    0x28,    0x2d,
-                            0xc8,    0x5f,    0xc7,    0xc0,    0x29,    0x3d,  0xff08,  0xff09,
-                            0x41,    0x5a,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,  0xfe52,    0x24,  0xff0d,  0xffe3,    0x51,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x4d,
-                            0xd9,    0xb2,  0xffe1,    0x2a,    0x57,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x2c,    0x3b,    0x3a,    0x21,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x040c_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0xb9,    0x7e,    0x23,    0x7b,    0x5b,    0x7c,
-                            0x60,    0x5c,    0x5e,    0x40,    0x5d,    0x7d,  0xff08,  0xff09,
-                            0xe6,    0xab,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd,
-                            0xf8,    0xfe,  0xfe57,    0xa4,  0xff0d,  0xffe3,    0x40,    0xdf,
-                            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,    0xb5,
-                            0xfe52,    0xac,  0xffe1,  0xfe50,   0x1b3,    0xbb,    0xa2,   0xad2,
-                            0xad3,    0x6e,  0xfe51,   0x8a3,    0xb7,  0xfe60,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x040c_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xb0,    0x2b,  0xff08,  0xfe20,
-                            0x61,    0x7a,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,  0xfe57,    0xa3,  0xff0d,  0xffe3,    0x71,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x6d,
-                            0x25,    0x7e,  0xffe1,   0x39c,    0x77,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x3f,    0x2e,    0x2f,    0xa7,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x040c_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x040c_noshift_sym[i] ;
-                    }
-                    if (x040c_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x040c_shift_sym[i] ;
-                    }
-                    if (x040c_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x040c_altgr_sym[i] ;
-                    }
-                    if (x040c_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x040c_capslock_sym[i] ;
-                    }
-                    if (x040c_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x040c_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x0410: // Italian
-        {
-                const KeyLayout_t x0410_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x27,    0xec,  0xff08,  0xff09,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0xe8,    0x2b,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf2,
-                            0xe0,    0x5c,  0xffe1,    0xf9,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0410_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0xa3,    0x24,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,    0x5e,  0xff08,  0xfe20,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,    0xe9,    0x2a,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xe7,
-                            0xb0,    0x7c,  0xffe1,    0xa7,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x0410_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0xb9,    0xb2,    0xb3,    0xbc,    0xbd,    0xac,
-                            0x7b,    0x5b,    0x5d,    0x7d,    0x60,    0x7e,  0xff08,  0xff09,
-                            0x40,   0x1b3,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd,
-                            0xf8,    0xfe,    0x5b,    0x5d,  0xff0d,  0xffe3,    0xe6,    0xdf,
-                            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,    0x40,
-                            0x23,    0xac,  0xffe1,  0xfe50,    0xab,    0xbb,    0xa2,   0xad2,
-                            0xad3,    0xf1,    0xb5,  0xfe51,    0xb7,  0xfe54,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0xab,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0410_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x27,    0xcc,  0xff08,  0xff09,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,    0xc8,    0x2b,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd2,
-                            0xc0,    0x5c,  0xffe1,    0xd9,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0410_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0xa3,    0x24,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,    0x5e,  0xff08,  0xfe20,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0xc9,    0x2a,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xc7,
-                            0xb0,    0x7c,  0xffe1,    0xa7,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x0410_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x0410_noshift_sym[i] ;
-                    }
-                    if (x0410_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x0410_shift_sym[i] ;
-                    }
-                    if (x0410_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x0410_altgr_sym[i] ;
-                    }
-                    if (x0410_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x0410_capslock_sym[i] ;
-                    }
-                    if (x0410_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x0410_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x0419: // Russian
-        {
-                const KeyLayout_t x0419_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x6ca,   0x6c3,   0x6d5,   0x6cb,   0x6c5,   0x6ce,   0x6c7,   0x6db,
-                            0x6dd,   0x6da,   0x6c8,   0x6df,  0xff0d,  0xffe3,   0x6c6,   0x6d9,
-                            0x6d7,   0x6c1,   0x6d0,   0x6d2,   0x6cf,   0x6cc,   0x6c4,   0x6d6,
-                            0x6dc,   0x6a3,  0xffe1,    0x5c,   0x6d1,   0x6de,   0x6d3,   0x6cd,
-                            0x6c9,   0x6d4,   0x6d8,   0x6c2,   0x6c0,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x2f,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0419_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0x23,    0x2a,    0x3a,    0x2c,
-                            0x2e,    0x3b,    0x28,    0x29,    0x5f,    0x2b,  0xff08,  0xfe20,
-                            0x6ea,   0x6e3,   0x6f5,   0x6eb,   0x6e5,   0x6ee,   0x6e7,   0x6fb,
-                            0x6fd,   0x6fa,   0x6e8,   0x6ff,  0xff0d,  0xffe3,   0x6e6,   0x6f9,
-                            0x6f7,   0x6e1,   0x6f0,   0x6f2,   0x6ef,   0x6ec,   0x6e4,   0x6f6,
-                            0x6fc,   0x6b3,  0xffe1,    0x7c,   0x6f1,   0x6fe,   0x6f3,   0x6ed,
-                            0x6e9,   0x6f4,   0x6f8,   0x6e2,   0x6e0,    0x3f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x0419_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x6ca,   0x6c3,   0x6d5,   0x6cb,   0x6c5,   0x6ce,   0x6c7,   0x6db,
-                            0x6dd,   0x6da,   0x6c8,   0x6df,  0xff0d,  0xffe3,   0x6c6,   0x6d9,
-                            0x6d7,   0x6c1,   0x6d0,   0x6d2,   0x6cf,   0x6cc,   0x6c4,   0x6d6,
-                            0x6dc,   0x6a3,  0xffe1,    0x5c,   0x6d1,   0x6de,   0x6d3,   0x6cd,
-                            0x6c9,   0x6d4,   0x6d8,   0x6c2,   0x6c0,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0419_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x6ea,   0x6e3,   0x6f5,   0x6eb,   0x6e5,   0x6ee,   0x6e7,   0x6fb,
-                            0x6fd,   0x6fa,   0x6e8,   0x6ff,  0xff0d,  0xffe3,   0x6e6,   0x6f9,
-                            0x6f7,   0x6e1,   0x6f0,   0x6f2,   0x6ef,   0x6ec,   0x6e4,   0x6f6,
-                            0x6fc,   0x6b3,  0xffe1,    0x5c,   0x6f1,   0x6fe,   0x6f3,   0x6ed,
-                            0x6e9,   0x6f4,   0x6f8,   0x6e2,   0x6e0,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x2f,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0419_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0x23,    0x2a,    0x3a,    0x2c,
-                            0x2e,    0x3b,    0x28,    0x29,    0x5f,    0x2b,  0xff08,  0xfe20,
-                            0x6ca,   0x6c3,   0x6d5,   0x6cb,   0x6c5,   0x6ce,   0x6c7,   0x6db,
-                            0x6dd,   0x6da,   0x6c8,   0x6df,  0xff0d,  0xffe3,   0x6c6,   0x6d9,
-                            0x6d7,   0x6c1,   0x6d0,   0x6d2,   0x6cf,   0x6cc,   0x6c4,   0x6d6,
-                            0x6dc,   0x6a3,  0xffe1,    0x7c,   0x6d1,   0x6de,   0x6d3,   0x6cd,
-                            0x6c9,   0x6d4,   0x6d8,   0x6c2,   0x6c0,    0x3f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x0419_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x0419_noshift_sym[i] ;
-                    }
-                    if (x0419_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x0419_shift_sym[i] ;
-                    }
-                    if (x0419_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x0419_altgr_sym[i] ;
-                    }
-                    if (x0419_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x0419_capslock_sym[i] ;
-                    }
-                    if (x0419_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x0419_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x041d: // Swedish
-        {
-                const KeyLayout_t x041d_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2b,  0xfe51,  0xff08,  0xff09,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0xe5,  0xfe57,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-                            0xe4,    0xa7,  0xffe1,    0x27,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x041d_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0x23,    0xa4,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,    0xc5,  0xfe52,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6,
-                            0xc4,    0xbd,  0xffe1,    0x2a,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x041d_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0xa1,    0x40,    0xa3,    0x24,  0x20ac,    0xa5,
-                            0x7b,    0x5b,    0x5d,    0x7d,    0x5c,    0xb1,  0xff08,  0xff09,
-                            0x40,   0x1b3,  0x20ac,    0xae,    0xfe,   0x8fb,   0x8fe,   0x8fd,
-                            0x13bd,    0xfe,  0xfe57,  0xfe53,  0xff0d,  0xffe3,    0xaa,    0xdf,
-                            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,    0xf8,
-                            0xe6,    0xb6,  0xffe1,    0xb4,    0xab,    0xbb,    0xa9,   0xad2,
-                            0xad3,    0x6e,    0xb5,  0xfe5b,    0xb7,  0xfe60,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x041d_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2b,  0xfe51,  0xff08,  0xff09,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,    0xc5,  0xfe57,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6,
-                            0xc4,    0xa7,  0xffe1,    0x27,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x041d_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0x23,    0xa4,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0xe5,  0xfe52,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-                            0xe4,    0xbd,  0xffe1,    0x2a,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x041d_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x041d_noshift_sym[i] ;
-                    }
-                    if (x041d_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x041d_shift_sym[i] ;
-                    }
-                    if (x041d_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x041d_altgr_sym[i] ;
-                    }
-                    if (x041d_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x041d_capslock_sym[i] ;
-                    }
-                    if (x041d_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x041d_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x046e: // Luxemburgish
-        {
-                const KeyLayout_t x046e_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x27,    0x5e,  0xff08,  0xff09,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69,
-                            0x6f,    0x70,    0x5b,    0x5d,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-                            0xe4,    0x5f,  0xffe1,    0x24,    0x79,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x046e_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x2b,    0x22,    0x2a,     0x0,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,    0x60,  0xff08,  0xfe20,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49,
-                            0x4f,    0x50,    0x7b,    0x21,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x3a,
-                            0x22,     0x0,     0x0,    0x23,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x046e_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x7e,    0x23,    0x7b,    0x5b,    0x7c,    0x60,
-                            0x5c,    0x5e,    0x40,    0x5d,    0x7d,    0x3d,  0xff08,  0xff09,
-                            0x40,   0x1b3,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd,
-                            0xf8,    0xfe,  0xfe57,  0xfe53,  0xff0d,  0xffe3,    0xe6,    0xdf,
-                            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,  0xfe59,
-                            0xfe52,    0xac,  0xffe1,    0x5c,    0xab,    0xbb,    0xa2,   0xad2,
-                            0xad3,    0x6e,    0xb5,   0x8a3,    0xb7,  0xfe60,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x046e_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xdf,  0xfe51,  0xff08,  0xff09,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49,
-                            0x4f,    0x50,    0xdc,    0x2b,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6,
-                            0xc4,  0xfe52,  0xffe1,    0x23,    0x59,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x046e_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0xa7,    0x24,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69,
-                            0x6f,    0x70,    0xfc,    0x2a,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-                            0xe4,    0xb0,  0xffe1,    0x27,    0x79,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x046e_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x046e_noshift_sym[i] ;
-                    }
-                    if (x046e_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x046e_shift_sym[i] ;
-                    }
-                    if (x046e_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x046e_altgr_sym[i] ;
-                    }
-                    if (x046e_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x046e_capslock_sym[i] ;
-                    }
-                    if (x046e_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x046e_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x0807: // German Swizerland
-        {
-                const KeyLayout_t x0807_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xdf,  0xfe51,  0xff08,  0xff09,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69,
-                            0x6f,    0x70,    0xfc,    0x2b,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-                            0xe4,  0xfe52,  0xffe1,    0x23,    0x79,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0807_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0xa7,    0x24,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49,
-                            0x4f,    0x50,    0xdc,    0x2a,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6,
-                            0xc4,    0xb0,  0xffe1,    0x27,    0x59,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x0807_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x7c,    0x40,    0x23,     0x0,     0x0,     0x0,
-                            0x7c,     0x0,     0x0,    0x5d,    0x60,    0x7e,  0xff08,  0xff09,
-                            0x40,   0x1b3,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd,
-                            0x5b,    0x5b,    0x5b,    0x5d,  0xff0d,  0xffe3,    0xe6,    0xdf,
-                            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,  0xfe59,
-                            0x7b,    0xac,  0xffe1,    0x7d,    0xab,    0xbb,    0xa2,   0xad2,
-                            0xad3,    0x6e,    0xb5,   0x8a3,    0xb7,  0xfe60,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0807_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xdf,  0xfe51,  0xff08,  0xff09,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49,
-                            0x4f,    0x50,    0xdc,    0x2b,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6,
-                            0xc4,  0xfe52,  0xffe1,    0x23,    0x59,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0807_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0xa7,    0x24,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69,
-                            0x6f,    0x70,    0xfc,    0x2a,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-                            0xe4,    0xb0,  0xffe1,    0x27,    0x79,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x0807_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x0807_noshift_sym[i] ;
-                    }
-                    if (x0807_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x0807_shift_sym[i] ;
-                    }
-                    if (x0807_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x0807_altgr_sym[i] ;
-                    }
-                    if (x0807_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x0807_capslock_sym[i] ;
-                    }
-                    if (x0807_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x0807_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x0809: // English UK
-        {
-                const KeyLayout_t x0809_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0x5b,    0x5d,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x3b,
-                            0x27,    0x60,  0xffe1,    0x23,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x5c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0809_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0xa3,    0x24,    0x25,    0x5e,
-                            0x26,    0x2a,    0x28,    0x29,    0x5f,    0x2b,  0xff08,  0xfe20,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,    0x7b,    0x7d,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x3a,
-                            0x40,    0x7e,  0xffe1,  0xfe53,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x3c,    0x3e,    0x3f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x0809_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,  0x20ac,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x71,    0x77,    0xe9,    0x72,    0x74,    0x79,    0xfa,    0xed,
-                            0xf3,    0x70,    0x5b,    0x5d,  0xff0d,  0xffe3,    0xe1,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x3b,
-                            0x27,    0xa6,  0xffe1,    0x5c,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0809_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x2d,    0x3d,  0xff08,  0xff09,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,    0x5b,    0x5d,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x3b,
-                            0x27,    0x60,  0xffe1,    0x23,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2f,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x5c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0809_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0xa3,    0x24,    0x25,    0x5e,
-                            0x26,    0x2a,    0x28,    0x29,    0x5f,    0x2b,  0xff08,  0xfe20,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,    0x7b,    0x7d,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x3a,
-                            0x40,    0x7e,  0xffe1,  0xfe53,    0x7a,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x3c,    0x3e,    0x3f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x0809_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x0809_noshift_sym[i] ;
-                    }
-                    if (x0809_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x0809_shift_sym[i] ;
-                    }
-                    if (x0809_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x0809_altgr_sym[i] ;
-                    }
-                    if (x0809_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x0809_capslock_sym[i] ;
-                    }
-                    if (x0809_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x0809_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x080c: // French Belgium
-        {
-                const KeyLayout_t x080c_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x26,    0xe9,    0x22,    0x27,    0x28,    0x2d,
-                            0xe8,    0x5f,    0xe7,    0xe0,    0x29,    0x3d,  0xff08,  0xff09,
-                            0x61,    0x7a,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,  0xfe52,    0x24,  0xff0d,  0xffe3,    0x71,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x6d,
-                            0xf9,    0xb2,  0xffe1,    0x2a,    0x77,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x2c,    0x3b,    0x3a,    0x21,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x080c_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xb0,    0x2b,  0xff08,  0xfe20,
-                            0x41,    0x5a,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,  0xfe57,    0xa3,  0xff0d,  0xffe3,    0x51,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x4d,
-                            0x25,    0x7e,  0xffe1,    0xb5,    0x57,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x3f,    0x2e,    0x2f,    0xa7,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x080c_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0xb9,    0x7e,    0x23,    0x7b,    0x5b,    0x7c,
-                            0x60,    0x5c,    0x5e,    0x40,    0x5d,    0x7d,  0xff08,  0xff09,
-                            0xe6,    0xab,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd,
-                            0xf8,    0xfe,  0xfe57,    0xa4,  0xff0d,  0xffe3,    0x40,    0xdf,
-                            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,    0xb5,
-                            0xfe52,    0xac,  0xffe1,  0xfe50,   0x1b3,    0xbb,    0xa2,   0xad2,
-                            0xad3,    0x6e,  0xfe51,   0x8a3,    0xb7,  0xfe60,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x080c_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x26,    0xc9,    0x22,    0x27,    0x28,    0x2d,
-                            0xc8,    0x5f,    0xc7,    0xc0,    0x29,    0x3d,  0xff08,  0xff09,
-                            0x41,    0x5a,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,  0xfe52,    0x24,  0xff0d,  0xffe3,    0x51,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x4d,
-                            0xd9,    0xb2,  0xffe1,    0x2a,    0x57,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x2c,    0x3b,    0x3a,    0x21,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x080c_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xb0,    0x2b,  0xff08,  0xfe20,
-                            0x61,    0x7a,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,  0xfe57,    0xa3,  0xff0d,  0xffe3,    0x71,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x6d,
-                            0x25,    0x7e,  0xffe1,   0x39c,    0x77,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x3f,    0x2e,    0x2f,    0xa7,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x080c_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x080c_noshift_sym[i] ;
-                    }
-                    if (x080c_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x080c_shift_sym[i] ;
-                    }
-                    if (x080c_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x080c_altgr_sym[i] ;
-                    }
-                    if (x080c_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x080c_capslock_sym[i] ;
-                    }
-                    if (x080c_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x080c_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x0813: // Dutch Belgium
-        {
-                const KeyLayout_t x0813_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x26,    0xe9,    0x22,    0x27,    0x28,    0x2d,
-                            0xe8,    0x21,    0xe7,    0xe0,    0x29,    0x2d,  0xff08,  0xff09,
-                            0x61,    0x7a,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,  0xfe52,    0x24,  0xff0d,  0xffe3,    0x71,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x6d,
-                            0xf9,    0xb2,  0xffe1,    0x2a,    0x77,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x2c,    0x3b,    0x3a,    0x3d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0813_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xb0,    0x5f,  0xff08,  0xfe20,
-                            0x41,    0x5a,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,  0xfe57,    0xa3,  0xff0d,  0xffe3,    0x51,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x4d,
-                            0x25,    0x7e,  0xffe1,    0xb5,    0x57,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x3f,    0x2e,    0x2f,    0x2b,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x0813_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0xb9,    0x40,    0x23,    0x7b,    0x5b,    0x5e,
-                                0x0,     0x0,    0x7b,    0x7d,     0x0,     0x0,  0xff08,  0xff09,
-                            0xe6,    0xab,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd,
-                            0xf8,    0xfe,    0x5b,    0x5d,  0xff0d,  0xffe3,    0x40,    0xdf,
-                            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,    0xb5,
-                            0x27,    0x60,  0xffe1,  0xfe50,   0x1b3,    0xbb,    0xa2,   0xad2,
-                            0xad3,    0x6e,  0xfe51,   0x8a3,    0xb7,    0x7e,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0813_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x26,    0xc9,    0x22,    0x27,    0x28,    0x2d,
-                            0xc8,    0x5f,    0xc7,    0xc0,    0x29,    0x3d,  0xff08,  0xff09,
-                            0x41,    0x5a,    0x45,    0x52,    0x54,    0x59,    0x55,    0x49,
-                            0x4f,    0x50,  0xfe52,    0x24,  0xff0d,  0xffe3,    0x51,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x4d,
-                            0xd9,    0xb2,  0xffe1,    0x2a,    0x57,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x2c,    0x3b,    0x3a,    0x21,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x0813_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xb0,    0x2b,  0xff08,  0xfe20,
-                            0x61,    0x7a,    0x65,    0x72,    0x74,    0x79,    0x75,    0x69,
-                            0x6f,    0x70,  0xfe57,    0xa3,  0xff0d,  0xffe3,    0x71,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0x6d,
-                            0x25,    0x7e,  0xffe1,   0x39c,    0x77,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x3f,    0x2e,    0x2f,    0xa7,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffae,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x0813_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x0813_noshift_sym[i] ;
-                    }
-                    if (x0813_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x0813_shift_sym[i] ;
-                    }
-                    if (x0813_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x0813_altgr_sym[i] ;
-                    }
-                    if (x0813_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x0813_capslock_sym[i] ;
-                    }
-                    if (x0813_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x0813_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        case 0x100c: // French Swizerland
-        {
-                const KeyLayout_t x100c_noshift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0x27,    0x3d,  0xff08,  0xff09,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69,
-                            0x6f,    0x70,    0x5b,    0x5d,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-                            0xe4,    0x5f,  0xffe1,    0x24,    0x79,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x100c_shift_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x2b,    0x22,    0x2a,     0x0,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49,
-                            0x4f,    0x50,    0x7b,    0x21,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0x3a,
-                            0x22,     0x0,     0x0,    0x23,    0x5a,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-                const KeyLayout_t x100c_altgr_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x7c,    0x40,    0x23,     0x0,     0x0,     0x0,
-                                0x0,    0x7c,     0x0,    0x5d,    0x60,    0x7e,  0xff08,  0xff09,
-                            0x40,   0x1b3,  0x20ac,    0xb6,   0x3bc,   0x8fb,   0x8fe,   0x8fd,
-                                0x0,     0x0,    0x5b,    0x5d,  0xff0d,  0xffe3,    0xe6,    0xdf,
-                            0xf0,   0x1f0,   0x3bf,   0x2b1,    0x6a,   0x3a2,   0x1b3,  0xfe59,
-                            0x7b,    0xac,  0xffe1,    0x7d,    0xab,    0xbb,    0xa2,   0xad2,
-                            0xad3,    0x6e,    0xb5,   0x8a3,    0xb7,  0xfe60,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x7c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x100c_capslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x31,    0x32,    0x33,    0x34,    0x35,    0x36,
-                            0x37,    0x38,    0x39,    0x30,    0xdf,  0xfe51,  0xff08,  0xff09,
-                            0x51,    0x57,    0x45,    0x52,    0x54,    0x5a,    0x55,    0x49,
-                            0x4f,    0x50,    0xdc,    0x2b,  0xff0d,  0xffe3,    0x41,    0x53,
-                            0x44,    0x46,    0x47,    0x48,    0x4a,    0x4b,    0x4c,    0xd6,
-                            0xc4,  0xfe52,  0xffe1,    0x23,    0x59,    0x58,    0x43,    0x56,
-                            0x42,    0x4e,    0x4d,    0x2c,    0x2e,    0x2d,  0xffe2,  0xffaa,
-                            0xffe9,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xff7f,  0xff14,  0xff95,
-                            0xff97,  0xff9a,  0xffad,  0xff96,  0xff9d,  0xff98,  0xffab,  0xff9c,
-                            0xff99,  0xff9b,  0xff9e,  0xff9f,     0x0,  0xff7e,    0x3c,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-                };
-                const KeyLayout_t x100c_shiftcapslock_sym = {
-                                0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
-                                0x0,  0xff1b,    0x21,    0x22,    0xa7,    0x24,    0x25,    0x26,
-                            0x2f,    0x28,    0x29,    0x3d,    0x3f,  0xfe50,  0xff08,  0xfe20,
-                            0x71,    0x77,    0x65,    0x72,    0x74,    0x7a,    0x75,    0x69,
-                            0x6f,    0x70,    0xfc,    0x2a,  0xff0d,  0xffe3,    0x61,    0x73,
-                            0x64,    0x66,    0x67,    0x68,    0x6a,    0x6b,    0x6c,    0xf6,
-                            0xe4,    0xb0,  0xffe1,    0x27,    0x79,    0x78,    0x63,    0x76,
-                            0x62,    0x6e,    0x6d,    0x3b,    0x3a,    0x5f,  0xffe2,  0xffaa,
-                            0xffe7,    0x20,  0xffe5,  0xffbe,  0xffbf,  0xffc0,  0xffc1,  0xffc2,
-                            0xffc3,  0xffc4,  0xffc5,  0xffc6,  0xffc7,  0xfef9,  0xff14,  0xffb7,
-                            0xffb8,  0xffb9,  0xffad,  0xffb4,  0xffb5,  0xffb6,  0xffab,  0xffb1,
-                            0xffb2,  0xffb3,  0xffb0,  0xffac,     0x0,  0xff7e,    0x3e,  0xffc8,
-                            0xffc9,  0xff50,  0xff52,  0xff55,  0xff51,     0x0,  0xff53,  0xff57,
-                            0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
-                            0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
-                                0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-                };
-
-                for(size_t i = 0 ; i < 128 ; i++) {
-                    if (x100c_noshift_sym[i]){
-                        keylayout_WORK_noshift_sym[i] = x100c_noshift_sym[i] ;
-                    }
-                    if (x100c_shift_sym[i]){
-                        keylayout_WORK_shift_sym[i] = x100c_shift_sym[i] ;
-                    }
-                    if (x100c_altgr_sym[i]){
-                        keylayout_WORK_altgr_sym[i] = x100c_altgr_sym[i] ;
-                    }
-                    if (x100c_capslock_sym[i]){
-                        keylayout_WORK_capslock_sym[i] = x100c_capslock_sym[i] ;
-                    }
-                    if (x100c_shiftcapslock_sym[i]){
-                        keylayout_WORK_shiftcapslock_sym[i] = x100c_shiftcapslock_sym[i] ;
-                    }
-                }
-            }
-            break;
-
-        default:
-            break;
-    }
-
-} // KeymapSym::init_layout
+#include "keyboard/keymapsymlayouts.hpp"
