@@ -1038,12 +1038,12 @@ public:
                     this->send_keyevent(downflag, 0x20AC);
                     break;
                 default:
-                    this->send_keyevent(downflag, key);
+                    this->send_keyevent(downflag, 0x20AC);
                     break;
                 }
                 this->putback_modifiers();
             }
-            if (!this->remove_server_alt_state_for_char 
+            else if (!this->remove_server_alt_state_for_char 
             && this->keymapSym.is_altgr_pressed() 
             && (key == 0x65))
             {
@@ -1080,8 +1080,8 @@ public:
     }
 
     void send_keyevent(uint8_t down_flag, uint32_t key) {
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
+        if (bool(this->verbose & VNCVerbose::keymap_stack)) {
+            LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %s, key: 0x%x (%d)", down_flag?"down":"up", key);
         }
         StaticOutStream<8> stream;
         stream.out_uint8(4);
