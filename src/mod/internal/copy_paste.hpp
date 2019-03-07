@@ -81,6 +81,9 @@ class CopyPaste
     bool has_clipboard_ = false;
     std::size_t long_data_response_size = 0;
 
+    bool       client_use_long_format_names = false;
+    bool const server_use_long_format_names = true;
+
     bool verbose;
 
 public:
