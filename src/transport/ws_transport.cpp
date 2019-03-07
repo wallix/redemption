@@ -47,6 +47,7 @@ namespace
     {
         HttpHeader,
         Ws,
+        Closed,
         Error,
     };
 
@@ -168,9 +169,7 @@ namespace
 
 size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
-    // LOG(LOG_DEBUG, "read");
     size_t res = SocketTransport::do_partial_read(buffer, len);
-    // LOG(LOG_DEBUG, " %zu %.*s", res, int(res), buffer);
 
     switch (this->d->state) {
         case State::HttpHeader: {
@@ -228,24 +227,18 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
                 }
 
                 int const opcode = in[0] & 0xF;
-                bool const fin = (in[0] >> 7) & 0x01;
-                bool const masked = (in[1] >> 7) & 0x01;
+                [[maybe_unused]] bool const fin = (in[0] >> 7) & 0x01;
+                [[maybe_unused]] bool const masked = (in[1] >> 7) & 0x01;
                 uint8_t const length_field = in[1] & (~0x80);
 
-                if (opcode != int(WsOpCode::Binary)) {
-                    LOG(LOG_ERR, "WebSocket: invalide opcode %d, expected 0x02 (binary)", opcode);
-                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                if (opcode == WsOpCode::Close) {
+                    this->disconnect();
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA);
                 }
 
-                if (!fin) {
-                    LOG(LOG_ERR, "WebSocket: fin = 0 isn't supported");
-                    throw Error(ERR_TRANSPORT_READ_FAILED);
-                }
-
-                if (!masked) {
-                    LOG(LOG_ERR, "WebSocket: masked = 1, bad protocol");
-                    throw Error(ERR_TRANSPORT_READ_FAILED);
-                }
+                assert(opcode == int(WsOpCode::Binary));
+                assert(fin);
+                assert(masked);
 
                 size_t payload_length = 0;
                 size_t pos = 2;
@@ -254,7 +247,6 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
                     payload_length = length_field;
                 }
                 else if (length_field == 126u) { // msglen is 16bit!
-                    //payload_length = in[2] + (in[3]<<8);
                     payload_length = (
                         (in[2] << 8) |
                         (in[3])
@@ -314,6 +306,8 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
             break;
         }
 
+        case State::Closed:
+            throw Error(ERR_TRANSPORT_CLOSED);
         case State::Error:
             throw Error(ERR_TRANSPORT_READ_FAILED);
     }
@@ -370,5 +364,18 @@ WsTransport::TlsResult WsTransport::enable_client_tls(
 
 bool WsTransport::disconnect()
 {
-    return true;
+    this->d->state = State::Closed;
+
+    if (this->sck != INVALID_SOCKET) {
+        uint8_t data[]{
+            Fin | WsOpCode::Close,
+            2,
+            0,
+            1,
+        };
+        SocketTransport::do_send(data, std::size(data));
+        return SocketTransport::disconnect();
+    }
+
+    return false;
 }
