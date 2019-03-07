@@ -112,7 +112,8 @@ bool CopyPaste::ready(FrontAPI & front)
     if (this->channel_) {
         StaticOutStream<256> out_s_cb_clip_caps;
 
-        RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, /*RDPECLIP::CB_USE_LONG_FORMAT_NAMES*/0);
+        RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2,
+            (this->server_use_long_format_names ? RDPECLIP::CB_USE_LONG_FORMAT_NAMES : 0));
         RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(1);
         RDPECLIP::CliprdrHeader clip_header(RDPECLIP::CB_CLIP_CAPS, 0, clip_cap_pdu.size() + general_cap_set.size());
 
@@ -176,7 +177,7 @@ void CopyPaste::copy(const char * s, size_t n)
     RDPECLIP::FormatListPDUEx format_list_pdu;
     format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
 
-    const bool use_long_format_names = false;
+    const bool use_long_format_names = (this->client_use_long_format_names && this->server_use_long_format_names);
     const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
     RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
@@ -248,7 +249,7 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
                 clipboard_header.recv(stream);
 
                 RDPECLIP::FormatListPDUEx format_list_pdu;
-                const bool use_long_format_names = false;
+                const bool use_long_format_names = (this->client_use_long_format_names && this->server_use_long_format_names);
                 const bool in_ASCII_8            = (clipboard_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES);
                 format_list_pdu.recv(stream, use_long_format_names, in_ASCII_8);
 
@@ -320,6 +321,51 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
             }
             break;
         }
+        case RDPECLIP::CB_CLIP_CAPS:
+        {
+            RDPECLIP::CliprdrHeader clipboard_header;
+            clipboard_header.recv(stream);
+
+            {
+                const unsigned int expected = 4;   //     cCapabilitiesSets(2) +
+                                                    //     pad1(2)
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "CopyPaste::send_to_mod_channel: "
+                            "Truncated CLIPRDR_CAPS, need=%u remains=%zu", expected, stream.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+            }
+
+            LOG_IF(this->verbose, LOG_INFO,
+                "CopyPaste::send_to_mod_channel: Clipboard Capabilities PDU");
+
+            const uint16_t cCapabilitiesSets = stream.in_uint16_le();
+            LOG_IF(this->verbose, LOG_INFO, "cCapabilitiesSets=%u", cCapabilitiesSets);
+            assert(1 == cCapabilitiesSets);
+
+            stream.in_skip_bytes(2); // pad1(2)
+
+            for (uint16_t i = 0; i < cCapabilitiesSets; ++i) {
+                RDPECLIP::CapabilitySetRecvFactory f(stream);
+
+                if (f.capabilitySetType() == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+                    RDPECLIP::GeneralCapabilitySet general_caps;
+
+                    general_caps.recv(stream, f);
+
+                    if (this->verbose) {
+                        LOG(LOG_INFO,
+                            "CopyPaste::send_to_mod_channel: General Capability Set");
+                        general_caps.log(LOG_INFO);
+                    }
+
+                    this->client_use_long_format_names =
+                        bool(general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                }
+            }
+        }
+        break;
         default:
             if (this->verbose) {
                 LOG(LOG_INFO, "CopyPaste::send_to_mod_channel msgType=%u", unsigned(rp.msgType()));
