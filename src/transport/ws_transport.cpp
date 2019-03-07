@@ -21,28 +21,20 @@
 */
 
 #include "transport/ws_transport.hpp"
-#include "utils/hexdump.hpp"
-#include "utils/sugar/flags.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/base64.hpp"
 #include "system/ssl_sha1.hpp"
 
-#include <cstring>
 #include <algorithm>
 #include <functional>
 
+#include <cstring>
+
+
 namespace
 {
-    enum class WsOption
-    {
-        PermessageDeflate,
-        EncodingGZip,
-        EncodingDeflate,
-        COUNT_,
-    };
-
     enum class State
     {
         HttpHeader,
@@ -51,27 +43,27 @@ namespace
         Error,
     };
 
-    struct MiniBuf
-    {
-        char data[24];
-        uint8_t len = 0;
-    };
-
     constexpr auto WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"_av;
+
+    namespace WsHeader
+    {
+        constexpr unsigned Fin = 0x80;
+        enum OpCode : uint8_t
+        {
+            Text = 0x1,
+            Binary = 0x2,
+            Close = 0x8,
+            Ping = 0x9,
+            Pong = 0xA,
+        };
+    }
 } // anonymous namespace
 
-template<>
-struct utils::enum_as_flag<WsOption>
-{
-    static constexpr std::size_t max = std::size_t(WsOption::COUNT_);
-};
 
 struct WsTransport::D
 {
     State state = State::HttpHeader;
-    utils::flags_t<WsOption> ws_options;
     std::array<char, 28> base64_key_rep {};
-    MiniBuf minibuf;
 
     void extract_http_header(array_view_const_char in)
     {
@@ -87,42 +79,14 @@ struct WsTransport::D
             }
         };
 
-        auto aveq = [](array_view_const_char a, array_view_const_char b){
-            return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
-        };
-
-        extract_http_header_value("\r\nAccept-Encoding: "_av, [&](array_view_const_char value){
-            for (auto word : get_split(value.begin(), value.end(), ',')) {
-                auto word_begin = ltrim(word.begin(), word.end());
-                struct Data {
-                    array_view_const_char str;
-                    WsOption option;
-                };
-                for (auto data : {
-                    Data{"gzip"_av, WsOption::EncodingGZip},
-                    Data{"deflate"_av, WsOption::EncodingDeflate}
-                }) {
-                    if (aveq(data.str, {word_begin, word.end()})) {
-                        this->ws_options += data.option;
-                        break;
-                    }
-                }
-            }
-        });
-
         extract_http_header_value("\r\nSec-WebSocket-Key: "_av, [&](array_view_const_char value){
             SslSha1 sha1;
             uint8_t digest[SslSha1::DIGEST_LENGTH];
             sha1.update(value);
             sha1.update(WS_GUID);
             sha1.final(digest);
+            static_assert(base64_encode_size(sizeof(digest)) == sizeof(this->base64_key_rep));
             base64_encode(make_array_view(digest), this->base64_key_rep);
-        });
-
-        extract_http_header_value("\r\nSec-WebSocket-Extensions: "_av, [&](array_view_const_char value){
-            if (aveq(value, "permessage-deflate"_av)) {
-                this->ws_options += WsOption::PermessageDeflate;
-            }
         });
     }
 };
@@ -153,19 +117,6 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
     return SocketTransport::do_partial_read(buffer, len);
 }
 #else
-
-namespace
-{
-    constexpr unsigned Fin = 0x80;
-    enum WsOpCode : uint8_t
-    {
-        Text = 0x1,
-        Binary = 0x2,
-        Close = 0x8,
-        Ping = 0x9,
-        Pong = 0xA,
-    };
-}
 
 size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
@@ -226,17 +177,17 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
                     throw Error(ERR_TRANSPORT_READ_FAILED);
                 }
 
-                int const opcode = in[0] & 0xF;
+                uint8_t const opcode = in[0] & 0xF;
                 [[maybe_unused]] bool const fin = (in[0] >> 7) & 0x01;
                 [[maybe_unused]] bool const masked = (in[1] >> 7) & 0x01;
                 uint8_t const length_field = in[1] & (~0x80);
 
-                if (opcode == WsOpCode::Close) {
+                if (opcode == WsHeader::OpCode::Close) {
                     this->disconnect();
                     throw Error(ERR_TRANSPORT_NO_MORE_DATA);
                 }
 
-                assert(opcode == int(WsOpCode::Binary));
+                assert(opcode == WsHeader::Binary);
                 assert(fin);
                 assert(masked);
 
@@ -323,7 +274,7 @@ WsTransport::Read WsTransport::do_atomic_read(uint8_t* /*buffer*/, size_t /*len*
 
 void WsTransport::do_send(const uint8_t * const buffer, size_t const len)
 {
-    constexpr uint8_t binary_frame = Fin | WsOpCode::Binary;
+    constexpr uint8_t binary_frame = WsHeader::Fin | WsHeader::OpCode::Binary;
 
     if (len <= 125) {
         uint8_t buf[] = {binary_frame, uint8_t(len)};
@@ -368,7 +319,7 @@ bool WsTransport::disconnect()
 
     if (this->sck != INVALID_SOCKET) {
         uint8_t data[]{
-            Fin | WsOpCode::Close,
+            WsHeader::Fin | WsHeader::OpCode::Close,
             2,
             0,
             1,
