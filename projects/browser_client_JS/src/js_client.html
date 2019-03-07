@@ -123,15 +123,26 @@ const createRdpClient = (function(Module) {
             sendFile: noop,
         };
 
+        // let counter = 1;
+
         const send_data = function() {
             const out = rdpclient.getSendingData()
             if (out.length) {
-                console.log("send " + out.length + " bytes")
+                // console.log("send " + out.length + " bytes")
                 const cb = events.socketSend;
                 if (cb) {
                     cb(out);
                 }
                 socket.send(out);
+
+                // let text = "";
+                // console.log('Received Binary Message of ' + out.length + ' bytes');
+                // for (let byte of out) {
+                //     text += ":" + (byte+0x10000).toString(16).substr(-2);
+                // }
+                // console.log(counter, "Send: " + text);
+                // ++counter;
+
                 rdpclient.clearSendingData();
             }
         };
@@ -222,7 +233,7 @@ const createRdpClient = (function(Module) {
                 cb1(event);
             }
 
-            console.log("receive " + event.data.byteLength + " bytes")
+            // console.log("receive " + event.data.byteLength + " bytes")
             rdpclient.addReceivingData(event.data);
             const now = Date.now();
             const timeout = rdpclient.updateTime();
@@ -760,15 +771,12 @@ sendCbFile.onsubmit = (e) => {
 canvas.fillStyle = 'black';
 canvas.fillRect(0,0,800,600);
 
-const stringvalues = document.URL.split('?')[1];
-if (stringvalues) {
-    const inputs = {user: user_input, pass: pass_input};
-    for (const strvalue of stringvalues.split('&')) {
-        const kv = strvalue.split('=');
-        const input = inputs[kv[0]]
-        if (input) {
-            input.value = kv[1].replace('#')
-        }
+const url = new URL(window.location.href)
+const inputs = {user: user_input, pass: pass_input};
+for (const k in inputs) {
+    const x = url.searchParams.get(k);
+    if (x) {
+        inputs[k].value = x
     }
 }
 

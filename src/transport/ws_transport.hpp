@@ -37,12 +37,20 @@ public:
 
     ~WsTransport();
 
+    bool disconnect() override;
+
 protected:
     size_t do_partial_read(uint8_t * buffer, size_t len) override;
 
     Read do_atomic_read(uint8_t * buffer, size_t len) override;
 
     void do_send(const uint8_t * const buffer, size_t len) override;
+
+    TlsResult enable_client_tls(bool server_cert_store,
+                                ServerCertCheck server_cert_check,
+                                ServerNotifier & server_notifier,
+                                const char * certif_path
+    ) override;
 
 private:
     class D;

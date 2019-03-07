@@ -153,11 +153,24 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
 }
 #else
 
+namespace
+{
+    constexpr unsigned Fin = 0x80;
+    enum WsOpCode : uint8_t
+    {
+        Text = 0x1,
+        Binary = 0x2,
+        Close = 0x8,
+        Ping = 0x9,
+        Pong = 0xA,
+    };
+}
+
 size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
-    LOG(LOG_DEBUG, "read");
+    // LOG(LOG_DEBUG, "read");
     size_t res = SocketTransport::do_partial_read(buffer, len);
-    LOG(LOG_DEBUG, " %zu %.*s", res, int(res), buffer);
+    // LOG(LOG_DEBUG, " %zu %.*s", res, int(res), buffer);
 
     switch (this->d->state) {
         case State::HttpHeader: {
@@ -205,56 +218,66 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
         }
 
         case State::Ws: {
-            LOG(LOG_DEBUG, "ws");
             array_view_u8 in{buffer, res};
-            if(in.size() < 12) {
-                LOG(LOG_ERR, "partial header");
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
+            res = 0;
 
-            unsigned char msg_opcode =  in[0]       & 0x0F;
-            unsigned char msg_fin    = (in[0] >> 7) & 0x01;
-            unsigned char msg_masked = (in[1] >> 7) & 0x01;
+            while (!in.empty()) {
+                if (in.size() < 12) {
+                    LOG(LOG_ERR, "WebSocket: partial header isn't supported");
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
 
-            // *** message decoding
+                int const opcode = in[0] & 0xF;
+                bool const fin = (in[0] >> 7) & 0x01;
+                bool const masked = (in[1] >> 7) & 0x01;
+                uint8_t const length_field = in[1] & (~0x80);
 
-            uint64_t payload_length = 0;
-            int pos = 2;
-            unsigned length_field = in[1] & (~0x80);
+                if (opcode != int(WsOpCode::Binary)) {
+                    LOG(LOG_ERR, "WebSocket: invalide opcode %d, expected 0x02 (binary)", opcode);
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
 
-            if (length_field <= 125) {
-                payload_length = length_field;
-            }
-            else if (length_field == 126) { // msglen is 16bit!
-                //payload_length = in[2] + (in[3]<<8);
-                payload_length = (
-                    (in[2] << 8) |
-                    (in[3])
-                );
-                pos += 2;
-            }
-            else /*if(length_field == 127)*/ { // msglen is 64bit!
-                payload_length = (
-                    (uint64_t(in[2]) << 56) |
-                    (uint64_t(in[3]) << 48) |
-                    (uint64_t(in[4]) << 40) |
-                    (uint64_t(in[5]) << 32) |
-                    (uint64_t(in[6]) << 24) |
-                    (uint64_t(in[7]) << 16) |
-                    (uint64_t(in[8]) << 8 ) |
-                    (uint64_t(in[9]))
-                );
-                pos += 8;
-            }
+                if (!fin) {
+                    LOG(LOG_ERR, "WebSocket: fin = 0 isn't supported");
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
 
-            LOG(LOG_DEBUG, "payload_length = %lu", payload_length);
+                if (!masked) {
+                    LOG(LOG_ERR, "WebSocket: masked = 1, bad protocol");
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
 
-            if(in.size() < payload_length || in.size() < payload_length + pos + (msg_masked ? 4u : 0u)) {
-                LOG(LOG_ERR, "partial data");
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            }
+                size_t payload_length = 0;
+                size_t pos = 2;
 
-            if(msg_masked) {
+                if (length_field <= 125u) {
+                    payload_length = length_field;
+                }
+                else if (length_field == 126u) { // msglen is 16bit!
+                    //payload_length = in[2] + (in[3]<<8);
+                    payload_length = (
+                        (in[2] << 8) |
+                        (in[3])
+                    );
+                    pos += 2;
+                }
+                else /*if(length_field == 127u)*/ { // msglen is 64bit!
+                    LOG(LOG_ERR, "WebSocket: payload_length too great");
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                    // static_assert(sizeof(size_t) < sizeof(uint64_t));
+                    // payload_length = (
+                    //     (uint64_t(in[2]) << 56) |
+                    //     (uint64_t(in[3]) << 48) |
+                    //     (uint64_t(in[4]) << 40) |
+                    //     (uint64_t(in[5]) << 32) |
+                    //     (uint64_t(in[6]) << 24) |
+                    //     (uint64_t(in[7]) << 16) |
+                    //     (uint64_t(in[8]) << 8 ) |
+                    //     (uint64_t(in[9]))
+                    // );
+                    // pos += 8;
+                }
+
                 uint8_t mask[4] {
                     in[pos  ],
                     in[pos+1],
@@ -262,6 +285,11 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
                     in[pos+3],
                 };
                 pos += 4;
+
+                if(in.size() - pos < payload_length) {
+                    LOG(LOG_ERR, "WebSocket: partial data isn't supported");
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
 
                 auto first = in.begin() + pos;
                 auto end = first + (payload_length - payload_length % 4u);
@@ -277,21 +305,11 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
                     case 1: first[0] ^= mask[0]; [[fallthrough]];
                     case 0: break;
                 }
+
+                memmove(buffer + res, in.data() + pos, payload_length);
+                res += payload_length;
+                in = in.array_from_offset(pos + payload_length);
             }
-
-            memmove(buffer, in.data() + pos, payload_length);
-            res = payload_length;
-
-            LOG(LOG_DEBUG, "%d %d", int(msg_opcode), int(msg_fin));
-
-            hexdump(buffer, res);
-
-            // if(msg_opcode == 0x0) return (msg_fin)?TEXT_FRAME:INCOMPLETE_TEXT_FRAME; // continuation frame ?
-            // if(msg_opcode == 0x1) return (msg_fin)?TEXT_FRAME:INCOMPLETE_TEXT_FRAME;
-            // if(msg_opcode == 0x2) return (msg_fin)?BINARY_FRAME:INCOMPLETE_BINARY_FRAME;
-            // if(msg_opcode == 0x8) return CONNECTION_CLOSE_FRAME;
-            // if(msg_opcode == 0x9) return PING_FRAME;
-            // if(msg_opcode == 0xA) return PONG_FRAME;
 
             break;
         }
@@ -300,35 +318,18 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
             throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
-    // hexdump_c(buffer, res);
     return res;
 }
 
-WsTransport::Read WsTransport::do_atomic_read(uint8_t * buffer, size_t len)
+WsTransport::Read WsTransport::do_atomic_read(uint8_t* /*buffer*/, size_t /*len*/)
 {
-    auto res = SocketTransport::do_atomic_read(buffer, len);
-    if (res == Read::Ok) {
-        // hexdump_c(buffer, len);
-        LOG(LOG_DEBUG, "%*s", int(len), buffer);
-    }
-    return res;
-}
-
-namespace
-{
-    enum WsHeader : uint8_t
-    {
-        Fin = 0x80,
-        Binary = 0x02,
-    };
+    LOG(LOG_ERR, "WebSocket: do_atomic_read isn't supported");
+    throw Error(ERR_TRANSPORT_READ_FAILED);
 }
 
 void WsTransport::do_send(const uint8_t * const buffer, size_t const len)
 {
-    LOG(LOG_DEBUG, "send %zu", len);
-    hexdump(buffer, len);
-
-    constexpr uint8_t binary_frame = WsHeader::Fin | WsHeader::Binary;
+    constexpr uint8_t binary_frame = Fin | WsOpCode::Binary;
 
     if (len <= 125) {
         uint8_t buf[] = {binary_frame, uint8_t(len)};
@@ -355,7 +356,19 @@ void WsTransport::do_send(const uint8_t * const buffer, size_t const len)
     }
 
     SocketTransport::do_send(buffer, len);
-    LOG(LOG_DEBUG, "end send");
 }
 
 #endif
+
+WsTransport::TlsResult WsTransport::enable_client_tls(
+    bool /*server_cert_store*/, ServerCertCheck /*server_cert_check*/,
+    ServerNotifier & /*server_notifier*/, const char * /*certif_path*/)
+{
+    LOG(LOG_DEBUG, "enable_client_tls");
+    return TlsResult::Fail;
+}
+
+bool WsTransport::disconnect()
+{
+    return true;
+}
