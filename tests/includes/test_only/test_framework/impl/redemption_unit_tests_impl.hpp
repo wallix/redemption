@@ -80,7 +80,7 @@ namespace tt_detail {
 
 template<>
 struct BOOST_TEST_DECL print_log_value<decltype(nullptr)> {
-    void operator()(std::ostream& ostr, decltype(nullptr) t);
+    void operator()(std::ostream& ostr, decltype(nullptr)) { ostr<<"nullptr"; }
 };
 
 }}}

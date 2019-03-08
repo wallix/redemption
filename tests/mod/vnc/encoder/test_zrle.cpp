@@ -25,7 +25,7 @@
 
 #include "mod/vnc/encoder/zrle.cpp"
 
-RED_TEST_DELEGATE_PRINT_ENUM_NS(VNC::Encoder, EncoderState)
+RED_TEST_DELEGATE_PRINT_ENUM_NS(VNC::Encoder::EncoderState)
 
 //connection to 10.10.47.0:5900 (10.10.47.0) succeeded : socket 34
 //Connected to [10.10.47.0].
@@ -6930,4 +6930,3 @@ RED_AUTO_TEST_CASE(TestZrlePackedPalette5)
     RED_CHECK_SIG(drawable,
         "\xd7\x7d\xbb\xa7\xcb\xed\x89\x3d\xa8\x61\xa6\xeb\x90\xd8\xee\x03\xa5\x3b\x0b\x4a");
 }
-
