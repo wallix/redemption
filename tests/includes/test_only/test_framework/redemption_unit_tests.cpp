@@ -30,13 +30,13 @@ Author(s): Jonathan Poelen
 
 namespace redemption_unit_test__
 {
-    bool xarray::operator == (xarray const & other) const
+    bool xarray::operator == (xarray const & other) const noexcept
     {
         return sig.size() == other.sig.size()
             && std::equal(sig.begin(), sig.end(), other.sig.begin());
     }
 
-    bool xarray_color::operator == (xarray_color const & other) const
+    bool xarray_color::operator == (xarray_color const & other) const noexcept
     {
         this->res = std::mismatch(sig.begin(), sig.end(), other.sig.begin(), other.sig.end()).first - sig.begin();
         return this->res == sig.size() && this->sig.size() == other.sig.size();
@@ -114,7 +114,7 @@ namespace redemption_unit_test__
     }
 
 
-    bool xsarray::operator == (xsarray const & other) const
+    bool xsarray::operator == (xsarray const & other) const noexcept
     {
         return sig.size() == other.sig.size()
             && std::equal(sig.begin(), sig.end(), other.sig.begin());

@@ -293,12 +293,12 @@ namespace redemption_unit_test__
     {
         const_bytes_view sig;
 
-        std::size_t size() const
+        std::size_t size() const noexcept
         {
             return sig.size();
         }
 
-        bool operator == (xarray const & other) const;
+        bool operator == (xarray const & other) const noexcept;
     };
 
     struct xarray_color
@@ -306,12 +306,12 @@ namespace redemption_unit_test__
         size_t & res;
         const_bytes_view sig;
 
-        std::size_t size() const
+        std::size_t size() const noexcept
         {
             return sig.size();
         }
 
-        bool operator == (xarray_color const & other) const;
+        bool operator == (xarray_color const & other) const noexcept;
     };
 
     std::ostream & operator<<(std::ostream & out, xarray_color const & x);
@@ -321,12 +321,12 @@ namespace redemption_unit_test__
     {
         const_bytes_view sig;
 
-        std::size_t size() const
+        std::size_t size() const noexcept
         {
             return sig.size();
         }
 
-        bool operator == (xsarray const & other) const;
+        bool operator == (xsarray const & other) const noexcept;
     };
 
     std::ostream & operator<<(std::ostream & out, xsarray const & x);
