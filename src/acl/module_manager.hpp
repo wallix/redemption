@@ -45,6 +45,7 @@
 #include "mod/internal/selector_mod.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
+#include "mod/internal/transition_mod.hpp"
 
 #include "mod/mod_api.hpp"
 #include "mod/null/null.hpp"
@@ -507,8 +508,11 @@ private:
 public:
     void new_mod(int target_module, time_t now, AuthApi & authentifier, ReportMessageApi & report_message) override
     {
-        LOG(LOG_INFO, "----------> ACL new_mod <--------");
-        LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
+        if (target_module != MODULE_INTERNAL_TRANSITION) {
+            LOG(LOG_INFO, "----------> ACL new_mod <--------");
+            LOG(LOG_INFO, "target_module=%s(%d)",
+                get_module_name(target_module), target_module);
+        }
 
         this->client_execute.enable_remote_program(this->front.client_info.remote_program);
 
@@ -823,6 +827,26 @@ public:
                     flag
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
+            }
+            break;
+        case MODULE_INTERNAL_TRANSITION:
+            {
+                this->set_mod(new TransitionMod(
+                    this->ini,
+                    this->session_reactor,
+                    this->front,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
+                    this->client_execute.adjust_rect(get_widget_rect(
+                        this->front.client_info.screen_info.width,
+                        this->front.client_info.screen_info.height,
+                        this->front.client_info.cs_monitor
+                    )),
+                    this->client_execute,
+                    this->load_font(),
+                    this->load_theme()
+                ));
+                LOG(LOG_INFO, "ModuleManager::internal module 'Transition' loaded");
             }
             break;
         case MODULE_INTERNAL_WIDGET_LOGIN:
