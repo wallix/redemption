@@ -4176,6 +4176,18 @@ test-run tests/mod/rdp/test_rdp_params :
 :
   <covfile>src/mod/rdp/rdp_params.hpp
 ;
+test-run tests/mod/test_icap_files_service :
+  $(REDEMPTION_TEST_PATH)/mod/test_icap_files_service.cpp
+:
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/netutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/icap_files_service.hpp
+;
 test-run tests/mod/test_mod_api :
   $(REDEMPTION_TEST_PATH)/mod/test_mod_api.cpp
 :
@@ -5796,6 +5808,8 @@ alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
 alias test_rdp_orders.coverage : tests/mod/rdp/test_rdp_orders.coverage ;
 alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
 alias test_rdp_params.coverage : tests/mod/rdp/test_rdp_params.coverage ;
+alias test_icap_files_service : tests/mod/test_icap_files_service ;
+alias test_icap_files_service.coverage : tests/mod/test_icap_files_service.coverage ;
 alias test_mod_api : tests/mod/test_mod_api ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
@@ -6311,6 +6325,7 @@ alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp_params
 ;
 alias tests/mod.norec :
+  tests/mod/test_icap_files_service
   tests/mod/test_mod_api
 ;
 alias tests/mod/vnc/encoder.norec :
