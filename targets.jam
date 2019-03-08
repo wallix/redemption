@@ -135,6 +135,7 @@ exe rdpproxy :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -523,6 +524,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -2313,6 +2315,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -2438,6 +2441,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -4062,13 +4066,6 @@ test-run tests/mod/rdp/test_rdp_params :
 test-run tests/mod/test_icap_files_service :
   $(REDEMPTION_TEST_PATH)/mod/test_icap_files_service.cpp
 :
-  <library>src/core/error.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/netutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/icap_files_service.hpp
 ;
 test-run tests/mod/test_mod_api :
@@ -5192,6 +5189,7 @@ obj src/mod/internal/rail_module_host_mod.o : $(REDEMPTION_SRC_PATH)/mod/interna
 obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;
 obj src/mod/internal/selector_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/selector_mod.cpp ;
 obj src/mod/internal/test_card_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/test_card_mod.cpp ;
+obj src/mod/internal/transition_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/transition_mod.cpp ;
 obj src/mod/internal/widget/composite.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/composite.cpp ;
 obj src/mod/internal/widget/edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit.cpp ;
 obj src/mod/internal/widget/edit_valid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit_valid.cpp ;

@@ -60,6 +60,7 @@ enum ModuleIndex : int
     MODULE_INTERNAL_WIDGET_SELECTOR,
     MODULE_INTERNAL_WIDGETTEST,
     MODULE_INTERNAL_WAIT_INFO,
+    MODULE_INTERNAL_TRANSITION,
     MODULE_TRANSITORY,
     MODULE_AUTH,
 
@@ -87,6 +88,7 @@ inline const char * get_module_name(ModuleIndex module_id) noexcept
         case MODULE_INTERNAL_WIDGET_SELECTOR:        return "MODULE_INTERNAL_WIDGET_SELECTOR";
         case MODULE_INTERNAL_WIDGETTEST:             return "MODULE_INTERNAL_WIDGETTEST";
         case MODULE_INTERNAL_WAIT_INFO:              return "MODULE_INTERNAL_WAIT_INFO";
+        case MODULE_INTERNAL_TRANSITION:             return "MODULE_INTERNAL_TRANSITION";
         case MODULE_TRANSITORY:                      return "MODULE_TRANSITORY";
         case MODULE_AUTH:                            return "MODULE_AUTH";
         case MODULE_UNKNOWN: break;
