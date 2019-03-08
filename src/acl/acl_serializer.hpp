@@ -474,6 +474,11 @@ public:
             else if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
                 this->remote_answer = false;
                 this->send_acl_data();
+                if (signal == BACK_EVENT_NEXT) {
+                    mm.remove_mod();
+                    mm.new_mod(MODULE_INTERNAL_TRANSITION, now, authentifier,
+                               report_message);
+                }
             }
         }
         else if (this->remote_answer

@@ -52,6 +52,7 @@
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
+#include "mod/internal/transition_mod.hpp"
 
 #include "gdi/protected_graphics.hpp"
 #include "mod/metrics_hmac.hpp"
@@ -122,6 +123,7 @@ enum {
     MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY,
     MODULE_INTERNAL_WIDGETTEST,
     MODULE_INTERNAL_WAIT_INFO,
+    MODULE_INTERNAL_TRANSITION,
     MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
     MODULE_AUTH,
@@ -156,6 +158,7 @@ inline const char * get_module_name(int module_id) {
         case MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY:    return "MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY";
         case MODULE_INTERNAL_WIDGETTEST:                return "MODULE_INTERNAL_WIDGETTEST";
         case MODULE_INTERNAL_WAIT_INFO:                 return "MODULE_INTERNAL_WAIT_INFO";
+        case MODULE_INTERNAL_TRANSITION:                 return "MODULE_INTERNAL_TRANSITION";
         case MODULE_EXIT_INTERNAL_CLOSE:                return "MODULE_EXIT_INTERNAL_CLOSE";
         case MODULE_TRANSITORY:                         return "MODULE_TRANSITORY";
         case MODULE_AUTH:                               return "MODULE_AUTH";
@@ -885,8 +888,11 @@ private:
 public:
     void new_mod(int target_module, time_t now, AuthApi & authentifier, ReportMessageApi & report_message) override
     {
-        LOG(LOG_INFO, "----------> ACL new_mod <--------");
-        LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
+        if (target_module == MODULE_INTERNAL_TRANSITION) {
+            LOG(LOG_INFO, "----------> ACL new_mod <--------");
+            LOG(LOG_INFO, "target_module=%s(%d)",
+                get_module_name(target_module), target_module);
+        }
 
         this->client_execute.enable_remote_program(this->front.client_info.remote_program);
 
@@ -1172,6 +1178,23 @@ public:
                 LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
             }
             break;
+        case MODULE_INTERNAL_TRANSITION:
+            {
+                this->set_mod(new TransitionMod(
+                    this->ini,
+                    this->front,
+                    this->front.client_info.width,
+                    this->front.client_info.height,
+                    this->client_execute.adjust_rect(get_widget_rect(
+                        this->front.client_info.width,
+                        this->front.client_info.height,
+                        this->front.client_info.cs_monitor
+                    )),
+                    this->client_execute
+                ));
+                LOG(LOG_INFO, "ModuleManager::internal module 'Transition' loaded");
+            }
+            break;
         case MODULE_INTERNAL_WIDGET_LOGIN:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
             if (this->ini.is_asked<cfg::globals::target_user>()
@@ -1219,7 +1242,6 @@ public:
             ));
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;
-
         case MODULE_XUP:
             {
                 const char * name = "XUP Target";

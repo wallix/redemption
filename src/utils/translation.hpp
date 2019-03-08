@@ -282,6 +282,10 @@ namespace trkeys
         "Provided login/password is probably incorrect.",
         "Le nom d'utilisateur/mot de passe fourni est probablement incorrect."
     );
+    TR_KV(wait_msg,
+        "Please wait...",
+        "Veuillez patienter..."
+    );
     TR_KV(err_nla_required,
         "Enable NLA is probably required.",
         "Il est probablement nécessaire d'activer NLA."

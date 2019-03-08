@@ -59,6 +59,7 @@ exe rdpproxy :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -246,6 +247,7 @@ exe rdptproxy :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -335,6 +337,7 @@ exe vncclient :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -483,6 +486,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -576,6 +580,7 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -669,6 +674,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -1907,6 +1913,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -2005,6 +2012,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -2093,6 +2101,7 @@ test-run tests/core/test_session_server :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
@@ -4082,6 +4091,10 @@ test-run tests/utils/test_difftimeval :
 :
   <covfile>src/utils/difftimeval.hpp
 ;
+test-run tests/utils/test_divers :
+  $(REDEMPTION_TEST_PATH)/utils/test_divers.cpp
+:
+;
 test-run tests/utils/test_drawable :
   $(REDEMPTION_TEST_PATH)/utils/test_drawable.cpp
 :
@@ -4306,6 +4319,7 @@ obj src/mod/internal/rail_module_host_mod.o : $(REDEMPTION_SRC_PATH)/mod/interna
 obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp ;
 obj src/mod/internal/selector_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/selector_mod.cpp ;
 obj src/mod/internal/test_card_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/test_card_mod.cpp ;
+obj src/mod/internal/transition_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/transition_mod.cpp ;
 obj src/mod/internal/widget/composite.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/composite.cpp ;
 obj src/mod/internal/widget/edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit.cpp ;
 obj src/mod/internal/widget/edit_valid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit_valid.cpp ;
@@ -4959,6 +4973,7 @@ alias test_diffiehellman : tests/utils/test_diffiehellman ;
 alias test_diffiehellman.coverage : tests/utils/test_diffiehellman.coverage ;
 alias test_difftimeval : tests/utils/test_difftimeval ;
 alias test_difftimeval.coverage : tests/utils/test_difftimeval.coverage ;
+alias test_divers : tests/utils/test_divers ;
 alias test_drawable : tests/utils/test_drawable ;
 alias test_drawable.coverage : tests/utils/test_drawable.coverage ;
 alias test_ellipse : tests/utils/test_ellipse ;
@@ -5454,6 +5469,7 @@ alias tests/utils :
   tests/utils/test_d3des
   tests/utils/test_diffiehellman
   tests/utils/test_difftimeval
+  tests/utils/test_divers
   tests/utils/test_drawable
   tests/utils/test_ellipse
   tests/utils/test_fileutils
