@@ -25,7 +25,7 @@
 
 #include "mod/vnc/encoder/zrle.cpp"
 
-RED_TEST_DELEGATE_PRINT_NS(VNC::Encoder, EncoderState, int(x))
+RED_TEST_DELEGATE_PRINT_ENUM_NS(VNC::Encoder, EncoderState)
 
 //connection to 10.10.47.0:5900 (10.10.47.0) succeeded : socket 34
 //Connected to [10.10.47.0].

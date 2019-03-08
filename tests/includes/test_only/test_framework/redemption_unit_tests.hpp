@@ -330,7 +330,31 @@ namespace redemption_unit_test__
     };
 
     std::ostream & operator<<(std::ostream & out, xsarray const & x);
+
+    struct Enum
+    {
+        template<class E, class = std::enable_if_t<std::is_enum<E>::value>>
+        Enum(E e) noexcept
+        : name(get_type_name(__PRETTY_FUNCTION__))
+        , x(static_cast<long long>(e))
+        , is_signed(std::is_signed_v<std::underlying_type_t<E>>)
+        {}
+
+        template<std::size_t N>
+        static array_view_const_char get_type_name(char const(&s)[N]) noexcept
+        {
+            return get_type_name(s, N-1);
+        }
+
+        static array_view_const_char get_type_name(char const* s, std::size_t n) noexcept;
+
+        array_view_const_char name;
+        long long x;
+        bool is_signed;
+    };
 } // namespace redemption_unit_test__
+
+::std::ostream& operator<<(::std::ostream& ostr, redemption_unit_test__::Enum const& e);
 
 #endif
 
@@ -341,6 +365,11 @@ namespace redemption_unit_test__
 
 #define RED_TEST_DELEGATE_PRINT_NS(ns, type, exp) \
   namespace ns { RED_TEST_DELEGATE_PRINT(type, exp) }
+
+#define RED_TEST_DELEGATE_PRINT_ENUM_NS(ns, type)                 \
+  namespace ns { RED_TEST_DELEGATE_PRINT(type,                    \
+    #ns #type << "{" << +::std::underlying_type_t<type>(x) << "}" \
+  )}
 
 
 /// CHECK

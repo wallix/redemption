@@ -18,6 +18,10 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
+#ifdef IN_IDE_PARSER
+# define REDEMPTION_UNIT_TEST_CPP
+#endif
+
 #include "./redemption_unit_tests.hpp"
 
 #include <algorithm>
@@ -130,4 +134,32 @@ namespace redemption_unit_test__
         }
         return out << "\"";
     }
+
+    namespace
+    {
+#ifdef __clang__
+        constexpr std::size_t start_type_name = 43;
+        constexpr std::size_t end_type_name = 1;
+#elif defined(__GNUC__)
+        constexpr std::size_t start_type_name = 48;
+        constexpr std::size_t end_type_name = 34;
+#endif
+    }
+
+    array_view_const_char Enum::get_type_name(char const* s, std::size_t n) noexcept
+    {
+        return {s + start_type_name, n - start_type_name - end_type_name};
+    }
 } // namespace redemption_unit_test__
+
+std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e)
+{
+    out.write(e.name.data(), e.name.size()) << "{";
+    if (e.is_signed) {
+        out << e.x;
+    }
+    else {
+        out << static_cast<unsigned long long>(e.x);
+    }
+    return out << "}";
+}

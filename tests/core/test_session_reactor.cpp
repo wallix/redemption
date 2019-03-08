@@ -29,7 +29,7 @@
 #include "core/session_reactor.hpp"
 #include "gdi/graphic_api.hpp"
 
-RED_TEST_DELEGATE_PRINT_NS(jln, R, int(x))
+RED_TEST_DELEGATE_PRINT_ENUM_NS(jln, R)
 
 RED_AUTO_TEST_CASE(TestSequencer)
 {

@@ -29,8 +29,6 @@
 
 #include <snappy.h> // for SNAPPY_VERSION
 
-RED_TEST_DELEGATE_PRINT(EncryptionSchemeTypeResult, long(x))
-
 namespace
 {
     void init_keys(CryptoContext & cctx)
