@@ -135,25 +135,14 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
 {
     switch (event) {
     case NOTIFY_CANCEL: {
-        if (this->waiting_for_next_module) {
-            LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_CANCEL - Waiting for next module.");
-            return;
-        }
-
         this->vars.ask<cfg::globals::auth_user>();
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set_trigger_time(wait_obj::NOW);
 
-        this->waiting_for_next_module = true;
     } break;
     case NOTIFY_SUBMIT: {
-        if (this->waiting_for_next_module) {
-            LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_SUBMIT - Waiting for next module.");
-            return;
-        }
-
         if (widget == &this->selector.connect) {
             char buffer[1024] = {};
             uint16_t row_index = 0;
@@ -173,7 +162,6 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set_trigger_time(wait_obj::NOW);
 
-                this->waiting_for_next_module = true;
             }
         }
         else if (widget->group_id == this->selector.apply.group_id) {
