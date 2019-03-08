@@ -213,7 +213,6 @@ private:
     ReportMessageApi & report_message;
     time_t beginning;
     bool server_is_apple;
-    bool remove_server_alt_state_for_char;
     int keylayout;
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
@@ -257,7 +256,7 @@ public:
     , width(front_width)
     , height(front_height)
     , verbose(verbose)
-    , keymapSym(static_cast<uint32_t>(verbose & VNCVerbose::keymap),   remove_server_alt_state_for_char, server_is_apple)
+    , keymapSym(keylayout, key_flags, remove_server_alt_state_for_char, server_is_apple, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
@@ -265,7 +264,6 @@ public:
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
     , server_is_apple(server_is_apple)
-    , remove_server_alt_state_for_char(remove_server_alt_state_for_char)
     , keylayout(keylayout)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
@@ -277,18 +275,10 @@ public:
     , clipboard_data_ctx(verbose)
     {
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "server_is_apple=%s", (server_is_apple ? "yes" : "no"));
 
         ::time(&this->beginning);
 
         // TODO init layout sym with apple layout
-        if (this->server_is_apple) {
-            keymapSym.init_layout_sym(0x0409);
-        } else {
-            keymapSym.init_layout_sym(keylayout);
-        }
-        // Initial state of keys (at least lock keys) is copied from Keymap2
-        keymapSym.key_flags = key_flags;
 
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
@@ -920,27 +910,31 @@ public:
     } // rdp_input_mouse
 
     void rdp_input_scancode(
-        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/
+        long keycode, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/
     ) override {
         if (this->state != UP_AND_RUNNING) {
             return;
         }
 
-        // AltGr or Alt are catched by Appel OS
+        // AltGr or Alt are catched by Apple OS
 
-        // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
-
-        // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
+        LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, keycode=%ld)", device_flags, keycode);
 
         IF_ENABLE_METRICS(key_pressed());
 
-        uint8_t downflag = !(device_flags & KBD_FLAG_UP);
+        keymapSym.vnc_event(device_flags, keycode);
 
-        if (this->server_is_apple) {
-            this->apple_keyboard_translation(device_flags, param1, downflag);
-        } else {
-            this->keyMapSym_event(device_flags, param1, downflag);
+        uint8_t downflag = 0;
+        int key = this->keymapSym.get_sym(downflag);
+        while (key){
+            if (bool(this->verbose & VNCVerbose::keymap_stack)) {
+                LOG(LOG_INFO, "keyloop::key=%d (%x) %s param1=%u nbsym=%u", 
+                    key, static_cast<unsigned>(key), downflag?"DOWN":"UP",
+                    static_cast<unsigned>(keycode),
+                    this->keymapSym.nb_sym_available());
+            }
+            this->send_keyevent(downflag, key);
+            key = this->keymapSym.get_sym(downflag);
         }
     } // rdp_input_scancode
 
@@ -948,60 +942,8 @@ public:
         LOG(LOG_WARNING, "mod_vnc::rdp_input_unicode: Unicode Keyboard Event is not yet supported");
     }
 
-    void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {
-
-        this->keymapSym.event(device_flags, param1);
-
-        uint32_t const key {this->keymapSym.get_sym()};
-
-        if (key > 0) {
-
-            if (this->keymapSym.is_remove_state_mode() && this->keymapSym.is_add_state_mode()) {
-
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, key);
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, this->keymapSym.get_sym());
-                this->send_keyevent(downflag, this->keymapSym.get_sym());
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, this->keymapSym.get_sym());
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, this->keymapSym.get_sym());
-
-            } else if (this->keymapSym.is_remove_state_mode()) {
-
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, key);
-                this->send_keyevent(downflag, this->keymapSym.get_sym());
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, this->keymapSym.get_sym());
-
-            } else if (this->keymapSym.is_add_state_mode()) {
-
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, key);
-                this->send_keyevent(downflag, this->keymapSym.get_sym());
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, this->keymapSym.get_sym());
-
-            } else
-            if (this->left_ctrl_pressed) {
-
-                if (key == 0xfe03) {
-                    // alt gr => left ctrl is ignored
-                    this->send_keyevent(downflag, key);
-                }
-                else {
-                    // TODO magic number
-                    this->send_keyevent(1, KeymapSym::VNC_LEFT_CTRL);
-                    this->send_keyevent(downflag, key);
-                }
-                this->left_ctrl_pressed = false;
-            }
-            else if (!((key == KeymapSym::VNC_LEFT_CTRL) && downflag)) {
-                this->send_keyevent(downflag, key);
-            }
-            else {
-                // left ctrl is down
-                this->left_ctrl_pressed = true;
-            }
-        }
-    }
-
     void send_keyevent(uint8_t down_flag, uint32_t key) {
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
+        LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
         StaticOutStream<8> stream;
         stream.out_uint8(4);
         stream.out_uint8(down_flag); /* down/up flag */
@@ -1010,210 +952,6 @@ public:
         this->t.send(stream.get_bytes());
         IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 
-    }
-
-    void apple_keyboard_translation(int device_flags, long param1, uint8_t downflag) {
-
-        switch (this->keylayout) {
-
-            case 0x040c:                                    // French
-                switch (param1) {
-
-                    case 0x0b:
-                        if (this->keymapSym.is_alt_pressed()) {
-                            this->send_keyevent(0, this->keymapSym.is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
-                            this->send_keyevent(downflag, 0xa4); /* @ */
-                            this->send_keyevent(1, this->keymapSym.is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
-                        } else {
-                            this->keyMapSym_event(device_flags, param1, downflag);
-                        }
-                        break;
-
-                    case 0x04:
-                        if (this->keymapSym.is_alt_pressed()) {
-                            this->send_keyevent(0, this->keymapSym.is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
-                            this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0xa4); /* # */
-                            this->send_keyevent(0, 0xffe2);
-                            this->send_keyevent(1, this->keymapSym.is_right_alt_pressed() ? KS_Alt_R : KS_Alt_L);
-                        } else {
-                            this->keyMapSym_event(device_flags, param1, downflag);
-                        }
-                        break;
-
-                    case 0x35:
-                        if (this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(0, 0xffe2);
-                            this->send_keyevent(downflag, 0x36); /* § */
-                            this->send_keyevent(1, 0xffe2);
-                        } else {
-                            if (device_flags & KeymapSym::KBDFLAGS_EXTENDED) {
-                                this->send_keyevent(1, 0xffe2);
-                                this->send_keyevent(downflag, 0x3e); /* / */
-                                this->send_keyevent(0, 0xffe2);
-                            } else {
-                                this->send_keyevent(downflag, 0x38); /* ! */
-                            }
-                        }
-                        break;
-
-                    case 0x07: /* - */
-                        if (!this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0x3d);
-                            this->send_keyevent(0, 0xffe2);
-                        } else {
-                            this->keyMapSym_event(device_flags, param1, downflag);
-                        }
-                        break;
-
-                    case 0x2b: /* * */
-                        this->send_keyevent(1, 0xffe2);
-                        this->send_keyevent(downflag, 0x2a);
-                        this->send_keyevent(0, 0xffe2);
-                        break;
-
-                    case 0x1b: /* £ */
-                        if (this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(downflag, 0x5c);
-                        } else {
-                            this->keyMapSym_event(device_flags, param1, downflag);
-                        }
-                        break;
-
-                    case 0x09: /* _ */
-                        if (!this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0xad);
-                            this->send_keyevent(0, 0xffe2);
-                        } else {
-                            this->send_keyevent(downflag, 0x38); /* 8 */
-                        }
-                        break;
-
-                    case 0x56:
-                        if (this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(downflag, 0x7e); /* > */
-                        } else {
-                            this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0x60); /* < */
-                            this->send_keyevent(0, 0xffe2);
-                        }
-                        break;
-
-                    case 0x0d: /* = */
-                        this->send_keyevent(downflag, 0x2f);
-                        break;
-
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-                }
-                break;
-
-            case 0x0407: // GERMAN
-                // TODO treat problematic case
-                switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-                }
-                break;
-
-            case 0x0409: // United States
-                // TODO treat problematic case
-                switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-                }
-                break;
-
-           case 0x0410: // Italian
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            case 0x0419: // Russian
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            case 0x041d: // Swedish
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            case 0x046e: // Luxemburgish
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            case 0x0807: // German Swizerland
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            case 0x0809: // English UK
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            case 0x080c: // French Belgium
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            case 0x0813: // Dutch Belgium
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            case 0x100c: // French Swizerland
-               // TODO treat problematic case
-               switch (param1) {
-                    default:
-                        this->keyMapSym_event(device_flags, param1, downflag);
-                        break;
-               }
-               break;
-
-            default:
-               this->keyMapSym_event(device_flags, param1, downflag);
-               break;
-        }
     }
 
 protected:
