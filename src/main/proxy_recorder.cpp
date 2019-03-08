@@ -555,16 +555,17 @@ private:
 };
 
 /** @brief the server that handles RDP connections */
-class FrontServer : public Server
+class FrontServer
 {
 public:
-    FrontServer(std::string host, int port, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos, uint64_t verbosity)
+    FrontServer(std::string host, int port, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
         : targetPort(port)
         , targetHost(std::move(host))
         , captureTemplate(std::move(captureFile))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
         , enable_kerberos(enable_kerberos)
+        , forkable(forkable)
         , verbosity(verbosity)
     {
         // just ignore this signal because there is no child termination management yet.
@@ -575,14 +576,15 @@ public:
         sigaction(SIGCHLD, &sa, nullptr);
     }
 
-    Server::Server_status start(int sck, bool forkable) override {
+    bool start(int sck)
+    {
         unique_fd sck_in {accept(sck, nullptr, nullptr)};
         if (!sck_in) {
             LOG(LOG_ERR, "Accept failed on socket %d (%s)", sck, strerror(errno));
             _exit(1);
         }
 
-        const pid_t pid = forkable ? fork() : 0;
+        const pid_t pid = this->forkable ? fork() : 0;
         connection_counter++;
 
         if(pid == 0) {
@@ -615,11 +617,11 @@ public:
             }
             exit(0);
         }
-        else if (!forkable) {
-            return Server::START_FAILED;
+        else if (!this->forkable) {
+            return false;
         }
 
-        return Server::START_OK;
+        return true;
     }
 
 private:
@@ -666,6 +668,7 @@ private:
     std::string nla_username;
     std::string nla_password;
     bool enable_kerberos;
+    bool forkable;
     uint64_t verbosity;
 };
 
@@ -766,10 +769,12 @@ int main(int argc, char *argv[])
     FrontServer front(
         target_host, target_port, capture_file,
         std::move(nla_username), std::move(nla_password),
-        enable_kerberos, verbosity);
-    Listen listener(front, inet_addr("0.0.0.0"), listen_port);
-    if (listener.sck <= 0) {
+        enable_kerberos, !no_forkable, verbosity);
+    auto sck = create_server(inet_addr("0.0.0.0"), listen_port);
+    if (!sck) {
         return 2;
     }
-    listener.run(!no_forkable);
+    return unique_server_loop(std::move(sck), std::chrono::minutes(1), [&](int sck){
+        return front.start(sck);
+    });
 }

@@ -2378,11 +2378,6 @@ test-run tests/core/test_mainloop :
   <covfile>src/core/mainloop.cpp
   <covfile>src/core/mainloop.hpp
 ;
-test-run tests/core/test_server :
-  $(REDEMPTION_TEST_PATH)/core/test_server.cpp
-:
-  <covfile>src/core/server.hpp
-;
 test-run tests/core/test_server_notifier_api :
   $(REDEMPTION_TEST_PATH)/core/test_server_notifier_api.cpp
 :
@@ -2518,126 +2513,6 @@ test-run tests/core/test_session_reactor :
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/session_reactor.hpp
-;
-test-run tests/core/test_session_server :
-  $(REDEMPTION_TEST_PATH)/core/test_session_server.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>ffmpeg
-  <library>gssapi_krb5
-  <library>krb5
-  <library>openssl
-  <library>png
-  <library>ppocr
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
-  <library>src/RAIL/client_execute.o
-  <library>src/acl/module_manager/create_module_rdp.o
-  <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/module_manager/mm_ini.o
-  <library>src/capture/capture.o
-  <library>src/capture/file_to_graphic.o
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/params_from_ini.o
-  <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/capture/utils/match_finder.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
-  <library>src/core/channels_authorizations.o
-  <library>src/core/date_dir_from_filename.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/core/set_server_redirection_target.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/protected_graphics.o
-  <library>src/gdi/screen_functions.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
-  <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wab_close_mod.o
-  <library>src/mod/internal/flat_wait_mod.o
-  <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
-  <library>src/mod/internal/rail_module_host_mod.o
-  <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/selector_mod.o
-  <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_dialog.o
-  <library>src/mod/internal/widget/flat_form.o
-  <library>src/mod/internal/widget/flat_interactive_target.o
-  <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_wab_close.o
-  <library>src/mod/internal/widget/flat_wait.o
-  <library>src/mod/internal/widget/group_box.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/labelgrid.o
-  <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/module_host.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/number_edit.o
-  <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/rail_module_host.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/scroll.o
-  <library>src/mod/internal/widget/selector.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/widget_rect.o
-  <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/mod/rdp/parse_extra_orders.o
-  <library>src/mod/rdp/rdp.o
-  <library>src/mod/rdp/rdp_negociation.o
-  <library>src/mod/vnc/encoder/copyrect.o
-  <library>src/mod/vnc/encoder/cursor.o
-  <library>src/mod/vnc/encoder/hextile.o
-  <library>src/mod/vnc/encoder/raw.o
-  <library>src/mod/vnc/encoder/rre.o
-  <library>src/mod/vnc/encoder/zrle.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
-  <library>src/transport/ws_transport.o
-  <library>src/utils/base64.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
-  <library>src/utils/d3des.o
-  <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/load_theme.o
-  <library>src/utils/log_siem.o
-  <library>src/utils/netutils.o
-  <library>src/utils/pattutils.o
-  <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/sugar/multisz.o
-  <library>src/utils/utf.o
-  <library>z
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/session_server.hpp
-  <define>ZLIB_CONST
 ;
 test-run tests/front/test_front :
   $(REDEMPTION_TEST_PATH)/front/test_front.cpp
@@ -5695,16 +5570,12 @@ alias test_listen : tests/core/test_listen ;
 alias test_listen.coverage : tests/core/test_listen.coverage ;
 alias test_mainloop : tests/core/test_mainloop ;
 alias test_mainloop.coverage : tests/core/test_mainloop.coverage ;
-alias test_server : tests/core/test_server ;
-alias test_server.coverage : tests/core/test_server.coverage ;
 alias test_server_notifier_api : tests/core/test_server_notifier_api ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
 alias test_session : tests/core/test_session ;
 alias test_session.coverage : tests/core/test_session.coverage ;
 alias test_session_reactor : tests/core/test_session_reactor ;
 alias test_session_reactor.coverage : tests/core/test_session_reactor.coverage ;
-alias test_session_server : tests/core/test_session_server ;
-alias test_session_server.coverage : tests/core/test_session_server.coverage ;
 alias test_front : tests/front/test_front ;
 alias test_front.coverage : tests/front/test_front.coverage ;
 alias test_graphic_api : tests/gdi/test_graphic_api ;
@@ -6264,11 +6135,9 @@ alias tests/core.norec :
   tests/core/test_front_api
   tests/core/test_listen
   tests/core/test_mainloop
-  tests/core/test_server
   tests/core/test_server_notifier_api
   tests/core/test_session
   tests/core/test_session_reactor
-  tests/core/test_session_server
 ;
 alias tests/front.norec :
   tests/front/test_front

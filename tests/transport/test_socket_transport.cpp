@@ -23,7 +23,6 @@
 
 #include "transport/socket_transport.hpp"
 #include "core/listen.hpp"
-#include "core/server.hpp"
 #include "cxx/diagnostic.hpp"
 #include "cxx/cxx.hpp"
 
@@ -49,13 +48,9 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code")
 
 RED_AUTO_TEST_CASE(TestSocketTransport)
 {
-    class ServerOnce : public Server
-    {
-        public:
-        Server_status start(int, bool /*forkable*/) override { return START_WANT_STOP; }
-    } dummy;
+    int port = 4444;
 
-    Listen listener(dummy, inet_addr("127.0.0.1"), 4444, true, 2, false); // 25 seconds to connect, or timeout
+    unique_fd sck_server = create_server(inet_addr("127.0.0.1"), port);
 
     int nb_inbuffer = 0;
     uint8_t buffer[1024];
@@ -65,7 +60,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     int nb_recv_sck = 0;
     // 10 should be enough for testing
     int recv_sck[10];
-    SocketTransport * sck_trans[10];
+    std::unique_ptr<SocketTransport> sck_trans[10];
 
     bool run = true;
 
@@ -80,7 +75,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     } ucs;
     memset(&ucs, 0, sizeof(ucs));
     ucs.s4.sin_family = AF_INET;
-    ucs.s4.sin_port = htons(4444);
+    ucs.s4.sin_port = htons(port);
     ucs.s4.sin_addr.s_addr = inet_addr(ip);
     if (ucs.s4.sin_addr.s_addr == INADDR_NONE) {
         struct addrinfo * addr_info = nullptr;
@@ -108,7 +103,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
 
     int res = -1;
     int data_sent = 0;
-    SocketTransport * client_trans = nullptr;
+    std::unique_ptr<SocketTransport> client_trans;
 
     while (run){
         fd_set rfds;
@@ -120,7 +115,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
         timeout.tv_usec = 0;
 
         RED_CHECK_EQUAL(true, true);
-        int max = listener.sck;
+        int max = sck_server.fd();
         FD_SET(max, &rfds);
 
         for (int i = 0 ; i < nb_recv_sck ; i++){
@@ -133,8 +128,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
             }
         }
 
-        if (((client_trans != nullptr) && (data_sent == 0))
-        || (res == -1))
+        if ((client_trans && data_sent == 0) || (res == -1))
         {
             FD_SET(client_sck, &wfds);
             if (client_sck > max){
@@ -160,7 +154,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 else if (res == -1) {
                     res = ::connect(client_sck, &ucs.s, sizeof(ucs));
                     if (res != -1){
-                        client_trans = new SocketTransport(
+                        client_trans = std::make_unique<SocketTransport>(
                             "Sender", unique_fd{client_sck}, "127.0.0.1", 4444,
                             std::chrono::seconds(1), to_verbose_flags(511));
                     }
@@ -180,7 +174,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 }
             }
 
-            if (FD_ISSET(listener.sck, &rfds)){
+            if (FD_ISSET(sck_server.fd(), &rfds)){
                 char ip_source[128];
                 union
                 {
@@ -193,12 +187,12 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 u.s4.sin_family = AF_INET;
                 unsigned int sin_size = sizeof(u);
                 memset(&u, 0, sin_size);
-                int sck = accept(listener.sck, &u.s, &sin_size);
+                int sck = accept(sck_server.fd(), &u.s, &sin_size);
                 strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
                 LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
                 if (sck > 0){
                     recv_sck[nb_recv_sck] = sck;
-                    sck_trans[nb_recv_sck] = new SocketTransport(
+                    sck_trans[nb_recv_sck] = std::make_unique<SocketTransport>(
                         "Reader", unique_fd{sck}, "127.0.0.1", 4444,
                         std::chrono::seconds(1), to_verbose_flags(511));
                     nb_recv_sck++;
@@ -216,11 +210,6 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
             run = false;
         }
     }
-
-    for (int i = 0; i < nb_recv_sck; ++i) {
-        delete sck_trans[i];
-    }
-    delete client_trans;
 }
 
 REDEMPTION_DIAGNOSTIC_POP
