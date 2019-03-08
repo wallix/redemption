@@ -35,8 +35,6 @@ public:
         std::chrono::milliseconds recv_timeout, Verbose verbose,
         std::string * error_message = nullptr);
 
-    ~WsTransport();
-
     bool disconnect() override;
 
 protected:
@@ -54,5 +52,14 @@ protected:
 
 private:
     class D;
-    std::unique_ptr<D> d;
+
+    enum class State
+    {
+        HttpHeader,
+        Ws,
+        Closed,
+        Error,
+    };
+
+    State state = State::HttpHeader;
 };

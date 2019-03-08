@@ -4726,6 +4726,16 @@ test-run tests/transport/test_transport :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/transport.hpp
 ;
+test-run tests/transport/ws/test_ws_protocol :
+  $(REDEMPTION_TEST_PATH)/transport/ws/test_ws_protocol.cpp
+:
+  <library>crypto
+  <library>src/core/error.o
+  <library>src/utils/base64.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/ws/ws_protocol.hpp
+;
 test-run tests/utils/crypto/test_ssl_aes_direct :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_aes_direct.cpp
 :
@@ -5899,6 +5909,8 @@ alias test_socket_transport.coverage : tests/transport/test_socket_transport.cov
 alias test_test_transport : tests/transport/test_test_transport ;
 alias test_transport : tests/transport/test_transport ;
 alias test_transport.coverage : tests/transport/test_transport.coverage ;
+alias test_ws_protocol : tests/transport/ws/test_ws_protocol ;
+alias test_ws_protocol.coverage : tests/transport/ws/test_ws_protocol.coverage ;
 alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
 alias test_ssl_aes_direct.coverage : tests/utils/crypto/test_ssl_aes_direct.coverage ;
 alias test_ssl_lib : tests/utils/crypto/test_ssl_lib ;
@@ -6398,6 +6410,9 @@ alias tests/transport.norec :
   tests/transport/test_test_transport
   tests/transport/test_transport
 ;
+alias tests/transport/ws.norec :
+  tests/transport/ws/test_ws_protocol
+;
 alias tests/utils/crypto.norec :
   tests/utils/crypto/test_ssl_aes_direct
   tests/utils/crypto/test_ssl_lib
@@ -6654,6 +6669,10 @@ alias tests/system/linux :
 ;
 alias tests/transport :
   tests/transport.norec
+  tests/transport/ws
+;
+alias tests/transport/ws :
+  tests/transport/ws.norec
 ;
 alias tests/utils/crypto :
   tests/utils/crypto.norec
@@ -6715,6 +6734,7 @@ explicit
   tests/server.norec
   tests/system/linux/system.norec
   tests/transport.norec
+  tests/transport/ws.norec
   tests/utils/crypto.norec
   tests/utils/sugar/numerics.norec
   tests/utils/sugar.norec
@@ -6767,6 +6787,7 @@ explicit
   tests/system/linux/system
   tests/system/linux
   tests/transport
+  tests/transport/ws
   tests/utils/crypto
   tests/utils
   tests/utils/sugar/numerics
