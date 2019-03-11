@@ -92,6 +92,8 @@ Disable ffmpeg with `NO_FFMPEG=1`.
 
 # Compilation
 
+([Instruction for Debian 9](https://github.com/wallix/redemption/issues/34#issuecomment-471322759))
+
 Well, that's pretty easy once you installed the required dependencies.
 
 Just run (as user):
