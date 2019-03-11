@@ -138,8 +138,6 @@ RED_AUTO_TEST_CASE(TestFront)
     //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
     //                           , ini.get<cfg::debug::front,>() 0);
 
-    time_t now = 1450864840;
-
     // Comment the code block below to generate testing data.
     #include "fixtures/trace_front_client.hpp"
 
@@ -165,11 +163,11 @@ RED_AUTO_TEST_CASE(TestFront)
     NullReportMessage report_message;
     MyFront front(
         session_reactor, front_trans, gen1, ini , cctx,
-        report_message, fastpath_support, mem3blt_support, now);
+        report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 
     while (front.up_and_running == 0) {
-        front.incoming(no_mod, now);
+        front.incoming(no_mod);
         RED_CHECK(session_reactor.timer_events_.is_empty());
     }
     RED_CHECK(session_reactor.front_events_.is_empty());
@@ -370,8 +368,6 @@ RED_AUTO_TEST_CASE(TestFront2)
     //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
     //                           , ini.get<cfg::debug::front,>() 0);
 
-    time_t now = 1450864840;
-
     // Comment the code block below to generate testing data.
     #include "fixtures/trace_front_client.hpp"
 
@@ -397,8 +393,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     SessionReactor session_reactor;
     NullReportMessage report_message;
     MyFront front( session_reactor, front_trans, gen1, ini
-                 , cctx, report_message, fastpath_support, mem3blt_support
-                 , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
+                 , cctx, report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 
     RED_REQUIRE(!session_reactor.timer_events_.is_empty());

@@ -683,7 +683,6 @@ public:
          , ReportMessageApi & report_message
          , bool fp_support // If true, fast-path must be supported
          , bool mem3blt_support
-         , time_t /*now*/
          , std::string server_capabilities_filename = {}
          )
     : nomouse(ini.get<cfg::globals::nomouse>())
@@ -1259,7 +1258,7 @@ public:
     TpduBuffer buf;
     size_t channel_list_index = 0;
 
-    void incoming(Callback & cb, time_t /*now*/) /*NOLINT*/
+    void incoming(Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 

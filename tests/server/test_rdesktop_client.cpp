@@ -101,20 +101,18 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::globals::large_pointer_support>(false);
     ini.set<cfg::globals::unicode_keyboard_event_support>(false);
 
-    time_t now = 1450864840;
-
     LCGRandom gen(0);
     CryptoContext cctx;
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    Front front(session_reactor, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support, now);
+    Front front(session_reactor, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
     front.ignore_rdesktop_bogus_clip = true;
     null_mod no_mod;
 
     while (front.up_and_running == 0) {
-        front.incoming(no_mod, now);
+        front.incoming(no_mod);
     }
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);

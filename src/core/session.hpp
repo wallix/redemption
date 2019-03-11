@@ -84,11 +84,10 @@ public:
 
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
         session_reactor.set_current_time(tvtime());
-        time_t now = session_reactor.get_current_time().tv_sec;
 
         Front front(
             session_reactor, front_trans, rnd, this->ini, cctx, authentifier,
-            this->ini.get<cfg::client::fast_path>(), mem3blt_support, now
+            this->ini.get<cfg::client::fast_path>(), mem3blt_support
         );
 
         std::unique_ptr<Acl> acl;
@@ -184,7 +183,7 @@ public:
                 this->send_waiting_data(ioswitch, sck_no_read, front_trans, mm, acl);
 
                 session_reactor.set_current_time(tvtime());
-                now = session_reactor.get_current_time().tv_sec;
+                const time_t now = session_reactor.get_current_time().tv_sec;
                 if (this->ini.get<cfg::debug::performance>() & 0x8000) {
                     this->write_performance_log(now);
                 }
@@ -282,7 +281,7 @@ public:
                             session_reactor.execute_callbacks(mm.get_callback());
                         }
                         if (front_is_set) {
-                            front.incoming(mm.get_callback(), now);
+                            front.incoming(mm.get_callback());
                         }
                     } catch (Error const& e) {
                         if (ERR_DISCONNECT_BY_USER == e.id) {
