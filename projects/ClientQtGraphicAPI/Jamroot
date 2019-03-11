@@ -88,6 +88,7 @@ project redemption_qt_client
     $(REDEMPTION_CXXFLAGS)
     $(REDEMPTION_FFMPEG_FLAGS)
     $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
+    $(BOOST_STACKTRACE_CXXFLAGS)
 
     # <cxxflags>-fPIC
     <variant>debug:<cxxflags>-frtti
@@ -141,6 +142,7 @@ include redemption_deps.jam ;
 constant EXE_DEPENDENCIES :
     <define>CLIENT_REDEMPTION_MAIN_PATH='\"$(CLIENT_REDEMPTION_MAIN_PATH)\"'
     <define>REDEMPTION_QT_VERSION=$(qtversion)
+    $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
 if $(qtversion) = 4
