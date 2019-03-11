@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     SessionReactor session_reactor;
     WidgetTestMod d(session_reactor, front.gd(), front, screen_info.width, screen_info.height, global_font());
-    d.draw_event(100001, front.gd());
+    d.draw_event(front.gd());
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);

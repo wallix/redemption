@@ -89,11 +89,11 @@ void WidgetModuleHost::ModuleHolder::send_checkout_channel_data(const char * str
 
 // mod_api
 
-void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& gd)
+void WidgetModuleHost::ModuleHolder::draw_event(gdi::GraphicApi& gd)
 {
     this->host.drawable_ptr = &gd;
 
-    this->managed_mod->draw_event(now, this->host);
+    this->managed_mod->draw_event(this->host);
 
     this->host.drawable_ptr = &this->host.drawable_ref;
 }

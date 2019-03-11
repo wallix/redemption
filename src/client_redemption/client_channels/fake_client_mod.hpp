@@ -91,7 +91,7 @@ public:
 
     void refresh(Rect clip) override { (void) clip; }
 
-    void draw_event(time_t now, gdi::GraphicApi & gd) override { (void)now; (void)gd; }
+    void draw_event(gdi::GraphicApi & gd) override { (void)gd; }
 };
 
 

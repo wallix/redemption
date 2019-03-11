@@ -41,7 +41,7 @@ public:
 
     void refresh(Rect clip) override;
 
-    void draw_event(time_t /*now*/, gdi::GraphicApi & gd) override;
+    void draw_event(gdi::GraphicApi & gd) override;
 
     bool is_up_and_running() const override
     {

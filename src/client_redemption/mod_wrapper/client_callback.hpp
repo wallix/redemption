@@ -145,10 +145,7 @@ public:
 
     void close() {
         if (this->get_mod() != nullptr) {
-            time_t now;
-            time(&now);
-
-            this->mod->disconnect(now);
+            this->mod->disconnect();
             this->mod = nullptr;
         }
         this->client->close();
@@ -157,10 +154,7 @@ public:
     void disconnect(bool pipe_broken) {
         if (this->get_mod() != nullptr) {
             if (!pipe_broken) {
-                time_t now;
-                time(&now);
-
-                this->mod->disconnect(now);
+                this->mod->disconnect();
             }
             this->mod = nullptr;
         }

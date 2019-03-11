@@ -288,7 +288,7 @@ public:
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
         .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
-            this->draw_event(ctx.get_current_time().tv_sec, gd);
+            this->draw_event(gd);
             return ctx.need_more_data();
         })
         .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd){
@@ -928,7 +928,7 @@ public:
         int key = this->keymapSym.get_sym(downflag);
         while (key){
             if (bool(this->verbose & VNCVerbose::keymap_stack)) {
-                LOG(LOG_INFO, "keyloop::key=%d (%x) %s param1=%u nbsym=%u", 
+                LOG(LOG_INFO, "keyloop::key=%d (%x) %s param1=%u nbsym=%u",
                     key, static_cast<unsigned>(key), downflag?"DOWN":"UP",
                     static_cast<unsigned>(keycode),
                     this->keymapSym.nb_sym_available());
@@ -1315,7 +1315,7 @@ protected:
     Buf64k server_data_buf;
 
 public:
-    void draw_event(time_t /*now*/, gdi::GraphicApi & gd) override
+    void draw_event(gdi::GraphicApi & gd) override
     {
         LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 
@@ -3097,16 +3097,16 @@ private:
     }
 
 public:
-    void disconnect(time_t now) override {
-
-        double seconds = ::difftime(now, this->beginning);
+    void disconnect() override
+    {
+        uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->beginning;
         LOG(LOG_INFO, "Client disconnect from VNC module");
 
         char extra[1024];
         snprintf(extra, sizeof(extra), "%02d:%02d:%02d",
-                        (int(seconds) / 3600),
-                        ((int(seconds) % 3600) / 60),
-                        (int(seconds) % 60));
+            int(seconds / 3600),
+            int((seconds % 3600) / 60),
+            int(seconds % 60));
 
         auto info = key_qvalue_pairs({
             {"type", "SESSION_DISCONNECTION"},
@@ -3117,9 +3117,9 @@ public:
         arc_info.name = "SESSION_DISCONNECTION";
         arc_info.signatureID = ArcsightLogInfo::SESSION_DISCONNECTION;
         arc_info.ApplicationProtocol = "vnc";
-        arc_info.endTime = long(seconds);
+        arc_info.endTime = seconds;
 
-        this->report_message.log6("type=\"SESSION_DISCONNECTION\"", arc_info, this->session_reactor.get_current_time());
+        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
     }
 
     Dimension get_dim() const override

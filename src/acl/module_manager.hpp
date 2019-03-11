@@ -261,11 +261,11 @@ class ModuleManager : public MMIni
         }
 
     private:
-        void draw_event(time_t now, gdi::GraphicApi & gd) override
+        void draw_event(gdi::GraphicApi & gd) override
         {
             update_lock lock{gd};
             this->draw_osd_message_impl(gd);
-            this->mm.mod->draw_event(now, gd);
+            this->mm.mod->draw_event(gd);
         }
 
         void draw_osd_message_impl(gdi::GraphicApi & drawable)
@@ -371,8 +371,8 @@ class ModuleManager : public MMIni
         bool is_up_and_running() const override
         { return this->mm.mod->is_up_and_running(); }
 
-        void disconnect(time_t now) override
-        { this->mm.mod->disconnect(now); }
+        void disconnect() override
+        { this->mm.mod->disconnect(); }
 
         void display_osd_message(std::string const & message) override
         { this->mm.mod->display_osd_message(message); }

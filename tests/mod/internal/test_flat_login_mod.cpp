@@ -47,7 +47,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     FlatLoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(0, 0, 799, 599), client_execute, global_font(), theme);
-    d.draw_event(100001, front.gd());
+    d.draw_event(front.gd());
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
 
@@ -74,11 +74,11 @@ RED_AUTO_TEST_CASE(TestDialogMod1)
 
     FlatLoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(0, 0, 799, 599), client_execute, global_font(), theme);
-    d.draw_event(100001, front.gd());
+    d.draw_event(front.gd());
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
 
-    d.draw_event(100601, front.gd());
+    d.draw_event(front.gd());
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_STOP, d.get_event().signal);
 }
@@ -100,11 +100,11 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
 
     FlatLoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
-    d.draw_event(100001, front.gd());
+    d.draw_event(front.gd());
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
 
-    d.draw_event(100601, front.gd());
+    d.draw_event(front.gd());
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_STOP, d.get_event().signal);
 }

@@ -203,8 +203,7 @@ enum {
         this->t.send(stream.get_data(), len);
     }
 
-    void draw_event(time_t now, gdi::GraphicApi & gd) override {
-        (void)now;
+    void draw_event(gdi::GraphicApi & gd) override {
         try{
             BufMaker<32768> buf_maker;
             auto* buf = buf_maker.static_array().data();

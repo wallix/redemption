@@ -44,7 +44,7 @@ TestCardMod::TestCardMod(
 , session_reactor(session_reactor)
 , gd_event(session_reactor.create_graphic_event(std::ref(*this))
     .on_action(jln::one_shot([](gdi::GraphicApi& gd, TestCardMod& mod){
-        mod.draw_event(0, gd);
+        mod.draw_event(gd);
     })))
 {}
 
@@ -58,7 +58,7 @@ void TestCardMod::rdp_input_scancode(
     }
 }
 
-void TestCardMod::draw_event(time_t /*now*/, gdi::GraphicApi & gd)
+void TestCardMod::draw_event(gdi::GraphicApi & gd)
 {
     update_lock<gdi::GraphicApi> lock(gd);
 

@@ -85,7 +85,7 @@ public:
     void rdp_input_scancode(long int param1, long int param2, long int param3,
                             long int param4, Keymap2* keymap) override;
 
-    void draw_event(time_t now, gdi::GraphicApi & gapi) override;
+    void draw_event(gdi::GraphicApi & gapi) override;
 
     bool is_up_and_running() const override
     {

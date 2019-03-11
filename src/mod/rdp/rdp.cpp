@@ -136,7 +136,7 @@ void mod_rdp::init_negociate_event_(
             if (this->buf.remaining()) {
                 private_rdp_negociation->graphic_event = ctx.get_reactor().create_graphic_event()
                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
-                    this->draw_event_impl(this->session_reactor.get_current_time().tv_sec, gd);
+                    this->draw_event_impl(gd);
                 }));
             }
 
@@ -145,9 +145,9 @@ void mod_rdp::init_negociate_event_(
             .replace_exit(jln::propagate_exit())
             .replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd, PrivateRdpNegociationPtr& private_rdp_negociation){
                 private_rdp_negociation.reset();
-                this->draw_event(ctx.get_current_time().tv_sec, gd);
+                this->draw_event(gd);
                 return ctx.replace_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd, PrivateRdpNegociationPtr&){
-                    this->draw_event(ctx.get_current_time().tv_sec, gd);
+                    this->draw_event(gd);
                     return ctx.need_more_data();
                 });
             });

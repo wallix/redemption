@@ -107,9 +107,9 @@ void FlatWaitMod::refused()
     this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
-void FlatWaitMod::draw_event(time_t now, gdi::GraphicApi & gapi)
+void FlatWaitMod::draw_event(gdi::GraphicApi & gapi)
 {
-    LocallyIntegrableMod::draw_event(now, gapi);
+    LocallyIntegrableMod::draw_event(gapi);
 }
 
 void FlatWaitMod::send_to_mod_channel(

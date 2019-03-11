@@ -565,7 +565,7 @@ public:
         if (enddate != 0 && (static_cast<uint32_t>(now) > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             const char * message = TR(trkeys::session_out_time, language(this->ini));
-            mm.invoke_close_box(message, signal, now, authentifier, report_message);
+            mm.invoke_close_box(message, signal, authentifier, report_message);
 
             return true;
         }
@@ -576,7 +576,7 @@ public:
             LOG(LOG_INFO, "Close by Rejected message received : %s",
                 this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
-            mm.invoke_close_box(nullptr, signal, now, authentifier, report_message);
+            mm.invoke_close_box(nullptr, signal, authentifier, report_message);
             return true;
         }
 
@@ -584,7 +584,7 @@ public:
         if (this->keepalive.check(now, this->ini)) {
             mm.invoke_close_box(
                 TR(trkeys::miss_keepalive, language(this->ini)),
-                signal, now, authentifier, report_message
+                signal, authentifier, report_message
             );
             return true;
         }
@@ -593,7 +593,7 @@ public:
         if (this->inactivity.check_user_activity(now, has_user_activity)) {
             mm.invoke_close_box(
                 TR(trkeys::close_inactivity, language(this->ini)),
-                signal, now, authentifier, report_message
+                signal, authentifier, report_message
             );
             return true;
         }
@@ -653,14 +653,14 @@ public:
 
                 signal = BACK_EVENT_NONE;
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    mm.invoke_close_box(nullptr, signal, now, authentifier, report_message);
+                    mm.invoke_close_box(nullptr, signal, authentifier, report_message);
                     return true;
                 }
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     this->keepalive.stop();
                 }
                 if (mm.get_mod()) {
-                    mm.get_mod()->disconnect(now);
+                    mm.get_mod()->disconnect();
                 }
                 mm.remove_mod();
                 try {

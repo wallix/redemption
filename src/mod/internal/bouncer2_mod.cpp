@@ -37,7 +37,7 @@ Bouncer2Mod::Bouncer2Mod(
 , timer(session_reactor.create_graphic_timer()
     .set_delay(std::chrono::milliseconds(33))
     .on_action(jln::always_ready([this](gdi::GraphicApi& gd){
-        this->draw_event(0, gd);
+        this->draw_event(gd);
     })))
 {}
 
@@ -92,7 +92,7 @@ int Bouncer2Mod::interaction()
 }
 
 // This should come from BACK!
-void Bouncer2Mod::draw_event(time_t /*now*/, gdi::GraphicApi & gd)
+void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 {
     auto const color_ctx = gdi::ColorCtx::depth24();
 

@@ -331,9 +331,9 @@ void SelectorMod::rdp_input_scancode(
     LocallyIntegrableMod::rdp_input_scancode(param1, param2, param3, param4, keymap);
 }
 
-void SelectorMod::draw_event(time_t now, gdi::GraphicApi & gapi)
+void SelectorMod::draw_event(gdi::GraphicApi & gapi)
 {
-    LocallyIntegrableMod::draw_event(now, gapi);
+    LocallyIntegrableMod::draw_event(gapi);
 }
 
 void SelectorMod::send_to_mod_channel(

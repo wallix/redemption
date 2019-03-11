@@ -124,7 +124,7 @@ void WidgetTestMod::refresh(Rect clip)
     this->rdp_input_invalidate(clip);
 }
 
-void WidgetTestMod::draw_event(time_t /*now*/, gdi::GraphicApi& gd)
+void WidgetTestMod::draw_event(gdi::GraphicApi& gd)
 {
     update_lock update_lock{gd};
 

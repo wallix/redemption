@@ -67,7 +67,7 @@ public:
 
     void notify(Widget * sender, notify_event_t event) override;
 
-    void draw_event(time_t now, gdi::GraphicApi & gapi) override;
+    void draw_event(gdi::GraphicApi & gapi) override;
 
     bool is_up_and_running() const override
     { return true; }

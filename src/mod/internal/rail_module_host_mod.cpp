@@ -112,11 +112,11 @@ void RailModuleHostMod::send_checkout_channel_data(const char * string_data)
 
 // mod_api
 
-void RailModuleHostMod::draw_event(time_t now, gdi::GraphicApi& gapi)
+void RailModuleHostMod::draw_event(gdi::GraphicApi& gapi)
 {
     mod_api& mod = this->rail_module_host.get_managed_mod();
 
-    return mod.draw_event(now, gapi);
+    return mod.draw_event(gapi);
 }
 
 bool RailModuleHostMod::is_up_and_running() const

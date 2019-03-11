@@ -62,7 +62,7 @@ void MMIni::new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessa
 
 void MMIni::invoke_close_box(
     const char * auth_error_message, BackEvent_t & signal,
-    time_t now, AuthApi & authentifier, ReportMessageApi & report_message)
+    AuthApi & authentifier, ReportMessageApi & report_message)
 {
     LOG(LOG_INFO, "----------> ACL invoke_close_box <--------");
     this->last_module = true;
@@ -71,7 +71,7 @@ void MMIni::invoke_close_box(
     }
     if (this->mod) {
         try {
-            this->mod->disconnect(now);
+            this->mod->disconnect();
         }
         catch (Error const& e) {
             LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!\n", e.id);

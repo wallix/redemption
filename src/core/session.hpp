@@ -191,7 +191,6 @@ public:
 
                 auto check_exception = [&](Error const& e) {
                     auto invoke_close_box = [&]{
-                        time_t now = time(nullptr);
                         signal = BackEvent_t(session_reactor.signal);
 
                         const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(this->ini)));
@@ -203,7 +202,7 @@ public:
 
                         mm.invoke_close_box(
                             auth_error_message,
-                            signal, now, authentifier, authentifier);
+                            signal, authentifier, authentifier);
                         session_reactor.signal = signal;
 
                         this->ini.set<cfg::globals::enable_close_box>(enable_close_box);
@@ -365,7 +364,7 @@ public:
                                 catch (...) {
                                     signal = BackEvent_t(session_reactor.signal);
                                     session_reactor.signal = 0;
-                                    mm.invoke_close_box("No authentifier available", signal, now, authentifier, authentifier);
+                                    mm.invoke_close_box("No authentifier available", signal, authentifier, authentifier);
                                     if (!session_reactor.signal || signal) {
                                         session_reactor.signal = signal;
                                     }
@@ -444,11 +443,10 @@ public:
                     }
                 } catch (Error const& e) {
                     LOG(LOG_ERR, "Session::Session exception (2) = %s\n", e.errmsg());
-                    time_t now = time(nullptr);
                     signal = BackEvent_t(session_reactor.signal);
                     mm.invoke_close_box(
                         local_err_msg(e, language(this->ini)),
-                        signal, now, authentifier, authentifier);
+                        signal, authentifier, authentifier);
                     session_reactor.signal = signal;
 
                     if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
@@ -457,7 +455,7 @@ public:
                 }
             }
             if (mm.get_mod()) {
-                mm.get_mod()->disconnect(time(nullptr));
+                mm.get_mod()->disconnect();
             }
             front.disconnect();
         }
@@ -527,7 +525,6 @@ private:
                 "ru_utime.tv_sec;ru_utime.tv_usec;ru_stime.tv_sec;ru_stime.tv_usec;"
                 "ru_maxrss;ru_ixrss;ru_idrss;ru_isrss;ru_minflt;ru_majflt;ru_nswap;"
                 "ru_inblock;ru_oublock;ru_msgsnd;ru_msgrcv;ru_nsignals;ru_nvcsw;ru_nivcsw\n"));
-
         }
         else if (this->perf_last_info_collect_time + this->select_timeout_tv_sec > now) {
             return;

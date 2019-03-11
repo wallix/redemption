@@ -2532,7 +2532,7 @@ public:
 
     }
 
-    void connected_slow_path(time_t now, gdi::GraphicApi & drawable, InStream & stream)
+    void connected_slow_path(gdi::GraphicApi & drawable, InStream & stream)
     {
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -2563,7 +2563,7 @@ public:
 #endif
             this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
-            this->log_disconnection(now, bool(this->verbose & RDPVerbose::sesprobe));
+            this->log_disconnection(bool(this->verbose & RDPVerbose::sesprobe));
 
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
@@ -3070,7 +3070,7 @@ public:
 
     TpduBuffer buf;
 
-    void draw_event(time_t now, gdi::GraphicApi & gd) override
+    void draw_event(gdi::GraphicApi & gd) override
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
@@ -3081,11 +3081,11 @@ public:
 #endif
 
         this->buf.load_data(this->trans);
-        draw_event_impl(now, gd);
+        this->draw_event_impl(gd);
     }
 
 
-    void draw_event_impl(time_t now, gdi::GraphicApi & gd)
+    void draw_event_impl(gdi::GraphicApi & gd)
     {
         while (this->buf.next_pdu()) {
             InStream x224_data(this->buf.current_pdu_buffer());
@@ -3104,7 +3104,7 @@ public:
                     this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
                 }
                 else {
-                    this->connected_slow_path(now, drawable, x224_data);
+                    this->connected_slow_path(drawable, x224_data);
                 }
             }
             catch(Error const & e){
@@ -5556,7 +5556,7 @@ public:
         return (UP_AND_RUNNING == this->connection_finalization_state);
     }
 
-    void disconnect(time_t now) override {
+    void disconnect() override {
         if (this->is_up_and_running()) {
             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
                 LOG_INFO, "mod_rdp::disconnect()");
@@ -5566,20 +5566,21 @@ public:
             this->send_disconnect_ultimatum();
         }
 
-        this->log_disconnection(now, false);
+        this->log_disconnection(false);
     }
 
 private:
-    void log_disconnection(time_t now, bool enable_verbose)
+    void log_disconnection(bool enable_verbose)
     {
         if (this->session_time_start.count()) {
-            double seconds = ::difftime(now, this->session_time_start.count());
+            uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->session_time_start.count();
             this->session_time_start = std::chrono::seconds::zero();
 
             char extra[1024];
             snprintf(extra, sizeof(extra), "%d:%02d:%02d",
-                (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-                (int(seconds) % 60));
+                int(seconds / 3600),
+                int((seconds % 3600) / 60),
+                int(seconds % 60));
 
             auto info = key_qvalue_pairs({
                 {"type", "SESSION_DISCONNECTION"},
@@ -5590,7 +5591,7 @@ private:
             arc_info.name = "SESSION_DISCONNECTION";
             arc_info.signatureID = ArcsightLogInfo::SESSION_DISCONNECTION;
             arc_info.ApplicationProtocol = "rdp";
-            arc_info.endTime = long(seconds);
+            arc_info.endTime = seconds;
 
             this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
