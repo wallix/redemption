@@ -28,6 +28,11 @@
 #include <unistd.h>
 #include <stdio.h>
 
+RED_AUTO_TEST_CASE(Dummy)
+{
+}
+
+
 //RED_AUTO_TEST_CASE(testFileValid)
 //{
 //    std::string session_id("0000");
