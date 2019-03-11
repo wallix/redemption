@@ -20,7 +20,7 @@
    header file. KeymapSym object for keymap translation from RDP to X (VNC)
 */
 
-#include "keyboard/keymapSym.hpp"
+#include "keyboard/keymapsym.hpp"
 #include "utils/log.hpp"
 #include <cstring>
 #include <cstdio>

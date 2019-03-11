@@ -25,7 +25,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "keyboard/keymapSym.hpp"
+#include "keyboard/keymapsym.hpp"
 
 RED_AUTO_TEST_CASE(TestKeymapSym)
 {

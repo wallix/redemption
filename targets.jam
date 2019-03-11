@@ -36,7 +36,7 @@ exe headlessclient :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
@@ -121,7 +121,7 @@ exe rdpproxy :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
@@ -258,7 +258,7 @@ exe rdpclient :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -509,7 +509,7 @@ test-run tests/acl/test_module_manager :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
@@ -2299,7 +2299,7 @@ test-run tests/core/test_mainloop :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
@@ -2424,7 +2424,7 @@ test-run tests/core/test_session :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
@@ -2626,12 +2626,12 @@ test-run tests/keyboard/test_keymap2 :
   <covfile>src/keyboard/keymap2.cpp
   <covfile>src/keyboard/keymap2.hpp
 ;
-test-run tests/keyboard/test_keymapSym :
-  $(REDEMPTION_TEST_PATH)/keyboard/test_keymapSym.cpp
+test-run tests/keyboard/test_keymapsym :
+  $(REDEMPTION_TEST_PATH)/keyboard/test_keymapsym.cpp
 :
-  <library>src/keyboard/keymapSym.o
-  <covfile>src/keyboard/keymapSym.cpp
-  <covfile>src/keyboard/keymapSym.hpp
+  <library>src/keyboard/keymapsym.o
+  <covfile>src/keyboard/keymapsym.cpp
+  <covfile>src/keyboard/keymapsym.hpp
 ;
 test-run tests/lib/test_do_recorder :
   $(REDEMPTION_TEST_PATH)/lib/test_do_recorder.cpp
@@ -4059,20 +4059,18 @@ test-run tests/mod/rdp/test_rdp_params :
 :
   <covfile>src/mod/rdp/rdp_params.hpp
 ;
-
-
-#test-run tests/mod/test_icap_files_service :
-#  $(REDEMPTION_TEST_PATH)/mod/test_icap_files_service.cpp
-#:
-#  <library>src/core/error.o
-#  <library>src/utils/fileutils.o
-#  <library>src/utils/netutils.o
-#  <library>src/utils/stacktrace.o
-#  <library>src/utils/strutils.o
-#  <library>src/utils/utf.o
-#  $(BOOST_STACKTRACE_LINKFLAGS)
-#  <covfile>src/mod/icap_files_service.hpp
-#;
+test-run tests/mod/test_icap_files_service :
+  $(REDEMPTION_TEST_PATH)/mod/test_icap_files_service.cpp
+:
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/netutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/icap_files_service.hpp
+;
 test-run tests/mod/test_mod_api :
   $(REDEMPTION_TEST_PATH)/mod/test_mod_api.cpp
 :
@@ -4137,7 +4135,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -5172,7 +5170,7 @@ obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
-obj src/keyboard/keymapSym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapSym.cpp ;
+obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
@@ -5588,8 +5586,8 @@ alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_protected_graphics.coverage : tests/gdi/test_protected_graphics.coverage ;
 alias test_keymap2 : tests/keyboard/test_keymap2 ;
 alias test_keymap2.coverage : tests/keyboard/test_keymap2.coverage ;
-alias test_keymapSym : tests/keyboard/test_keymapSym ;
-alias test_keymapSym.coverage : tests/keyboard/test_keymapSym.coverage ;
+alias test_keymapsym : tests/keyboard/test_keymapsym ;
+alias test_keymapsym.coverage : tests/keyboard/test_keymapsym.coverage ;
 alias test_do_recorder : tests/lib/test_do_recorder ;
 alias test_iametrics : tests/lib/test_iametrics ;
 alias test_scytale : tests/lib/test_scytale ;
@@ -5708,8 +5706,8 @@ alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
 alias test_rdp_orders.coverage : tests/mod/rdp/test_rdp_orders.coverage ;
 alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
 alias test_rdp_params.coverage : tests/mod/rdp/test_rdp_params.coverage ;
-#alias test_icap_files_service : tests/mod/test_icap_files_service ;
-#alias test_icap_files_service.coverage : tests/mod/test_icap_files_service.coverage ;
+alias test_icap_files_service : tests/mod/test_icap_files_service ;
+alias test_icap_files_service.coverage : tests/mod/test_icap_files_service.coverage ;
 alias test_mod_api : tests/mod/test_mod_api ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
@@ -6151,7 +6149,7 @@ alias tests/gdi.norec :
 ;
 alias tests/keyboard.norec :
   tests/keyboard/test_keymap2
-  tests/keyboard/test_keymapSym
+  tests/keyboard/test_keymapsym
 ;
 alias tests/lib.norec :
   tests/lib/test_do_recorder
@@ -6227,7 +6225,7 @@ alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp_params
 ;
 alias tests/mod.norec :
-#  tests/mod/test_icap_files_service
+  tests/mod/test_icap_files_service
   tests/mod/test_mod_api
 ;
 alias tests/mod/vnc/encoder.norec :

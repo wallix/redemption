@@ -42,7 +42,7 @@
 #include "gdi/graphic_api.hpp"
 
 #include "keyboard/keymap2.hpp"
-#include "keyboard/keymapSym.hpp"
+#include "keyboard/keymapsym.hpp"
 #include "main/version.hpp"
 #include "RAIL/client_execute.hpp"
 #include "mod/mod_api.hpp"
