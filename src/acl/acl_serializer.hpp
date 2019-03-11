@@ -626,8 +626,6 @@ public:
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
-                // TODO signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind
-                //mm.get_mod()->refresh_context();
             }
             else if ((signal == BACK_EVENT_NEXT)
                     || (signal == BACK_EVENT_RETRY_CURRENT)

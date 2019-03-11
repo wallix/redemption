@@ -82,8 +82,6 @@ public:
 
     void notify(Widget* widget, notify_event_t event) override;
 
-    void refresh_context() override;
-
     void rdp_input_scancode(long int param1, long int param2, long int param3,
                             long int param4, Keymap2* keymap) override;
 

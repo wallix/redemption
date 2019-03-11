@@ -368,9 +368,6 @@ class ModuleManager : public MMIni
         void send_checkout_channel_data(const char * data) override
         { this->mm.mod->send_checkout_channel_data(data); }
 
-        void refresh_context() override
-        { this->mm.mod->refresh_context(); }
-
         bool is_up_and_running() const override
         { return this->mm.mod->is_up_and_running(); }
 

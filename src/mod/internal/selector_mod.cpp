@@ -120,7 +120,24 @@ SelectorMod::SelectorMod(
 
     this->sesman_event = session_reactor.create_sesman_event()
     .on_action(jln::always_ready([this](Inifile&){
-        this->refresh_context();
+        char buffer[16];
+
+        this->current_page = this->vars.get<cfg::context::selector_current_page>();
+        snprintf(buffer, sizeof(buffer), "%d", this->current_page);
+        this->selector.current_page.set_text(buffer);
+
+        this->number_page = this->vars.get<cfg::context::selector_number_of_pages>();
+        snprintf(buffer, sizeof(buffer), "%d", this->number_page);
+        this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
+
+        this->selector.selector_lines.clear();
+
+        this->refresh_device();
+
+        this->selector.rdp_input_invalidate(this->selector.get_rect());
+
+        this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
+        this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
     }));
 }
 
@@ -136,6 +153,7 @@ void SelectorMod::ask_page()
     this->vars.ask<cfg::globals::target_device>();
     this->vars.ask<cfg::context::selector>();
 
+    // TODO replace BACK_EVENT_REFRESH by session_reactor.create_graphic_event ?
     this->session_reactor.set_next_event(BACK_EVENT_REFRESH);
 }
 
@@ -216,28 +234,6 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
     } break;
     default:;
     }
-}
-
-void SelectorMod::refresh_context()
-{
-    char buffer[16];
-
-    this->current_page = vars.get<cfg::context::selector_current_page>();
-    snprintf(buffer, sizeof(buffer), "%d", this->current_page);
-    this->selector.current_page.set_text(buffer);
-
-    this->number_page = vars.get<cfg::context::selector_number_of_pages>();
-    snprintf(buffer, sizeof(buffer), "%d", this->number_page);
-    this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
-
-    this->selector.selector_lines.clear();
-
-    this->refresh_device();
-
-    this->selector.rdp_input_invalidate(this->selector.get_rect());
-
-    this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
-    this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
 }
 
 void SelectorMod::refresh_device()

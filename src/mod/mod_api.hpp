@@ -46,11 +46,6 @@ public:
     // may raise an exception (say if connection to server is closed), but returns nothings
     virtual void draw_event(time_t now, gdi::GraphicApi & gd) = 0;
 
-    // used when context changed to avoid creating a new module
-    // it usually perform some task identical to what constructor does
-    // henceforth it should often be called by constructors
-    virtual void refresh_context() {}
-
     virtual bool is_up_and_running() const { return false; }
 
     // support auto-reconnection
