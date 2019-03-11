@@ -1315,7 +1315,7 @@ protected:
     Buf64k server_data_buf;
 
 public:
-    void draw_event(gdi::GraphicApi & gd) override
+    void draw_event(gdi::GraphicApi & gd)
     {
         LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 

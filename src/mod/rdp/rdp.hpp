@@ -3070,7 +3070,7 @@ public:
 
     TpduBuffer buf;
 
-    void draw_event(gdi::GraphicApi & gd) override
+    void draw_event(gdi::GraphicApi & gd)
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 

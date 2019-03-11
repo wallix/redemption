@@ -61,7 +61,7 @@ public:
     void refresh(Rect /*rect*/) override
     {}
 
-    void draw_event(gdi::GraphicApi & gd) override;
+    void draw_event(gdi::GraphicApi & gd);
 
     bool is_up_and_running() const override
     {

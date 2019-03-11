@@ -51,11 +51,6 @@ struct null_mod : public mod_api
 
     void refresh(const Rect /*clip*/) override {}
 
-    // management of module originated event ("data received from server")
-    // return non zero if module is "finished", 0 if it's still running
-    // the null module never finish and accept any incoming event
-    void draw_event(gdi::GraphicApi & /*gd*/) override {}
-
     bool is_up_and_running() const override { return true; }
 };
 

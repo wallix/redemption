@@ -261,13 +261,6 @@ class ModuleManager : public MMIni
         }
 
     private:
-        void draw_event(gdi::GraphicApi & gd) override
-        {
-            update_lock lock{gd};
-            this->draw_osd_message_impl(gd);
-            this->mm.mod->draw_event(gd);
-        }
-
         void draw_osd_message_impl(gdi::GraphicApi & drawable)
         {
             if (this->clip.isempty()) {

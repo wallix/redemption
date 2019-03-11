@@ -49,10 +49,8 @@ class RDPPolygonCB;
 class RDPPolygonSC;
 
 
-WidgetModuleHost::ModuleHolder::ModuleHolder(
-    WidgetModuleHost& host, std::unique_ptr<mod_api>&& managed_mod)
-: host(host)
-, managed_mod(std::move(managed_mod))
+WidgetModuleHost::ModuleHolder::ModuleHolder(std::unique_ptr<mod_api>&& managed_mod)
+: managed_mod(std::move(managed_mod))
 {
     assert(this->managed_mod);
 }
@@ -88,15 +86,6 @@ void WidgetModuleHost::ModuleHolder::send_checkout_channel_data(const char * str
 }
 
 // mod_api
-
-void WidgetModuleHost::ModuleHolder::draw_event(gdi::GraphicApi& gd)
-{
-    this->host.drawable_ptr = &gd;
-
-    this->managed_mod->draw_event(this->host);
-
-    this->host.drawable_ptr = &this->host.drawable_ref;
-}
 
 bool WidgetModuleHost::ModuleHolder::is_up_and_running() const
 {
@@ -330,9 +319,8 @@ WidgetModuleHost::WidgetModuleHost(
     uint16_t front_width, uint16_t front_height,
     int group_id)
 : WidgetParent(drawable, parent, notifier, group_id)
-, module_holder(*this, std::move(managed_mod))
+, module_holder(std::move(managed_mod))
 , drawable_ptr(&drawable)
-, drawable_ref(drawable)
 , hscroll(drawable, *this, this, true, BLACK,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
 , vscroll(drawable, *this, this, false, BLACK,

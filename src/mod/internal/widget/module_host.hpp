@@ -132,12 +132,10 @@ private:
     class ModuleHolder : public mod_api
     {
     private:
-        WidgetModuleHost& host;
-
         const std::unique_ptr<mod_api> managed_mod;
 
     public:
-        ModuleHolder(WidgetModuleHost& host, /*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod);
+        ModuleHolder(/*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod);
 
         // Callback
         void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
@@ -149,8 +147,6 @@ private:
         void send_checkout_channel_data(const char * string_data) override;
 
         // mod_api
-
-        void draw_event(gdi::GraphicApi& gd) override;
 
         bool is_up_and_running() const override;
 
@@ -179,8 +175,6 @@ private:
     CompositeArray composite_array;
 
     not_null_ptr<gdi::GraphicApi> drawable_ptr;
-
-    gdi::GraphicApi& drawable_ref;
 
     WidgetScrollBar hscroll;
     WidgetScrollBar vscroll;

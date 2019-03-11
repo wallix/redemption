@@ -90,8 +90,6 @@ public:
     void rdp_input_invalidate(Rect r) override { (void) r; }
 
     void refresh(Rect clip) override { (void) clip; }
-
-    void draw_event(gdi::GraphicApi & gd) override { (void)gd; }
 };
 
 

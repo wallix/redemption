@@ -66,11 +66,6 @@ void TransitionMod::rdp_input_scancode(long int, long int, long int,
     }
 }
 
-void TransitionMod::draw_event(time_t now, gdi::GraphicApi & gapi)
-{
-    LocallyIntegrableMod::draw_event(now, gapi);
-}
-
 void TransitionMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
     LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);

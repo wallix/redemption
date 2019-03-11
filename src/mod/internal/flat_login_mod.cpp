@@ -112,11 +112,6 @@ void FlatLoginMod::notify(Widget* sender, notify_event_t event)
     }
 }
 
-void FlatLoginMod::draw_event(gdi::GraphicApi & gapi)
-{
-    LocallyIntegrableMod::draw_event(gapi);
-}
-
 void FlatLoginMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
     LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);

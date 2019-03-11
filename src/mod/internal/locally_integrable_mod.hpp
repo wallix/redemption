@@ -46,8 +46,6 @@ public:
 
     void refresh(Rect r) override;
 
-    void draw_event(gdi::GraphicApi & /*gd*/) override;
-
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
 private:

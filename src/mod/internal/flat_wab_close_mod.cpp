@@ -132,5 +132,3 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
         this->session_reactor.set_next_event(BACK_EVENT_NEXT);
     }
 }
-
-void FlatWabCloseMod::draw_event(gdi::GraphicApi& /*unused*/) {}
