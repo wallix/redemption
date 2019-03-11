@@ -28,80 +28,82 @@
 #include <unistd.h>
 #include <stdio.h>
 
-RED_AUTO_TEST_CASE(testFileValid)
-{
-    std::string session_id("0000");
-    std::string socket_path("../ICAPService/socket/redemption-icap-service-sock");
-    std::string file_name("README.md");
-    std::string file_content(get_file_contents("../ICAPService/README.md"));
-    int file_size = file_content.length();
+//RED_AUTO_TEST_CASE(testFileValid)
+//{
+//    std::string session_id("0000");
+//    std::string socket_path("../ICAPService/socket/redemption-icap-service-sock");
+//    std::string file_name("README.md");
+//    std::string file_content(get_file_contents("../ICAPService/README.md"));
+//    int file_size = file_content.length();
 
 
-    ICAPService * service = icap_open_session(socket_path, session_id);
-    int fd = service->fd.fd();
-    if (service->fd.is_open()) {
-        RED_CHECK(fd>0);
-        std::string session_id_ = service->session_id;
-        RED_CHECK_EQUAL(session_id_, "0000");
+//    ICAPService * service = icap_open_session(socket_path, session_id);
+//    int fd = service->fd.fd();
+//    if (service->fd.is_open()) {
+//        RED_CHECK(fd>0);
+//        std::string session_id_ = service->session_id;
+//        RED_CHECK_EQUAL(session_id_, "0000");
 
 
-        std::string file_id = icap_open_file(service, file_name, file_size);
-        RED_CHECK_EQUAL(file_id, "0000-1");
+//        std::string file_id = icap_open_file(service, file_name, file_size);
+//        RED_CHECK_EQUAL(file_id, "0000-1");
 
 
-        icap_send_data(service, file_id, const_byte_ptr(file_content.c_str()), file_size);
+//        icap_send_data(service, file_id, const_byte_ptr(file_content.c_str()), file_size);
 
 
-        ICAPResult result = icap_get_result(service);
-        RED_CHECK_EQUAL(result.res, 0x03);
-        RED_CHECK_EQUAL(result.id, "0000-1");
+//        ICAPResult result = icap_get_result(service);
+//        RED_CHECK_EQUAL(result.res, 0x03);
+//        RED_CHECK_EQUAL(result.id, "0000-1");
 
-        int n = icap_close_session(service);
+//        int n = icap_close_session(service);
 
-        RED_CHECK(n>0);
-    }
-}
-
-
-RED_AUTO_TEST_CASE(testFileInvalid)
-{
-    std::string session_id("0001");
-    std::string socket_path("../ICAPService/socket/redemption-icap-service-sock");
-    std::string file_path("../ICAPService/test/the_zeus_binary_chapros");
-    std::string file_name("the_zeus_binary_chapros");
-    int file_size = 227328;
-
-    ICAPService * service = icap_open_session(socket_path, session_id);
-    int fd = service->fd.fd();
-    if (service->fd.is_open()) {
-        RED_CHECK(fd>0);
-        std::string session_id_ = service->session_id;
-        RED_CHECK_EQUAL(session_id_, "0001");
+//        RED_CHECK(n>0);
+//    }
+//}
 
 
-        std::string file_id = icap_open_file(service, file_name, file_size);
-        RED_CHECK_EQUAL(file_id, "0001-1");
+//RED_AUTO_TEST_CASE(testFileInvalid)
+//{
+//    std::string session_id("0001");
+//    std::string socket_path("../ICAPService/socket/redemption-icap-service-sock");
+//    std::string file_path("../ICAPService/test/the_zeus_binary_chapros");
+//    std::string file_name("the_zeus_binary_chapros");
+//    int file_size = 227328;
 
-        int sent_data = 0;
-        char buff[1024] = {0};
-        std::ifstream iFile(file_path, std::ios::binary | std::ios::app);
+//    ICAPService * service = icap_open_session(socket_path, session_id);
+//    int fd = service->fd.fd();
+//    if (service->fd.is_open()) {
+//        RED_CHECK(fd>0);
+//        std::string session_id_ = service->session_id;
+//        RED_CHECK_EQUAL(session_id_, "0001");
 
-        if (iFile.is_open()) {
-            while (sent_data < file_size) {
 
-                iFile.read(buff, 1024);
-                sent_data += 1024;
+//        std::string file_id = icap_open_file(service, file_name, file_size);
+//        RED_CHECK_EQUAL(file_id, "0001-1");
 
-                icap_send_data(service, file_id, buff, 1024);
-            }
-        }
+//        int sent_data = 0;
+//        char buff[1024] = {0};
+//        std::ifstream iFile(file_path, std::ios::binary | std::ios::app);
 
-        ICAPResult result = icap_get_result(service);
-        RED_CHECK_EQUAL(result.res, 0x04);
-        RED_CHECK_EQUAL(result.id, "0001-1");
+//        if (iFile.is_open()) {
+//            while (sent_data < file_size) {
 
-        int n = icap_close_session(service);
+//                iFile.read(buff, 1024);
+//                sent_data += 1024;
 
-        RED_CHECK(n>0);
-    }
-}
+//                icap_send_data(service, file_id, buff, 1024);
+//            }
+//        }
+
+//        ICAPResult result = icap_get_result(service);
+//        RED_CHECK_EQUAL(result.res, 0x04);
+//        RED_CHECK_EQUAL(result.id, "0001-1");
+
+//        int n = icap_close_session(service);
+
+//        RED_CHECK(n>0);
+//    }
+//}
+
+
