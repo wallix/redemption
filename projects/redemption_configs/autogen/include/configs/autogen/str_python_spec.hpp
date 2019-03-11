@@ -623,11 +623,9 @@
 "#_advanced\n"
 "bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)\n\n"
 
+"# Control host OS specific behaviors of VNC, notably for keyboard.\n"
 "#_hidden\n"
-"server_is_apple = boolean(default=False)\n\n"
-
-"#_hidden\n"
-"server_unix_alt = boolean(default=False)\n\n"
+"host_OS = option('windows', 'unix', 'apple', default='windows')\n\n"
 
 "[mod_replay]\n\n"
 

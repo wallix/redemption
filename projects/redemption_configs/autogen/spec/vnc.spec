@@ -21,7 +21,6 @@ vault_transformation_rule = string(default='')
 
 [vnc]
 
-server_is_apple = boolean(default=False)
-
-server_unix_alt = boolean(default=False)
+# Control host OS specific behaviors of VNC, notably for keyboard.
+host_OS = option('windows', 'unix', 'apple', default='windows')
 
