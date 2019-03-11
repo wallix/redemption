@@ -24,11 +24,6 @@
 #include "test_only/get_file_contents.hpp"
 #include "utils/log.hpp"
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-
-
 
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPService) {
     std::string socket_path("tools/ICAPService/fake_socket/redemption-icap-service-sock");

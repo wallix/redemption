@@ -4066,6 +4066,13 @@ test-run tests/mod/rdp/test_rdp_params :
 test-run tests/mod/test_icap_files_service :
   $(REDEMPTION_TEST_PATH)/mod/test_icap_files_service.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/netutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/icap_files_service.hpp
 ;
 test-run tests/mod/test_mod_api :
