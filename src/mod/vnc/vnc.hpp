@@ -937,7 +937,7 @@ public:
         if (this->state != UP_AND_RUNNING) {
             return;
         }
-
+        (void)param2;(void)param4; (void)keymap; // silencing the warning about unused parameters, it's ok
         // AltGr or Alt are catched by Apple OS
 
         // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
@@ -1026,7 +1026,9 @@ public:
         int key = this->keymapSym.get_sym();
         while (key){
             if (bool(this->verbose & VNCVerbose::keymap_stack)) {
-                LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u", key, key, keycode, downflag);
+                LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u",
+                    key, static_cast<unsigned>(key), 
+                    static_cast<unsigned>(keycode), downflag);
             }
             if (this->remove_server_alt_state_for_char 
             && this->keymapSym.is_altgr_pressed() 
@@ -1081,7 +1083,7 @@ public:
 
     void send_keyevent(uint8_t down_flag, uint32_t key) {
         if (bool(this->verbose & VNCVerbose::keymap_stack)) {
-            LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %s, key: 0x%x (%d)", down_flag?"down":"up", key);
+            LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %s, key: 0x%x (%u)", down_flag?"down":"up", key, key);
         }
         StaticOutStream<8> stream;
         stream.out_uint8(4);
