@@ -611,8 +611,7 @@ public:
                 this->send_acl_data();
                 if (signal == BACK_EVENT_NEXT) {
                     mm.remove_mod();
-                    mm.new_mod(MODULE_INTERNAL_TRANSITION, now, authentifier,
-                               report_message);
+                    mm.new_mod(MODULE_INTERNAL_TRANSITION, authentifier, report_message);
                 }
             }
             if (signal == BACK_EVENT_REFRESH) {
@@ -665,7 +664,7 @@ public:
                 }
                 mm.remove_mod();
                 try {
-                    mm.new_mod(next_state, now, authentifier, report_message);
+                    mm.new_mod(next_state, authentifier, report_message);
                 }
                 catch (Error const& e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {

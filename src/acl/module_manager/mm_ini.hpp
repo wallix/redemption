@@ -53,7 +53,7 @@ public:
 
     void remove_mod() override {}
 
-    void new_mod(ModuleIndex target_module, time_t now, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) override;
+    void new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) override;
 
     void invoke_close_box(const char * auth_error_message, BackEvent_t & signal,
                           time_t now, AuthApi & authentifier, ReportMessageApi & report_message) override;

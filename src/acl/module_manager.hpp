@@ -512,7 +512,7 @@ private:
     }
 
 public:
-    void new_mod(ModuleIndex target_module, time_t /*now*/, AuthApi & authentifier, ReportMessageApi & report_message) override
+    void new_mod(ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message) override
     {
         if (target_module != MODULE_INTERNAL_TRANSITION) {
             LOG(LOG_INFO, "----------> ACL new_mod <--------");

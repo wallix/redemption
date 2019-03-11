@@ -46,9 +46,9 @@ Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor c
 }
 
 
-void MMIni::new_mod(ModuleIndex target_module, time_t now, AuthApi & /*unused*/, ReportMessageApi & /*unused*/)
+void MMIni::new_mod(ModuleIndex target_module, AuthApi & /*unused*/, ReportMessageApi & /*unused*/)
 {
-    LOG(LOG_INFO, "new mod %d at time: %d\n", target_module, static_cast<int>(now));
+    LOG(LOG_INFO, "new mod %d", target_module);
     switch (target_module) {
     case MODULE_VNC:
     case MODULE_XUP:
@@ -80,7 +80,7 @@ void MMIni::invoke_close_box(
 
     this->remove_mod();
     if (this->ini.get<cfg::globals::enable_close_box>()) {
-        this->new_mod(MODULE_INTERNAL_CLOSE, now, authentifier, report_message);
+        this->new_mod(MODULE_INTERNAL_CLOSE, authentifier, report_message);
         signal = BACK_EVENT_NONE;
     }
     else {
