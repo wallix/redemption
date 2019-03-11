@@ -212,7 +212,6 @@ private:
     uint32_t clipboard_general_capability_flags = 0;
     ReportMessageApi & report_message;
     time_t beginning;
-    bool server_is_apple;
     int keylayout;
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
@@ -245,7 +244,7 @@ public:
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
            , bool server_is_apple
-           , bool remove_server_alt_state_for_char
+           , bool server_is_unix
            , ClientExecute* rail_client_execute
            , ModVncVariables vars
            , VNCVerbose verbose
@@ -256,14 +255,13 @@ public:
     , width(front_width)
     , height(front_height)
     , verbose(verbose)
-    , keymapSym(keylayout, key_flags, remove_server_alt_state_for_char, server_is_apple, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
+    , keymapSym(keylayout, key_flags, server_is_unix, server_is_apple, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
-    , server_is_apple(server_is_apple)
     , keylayout(keylayout)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
