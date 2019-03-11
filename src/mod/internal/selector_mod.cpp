@@ -144,25 +144,14 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
 {
     switch (event) {
     case NOTIFY_CANCEL: {
-        if (this->waiting_for_next_module) {
-            LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_CANCEL - Waiting for next module.");
-            return;
-        }
-
         this->vars.ask<cfg::globals::auth_user>();
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
         this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
-        this->waiting_for_next_module = true;
         this->sesman_event.reset();
     } break;
     case NOTIFY_SUBMIT: {
-        if (this->waiting_for_next_module) {
-            LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_SUBMIT - Waiting for next module.");
-            return;
-        }
-
         if (widget == &this->selector.connect) {
             char buffer[1024] = {};
             uint16_t row_index = 0;
@@ -181,7 +170,6 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
 
                 this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
-                this->waiting_for_next_module = true;
                 this->sesman_event.reset();
             }
         }
