@@ -64,8 +64,6 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi
 
     CopyPaste copy_paste;
 
-    bool waiting_for_next_module = false;
-
     int selector_lines_per_page_saved = 0;
 
 public:
