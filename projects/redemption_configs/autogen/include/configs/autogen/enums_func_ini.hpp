@@ -423,6 +423,31 @@ inline parse_error parse(RdpModeConsole & x, spec_type<RdpModeConsole> /*type*/,
     });
 }
 
+template<> struct zstr_buffer_traits<HostOS> : zstr_buffer_traits<void> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<HostOS> & buf,
+    cfg_s_type<HostOS> /*type*/,
+    HostOS x
+) {
+    (void)buf;    static constexpr array_view_const_char arr[]{
+        cstr_array_view("windows"),
+        cstr_array_view("unix"),
+        cstr_array_view("apple"),
+    };
+    assert(is_valid_enum_value(x));
+    return arr[static_cast<unsigned long>(x)];
+}
+
+inline parse_error parse(HostOS & x, spec_type<HostOS> /*type*/, array_view_const_char value)
+{
+    return parse_enum_str(x, value, {
+        {cstr_array_view("windows"), HostOS::windows},
+        {cstr_array_view("unix"), HostOS::unix},
+        {cstr_array_view("apple"), HostOS::apple},
+    });
+}
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 inline array_view_const_char assign_zbuf_from_cfg(

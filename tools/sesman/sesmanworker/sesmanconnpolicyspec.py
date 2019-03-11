@@ -63,7 +63,6 @@ cp_spec = {
     u'session_probe_windows_of_these_applications_as_unidentified_input_field': 'windows_of_these_applications_as_unidentified_input_field',
 },
   'vnc': {
-    u'server_is_apple': 'server_is_apple',
-    u'server_unix_alt': 'server_unix_alt',
+    u'host_OS': 'host_OS',
   },
 }
