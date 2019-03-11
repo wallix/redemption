@@ -111,28 +111,31 @@ const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
     // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
     if ((this->is_ctrl_pressed() && this->is_left_alt_pressed())
     || (this->is_right_alt_pressed())) {
-        if (this->verbose) {
+        if (this->verbose & 2) {
             LOG(LOG_INFO, "Altgr Layout");
         }
         return &this->keylayout_WORK_altgr_sym;
     }
     if (this->is_shift_pressed() && this->is_caps_locked()){
-        if (this->verbose) {
+        if (this->verbose & 2) {
             LOG(LOG_INFO, "Shift Capslock Layout");
         }
         return &this->keylayout_WORK_shiftcapslock_sym;
     }
     if (this->is_shift_pressed()){
-        if (this->verbose) {
-            LOG(LOG_INFO, "Use KEYLAYOUT WORK shift");
+        if (this->verbose & 2) {
+            LOG(LOG_INFO, "Shift Layout");
         }
         return &this->keylayout_WORK_shift_sym;
     }
     if (this->is_caps_locked()) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "Use KEYLAYOUT WORK capslock");
+        if (this->verbose & 2) {
+            LOG(LOG_INFO, "Capslock Layout");
         }
         return &this->keylayout_WORK_capslock_sym;
+    }
+    if (this->verbose & 2) {
+        LOG(LOG_INFO, "Plain Layout");
     }
     return &this->keylayout_WORK_noshift_sym;
 }
@@ -168,12 +171,26 @@ const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
 // triggered the event.
 
 
-void KeymapSym::vnc_event(int device_flags, long keycode)
+void KeymapSym::event(int device_flags, long keycode)
 {
+     if (this->verbose & 2)
+     {
+        LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x (%s%s), keycode=%04x flags=%04x (%s %s %s %s %s %s %s))",
+            static_cast<unsigned>(device_flags), (device_flags & KBDFLAGS_RELEASE)?"UP":"DOWN",(device_flags & KBDFLAGS_EXTENDED)?" EXT":"",
+            static_cast<unsigned>(keycode), static_cast<unsigned>(this->key_flags),
+            (this->key_flags & SCROLLLOCK)?"SCR ":"",
+            (this->key_flags & NUMLOCK)?"NUM ":"",
+            (this->key_flags & CAPSLOCK)?"CAPS ":"",
+            (this->key_flags & FLG_SHIFT)?"SHIFT ":"",
+            (this->key_flags & FLG_ALT)?"ALT ":"",
+            (this->key_flags & FLG_WINDOWS)?"WIN ":"",
+            (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
+     }
+
     if (this->is_apple) {
         this->apple_keyboard_translation(device_flags, keycode);
     } else {
-        this->keyMapSym_event(device_flags, keycode);
+        this->key_event(device_flags, keycode);
     }
 }
 
@@ -234,13 +251,11 @@ void KeymapSym::putback_modifiers()
 }
 
 
-void KeymapSym::keyMapSym_event(int device_flags, long keycode) {
+void KeymapSym::key_event(int device_flags, long keycode) {
 
-    LOG(LOG_INFO, "device_flag=%x keycode=%x", device_flags, keycode);
-    KeySym ks = this->event(device_flags, keycode);
+    KeySym ks = this->get_key(device_flags, keycode);
     int key = ks.sym;
     uint8_t downflag = ks.down;
-    LOG(LOG_INFO, "ks.down=%x ks.sym=%x", ks.down, ks.sym);
     
     if (this->is_unix 
     && this->is_altgr_pressed() 
@@ -263,6 +278,7 @@ void KeymapSym::keyMapSym_event(int device_flags, long keycode) {
             this->remove_modifiers();
             switch (key){
             default:
+                break;
             case 0x65:
                 this->push_sym(KeySym(0xffe3, 1));
                 this->push_sym(KeySym(0xffe9, 1));
@@ -302,7 +318,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                         this->push_sym(KeySym(0xa4, downflag)); /* @ */
                         this->push_sym(KeySym(0xffe9, 1));
                     } else {
-                        this->keyMapSym_event(device_flags, keycode);
+                        this->key_event(device_flags, keycode);
                     }
                     break;
 
@@ -314,7 +330,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                         this->push_sym(KeySym(0xffe2, 0));
                         this->push_sym(KeySym(0xffe9, 1));
                     } else {
-                        this->keyMapSym_event(device_flags, keycode);
+                        this->key_event(device_flags, keycode);
                     }
                     break;
 
@@ -340,7 +356,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                         this->push_sym(KeySym(0x3d, downflag));
                         this->push_sym(KeySym(0xffe2, 0));
                     } else {
-                        this->keyMapSym_event(device_flags, keycode);
+                        this->key_event(device_flags, keycode);
                     }
                     break;
 
@@ -354,7 +370,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     if (this->is_shift_pressed()) {
                         this->push_sym(KeySym(0x5c, downflag));
                     } else {
-                        this->keyMapSym_event(device_flags, keycode);
+                        this->key_event(device_flags, keycode);
                     }
                     break;
 
@@ -383,7 +399,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
                     break;
 
                 default:
-                    this->keyMapSym_event(device_flags, keycode);
+                    this->key_event(device_flags, keycode);
                     break;
             }
             break;
@@ -404,13 +420,13 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
 //            case 0x0409: // United States
 //            case 0x0407: // GERMAN
         default:
-           this->keyMapSym_event(device_flags, keycode);
+           this->key_event(device_flags, keycode);
            break;
     }
 }
 
 
-KeymapSym::KeySym KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
+KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_t keyCode)
 {
     enum {
            SCROLLLOCK  = 0x01
@@ -422,20 +438,6 @@ KeymapSym::KeySym KeymapSym::event(const uint16_t keyboardFlags, const uint16_t 
          , FLG_WINDOWS = 0x40
          , FLG_ALTGR   = 0x80
     };
-
-     if (this->verbose & 2)
-     {
-        LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x (%s%s), keyCode=%04x flags=%04x (%s %s %s %s %s %s %s))",
-            keyboardFlags, (keyboardFlags & KBDFLAGS_RELEASE)?"UP":"DOWN",(keyboardFlags & KBDFLAGS_EXTENDED)?" EXT":"",
-            keyCode, unsigned(this->key_flags),
-            (this->key_flags & SCROLLLOCK)?"SCR ":"",
-            (this->key_flags & NUMLOCK)?"NUM ":"",
-            (this->key_flags & CAPSLOCK)?"CAPS ":"",
-            (this->key_flags & FLG_SHIFT)?"SHIFT ":"",
-            (this->key_flags & FLG_ALT)?"ALT ":"",
-            (this->key_flags & FLG_WINDOWS)?"WIN ":"",
-            (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
-     }
 
     // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
 
@@ -789,7 +791,7 @@ KeymapSym::KeySym KeymapSym::event(const uint16_t keyboardFlags, const uint16_t 
     } // END SWITCH : ExtendedKeyCode
     // Should never happen
     return KeySym(0, 0);
-} // END FUNCT : event
+} // END FUNCT : get_key
 
 
 // Push only sym
@@ -818,7 +820,6 @@ uint32_t KeymapSym::get_sym(uint8_t & downflag)
 
         if (this->nbuf_sym > 0){
             this->nbuf_sym--;
-            this->ibuf_sym++;
             if (this->nbuf_sym == 0){
                 this->ibuf_sym = 0;
             }

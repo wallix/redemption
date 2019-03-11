@@ -1129,13 +1129,13 @@ struct KeymapSym
 // keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which
 // triggered the event.
 
-    void vnc_event(int device_flags, long keycode);
+    void event(int device_flags, long keycode);
+
     void remove_modifiers();
     void putback_modifiers();
-    void keyMapSym_event(int device_flags, long keycode);
+    void key_event(int device_flags, long keycode);
     void apple_keyboard_translation(int device_flags, long keycode);
-
-    KeySym event(const uint16_t keyboardFlags, const uint16_t keyCode);
+    KeySym get_key(const uint16_t keyboardFlags, const uint16_t keyCode);
 
     // Push only sym
     void push_sym(KeySym sym);

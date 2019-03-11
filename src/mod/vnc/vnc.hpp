@@ -922,7 +922,7 @@ public:
 
         IF_ENABLE_METRICS(key_pressed());
 
-        keymapSym.vnc_event(device_flags, keycode);
+        keymapSym.event(device_flags, keycode);
 
         uint8_t downflag = 0;
         int key = this->keymapSym.get_sym(downflag);
