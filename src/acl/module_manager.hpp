@@ -104,6 +104,45 @@ inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Tr
     );
 }
 
+class EndSessionWarning
+{
+    static constexpr std::array<unsigned, 4> timers{{ 30*60, 10*60, 5*60, 1*60 }};
+
+    const unsigned OSD_STATE_INVALID = timers.size();
+    const unsigned OSD_STATE_NOT_YET_COMPUTED = OSD_STATE_INVALID + 1;
+
+    unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
+
+public:
+    void initialize() {
+        this->osd_state = OSD_STATE_NOT_YET_COMPUTED;
+    }
+
+    void update_osd_state(std::string& out_msg, Translation::language_t lang, time_t start_time, time_t end_time, time_t now) {
+        out_msg.clear();
+
+        if (this->osd_state == OSD_STATE_NOT_YET_COMPUTED) {
+            this->osd_state = (
+                      (end_time <= now)
+                    ? OSD_STATE_INVALID
+                    : timers.size() - (std::lower_bound(timers.rbegin(), timers.rend(), end_time - start_time) - timers.rbegin())
+                );
+        }
+        else if (this->osd_state < OSD_STATE_INVALID
+              && end_time - now <= timers[this->osd_state]) {
+            out_msg.reserve(128);
+            const unsigned minutes = (end_time - now + 30) / 60;
+            out_msg += std::to_string(minutes);
+            out_msg += ' ';
+            out_msg += TR(trkeys::minute, lang);
+            out_msg += (minutes > 1) ? "s " : " ";
+            out_msg += TR(trkeys::before_closing, lang);
+
+            ++this->osd_state;
+        }
+    }
+};
+
 class ModuleManager : public MMIni
 {
     class ModOSD : public gdi::ProtectedGraphics, public mod_api
@@ -441,6 +480,8 @@ private:
     windowing_api* winapi = nullptr;
 
     SocketTransport * socket_transport = nullptr;
+
+    EndSessionWarning end_session_warning;
 
 public:
     ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
@@ -937,6 +978,14 @@ public:
 
     rdp_api* get_rdp_api() const override {
         return this->rdpapi;
+    }
+
+    void update_end_session_warning(time_t start_time, time_t end_time, time_t now) {
+        std::string mes;
+        this->end_session_warning.update_osd_state(mes, language(this->ini), start_time, end_time, now);
+        if (!mes.empty()) {
+            this->osd_message(std::move(mes), true);
+        }
     }
 
 private:

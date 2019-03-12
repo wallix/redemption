@@ -112,10 +112,6 @@ public:
 
             bool run_session = true;
 
-            constexpr std::array<unsigned, 4> timers{{ 30*60, 10*60, 5*60, 1*60, }};
-            const unsigned OSD_STATE_INVALID = timers.size();
-            const unsigned OSD_STATE_NOT_YET_COMPUTED = OSD_STATE_INVALID + 1;
-            unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
             const bool enable_osd = this->ini.get<cfg::globals::enable_osd>();
 
 
@@ -381,28 +377,7 @@ public:
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mm.is_up_and_running()) {
-                                if (osd_state == OSD_STATE_NOT_YET_COMPUTED) {
-                                    osd_state = (enddate <= static_cast<uint32_t>(now))
-                                        ? OSD_STATE_INVALID
-                                        : timers.rbegin()
-                                            - std::lower_bound(
-                                                timers.rbegin(),
-                                                timers.rend(),
-                                                enddate - start_time);
-                                }
-                                else if (osd_state < OSD_STATE_INVALID
-                                     && enddate - now <= timers[osd_state]) {
-                                    const unsigned minutes = (enddate - now + 30) / 60;
-                                    std::string mes = str_concat(
-                                        std::to_string(minutes),
-                                        ' ',
-                                        TR(trkeys::minute, language(this->ini)),
-                                        (minutes > 1) ? "s " : " ",
-                                        TR(trkeys::before_closing, language(this->ini))
-                                    );
-                                    mm.osd_message(std::move(mes), true);
-                                    ++osd_state;
-                                }
+                                mm.update_end_session_warning(start_time, static_cast<time_t>(enddate), now);
                             }
                         }
 
