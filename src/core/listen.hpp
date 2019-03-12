@@ -37,6 +37,7 @@
 #include "utils/select.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/timeval_ops.hpp"
 #include "cxx/diagnostic.hpp"
 
 #include <chrono>
@@ -167,45 +168,85 @@ struct ServerLoopIgnoreTimeout
     }
 };
 
-template<class CbNewConn, class CbTimeout = ServerLoopIgnoreTimeout>
-int unique_server_loop(
-    unique_fd sck, std::chrono::seconds timeout_sec,
-    CbNewConn&& cb_new_conn, CbTimeout&& cb_timeout = CbTimeout{})
+inline bool is_no_error_server_loop() noexcept
+{
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wlogical-op")
+    if (errno == EAGAIN
+     || errno == EWOULDBLOCK
+     || errno == EINPROGRESS
+     || errno == EINTR
+    ) {
+        return true; /* these are not really errors */
+    }
+    REDEMPTION_DIAGNOSTIC_POP
+    return false;
+}
+
+template<class CbNewConn>
+int unique_server_loop(unique_fd sck, CbNewConn&& cb_new_conn)
 {
     SCOPE_EXIT(if (sck) shutdown(sck.fd(), SHUT_RDWR));
 
     fd_set rfds;
     io_fd_zero(rfds);
+    const int max = sck.fd() + 1;
+
     for (;;) {
         io_fd_set(sck.fd(), rfds);
-        struct timeval timeout;
-        timeout.tv_sec = timeout_sec.count();
-        timeout.tv_usec = 0;
+        timeval timeout{std::chrono::minutes(10).count(), 0};
 
-        int const r = select(sck.fd() + 1, &rfds, nullptr, nullptr, &timeout);
+        int const r = select(max, &rfds, nullptr, nullptr, &timeout);
 
         if (r < 0) {
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wlogical-op")
-            if (errno == EAGAIN
-             || errno == EWOULDBLOCK
-             || errno == EINPROGRESS
-             || errno == EINTR
-            ) {
-                continue; /* these are not really errors */
+            if (is_no_error_server_loop()) {
+                continue;
             }
-            REDEMPTION_DIAGNOSTIC_POP
             LOG(LOG_ERR, "socket error detected in listen (%s)\n", strerror(errno));
             return -1;
         }
 
-        if (r == 0) {
-            if (!cb_timeout(sck.fd())) {
-                return 0;
-            }
+        if (r && !cb_new_conn(sck.fd())) {
+            return 0;
         }
-        else {
-            if (!cb_new_conn(sck.fd())) {
+    }
+}
+
+
+template<class CbNewConn>
+int two_server_loop(unique_fd sck1, unique_fd sck2, CbNewConn&& cb_new_conn)
+{
+    SCOPE_EXIT(if (sck1) shutdown(sck1.fd(), SHUT_RDWR));
+    SCOPE_EXIT(if (sck2) shutdown(sck2.fd(), SHUT_RDWR));
+
+    fd_set rfds;
+    io_fd_zero(rfds);
+    const int max = std::max(sck1.fd(), sck2.fd()) + 1;
+
+    for (;;) {
+        io_fd_set(sck1.fd(), rfds);
+        io_fd_set(sck2.fd(), rfds);
+        timeval timeout{std::chrono::minutes(10).count(), 0};
+
+        int const r = select(max, &rfds, nullptr, nullptr, &timeout);
+
+        if (r < 0) {
+            if (is_no_error_server_loop()) {
+                continue;
+            }
+            LOG(LOG_ERR, "socket error detected in listen (%s)\n", strerror(errno));
+            return -1;
+        }
+
+        if (r) {
+            bool stopped = false;
+            if (io_fd_isset(sck1.fd(), rfds) && !cb_new_conn(sck1.fd())) {
+                stopped = true;
+            }
+            if (io_fd_isset(sck2.fd(), rfds) && !cb_new_conn(sck2.fd())) {
+                stopped = true;
+            }
+            if (stopped) {
                 return 0;
             }
         }

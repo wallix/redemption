@@ -115,6 +115,7 @@ exe rdpproxy :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
+  <library>src/core/session.o
   <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2295,6 +2296,7 @@ test-run tests/core/test_mainloop :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
+  <library>src/core/session.o
   <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2421,6 +2423,7 @@ test-run tests/core/test_session :
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/core/session.o
   <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2504,8 +2507,8 @@ test-run tests/core/test_session :
   <library>src/utils/utf.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/core/session.cpp
   <covfile>src/core/session.hpp
-  <define>ZLIB_CONST
 ;
 test-run tests/core/test_session_reactor :
   $(REDEMPTION_TEST_PATH)/core/test_session_reactor.cpp
@@ -5167,7 +5170,8 @@ obj src/core/check_files.o : $(REDEMPTION_SRC_PATH)/core/check_files.cpp ;
 obj src/core/date_dir_from_filename.o : $(REDEMPTION_SRC_PATH)/core/date_dir_from_filename.cpp ;
 obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
-obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp : <define>ZLIB_CONST ;
+obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
+obj src/core/session.o : $(REDEMPTION_SRC_PATH)/core/session.cpp : <define>ZLIB_CONST ;
 obj src/core/set_server_redirection_target.o : $(REDEMPTION_SRC_PATH)/core/set_server_redirection_target.cpp ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;

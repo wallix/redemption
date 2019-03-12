@@ -20,10 +20,13 @@
   Main loop
 */
 
-#include "core/mainloop.hpp"
-#include "utils/log.hpp"
 #include "core/listen.hpp"
+#include "core/mainloop.hpp"
 #include "core/session.hpp"
+#include "main/version.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/log.hpp"
+#include "utils/log_siem.hpp"
 #include "utils/netutils.hpp"
 #include "utils/strutils.hpp"
 
@@ -39,6 +42,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 
 
 namespace {
@@ -227,7 +231,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
     int nodelay = 1;
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))){
-        Session session(unique_fd{sck}, ini, cctx, rnd, fstat);
+        session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
 
         if (ini.get<cfg::debug::session>()){
             LOG(LOG_INFO, "Session::end of Session(%d)", sck);
@@ -240,9 +244,16 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
 namespace
 {
+    enum SocketType : bool
+    {
+        Ws,
+        Tls,
+    };
+
     void session_server_start(
         int incoming_sck, CryptoContext& cctx, Random& rnd, Fstat& fstat, bool forkable,
-        unsigned uid, unsigned gid, std::string const& config_filename, bool debug_config)
+        unsigned uid, unsigned gid, std::string const& config_filename, bool debug_config,
+        SocketType socket_type)
     {
         union
         {
@@ -387,7 +398,14 @@ namespace
                     && 0 != strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                     ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                 }
-                Session session(unique_fd{sck}, ini, cctx, rnd, fstat);
+
+                switch (socket_type) {
+                    case SocketType::Ws:
+                        session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        [[fallthrough]];
+                    case SocketType::Tls:
+                        session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
+                }
 
                 // Suppress session file
                 unlink(session_file);
@@ -427,12 +445,31 @@ void redemption_main_loop(
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     REDEMPTION_DIAGNOSTIC_POP
 
-    unique_fd sck = create_server(s_addr, ini.get<cfg::globals::port>(),
-        EnableTransparentMode(ini.get<cfg::globals::enable_transparent_mode>()));
-
     const bool debug_config = (ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
-    unique_server_loop(std::move(sck), std::chrono::minutes(1), [&](int sck){
-        session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config);
-        return true;
-    });
+    const EnableTransparentMode enable_transparent_mode
+      = EnableTransparentMode(ini.get<cfg::globals::enable_transparent_mode>());
+
+    unique_fd sck1 = create_server(s_addr, ini.get<cfg::globals::port>(), enable_transparent_mode);
+
+    if (ini.get<cfg::globals::enable_websocket>())
+    {
+        unique_fd sck2 = create_server(
+            s_addr, ini.get<cfg::globals::websocket_port>(), enable_transparent_mode);
+        const auto ws_sck = sck2.fd();
+        two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)
+        {
+            auto const socket_type = (ws_sck == sck) ? SocketType::Ws : SocketType::Tls;
+            LOG(LOG_DEBUG, "%d %d", socket_type, sck);
+            session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, socket_type);
+            return true;
+        });
+    }
+    else
+    {
+        unique_server_loop(std::move(sck1), [&](int sck)
+        {
+            session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, SocketType::Tls);
+            return true;
+        });
+    }
 }

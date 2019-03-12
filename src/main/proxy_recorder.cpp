@@ -774,7 +774,7 @@ int main(int argc, char *argv[])
     if (!sck) {
         return 2;
     }
-    return unique_server_loop(std::move(sck), std::chrono::minutes(1), [&](int sck){
+    return unique_server_loop(std::move(sck), [&](int sck){
         return front.start(sck);
     });
 }
