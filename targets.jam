@@ -3843,13 +3843,6 @@ test-run tests/transport/test_transport :
 :
   <covfile>src/transport/transport.hpp
 ;
-test-run tests/utils/crypto/test_cryptcontext :
-  $(REDEMPTION_TEST_PATH)/utils/crypto/test_cryptcontext.cpp
-:
-  <covfile>src/utils/crypto/cryptcontext.hpp
-  <library>crypto
-  <library>src/utils/hexdump.o
-;
 test-run tests/utils/crypto/test_ssl_aes_direct :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_aes_direct.cpp
 :
@@ -4892,8 +4885,6 @@ alias test_socket_transport.coverage : tests/transport/test_socket_transport.cov
 alias test_test_transport : tests/transport/test_test_transport ;
 alias test_transport : tests/transport/test_transport ;
 alias test_transport.coverage : tests/transport/test_transport.coverage ;
-alias test_cryptcontext : tests/utils/crypto/test_cryptcontext ;
-alias test_cryptcontext.coverage : tests/utils/crypto/test_cryptcontext.coverage ;
 alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
 alias test_ssl_aes_direct.coverage : tests/utils/crypto/test_ssl_aes_direct.coverage ;
 alias test_ssl_lib : tests/utils/crypto/test_ssl_lib ;
@@ -5422,7 +5413,6 @@ alias tests/transport :
 ;
 explicit tests/utils/crypto ;
 alias tests/utils/crypto :
-  tests/utils/crypto/test_cryptcontext
   tests/utils/crypto/test_ssl_aes_direct
   tests/utils/crypto/test_ssl_lib
   tests/utils/crypto/test_ssl_md4_direct
