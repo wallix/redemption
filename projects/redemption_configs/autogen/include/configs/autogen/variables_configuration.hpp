@@ -255,6 +255,31 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_AUTHFILE;
     };
+    /// Enable only ws protocol. Wss isn't supported <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct globals::enable_websocket {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "globals";
+        static constexpr char const * name = "enable_websocket";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// type: unsigned int <br/>
+    /// value{3390} <br/>
+    struct globals::websocket_port {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "globals";
+        static constexpr char const * name = "websocket_port";
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{3390};
+    };
     /// Time out during RDP handshake stage. <br/>
     /// type: std::chrono::seconds <br/>
     /// value{10} <br/>
@@ -4605,11 +4630,13 @@ struct globals
 , cfg::globals::codec_id
 , cfg::globals::rdp_keepalive_connection_interval
 , cfg::globals::port
+, cfg::globals::websocket_port
 , cfg::globals::capture_chunk
 , cfg::globals::glyph_cache
 , cfg::globals::nomouse
 , cfg::globals::notimestamp
 , cfg::globals::encryptionLevel
+, cfg::globals::enable_websocket
 , cfg::globals::trace_type
 , cfg::globals::listen_address
 , cfg::globals::enable_transparent_mode

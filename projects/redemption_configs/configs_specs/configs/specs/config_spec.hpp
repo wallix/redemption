@@ -128,6 +128,9 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "encryptionLevel", set(Level::low));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
 
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_websocket", set(false), desc{"Enable only ws protocol. Wss isn't supported"});
+        W.member(hidden_in_gui, no_sesman, L, type_<unsigned>(), "websocket_port", set(3390));
+
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));
         W.member(hidden_in_gui, rdp_connpolicy, connpolicy::section{"session"}, L, type_<std::chrono::seconds>(), "inactivity_timeout", desc{"No traffic auto disconnection.\nIf value is 0, global value (session_timeout) is used."}, set(0));

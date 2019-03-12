@@ -55,6 +55,22 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "enable_websocket")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::enable_websocket&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "websocket_port")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::websocket_port&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "handshake_timeout")) {
             ::configs::parse_and_log(
                 context, key,

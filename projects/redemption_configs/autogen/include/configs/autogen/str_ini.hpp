@@ -26,6 +26,15 @@
 "#_advanced\n"
 "#authfile = " << (REDEMPTION_CONFIG_AUTHFILE) << "\n\n"
 
+"# Enable only ws protocol. Wss isn't supported\n"
+"# value: 0 or 1\n"
+"#_hidden\n"
+"#enable_websocket = 0\n\n"
+
+"# min = 0\n"
+"#_hidden\n"
+"#websocket_port = 3390\n\n"
+
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"
 "#handshake_timeout = 10\n\n"
