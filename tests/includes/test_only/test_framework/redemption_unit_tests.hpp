@@ -358,21 +358,18 @@ namespace redemption_unit_test__
 
 #endif
 
-#define RED_TEST_DELEGATE_PRINT(type, stream_expr)     \
-  template<>                                           \
-  struct RED_TEST_PRINT_TYPE_STRUCT_NAME<type>         \
-  {                                                    \
-    void operator()(std::ostream& out, type const & x) \
-    {                                                  \
-      out<<stream_expr;                                \
-    }                                                  \
+#define RED_TEST_DELEGATE_PRINT(type, stream_expr)             \
+  template<>                                                   \
+  struct RED_TEST_PRINT_TYPE_STRUCT_NAME< ::type>              \
+  {                                                            \
+    void operator()(std::ostream& out, ::type const & x) const \
+    {                                                          \
+      out << stream_expr;                                      \
+    }                                                          \
   };
 
-#define RED_TEST_DELEGATE_PRINT_NS(type, stream_expr) \
-  RED_TEST_DELEGATE_PRINT(::type, stream_expr)
-
-#define RED_TEST_DELEGATE_PRINT_ENUM_NS(type)                        \
-  RED_TEST_DELEGATE_PRINT(::type,                                    \
+#define RED_TEST_DELEGATE_PRINT_ENUM(type) \
+  RED_TEST_DELEGATE_PRINT(type,            \
     #type << "{" << +::std::underlying_type_t<::type>(x) << "}")
 
 
