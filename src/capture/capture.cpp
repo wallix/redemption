@@ -818,7 +818,7 @@ public:
         return interval - duration % interval;
     }
 
-    virtual void visibility_rects_event(Rect const & rect_) {
+    void visibility_rects_event(Rect const & rect_) override {
         if (!rect_.isempty()) {
             Rect rect = rect_.expand(16).intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
@@ -1923,7 +1923,7 @@ Capture::Microseconds Capture::periodic_snapshot(
     return time;
 }
 
-void Capture::draw_impl(const RDP::RAIL::NonMonitoredDesktop & cmd) {
+void Capture::draw_impl(const RDP::RAIL::NonMonitoredDesktop &/* cmd*/) {
     if (this->capture_drawable) {
         for (gdi::CaptureApi & cap : this->caps) {
             cap.visibility_rects_event(Rect(0, 0, this->gd_drawable->width(), this->gd_drawable->height()));

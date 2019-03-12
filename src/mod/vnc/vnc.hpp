@@ -214,7 +214,7 @@ private:
 
 public:
 
-    virtual Metrics * get_metrics() {
+    Metrics * get_metrics() override {
         return (this->metrics)?this->metrics->get_metrics():nullptr;
     }
 
@@ -267,9 +267,9 @@ public:
     , remove_server_alt_state_for_char(remove_server_alt_state_for_char)
     , keylayout(keylayout)
     , client_execute(client_execute)
+	, metrics(metrics)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
-	, metrics(metrics)
     {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -1026,10 +1026,10 @@ public:
         int key = this->keymapSym.get_sym();
         while (key){
             if (bool(this->verbose & VNCVerbose::keymap_stack)) {
-                LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u", key, key, keycode, downflag);
+                LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u", key, unsigned(key), unsigned(keycode), downflag);
             }
-            if (this->remove_server_alt_state_for_char 
-            && this->keymapSym.is_altgr_pressed() 
+            if (this->remove_server_alt_state_for_char
+            && this->keymapSym.is_altgr_pressed()
             && (key == 0x65))
             {
                 this->remove_modifiers();
@@ -1043,8 +1043,8 @@ public:
                 }
                 this->putback_modifiers();
             }
-            if (!this->remove_server_alt_state_for_char 
-            && this->keymapSym.is_altgr_pressed() 
+            if (!this->remove_server_alt_state_for_char
+            && this->keymapSym.is_altgr_pressed()
             && (key == 0x65))
             {
                 if (downflag == 1){
@@ -1065,7 +1065,7 @@ public:
                 }
             }
             else
-            if (this->keymapSym.is_altgr_pressed() 
+            if (this->keymapSym.is_altgr_pressed()
             // this is plain ascii: trust our decoder
             && (key >= 0x20 && key <= 0x7e)){
                 this->remove_modifiers();
@@ -1093,7 +1093,7 @@ public:
         this->event.set_trigger_time(1000);
     }
 
-    // TODO: this should use the same method to take care of modifiers that 
+    // TODO: this should use the same method to take care of modifiers that
     // the non apple targets are using. We need to set an apple target to
     // check behavior
     void apple_keyboard_translation(int device_flags, long keycode, uint8_t downflag) {
@@ -1198,7 +1198,7 @@ public:
             // Note: specialize and treat special case if need arise.
             // (like french keyboard above)
             // -----------------------------------------------------------------
-            
+
 //            case 0x100c: // French Swizerland
 //            case 0x0813: // Dutch Belgium
 //            case 0x080c: // French Belgium

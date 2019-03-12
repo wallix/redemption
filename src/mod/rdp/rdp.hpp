@@ -936,7 +936,7 @@ public:
     GCC::UserData::SCSecurity sc_sec1;
     GCC::UserData::CSSecurity cs_security;
 
-    virtual Metrics * get_metrics() {
+    Metrics * get_metrics() override {
         return (this->metrics)?this->metrics->get_metrics():nullptr;
     }
 
@@ -2793,7 +2793,7 @@ public:
                         if (!this->remote_program && channel_item.name == channel_names::rail) {
                             ::snprintf(cs_net.channelDefArray[index].name,
                                        sizeof(cs_net.channelDefArray[index].name),
-                                       "null_%02d",
+                                       "null_%02zu",
                                        index);
                         }
                         else if (this->authorization_channels.is_authorized(channel_item.name) ||
@@ -2811,7 +2811,7 @@ public:
                         else {
                             ::snprintf(cs_net.channelDefArray[index].name,
                                        sizeof(cs_net.channelDefArray[index].name),
-                                       "null_%02d",
+                                       "null_%02zu",
                                        index);
                         }
                         cs_net.channelDefArray[index].options = channel_item.flags;
