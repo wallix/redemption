@@ -484,12 +484,12 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
             }
             return KeySym(0, downflag);
 
-            //--------------------------------------------------------
-            // KEYPAD : Keypad keys whose meaning depends on Numlock
-            //          are handled apart by the code below
-            //          47 48 49 4B 4C 4D 4F 50 51 52 53
-            //--------------------------------------------------------
-            /* KP_4 or KEYPAD LEFT ARROW */
+    //--------------------------------------------------------
+    // KEYPAD : Keypad keys whose meaning depends on Numlock
+    //          are handled apart by the code below
+    //          47 48 49 4B 4C 4D 4F 50 51 52 53
+    //--------------------------------------------------------
+        /* KP_4 or KEYPAD LEFT ARROW */
         case 0x4b: return KeySym((this->key_flags & NUMLOCK)?KS_KP_4:KS_Left, downflag);
         /* KP_8 or kEYPAD UP ARROW */
         case 0x48: return KeySym((this->key_flags & NUMLOCK)?KS_KP_8:KS_Up, downflag);
@@ -722,8 +722,6 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
             return KeySym(ksym, downflag);
         } // END if KEYPAD specific / else
     } // END SWITCH : ExtendedKeyCode
-    // Should never happen
-    return KeySym(0, 0);
 } // END FUNCT : get_key
 
 
