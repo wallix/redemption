@@ -162,9 +162,9 @@ inline namespace flags_operators
     operator^(E lhs, E rhs) noexcept { return flags_t<E>(lhs) ^ rhs; }
 } // namespace flags_operators
 
-}
+} // namespace utils
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
-using namespace utils::flags_operators;
+using namespace utils::flags_operators; /*NOLINT*/
 REDEMPTION_DIAGNOSTIC_POP

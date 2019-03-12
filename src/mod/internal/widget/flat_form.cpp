@@ -271,8 +271,7 @@ namespace
         }
         return res;
     }
-
-}
+} // anonymous namespace
 
 void FlatForm::check_confirmation()
 {

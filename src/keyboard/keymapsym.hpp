@@ -200,7 +200,7 @@ enum KS_Symbols {
 //    App                              65373     0xff5d
     KS_App                              =     0xff5d,
     KS_Win_L = 0xffeb, // Actually Super_L, Win_L is 0xff5b but doesn' t work with VNC
-    KS_Win_R = 0xffec, // Actually Super_R, Win_L is 0xff5c but doesn' t work with VNC 
+    KS_Win_R = 0xffec, // Actually Super_R, Win_L is 0xff5c but doesn' t work with VNC
 
 //    Hyper_L                          65517     0xffed
     KS_Hyper_L                          =     0xffed,
@@ -1055,15 +1055,15 @@ struct KeymapSym
 
     struct KeySym
     {
-        KeySym() : sym(0), down(0) {}
+        KeySym() = default;
 
-        KeySym(uint32_t sym, uint8_t down) 
-            : sym(sym)
-            , down(down)
-        {
-        }
-        uint32_t sym;
-        uint8_t down;
+        KeySym(uint32_t sym, uint8_t down) noexcept
+        : sym(sym)
+        , down(down)
+        {}
+
+        uint32_t sym = 0;
+        uint8_t down = 0;
     };
 
     uint32_t ibuf_sym; // first free position
@@ -1083,10 +1083,11 @@ struct KeymapSym
     int keylayout;
     bool is_unix;
     bool is_apple;
+    // TODO should be a Verbose enum class
     uint32_t verbose;
     int last_sym;
 
-    typedef int KeyLayout_t[128];
+    using KeyLayout_t = int[128];
 
     // keylayout working tables (X11 mode : begins in 8e position.)
     KeyLayout_t keylayout_WORK_noshift_sym;

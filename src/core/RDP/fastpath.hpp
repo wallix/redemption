@@ -216,7 +216,7 @@ namespace FastPath {
         , dataSignature{}
         , decrypted_payload([&stream, &decrypt, this](){
             // TODO RZ: Should we treat fipsInformation ?
-            
+
             std::unique_ptr<uint8_t[]> clear_payload = nullptr;
             if ( 0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED)) {
                 size_t remaining_len = stream.in_remain();
@@ -230,7 +230,7 @@ namespace FastPath {
                        , expected, remaining_len);
                     throw Error(ERR_RDP_FASTPATH);
                 }
-                clear_payload.reset(new uint8_t[stream.in_remain()]);
+                clear_payload.reset(new uint8_t[stream.in_remain()]); /*NOLINT*/
                 stream.in_copy_bytes(this->dataSignature, 8);
                 decrypt.decrypt(stream.get_current(), stream.in_remain(), clear_payload.get());
             }

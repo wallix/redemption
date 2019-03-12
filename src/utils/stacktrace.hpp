@@ -62,7 +62,7 @@ namespace red
         }
         // std::cerr << boost::stacktrace::stacktrace() << std::flush;
     }
-} // namespace
+} // namespace red
 #else
 namespace red
 {

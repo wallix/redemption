@@ -44,7 +44,7 @@ KeymapSym::KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, 
     memset(&this->keylayout_WORK_shiftcapslock_sym, 0, 128 * sizeof(int));
 
     this->last_sym = 0;
-    
+
     if (is_apple) {
         this->init_layout_sym(0x0409);
     } else {
@@ -111,32 +111,26 @@ const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
     // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
     if ((this->is_ctrl_pressed() && this->is_left_alt_pressed())
     || (this->is_right_alt_pressed())) {
-        if (this->verbose & 2) {
-            LOG(LOG_INFO, "Altgr Layout");
-        }
+        LOG_IF(this->verbose & 2, LOG_INFO, "Altgr Layout");
         return &this->keylayout_WORK_altgr_sym;
     }
+
     if (this->is_shift_pressed() && this->is_caps_locked()){
-        if (this->verbose & 2) {
-            LOG(LOG_INFO, "Shift Capslock Layout");
-        }
+        LOG_IF(this->verbose & 2, LOG_INFO, "Shift Capslock Layout");
         return &this->keylayout_WORK_shiftcapslock_sym;
     }
+
     if (this->is_shift_pressed()){
-        if (this->verbose & 2) {
-            LOG(LOG_INFO, "Shift Layout");
-        }
+        LOG_IF(this->verbose & 2, LOG_INFO, "Shift Layout");
         return &this->keylayout_WORK_shift_sym;
     }
+
     if (this->is_caps_locked()) {
-        if (this->verbose & 2) {
-            LOG(LOG_INFO, "Capslock Layout");
-        }
+        LOG_IF(this->verbose & 2, LOG_INFO, "Capslock Layout");
         return &this->keylayout_WORK_capslock_sym;
     }
-    if (this->verbose & 2) {
-        LOG(LOG_INFO, "Plain Layout");
-    }
+
+    LOG_IF(this->verbose & 2, LOG_INFO, "Plain Layout");
     return &this->keylayout_WORK_noshift_sym;
 }
 
@@ -173,19 +167,17 @@ const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
 
 void KeymapSym::event(int device_flags, long keycode)
 {
-     if (this->verbose & 2)
-     {
-        LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x (%s%s), keycode=%04x flags=%04x (%s %s %s %s %s %s %s))",
-            static_cast<unsigned>(device_flags), (device_flags & KBDFLAGS_RELEASE)?"UP":"DOWN",(device_flags & KBDFLAGS_EXTENDED)?" EXT":"",
-            static_cast<unsigned>(keycode), static_cast<unsigned>(this->key_flags),
-            (this->key_flags & SCROLLLOCK)?"SCR ":"",
-            (this->key_flags & NUMLOCK)?"NUM ":"",
-            (this->key_flags & CAPSLOCK)?"CAPS ":"",
-            (this->key_flags & FLG_SHIFT)?"SHIFT ":"",
-            (this->key_flags & FLG_ALT)?"ALT ":"",
-            (this->key_flags & FLG_WINDOWS)?"WIN ":"",
-            (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
-     }
+     LOG_IF(this->verbose & 2, LOG_INFO,
+        "KeymapSym::event(keyboardFlags=%04x (%s%s), keycode=%04x flags=%04x (%s %s %s %s %s %s %s))",
+        static_cast<unsigned>(device_flags), (device_flags & KBDFLAGS_RELEASE)?"UP":"DOWN",(device_flags & KBDFLAGS_EXTENDED)?" EXT":"",
+        static_cast<unsigned>(keycode), static_cast<unsigned>(this->key_flags),
+        (this->key_flags & SCROLLLOCK)?"SCR ":"",
+        (this->key_flags & NUMLOCK)?"NUM ":"",
+        (this->key_flags & CAPSLOCK)?"CAPS ":"",
+        (this->key_flags & FLG_SHIFT)?"SHIFT ":"",
+        (this->key_flags & FLG_ALT)?"ALT ":"",
+        (this->key_flags & FLG_WINDOWS)?"WIN ":"",
+        (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
 
     if (this->is_apple) {
         this->apple_keyboard_translation(device_flags, keycode);
@@ -256,9 +248,9 @@ void KeymapSym::key_event(int device_flags, long keycode) {
     KeySym ks = this->get_key(device_flags, keycode);
     int key = ks.sym;
     uint8_t downflag = ks.down;
-    
-    if (this->is_unix 
-    && this->is_altgr_pressed() 
+
+    if (this->is_unix
+    && this->is_altgr_pressed()
     && (key == 0x65))
     {
         this->remove_modifiers();
@@ -270,8 +262,8 @@ void KeymapSym::key_event(int device_flags, long keycode) {
         }
         this->putback_modifiers();
     }
-    else if (!this->is_unix 
-    && this->is_altgr_pressed() 
+    else if (!this->is_unix
+    && this->is_altgr_pressed()
     && (key == 0x65))
     {
         if (downflag == 1){
@@ -291,7 +283,7 @@ void KeymapSym::key_event(int device_flags, long keycode) {
         }
     }
     else
-    if (this->is_altgr_pressed() 
+    if (this->is_altgr_pressed()
     // this is plain ascii: trust our decoder
     && (key >= 0x20 && key <= 0x7e)){
         this->remove_modifiers();
@@ -306,7 +298,7 @@ void KeymapSym::key_event(int device_flags, long keycode) {
 void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
 
     uint8_t downflag = !(device_flags & KBDFLAGS_RELEASE);
-    
+
     switch (this->keylayout) {
 
         case 0x040c:                                    // French
@@ -407,7 +399,7 @@ void KeymapSym::apple_keyboard_translation(int device_flags, long keycode) {
         // Note: specialize and treat special case if need arise.
         // (like french keyboard above)
         // -----------------------------------------------------------------
-        
+
 //            case 0x100c: // French Swizerland
 //            case 0x0813: // Dutch Belgium
 //            case 0x080c: // French Belgium
@@ -453,7 +445,7 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
 
     // TODO: see how it interacts with autorepeat
     // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
-    
+
     if (keyboardFlags & KBDFLAGS_RELEASE){ // up or down and released
        // Down and key released
        this->keys_down[extendedKeyCode] = 0; // up
@@ -491,42 +483,32 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
                 this->key_flags ^= SCROLLLOCK;
             }
             return KeySym(0, downflag);
- 
+
             //--------------------------------------------------------
-            // KEYPAD : Keypad keys whose meaning depends on Numlock 
+            // KEYPAD : Keypad keys whose meaning depends on Numlock
             //          are handled apart by the code below
             //          47 48 49 4B 4C 4D 4F 50 51 52 53
             //--------------------------------------------------------
             /* KP_4 or KEYPAD LEFT ARROW */
-        case 0x4b:
-                return KeySym((this->key_flags & NUMLOCK)?KS_KP_4:KS_Left, downflag);
+        case 0x4b: return KeySym((this->key_flags & NUMLOCK)?KS_KP_4:KS_Left, downflag);
         /* KP_8 or kEYPAD UP ARROW */
-        case 0x48:
-            return KeySym((this->key_flags & NUMLOCK)?KS_KP_8:KS_Up, downflag);
+        case 0x48: return KeySym((this->key_flags & NUMLOCK)?KS_KP_8:KS_Up, downflag);
         /* KP_6 or KEYPAD RIGHT ARROW */
-        case 0x4d:
-            return KeySym((this->key_flags & NUMLOCK)?KS_KP_6:KS_Right, downflag);
+        case 0x4d: return KeySym((this->key_flags & NUMLOCK)?KS_KP_6:KS_Right, downflag);
         /* KP_2 or KEYPAD DOWN ARROW */
-        case 0x50:
-            return KeySym((this->key_flags & NUMLOCK)?KS_KP_2:KS_Down, downflag);
+        case 0x50: return KeySym((this->key_flags & NUMLOCK)?KS_KP_2:KS_Down, downflag);
         /* Kp_9 or KEYPAD PGUP */
-        case 0x49:
-            return KeySym((this->key_flags & NUMLOCK)?KS_KP_9:KS_Prior, downflag);
+        case 0x49: return KeySym((this->key_flags & NUMLOCK)?KS_KP_9:KS_Prior, downflag);
         /* KP_3 or kEYPAD PGDOWN */
-        case 0x51:
-            return KeySym((this->key_flags & NUMLOCK)?KS_KP_3:KS_Next, downflag);
+        case 0x51: return KeySym((this->key_flags & NUMLOCK)?KS_KP_3:KS_Next, downflag);
         /* KP_1 or KEYPAD END */
-        case 0x4F:
-            return KeySym((this->key_flags & NUMLOCK)?KS_KP_1:KS_End, downflag);
+        case 0x4F: return KeySym((this->key_flags & NUMLOCK)?KS_KP_1:KS_End, downflag);
         /* kEYPAD EMPTY 5 */
-        case 0x4c:
-            return KeySym((this->key_flags & NUMLOCK)?KS_KP_5:0, downflag);
+        case 0x4c: return KeySym((this->key_flags & NUMLOCK)?KS_KP_5:0, downflag);
         /* kEYPAD HOME */
-        case 0x47:
-            return KeySym((this->key_flags & NUMLOCK)?KS_KP_7:KS_Home, downflag);
+        case 0x47: return KeySym((this->key_flags & NUMLOCK)?KS_KP_7:KS_Home, downflag);
         /* KP_0 or kEYPAD INSER */
-        case 0x52:
-            return KeySym((this->key_flags & NUMLOCK)?'0':0xFF63, downflag);
+        case 0x52: return KeySym((this->key_flags & NUMLOCK)?'0':0xFF63, downflag);
 
     //----------------
     // All other keys
@@ -625,29 +607,23 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
                     uint32_t ksym = (*layout)[sym];
                     return KeySym(ksym, downflag);
                 }
-                else {
-                    return KeySym(0xFFFF, downflag);
-                }
-                break;
+                return KeySym(0xFFFF, downflag);
             }
 
-            if (this->verbose) {
-                LOG(LOG_INFO, "Use KEYLAYOUT WORK no shift");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "Use KEYLAYOUT WORK no shift");
 
             // Translate the scancode to a KeySym
             //----------------------------------------
             uint8_t sym = map[extendedKeyCode];
             uint32_t ksym = (*layout)[sym];
-//            if (this->verbose){
-                LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-//            }
-            if ((ksym == 0xFE52 ) // DEADKEYS 
-            || (ksym == 0xFE57) 
-            || (ksym == 0x60) 
+            LOG_IF(this->verbose, LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
+
+            if ((ksym == 0xFE52 ) // DEADKEYS
+            || (ksym == 0xFE57)
+            || (ksym == 0x60)
             || (ksym == 0x7E)) {
 
-                LOG(LOG_INFO, "deadkey=0x%X", ksym);
+                LOG_IF(this->verbose, LOG_INFO, "deadkey=0x%X", ksym);
 
                 //-------------------------------------------------
                 // ksym is NOT in Printable unicode character range
@@ -673,121 +649,78 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
             //-------------------------------------------------
             // ksym is in Printable character range.
             //-------------------------------------------------
-            if (this->dead_key != DEADKEY_NONE){
+            if (this->dead_key != DEADKEY_NONE) {
                 uint32_t current_dead_key = this->dead_key;
                 // if releasing next key after key: disable dead_key mode for following keys
                 if (this->keys_down[extendedKeyCode])
                 {
                     this->dead_key = DEADKEY_NONE;
                 }
-                switch (current_dead_key){
+                switch (current_dead_key) {
                     case DEADKEY_CIRC:
                         switch (ksym){
-                            case 'a':
-                                return KeySym(0xE2, downflag); // unicode for â (acirc)
-                            case 'A':
-                                return KeySym(0xC2, downflag); // unicode for Â (Acirc)
-                            case 'e':
-                                return KeySym(0xEA, downflag); // unicode for ê (ecirc)
-                            case 'E':
-                                return KeySym(0xCA, downflag); // unicode for Ê (Ecirc)
-                            case 'i':
-                                return KeySym(0xEE, downflag); // unicode for î (icirc)
-                            case 'I':
-                                return KeySym(0xCE, downflag); // unicode for Î (Icirc)
-                            case 'o':
-                                return KeySym(0xF4, downflag); // unicode for ô (ocirc)
-                            case 'O':
-                                return KeySym(0xD4, downflag); // unicode for Ô (Ocirc)
-                            case 'u':
-                                return KeySym(0xFB, downflag); // unicode for û (ucirc)
-                            case 'U':
-                                return KeySym(0xDB, downflag); // unicode for Û (Ucirc)
-                            case ' ':
-                                return KeySym(0x5E, downflag); // unicode for ^ (caret)
-                            default:
-                                return KeySym(ksym, downflag); // unmodified unicode
+                            case 'a': return KeySym(0xE2, downflag); // unicode for â (acirc)
+                            case 'A': return KeySym(0xC2, downflag); // unicode for Â (Acirc)
+                            case 'e': return KeySym(0xEA, downflag); // unicode for ê (ecirc)
+                            case 'E': return KeySym(0xCA, downflag); // unicode for Ê (Ecirc)
+                            case 'i': return KeySym(0xEE, downflag); // unicode for î (icirc)
+                            case 'I': return KeySym(0xCE, downflag); // unicode for Î (Icirc)
+                            case 'o': return KeySym(0xF4, downflag); // unicode for ô (ocirc)
+                            case 'O': return KeySym(0xD4, downflag); // unicode for Ô (Ocirc)
+                            case 'u': return KeySym(0xFB, downflag); // unicode for û (ucirc)
+                            case 'U': return KeySym(0xDB, downflag); // unicode for Û (Ucirc)
+                            case ' ': return KeySym(0x5E, downflag); // unicode for ^ (caret)
+                            default: return KeySym(ksym, downflag); // unmodified unicode
                         }
-                        break;
 
                     case DEADKEY_UML:
                         switch (ksym){
-                            case 'a':
-                                return KeySym(0xE4, downflag); // unicode for ä (auml)
-                            case 'A':
-                                return KeySym(0xC4, downflag); // unicode for Ä (Auml)
-                            case 'e':
-                                return KeySym(0xEB, downflag); // unicode for ë (euml)
-                            case 'E':
-                                return KeySym(0xCB, downflag); // unicode for Ë (Euml)
-                            case 'i':
-                                return KeySym(0xEF, downflag); // unicode for ï (iuml)
-                            case 'I':
-                                return KeySym(0xCF, downflag); // unicode for Ï (Iuml)
-                            case 'o':
-                                return KeySym(0xF6, downflag); // unicode for ö (ouml)
-                            case 'O':
-                                return KeySym(0xD6, downflag); // unicode for Ö (Ouml)
-                            case 'u':
-                                return KeySym(0xFC, downflag); // unicode for ü (uuml)
-                            case 'U':
-                                return KeySym(0xDC, downflag); // unicode for Ü (Uuml)
-                            case ' ':
-                                return KeySym(0xA8, downflag); // unicode for " (umlaut)
-                            default:
-                                return KeySym(ksym, downflag); // unmodified unicode
+                            case 'a': return KeySym(0xE4, downflag); // unicode for ä (auml)
+                            case 'A': return KeySym(0xC4, downflag); // unicode for Ä (Auml)
+                            case 'e': return KeySym(0xEB, downflag); // unicode for ë (euml)
+                            case 'E': return KeySym(0xCB, downflag); // unicode for Ë (Euml)
+                            case 'i': return KeySym(0xEF, downflag); // unicode for ï (iuml)
+                            case 'I': return KeySym(0xCF, downflag); // unicode for Ï (Iuml)
+                            case 'o': return KeySym(0xF6, downflag); // unicode for ö (ouml)
+                            case 'O': return KeySym(0xD6, downflag); // unicode for Ö (Ouml)
+                            case 'u': return KeySym(0xFC, downflag); // unicode for ü (uuml)
+                            case 'U': return KeySym(0xDC, downflag); // unicode for Ü (Uuml)
+                            case ' ': return KeySym(0xA8, downflag); // unicode for " (umlaut)
+                            default: return KeySym(ksym, downflag); // unmodified unicode
                         }
-                        break;
+
                     case DEADKEY_GRAVE:
                         switch (ksym){
-                            case 'a':
-                                return KeySym(0xE0, downflag); // unicode for à (agrave)
-                            case 'A':
-                                return KeySym(0xC0, downflag); // unicode for À (Agrave)
-                            case 'e':
-                                return KeySym(0xE8, downflag); // unicode for è (egrave)
-                            case 'E':
-                                return KeySym(0xC8, downflag); // unicode for È (Egrave)
-                            case 'i':
-                                return KeySym(0xEC, downflag); // unicode for ì (igrave)
-                            case 'I':
-                                return KeySym(0xCC, downflag); // unicode for Ì (Igrave)
-                            case 'o':
-                                return KeySym(0xF2, downflag); // unicode for ò (ograve)
-                            case 'O':
-                                return KeySym(0xD2, downflag); // unicode for Ò (Ograve)
-                            case 'u':
-                                return KeySym(0xF9, downflag); // unicode for ù (ugrave)
-                            case 'U':
-                                return KeySym(0xD9, downflag); // unicode for Ù (Ugrave)
-                            case ' ':
-                                return KeySym(0x60, downflag); // unicode for ` (backquote)
-                            default:
-                                return KeySym(ksym, downflag); // unmodified unicode
+                            case 'a': return KeySym(0xE0, downflag); // unicode for à (agrave)
+                            case 'A': return KeySym(0xC0, downflag); // unicode for À (Agrave)
+                            case 'e': return KeySym(0xE8, downflag); // unicode for è (egrave)
+                            case 'E': return KeySym(0xC8, downflag); // unicode for È (Egrave)
+                            case 'i': return KeySym(0xEC, downflag); // unicode for ì (igrave)
+                            case 'I': return KeySym(0xCC, downflag); // unicode for Ì (Igrave)
+                            case 'o': return KeySym(0xF2, downflag); // unicode for ò (ograve)
+                            case 'O': return KeySym(0xD2, downflag); // unicode for Ò (Ograve)
+                            case 'u': return KeySym(0xF9, downflag); // unicode for ù (ugrave)
+                            case 'U': return KeySym(0xD9, downflag); // unicode for Ù (Ugrave)
+                            case ' ': return KeySym(0x60, downflag); // unicode for ` (backquote)
+                            default: return KeySym(ksym, downflag); // unmodified unicode
                         }
-                        break;
+
                     case DEADKEY_TILDE:
                         switch (ksym){
-                            case 'n':
-                                return KeySym(0xF1, downflag); // unicode for ~n (ntilde)
-                            case 'N':
-                                return KeySym(0xD1, downflag); // unicode for ~N (Ntilde)
-                            case ' ':
-                                return KeySym(0x7E, downflag); // unicode for ~ (tilde)
-                            default:
-                                return KeySym(ksym, downflag); // unmodified unicode
+                            case 'n': return KeySym(0xF1, downflag); // unicode for ~n (ntilde)
+                            case 'N': return KeySym(0xD1, downflag); // unicode for ~N (Ntilde)
+                            case ' ': return KeySym(0x7E, downflag); // unicode for ~ (tilde)
+                            default: return KeySym(ksym, downflag); // unmodified unicode
                         }
-                        break;
+
                     default:
                         return KeySym(ksym, downflag); // unmodified unicode
                 } // Switch DEAD_KEY
             } // Is a dead Key
-            else {
-                // If previous key wasn't a dead key, simply return it
-                return KeySym(ksym, downflag);
-            }
+
+            // If previous key wasn't a dead key, simply return it
+            return KeySym(ksym, downflag);
         } // END if KEYPAD specific / else
-        break;
     } // END SWITCH : ExtendedKeyCode
     // Should never happen
     return KeySym(0, 0);
@@ -797,11 +730,14 @@ KeymapSym::KeySym KeymapSym::get_key(const uint16_t keyboardFlags, const uint16_
 // Push only sym
 void KeymapSym::push_sym(KeySym sym)
 {
-    if (this->verbose & 2){
-        LOG(LOG_INFO, "KeymapSym::push_sym(sym=%08x) nbuf_sym=%u", sym.sym, this->nbuf_sym);
+    LOG_IF(this->verbose & 2, LOG_INFO,
+        "KeymapSym::push_sym(sym=%08x) nbuf_sym=%u", sym.sym, this->nbuf_sym);
+
+    if (sym.sym == 0) {
+        return;
     }
-    if (sym.sym == 0) return;
-    if (this->nbuf_sym < SIZE_KEYBUF_SYM){
+
+    if (this->nbuf_sym < SIZE_KEYBUF_SYM) {
         this->buffer_sym[this->ibuf_sym] = sym;
         this->ibuf_sym++;
         if (this->ibuf_sym >= SIZE_KEYBUF_SYM){

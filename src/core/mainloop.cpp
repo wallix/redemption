@@ -242,7 +242,7 @@ namespace
 {
     void session_server_start(
         int incoming_sck, CryptoContext& cctx, Random& rnd, Fstat& fstat, bool forkable,
-        unsigned uid, unsigned gid, std::string config_filename, bool debug_config)
+        unsigned uid, unsigned gid, std::string const& config_filename, bool debug_config)
     {
         union
         {
@@ -411,7 +411,7 @@ namespace
             break;
         }
     }
-}
+} // anonymous namespace
 
 void redemption_main_loop(
     Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat,

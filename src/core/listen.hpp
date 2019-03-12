@@ -198,7 +198,8 @@ int unique_server_loop(
             LOG(LOG_ERR, "socket error detected in listen (%s)\n", strerror(errno));
             return -1;
         }
-        else if (r == 0) {
+
+        if (r == 0) {
             if (!cb_timeout(sck.fd())) {
                 return 0;
             }

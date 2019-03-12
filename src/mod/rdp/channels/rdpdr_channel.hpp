@@ -886,7 +886,7 @@ public:
         FileSystemDriveManager& file_system_drive_manager,
         FrontAPI& front,
         const bool channel_filter_on,
-        const std::string & channel_files_directory,
+        std::string channel_files_directory,
         const char * client_name,
         uint32_t random_number,
         const char * proxy_managed_drive_prefix,
@@ -921,7 +921,7 @@ public:
     , front(front)
     , session_reactor(session_reactor)
     , channel_filter_on(channel_filter_on)
-    , channel_files_directory(channel_files_directory)
+    , channel_files_directory(std::move(channel_files_directory))
     {}
 
     ~FileSystemVirtualChannel() override

@@ -293,6 +293,8 @@ namespace
     }
 } // anonymous namespace
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wsubobject-linkage")
 class Capture::PatternKbd final : public gdi::KbdInputApi
 {
     ReportMessageApi * report_message;
@@ -372,7 +374,7 @@ private:
         );
     }
 };
-
+REDEMPTION_DIAGNOSTIC_POP
 
 class Capture::SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 {
@@ -2086,20 +2088,6 @@ struct Capture::WindowRecord
     int32_t visible_offset_y;
 
     std::string title_info;
-
-    WindowRecord(
-        uint32_t window_id, uint32_t fields_present_flags,
-        uint32_t style, uint8_t show_state,
-        int32_t visible_offset_x, int32_t visible_offset_y,
-        std::string const& title_info) noexcept
-    : window_id(window_id)
-    , fields_present_flags(fields_present_flags)
-    , style(style)
-    , show_state(show_state)
-    , visible_offset_x(visible_offset_x)
-    , visible_offset_y(visible_offset_y)
-    , title_info(title_info)
-    {}
 };
 
 struct Capture::WindowVisibilityRectRecord
@@ -2256,14 +2244,16 @@ void Capture::draw(const RDP::RAIL::NewOrExistingWindow & cmd)
             }
         }
         else {
-            this->windows.emplace_back(window_id,
+            this->windows.emplace_back(WindowRecord{
+                window_id,
                 (fields_present_flags &
                  (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
                   RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
                   RDP::RAIL::WINDOW_ORDER_FIELD_TITLE |
                   RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)),
                 style, show_state, visible_offset_x, visible_offset_y,
-                title_info);
+                title_info
+            });
         }
     }
 

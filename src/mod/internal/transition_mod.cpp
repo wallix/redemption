@@ -52,8 +52,9 @@ TransitionMod::~TransitionMod()
     this->screen.clear();
 }
 
-void TransitionMod::rdp_input_scancode(long int, long int, long int,
-                                       long int, Keymap2* keymap)
+void TransitionMod::rdp_input_scancode(long int /*param1*/, long int /*param2*/,
+                                       long int /*param3*/, long int /*param4*/,
+                                       Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() > 0){
         switch (keymap->top_kevent()){

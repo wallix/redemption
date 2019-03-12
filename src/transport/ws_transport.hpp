@@ -40,6 +40,7 @@ public:
 protected:
     size_t do_partial_read(uint8_t * buffer, size_t len) override;
 
+    [[noreturn]]
     Read do_atomic_read(uint8_t * buffer, size_t len) override;
 
     void do_send(const uint8_t * const buffer, size_t len) override;

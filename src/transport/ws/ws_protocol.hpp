@@ -42,7 +42,7 @@ namespace WsHeader
         Ping = 0x9,
         Pong = 0xA,
     };
-}
+} // namespace WsHeader
 
 
 struct WsHttpHeader
@@ -115,15 +115,14 @@ struct WsHttpHeader
                 this->base64_key_rep.size());
             return std::invoke(static_cast<F&&>(f), http_header);
         }
-        else {
-            auto http_header =
-                "HTTP/1.1 101 Switching Protocols\r\n"
-                "Upgrade: websocket\r\n"
-                "Sec-WebSocket-Protocol: RDP\r\n"
-                "Connection: Upgrade\r\n"
-                "\r\n"_av;
-            return std::invoke(static_cast<F&&>(f), http_header);
-        }
+
+        auto http_header =
+            "HTTP/1.1 101 Switching Protocols\r\n"
+            "Upgrade: websocket\r\n"
+            "Sec-WebSocket-Protocol: RDP\r\n"
+            "Connection: Upgrade\r\n"
+            "\r\n"_av;
+        return std::invoke(static_cast<F&&>(f), http_header);
     }
 };
 

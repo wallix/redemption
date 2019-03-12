@@ -201,8 +201,6 @@ private:
 
     VncState state = WAIT_SECURITY_TYPES;
 
-    bool left_ctrl_pressed = false;
-
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
@@ -212,7 +210,6 @@ private:
     uint32_t clipboard_general_capability_flags = 0;
     ReportMessageApi & report_message;
     time_t beginning;
-    int keylayout;
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
 
@@ -262,7 +259,6 @@ public:
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
-    , keylayout(keylayout)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
     , vars(vars)

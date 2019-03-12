@@ -110,6 +110,7 @@ size_t WsTransport::do_partial_read(uint8_t * buffer, size_t len)
     return res;
 }
 
+[[noreturn]]
 WsTransport::Read WsTransport::do_atomic_read(uint8_t* /*buffer*/, size_t /*len*/)
 {
     LOG(LOG_ERR, "WebSocket: do_atomic_read isn't supported");

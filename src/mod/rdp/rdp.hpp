@@ -361,7 +361,7 @@ private:
 
 public:
     mod_rdp_channels(
-        const ChannelsAuthorizations & channels_authorizations,
+        ChannelsAuthorizations&& channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         SessionReactor & session_reactor)
@@ -1916,14 +1916,14 @@ public:
       , RedirectionInfo & redir_info
       , Random & gen
       , TimeObj & timeobj
-      , const ChannelsAuthorizations & channels_authorizations
+      , ChannelsAuthorizations channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , AuthApi & authentifier
       , ReportMessageApi & report_message
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
     )
-        : channels(channels_authorizations, mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor)
+        : channels(std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
@@ -2821,7 +2821,10 @@ public:
                             if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect && this->monitor_count) {
                                     this->rdp_suppress_display_updates();
-                                    this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
+                                    this->rdp_allow_display_updates(
+                                        0, 0,
+                                        this->negociation_result.front_width,
+                                        this->negociation_result.front_height);
                                 }
                                 this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
                             }
@@ -3500,7 +3503,8 @@ public:
                         static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
                     );
                     if (this->multifragment_update_data.get_capacity() < fragCaps.MaxRequestSize) {
-                        this->multifragment_update_buffer.reset(new uint8_t[fragCaps.MaxRequestSize]());
+                        this->multifragment_update_buffer
+                            = std::make_unique<uint8_t[]>(fragCaps.MaxRequestSize);
                         this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), fragCaps.MaxRequestSize);
                     }
                     confirm_active_pdu.emit_capability_set(fragCaps);

@@ -272,11 +272,6 @@ void ModuleManager::create_mod_rdp(
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
 
-    const ChannelsAuthorizations channels_authorizations(
-        ini.get<cfg::mod_rdp::allow_channels>(),
-        ini.get<cfg::mod_rdp::deny_channels>()
-    );
-
     try {
         const char * const name = "RDP Target";
 
@@ -364,7 +359,9 @@ void ModuleManager::create_mod_rdp(
             ini.get_ref<cfg::mod_rdp::redir_info>(),
             this->gen,
             this->timeobj,
-            channels_authorizations,
+            ChannelsAuthorizations(
+                ini.get<cfg::mod_rdp::allow_channels>(),
+                ini.get<cfg::mod_rdp::deny_channels>()),
             mod_rdp_params,
             authentifier,
             report_message,
