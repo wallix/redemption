@@ -254,8 +254,6 @@ int main(int argc, char** argv)
 
         {'f', "force", "remove application lock file"},
 
-        {'i', "inetd", "launch redemption with inetd like launcher"},
-
         {'N', "nofork", "not forkable (debug)"},
 
         {"config-file", &config_filename, "use an another ini file"},
@@ -340,11 +338,6 @@ int main(int argc, char** argv)
     CryptoContext cctx;
     UdevRandom rnd;
     Fstat fstat;
-
-    if (options.count("inetd")) {
-        redemption_new_session(cctx, rnd, fstat, config_filename.c_str());
-        return 0;
-    }
 
     // if -f (force option) is set
     // force kill running rdpproxy
