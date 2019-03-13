@@ -752,7 +752,7 @@ public:
             this->client_execute.arguments, stream, ArgumentsLen, "Client Execute PDU");
     }
 
-    const WindowsExecuteShellParams get_client_execute()
+    const WindowsExecuteShellParams& get_client_execute() const
     {
         return this->client_execute;
     }

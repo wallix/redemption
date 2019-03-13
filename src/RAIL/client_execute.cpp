@@ -2119,7 +2119,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uin
                 RDP::RAIL::NewOrExistingWindow order;
 
                 order.header.FieldsPresentFlags(
-                            RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                          RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
                         | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
                         | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
                         | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
