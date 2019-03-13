@@ -481,11 +481,8 @@ public:
             return true;
         }
 
-        unique_fd unique_client_sck = ip_connect(this->config.target_IP.c_str(),
-                                          this->config.port,
-                                          3,                //nbTry
-                                          1000             //retryDelay
-                                          );
+        unique_fd unique_client_sck = ip_connect(
+            this->config.target_IP.c_str(), this->config.port);
 
         this->client_sck = unique_client_sck.fd();
 

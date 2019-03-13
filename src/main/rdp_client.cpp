@@ -51,8 +51,6 @@ int main(int argc, char** argv)
     uint64_t verbose = 0;
     std::string target_device;
     int target_port = 3389;
-    int nbretry = 3;
-    int retry_delai_ms = 1000;
 
     unsigned inactivity_time_ms = 1000u;
     unsigned max_time_ms = 5u * inactivity_time_ms;
@@ -121,7 +119,7 @@ int main(int argc, char** argv)
     openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
 
     /* SocketTransport mod_trans */
-    auto sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
+    auto sck = ip_connect(target_device.c_str(), target_port);
     if (!sck.is_open()) {
         return 1;
     }

@@ -42,9 +42,9 @@ struct ICAPService
 public:
     int file_id_int;
 
-    ICAPService(std::string & socket_path/*,
+    ICAPService(std::string const& socket_path/*,
                 std::string & session_id*/)
-    : fd( local_connect(socket_path.c_str(), 3, 1000))
+    : fd(local_connect(socket_path.c_str()))
     , file_id_int(0)
     {}
 

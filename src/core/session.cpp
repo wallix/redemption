@@ -56,6 +56,9 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+namespace
+{
+
 template<class FrontTransport>
 class Session
 {
@@ -547,20 +550,7 @@ private:
 
     static unique_fd acl_connect(std::string const & authtarget)
     {
-        size_t const pos = authtarget.find(':');
-        unique_fd client_sck = (pos == std::string::npos)
-            ? local_connect(authtarget.c_str(), 30, 1000)
-            : [&](){
-                // TODO: add some explicit error checking
-                char* end;
-                std::string ip = authtarget.substr(0, pos);
-                long port = std::strtol(authtarget.c_str() + pos + 1, &end, 10);
-                if (port > std::numeric_limits<int>::max()) {
-                    return unique_fd{-1};
-                }
-                return ip_connect(ip.c_str(), int(port), 30, 1000);
-            }();
-
+        unique_fd client_sck = addr_connect(authtarget.c_str());
         if (!client_sck.is_open()) {
             LOG(LOG_ERR,
                 "Failed to connect to authentifier (%s)",
@@ -733,6 +723,8 @@ private:
         return sck_no_read;
     }
 };
+
+}
 
 void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {

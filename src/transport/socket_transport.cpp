@@ -189,7 +189,7 @@ bool SocketTransport::disconnect()
 bool SocketTransport::connect()
 {
     if (this->sck <= INVALID_SOCKET){
-        this->sck = ip_connect(this->ip_address, this->port, 3, 1000).release();
+        this->sck = ip_connect(this->ip_address, this->port).release();
     }
     return this->sck > INVALID_SOCKET;
 }

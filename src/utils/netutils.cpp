@@ -164,7 +164,7 @@ char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return nullptr;
 }
 
-unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/, char const** error_result)
+unique_fd ip_connect(const char* ip, int port, char const** error_result)
 {
     LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
@@ -210,12 +210,13 @@ unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_de
     char text_target[256];
     snprintf(text_target, sizeof(text_target), "%s:%d (%s)", ip, port, inet_ntoa(u.s4.sin_addr));
 
+    int nbretry = 3;
+    int retry_delai_ms = 1000;
     return connect_sck(sck, nbretry, retry_delai_ms, u.s, sizeof(u), text_target, error_result);
 }
 
 
-// TODO int retry_delai_ms -> std::milliseconds
-unique_fd local_connect(const char* sck_name, int nbretry, int retry_delai_ms)
+unique_fd local_connect(const char* sck_name)
 {
     char target[1024] = {};
     snprintf(target, sizeof(target), "%s", sck_name);
@@ -243,9 +244,29 @@ unique_fd local_connect(const char* sck_name, int nbretry, int retry_delai_ms)
     u.s.sun_path[len] = 0;
     u.s.sun_family = AF_UNIX;
 
+    int nbretry = 1;
+    int retry_delai_ms = 1000;
     return connect_sck(sck, nbretry, retry_delai_ms, u.addr, static_cast<int>(offsetof(sockaddr_un, sun_path) + strlen(u.s.sun_path) + 1u), target);
 }
 
+
+unique_fd addr_connect(const char* addr)
+{
+    const char* pos = strchr(addr, ':');
+    if (!pos) {
+        return local_connect(addr);
+    }
+
+    char* end;
+    long port = std::strtol(pos + 1, &end, 10);
+    if (port > std::numeric_limits<int>::max()) {
+        LOG(LOG_ERR, "Connecting to %s failed: invalid port", pos + 1);
+        return unique_fd{-1};
+    }
+
+    std::string ip(addr, pos);
+    return ip_connect(ip.c_str(), int(port));
+}
 
 
 struct LineBuffer

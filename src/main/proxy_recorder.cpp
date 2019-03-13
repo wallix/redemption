@@ -131,7 +131,7 @@ public:
         uint64_t verbosity
     )
         : frontConn("front", std::move(sck), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity))
-        , backConn("back", ip_connect(host.c_str(), port, 3, 1000),
+        , backConn("back", ip_connect(host.c_str(), port),
             host.c_str(), port, std::chrono::milliseconds(100), to_verbose_flags(verbosity))
         , outFile(timeobj, captureFile.c_str())
         , host(std::move(host))

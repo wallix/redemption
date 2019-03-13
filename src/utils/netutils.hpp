@@ -36,10 +36,11 @@ bool try_again(int errnum);
 /// \return nullptr if ok, view string if error
 char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
-unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/, char const** error_result = nullptr);
+unique_fd ip_connect(const char* ip, int port, char const** error_result = nullptr);
 
-// TODO int retry_delai_ms -> std::milliseconds
-unique_fd local_connect(const char* sck_name, int nbretry = 3, int retry_delai_ms = 1000);
+unique_fd local_connect(const char* sck_name);
+
+unique_fd addr_connect(const char* addr);
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
                        char * transparent_dest, size_t sz_transparent_dest, uint32_t verbose = 0);
