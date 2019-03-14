@@ -187,14 +187,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("forbid")
       .set_string_parser()
     ;
-
-    e.enumeration_list("HostOS")
-      .value("windows")
-      .value("unix")
-      .value("apple")
-      .set_string_parser()
-    ;
-
 }
 
 }

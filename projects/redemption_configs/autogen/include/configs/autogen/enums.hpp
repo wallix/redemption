@@ -495,21 +495,6 @@ operator << (std::basic_ostream<Ch, Tr> & os, RdpModeConsole e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class HostOS {
-    windows = 0,
-    unix = 1,
-    apple = 2,
-};
-
-inline bool is_valid_enum_value(HostOS e)
-{ return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, HostOS e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth {
     // 8-bit
