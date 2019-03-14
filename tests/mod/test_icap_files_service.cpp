@@ -25,23 +25,22 @@
 #include "utils/log.hpp"
 
 
-RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPService) {
-    std::string socket_path("tools/ICAPService/fake_socket/redemption-icap-service-sock");
-    std::string session_id("0000");
 
-    ICAPService service(socket_path, session_id);
-    std::string id_got = service.generate_id();
-    RED_CHECK_EQUAL(id_got, "0000-1");
+RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPService) {
+    std::string socket_fake_path("tools/ICAPService/fake_socket/redemption-icap-service-sock");
+
+    ICAPService service(socket_fake_path);
+    int id_got = service.generate_id();
+    RED_CHECK_EQUAL(id_got, 1);
     RED_CHECK_EQUAL(service.fd.is_open(), false);
 }
 
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_icap_open_session) {
-    std::string socket_path("tools/ICAPService/fake_socket/redemption-icap-service-sock");
-    std::string session_id("0001");
+    std::string socket_fake_path("tools/ICAPService/fake_socket/redemption-icap-service-sock");
 
-    ICAPService * service = icap_open_session(socket_path, session_id);
-    std::string id_got = service->generate_id();
-    RED_CHECK_EQUAL(id_got, "0001-1");
+    ICAPService * service = icap_open_session(socket_fake_path);
+    int id_got = service->generate_id();
+    RED_CHECK_EQUAL(id_got, 1);
     RED_CHECK_EQUAL(service->fd.is_open(), false);
 
     int n = icap_close_session(service);
@@ -66,7 +65,7 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPHeader) {
 
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPNewFile) {
 
-    const std::string file_id = "0000-1";
+    const int file_id = 1;
     const std::string file_name = "file_name.file";
     const size_t file_size = 5658;
 
@@ -76,17 +75,17 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPNewFile) {
     icap_new_file.emit(message);
 
     auto exp_data = cstr_array_view(
-        "\x00\x00\x00\x06\x30\x30\x30\x30\x2d\x31\x00\x00\x00\x0e\x66\x69" //....0000-1....fi !
-        "\x6c\x65\x5f\x6e\x61\x6d\x65\x2e\x66\x69\x6c\x65\x00\x00\x16\x1a" //le_name.file.... !]
+        "\x00\x00\x00\x01\x00\x00\x00\x0e\x66\x69\x6c\x65\x5f\x6e\x61\x6d" //........file_nam
+        "\x65\x2e\x66\x69\x6c\x65\x00\x00\x16\x1a"                         //e.file....
     );
 
-    RED_CHECK_EQUAL(message.get_offset(), 32);
+    RED_CHECK_EQUAL(message.get_offset(), 26);
     RED_CHECK_MEM(exp_data, message.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPFileDataHeader) {
 
-    const std::string file_id = "0000-1";
+    const int file_id = 1;
 
     StaticOutStream<512> message;
 
@@ -94,20 +93,20 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPFileDataHeader) {
     icap_file_data.emit(message);
 
     auto exp_data = cstr_array_view(
-        "\x00\x00\x00\x06\x30\x30\x30\x30\x2d\x31"                         //....0000-1
+        "\x00\x00\x00\x01"                         //....
     );
 
-    RED_CHECK_EQUAL(message.get_offset(), 10);
+    RED_CHECK_EQUAL(message.get_offset(), 4);
     RED_CHECK_MEM(exp_data, message.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPResult) {
 
-    const std::string expected_file_id = "0000-1";
     const uint8_t expected_result = LocalICAPServiceProtocol::ACCEPTED_FLAG;
+    const int expected_file_id = 1;
 
     auto data = cstr_array_view(
-        "\x00\x00\x00\x00\x06\x30\x30\x30\x30\x2d\x31"                     //.....0000-1
+        "\x00\x00\x00\x00\x01"                     //.....
     );
 
     InStream stream(data);
@@ -116,18 +115,17 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPResult) {
     icap_result.receive(stream);
 
     RED_CHECK_EQUAL(icap_result.id, expected_file_id);
-    RED_CHECK_EQUAL(icap_result.result,  expected_result);
+    RED_CHECK_EQUAL(icap_result.result, expected_result);
 }
-
 
 
 
 RED_AUTO_TEST_CASE(testFileValid)
 {
-    std::string session_id("0002");
-    std::string socket_path("tools/ICAPService/socket/redemption-icap-service-sock");
+//     const int file_id = 2;
+    std::string socket_path("tools/ICAP_socket/redemption-icap-service-sock");
 
-    ICAPService * service = icap_open_session(socket_path, session_id);
+    ICAPService * service = icap_open_session(socket_path);
     bool mod_local_server = false;
 
     if (service->fd.is_open()) {
@@ -137,17 +135,14 @@ RED_AUTO_TEST_CASE(testFileValid)
         std::string file_content(get_file_contents("README.md"));
         int file_size = file_content.length();
 
-        std::string session_id_ = service->session_id;
-        RED_CHECK_EQUAL(session_id_, "0002");
-
-        std::string file_id = icap_open_file(service, file_name, file_size);
-        RED_CHECK_EQUAL(file_id, "0002-1");
+        int file_id = icap_open_file(service, file_name, file_size);
+        RED_CHECK_EQUAL(file_id, 1);
 
         icap_send_data(service, file_id, const_byte_ptr(file_content.c_str()), file_size);
 
-        LocalICAPServiceProtocol::ICAPResult result = icap_get_result(service);
-        RED_CHECK_EQUAL(result.result, LocalICAPServiceProtocol::ACCEPTED_FLAG);
-        RED_CHECK_EQUAL(result.id, "0002-1");
+        int result = icap_get_result(service);
+        RED_CHECK_EQUAL(result, LocalICAPServiceProtocol::ACCEPTED_FLAG);
+//         RED_CHECK_EQUAL(result.id, "0002-1");
     }
 
     int n = icap_close_session(service);
@@ -161,24 +156,21 @@ RED_AUTO_TEST_CASE(testFileValid)
 
 RED_AUTO_TEST_CASE(testFileInvalid)
 {
-    std::string session_id("0003");
-    std::string socket_path("tools/ICAPService/socket/redemption-icap-service-sock");
+//     const int file_id = 3;
+    std::string socket_path("tools/ICAP_socket/redemption-icap-service-sock");
 
-    ICAPService * service = icap_open_session(socket_path, session_id);
+    ICAPService * service = icap_open_session(socket_path);
 
     bool mod_local_server = false;
     if (service->fd.is_open()) {
         mod_local_server = true;
 
-        std::string file_path("../ICAPService/test/the_zeus_binary_chapros");
+        std::string file_path("../ICAPService/tests/the_zeus_binary_chapros");
         std::string file_name("the_zeus_binary_chapros");
         int file_size = 227328;
 
-        std::string session_id_ = service->session_id;
-        RED_CHECK_EQUAL(session_id_, "0003");
-
-        std::string file_id = icap_open_file(service, file_name, file_size);
-        RED_CHECK_EQUAL(file_id, "0003-1");
+        int file_id = icap_open_file(service, file_name, file_size);
+        RED_CHECK_EQUAL(file_id, 1);
 
         int sent_data = 0;
         char buff[1024] = {0};
@@ -194,9 +186,9 @@ RED_AUTO_TEST_CASE(testFileInvalid)
             }
         }
 
-        LocalICAPServiceProtocol::ICAPResult result = icap_get_result(service);
-        RED_CHECK_EQUAL(result.result, LocalICAPServiceProtocol::REJECTED_FLAG);
-        RED_CHECK_EQUAL(result.id, "0003-1");
+        int result = icap_get_result(service);
+        RED_CHECK_EQUAL(result, LocalICAPServiceProtocol::REJECTED_FLAG);
+//         RED_CHECK_EQUAL(result.id, "0003-1");
     }
 
     int n = icap_close_session(service);
