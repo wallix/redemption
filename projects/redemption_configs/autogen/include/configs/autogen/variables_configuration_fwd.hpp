@@ -187,7 +187,8 @@ namespace cfg {
         struct encodings;
         struct server_clipboard_encoding_type;
         struct bogus_clipboard_infinite_loop;
-        struct host_OS;
+        struct server_is_apple;
+        struct server_unix_alt;
     };
 
     struct mod_replay {

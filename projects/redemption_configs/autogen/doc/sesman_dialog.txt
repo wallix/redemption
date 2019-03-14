@@ -158,8 +158,8 @@ cfg::mod_vnc::bogus_clipboard_infinite_loop <- vnc_bogus_clipboard_infinite_loop
       0: delayed
       1: duplicated
       2: continued
-cfg::mod_vnc::host_OS <- host_OS   [HostOS]
-    Control host OS specific behaviors of VNC, notably for keyboard.
+cfg::mod_vnc::server_is_apple <- server_is_apple   [bool]
+cfg::mod_vnc::server_unix_alt <- server_unix_alt   [bool]
 
 cfg::mod_replay::replay_on_loop <- replay_on_loop   [bool]
     0 - replay once, 1 - loop replay

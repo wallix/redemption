@@ -21,27 +21,16 @@
       "name": "vnc",
       "members": [
         {
-          "name": "host_OS",
-          "type": "option",
-          "default": "windows",
-          "values": [
-            {
-               "value": "windows",
-               "label": "windows",
-               "description": ""
-            },
-            {
-               "value": "unix",
-               "label": "unix",
-               "description": ""
-            },
-            {
-               "value": "apple",
-               "label": "apple",
-               "description": ""
-            }
-          ],
-          "description": "Control host OS specific behaviors of VNC, notably for keyboard."
+          "name": "server_is_apple",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "server_unix_alt",
+          "type": "bool",
+          "default": false,
+          "description": ""
         }
       ]
     }

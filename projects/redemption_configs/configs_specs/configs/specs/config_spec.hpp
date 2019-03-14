@@ -447,7 +447,8 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, sesman_to_proxy, L, type_<VncBogusClipboardInfiniteLoop>(), "bogus_clipboard_infinite_loop", sesman::name{"vnc_bogus_clipboard_infinite_loop"}, set(VncBogusClipboardInfiniteLoop::delayed));
 
-        W.member(hidden_in_gui, vnc_connpolicy, L, type_<HostOS>(), "host_OS", set(HostOS::windows), desc{"Control host OS specific behaviors of VNC, notably for keyboard."});
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_is_apple", set(false));
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_unix_alt", set(false));
     });
 
     W.section("mod_replay", [&]

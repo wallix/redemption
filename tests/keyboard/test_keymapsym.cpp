@@ -27,23 +27,6 @@
 
 #include "keyboard/keymapsym.hpp"
 
-enum ScancodeState {
-    DOWN = 0,
-    UP   = 0x8000,
-    DOWN_EXT = 0x0100,
-    UP_EXT   = 0x8100
-};
-
-struct check_key_events {
-    ScancodeState flags;   // input keyboard flags
-    uint8_t  code;         // key scancode, or 0 if there is another keysym to read from previous keys
-    uint16_t rflags;       // expected keymap flags (persistant flags)
-    uint32_t rkey;         // expected generated key (or 0 if no key to send, 
-                           // like for deadkeys or char keys up)
-    int      downflag;     // 1: keydown, 0: keyup
-    
-};
-
 RED_AUTO_TEST_CASE(TestKeymapSym)
 {
     KeymapSym keymap(0x040C, 0, false, false, 0);
@@ -149,42 +132,6 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
     RED_CHECK_EQUAL('a', keymap.get_sym(downflag));
     keymap.event(0xc000, 0x10); // up
     RED_CHECK_EQUAL('a', keymap.get_sym(downflag));
-    RED_CHECK_EQUAL(0, keymap.nb_sym_available());
-}
-
-
-RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
-{
-    KeymapSym keymap(0x040C, 0, false, false, 0);
-    uint8_t downflag = 0;
-
-    // CAPSLOCK is not transmitted but has effect on keyboard (applied by Bastion)
-    // Is is really the right thing to do ?
-    
-    check_key_events keys[] = {
-        {DOWN, 0x3A, 4, 0, 1},  // CAPSLOCK ON
-        {UP,   0x3A, 4, 0, 0},
-        {DOWN, 16,   4, 'A', 1}, // A
-        {UP,   16,   4, 'A', 0},
-        {DOWN, 0x2A, 4, 0xffe1, 1}, // SHIFT + A
-        {DOWN, 16, 4, 'a', 1},
-        {UP,   16, 4, 'a', 0},
-        {UP,   0x2A, 4, 0xffe1, 0},
-        {DOWN, 0x3A, 0, 0, 1},   // CAPSLOCK OFF
-        {UP,   0x3A, 0, 0, 0},
-    };
-    size_t i = 0;
-    for (auto k: keys){
-        i++;
-        BOOST_TEST_CONTEXT("Loop " << i << ": " 
-                   << std::hex << static_cast<uint16_t>(k.flags) << ", "
-                   << std::dec << +k.code << ", " 
-                   << std::hex << k.rflags << ", " << k.rkey){
-            keymap.event(k.flags, k.code);
-            RED_CHECK_EQUAL(k.rflags, keymap.key_flags);
-            RED_CHECK_EQUAL(k.rkey, keymap.get_sym(downflag));
-        }
-    }
     RED_CHECK_EQUAL(0, keymap.nb_sym_available());
 }
 

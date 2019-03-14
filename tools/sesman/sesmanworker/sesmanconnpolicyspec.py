@@ -63,6 +63,7 @@ cp_spec = {
     u'disable_keyboard_log': 'disable_keyboard_log',
   },
   'vnc': {
-    u'host_OS': 'host_OS',
+    u'server_is_apple': 'server_is_apple',
+    u'server_unix_alt': 'server_unix_alt',
   },
 }
