@@ -38,7 +38,7 @@ enum {
 
 /* difference caches */
 class PointerCache : noncopyable {
-    int pointer_cache_entries;
+    int const pointer_cache_entries;
 
     /* pointer */
     int pointer_stamp = 0;
@@ -102,7 +102,8 @@ public:
             &&  this->Pointers[i].height == cursor.height
 //            &&  this->Pointers[i].bpp == cursor.bpp
             &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0)
-            &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)) {
+            &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)
+            &&  this->cached[i]) {
                 this->stamps[i] = this->pointer_stamp;
                 cache_idx = i;
                 return POINTER_ALLREADY_SENT;
