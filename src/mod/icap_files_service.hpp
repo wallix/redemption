@@ -189,7 +189,6 @@ struct ICAPNewFile {
     void emit(OutStream & stream) {
 
         stream.out_uint32_be(this->file_id);
-        //stream.out_string(this->file_id.c_str());
 
         stream.out_uint32_be(this->file_name.length());
         stream.out_string(this->file_name.c_str());
@@ -401,7 +400,7 @@ uint8_t icap_get_result(const ICAPService * service) {
     return result.result;
 }
 
-int icap_close_session(const ICAPService * service) {
+int icap_close_session(ICAPService * service) {
 
     int n = -1;
 
