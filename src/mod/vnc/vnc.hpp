@@ -40,7 +40,7 @@
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
 #include "keyboard/keymap2.hpp"
-#include "keyboard/keymapSym.hpp"
+#include "keyboard/keymapsym.hpp"
 #include "main/version.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/internal_mod.hpp"
@@ -205,9 +205,6 @@ private:
     uint32_t clipboard_general_capability_flags = 0;
     ReportMessageApi & report_message;
     time_t beginning;
-    bool server_is_apple;
-    bool remove_server_alt_state_for_char;
-    int keylayout;
     ClientExecute* client_execute = nullptr;
     Zdecompressor<> zd;
     VNCMetrics * metrics;
@@ -239,10 +236,10 @@ public:
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
            , bool server_is_apple
-           , bool remove_server_alt_state_for_char
+           , bool server_is_unix
            , ClientExecute* client_execute
            , VNCVerbose verbose
-		   , VNCMetrics * metrics = nullptr
+           , VNCMetrics * metrics = nullptr
            )
     : mod_name{0}
     , username{0}
@@ -253,7 +250,7 @@ public:
     , bpp(0)
     , depth(0)
     , verbose(verbose)
-    , keymapSym(static_cast<uint32_t>(verbose))
+    , keymapSym(keylayout, key_flags, server_is_unix, server_is_apple, static_cast<uint32_t>(verbose & VNCVerbose::keymap_stack))
     , to_vnc_clipboard_data_size(0)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
@@ -263,32 +260,16 @@ public:
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
-    , server_is_apple(server_is_apple)
-    , remove_server_alt_state_for_char(remove_server_alt_state_for_char)
-    , keylayout(keylayout)
     , client_execute(client_execute)
-	, metrics(metrics)
+    , metrics(metrics)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'VNC'");
         }
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "server_is_apple=%s", (server_is_apple ? "yes" : "no"));
-        }
 
         ::time(&this->beginning);
-
-        // TODO init layout sym with apple layout
-        if (this->server_is_apple) {
-            keymapSym.init_layout_sym(0x0409);
-        } else {
-            keymapSym.init_layout_sym(keylayout);
-        }
-        // Initial state of keys (at least lock keys) is copied from Keymap2
-        // like keymapSym::synchronize() except non persistant keys states are also transmitted
-        keymapSym.key_flags = key_flags;
 
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
@@ -938,8 +919,6 @@ public:
             return;
         }
 
-        // AltGr or Alt are catched by Apple OS
-
         // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, keycode=%ld)", device_flags, keycode);
@@ -951,10 +930,18 @@ public:
             IF_EXISTS(this->metrics, key_pressed());
         }
 
-        if (this->server_is_apple) {
-            this->apple_keyboard_translation(device_flags, keycode, downflag);
-        } else {
-            this->keyMapSym_event(device_flags, keycode, downflag);
+        keymapSym.event(device_flags, keycode);
+
+        int key = this->keymapSym.get_sym(downflag);
+        while (key){
+            if (bool(this->verbose & VNCVerbose::keymap_stack)) {
+                LOG(LOG_INFO, "keyloop::key=%d (%x) %s param1=%u nbsym=%u",
+                    key, static_cast<unsigned>(key), downflag?"DOWN":"UP",
+                    static_cast<unsigned>(keycode),
+                    this->keymapSym.nb_sym_available());
+            }
+            this->send_keyevent(downflag, key);
+            key = this->keymapSym.get_sym(downflag);
         }
     } // rdp_input_scancode
 
@@ -962,122 +949,6 @@ public:
         LOG(LOG_WARNING, "mod_vnc::rdp_input_unicode: Unicode Keyboard Event is not yet supported");
     }
 
-
-    void remove_modifiers()
-    {
-        // KS_Alt_L = 0xffe9,
-        if (this->keymapSym.is_left_alt_pressed()){
-            this->send_keyevent(0, 0xffe9);
-        }
-        // KS_Alt_R = 0xffea,
-        if (this->keymapSym.is_right_alt_pressed()){
-            this->send_keyevent(0, 0xffea);
-        }
-        // KS_Control_R = 0xffe4,
-        if (this->keymapSym.is_right_ctrl_pressed()){
-            this->send_keyevent(0, 0xffe4);
-        }
-        // KS_Control_L = 0xffe3,
-        if (this->keymapSym.is_left_ctrl_pressed()){
-            this->send_keyevent(0, 0xffe3);
-        }
-        // KS_Shift_L = 0xffe1,
-        if (this->keymapSym.is_left_shift_pressed()){
-            this->send_keyevent(0, 0xffe1);
-        }
-        // KS_Shift_R = 0xffe2,
-        if (this->keymapSym.is_right_shift_pressed()){
-            this->send_keyevent(0, 0xffe2);
-        }
-    }
-
-    void putback_modifiers()
-    {
-        // KS_Alt_L = 0xffe9,
-        if (this->keymapSym.is_left_alt_pressed()){
-            this->send_keyevent(1, 0xffe9);
-        }
-        // KS_Alt_R = 0xffea,
-        if (this->keymapSym.is_right_alt_pressed()){
-            this->send_keyevent(1, 0xffea);
-        }
-        // KS_Control_R = 0xffe4,
-        if (this->keymapSym.is_right_ctrl_pressed()){
-            this->send_keyevent(1, 0xffe4);
-        }
-        // KS_Control_L = 0xffe3,
-        if (this->keymapSym.is_left_ctrl_pressed()){
-            this->send_keyevent(1, 0xffe3);
-        }
-        // KS_Shift_L = 0xffe1,
-        if (this->keymapSym.is_left_shift_pressed()){
-            this->send_keyevent(1, 0xffe1);
-        }
-        // KS_Shift_R = 0xffe2,
-        if (this->keymapSym.is_right_shift_pressed()){
-            this->send_keyevent(1, 0xffe2);
-        }
-    }
-
-
-    void keyMapSym_event(int device_flags, long keycode, uint8_t downflag) {
-        this->keymapSym.event(device_flags, keycode);
-
-        int key = this->keymapSym.get_sym();
-        while (key){
-            if (bool(this->verbose & VNCVerbose::keymap_stack)) {
-                LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u", key, unsigned(key), unsigned(keycode), downflag);
-            }
-            if (this->remove_server_alt_state_for_char
-            && this->keymapSym.is_altgr_pressed()
-            && (key == 0x65))
-            {
-                this->remove_modifiers();
-                switch (key){
-                case 0x65:
-                    this->send_keyevent(downflag, 0x20AC);
-                    break;
-                default:
-                    this->send_keyevent(downflag, key);
-                    break;
-                }
-                this->putback_modifiers();
-            }
-            if (!this->remove_server_alt_state_for_char
-            && this->keymapSym.is_altgr_pressed()
-            && (key == 0x65))
-            {
-                if (downflag == 1){
-                    this->remove_modifiers();
-                    switch (key){
-                    case 0x65:
-                        this->send_keyevent(1, 0xffe3);
-                        this->send_keyevent(1, 0xffe9);
-                        this->send_keyevent(downflag, 0x65);
-                        this->send_keyevent(0, 0xffe3);
-                        this->send_keyevent(0, 0xffe9);
-                        break;
-                    default:
-                        this->send_keyevent(downflag, key);
-                        break;
-                    }
-                    this->putback_modifiers();
-                }
-            }
-            else
-            if (this->keymapSym.is_altgr_pressed()
-            // this is plain ascii: trust our decoder
-            && (key >= 0x20 && key <= 0x7e)){
-                this->remove_modifiers();
-                this->send_keyevent(downflag, key);
-                this->putback_modifiers();
-            }
-            else {
-                this->send_keyevent(downflag, key);
-            }
-            key = this->keymapSym.get_sym();
-        }
-    }
 
     void send_keyevent(uint8_t down_flag, uint32_t key) {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -1093,128 +964,6 @@ public:
         this->event.set_trigger_time(1000);
     }
 
-    // TODO: this should use the same method to take care of modifiers that
-    // the non apple targets are using. We need to set an apple target to
-    // check behavior
-    void apple_keyboard_translation(int device_flags, long keycode, uint8_t downflag) {
-
-        switch (this->keylayout) {
-
-            case 0x040c:                                    // French
-                switch (keycode) {
-
-                    case 0x0b:
-                        if (this->keymapSym.is_alt_pressed()) {
-                            this->send_keyevent(0, 0xffe9);
-                            this->send_keyevent(downflag, 0xa4); /* @ */
-                            this->send_keyevent(1, 0xffe9);
-                        } else {
-                            this->keyMapSym_event(device_flags, keycode, downflag);
-                        }
-                        break;
-
-                    case 0x04:
-                        if (this->keymapSym.is_alt_pressed()) {
-                            this->send_keyevent(0, 0xffe9);
-                            this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0xa4); /* # */
-                            this->send_keyevent(0, 0xffe2);
-                            this->send_keyevent(1, 0xffe9);
-                        } else {
-                            this->keyMapSym_event(device_flags, keycode, downflag);
-                        }
-                        break;
-
-                    case 0x35:
-                        if (this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(0, 0xffe2);
-                            this->send_keyevent(downflag, 0x36); /* § */
-                            this->send_keyevent(1, 0xffe2);
-                        } else {
-                            if (device_flags & KeymapSym::KBDFLAGS_EXTENDED) {
-                                this->send_keyevent(1, 0xffe2);
-                                this->send_keyevent(downflag, 0x3e); /* / */
-                                this->send_keyevent(0, 0xffe2);
-                            } else {
-                                this->send_keyevent(downflag, 0x38); /* ! */
-                            }
-                        }
-                        break;
-
-                    case 0x07: /* - */
-                        if (!this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0x3d);
-                            this->send_keyevent(0, 0xffe2);
-                        } else {
-                            this->keyMapSym_event(device_flags, keycode, downflag);
-                        }
-                        break;
-
-                    case 0x2b: /* * */
-                        this->send_keyevent(1, 0xffe2);
-                        this->send_keyevent(downflag, 0x2a);
-                        this->send_keyevent(0, 0xffe2);
-                        break;
-
-                    case 0x1b: /* £ */
-                        if (this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(downflag, 0x5c);
-                        } else {
-                            this->keyMapSym_event(device_flags, keycode, downflag);
-                        }
-                        break;
-
-                    case 0x09: /* _ */
-                        if (!this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0xad);
-                            this->send_keyevent(0, 0xffe2);
-                        } else {
-                            this->send_keyevent(downflag, 0x38); /* 8 */
-                        }
-                        break;
-
-                    case 0x56:
-                        if (this->keymapSym.is_shift_pressed()) {
-                            this->send_keyevent(downflag, 0x7e); /* > */
-                        } else {
-                            this->send_keyevent(1, 0xffe2);
-                            this->send_keyevent(downflag, 0x60); /* < */
-                            this->send_keyevent(0, 0xffe2);
-                        }
-                        break;
-
-                    case 0x0d: /* = */
-                        this->send_keyevent(downflag, 0x2f);
-                        break;
-
-                    default:
-                        this->keyMapSym_event(device_flags, keycode, downflag);
-                        break;
-                }
-                break;
-
-            // Note: specialize and treat special case if need arise.
-            // (like french keyboard above)
-            // -----------------------------------------------------------------
-
-//            case 0x100c: // French Swizerland
-//            case 0x0813: // Dutch Belgium
-//            case 0x080c: // French Belgium
-//            case 0x0809: // English UK
-//            case 0x0807: // German Swizerland
-//            case 0x046e: // Luxemburgish
-//            case 0x041d: // Swedish
-//            case 0x0419: // Russian
-//            case 0x0410: // Italian
-//            case 0x0409: // United States
-//            case 0x0407: // GERMAN
-            default:
-               this->keyMapSym_event(device_flags, keycode, downflag);
-               break;
-        }
-    }
 
 protected:
 /*

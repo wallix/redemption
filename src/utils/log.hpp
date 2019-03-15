@@ -33,6 +33,8 @@
 # error LOGNULL is deprecated. Used REDEMPTION_LOG_PRINT environment variable instead. Ex: `REDEMPTION_LOG_PRINT=0 bjam`. By default REDEMPTION_LOG_PRINT = 0
 #endif
 
+#define LOG_IF(cond, priority, ...) if (__builtin_expect(!!(cond), 0)) LOG(priority, __VA_ARGS__)
+
 #include <sys/types.h> // getpid
 #include <unistd.h> // getpid
 

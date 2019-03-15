@@ -20,10 +20,9 @@
    header file. KeymapSym object for keymap translation from RDP to X (VNC)
 */
 
-#include "keyboard/keymapSym.hpp"
-#include "utils/log.hpp"
-#include <cstring>
-#include <cstdio>
+#pragma once
+
+#include <cstdint>
 
 enum KS_Symbols {
 
@@ -201,7 +200,7 @@ enum KS_Symbols {
 //    App                              65373     0xff5d
     KS_App                              =     0xff5d,
     KS_Win_L = 0xffeb, // Actually Super_L, Win_L is 0xff5b but doesn' t work with VNC
-    KS_Win_R = 0xffec, // Actually Super_R, Win_L is 0xff5c but doesn' t work with VNC 
+    KS_Win_R = 0xffec, // Actually Super_R, Win_L is 0xff5c but doesn' t work with VNC
 
 //    Hyper_L                          65517     0xffed
     KS_Hyper_L                          =     0xffed,
@@ -995,108 +994,111 @@ enum KS_Symbols {
 //    hebrew_shin                       3321     0x0cf9
 //    hebrew_taf                        3322     0x0cfa
 
-// using namespace std;
-
-KeymapSym::KeymapSym(int verbose)
-: ibuf_sym(0)
-, nbuf_sym(0)
-, dead_key(DEADKEY_NONE)
-, verbose(verbose)
+struct KeymapSym
 {
-    memset(this->keys_down, 0, 256 * sizeof(int));
+    enum {
+           KBDFLAGS_EXTENDED = 0x0100
+         , KBDFLAGS_DOWN     = 0x4000
+         , KBDFLAGS_RELEASE  = 0x8000
+    };
 
-    memset(&this->keylayout_WORK_noshift_sym,       0, 128 * sizeof(int));
-    memset(&this->keylayout_WORK_shift_sym,         0, 128 * sizeof(int));
-    memset(&this->keylayout_WORK_altgr_sym,         0, 128 * sizeof(int));
-    memset(&this->keylayout_WORK_capslock_sym,      0, 128 * sizeof(int));
-    memset(&this->keylayout_WORK_shiftcapslock_sym, 0, 128 * sizeof(int));
+    enum {
+           SCROLLLOCK  = 0x01
+         , NUMLOCK     = 0x02
+         , CAPSLOCK    = 0x04
+         , FLG_SHIFT   = 0x08
+         , FLG_CTRL    = 0x10
+         , FLG_ALT     = 0x20
+         , FLG_WINDOWS = 0x40
+         , FLG_ALTGR   = 0x80
+    };
 
-    this->key_flags = 0;
-    this->last_sym = 0;
-}
-
-// [MS-RDPBCGR] - 2.2.8.1.2.2.5 Fast-Path Synchronize Event
-//  (TS_FP_SYNC_EVENT)
-// ========================================================
-
-// The TS_FP_SYNC_EVENT structure is the fast-path variant of the TS_SYNC_EVENT
-//  (section 2.2.8.1.1.3.1.1.5) structure.
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |  eventHeader  |
-// +---------------+
-
-// eventHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
-//  the same as the eventHeader byte field, specified in section 2.2.8.1.2.2.
-//  The eventCode bitfield (3 bits in size) MUST be set to
-//  FASTPATH_INPUT_EVENT_SYNC (3). The eventFlags bitfield (5 bits in size)
-//  contains flags indicating the "on" status of the keyboard toggle keys.
-
-// +--------------------------------------+------------------------------------+
-// | 5-Bit Codes                          | Meaning                            |
-// +--------------------------------------+------------------------------------+
-// | 0x01 FASTPATH_INPUT_SYNC_SCROLL_LOCK | Indicates that the Scroll Lock     |
-// |                                      | indicator light SHOULD be on.      |
-// +--------------------------------------+------------------------------------+
-// | 0x02 FASTPATH_INPUT_SYNC_NUM_LOCK    | Indicates that the Num Lock        |
-// |                                      | indicator light SHOULD be on.      |
-// +--------------------------------------+------------------------------------+
-// | 0x04 FASTPATH_INPUT_SYNC_CAPS_LOCK   | Indicates that the Caps Lock       |
-// |                                      | indicator light SHOULD be on.      |
-// +--------------------------------------+------------------------------------+
-// | 0x08 FASTPATH_INPUT_SYNC_KANA_LOCK   | Indicates that the Kana Lock       |
-// |                                      | indicator light SHOULD be on.      |
-// +--------------------------------------+------------------------------------+
+    enum {
+           LEFT_SHIFT  = 0x36
+         , RIGHT_SHIFT = 0x2A
+         , LEFT_CTRL   = 0x1D
+         , RIGHT_CTRL  = 0x9D
+         , LEFT_ALT    = 0x38
+         , RIGHT_ALT   = 0xB8
+    };
 
 
-// TODO: synchronize is not called, we currently have a direct change of key_flags from vnc
-void KeymapSym::synchronize(uint16_t param1)
-{
-    this->key_flags = param1 & 0x07;
-    // non sticky keys are forced to be UP
-    this->keys_down[LEFT_SHIFT] = 0;
-    this->keys_down[RIGHT_SHIFT] = 0;
-    this->keys_down[LEFT_CTRL] = 0;
-    this->keys_down[RIGHT_CTRL] = 0;
-    this->keys_down[LEFT_ALT] = 0;
-    this->keys_down[RIGHT_ALT] = 0;
-}
 
-const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
-{
-    // pick the LAYOUT to use (depending on current keyboard state)
-    //----------------------------------------
-    // if left ctrl and left alt are pressed, vnc server will convert key combination itself.
-    if ((this->is_ctrl_pressed() && this->is_left_alt_pressed())
-    || (this->is_right_alt_pressed())) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "Altgr Layout");
-        }
-        return &this->keylayout_WORK_altgr_sym;
-    }
-    if (this->is_shift_pressed() && this->is_caps_locked()){
-        if (this->verbose) {
-            LOG(LOG_INFO, "Shift Capslock Layout");
-        }
-        return &this->keylayout_WORK_shiftcapslock_sym;
-    }
-    if (this->is_shift_pressed()){
-        if (this->verbose) {
-            LOG(LOG_INFO, "Use KEYLAYOUT WORK shift");
-        }
-        return &this->keylayout_WORK_shift_sym;
-    }
-    if (this->is_caps_locked()) {
-        if (this->verbose) {
-            LOG(LOG_INFO, "Use KEYLAYOUT WORK capslock");
-        }
-        return &this->keylayout_WORK_capslock_sym;
-    }
-    return &this->keylayout_WORK_noshift_sym;
-}
+    // keyboard info
+    int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
+
+    int key_flags;          // scroll_lock = 1, num_lock = 2, caps_lock = 4,
+                            // shift = 8, ctrl = 16, Alt = 32,
+                            // Windows = 64, AltGr = 128
+
+    enum {
+        SIZE_KEYBUF_SYM = 200 // we are sending along many modifiers and the actual number of keys can become large
+    };
+
+    enum {
+        KEVENT_KEY,
+        KEVENT_TAB,
+        KEVENT_BACKTAB,
+        KEVENT_ENTER,
+        KEVENT_ESC,
+        KEVENT_DELETE,
+        KEVENT_BACKSPACE,
+        KEVENT_LEFT_ARROW,
+        KEVENT_RIGHT_ARROW,
+        KEVENT_UP_ARROW,
+        KEVENT_DOWN_ARROW,
+        KEVENT_HOME,
+        KEVENT_END,
+        KEVENT_PGUP,
+        KEVENT_PGDOWN
+    };
+
+    struct KeySym
+    {
+        KeySym() = default;
+
+        KeySym(uint32_t sym, uint8_t down) noexcept
+        : sym(sym)
+        , down(down)
+        {}
+
+        uint32_t sym = 0;
+        uint8_t down = 0;
+    };
+
+    uint32_t ibuf_sym; // first free position
+    uint32_t nbuf_sym; // number of char in char buffer
+    KeySym buffer_sym[SIZE_KEYBUF_SYM]; // actual char buffer
+
+    uint8_t dead_key;
+
+    enum {
+        DEADKEY_NONE,
+        DEADKEY_CIRC,
+        DEADKEY_UML,
+        DEADKEY_GRAVE,
+        DEADKEY_TILDE
+    };
+
+    int keylayout;
+    bool is_unix;
+    bool is_apple;
+    // TODO should be a Verbose enum class
+    uint32_t verbose;
+    int last_sym;
+
+    using KeyLayout_t = int[128];
+
+    // keylayout working tables (X11 mode : begins in 8e position.)
+    KeyLayout_t keylayout_WORK_noshift_sym;
+    KeyLayout_t keylayout_WORK_shift_sym;
+    KeyLayout_t keylayout_WORK_altgr_sym;
+    KeyLayout_t keylayout_WORK_capslock_sym;
+    KeyLayout_t keylayout_WORK_shiftcapslock_sym;
+
+    explicit KeymapSym(int keylayout, int key_flags, bool is_unix, bool is_apple, int verbose);
+
+    void synchronize(uint16_t param1);
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
 // 8.18.2). RDP keyboard input is restricted to keyboard scancodes, unlike the code-point or virtual
@@ -1128,533 +1130,53 @@ const KeymapSym::KeyLayout_t * KeymapSym::select_layout()
 // keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which
 // triggered the event.
 
-void KeymapSym::event(const uint16_t keyboardFlags, const uint16_t keyCode)
-{
-    enum {
-           SCROLLLOCK  = 0x01
-         , NUMLOCK     = 0x02
-         , CAPSLOCK    = 0x04
-         , FLG_SHIFT   = 0x08
-         , FLG_CTRL    = 0x10
-         , FLG_ALT     = 0x20
-         , FLG_WINDOWS = 0x40
-         , FLG_ALTGR   = 0x80
-    };
+    void event(int device_flags, long keycode);
 
-     if (this->verbose){
-        LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x (%s%s), keyCode=%04x flags=%04x (%s %s %s %s %s %s %s))",
-            keyboardFlags, (keyboardFlags & KBDFLAGS_RELEASE)?"UP":"DOWN",(keyboardFlags & KBDFLAGS_EXTENDED)?" EXT":"",
-            keyCode, unsigned(this->key_flags),
-            (this->key_flags & SCROLLLOCK)?"SCR ":"",
-            (this->key_flags & NUMLOCK)?"NUM ":"",
-            (this->key_flags & CAPSLOCK)?"CAPS ":"",
-            (this->key_flags & FLG_SHIFT)?"SHIFT ":"",
-            (this->key_flags & FLG_ALT)?"ALT ":"",
-            (this->key_flags & FLG_WINDOWS)?"WIN ":"",
-            (this->key_flags & FLG_ALTGR)?"ALTGR ":"");
-     }
+    void remove_modifiers();
+    void putback_modifiers();
+    void key_event(int device_flags, long keycode);
+    void apple_keyboard_translation(int device_flags, long keycode);
+    KeySym get_key(const uint16_t keyboardFlags, const uint16_t keyCode);
 
-    // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
+    // Push only sym
+    void push_sym(KeySym sym);
 
-//    uint16_t keyboardFlags_pos = keyboardFlags;
-//    if (keyboardFlags_pos & KBDFLAGS_EXTENDED) {
-//        keyboardFlags_pos -=  KBDFLAGS_EXTENDED;
-//    }
-//    uint8_t extendedKeyCode = keyCode|((keyboardFlags_pos >> 1)&0x80);
+    uint32_t get_sym(uint8_t & downflag);
 
-    // Commented code above is disabling all extended codes, putting them back
-    uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
+    uint32_t nb_sym_available() const;
 
-    // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
-    this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
+    bool is_caps_locked() const;
 
-    // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
-    if (is_ctrl_pressed() && is_alt_pressed()
-    && ((extendedKeyCode == 0xCF)||(extendedKeyCode == 0x53))){
-    //    Delete                           65535     0xffff
-        extendedKeyCode = 0xD3;
-    }
+    bool is_scroll_locked() const;
 
-    switch (extendedKeyCode){
-    //----------------
-    // Lock keys
-    //----------------
-        // These keys are managed internally by proxy and never
-        // transmitted to target system
-        case 0x3A: // capslock
-            if (this->keys_down[extendedKeyCode]){
-                this->key_flags ^= CAPSLOCK;
-            }
-            break;
-        case 0x45: // numlock
-            if (this->keys_down[extendedKeyCode]){
-                this->key_flags ^= NUMLOCK;
-            }
-            break;
-        case 0x46: // scrolllock
-            if (this->keys_down[extendedKeyCode]){
-                this->key_flags ^= SCROLLLOCK;
-            }
-            break;
- 
-            //--------------------------------------------------------
-            // KEYPAD : Keypad keys whose meaning depends on Numlock 
-            //          are handled apart by the code below
-            //          47 48 49 4B 4C 4D 4F 50 51 52 53
-            //--------------------------------------------------------
-            /* KP_4 or KEYPAD LEFT ARROW */
-        case 0x4b:
-                this->push_sym((this->key_flags & NUMLOCK)?KS_KP_4:KS_Left);
-            break;
-        /* KP_8 or kEYPAD UP ARROW */
-        case 0x48:
-            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_8:KS_Up);
-            break;
-        /* KP_6 or KEYPAD RIGHT ARROW */
-        case 0x4d:
-            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_6:KS_Right);
-            break;
-        /* KP_2 or KEYPAD DOWN ARROW */
-        case 0x50:
-            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_2:KS_Down);
-            break;
-        /* Kp_9 or KEYPAD PGUP */
-        case 0x49:
-            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_9:KS_Prior);
-            break;
-        /* KP_3 or kEYPAD PGDOWN */
-        case 0x51:
-            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_3:KS_Next);
-            break;
-        /* KP_1 or KEYPAD END */
-        case 0x4F:
-            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_1:KS_End);
-            break;
-        /* kEYPAD EMPTY 5 */
-        case 0x4c:
-            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_5:0);
-            break;
-        /* kEYPAD HOME */
-        case 0x47:
-            this->push_sym((this->key_flags & NUMLOCK)?KS_KP_7:KS_Home);
-            break;
-        /* KP_0 or kEYPAD INSER */
-        case 0x52:
-            this->push_sym((this->key_flags & NUMLOCK)?'0':0xFF63);
-            break;
+    bool is_num_locked() const;
 
-    //----------------
-    // All other keys
-    //----------------
-        default:
-        {
-            // This table translates the RDP scancodes to X11 scancodes :
-            //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
-            //  - the second block (128-255) give codes for the extended keys that have a meaningful one
-            // as in this code extended bit is cleared: it won't work
+    void toggle_num_lock(bool on);
 
-            uint8_t map[256] =  {
-                0x00, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, // 0x00 - 0x07
-                0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, // 0x08 - 0x0f
-                0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, // 0x10 - 0x17
-                0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, // 0x18 - 0x1f
-                0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, // 0x20 - 0x27
-                0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, // 0x28 - 0x2f
-                0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, // 0x30 - 0x37
-                0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, // 0x38 - 0x3f
-                0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, // 0x40 - 0x47
-                0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, // 0x48 - 0x4f
-                0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, // 0x50 - 0x57
-                0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67, // 0x58 - 0x5f
-                0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, // 0x60 - 0x67
-                0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, // 0x68 - 0x6f
-                0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, // 0x70 - 0x77
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x78 - 0x7f
+    bool is_left_shift_pressed() const;
 
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x80 - 0x87
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x88 - 0x8f
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x90 - 0x97
-                0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00, // 0x98 - 0x9f
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xa0 - 0xa7
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xa8 - 0xaf
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x6f, // 0xb0 - 0xb7
-                0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xb8 - 0xbf
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61, // 0xc0 - 0xc7
-                0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67, // 0xc8 - 0xcf
-                0x68, 0x69, 0x6a, 0x6b, 0x00, 0x00, 0x00, 0x00, // 0xd0 - 0xd7
-                0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00, // 0xd8 - 0xdf
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xe0 - 0xe7
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xe8 - 0xef
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xf0 - 0xf7
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
-            } ;
+    bool is_right_shift_pressed() const;
 
-            // Maps RDP Scancode to X11 code syms matrix
-            // -----------------------------------------
-            // The actual code to use will be looked-up in keyboard mapping tables
+    bool is_shift_pressed() const;
 
-// KEYBOARD MAP WITH RDP SCANCODES
-// -------------------------------
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-// | 01 |  | 3B | 3C | 3D | 3E |  | 3F | 40 | 41 | 42 |  | 43 | 44 | 57 | 58 |  | 37 | 46 | 1D+45 |
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-//                                     ***  keycodes suffixed by 'x' are extended ***
-// +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +--------------------+
-// | 29 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0A | 0B | 0C | 0D |   0E   |  | 52x| 47x| 49x|  | 45 | 35x| 37 | 4A  |
-// +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+-----+
-// |  0F  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1A | 1B |      |  | 53x| 4Fx| 51x|  | 47 | 48 | 49 |     |
-// +------------------------------------------------------------------+  1C  |  +----+----+----+  +----+----+----| 4E  |
-// |  3A   | 1E | 1F | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 2B |     |                    | 4B | 4C | 4D |     |
-// +-------------------------------------------------------------------------+       +----+       +----+----+----+-----+
-// |  2A | 56 | 2C | 2D | 2E | 2F | 30 | 31 | 32 | 33 | 34 | 35 |     36     |       | 48x|       | 4F | 50 | 51 |     |
-// +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 1Cx |
-// |  1D  |  5Bx | 38 |           39           |  38x  |  5Cx |  5Dx |  1Dx  |  | 4Bx| 50x| 4Dx|  |    52   | 53 |     |
-// +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
+    bool is_left_ctrl_pressed() const;
 
-// KEYBOARD MAP WITH X KSYM LAYOUT SCANCODES
-// -----------------------------------------
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-// | 09 |  | 43 | 44 | 45 | 46 |  | 47 | 48 | 49 | 4A |  | 4B | 4C | 5F | 60 |  | 37 | 4E | 6DX   |
-// +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
-//                                     ***  keycodes suffixed by 'x' are extended ***
-// +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +--------------------+
-// | 31 | 0A | 0B | 0C | 0D | 0E | 0F | 10 | 11 | 12 | 13 | 14 | 15 |   16   |  | 6AX| 61X| 63X|  | 4D | 70X| 3F | 52  |
-// +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+-----+
-// |  17  | 18 | 19 | 1A | 1B | 1C | 1D | 1E | 1F | 20 | 21 | 22 | 23 |      |  | 6BX| 67X| 69X|  | 4F | 50 | 51 |     |
-// +------------------------------------------------------------------+  24  |  +----+----+----+  +----+----+----| 56  |
-// |  42   | 26 | 27 | 28 | 29 | 2A | 2B | 2C | 2D | 2E | 2F | 30 | 33 |     |                    | 53 | 54 | 55 |     |
-// +-------------------------------------------------------------------------+       +----+       +----+----+----+-----+
-// |  32 | 56 | 34 | 35 | 36 | 37 | 38 | 39 | 3A | 3B | 3C | 3D |     3E     |       | 62X|       | 57 | 58 | 59 |     |
-// +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 6CX |
-// |  25  |  73X | 40 |           41           |  71X  |  74X |  75X |  6DX  |  | 64X| 68X| 66X|  |    5A   | 5B |     |
-// +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
+    bool is_right_ctrl_pressed() const;
 
-            const KeyLayout_t * layout = this->select_layout();
+    bool is_ctrl_pressed() const;
 
-            /* KP_ POINT or kEYPAD DELETE */
-            if (extendedKeyCode == 0x53){
-                if (this->key_flags & NUMLOCK){
-                    // This one has to be localized
-                    layout = &this->keylayout_WORK_shift_sym;
-                    uint8_t sym = map[extendedKeyCode];
-                    uint32_t ksym = (*layout)[sym];
-                    this->push_sym(ksym);
-                }
-                else {
-                    this->push_sym(0xFFFF);
-                }
-                break;
-            }
+    bool is_left_alt_pressed() const;
 
-            if (this->verbose) {
-                LOG(LOG_INFO, "Use KEYLAYOUT WORK no shift");
-            }
+    // altgr key or ctrl+alt
+    bool is_altgr_pressed() const;
 
-            // Translate the scancode to a KeySym
-            //----------------------------------------
-            uint8_t sym = map[extendedKeyCode];
-            uint32_t ksym = (*layout)[sym];
-            if (this->verbose){
-                LOG(LOG_INFO, "extendedKeyCode=0x%X sym=0x%X ksym=0x%X", extendedKeyCode, sym, ksym);
-            }
-            if ((ksym == 0xFE52 ) // DEADKEYS 
-            || (ksym == 0xFE57) 
-            || (ksym == 0x60) 
-            || (ksym == 0x7E)) {
-                //-------------------------------------------------
-                // ksym is NOT in Printable unicode character range
-                //-------------------------------------------------
-                // That is, A dead key (0xFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
-                // The flag is set accordingly
-                switch (extendedKeyCode){
-                    case 0x1A:
-                        this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
-                        break;
-                    case 0x08:
-                        this->dead_key = DEADKEY_GRAVE;
-                        break;
-                    case 0x03:
-                        this->dead_key = DEADKEY_TILDE;
-                        break;
-                    default:
-                        break;
-                } // Switch extendedKeyCode
-            }
-            else {
-                //-------------------------------------------------
-                // ksym is in Printable character range.
-                //-------------------------------------------------
-                if (this->dead_key != DEADKEY_NONE){
-                    switch (dead_key){
-                        case DEADKEY_CIRC:
-                            switch (ksym){
-                                case 'a':
-                                    this->push_sym(0xE2); // unicode for â (acirc)
-                                    break;
-                                case 'A':
-                                    this->push_sym(0xC2); // unicode for Â (Acirc)
-                                    break;
-                                case 'e':
-                                    this->push_sym(0xEA); // unicode for ê (ecirc)
-                                    break;
-                                case 'E':
-                                    this->push_sym(0xCA); // unicode for Ê (Ecirc)
-                                    break;
-                                case 'i':
-                                    this->push_sym(0xEE); // unicode for î (icirc)
-                                    break;
-                                case 'I':
-                                    this->push_sym(0xCE); // unicode for Î (Icirc)
-                                    break;
-                                case 'o':
-                                    this->push_sym(0xF4); // unicode for ô (ocirc)
-                                    break;
-                                case 'O':
-                                    this->push_sym(0xD4); // unicode for Ô (Ocirc)
-                                    break;
-                                case 'u':
-                                    this->push_sym(0xFB); // unicode for û (ucirc)
-                                    break;
-                                case 'U':
-                                    this->push_sym(0xDB); // unicode for Û (Ucirc)
-                                    break;
-                                case ' ':
-                                    this->push_sym(0x5E); // unicode for ^ (caret)
-                                    break;
-                                default:
-                                    this->push_sym(ksym); // unmodified unicode
-                                    break;
-                            }
-                            break;
+    // altgr key
+    bool is_right_alt_pressed() const;
 
-                        case DEADKEY_UML:
-                            switch (ksym){
-                                case 'a':
-                                    this->push_sym(0xE4); // unicode for ä (auml)
-                                    break;
-                                case 'A':
-                                    this->push_sym(0xC4); // unicode for Ä (Auml)
-                                    break;
-                                case 'e':
-                                    this->push_sym(0xEB); // unicode for ë (euml)
-                                    break;
-                                case 'E':
-                                    this->push_sym(0xCB); // unicode for Ë (Euml)
-                                    break;
-                                case 'i':
-                                    this->push_sym(0xEF); // unicode for ï (iuml)
-                                    break;
-                                case 'I':
-                                    this->push_sym(0xCF); // unicode for Ï (Iuml)
-                                    break;
-                                case 'o':
-                                    this->push_sym(0xF6); // unicode for ö (ouml)
-                                    break;
-                                case 'O':
-                                    this->push_sym(0xD6); // unicode for Ö (Ouml)
-                                    break;
-                                case 'u':
-                                    this->push_sym(0xFC); // unicode for ü (uuml)
-                                    break;
-                                case 'U':
-                                    this->push_sym(0xDC); // unicode for Ü (Uuml)
-                                    break;
-                                case ' ':
-                                    this->push_sym(0xA8); // unicode for " (umlaut)
-                                    break;
-                                default:
-                                    this->push_sym(ksym); // unmodified unicode
-                                    break;
-                            }
-                            break;
-                        case DEADKEY_GRAVE:
-                            switch (ksym){
-                                case 'a':
-                                    this->push_sym(0xE0); // unicode for à (agrave)
-                                    break;
-                                case 'A':
-                                    this->push_sym(0xC0); // unicode for À (Agrave)
-                                    break;
-                                case 'e':
-                                    this->push_sym(0xE8); // unicode for è (egrave)
-                                    break;
-                                case 'E':
-                                    this->push_sym(0xC8); // unicode for È (Egrave)
-                                    break;
-                                case 'i':
-                                    this->push_sym(0xEC); // unicode for ì (igrave)
-                                    break;
-                                case 'I':
-                                    this->push_sym(0xCC); // unicode for Ì (Igrave)
-                                    break;
-                                case 'o':
-                                    this->push_sym(0xF2); // unicode for ò (ograve)
-                                    break;
-                                case 'O':
-                                    this->push_sym(0xD2); // unicode for Ò (Ograve)
-                                    break;
-                                case 'u':
-                                    this->push_sym(0xF9); // unicode for ù (ugrave)
-                                    break;
-                                case 'U':
-                                    this->push_sym(0xD9); // unicode for Ù (Ugrave)
-                                    break;
-                                case ' ':
-                                    this->push_sym(0x60); // unicode for ` (backquote)
-                                    break;
-                                default:
-                                    this->push_sym(ksym); // unmodified unicode
-                                    break;
-                            }
-                            break;
-                        case DEADKEY_TILDE:
-                            switch (ksym){
-                                case 'n':
-                                    this->push_sym(0xF1); // unicode for ~n (ntilde)
-                                    break;
-                                case 'N':
-                                    this->push_sym(0xD1); // unicode for ~N (Ntilde)
-                                    break;
-                                case ' ':
-                                    this->push_sym(0x7E); // unicode for ~ (tilde)
-                                    break;
-                                default:
-                                    this->push_sym(ksym); // unmodified unicode
-                                    break;
-                            }
-                            break;
-                        default:
-                            this->push_sym(ksym); // unmodified unicode
-                            break;
-                    } // Switch DEAD_KEY
-                    // if event is a Make (mandatory because a BREAK on a modifier key would also reset this flag)
-                    if (this->keys_down[extendedKeyCode])
-                    {
-                        this->dead_key = DEADKEY_NONE;
-                    }
-                } // Is a dead Key
-                else {
-                    // If previous key wasn't a dead key, simply push
-                    this->push_sym(ksym);
-                }
-            } // END if PRINTABLE / else
-        } // END if KEYPAD specific / else
-        break;
-    } // END SWITCH : ExtendedKeyCode
+    bool is_alt_pressed() const;
 
-} // END FUNCT : event
+    void init_layout_sym(int keyb);
 
+    const KeyLayout_t * select_layout();
 
-// Push only sym
-void KeymapSym::push_sym(uint32_t sym)
-{
-    if (this->verbose & 2){
-        LOG(LOG_INFO, "KeymapSym::push_sym(sym=%08x) nbuf_sym=%u", sym, this->nbuf_sym);
-    }
-    if (this->nbuf_sym < SIZE_KEYBUF_SYM){
-        this->buffer_sym[this->ibuf_sym] = sym;
-        this->ibuf_sym++;
-        if (this->ibuf_sym >= SIZE_KEYBUF_SYM){
-            this->ibuf_sym = 0;
-        }
-        this->nbuf_sym++;
-    }
-}
-
-uint32_t KeymapSym::get_sym()
-{
-    if (this->verbose & 2){
-        LOG(LOG_INFO, "KeymapSym::get_sym() nbuf_sym=%u", this->nbuf_sym);
-    }
-    if (this->nbuf_sym > 0){
-        uint32_t res = this->buffer_sym[(SIZE_KEYBUF_SYM + this->ibuf_sym - this->nbuf_sym) % SIZE_KEYBUF_SYM];
-
-        if (this->nbuf_sym > 0){
-            this->nbuf_sym--;
-        }
-        if (this->verbose & 2){
-            LOG(LOG_INFO, "KeymapSym::get_sym() nbuf_sym=%u -> %08x", this->nbuf_sym, res);
-        }
-        return res;
-    }
-    return 0;
-}
-
-uint32_t KeymapSym::nb_sym_available() const
-{
-    return this->nbuf_sym;
-}
-
-bool KeymapSym::is_caps_locked() const
-{
-    return this->key_flags & CAPSLOCK;
-}
-
-bool KeymapSym::is_scroll_locked() const
-{
-    return this->key_flags & SCROLLLOCK;
-}
-
-bool KeymapSym::is_num_locked() const
-{
-    return this->key_flags & NUMLOCK;
-}
-
-void KeymapSym::toggle_num_lock(bool on)
-{
-    if (((this->key_flags & NUMLOCK) == NUMLOCK) != on) {
-        this->key_flags ^= NUMLOCK;
-    }
-}
-
-bool KeymapSym::is_left_shift_pressed() const
-{
-    return this->keys_down[LEFT_SHIFT];
-}
-
-bool KeymapSym::is_right_shift_pressed() const
-{
-    return this->keys_down[RIGHT_SHIFT];
-}
-
-bool KeymapSym::is_shift_pressed() const
-{
-    return this->is_left_shift_pressed() || this->is_right_shift_pressed();
-}
-
-bool KeymapSym::is_left_ctrl_pressed() const
-{
-    return this->keys_down[LEFT_CTRL];
-}
-
-bool KeymapSym::is_right_ctrl_pressed() const
-{
-    return this->keys_down[RIGHT_CTRL];
-}
-
-bool KeymapSym::is_ctrl_pressed() const
-{
-    return is_right_ctrl_pressed() || is_left_ctrl_pressed();
-}
-
-bool KeymapSym::is_left_alt_pressed() const
-{
-    return this->keys_down[LEFT_ALT];
-}
-
-bool KeymapSym::is_right_alt_pressed() const // altgr
-{
-    return this->keys_down[RIGHT_ALT];
-}
-
-bool KeymapSym::is_alt_pressed() const
-{
-    return is_right_alt_pressed() || is_left_alt_pressed();
-}
-
-bool KeymapSym::is_altgr_pressed() const
-{
-    return ((this->is_ctrl_pressed() && this->is_left_alt_pressed()) || (this->is_right_alt_pressed()));
-}
-
-#include "keyboard/keymapsymlayouts.hpp"
+}; // STRUCT - KeymapSym

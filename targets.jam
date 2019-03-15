@@ -44,7 +44,7 @@ exe rdpproxy :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -161,7 +161,7 @@ exe rdpheadless :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
@@ -232,7 +232,7 @@ exe rdptproxy :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -322,7 +322,7 @@ exe vncclient :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -471,7 +471,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -565,7 +565,7 @@ test-run tests/acl/test_authentifier :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -659,7 +659,7 @@ test-run tests/acl/test_module_manager :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -1044,7 +1044,7 @@ test-run tests/client_mods/test_vnc_client_simple :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
@@ -1898,7 +1898,7 @@ test-run tests/core/test_mainloop :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -1997,7 +1997,7 @@ test-run tests/core/test_session :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -2086,7 +2086,7 @@ test-run tests/core/test_session_server :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
@@ -2241,12 +2241,12 @@ test-run tests/keyboard/test_keymap2 :
   <covfile>src/keyboard/keymap2.hpp
   <library>src/keyboard/keymap2.o
 ;
-test-run tests/keyboard/test_keymapSym :
-  $(REDEMPTION_TEST_PATH)/keyboard/test_keymapSym.cpp
+test-run tests/keyboard/test_keymapsym :
+  $(REDEMPTION_TEST_PATH)/keyboard/test_keymapsym.cpp
 :
-  <covfile>src/keyboard/keymapSym.cpp
-  <covfile>src/keyboard/keymapSym.hpp
-  <library>src/keyboard/keymapSym.o
+  <covfile>src/keyboard/keymapsym.cpp
+  <covfile>src/keyboard/keymapsym.hpp
+  <library>src/keyboard/keymapsym.o
 ;
 test-run tests/main/test_do_recorder :
   $(REDEMPTION_TEST_PATH)/main/test_do_recorder.cpp
@@ -3363,7 +3363,7 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
@@ -3399,7 +3399,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
@@ -3435,7 +3435,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
+  <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
@@ -4300,7 +4300,7 @@ obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
-obj src/keyboard/keymapSym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapSym.cpp ;
+obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
@@ -4692,8 +4692,8 @@ alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_protected_graphics.coverage : tests/gdi/test_protected_graphics.coverage ;
 alias test_keymap2 : tests/keyboard/test_keymap2 ;
 alias test_keymap2.coverage : tests/keyboard/test_keymap2.coverage ;
-alias test_keymapSym : tests/keyboard/test_keymapSym ;
-alias test_keymapSym.coverage : tests/keyboard/test_keymapSym.coverage ;
+alias test_keymapsym : tests/keyboard/test_keymapsym ;
+alias test_keymapsym.coverage : tests/keyboard/test_keymapsym.coverage ;
 alias test_do_recorder : tests/main/test_do_recorder ;
 alias test_do_recorder.coverage : tests/main/test_do_recorder.coverage ;
 alias test_scytale : tests/main/test_scytale ;
@@ -5261,7 +5261,7 @@ alias tests/gdi :
 explicit tests/keyboard ;
 alias tests/keyboard :
   tests/keyboard/test_keymap2
-  tests/keyboard/test_keymapSym
+  tests/keyboard/test_keymapsym
 ;
 explicit tests/main ;
 alias tests/main :
