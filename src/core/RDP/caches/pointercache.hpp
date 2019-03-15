@@ -88,7 +88,7 @@ public:
         this->pointer_stamp++;
         /* look for match */
         for (int i = 0; i < this->pointer_cache_entries; i++) {
-            if (this->Pointers[i] == cursor) {
+            if (this->cached[index] && (this->Pointers[i] == cursor)) {
                 this->stamps[i] = this->pointer_stamp;
                 cache_idx = i;
                 return POINTER_ALLREADY_SENT;
