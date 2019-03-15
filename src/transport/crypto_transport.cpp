@@ -787,7 +787,7 @@ void OutCryptoTransport::close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t
     if (this->tmpname[0] != 0){
         if (::rename(this->tmpname, this->finalname) < 0) {
             int const err = errno;
-            LOG(LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%d : %s\n"
+            LOG(LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%d : %s"
                 , this->tmpname, this->finalname, err, strerror(err));
             this->out_file.close();
             throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
@@ -833,7 +833,7 @@ void OutCryptoTransport::create_hash_file(
     struct stat stat;
     if (0 != this->fstat.stat(this->finalname, stat)) {
         int const err = errno;
-        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n",
+        LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]",
             this->hash_filename, err);
         throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
     }

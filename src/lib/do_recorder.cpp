@@ -807,7 +807,7 @@ static inline int check_encrypted_or_checksumed(
                 }
             }
             if (err) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
+                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]", hash_filename, err);
                 return 1;
             }
         }
@@ -998,7 +998,7 @@ static bool program_requested_to_shutdown = false;
 
 inline void shutdown(int sig)
 {
-    LOG(LOG_INFO, "shutting down : signal %d pid=%d\n", sig, getpid());
+    LOG(LOG_INFO, "shutting down : signal %d pid=%d", sig, getpid());
 
     program_requested_to_shutdown = true;
 }
@@ -1529,7 +1529,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
                         }
 
-                        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
+                        LOG(LOG_INFO, "canonical_path : %s%s%s", path, basename, extension);
 
                         // PngParams
                         png_params.remote_program_session = false;

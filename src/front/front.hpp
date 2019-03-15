@@ -926,11 +926,11 @@ public:
         LOG(LOG_INFO, "---<>  Front::can_be_start_capture  <>---");
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Front::can_be_start_capture: movie_path    = %s\n", ini.get<cfg::globals::movie_path>());
-            LOG(LOG_INFO, "Front::can_be_start_capture: auth_user     = %s\n", ini.get<cfg::globals::auth_user>());
-            LOG(LOG_INFO, "Front::can_be_start_capture: host          = %s\n", ini.get<cfg::globals::host>());
-            LOG(LOG_INFO, "Front::can_be_start_capture: target_device = %s\n", ini.get<cfg::globals::target_device>());
-            LOG(LOG_INFO, "Front::can_be_start_capture: target_user   = %s\n", ini.get<cfg::globals::target_user>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: movie_path    = %s", ini.get<cfg::globals::movie_path>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: auth_user     = %s", ini.get<cfg::globals::auth_user>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: host          = %s", ini.get<cfg::globals::host>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: target_device = %s", ini.get<cfg::globals::target_device>());
+            LOG(LOG_INFO, "Front::can_be_start_capture: target_user   = %s", ini.get<cfg::globals::target_user>());
         }
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? BitsPerPixel{16} : BitsPerPixel{24});
@@ -1539,7 +1539,7 @@ public:
                         }
                         break;
                         default:
-                            LOG(LOG_WARNING, "Front::incoming: Unexpected data block tag %x\n", f.tag);
+                            LOG(LOG_WARNING, "Front::incoming: Unexpected data block tag %x", f.tag);
                         break;
                     }
                 }
@@ -2213,7 +2213,7 @@ public:
                         // TODO check all payload data is consumed
                         break;
                     default:
-                        LOG(LOG_WARNING, "Front::incoming: Unknown PDU type received while in licence negociation (%d)\n", sctrl.pduType);
+                        LOG(LOG_WARNING, "Front::incoming: Unknown PDU type received while in licence negociation (%d)", sctrl.pduType);
                         break;
                     }
                     // TODO Check why this is necessary when using loop connection ?
@@ -2543,7 +2543,7 @@ public:
                                 "Front::incoming: Received SERVER_REDIR_PKT (unsupported)");
                             break;
                         default:
-                            LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)\n", sctrl.pduType);
+                            LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)", sctrl.pduType);
                             break;
                         }
 
@@ -3525,7 +3525,7 @@ private:
                         this->send_control(RDP_CTL_COOPERATE);
                     break;
                     default:
-                        LOG(LOG_WARNING, "Front::process_data: DATA_PDU_CONTROL unknown action (%d)\n", action);
+                        LOG(LOG_WARNING, "Front::process_data: DATA_PDU_CONTROL unknown action (%d)", action);
                 }
             }
             break;
@@ -4003,7 +4003,7 @@ private:
         break;
 
         default:
-            LOG(LOG_WARNING, "Front::process_data: Unsupported PDUTYPE in process_data %d\n", sdata_in.pdutype2);
+            LOG(LOG_WARNING, "Front::process_data: Unsupported PDUTYPE in process_data %d", sdata_in.pdutype2);
             break;
         }
 

@@ -288,7 +288,7 @@ public:
             timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
             *this->_callback.get_mod(), *this
         )) {
-            LOG(LOG_ERR, "RDP CLIENT :: errno = %s\n", strerror(errno));
+            LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
             return 9;
         }
         return 0;

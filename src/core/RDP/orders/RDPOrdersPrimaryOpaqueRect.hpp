@@ -88,7 +88,7 @@ class RDPOpaqueRect {
 
         uint32_t const diff_color = this->color.as_bgr().as_u32() ^ oldcmd.color.as_bgr().as_u32();
 
-//        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
+        // LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x", oldcmd.color, this->color);
 
         header.fields =   (dr.dleft                != 0) * 0x01
                         | (dr.dtop                 != 0) * 0x02

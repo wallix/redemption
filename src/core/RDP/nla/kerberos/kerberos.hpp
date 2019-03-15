@@ -432,13 +432,13 @@ public:
         OM_uint32 msgctx = 0, ms;
         gss_buffer_desc status_string;
 
-        LOG(LOG_ERR, "GSS error [%u:%u:%u]: %s\n",
+        LOG(LOG_ERR, "GSS error [%u:%u:%u]: %s",
             (major_status & 0xff000000) >> 24,	// Calling error
             (major_status & 0xff0000) >> 16,	// Routine error
             major_status & 0xffff,	// Supplementary info bits
             str);
 
-        LOG(LOG_ERR, "GSS Minor status error [%u:%u:%u]:%u %s\n",
+        LOG(LOG_ERR, "GSS Minor status error [%u:%u:%u]:%u %s",
             (minor_status & 0xff000000) >> 24,	// Calling error
             (minor_status & 0xff0000) >> 16,	// Routine error
             minor_status & 0xffff,	// Supplementary info bits
@@ -453,7 +453,7 @@ public:
                 continue;
             }
 
-            LOG(LOG_ERR," - %s\n", static_cast<char const*>(status_string.value));
+            LOG(LOG_ERR," - %s", static_cast<char const*>(status_string.value));
         }
         while (ms == GSS_S_COMPLETE && msgctx);
 

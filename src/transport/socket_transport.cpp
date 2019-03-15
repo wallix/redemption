@@ -175,7 +175,7 @@ bool SocketTransport::disconnect()
 {
     if (0 == strcmp("127.0.0.1", this->ip_address)){
         // silent trace in the case of watchdog
-        LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
+        LOG(LOG_INFO, "Socket %s (%d) : closing connection", this->name, this->sck);
     }
     this->tls_state = TLSState::Uninit;
     // Disconnect tls if needed

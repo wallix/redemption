@@ -39,7 +39,7 @@ void ModuleManager::create_mod_vnc(
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags)
 {
-    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
+    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
     unique_fd client_sck = this->connect_to_target_host(
         report_message, trkeys::authentification_vnc_fail, "VNC");

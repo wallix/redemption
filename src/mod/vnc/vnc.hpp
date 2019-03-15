@@ -813,7 +813,7 @@ public:
         this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
-        LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "VNC screen cleaning ok\n");
+        LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "VNC screen cleaning ok");
 
         RDPECLIP::GeneralCapabilitySet general_caps(
             RDPECLIP::CB_CAPS_VERSION_1,
@@ -1286,7 +1286,7 @@ protected:
                         this->state = State::ServerCutText;
                         return vnc.lib_clip_data(buf);
                     default:
-                        LOG(LOG_ERR, "unknown message type in vnc %u\n", message_type);
+                        LOG(LOG_ERR, "unknown message type in vnc %u", message_type);
                         throw Error(ERR_VNC);
                 }
                 break;
@@ -1377,7 +1377,7 @@ private:
 
                 this->server_data_buf.advance(protocol_version_len);
 
-                this->t.send("RFB 003.003\n", 12);
+                this->t.send("RFB 003.003", 12);
                 IF_ENABLE_METRICS(data_from_client(12));
                 // sec type
 
@@ -1449,7 +1449,7 @@ private:
 
                 if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                     if (status) {
-                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "vnc password ok\n");
+                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "vnc password ok");
                     }
                     else {
                         LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
@@ -1483,7 +1483,7 @@ private:
 
                 if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                     if (status) {
-                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "MS LOGON password ok\n");
+                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "MS LOGON password ok");
                     }
                     else {
                         LOG(LOG_INFO, "MS LOGON password FAILED. Reason: %.*s",
@@ -2150,7 +2150,7 @@ private:
             buf.advance(4);
 
             if (this->first_color + this->num_colors > 256) {
-                LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n",
+                LOG(LOG_ERR, "VNC: number of palette colors too large: %d",
                     this->num_colors);
                 return Result::ok(State::SkipData);
             }

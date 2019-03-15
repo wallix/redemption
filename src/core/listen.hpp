@@ -89,7 +89,7 @@ inline unique_fd create_local_server(char const* sck_name)
 
     LOG(LOG_INFO, "Listen: listening on socket %d", sck);
     if (0 != listen(sck, 2)) {
-        LOG(LOG_ERR, "Listen: error listening on socket\n");
+        LOG(LOG_ERR, "Listen: error listening on socket");
     }
 
     // OK, keep the temporary socket everything was fine
@@ -124,18 +124,18 @@ inline unique_fd create_server_bind_sck(
     }
 
     if (bool(enable_transparent_mode)) {
-        LOG(LOG_INFO, "Enable transparent proxying on listened socket.\n");
+        LOG(LOG_INFO, "Enable transparent proxying on listened socket.");
         int optval = 1;
 
         if (setsockopt(sck, SOL_IP, IP_TRANSPARENT, &optval, sizeof(optval))) {
-            LOG(LOG_ERR, "Failed to enable transparent proxying on listened socket.\n");
+            LOG(LOG_ERR, "Failed to enable transparent proxying on listened socket.");
             return invalid_fd();
         }
     }
 
     LOG(LOG_INFO, "Listen: listening on socket %d", sck);
     if (0 != listen(sck, 2)) {
-        LOG(LOG_ERR, "Listen: error listening on socket\n");
+        LOG(LOG_ERR, "Listen: error listening on socket");
     }
 
     // OK, keep the temporary socket everything was fine
@@ -231,7 +231,7 @@ int unique_server_loop(unique_fd sck, CbNewConn&& cb_new_conn)
             if (is_no_error_server_loop()) {
                 continue;
             }
-            LOG(LOG_ERR, "socket error detected in listen (%s)\n", strerror(errno));
+            LOG(LOG_ERR, "socket error detected in listen (%s)", strerror(errno));
             return -1;
         }
 
@@ -263,7 +263,7 @@ int two_server_loop(unique_fd sck1, unique_fd sck2, CbNewConn&& cb_new_conn)
             if (is_no_error_server_loop()) {
                 continue;
             }
-            LOG(LOG_ERR, "socket error detected in listen (%s)\n", strerror(errno));
+            LOG(LOG_ERR, "socket error detected in listen (%s)", strerror(errno));
             return -1;
         }
 

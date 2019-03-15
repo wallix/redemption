@@ -1109,7 +1109,7 @@ public:
             assert(!(header.fields & ~0x1FFF));
             break;
         default:
-            LOG(LOG_INFO, "Order is Unknown (%u)\n", this->order);
+            LOG(LOG_INFO, "Order is Unknown (%u)", this->order);
             assert(false);
         }
 

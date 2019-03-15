@@ -185,7 +185,7 @@ namespace BER {
             return false;
         }
         byte = s.peek_uint8();
-        // LOG(LOG_INFO, "read_contextual_tag read: %x\n", byte);
+        // LOG(LOG_INFO, "read_contextual_tag read: %x", byte);
         if (byte != (CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag))) { /*NOLINT*/
             return false;
         }

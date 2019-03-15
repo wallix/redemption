@@ -74,7 +74,7 @@ void MMIni::invoke_close_box(
             this->mod->disconnect();
         }
         catch (Error const& e) {
-            LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!\n", e.id);
+            LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!", e.id);
         }
     }
 

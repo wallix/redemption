@@ -97,7 +97,7 @@ inline int run_connection_test(
             SessionReactor::EnableGraphics{true}, mod, gd
         )) {
             case ExecuteEventsResult::Error:
-                LOG(LOG_INFO, "%s CLIENT :: errno = %d\n", type, errno);
+                LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
                 return 1;
             case ExecuteEventsResult::Continue:
                 break;
@@ -140,7 +140,7 @@ inline int wait_for_screenshot(
             SessionReactor::EnableGraphics{true}, callback, gd
         )) {
             case ExecuteEventsResult::Error:
-                LOG(LOG_INFO, "%s CLIENT :: errno = %d\n", type, errno);
+                LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
                 return 1;
             case ExecuteEventsResult::Success:
                 LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
@@ -186,7 +186,7 @@ inline int run_test_client(
         return 0;
     }
     catch (Error const & e) {
-        LOG(LOG_ERR, "%s CLIENT :: Exception raised = %s !\n", type, e.errmsg());
+        LOG(LOG_ERR, "%s CLIENT :: Exception raised = %s !", type, e.errmsg());
         return e.id;
     }
 }

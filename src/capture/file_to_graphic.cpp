@@ -286,7 +286,7 @@ void FileToGraphic::interpret_order()
             throw Error(ERR_WRM);
         }
         if (!this->timestamp_ok){
-            LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
+            LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing");
             throw Error(ERR_WRM);
         }
         uint8_t control = this->stream.in_uint8();
@@ -485,7 +485,7 @@ void FileToGraphic::interpret_order()
             }
 
             LOG_IF(bool(this->verbose & Verbose::timestamp), LOG_INFO,
-                "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")\n"
+                "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")"
                 , static_cast<unsigned long>(this->record_now.tv_sec)
                 , static_cast<unsigned long>(this->record_now.tv_usec)
                 , this->mouse_x
@@ -1004,7 +1004,7 @@ void FileToGraphic::instant_play_client(std::chrono::microseconds endin_frame)
         if (this->next_order()) {
 
             LOG_IF(bool(this->verbose & Verbose::play), LOG_INFO,
-                "replay TIMESTAMP (first timestamp) = %u order=%u\n",
+                "replay TIMESTAMP (first timestamp) = %u order=%u",
                 unsigned(this->record_now.tv_sec), this->total_orders_count);
 
             this->interpret_order();
@@ -1034,6 +1034,6 @@ void FileToGraphic::snapshot_play()
 void FileToGraphic::log_play() const
 {
     LOG_IF(bool(this->verbose & Verbose::play), LOG_INFO,
-        "replay TIMESTAMP (first timestamp) = %u order=%u\n",
+        "replay TIMESTAMP (first timestamp) = %u order=%u",
         unsigned(this->record_now.tv_sec), this->total_orders_count);
 }

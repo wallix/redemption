@@ -207,7 +207,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
             path[end_of_path + 1 - fullpath] = 0;
         }
         else {
-            LOG(LOG_ERR, "canonical_path : Path too long for the buffer\n");
+            LOG(LOG_ERR, "canonical_path : Path too long for the buffer");
             return false;
         }
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
@@ -219,7 +219,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
                     basename[start_of_extension - end_of_path - 1] = 0;
                 }
                 else {
-                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
+                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer");
                     return false;
                 }
             }
@@ -247,7 +247,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
                     basename[start_of_extension - fullpath] = 0;
                 }
                 else {
-                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
+                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer");
                     return false;
                 }
             }

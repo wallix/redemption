@@ -89,7 +89,7 @@ Bitmap bitmap_from_file_impl(const char * filename)
         return Bitmap{};
     }
     if (type1[0] == 'B' && type1[1] == 'M') {
-        LOG(LOG_INFO, "Bitmap: image file [%s] is BMP file\n", filename);
+        LOG(LOG_INFO, "Bitmap: image file [%s] is BMP file", filename);
         return bitmap_from_bmp_without_sig(file.fd(), filename);
     }
     if (not read_all(file.fd(), type1 + 2, 6)) {
@@ -97,11 +97,11 @@ Bitmap bitmap_from_file_impl(const char * filename)
         return Bitmap{};
     }
     if (png_sig_cmp(type1, 0, 8) == 0) {
-        //LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file\n", filename);
+        //LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file", filename);
         return bitmap_from_png_without_sig(file.fd(), filename);
     }
 
-    LOG(LOG_ERR, "Bitmap: error bitmap file [%s] not BMP or PNG file\n", filename);
+    LOG(LOG_ERR, "Bitmap: error bitmap file [%s] not BMP or PNG file", filename);
     return Bitmap{};
 }
 
@@ -304,7 +304,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
                 }
                 break;
             default:
-                LOG(LOG_ERR, "Bitmap: error bitmap file [%s] unsupported bpp %d\n",
+                LOG(LOG_ERR, "Bitmap: error bitmap file [%s] unsupported bpp %d",
                     filename, header.bit_count);
                 return bitmap;
         }
@@ -324,7 +324,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             auto p = buf_maker.dyn_array(bufsize).data();
             for (unsigned y = 0; y < header.image_height; y++) {
                 if (not read_all(fd, p + y * row_size, row_size + padding)) {
-                    LOG(LOG_ERR, "Bitmap: read error reading bitmap file [%s] read\n", filename);
+                    LOG(LOG_ERR, "Bitmap: read error reading bitmap file [%s] read", filename);
                     return bitmap;
                 }
             }

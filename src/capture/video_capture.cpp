@@ -89,7 +89,7 @@ VideoTransportBase::~VideoTransportBase()
         this->out_file.close();
         // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
         if (::rename(this->tmp_filename, this->final_filename) < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s\n"
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s"
                , this->tmp_filename, this->final_filename, errno, strerror(errno));
         }
     }
@@ -136,7 +136,7 @@ void VideoTransportBase::rename()
     if (::rename(this->tmp_filename, this->final_filename) < 0)
     {
         int const errnum = errno;
-        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s\n"
+        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s"
             , this->tmp_filename, this->final_filename, errnum, strerror(errnum));
         this->status = false;
         throw Error(ERR_TRANSPORT_WRITE_FAILED, errnum);

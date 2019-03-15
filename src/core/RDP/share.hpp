@@ -300,12 +300,11 @@ struct ShareControl_Recv
     }
 
     inline void log() const {
-        LOG(LOG_INFO, "ShareControl_Recv: \n"
-                      "     * totalLength = %d (2 bytes)\n"
-                      "     * pduType = %d (2 bytes)\n"
-                      "     * PDUSource = %d (2 bytes)\n"
-                      "     * payload (%zu byte(s))\n",
-                      int(totalLength), int(pduType), int(PDUSource), this->payload.in_remain());
+        LOG(LOG_INFO, "ShareControl_Recv:");
+        LOG(LOG_INFO, "     * totalLength = %d (2 bytes)", int(totalLength));
+        LOG(LOG_INFO, "     * pduType = %d (2 bytes)", int(pduType));
+        LOG(LOG_INFO, "     * PDUSource = %d (2 bytes)", int(PDUSource));
+        LOG(LOG_INFO, "     * payload (%zu byte(s))", this->payload.in_remain());
     }
 
 }; // END CLASS ShareControl_Recv
@@ -582,17 +581,15 @@ struct ShareData_Recv : private CheckShareData_Recv
     } // END CONSTRUCTOR
 
     inline void log() const {
-        LOG(LOG_INFO, "ShareData_Recv: \n"
-                      "     * shareId = %d (4 bytes)\n"
-                      "     * pad1 (1 byte) \n"
-                      "     * streamId = %d (1 byte)\n"
-                      "     * uncompressedLength = %d (2 bytes)\n"
-                      "     * pduType2 = %d (1 byte)\n"
-                      "     * compressedType = %d (1 byte)\n"
-                      "     * compressedLength = %d (2 bytes)\n"
-                      "     * payload (%zu byte(s))\n",
-                      int(share_id), int(streamid), int(len), int(pdutype2), int(compressedType), int(compressedLen)
-                      , payload.in_remain());
+        LOG(LOG_INFO, "ShareData_Recv:");
+        LOG(LOG_INFO, "     * shareId = %d (4 bytes)", int(share_id));
+        LOG(LOG_INFO, "     * pad1 (1 byte)");
+        LOG(LOG_INFO, "     * streamId = %d (1 byte)", int(streamid));
+        LOG(LOG_INFO, "     * uncompressedLength = %d (2 bytes)", int(len));
+        LOG(LOG_INFO, "     * pduType2 = %d (1 byte)", int(pdutype2));
+        LOG(LOG_INFO, "     * compressedType = %d (1 byte)", int(compressedType));
+        LOG(LOG_INFO, "     * compressedLength = %d (2 bytes)", int(compressedLen));
+        LOG(LOG_INFO, "     * payload (%zu byte(s))", payload.in_remain());
     }
 
     ~ShareData_Recv() noexcept(false) {

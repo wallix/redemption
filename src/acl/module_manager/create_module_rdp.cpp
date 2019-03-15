@@ -440,7 +440,7 @@ void ModuleManager::create_mod_rdp(
             client_info.screen_info.width, client_info.screen_info.height);
     }
     this->mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
-    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
+    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded");
     ini.get_ref<cfg::context::auth_error_message>().clear();
     this->connected = true;
 }

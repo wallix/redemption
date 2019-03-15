@@ -233,7 +233,7 @@ public:
                             authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
                         }
                         else {
-                            LOG(LOG_ERR, "Session::Session exception (1) = %s\n", e.errmsg());
+                            LOG(LOG_ERR, "Session::Session exception (1) = %s", e.errmsg());
                             invoke_close_box();
                         }
                     }
@@ -256,7 +256,7 @@ public:
                         session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
                     }
                     else {
-                        LOG(LOG_ERR, "Session::Session exception (2) = %s\n", e.errmsg());
+                        LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
                         invoke_close_box();
                     }
                 };
@@ -419,7 +419,7 @@ public:
                         }
                     }
                 } catch (Error const& e) {
-                    LOG(LOG_ERR, "Session::Session exception (2) = %s\n", e.errmsg());
+                    LOG(LOG_ERR, "Session::Session exception (2) = %s", e.errmsg());
                     signal = BackEvent_t(session_reactor.signal);
                     mm.invoke_close_box(
                         local_err_msg(e, language(ini)),

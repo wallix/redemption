@@ -925,7 +925,7 @@ public:
 
         case MODULE_XUP: {
             const char * name = "XUP Target";
-            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
+            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'");
 
             unique_fd client_sck = this->connect_to_target_host(
                 report_message, trkeys::authentification_x_fail, "XUP");
@@ -950,7 +950,7 @@ public:
             ));
 
             this->ini.get_ref<cfg::context::auth_error_message>().clear();
-            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
+            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded");
             this->connected = true;
             break;
         }

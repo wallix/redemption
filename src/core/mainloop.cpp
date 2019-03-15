@@ -51,25 +51,25 @@ namespace {
 [[noreturn]]
 void shutdown(int sig)
 {
-    LOG(LOG_INFO, "shutting down : signal %d pid=%d\n", sig, getpid());
+    LOG(LOG_INFO, "shutting down : signal %d pid=%d", sig, getpid());
     exit(1);
 }
 
 /*****************************************************************************/
 void sigpipe(int sig)
 {
-    LOG(LOG_INFO, "got SIGPIPE(%d) : ignoring\n", sig);
+    LOG(LOG_INFO, "got SIGPIPE(%d) : ignoring", sig);
 }
 
 /*****************************************************************************/
 //void sigsegv(int sig)
 //{
-//    LOG(LOG_INFO, "Ignoring SIGSEGV : signal %d \n", sig);
+//    LOG(LOG_INFO, "Ignoring SIGSEGV : signal %d", sig);
 //}
 
 void sighup(int sig)
 {
-    LOG(LOG_INFO, "Ignoring SIGHUP : signal %d \n", sig);
+    LOG(LOG_INFO, "Ignoring SIGHUP : signal %d", sig);
 }
 
 //void sigchld(int sig)
@@ -78,7 +78,7 @@ void sighup(int sig)
 //    // because there is no child termination management yet.
 //    // When there will be child management code, we will have to setup
 //    // some communication protocol to discuss with childs.
-//    LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d\n", sig, getpid());
+//    LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d", sig, getpid());
 //}
 
 void init_signals()
@@ -220,7 +220,7 @@ namespace
             ini.set<cfg::debug::config>(debug_config);
 
             if (ini.get<cfg::debug::session>()){
-                LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+                LOG(LOG_INFO, "Setting new session socket to %d", sck);
             }
 
             {
@@ -276,11 +276,11 @@ namespace
                 close(fd);
 
                 if (setgid(gid) != 0){
-                    LOG(LOG_ERR, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
+                    LOG(LOG_ERR, "Changing process group to %u failed with error: %s", gid, strerror(errno));
                     _exit(1);
                 }
                 if (setuid(uid) != 0){
-                    LOG(LOG_ERR, "Changing process user to %u failed with error: %s\n", uid, strerror(errno));
+                    LOG(LOG_ERR, "Changing process user to %u failed with error: %s", uid, strerror(errno));
                     _exit(1);
                 }
 
@@ -351,7 +351,7 @@ namespace
             break;
         case -1:
             // error forking
-            LOG(LOG_ERR, "Error creating process for new session : %s\n", strerror(errno));
+            LOG(LOG_ERR, "Error creating process for new session : %s", strerror(errno));
             break;
         }
     }

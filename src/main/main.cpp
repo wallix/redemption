@@ -398,11 +398,11 @@ int main(int argc, char** argv)
 
     if (!ini.get<cfg::globals::enable_transparent_mode>()) {
         if (setgid(egid) != 0){
-            LOG(LOG_ERR, "Changing process group to %u failed with error: %s\n", egid, strerror(errno));
+            LOG(LOG_ERR, "Changing process group to %u failed with error: %s", egid, strerror(errno));
             return 1;
         }
         if (setuid(euid) != 0){
-            LOG(LOG_ERR, "Changing process user to %u failed with error: %s\n", euid, strerror(errno));
+            LOG(LOG_ERR, "Changing process user to %u failed with error: %s", euid, strerror(errno));
             return 1;
         }
     }

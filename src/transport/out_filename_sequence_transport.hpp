@@ -171,7 +171,7 @@ class OutFilenameSequenceTransport : public Transport
             if (fd < 0) {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
-            // LOG(LOG_INFO, "pngcapture=%s\n", this->current_filename_);
+            // LOG(LOG_INFO, "pngcapture=%s", this->current_filename_);
             // TODO PERF used fchmod
             if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
@@ -187,10 +187,10 @@ class OutFilenameSequenceTransport : public Transport
         {
             const char * filename = this->get_filename_generate();
             const int res = ::rename(this->current_filename_, filename);
-            // LOG( LOG_INFO, "renaming file \"%s\" to \"%s\"\n"
+            // LOG( LOG_INFO, "renaming file \"%s\" to \"%s\""
             //    , this->current_filename_, filename);
             if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed error=%d : %s\n"
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed error=%d : %s"
                    , this->current_filename_, filename, errno, strerror(errno));
                 return nullptr;
             }

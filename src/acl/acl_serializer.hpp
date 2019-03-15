@@ -118,7 +118,7 @@ public:
                 return true;
             }
 
-            // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
+            // LOG(LOG_INFO, "keepalive state ask=%s bool=%s",
             //     ini.is_asked<cfg::context::keepalive>()?"Y":"N",
             //     ini.get<cfg::context::keepalive>()?"Y":"N");
 
