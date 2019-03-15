@@ -55,7 +55,8 @@ project redemption
     $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
 
     <cxxflags>-fno-rtti
-    <linkflags>-fuse-ld=gold
+    <toolset>gcc:<linkflags>-fuse-ld=gold
+    <toolset>clang:<linkflags>-fuse-ld=gold
     <toolset>gcc:<cxxflags>-pipe
 
     # <cxx-lto>on
