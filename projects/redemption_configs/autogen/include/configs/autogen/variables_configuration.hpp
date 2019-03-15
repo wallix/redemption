@@ -268,17 +268,17 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// type: unsigned int <br/>
-    /// value{3390} <br/>
-    struct globals::websocket_port {
+    /// type: std::string <br/>
+    /// value = ":3390" <br/>
+    struct globals::websocket_addr {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "globals";
-        static constexpr char const * name = "websocket_port";
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        static constexpr char const * name = "websocket_addr";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value{3390};
+        type value = ":3390";
     };
     /// Time out during RDP handshake stage. <br/>
     /// type: std::chrono::seconds <br/>
@@ -4636,6 +4636,7 @@ struct globals
 , cfg::globals::target_application_account
 , cfg::globals::target_application_password
 , cfg::globals::authfile
+, cfg::globals::websocket_addr
 , cfg::globals::handshake_timeout
 , cfg::globals::session_timeout
 , cfg::globals::inactivity_timeout
@@ -4646,7 +4647,6 @@ struct globals
 , cfg::globals::codec_id
 , cfg::globals::rdp_keepalive_connection_interval
 , cfg::globals::port
-, cfg::globals::websocket_port
 , cfg::globals::capture_chunk
 , cfg::globals::glyph_cache
 , cfg::globals::nomouse

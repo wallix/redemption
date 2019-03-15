@@ -129,7 +129,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
 
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_websocket", set(false), desc{"Enable only ws protocol. Wss isn't supported"});
-        W.member(hidden_in_gui, no_sesman, L, type_<unsigned>(), "websocket_port", set(3390));
+        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "websocket_addr", desc{"${addr}:${port} or ${port} or ${unix_socket_path}"}, set(":3390"));
 
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));

@@ -26,7 +26,7 @@
 "enable_websocket = boolean(default=False)\n\n"
 
 "#_hidden\n"
-"websocket_port = integer(min=0, default=3390)\n\n"
+"websocket_addr = string(default=':3390')\n\n"
 
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"

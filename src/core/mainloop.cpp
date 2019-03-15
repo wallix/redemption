@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
+#include <sys/stat.h>
 
 
 namespace {
@@ -290,14 +291,16 @@ namespace
             }
 
             int nodelay = 1;
-            if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))){
+            if (socket_type == SocketType::Ws
+             || 0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))
+            ){
                 // Create session file
                 int child_pid = getpid();
                 char session_file[256];
                 sprintf(session_file, "%s/session_%d.pid", app_path(AppPath::LockDir), child_pid);
                 int fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
                 if (fd == -1) {
-                    LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%s\n", errno, strerror(errno));
+                    LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%s", errno, strerror(errno));
                     _exit(1);
                 }
                 char text[256];
@@ -338,7 +341,7 @@ namespace
                 }
             }
             else {
-                LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
+                LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket: %d: %s", errno, strerror(errno));
             }
 
             _exit(0);
@@ -351,6 +354,44 @@ namespace
             LOG(LOG_ERR, "Error creating process for new session : %s\n", strerror(errno));
             break;
         }
+    }
+
+    unique_fd create_ws_server(
+        uint32_t s_addr, char const* ws_addr,
+        EnableTransparentMode enable_transparent_mode)
+    {
+        // "[:]port"
+        {
+            const unsigned pos = (ws_addr[0] == ':' ? 1 : 0);
+            char* end = nullptr;
+            long port = std::strtol(ws_addr + pos, &end, 10);
+            if (*end == '\0') {
+                return create_server(s_addr, port, enable_transparent_mode);
+            }
+        }
+
+        // "addr:port"
+        const char* ws_port = strchr(ws_addr, ':');
+        if (ws_port) {
+            std::string listen_addr(ws_addr, ws_port);
+            uint32_t ws_iaddr = inet_addr(listen_addr.c_str());
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wuseless-cast")
+            if (ws_iaddr == INADDR_NONE) { ws_iaddr = INADDR_ANY; }
+            REDEMPTION_DIAGNOSTIC_POP
+            char* end = nullptr;
+            long port = std::strtol(ws_port + 1, &end, 10);
+            if (*end == '\0') {
+                return create_server(ws_iaddr, port, enable_transparent_mode);
+            }
+        }
+
+        // removed previous websocket
+        if (struct stat buf; 0 == stat(ws_addr, &buf) && S_ISSOCK(buf.st_mode)) {
+            unlink(ws_addr);
+        }
+        return create_unix_server(ws_addr, enable_transparent_mode);
     }
 } // anonymous namespace
 
@@ -376,8 +417,8 @@ void redemption_main_loop(
 
     if (ini.get<cfg::globals::enable_websocket>())
     {
-        unique_fd sck2 = create_server(
-            s_addr, ini.get<cfg::globals::websocket_port>(), enable_transparent_mode);
+        unique_fd sck2 = create_ws_server(
+            s_addr, ini.get<cfg::globals::websocket_addr>().c_str(), enable_transparent_mode);
         const auto ws_sck = sck2.fd();
         two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)
         {

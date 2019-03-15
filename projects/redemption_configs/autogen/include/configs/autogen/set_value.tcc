@@ -63,11 +63,11 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "websocket_port")) {
+        else if (0 == strcmp(key, "websocket_addr")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::globals::websocket_port&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                static_cast<cfg::globals::websocket_addr&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
                 av
             );
         }

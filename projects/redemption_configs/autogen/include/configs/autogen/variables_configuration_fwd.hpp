@@ -26,7 +26,7 @@ namespace cfg {
         struct encryptionLevel;
         struct authfile;
         struct enable_websocket;
-        struct websocket_port;
+        struct websocket_addr;
         struct handshake_timeout;
         struct session_timeout;
         struct inactivity_timeout;

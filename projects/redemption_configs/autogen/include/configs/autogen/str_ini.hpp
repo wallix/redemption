@@ -31,9 +31,8 @@
 "#_hidden\n"
 "#enable_websocket = 0\n\n"
 
-"# min = 0\n"
 "#_hidden\n"
-"#websocket_port = 3390\n\n"
+"#websocket_addr = :3390\n\n"
 
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"

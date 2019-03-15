@@ -96,12 +96,10 @@ inline unique_fd create_local_server(char const* sck_name)
     return unique_sck;
 }
 
-inline unique_fd create_server(
-    uint32_t s_addr, int port,
-    EnableTransparentMode enable_transparent_mode = EnableTransparentMode::No)
+inline unique_fd create_server_bind_sck(
+    unique_fd fd_sck, sockaddr& addr, EnableTransparentMode enable_transparent_mode)
 {
-    unique_fd unique_sck {socket(PF_INET, SOCK_STREAM, 0)};
-    int const sck = unique_sck.fd();
+    const int sck = fd_sck.fd();
 
     /* reuse same port if a previous daemon was stopped */
     int allow_reuse = 1;
@@ -120,23 +118,7 @@ inline unique_fd create_server(
     /* set non blocking */
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
-    union
-    {
-        sockaddr s;
-        sockaddr_storage ss;
-        sockaddr_in s4;
-        sockaddr_in6 s6;
-    } u;
-    memset(&u, 0, sizeof(u));
-    u.s4.sin_family = AF_INET;
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
-    u.s4.sin_port = htons(port);
-    REDEMPTION_DIAGNOSTIC_POP
-    u.s4.sin_addr.s_addr = s_addr;
-
-    LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", sck, ::inet_ntoa(u.s4.sin_addr), port);
-    if (0 != ::bind(sck, &u.s, sizeof(u))) {
+    if (0 != ::bind(sck, &addr, sizeof(addr))) {
         LOG(LOG_ERR, "Listen: error binding socket [errno=%d] %s", errno, strerror(errno));
         return invalid_fd();
     }
@@ -157,7 +139,54 @@ inline unique_fd create_server(
     }
 
     // OK, keep the temporary socket everything was fine
-    return unique_sck;
+    return fd_sck;
+}
+
+inline unique_fd create_unix_server(
+    char const* sck_name,
+    EnableTransparentMode enable_transparent_mode = EnableTransparentMode::No)
+{
+    unique_fd sck {socket(AF_UNIX, SOCK_STREAM, 0)};
+
+    union
+    {
+      sockaddr_un s;
+      sockaddr addr;
+    } u;
+
+    auto len = strnlen(sck_name, sizeof(u.s.sun_path)-1u);
+    memcpy(u.s.sun_path, sck_name, len);
+    u.s.sun_path[len] = 0;
+    u.s.sun_family = AF_UNIX;
+
+    LOG(LOG_INFO, "Listen: binding socket %d on %s", sck.fd(), sck_name);
+    return create_server_bind_sck(std::move(sck), u.addr, enable_transparent_mode);
+}
+
+inline unique_fd create_server(
+    uint32_t s_addr, int port,
+    EnableTransparentMode enable_transparent_mode = EnableTransparentMode::No)
+{
+    unique_fd sck {socket(PF_INET, SOCK_STREAM, 0)};
+
+    union
+    {
+        sockaddr s;
+        sockaddr_storage ss;
+        sockaddr_in s4;
+        sockaddr_in6 s6;
+    } u;
+    memset(&u, 0, sizeof(u));
+    u.s4.sin_family = AF_INET;
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
+    u.s4.sin_port = htons(port);
+    REDEMPTION_DIAGNOSTIC_POP
+    u.s4.sin_addr.s_addr = s_addr;
+
+    LOG(LOG_INFO, "Listen: binding socket %d on %s:%d",
+        sck.fd(), ::inet_ntoa(u.s4.sin_addr), port);
+    return create_server_bind_sck(std::move(sck), u.s, enable_transparent_mode);
 }
 
 struct ServerLoopIgnoreTimeout
