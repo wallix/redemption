@@ -1,3 +1,10 @@
+redemption (1.1.145%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix typing Euro (€) symbol in VNC session.
+  * Fix Remmina crashes after successful connection to target.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 Mar 2019 17:21:01 +0200
+
 redemption (1.1.143%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
