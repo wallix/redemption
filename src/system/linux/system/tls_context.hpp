@@ -69,7 +69,6 @@ inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std
 
 class TLSContext
 {
-    bool tls = false;
     SSL_CTX * allocated_ctx = nullptr;
     SSL     * allocated_ssl = nullptr;
     SSL     * io = nullptr;
@@ -539,7 +538,6 @@ public:
 
            // TODO: Probably to be set by caller if everything successfull
            this->io = this->allocated_ssl;
-           this->tls = true;
         }
 
         if ((!certificate_exists && ensure_server_certificate_exists)
@@ -869,11 +867,10 @@ public:
             return tls_ctx_print_error("enable_server_tls", "SSL accept error", nullptr);
         }
         this->io = this->allocated_ssl;
-        this->tls = true;
 
         LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(this->allocated_ssl));
 
-        // TODO: the commented code belows shows the list of all enabled cipher suite on server, 
+        // TODO: the commented code belows shows the list of all enabled cipher suite on server,
         // We could enable it but put that under some configuration variable.
 //        int priority = 0;
 //        while(1){
