@@ -167,6 +167,8 @@ class ACLPassthrough():
         self.shared = AuthentifierSharedData(conn)
 
     def interactive_target(self, data_to_send):
+        if self.shared.get(u'login') != MAGICASK and self.shared.get(u'password') != MAGICASK:
+            return True, u''
         data_to_send.update({ u'module' : u'interactive_target' })
         self.shared.send_data(data_to_send)
         _status, _error = self.shared.receive_data()
