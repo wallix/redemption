@@ -20,7 +20,19 @@
 </head>
 <body>
 
+<div>
 <canvas id="canvas" width="800" height="600"></canvas>
+<input id="canvasFocus" type="text"/>
+<style>
+#canvasFocus {
+    width: 0px;
+    height: 0px;
+    position: relative;
+    z-index: -10;
+    top: -800px;
+}
+</style>
+</div>
 <canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
 <canvas id="curCanvas" style="display:none"></canvas>
 <section>
@@ -263,6 +275,7 @@ const createRdpClient = (function(Module) {
     }
 })(Module);
 
+const ecanvasFocus = document.getElementById('canvasFocus');
 const ecurCanvas = document.getElementById('curCanvas');
 const ecanvas = document.getElementById('canvas');
 const ecanvas2 = document.getElementById('canvas2');
@@ -277,6 +290,7 @@ const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
 const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
+
 let rdpclient;
 
 function has_intersection(x1,y1,w1,h1,x2,y2,w2,h2)
@@ -625,6 +639,48 @@ function removeEvents(elem, events)
     }
 }
 
+function canvasStartEvents()
+{
+    addEvents(document, docEvents);
+    addEvents(ecanvas, canvasEvent);
+    ecanvasFocus.onblur = canvasBlur;
+    ecanvasFocus.onfocus = canvasFocus;
+    canvasEnableFocus();
+}
+
+function canvasStopEvents()
+{
+    removeEvents(document, docEvents);
+    removeEvents(ecanvas, canvasEvent);
+    ecanvasFocus.onblur = () => {};
+    ecanvasFocus.onfocus = () => {};
+    ecanvas.onclick = () => {};
+    ecurCanvas.onclick = () => {};
+}
+
+function canvasFocus()
+{
+    console.log('focus')
+    addEvents(document, docEvents);
+    ecanvas.onclick = (e) => e.preventDefault();
+    ecurCanvas.onclick = (e) => e.preventDefault();
+}
+
+function canvasEnableFocus()
+{
+    // preventScroll don't work with firefox
+    ecanvasFocus.focus({preventScroll: true});
+}
+
+function canvasBlur()
+{
+    console.log('blur')
+    removeEvents(document, docEvents);
+    ecanvas.onclick = canvasEnableFocus;
+    ecurCanvas.onclick = canvasEnableFocus;
+}
+
+
 function run()
 {
     rdpclient = createRdpClient(
@@ -637,13 +693,12 @@ function run()
         0/*xff*/);
     rdpclient.on('socketOpen', () => {
         console.log('RdpClient open');
-        addEvents(document, docEvents);
-        addEvents(ecanvas, canvasEvent);
+        canvasStartEvents();
     });
     rdpclient.on('socketClose', () => {
         console.log('RdpClient close');
-        removeEvents(document, docEvents);
-        removeEvents(ecanvas, canvasEvent);
+        canvasStopEvents();
+        rdpclient = null;
     });
     rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
     // rdpclient.on('drawImage', function() {
@@ -749,6 +804,11 @@ login.onsubmit = (e) => {
     e.preventDefault();
     if (rdpclient) {
         rdpclient.close();
+        rdpclient.on('socketClose', () => {
+            console.log('RdpClient close (previous socket)');
+        });
+        canvasStopEvents();
+        rdpclient = null;
     }
     run();
 };
