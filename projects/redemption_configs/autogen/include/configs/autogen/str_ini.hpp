@@ -31,6 +31,7 @@
 "#_hidden\n"
 "#enable_websocket = 0\n\n"
 
+"# ${addr}:${port} or ${port} or ${unix_socket_path}\n"
 "#_hidden\n"
 "#websocket_addr = :3390\n\n"
 

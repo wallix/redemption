@@ -268,6 +268,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// ${addr}:${port} or ${port} or ${unix_socket_path} <br/>
     /// type: std::string <br/>
     /// value = ":3390" <br/>
     struct globals::websocket_addr {

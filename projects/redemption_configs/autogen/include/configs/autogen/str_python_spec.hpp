@@ -25,6 +25,7 @@
 "#_hidden\n"
 "enable_websocket = boolean(default=False)\n\n"
 
+"# ${addr}:${port} or ${port} or ${unix_socket_path}\n"
 "#_hidden\n"
 "websocket_addr = string(default=':3390')\n\n"
 
