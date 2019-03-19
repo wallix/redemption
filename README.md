@@ -175,13 +175,15 @@ occurs just report it to us so that we can correct it.
 
 Example with freerdp when the proxy runs on the same host as the client:
 
-$ `xfreerdp 127.0.0.1`
+$ `xfreerdp /v:127.0.0.1`
+
+$ `xfreerdp /v:127.0.0.1 /u:username@target_ip /p:password`
 
 A dialog box should open in which you can type a username and a password.
 With default passthrough.py at least internal services should work. Try login: internal, password: internal and bouncer2 or card as device. If you want to provide such extensions
 to current passthrough.py, please contribute it, it will be much appreciated.
 
-$ `xfreerdp /u:internal /p:internal 127.0.0.1`
+$ `xfreerdp /u:internal@internal /p:internal 127.0.0.1`
 
 
 # Convert .mwrm/.wrm capture to video

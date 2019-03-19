@@ -167,8 +167,6 @@ class ACLPassthrough():
         self.shared = AuthentifierSharedData(conn)
 
     def interactive_target(self, data_to_send):
-        if self.shared.get(u'login') != MAGICASK and self.shared.get(u'password') != MAGICASK:
-            return True, u''
         data_to_send.update({ u'module' : u'interactive_target' })
         self.shared.send_data(data_to_send)
         _status, _error = self.shared.receive_data()
@@ -199,6 +197,7 @@ class ACLPassthrough():
             self.shared.shared[u'target_login'] = target_login
             self.shared.shared[u'target_host'] = target_device
             self.shared.shared[u'target_device'] = target_device
+            self.shared.shared[u'real_target_device'] = target_device
             # self.shared.shared[u'target_password'] = '...'
             # self.shared.shared[u'proto_dest'] = 'RDP'
         else:
@@ -210,17 +209,35 @@ class ACLPassthrough():
     def start(self):
         _status, _error = self.shared.receive_data()
 
+        device = "<host>$<application path>$<working dir>$<args> for Application"
+        login = self.shared.get(u'login', MAGICASK) or MAGICASK
+        host = self.shared.get(u'real_target_device', MAGICASK) or MAGICASK
+        password = self.shared.get(u'password', MAGICASK) or MAGICASK
+        splitted = login.split('@')
+        if len(splitted) > 1:
+            login = splitted[0]
+            host = ''.join(splitted[1:])
+            device = host
+
         interactive_data = {
-            u'target_password': self.shared.get(u'password', MAGICASK),
-            u'target_host': self.shared.get(u'real_target_device', MAGICASK),
-            u'target_login': self.shared.get(u'login', MAGICASK),
-            u'target_device': (
-                "<host>$<application path>$<working dir>$"
-                "<args> for Application"
-            )
+            u'target_password': password,
+            u'target_host': host,
+            u'target_login': login,
+            u'target_device': device
         }
 
-        _status, _error = self.interactive_target(interactive_data)
+        kv = {}
+
+        if MAGICASK in (device, login, host, password):
+            _status, _error = self.interactive_target(interactive_data)
+        else:
+            self.shared.shared[u'login'] = login
+            self.shared.shared[u'target_login'] = login
+            self.shared.shared[u'target_password'] = password
+            self.shared.shared[u'target_host'] = host
+            self.shared.shared[u'target_device'] = host
+            self.shared.shared[u'real_target_device'] = host
+            kv = interactive_data
 
         # selector_data = {
         #     u'target_login': 'Proxy\\Administrator\x01login 2\x01login 3',
@@ -242,7 +259,7 @@ class ACLPassthrough():
         kv[u'target_device'] = self.shared.get(u'target_host')
         kv[u'session_log_path'] = datetime.now().strftime(
             "session_log-%Y-%m-%d-%I:%M%p.log")
-        kv[u'session_probe'] = self.shared.get(u'0')
+        kv[u'session_probe'] = u'0'
 
         if '$' in kv[u'target_host']:
             app_params = kv[u'target_host']
