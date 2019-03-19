@@ -5229,8 +5229,6 @@ public:
             ? this->send_input_fastpath(time, message_type, device_flags, param1, param2)
             : this->send_input_slowpath(time, message_type, device_flags, param1, param2);
 
-        IF_ENABLE_METRICS(client_main_channel_data(channel_data_size));
-
         if (message_type == RDP_INPUT_SYNCHRONIZE) {
             this->last_key_flags_sent = param1;
         }
@@ -5326,11 +5324,6 @@ public:
     void refresh(Rect r) override {
         this->rdp_input_invalidate(r);
     }
-
-    void set_last_tram_len([[maybe_unused]] size_t tram_length) override {
-        IF_ENABLE_METRICS(client_main_channel_data(tram_length));
-    }
-
 
     // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
@@ -5849,6 +5842,7 @@ private:
         );
     }
 
+
     template<class... WriterData>
     void send_data_request_ex(uint16_t channelId, WriterData... writer_data)
     {
@@ -5863,7 +5857,11 @@ private:
                 );
                 (void)mcs;
             },
-            X224::write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{},
+            [this](StreamSize<0>, OutStream &, std::size_t total_pdu_sz) {
+                (void)this;
+                IF_ENABLE_METRICS(client_main_channel_data(total_pdu_sz));
+            }
         );
     }
 
