@@ -169,19 +169,22 @@ struct CSCluster {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data CS_CLUSTER (%u bytes)", msg, this->length);
         LOG(LOG_INFO, "cs_cluster::flags [%04x]", this->flags);
-        if (this->flags == REDIRECTION_SUPPORTED){
+        if (this->flags & REDIRECTION_SUPPORTED){
             LOG(LOG_INFO, "cs_cluster::flags::REDIRECTION_SUPPORTED");
             LOG(LOG_INFO, "cs_cluster::flags::redirectionVersion = %u",
-                (this->flags & ServerSessionRedirectionVersionMask) >> 2);
+                1 + ((this->flags & ServerSessionRedirectionVersionMask) >> 2));
         }
-        if (this->flags == REDIRECTED_SESSIONID_FIELD_VALID){
+        if (this->flags & REDIRECTED_SESSIONID_FIELD_VALID){
             LOG(LOG_INFO, "cs_cluster::flags::REDIRECTED_SESSIONID_FIELD_VALID");
         }
-        if (this->flags == REDIRECTED_SMARTCARD){
+        if (this->flags & REDIRECTED_SMARTCARD){
             LOG(LOG_INFO, "cs_cluster::flags::REDIRECTED_SMARTCARD");
         }
         if (this->length < 12) { return; }
-        LOG(LOG_INFO, "cs_cluster::redirectedSessionID = %u", this->redirectedSessionID);
+
+        if (this->flags & REDIRECTED_SESSIONID_FIELD_VALID) {
+        	LOG(LOG_INFO, "cs_cluster::redirectedSessionID = %u", this->redirectedSessionID);
+        }
     }
 };
 

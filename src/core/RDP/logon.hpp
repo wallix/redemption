@@ -1109,17 +1109,34 @@ struct InfoPacket {
         if (!this->rdp5_support){ return; }
 
         // Extended
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddressFamily %u", this->extendedInfoPacket.clientAddressFamily);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientAddress %u", this->extendedInfoPacket.cbClientAddress);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddress %s", this->extendedInfoPacket.clientAddress);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientDir %u", this->extendedInfoPacket.cbClientDir);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientDir %s", this->extendedInfoPacket.clientDir);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientSessionId %u", this->extendedInfoPacket.clientSessionId);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::performanceFlags %u", this->extendedInfoPacket.performanceFlags);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen %u", this->extendedInfoPacket.cbAutoReconnectLen);
+        const ExtendedInfoPacket &extInfo = this->extendedInfoPacket;
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddressFamily %u", extInfo.clientAddressFamily);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientAddress %u", extInfo.cbClientAddress);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddress %s", extInfo.clientAddress);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientDir %u", extInfo.cbClientDir);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientDir %s", extInfo.clientDir);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientSessionId %u", extInfo.clientSessionId);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::performanceFlags 0x%x", extInfo.performanceFlags);
+        if (extInfo.performanceFlags & PERF_DISABLE_WALLPAPER)
+        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::DISABLE_WALLPAPER");
+        if (extInfo.performanceFlags & PERF_DISABLE_FULLWINDOWDRAG)
+        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_FULLWINDOWDRAG");
+        if (extInfo.performanceFlags & PERF_DISABLE_MENUANIMATIONS)
+        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_MENUANIMATIONS");
+        if (extInfo.performanceFlags & PERF_DISABLE_THEMING)
+        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_THEMING");
+        if (extInfo.performanceFlags & PERF_DISABLE_CURSOR_SHADOW)
+        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_CURSOR_SHADOW");
+        if (extInfo.performanceFlags & PERF_DISABLE_CURSORSETTINGS)
+        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_CURSORSETTINGS");
+        if (extInfo.performanceFlags & PERF_ENABLE_FONT_SMOOTHING)
+        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_ENABLE_FONT_SMOOTHING");
+        if (extInfo.performanceFlags & PERF_ENABLE_DESKTOP_COMPOSITION)
+        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_ENABLE_DESKTOP_COMPOSITION");
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen %u", extInfo.cbAutoReconnectLen);
         //LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::autoReconnectCookie %s", this->extendedInfoPacket.autoReconnectCookie);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved1 %u", this->extendedInfoPacket.reserved1);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved2 %u", this->extendedInfoPacket.reserved2);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved1 %u", extInfo.reserved1);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved2 %u", extInfo.reserved2);
         // Extended - Client Time Zone
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::Bias %u", this->extendedInfoPacket.clientTimeZone.Bias);
 

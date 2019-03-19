@@ -289,16 +289,16 @@ enum OrdersIndexes {
     , TS_NEG_SCRBLT_INDEX = 0x02
     , TS_NEG_MEMBLT_INDEX = 0x03
     , TS_NEG_MEM3BLT_INDEX = 0x04
-    , UnusedIndex1 = 0x05
-    , UnusedIndex2 = 0x06
+    , TS_NEG_ATEXTOUT_INDEX = 0x05
+    , TS_NEG_AEXTTEXTOUT_INDEX = 0x06
     , TS_NEG_DRAWNINEGRID_INDEX = 0x07
     , TS_NEG_LINETO_INDEX = 0x08
     , TS_NEG_MULTI_DRAWNINEGRID_INDEX = 0x09
-    , UnusedIndex3 = 0x0A
+    , TS_NEG_OPAQUERECT_INDEX = 0x0A
     , TS_NEG_SAVEBITMAP_INDEX = 0x0B
-    , UnusedIndex4 = 0x0C
-    , UnusedIndex5 = 0x0D
-    , UnusedIndex6 = 0x0E
+    , TS_NEG_WTEXTOUT_INDEX = 0x0C
+    , TS_NEG_MEMBLT_V2_INDEX = 0x0D
+    , TS_NEG_MEM3BLT_V2_INDEX = 0x0E
     , TS_NEG_MULTIDSTBLT_INDEX = 0x0F
     , TS_NEG_MULTIPATBLT_INDEX = 0x10
     , TS_NEG_MULTISCRBLT_INDEX = 0x11
@@ -311,10 +311,10 @@ enum OrdersIndexes {
     , TS_NEG_FAST_GLYPH_INDEX = 0x18
     , TS_NEG_ELLIPSE_SC_INDEX = 0x19
     , TS_NEG_ELLIPSE_CB_INDEX = 0x1A
-    , TS_NEG_INDEX_INDEX = 0x1B
-    , UnusedIndex8 = 0x1C
-    , UnusedIndex9 = 0x1D
-    , UnusedIndex10 = 0x1E
+    , TS_NEG_GLYPH_INDEX = 0x1B
+    , TS_NEG_GLYPH_WEXTTEXTOUT_INDEX = 0x1C
+    , TS_NEG_GLYPH_WLONGTEXTOUT_INDEX = 0x1D
+    , TS_NEG_GLYPH_WLONGEXTTEXTOUT_INDEX = 0x1E
     , UnusedIndex11 = 0x1F
 };
 
@@ -427,68 +427,68 @@ struct OrderCaps : public Capability {
         LOG(LOG_INFO, "     Order caps::maximumOrderLevel %u", this->maximumOrderLevel);
         LOG(LOG_INFO, "     Order caps::numberFonts %u", this->numberFonts);
         LOG(LOG_INFO, "     Order caps::orderFlags 0x%X", this->orderFlags);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_DSTBLT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[DSTBLT] %u"
                         , this->orderSupport[TS_NEG_DSTBLT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_PATBLT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[PATBLT] %u"
                         , this->orderSupport[TS_NEG_PATBLT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_SCRBLT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[SCRBLT] %u"
                         , this->orderSupport[TS_NEG_SCRBLT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_MEMBLT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[MEMBLT] %u"
                         , this->orderSupport[TS_NEG_MEMBLT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_MEM3BLT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[MEM3BLT] %u"
                         , this->orderSupport[TS_NEG_MEM3BLT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex1] %u"
-                        , this->orderSupport[UnusedIndex1]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex2] %u"
-                        , this->orderSupport[UnusedIndex2]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_DRAWNINEGRID_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[ATEXTOUT] %u"
+                        , this->orderSupport[TS_NEG_ATEXTOUT_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[AEXTTEXTOUT] %u"
+                        , this->orderSupport[TS_NEG_AEXTTEXTOUT_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[DRAWNINEGRID] %u"
                         , this->orderSupport[TS_NEG_DRAWNINEGRID_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_LINETO_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[LINETO] %u"
                         , this->orderSupport[TS_NEG_LINETO_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[MULTI_DRAWNINEGRID] %u"
                         , this->orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex3] %u"
-                        , this->orderSupport[UnusedIndex3]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_SAVEBITMAP_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[OPAQUERECT] %u"
+                        , this->orderSupport[TS_NEG_OPAQUERECT_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[SAVEBITMAP] %u"
                         , this->orderSupport[TS_NEG_SAVEBITMAP_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex4] %u"
-                        , this->orderSupport[UnusedIndex4]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex5] %u"
-                        , this->orderSupport[UnusedIndex5]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex6] %u"
-                        , this->orderSupport[UnusedIndex6]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_MULTIDSTBLT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[WTEXTOUT] %u"
+                        , this->orderSupport[TS_NEG_WTEXTOUT_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[MEMBLT_V2] %u"
+                        , this->orderSupport[TS_NEG_MEMBLT_V2_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[MEM3BLT_V2] %u"
+                        , this->orderSupport[TS_NEG_MEM3BLT_V2_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[MULTIDSTBLT] %u"
                         , this->orderSupport[TS_NEG_MULTIDSTBLT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_MULTIPATBLT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[MULTIPATBLT] %u"
                         , this->orderSupport[TS_NEG_MULTIPATBLT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_MULTISCRBLT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[MULTISCRBLT] %u"
                         , this->orderSupport[TS_NEG_MULTISCRBLT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[MULTIOPAQUERECT] %u"
                         , this->orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_FAST_INDEX_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[FAST_INDEX] %u"
                         , this->orderSupport[TS_NEG_FAST_INDEX_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_POLYGON_SC_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[POLYGON_SC] %u"
                         , this->orderSupport[TS_NEG_POLYGON_SC_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_POLYGON_CB_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[POLYGON_CB] %u"
                         , this->orderSupport[TS_NEG_POLYGON_CB_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_POLYLINE_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[POLYLINE] %u"
                         , this->orderSupport[TS_NEG_POLYLINE_INDEX]);
         LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex7] %u"
                         , this->orderSupport[UnusedIndex7]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_FAST_GLYPH_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[FAST_GLYPH] %u"
                         , this->orderSupport[TS_NEG_FAST_GLYPH_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_ELLIPSE_SC_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[ELLIPSE_SC] %u"
                         , this->orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_ELLIPSE_CB_INDEX] %u"
+        LOG(LOG_INFO, "     Order caps::orderSupport[ELLIPSE_CB] %u"
                         , this->orderSupport[TS_NEG_ELLIPSE_CB_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_INDEX_INDEX] %u"
-                        , this->orderSupport[TS_NEG_INDEX_INDEX]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex8] %u"
-                        , this->orderSupport[UnusedIndex8]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex9] %u"
-                        , this->orderSupport[UnusedIndex9]);
-        LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex10] %u"
-                        , this->orderSupport[UnusedIndex10]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[GLYPH] %u"
+                        , this->orderSupport[TS_NEG_GLYPH_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[GLYPH_WEXTTEXTOUT] %u"
+                        , this->orderSupport[TS_NEG_GLYPH_WEXTTEXTOUT_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[GLYPH_WLONGTEXTOUT] %u"
+                        , this->orderSupport[TS_NEG_GLYPH_WLONGTEXTOUT_INDEX]);
+        LOG(LOG_INFO, "     Order caps::orderSupport[GLYPH_WLONGEXTTEXTOUT] %u"
+                        , this->orderSupport[TS_NEG_GLYPH_WLONGEXTTEXTOUT_INDEX]);
         LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex11] %u"
                         , this->orderSupport[UnusedIndex11]);
         LOG(LOG_INFO, "     Order caps::textFlags %u", this->textFlags);
@@ -530,7 +530,7 @@ struct OrderCaps : public Capability {
        fprintf(f, "TS_NEG_FAST_GLYPH_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_FAST_GLYPH_INDEX]));
        fprintf(f, "TS_NEG_ELLIPSE_SC_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_ELLIPSE_SC_INDEX]));
        fprintf(f, "TS_NEG_ELLIPSE_CB_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_ELLIPSE_CB_INDEX]));
-       fprintf(f, "TS_NEG_INDEX_INDEX=%u\n",              unsigned(this->orderSupport[TS_NEG_INDEX_INDEX]));
+       fprintf(f, "TS_NEG_INDEX_INDEX=%u\n",              unsigned(this->orderSupport[TS_NEG_GLYPH_INDEX]));
        fprintf(f, "orderSupportExFlags=0x%X\n",           unsigned(this->orderSupportExFlags));
        fprintf(f, "desktopSaveSize=%u\n",                 this->desktopSaveSize);
        fprintf(f, "textANSICodePage=%u\n\n",              unsigned(this->textANSICodePage));

@@ -68,10 +68,17 @@ namespace GCC { namespace UserData {
 //          Value Meaning
 //          RNS_UD_COLOR_4BPP 0xCA00 4 bits-per-pixel (bpp)
 //          RNS_UD_COLOR_8BPP 0xCA01 8 bpp
+enum {
+	  RNS_UD_COLOR_4BPP = 0xCA00
+	, RNS_UD_COLOR_8BPP = 0xCA01
+};
 
 // SASSequence (2 bytes): A 16-bit, unsigned integer. Secure access
 //                        sequence. This field SHOULD be set to
 //                        RNS_UD_SAS_DEL (0xAA03).
+enum {
+	RNS_UD_SAS_DEL = 0xAA03
+};
 
 // keyboardLayout (4 bytes): A 32-bit, unsigned integer. Keyboard layout
 //                           (active input locale identifier). For a
@@ -185,6 +192,11 @@ namespace GCC { namespace UserData {
 // If this field is present, all of the preceding fields MUST also be
 // present. If this field is not present, all of the subsequent fields
 // MUST NOT be present.
+enum {
+	  RNS_UD_COLOR_16BPP_555 = 0xCA02
+	, RNS_UD_COLOR_16BPP_565 = 0xCA03
+	, RNS_UD_COLOR_24BPP = 0xCA04
+};
 
 // clientProductId (2 bytes): A 16-bit, unsigned integer. The client
 //                          product ID. This field SHOULD be initialized
@@ -248,7 +260,12 @@ enum {
 // If this field is present, all of the preceding fields MUST also be
 // present. If this field is not present, all of the subsequent fields
 // MUST NOT be present.
-
+enum {
+	  RNS_UD_24BPP_SUPPORT = 0x0001
+	, RNS_UD_16BPP_SUPPORT = 0x0002
+	, RNS_UD_15BPP_SUPPORT = 0x0004
+	, RNS_UD_32BPP_SUPPORT = 0x0008
+};
 // earlyCapabilityFlags (2 bytes)      : A 16-bit, unsigned integer. It
 //                                       specifies capabilities early in
 //                                       the connection sequence.
@@ -326,14 +343,25 @@ enum {
 //                                 (2 Mbps - 10 Mbps)
 //  CONNECTION_TYPE_WAN 0x05 : WAN (10 Mbps or higher with high latency)
 //  CONNECTION_TYPE_LAN 0x06 : LAN (10 Mbps or higher)
+//  CONNECTION_TYPE_AUTODETECT 0x07 : The server SHOULD attempt to detect the connection type. If the
+//							connection type can be successfully determined then the
+//							performance flags, sent by the client in the performanceFlags
+//							field of the Extended Info Packet (section 2.2.1.11.1.1.1),
+//							SHOULD be ignored and the server SHOULD determine the
+//							appropriate set of performance flags to apply to the remote
+//							session (based on the detected connection type). If the
+//							RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT (0x0080) flag is
+//							not set in the earlyCapabilityFlags field, then this value
+//							SHOULD be ignored.
 
 enum {
-	CONNECTION_TYPE_MODEM = 0x01,
-	CONNECTION_TYPE_BROADBAND_LOW = 0x02,
-	CONNECTION_TYPE_SATELLITE = 0x03,
-	CONNECTION_TYPE_BROADBAND_HIGH = 0x04,
-	CONNECTION_TYPE_WAN = 0x05,
-	CONNECTION_TYPE_LAN = 0x06
+	  CONNECTION_TYPE_MODEM = 0x01
+	, CONNECTION_TYPE_BROADBAND_LOW = 0x02
+	, CONNECTION_TYPE_SATELLITE = 0x03
+	, CONNECTION_TYPE_BROADBAND_HIGH = 0x04
+	, CONNECTION_TYPE_WAN = 0x05
+	, CONNECTION_TYPE_LAN = 0x06
+	, CONNECTION_TYPE_AUTODETECT = 0x07
 };
 
 // If this field is present, all of the preceding fields MUST also be
@@ -359,12 +387,12 @@ enum {
 struct CSCore {
     // header
     uint16_t userDataType{CS_CORE};
-    uint16_t length{216};            // default: everything including serverSelectedProtocol
-    uint32_t version{0x00080001};    // RDP version. 1 == RDP4, 4 == RDP5
+    uint16_t length{234};      // default: everything including serverSelectedProtocol
+    uint32_t version{0x00080004};    // RDP version. 1 == RDP4, 4 == RDP5
     uint16_t desktopWidth{0};
     uint16_t desktopHeight{0};
-    uint16_t colorDepth{0xca01};
-    uint16_t SASSequence{0xaa03};
+    uint16_t colorDepth{RNS_UD_COLOR_8BPP};
+    uint16_t SASSequence{RNS_UD_SAS_DEL};
     uint32_t keyboardLayout{0x040c}; // default to French
     uint32_t clientBuild{2600};
     uint16_t clientName[16];
@@ -373,16 +401,21 @@ struct CSCore {
     uint32_t keyboardFunctionKey{12};
     uint16_t imeFileName[32];
     // optional payload
-    uint16_t postBeta2ColorDepth{0xca01};
+    uint16_t postBeta2ColorDepth{RNS_UD_COLOR_8BPP};
     uint16_t clientProductId{1};
     uint32_t serialNumber{0};
     uint16_t highColorDepth{0};
-    uint16_t supportedColorDepths{7};
-    uint16_t earlyCapabilityFlags{RNS_UD_CS_SUPPORT_ERRINFO_PDU};
+    uint16_t supportedColorDepths{RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT};
+    uint16_t earlyCapabilityFlags{RNS_UD_CS_SUPPORT_ERRINFO_PDU|RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU};
     uint8_t  clientDigProductId[64];
-    uint8_t  connectionType{0};
+    uint8_t  connectionType{CONNECTION_TYPE_LAN};
     uint8_t  pad1octet{0};
     uint32_t serverSelectedProtocol{0};
+    uint32_t desktopPhysicalWidth{0};
+    uint32_t desktopPhysicalHeight{0};
+    uint16_t desktopOrientation{0};
+    uint32_t desktopScaleFactor{0};
+    uint32_t deviceScaleFactor{0};
 
     // we do not provide parameters in constructor,
     // because setting them one field at a time is more explicit and maintainable
@@ -448,8 +481,16 @@ struct CSCore {
         this->pad1octet = stream.in_uint8();
         if (this->length < 216) { return; }
         this->serverSelectedProtocol = stream.in_uint32_le();
-        // TODO Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2
-
+        if (this->length < 220) { return; }
+        this->desktopPhysicalWidth = stream.in_uint32_le();
+        if (this->length < 224) { return; }
+        this->desktopPhysicalHeight = stream.in_uint32_le();
+        if (this->length < 226) { return; }
+        this->desktopOrientation = stream.in_uint16_le();
+        if (this->length < 230) { return; }
+        this->desktopScaleFactor = stream.in_uint32_le();
+        if (this->length < 234) { return; }
+        this->deviceScaleFactor = stream.in_uint32_le();
     }
 
     void emit(OutStream & stream) const
@@ -502,6 +543,16 @@ private:
         stream.out_uint8(this->pad1octet);
         if (this->length < 216) { return; }
         stream.out_uint32_le(this->serverSelectedProtocol);
+        if (this->length < 220) { return; }
+        stream.out_uint32_le(this->desktopPhysicalWidth);
+        if (this->length < 224) { return; }
+        stream.out_uint32_le(this->desktopPhysicalHeight);
+        if (this->length < 226) { return; }
+        stream.out_uint16_le(this->desktopOrientation);
+        if (this->length < 230) { return; }
+        stream.out_uint32_le(this->desktopScaleFactor);
+        if (this->length < 234) { return; }
+        stream.out_uint32_le(this->deviceScaleFactor);
     }
 
     const char *connectionTypeString(uint8_t type) const {
@@ -621,6 +672,16 @@ public:
         LOG(LOG_INFO, "cs_core::pad1octet = %u", this->pad1octet);
         if (this->length < 216) { return; }
         LOG(LOG_INFO, "cs_core::serverSelectedProtocol = %u", this->serverSelectedProtocol);
+        if (this->length < 220) { return; }
+        LOG(LOG_INFO, "cs_core::desktopPhysicalWidth = %u", this->desktopPhysicalWidth);
+        if (this->length < 224) { return; }
+        LOG(LOG_INFO, "cs_core::desktopPhysicalHeight = %u", this->desktopPhysicalHeight);
+        if (this->length < 226) { return; }
+        LOG(LOG_INFO, "cs_core::desktopOrientation = %u", this->desktopOrientation);
+        if (this->length < 230) { return; }
+        LOG(LOG_INFO, "cs_core::desktopScaleFactor = %u", this->desktopScaleFactor);
+        if (this->length < 234) { return; }
+        LOG(LOG_INFO, "cs_core::deviceScaleFactor = %u", this->deviceScaleFactor);
     }
 };
 } // namespace UserData

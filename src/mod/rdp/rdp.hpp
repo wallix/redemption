@@ -42,6 +42,7 @@
 #include "core/RDP/capabilities/bmpcache2.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"
 #include "core/RDP/capabilities/cap_bmpcache.hpp"
+#include "core/RDP/capabilities/cap_brushcache.hpp"
 #include "core/RDP/capabilities/cap_font.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/capabilities/cap_share.hpp"
@@ -1794,9 +1795,11 @@ class mod_rdp : public mod_api, public rdp_api
     const bool persist_bitmap_cache_on_disk;
 
     const bool enable_remotefx;
-    uint8_t remoteFx_codec_id = 0;
+    bool haveRemoteFx{false};
+    bool haveSurfaceFrameAck{false};
+	uint8_t remoteFx_codec_id;
 
-    const PrimaryDrawingOrdersSupport primary_drawing_orders_support;
+	const PrimaryDrawingOrdersSupport primary_drawing_orders_support;
 
     uint32_t frameInProgress = false;
     uint32_t currentFrameId = 0;
@@ -1900,7 +1903,7 @@ class mod_rdp : public mod_api, public rdp_api
             // TS_NEG_FAST_GLYPH_INDEX,
             TS_NEG_ELLIPSE_SC_INDEX,
             TS_NEG_ELLIPSE_CB_INDEX,
-            TS_NEG_INDEX_INDEX
+			TS_NEG_GLYPH_INDEX
         );
     }
 
@@ -2276,15 +2279,23 @@ public:
                 case FU::CACHED:      m = "CACHED"; break;
                 case FU::POINTER:     m = "POINTER"; break;
                 }
-                LOG(LOG_INFO, "FastPath::UpdateType::%s", m);
-                upd.log(LOG_INFO);
+
+                const char * f = "UNKNOWN FRAGMENTATION";
+                switch(upd.fragmentation) {
+                case FastPath::FASTPATH_FRAGMENT_SINGLE: f = "single"; break;
+                case FastPath::FASTPATH_FRAGMENT_FIRST: f = "first"; break;
+                case FastPath::FASTPATH_FRAGMENT_LAST: f = "last"; break;
+                case FastPath::FASTPATH_FRAGMENT_NEXT: f = "next"; break;
+                }
+                LOG(LOG_INFO, "FastPath::UpdateType::%s flags=%s len=%lu", m, f, upd.payload.in_remain());
+                //upd.log(LOG_INFO);
             }
 
             if (upd.fragmentation != FastPath::FASTPATH_FRAGMENT_SINGLE) {
                 if (upd.fragmentation == FastPath::FASTPATH_FRAGMENT_FIRST) {
                     this->multifragment_update_data.rewind();
                 }
-                this->multifragment_update_data.out_copy_bytes(upd.payload.get_data(), upd.payload.get_capacity());
+                this->multifragment_update_data.out_copy_bytes(upd.payload.get_data(), upd.payload.in_remain());
                 if (upd.fragmentation != FastPath::FASTPATH_FRAGMENT_LAST) {
                     continue;
                 }
@@ -2293,6 +2304,7 @@ public:
             InStream fud(this->multifragment_update_data.get_bytes());
 
             InStream& stream = ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ? upd.payload : fud);
+            LOG(LOG_INFO, "fastpath full packet len=%lu", stream.in_remain());
 
             switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
             case FastPath::UpdateType::ORDERS:
@@ -2437,99 +2449,117 @@ public:
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-
         ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
 
-        uint16_t cmdType = stream.in_uint16_le();
+    	while (stream.in_check_rem(2)) {
+			unsigned expected = 2;
+			if (!stream.in_check_rem(expected)) {
+				LOG(LOG_ERR, "Truncated SurfaceCommand, need=%u remains=%zu", expected, stream.in_remain());
+				throw Error(ERR_RDP_DATA_TRUNCATED);
+			}
 
-        switch(cmdType) {
-        case CMDTYPE_SET_SURFACE_BITS:
-        case CMDTYPE_STREAM_SURFACE_BITS: {
-            RDPSetSurfaceCommand setSurface;
+			uint16_t cmdType = stream.in_uint16_le();
 
-            setSurface.recv(stream);
+			switch(cmdType) {
+			case CMDTYPE_SET_SURFACE_BITS:
+			case CMDTYPE_STREAM_SURFACE_BITS: {
+				RDPSetSurfaceCommand setSurface;
 
-            if (setSurface.codecId == this->remoteFx_codec_id) {
-                InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
-                this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
-            }
+				setSurface.recv(stream);
 
-            break;
-        }
-        case CMDTYPE_FRAME_MARKER: {
-            // 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
-            // The Frame Marker Command is used to group multiple surface commands so that these commands
-            // can be processed and presented to the user as a single entity, a frame.
-            //
-            // cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
-            //         CMDTYPE_FRAME_MARKER (0x0004).
-            // frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
-            // +------------------------------+-------------------------------------+
-            // |             Value            |         Meaning                     |
-            // +------------------------------+-------------------------------------+
-            // | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
-            // |            0x0000              |                                     |
-            // +------------------------------+-------------------------------------+
-            // | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
-            // |             0x0001            | frame.                              |
-            // +------------------------------+-------------------------------------+
-            //
-            // frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
-            //
-            enum {
-                SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
-                SURFACECMD_FRAMEACTION_END = 0x0001
-            };
+				if (setSurface.codecId == this->remoteFx_codec_id) {
+					InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
+					this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
+				}
+				else {
+					LOG(LOG_INFO, "unknown codecId=%u", setSurface.codecId);
+				}
+				stream.in_skip_bytes(setSurface.bitmapDataLength);
+				break;
+			}
+			case CMDTYPE_FRAME_MARKER: {
+				// 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
+				// The Frame Marker Command is used to group multiple surface commands so that these commands
+				// can be processed and presented to the user as a single entity, a frame.
+				//
+				// cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
+				//         CMDTYPE_FRAME_MARKER (0x0004).
+				// frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
+				// +------------------------------+-------------------------------------+
+				// |             Value            |         Meaning                     |
+				// +------------------------------+-------------------------------------+
+				// | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
+				// |            0x0000            |                                     |
+				// +------------------------------+-------------------------------------+
+				// | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
+				// |             0x0001           | frame.                              |
+				// +------------------------------+-------------------------------------+
+				//
+				// frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
+				//
+				enum {
+					SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
+					SURFACECMD_FRAMEACTION_END = 0x0001
+				};
 
-            // frameAction (2) + frameId (4)
-            ::check_throw(stream, 6, "mod_rdp::FrameMarker", ERR_RDP_DATA_TRUNCATED);
+				expected = 6;
+				if (!stream.in_check_rem(expected)) {
+					LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
+					throw Error(ERR_RDP_DATA_TRUNCATED);
+				}
 
-            uint16_t frameAction = stream.in_uint16_le();
-            uint32_t frameId = stream.in_uint32_le();
-            switch(frameAction) {
-            case SURFACECMD_FRAMEACTION_BEGIN:
-                LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
-                if (this->frameInProgress) {
-                    // some servers don't send frame end markers, so send acks when we receive
-                    // a new frame and the previous one was not acked
-                    drawable.end_update();
+				uint16_t frameAction = stream.in_uint16_le();
+				uint32_t frameId = stream.in_uint32_le();
+				switch(frameAction) {
+				case SURFACECMD_FRAMEACTION_BEGIN:
+					LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
+					if (this->frameInProgress) {
+						// some servers don't send frame end markers, so send acks when we receive
+						// a new frame and the previous one was not acked
+						drawable.end_update();
 
-                    LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
-                    this->send_pdu_type2(
-                        PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-                        [this](StreamSize<32>, OutStream & ostream) {
-                            ostream.out_uint32_le(this->currentFrameId);
-                        }
-                    );
-                }
+						if (this->haveSurfaceFrameAck) {
+							LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
+							uint32_t localLastFrame = this->currentFrameId;
+							this->send_pdu_type2(
+								PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
+								[localLastFrame](StreamSize<32>, OutStream & ostream) {
+									ostream.out_uint32_le(localLastFrame);
+								}
+							);
+						}
+					}
 
-                this->frameInProgress = true;
-                this->currentFrameId = frameId;
-                drawable.begin_update();
-                break;
-            case SURFACECMD_FRAMEACTION_END:
-                LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
-                this->frameInProgress = false;
-                drawable.end_update();
-                this->send_pdu_type2(
-                    PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-                    [frameId](StreamSize<32>, OutStream & ostream) {
-                        ostream.out_uint32_le(frameId);
-                    }
-                );
-                break;
-            default:
-                LOG(LOG_ERR, "unknown frame marker action %u", frameAction);
-                break;
-            }
+					this->frameInProgress = true;
+					this->currentFrameId = frameId;
+					drawable.begin_update();
+					break;
+				case SURFACECMD_FRAMEACTION_END:
+					LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
+					this->frameInProgress = false;
+					drawable.end_update();
 
-            break;
-        }
-        default:
-            LOG(LOG_ERR, "unknown surface command %u", cmdType);
-            break;
-        }
+					if (this->haveSurfaceFrameAck) {
+						this->send_pdu_type2(
+							PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
+							[frameId](StreamSize<32>, OutStream & ostream) {
+								ostream.out_uint32_le(frameId);
+							}
+						);
+					}
+					break;
+				default:
+					LOG(LOG_ERR, "unknown frame marker action %u", frameAction);
+					break;
+				}
 
+				break;
+			}
+			default:
+				LOG(LOG_ERR, "unknown surface command 0x%x", cmdType);
+				break;
+			}
+    	}
     }
 
     void connected_slow_path(gdi::GraphicApi & drawable, InStream & stream)
@@ -3255,6 +3285,8 @@ public:
                 confirm_active_pdu.emit_begin(this->share_id);
 
                 GeneralCaps general_caps;
+                general_caps.os_major = 4;
+                general_caps.os_minor = 7;
                 general_caps.extraflags  =
                     this->negociation_result.use_rdp5
                     ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
@@ -3266,6 +3298,8 @@ public:
                     ? FASTPATH_OUTPUT_SUPPORTED
                     : 0
                     ;
+                general_caps.refreshRectSupport = true;
+                general_caps.suppressOutputSupport = true;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     general_caps.log("Sending to server");
                 }
@@ -3280,6 +3314,7 @@ public:
                 bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
                 //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
+
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     bitmap_caps.log("Sending to server");
                 }
@@ -3301,8 +3336,8 @@ public:
                     order_caps.orderSupport[idx] = this->primary_drawing_orders_support.test(idx);
                 }
 
-                order_caps.orderSupport[UnusedIndex3] = 1;
-                order_caps.orderSupport[UnusedIndex5] = 1;
+                order_caps.orderSupport[TS_NEG_OPAQUERECT_INDEX] = 1;
+                order_caps.orderSupport[TS_NEG_MEMBLT_V2_INDEX] = 1;
                 order_caps.textFlags                  = 0x06a1;
                 order_caps.orderSupportExFlags        = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
                 order_caps.textANSICodePage           = 0x4e4; // Windows-1252 codepage is passed (latin-1)
@@ -3327,13 +3362,15 @@ public:
                 bmpcache_caps.cache2MaximumCellSize = nb_bytes_per_pixel(this->orders.bpp) * 0x1000;
 
                 BmpCache2Caps bmpcache2_caps;
-                bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG | (this->enable_cache_waiting_list ? ALLOW_CACHE_WAITING_LIST_FLAG : 0);
+                bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG;
+                if (this->enable_cache_waiting_list || (this->enable_remotefx && this->haveRemoteFx))
+                	bmpcache2_caps.cacheFlags |= ALLOW_CACHE_WAITING_LIST_FLAG;
                 bmpcache2_caps.numCellCaches        = 3;
                 bmpcache2_caps.bitmapCache0CellInfo = this->BmpCacheRev2_Cache_NumEntries()[0];
                 bmpcache2_caps.bitmapCache1CellInfo = this->BmpCacheRev2_Cache_NumEntries()[1];
                 bmpcache2_caps.bitmapCache2CellInfo = (this->BmpCacheRev2_Cache_NumEntries()[2] | 0x80000000);
 
-                bool use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache;
+                bool use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache || (this->enable_remotefx && this->haveRemoteFx);
 
                 if (use_bitmapcache_rev2) {
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
@@ -3368,24 +3405,6 @@ public:
                     }
                 }
 
-                ColorCacheCaps colorcache_caps;
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    colorcache_caps.log("Sending to server");
-                }
-                confirm_active_pdu.emit_capability_set(colorcache_caps);
-
-                ActivationCaps activation_caps;
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    activation_caps.log("Sending to server");
-                }
-                confirm_active_pdu.emit_capability_set(activation_caps);
-
-                ControlCaps control_caps;
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    control_caps.log("Sending to server");
-                }
-                confirm_active_pdu.emit_capability_set(control_caps);
-
                 PointerCaps pointer_caps;
                 pointer_caps.len                       = 10;
                 if (!this->enable_new_pointer) {
@@ -3400,29 +3419,19 @@ public:
                 }
                 confirm_active_pdu.emit_capability_set(pointer_caps);
 
-                ShareCaps share_caps;
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    share_caps.log("Sending to server");
-                }
-                confirm_active_pdu.emit_capability_set(share_caps);
-
                 InputCaps input_caps;
+                input_caps.inputFlags |= INPUT_FLAG_FASTPATH_INPUT;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     input_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(input_caps);
 
-                SoundCaps sound_caps;
+                BrushCacheCaps brush_caps;
+                brush_caps.brushSupportLevel = BRUSH_COLOR_FULL;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    sound_caps.log("Sending to server");
+                	brush_caps.log("Sending to server");
                 }
-                confirm_active_pdu.emit_capability_set(sound_caps);
-
-                FontCaps font_caps;
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    font_caps.log("Sending to server");
-                }
-                confirm_active_pdu.emit_capability_set(font_caps);
+                confirm_active_pdu.emit_capability_set(brush_caps);
 
                 GlyphCacheCaps glyphcache_caps;
                 if (this->enable_glyph_cache) {
@@ -3439,6 +3448,50 @@ public:
                 confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
 #ifndef __EMSCRIPTEN__
+                VirtualChannelCaps virtual_channel_caps;
+                virtual_channel_caps.VCChunkSize = 1600;
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                	virtual_channel_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(virtual_channel_caps);
+
+                SoundCaps sound_caps;
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    sound_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(sound_caps);
+
+                ShareCaps share_caps;
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    share_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(share_caps);
+
+                FontCaps font_caps;
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    font_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(font_caps);
+
+                ControlCaps control_caps;
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    control_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(control_caps);
+
+                ColorCacheCaps colorcache_caps;
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    colorcache_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(colorcache_caps);
+
+                ActivationCaps activation_caps;
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    activation_caps.log("Sending to server");
+                }
+                confirm_active_pdu.emit_capability_set(activation_caps);
+
+
                 if (this->channels.remote_app.enable_remote_program) {
                     RailCaps rail_caps = this->client_rail_caps;
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
@@ -3454,26 +3507,24 @@ public:
                 }
 #endif
 
-                if (this->large_pointer_support &&
-                    this->client_large_pointer_caps.largePointerSupportFlags) {
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        this->client_large_pointer_caps.log("Sending to server");
-                    }
-                    confirm_active_pdu.emit_capability_set(this->client_large_pointer_caps);
+                bool sendMultiFragmentUpdate = false;
+                MultiFragmentUpdateCaps multi_fragment_update_caps;
 
-                    if (this->client_multi_fragment_update_caps.MaxRequestSize) {
-                        MultiFragmentUpdateCaps multi_fragment_update_caps;
+                LargePointerCaps large_pointer_caps;
+                bool sendLargePointer = false;
 
-                        multi_fragment_update_caps = this->client_multi_fragment_update_caps;
+                if (this->large_pointer_support && this->client_large_pointer_caps.largePointerSupportFlags) {
+                	sendLargePointer = true;
 
-                        if (multi_fragment_update_caps.MaxRequestSize > this->multifragment_update_data.get_capacity()) {
-                            multi_fragment_update_caps.MaxRequestSize = this->multifragment_update_data.get_capacity();
-                        }
-                        if (bool(this->verbose & RDPVerbose::capabilities)) {
-                            multi_fragment_update_caps.log("Sending to server");
-                        }
-                        confirm_active_pdu.emit_capability_set(multi_fragment_update_caps);
-                    }
+                    /* 2.2.7.2.7 Large Pointer Capability Set (TS_LARGE_POINTER_CAPABILITYSET)
+                     * To support large pointer shapes, the client and server MUST support multifragment updates and
+					 * indicate this support by exchanging the Multifragment Update Capability Set (section 2.2.7.2.6). The
+					 * MaxRequestSize field of the Multifragment Update Capability Set MUST be set to at least 38,055
+					 * bytes (so that a 96 x 96 pixel 32bpp pointer can be transported).
+                     */
+					sendMultiFragmentUpdate = true;
+					if (multi_fragment_update_caps.MaxRequestSize < 38055)
+						multi_fragment_update_caps.MaxRequestSize = 38055;
                 }
 
                 if (this->primary_drawing_orders_support.test(TS_NEG_DRAWNINEGRID_INDEX)) {
@@ -3486,34 +3537,77 @@ public:
 
                 BitmapCodecCaps bitmap_codec_caps(true);
 
-                if (this->enable_remotefx && this->remoteFx_codec_id != 1) {
-                    bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX, this->remoteFx_codec_id);
+                if (this->enable_remotefx && this->haveRemoteFx) {
+                	/**
+                	 * for remoteFx we need:
+                	 * 	* frameAck
+                	 * 	* announced remoteFx codec
+                	 * 	* appropriate surfaceCommands
+                	 * 	* largePointer
+                	 * 	* a multi_fragment_update that is big enough (at least the value returned by the server)
+                	 */
+                	this->remoteFx_codec_id = bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
 
-                    FrameAcknowledgeCaps frameAck;
-                    frameAck.maxUnacknowledgedFrameCount = 2;
-                    confirm_active_pdu.emit_capability_set(frameAck);
-
-                    SurfaceCommandsCaps surfaceCommands;
-                    surfaceCommands.cmdFlags = SURFCMDS_SETSURFACEBITS | SURFCMDS_FRAMEMARKER | SURFCMDS_STREAMSURFACEBITS;
-                    confirm_active_pdu.emit_capability_set(surfaceCommands);
-
-                    MultiFragmentUpdateCaps fragCaps;
-                    fragCaps.MaxRequestSize = std::max(
-                        this->front_multifragment_maxsize,
-                        static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
-                    );
-                    if (this->multifragment_update_data.get_capacity() < fragCaps.MaxRequestSize) {
-                        this->multifragment_update_buffer
-                            = std::make_unique<uint8_t[]>(fragCaps.MaxRequestSize);
-                        this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), fragCaps.MaxRequestSize);
-                    }
-                    confirm_active_pdu.emit_capability_set(fragCaps);
-
-                    confirm_active_pdu.emit_capability_set(bitmap_codec_caps);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         bitmap_codec_caps.log("Sending to server");
                     }
+                    confirm_active_pdu.emit_capability_set(bitmap_codec_caps);
+
+                    if (this->haveSurfaceFrameAck) {
+						FrameAcknowledgeCaps frameAck;
+						frameAck.maxUnacknowledgedFrameCount = 2;
+						if (bool(this->verbose & RDPVerbose::capabilities)) {
+							frameAck.log("Sending to server");
+						}
+						confirm_active_pdu.emit_capability_set(frameAck);
+                    }
+
+                    SurfaceCommandsCaps surface_commands_caps;
+                    surface_commands_caps.cmdFlags = SURFCMDS_SETSURFACEBITS | SURFCMDS_FRAMEMARKER | SURFCMDS_STREAMSURFACEBITS;
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    	surface_commands_caps.log("Sending to server");
+                    }
+                    confirm_active_pdu.emit_capability_set(surface_commands_caps);
+
+                    multi_fragment_update_caps.MaxRequestSize = std::max(
+                    		this->front_multifragment_maxsize,
+                            static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
+                    );
+                    sendMultiFragmentUpdate = true;
+
+                    large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
+                    sendLargePointer = true;
                 }
+
+                if (sendMultiFragmentUpdate && multi_fragment_update_caps.MaxRequestSize) {
+					if (bool(this->verbose & RDPVerbose::capabilities)) {
+						multi_fragment_update_caps.log("Sending to server");
+					}
+
+                    confirm_active_pdu.emit_capability_set(multi_fragment_update_caps);
+                }
+
+                if (sendLargePointer) {
+                    confirm_active_pdu.emit_capability_set(large_pointer_caps);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    	large_pointer_caps.log("Sending to server");
+                    }
+                }
+				if (this->multifragment_update_data.get_capacity() < multi_fragment_update_caps.MaxRequestSize) {
+					this->multifragment_update_buffer.reset(new uint8_t[multi_fragment_update_caps.MaxRequestSize]());
+					this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), multi_fragment_update_caps.MaxRequestSize);
+				}
+
+                /** OffscreenBitmapCacheCapabilitySet */
+				OffScreenCacheCaps offscreen_cache_caps;
+				offscreen_cache_caps.offscreenSupportLevel = true;
+				offscreen_cache_caps.offscreenCacheSize = 0x1E00;
+				offscreen_cache_caps.offscreenCacheEntries = 0x07D0;
+
+				confirm_active_pdu.emit_capability_set(offscreen_cache_caps);
+				if (bool(this->verbose & RDPVerbose::capabilities)) {
+					offscreen_cache_caps.log("Sending to server");
+				}
 
                 confirm_active_pdu.emit_end();
             },
@@ -4960,7 +5054,7 @@ public:
                         caps.log("Receiving from server");
                     }
 
-                    this->remoteFx_codec_id = caps.remoteFxCodecId;
+                    this->haveRemoteFx = caps.haveRemoteFxCodec;
                 }
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE:
@@ -4970,6 +5064,7 @@ public:
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         caps.log("Receiving from server");
                     }
+                    this->haveSurfaceFrameAck = true;
                 }
                 break;
             default:

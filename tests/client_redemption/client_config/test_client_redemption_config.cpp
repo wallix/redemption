@@ -838,6 +838,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
                            "\nnla 1"
                            "\nsound 0"
                            "\nconsole_mode 0"
+    					   "\nremotefx 0"
                            "\nenable_shared_clipboard 1"
                            "\nenable_shared_virtual_disk 1"
                            "\nenable_shared_remoteapp 0"

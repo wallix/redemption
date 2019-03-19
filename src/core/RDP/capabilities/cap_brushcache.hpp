@@ -57,9 +57,9 @@
 
 
 enum {
-      BRUSH_DEFAULT
-    , BRUSH_COLOR_8X8
-    , BRUSH_COLOR_FULL
+      BRUSH_DEFAULT = 0
+    , BRUSH_COLOR_8X8 = 1
+    , BRUSH_COLOR_FULL = 2
 };
 
 enum {
