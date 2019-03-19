@@ -36,6 +36,7 @@
 #pragma once
 
 #include "utils/bitfu.hpp"
+#include "utils/log.hpp"
 
 #include <cstdint>
 #include <cstddef>
@@ -178,66 +179,27 @@ struct DrawablePointer {
         , MAX_HEIGHT = 96
     };
 
-    struct ContiguousPixels {
-        int             x;
-        int             y;
-        uint8_t         data_size;
-        const uint8_t * data;
-    };
-
-
-    ContiguousPixels contiguous_pixels[MAX_WIDTH / 2 * MAX_HEIGHT] {}; // MAX_WIDTH / 2 contiguous pixels per line * MAX_HEIGHT lines
-    uint8_t number_of_contiguous_pixels = 0;
-    uint8_t Bpp = 3;
-    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3] {}; // 32 pixels per line * 32 lines * 3 bytes per pixel
-
     explicit DrawablePointer() = default;
 
-    void initialize(unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
-        ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));
-        this->number_of_contiguous_pixels = 0;
-        ::memset(this->data, 0, sizeof(this->data));
+    unsigned width { 0 };
+    unsigned height { 0 };
 
-        ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels;
+    unsigned line_bytes { 0 };
+    unsigned mask_line_bytes { 0 };
 
-        Array2D a2d(::nbbytes(width), height, pointer_mask);
-        size_t y = height-1;
-        for (auto line : a2d){
-            size_t x = 0;
-            BitZones ba(width, line);
-            for (auto zone : ba){
-                if (!zone.bit){
-                    current_contiguous_pixels->x = x;
-                    current_contiguous_pixels->y = y;
-                    current_contiguous_pixels->data_size = zone.length*this->Bpp;
-                    current_contiguous_pixels++;
-                }
-                x += zone.length;
-            }
-            y--;
-        }
+    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3] {}; // 96 pixels per line * 96 lines * 3 bytes per pixel
+    uint8_t mask[MAX_WIDTH * MAX_HEIGHT / 8] {};
 
-        this->number_of_contiguous_pixels = current_contiguous_pixels - this->contiguous_pixels;
+    void initialize(unsigned int width_, unsigned int height_, unsigned int line_bytes_, unsigned int mask_line_bytes_,
+                    const uint8_t * pointer_data, const uint8_t * pointer_mask) {
+        this->width  = width_;
+        this->height = height_;
 
-        uint8_t * current_data = this->data;
-        for (size_t count = 0 ; count < this->number_of_contiguous_pixels ; count++) {
-            ContiguousPixels & block = this->contiguous_pixels[count];
-              const uint8_t * pixel = pointer_data + even_pad_length(width*Bpp) * (height - (block.y + 1)) + block.x * Bpp;
-            ::memcpy(current_data, pixel, block.data_size);
-            this->contiguous_pixels[count].data = current_data;
-            current_data += block.data_size;
-        }
-    }
+        this->line_bytes      = line_bytes_;
+        this->mask_line_bytes = mask_line_bytes_;
 
-    struct ContiguousPixelsView {
-        DrawablePointer::ContiguousPixels const * first;
-        DrawablePointer::ContiguousPixels const * last;
-        DrawablePointer::ContiguousPixels const * begin() const noexcept { return this->first; }
-        DrawablePointer::ContiguousPixels const * end() const noexcept { return this->last; }
-    };
-
-    ContiguousPixelsView contiguous_pixels_view() const {
-        return {this->contiguous_pixels + 0, this->contiguous_pixels + this->number_of_contiguous_pixels};
+        ::memcpy(this->data, pointer_data, this->line_bytes * this->height);
+        ::memcpy(this->mask, pointer_mask, this->mask_line_bytes * this->height);
     }
 };  // struct DrawablePointer
 
