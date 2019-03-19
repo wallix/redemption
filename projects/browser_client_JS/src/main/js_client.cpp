@@ -33,6 +33,7 @@ Author(s): Jonathan Poelen
 #include "redjs/image_data.hpp"
 #include "redjs/browser_transport.hpp"
 #include "redjs/browser_front.hpp"
+#include "redjs/js_table_id.hpp"
 
 #include <chrono>
 #include <string_view>
@@ -54,19 +55,23 @@ struct RdpClient
 
     struct JsRandom : Random
     {
+        JsRandom(redjs::JsTableId id) noexcept
+        : id(id)
+        {}
+
         void random(void * dest, std::size_t size) override
         {
             RED_EM_ASM(
                 {
                     Module.RdpClientEventTable[$0].random($1, $2);
                 },
-                id,
+                id.raw(),
                 dest,
                 size
             );
         }
 
-        void const* id;
+        redjs::JsTableId id;
     };
 
     struct JsAuth : NullAuthentifier
@@ -91,7 +96,7 @@ struct RdpClient
 
     Inifile ini;
 
-    JsRandom js_gen;
+    JsRandom js_rand;
     LCGTime lcg_timeobj;
     JsAuth authentifier;
     RedirectionInfo redir_info;
@@ -103,10 +108,11 @@ struct RdpClient
 
 
     RdpClient(
-        uint16_t width, uint16_t height,
+        int id, uint16_t width, uint16_t height,
         std::string const& username, std::string const& password,
         unsigned long verbose)
-    : front(width, height, client_info.screen_info, client_info.order_caps, RDPVerbose(verbose))
+    : front(id, width, height, client_info.screen_info, client_info.order_caps, RDPVerbose(verbose))
+    , js_rand(id)
     {
         ini.set<cfg::mod_rdp::server_redirection_support>(false);
         ini.set<cfg::mod_rdp::enable_nla>(false);
@@ -147,9 +153,8 @@ struct RdpClient
 
         const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
-        this->js_gen.id = &front;
         this->mod = new_mod_rdp(
-            browser_trans, session_reactor, front, front, client_info, redir_info, js_gen,
+            browser_trans, session_reactor, front, front, client_info, redir_info, js_rand,
             lcg_timeobj, channels_authorizations,
             mod_rdp_params, authentifier, report_message, ini, nullptr);
         front.set_mod(this->mod.get());
@@ -222,13 +227,18 @@ struct RdpClient
     {
         this->front.send_file(name, std::move(data));
     }
+
+    int id() const noexcept
+    {
+        return js_rand.id.raw();
+    }
 };
 
 // Binding code
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor<uint16_t, uint16_t, std::string, std::string, unsigned long>()
+        .constructor<int, uint16_t, uint16_t, std::string, std::string, unsigned long>()
         /// long long is not embind type. Use long or double (safe for 53 bits);
         .function_ptr("updateTime", [](RdpClient& client) {
             Ms ms = client.update_time(tvtime());
@@ -237,9 +247,7 @@ EMSCRIPTEN_BINDINGS(client)
         .function_ptr("getSendingData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_sending_data_view());
         })
-        .function_ptr("frontPtr", +[](RdpClient& ref) {
-            return RED_EM_ASM_INT({ return $0; }, &ref.front);
-        })
+        .function("id", &RdpClient::id)
         .function("clearSendingData", &RdpClient::clear_sending_data)
         .function("addReceivingData", &RdpClient::add_receiving_data)
         .function("sendUnicode", &RdpClient::rdp_input_unicode)

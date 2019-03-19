@@ -28,6 +28,7 @@ Author(s): Jonathan Poelen
 #include "core/front_api.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
+#include "redjs/js_table_id.hpp"
 
 #include <vector>
 #include <string_view>
@@ -44,7 +45,7 @@ class ImageData;
 class BrowserFront : public FrontAPI, public gdi::GraphicApi
 {
 public:
-    BrowserFront(uint16_t width, uint16_t height, ScreenInfo& screen_info, OrderCaps& order_caps, RDPVerbose verbose);
+    BrowserFront(redjs::JsTableId id, uint16_t width, uint16_t height, ScreenInfo& screen_info, OrderCaps& order_caps, RDPVerbose verbose);
     ~BrowserFront();
 
     bool can_be_start_capture() override;
@@ -117,6 +118,7 @@ private:
 
     uint16_t width;
     uint16_t height;
+    redjs::JsTableId id;
     RDPVerbose verbose;
     ScreenInfo& screen_info;
     std::unique_ptr<ImageData[]> image_datas;

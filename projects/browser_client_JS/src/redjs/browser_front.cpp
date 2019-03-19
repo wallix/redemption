@@ -204,9 +204,10 @@ struct BrowserFront::Clipboard
     redjs::Clipboard clipboard;
 };
 
-BrowserFront::BrowserFront(uint16_t width, uint16_t height, ScreenInfo& screen_info, OrderCaps& order_caps, RDPVerbose verbose)
+BrowserFront::BrowserFront(redjs::JsTableId id, uint16_t width, uint16_t height, ScreenInfo& screen_info, OrderCaps& order_caps, RDPVerbose verbose)
 : width(screen_info.width)
 , height(screen_info.height)
+, id(id)
 , verbose(verbose)
 , screen_info(screen_info)
 , clipboard(std::make_unique<Clipboard>(verbose))
@@ -224,7 +225,7 @@ BrowserFront::BrowserFront(uint16_t width, uint16_t height, ScreenInfo& screen_i
 
     this->cl.push_back(CHANNELS::ChannelDef(channel_names::cliprdr, 0, 0));
 
-    this->clipboard->clip.frontidx = RED_EM_ASM_INT({ return $0; }, this);
+    this->clipboard->clip.frontidx = RED_EM_ASM_INT({ return $0; }, id.raw());
 }
 
 BrowserFront::~BrowserFront() = default;
@@ -254,7 +255,7 @@ void BrowserFront::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx colo
         {
             Module.RdpClientEventTable[$0].drawRect($1, $2, $3, $4, Pointer_stringify($5));
         },
-        this,
+        this->id.raw(),
         trect.x,
         trect.y,
         trect.cx,
@@ -273,7 +274,7 @@ void BrowserFront::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx
             {
                 Module.RdpClientEventTable[$0].drawRect($1, $2, $3, $4, Pointer_stringify($5));
             },
-            this,
+            this->id.raw(),
             trect.x,
             trect.y,
             trect.cx,
@@ -296,7 +297,7 @@ void BrowserFront::draw(const RDPScrBlt & cmd, Rect clip)
         {
             Module.RdpClientEventTable[$0].drawSrcBlt($1, $2, $3, $4, $5, $6, $7);
         },
-        this,
+        this->id.raw(),
         drect.x + deltax,
         drect.y + deltay,
         drect.cx,
@@ -319,7 +320,7 @@ void BrowserFront::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
             {
                 Module.RdpClientEventTable[$0].drawSrcBlt($1, $2, $3, $4, $5, $6, $7);
             },
-            this,
+            this->id.raw(),
             trect.x,
             trect.y,
             trect.cx,
@@ -395,7 +396,7 @@ void BrowserFront::draw(RDPMemBlt const & cmd_, Rect clip)
         {
             Module.RdpClientEventTable[$0].drawImage($1, $2, $3, $4, $5, $6, $7, $8, $9);
         },
-        this,
+        this->id.raw(),
         image.data(),
         image.width(),
         image.height(),
@@ -499,7 +500,7 @@ void BrowserFront::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
         {
             Module.RdpClientEventTable[$0].drawImage($1, $2, $3, $4, $5, 0, 0, $6, $7);
         },
-        this,
+        this->id.raw(),
         image.data(),
         image.width(),
         image.height(),
@@ -538,7 +539,7 @@ void BrowserFront::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPoi
             {
                 Module.RdpClientEventTable[$0].cachedPointer($1);
             },
-            this,
+            this->id.raw(),
             cache_idx
         );
         break;
@@ -550,7 +551,7 @@ void BrowserFront::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPoi
             {
                 Module.RdpClientEventTable[$0].newPointer($1, $2, $3, $4, $5, $6);
             },
-            this,
+            this->id.raw(),
             image.data(),
             image.width(),
             image.height(),
@@ -568,7 +569,7 @@ void BrowserFront::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPoi
             {
                 Module.RdpClientEventTable[$0].setPointer($1, $2, $3, $4, $5);
             },
-            this,
+            this->id.raw(),
             image.data(),
             image.width(),
             image.height(),
