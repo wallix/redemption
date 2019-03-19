@@ -149,6 +149,7 @@ public:
     {
         switch (state) {
         case NEGOCIATING_FRONT_STEP1:
+            LOG(LOG_INFO, "NEGOCIATING_FRONT_STEP1");
             frontBuffer.load_data(this->frontConn);
             if (frontBuffer.next_pdu()) {
                 array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
@@ -210,6 +211,7 @@ public:
             break;
 
         case NEGOCIATING_FRONT_NLA: {
+            LOG(LOG_INFO, "NEGOCIATING_FRONT_NLA");
             frontBuffer.load_data(frontConn);
             rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
             switch (st) {
@@ -227,6 +229,7 @@ public:
 
         // force X224::PROTOCOL_HYBRID
         case NEGOCIATING_FRONT_INITIAL_PDU:
+            LOG(LOG_INFO, "NEGOCIATING_INITIAL_PDU");
             frontBuffer.load_data(this->frontConn);
             if (frontBuffer.next_pdu()) {
                 array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
@@ -255,6 +258,7 @@ public:
             }
             break;
         case FORWARD: {
+            LOG(LOG_INFO, "FORWARD");
             size_t ret = frontConn.partial_read(make_array_view(tmpBuffer));
             if (ret > 0) {
                 outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
@@ -263,8 +267,12 @@ public:
             break;
         }
         case NEGOCIATING_BACK_NLA:
+            LOG(LOG_INFO, "Unexpected Front event when waiting for Back NLA negociation");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+
         case NEGOCIATING_BACK_INITIAL_PDU:
-            REDEMPTION_UNREACHABLE();
+            LOG(LOG_INFO, "Unexpected Front event when waiting for Back Initial PDU");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
         }
     }
 
@@ -272,6 +280,7 @@ public:
     {
         switch (state) {
         case NEGOCIATING_BACK_NLA: {
+            LOG(LOG_INFO, "NEGOCIATING_BACK_NLA");
             NullServerNotifier null_notifier;
             if (not nego_client->recv_next_data(backBuffer, null_notifier)) {
                 LOG(LOG_INFO, "stop NegoClient");
@@ -282,6 +291,7 @@ public:
             break;
         }
         case NEGOCIATING_BACK_INITIAL_PDU: {
+            LOG(LOG_INFO, "NEGOCIATING_BACK_INITIAL_PDU");
             backBuffer.load_data(this->backConn);
             if (backBuffer.next_pdu()) {
                 array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
@@ -314,6 +324,7 @@ public:
             break;
         }
         case FORWARD: {
+            LOG(LOG_INFO, "FORWARD (BACK to FRONT)");
             size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
             if (ret > 0) {
                 frontConn.send(tmpBuffer, ret);
@@ -322,9 +333,16 @@ public:
             break;
         }
         case NEGOCIATING_FRONT_INITIAL_PDU:
+            LOG(LOG_INFO, "Unexpected Back event when waiting for Front Initial PDU");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+
         case NEGOCIATING_FRONT_STEP1:
+            LOG(LOG_INFO, "Unexpected Back event when waiting for Front STEP1 negociation");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+
         case NEGOCIATING_FRONT_NLA:
-            REDEMPTION_UNREACHABLE();
+            LOG(LOG_INFO, "Unexpected Back event when waiting for Front NLA negociation");
+            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
         }
     }
 
@@ -344,10 +362,13 @@ public:
             case NEGOCIATING_FRONT_NLA:
             case NEGOCIATING_FRONT_STEP1:
             case NEGOCIATING_FRONT_INITIAL_PDU:
+                // Negotiation with back delayed until front finished
                 FD_SET(front_fd, &rset);
                 break;
             case NEGOCIATING_BACK_NLA:
             case NEGOCIATING_BACK_INITIAL_PDU:
+                // Now start negociation with back
+                // FIXME: use front NLA parameters!
                 FD_SET(back_fd, &rset);
                 break;
             case FORWARD:
@@ -362,7 +383,7 @@ public:
             }
 
             if (FD_ISSET(front_fd, &rset)) {
-                treat_front_activity();
+                this->treat_front_activity();
             }
 
             if (FD_ISSET(back_fd, &rset)) {

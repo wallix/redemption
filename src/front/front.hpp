@@ -501,7 +501,7 @@ private:
     /// \param fn  Fn(MCS::ChannelJoinRequest_Recv &)
     template<class Fn>
     void channel_join_request_transmission(InStream & x224_data, Fn fn) {
-        assert(buf.current_pdu_get_type() == X224::DT_TPDU);
+        assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
         X224::DT_TPDU_Recv x224(x224_data);
         MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
@@ -1255,17 +1255,17 @@ public:
                                           , length, flags, chunk, chunk_size);
     }
 
-    TpduBuffer buf;
+    TpduBuffer rbuf;
     size_t channel_list_index = 0;
 
     void incoming(Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 
-        buf.load_data(this->trans);
-        while (buf.next_pdu())
+        this->rbuf.load_data(this->trans);
+        while (this->rbuf.next_pdu())
         {
-            InStream new_x224_stream(buf.current_pdu_buffer());
+            InStream new_x224_stream(this->rbuf.current_pdu_buffer());
 
             switch (this->state) {
             case CONNECTION_INITIATION:
@@ -2259,7 +2259,7 @@ public:
             // connection management information and virtual channel messages (exchanged
             // between client-side plug-ins and server-side applications).
             {
-                if (buf.current_pdu_is_fast_path()) {
+                if (this->rbuf.current_pdu_is_fast_path()) {
                     FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
 
                     int num_events = cfpie.numEvents;
@@ -2403,15 +2403,15 @@ public:
                 }
 
                 // TODO We shall put a specific case when we get Disconnect Request
-                if (buf.current_pdu_get_type() == X224::DR_TPDU) {
+                if (this->rbuf.current_pdu_get_type() == X224::DR_TPDU) {
                     // TODO What is the clean way to actually disconnect ?
                     X224::DR_TPDU_Recv x224(new_x224_stream);
                     LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
                     this->is_client_disconnected = true;
                     throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
                 }
-                if (buf.current_pdu_get_type() != X224::DT_TPDU) {
-                    LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", buf.current_pdu_get_type());
+                if (this->rbuf.current_pdu_get_type() != X224::DT_TPDU) {
+                    LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", this->rbuf.current_pdu_get_type());
                     throw Error(ERR_X224_EXPECTED_DATA_PDU);
                 }
 
