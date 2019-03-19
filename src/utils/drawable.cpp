@@ -1463,55 +1463,74 @@ void Drawable::set_row(size_t rownum, const uint8_t * data, size_t data_length)
 
 void Drawable::trace_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave)
 {
-    for (DrawablePointer::ContiguousPixels const & contiguous_pixels : current_pointer->contiguous_pixels_view()) {
-        if (contiguous_pixels.x + x < 0 || contiguous_pixels.y + y < 0) {
+    uint8_t* cur_psave = psave;
+
+    auto get_pixel_1bpp = [](const uint8_t* data, uint16_t line_bytes, unsigned int x, unsigned int y) -> uint8_t {
+        unsigned const index =  y * line_bytes * 8 + x;
+
+        return (((*(data + index / 8)) & (1 << (7 - (index % 8)))) ? 0xFF : 0);
+    };
+
+    auto get_pixel_24bpp = [](const uint8_t* data, uint16_t line_bytes, unsigned int x, unsigned int y) -> uint32_t {
+        const uint8_t* dest = data + y * line_bytes + x * 3;
+
+        uint32_t res = 0;
+        for (int b = 0 ; b < 3 ; ++b){
+            res |= dest[b] << (8 * b);
+        }
+        return res;
+    };
+
+    for (unsigned cur_line = 0; cur_line < current_pointer->height; ++cur_line) {
+        int const drawable_y = cur_line + y;
+        if ((drawable_y < 0) || (drawable_y >= this->impl_.height())) {
             continue;
         }
-        uint8_t * pixel_begin = this->impl_.first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
-        uint8_t * pixel_end = pixel_begin + contiguous_pixels.data_size;
-        uint8_t * line_begin = this->impl_.row_data(contiguous_pixels.y+y);
-        uint8_t * line_end = line_begin + this->impl_.rowsize();
-        if (pixel_end > line_end) {
-            pixel_end = line_end;
+
+        for (unsigned cur_column = 0; cur_column < current_pointer->width; ++cur_column) {
+            int const drawable_x = cur_column + x;
+            if ((drawable_x < 0) || (drawable_x >= this->impl_.width())) {
+                continue;
+            }
+
+            uint8_t * first_byte = this->impl_.first_pixel(drawable_x, drawable_y);
+            ::memcpy(cur_psave, first_byte, this->impl_.nbbytes_color());
+
+            uint32_t const andBits =
+                (get_pixel_1bpp(current_pointer->mask, current_pointer->mask_line_bytes, cur_column, current_pointer->height - cur_line - 1) ?
+                 0xFFFFFF : 0);
+            uint32_t const xorBits =
+                get_pixel_24bpp(current_pointer->data, current_pointer->line_bytes, cur_column, current_pointer->height - cur_line - 1);
+
+            uint32_t const bits = in_uint32_from_nb_bytes_le(3, first_byte);
+
+            ::out_bytes_le(first_byte, 3, (bits & andBits) ^ xorBits);
+
+            cur_psave += this->impl_.nbbytes_color();
         }
-        if (line_end >= this->impl_.last_pixel()) {
-            continue;
-        }
-        if (line_begin < this->impl_.first_pixel()) {
-            continue;
-        }
-        size_t offset = (pixel_begin < line_begin) ? line_begin - pixel_begin : 0;
-        if (pixel_end > pixel_begin+offset){
-            memcpy(psave+offset, pixel_begin+offset, pixel_end-pixel_begin-offset);
-            memcpy(pixel_begin + offset, contiguous_pixels.data + offset, pixel_end-pixel_begin-offset);
-        }
-        psave += contiguous_pixels.data_size;
     }
 }
 
 void Drawable::clear_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave)
 {
-    for (DrawablePointer::ContiguousPixels const & contiguous_pixels : current_pointer->contiguous_pixels_view()) {
-        if (contiguous_pixels.x + x < 0 || contiguous_pixels.y + y < 0) {
+    uint8_t* cur_psave = psave;
+
+    for (unsigned cur_line = 0; cur_line < current_pointer->height; ++cur_line) {
+        int const drawable_y = cur_line + y;
+        if ((drawable_y < 0) || (drawable_y >= this->impl_.height())) {
             continue;
         }
-        uint8_t * pixel_begin = this->impl_.first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
-        uint8_t * pixel_end = pixel_begin + contiguous_pixels.data_size;
-        uint8_t * line_begin = this->impl_.row_data(contiguous_pixels.y+y);
-        uint8_t * line_end = line_begin + this->impl_.rowsize();
-        if (pixel_end > line_end) {
-            pixel_end = line_end;
+
+        for (unsigned cur_column = 0; cur_column < current_pointer->width; ++cur_column) {
+            int const drawable_x = cur_column + x;
+            if ((drawable_x < 0) || (drawable_x >= this->impl_.width())) {
+                continue;
+            }
+
+            uint8_t * first_byte = this->impl_.first_pixel(drawable_x, drawable_y);
+            ::memcpy(first_byte, cur_psave, this->impl_.nbbytes_color());
+
+            cur_psave += this->impl_.nbbytes_color();
         }
-        if (line_end >= this->impl_.last_pixel()) {
-            continue;
-        }
-        if (line_begin < this->impl_.first_pixel()) {
-            continue;
-        }
-        size_t offset = (pixel_begin < line_begin) ? line_begin - pixel_begin : 0;
-        if (pixel_end > pixel_begin+offset){
-            memcpy(pixel_begin+offset, psave+offset, pixel_end-pixel_begin-offset);
-        }
-        psave += contiguous_pixels.data_size;
     }
 }

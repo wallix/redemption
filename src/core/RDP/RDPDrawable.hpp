@@ -40,7 +40,7 @@ class RDPDrawable final
     using Color = Drawable::Color;
 
     Drawable drawable;
-    uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
+    uint8_t  save_mouse[96 * 96 * 3];   // 96 lines * 96 columns * 3 bytes per pixel
     uint16_t save_mouse_x;
     uint16_t save_mouse_y;
 public:
