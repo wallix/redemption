@@ -187,8 +187,9 @@ const createRdpClient = (function(Module) {
                     if (timeoutID) {
                         clearTimeout(timeoutID);
                     }
+                    Module.RdpClientEventTable[rdpclient.frontPtr()] = undefined;
                     rdpclient.delete();
-                    rdpclient = null;
+                    rdpclient = undefined;
                 }
             }
         }
@@ -690,7 +691,7 @@ function run()
         ecanvas.height,
         user_input.value,
         pass_input.value,
-        0/*xff*/);
+        0/*xff*/|0x04000000);
     rdpclient.on('socketOpen', () => {
         console.log('RdpClient open');
         canvasStartEvents();

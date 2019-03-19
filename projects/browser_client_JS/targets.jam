@@ -14,6 +14,7 @@ exe-js js_client :
   krb5.bc
   src/redjs/browser_front.bc
   src/redjs/browser_transport.bc
+  src/redjs/clipboard.bc
   src/redjs/image_data_from_bitmap.bc
   src/redjs/image_data_from_pointer.bc
   projects/redemption_configs/redemption_src/configs/config.bc
@@ -81,6 +82,7 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
 objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
 objjs src/redjs/browser_front.bc : src/redjs/browser_front.cpp ;
 objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
+objjs src/redjs/clipboard.bc : src/redjs/clipboard.cpp ;
 objjs src/redjs/image_data_from_bitmap.bc : src/redjs/image_data_from_bitmap.cpp ;
 objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;

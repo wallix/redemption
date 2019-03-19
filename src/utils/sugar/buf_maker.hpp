@@ -21,7 +21,10 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include <memory>
+#include <cstddef>
+
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 
 template<std::size_t StaticLen, class T = uint8_t>
@@ -42,12 +45,50 @@ struct BufMaker
         return this->buf_;
     }
 
-    static constexpr std::size_t size() noexcept
+    static constexpr std::size_t min_size() noexcept
     {
         return StaticLen;
     }
 
 private:
     T buf_[StaticLen];
+    std::unique_ptr<T[]> dyn_buf_;
+};
+
+
+template<std::size_t StaticLen, class T = uint8_t>
+struct BufArrayMaker
+{
+    array_view<T> dyn_array(std::size_t n) &
+    {
+        T * p = this->buf_;
+        if (n > StaticLen) {
+            if (this->dyn_buf_len_ < n) {
+                this->dyn_buf_ = std::make_unique<T[]>(n);
+                this->dyn_buf_len_ = checked_int(n);
+            }
+            p = this->dyn_buf_.get();
+        }
+        return {p, n};
+    }
+
+    array_view<T> static_array() & noexcept
+    {
+        return this->buf_;
+    }
+
+    static constexpr std::size_t min_size() noexcept
+    {
+        return StaticLen;
+    }
+
+    std::size_t capacity() const noexcept
+    {
+        return this->dyn_buf_ ? this->dyn_buf_len_ : StaticLen;
+    }
+
+private:
+    T buf_[StaticLen];
+    std::uint32_t dyn_buf_len_ = 0;
     std::unique_ptr<T[]> dyn_buf_;
 };

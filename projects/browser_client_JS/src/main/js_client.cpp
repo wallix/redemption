@@ -137,7 +137,7 @@ struct RdpClient
             theme,
             server_auto_reconnect_packet,
             close_box_extra_message,
-            to_verbose_flags(verbose)
+            RDPVerbose(verbose)
         );
 
         mod_rdp_params.device_id                  = "device_id";
@@ -155,7 +155,7 @@ struct RdpClient
         mod_rdp_params.primary_drawing_orders_support += TS_NEG_MULTIOPAQUERECT_INDEX;
         mod_rdp_params.ignore_auth_channel = true;
 
-        if (verbose > 128) {
+        if (bool(RDPVerbose(verbose) & RDPVerbose::basic_trace)) {
             mod_rdp_params.log();
         }
 

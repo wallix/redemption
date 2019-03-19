@@ -82,56 +82,67 @@ struct array_view
 
     constexpr type & front() const noexcept { /*assert(this->size());*/ return *this->p; }
     constexpr type & back() const noexcept { /*assert(this->size());*/ return this->p[this->sz-1u]; }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type & front() noexcept { assert(this->size()); return *this->p; }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type & back() noexcept { assert(this->size()); return this->p[this->sz-1u]; }
+    constexpr type & front() noexcept { assert(this->size()); return *this->p; }
+    constexpr type & back() noexcept { assert(this->size()); return this->p[this->sz-1u]; }
 
     constexpr type const * data() const noexcept { return this->p; }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * data() noexcept { return this->p; }
+    constexpr type * data() noexcept { return this->p; }
 
     constexpr type const * begin() const noexcept { return this->data(); }
     constexpr type const * end() const noexcept { return this->data() + this->size(); }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * begin() noexcept { return this->data(); }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type * end() noexcept { return this->data() + this->size(); }
+    constexpr type * begin() noexcept { return this->data(); }
+    constexpr type * end() noexcept { return this->data() + this->size(); }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type & operator[](std::size_t i) noexcept
+    constexpr type & operator[](std::size_t i) noexcept
     { assert(i < this->size()); return this->data()[i]; }
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 type const & operator[](std::size_t i) const noexcept
+    constexpr type const & operator[](std::size_t i) const noexcept
     { assert(i < this->size()); return this->data()[i]; }
 
     // TODO free functions
     //@{
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view first(std::size_t n) const noexcept
+    constexpr array_view first(std::size_t n) noexcept
     {
         assert(n <= this->size());
         return {this->data(), n};
     }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view last(std::size_t n) const noexcept
+    constexpr array_view last(std::size_t n) noexcept
     {
         assert(n <= this->size());
         return {this->data() + this->size() - n, n};
     }
 
+    constexpr array_view<const T> first(std::size_t n) const noexcept
+    {
+        assert(n <= this->size());
+        return {this->data(), n};
+    }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view array_from_offset(std::size_t offset) noexcept
+    constexpr array_view<const T> last(std::size_t n) const noexcept
+    {
+        assert(n <= this->size());
+        return {this->data() + this->size() - n, n};
+    }
+
+    constexpr array_view array_from_offset(std::size_t offset) noexcept
     {
         assert(offset <= this->size());
         return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
     }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view subarray(std::size_t offset, std::size_t count) noexcept
+    constexpr array_view subarray(std::size_t offset, std::size_t count) noexcept
     {
         assert(offset <= this->size() && count <= this->size() - offset);
         return {this->data() + offset, count};
     }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view<T const> array_from_offset(std::size_t offset) const noexcept
+    constexpr array_view<T const> array_from_offset(std::size_t offset) const noexcept
     {
         assert(offset <= this->size());
         return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
     }
 
-    REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view<T const> subarray(std::size_t offset, std::size_t count) const noexcept
+    constexpr array_view<T const> subarray(std::size_t offset, std::size_t count) const noexcept
     {
         assert(offset <= this->size() && count <= this->size() - offset);
         return {this->data() + offset, count};

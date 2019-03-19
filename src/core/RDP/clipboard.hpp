@@ -37,7 +37,8 @@
 namespace RDPECLIP {
 
 // Predefined Clipboard Formats (WinUser.h)
-enum {
+enum CF
+{
       CF_TEXT            = 1
     , CF_BITMAP          = 2
     , CF_METAFILEPICT    = 3
@@ -922,13 +923,10 @@ class FormatName {
     std::string format_name_;
 
 public:
-    explicit FormatName(uint32_t formatId, const char * format_name)
+    explicit FormatName(uint32_t formatId, std::string format_name) noexcept
     : formatId_(formatId)
-    , format_name_(format_name) {}
-
-    explicit FormatName(uint32_t formatId, std::string && format_name)
-    : formatId_(formatId)
-    , format_name_(std::move(format_name)) {}
+    , format_name_(std::move(format_name))
+    {}
 
     uint32_t formatId() const { return this->formatId_; }
 
