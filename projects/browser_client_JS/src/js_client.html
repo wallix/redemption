@@ -62,7 +62,7 @@ const Module = WallixModule({
     TOTAL_MEMORY: 268435456, // 16**7
 });
 
-const createRdpClient = (function(Module) {
+const createRdpClient = (function(Module, window) {
     const HEAPU8 = Module.HEAPU8;
     const HEAP16 = Module.HEAP16;
     const identity = (x) => x;
@@ -72,6 +72,13 @@ const createRdpClient = (function(Module) {
             const data = HEAPU8.subarray(idata, idata + w * h * 4);
             const image = new ImageData(new Uint8ClampedArray(data), w, h);
             cb(image, ...args);
+        };
+    };
+
+    const wCb_em2js_U8p = function(cb) {
+        return function(idata, w, h, ...args) {
+            const data = HEAPU8.subarray(idata, idata + len);
+            cb(data, ...args);
         };
     };
 
@@ -94,6 +101,8 @@ const createRdpClient = (function(Module) {
         cachedPointer: identity,
 
         setClipboardUtf8: identity,
+
+        random: wCb_em2js_U8p,
     };
 
     const wrappersCb = {
@@ -106,6 +115,11 @@ const createRdpClient = (function(Module) {
         socketSend: identity,
     };
 
+    const defaultRandom = function(idata, len) {
+        const data = HEAPU8.subarray(idata, idata + len);
+        window.crypto.getRandomValues(data);
+    };
+
     Module.RdpClientEventTable = {};
 
     const noop = function(){};
@@ -115,7 +129,9 @@ const createRdpClient = (function(Module) {
         socket.binaryType = 'arraybuffer';
 
         let rdpclient = null;
-        const events = {};
+        const events = {
+            random: defaultRandom,
+        };
 
         const client = {
             on: function(eventName, cb) {
@@ -274,7 +290,7 @@ const createRdpClient = (function(Module) {
 
         return client;
     }
-})(Module);
+})(Module, window);
 
 const ecanvasFocus = document.getElementById('canvasFocus');
 const ecurCanvas = document.getElementById('curCanvas');

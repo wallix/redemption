@@ -56,30 +56,17 @@ struct RdpClient
     {
         void random(void * dest, std::size_t size) override
         {
-            uint8_t* p = static_cast<uint8_t*>(dest);
-
-            if (size % 4) {
-                int const r = next_int();
-                switch (size % 4) {
-                    case 3: *p++ = static_cast<uint8_t>(r >> 16); [[fallthrough]];
-                    case 2: *p++ = static_cast<uint8_t>(r >> 8); [[fallthrough]];
-                    case 1: *p++ = static_cast<uint8_t>(r);
-                }
-            }
-
-            for (std::size_t i = 0, ie = size / 4; i < ie; ++i) {
-                int const r = next_int();
-                *p++ = static_cast<uint8_t>(r >> 24);
-                *p++ = static_cast<uint8_t>(r >> 16);
-                *p++ = static_cast<uint8_t>(r >> 8);
-                *p++ = static_cast<uint8_t>(r);
-            }
+            RED_EM_ASM(
+                {
+                    Module.RdpClientEventTable[$0].random($1, $2);
+                },
+                id,
+                dest,
+                size
+            );
         }
 
-        int next_int() noexcept
-        {
-            return RED_EM_ASM_INT({ return Math.random() * 4294967296 });
-        }
+        void const* id;
     };
 
     struct JsAuth : NullAuthentifier
@@ -104,8 +91,7 @@ struct RdpClient
 
     Inifile ini;
 
-    // TODO JsRandom
-    JsRandom lcg_gen;
+    JsRandom js_gen;
     LCGTime lcg_timeobj;
     JsAuth authentifier;
     RedirectionInfo redir_info;
@@ -161,8 +147,9 @@ struct RdpClient
 
         const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
+        this->js_gen.id = &front;
         this->mod = new_mod_rdp(
-            browser_trans, session_reactor, front, front, client_info, redir_info, lcg_gen,
+            browser_trans, session_reactor, front, front, client_info, redir_info, js_gen,
             lcg_timeobj, channels_authorizations,
             mod_rdp_params, authentifier, report_message, ini, nullptr);
         front.set_mod(this->mod.get());
