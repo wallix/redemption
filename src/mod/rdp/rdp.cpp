@@ -41,11 +41,11 @@ namespace
             return false;
         }
 
-        std::size_t pem_len = bio->num_write + 1;
+        std::size_t pem_len = BIO_number_written(bio) + 1;
         output.resize(pem_len);
         std::fill(output.data(), output.data() + pem_len, 0);
 
-        BIO_read(bio, output.data(), bio->num_write);
+        BIO_read(bio, output.data(), BIO_number_written(bio));
         BIO_free(bio);
 
         std::replace(output.begin(), output.end(), '\n', '\x01');
