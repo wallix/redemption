@@ -147,7 +147,7 @@ struct RdpClient
         mod_rdp_params.enable_new_pointer         = true;
         mod_rdp_params.enable_glyph_cache         = true;
         mod_rdp_params.server_cert_check          = ServerCertCheck::always_succeed;
-        mod_rdp_params.primary_drawing_orders_support -= TS_NEG_INDEX_INDEX;
+        mod_rdp_params.primary_drawing_orders_support -= TS_NEG_GLYPH_INDEX;
         mod_rdp_params.primary_drawing_orders_support -= TS_NEG_DSTBLT_INDEX;
         mod_rdp_params.primary_drawing_orders_support -= TS_NEG_PATBLT_INDEX;
         mod_rdp_params.primary_drawing_orders_support += TS_NEG_POLYLINE_INDEX;
