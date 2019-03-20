@@ -3429,7 +3429,7 @@ public:
                 confirm_active_pdu.emit_capability_set(input_caps);
 
                 BrushCacheCaps brush_caps;
-                brush_caps.brushSupportLevel = BRUSH_COLOR_FULL;
+                // brush_caps.brushSupportLevel = BRUSH_COLOR_FULL;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                 	brush_caps.log("Sending to server");
                 }
