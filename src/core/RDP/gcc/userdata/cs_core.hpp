@@ -391,8 +391,8 @@ struct CSCore {
     uint32_t version{0x00080001};    // RDP version. 1 == RDP4, 4 == RDP5
     uint16_t desktopWidth{0};
     uint16_t desktopHeight{0};
-    uint16_t colorDepth{0xca01};
-    uint16_t SASSequence{0xaa03};
+    uint16_t colorDepth{RNS_UD_COLOR_8BPP};
+    uint16_t SASSequence{RNS_UD_SAS_DEL};
     uint32_t keyboardLayout{0x040c}; // default to French
     uint32_t clientBuild{2600};
     uint16_t clientName[16];
@@ -401,14 +401,14 @@ struct CSCore {
     uint32_t keyboardFunctionKey{12};
     uint16_t imeFileName[32];
     // optional payload
-    uint16_t postBeta2ColorDepth{0xca01};
+    uint16_t postBeta2ColorDepth{RNS_UD_COLOR_8BPP};
     uint16_t clientProductId{1};
     uint32_t serialNumber{0};
     uint16_t highColorDepth{0};
-    uint16_t supportedColorDepths{7};
-    uint16_t earlyCapabilityFlags{RNS_UD_CS_SUPPORT_ERRINFO_PDU};
+    uint16_t supportedColorDepths{RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT};
+    uint16_t earlyCapabilityFlags{RNS_UD_CS_SUPPORT_ERRINFO_PDU|RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU};
     uint8_t  clientDigProductId[64];
-    uint8_t  connectionType{0};
+    uint8_t  connectionType{CONNECTION_TYPE_LAN};
     uint8_t  pad1octet{0};
     uint32_t serverSelectedProtocol{0};
     uint32_t desktopPhysicalWidth{0};
