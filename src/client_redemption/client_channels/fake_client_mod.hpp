@@ -307,7 +307,7 @@ public:
 
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
-    ResizeResult server_resize(uint16_t /*width*/, uint16_t /*height*/, BitsPerPixel /*bpp*/) override { return ResizeResult::instant_done;}
+    ResizeResult server_resize(ScreenInfo /*screen_server*/) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
 };
 

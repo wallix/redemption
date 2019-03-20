@@ -33,7 +33,7 @@
 
 RED_AUTO_TEST_CASE(TestDialogMod)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
 RED_AUTO_TEST_CASE(TestDialogModReject)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
@@ -79,7 +79,7 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
 
 RED_AUTO_TEST_CASE(TestDialogModChallenge)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
@@ -123,7 +123,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
 
 RED_AUTO_TEST_CASE(TestDialogModChallenge2)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 1600, 1200};
+    ScreenInfo screen_info{1600, 1200, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;

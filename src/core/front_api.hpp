@@ -25,7 +25,6 @@
 #pragma once
 
 #include "gdi/screen_info.hpp"
-#include "core/channel_list.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
@@ -51,7 +50,7 @@ public:
         instant_done = 2,
         remoteapp = 3
     };
-    virtual ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) = 0;
+    virtual ResizeResult server_resize(ScreenInfo screen_server) = 0;
 
     virtual void update_pointer_position(uint16_t x, uint16_t y) { (void)x; (void)y; }
 

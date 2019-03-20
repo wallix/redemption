@@ -149,7 +149,7 @@ private:
         uint16_t cx = stream.in_uint16_le();
         uint16_t cy = stream.in_uint16_le();
 
-        return ScreenInfo{original_bpp, cx, cy};
+        return ScreenInfo{cx, cy, original_bpp};
     }
 
     void preload_from_disk(Transport & t, uint8_t cache_id) {

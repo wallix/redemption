@@ -35,7 +35,7 @@
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
@@ -63,7 +63,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
 
     SessionReactor session_reactor;
@@ -120,7 +120,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
 
     SessionReactor session_reactor;
@@ -155,7 +155,7 @@ public:
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
@@ -207,7 +207,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
@@ -388,7 +388,7 @@ public:
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     WorkingDirectory wd("TestCliprdrChannelFilterServerDataFile");
 
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
 
     SessionReactor session_reactor;
@@ -886,7 +886,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
     WorkingDirectory wd("TestCliprdrChannelFilterClientDataFile");
 
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
 
     SessionReactor session_reactor;

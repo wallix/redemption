@@ -309,32 +309,34 @@ public:
         }
     }
 
-    FrontAPI::ResizeResult server_resize(const int width, const int height, const BitsPerPixel bpp) {
+    FrontAPI::ResizeResult server_resize(ScreenInfo screen_server) {
 
-        if (width == 0 || height == 0) {
+        if (screen_server.width == 0 || screen_server.height == 0) {
             return FrontAPI::ResizeResult::fail;
         }
 
         switch (this->config->mod_state) {
 
             case ClientRedemptionConfig::MOD_RDP:
-                if (this->config->info.screen_info.width == width && this->config->info.screen_info.height == height) {
+                if (this->config->info.screen_info.width == screen_server.width
+                 && this->config->info.screen_info.height == screen_server.height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
                 this->dropScreen();
-                this->reset_cache(width, height);
+                this->reset_cache(screen_server.width, screen_server.height);
                 this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);
                 this->screen->show();
                     break;
 
             case ClientRedemptionConfig::MOD_VNC:
-                if (this->config->modVNCParamsData.width == width && this->config->modVNCParamsData.height == height) {
+                if (this->config->modVNCParamsData.width == screen_server.width
+                 && this->config->modVNCParamsData.height == screen_server.height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
-                this->config->modVNCParamsData.width = width;
-                this->config->modVNCParamsData.height = height;
+                this->config->modVNCParamsData.width = screen_server.width;
+                this->config->modVNCParamsData.height = screen_server.height;
                 this->dropScreen();
-                this->reset_cache(width, height);
+                this->reset_cache(screen_server.width, screen_server.height);
                 this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);
                 this->screen->show();
                     break;
@@ -354,7 +356,7 @@ public:
                         this->dropScreen();
                     }
 
-                    this->reset_cache(width, height);
+                    this->reset_cache(screen_server.width, screen_server.height);
 
                     if (!this->config->is_pre_loading) {
 
@@ -367,7 +369,7 @@ public:
                     break;
         }
 
-        this->config->info.screen_info.bpp = bpp;
+        this->config->info.screen_info.bpp = screen_server.bpp;
 
         return FrontAPI::ResizeResult::instant_done;
     }

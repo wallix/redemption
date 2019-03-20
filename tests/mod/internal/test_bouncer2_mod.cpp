@@ -29,7 +29,7 @@
 
 RED_AUTO_TEST_CASE(TestBouncer2Mod)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
 
 

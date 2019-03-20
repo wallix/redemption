@@ -33,7 +33,7 @@
 
 RED_AUTO_TEST_CASE(TestDialogMod)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
 RED_AUTO_TEST_CASE(TestDialogMod2)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 2048, 1536};
+    ScreenInfo screen_info{2048, 1536, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;

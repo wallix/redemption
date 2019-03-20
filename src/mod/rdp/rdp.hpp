@@ -2758,7 +2758,7 @@ public:
                                 else {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
 
-                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp)){
+                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp})){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);

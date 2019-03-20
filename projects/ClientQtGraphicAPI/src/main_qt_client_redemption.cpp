@@ -162,11 +162,12 @@ public:
         return ClientRedemption::init_mod();
     }
 
-    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override {
+    ResizeResult server_resize(ScreenInfo screen_server) override {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "server_resize to (%d, %u, %u)", width, height, bpp);
+            LOG(LOG_INFO, "server_resize to (%d, %u, %u)",
+            screen_server.width, screen_server.height, screen_server.bpp);
         }
-        return this->qt_graphic.server_resize(width, height, bpp);
+        return this->qt_graphic.server_resize(screen_server);
     }
 
     void begin_update() override {

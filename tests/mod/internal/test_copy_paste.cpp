@@ -157,7 +157,7 @@ public:
 
 RED_AUTO_TEST_CASE(TestPaste)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 120, 20};
+    ScreenInfo screen_info{120, 20, BitsPerPixel{24}};
 
     CopyPaste copy_paste;
     CopyPasteFront front(screen_info, copy_paste);

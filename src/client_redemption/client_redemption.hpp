@@ -1161,10 +1161,11 @@ public:
 		this->draw_impl(no_log{}, cmd, content);
 	}
 
-    virtual ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override
+    virtual ResizeResult server_resize(ScreenInfo screen_server) override
     {
         LOG_IF(bool(this->config.verbose & RDPVerbose::graphics), LOG_INFO,
-            "server_resize to (%u, %u, %d)", width, height, bpp);
+            "server_resize to (%u, %u, %d)",
+            screen_server.width, screen_server.height, screen_server.bpp);
         return ResizeResult::instant_done;
     }
 

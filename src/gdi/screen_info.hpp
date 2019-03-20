@@ -99,9 +99,9 @@ constexpr uint8_t nb_bits_per_pixel(BytesPerPixel nb_bytes) noexcept
 
 struct ScreenInfo
 {
-    BitsPerPixel bpp {};
     // Width width {};
     // Height height {};
     uint16_t width {};
     uint16_t height {};
+    BitsPerPixel bpp {};
 };

@@ -96,7 +96,7 @@ WidgetTestMod::WidgetTestMod(
 : InternalMod(drawable, front, width, height, font, Theme{})
 , d(std::make_unique<WidgetTestModPrivate>(session_reactor, *this))
 {
-    front.server_resize(width, height, BitsPerPixel{8});
+    front.server_resize({width, height, BitsPerPixel{8}});
 }
 
 WidgetTestMod::~WidgetTestMod()

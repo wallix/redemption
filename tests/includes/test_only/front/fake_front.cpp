@@ -44,10 +44,10 @@ void FakeFront::send_to_channel(
 {
 }
 
-FakeFront::ResizeResult FakeFront::server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp)
+FakeFront::ResizeResult FakeFront::server_resize(ScreenInfo screen_server)
 {
-    this->d->gd.resize(width, height);
-    this->d->screen_info.bpp = bpp;
+    this->d->gd.resize(screen_server.width, screen_server.height);
+    this->d->screen_info.bpp = screen_server.bpp;
     return ResizeResult::done;
 }
 

@@ -46,7 +46,7 @@ public:
     void send_to_channel( const CHANNELS::ChannelDef &, uint8_t const * /*data*/, size_t /*length*/
                         , size_t /*chunk_size*/, int /*flags*/) override;
 
-    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override;
+    ResizeResult server_resize(ScreenInfo screen_server) override;
 
     void update_pointer_position(uint16_t, uint16_t) override {}
 

@@ -1749,7 +1749,7 @@ private:
             }
 
 
-            switch (this->front.server_resize(this->width, this->height, this->bpp)){
+            switch (this->front.server_resize({this->width, this->height, this->bpp})){
             case FrontAPI::ResizeResult::instant_done:
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "no resizing needed");
                 // no resizing needed

@@ -31,7 +31,7 @@
 
 RED_AUTO_TEST_CASE(TestRdpdrChannel)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
@@ -153,7 +153,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
@@ -194,7 +194,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
@@ -235,7 +235,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
@@ -276,7 +276,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
 {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 

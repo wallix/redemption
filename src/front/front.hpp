@@ -809,21 +809,21 @@ public:
         }
     }
 
-    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override
+    ResizeResult server_resize(ScreenInfo screen_server) override
     {
         ResizeResult res = ResizeResult::no_need;
 
-        this->mod_bpp = bpp;
+        this->mod_bpp = screen_server.bpp;
 
-        if (bpp == BitsPerPixel{8}) {
+        if (screen_server.bpp == BitsPerPixel{8}) {
             this->palette_sent = false;
             for (bool & b : this->palette_memblt_sent) {
                 b = false;
             }
         }
 
-        if (this->client_info.screen_info.width != width
-         || this->client_info.screen_info.height != height) {
+        if (this->client_info.screen_info.width != screen_server.width
+         || this->client_info.screen_info.height != screen_server.height) {
             if (!this->client_info.remote_program) {
                 /* older client can't resize */
                 if (client_info.build <= 419) {
@@ -832,10 +832,10 @@ public:
                     res = ResizeResult::fail;
                 }
                 else {
-                    LOG(LOG_INFO, "Front::server_resize: Resizing client to : %d x %d x %d", width, height, this->client_info.screen_info.bpp);
+                    LOG(LOG_INFO, "Front::server_resize: Resizing client to : %d x %d x %d", screen_server.width, screen_server.height, this->client_info.screen_info.bpp);
 
-                    this->client_info.screen_info.width = width;
-                    this->client_info.screen_info.height = height;
+                    this->client_info.screen_info.width = screen_server.width;
+                    this->client_info.screen_info.height = screen_server.height;
 
                     this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
                     this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
@@ -846,7 +846,7 @@ public:
 
                     if (this->capture) {
                         if (this->ini.get<cfg::globals::experimental_support_resize_session_during_recording>()) {
-                            this->capture->resize(width, height);
+                            this->capture->resize(screen_server.width, screen_server.height);
                         }
                         else {
                             this->must_be_stop_capture();

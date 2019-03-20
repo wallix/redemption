@@ -172,13 +172,14 @@ bool BrowserFront::must_be_stop_capture()
     return false;
 }
 
-BrowserFront::ResizeResult BrowserFront::server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp)
+BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
 {
     if (bool(this->verbose & RDPVerbose::graphics)) {
-        LOG(LOG_INFO, "BrowserFront::server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+        LOG(LOG_INFO, "BrowserFront::server_resize(width=%d, height=%d, bpp=%d",
+        screen_server.width, screen_server.height, screen_server.bpp);
     }
 
-    return this->gd.resize_canvas(width, height)
+    return this->gd.resize_canvas(screen_server.width, screen_server.height)
         ? ResizeResult::instant_done
         : ResizeResult::fail;
 }

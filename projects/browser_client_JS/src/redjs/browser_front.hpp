@@ -50,7 +50,7 @@ public:
     bool can_be_start_capture() override;
     bool must_be_stop_capture() override;
 
-    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override;
+    ResizeResult server_resize(ScreenInfo screen_server) override;
 
     const CHANNELS::ChannelDefArray & get_channel_list() const override
     {

@@ -60,13 +60,12 @@ public:
         return false;
     }
 
-    ResizeResult server_resize(uint16_t width, uint16_t height, BitsPerPixel bpp) override
+    ResizeResult server_resize(ScreenInfo screen_server) override
     {
-        this->screen_info.width = width;
-        this->screen_info.height = height;
-        this->screen_info.bpp = bpp;
+        this->screen_info = screen_server;
         LOG_IF(this->verbose, LOG_INFO,
-            "ClientFront::server_resize(width=%u, height=%u, bpp=%d", width, height, bpp);
+            "ClientFront::server_resize(width=%u, height=%u, bpp=%d",
+            screen_server.width, screen_server.height, screen_server.bpp);
         return ResizeResult::instant_done;
     }
 

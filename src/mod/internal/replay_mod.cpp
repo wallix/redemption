@@ -108,7 +108,7 @@ struct ReplayMod::Reader
     {
         bool is_resized = false;
         switch (front.server_resize(
-            this->reader.info.width , this->reader.info.height , this->reader.info.bpp)
+            {this->reader.info.width , this->reader.info.height , this->reader.info.bpp})
         ) {
             case FrontAPI::ResizeResult::no_need:
                 // no resizing needed
