@@ -246,8 +246,8 @@ public:
                     if (f.tag == CS_CORE) {
                         GCC::UserData::CSCore cs_core;
                         cs_core.recv(f.payload);
-                        if (cs_core.length > 216) {
-                            auto const idx = f.payload.get_current() - currentPacket.data() - 4;
+                        if (cs_core.length >= 216) {
+                            auto const idx = f.payload.get_current() - currentPacket.data() + (216-cs_core.length) - 4;
                             currentPacket[idx] = X224::PROTOCOL_HYBRID;
                         }
                     }

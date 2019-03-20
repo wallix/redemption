@@ -387,7 +387,7 @@ enum {
 struct CSCore {
     // header
     uint16_t userDataType{CS_CORE};
-    uint16_t length{216};            // default: everything including serverSelectedProtocol
+    uint16_t length{216};      // default: everything including serverSelectedProtocol
     uint32_t version{0x00080004};    // RDP version. 1 == RDP4, 4 == RDP5
     uint16_t desktopWidth{0};
     uint16_t desktopHeight{0};
@@ -436,6 +436,7 @@ struct CSCore {
 
         this->userDataType = stream.in_uint16_le();
         this->length = stream.in_uint16_le();
+        LOG(LOG_ERR, "CSCore::recv length=%d", this->length);
 
         if (!stream.in_check_rem(this->length - 4)){
             LOG(LOG_ERR, "CSCore::recv short length=%d", this->length);
@@ -481,8 +482,16 @@ struct CSCore {
         this->pad1octet = stream.in_uint8();
         if (this->length < 216) { return; }
         this->serverSelectedProtocol = stream.in_uint32_le();
-        // TODO Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2
-
+        if (this->length < 220) { return; }
+        this->desktopPhysicalWidth = stream.in_uint32_le();
+        if (this->length < 224) { return; }
+        this->desktopPhysicalHeight = stream.in_uint32_le();
+        if (this->length < 226) { return; }
+        this->desktopOrientation = stream.in_uint16_le();
+        if (this->length < 230) { return; }
+        this->desktopScaleFactor = stream.in_uint32_le();
+        if (this->length < 234) { return; }
+        this->deviceScaleFactor = stream.in_uint32_le();
     }
 
     void emit(OutStream & stream) const
