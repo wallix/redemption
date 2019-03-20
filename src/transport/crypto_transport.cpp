@@ -781,17 +781,16 @@ void OutCryptoTransport::close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t
     }
     const ocrypto::Result res = this->encrypter.close(qhash, fhash);
     this->out_file.send(res.buf.data(), res.buf.size());
+    this->out_file.close();
     if (this->tmpname[0] != 0){
         if (::rename(this->tmpname, this->finalname) < 0) {
             int const err = errno;
             LOG(LOG_ERR, "OutCryptoTransport::close Renaming file \"%s\" -> \"%s\" failed, errno=%d : %s\n"
                 , this->tmpname, this->finalname, err, strerror(err));
-            this->out_file.close();
             throw Error(ERR_TRANSPORT_WRITE_FAILED, err);
         }
         this->tmpname[0] = 0;
     }
-    this->out_file.close();
     this->create_hash_file(qhash, fhash);
 }
 
