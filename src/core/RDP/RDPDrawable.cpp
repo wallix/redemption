@@ -151,7 +151,7 @@ RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height)
 , frame_start_count(0)
 , mod_palette_rgb(BGRPalette::classic_332())
 {
-    Pointer const& p = drawable_default_pointer(true);
+    Pointer const& p = drawable_default_pointer();
     auto av     = p.get_24bits_xor_mask();
     auto avmask = p.get_monochrome_and_mask();
 
