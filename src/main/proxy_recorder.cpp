@@ -381,6 +381,10 @@ public:
                 }
                 break;
             case NEGOCIATING_BACK_NLA:
+                if (FD_ISSET(back_fd, &rset)) {
+                    this->treat_back_activity();
+                }
+                break;
             case NEGOCIATING_BACK_INITIAL_PDU:
                 // Now start negociation with back
                 // FIXME: use front NLA parameters!
