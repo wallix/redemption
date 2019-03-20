@@ -388,7 +388,7 @@ struct CSCore {
     // header
     uint16_t userDataType{CS_CORE};
     uint16_t length{216};            // default: everything including serverSelectedProtocol
-    uint32_t version{0x00080001};    // RDP version. 1 == RDP4, 4 == RDP5
+    uint32_t version{0x00080004};    // RDP version. 1 == RDP4, 4 == RDP5
     uint16_t desktopWidth{0};
     uint16_t desktopHeight{0};
     uint16_t colorDepth{RNS_UD_COLOR_8BPP};
