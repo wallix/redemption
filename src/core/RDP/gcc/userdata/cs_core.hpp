@@ -387,7 +387,7 @@ enum {
 struct CSCore {
     // header
     uint16_t userDataType{CS_CORE};
-    uint16_t length{216};      // default: everything including serverSelectedProtocol
+    uint16_t length{234};      // default: everything including serverSelectedProtocol
     uint32_t version{0x00080004};    // RDP version. 1 == RDP4, 4 == RDP5
     uint16_t desktopWidth{0};
     uint16_t desktopHeight{0};
@@ -436,7 +436,6 @@ struct CSCore {
 
         this->userDataType = stream.in_uint16_le();
         this->length = stream.in_uint16_le();
-        LOG(LOG_ERR, "CSCore::recv length=%d", this->length);
 
         if (!stream.in_check_rem(this->length - 4)){
             LOG(LOG_ERR, "CSCore::recv short length=%d", this->length);
@@ -544,6 +543,16 @@ private:
         stream.out_uint8(this->pad1octet);
         if (this->length < 216) { return; }
         stream.out_uint32_le(this->serverSelectedProtocol);
+        if (this->length < 220) { return; }
+        stream.out_uint32_le(this->desktopPhysicalWidth);
+        if (this->length < 224) { return; }
+        stream.out_uint32_le(this->desktopPhysicalHeight);
+        if (this->length < 226) { return; }
+        stream.out_uint16_le(this->desktopOrientation);
+        if (this->length < 230) { return; }
+        stream.out_uint32_le(this->desktopScaleFactor);
+        if (this->length < 234) { return; }
+        stream.out_uint32_le(this->deviceScaleFactor);
     }
 
     const char *connectionTypeString(uint8_t type) const {
