@@ -2304,7 +2304,9 @@ public:
             InStream fud(this->multifragment_update_data.get_bytes());
 
             InStream& stream = ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ? upd.payload : fud);
-            LOG(LOG_INFO, "fastpath full packet len=%lu", stream.in_remain());
+
+            LOG_IF(bool(this->verbose & RDPVerbose::graphics),
+                LOG_INFO, "fastpath full packet len=%lu", stream.in_remain());
 
             switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
             case FastPath::UpdateType::ORDERS:

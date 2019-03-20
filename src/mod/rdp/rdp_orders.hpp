@@ -540,9 +540,10 @@ public:
         while (processed < orders_update.number_orders) {
             DrawingOrder_RecvFactory drawing_order(stream);
 
-            uint8_t klass = (drawing_order.control_flags & (STANDARD | SECONDARY));
-            if (klass == SECONDARY) {
-                if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "Alternate secondary order"); }
+            const uint8_t klass = (drawing_order.control_flags & (STANDARD | SECONDARY));
+            switch (klass) {
+            case SECONDARY: {
+                LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "Alternate secondary order");
 
                 RDP::AltsecDrawingOrderHeader header(drawing_order.control_flags);
                 switch (header.orderType) {
@@ -566,8 +567,10 @@ public:
                         /* error, unknown order */
                     break;
                 }
+
+                break;
             }
-            else if (klass == (STANDARD | SECONDARY)) {
+            case STANDARD | SECONDARY: {
                 //uint8_t * order_start = stream.p;
                 RDPSecondaryOrderHeader header(stream);
                 //LOG(LOG_INFO, "secondary order=%d", header.type);
@@ -599,8 +602,9 @@ public:
                     break;
                 }
                 stream.in_skip_bytes(next_order - stream.get_current());
+                break;
             }
-            else if (klass == STANDARD) {
+            case STANDARD: {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, drawing_order.control_flags);
                 const Rect cmd_clip =
                     (drawing_order.control_flags & BOUNDS)
@@ -740,12 +744,14 @@ public:
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
                     break;
                 }
+                break;
             }
-            else {
+            default: {
                 /* error, this should always be set */
-                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error. class=0x%02X", klass);
+                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error. flags=0x%02X class=0x%02X", drawing_order.control_flags, klass);
                 assert(false);
                 break;
+            }
             }
             processed++;
         }
