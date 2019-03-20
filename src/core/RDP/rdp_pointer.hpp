@@ -646,7 +646,6 @@ inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
             unsigned char bit_count = 7;
             unsigned char mask_bit_count = 7;
             for (unsigned int j = 0; j < width ; ++j) {
-                unsigned maskbit = *src_mask & (1 << mask_bit_count);
                 unsigned databit = *src      & (1 << bit_count);
                 unsigned pixel = databit?0xFFFFFF:0 ;
                 ::out_bytes_le(dest, 3, pixel);

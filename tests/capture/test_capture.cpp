@@ -237,25 +237,25 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         const char * filename;
 
         filename = png_seq.get(0);
-        RED_CHECK_EQUAL(3098, ::filesize(filename));
+        RED_CHECK_EQUAL(3102, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(1);
-        RED_CHECK_EQUAL(3125, ::filesize(filename));
+        RED_CHECK_EQUAL(3127, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(2);
-        RED_CHECK_EQUAL(3140, ::filesize(filename));
+        RED_CHECK_EQUAL(3145, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(3);
-        RED_CHECK_EQUAL(3158, ::filesize(filename));
+        RED_CHECK_EQUAL(3162, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(4);
-        RED_CHECK_EQUAL(3172, ::filesize(filename));
+        RED_CHECK_EQUAL(3175, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(5);
-        RED_CHECK_EQUAL(3197, ::filesize(filename));
+        RED_CHECK_EQUAL(3201, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(6);
-        RED_CHECK_EQUAL(3223, ::filesize(filename));
+        RED_CHECK_EQUAL(3225, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(7);
         RED_CHECK_FILE_NOT_EXISTS((filename));
@@ -406,7 +406,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     auto s = get_file_contents<std::string>(filename);
     RED_CHECK_SIG(
-        s, "\xbd\x6a\x84\x08\x3e\xe7\x19\xab\xb0\x67\xeb\x72\x94\x1f\xea\x26\xc4\x69\xe1\x37");
+        s, "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87");
     ::unlink(filename);
 }
 
@@ -3036,16 +3036,16 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         const char * filename;
 
         filename = png_seq.get(0);
-        RED_CHECK_EQUAL(3098, ::filesize(filename));
+        RED_CHECK_EQUAL(3102, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(1);
-        RED_CHECK_EQUAL(3117, ::filesize(filename));
+        RED_CHECK_EQUAL(3121, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(2);
-        RED_CHECK_EQUAL(3128, ::filesize(filename));
+        RED_CHECK_EQUAL(3131, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(3);
-        RED_CHECK_EQUAL(3140, ::filesize(filename));
+        RED_CHECK_EQUAL(3143, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(4);
         RED_CHECK_EQUAL(4079, ::filesize(filename));
@@ -3054,10 +3054,10 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         RED_CHECK_EQUAL(4103, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(6);
-        RED_CHECK_EQUAL(4121, ::filesize(filename));
+        RED_CHECK_EQUAL(4122, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(7);
-        RED_CHECK_EQUAL(4136, ::filesize(filename));
+        RED_CHECK_EQUAL(4137, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
         RED_CHECK_FILE_NOT_EXISTS((filename));
@@ -3280,28 +3280,28 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         const char * filename;
 
         filename = png_seq.get(0);
-        RED_CHECK_EQUAL(3098, ::filesize(filename));
+        RED_CHECK_EQUAL(3102, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(1);
-        RED_CHECK_EQUAL(3125, ::filesize(filename));
+        RED_CHECK_EQUAL(3127, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(2);
-        RED_CHECK_EQUAL(3140, ::filesize(filename));
+        RED_CHECK_EQUAL(3145, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(3);
-        RED_CHECK_EQUAL(3158, ::filesize(filename));
+        RED_CHECK_EQUAL(3162, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(4);
-        RED_CHECK_EQUAL(2301, ::filesize(filename));
+        RED_CHECK_EQUAL(2304, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(5);
-        RED_CHECK_EQUAL(2316, ::filesize(filename));
+        RED_CHECK_EQUAL(2320, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(6);
-        RED_CHECK_EQUAL(2330, ::filesize(filename));
+        RED_CHECK_EQUAL(2334, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(7);
-        RED_CHECK_EQUAL(2341, ::filesize(filename));
+        RED_CHECK_EQUAL(2345, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
         RED_CHECK_FILE_NOT_EXISTS((filename));

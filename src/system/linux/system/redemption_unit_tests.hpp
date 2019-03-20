@@ -313,6 +313,13 @@ namespace redemption_unit_test__
     ::unlink(filename);                                  \
 } while(0)
 
+#define RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN(filename, sz, variation) do { \
+    size_t fsize = filesize(filename);                                             \
+    RED_CHECK_GE(fsize, sz - variation);                                           \
+    RED_CHECK_LE(fsize, sz + variation);                                           \
+    ::unlink(filename);                                                            \
+} while(0)
+
 #define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) do { \
     size_t fsize = filesize(filename);                              \
     if (fsize != size2){                                            \
