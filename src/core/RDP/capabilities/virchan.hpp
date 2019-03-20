@@ -71,7 +71,6 @@ struct VirtualChannelCaps : public Capability {
 
     VirtualChannelCaps()
     : Capability(CAPSTYPE_VIRTUALCHANNEL, CAPLEN_VIRTUALCHANNEL)
-     
     {
     }
 

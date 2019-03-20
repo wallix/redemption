@@ -423,7 +423,6 @@ void redemption_main_loop(
         two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)
         {
             auto const socket_type = (ws_sck == sck) ? SocketType::Ws : SocketType::Tls;
-            LOG(LOG_DEBUG, "%d %d", socket_type, sck);
             session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, socket_type);
             return true;
         });
