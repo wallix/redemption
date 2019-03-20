@@ -1,3 +1,9 @@
+redemption (1.1.147%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Close encrypted recorded file before rename it.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 20 Mar 2019 11:48:33 +0200
+
 redemption (1.1.145%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix typing Euro (€) symbol in VNC session.
