@@ -3601,15 +3601,15 @@ public:
 				}
 
                 /** OffscreenBitmapCacheCapabilitySet */
-				OffScreenCacheCaps offscreen_cache_caps;
-				offscreen_cache_caps.offscreenSupportLevel = true;
-				offscreen_cache_caps.offscreenCacheSize = 0x1E00;
-				offscreen_cache_caps.offscreenCacheEntries = 0x07D0;
+                OffScreenCacheCaps offscreen_cache_caps;
+                // offscreen_cache_caps.offscreenSupportLevel = true;
+                // offscreen_cache_caps.offscreenCacheSize = 0x1E00;
+                // offscreen_cache_caps.offscreenCacheEntries = 0x07D0;
 
-				confirm_active_pdu.emit_capability_set(offscreen_cache_caps);
-				if (bool(this->verbose & RDPVerbose::capabilities)) {
-					offscreen_cache_caps.log("Sending to server");
-				}
+                confirm_active_pdu.emit_capability_set(offscreen_cache_caps);
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    offscreen_cache_caps.log("Sending to server");
+                }
 
                 confirm_active_pdu.emit_end();
             },
