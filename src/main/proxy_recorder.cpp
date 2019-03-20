@@ -145,74 +145,77 @@ public:
         }
     }
 
+    void front_step1()
+    {
+        LOG(LOG_INFO, "NEGOCIATING_FRONT_STEP1");
+        if (frontBuffer.next_pdu()) {
+            array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
+            InStream x224_stream(currentPacket);
+            X224::CR_TPDU_Recv x224(x224_stream, true);
+            if (x224._header_size != x224_stream.get_capacity()) {
+                LOG(LOG_WARNING,
+                    "Front::incoming: connection request: all data should have been consumed,"
+                    " %zu bytes remains",
+                    x224_stream.get_capacity() - x224._header_size);
+            }
+
+            is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
+            is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
+
+            StaticOutStream<256> front_x224_stream;
+            X224::CC_TPDU_Send(
+                front_x224_stream,
+                X224::RDP_NEG_RSP,
+                RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
+                select_client_protocol());
+            outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
+            frontConn.send(front_x224_stream.get_bytes());
+
+            if (is_tls_client || is_nla_client) {
+                frontConn.enable_server_tls("inquisition", nullptr, 0);
+            }
+
+            if (is_nla_client) {
+                LOG(LOG_INFO, "start NegoServer");
+                nego_server = std::make_unique<NegoServer>(
+                    frontConn, outFile, nla_username, nla_password, verbosity);
+
+                rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
+
+                if (rdpCredsspServer::State::Err == st) {
+                    throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+                }
+            }
+
+            nego_client = std::make_unique<NegoClient>(
+                !nla_username.empty(),
+                x224.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
+                backConn, outFile,
+                host.c_str(), nla_username.c_str(),
+                nla_password.empty() ? "\0" : nla_password.c_str(),
+                enable_kerberos, verbosity);
+
+            // equivalent to nego_client->send_negotiation_request()
+            StaticOutStream<256> back_x224_stream;
+            X224::CR_TPDU_Send(
+                back_x224_stream, x224.cookie, x224.rdp_neg_type, x224.rdp_neg_flags,
+                !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
+            outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
+            backConn.send(back_x224_stream.get_bytes());
+
+            this->pstate = nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
+        }
+    }
+
     void treat_front_activity()
     {
-        switch (state) {
+        switch (this->pstate) {
         case NEGOCIATING_FRONT_STEP1:
-            LOG(LOG_INFO, "NEGOCIATING_FRONT_STEP1");
-            frontBuffer.load_data(this->frontConn);
-            if (frontBuffer.next_pdu()) {
-                array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
-                InStream x224_stream(currentPacket);
-                X224::CR_TPDU_Recv x224(x224_stream, true);
-                if (x224._header_size != x224_stream.get_capacity()) {
-                    LOG(LOG_WARNING,
-                        "Front::incoming: connection request: all data should have been consumed,"
-                        " %zu bytes remains",
-                        x224_stream.get_capacity() - x224._header_size);
-                }
-
-                is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
-                is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
-
-                StaticOutStream<256> front_x224_stream;
-                X224::CC_TPDU_Send(
-                    front_x224_stream,
-                    X224::RDP_NEG_RSP,
-                    RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
-                    select_client_protocol());
-                outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
-                frontConn.send(front_x224_stream.get_bytes());
-
-                if (is_tls_client || is_nla_client) {
-                    frontConn.enable_server_tls("inquisition", nullptr, 0);
-                }
-
-                if (is_nla_client) {
-                    LOG(LOG_INFO, "start NegoServer");
-                    nego_server = std::make_unique<NegoServer>(
-                        frontConn, outFile, nla_username, nla_password, verbosity);
-
-                    rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
-
-                    if (rdpCredsspServer::State::Err == st) {
-                        throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-                    }
-                }
-
-                nego_client = std::make_unique<NegoClient>(
-                    !nla_username.empty(),
-                    x224.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
-                    backConn, outFile,
-                    host.c_str(), nla_username.c_str(),
-                    nla_password.empty() ? "\0" : nla_password.c_str(),
-                    enable_kerberos, verbosity);
-
-                // equivalent to nego_client->send_negotiation_request()
-                StaticOutStream<256> back_x224_stream;
-                X224::CR_TPDU_Send(
-                    back_x224_stream, x224.cookie, x224.rdp_neg_type, x224.rdp_neg_flags,
-                    !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
-                outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
-                backConn.send(back_x224_stream.get_bytes());
-
-                state = nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
-            }
-            break;
+            this->front_step1();
+        break;
 
         case NEGOCIATING_FRONT_NLA: {
             LOG(LOG_INFO, "NEGOCIATING_FRONT_NLA");
-            frontBuffer.load_data(frontConn);
             rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
             switch (st) {
             case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
@@ -221,7 +224,7 @@ public:
                 LOG(LOG_INFO, "stop NegoServer");
                 LOG(LOG_INFO, "start NegoClient");
                 nego_server.reset();
-                state = NEGOCIATING_BACK_NLA;
+                this->pstate = NEGOCIATING_BACK_NLA;
                 break;
             }
             break;
@@ -230,7 +233,6 @@ public:
         // force X224::PROTOCOL_HYBRID
         case NEGOCIATING_FRONT_INITIAL_PDU:
             LOG(LOG_INFO, "NEGOCIATING_INITIAL_PDU");
-            frontBuffer.load_data(this->frontConn);
             if (frontBuffer.next_pdu()) {
                 array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
 
@@ -254,16 +256,10 @@ public:
                 outFile.write_packet(PacketType::DataOut, frontBuffer.remaining_data());
                 backConn.send(frontBuffer.remaining_data());
 
-                state = NEGOCIATING_BACK_INITIAL_PDU;
+                this->pstate = NEGOCIATING_BACK_INITIAL_PDU;
             }
             break;
         case FORWARD: {
-            LOG(LOG_INFO, "FORWARD");
-            size_t ret = frontConn.partial_read(make_array_view(tmpBuffer));
-            if (ret > 0) {
-                outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
-                backConn.send(tmpBuffer, ret);
-            }
             break;
         }
         case NEGOCIATING_BACK_NLA:
@@ -278,21 +274,20 @@ public:
 
     void treat_back_activity()
     {
-        switch (state) {
+        switch (this->pstate) {
         case NEGOCIATING_BACK_NLA: {
             LOG(LOG_INFO, "NEGOCIATING_BACK_NLA");
             NullServerNotifier null_notifier;
             if (not nego_client->recv_next_data(backBuffer, null_notifier)) {
                 LOG(LOG_INFO, "stop NegoClient");
                 this->nego_client.reset();
-                state = NEGOCIATING_FRONT_INITIAL_PDU;
+                this->pstate = NEGOCIATING_FRONT_INITIAL_PDU;
                 outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
             }
             break;
         }
         case NEGOCIATING_BACK_INITIAL_PDU: {
             LOG(LOG_INFO, "NEGOCIATING_BACK_INITIAL_PDU");
-            backBuffer.load_data(this->backConn);
             if (backBuffer.next_pdu()) {
                 array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
 
@@ -319,17 +314,12 @@ public:
                 outFile.write_packet(PacketType::DataIn, backBuffer.remaining_data());
                 frontConn.send(backBuffer.remaining_data());
 
-                state = FORWARD;
+                this->pstate = FORWARD;
             }
             break;
         }
         case FORWARD: {
-            LOG(LOG_INFO, "FORWARD (BACK to FRONT)");
-            size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
-            if (ret > 0) {
-                frontConn.send(tmpBuffer, ret);
-                outFile.write_packet(PacketType::DataIn, {tmpBuffer, ret});
-            }
+            LOG(LOG_INFO, "Unexpected Forward event");
             break;
         }
         case NEGOCIATING_FRONT_INITIAL_PDU:
@@ -357,8 +347,7 @@ public:
 
         for (;;) {
             FD_ZERO(&rset);
-
-            switch(state) {
+            switch(this->pstate) {
             case NEGOCIATING_FRONT_NLA:
             case NEGOCIATING_FRONT_STEP1:
             case NEGOCIATING_FRONT_INITIAL_PDU:
@@ -382,12 +371,42 @@ public:
                 break;
             }
 
-            if (FD_ISSET(front_fd, &rset)) {
-                this->treat_front_activity();
-            }
-
-            if (FD_ISSET(back_fd, &rset)) {
-                treat_back_activity();
+            switch(this->pstate) {
+            case NEGOCIATING_FRONT_NLA:
+            case NEGOCIATING_FRONT_STEP1:
+            case NEGOCIATING_FRONT_INITIAL_PDU:
+                if (FD_ISSET(front_fd, &rset)) {
+                    frontBuffer.load_data(this->frontConn);
+                    this->treat_front_activity();
+                }
+                break;
+            case NEGOCIATING_BACK_NLA:
+            case NEGOCIATING_BACK_INITIAL_PDU:
+                // Now start negociation with back
+                // FIXME: use front NLA parameters!
+                if (FD_ISSET(back_fd, &rset)) {
+                    backBuffer.load_data(this->backConn);
+                    this->treat_back_activity();
+                }
+                break;
+            case FORWARD:
+                if (FD_ISSET(front_fd, &rset)) {
+                    LOG(LOG_INFO, "FORWARD (FRONT TO BACK)");
+                    size_t ret = frontConn.partial_read(make_array_view(tmpBuffer));
+                    if (ret > 0) {
+                        outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
+                        backConn.send(tmpBuffer, ret);
+                    }
+                }
+                if (FD_ISSET(back_fd, &rset)) {
+                    LOG(LOG_INFO, "FORWARD (BACK to FRONT)");
+                    size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
+                    if (ret > 0) {
+                        frontConn.send(tmpBuffer, ret);
+                        outFile.write_packet(PacketType::DataIn, {tmpBuffer, ret});
+                    }
+                }
+                break;
             }
         }
     }
@@ -526,7 +545,7 @@ private:
         NEGOCIATING_FRONT_INITIAL_PDU,
         NEGOCIATING_BACK_INITIAL_PDU,
         FORWARD
-    } state = NEGOCIATING_FRONT_STEP1;
+    } pstate = NEGOCIATING_FRONT_STEP1;
 
     struct TraceTransport final : SocketTransport
     {
