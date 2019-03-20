@@ -67,11 +67,12 @@ public:
     void send_file(std::string_view name, std::vector<uint8_t> data);
     void set_mod(mod_api * mod);
 
+    void clipboard_send_request_format(uint32_t id);
+
     gdi::GraphicApi& graphic_api() noexcept { return this->gd; }
 
 private:
     BrowserGraphic gd;
-    JsTableId id;
     RDPVerbose verbose;
     CHANNELS::ChannelDefArray cl;
 

@@ -234,6 +234,11 @@ struct RdpClient
         this->front.send_file(name, std::move(data));
     }
 
+    void clipboard_send_request_format(uint32_t id)
+    {
+        this->front.clipboard_send_request_format(id);
+    }
+
     int id() const noexcept
     {
         return js_rand.id.raw();
@@ -261,5 +266,6 @@ EMSCRIPTEN_BINDINGS(client)
         .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
         .function("sendClipboardUtf8", &RdpClient::send_clipboard_utf8)
         .function("sendFile", &RdpClient::send_file)
+        .function("clipboardSendRequestFormat", &RdpClient::clipboard_send_request_format)
     ;
 }

@@ -105,6 +105,8 @@ const createRdpClient = (function(Module, window) {
         resizeCanvas: identity,
 
         random: wCb_em2js_U8p,
+
+        clipboardReceiveFormat: identity,
     };
 
     const wrappersCb = {
@@ -226,12 +228,13 @@ const createRdpClient = (function(Module, window) {
                 nextId(), width, height,
                 username || "", password || "",
                 verbosity || 0);
+            client.rdpclient = rdpclient;
 
-            // for (eventName in wrappersCbMod) {
-            //     if (!(eventName in events)) {
-            //         events[eventName] = console.log.bind(console, eventName);
-            //     }
-            // }
+            for (eventName in wrappersCbMod) {
+                if (!(eventName in events)) {
+                    events[eventName] = noop;
+                }
+            }
 
             client.sendUnicode = function(unicode, flags) {
                 rdpclient.sendUnicode(unicode, flags);
@@ -251,6 +254,10 @@ const createRdpClient = (function(Module, window) {
             }
             client.sendFile = (filename, binary) => {
                 rdpclient.sendFile(filename, binary);
+                send_data();
+            }
+            client.clipboardSendRequestFormat = (id) => {
+                rdpclient.clipboardSendRequestFormat(id);
                 send_data();
             }
 
@@ -823,6 +830,23 @@ function run()
     });
     rdpclient.on('setClipboardUtf8', function(str) {
         receiveCbUtf8_data.value = str;
+    });
+
+    // let clipboardCtx = {
+    //     formatId = 0,
+    // };
+
+    rdpclient.on('clipboardReceiveFormat', function(id, name) {
+        if (id) {
+            console.log(id, name);
+            rdpclient.clipboardSendRequestFormat(id);
+        }
+        else if (name) {
+            console.log("begin");
+        }
+        else {
+            console.log("end");
+        }
     });
 }
 

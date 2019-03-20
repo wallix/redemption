@@ -20,6 +20,7 @@ Author(s): Jonathan Poelen
 
 #include "utils/stream.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
+#include "redjs/js_table_id.hpp"
 
 #include <memory>
 
@@ -30,11 +31,13 @@ namespace redjs
 
 struct Clipboard
 {
-    Clipboard(RDPVerbose verbose);
+    Clipboard(JsTableId id, RDPVerbose verbose);
     ~Clipboard();
 
     void receive(InStream chunk, int flags);
     void set_cb(Callback* cb);
+
+    void send_request_format(uint32_t id);
 
 private:
     class D;

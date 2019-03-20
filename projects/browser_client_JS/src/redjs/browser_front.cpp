@@ -131,15 +131,16 @@ namespace redjs
 
 struct BrowserFront::Clipboard
 {
-    Clipboard(RDPVerbose verbose)
+    Clipboard(JsTableId id, RDPVerbose verbose)
     : clientCLIPRDRChannel(verbose, &channel_mod, []{
         RDPClipboardConfig config;
         config.add_format(RDPECLIP::CF_UNICODETEXT, {});
         return config;
     }())
-    , clipboard(verbose)
+    , clipboard(id, verbose)
     {
         clientCLIPRDRChannel.set_api(&clip);
+        this->clip.frontidx = id.raw();
     }
 
     ClientChannelMod channel_mod;
@@ -151,13 +152,10 @@ struct BrowserFront::Clipboard
 
 BrowserFront::BrowserFront(redjs::JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose)
 : gd(id, width, height, order_caps)
-, id(id)
 , verbose(verbose)
-, clipboard(std::make_unique<Clipboard>(verbose))
+, clipboard(std::make_unique<Clipboard>(id, verbose))
 {
     this->cl.push_back(CHANNELS::ChannelDef(channel_names::cliprdr, 0, 0));
-
-    this->clipboard->clip.frontidx = RED_EM_ASM_INT({ return $0; }, id.raw());
 }
 
 BrowserFront::~BrowserFront() = default;
@@ -200,6 +198,12 @@ void BrowserFront::send_file(std::string_view name, std::vector<uint8_t> data)
 {
     this->clipboard->clip.set_file(name, std::move(data));
     this->clipboard->clientCLIPRDRChannel.send_FormatListPDU();
+}
+
+
+void BrowserFront::clipboard_send_request_format(uint32_t id)
+{
+    this->clipboard->clipboard.send_request_format(id);
 }
 
 void BrowserFront::send_to_channel(
