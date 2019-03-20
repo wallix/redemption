@@ -91,6 +91,7 @@ struct RdpClient
     ClientInfo client_info;
 
     redjs::BrowserFront front;
+    gdi::GraphicApi& gd;
     JsReportMessage report_message;
     SessionReactor session_reactor;
 
@@ -111,9 +112,14 @@ struct RdpClient
         int id, uint16_t width, uint16_t height,
         std::string const& username, std::string const& password,
         unsigned long verbose)
-    : front(id, width, height, client_info.screen_info, client_info.order_caps, RDPVerbose(verbose))
+    : front(id, width, height, client_info.order_caps, RDPVerbose(verbose))
+    , gd(front.graphic_api())
     , js_rand(id)
     {
+        client_info.screen_info.width = width;
+        client_info.screen_info.height = height;
+        client_info.screen_info.bpp = BitsPerPixel{24};
+
         ini.set<cfg::mod_rdp::server_redirection_support>(false);
         ini.set<cfg::mod_rdp::enable_nla>(false);
         ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -154,8 +160,8 @@ struct RdpClient
         const ChannelsAuthorizations channels_authorizations("*", std::string{});
 
         this->mod = new_mod_rdp(
-            browser_trans, session_reactor, front, front, client_info, redir_info, js_rand,
-            lcg_timeobj, channels_authorizations,
+            browser_trans, session_reactor, gd, front, client_info,
+            redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, authentifier, report_message, ini, nullptr);
         front.set_mod(this->mod.get());
     }
@@ -167,7 +173,7 @@ struct RdpClient
 
         session_reactor.execute_timers(
             SessionReactor::EnableGraphics{true},
-            [&]() -> gdi::GraphicApi& { return front; });
+            [&]() -> gdi::GraphicApi& { return gd; });
 
         std::chrono::microseconds us =
             session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true}, 1h)
@@ -197,7 +203,7 @@ struct RdpClient
         auto fd_isset = [fd_trans = browser_trans.get_fd()](int fd, auto& /*e*/){
             return fd == fd_trans;
         };
-        session_reactor.execute_graphics(fd_isset, front);
+        session_reactor.execute_graphics(fd_isset, gd);
     }
 
     void rdp_input_scancode(uint16_t key, uint16_t flag)
@@ -239,9 +245,9 @@ EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
         .constructor<int, uint16_t, uint16_t, std::string, std::string, unsigned long>()
-        /// long long is not embind type. Use long or double (safe for 53 bits);
         .function_ptr("updateTime", [](RdpClient& client) {
             Ms ms = client.update_time(tvtime());
+            // long long is not embind type. Use long or double (safe for 53 bits);
             return static_cast<unsigned long>(ms.count());
         })
         .function_ptr("getSendingData", [](RdpClient& client) {

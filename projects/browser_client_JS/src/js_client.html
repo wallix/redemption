@@ -102,6 +102,8 @@ const createRdpClient = (function(Module, window) {
 
         setClipboardUtf8: identity,
 
+        resizeCanvas: identity,
+
         random: wCb_em2js_U8p,
     };
 
@@ -711,14 +713,18 @@ function run()
         user_input.value,
         pass_input.value,
         0/*xff*/|0x04000000);
-    rdpclient.on('socketOpen', () => {
+    rdpclient.on('socketOpen', function() {
         console.log('RdpClient open');
         canvasStartEvents();
     });
-    rdpclient.on('socketClose', () => {
+    rdpclient.on('socketClose', function() {
         console.log('RdpClient close');
         canvasStopEvents();
         rdpclient = null;
+    });
+    rdpclient.on('resizeCanvas', function(w, h) {
+        ecanvas.width = w;
+        ecanvas.height = h;
     });
     rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
     // rdpclient.on('drawImage', function() {
