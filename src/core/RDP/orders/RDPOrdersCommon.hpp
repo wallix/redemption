@@ -486,65 +486,48 @@ struct DeltaEncodedRectangle {
 //  |                                  | 2.2.2.2.1.3.7).                       |
 //  +----------------------------------+---------------------------------------+
 
-enum {
-    TS_ALTSEC_SWITCH_SURFACE
-  , TS_ALTSEC_CREATE_OFFSCR_BITMAP
-  , TS_ALTSEC_STREAM_BITMAP_FIRST
-  , TS_ALTSEC_STREAM_BITMAP_NEXT
-  , TS_ALTSEC_CREATE_NINEGRID_BITMAP
-  , TS_ALTSEC_GDIP_FIRST
-  , TS_ALTSEC_GDIP_NEXT
-  , TS_ALTSEC_GDIP_END
-  , TS_ALTSEC_GDIP_CACHE_FIRST
-  , TS_ALTSEC_GDIP_CACHE_NEXT
-  , TS_ALTSEC_GDIP_CACHE_END
-  , TS_ALTSEC_WINDOW
-  , TS_ALTSEC_COMPDESK_FIRST
-  , TS_ALTSEC_FRAME_MARKER
+enum class AltsecDrawingOrderType : uint8_t
+{
+    SwitchSurface        = 0x00
+  , CreateOffscrBitmap   = 0x01
+  , StreamBitmapFirst    = 0x02
+  , StreamBitmapNext     = 0x03
+  , CreateNinegridBitmap = 0x04
+  , GdipFirst            = 0x05
+  , GdipNext             = 0x06
+  , GdipEnd              = 0x07
+  , GdipCacheFirst       = 0x08
+  , GdipCacheNext        = 0x09
+  , GdipCacheEnd         = 0x0A
+  , Window               = 0x0B
+  , CompdeskFirst        = 0x0C
+  , FrameMarker          = 0x0D
 };
 
-class AltsecDrawingOrderHeader {
-public:
+struct AltsecDrawingOrderHeader
+{
     uint8_t controlFlags;
     uint8_t class_;
-    uint8_t orderType;
+    AltsecDrawingOrderType orderType;
 
-    enum {
-          SwitchSurface        = 0x00
-        , CreateOffscrBitmap   = 0x01
-        , StreamBitmapFirst    = 0x02
-        , StreamBitmapNext     = 0x03
-        , CreateNinegridBitmap = 0x04
-        , GdipFirst            = 0x05
-        , GdipNext             = 0x06
-        , GdipEnd              = 0x07
-        , GdipCacheFirst       = 0x08
-        , GdipCacheNext        = 0x09
-        , GdipCacheEnd         = 0x0A
-        , Window               = 0x0B
-        , CompdeskFirst        = 0x0C
-        , FrameMarker          = 0x0D
-    };
+    explicit AltsecDrawingOrderHeader(InStream & stream)
+    : AltsecDrawingOrderHeader(stream.in_uint8())
+    {}
 
-    explicit AltsecDrawingOrderHeader(InStream & stream) {
-        this->controlFlags = stream.in_uint8();
-
-        this->class_    = (this->controlFlags & 0x03);
-        this->orderType = (this->controlFlags >> 2);
-    }
-
-    explicit AltsecDrawingOrderHeader(uint8_t controlFlags) {
+    explicit AltsecDrawingOrderHeader(uint8_t controlFlags)
+    {
         this->controlFlags = controlFlags;
 
         this->class_    = (this->controlFlags & 0x03);
-        this->orderType = (this->controlFlags >> 2);
+        this->orderType = AltsecDrawingOrderType(this->controlFlags >> 2);
     }
 
-    AltsecDrawingOrderHeader(uint8_t class_, uint8_t orderType) {
+    AltsecDrawingOrderHeader(uint8_t class_, AltsecDrawingOrderType orderType)
+    {
         this->class_    = (class_ & 0x03);
-        this->orderType = (orderType & 0x3F);
+        this->orderType = AltsecDrawingOrderType(uint8_t(orderType) & 0x3F);
 
-        this->controlFlags = (this->class_ | (this->orderType << 2));
+        this->controlFlags = (this->class_ | (uint8_t(this->orderType) << 2));
     }
 };  // class AltsecDrawingOrderHeader
 

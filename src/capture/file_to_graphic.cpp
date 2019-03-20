@@ -294,13 +294,13 @@ void FileToGraphic::interpret_order()
         if (class_ == RDP::SECONDARY) {
             RDP::AltsecDrawingOrderHeader header(control);
             switch (header.orderType) {
-                case RDP::AltsecDrawingOrderHeader::FrameMarker:
+                case RDP::AltsecDrawingOrderType::FrameMarker:
                 {
                     receive_order.read_and_draw<RDP::FrameMarker>(
                         this->statistics.FrameMarker, Verbose::frame_marker, header);
                 }
                 break;
-                case RDP::AltsecDrawingOrderHeader::Window:
+                case RDP::AltsecDrawingOrderType::Window:
                     this->process_windowing(stream, header);
                 break;
                 default:

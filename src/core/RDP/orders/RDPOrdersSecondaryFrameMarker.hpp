@@ -78,7 +78,7 @@ public:
     explicit FrameMarker(uint32_t action) : action(action) {}
 
     void emit(OutStream & stream) const {
-        uint8_t controlFlags = SECONDARY | (AltsecDrawingOrderHeader::FrameMarker << 2);
+        uint8_t controlFlags = SECONDARY | (uint8_t(AltsecDrawingOrderType::FrameMarker) << 2);
         stream.out_uint8(controlFlags);
         stream.out_uint32_le(this->action);
     }

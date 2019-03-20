@@ -472,7 +472,7 @@ public:
 
         this->output_stream = &stream;
 
-        uint8_t const controlFlags = SECONDARY | (AltsecDrawingOrderHeader::Window << 2);
+        uint8_t const controlFlags = SECONDARY | (uint8_t(AltsecDrawingOrderType::Window) << 2);
         stream.out_uint8(controlFlags);
 
         this->offset_of_OrderSize = stream.get_offset();
@@ -2256,7 +2256,7 @@ public:
 
         this->output_stream = &stream;
 
-        uint8_t const controlFlags = SECONDARY | (AltsecDrawingOrderHeader::Window << 2);
+        uint8_t const controlFlags = SECONDARY | (uint8_t(AltsecDrawingOrderType::Window) << 2);
         stream.out_uint8(controlFlags);
 
         this->offset_of_OrderSize = stream.get_offset();
@@ -3027,7 +3027,7 @@ public:
 
         this->output_stream = &stream;
 
-        uint8_t const controlFlags = SECONDARY | (AltsecDrawingOrderHeader::Window << 2);
+        uint8_t const controlFlags = SECONDARY | (uint8_t(AltsecDrawingOrderType::Window) << 2);
         stream.out_uint8(controlFlags);
 
         this->offset_of_OrderSize = stream.get_offset();

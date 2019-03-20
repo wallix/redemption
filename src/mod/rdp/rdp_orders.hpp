@@ -546,19 +546,19 @@ public:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "Alternate secondary order");
 
                 RDP::AltsecDrawingOrderHeader header(drawing_order.control_flags);
-                switch (header.orderType) {
-                	case RDP::AltsecDrawingOrderHeader::SwitchSurface: {
-                		uint16_t bitmapId = stream.in_uint16_le();
-                		LOG(LOG_INFO, "switchSurface bitmapId=0x%x", bitmapId);
-                		break;
-                	}
-                    case RDP::AltsecDrawingOrderHeader::FrameMarker:
+                switch (AltsecDrawingOrderType(header.orderType)) {
+                    case RDP::AltsecDrawingOrderType::SwitchSurface: {
+                        uint16_t bitmapId = stream.in_uint16_le();
+                        LOG(LOG_INFO, "switchSurface bitmapId=0x%x", bitmapId);
+                        break;
+                    }
+                    case RDP::AltsecDrawingOrderType::FrameMarker:
                         this->process_framemarker(stream, header, gd);
                     break;
-                    case RDP::AltsecDrawingOrderHeader::Window:
+                    case RDP::AltsecDrawingOrderType::Window:
                         this->process_windowing(stream, header, gd);
                     break;
-                    case RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap:
+                    case RDP::AltsecDrawingOrderType::CreateNinegridBitmap:
                         this->process_ninegrid_bmpcache(stream, header);
                         LOG(LOG_INFO, "CREATE_NINEGRID_BITMAP !!!!!!!!!!!!!!!!!");
                     break;

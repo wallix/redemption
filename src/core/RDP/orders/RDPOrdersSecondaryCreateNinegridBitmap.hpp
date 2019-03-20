@@ -230,7 +230,7 @@ struct CreateNineGridBitmap
 
     void emit(OutStream & stream) const
     {
-        uint8_t controlFlags = RDP::SECONDARY | (RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap << 2);
+        uint8_t controlFlags = RDP::SECONDARY | (uint8_t(RDP::AltsecDrawingOrderType::CreateNinegridBitmap) << 2);
         stream.out_uint8(controlFlags);
         stream.out_uint8(this->BitmapBpp);
         stream.out_uint16_le(this->BitmapId);
