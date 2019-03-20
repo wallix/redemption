@@ -899,11 +899,11 @@ public:
 
                 case SSL_ERROR_WANT_READ:
                     LOG(LOG_INFO, "recv_tls WANT READ");
-                    continue;
+                    return 0;
 
                 case SSL_ERROR_WANT_WRITE:
                     LOG(LOG_INFO, "recv_tls WANT WRITE");
-                    continue;
+                    return 0;
 
                 case SSL_ERROR_WANT_CONNECT:
                     LOG(LOG_INFO, "recv_tls WANT CONNECT");
