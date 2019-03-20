@@ -343,6 +343,16 @@ enum {
 //                                 (2 Mbps - 10 Mbps)
 //  CONNECTION_TYPE_WAN 0x05 : WAN (10 Mbps or higher with high latency)
 //  CONNECTION_TYPE_LAN 0x06 : LAN (10 Mbps or higher)
+//  CONNECTION_TYPE_AUTODETECT 0x07 : The server SHOULD attempt to detect the connection type. If the
+//							connection type can be successfully determined then the
+//							performance flags, sent by the client in the performanceFlags
+//							field of the Extended Info Packet (section 2.2.1.11.1.1.1),
+//							SHOULD be ignored and the server SHOULD determine the
+//							appropriate set of performance flags to apply to the remote
+//							session (based on the detected connection type). If the
+//							RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT (0x0080) flag is
+//							not set in the earlyCapabilityFlags field, then this value
+//							SHOULD be ignored.
 
 enum {
 	  CONNECTION_TYPE_MODEM = 0x01
@@ -401,6 +411,11 @@ struct CSCore {
     uint8_t  connectionType{0};
     uint8_t  pad1octet{0};
     uint32_t serverSelectedProtocol{0};
+    uint32_t desktopPhysicalWidth{0};
+    uint32_t desktopPhysicalHeight{0};
+    uint16_t desktopOrientation{0};
+    uint32_t desktopScaleFactor{0};
+    uint32_t deviceScaleFactor{0};
 
     // we do not provide parameters in constructor,
     // because setting them one field at a time is more explicit and maintainable
@@ -639,6 +654,16 @@ public:
         LOG(LOG_INFO, "cs_core::pad1octet = %u", this->pad1octet);
         if (this->length < 216) { return; }
         LOG(LOG_INFO, "cs_core::serverSelectedProtocol = %u", this->serverSelectedProtocol);
+        if (this->length < 220) { return; }
+        LOG(LOG_INFO, "cs_core::desktopPhysicalWidth = %u", this->desktopPhysicalWidth);
+        if (this->length < 224) { return; }
+        LOG(LOG_INFO, "cs_core::desktopPhysicalHeight = %u", this->desktopPhysicalHeight);
+        if (this->length < 226) { return; }
+        LOG(LOG_INFO, "cs_core::desktopOrientation = %u", this->desktopOrientation);
+        if (this->length < 230) { return; }
+        LOG(LOG_INFO, "cs_core::desktopScaleFactor = %u", this->desktopScaleFactor);
+        if (this->length < 234) { return; }
+        LOG(LOG_INFO, "cs_core::deviceScaleFactor = %u", this->deviceScaleFactor);
     }
 };
 } // namespace UserData
