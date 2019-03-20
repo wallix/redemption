@@ -5862,6 +5862,7 @@ private:
             X224::write_x224_dt_tpdu_fn{},
             [this](StreamSize<0>, OutStream &, std::size_t total_pdu_sz) {
                 (void)this;
+                (void)total_pdu_sz;
                 IF_ENABLE_METRICS(client_main_channel_data(total_pdu_sz));
             }
         );
