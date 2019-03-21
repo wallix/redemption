@@ -30,6 +30,7 @@
 #include "utils/ellipse.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/log.hpp"
+#include "utils/pixel_io.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 
@@ -1465,72 +1466,49 @@ void Drawable::trace_mouse(const DrawablePointer * current_pointer, const int x,
 {
     uint8_t* cur_psave = psave;
 
-    auto get_pixel_1bpp = [](const uint8_t* data, uint16_t line_bytes, unsigned int x, unsigned int y) -> uint8_t {
-        unsigned const index =  y * line_bytes * 8 + x;
-
-        return (((*(data + index / 8)) & (1 << (7 - (index % 8)))) ? 0xFF : 0);
-    };
-
-    auto get_pixel_24bpp = [](const uint8_t* data, uint16_t line_bytes, unsigned int x, unsigned int y) -> uint32_t {
-        const uint8_t* dest = data + y * line_bytes + x * 3;
-
-        uint32_t res = 0;
-        for (int b = 0 ; b < 3 ; ++b){
-            res |= dest[b] << (8 * b);
-        }
-        return res;
-    };
-
-    for (unsigned cur_line = 0; cur_line < current_pointer->height; ++cur_line) {
-        int const drawable_y = cur_line + y;
-        if ((drawable_y < 0) || (drawable_y >= this->impl_.height())) {
-            continue;
-        }
-
-        for (unsigned cur_column = 0; cur_column < current_pointer->width; ++cur_column) {
-            int const drawable_x = cur_column + x;
-            if ((drawable_x < 0) || (drawable_x >= this->impl_.width())) {
-                continue;
-            }
-
-            uint8_t * first_byte = this->impl_.first_pixel(drawable_x, drawable_y);
-            ::memcpy(cur_psave, first_byte, this->impl_.nbbytes_color());
-
-            uint32_t const andBits =
-                (get_pixel_1bpp(current_pointer->mask, current_pointer->mask_line_bytes, cur_column, current_pointer->height - cur_line - 1) ?
-                 0xFFFFFF : 0);
-            uint32_t const xorBits =
-                get_pixel_24bpp(current_pointer->data, current_pointer->line_bytes, cur_column, current_pointer->height - cur_line - 1);
-
-            uint32_t const bits = in_uint32_from_nb_bytes_le(3, first_byte);
-
-            ::out_bytes_le(first_byte, 3, (bits & andBits) ^ xorBits);
-
-            cur_psave += this->impl_.nbbytes_color();
-        }
+    Rect const rect_pointer(x, y, current_pointer->width, current_pointer->height);
+    Rect const rect_drawable(0, 0, this->impl_.width(), this->impl_.height());
+    Rect const rect_intersect = rect_drawable.intersect(rect_pointer);
+    if (rect_intersect.isempty()) {
+        return;
     }
+
+    for (unsigned cur_line = 0; cur_line < rect_intersect.cy; ++cur_line) {
+        const uint8_t * first_byte = this->impl_.first_pixel(rect_intersect.x, rect_intersect.y + cur_line);
+        const unsigned data_length = this->impl_.nbbytes_color() * rect_intersect.cx;
+        ::memcpy(cur_psave, first_byte, data_length);
+
+        cur_psave += data_length;
+    }
+
+    Rect rect_sub_view(rect_intersect.x - rect_pointer.x, rect_intersect.y - rect_pointer.y,
+        rect_intersect.cx, rect_intersect.cy);
+    this->mem_blt_ex(
+            rect_intersect,
+            current_pointer->image_data_view_mask24->sub_view(rect_sub_view),
+            0, 0, 0x88);
+    this->mem_blt_ex(
+            rect_intersect,
+            current_pointer->image_data_view_data->sub_view(rect_sub_view),
+            0, 0, 0x66);
 }
 
 void Drawable::clear_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave)
 {
     uint8_t* cur_psave = psave;
 
-    for (unsigned cur_line = 0; cur_line < current_pointer->height; ++cur_line) {
-        int const drawable_y = cur_line + y;
-        if ((drawable_y < 0) || (drawable_y >= this->impl_.height())) {
-            continue;
-        }
+    Rect const rect_pointer(x, y, current_pointer->width, current_pointer->height);
+    Rect const rect_drawable(0, 0, this->impl_.width(), this->impl_.height());
+    Rect const rect_intersect = rect_drawable.intersect(rect_pointer);
+    if (rect_intersect.isempty()) {
+        return;
+    }
 
-        for (unsigned cur_column = 0; cur_column < current_pointer->width; ++cur_column) {
-            int const drawable_x = cur_column + x;
-            if ((drawable_x < 0) || (drawable_x >= this->impl_.width())) {
-                continue;
-            }
+    for (unsigned cur_line = 0; cur_line < rect_intersect.cy; ++cur_line) {
+        uint8_t * first_byte = this->impl_.first_pixel(rect_intersect.x, rect_intersect.y + cur_line);
+        const unsigned data_length = this->impl_.nbbytes_color() * rect_intersect.cx;
+        ::memcpy(first_byte, cur_psave, data_length);
 
-            uint8_t * first_byte = this->impl_.first_pixel(drawable_x, drawable_y);
-            ::memcpy(first_byte, cur_psave, this->impl_.nbbytes_color());
-
-            cur_psave += this->impl_.nbbytes_color();
-        }
+        cur_psave += data_length;
     }
 }
