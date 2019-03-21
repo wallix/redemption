@@ -30,6 +30,7 @@
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/colors.hpp"
+#include "utils/pixel_io.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 
@@ -661,30 +662,9 @@ inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
             }
         }
 
-//         auto get_pixel_1bpp = [](const uint8_t* data, uint16_t line_bytes, unsigned int x, unsigned int y) -> uint8_t {
-//             unsigned const index =  y * line_bytes * 8 + x;
-//
-//             return (((*(data + index / 8)) & (1 << (7 - (index % 8)))) ? 0xFF : 0);
-//         };
-
-//         auto put_pixel_1bpp = [](uint8_t* data, uint16_t line_bytes, unsigned int x, unsigned int y, uint8_t value) {
-//             unsigned const index =  y * line_bytes * 8 + x;
-//
-//             if (value)
-//                 (*(data + index / 8)) |= (1 << (7 - (index % 8)));
-//             else
-//                 (*(data + index / 8)) &= ~(1 << (7 - (index % 8)));
-//         };
-//
-//         auto put_pixel_24bpp = [](uint8_t* data, uint16_t line_bytes, unsigned int x, unsigned int y, uint32_t value) {
-//             uint8_t* dest = data + y * line_bytes + x * 3;
-//
-//             ::out_bytes_le(dest, 3, value);
-//         };
-
 //         for (unsigned int y = 0; y < height; ++y) {
 //             for (unsigned int x = 0; x < width; ++x) {
-//                 printf("%s", (get_pixel_1bpp(data, src_line_bytes, x, y) ? "#" : "."));
+//                 printf("%s", (::get_pixel_1bpp(data, src_line_bytes, x, y) ? "#" : "."));
 //             }
 //             printf("\n");
 //         }

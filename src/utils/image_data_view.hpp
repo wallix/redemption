@@ -23,6 +23,8 @@
 #include <cstdint>
 
 #include "gdi/screen_info.hpp"
+#include "utils/rect.hpp"
+#include "utils/sugar/cast.hpp"
 
 
 class BGRPalette;
@@ -92,6 +94,21 @@ public:
 
     size_t offset(uint16_t x, uint16_t y) const noexcept
     { return y * this->rowsize_ + x * int(this->bytes_per_pixel_); }
+
+    ConstImageDataView sub_view(Rect rect) const noexcept
+    {
+        const unsigned physical_y = (this->storage_ == Storage::BottomToTop ? (this->height_ - rect.bottom()) : rect.y);
+
+        return ConstImageDataView(
+                this->data_ + physical_y * this->rowsize_ + rect.x * underlying_cast(this->bytes_per_pixel_),
+                rect.cx,
+                rect.cy,
+                this->rowsize_,
+                this->bits_per_pixel_,
+                this->storage_,
+                this->palette_
+            );
+    }
 
 private:
     uint8_t const * data_;

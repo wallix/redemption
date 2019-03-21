@@ -37,6 +37,7 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/log.hpp"
+#include "utils/pixel_io.hpp"
 
 #include <cstdint>
 #include <cstddef>
@@ -185,10 +186,12 @@ struct DrawablePointer {
     unsigned height { 0 };
 
     unsigned line_bytes { 0 };
-    unsigned mask_line_bytes { 0 };
 
     uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3] {}; // 96 pixels per line * 96 lines * 3 bytes per pixel
-    uint8_t mask[MAX_WIDTH * MAX_HEIGHT / 8] {};
+    uint8_t mask24[MAX_WIDTH * MAX_HEIGHT * 3] {}; // 96 pixels per line * 96 lines * 3 bytes per pixel
+
+    std::unique_ptr<ConstImageDataView> image_data_view_data;
+    std::unique_ptr<ConstImageDataView> image_data_view_mask24;
 
     void initialize(unsigned int width_, unsigned int height_, unsigned int line_bytes_, unsigned int mask_line_bytes_,
                     const uint8_t * pointer_data, const uint8_t * pointer_mask) {
@@ -196,10 +199,31 @@ struct DrawablePointer {
         this->height = height_;
 
         this->line_bytes      = line_bytes_;
-        this->mask_line_bytes = mask_line_bytes_;
 
         ::memcpy(this->data, pointer_data, this->line_bytes * this->height);
-        ::memcpy(this->mask, pointer_mask, this->mask_line_bytes * this->height);
+
+        this->image_data_view_data = std::make_unique<ConstImageDataView>(
+                this->data,
+                width_,
+                height_,
+                line_bytes_,
+                BytesPerPixel{3},
+                ConstImageDataView::Storage::BottomToTop
+            );
+
+        for (unsigned int y = 0; y < width_; ++y) {
+            for (unsigned int x = 0; x < height_; ++x) {
+                ::put_pixel_24bpp(this->mask24, line_bytes_, x, y, (::get_pixel_1bpp(pointer_mask, mask_line_bytes_, x, y) ? 0xFFFFFF : 0));
+            }
+        }
+        this->image_data_view_mask24 = std::make_unique<ConstImageDataView>(
+                this->mask24,
+                width_,
+                height_,
+                line_bytes_,
+                BytesPerPixel{3},
+                ConstImageDataView::Storage::BottomToTop
+            );
     }
 };  // struct DrawablePointer
 
