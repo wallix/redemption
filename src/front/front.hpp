@@ -1713,7 +1713,7 @@ public:
                 LOG_IF(bool(this->verbose), LOG_INFO,
                     "Front::incoming: Recv MCS::ErectDomainRequest");
                 {
-                    assert(buf.current_pdu_get_type() == X224::DT_TPDU);
+                    assert(this->rbuf.current_pdu_get_type() == X224::DT_TPDU);
                     X224::DT_TPDU_Recv x224(new_x224_stream);
                     MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 }
