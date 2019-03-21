@@ -357,7 +357,7 @@ RdpNegociation::RdpNegociation(
     , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
     , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
     , has_managed_drive(has_managed_drive)
-	, send_channel_index(0)
+    , send_channel_index(0)
 {
     this->negociation_result.front_width = info.screen_info.width;
     this->negociation_result.front_width -= this->negociation_result.front_width % 4;
@@ -847,14 +847,14 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
         this->trans,
         [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
             // ------------------------------------------------------------
-            GCC::UserData::CSCore cs_core;
+            GCC::UserData::CSCore cs_core(216); // 216: optional parameters up to serverSelectedProtocol
 
             if (this->enable_remotefx) {
                 cs_core.connectionType = GCC::UserData::CONNECTION_TYPE_LAN;
             }
 
             if (cs_core.connectionType != 0) {
-            	cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_VALID_CONNECTION_TYPE;
+                cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_VALID_CONNECTION_TYPE;
             }
 
             Rect primary_monitor_rect = this->cs_monitor.get_primary_monitor_rect();
@@ -872,9 +872,9 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             cs_core.keyboardLayout = this->keylayout;
             if (this->front_bpp == BitsPerPixel{32}) {
                 cs_core.supportedColorDepths = GCC::UserData::RNS_UD_24BPP_SUPPORT
-						| GCC::UserData::RNS_UD_16BPP_SUPPORT
-						| GCC::UserData::RNS_UD_15BPP_SUPPORT
-						| GCC::UserData::RNS_UD_32BPP_SUPPORT;
+                        | GCC::UserData::RNS_UD_16BPP_SUPPORT
+                        | GCC::UserData::RNS_UD_15BPP_SUPPORT
+                        | GCC::UserData::RNS_UD_32BPP_SUPPORT;
                 cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
             }
             if (!single_monitor) {
@@ -895,8 +895,8 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             if (bool(this->verbose & RDPVerbose::security)) {
                 cs_core.log("Sending to Server");
             }
-            cs_core.emit(stream);
-            // ------------------------------------------------------------
+            cs_core.emit(stream, 216); // 216: optional parameters up to serverSelectedProtocol
+            // --------------------------------------------------------------------------------
 
             GCC::UserData::CSCluster cs_cluster;
             {

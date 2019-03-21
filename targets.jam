@@ -2221,6 +2221,7 @@ test-run tests/core/test_client_info :
   <library>crypto
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -3012,7 +3013,6 @@ test-run tests/mod/internal/test_replay_mod :
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -3396,7 +3396,6 @@ test-run tests/mod/internal/widget/test_flat_wait :
 :
   <library>crypto
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -3414,7 +3413,6 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3454,7 +3452,6 @@ test-run tests/mod/internal/widget/test_group_box :
 :
   <library>crypto
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -3469,7 +3466,6 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -4180,12 +4176,10 @@ test-run tests/mod/xup/test_xup :
   $(REDEMPTION_TEST_PATH)/mod/xup/test_xup.cpp
 :
   <library>crypto
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
