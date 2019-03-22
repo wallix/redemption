@@ -716,6 +716,10 @@ function canvasBlur()
     ecurCanvas.onclick = canvasEnableFocus;
 }
 
+function bgrToCss(color)
+{
+    return '#'+color.toString(16).padStart(6, '0');
+}
 
 function run()
 {
@@ -747,7 +751,7 @@ function run()
     // });
     rdpclient.on('drawRect', function(x, y, w, h, color) {
         // console.log('drawRect');
-        canvas.fillStyle = color;
+        canvas.fillStyle = bgrToCss(color);
         canvas.fillRect(x,y,w,h);
     });
     rdpclient.on('drawSrcBlt', function(sx, sy, w, h, dx, dy, rop) {
@@ -780,8 +784,8 @@ function run()
 		canvas.moveTo(nXStart, nYStart);
 		canvas.lineTo(nXEnd, nYEnd);
 		canvas.lineWidth = penWidth;
-		canvas.fillStyle = backColor;
-		canvas.strokeStyle = penColor;
+		canvas.fillStyle = bgrToCss(backColor);
+		canvas.strokeStyle = bgrToCss(penColor);
 		switch (penStyle) {
 		case 1: canvas.setLineDash([ 10, 6, 10, 6 ]); break;
 		case 2: canvas.setLineDash([ 3, 3, 3, 3 ]); break;
@@ -798,7 +802,7 @@ function run()
     rdpclient.on('drawPolyline', function(xStart, yStart, deltas, penColor) {
         // console.log('drawPolyline');
 		canvas.save();
-		canvas.strokeStyle = penColor;
+		canvas.strokeStyle = bgrToCss(penColor);
 		canvas.beginPath();
 		canvas.moveTo(xStart, yStart);
         let endx = xStart;

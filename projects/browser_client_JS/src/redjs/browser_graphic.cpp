@@ -47,31 +47,6 @@ Author(s): Jonathan Poelen
 
 namespace
 {
-    constexpr char char_hex[] = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
-    };
-
-    std::array<char, 8> css_color(RDPColor c, gdi::ColorCtx color_ctx) noexcept
-    {
-        std::array<char, 8> r;
-
-        auto* p = r.data();
-        *p++ = '#';
-
-        auto write_hex = [&p](uint8_t byte){
-            *p++ = char_hex[byte >> 4];
-            *p++ = char_hex[byte & 0xf];
-        };
-
-        const BGRColor color = color_decode(c, color_ctx);
-        write_hex(color.red());
-        write_hex(color.green());
-        write_hex(color.blue());
-
-        *p++ = '\0';
-        return r;
-    }
-
     Rect intersect(uint16_t w, uint16_t h, Rect const& a, Rect const& b)
     {
         return a.intersect(w, h).intersect(b);
@@ -134,16 +109,12 @@ void BrowserGraphic::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx co
 
     const Rect trect = intersect(clip, cmd.rect);
 
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].drawRect($1, $2, $3, $4, Pointer_stringify($5));
-        },
-        this->id.raw(),
+    emval_call(this->callbacks, "drawRect",
         trect.x,
         trect.y,
         trect.cx,
         trect.cy,
-        css_color(cmd.color, color_ctx).data()
+        color_decode(cmd.color, color_ctx).as_u32()
     );
 }
 
@@ -151,18 +122,14 @@ void BrowserGraphic::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorC
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPMultiOpaqueRect");
 
-    const auto color = css_color(cmd._Color, color_ctx);
-    draw_multi(this->width, this->height, cmd, clip, [&color, this](const Rect & trect) {
-        RED_EM_ASM(
-            {
-                Module.RdpClientEventTable[$0].drawRect($1, $2, $3, $4, Pointer_stringify($5));
-            },
-            this->id.raw(),
+    const auto color = color_decode(cmd._Color, color_ctx).as_u32();
+    draw_multi(this->width, this->height, cmd, clip, [color, this](const Rect & trect) {
+        emval_call(this->callbacks, "drawRect",
             trect.x,
             trect.y,
             trect.cx,
             trect.cy,
-            color.data()
+            color
         );
     });
 }
@@ -176,11 +143,7 @@ void BrowserGraphic::draw(const RDPScrBlt & cmd, Rect clip)
     const auto deltax = cmd.srcx - cmd.rect.x;
     const auto deltay = cmd.srcy - cmd.rect.y;
 
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].drawSrcBlt($1, $2, $3, $4, $5, $6, $7);
-        },
-        this->id.raw(),
+    emval_call(this->callbacks, "drawSrcBlt",
         drect.x + deltax,
         drect.y + deltay,
         drect.cx,
@@ -199,11 +162,7 @@ void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     const signed int deltay = cmd.nYSrc - cmd.rect.y;
 
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
-        RED_EM_ASM(
-            {
-                Module.RdpClientEventTable[$0].drawSrcBlt($1, $2, $3, $4, $5, $6, $7);
-            },
-            this->id.raw(),
+        emval_call(this->callbacks, "drawSrcBlt",
             trect.x,
             trect.y,
             trect.cx,
@@ -275,11 +234,7 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
     }
 
     // cmd.rop == 0xCC
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].drawImage($1, $2, $3, $4, $5, $6, $7, $8, $9);
-        },
-        this->id.raw(),
+    emval_call(this->callbacks, "drawImage",
         image.data(),
         image.width(),
         image.height(),
@@ -319,20 +274,16 @@ void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_
         return;
     }
 
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].drawLineTo(
-                $1, $2, $3, $4, $5, Pointer_stringify($6), $7, $8, Pointer_stringify($9));
-        },
+    emval_call(this->callbacks, "drawLineTo",
         cmd.back_mode,
         equa.segin.a.x,
         equa.segin.a.y,
         equa.segin.b.x,
         equa.segin.b.y,
-        css_color(cmd.back_color, color_ctx).data(),
+        color_decode(cmd.back_color, color_ctx).as_u32(),
         cmd.pen.style,
         cmd.pen.width,
-        css_color(cmd.pen.color, color_ctx).data()
+        color_decode(cmd.pen.color, color_ctx).as_u32()
     );
 }
 
@@ -345,17 +296,14 @@ void BrowserGraphic::draw(RDPPolyline const & cmd, Rect /*clip*/, gdi::ColorCtx 
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPPolyline");
 
-    const auto color = css_color(cmd.PenColor, color_ctx);
+    const auto color = color_decode(cmd.PenColor, color_ctx).as_u32();
 
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].drawPolyline($1, $2, $3, $4, Pointer_stringify($5));
-        },
+    emval_call(this->callbacks, "drawPolyline",
         cmd.xStart,
         cmd.yStart,
         cmd.NumDeltaEntries,
-        cmd.deltaEncodedPoints,
-        color.data()
+        reinterpret_cast<void const*>(cmd.deltaEncodedPoints),
+        color
     );
 }
 
@@ -379,16 +327,14 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 
     redjs::ImageData image = image_data_from_bitmap(bmp);
 
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].drawImage($1, $2, $3, $4, $5, 0, 0, $6, $7);
-        },
-        this->id.raw(),
+    emval_call(this->callbacks, "drawImage",
         image.data(),
         image.width(),
         image.height(),
         cmd.dest_left,
         cmd.dest_top,
+        0,
+        0,
         cmd.dest_right - cmd.dest_left + 1,
         cmd.dest_bottom - cmd.dest_top + 1
     );
@@ -405,23 +351,13 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
 
     switch (mode) {
     case SetPointerMode::Cached:
-        RED_EM_ASM(
-            {
-                Module.RdpClientEventTable[$0].cachedPointer($1);
-            },
-            this->id.raw(),
-            cache_idx
-        );
+        emval_call(this->callbacks, "cachedPointer", cache_idx);
         break;
     case SetPointerMode::New: {
         const redjs::ImageData image = redjs::image_data_from_pointer(cursor);
         const auto hotspot = cursor.get_hotspot();
 
-        RED_EM_ASM(
-            {
-                Module.RdpClientEventTable[$0].newPointer($1, $2, $3, $4, $5, $6);
-            },
-            this->id.raw(),
+        emval_call(this->callbacks, "newPointer",
             image.data(),
             image.width(),
             image.height(),
@@ -435,11 +371,7 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
         const redjs::ImageData image = redjs::image_data_from_pointer(cursor);
         const auto hotspot = cursor.get_hotspot();
 
-        RED_EM_ASM(
-            {
-                Module.RdpClientEventTable[$0].setPointer($1, $2, $3, $4, $5);
-            },
-            this->id.raw(),
+        emval_call(this->callbacks, "setPointer",
             image.data(),
             image.width(),
             image.height(),
@@ -459,11 +391,7 @@ bool BrowserGraphic::resize_canvas(uint16_t width, uint16_t height)
     this->width = width;
     this->height = height;
 
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].resizeCanvas($1, $2);
-        },
-        this->id.raw(),
+    emval_call(this->callbacks, "resizeCanvas",
         width,
         height
     );
