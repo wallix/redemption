@@ -105,8 +105,6 @@ const createRdpClient = (function(Module, window) {
         resizeCanvas: identity,
 
         random: wCb_em2js_U8p,
-
-        clipboardReceiveFormat: identity,
     };
 
     const wrappersCb = {
@@ -847,26 +845,27 @@ function run()
         formats: {},
     };
 
-    const clipboard = rdpclient.addChannel(new Module.ClipboardChannel(0,0xffffff));
 
-    rdpclient.on('clipboardReceiveFormat', function(id, name) {
-        console.log(id,name)
-        if (id === false) {
-            if (name) {
-                clipboardCtx.formats = {};
+    const clipboard = rdpclient.addChannel(new Module.ClipboardChannel({
+        receiveFormat: function(id, name) {
+            console.log(id,name)
+            if (id === false) {
+                if (name) {
+                    clipboardCtx.formats = {};
+                }
+                else {
+                    for (const id in clipboardCtx.formats) {
+                        console.log(id)
+                    }
+                    clipboardCtx.formats = {};
+                }
             }
             else {
-                for (const id in clipboardCtx.formats) {
-                    console.log(id)
-                }
-                clipboardCtx.formats = {};
+                clipboardCtx.formats[id] = true;
+                rdpclient.clipboardSendRequestFormat(id);
             }
         }
-        else {
-            clipboardCtx.formats[id] = true;
-            rdpclient.clipboardSendRequestFormat(id);
-        }
-    });
+    }, 0xffffff));
 }
 
 login.onsubmit = (e) => {

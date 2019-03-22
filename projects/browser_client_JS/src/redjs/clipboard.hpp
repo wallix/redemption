@@ -24,6 +24,8 @@ Author(s): Jonathan Poelen
 #include "utils/stream.hpp"
 #include "redjs/js_table_id.hpp"
 
+#include <emscripten/val.h>
+
 #include <memory>
 
 
@@ -34,7 +36,7 @@ namespace redjs
 
 struct ClipboardChannel
 {
-    ClipboardChannel(JsTableId id, unsigned long verbose);
+    ClipboardChannel(emscripten::val callbacks, unsigned long verbose);
     ~ClipboardChannel();
 
     void receive(Callback& cb, cbytes_view data, int flags);

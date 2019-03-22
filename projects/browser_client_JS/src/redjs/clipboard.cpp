@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 #include "redjs/channel.hpp"
 
 #include "red_emscripten/em_asm.hpp"
+#include "red_emscripten/val.hpp"
 
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/log.hpp"
@@ -142,8 +143,8 @@ namespace
 
 struct redjs::ClipboardChannel::D
 {
-    D(JsTableId id, RDPVerbose verbose)
-    : id(id)
+    D(emscripten::val&& callbacks, RDPVerbose verbose)
+    : callbacks(std::move(callbacks))
     , verbose(bool(verbose & RDPVerbose::cliprdr))
     {}
 
@@ -259,12 +260,7 @@ struct redjs::ClipboardChannel::D
         FormatListExtractorData data;
         BufArrayMaker<256> buf;
 
-        RED_EM_ASM(
-            {
-                Module.RdpClientEventTable[$0].clipboardReceiveFormat(false, true);
-            },
-            this->id.raw()
-        );
+        emval_call(this->callbacks, "receiveFormat", false, true);
 
         while (format_list_extractor(
             data, chunk,
@@ -323,22 +319,10 @@ struct redjs::ClipboardChannel::D
                 }
             }
 
-            RED_EM_ASM(
-                {
-                    Module.RdpClientEventTable[$0].clipboardReceiveFormat($1, Pointer_stringify($2));
-                },
-                this->id.raw(),
-                data.format_id,
-                utf8_name.data()
-            );
+            emval_call(this->callbacks, "receiveFormat", data.format_id, utf8_name.data());
         }
 
-        RED_EM_ASM(
-            {
-                Module.RdpClientEventTable[$0].clipboardReceiveFormat(false, false);
-            },
-            this->id.raw()
-        );
+        emval_call(this->callbacks, "receiveFormat", false, false);
     }
 
     void process_capabilities(InStream& chunk)
@@ -411,15 +395,15 @@ struct redjs::ClipboardChannel::D
 
     Callback* cb = nullptr;
     FormatListEmptyName format_list;
-    JsTableId id;
+    emscripten::val callbacks;
     bool verbose;
 };
 
 namespace redjs
 {
 
-ClipboardChannel::ClipboardChannel(JsTableId id, unsigned long verbose)
-: d(std::make_unique<D>(id, RDPVerbose(verbose)))
+ClipboardChannel::ClipboardChannel(emscripten::val callbacks, unsigned long verbose)
+: d(std::make_unique<D>(std::move(callbacks), RDPVerbose(verbose)))
 {}
 
 ClipboardChannel::~ClipboardChannel() = default;
@@ -437,7 +421,7 @@ void ClipboardChannel::receive(Callback& cb, cbytes_view data, int flags)
 EMSCRIPTEN_BINDINGS(channel_clipboard)
 {
     redjs::class_<redjs::ClipboardChannel>("ClipboardChannel")
-        .constructor<int, int>()
+        .constructor<emscripten::val, unsigned long>()
         .function_ptr("getChannel", [](redjs::ClipboardChannel& clip) {
             auto receiver = [&clip](redjs::Channel& chan, cbytes_view data, int channel_flags){
                 clip.receive(chan.callback(), data, channel_flags);
