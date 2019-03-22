@@ -36,7 +36,8 @@ project redjs
 
     # <define>REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING=1
 
-    <cxxflags>-fno-rtti
+    # <cxxflags>-fno-rtti
+    # <define>EMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
     <cxxflags>"-isystem system_include"
     <include>src
 

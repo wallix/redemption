@@ -20,28 +20,41 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
+#include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
+#include "core/channel_names.hpp"
 
-#include "utils/stream.hpp"
-#include "redjs/js_table_id.hpp"
-
-#include <memory>
+#include <functional>
 
 
 class Callback;
+class RdpClient;
 
 namespace redjs
 {
 
-struct ClipboardChannel
-{
-    ClipboardChannel(JsTableId id, unsigned long verbose);
-    ~ClipboardChannel();
+class Channel;
 
-    void receive(Callback& cb, cbytes_view data, int flags);
+struct Channel
+{
+    using receiver_type = std::function<void(Channel&, cbytes_view data, int channel_flags)>;
+
+    Channel(CHANNELS::ChannelNameId name_id, receiver_type receiver);
+
+    CHANNELS::ChannelNameId name() const noexcept { return this->name_id; }
+
+    void send(cbytes_view data, int channel_flags);
+    void receive(cbytes_view data, int channel_flags);
+
+    Callback& callback() noexcept;
 
 private:
-    class D;
-    std::unique_ptr<D> d;
+    friend RdpClient;
+    void set_cb(not_null_ptr<Callback> cb) noexcept;
+
+    CHANNELS::ChannelNameId name_id;
+    Callback* cb = nullptr;
+    receiver_type do_receive;
 };
 
 } // namespace redjs

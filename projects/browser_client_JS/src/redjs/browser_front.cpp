@@ -20,6 +20,7 @@ Author(s): Jonathan Poelen
 
 #include "redjs/browser_front.hpp"
 #include "redjs/clipboard.hpp"
+#include "redjs/channel.hpp"
 
 #include "redjs/image_data_from_bitmap.hpp"
 #include "redjs/image_data_from_pointer.hpp"
@@ -137,7 +138,6 @@ struct BrowserFront::Clipboard
         config.add_format(RDPECLIP::CF_UNICODETEXT, {});
         return config;
     }())
-    , clipboard(id, verbose)
     {
         clientCLIPRDRChannel.set_api(&clip);
         this->clip.frontidx = id.raw();
@@ -147,7 +147,7 @@ struct BrowserFront::Clipboard
     ClientCLIPRDRChannel clientCLIPRDRChannel;
     Clip clip;
 
-    redjs::Clipboard clipboard;
+    std::vector<Channel> channels;
 };
 
 BrowserFront::BrowserFront(redjs::JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose)
@@ -159,6 +159,12 @@ BrowserFront::BrowserFront(redjs::JsTableId id, uint16_t width, uint16_t height,
 }
 
 BrowserFront::~BrowserFront() = default;
+
+void BrowserFront::add_channel(Channel&& channel)
+{
+    this->cl.push_back(CHANNELS::ChannelDef(channel.name(), 0, 0));
+    this->clipboard->channels.emplace_back(std::move(channel));
+}
 
 bool BrowserFront::can_be_start_capture()
 {
@@ -185,7 +191,6 @@ BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
 void BrowserFront::set_mod(mod_api * mod)
 {
     this->clipboard->channel_mod.set_mod(mod);
-    this->clipboard->clipboard.set_cb(mod);
 }
 
 void BrowserFront::send_clipboard_utf8(std::string_view utf8_string)
@@ -201,26 +206,30 @@ void BrowserFront::send_file(std::string_view name, std::vector<uint8_t> data)
 }
 
 
-void BrowserFront::clipboard_send_request_format(uint32_t id)
-{
-    this->clipboard->clipboard.send_request_format(id);
-}
-
 void BrowserFront::send_to_channel(
-    const CHANNELS::ChannelDef & channel, const uint8_t * data,
+    const CHANNELS::ChannelDef & channel_def, const uint8_t * data,
     std::size_t /*length*/, std::size_t chunk_size, int flags)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::channels),
         LOG_INFO, "BrowserFront::send_to_channel");
 
-    assert(channel.name == channel_names::cliprdr);
+    for (Channel& channel : this->clipboard->channels)
+    {
+        if (channel.name() == channel_def.name)
+        {
+            channel.receive({data, chunk_size}, flags);
+            break;
+        }
+    }
+
+    // assert(channel.name == channel_names::cliprdr);
 
     // InStream chunk(data, chunk_size);
     // this->clipboard->clientCLIPRDRChannel.receive(chunk, flags);
-    this->clipboard->clipboard.receive(InStream(data, chunk_size), flags);
+    // this->clipboard->clipboard.receive(InStream(data, chunk_size), flags);
 }
 
-void BrowserFront::update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/)
+void BrowserFront::update_pointer_position(uint16_t /*x*/, uint16_t /*y*/)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
         LOG_INFO, "BrowserFront::update_pointer_position");

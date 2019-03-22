@@ -139,6 +139,7 @@ const createRdpClient = (function(Module, window) {
         const events = {
             random: defaultRandom,
         };
+        let channels = [];
 
         const client = {
             on: function(eventName, cb) {
@@ -156,6 +157,7 @@ const createRdpClient = (function(Module, window) {
             sendMouseEvent: noop,
             sendClipboardUtf8: noop,
             sendFile: noop,
+            addChannel: (channel) => { channels.push(channel); },
         };
 
         // let counter = 1;
@@ -228,7 +230,12 @@ const createRdpClient = (function(Module, window) {
                 nextId(), width, height,
                 username || "", password || "",
                 verbosity || 0);
-            client.rdpclient = rdpclient;
+            // client.rdpclient = rdpclient;
+
+            for (channel of channels) {
+                console.log(channel);
+                rdpclient.addChannel(channel.getChannel());
+            }
 
             for (eventName in wrappersCbMod) {
                 if (!(eventName in events)) {
@@ -832,20 +839,28 @@ function run()
         receiveCbUtf8_data.value = str;
     });
 
-    // let clipboardCtx = {
-    //     formatId = 0,
-    // };
+    let clipboardCtx = {
+        formats: {},
+    };
+
+    const clipboard = rdpclient.addChannel(new Module.ClipboardChannel(0,0xffffff));
 
     rdpclient.on('clipboardReceiveFormat', function(id, name) {
-        if (id) {
-            console.log(id, name);
-            rdpclient.clipboardSendRequestFormat(id);
-        }
-        else if (name) {
-            console.log("begin");
+        console.log(id,name)
+        if (id === false) {
+            if (name) {
+                clipboardCtx.formats = {};
+            }
+            else {
+                for (const id in clipboardCtx.formats) {
+                    console.log(id)
+                }
+                clipboardCtx.formats = {};
+            }
         }
         else {
-            console.log("end");
+            clipboardCtx.formats[id] = true;
+            rdpclient.clipboardSendRequestFormat(id);
         }
     });
 }

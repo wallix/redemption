@@ -41,11 +41,15 @@ class mod_api;
 namespace redjs
 {
 
+class Channel;
+
 class BrowserFront : public FrontAPI
 {
 public:
     BrowserFront(JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose);
     ~BrowserFront();
+
+    void add_channel(Channel&& channel);
 
     bool can_be_start_capture() override;
     bool must_be_stop_capture() override;
@@ -58,16 +62,14 @@ public:
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef & /*channel*/, const uint8_t * /*data*/,
-        std::size_t /*length*/, std::size_t /*chunk_size*/, int /*flags*/) override;
+        const CHANNELS::ChannelDef& channel_def, uint8_t const* data,
+        std::size_t length, std::size_t chunk_size, int flags) override;
 
-    void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) override;
+    void update_pointer_position(uint16_t x, uint16_t y) override;
 
     void send_clipboard_utf8(std::string_view utf8_string);
     void send_file(std::string_view name, std::vector<uint8_t> data);
     void set_mod(mod_api * mod);
-
-    void clipboard_send_request_format(uint32_t id);
 
     gdi::GraphicApi& graphic_api() noexcept { return this->gd; }
 

@@ -15,6 +15,7 @@ exe-js js_client :
   src/redjs/browser_front.bc
   src/redjs/browser_graphic.bc
   src/redjs/browser_transport.bc
+  src/redjs/channel.bc
   src/redjs/clipboard.bc
   src/redjs/image_data_from_bitmap.bc
   src/redjs/image_data_from_pointer.bc
@@ -84,6 +85,7 @@ objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frt
 objjs src/redjs/browser_front.bc : src/redjs/browser_front.cpp ;
 objjs src/redjs/browser_graphic.bc : src/redjs/browser_graphic.cpp ;
 objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
+objjs src/redjs/channel.bc : src/redjs/channel.cpp ;
 objjs src/redjs/clipboard.bc : src/redjs/clipboard.cpp ;
 objjs src/redjs/image_data_from_bitmap.bc : src/redjs/image_data_from_bitmap.cpp ;
 objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;

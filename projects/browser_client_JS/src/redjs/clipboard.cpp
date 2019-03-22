@@ -19,6 +19,7 @@ Author(s): Jonathan Poelen
 */
 
 #include "redjs/clipboard.hpp"
+#include "redjs/channel.hpp"
 
 #include "red_emscripten/em_asm.hpp"
 
@@ -27,6 +28,7 @@ Author(s): Jonathan Poelen
 
 #include "core/RDP/clipboard.hpp"
 #include "core/callback.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 
 
 namespace
@@ -138,20 +140,17 @@ namespace
 }
 
 
-struct redjs::Clipboard::D
+struct redjs::ClipboardChannel::D
 {
     D(JsTableId id, RDPVerbose verbose)
     : id(id)
     , verbose(bool(verbose & RDPVerbose::cliprdr))
     {}
 
-    void send_request_format(uint32_t id)
+    void receive(Callback& cb, InStream chunk, int flags)
     {
-        LOG(LOG_DEBUG, "%d", id);
-    }
+        this->cb = &cb;
 
-    void receive(InStream chunk, int flags)
-    {
         if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST))
         {
             return;
@@ -262,11 +261,9 @@ struct redjs::Clipboard::D
 
         RED_EM_ASM(
             {
-                Module.RdpClientEventTable[$0].clipboardReceiveFormat($1, $2);
+                Module.RdpClientEventTable[$0].clipboardReceiveFormat(false, true);
             },
-            this->id.raw(),
-            false,
-            true
+            this->id.raw()
         );
 
         while (format_list_extractor(
@@ -338,10 +335,9 @@ struct redjs::Clipboard::D
 
         RED_EM_ASM(
             {
-                Module.RdpClientEventTable[$0].clipboardReceiveFormat($1);
+                Module.RdpClientEventTable[$0].clipboardReceiveFormat(false, false);
             },
-            this->id.raw(),
-            false
+            this->id.raw()
         );
     }
 
@@ -413,7 +409,6 @@ struct redjs::Clipboard::D
         );
     }
 
-
     Callback* cb = nullptr;
     FormatListEmptyName format_list;
     JsTableId id;
@@ -423,27 +418,32 @@ struct redjs::Clipboard::D
 namespace redjs
 {
 
-Clipboard::Clipboard(JsTableId id, RDPVerbose verbose)
-: d(std::make_unique<D>(id, verbose))
+ClipboardChannel::ClipboardChannel(JsTableId id, unsigned long verbose)
+: d(std::make_unique<D>(id, RDPVerbose(verbose)))
 {}
 
-Clipboard::~Clipboard() = default;
+ClipboardChannel::~ClipboardChannel() = default;
 
-void Clipboard::receive(InStream chunk, int flags)
+void ClipboardChannel::receive(Callback& cb, cbytes_view data, int flags)
 {
-    this->d->receive(std::move(chunk), flags);
+    this->d->receive(cb, InStream(data), flags);
 }
-
-void Clipboard::set_cb(Callback* cb)
-{
-    this->d->cb = cb;
-}
-
-void Clipboard::send_request_format(uint32_t id)
-{
-    this->d->send_request_format(id);
-}
-
-
 
 } // namespace redjs
+
+
+#include "red_emscripten/bind.hpp"
+
+EMSCRIPTEN_BINDINGS(channel_clipboard)
+{
+    redjs::class_<redjs::ClipboardChannel>("ClipboardChannel")
+        .constructor<int, int>()
+        .function_ptr("getChannel", [](redjs::ClipboardChannel& clip) {
+            auto receiver = [&clip](redjs::Channel& chan, cbytes_view data, int channel_flags){
+                clip.receive(chan.callback(), data, channel_flags);
+            };
+            return redjs::Channel(channel_names::cliprdr, receiver);
+        })
+        .function("receive", &redjs::ClipboardChannel::receive)
+    ;
+}

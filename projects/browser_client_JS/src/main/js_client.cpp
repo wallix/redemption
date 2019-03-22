@@ -33,6 +33,7 @@ Author(s): Jonathan Poelen
 #include "redjs/image_data.hpp"
 #include "redjs/browser_transport.hpp"
 #include "redjs/browser_front.hpp"
+#include "redjs/channel.hpp"
 #include "redjs/js_table_id.hpp"
 
 #include <chrono>
@@ -234,14 +235,15 @@ struct RdpClient
         this->front.send_file(name, std::move(data));
     }
 
-    void clipboard_send_request_format(uint32_t id)
-    {
-        this->front.clipboard_send_request_format(id);
-    }
-
     int id() const noexcept
     {
         return js_rand.id.raw();
+    }
+
+    void add_channel(redjs::Channel&& channel)
+    {
+        channel.set_cb(this->mod.get());
+        this->front.add_channel(std::move(channel));
     }
 };
 
@@ -259,13 +261,14 @@ EMSCRIPTEN_BINDINGS(client)
             return redjs::emval_from_view(client.get_sending_data_view());
         })
         .function("id", &RdpClient::id)
+        .function("addChannel", &RdpClient::add_channel)
         .function("clearSendingData", &RdpClient::clear_sending_data)
         .function("addReceivingData", &RdpClient::add_receiving_data)
         .function("sendUnicode", &RdpClient::rdp_input_unicode)
         .function("sendScancode", &RdpClient::rdp_input_scancode)
         .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
+
         .function("sendClipboardUtf8", &RdpClient::send_clipboard_utf8)
         .function("sendFile", &RdpClient::send_file)
-        .function("clipboardSendRequestFormat", &RdpClient::clipboard_send_request_format)
     ;
 }

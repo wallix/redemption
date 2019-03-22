@@ -24,10 +24,10 @@ Author(s): Jonathan Poelen
 
 namespace redjs
 {
-    template<class T>
-    struct class_ : emscripten::class_<T>
+    template<class T, class BaseSpecifier = emscripten::internal::NoBaseClass>
+    struct class_ : emscripten::class_<T, BaseSpecifier>
     {
-        using em_class = emscripten::class_<T>;
+        using em_class = emscripten::class_<T, BaseSpecifier>;
 
         using em_class::em_class;
 
@@ -35,6 +35,13 @@ namespace redjs
         EMSCRIPTEN_ALWAYS_INLINE class_ const& constructor(Policies... policies) const
         {
             em_class::template constructor<ConstructorArgs...>(policies...);
+            return *this;
+        }
+
+        template<typename... Args, typename ReturnType, typename... Policies>
+        EMSCRIPTEN_ALWAYS_INLINE const class_& constructor(ReturnType (*factory)(Args...), Policies... policies) const
+        {
+            em_class::constructor(factory, policies...);
             return *this;
         }
 
