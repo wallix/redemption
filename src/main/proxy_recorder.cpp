@@ -20,10 +20,13 @@
    A proxy that will capture all the traffic to the target
 */
 
+#include "main/nla_tee_transport.hpp"
+#include "main/nego_client.hpp"
+#include "main/nego_server.hpp"
+
 #include "core/RDP/nla/nla.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/mcs.hpp"
-#include "core/RDP/nego.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/listen.hpp"
 #include "core/server_notifier_api.hpp"
@@ -49,78 +52,6 @@
 
 
 using PacketType = RecorderFile::PacketType;
-
-
-/// @brief Wrap a Transport and a RecorderFile for a nla negociation
-struct NlaTeeTransport : Transport
-{
-    enum class Type : bool { Client, Server };
-
-    NlaTeeTransport(Transport& trans, RecorderFile& outFile, Type type)
-    : trans(trans)
-    , outFile(outFile)
-    , is_server(type == Type::Server)
-    {}
-
-    TlsResult enable_client_tls(
-        bool server_cert_store,
-        ServerCertCheck server_cert_check,
-        ServerNotifier & server_notifier,
-        const char * certif_path
-    ) override
-    {
-        return this->trans.enable_client_tls(
-            server_cert_store, server_cert_check, server_notifier, certif_path);
-    }
-
-    array_view_const_u8 get_public_key() const override
-    {
-        return this->trans.get_public_key();
-    }
-
-    bool disconnect() override
-    {
-        return this->trans.disconnect();
-    }
-
-    bool connect() override
-    {
-        return this->trans.connect();
-    }
-
-private:
-    Read do_atomic_read(uint8_t * buffer, size_t len) override
-    {
-        auto r = this->trans.atomic_read(buffer, len);
-        outFile.write_packet(
-            this->is_server ? PacketType::NlaServerIn : PacketType::NlaClientIn,
-            {buffer, len});
-        return r;
-    }
-
-    size_t do_partial_read(uint8_t * buffer, size_t len) override
-    {
-        len = this->trans.partial_read(buffer, len);
-        outFile.write_packet(
-            this->is_server ? PacketType::NlaServerIn : PacketType::NlaClientIn,
-            {buffer, len});
-        return len;
-    }
-
-    void do_send(const uint8_t * buffer, size_t len) override
-    {
-        outFile.write_packet(
-            this->is_server ? PacketType::NlaServerOut : PacketType::NlaClientOut,
-            {buffer, len});
-        this->trans.send(buffer, len);
-    }
-
-private:
-    Transport& trans;
-    RecorderFile& outFile;
-    bool is_server;
-};
-
 
 /** @brief a front connection with a RDP client */
 class FrontConnection
@@ -402,125 +333,6 @@ private:
                is_tls_client ? X224::PROTOCOL_TLS
                              : X224::PROTOCOL_RDP;
     }
-
-    static std::pair<std::string, std::string>
-    extract_user_domain(char const* target_user)
-    {
-        std::pair<std::string, std::string> ret;
-        auto& [username, domain] = ret;
-
-        char const* separator = strchr(target_user, '\\');
-        if (separator) {
-            username = separator+1;
-            domain.assign(target_user, separator-target_user);
-        }
-        else {
-            separator = strchr(target_user, '@');
-            if (separator) {
-                username.assign(target_user, separator-target_user);
-                domain = separator+1;
-            }
-            else {
-                username = target_user;
-            }
-        }
-
-        return ret;
-    }
-
-    class NegoServer
-    {
-        FixedRandom rand;
-        LCGTime timeobj;
-        std::string extra_message;
-        NlaTeeTransport trans;
-        rdpCredsspServer credssp;
-
-    public:
-        NegoServer(
-            Transport& trans, RecorderFile& outFile,
-            std::string const& user, std::string const& password,
-            uint64_t verbosity)
-        : trans(trans, outFile, NlaTeeTransport::Type::Server)
-        , credssp(
-            this->trans, false, false, rand, timeobj, extra_message, Translation::EN,
-            [&](SEC_WINNT_AUTH_IDENTITY& identity){
-                auto check = [vec = std::vector<uint8_t>{}](
-                    std::string const& str, Array& arr
-                ) mutable {
-                    vec.resize(str.size() * 2);
-                    UTF8toUTF16(str, vec.data(), vec.size());
-                    return vec.size() == arr.size()
-                        && 0 == memcmp(vec.data(), arr.get_data(), vec.size());
-                };
-
-                auto [username, domain] = extract_user_domain(user.c_str());
-                if (check(username, identity.User)
-                 // domain is empty
-                 && check(domain, identity.Domain)
-                ) {
-                    identity.SetPasswordFromUtf8(byte_ptr_cast(password.c_str()));
-                    return Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
-                }
-
-                LOG(LOG_ERR, "Ntlm: bad identity");
-                return Ntlm_SecurityFunctionTable::PasswordCallback::Error;
-            }, verbosity)
-        {
-            this->credssp.credssp_server_authenticate_init();
-        }
-
-        rdpCredsspServer::State recv_data(TpduBuffer& buffer)
-        {
-            rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
-            while (buffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
-                InStream in_stream(buffer.current_pdu_buffer());
-                st = this->credssp.credssp_server_authenticate_next(in_stream);
-            }
-            return st;
-        }
-    };
-
-    class NegoClient
-    {
-        LCGTime timeobj;
-        FixedRandom random;
-        std::string extra_message;
-        RdpNego nego;
-        NlaTeeTransport trans;
-
-    public:
-        NegoClient(
-            bool is_nla, bool is_admin_mode,
-            Transport& trans, RecorderFile& outFile,
-            char const* host, char const* target_user, char const* password,
-            bool enable_kerberos, uint64_t verbosity
-        )
-        : nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
-            this->random, this->timeobj, this->extra_message, Translation::EN,
-            to_verbose_flags(verbosity))
-        , trans(trans, outFile, NlaTeeTransport::Type::Client)
-        {
-            auto [username, domain] = extract_user_domain(target_user);
-            nego.set_identity(username.c_str(), domain.c_str(), password, "ProxyRecorder");
-            // static char ln_info[] = "tsv://MS Terminal Services Plugin.1.Sessions\x0D\x0A";
-            // nego.set_lb_info(byte_ptr_cast(ln_info), sizeof(ln_info)-1);
-        }
-
-        void send_negotiation_request()
-        {
-            this->nego.send_negotiation_request(this->trans);
-        }
-
-        bool recv_next_data(TpduBuffer& tpdu_buffer, ServerNotifier& notifier)
-        {
-            return this->nego.recv_next_data(
-                tpdu_buffer, this->trans,
-                RdpNego::ServerCert{
-                    false, ServerCertCheck::always_succeed, "/tmp", notifier}
-            );
-        }
-    };
 
     enum {
         NEGOCIATING_FRONT_STEP1,
