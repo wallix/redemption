@@ -43,6 +43,7 @@ Author(s): Jonathan Poelen
 #include "utils/log.hpp"
 
 #include <numeric>
+#include <cinttypes>
 
 
 namespace
@@ -81,10 +82,9 @@ namespace
 namespace redjs
 {
 
-BrowserGraphic::BrowserGraphic(emscripten::val callbacks, redjs::JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps)
+BrowserGraphic::BrowserGraphic(emscripten::val callbacks, uint16_t width, uint16_t height, OrderCaps& order_caps)
 : width(width)
 , height(height)
-, id(id)
 , callbacks(std::move(callbacks))
 {
     // TODO check implementation from this->callbacks

@@ -22,7 +22,6 @@ Author(s): Jonathan Poelen
 
 
 #include "utils/stream.hpp"
-#include "redjs/js_table_id.hpp"
 
 #include <emscripten/val.h>
 

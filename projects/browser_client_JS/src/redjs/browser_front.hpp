@@ -26,9 +26,8 @@ Author(s): Jonathan Poelen
 
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
-#include "gdi/graphic_api.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
-#include "redjs/js_table_id.hpp"
+#include "redjs/channel.hpp"
 #include "redjs/browser_graphic.hpp"
 
 #include <vector>
@@ -36,7 +35,6 @@ Author(s): Jonathan Poelen
 
 class ScreenInfo;
 class OrderCaps;
-class mod_api;
 
 namespace redjs
 {
@@ -46,7 +44,7 @@ class Channel;
 class BrowserFront : public FrontAPI
 {
 public:
-    BrowserFront(emscripten::val callbacks, JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose);
+    BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose);
     ~BrowserFront();
 
     void add_channel(Channel&& channel);
@@ -67,19 +65,13 @@ public:
 
     void update_pointer_position(uint16_t x, uint16_t y) override;
 
-    void send_clipboard_utf8(std::string_view utf8_string);
-    void send_file(std::string_view name, std::vector<uint8_t> data);
-    void set_mod(mod_api * mod);
-
     gdi::GraphicApi& graphic_api() noexcept { return this->gd; }
 
 private:
     BrowserGraphic gd;
     RDPVerbose verbose;
     CHANNELS::ChannelDefArray cl;
-
-    class Clipboard;
-    std::unique_ptr<Clipboard> clipboard;
+    std::vector<Channel> channels;
 };
 
 }

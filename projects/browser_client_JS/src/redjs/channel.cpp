@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 #include "utils/stream.hpp"
 #include "core/callback.hpp"
 
+
 redjs::Channel::Channel(CHANNELS::ChannelNameId name_id, receiver_type receiver)
 : name_id(name_id)
 , do_receive(std::move(receiver))

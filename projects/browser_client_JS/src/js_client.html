@@ -122,11 +122,6 @@ const createRdpClient = (function(Module, window) {
         window.crypto.getRandomValues(data);
     };
 
-    let id = 0;
-    const nextId = () => id++;
-
-    Module.RdpClientEventTable = {};
-
     const noop = function(){};
 
     return function(url, width, height, username, password, verbosity) {
@@ -210,7 +205,6 @@ const createRdpClient = (function(Module, window) {
                     if (timeoutID) {
                         clearTimeout(timeoutID);
                     }
-                    Module.RdpClientEventTable[rdpclient.id()] = undefined;
                     rdpclient.delete();
                     rdpclient = undefined;
                 }
@@ -225,7 +219,7 @@ const createRdpClient = (function(Module, window) {
 
             client.close = () => socket.close();
             rdpclient = new Module.RdpClient(
-                events, nextId(), width, height,
+                events, width, height,
                 username || "", password || "",
                 verbosity || 0);
             // client.rdpclient = rdpclient;
@@ -265,8 +259,6 @@ const createRdpClient = (function(Module, window) {
                 rdpclient.clipboardSendRequestFormat(id);
                 send_data();
             }
-
-            Module.RdpClientEventTable[rdpclient.id()] = events;
 
             rdpclient.updateTime();
             timeoutDate = Date.now();

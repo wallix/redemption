@@ -34,10 +34,8 @@ Author(s): Jonathan Poelen
 #include "redjs/browser_transport.hpp"
 #include "redjs/browser_front.hpp"
 #include "redjs/channel.hpp"
-#include "redjs/js_table_id.hpp"
 
 #include <chrono>
-#include <string_view>
 
 
 using Ms = std::chrono::milliseconds;
@@ -101,17 +99,13 @@ struct RdpClient
     Theme theme;
     Font font;
 
-    redjs::JsTableId jsid;
-
-
     RdpClient(
-        emscripten::val callbacks, int id, uint16_t width, uint16_t height,
+        emscripten::val callbacks, uint16_t width, uint16_t height,
         std::string const& username, std::string const& password,
         unsigned long verbose)
-    : front(callbacks, id, width, height, client_info.order_caps, RDPVerbose(verbose))
+    : front(callbacks, width, height, client_info.order_caps, RDPVerbose(verbose))
     , gd(front.graphic_api())
     , js_rand(callbacks)
-    , jsid(id)
     {
         client_info.screen_info.width = width;
         client_info.screen_info.height = height;
@@ -160,7 +154,6 @@ struct RdpClient
             browser_trans, session_reactor, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, authentifier, report_message, ini, nullptr);
-        front.set_mod(this->mod.get());
     }
 
     /// \return milliseconds before next timer, or 0 if no timer
@@ -221,21 +214,6 @@ struct RdpClient
         this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
     }
 
-    void send_clipboard_utf8(std::string const& utf8_string)
-    {
-        this->front.send_clipboard_utf8(utf8_string);
-    }
-
-    void send_file(std::string const& name, std::vector<uint8_t> data)
-    {
-        this->front.send_file(name, std::move(data));
-    }
-
-    int id() const noexcept
-    {
-        return this->jsid.raw();
-    }
-
     void add_channel(redjs::Channel&& channel)
     {
         channel.set_cb(this->mod.get());
@@ -247,7 +225,7 @@ struct RdpClient
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor<emscripten::val, int, uint16_t, uint16_t, std::string, std::string, unsigned long>()
+        .constructor<emscripten::val, uint16_t, uint16_t, std::string, std::string, unsigned long>()
         .function_ptr("updateTime", [](RdpClient& client) {
             Ms ms = client.update_time(tvtime());
             // long long is not embind type. Use long or double (safe for 53 bits);
@@ -256,15 +234,11 @@ EMSCRIPTEN_BINDINGS(client)
         .function_ptr("getSendingData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_sending_data_view());
         })
-        .function("id", &RdpClient::id)
         .function("addChannel", &RdpClient::add_channel)
         .function("clearSendingData", &RdpClient::clear_sending_data)
         .function("addReceivingData", &RdpClient::add_receiving_data)
         .function("sendUnicode", &RdpClient::rdp_input_unicode)
         .function("sendScancode", &RdpClient::rdp_input_scancode)
         .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
-
-        .function("sendClipboardUtf8", &RdpClient::send_clipboard_utf8)
-        .function("sendFile", &RdpClient::send_file)
     ;
 }
