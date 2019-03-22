@@ -207,6 +207,54 @@ public:
         }
     }
 
+    void front_nla()
+    {
+        LOG(LOG_INFO, "NEGOCIATING_FRONT_NLA");
+        rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
+        switch (st) {
+        case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+        case rdpCredsspServer::State::Cont: break;
+        case rdpCredsspServer::State::Finish:
+            LOG(LOG_INFO, "stop NegoServer");
+            LOG(LOG_INFO, "start NegoClient");
+            nego_server.reset();
+            this->pstate = NEGOCIATING_BACK_NLA;
+            break;
+        }
+    }
+
+
+    void front_initial_pdu_negociation()
+    {
+        LOG(LOG_INFO, "NEGOCIATING_INITIAL_PDU");
+        if (frontBuffer.next_pdu()) {
+            array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
+
+            if (!nla_username.empty()) {
+                LOG(LOG_INFO, "Back: force protocol PROTOCOL_HYBRID");
+                InStream new_x224_stream(currentPacket);
+                X224::DT_TPDU_Recv x224(new_x224_stream);
+                MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
+                GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
+                GCC::UserData::RecvFactory f(gcc_cr.payload);
+                // force X224::PROTOCOL_HYBRID
+                if (f.tag == CS_CORE) {
+                    GCC::UserData::CSCore cs_core;
+                    cs_core.recv(f.payload);
+                    if (cs_core.length >= 216) {
+                        auto const idx = f.payload.get_current() - currentPacket.data() + (216-cs_core.length) - 4;
+                        currentPacket[idx] = X224::PROTOCOL_HYBRID;
+                    }
+                }
+            }
+
+            outFile.write_packet(PacketType::DataOut, frontBuffer.remaining_data());
+            backConn.send(frontBuffer.remaining_data());
+
+            this->pstate = NEGOCIATING_BACK_INITIAL_PDU;
+        }
+    }
+
     void treat_front_activity()
     {
         switch (this->pstate) {
@@ -215,49 +263,12 @@ public:
         break;
 
         case NEGOCIATING_FRONT_NLA: {
-            LOG(LOG_INFO, "NEGOCIATING_FRONT_NLA");
-            rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
-            switch (st) {
-            case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-            case rdpCredsspServer::State::Cont: break;
-            case rdpCredsspServer::State::Finish:
-                LOG(LOG_INFO, "stop NegoServer");
-                LOG(LOG_INFO, "start NegoClient");
-                nego_server.reset();
-                this->pstate = NEGOCIATING_BACK_NLA;
-                break;
-            }
+            this->front_nla();
             break;
         }
 
-        // force X224::PROTOCOL_HYBRID
         case NEGOCIATING_FRONT_INITIAL_PDU:
-            LOG(LOG_INFO, "NEGOCIATING_INITIAL_PDU");
-            if (frontBuffer.next_pdu()) {
-                array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
-
-                if (!nla_username.empty()) {
-                    LOG(LOG_INFO, "Back: force protocol PROTOCOL_HYBRID");
-                    InStream new_x224_stream(currentPacket);
-                    X224::DT_TPDU_Recv x224(new_x224_stream);
-                    MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
-                    GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
-                    GCC::UserData::RecvFactory f(gcc_cr.payload);
-                    if (f.tag == CS_CORE) {
-                        GCC::UserData::CSCore cs_core;
-                        cs_core.recv(f.payload);
-                        if (cs_core.length >= 216) {
-                            auto const idx = f.payload.get_current() - currentPacket.data() + (216-cs_core.length) - 4;
-                            currentPacket[idx] = X224::PROTOCOL_HYBRID;
-                        }
-                    }
-                }
-
-                outFile.write_packet(PacketType::DataOut, frontBuffer.remaining_data());
-                backConn.send(frontBuffer.remaining_data());
-
-                this->pstate = NEGOCIATING_BACK_INITIAL_PDU;
-            }
+            this->front_initial_pdu_negociation();
             break;
         case FORWARD: {
             break;
@@ -272,50 +283,60 @@ public:
         }
     }
 
+    void back_nla_negociation()
+    {
+        LOG(LOG_INFO, "NEGOCIATING_BACK_NLA");
+        NullServerNotifier null_notifier;
+        if (not nego_client->recv_next_data(backBuffer, null_notifier)) {
+            LOG(LOG_INFO, "stop NegoClient");
+            this->nego_client.reset();
+            this->pstate = NEGOCIATING_FRONT_INITIAL_PDU;
+            outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
+        }
+    }
+
+    void back_initial_pdu_negociation()
+    {
+        LOG(LOG_INFO, "NEGOCIATING_BACK_INITIAL_PDU");
+        if (backBuffer.next_pdu()) {
+            array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
+
+            if (!nla_username.empty()) {
+                LOG(LOG_INFO, "Front: force protocol tls=%d nla=%d", is_tls_client, is_nla_client);
+                InStream new_x224_stream(currentPacket);
+                X224::DT_TPDU_Recv x224(new_x224_stream);
+                MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
+                GCC::Create_Response_Recv gcc_cr(mcs.payload);
+                GCC::UserData::RecvFactory f(gcc_cr.payload);
+                if (f.tag == SC_CORE) {
+                    GCC::UserData::SCCore sc_core;
+                    sc_core.recv(f.payload);
+                    if (sc_core.length >= 12) {
+                        hexdump(f.payload.get_data(), f.payload.get_capacity());
+                        auto const offset = (sc_core.length >= 16) ? 8 : 4;
+                        auto const idx = f.payload.get_current() - currentPacket.data() - offset;
+                        currentPacket[idx] = select_client_protocol();
+                        hexdump(f.payload.get_data(), f.payload.get_capacity());
+                    }
+                }
+            }
+
+            outFile.write_packet(PacketType::DataIn, backBuffer.remaining_data());
+            frontConn.send(backBuffer.remaining_data());
+
+            this->pstate = FORWARD;
+        }
+    }
+
     void treat_back_activity()
     {
         switch (this->pstate) {
         case NEGOCIATING_BACK_NLA: {
-            LOG(LOG_INFO, "NEGOCIATING_BACK_NLA");
-            NullServerNotifier null_notifier;
-            if (not nego_client->recv_next_data(backBuffer, null_notifier)) {
-                LOG(LOG_INFO, "stop NegoClient");
-                this->nego_client.reset();
-                this->pstate = NEGOCIATING_FRONT_INITIAL_PDU;
-                outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
-            }
+            this->back_nla_negociation();
             break;
         }
         case NEGOCIATING_BACK_INITIAL_PDU: {
-            LOG(LOG_INFO, "NEGOCIATING_BACK_INITIAL_PDU");
-            if (backBuffer.next_pdu()) {
-                array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
-
-                if (!nla_username.empty()) {
-                    LOG(LOG_INFO, "Front: force protocol tls=%d nla=%d", is_tls_client, is_nla_client);
-                    InStream new_x224_stream(currentPacket);
-                    X224::DT_TPDU_Recv x224(new_x224_stream);
-                    MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
-                    GCC::Create_Response_Recv gcc_cr(mcs.payload);
-                    GCC::UserData::RecvFactory f(gcc_cr.payload);
-                    if (f.tag == SC_CORE) {
-                        GCC::UserData::SCCore sc_core;
-                        sc_core.recv(f.payload);
-                        if (sc_core.length >= 12) {
-                            hexdump(f.payload.get_data(), f.payload.get_capacity());
-                            auto const offset = (sc_core.length >= 16) ? 8 : 4;
-                            auto const idx = f.payload.get_current() - currentPacket.data() - offset;
-                            currentPacket[idx] = select_client_protocol();
-                            hexdump(f.payload.get_data(), f.payload.get_capacity());
-                        }
-                    }
-                }
-
-                outFile.write_packet(PacketType::DataIn, backBuffer.remaining_data());
-                frontConn.send(backBuffer.remaining_data());
-
-                this->pstate = FORWARD;
-            }
+            this->back_initial_pdu_negociation();
             break;
         }
         case FORWARD: {
