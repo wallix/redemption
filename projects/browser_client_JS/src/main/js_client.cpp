@@ -56,23 +56,16 @@ struct RdpClient
 
     struct JsRandom : Random
     {
-        JsRandom(redjs::JsTableId id) noexcept
-        : id(id)
+        JsRandom(emscripten::val callbacks) noexcept
+        : callbacks(std::move(callbacks))
         {}
 
-        void random(void * dest, std::size_t size) override
+        void random(void* dest, std::size_t size) override
         {
-            RED_EM_ASM(
-                {
-                    Module.RdpClientEventTable[$0].random($1, $2);
-                },
-                id.raw(),
-                dest,
-                size
-            );
+            redjs::emval_call(this->callbacks, "random", dest, size);
         }
 
-        redjs::JsTableId id;
+        emscripten::val callbacks;
     };
 
     struct JsAuth : NullAuthentifier
@@ -108,14 +101,17 @@ struct RdpClient
     Theme theme;
     Font font;
 
+    redjs::JsTableId jsid;
+
 
     RdpClient(
-        int id, uint16_t width, uint16_t height,
+        emscripten::val callbacks, int id, uint16_t width, uint16_t height,
         std::string const& username, std::string const& password,
         unsigned long verbose)
-    : front(id, width, height, client_info.order_caps, RDPVerbose(verbose))
+    : front(callbacks, id, width, height, client_info.order_caps, RDPVerbose(verbose))
     , gd(front.graphic_api())
-    , js_rand(id)
+    , js_rand(callbacks)
+    , jsid(id)
     {
         client_info.screen_info.width = width;
         client_info.screen_info.height = height;
@@ -237,7 +233,7 @@ struct RdpClient
 
     int id() const noexcept
     {
-        return js_rand.id.raw();
+        return this->jsid.raw();
     }
 
     void add_channel(redjs::Channel&& channel)
@@ -251,7 +247,7 @@ struct RdpClient
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor<int, uint16_t, uint16_t, std::string, std::string, unsigned long>()
+        .constructor<emscripten::val, int, uint16_t, uint16_t, std::string, std::string, unsigned long>()
         .function_ptr("updateTime", [](RdpClient& client) {
             Ms ms = client.update_time(tvtime());
             // long long is not embind type. Use long or double (safe for 53 bits);

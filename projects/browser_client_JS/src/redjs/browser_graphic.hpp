@@ -28,6 +28,8 @@ Author(s): Jonathan Poelen
 #include "mod/rdp/rdp_verbose.hpp"
 #include "redjs/js_table_id.hpp"
 
+#include <emscripten/val.h>
+
 #include <vector>
 #include <memory>
 
@@ -43,7 +45,7 @@ class ImageData;
 class BrowserGraphic : public gdi::GraphicApi
 {
 public:
-    BrowserGraphic(JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps);
+    BrowserGraphic(emscripten::val callbacks, JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps);
     ~BrowserGraphic();
 
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
@@ -99,6 +101,7 @@ private:
     uint16_t width;
     uint16_t height;
     JsTableId id;
+    emscripten::val callbacks;
     std::unique_ptr<ImageData[]> image_datas;
     std::array<size_t, 3> image_data_index {0};
     size_t nb_image_datas {0};

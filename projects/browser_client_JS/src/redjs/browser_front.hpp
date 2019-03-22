@@ -46,7 +46,7 @@ class Channel;
 class BrowserFront : public FrontAPI
 {
 public:
-    BrowserFront(JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose);
+    BrowserFront(emscripten::val callbacks, JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose);
     ~BrowserFront();
 
     void add_channel(Channel&& channel);

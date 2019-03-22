@@ -150,8 +150,8 @@ struct BrowserFront::Clipboard
     std::vector<Channel> channels;
 };
 
-BrowserFront::BrowserFront(redjs::JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose)
-: gd(id, width, height, order_caps)
+BrowserFront::BrowserFront(emscripten::val callbacks, redjs::JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose)
+: gd(std::move(callbacks), id, width, height, order_caps)
 , verbose(verbose)
 , clipboard(std::make_unique<Clipboard>(id, verbose))
 {

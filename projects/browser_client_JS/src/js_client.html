@@ -227,7 +227,7 @@ const createRdpClient = (function(Module, window) {
 
             client.close = () => socket.close();
             rdpclient = new Module.RdpClient(
-                nextId(), width, height,
+                events, nextId(), width, height,
                 username || "", password || "",
                 verbosity || 0);
             // client.rdpclient = rdpclient;

@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 #include "redjs/image_data_from_pointer.hpp"
 
 #include "red_emscripten/em_asm.hpp"
+#include "red_emscripten/val.hpp"
 
 #include "gdi/screen_info.hpp"
 #include "core/RDP/rdp_pointer.hpp"
@@ -105,11 +106,13 @@ namespace
 namespace redjs
 {
 
-BrowserGraphic::BrowserGraphic(redjs::JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps)
+BrowserGraphic::BrowserGraphic(emscripten::val callbacks, redjs::JsTableId id, uint16_t width, uint16_t height, OrderCaps& order_caps)
 : width(width)
 , height(height)
 , id(id)
+, callbacks(std::move(callbacks))
 {
+    // TODO check implementation from this->callbacks
     order_caps.orderSupport[TS_NEG_POLYLINE_INDEX] = 1;
     order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
     order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] = 1;

@@ -19,7 +19,7 @@ Author(s): Jonathan Poelen
 */
 
 #pragma once
-
+#include <type_traits>
 #include "utils/sugar/bytes_view.hpp"
 
 #include <emscripten/val.h>
@@ -29,5 +29,43 @@ namespace redjs
     inline emscripten::val emval_from_view(const_bytes_view av)
     {
         return emscripten::val(emscripten::typed_memory_view(av.size(), av.data()));
+    }
+
+    template<class T>
+    struct EmValPtr;
+
+    template<>
+    struct EmValPtr<void>
+    {
+        static uintptr_t i(void const* p) noexcept
+        {
+            return reinterpret_cast<uintptr_t>(p);
+        }
+    };
+
+    template<> struct EmValPtr<char> : EmValPtr<void> {};
+    template<> struct EmValPtr<signed char> : EmValPtr<void> {};
+    template<> struct EmValPtr<unsigned char> : EmValPtr<void> {};
+
+    template<class T> struct EmValPtr<T const> : EmValPtr<T> {};
+
+#undef MAKE_EmValPtr
+
+    template<class T>
+    inline uintptr_t emval_call_arg(T* p) noexcept
+    {
+        return EmValPtr<T>::i(p);
+    }
+
+    template<class T>
+    inline T const& emval_call_arg(T const& x) noexcept
+    {
+        return x;
+    }
+
+    template<class ReturnType = void, class... Args>
+    inline ReturnType emval_call(emscripten::val const& v, char const* name, Args const&... args)
+    {
+        return v.call<ReturnType>(name, emval_call_arg(args)...);
     }
 }
