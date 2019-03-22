@@ -1774,14 +1774,18 @@ def aup_to_challenge(aup, username):
     """
     aup.challenge.username = username
     if aup.challenge.message_id == 1:
-        message = (u"You must change your password")
+        message = (u"Your password has expired, "
+                   u"You must change your password")
     elif aup.challenge.message_id == 2:
-        message = (u"Please enter the password a second time")
+        message = (u"Please confirm password")
     elif aup.challenge.message_id == 3:
-        message = (u"The two given password do not match")
+        message = (u"Passwords do not match")
     elif aup.challenge.message_id == 4:
-        message = (u"The given password does not meet the password "
-                   "policy requirements")
+        message = (u"The password does not meet the password policy "
+                   u"requirements")
+    elif aup.challenge.message_id == 5:
+        message = (u"Your password has been reset, "
+                   u"You must change your password")
     else:
         message = aup.challenge.message
     return Challenge(
