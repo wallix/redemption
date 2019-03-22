@@ -1382,7 +1382,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
             RED_CHECK_EQ(hash_buf,
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
                 " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6" 
-                " 3558a27a994a456567ecd91d817df8c1e1f15db44a4a41d16a17b14a3ebab143"
+                " f5b6a73d68ac7405d988bbb60a88afd59b72a47bab2e03068573e7510451e801"
                 "\n");
         #endif
     }
