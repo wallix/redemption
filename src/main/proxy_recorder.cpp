@@ -255,34 +255,6 @@ public:
         }
     }
 
-    void treat_front_activity()
-    {
-        switch (this->pstate) {
-        case NEGOCIATING_FRONT_STEP1:
-            this->front_step1();
-        break;
-
-        case NEGOCIATING_FRONT_NLA: {
-            this->front_nla();
-            break;
-        }
-
-        case NEGOCIATING_FRONT_INITIAL_PDU:
-            this->front_initial_pdu_negociation();
-            break;
-        case FORWARD: {
-            break;
-        }
-        case NEGOCIATING_BACK_NLA:
-            LOG(LOG_INFO, "Unexpected Front event when waiting for Back NLA negociation");
-            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-
-        case NEGOCIATING_BACK_INITIAL_PDU:
-            LOG(LOG_INFO, "Unexpected Front event when waiting for Back Initial PDU");
-            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-        }
-    }
-
     void back_nla_negociation()
     {
         LOG(LOG_INFO, "NEGOCIATING_BACK_NLA");
@@ -328,34 +300,6 @@ public:
         }
     }
 
-    void treat_back_activity()
-    {
-        switch (this->pstate) {
-        case NEGOCIATING_BACK_NLA: {
-            this->back_nla_negociation();
-            break;
-        }
-        case NEGOCIATING_BACK_INITIAL_PDU: {
-            this->back_initial_pdu_negociation();
-            break;
-        }
-        case FORWARD: {
-            LOG(LOG_INFO, "Unexpected Forward event");
-            break;
-        }
-        case NEGOCIATING_FRONT_INITIAL_PDU:
-            LOG(LOG_INFO, "Unexpected Back event when waiting for Front Initial PDU");
-            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-
-        case NEGOCIATING_FRONT_STEP1:
-            LOG(LOG_INFO, "Unexpected Back event when waiting for Front STEP1 negociation");
-            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-
-        case NEGOCIATING_FRONT_NLA:
-            LOG(LOG_INFO, "Unexpected Back event when waiting for Front NLA negociation");
-            throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-        }
-    }
 
     void run()
     {
@@ -394,26 +338,41 @@ public:
 
             switch(this->pstate) {
             case NEGOCIATING_FRONT_NLA:
+                if (FD_ISSET(front_fd, &rset)) {
+                    frontBuffer.load_data(this->frontConn);
+                    this->front_nla();
+                }
+                break;
+
             case NEGOCIATING_FRONT_STEP1:
+                if (FD_ISSET(front_fd, &rset)) {
+                    frontBuffer.load_data(this->frontConn);
+                    this->front_step1();
+                }
+                break;
+
             case NEGOCIATING_FRONT_INITIAL_PDU:
                 if (FD_ISSET(front_fd, &rset)) {
                     frontBuffer.load_data(this->frontConn);
-                    this->treat_front_activity();
+                    this->front_initial_pdu_negociation();
                 }
                 break;
+
             case NEGOCIATING_BACK_NLA:
                 if (FD_ISSET(back_fd, &rset)) {
-                    this->treat_back_activity();
+                    this->back_nla_negociation();
                 }
                 break;
+
             case NEGOCIATING_BACK_INITIAL_PDU:
                 // Now start negociation with back
                 // FIXME: use front NLA parameters!
                 if (FD_ISSET(back_fd, &rset)) {
                     backBuffer.load_data(this->backConn);
-                    this->treat_back_activity();
+                    this->back_initial_pdu_negociation();
                 }
                 break;
+
             case FORWARD:
                 if (FD_ISSET(front_fd, &rset)) {
                     LOG(LOG_INFO, "FORWARD (FRONT TO BACK)");
