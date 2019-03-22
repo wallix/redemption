@@ -1282,7 +1282,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     ::unlink(encrypted_file);
     ::unlink(hash_encrypted_file);
 
-    constexpr std::size_t original_filesize = 4166814;
+    constexpr std::size_t original_filesize = 4166665;
     auto original_contents = get_file_contents(original_filename);
     RED_CHECK_EQUAL(original_contents.size(), original_filesize);
 
@@ -1332,7 +1332,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     const char * encrypted_file = "/tmp/encrypted_file.enc";
     const char * hash_encrypted_file = "/tmp/hash_encrypted_file.enc";
 
-    constexpr std::size_t original_filesize = 4166814;
+    constexpr std::size_t original_filesize = 4166665;
     auto original_contents = get_file_contents(original_filename);
     RED_REQUIRE_EQUAL(original_contents.size(), original_filesize);
 
@@ -1381,8 +1381,9 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
         #else
             RED_CHECK_EQ(hash_buf,
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
-            	" c36c3725393f4e06487181052b4035295da12e7850f127cc2f2d775997cc5211"
-            	" 2ba961dfd5159a57aef15b0646295deafa8aa4c2fd96ad221d0eeca64d200924\n");
+                " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6" 
+                " 3558a27a994a456567ecd91d817df8c1e1f15db44a4a41d16a17b14a3ebab143"
+                "\n");
         #endif
     }
 
