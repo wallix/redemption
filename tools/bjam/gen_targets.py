@@ -34,6 +34,8 @@ disable_srcs = set((
 
 src_deps = dict((
     ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
+    ('src/proxy_recorder/proxy_recorder.hpp', ['src/proxy_recorder/proxy_recorder.cpp']),
+
 ))
 
 class Dep:
@@ -76,6 +78,7 @@ target_renames = dict((
     ('do_recorder', 'redrec'),
     ('ini_checker', 'rdpinichecker'),
     ('rdp_client', 'rdpclient'),
+    ('proxy_recorder_cli', 'proxy_recorder'),
 ))
 
 target_nosyslog = set((

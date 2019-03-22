@@ -25,8 +25,8 @@
 #include "utils/difftimeval.hpp"
 #include "utils/fixed_random.hpp"
 #include "core/RDP/nego.hpp"
-#include "main/nla_tee_transport.hpp"
-#include "main/extract_user_domain.hpp"
+#include "proxy_recorder/nla_tee_transport.hpp"
+#include "proxy_recorder/extract_user_domain.hpp"
 
 class NegoClient
 {
