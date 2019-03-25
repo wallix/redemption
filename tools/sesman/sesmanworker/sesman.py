@@ -318,6 +318,8 @@ class Sesman():
                 _pair = u"%s\nASK\n" % key
             _list.append(_pair)
 
+        _list.sort()
+
         if DEBUG:
            Logger().info(u'send_data (on the wire) length = %s' %
                          len(_list))
