@@ -241,6 +241,9 @@ has_set_arg = False
 next(argv_gen)
 try:
     set_arg = lambda name: lambda arg: default_options.setdefault(name, arg)
+    def add_deps_src(arg):
+        a = arg.split(',')
+        src_deps[a[0]] = glob.glob(a[1])
     options = {
         '--src': lambda arg: get_files(sources, arg),
         '--main': set_arg('main'),
@@ -248,6 +251,7 @@ try:
         '--test': set_arg('test'),
         '--src-system': set_arg('system'),
         '--disable-src': lambda arg: disable_srcs.add(arg),
+        '--deps-src': add_deps_src,
         '--include': lambda arg: includes.add(arg),
     }
     while True:

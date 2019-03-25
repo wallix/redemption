@@ -12,15 +12,14 @@ exe-js js_client :
   crypto.bc
   gssapi_krb5.bc
   krb5.bc
+  src/red_channels/clipboard.bc
   src/redjs/browser_front.bc
   src/redjs/browser_graphic.bc
   src/redjs/browser_transport.bc
-  src/redjs/channel.bc
-  src/redjs/clipboard.bc
+  src/redjs/channel_receiver.bc
   src/redjs/image_data_from_bitmap.bc
   src/redjs/image_data_from_pointer.bc
   projects/redemption_configs/redemption_src/configs/config.bc
-  src/client_redemption/client_channels/client_cliprdr_channel.bc
   src/core/RDP/dwt.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
@@ -82,15 +81,14 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
 ;
 
 objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
+objjs src/red_channels/clipboard.bc : src/red_channels/clipboard.cpp ;
 objjs src/redjs/browser_front.bc : src/redjs/browser_front.cpp ;
 objjs src/redjs/browser_graphic.bc : src/redjs/browser_graphic.cpp ;
 objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
-objjs src/redjs/channel.bc : src/redjs/channel.cpp ;
-objjs src/redjs/clipboard.bc : src/redjs/clipboard.cpp ;
+objjs src/redjs/channel_receiver.bc : src/redjs/channel_receiver.cpp ;
 objjs src/redjs/image_data_from_bitmap.bc : src/redjs/image_data_from_bitmap.cpp ;
 objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
-objjs src/client_redemption/client_channels/client_cliprdr_channel.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 objjs src/core/RDP/dwt.bc : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 objjs src/core/RDP/mppc.bc : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 objjs src/core/RDP/nego.bc : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;

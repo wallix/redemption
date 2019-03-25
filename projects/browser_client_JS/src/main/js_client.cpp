@@ -33,7 +33,7 @@ Author(s): Jonathan Poelen
 #include "redjs/image_data.hpp"
 #include "redjs/browser_transport.hpp"
 #include "redjs/browser_front.hpp"
-#include "redjs/channel.hpp"
+#include "redjs/channel_receiver.hpp"
 
 #include <chrono>
 
@@ -214,10 +214,14 @@ struct RdpClient
         this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
     }
 
-    void add_channel(redjs::Channel&& channel)
+    void add_channel_receiver(redjs::ChannelReceiver&& receiver)
     {
-        channel.set_cb(this->mod.get());
-        this->front.add_channel(std::move(channel));
+        this->front.add_channel_receiver(std::move(receiver));
+    }
+
+    Callback& get_callback()
+    {
+        return *this->mod;
     }
 };
 
@@ -234,7 +238,10 @@ EMSCRIPTEN_BINDINGS(client)
         .function_ptr("getSendingData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_sending_data_view());
         })
-        .function("addChannel", &RdpClient::add_channel)
+        .function_ptr("getCallbackAsVoidPtr", [](RdpClient& client) {
+            return reinterpret_cast<uintptr_t>(&client.get_callback());
+        })
+        .function("addChannelReceiver", &RdpClient::add_channel_receiver)
         .function("clearSendingData", &RdpClient::clear_sending_data)
         .function("addReceivingData", &RdpClient::add_receiving_data)
         .function("sendUnicode", &RdpClient::rdp_input_unicode)

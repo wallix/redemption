@@ -132,6 +132,7 @@ const createRdpClient = (function(Module, window) {
         const events = {
             random: defaultRandom,
         };
+        let channelCreators = [];
         let channels = [];
 
         const client = {
@@ -150,7 +151,7 @@ const createRdpClient = (function(Module, window) {
             sendMouseEvent: noop,
             sendClipboardUtf8: noop,
             sendFile: noop,
-            addChannel: (channel) => { channels.push(channel); },
+            addChannelCreator: (f) => { channelCreators.push(f); },
         };
 
         // let counter = 1;
@@ -205,6 +206,10 @@ const createRdpClient = (function(Module, window) {
                     if (timeoutID) {
                         clearTimeout(timeoutID);
                     }
+                    for (channel of channels) {
+                        channel.delete()
+                    }
+                    channels = undefined
                     rdpclient.delete();
                     rdpclient = undefined;
                 }
@@ -224,10 +229,16 @@ const createRdpClient = (function(Module, window) {
                 verbosity || 0);
             // client.rdpclient = rdpclient;
 
-            for (channel of channels) {
+            for (channelCreator of channelCreators) {
+                console.log(channelCreator);
+                const channel = channelCreator(rdpclient.getCallbackAsVoidPtr());
                 console.log(channel);
-                rdpclient.addChannel(channel.getChannel());
+                if (channel) {
+                    channels.push(channel);
+                    rdpclient.addChannelReceiver(channel.getChannelReceiver());
+                }
             }
+            channelCreators = undefined
 
             for (eventName in wrappersCbMod) {
                 if (!(eventName in events)) {
@@ -838,26 +849,28 @@ function run()
     };
 
 
-    const clipboard = rdpclient.addChannel(new Module.ClipboardChannel({
-        receiveFormat: function(id, name) {
-            console.log(id,name)
-            if (id === false) {
-                if (name) {
-                    clipboardCtx.formats = {};
+    const clipboard = rdpclient.addChannelCreator((cb) => {
+        return new Module.ClipboardChannel(cb, {
+            receiveFormat: function(id, name) {
+                console.log(id,name)
+                if (id === false) {
+                    if (name) {
+                        clipboardCtx.formats = {};
+                    }
+                    else {
+                        for (const id in clipboardCtx.formats) {
+                            console.log(id)
+                        }
+                        clipboardCtx.formats = {};
+                    }
                 }
                 else {
-                    for (const id in clipboardCtx.formats) {
-                        console.log(id)
-                    }
-                    clipboardCtx.formats = {};
+                    clipboardCtx.formats[id] = true;
+                    rdpclient.sendRequestFormat(id);
                 }
             }
-            else {
-                clipboardCtx.formats[id] = true;
-                rdpclient.clipboardSendRequestFormat(id);
-            }
-        }
-    }, 0xffffff));
+        }, 0xffffff);
+    });
 }
 
 login.onsubmit = (e) => {

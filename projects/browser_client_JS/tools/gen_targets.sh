@@ -1,12 +1,14 @@
 #!/bin/sh
 
 cd "$(dirname "$0")/../../.."
-d=projects/browser_client_JS/
+d=projects/browser_client_JS
 
 ./tools/bjam/gen_targets.py \
     --main $d/src/main \
     --src $d/src/red_emscripten \
     --src $d/src/redjs \
+    --src $d/src/red_channels \
+    --deps-src src/mod/rdp/new_mod_rdp.hpp,$d/src/red_channels/\*.cpp \
     --include $d/src/ \
     --src-system emscripten \
     --lib '' \
@@ -24,7 +26,7 @@ d=projects/browser_client_JS/
 | sed -E '
     /^  <variant>[^:]+:<library>dl$|^  <(covfile|variant)|^  \$\(GCOV_NO_BUILD\)|\.coverage ;$/d;
     s/^exe /exe-js /;t
-    s@^test-run '$d'@test-run-js @;t
+    s@^test-run '$d'/@test-run-js @;t
     s/^obj ([^.]+).o/objjs \1.bc/;ta
     s/^  <library>(.*)\.o/  \1.bc/;ta
     s/^  (.*)\.o/  \1.bc/;ta
@@ -34,6 +36,6 @@ d=projects/browser_client_JS/
     s@ : src/@ : $(REDEMPTION_SRC_PATH)/@g
     s@ : tests/@ : $(REDEMPTION_TEST_PATH)/@g
     s@ : projects/redemption_configs/@ : $(REDEMPTION_CONFIG_PATH)/@g
-    s@ '$d'@ @g
+    s@ '$d'/@ @g
     s@^(objjs src/main/[^.]+\.bc : src/[^ ]+) ;$@\1 : <cxxflags>-fno-rtti\&\&-frtti ;@
 '

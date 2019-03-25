@@ -18,8 +18,8 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/clipboard.hpp"
-#include "redjs/channel.hpp"
+#include "red_channels/clipboard.hpp"
+#include "redjs/channel_receiver.hpp"
 
 #include "red_emscripten/em_asm.hpp"
 #include "red_emscripten/val.hpp"
@@ -143,15 +143,28 @@ namespace
 
 struct redjs::ClipboardChannel::D
 {
-    D(emscripten::val&& callbacks, RDPVerbose verbose)
-    : callbacks(std::move(callbacks))
+    D(Callback& cb, emscripten::val&& callbacks, RDPVerbose verbose)
+    : cb(cb)
+    , callbacks(std::move(callbacks))
     , verbose(bool(verbose & RDPVerbose::cliprdr))
     {}
 
-    void receive(Callback& cb, InStream chunk, int flags)
+    void requestFormat(uint32_t format_id)
     {
-        this->cb = &cb;
+        LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Request Format");
 
+        RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(format_id);
+        StaticOutStream<256> out_stream;
+        formatListRequestPDUHeader.emit(out_stream);
+        formatDataRequestPDU.emit(out_stream);
+        InStream chunkRequest(out_stream.get_bytes());
+
+        this->send_to_mod_channel(out_stream);
+    }
+
+    void receive(InStream chunk, int flags)
+    {
         if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST))
         {
             return;
@@ -322,7 +335,19 @@ struct redjs::ClipboardChannel::D
             emval_call(this->callbacks, "receiveFormat", data.format_id, utf8_name.data());
         }
 
+        this->send_format_list_response_ok();
+
         emval_call(this->callbacks, "receiveFormat", false, false);
+    }
+
+    void send_format_list_response_ok()
+    {
+        StaticOutStream<256> out_stream;
+        RDPECLIP::CliprdrHeader formatListResponsePDUHeader(
+            RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
+        formatListResponsePDUHeader.emit(out_stream);
+        InStream chunk_format_list(out_stream.get_bytes());
+        this->send_to_mod_channel(out_stream);
     }
 
     void process_capabilities(InStream& chunk)
@@ -385,7 +410,7 @@ struct redjs::ClipboardChannel::D
     {
         InStream chunk(out_stream.get_bytes());
 
-        this->cb->send_to_mod_channel(
+        this->cb.send_to_mod_channel(
             channel_names::cliprdr,
             chunk,
             out_stream.get_offset(),
@@ -393,24 +418,24 @@ struct redjs::ClipboardChannel::D
         );
     }
 
-    Callback* cb = nullptr;
-    FormatListEmptyName format_list;
+    Callback& cb;
     emscripten::val callbacks;
+    FormatListEmptyName format_list;
     bool verbose;
 };
 
 namespace redjs
 {
 
-ClipboardChannel::ClipboardChannel(emscripten::val callbacks, unsigned long verbose)
-: d(std::make_unique<D>(std::move(callbacks), RDPVerbose(verbose)))
+ClipboardChannel::ClipboardChannel(Callback& cb, emscripten::val callbacks, unsigned long verbose)
+: d(std::make_unique<D>(cb, std::move(callbacks), RDPVerbose(verbose)))
 {}
 
 ClipboardChannel::~ClipboardChannel() = default;
 
-void ClipboardChannel::receive(Callback& cb, cbytes_view data, int flags)
+void ClipboardChannel::receive(cbytes_view data, int flags)
 {
-    this->d->receive(cb, InStream(data), flags);
+    this->d->receive(InStream(data), flags);
 }
 
 } // namespace redjs
@@ -421,13 +446,16 @@ void ClipboardChannel::receive(Callback& cb, cbytes_view data, int flags)
 EMSCRIPTEN_BINDINGS(channel_clipboard)
 {
     redjs::class_<redjs::ClipboardChannel>("ClipboardChannel")
-        .constructor<emscripten::val, unsigned long>()
-        .function_ptr("getChannel", [](redjs::ClipboardChannel& clip) {
-            auto receiver = [&clip](redjs::Channel& chan, cbytes_view data, int channel_flags){
-                clip.receive(chan.callback(), data, channel_flags);
-            };
-            return redjs::Channel(channel_names::cliprdr, receiver);
+        .constructor<uintptr_t, emscripten::val, unsigned long>([](uintptr_t&& icb, auto&&... args) {
+            auto* pcb = reinterpret_cast<Callback*>(icb);
+            return new redjs::ClipboardChannel(*pcb, std::move(args)...);
         })
-        .function("receive", &redjs::ClipboardChannel::receive)
+        .function_ptr("getChannelReceiver", [](redjs::ClipboardChannel& clip) {
+            auto receiver = [&clip](cbytes_view data, int channel_flags){
+                clip.receive(data, channel_flags);
+            };
+            return redjs::ChannelReceiver(channel_names::cliprdr, receiver);
+        })
+        // .function("receive", &redjs::ClipboardChannel::receive)
     ;
 }

@@ -27,7 +27,7 @@ Author(s): Jonathan Poelen
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
-#include "redjs/channel.hpp"
+#include "redjs/channel_receiver.hpp"
 #include "redjs/browser_graphic.hpp"
 
 #include <vector>
@@ -39,15 +39,13 @@ class OrderCaps;
 namespace redjs
 {
 
-class Channel;
-
 class BrowserFront : public FrontAPI
 {
 public:
     BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose);
     ~BrowserFront();
 
-    void add_channel(Channel&& channel);
+    void add_channel_receiver(ChannelReceiver&& channel);
 
     bool can_be_start_capture() override;
     bool must_be_stop_capture() override;
@@ -71,7 +69,7 @@ private:
     BrowserGraphic gd;
     RDPVerbose verbose;
     CHANNELS::ChannelDefArray cl;
-    std::vector<Channel> channels;
+    std::vector<ChannelReceiver> channel_receivers;
 };
 
 }

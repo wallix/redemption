@@ -18,31 +18,27 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
-#pragma once
-
-
+#include "redjs/channel_receiver.hpp"
 #include "utils/stream.hpp"
-
-#include <emscripten/val.h>
-
-#include <memory>
+#include "core/callback.hpp"
 
 
-class Callback;
-
-namespace redjs
+redjs::ChannelReceiver::ChannelReceiver(CHANNELS::ChannelNameId name_id, receiver_type receiver)
+: name_id(name_id)
+, do_receive(std::move(receiver))
 {
+    assert(bool(receiver));
+}
 
-struct ClipboardChannel
+void redjs::ChannelReceiver::operator()(cbytes_view data, int channel_flags)
 {
-    ClipboardChannel(emscripten::val callbacks, unsigned long verbose);
-    ~ClipboardChannel();
+    this->do_receive(data, channel_flags);
+}
 
-    void receive(Callback& cb, cbytes_view data, int flags);
 
-private:
-    class D;
-    std::unique_ptr<D> d;
-};
+#include "red_emscripten/bind.hpp"
 
-} // namespace redjs
+EMSCRIPTEN_BINDINGS(channel_receiver)
+{
+    redjs::class_<redjs::ChannelReceiver>("ChannelReceiver");
+}

@@ -31,17 +31,17 @@ namespace redjs
 
         using em_class::em_class;
 
-        template<typename... ConstructorArgs, typename... Policies>
-        EMSCRIPTEN_ALWAYS_INLINE class_ const& constructor(Policies... policies) const
+        template<typename... ConstructorArgs/*, typename... Policies*/>
+        EMSCRIPTEN_ALWAYS_INLINE class_ const& constructor(/*Policies... policies*/) const
         {
-            em_class::template constructor<ConstructorArgs...>(policies...);
+            em_class::template constructor<ConstructorArgs...>(/*policies...*/);
             return *this;
         }
 
-        template<typename... Args, typename ReturnType, typename... Policies>
-        EMSCRIPTEN_ALWAYS_INLINE const class_& constructor(ReturnType (*factory)(Args...), Policies... policies) const
+        template<typename... ConstructorArgs, class F/*, typename... Policies*/>
+        EMSCRIPTEN_ALWAYS_INLINE const class_& constructor(F f/*, Policies... policies*/) const
         {
-            em_class::constructor(factory, policies...);
+            em_class::constructor(static_cast<T*(*)(ConstructorArgs&&... args)>(f)/*, policies...*/);
             return *this;
         }
 

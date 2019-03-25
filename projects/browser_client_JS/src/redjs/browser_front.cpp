@@ -37,10 +37,10 @@ BrowserFront::BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t h
 
 BrowserFront::~BrowserFront() = default;
 
-void BrowserFront::add_channel(Channel&& channel)
+void BrowserFront::add_channel_receiver(ChannelReceiver&& channel_receiver)
 {
-    this->cl.push_back(CHANNELS::ChannelDef(channel.name(), 0, 0));
-    this->channels.emplace_back(std::move(channel));
+    this->cl.push_back(CHANNELS::ChannelDef(channel_receiver.name(), 0, 0));
+    this->channel_receivers.emplace_back(std::move(channel_receiver));
 }
 
 bool BrowserFront::can_be_start_capture()
@@ -72,11 +72,11 @@ void BrowserFront::send_to_channel(
     LOG_IF(bool(this->verbose & RDPVerbose::channels),
         LOG_INFO, "BrowserFront::send_to_channel");
 
-    for (Channel& channel : this->channels)
+    for (ChannelReceiver& receiver : this->channel_receivers)
     {
-        if (channel.name() == channel_def.name)
+        if (receiver.name() == channel_def.name)
         {
-            channel.receive({data, chunk_size}, flags);
+            receiver({data, chunk_size}, flags);
             break;
         }
     }
