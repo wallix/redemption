@@ -58,7 +58,7 @@ public:
 
 namespace LocalICAPServiceProtocol {
 
-enum {
+    enum {
     // +--------------------+-----------------------------------------+
     // | Value              | Meaning                                 |
     // +--------------------+-----------------------------------------+
@@ -71,9 +71,13 @@ enum {
     // | CLOSE_SESSION_FLAG | Close the session.                      |
     // | 0x02               |                                         |
     // +--------------------+-----------------------------------------+
+    // | END_OF_FILE_FLAG   | Indicates data file end                 |
+    // | 0x03               |                                         |
+    // +--------------------+-----------------------------------------+
         NEW_FILE_FLAG      = 0x00,
         DATA_FILE_FLAG     = 0x01,
-        CLOSE_SESSION_FLAG = 0x02
+        CLOSE_SESSION_FLAG = 0x02,
+        END_OF_FILE_FLAG   = 0x03
     };
 
     enum {
@@ -199,6 +203,33 @@ struct ICAPNewFile {
 };
 
 
+struct ICAPEndOfFile {
+
+    const int file_id;
+
+    // EndOfFile
+
+    // This message is sent when data file sent to the validator are
+    // complete.
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                            File_id                            |
+    // +---------------------------------------------------------------+
+
+    // File_id: An unsigned, 32-bit integer that contains the complete file id.
+
+    ICAPEndOfFile(const int file_id)
+    : file_id(file_id) {}
+
+    void emit(OutStream & stream) {
+
+        stream.out_uint32_be(this->file_id);
+    }
+};
+
 
 struct ICAPFileDataHeader
 {
@@ -299,7 +330,8 @@ ICAPService * icap_open_session(std::string & socket_path);
 int icap_open_file(ICAPService * service, std::string & file_name, size_t file_size);
 int icap_send_data(const ICAPService * service, const int file_id, const char * data, const size_t size);
 uint8_t icap_get_result(const ICAPService * service);
-int icap_close_session(const ICAPService * service);
+int icap_end_of_file(ICAPService * service, const int file_id);
+int icap_close_session(ICAPService * service);
 
 
 
@@ -398,6 +430,25 @@ uint8_t icap_get_result(const ICAPService * service) {
     }
 
     return result.result;
+}
+
+int icap_end_of_file(ICAPService * service, const int file_id) {
+
+    int n = -1;
+
+    if (service->fd.is_open()) {
+        StaticOutStream<16> message;
+
+        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::END_OF_FILE_FLAG, 4);
+        header.emit(message);
+
+        LocalICAPServiceProtocol::ICAPEndOfFile end_of_file(file_id);
+        end_of_file.emit(message);
+
+        n = write(service->fd.fd(), message.get_data(), message.get_offset());
+    }
+
+    return n;
 }
 
 int icap_close_session(ICAPService * service) {

@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2019
    Author(s): Clément Moroldo
-
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
@@ -100,6 +99,23 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPFileDataHeader) {
     RED_CHECK_MEM(exp_data, message.get_bytes());
 }
 
+RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPEndOfFile) {
+
+    const int file_id = 1;
+
+    StaticOutStream<16> message;
+
+    LocalICAPServiceProtocol::ICAPEndOfFile icap_end_of_file(file_id);
+    icap_end_of_file.emit(message);
+
+    auto exp_data = cstr_array_view(
+        "\x00\x00\x00\x01"                         //....
+    );
+
+    RED_CHECK_EQUAL(message.get_offset(), 4);
+    RED_CHECK_MEM(exp_data, message.get_bytes());
+}
+
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPResult) {
 
     const uint8_t expected_result = LocalICAPServiceProtocol::ACCEPTED_FLAG;
@@ -122,30 +138,34 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPResult) {
 
 RED_AUTO_TEST_CASE(testFileValid)
 {
-//     const int file_id = 2;
     std::string socket_path("tools/ICAP_socket/redemption-icap-service-sock");
 
     ICAPService * service = icap_open_session(socket_path);
     bool mod_local_server = false;
+
+    int n = -1;
 
     if (service->fd.is_open()) {
         mod_local_server = true;
 
         std::string file_name("README.md");
         std::string file_content(get_file_contents("README.md"));
-        int file_size = file_content.length();
+        int file_size = 30; /*file_content.length();*/
 
         int file_id = icap_open_file(service, file_name, file_size);
         RED_CHECK_EQUAL(file_id, 1);
 
-        icap_send_data(service, file_id, const_byte_ptr(file_content.c_str()), file_size);
+        n = icap_send_data(service, file_id, file_content.c_str(), file_size);
+        RED_CHECK(n>0);
+
+        n = icap_end_of_file(service, file_id);
+        RED_CHECK(n>0);
 
         int result = icap_get_result(service);
         RED_CHECK_EQUAL(result, LocalICAPServiceProtocol::ACCEPTED_FLAG);
-//         RED_CHECK_EQUAL(result.id, "0002-1");
     }
 
-    int n = icap_close_session(service);
+    n = icap_close_session(service);
 
     if (mod_local_server) {
         RED_CHECK(n>0);
@@ -156,16 +176,17 @@ RED_AUTO_TEST_CASE(testFileValid)
 
 RED_AUTO_TEST_CASE(testFileInvalid)
 {
-//     const int file_id = 3;
     std::string socket_path("tools/ICAP_socket/redemption-icap-service-sock");
 
     ICAPService * service = icap_open_session(socket_path);
+
+    int n = -1;
 
     bool mod_local_server = false;
     if (service->fd.is_open()) {
         mod_local_server = true;
 
-        std::string file_path("../ICAPService/tests/the_zeus_binary_chapros");
+        std::string file_path("../ICAPService/python/tests/the_zeus_binary_chapros");
         std::string file_name("the_zeus_binary_chapros");
         int file_size = 227328;
 
@@ -182,16 +203,19 @@ RED_AUTO_TEST_CASE(testFileInvalid)
                 iFile.read(buff, 1024);
                 sent_data += 1024;
 
-                icap_send_data(service, file_id, buff, 1024);
+                n = icap_send_data(service, file_id, buff, 1024);
+                RED_CHECK(n>0);
             }
+
+            n = icap_end_of_file(service, file_id);
+            RED_CHECK(n>0);
         }
 
         int result = icap_get_result(service);
         RED_CHECK_EQUAL(result, LocalICAPServiceProtocol::REJECTED_FLAG);
-//         RED_CHECK_EQUAL(result.id, "0003-1");
     }
 
-    int n = icap_close_session(service);
+    n = icap_close_session(service);
 
     if (mod_local_server) {
         RED_CHECK(n>0);
