@@ -23,6 +23,7 @@
 #include "configs/attributes/spec.hpp"
 #include "configs/generators/utils/spec_writer.hpp"
 #include "configs/generators/utils/write_template.hpp"
+#include "configs/generators/sesman_default_map.hpp"
 #include "configs/enumeration.hpp"
 
 
@@ -407,16 +408,21 @@ struct ConnectionPolicyWriterBase
                 sec.json_contains += ",\n";
             }
             sec.json_contains += this->json_spec.out.str();
-            update_sesman_contains(sec.sesman_contains, sesman_name, member_name);
-
-            if constexpr (is_convertible_v<Pack, sesman::deprecated_names>) {
-                for (auto&& old_name : get_elem<sesman::deprecated_names>(infos).names) {
-                    update_sesman_contains(sec.sesman_contains, old_name, member_name, " # Deprecated, for compatibility only.");
-                }
-            }
 
             this->python_spec.out.str("");
             this->json_spec.out.str("");
+
+            auto& buf = this->json_spec.out;
+            auto sesman_type = get_type<sesman::type_>(infos);
+            sesman_default_map::python::write_type(buf, sesman_type, get_default(sesman_type, infos));
+            update_sesman_contains(sec.sesman_contains, sesman_name, member_name, buf.str());
+
+            if constexpr (is_convertible_v<Pack, sesman::deprecated_names>) {
+                for (auto&& old_name : get_elem<sesman::deprecated_names>(infos).names) {
+                    update_sesman_contains(sec.sesman_contains, old_name, member_name, "None", " # Deprecated, for compatibility only.");
+                }
+            }
+            buf.str("");
         }
     }
 
@@ -424,9 +430,10 @@ struct ConnectionPolicyWriterBase
         std::string& s,
         std::string const sesman_name,
         std::string const connpolicy_name,
+        std::string const value,
         char const* extra = "")
     {
-        str_append(s, "    u'", sesman_name, "': '", connpolicy_name, "',", extra, '\n');
+        str_append(s, "    u'", sesman_name, "': ('", connpolicy_name, "', ", value, "),", extra, '\n');
     }
 
     void do_start_section(std::string const & /*section_name*/)

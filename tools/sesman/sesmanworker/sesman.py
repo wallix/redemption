@@ -2130,13 +2130,15 @@ class Sesman():
 
         #Logger().info(u"%s" % conn_opts)
 
-        for (section, matches) in cp_spec.items():
+        for (section, matches) in cp_spec.iteritems():
             section_values = conn_opts.get(section)
             if section_values is not None:
-                for (config_key, cp_key) in matches.items():
+                for (config_key, (cp_key, cp_value)) in matches.iteritems():
                     value = section_values.get(cp_key)
                     if value is not None:
                         connectionpolicy_kv[config_key] = value
+                    elif cp_value is not None:
+                        connectionpolicy_kv[config_key] = cp_value
 
         return connectionpolicy_kv
 

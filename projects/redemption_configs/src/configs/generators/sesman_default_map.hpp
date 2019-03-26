@@ -61,7 +61,7 @@ namespace python
     >
     write_type(std::ostream& out, type_<Int>, T const& i)
     {
-        out << python_spec_writer::impl::stringize_integral(i);
+        out << +python_spec_writer::impl::stringize_integral(i);
     }
 
     template<class E, class T>
@@ -69,6 +69,24 @@ namespace python
     write_type(std::ostream& out, type_<E>, T const& e)
     {
         out << +std::underlying_type_t<E>(e);
+    }
+
+    template<class T1, class Ratio1, class T2, class Ratio2>
+    void write_type(std::ostream& out, type_<std::chrono::duration<T1, Ratio1>>, std::chrono::duration<T2, Ratio2> const& d)
+    {
+        out << +std::chrono::duration_cast<std::chrono::duration<T1, Ratio1>>(d).count();
+    }
+
+    template<class T1, class Ratio1, class T>
+    void write_type(std::ostream& out, type_<std::chrono::duration<T1, Ratio1>>, T const& i)
+    {
+        out << +python_spec_writer::impl::stringize_integral(i);
+    }
+
+    template<class T1, long min, long max, class T>
+    void write_type(std::ostream& out, type_<types::range<T1, min, max>>, T const& x)
+    {
+        write_type(out, type_<T>{}, x);
     }
 }
 
@@ -91,9 +109,9 @@ public:
     void evaluate_member(std::string const&, Pack const& infos, type_enumerations&)
     {
         if constexpr (is_convertible_v<Pack, decltype(sesman::constants::reset_back_to_selector)>) {
-            auto type = get_type<sesman::type_>(infos);
+            auto sesman_type = get_type<sesman::type_>(infos);
             this->buf << "  u'" << get_name<sesman::name>(infos) << "': ";
-            python::write_type(this->buf, type, get_default(type, infos));
+            python::write_type(this->buf, sesman_type, get_default(sesman_type, infos));
             this->buf << ",\n";
             if (sesman::constants::proxy_to_sesman == value_or<sesman_io_t>(infos,
                 sesman_io_t{sesman::internal::io::proxy_to_sesman}).value)
