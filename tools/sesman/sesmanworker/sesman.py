@@ -384,6 +384,7 @@ class Sesman():
             u"end_time": u'',
             u"shell_working_directory": u'',
             u"alternate_shell": u'',
+            u"shell_arguments": u'',
             u"target_application": u'',
             u'target_host': u'',
             u'target_password': u'',
