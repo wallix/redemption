@@ -128,8 +128,6 @@ private:
 
     RecorderFile outFile;
 
-    uint8_t tmpBuffer[0xffff];
-
     TpduBuffer frontBuffer;
     TpduBuffer backBuffer;
 

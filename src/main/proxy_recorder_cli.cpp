@@ -20,37 +20,7 @@
    A proxy that will capture all the traffic to the target
 */
 
-#include "proxy_recorder/nla_tee_transport.hpp"
-#include "proxy_recorder/nego_client.hpp"
-#include "proxy_recorder/nego_server.hpp"
 #include "proxy_recorder/proxy_recorder.hpp"
-
-#include "core/RDP/nla/nla.hpp"
-#include "core/RDP/gcc.hpp"
-#include "core/RDP/mcs.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
-#include "core/listen.hpp"
-#include "core/server_notifier_api.hpp"
-#include "transport/recorder_transport.hpp"
-#include "transport/socket_transport.hpp"
-#include "utils/cli.hpp"
-#include "utils/fixed_random.hpp"
-#include "utils/netutils.hpp"
-#include "utils/redemption_info_version.hpp"
-#include "utils/utf.hpp"
-
-#include <vector>
-#include <chrono>
-#include <iostream>
-
-#include <cerrno>
-#include <cstring>
-#include <csignal>
-
-#include <netinet/tcp.h>
-#include <sys/select.h>
-#include <openssl/ssl.h>
-
 
 using PacketType = RecorderFile::PacketType;
 
