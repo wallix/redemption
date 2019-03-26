@@ -3076,28 +3076,28 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         const char * filename;
 
         filename = png_seq.get(0);
-        RED_CHECK_EQUAL(3102, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3102, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(1);
-        RED_CHECK_EQUAL(3121, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3121, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(2);
-        RED_CHECK_EQUAL(3131, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3131, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(3);
-        RED_CHECK_EQUAL(3143, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3143, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(4);
-        RED_CHECK_EQUAL(4079, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 4079, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(5);
-        RED_CHECK_EQUAL(4103, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 4103, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(6);
-        RED_CHECK_EQUAL(4122, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 4122, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(7);
-        RED_CHECK_EQUAL(4137, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 4137, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
         RED_CHECK_PREDICATE(file_not_exists, (filename));
@@ -3322,28 +3322,28 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         const char * filename;
 
         filename = png_seq.get(0);
-        RED_CHECK_EQUAL(3102, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3102, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(1);
-        RED_CHECK_EQUAL(3127, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3127, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(2);
-        RED_CHECK_EQUAL(3145, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3145, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(3);
-        RED_CHECK_EQUAL(3162, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3162, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(4);
-        RED_CHECK_EQUAL(2304, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 2304, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(5);
-        RED_CHECK_EQUAL(2320, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 2320, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(6);
-        RED_CHECK_EQUAL(2334, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 2334, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(7);
-        RED_CHECK_EQUAL(2345, ::filesize(filename));
+        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 2345, 100);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
         RED_CHECK_PREDICATE(file_not_exists, (filename));

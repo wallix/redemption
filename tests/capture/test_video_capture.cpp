@@ -182,7 +182,7 @@ RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp1.flv", 307698);
+    RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN("./opaquerect_fullvideocapture_timestamp1.flv", 307698, 15000);
 }
 
 RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
             capture_params, drawable, drawable, video_params, FullVideoParams{false});
         simple_movie(now, 250, drawable, video_capture, false, false);
     }
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_fullvideocapture_timestamp_mouse0.flv", 298467);
+    RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN("./opaquerect_fullvideocapture_timestamp_mouse0.flv", 298467, 5000);
 }
 
 RED_AUTO_TEST_CASE(TestFullVideoCaptureX264)

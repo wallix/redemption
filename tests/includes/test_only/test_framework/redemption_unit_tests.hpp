@@ -158,8 +158,11 @@ namespace redemption_unit_test__
 # define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size) \
     RED_TEST_FILE_SIZE_AND_CLEAN(CHECK, filename, size)
 
+#define RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, size, variation) \
+    RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN_ON_DEMAND(CHECK, filename, size, variation, false)
+
 #define RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN(filename, size, variation) \
-    RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN(CHECK, filename, size, variation)
+    RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN_ON_DEMAND(CHECK, filename, size, variation, true)
 
 # define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) \
     RED_TEST_FILE_SIZE_AND_CLEAN2(CHECK, filename, size1, size2)
@@ -185,7 +188,7 @@ namespace redemption_unit_test__
     RED_TEST_FILE_SIZE_AND_CLEAN(REQUIRE, filename, size)
 
 #define RED_REQUIRE_FILE_SIZE_WITH_VARIATION_AND_CLEAN(filename, size, variation) \
-    RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN(REQUIRE, filename, size, variation)
+    RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN_ON_DEMAND(REQUIRE, filename, size, variation, true)
 
 # define RED_REQUIRE_FILE_SIZE_AND_CLEAN2(filename, size1, size2) \
     RED_TEST_FILE_SIZE_AND_CLEAN2(REQUIRE, filename, size1, size2)
@@ -257,19 +260,19 @@ namespace redemption_unit_test__
     }(filename, size)
 
 
-#define RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN(lvl, filename, size, variation) \
-    [](auto&& filename__, int const size__, int const variation__) {                \
-        int const fsize__ = filesize(filename__);                                   \
-        RED_##lvl##_MESSAGE(                                                        \
-            fsize__ >= size__ - variation__,                                        \
-            RED_TEST_STRING_##lvl << fsize__ << " >= " << (size__ - variation__) << \
-            " has failed [filesize(" #filename ") < " #size " - " #variation "]");  \
-        RED_##lvl##_MESSAGE(                                                        \
-            fsize__ <= size__ + variation__,                                        \
-            RED_TEST_STRING_##lvl << fsize__ << " <= " << (size__ + variation__) << \
-            " has failed [filesize(" #filename ") > " #size " + " #variation "]");  \
-        ::unlink(filename__);                                                       \
-    }(filename, size, variation)
+#define RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN_ON_DEMAND(lvl, filename, size, variation, clean) \
+    [](auto&& filename__, int const size__, int const variation__, bool const clean__) {             \
+        int const fsize__ = filesize(filename__);                                                    \
+        RED_##lvl##_MESSAGE(                                                                         \
+            fsize__ >= size__ - variation__,                                                         \
+            RED_TEST_STRING_##lvl << fsize__ << " >= " << (size__ - variation__) <<                  \
+            " has failed [filesize(" #filename ") < " #size " - " #variation "]");                   \
+        RED_##lvl##_MESSAGE(                                                                         \
+            fsize__ <= size__ + variation__,                                                         \
+            RED_TEST_STRING_##lvl << fsize__ << " <= " << (size__ + variation__) <<                  \
+            " has failed [filesize(" #filename ") > " #size " + " #variation "]");                   \
+        if (clean__) { ::unlink(filename__); }                                                       \
+    }(filename, size, variation, clean)
 
 
 # define RED_TEST_FILE_SIZE_AND_CLEAN2(lvl, filename, size1, size2)   \
