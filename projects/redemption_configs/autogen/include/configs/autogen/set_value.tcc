@@ -988,6 +988,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "session_probe_disabled_features")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_disabled_features&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "session_probe_public_session")) {
             ::configs::parse_and_log(
                 context, key,

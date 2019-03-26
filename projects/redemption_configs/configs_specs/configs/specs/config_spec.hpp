@@ -373,6 +373,15 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
 
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy | hex_in_connpolicy, co_probe, L, type_<types::u32>(), "session_probe_disabled_features", desc{
+            "Disable some features of Session Probe:\n"
+            "  0x00000001: Java Access Bridge\n"
+            "  0x00000002: MS Active Accessbility\n"
+            "  0x00000004: MS UI Automation\n"
+        }, set(0x0));
+
+
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));

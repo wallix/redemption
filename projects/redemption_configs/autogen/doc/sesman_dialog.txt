@@ -106,6 +106,12 @@ cfg::mod_rdp::session_probe_handle_usage_limit <- session_probe_handle_usage_lim
 cfg::mod_rdp::session_probe_memory_usage_limit <- session_probe_memory_usage_limit   [uint32_t]
 cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check <- session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
 cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field <- session_probe_childless_window_as_unidentified_input_field   [bool]
+cfg::mod_rdp::session_probe_disabled_features <- session_probe_disabled_features   [uint32_t]
+    Disable some features of Session Probe:
+      0x00000001: Java Access Bridge
+      0x00000002: MS Active Accessbility
+      0x00000004: MS UI Automation
+    
 cfg::mod_rdp::session_probe_public_session <- session_probe_public_session   [bool]
     If enabled, disconnected session can be recovered by a different primary user.
 cfg::mod_rdp::server_cert_store <- server_cert_store   [bool]

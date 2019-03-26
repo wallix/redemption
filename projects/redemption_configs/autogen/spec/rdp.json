@@ -355,6 +355,15 @@
           "description": ""
         },
         {
+          "name": "session_probe_disabled_features",
+          "type": "integer",
+          "min": 0,
+          "default": 0,
+          "advanced": true,
+          "prefered_representation": "hex",
+          "description": "Disable some features of Session Probe:\n  0x00000001: Java Access Bridge\n  0x00000002: MS Active Accessbility\n  0x00000004: MS UI Automation\n"
+        },
+        {
           "name": "public_session",
           "type": "bool",
           "default": false,

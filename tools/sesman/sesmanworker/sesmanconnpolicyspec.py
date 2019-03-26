@@ -45,6 +45,7 @@ cp_spec = {
     u'session_probe_memory_usage_limit': 'memory_usage_limit',
     u'session_probe_ignore_ui_less_processes_during_end_of_session_check': 'ignore_ui_less_processes_during_end_of_session_check',
     u'session_probe_childless_window_as_unidentified_input_field': 'childless_window_as_unidentified_input_field',
+    u'session_probe_disabled_features': 'session_probe_disabled_features',
     u'session_probe_public_session': 'public_session',
     u'session_probe_outbound_connection_monitoring_rules': 'outbound_connection_monitoring_rules',
     u'session_probe_process_monitoring_rules': 'process_monitoring_rules',

@@ -142,6 +142,8 @@ struct SessionProbeVirtualChannelParams
     uint32_t handle_usage_limit = 0;
     uint32_t memory_usage_limit = 0;
 
+    uint32_t disabled_features = 0;
+
     bool enable_log = false;
     bool enable_log_rotation = true;
 
