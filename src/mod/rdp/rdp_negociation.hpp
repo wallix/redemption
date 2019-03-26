@@ -63,7 +63,8 @@ public:
         BASIC_SETTINGS_EXCHANGE,
         CHANNEL_CONNECTION_ATTACH_USER,
         CHANNEL_JOIN_CONFIRM,
-        GET_LICENSE
+        GET_LICENSE,
+        TERMINATED,
     };
 
 private:
@@ -86,6 +87,14 @@ private:
         void server_cert_success() override;
         void server_cert_failure() override;
         void server_cert_error(const char * str_error) override;
+
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+        CertificateResult server_cert_callback(const X509& certificate) override;
+
+    private:
+        friend class RdpNegociation;
+        std::function<CertificateResult(const X509&)> certificate_callback;
+#endif
 
     private:
         const ServerNotification server_access_allowed_message;
@@ -197,14 +206,15 @@ public:
     );
 
     void set_program(char const* program, char const* directory) noexcept;
+
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+    void set_cert_callback(std::function<CertificateResult(const X509&)> callback);
+#endif
+
     void start_negociation();
     bool recv_data(TpduBuffer& buf);
 
-    RdpNegociationResult const& get_result() const noexcept
-    {
-        assert(this->state == State::GET_LICENSE);
-        return this->negociation_result;
-    }
+    RdpNegociationResult const& get_result() const noexcept;
 
     State get_state() const noexcept
     {

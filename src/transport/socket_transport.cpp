@@ -149,6 +149,11 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
                                                        this->error_message,
                                                        this->ip_address,
                                                        this->port);
+
+                    if (ret == Transport::TlsResult::WaitExternalEvent) {
+                        this->tls_state = TLSState::WaitCertCb;
+                        return ret;
+                    }
                     assert(ret != Transport::TlsResult::Want);
                 }
                 catch (...) {
@@ -165,6 +170,23 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
         case TLSState::Ok:
             // TODO this should be an error, no need to commute two times to TLS
             return Transport::TlsResult::Fail;
+        case TLSState::WaitCertCb:
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+            switch (this->tls->certificate_external_validation(server_notifier)) {
+                case Transport::TlsResult::Ok:
+                    LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
+                    this->tls_state = TLSState::Ok;
+                    return Transport::TlsResult::Ok;
+                case Transport::TlsResult::Fail:
+                case Transport::TlsResult::Want:
+                case Transport::TlsResult::WaitExternalEvent:
+                    break;
+            }
+            this->tls.reset();
+            this->tls_state = TLSState::Uninit;
+            LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
+            return Transport::TlsResult::Fail;
+#endif
         default:
             LOG(LOG_ERR, "SocketTransport::%s() unhandled state for tls_state", __FUNCTION__);
             return Transport::TlsResult::Fail;

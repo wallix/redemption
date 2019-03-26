@@ -67,6 +67,7 @@
     f(ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED)                   \
     f(ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE)                \
     f(ERR_TRANSPORT_TLS_SERVER)                                  \
+    f(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID)                     \
                                                                  \
     fv(ERR_ACL_UNEXPECTED_IN_ITEM_OUT, 1700)                     \
     f(ERR_ACL_MESSAGE_TOO_BIG)                                   \

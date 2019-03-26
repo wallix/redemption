@@ -75,6 +75,25 @@ class TLSContext
     std::unique_ptr<uint8_t[]> public_key;
     size_t public_key_length = 0;
 
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+    struct cert_external_validation_wait_ctx_t
+    {
+        X509* px509 = nullptr;
+
+        ~cert_external_validation_wait_ctx_t()
+        {
+            this->free();
+        }
+
+        void free() noexcept
+        {
+            X509_free(this->px509);
+            this->px509 = nullptr;
+        }
+    };
+    cert_external_validation_wait_ctx_t cert_external_validation_wait_ctx;
+#endif
+
 public:
     TLSContext() = default;
 
@@ -209,6 +228,30 @@ public:
         return Transport::TlsResult::Ok;
     }
 
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+    Transport::TlsResult certificate_external_validation(ServerNotifier& server_notifier)
+    {
+        switch (server_notifier.server_cert_callback(*this->cert_external_validation_wait_ctx.px509))
+        {
+            case CertificateResult::wait:
+                return Transport::TlsResult::WaitExternalEvent;
+            case CertificateResult::valid:
+                this->cert_external_validation_wait_ctx.free();
+                LOG(LOG_INFO, "proxying certficate validation to authentifier");
+                this->io = this->allocated_ssl;
+                this->tls = true;
+                return Transport::TlsResult::Ok;
+            case CertificateResult::invalid:
+            case CertificateResult::unchecked:
+                this->cert_external_validation_wait_ctx.free();
+                LOG(LOG_WARNING, "server_cert_callback() failed");
+                return Transport::TlsResult::Fail;
+        }
+
+        REDEMPTION_UNREACHABLE();
+    }
+#endif
+
     Transport::TlsResult check_certificate(
         bool server_cert_store,
         bool ensure_server_certificate_match,
@@ -253,6 +296,27 @@ public:
             server_notifier.server_cert_error(strerror(errno));
             return Transport::TlsResult::Fail;
         }
+
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+        switch (server_notifier.server_cert_callback(*px509))
+        {
+            case CertificateResult::wait:
+                this->cert_external_validation_wait_ctx.px509 = px509;
+                return Transport::TlsResult::WaitExternalEvent;
+            case CertificateResult::valid:
+                X509_free(px509);
+                LOG(LOG_INFO, "proxying certficate validation to authentifier");
+                this->io = this->allocated_ssl;
+                this->tls = true;
+                return Transport::TlsResult::Ok;
+            case CertificateResult::invalid:
+                X509_free(px509);
+                LOG(LOG_WARNING, "server_cert_callback() failed");
+                return Transport::TlsResult::Fail;
+            case CertificateResult::unchecked:
+                break;
+        }
+#endif
 
         // TODO("Before to have default value certificate doesn't exists")
         bool bad_certificate_path = false;

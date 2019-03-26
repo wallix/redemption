@@ -57,7 +57,7 @@ public:
     uint32_t get_seqno() const
     { return this->seqno; }
 
-    enum class [[nodiscard]] TlsResult { Ok, Fail, Want, };
+    enum class [[nodiscard]] TlsResult : uint8_t { Ok, Fail, Want, WaitExternalEvent, };
     virtual TlsResult enable_client_tls(
             bool server_cert_store,
             ServerCertCheck server_cert_check,
