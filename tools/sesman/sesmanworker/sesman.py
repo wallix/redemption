@@ -32,7 +32,9 @@ import socket
 from socket     import gethostname
 
 from .sesmanconf import TR, SESMANCONF
-from . import engine, sesmanconnpolicyspec
+from . import engine
+from sesmanconnpolicyspec import cp_spec
+from sesmanbacktoselector import back_to_selector_default_reinit, back_to_selector_default_sent
 
 from .engine import LOCAL_TRACE_PATH_RDP
 from .engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
@@ -323,7 +325,6 @@ class Sesman():
         self.shared[u'keyboard_layout'] = MAGICASK
 
         self.shared[u'auth_channel_answer'] = u''
-        self.shared[u'auth_channel_result'] = u''
         self.shared[u'auth_channel_target'] = u''
 
         self.shared[u'recording_started'] = u'False'
@@ -368,63 +369,9 @@ class Sesman():
         self.internal_target = False
         self.target_app_rights = {}
         # Should set context values back to default
-        self.send_data({
-            u"module": u'transitory',
-            u"forcemodule": False,
-            u"message": u'',
-            u"rec_path": u'',
-            u"session_log_path": u'',
-            u"is_rec": False,
-            u"selector_number_of_pages": 1,
-            u"proxy_opt": u'',
-            u"device_id": u'',
-            u"session_id": u'',
-            u"trace_type": 0,
-            u"timeclose": 0,
-            u"end_time": u'',
-            u"shell_working_directory": u'',
-            u"alternate_shell": u'',
-            u"shell_arguments": u'',
-            u"target_application": u'',
-            u'target_host': u'',
-            u'target_password': u'',
-            u"target_service": u'',
-            u"target_str": u'',
-            u"target_port": 3389,
-            u'selector_group_filter': u'',
-            u'selector_device_filter': u'',
-            u'selector_proto_filter': u'',
-            u'selector_current_page': 1,
-            u'selector_lines_per_page': 0,
-            u'auth_channel_answer': u'',
-            u'auth_channel_result': u'',
-            u'auth_channel_target': u'',
-
-            u'pattern_kill': u'',
-            u'pattern_notify': u'',
-            u'reporting': u'',
-            u'target_login': u'',
-            u'target_device': u'',
-            u'proto_dest': u'',
-            u'target_application_account': u'',
-            u'target_application_password': u'',
-            u'rt_display': 0,
-            u'rt_ready': False,
-            u'opt_message': u'',
-
-            u'ticket': u'',
-            u'comment': u'',
-            u'duration': u'',
-            u'showform': False,
-            u'formflag': 0,
-
-            u'recording_started': "False",
-
-            u'auth_notify': u'',
-
-            u'inactivity_timeout': 900,
-            u'load_balance_info': u''
-            })
+        for key, value in back_to_selector_default_reinit.iteritems():
+            self.shared[key] = value
+        self.send_data(back_to_selector_default_sent)
         self.engine.reset_proxy_rights()
         self.rtmanager.reset()
 
@@ -962,7 +909,6 @@ class Sesman():
                             all_target_login  = [s[0] for s in services]
                             all_target_device = [s[1] for s in services]
                             all_proto_dest    = [s[2] for s in services]
-                            all_end_time      = ["-"  for s in services]
 
                             target_login = u"\x01".join(all_target_login)
                             target_device = u"\x01".join(all_target_device)
@@ -972,7 +918,6 @@ class Sesman():
                                            , u'target_login'            : target_login
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
-                                           , u'end_time'                : u";".join(all_end_time)
                                            # , u'selector'                : u'True'
                                            , u'ip_client'               : self.shared.get(u'ip_client')
                                            , u'selector_number_of_pages': "%s" % max(_number_of_pages, _current_page + 1)
@@ -2185,7 +2130,7 @@ class Sesman():
 
         #Logger().info(u"%s" % conn_opts)
 
-        for (section, matches) in sesmanconnpolicyspec.cp_spec.items():
+        for (section, matches) in cp_spec.items():
             section_values = conn_opts.get(section)
             if section_values is not None:
                 for (config_key, cp_key) in matches.items():

@@ -41,12 +41,13 @@ namespace sesman_dialog_writer
 
 using namespace cfg_attributes;
 
-struct SesmanDialogWriterBase
+class SesmanDialogWriterBase
 {
-    using attribute_name_type = cfg_attributes::sesman::name;
-
     std::ofstream out;
-    int errnum;
+    int errnum = 0;
+
+public:
+    using attribute_name_type = cfg_attributes::sesman::name;
 
     SesmanDialogWriterBase(std::string const& filename)
     : out(filename)

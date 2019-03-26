@@ -185,17 +185,17 @@ namespace spec
 
     inline namespace constants
     {
-        inline internal::spec_attr_t<internal::attr::no_ini_no_gui>   no_ini_no_gui{};
-        inline internal::spec_attr_t<internal::attr::ini_and_gui>     ini_and_gui{};
-        inline internal::spec_attr_t<internal::attr::hidden_in_gui>   hidden_in_gui{};
-        inline internal::spec_attr_t<internal::attr::hex_in_gui>      hex_in_gui{};
-        inline internal::spec_attr_t<internal::attr::advanced_in_gui> advanced_in_gui{};
-        inline internal::spec_attr_t<internal::attr::iptables_in_gui> iptables_in_gui{};
-        inline internal::spec_attr_t<internal::attr::password_in_gui> password_in_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::no_ini_no_gui>   no_ini_no_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::ini_and_gui>     ini_and_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::hidden_in_gui>   hidden_in_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::hex_in_gui>      hex_in_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::advanced_in_gui> advanced_in_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::iptables_in_gui> iptables_in_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::password_in_gui> password_in_gui{};
 
-        inline auto loggable = log_policy::loggable;
-        inline auto unloggable = log_policy::unloggable;
-        inline auto unloggable_if_value_contains_password = log_policy::unloggable_if_value_contains_password;
+        inline constexpr auto loggable = log_policy::loggable;
+        inline constexpr auto unloggable = log_policy::unloggable;
+        inline constexpr auto unloggable_if_value_contains_password = log_policy::unloggable_if_value_contains_password;
     }
 }
 
@@ -296,10 +296,10 @@ namespace sesman
 
     inline namespace constants
     {
-        inline internal::sesman_io_t<internal::io::none>              no_sesman{};
-        inline internal::sesman_io_t<internal::io::proxy_to_sesman>   proxy_to_sesman{};
-        inline internal::sesman_io_t<internal::io::sesman_to_proxy>   sesman_to_proxy{};
-        inline internal::sesman_io_t<internal::io::rw>                sesman_rw{};
+        inline constexpr internal::sesman_io_t<internal::io::none>              no_sesman{};
+        inline constexpr internal::sesman_io_t<internal::io::proxy_to_sesman>   proxy_to_sesman{};
+        inline constexpr internal::sesman_io_t<internal::io::sesman_to_proxy>   sesman_to_proxy{};
+        inline constexpr internal::sesman_io_t<internal::io::rw>                sesman_rw{};
     }
 
     struct connection_policy
@@ -326,6 +326,26 @@ namespace sesman
         : names(l.begin(), l.end())
         {}
     };
+
+    namespace internal
+    {
+        enum class back_to_selector_policy : bool
+        {
+            reset_back_to_selector,
+            not_reset_back_to_selector,
+        };
+
+        template<back_to_selector_policy value>
+        using back_to_selector_policy_t = std::integral_constant<back_to_selector_policy, value>;
+    }
+
+    inline namespace constants
+    {
+        inline constexpr internal::back_to_selector_policy_t<internal::back_to_selector_policy
+            ::reset_back_to_selector> reset_back_to_selector{};
+        inline constexpr internal::back_to_selector_policy_t<internal::back_to_selector_policy
+            ::not_reset_back_to_selector> not_reset_back_to_selector{};
+    }
 }
 
 

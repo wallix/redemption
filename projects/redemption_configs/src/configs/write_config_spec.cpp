@@ -23,31 +23,12 @@
 #include "configs/generators/ini.hpp"
 #include "configs/generators/python_spec.hpp"
 #include "configs/generators/sesman_dialog.hpp"
+#include "configs/generators/sesman_default_map.hpp"
 #include "configs/specs/config_spec.hpp"
 #include "configs/specs/config_type.hpp"
 
 int main()
 {
-    using PythonSpec = cfg_generators::python_spec_writer::PythonSpecWriterBase;
-    using Ini = cfg_generators::ini_writer::IniWriterBase;
-    using Cpp = cfg_generators::cpp_config_writer::CppConfigWriterBase;
-    using ConnPolicy = cfg_generators::connection_policy_writer::ConnectionPolicyWriterBase;
-    using SesmanDialog = cfg_generators::sesman_dialog_writer::SesmanDialogWriterBase;
-
-    PythonSpec python_spec("autogen/include/configs/autogen/str_python_spec.hpp");
-    Ini ini("autogen/include/configs/autogen/str_ini.hpp");
-    Cpp cpp({
-        "autogen/include/configs/autogen/authid.hpp",
-        "autogen/include/configs/autogen/variables_configuration_fwd.hpp",
-        "autogen/include/configs/autogen/variables_configuration.hpp",
-        "autogen/include/configs/autogen/set_value.tcc"
-    });
-    ConnPolicy conn_policy(
-        "autogen/spec/", {"rdp", "vnc"},
-        "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py"
-    );
-    SesmanDialog sesman_dialog("autogen/doc/sesman_dialog.txt");
-
     auto evaluate = [](auto&&... writers){
         cfg_generators::ConfigSpecWrapper<std::remove_reference_t<decltype(writers)>...> config;
 #ifndef IN_IDE_PARSER
@@ -57,5 +38,27 @@ int main()
         return config.evaluate(writers...);
     };
 
-    return evaluate(python_spec, ini, cpp, conn_policy, sesman_dialog);
+    using PythonSpec = cfg_generators::python_spec_writer::PythonSpecWriterBase;
+    using Ini = cfg_generators::ini_writer::IniWriterBase;
+    using Cpp = cfg_generators::cpp_config_writer::CppConfigWriterBase;
+    using ConnPolicy = cfg_generators::connection_policy_writer::ConnectionPolicyWriterBase;
+    using SesmanDialog = cfg_generators::sesman_dialog_writer::SesmanDialogWriterBase;
+    using SesmanDefaultMap = cfg_generators::sesman_default_map::SesmanDefaultMapBase;
+
+    return evaluate(
+        PythonSpec("autogen/include/configs/autogen/str_python_spec.hpp"),
+        Ini("autogen/include/configs/autogen/str_ini.hpp"),
+        Cpp({
+            "autogen/include/configs/autogen/authid.hpp",
+            "autogen/include/configs/autogen/variables_configuration_fwd.hpp",
+            "autogen/include/configs/autogen/variables_configuration.hpp",
+            "autogen/include/configs/autogen/set_value.tcc"
+        }),
+        ConnPolicy(
+            "autogen/spec/", {"rdp", "vnc"},
+            "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py"
+        ),
+        SesmanDefaultMap("../../tools/sesman/sesmanworker/sesmanbacktoselector.py"),
+        SesmanDialog("autogen/doc/sesman_dialog.txt")
+    );
 }
