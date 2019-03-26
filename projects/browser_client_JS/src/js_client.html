@@ -848,13 +848,13 @@ function run()
         formats: {},
     };
 
-
-    const clipboard = rdpclient.addChannelCreator((cb) => {
-        return new Module.ClipboardChannel(cb, {
-            receiveFormat: function(id, name) {
-                console.log(id,name)
+    let clipboard;
+    rdpclient.addChannelCreator((cb) => {
+        return clipboard = new Module.ClipboardChannel(cb, {
+            receiveFormat: function(id, iname, name_len) {
+                console.log(id,iname,name_len)
                 if (id === false) {
-                    if (name) {
+                    if (iname) {
                         clipboardCtx.formats = {};
                     }
                     else {
@@ -866,10 +866,17 @@ function run()
                 }
                 else {
                     clipboardCtx.formats[id] = true;
-                    rdpclient.sendRequestFormat(id);
+                    // TODO this
+                    clipboard.sendRequestFormat(id);
                 }
-            }
-        }, 0xffffff);
+            },
+            receiveUtf8: function(idata, len) {
+                console.log("utf8", idata, len);
+            },
+            receiveFormatData: function(idata, len) {
+                console.log("formatData", idata, len);
+            },
+        }, 0x04000000);
     });
 }
 

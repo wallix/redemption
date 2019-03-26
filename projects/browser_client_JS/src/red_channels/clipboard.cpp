@@ -149,7 +149,7 @@ struct redjs::ClipboardChannel::D
     , verbose(bool(verbose & RDPVerbose::cliprdr))
     {}
 
-    void requestFormat(uint32_t format_id)
+    void send_request_format(uint32_t format_id)
     {
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Request Format");
 
@@ -159,19 +159,27 @@ struct redjs::ClipboardChannel::D
         formatListRequestPDUHeader.emit(out_stream);
         formatDataRequestPDU.emit(out_stream);
         InStream chunkRequest(out_stream.get_bytes());
+        this->requested_format_id = format_id;
 
         this->send_to_mod_channel(out_stream);
     }
 
     void receive(InStream chunk, int flags)
     {
+        RDPECLIP::CliprdrHeader header;
+        header.recv(chunk);
+
+        if (this->response_buffer.waiting_for_data)
+        {
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Response PDU continuation");
+            this->process_format_data_response(chunk, header.msgFlags());
+            return;
+        }
+
         if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST))
         {
             return;
         }
-
-        RDPECLIP::CliprdrHeader header;
-        header.recv(chunk);
 
         switch (header.msgType())
         {
@@ -186,8 +194,14 @@ struct redjs::ClipboardChannel::D
             break;
 
         case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-            LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format List Response PDU%s",
-                (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) ? " Failed" : "");
+            if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL)
+            {
+                LOG(LOG_WARNING, "Clipboard: Format List Response PDU");
+            }
+            else
+            {
+                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format List Response PDU Failed");
+            }
             break;
 
         case RDPECLIP::CB_FORMAT_LIST:
@@ -200,6 +214,18 @@ struct redjs::ClipboardChannel::D
             this->process_format_list(chunk, header.msgFlags());
             break;
 
+        case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
+            if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL)
+            {
+                LOG(LOG_WARNING, "Clipboard: Format Data Response PDU FAILED");
+            }
+            else
+            {
+                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Response PDU");
+                this->process_format_data_response(chunk, header.msgFlags());
+            }
+        break;
+
             // case RDPECLIP::CB_LOCK_CLIPDATA:
             //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             //         "SERVER >> CB Channel: Lock Clipboard Data PDU");
@@ -208,23 +234,6 @@ struct redjs::ClipboardChannel::D
             // case RDPECLIP::CB_UNLOCK_CLIPDATA:
             //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             //         "SERVER >> CB Channel: Unlock Clipboard Data PDU");
-            // break;
-            //
-            // case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-            //     if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
-            //         LOG(LOG_WARNING, "SERVER >> CB Channel: Format Data Response PDU FAILED");
-            //     } else {
-            //         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            //             "SERVER >> CB Channel: Format Data Response PDU");
-            //
-            //         if(this->_requestedFormatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
-            //             this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-            //         }
-            //
-            //         this->_cb_buffers.sizeTotal = header.dataLen();
-            //
-            //         this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
-            //     }
             // break;
             //
             // case RDPECLIP::CB_FORMAT_DATA_REQUEST:
@@ -268,7 +277,86 @@ struct redjs::ClipboardChannel::D
         }
     }
 
-    void process_format_list(InStream& chunk, uint32_t msgFlags)
+    void process_format_data_response(InStream& chunk, uint32_t channel_flags)
+    {
+        if (channel_flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            response_buffer.reserve(chunk.in_remain());
+        }
+
+        hexdump_av(chunk.remaining_bytes());
+
+        if (!this->response_buffer.add(chunk.remaining_bytes()))
+        {
+            LOG(LOG_ERR, "Clipboard: buffer too small");
+            if ((channel_flags & CHANNELS::CHANNEL_FLAG_LAST))
+            {
+                this->response_buffer.final();
+            }
+            this->response_buffer.release();
+            return ;
+        }
+
+        if (!(channel_flags & CHANNELS::CHANNEL_FLAG_LAST))
+        {
+            return ;
+        }
+
+        auto callback_data = [&](char const* fname, cbytes_view data){
+            hexdump_av(data);
+            emval_call(this->callbacks, fname, data.data(), data.size());
+        };
+
+        switch (this->requested_format_id)
+        {
+            case RDPECLIP::CF_TEXT:
+                callback_data("receiveUtf8", this->response_buffer.final());
+                break;
+            case RDPECLIP::CF_UNICODETEXT: {
+                BufArrayMaker<256> buf;
+                callback_data("receiveUtf8", to_utf8(buf, this->response_buffer.final()));
+                break;
+            }
+            default:
+                callback_data("receiveFormatData", this->response_buffer.final());
+                break;
+            // case RDPECLIP::CF_BITMAP:          utf8_name = "bitmap"_av; break;
+            // case RDPECLIP::CF_METAFILEPICT:    utf8_name = "metafilepict"_av; break;
+            // case RDPECLIP::CF_SYLK:            utf8_name = "sylk"_av; break;
+            // case RDPECLIP::CF_DIF:             utf8_name = "dif"_av; break;
+            // case RDPECLIP::CF_TIFF:            utf8_name = "tiff"_av; break;
+            // case RDPECLIP::CF_OEMTEXT:         utf8_name = "oemtext"_av; break;
+            // case RDPECLIP::CF_DIB:             utf8_name = "dib"_av; break;
+            // case RDPECLIP::CF_PALETTE:         utf8_name = "palette"_av; break;
+            // case RDPECLIP::CF_PENDATA:         utf8_name = "pendata"_av; break;
+            // case RDPECLIP::CF_RIFF:            utf8_name = "riff"_av; break;
+            // case RDPECLIP::CF_WAVE:            utf8_name = "wave"_av; break;
+            // case RDPECLIP::CF_ENHMETAFILE:     utf8_name = "enhmetafile"_av; break;
+            // case RDPECLIP::CF_HDROP:           utf8_name = "hdrop"_av; break;
+            // case RDPECLIP::CF_LOCALE:          utf8_name = "locale"_av; break;
+            // case RDPECLIP::CF_DIBV5:           utf8_name = "dibv5"_av; break;
+            // case RDPECLIP::CF_OWNERDISPLAY:    utf8_name = "ownerdisplay"_av; break;
+            // case RDPECLIP::CF_DSPTEXT:         utf8_name = "dsptext"_av; break;
+            // case RDPECLIP::CF_DSPBITMAP:       utf8_name = "dspbitmap"_av; break;
+            // case RDPECLIP::CF_DSPMETAFILEPICT: utf8_name = "dspmetafilepict"_av; break;
+            // case RDPECLIP::CF_DSPENHMETAFILE:  utf8_name = "dspenhmetafile"_av; break;
+            // case RDPECLIP::CF_PRIVATEFIRST:    utf8_name = "privatefirst"_av; break;
+            // case RDPECLIP::CF_PRIVATELAST:     utf8_name = "privatelast"_av; break;
+            // case RDPECLIP::CF_GDIOBJFIRST:     utf8_name = "gdiobjfirst"_av; break;
+            // case RDPECLIP::CF_GDIOBJLAST:      utf8_name = "gdiobjlast"_av; break;
+        }
+
+        this->response_buffer.release();
+    }
+
+    static cbytes_view to_utf8(BufArrayMaker<256>& buf, cbytes_view data)
+    {
+        auto av = buf.dyn_array(data.size() * 2 + 1);
+        av = av.first(::UTF16toUTF8(data.data(), data.size(), av.data(), av.size()) + 1);
+        av.back() = '\0';
+        return av;
+    }
+
+    void process_format_list(InStream& chunk, uint32_t channel_flags)
     {
         FormatListExtractorData data;
         BufArrayMaker<256> buf;
@@ -278,7 +366,7 @@ struct redjs::ClipboardChannel::D
         while (format_list_extractor(
             data, chunk,
             IsLongFormat(this->format_list.use_long_format_names),
-            IsAscii(msgFlags & RDPECLIP::CB_ASCII_NAMES)))
+            IsAscii(channel_flags & RDPECLIP::CB_ASCII_NAMES)))
         {
             cbytes_view utf8_name = ""_av;
 
@@ -290,12 +378,7 @@ struct redjs::ClipboardChannel::D
                     utf8_name = data.av_name;
                     break;
                 case Charset::Utf16:
-                    auto av = buf.dyn_array(data.av_name.size() * 2 + 1);
-                    av = av.first(::UTF16toUTF8(
-                        data.av_name.data(), data.av_name.size(),
-                        av.data(), av.size()) + 1);
-                    av.back() = '\0';
-                    utf8_name = av;
+                    utf8_name = to_utf8(buf, data.av_name);
                     break;
                 }
             }
@@ -332,7 +415,7 @@ struct redjs::ClipboardChannel::D
                 }
             }
 
-            emval_call(this->callbacks, "receiveFormat", data.format_id, utf8_name.data());
+            emval_call(this->callbacks, "receiveFormat", data.format_id, utf8_name.data(), utf8_name.size());
         }
 
         this->send_format_list_response_ok();
@@ -418,9 +501,62 @@ struct redjs::ClipboardChannel::D
         );
     }
 
+    struct ResponseBuffer
+    {
+        std::unique_ptr<uint8_t[]> p;
+        std::size_t len = 0;
+        std::size_t ipos = 0;
+        bool waiting_for_data = false;
+
+        void reserve(std::size_t n)
+        {
+            this->p.reset(new uint8_t[n]);
+            this->len = n;
+            this->waiting_for_data = true;
+            this->ipos = 0;
+        }
+
+        cbytes_view final() noexcept
+        {
+            this->len = 0;
+            this->waiting_for_data = false;
+            return {this->p.get(), this->ipos};
+        }
+
+        void release()
+        {
+            this->len = 0;
+            this->p.reset();
+        }
+
+        [[nodiscard]] bool add(cbytes_view data) noexcept
+        {
+            std::size_t remaining = this->len - this->ipos;
+            if (remaining < data.size())
+            {
+                return false;
+            }
+            memcpy(this->p.get() + this->ipos, data.as_u8p(), data.size());
+            this->ipos += data.size();
+            return true;
+        }
+
+        // bytes_view remaining_buffer() noexcept
+        // {
+        //     return {p.get() + this->ipos, this->len - this->ipos};
+        // }
+        //
+        // cbytes_view full_buffer() const noexcept
+        // {
+        //     return {p.get(), this->len};
+        // }
+    };
+
     Callback& cb;
     emscripten::val callbacks;
     FormatListEmptyName format_list;
+    ResponseBuffer response_buffer;
+    uint32_t requested_format_id = 0;
     bool verbose;
 };
 
@@ -455,6 +591,9 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
                 clip.receive(data, channel_flags);
             };
             return redjs::ChannelReceiver(channel_names::cliprdr, receiver);
+        })
+        .function_ptr("sendRequestFormat", [](redjs::ClipboardChannel& clip, uint32_t id) {
+            clip.d->send_request_format(id);
         })
         // .function("receive", &redjs::ClipboardChannel::receive)
     ;

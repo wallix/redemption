@@ -40,7 +40,7 @@ struct ClipboardChannel
 
     void receive(cbytes_view data, int flags);
 
-private:
+// private:
     class D;
     std::unique_ptr<D> d;
 };

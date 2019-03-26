@@ -89,6 +89,10 @@ public:
         return {this->get_data(), this->get_offset()};
     }
 
+    const_bytes_view remaining_bytes() const noexcept {
+        return {this->get_current(), this->in_remain()};
+    }
+
     uint8_t const * get_data() const noexcept {
         return this->begin;
     }
