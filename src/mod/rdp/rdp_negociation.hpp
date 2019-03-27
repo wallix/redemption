@@ -74,6 +74,7 @@ private:
         explicit RDPServerNotifier(
             FrontAPI& front,
             ReportMessageApi& report_message,
+            RdpNego::ServerCert server_cert,
             ServerNotification server_access_allowed_message,
             ServerNotification server_cert_create_message,
             ServerNotification server_cert_success_message,
@@ -88,15 +89,13 @@ private:
         void server_cert_failure() override;
         void server_cert_error(const char * str_error) override;
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-        CertificateResult server_cert_callback(const X509& certificate) override;
+        CertificateResult server_cert_callback(X509& certificate, std::string* error_message, const char* ip_address, int port) override;
 
     private:
         friend class RdpNegociation;
-        std::function<CertificateResult(const X509&)> certificate_callback;
-#endif
+        std::function<CertificateResult(X509&)> certificate_callback;
 
-    private:
+        const RdpNego::ServerCert server_cert;
         const ServerNotification server_access_allowed_message;
         const ServerNotification server_cert_create_message;
         const ServerNotification server_cert_success_message;
@@ -207,9 +206,7 @@ public:
 
     void set_program(char const* program, char const* directory) noexcept;
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-    void set_cert_callback(std::function<CertificateResult(const X509&)> callback);
-#endif
+    void set_cert_callback(std::function<CertificateResult(X509&)> callback);
 
     void start_negociation();
     bool recv_data(TpduBuffer& buf);

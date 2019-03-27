@@ -425,11 +425,9 @@ void config_spec_definition(Writer && W)
             "Force to split target domain and username with '@' separator."
         }, set(false));
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-        W.member(no_ini_no_gui, sesman_to_proxy, L, type_<bool>(), "enable_server_cert_external_validation", desc{""});
-        W.member(no_ini_no_gui, proxy_to_sesman, L, type_<std::string>(), "server_cert");
-        W.member(no_ini_no_gui, sesman_to_proxy, L, type_<std::string>(), "server_cert_response", desc{"empty string for wait, 'Ok' or error message"});
-#endif
+        W.member(no_ini_no_gui, sesman_to_proxy, not_reset_back_to_selector, L, type_<bool>(), "enable_server_cert_external_validation");
+        W.member(no_ini_no_gui, proxy_to_sesman, not_reset_back_to_selector, L, type_<std::string>(), "server_cert");
+        W.member(no_ini_no_gui, sesman_to_proxy, not_reset_back_to_selector, L, type_<std::string>(), "server_cert_response", desc{"empty string for wait, 'Ok' or error message"});
     });
 
     W.section("metrics", [&]

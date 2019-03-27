@@ -42,6 +42,8 @@
 
 #include "utils/difftimeval.hpp"
 
+#include "system/tls_context.hpp"
+
 #include <cstring>
 
 
@@ -139,6 +141,7 @@ namespace
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(
     FrontAPI& front,
     ReportMessageApi& report_message,
+    RdpNego::ServerCert server_cert,
     ServerNotification server_access_allowed_message,
     ServerNotification server_cert_create_message,
     ServerNotification server_cert_success_message,
@@ -146,7 +149,8 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
     ServerNotification server_cert_error_message,
     RDPVerbose verbose
 ) noexcept
-: server_access_allowed_message(server_access_allowed_message)
+: server_cert(std::move(server_cert))
+, server_access_allowed_message(server_access_allowed_message)
 , server_cert_create_message(server_cert_create_message)
 , server_cert_success_message(server_cert_success_message)
 , server_cert_failure_message(server_cert_failure_message)
@@ -247,16 +251,34 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
     }
 }
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(const X509& certificate)
+CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(
+    X509& certificate, std::string* error_message, const char* ip_address, int port)
 {
-    if (this->certificate_callback == nullptr) {
-        return CertificateResult::unchecked;
+    if (this->certificate_callback) {
+        return this->certificate_callback(certificate);
     }
 
-    return this->certificate_callback(certificate);
+    const bool ensure_server_certificate_match =
+        (server_cert.check == ServerCertCheck::fails_if_no_match_or_missing)
+        ||(server_cert.check == ServerCertCheck::fails_if_no_match_and_succeed_if_no_know);
+
+    const bool ensure_server_certificate_exists =
+        (server_cert.check == ServerCertCheck::fails_if_no_match_or_missing)
+        ||(server_cert.check == ServerCertCheck::succeed_if_exists_and_fails_if_missing);
+
+    return tls_check_certificate(
+        certificate,
+        server_cert.store,
+        ensure_server_certificate_match,
+        ensure_server_certificate_exists,
+        server_cert.notifier,
+        server_cert.path,
+        error_message,
+        ip_address,
+        port)
+      ? CertificateResult::valid
+      : CertificateResult::invalid;
 }
-#endif
 
 void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, charp_or_string description, const ArcsightLogInfo & arc_info)
 {
@@ -329,6 +351,12 @@ RdpNegociation::RdpNegociation(
     , server_notifier(
         front,
         report_message,
+        RdpNego::ServerCert{
+            this->server_cert_store,
+            this->server_cert_check,
+            this->certif_path.get(),
+            this->server_notifier
+        },
         mod_rdp_params.server_access_allowed_message,
         mod_rdp_params.server_cert_create_message,
         mod_rdp_params.server_cert_success_message,
@@ -455,13 +483,10 @@ void RdpNegociation::set_program(char const* program, char const* directory) noe
     utils::strlcpy(this->directory, directory);
 }
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-void RdpNegociation::set_cert_callback(std::function<CertificateResult(const X509&)> callback)
+void RdpNegociation::set_cert_callback(std::function<CertificateResult(X509&)> callback)
 {
     this->server_notifier.certificate_callback = std::move(callback);
 }
-#endif
-
 
 void RdpNegociation::start_negociation()
 {

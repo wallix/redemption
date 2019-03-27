@@ -118,8 +118,6 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
                                                         ServerNotifier & server_notifier,
                                                         const char * certif_path)
 {
-    Transport::TlsResult ret;
-
     switch (this->tls_state) {
         case TLSState::Uninit:
             LOG(LOG_INFO, "Client TLS start");
@@ -129,26 +127,12 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
             }
             this->tls_state = TLSState::Want;
             REDEMPTION_CXX_FALLTHROUGH;
-        case TLSState::Want:
-            ret = this->tls->enable_client_tls_loop(this->error_message);
+        case TLSState::Want: {
+            Transport::TlsResult ret = this->tls->enable_client_tls_loop(this->error_message);
             if (ret == Transport::TlsResult::Ok) {
                 try {
-                    bool ensure_server_certificate_match =
-                        (server_cert_check == ServerCertCheck::fails_if_no_match_or_missing)
-                      ||(server_cert_check == ServerCertCheck::fails_if_no_match_and_succeed_if_no_know);
-
-                    bool ensure_server_certificate_exists =
-                        (server_cert_check == ServerCertCheck::fails_if_no_match_or_missing)
-                      ||(server_cert_check == ServerCertCheck::succeed_if_exists_and_fails_if_missing);
-
-                    ret = this->tls->check_certificate(server_cert_store,
-                                                       ensure_server_certificate_match,
-                                                       ensure_server_certificate_exists,
-                                                       server_notifier,
-                                                       certif_path,
-                                                       this->error_message,
-                                                       this->ip_address,
-                                                       this->port);
+                    ret = this->tls->check_certificate(
+                        server_notifier, this->error_message, this->ip_address, this->port);
 
                     if (ret == Transport::TlsResult::WaitExternalEvent) {
                         this->tls_state = TLSState::WaitCertCb;
@@ -167,12 +151,13 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
                 this->tls_state = TLSState::Ok;
             }
             return ret;
+        }
         case TLSState::Ok:
-            // TODO this should be an error, no need to commute two times to TLS
             return Transport::TlsResult::Fail;
         case TLSState::WaitCertCb:
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-            switch (this->tls->certificate_external_validation(server_notifier)) {
+            switch (this->tls->certificate_external_validation(
+                server_notifier, this->error_message, this->ip_address, this->port
+            )) {
                 case Transport::TlsResult::Ok:
                     LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
                     this->tls_state = TLSState::Ok;
@@ -186,7 +171,6 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
             this->tls_state = TLSState::Uninit;
             LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
             return Transport::TlsResult::Fail;
-#endif
         default:
             LOG(LOG_ERR, "SocketTransport::%s() unhandled state for tls_state", __FUNCTION__);
             return Transport::TlsResult::Fail;

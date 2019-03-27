@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(156);
+constexpr authid_t MAX_AUTHID = authid_t(159);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -78,6 +78,9 @@ constexpr array_view_const_char const authstr[] = {
     "server_cert_success_message"_av,
     "server_cert_failure_message"_av,
     "enable_rdpdr_data_analysis"_av,
+    "enable_server_cert_external_validation"_av,
+    "server_cert"_av,
+    "server_cert_response"_av,
     "clipboard_up"_av,
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,

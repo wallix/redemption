@@ -55,11 +55,9 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::metrics::log_file_turnover_interval,    vcfg::accessmode::get>,
     vcfg::var<cfg::metrics::sign_key,                      vcfg::accessmode::get>,
     vcfg::var<cfg::metrics::enable_rdp_metrics,            vcfg::accessmode::get>,
-    vcfg::var<cfg::metrics::log_interval,                  vcfg::accessmode::get>
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-    , vcfg::var<cfg::mod_rdp::server_cert,       vcfg::accessmode::set>
-    , vcfg::var<cfg::mod_rdp::server_cert_response, vcfg::accessmode::ask | vcfg::accessmode::get | vcfg::accessmode::get_ref>
-#endif
+    vcfg::var<cfg::metrics::log_interval,                  vcfg::accessmode::get>,
+    vcfg::var<cfg::mod_rdp::server_cert,                   vcfg::accessmode::set>,
+    vcfg::var<cfg::mod_rdp::server_cert_response,          vcfg::accessmode::ask | vcfg::accessmode::get | vcfg::accessmode::get_ref>
 >;
 
 struct ModRDPParams
@@ -139,9 +137,7 @@ struct ModRDPParams
     ServerNotification server_cert_failure_message = ServerNotification::syslog;
     ServerNotification server_cert_error_message = ServerNotification::syslog;
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
     bool enable_server_cert_external_validation = false;
-#endif
 
     bool hide_client_name = false;
 

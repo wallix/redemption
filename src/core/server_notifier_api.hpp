@@ -22,11 +22,11 @@
 
 #pragma once
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-#include <openssl/ssl.h>
+#include <openssl/ossl_typ.h>
 
-enum class CertificateResult { wait, valid, invalid, unchecked, };
-#endif
+#include <string>
+
+enum class CertificateResult { wait, valid, invalid, };
 
 class ServerNotifier
 {
@@ -37,9 +37,7 @@ public:
     virtual void server_cert_failure() = 0;
     virtual void server_cert_error(const char * str_error) = 0;
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-    virtual CertificateResult server_cert_callback(const X509& certificate) = 0;
-#endif
+    virtual CertificateResult server_cert_callback(X509& certificate, std::string* error_message, const char* ip_address, int port) = 0;
 
     virtual ~ServerNotifier() = default;
 };
@@ -51,15 +49,15 @@ public:
     void server_cert_success() override {}
     void server_cert_failure() override {}
 
-#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
-    CertificateResult server_cert_callback(const X509& certificate) override
+    CertificateResult server_cert_callback(X509& certificate, std::string* error_message, const char* ip_address, int port) override
     {
         (void)certificate;
-        return CertificateResult::unchecked;
+        (void)ip_address;
+        (void)port;
+        (void)error_message;
+        return CertificateResult::invalid;
     }
-#endif
 
     // TODO used array_view ?
     void server_cert_error(const char * str_error) override { (void)str_error; }
 };
-
