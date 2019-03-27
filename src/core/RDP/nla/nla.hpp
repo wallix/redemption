@@ -687,6 +687,8 @@ private:
 public:
     Res sm_credssp_server_authenticate_recv(InStream & in_stream)
     {
+        LOG_IF(this->verbose, LOG_INFO,"sm_credssp_server_authenticate_recv");
+
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
             this->ts_request.recv(in_stream);
@@ -754,6 +756,7 @@ public:
 
     Res sm_credssp_server_authenticate_final(InStream & in_stream)
     {
+        LOG_IF(this->verbose, LOG_INFO, "sm_credssp_server_authenticate_final");
         /* Receive encrypted credentials */
         this->ts_request.recv(in_stream);
 
@@ -770,6 +773,8 @@ public:
 public:
     bool credssp_server_authenticate_init()
     {
+        LOG_IF(this->verbose, LOG_INFO, "credssp_server_authenticate_init");
+
         this->server_auth_data.state = ServerAuthenticateData::Start;
         if (Res::Err == this->sm_credssp_server_authenticate_start()) {
             return false;
@@ -782,17 +787,24 @@ public:
 
     State credssp_server_authenticate_next(InStream & in_stream)
     {
+        LOG_IF(this->verbose, LOG_INFO, "credssp_server_authenticate_next");
+    
         switch (this->server_auth_data.state)
         {
             case ServerAuthenticateData::Start:
-                return State::Err;
+              LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Start");
+              return State::Err;
             case ServerAuthenticateData::Loop:
+                LOG(LOG_INFO, "ServerAuthenticateData::Loop");
                 if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream)) {
+                    LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     return State::Err;
                 }
                 return State::Cont;
             case ServerAuthenticateData::Final:
-                if (Res::Err == this->sm_credssp_server_authenticate_final(in_stream)) {
+               LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final");
+               if (Res::Err == this->sm_credssp_server_authenticate_final(in_stream)) {
+                   LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
                     return State::Err;
                 }
                 this->server_auth_data.state = ServerAuthenticateData::Start;

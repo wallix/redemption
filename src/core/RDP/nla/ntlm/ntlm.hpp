@@ -87,6 +87,7 @@ public:
         const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override
     {
+        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
         (void)pszPrincipal;
         (void)pvLogonID;
 
@@ -142,6 +143,7 @@ public:
     SEC_STATUS AcceptSecurityContext(
         array_view_const_u8 input_buffer, Array& output_buffer
     ) override {
+        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
         if (!this->context) {
             this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
 
@@ -171,10 +173,10 @@ public:
             SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
             if (status == SEC_I_CONTINUE_NEEDED) {
-                if (!set_password_cb) {
+                if (!this->set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
-                switch (set_password_cb(this->context->identity)) {
+                switch (this->set_password_cb(this->context->identity)) {
                     case PasswordCallback::Error:
                         return SEC_E_LOGON_DENIED;
                     case PasswordCallback::Ok:

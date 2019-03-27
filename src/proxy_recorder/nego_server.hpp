@@ -44,6 +44,7 @@ public:
     , credssp(
         this->trans, false, false, rand, timeobj, extra_message, Translation::EN,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
+            LOG(LOG_INFO, "NTLM Check identity");
             auto check = [vec = std::vector<uint8_t>{}](
                 std::string const& str, Array& arr
             ) mutable {
@@ -54,6 +55,10 @@ public:
             };
 
             auto [username, domain] = extract_user_domain(user.c_str());
+            std::string NTLMUser((char*)identity.User.get_data());
+            std::string NTLMDomain((char*)identity.Domain.get_data());
+            LOG(LOG_INFO, "NTML IDENTITY: identity.User=%s identity.Domain=%s username=%s, domain=%s",
+                NTLMUser.c_str(), NTLMDomain.c_str(), username, domain); 
             if (check(username, identity.User)
              // domain is empty
              && check(domain, identity.Domain)

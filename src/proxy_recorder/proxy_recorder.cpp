@@ -59,7 +59,7 @@ void ProxyRecorder::front_step1()
                 LOG(LOG_INFO, "start NegoServer");
             }
             nego_server = std::make_unique<NegoServer>(
-                frontConn, outFile, nla_username, nla_password, this->verbosity);
+                frontConn, outFile, nla_username, nla_password, this->verbosity > 8);
 
             rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
 
@@ -74,7 +74,7 @@ void ProxyRecorder::front_step1()
             backConn, outFile,
             host.c_str(), nla_username.c_str(),
             nla_password.empty() ? "\0" : nla_password.c_str(),
-            enable_kerberos, this->verbosity);
+            enable_kerberos, this->verbosity > 8);
 
         // equivalent to nego_client->send_negotiation_request()
         StaticOutStream<256> back_x224_stream;
