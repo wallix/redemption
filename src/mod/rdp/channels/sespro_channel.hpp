@@ -1051,21 +1051,19 @@ public:
                         }
                 });
 
-                if (this->param_disabled_features) {
-                    send_client_message([this](OutStream & out_s) {
-                            {
-                                const char cstr[] = "DisabledFeatures=";
-                                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                            }
+                send_client_message([this](OutStream & out_s) {
+                        {
+                            const char cstr[] = "DisabledFeatures=";
+                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                        }
 
-                            {
-                                char cstr[128];
-                                std::snprintf(cstr, sizeof(cstr), "0x%08X",
-                                    this->param_disabled_features);
-                                out_s.out_copy_bytes(cstr, strlen(cstr));
-                            }
-                    });
-                }
+                        {
+                            char cstr[128];
+                            std::snprintf(cstr, sizeof(cstr), "0x%08X",
+                                this->param_disabled_features);
+                            out_s.out_copy_bytes(cstr, strlen(cstr));
+                        }
+                });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableLaunchMask")) {
                 const bool disable_input_event     = false;
