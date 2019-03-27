@@ -1024,7 +1024,9 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
     RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN("./recorder-chunk-000000.mp4", 11226843, 100);
     RED_CHECK_FILE_SIZE_AND_CLEAN2("./recorder-chunk-000001.mp4", 86044, 86030);
     RED_CHECK_FILE_CONTENTS("./recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
+    ::unlink("./recorder-chunk.pgs");
     RED_CHECK_FILE_CONTENTS("./recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");
+    ::unlink("./recorder-chunk.meta");
 }
 #endif
 
