@@ -885,7 +885,7 @@ public:
                 }
 
                 send_client_message([](OutStream & out_s) {
-                        const char cstr[] = "Version=" "1" "\x01" "4";
+                        const char cstr[] = "Version=" "1" "\x01" "5";
                         out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                     });
 
