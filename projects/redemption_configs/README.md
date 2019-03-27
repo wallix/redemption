@@ -5,7 +5,7 @@ Edit `configs_specs/configs/specs/config_spec.hpp`
 - `CONFIG_DEFINE_TYPE` macro: declare a redemption type (forward declaration and more)
 - `W.section(section_name, [&]{ /* members... */ })`
 - `W.section(W.names(section_name, *::name{section_name}), [&]{ /* members... */ })`
-- `W.member(spec_attr, sesman_io | connpolicy, log_policy, type, name[, desc][, default_value][, ...])`. Ordering value is not significant.
+- `W.member(spec_attr, sesman_io | connpolicy[, back_to_selector_policy], log_policy, type, name[, desc][, default_value][, ...])`. Ordering value is not significant.
 - `W.sep()`: empty line (human readable)
 
 
@@ -51,6 +51,14 @@ Note: special parameter: `connpolicy::allow_connpolicy_and_gui`.
 - `proxy_to_sesman`
 - `sesman_to_proxy`
 - `sesman_rw` (`proxy_to_sesman + sesman_to_proxy`)
+
+
+### is_target_context (sesman::constants::*)
+
+Only with `proxy_to_sesman`, `sesman_to_proxy` and `sesman_rw`.
+
+- `is_target_ctx`
+- `not_target_ctx`
 
 
 

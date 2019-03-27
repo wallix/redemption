@@ -329,22 +329,16 @@ namespace sesman
 
     namespace internal
     {
-        enum class back_to_selector_policy : bool
-        {
-            reset_back_to_selector,
-            not_reset_back_to_selector,
-        };
+        enum class is_target_context : bool;
 
-        template<back_to_selector_policy value>
-        using back_to_selector_policy_t = std::integral_constant<back_to_selector_policy, value>;
+        template<is_target_context value>
+        using is_target_context_t = std::integral_constant<is_target_context, value>;
     }
 
     inline namespace constants
     {
-        inline constexpr internal::back_to_selector_policy_t<internal::back_to_selector_policy
-            ::reset_back_to_selector> reset_back_to_selector{};
-        inline constexpr internal::back_to_selector_policy_t<internal::back_to_selector_policy
-            ::not_reset_back_to_selector> not_reset_back_to_selector{};
+        inline constexpr internal::is_target_context_t<internal::is_target_context(true)> is_target_ctx{};
+        inline constexpr internal::is_target_context_t<internal::is_target_context(false)> not_target_ctx{};
     }
 }
 

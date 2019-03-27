@@ -378,10 +378,10 @@ public:
              || is_convertible_v<Ts, decltype(cfg_attributes::connpolicy::allow_connpolicy_and_gui)>
             ) || ...),
             "sesman::connection_policy only with:\n- spec::constants::no_ini_no_gui\n- spec::constants::hidden_in_gui\n- connpolicy::allow_connpolicy_and_gui");
-        constexpr bool has_back_to_selector = (is_convertible_v<Ts, cfg_attributes::sesman::internal::back_to_selector_policy> || ...);
-        static_assert(has_conn_policy ? !has_back_to_selector : has_back_to_selector == !((
+        constexpr bool is_target_context = (is_convertible_v<Ts, cfg_attributes::sesman::internal::is_target_context> || ...);
+        static_assert(has_conn_policy ? !is_target_context : is_target_context == !((
             is_convertible_v<Ts, decltype(cfg_attributes::sesman::constants::no_sesman)>
-         )|| ...), "sesman::back_to_selector_policy is missing or specified with no_sesman");
+         )|| ...), "sesman::is_target_context is missing or specified with no_sesman");
 
         using infos_type = Infos<decltype(detail_::normalize_info_arg(args))...>;
         std::unique_ptr<infos_type> u(new infos_type{detail_::normalize_info_arg(args)...});

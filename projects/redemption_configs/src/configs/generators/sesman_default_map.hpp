@@ -108,7 +108,8 @@ public:
     template<class Pack>
     void evaluate_member(std::string const&, Pack const& infos, type_enumerations&)
     {
-        if constexpr (is_convertible_v<Pack, decltype(sesman::constants::reset_back_to_selector)>) {
+        if constexpr (is_convertible_v<Pack, decltype(sesman::constants::is_target_ctx)>)
+        {
             auto sesman_type = get_type<sesman::type_>(infos);
             this->buf << "  u'" << get_name<sesman::name>(infos) << "': ";
             python::write_type(this->buf, sesman_type, get_default(sesman_type, infos));
