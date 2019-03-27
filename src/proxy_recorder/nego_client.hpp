@@ -61,11 +61,6 @@ public:
 
     bool recv_next_data(TpduBuffer& tpdu_buffer, ServerNotifier& notifier)
     {
-        // return this->nego.recv_next_data(
-        //     tpdu_buffer, this->trans,
-        //     RdpNego::ServerCert{
-        //         false, ServerCertCheck::always_succeed, "/tmp", notifier}
-        // );
         return this->nego.recv_next_data(tpdu_buffer, this->trans, notifier);
     }
 };

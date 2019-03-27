@@ -51,6 +51,7 @@ exe headlessclient :
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/recorder_transport.o
@@ -173,6 +174,7 @@ exe rdpproxy :
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -224,11 +226,9 @@ exe proxy_recorder :
   <library>src/proxy_recorder/proxy_recorder.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -275,6 +275,7 @@ exe rdpclient :
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
@@ -563,6 +564,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -785,6 +787,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
@@ -808,6 +811,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -864,6 +868,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
@@ -887,6 +892,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -912,6 +918,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
@@ -935,6 +942,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2356,6 +2364,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2483,6 +2492,7 @@ test-run tests/core/test_session :
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2565,6 +2575,7 @@ test-run tests/front/test_front :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
@@ -3954,6 +3965,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
@@ -3977,6 +3989,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4019,6 +4032,7 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/channels_authorizations.o
@@ -4028,6 +4042,7 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/system/linux/system/tls_check_certificate.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4465,9 +4480,7 @@ test-run tests/system/linux/system/test_tls_context :
   <library>crypto
   <library>openssl
   <library>src/core/error.o
-  <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/system/linux/system/tls_context.hpp
 ;
@@ -4578,11 +4591,9 @@ test-run tests/transport/test_socket_transport :
   <library>openssl
   <library>src/core/error.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/socket_transport.cpp
   <covfile>src/transport/socket_transport.hpp
@@ -5235,6 +5246,7 @@ obj src/mod/vnc/encoder/rre.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/rre.cpp ;
 obj src/mod/vnc/encoder/zrle.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/zrle.cpp : <define>ZLIB_CONST ;
 obj src/mod/vnc/new_mod_vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/new_mod_vnc.cpp : <define>ZLIB_CONST ;
 obj src/proxy_recorder/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/proxy_recorder/proxy_recorder.cpp ;
+obj src/system/linux/system/tls_check_certificate.o : $(REDEMPTION_SRC_PATH)/system/linux/system/tls_check_certificate.cpp ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;

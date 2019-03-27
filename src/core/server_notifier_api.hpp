@@ -28,6 +28,7 @@
 
 enum class CertificateResult { wait, valid, invalid, };
 
+// TODO only for tls_check_certificate...
 class ServerNotifier
 {
 public:
@@ -55,7 +56,7 @@ public:
         (void)ip_address;
         (void)port;
         (void)error_message;
-        return CertificateResult::invalid;
+        return CertificateResult::valid;
     }
 
     // TODO used array_view ?
