@@ -58,18 +58,10 @@ public:
     { return this->seqno; }
 
     enum class [[nodiscard]] TlsResult : uint8_t { Ok, Fail, Want, WaitExternalEvent, };
-    virtual TlsResult enable_client_tls(
-            bool server_cert_store,
-            ServerCertCheck server_cert_check,
-            ServerNotifier & server_notifier,
-            const char * certif_path
-        )
+    virtual TlsResult enable_client_tls(ServerNotifier & server_notifier)
     {
         // default enable_tls do nothing
-        (void)server_cert_store;
-        (void)server_cert_check;
         (void)server_notifier;
-        (void)certif_path;
         return TlsResult::Fail;
     }
 
@@ -233,16 +225,9 @@ struct InTransport
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 
-    Transport::TlsResult enable_client_tls(
-        bool server_cert_store,
-        ServerCertCheck server_cert_check,
-        ServerNotifier & server_notifier,
-        const char * certif_path
-    )
+    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier)
     {
-        return this->t.enable_client_tls(
-            server_cert_store, server_cert_check, server_notifier, certif_path
-        );
+        return this->t.enable_client_tls(server_notifier);
     }
 
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
@@ -275,16 +260,9 @@ struct OutTransport
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 
-    Transport::TlsResult enable_client_tls(
-        bool server_cert_store,
-        ServerCertCheck server_cert_check,
-        ServerNotifier & server_notifier,
-        const char * certif_path
-    )
+    Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier)
     {
-        return this->t.enable_client_tls(
-            server_cert_store, server_cert_check, server_notifier, certif_path
-        );
+        return this->t.enable_client_tls(server_notifier);
     }
 
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)

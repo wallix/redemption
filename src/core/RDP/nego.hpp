@@ -109,14 +109,6 @@ public:
 
     void send_negotiation_request(OutTransport trans);
 
-    struct ServerCert
-    {
-        const bool            store;
-        const ServerCertCheck check;
-        const char *          path;
-        ServerNotifier&       notifier;
-    };
-
     const char * get_target_host() const {
         return this->target_host;
     }
@@ -127,16 +119,16 @@ public:
 
     /// \return false if terminal state
     REDEMPTION_CXX_NODISCARD
-    bool recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const& cert);
+    bool recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& server_notifier);
 
 private:
     State fallback_to_tls(OutTransport trans);
 
-    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerCert const& cert);
+    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& server_notifier);
 
-    State activate_ssl_tls(OutTransport trans, ServerCert const& cert);
+    State activate_ssl_tls(OutTransport trans, ServerNotifier& server_notifier);
 
-    State activate_ssl_hybrid(OutTransport trans, ServerCert const& cert);
+    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& server_notifier);
 
     State recv_credssp(OutTransport trans, InStream stream);
 };

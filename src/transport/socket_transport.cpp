@@ -113,10 +113,7 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
 }
 
-Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
-                                                        ServerCertCheck server_cert_check,
-                                                        ServerNotifier & server_notifier,
-                                                        const char * certif_path)
+Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_notifier)
 {
     switch (this->tls_state) {
         case TLSState::Uninit:

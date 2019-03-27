@@ -37,15 +37,9 @@ struct NlaTeeTransport : Transport
     , is_server(type == Type::Server)
     {}
 
-    TlsResult enable_client_tls(
-        bool server_cert_store,
-        ServerCertCheck server_cert_check,
-        ServerNotifier & server_notifier,
-        const char * certif_path
-    ) override
+    TlsResult enable_client_tls(ServerNotifier & server_notifier) override
     {
-        return this->trans.enable_client_tls(
-            server_cert_store, server_cert_check, server_notifier, certif_path);
+        return this->trans.enable_client_tls(server_notifier);
     }
 
     array_view_const_u8 get_public_key() const override

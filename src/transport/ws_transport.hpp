@@ -45,11 +45,7 @@ protected:
 
     void do_send(const uint8_t * const buffer, size_t len) override;
 
-    TlsResult enable_client_tls(bool server_cert_store,
-                                ServerCertCheck server_cert_check,
-                                ServerNotifier & server_notifier,
-                                const char * certif_path
-    ) override;
+    TlsResult enable_client_tls(ServerNotifier& server_notifier) override;
 
 private:
     class D;

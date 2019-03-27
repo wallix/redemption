@@ -214,7 +214,7 @@ void RdpNego::set_lb_info(uint8_t * lb_info, size_t lb_info_length)
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
-bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const& cert)
+bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& notifier)
 {
     switch (this->state) {
         case State::Negociate:
@@ -228,16 +228,16 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const
                                     (this->nla) ? "NLA" :
                                     (this->tls) ? "TLS" :
                                                   "RDP");
-                this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), cert);
+                this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), notifier);
             } while (this->state == State::Negociate && buf.next_pdu());
             return (this->state != State::Final);
 
         case State::SslHybrid:
-            this->state = this->activate_ssl_hybrid(trans, cert);
+            this->state = this->activate_ssl_hybrid(trans, notifier);
             return (this->state != State::Final);
 
         case State::Tls:
-            this->state = this->activate_ssl_tls(trans, cert);
+            this->state = this->activate_ssl_tls(trans, notifier);
             return (this->state != State::Final);
 
         case State::Credssp:
@@ -254,7 +254,7 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const
             }
 
             while (this->state == State::Negociate && buf.next_pdu()) {
-                this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), cert);
+                this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), notifier);
             }
             return (this->state != State::Final);
 
@@ -265,7 +265,7 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const
     REDEMPTION_UNREACHABLE();
 }
 
-RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerCert const& cert)
+RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier)
 {
     LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
 
@@ -284,13 +284,13 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
         if (x224.rdp_neg_code == X224::PROTOCOL_HYBRID)
         {
             LOG(LOG_INFO, "activating SSL");
-            return this->activate_ssl_hybrid(trans, cert);
+            return this->activate_ssl_hybrid(trans, notifier);
         }
 
         if (x224.rdp_neg_code == X224::PROTOCOL_TLS)
         {
             LOG(LOG_INFO, "activating SSL");
-            return this->activate_ssl_tls(trans, cert);
+            return this->activate_ssl_tls(trans, notifier);
         }
 
         if (x224.rdp_neg_code == X224::PROTOCOL_RDP)
@@ -343,10 +343,9 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
     return State::Final;
 }
 
-inline bool enable_client_tls(OutTransport trans, RdpNego::ServerCert const& cert)
+inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier)
 {
-    switch (trans.enable_client_tls(
-        cert.store, cert.check, cert.notifier, cert.path))
+    switch (trans.enable_client_tls(notifier))
     {
         case Transport::TlsResult::WaitExternalEvent: return false;
         case Transport::TlsResult::Want: return false;
@@ -358,21 +357,21 @@ inline bool enable_client_tls(OutTransport trans, RdpNego::ServerCert const& cer
     return true;
 }
 
-RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerCert const& cert)
+RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& notifier)
 {
-    if (!enable_client_tls(trans, cert)) {
+    if (!enable_client_tls(trans, notifier)) {
         return State::Tls;
     }
     return State::Final;
 }
 
-RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerCert const& cert)
+RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier)
 {
     // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
     //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
     //     this->restricted_admin_mode = true;
     // }
-    if (!enable_client_tls(trans, cert)) {
+    if (!enable_client_tls(trans, notifier)) {
         return State::SslHybrid;
     }
 

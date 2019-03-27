@@ -207,14 +207,9 @@ array_view_const_u8 ReplayTransport::get_public_key() const
     return {this->public_key.data.get(), this->public_key.size};
 }
 
-Transport::TlsResult ReplayTransport::enable_client_tls(
-    bool server_cert_store, ServerCertCheck server_cert_check,
-    ServerNotifier & server_notifier, const char * certif_path)
+Transport::TlsResult ReplayTransport::enable_client_tls(ServerNotifier & server_notifier)
 {
-    (void)server_cert_store;
-    (void)server_cert_check;
     (void)server_notifier;
-    (void)certif_path;
 
     size_t cert_pos;
 

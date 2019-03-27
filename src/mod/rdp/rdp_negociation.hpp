@@ -74,7 +74,9 @@ private:
         explicit RDPServerNotifier(
             FrontAPI& front,
             ReportMessageApi& report_message,
-            RdpNego::ServerCert server_cert,
+            bool server_cert_store,
+            ServerCertCheck server_cert_check,
+            std::unique_ptr<char[]> certif_path,
             ServerNotification server_access_allowed_message,
             ServerNotification server_cert_create_message,
             ServerNotification server_cert_success_message,
@@ -95,7 +97,9 @@ private:
         friend class RdpNegociation;
         std::function<CertificateResult(X509&)> certificate_callback;
 
-        const RdpNego::ServerCert server_cert;
+        const ServerCertCheck server_cert_check;
+        std::unique_ptr<char[]> certif_path;
+        const bool server_cert_store;
         const ServerNotification server_access_allowed_message;
         const ServerNotification server_cert_create_message;
         const ServerNotification server_cert_success_message;
@@ -143,11 +147,7 @@ private:
     const ClientTimeZone client_time_zone;
     Random& gen;
     const RDPVerbose verbose;
-    const bool            server_cert_store;
-    const ServerCertCheck server_cert_check;
-    std::unique_ptr<char[]> certif_path;
     RDPServerNotifier server_notifier;
-    const RdpNego::ServerCert server_cert;
     RdpNego nego;
 
     Transport& trans;

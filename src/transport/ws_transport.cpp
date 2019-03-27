@@ -123,11 +123,9 @@ void WsTransport::do_send(const uint8_t * const buffer, size_t const len)
     SocketTransport::do_send(buffer, len);
 }
 
-WsTransport::TlsResult WsTransport::enable_client_tls(
-    bool /*server_cert_store*/, ServerCertCheck /*server_cert_check*/,
-    ServerNotifier & /*server_notifier*/, const char * /*certif_path*/)
+WsTransport::TlsResult WsTransport::enable_client_tls(ServerNotifier& /*server_notifier*/)
 {
-    LOG(LOG_DEBUG, "enable_client_tls");
+    LOG(LOG_ERR, "enable_client_tls");
     return TlsResult::Fail;
 }
 

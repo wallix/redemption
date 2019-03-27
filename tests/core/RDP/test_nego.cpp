@@ -116,18 +116,7 @@ RED_AUTO_TEST_CASE(TestNego)
 
     nego.send_negotiation_request(logtrans);
 
-    for (int i = 0;
-        nego.recv_next_data(
-            buf, logtrans,
-            RdpNego::ServerCert{
-                server_cert_store,
-                ServerCertCheck::always_succeed,
-                "/tmp/certif",
-                null_server_notifier
-            }
-        );
-        ++i
-    ){
+    for (int i = 0; nego.recv_next_data(buf, logtrans, null_server_notifier); ++i){
         RED_REQUIRE_LT(i, 1000);
     }
 
