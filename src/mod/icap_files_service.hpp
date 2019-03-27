@@ -152,7 +152,6 @@ struct ICAPNewFile {
 
     const int file_id;
     const std::string file_name;
-    const size_t file_size;
 
     // NewFileMessage
 
@@ -171,8 +170,6 @@ struct ICAPNewFile {
     // +---------------------------------------------------------------+
     // |                              ...                              |
     // +---------------------------------------------------------------+
-    // |                           File_size                           |
-    // +---------------------------------------------------------------+
 
     // File_id:  An unsigned, 32-bit integer that contains new file id.
 
@@ -185,10 +182,9 @@ struct ICAPNewFile {
     // File_size: An unsigned, 32-bit integer that indicate file length
     //            in bytes.
 
-    ICAPNewFile(const int file_id, const std::string & file_name, const size_t file_size)
+    ICAPNewFile(const int file_id, const std::string & file_name)
     : file_id(file_id)
-    , file_name(file_name)
-    , file_size(file_size) {}
+    , file_name(file_name) {}
 
     void emit(OutStream & stream) {
 
@@ -196,8 +192,6 @@ struct ICAPNewFile {
 
         stream.out_uint32_be(this->file_name.length());
         stream.out_string(this->file_name.c_str());
-
-        stream.out_uint32_be(this->file_size);
     }
 
 };
@@ -271,6 +265,7 @@ struct ICAPResult {
 
     uint8_t result;
     int id;
+    std::string content;
 
     // ResultMessage
 
@@ -281,10 +276,14 @@ struct ICAPResult {
     // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
     // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |    Result     |                   File_id                     |
+    // |    Result     |                local_File_id                  |
     // +---------------+-----------------------------------------------+
-    // |               |
-    // +---------------+
+    // |               |               content length                  |
+    // +---------------+-----------------------------------------------+
+    // |               |                  content                      |
+    // +---------------+-----------------------------------------------+
+    // |                             ...                               |
+    // +---------------------------------------------------------------+
 
     // Result: An unsigned, 8-bit integer that indicate result analysis. Value
     //         must be ACCEPTED_FLAG, REJECTED_FLAG or ERROR_FLAG.
@@ -309,7 +308,7 @@ struct ICAPResult {
     : result(LocalICAPServiceProtocol::ERROR_FLAG) {}
 
     void receive(InStream & stream) {
-        const unsigned expected = 5;    /* Result(1) + File_id_size(4) */
+        const unsigned expected = 9;    /* Result(1) + File_id_size(4) + content_size(4)  */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO, "ICAPResult truncated, need=%u remains=%zu"
                , expected, stream.in_remain());
@@ -318,6 +317,16 @@ struct ICAPResult {
         this->result = stream.in_uint8();
 
         this->id = stream.in_uint32_be();
+
+        uint32_t content_size = stream.in_uint32_be();
+
+        if (!stream.in_check_rem(content_size)) {
+            LOG( LOG_INFO, "ICAPResult truncated, need=%u remains=%zu"
+               , content_size, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->content = std::string(char_ptr_cast(stream.get_current()), content_size);
     }
 
 };
@@ -327,7 +336,7 @@ struct ICAPResult {
 
 
 ICAPService * icap_open_session(std::string & socket_path);
-int icap_open_file(ICAPService * service, std::string & file_name, size_t file_size);
+int icap_open_file(ICAPService * service, std::string & file_name);
 int icap_send_data(const ICAPService * service, const int file_id, const char * data, const size_t size);
 uint8_t icap_get_result(const ICAPService * service);
 int icap_end_of_file(ICAPService * service, const int file_id);
@@ -340,7 +349,7 @@ ICAPService * icap_open_session(std::string & socket_path) {
     return new ICAPService(socket_path);
 }
 
-int icap_open_file(ICAPService * service, std::string & file_name, size_t file_size) {
+int icap_open_file(ICAPService * service, std::string & file_name) {
 
     int file_id = -1;
 
@@ -353,10 +362,10 @@ int icap_open_file(ICAPService * service, std::string & file_name, size_t file_s
 
         StaticOutStream<1024> message;
 
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 12+file_name.length());
+        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 4+file_name.length());
         header.emit(message);
 
-        LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name, file_size);
+        LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name);
         icap_new_file.emit(message);
 
         int n = write(service->fd.fd(), message.get_data(), message.get_offset());

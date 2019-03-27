@@ -66,19 +66,18 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPNewFile) {
 
     const int file_id = 1;
     const std::string file_name = "file_name.file";
-    const size_t file_size = 5658;
 
     StaticOutStream<512> message;
 
-    LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name, file_size);
+    LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name);
     icap_new_file.emit(message);
 
     auto exp_data = cstr_array_view(
         "\x00\x00\x00\x01\x00\x00\x00\x0e\x66\x69\x6c\x65\x5f\x6e\x61\x6d" //........file_nam
-        "\x65\x2e\x66\x69\x6c\x65\x00\x00\x16\x1a"                         //e.file....
+        "\x65\x2e\x66\x69\x6c\x65"                                         //e.file
     );
 
-    RED_CHECK_EQUAL(message.get_offset(), 26);
+    RED_CHECK_EQUAL(message.get_offset(), 22);
     RED_CHECK_MEM(exp_data, message.get_bytes());
 }
 
@@ -120,9 +119,10 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPResult) {
 
     const uint8_t expected_result = LocalICAPServiceProtocol::ACCEPTED_FLAG;
     const int expected_file_id = 1;
+    const std::string expected_content = "eg";
 
     auto data = cstr_array_view(
-        "\x00\x00\x00\x00\x01"                     //.....
+        "\x00\x00\x00\x00\x01\x00\x00\x00\x02\x65\x67"                     //.....
     );
 
     InStream stream(data);
@@ -132,6 +132,7 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPResult) {
 
     RED_CHECK_EQUAL(icap_result.id, expected_file_id);
     RED_CHECK_EQUAL(icap_result.result, expected_result);
+    RED_CHECK_EQUAL(icap_result.content, expected_content);
 }
 
 
@@ -152,7 +153,7 @@ RED_AUTO_TEST_CASE(testFileValid)
         std::string file_content(get_file_contents("README.md"));
         int file_size = 30; /*file_content.length();*/
 
-        int file_id = icap_open_file(service, file_name, file_size);
+        int file_id = icap_open_file(service, file_name);
         RED_CHECK_EQUAL(file_id, 1);
 
         n = icap_send_data(service, file_id, file_content.c_str(), file_size);
@@ -190,7 +191,7 @@ RED_AUTO_TEST_CASE(testFileInvalid)
         std::string file_name("the_zeus_binary_chapros");
         int file_size = 227328;
 
-        int file_id = icap_open_file(service, file_name, file_size);
+        int file_id = icap_open_file(service, file_name);
         RED_CHECK_EQUAL(file_id, 1);
 
         int sent_data = 0;
