@@ -12,7 +12,6 @@ Ex: `./gtrace -c -- ./bin/gcc/debug/test_in_meta_sequence_transport -ex 'b test_
 - `cppcheck [cppcheck-args]`: run `cppcheck` on `main/*`.
 - `cppcheck-full [cppcheck-args]`: run `cppcheck`.
 - `scan-build [-h | jamdir [targers pattern-filter-cmd]]]`: run `scan-build` on each executable.
-- `unused_files`: show unesed files (files without `#include`).
 - `todo_extractor files...`: extract comment with BUG, ALERT, ATTENTION, DANGER, HACK, SECURITYFIXME, DEPRECATED, TASK, TODO, TBD, WARNING, CAUTION, NOTE, NOTICE, TEST, TESTING, PERFORMANCE, PERF
 
 # Source corrector
