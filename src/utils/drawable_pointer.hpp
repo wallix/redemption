@@ -38,6 +38,8 @@
 #include "utils/bitfu.hpp"
 #include "utils/log.hpp"
 #include "utils/pixel_io.hpp"
+#include "utils/image_data_view.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 #include <cstdint>
 #include <cstddef>
@@ -174,56 +176,69 @@ public:
 };
 
 
-struct DrawablePointer {
+struct DrawablePointer
+{
     enum {
           MAX_WIDTH  = 96
         , MAX_HEIGHT = 96
     };
-
-    explicit DrawablePointer() = default;
 
     unsigned width { 0 };
     unsigned height { 0 };
 
     unsigned line_bytes { 0 };
 
-    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3] {}; // 96 pixels per line * 96 lines * 3 bytes per pixel
-    uint8_t mask24[MAX_WIDTH * MAX_HEIGHT * 3] {}; // 96 pixels per line * 96 lines * 3 bytes per pixel
+    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
+    uint8_t mask24[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
 
-    std::unique_ptr<ConstImageDataView> image_data_view_data;
-    std::unique_ptr<ConstImageDataView> image_data_view_mask24;
+    ConstImageDataView image_data_view_data;
+    ConstImageDataView image_data_view_mask24;
 
-    void initialize(unsigned int width_, unsigned int height_, unsigned int line_bytes_, unsigned int mask_line_bytes_,
-                    const uint8_t * pointer_data, const uint8_t * pointer_mask) {
-        this->width  = width_;
-        this->height = height_;
+    DrawablePointer()
+    : image_data_view_data(create_img(nullptr))
+    , image_data_view_mask24(create_img(nullptr))
+    {}
 
-        this->line_bytes      = line_bytes_;
+    DrawablePointer(Pointer const& cursor)
+    : DrawablePointer()
+    {
+        this->set_cursor(cursor);
+    }
 
+    void set_cursor(Pointer const& cursor)
+    {
+        const auto dim = cursor.get_dimensions();
+        this->width = dim.width;
+        this->height = dim.height;
+        this->line_bytes = ::even_pad_length(this->width * 3);
+
+        const uint8_t* pointer_data = cursor.get_24bits_xor_mask().data();
         ::memcpy(this->data, pointer_data, this->line_bytes * this->height);
+        this->image_data_view_data = this->create_img(this->data);
 
-        this->image_data_view_data = std::make_unique<ConstImageDataView>(
-                this->data,
-                width_,
-                height_,
-                line_bytes_,
-                BytesPerPixel{3},
-                ConstImageDataView::Storage::BottomToTop
-            );
-
-        for (unsigned int y = 0; y < width_; ++y) {
-            for (unsigned int x = 0; x < height_; ++x) {
-                ::put_pixel_24bpp(this->mask24, line_bytes_, x, y, (::get_pixel_1bpp(pointer_mask, mask_line_bytes_, x, y) ? 0xFFFFFF : 0));
+        const uint8_t* pointer_mask = cursor.get_monochrome_and_mask().data();
+        const unsigned int mask_line_bytes = ::even_pad_length(::nbbytes(this->width));
+        for (unsigned int y = 0; y < this->width; ++y) {
+            for (unsigned int x = 0; x < this->height; ++x) {
+                ::put_pixel_24bpp(
+                    this->mask24, this->line_bytes, x, y,
+                    (::get_pixel_1bpp(pointer_mask, mask_line_bytes, x, y) ? 0xFFFFFF : 0)
+                );
             }
         }
-        this->image_data_view_mask24 = std::make_unique<ConstImageDataView>(
-                this->mask24,
-                width_,
-                height_,
-                line_bytes_,
-                BytesPerPixel{3},
-                ConstImageDataView::Storage::BottomToTop
-            );
+        this->image_data_view_mask24 = this->create_img(this->mask24);
+    }
+
+private:
+    ConstImageDataView create_img(uint8_t const* data) const
+    {
+        return ConstImageDataView(
+            data,
+            this->width,
+            this->height,
+            this->line_bytes,
+            BytesPerPixel{3},
+            ConstImageDataView::Storage::BottomToTop
+        );
     }
 };  // struct DrawablePointer
-

@@ -1462,11 +1462,11 @@ void Drawable::set_row(size_t rownum, const uint8_t * data, size_t data_length)
     memcpy(this->impl_.row_data(rownum), data, std::min(this->rowsize(), data_length));
 }
 
-void Drawable::trace_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave)
+void Drawable::trace_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave)
 {
     uint8_t* cur_psave = psave;
 
-    Rect const rect_pointer(x, y, current_pointer->width, current_pointer->height);
+    Rect const rect_pointer(x, y, current_pointer.width, current_pointer.height);
     Rect const rect_drawable(0, 0, this->impl_.width(), this->impl_.height());
     Rect const rect_intersect = rect_drawable.intersect(rect_pointer);
     if (rect_intersect.isempty()) {
@@ -1485,19 +1485,19 @@ void Drawable::trace_mouse(const DrawablePointer * current_pointer, const int x,
         rect_intersect.cx, rect_intersect.cy);
     this->mem_blt_ex(
             rect_intersect,
-            current_pointer->image_data_view_mask24->sub_view(rect_sub_view),
+            current_pointer.image_data_view_mask24.sub_view(rect_sub_view),
             0, 0, 0x88);
     this->mem_blt_ex(
             rect_intersect,
-            current_pointer->image_data_view_data->sub_view(rect_sub_view),
+            current_pointer.image_data_view_data.sub_view(rect_sub_view),
             0, 0, 0x66);
 }
 
-void Drawable::clear_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave)
+void Drawable::clear_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave)
 {
     uint8_t* cur_psave = psave;
 
-    Rect const rect_pointer(x, y, current_pointer->width, current_pointer->height);
+    Rect const rect_pointer(x, y, current_pointer.width, current_pointer.height);
     Rect const rect_drawable(0, 0, this->impl_.width(), this->impl_.height());
     Rect const rect_intersect = rect_drawable.intersect(rect_pointer);
     if (rect_intersect.isempty()) {

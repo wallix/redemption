@@ -400,8 +400,8 @@ public:
 
     void set_row(size_t rownum, const uint8_t * data, size_t data_length);
 
-    void trace_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave);
-    void clear_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave);
+    void trace_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);
+    void clear_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);
 
     operator ConstImageDataView () const
     {

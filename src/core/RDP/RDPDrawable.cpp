@@ -141,28 +141,23 @@ namespace
 
 
 RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height)
+: RDPDrawable(width, height, drawable_default_pointer())
+{}
+
+RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height, Pointer const& cursor)
 : drawable(width, height)
 , save_mouse_x(0)
 , save_mouse_y(0)
 , mouse_cursor_pos_x(width / 2)
 , mouse_cursor_pos_y(height / 2)
 , dont_show_mouse_cursor(false)
-, current_pointer(&this->default_pointer)
+, current_pointer(cursor)
 , frame_start_count(0)
 , mod_palette_rgb(BGRPalette::classic_332())
 {
-    Pointer const& p = drawable_default_pointer();
-
-    const auto hotspot = p.get_hotspot();
-
+    const auto hotspot = cursor.get_hotspot();
     this->mouse_cursor_hotspot_x = hotspot.x;
     this->mouse_cursor_hotspot_y = hotspot.y;
-
-    auto av     = p.get_24bits_xor_mask();
-    auto avmask = p.get_monochrome_and_mask();
-
-    const unsigned p_width = p.get_dimensions().width;
-    this->default_pointer.initialize(32, 32, ::even_pad_length(p_width * 3), ::even_pad_length(::nbbytes(p_width)), av.data(), avmask.data());
 }
 
 void RDPDrawable::resize(uint16_t width, uint16_t height)
@@ -876,7 +871,7 @@ void RDPDrawable::draw(const RDP::FrameMarker & order)
 
 void RDPDrawable::trace_mouse()
 {
-    if (this->dont_show_mouse_cursor || !this->current_pointer) {
+    if (this->dont_show_mouse_cursor) {
         return;
     }
     this->save_mouse_x = this->mouse_cursor_pos_x;
@@ -888,7 +883,7 @@ void RDPDrawable::trace_mouse()
 
 void RDPDrawable::clear_mouse()
 {
-    if (this->dont_show_mouse_cursor || !this->current_pointer) {
+    if (this->dont_show_mouse_cursor) {
         return;
     }
     int x = this->save_mouse_x - this->mouse_cursor_hotspot_x;
@@ -903,11 +898,5 @@ void RDPDrawable::set_pointer(uint16_t /*cache_idx*/, Pointer const& cursor, Set
     this->mouse_cursor_hotspot_x = hotspot.x;
     this->mouse_cursor_hotspot_y = hotspot.y;
 
-    auto av_xor = cursor.get_24bits_xor_mask();
-    auto av_and = cursor.get_monochrome_and_mask();
-
-    auto const dimensions = cursor.get_dimensions();
-    this->dynamic_pointer.initialize(dimensions.width, dimensions.height, ::even_pad_length(dimensions.width * 3), ::even_pad_length(::nbbytes(dimensions.width)), av_xor.data(), av_and.data());
-
-    this->current_pointer = &this->dynamic_pointer;
+    this->current_pointer.set_cursor(cursor);
 }

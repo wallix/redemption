@@ -51,9 +51,7 @@ private:
     int mouse_cursor_hotspot_x;
     int mouse_cursor_hotspot_y;
     bool dont_show_mouse_cursor;
-    const DrawablePointer * current_pointer;
-    DrawablePointer dynamic_pointer;
-    DrawablePointer default_pointer;
+    DrawablePointer current_pointer;
 
     int frame_start_count;
     BGRPalette mod_palette_rgb;
@@ -64,6 +62,7 @@ private:
 
 public:
     RDPDrawable(const uint16_t width, const uint16_t height);
+    RDPDrawable(const uint16_t width, const uint16_t height, Pointer const& cursor);
 
     void resize(uint16_t width, uint16_t height) override;
 

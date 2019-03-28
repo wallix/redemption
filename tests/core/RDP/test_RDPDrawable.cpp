@@ -568,31 +568,14 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
 
     class ImageCaptureLocal
     {
-    private:
         Transport & trans;
         Drawable & drawable;
-        uint8_t save_mouse[3072];
-        int save_mouse_x = 0;
-        int save_mouse_y = 0;
-        int mouse_cursor_pos_x;
-        int mouse_cursor_pos_y;
-    public:
-        bool dont_show_mouse_cursor;
-    private:
-        const DrawablePointer * current_pointer;
-        DrawablePointer dynamic_pointer;
-        DrawablePointer default_pointer;
-
         TimestampTracer timestamp_tracer;
 
     public:
         ImageCaptureLocal(Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , mouse_cursor_pos_x(800 / 2)
-        , mouse_cursor_pos_y(600 / 2)
-        , dont_show_mouse_cursor(false)
-        , current_pointer(&this->default_pointer)
         , timestamp_tracer(gdi::get_mutable_image_view(drawable))
         {}
 
@@ -603,20 +586,12 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
             (void)y;
             (void)ignore_frame_in_timeval;
             using std::chrono::microseconds;
-            if (!this->dont_show_mouse_cursor && this->current_pointer){
-                this->save_mouse_x = this->mouse_cursor_pos_x;
-                this->save_mouse_y = this->mouse_cursor_pos_y;
-                this->drawable.trace_mouse(this->current_pointer, this->mouse_cursor_pos_x, this->mouse_cursor_pos_y, this->save_mouse);
-            }
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
             this->timestamp_tracer.trace(ptm);
             this->flush();
             this->trans.next();
             this->timestamp_tracer.clear();
-            if (!this->dont_show_mouse_cursor && this->current_pointer){
-                this->drawable.clear_mouse(this->current_pointer, this->save_mouse_x, this->save_mouse_y, this->save_mouse);
-            }
             return microseconds::zero();
         }
 
@@ -626,8 +601,6 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
     };
 
     ImageCaptureLocal consumer(drawable.impl(), trans);
-
-    consumer.dont_show_mouse_cursor = true;
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     auto const color_cxt = gdi::ColorCtx::depth24();

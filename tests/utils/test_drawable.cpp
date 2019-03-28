@@ -281,23 +281,16 @@ RED_AUTO_TEST_CASE(TestDestBlt)
 
 RED_AUTO_TEST_CASE(TestAddMouse)
 {
-
-    Pointer p = drawable_default_pointer();
-    auto av     = p.get_24bits_xor_mask();
-    auto avmask = p.get_monochrome_and_mask();
-
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
     uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
-    DrawablePointer current_pointer;
-    const unsigned p_width = p.get_dimensions().width;
-    current_pointer.initialize(32, 32, ::even_pad_length(p_width * 3), ::even_pad_length(::nbbytes(p_width)), av.data(), avmask.data());
+    DrawablePointer current_pointer(drawable_default_pointer());
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
-    gd.trace_mouse(&current_pointer, 100, 100, save_mouse);
+    gd.trace_mouse(current_pointer, 100, 100, save_mouse);
 
     // uncomment to see result in png file
 //    dump_png24("./test_mouse_000_.png", gd, true);
@@ -305,22 +298,15 @@ RED_AUTO_TEST_CASE(TestAddMouse)
     RED_CHECK_SIG(gd, "\x36\x62\x5c\x6b\x82\xba\xf9\x39\x32\x76\x5a\x73\x34\x82\xd2\x16\xaf\xc6\x69\xf3");
 
 
-    gd.clear_mouse(&current_pointer, 100, 100, save_mouse);
+    gd.clear_mouse(current_pointer, 100, 100, save_mouse);
     // uncomment to see result in png file
 //    dump_png24("./test_mouse_001_.png", gd, true);
 
     RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 }
 
-
-
-
 RED_AUTO_TEST_CASE(TestAddMouse2)
 {
-    Pointer p = drawable_default_pointer();
-    auto av     = p.get_24bits_xor_mask();
-    auto avmask = p.get_monochrome_and_mask();
-
     // Create a simple capture image and dump it to file
     uint16_t width  = 640;
     uint16_t height = 480;
@@ -328,19 +314,18 @@ RED_AUTO_TEST_CASE(TestAddMouse2)
     Drawable gd(width, height);
     uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
     DrawablePointer current_pointer;
-    const unsigned p_width = p.get_dimensions().width;
-    current_pointer.initialize(32, 32, ::even_pad_length(p_width * 3), ::even_pad_length(::nbbytes(p_width)), av.data(), avmask.data());
+    current_pointer.set_cursor(drawable_default_pointer());
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
 
-    gd.trace_mouse(&current_pointer, 638, 470, save_mouse);
+    gd.trace_mouse(current_pointer, 638, 470, save_mouse);
     // uncomment to see result in png file
 //    dump_png24("test_mouse2_visible_.png", gd, true);
 
     RED_CHECK_SIG(gd, "\x41\x1d\x25\x87\x04\x28\xdb\x8f\x46\x35\x50\x2d\x19\x10\x3f\xd0\x5d\x7e\x2a\x62");
 
 
-    gd.clear_mouse(&current_pointer, 638, 470, save_mouse);
+    gd.clear_mouse(current_pointer, 638, 470, save_mouse);
     // uncomment to see result in png file
 //    dump_png24("test_mouse2_clear_.png", gd, true);
     RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
@@ -348,29 +333,23 @@ RED_AUTO_TEST_CASE(TestAddMouse2)
 
 RED_AUTO_TEST_CASE(TestAddMouse3)
 {
-    Pointer p = drawable_default_pointer();
-    auto av     = p.get_24bits_xor_mask();
-    auto avmask = p.get_monochrome_and_mask();
-
     // Create a simple capture image and dump it to file
     uint16_t width  = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
     uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
-    DrawablePointer current_pointer;
-    const unsigned p_width = p.get_dimensions().width;
-    current_pointer.initialize(32, 32, ::even_pad_length(p_width * 3), ::even_pad_length(::nbbytes(p_width)), av.data(), avmask.data());
+    DrawablePointer current_pointer(drawable_default_pointer());
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
-    gd.trace_mouse(&current_pointer, -8, -8, save_mouse);
+    gd.trace_mouse(current_pointer, -8, -8, save_mouse);
     // uncomment to see result in png file
 //    dump_png24("test_mouse3_visible_.png", gd, true);
 
     RED_CHECK_SIG(gd, "\x63\xdc\x47\x28\xf6\x76\x26\x5b\xfe\x9f\xa2\x57\xf5\x3a\xb3\x86\xda\xcb\x93\x2b");
 
 
-    gd.clear_mouse(&current_pointer, -8, -8, save_mouse);
+    gd.clear_mouse(current_pointer, -8, -8, save_mouse);
     RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 
     // uncomment to see result in png file
