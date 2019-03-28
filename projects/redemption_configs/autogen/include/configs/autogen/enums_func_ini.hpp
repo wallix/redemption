@@ -441,6 +441,7 @@ inline parse_error parse(ColorDepth & x, spec_type<ColorDepth> /*type*/, array_v
         ColorDepth::depth15,
         ColorDepth::depth16,
         ColorDepth::depth24,
+        ColorDepth::depth32,
     });
 }
 

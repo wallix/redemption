@@ -254,6 +254,7 @@
 "#   15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)\n"
 "#   16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)\n"
 "#   24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)\n"
+"#   32: 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)\n"
 "#_advanced\n"
 "#max_color_depth = 24\n\n"
 

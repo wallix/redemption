@@ -3642,21 +3642,25 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
 
     RED_CHECK_EQUAL(bmp24.bpp(), BitsPerPixel{24});
 
+    Bitmap bmp_24_to_32(BitsPerPixel{32}, bmp24);
     Bitmap bmp_24_to_24(BitsPerPixel{24}, bmp24);
     Bitmap bmp_24_to_16(BitsPerPixel{16}, bmp24);
     Bitmap bmp_24_to_15(BitsPerPixel{15}, bmp24);
     Bitmap bmp_24_to_8(BitsPerPixel{8}, bmp24);
 
+    Bitmap bmp_16_to_32(BitsPerPixel{32}, bmp_24_to_16);
     Bitmap bmp_16_to_24(BitsPerPixel{24}, bmp_24_to_16);
     Bitmap bmp_16_to_16(BitsPerPixel{16}, bmp_24_to_16);
     Bitmap bmp_16_to_15(BitsPerPixel{15}, bmp_24_to_16);
     Bitmap bmp_16_to_8(BitsPerPixel{8}, bmp_24_to_16);
 
+    Bitmap bmp_15_to_32(BitsPerPixel{32}, bmp_24_to_15);
     Bitmap bmp_15_to_24(BitsPerPixel{24}, bmp_24_to_15);
     Bitmap bmp_15_to_16(BitsPerPixel{16}, bmp_24_to_15);
     Bitmap bmp_15_to_15(BitsPerPixel{15}, bmp_24_to_15);
     Bitmap bmp_15_to_8(BitsPerPixel{8}, bmp_24_to_15);
 
+    Bitmap bmp_8_to_32(BitsPerPixel{32}, bmp_24_to_8);
     Bitmap bmp_8_to_24(BitsPerPixel{24}, bmp_24_to_8);
     Bitmap bmp_8_to_16(BitsPerPixel{16}, bmp_24_to_8);
     Bitmap bmp_8_to_15(BitsPerPixel{15}, bmp_24_to_8);
