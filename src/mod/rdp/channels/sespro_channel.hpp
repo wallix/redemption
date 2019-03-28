@@ -337,6 +337,8 @@ private:
     const uint32_t param_handle_usage_limit;
     const uint32_t param_memory_usage_limit;
 
+    const uint32_t param_disabled_features;
+
     const bool param_session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
     const bool param_session_probe_childless_window_as_unidentified_input_field;
@@ -422,6 +424,8 @@ public:
         uninit_checked<uint32_t> session_probe_handle_usage_limit;
         uninit_checked<uint32_t> session_probe_memory_usage_limit;
 
+        uninit_checked<uint32_t> session_probe_disabled_features;
+
         uninit_checked<bool> session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
         uninit_checked<bool> session_probe_childless_window_as_unidentified_input_field;
@@ -483,6 +487,7 @@ public:
     , param_enable_crash_dump(params.session_probe_enable_crash_dump)
     , param_handle_usage_limit(params.session_probe_handle_usage_limit)
     , param_memory_usage_limit(params.session_probe_memory_usage_limit)
+    , param_disabled_features(params.session_probe_disabled_features)
     , param_session_probe_ignore_ui_less_processes_during_end_of_session_check(params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
     , param_session_probe_childless_window_as_unidentified_input_field(params.session_probe_childless_window_as_unidentified_input_field)
     , front(front)
@@ -1045,6 +1050,22 @@ public:
                             out_s.out_copy_bytes(cstr, strlen(cstr));
                         }
                 });
+
+                if (this->param_disabled_features) {
+                    send_client_message([this](OutStream & out_s) {
+                            {
+                                const char cstr[] = "DisabledFeatures=";
+                                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                            }
+
+                            {
+                                char cstr[128];
+                                std::snprintf(cstr, sizeof(cstr), "0x%08X",
+                                    this->param_disabled_features);
+                                out_s.out_copy_bytes(cstr, strlen(cstr));
+                            }
+                    });
+                }
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableLaunchMask")) {
                 const bool disable_input_event     = false;

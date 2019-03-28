@@ -107,6 +107,8 @@ struct ModRDPParams {
     uint32_t                     session_probe_handle_usage_limit = 0;
     uint32_t                     session_probe_memory_usage_limit = 0;
 
+    uint32_t                     session_probe_disabled_features = 0;
+
     bool                         session_probe_ignore_ui_less_processes_during_end_of_session_check = true;
 
     bool                         session_probe_childless_window_as_unidentified_input_field = true;
@@ -306,6 +308,8 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_handle_usage_limit);
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_memory_usage_limit);
+
+        RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, session_probe_disabled_features);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_ignore_ui_less_processes_during_end_of_session_check);
 

@@ -224,6 +224,14 @@ ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 #_advanced
 childless_window_as_unidentified_input_field = boolean(default=True)
 
+# Disable some features of Session Probe:
+#   0x00000001: Java Access Bridge
+#   0x00000002: MS Active Accessbility
+#   0x00000004: MS UI Automation
+#_advanced
+#_hex
+session_probe_disabled_features = integer(min=0, default=0)
+
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
 

@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-inline authid_t MAX_AUTHID = authid_t(154);
+inline authid_t MAX_AUTHID = authid_t(155);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -69,6 +69,7 @@ constexpr array_view_const_char const authstr[] = {
     "session_probe_memory_usage_limit"_av,
     "session_probe_ignore_ui_less_processes_during_end_of_session_check"_av,
     "session_probe_childless_window_as_unidentified_input_field"_av,
+    "session_probe_disabled_features"_av,
     "session_probe_public_session"_av,
     "server_cert_store"_av,
     "server_cert_check"_av,
