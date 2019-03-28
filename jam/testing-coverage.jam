@@ -89,6 +89,7 @@ obj register_exception.o :
     $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/impl/register_exception.cpp
 :
     $(CXXFLAGS_TEST)
+    <cxxflags>-O3
 ;
 
 lib libunit_test :
@@ -100,6 +101,7 @@ lib libunit_test :
     # <cxxflags>-frtti
     # <define>BOOST_AUTO_TEST_MAIN
     <define>BOOST_TEST_DYN_LINK
+    <cxxflags>-O3
 ;
 
 constant TEST_DEPENDENCIES :
