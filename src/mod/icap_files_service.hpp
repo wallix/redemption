@@ -189,8 +189,7 @@ struct ICAPNewFile {
     void emit(OutStream & stream) {
 
         stream.out_uint32_be(this->file_id);
-
-        stream.out_uint32_be(this->file_name.length());
+        stream.out_uint32_be(this->file_name.length()-4);
         stream.out_string(this->file_name.c_str());
     }
 

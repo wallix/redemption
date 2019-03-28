@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPNewFile) {
     icap_new_file.emit(message);
 
     auto exp_data = cstr_array_view(
-        "\x00\x00\x00\x01\x00\x00\x00\x0e\x66\x69\x6c\x65\x5f\x6e\x61\x6d" //........file_nam
+        "\x00\x00\x00\x01\x00\x00\x00\x0a\x66\x69\x6c\x65\x5f\x6e\x61\x6d" //........file_nam
         "\x65\x2e\x66\x69\x6c\x65"                                         //e.file
     );
 
