@@ -24,8 +24,8 @@
 #include "configs/autogen/enums.hpp"
 #include "configs/autogen/enums_func_ini.hpp"
 
-RED_TEST_DELEGATE_PRINT(ServerCertCheck, long(x))
-RED_TEST_DELEGATE_PRINT(configs::parse_error, x.c_str())
+RED_TEST_DELEGATE_PRINT_ENUM(ServerCertCheck);
+RED_TEST_DELEGATE_PRINT(configs::parse_error, x.c_str());
 
 RED_AUTO_TEST_CASE(TestParser)
 {
