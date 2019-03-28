@@ -41,6 +41,7 @@
 #include "utils/stream.hpp"
 
 const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
+constexpr auto fsize = RED_TEST_FUNC_CTX(filesize);
 
 RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
@@ -236,40 +237,25 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
           , "./" , "test_capture", ".png"
         );
 
-        const char * filename;
-
-        filename = png_seq.get(0);
-        RED_CHECK_EQUAL(3102, ::filesize(filename));
-        ::unlink(filename);
-        filename = png_seq.get(1);
-        RED_CHECK_EQUAL(3127, ::filesize(filename));
-        ::unlink(filename);
-        filename = png_seq.get(2);
-        RED_CHECK_EQUAL(3145, ::filesize(filename));
-        ::unlink(filename);
-        filename = png_seq.get(3);
-        RED_CHECK_EQUAL(3162, ::filesize(filename));
-        ::unlink(filename);
-        filename = png_seq.get(4);
-        RED_CHECK_EQUAL(3175, ::filesize(filename));
-        ::unlink(filename);
-        filename = png_seq.get(5);
-        RED_CHECK_EQUAL(3201, ::filesize(filename));
-        ::unlink(filename);
-        filename = png_seq.get(6);
-        RED_CHECK_EQUAL(3225, ::filesize(filename));
-        ::unlink(filename);
-        filename = png_seq.get(7);
-        RED_CHECK_PREDICATE(file_not_exists, (filename));
+        int i = 0;
+        for (auto size : {
+            3102,
+            3127,
+            3145,
+            3162,
+            3175,
+            3201,
+            3225
+        }) {
+            char const* filename = png_seq.get(i++);
+            RED_CHECK(fsize(filename) == size);
+            ::unlink(filename);
+        }
+        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
     }
 
     for (auto x: fileinfo) {
-        auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
+        RED_CHECK(fsize(x.filename) == x.size);
         ::unlink(x.filename);
     }
 }
@@ -3073,43 +3059,26 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
           , "./" , "resizing-capture-0", ".png"
         );
 
-        const char * filename;
-
-        filename = png_seq.get(0);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3102 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(1);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3121 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(2);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3131 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(3);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3143 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(4);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 4079 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(5);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 4103 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(6);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 4122 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(7);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 4137 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(8);
-        RED_CHECK_PREDICATE(file_not_exists, (filename));
+        int i = 0;
+        for (auto size : {
+            3102 +- 100_v,
+            3121 +- 100_v,
+            3131 +- 100_v,
+            3143 +- 100_v,
+            4079 +- 100_v,
+            4103 +- 100_v,
+            4122 +- 100_v,
+            4137 +- 100_v
+        }) {
+            char const* filename = png_seq.get(i++);
+            RED_CHECK(fsize(filename) == size);
+            if (remove_files) { ::unlink(filename); }
+        }
+        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
     }
 
     for (auto x: fileinfo) {
-        auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
+        RED_CHECK(fsize(x.filename) == x.size);
         if (remove_files) { ::unlink(x.filename); }
     }
 }
@@ -3330,15 +3299,11 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
             2334 +- 100_v,
             2345 +- 100_v
         }) {
-            char const* filename = png_seq.get(i);
-            RED_TEST_CONTEXT(i << " filename: " << filename) {
-                RED_CHECK(filesize(filename) == size);
-                if (remove_files) { ::unlink(filename); }
-            }
-            ++i;
+            char const* filename = png_seq.get(i++);
+            RED_CHECK(fsize(filename) == size);
+            if (remove_files) { ::unlink(filename); }
         }
-        char const* filename = png_seq.get(i);
-        RED_CHECK_PREDICATE(file_not_exists, (filename));
+        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
     }
 
     for (auto x: fileinfo) {

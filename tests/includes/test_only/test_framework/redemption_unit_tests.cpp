@@ -152,6 +152,20 @@ namespace redemption_unit_test__
     }
 } // namespace redemption_unit_test__
 
+
+void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::operator()(
+    std::ostream& out, redemption_unit_test__::int_variation const & x) const
+{
+    if (x.left == x.right) {
+        out << x.left;
+    }
+    else {
+        out << x.value << "+-" << x.variant << (x.is_percent ? "%" : "")
+            << " [" << x.left << ", " << x.right << "]";
+    }
+}
+
+
 std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e)
 {
     out.write(e.name.data(), e.name.size()) << "{";

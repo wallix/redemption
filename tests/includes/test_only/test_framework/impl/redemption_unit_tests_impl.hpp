@@ -89,3 +89,123 @@ struct BOOST_TEST_DECL print_log_value<decltype(nullptr)> {
 
 }}}
 #endif
+
+
+namespace redemption_unit_test__
+{
+
+template<class T, class Fd>
+struct fn_ctx_t
+{
+    char const* name;
+    T x;
+    Fd g;
+
+    operator T const& () const noexcept { return x; }
+    operator T& () noexcept { return x; }
+};
+
+#define MK_OP(op)                                                         \
+    template<class T, class Fd, class U>                                  \
+    bool operator op (fn_ctx_t<T, Fd> const& fctx, U const& x)            \
+    {                                                                     \
+        return fctx.x op x;                                               \
+    }                                                                     \
+    template<class T, class Fd, class U>                                  \
+    bool operator op (fn_ctx_t<T, Fd> const&,                             \
+        boost::test_tools::assertion::value_expr<U> const&) = delete;     \
+    template<class U, class T, class Fd>                                  \
+    bool operator op (U const& x, fn_ctx_t<T, Fd> const& fctx)            \
+    {                                                                     \
+        return x op fctx.x;                                               \
+    }                                                                     \
+    template<class U, class T, class Fd>                                  \
+    bool operator op (boost::test_tools::assertion::value_expr<U> const&, \
+        fn_ctx_t<T, Fd> const&) = delete
+
+MK_OP(==);
+MK_OP(!=);
+MK_OP(<);
+MK_OP(<=);
+MK_OP(>);
+MK_OP(>=);
+
+#undef MK_OP
+
+template<class X, class... Xs>
+auto fn_ctx_arg(X const& x, Xs const&... xs)
+{
+    return [&](std::ostream& out){
+        out << x;
+        ((out << ", " << boost::test_tools::tt_detail::print_helper(xs)), ...);
+    };
+}
+
+template<class F, class... Ts>
+auto fn_ctx(char const* name, F f, Ts&&... xs)
+{
+    auto print = fn_ctx_arg(xs...);
+    return fn_ctx_t<decltype(f(static_cast<Ts&&>(xs)...)), decltype(print)>{
+        name, f(static_cast<Ts&&>(xs)...), print
+    };
+}
+
+template<class Fr, class Fd>
+std::ostream& operator<<(std::ostream& out, fn_ctx_t<Fr, Fd> const& fctx)
+{
+    out << fctx.name << "(";
+    fctx.g(out);
+    out << ")= " << fctx.x;
+    return out;
+}
+
+template<class F>
+struct fn_invoker_t
+{
+    char const* name;
+    F f;
+
+    template<class... Xs>
+    decltype(auto) operator()(Xs&&... xs) const
+    {
+        auto print = fn_ctx_arg(xs...);
+        return fn_ctx_t<decltype(f(static_cast<Xs&&>(xs)...)), decltype(print)>{
+            name, f(static_cast<Xs&&>(xs)...), print
+        };
+    }
+
+    template<class... Xs>
+    decltype(auto) operator()(Xs&&... xs)
+    {
+        auto print = fn_ctx_arg(xs...);
+        return fn_ctx_t<decltype(f(static_cast<Xs&&>(xs)...)), decltype(print)>{
+            name, f(static_cast<Xs&&>(xs)...), print
+        };
+    }
+};
+
+template<class F>
+constexpr fn_invoker_t<F> fn_invoker(char const* name, F f)
+{
+    return {name, f};
+}
+
+} // namespace redemption_unit_test__
+
+#define RED_TEST_FUNC_CTX(fname) redemption_unit_test__::fn_invoker( \
+    #fname, [](auto&&... args){ return fname(args...); })
+
+#define RED_TEST_INVOKER(fname) redemption_unit_test__::fn_invoker( \
+    #fname, [&](auto&&... args){ return fname(args...); })
+
+#define RED_TEST_F(fname) [&]{                                     \
+    auto BOOST_PP_CAT(fctx__, __LINE__) = RED_TEST_INVOKER(fname); \
+    RED_TEST_F_I
+
+#define RED_TEST_F_I(...) RED_TEST(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()
+
+#define RED_REQUIRE_F(fname) [&]{                                  \
+    auto BOOST_PP_CAT(fctx__, __LINE__) = RED_TEST_INVOKER(fname); \
+    RED_REQUIRE_F_I
+
+#define RED_REQUIRE_F_I(...) RED_REQUIRE(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()

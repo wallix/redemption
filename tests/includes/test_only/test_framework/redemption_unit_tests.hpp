@@ -68,6 +68,14 @@ namespace redemption_unit_test__
 # define RED_TEST_CHECK(expr) RED_CHECK(expr)
 # define RED_TEST_CONTEXT(iostream_expr) if (::redemption_unit_test__::Stream{} << iostream_expr)
 
+# define RED_TEST_INVOKER(fname) fname
+# define RED_TEST_FUNC_CTX(fname) ([](auto&&... xs) { \
+    return fname(static_cast<decltype(xs)&&>(xs)...); })
+# define RED_TEST_F(fname) ::redemption_unit_test__::X(bool(fname RED_TEST_F_I
+# define RED_TEST_F_I(...) __VA_ARGS__))
+# define RED_REQUIRE_F(fname) ::redemption_unit_test__::X(bool(fname RED_REQUIRE_F_I
+# define RED_REQUIRE_F_I(...) __VA_ARGS__))
+
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
@@ -468,16 +476,7 @@ REDEMPTION_DIAGNOSTIC_POP
 template<>
 struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
 {
-    void operator()(std::ostream& out, redemption_unit_test__::int_variation const & x) const
-    {
-        if (x.left == x.right) {
-            out << x.left;
-        }
-        else {
-            out << x.value << "+-" << x.variant << (x.is_percent ? "%" : "")
-                << " [" << x.left << ", " << x.right << "]";
-        }
-    }
+    void operator()(std::ostream& out, redemption_unit_test__::int_variation const & x) const;
 };
 
 /// CHECK
