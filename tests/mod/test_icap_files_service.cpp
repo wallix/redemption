@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPNewFile) {
     icap_new_file.emit(message);
 
     auto exp_data = cstr_array_view(
-        "\x00\x00\x00\x01\x00\x00\x00\x0a\x66\x69\x6c\x65\x5f\x6e\x61\x6d" //........file_nam
+        "\x00\x00\x00\x01\x00\x00\x00\x0e\x66\x69\x6c\x65\x5f\x6e\x61\x6d" //........file_nam
         "\x65\x2e\x66\x69\x6c\x65"                                         //e.file
     );
 
@@ -162,8 +162,8 @@ RED_AUTO_TEST_CASE(testFileValid)
         n = icap_end_of_file(service, file_id);
         RED_CHECK(n>0);
 
-        int result = icap_get_result(service);
-        RED_CHECK_EQUAL(result, LocalICAPServiceProtocol::ACCEPTED_FLAG);
+        LocalICAPServiceProtocol::ICAPResult result = icap_get_result(service);
+        RED_CHECK_EQUAL(result.result, LocalICAPServiceProtocol::ACCEPTED_FLAG);
     }
 
     n = icap_close_session(service);
@@ -212,8 +212,24 @@ RED_AUTO_TEST_CASE(testFileInvalid)
             RED_CHECK(n>0);
         }
 
-        int result = icap_get_result(service);
-        RED_CHECK_EQUAL(result, LocalICAPServiceProtocol::REJECTED_FLAG);
+        LocalICAPServiceProtocol::ICAPResult result = icap_get_result(service);
+        RED_CHECK_EQUAL(result.result, LocalICAPServiceProtocol::REJECTED_FLAG);
+
+        std::string expected_content =
+        "\xaVIRUS FOUND\xa"
+        "\xa"
+        "\xa"
+        "You tried to upload/download a file that contains the virus: \xa"
+        "    Win.Trojan.Agent-1810289 \xa"
+        "\xa"
+        "The Http location is: \xa"
+        "  http://127.0.1.1/the_zeus_binary_chapros \xa"
+        "\xa"
+        "\xa"
+        "  For more information contact your system administrator\xa";
+
+        RED_CHECK_EQUAL(result.content.substr(0, expected_content.length()) , expected_content);
+
     }
 
     n = icap_close_session(service);

@@ -34,6 +34,7 @@
 
 
 
+
 struct ICAPService
 {
 
@@ -53,7 +54,6 @@ public:
         return this->file_id_int;
     }
 };
-
 
 
 namespace LocalICAPServiceProtocol {
@@ -99,7 +99,6 @@ namespace LocalICAPServiceProtocol {
     };
 
 
-
 struct ICAPHeader {
     const uint8_t msg_type;
     const uint32_t msg_len;
@@ -136,6 +135,7 @@ struct ICAPHeader {
     // msg_size: An unsigned, 32-bit integer that indicate length of following message
     //           data.
 
+
     ICAPHeader(const uint8_t msg_type, const uint32_t msg_len)
     : msg_type(msg_type)
     , msg_len(msg_len) {}
@@ -145,7 +145,6 @@ struct ICAPHeader {
         stream.out_uint32_be(msg_len);
     }
 };
-
 
 
 struct ICAPNewFile {
@@ -182,6 +181,7 @@ struct ICAPNewFile {
     // File_size: An unsigned, 32-bit integer that indicate file length
     //            in bytes.
 
+
     ICAPNewFile(const int file_id, const std::string & file_name)
     : file_id(file_id)
     , file_name(file_name) {}
@@ -189,10 +189,9 @@ struct ICAPNewFile {
     void emit(OutStream & stream) {
 
         stream.out_uint32_be(this->file_id);
-        stream.out_uint32_be(this->file_name.length()-4);
+        stream.out_uint32_be(this->file_name.length());
         stream.out_string(this->file_name.c_str());
     }
-
 };
 
 
@@ -213,6 +212,7 @@ struct ICAPEndOfFile {
     // +---------------------------------------------------------------+
 
     // File_id: An unsigned, 32-bit integer that contains the complete file id.
+
 
     ICAPEndOfFile(const int file_id)
     : file_id(file_id) {}
@@ -249,6 +249,7 @@ struct ICAPFileDataHeader
 
     // DATA: A binary, variable length, pay load data from a file .
 
+
     ICAPFileDataHeader(const int file_id)
     : file_id(file_id) {}
 
@@ -277,7 +278,7 @@ struct ICAPResult {
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     // |    Result     |                local_File_id                  |
     // +---------------+-----------------------------------------------+
-    // |               |               content length                  |
+    // |               |               content_lend gth                |
     // +---------------+-----------------------------------------------+
     // |               |                  content                      |
     // +---------------+-----------------------------------------------+
@@ -287,21 +288,27 @@ struct ICAPResult {
     // Result: An unsigned, 8-bit integer that indicate result analysis. Value
     //         must be ACCEPTED_FLAG, REJECTED_FLAG or ERROR_FLAG.
 
-    // +--------------------+----------------------------------------------+
-    // | Value              | Meaning                                      |
-    // +--------------------+----------------------------------------------+
-    // | ACCEPTED_FLAG      | File is valid                                |
-    // | 0x00               |                                              |
-    // +--------------------+----------------------------------------------+
-    // | REJECTED_FLAG      | File is NOT valid                            |
-    // | 0x01               |                                              |
-    // +--------------------+----------------------------------------------+
-    // | ERROR_FLAG         | File analysis error                          |
-    // | 0x02               |                                              |
-    // +--------------------+----------------------------------------------+
+    //   +--------------------+----------------------------------------------+
+    //   | Value              | Meaning                                      |
+    //   +--------------------+----------------------------------------------+
+    //   | ACCEPTED_FLAG      | File is valid                                |
+    //   | 0x00               |                                              |
+    //   +--------------------+----------------------------------------------+
+    //   | REJECTED_FLAG      | File is NOT valid                            |
+    //   | 0x01               |                                              |
+    //   +--------------------+----------------------------------------------+
+    //   | ERROR_FLAG         | File analysis error                          |
+    //   | 0x02               |                                              |
+    //   +--------------------+----------------------------------------------+
 
-    // File_id:  An unsigned, 32-bit integer that contains file id
-    //          corresponding analysis result.
+    // local_File_id: An unsigned, 32-bit integer that contains client local file
+    //                id sent to the validator.
+
+    // content_length: An unsigned, 32-bit integer that contains result content
+    //                 length.
+
+    // content: A variable length, ascii string that contains analysis result.
+
 
     ICAPResult()
     : result(LocalICAPServiceProtocol::ERROR_FLAG) {}
@@ -337,7 +344,7 @@ struct ICAPResult {
 ICAPService * icap_open_session(std::string & socket_path);
 int icap_open_file(ICAPService * service, std::string & file_name);
 int icap_send_data(const ICAPService * service, const int file_id, const char * data, const size_t size);
-uint8_t icap_get_result(const ICAPService * service);
+LocalICAPServiceProtocol::ICAPResult icap_get_result(const ICAPService * service);
 int icap_end_of_file(ICAPService * service, const int file_id);
 int icap_close_session(ICAPService * service);
 
@@ -361,7 +368,7 @@ int icap_open_file(ICAPService * service, std::string & file_name) {
 
         StaticOutStream<1024> message;
 
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 4+file_name.length());
+        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 8+file_name.length());
         header.emit(message);
 
         LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name);
@@ -420,7 +427,7 @@ int icap_send_data(const ICAPService * service, const int file_id, const char * 
     return total_n;
 }
 
-uint8_t icap_get_result(const ICAPService * service) {
+LocalICAPServiceProtocol::ICAPResult icap_get_result(const ICAPService * service) {
 
     LocalICAPServiceProtocol::ICAPResult result;
     int read_data_len = -1;
@@ -437,7 +444,7 @@ uint8_t icap_get_result(const ICAPService * service) {
         result.receive(stream_data);
     }
 
-    return result.result;
+    return result;
 }
 
 int icap_end_of_file(ICAPService * service, const int file_id) {
