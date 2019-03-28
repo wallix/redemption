@@ -495,6 +495,40 @@ operator << (std::basic_ostream<Ch, Tr> & os, RdpModeConsole e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class SessionProbeDisabledFeature {
+    none = 0,
+    // Java Access Bridge
+    jab = 1,
+    // MS Active Accessbility
+    msaa = 2,
+    // MS UI Automation
+    msuia = 4,
+};
+
+inline bool is_valid_enum_value(SessionProbeDisabledFeature e)
+{
+    return static_cast<unsigned long>(e) <= 7;
+}
+
+inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
+{ return static_cast<SessionProbeDisabledFeature>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
+inline SessionProbeDisabledFeature operator & (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
+{ return static_cast<SessionProbeDisabledFeature>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
+inline SessionProbeDisabledFeature operator ~ (SessionProbeDisabledFeature x)
+{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(7)); }
+inline SessionProbeDisabledFeature operator + (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x | y; }
+inline SessionProbeDisabledFeature operator - (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x & ~y; }
+inline SessionProbeDisabledFeature & operator |= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x | y; }
+inline SessionProbeDisabledFeature & operator &= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x & y; }
+inline SessionProbeDisabledFeature & operator += (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x + y; }
+inline SessionProbeDisabledFeature & operator -= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x - y; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeDisabledFeature e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth {
     // 8-bit

@@ -363,7 +363,7 @@ private:
     const uint32_t                    session_probe_handle_usage_limit;
     const uint32_t                    session_probe_memory_usage_limit;
 
-    const uint32_t                    session_probe_disabled_features;
+    const SessionProbeDisabledFeature session_probe_disabled_features;
 
     const bool                        session_probe_ignore_ui_less_processes_during_end_of_session_check;
 

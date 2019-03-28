@@ -992,7 +992,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_disabled_features&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
+                ::configs::spec_type<SessionProbeDisabledFeature>{},
                 av
             );
         }

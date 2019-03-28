@@ -337,7 +337,7 @@ private:
     const uint32_t param_handle_usage_limit;
     const uint32_t param_memory_usage_limit;
 
-    const uint32_t param_disabled_features;
+    const SessionProbeDisabledFeature param_disabled_features;
 
     const bool param_session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
@@ -424,7 +424,7 @@ public:
         uninit_checked<uint32_t> session_probe_handle_usage_limit;
         uninit_checked<uint32_t> session_probe_memory_usage_limit;
 
-        uninit_checked<uint32_t> session_probe_disabled_features;
+        uninit_checked<SessionProbeDisabledFeature> session_probe_disabled_features;
 
         uninit_checked<bool> session_probe_ignore_ui_less_processes_during_end_of_session_check;
 

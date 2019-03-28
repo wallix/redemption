@@ -107,7 +107,7 @@ struct ModRDPParams {
     uint32_t                     session_probe_handle_usage_limit = 0;
     uint32_t                     session_probe_memory_usage_limit = 0;
 
-    uint32_t                     session_probe_disabled_features = 0;
+    SessionProbeDisabledFeature  session_probe_disabled_features = SessionProbeDisabledFeature::none;
 
     bool                         session_probe_ignore_ui_less_processes_during_end_of_session_check = true;
 

@@ -1930,13 +1930,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// Disable some features of Session Probe: <br/>
-    ///   0x00000001: Java Access Bridge <br/>
-    ///   0x00000002: MS Active Accessbility <br/>
-    ///   0x00000004: MS UI Automation <br/>
-    /// type: uint32_t <br/>
+    /// type: SessionProbeDisabledFeature <br/>
     /// sesman -> proxy <br/>
-    /// value{0} <br/>
+    /// value = static_cast<type>(0) <br/>
     struct mod_rdp::session_probe_disabled_features {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1945,10 +1941,10 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(58);
-        using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
+        using type = SessionProbeDisabledFeature;
+        using sesman_and_spec_type = SessionProbeDisabledFeature;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value = static_cast<type>(0);
     };
     /// If enabled, disconnected session can be recovered by a different primary user. <br/>
     /// type: bool <br/>
@@ -4709,6 +4705,7 @@ struct mod_rdp
 , cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_on_keepalive_timeout
+, cfg::mod_rdp::session_probe_disabled_features
 , cfg::mod_rdp::server_cert_check
 , cfg::mod_rdp::server_access_allowed_message
 , cfg::mod_rdp::server_cert_create_message
@@ -4757,7 +4754,6 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_memory_usage_limit
 , cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check
 , cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field
-, cfg::mod_rdp::session_probe_disabled_features
 , cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::hide_client_name

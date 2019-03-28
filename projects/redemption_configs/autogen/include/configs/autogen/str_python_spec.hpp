@@ -483,12 +483,13 @@
 "#_hidden\n"
 "session_probe_childless_window_as_unidentified_input_field = boolean(default=True)\n\n"
 
-"# Disable some features of Session Probe:\n"
-"#   0x00000001: Java Access Bridge\n"
-"#   0x00000002: MS Active Accessbility\n"
-"#   0x00000004: MS UI Automation\n"
+"#   0: none\n"
+"#   1: Java Access Bridge\n"
+"#   2: MS Active Accessbility\n"
+"#   4: MS UI Automation\n"
+"# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_hidden\n"
-"session_probe_disabled_features = integer(min=0, default=0)\n\n"
+"session_probe_disabled_features = integer(min=0, max=7, default=0)\n\n"
 
 "# If enabled, disconnected session can be recovered by a different primary user.\n"
 "#_hidden\n"
