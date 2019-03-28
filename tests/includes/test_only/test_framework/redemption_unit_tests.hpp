@@ -89,12 +89,6 @@ namespace redemption_unit_test__
 #define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size) \
     ::redemption_unit_test__::X(bool(filesize(filename) == (size)))
 
-#define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) \
-    ::redemption_unit_test__::X(bool(filesize(filename) == (void(size1), size2)))
-
-#define RED_CHECK_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) \
-    ::redemption_unit_test__::X(bool(filesize(filename) == (void(size1), void(size2), size3)))
-
 // require #include "test_only/get_file_contents.hpp"
 #define RED_CHECK_FILE_CONTENTS(filename, contents) \
     ::redemption_unit_test__::X(bool(get_file_contents(filename) == (contents)))
@@ -512,8 +506,20 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
 using namespace redemption_unit_test__::literals; // NOLINT
 REDEMPTION_DIAGNOSTIC_POP
 
-RED_TEST_DELEGATE_PRINT(redemption_unit_test__::int_variation,
-    x.value << "+-" << x.variant << (x.is_percent ? "%" : "") << " [" << x.left << ", " << x.right << "]");
+template<>
+struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
+{
+    void operator()(std::ostream& out, redemption_unit_test__::int_variation const & x) const
+    {
+        if (x.left == x.right) {
+            out << x.left;
+        }
+        else {
+            out << x.value << "+-" << x.variant << (x.is_percent ? "%" : "")
+                << " [" << x.left << ", " << x.right << "]";
+        }
+    }
+};
 
 /// CHECK
 //@{

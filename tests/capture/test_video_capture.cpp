@@ -128,17 +128,17 @@ RED_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_videocapture-000000.png", 3099, 3099);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000000.png", 3099);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000000.mp4", 25467 +- 200_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_videocapture-000001.png", 3104, 3104);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000001.png", 3104);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000001.mp4", 25016 +- 200_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_videocapture-000002.png", 3107, 3107);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000002.png", 3107);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000002.mp4", 25192 +- 200_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_videocapture-000003.png", 3099, 3099);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000003.png", 3099);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000003.mp4", 24640 +- 200_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_videocapture-000004.png", 3098, 3098);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000004.png", 3098);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000004.mp4", 24409 +- 200_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_videocapture-000005.png", 3098, 3098);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000005.png", 3098);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_videocapture-000005.mp4", 6618 +- 200_v);
 }
 
@@ -282,27 +282,27 @@ RED_AUTO_TEST_CASE(SequencedVideoCaptureX264)
         simple_movie(now, 250, drawable, video_capture, false, true);
     }
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000000.png", 3099, 3099);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000000.png", 3099);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000000.mp4", 13477 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000001.png", 3099, 3099);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000001.png", 3099);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000001.mp4", 13470 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000002.png", 3104, 3104);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000002.png", 3104);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000002.mp4", 13299 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000003.png", 3101, 3101);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000003.png", 3101);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000003.mp4", 13196 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000004.png", 3107, 3107);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000004.png", 3107);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000004.mp4", 13212 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000005.png", 3101, 3101);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000005.png", 3101);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000005.mp4", 13457 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000006.png", 3099, 3099);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000006.png", 3099);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000006.mp4", 13054 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000007.png", 3101, 3101);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000007.png", 3101);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000007.mp4", 13064 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000008.png", 3098, 3098);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000008.png", 3098);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000008.mp4", 12903 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000009.png", 3098, 3098);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000009.png", 3098);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000009.mp4", 12983 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000010.png", 3098, 3098);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000010.png", 3098);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./opaquerect_seqvideocapture_timestamp2-000010.mp4", 6618 +- 50_v);
 }
 #else

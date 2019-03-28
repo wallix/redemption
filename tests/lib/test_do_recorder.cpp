@@ -1022,7 +1022,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
     RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000000.png", 26981);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000001.png", 27536);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000000.mp4", 11226843 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("./recorder-chunk-000001.mp4", 86044, 86030);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000001.mp4", 86037 +- 100_v);
     RED_CHECK_FILE_CONTENTS("./recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
     ::unlink("./recorder-chunk.pgs");
     RED_CHECK_FILE_CONTENTS("./recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");
@@ -1197,14 +1197,13 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
 {
     const struct CheckFiles {
         const char * filename;
-        ssize_t size;
-        ssize_t size2 = 0;
+        redemption_unit_test__::int_variation size;
     } fileinfo[] = {
-        {"/tmp/recorder-chunk-meta-000000.mp4", 411572},
-        {"/tmp/recorder-chunk-meta-000000.png", 15353},
-        {"/tmp/recorder-chunk-meta-000001.mp4", 734169, 734095},
-        {"/tmp/recorder-chunk-meta-000001.png", 40151},
-        {"/tmp/recorder-chunk-meta.pgs",        37},
+        {"/tmp/recorder-chunk-meta-000000.mp4", 411572 +- 100_v},
+        {"/tmp/recorder-chunk-meta-000000.png", 15353 +- 0_v},
+        {"/tmp/recorder-chunk-meta-000001.mp4", 734140 +- 100_v},
+        {"/tmp/recorder-chunk-meta-000001.png", 40151 +- 0_v},
+        {"/tmp/recorder-chunk-meta.pgs",        37 +- 0_v},
     };
 
     for (auto & f : fileinfo) {
@@ -1236,7 +1235,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk-meta.meta", "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n");
 
     for (auto x: fileinfo) {
-        RED_CHECK_FILE_SIZE_AND_CLEAN2(x.filename, x.size, x.size2);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
     }
 }
 
