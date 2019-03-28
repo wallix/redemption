@@ -3076,28 +3076,28 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         const char * filename;
 
         filename = png_seq.get(0);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3102, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3102 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(1);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3121, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3121 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(2);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3131, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3131 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(3);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3143, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3143 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(4);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 4079, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 4079 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(5);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 4103, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 4103 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(6);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 4122, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 4122 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(7);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 4137, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 4137 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
         RED_CHECK_PREDICATE(file_not_exists, (filename));
@@ -3322,28 +3322,28 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         const char * filename;
 
         filename = png_seq.get(0);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3102, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3102 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(1);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3127, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3127 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(2);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3145, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3145 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(3);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 3162, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3162 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(4);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 2304, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 2304 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(5);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 2320, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 2320 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(6);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 2334, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 2334 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(7);
-        RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, 2345, 100);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 2345 +- 100_v);
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
         RED_CHECK_PREDICATE(file_not_exists, (filename));

@@ -984,9 +984,9 @@ RED_AUTO_TEST_CASE(TestAppRecorderVlc)
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"./recorder.1.flva\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN("./recorder.1-000000.flv", 62513357, 100);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1-000000.flv", 62513357 +- 100_v);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1-000001.flv", 7555247);
-    RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN("./recorder.1.flv", 70069293, 100);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1.flv", 70069293 +- 100_v);
 
     ::unlink("recorder.1.pgs");
     ::unlink("recorder.1-000000.png");
@@ -1021,7 +1021,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
 
     RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000000.png", 26981);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000001.png", 27536);
-    RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN("./recorder-chunk-000000.mp4", 11226843, 100);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000000.mp4", 11226843 +- 100_v);
     RED_CHECK_FILE_SIZE_AND_CLEAN2("./recorder-chunk-000001.mp4", 86044, 86030);
     RED_CHECK_FILE_CONTENTS("./recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
     ::unlink("./recorder-chunk.pgs");

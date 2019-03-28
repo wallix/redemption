@@ -20,6 +20,7 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
+#include "cxx/diagnostic.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include <iterator> // std:begin / std::end
 #include <type_traits>
@@ -39,6 +40,8 @@ namespace redemption_unit_test__
             return *this;
         }
     };
+
+    template<class> class red_test_print_type_t;
 } // namespace redemption_unit_test__
 
 # define FIXTURES_PATH "./tests/fixtures"
@@ -50,6 +53,8 @@ namespace redemption_unit_test__
 # define RED_TEST_PASSPOINT() do { } while(0)
 # define RED_TEST_DONT_PRINT_LOG_VALUE(type)
 # define RED_TEST_PRINT_TYPE_FUNCTION_NAME red_test_print_type
+# define RED_TEST_PRINT_TYPE_STRUCT_NAME redemption_unit_test__::red_test_print_type_t
+
 
 # define RED_AUTO_TEST_CASE(test_name)       \
     struct test_name { void operator()(); }; \
@@ -158,12 +163,6 @@ namespace redemption_unit_test__
 # define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size) \
     RED_TEST_FILE_SIZE_AND_CLEAN(CHECK, filename, size)
 
-#define RED_CHECK_FILE_SIZE_WITH_VARIATION(filename, size, variation) \
-    RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN_ON_DEMAND(CHECK, filename, size, variation, false)
-
-#define RED_CHECK_FILE_SIZE_WITH_VARIATION_AND_CLEAN(filename, size, variation) \
-    RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN_ON_DEMAND(CHECK, filename, size, variation, true)
-
 # define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) \
     RED_TEST_FILE_SIZE_AND_CLEAN2(CHECK, filename, size1, size2)
 
@@ -187,9 +186,6 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_FILE_SIZE_AND_CLEAN(filename, size) \
     RED_TEST_FILE_SIZE_AND_CLEAN(REQUIRE, filename, size)
 
-#define RED_REQUIRE_FILE_SIZE_WITH_VARIATION_AND_CLEAN(filename, size, variation) \
-    RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN_ON_DEMAND(REQUIRE, filename, size, variation, true)
-
 # define RED_REQUIRE_FILE_SIZE_AND_CLEAN2(filename, size1, size2) \
     RED_TEST_FILE_SIZE_AND_CLEAN2(REQUIRE, filename, size1, size2)
 
@@ -200,7 +196,6 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
     RED_TEST_FILE_CONTENTS(REQUIRE, filename, contents)
 //@}
-
 
 # define RED_TEST_STRING_CHECK "check"
 # define RED_TEST_STRING_REQUIRE "require"
@@ -249,31 +244,13 @@ namespace redemption_unit_test__
             (void("memref__ = " #memref), memref__));           \
     }(mem, memref)
 
-# define RED_TEST_FILE_SIZE_AND_CLEAN(lvl, filename, size)          \
-    [](auto&& filename__, int const size__) {                       \
-        int const fsize__ = filesize(filename__);                   \
-        RED_##lvl##_MESSAGE(                                        \
-            fsize__ == size__,                                      \
-            RED_TEST_STRING_##lvl << fsize__ << " == " << size__ << \
-            " has failed [filesize(" #filename ") != " #size "]");  \
-        ::unlink(filename__);                                       \
+# define RED_TEST_FILE_SIZE_AND_CLEAN(lvl, filename, size) \
+    [](auto&& filename__, auto const size__) {             \
+        BOOST_TEST_CONTEXT("filename: " << filename__) {   \
+            RED_##lvl(filesize(filename__) == size__);     \
+            ::unlink(filename__);                          \
+        }                                                  \
     }(filename, size)
-
-
-#define RED_TEST_FILE_SIZE_WITH_VARIATION_AND_CLEAN_ON_DEMAND(lvl, filename, size, variation, clean) \
-    [](auto&& filename__, int const size__, int const variation__, bool const clean__) {             \
-        int const fsize__ = filesize(filename__);                                                    \
-        RED_##lvl##_MESSAGE(                                                                         \
-            fsize__ >= size__ - variation__,                                                         \
-            RED_TEST_STRING_##lvl << fsize__ << " >= " << (size__ - variation__) <<                  \
-            " has failed [filesize(" #filename ") < " #size " - " #variation "]");                   \
-        RED_##lvl##_MESSAGE(                                                                         \
-            fsize__ <= size__ + variation__,                                                         \
-            RED_TEST_STRING_##lvl << fsize__ << " <= " << (size__ + variation__) <<                  \
-            " has failed [filesize(" #filename ") > " #size " + " #variation "]");                   \
-        if (clean__) { ::unlink(filename__); }                                                       \
-    }(filename, size, variation, clean)
-
 
 # define RED_TEST_FILE_SIZE_AND_CLEAN2(lvl, filename, size1, size2)   \
     [](auto&& filename__, int const size1__, int const size2__) {     \
@@ -390,12 +367,153 @@ namespace redemption_unit_test__
     {                                                          \
       out << stream_expr;                                      \
     }                                                          \
-  };
+  }
 
 #define RED_TEST_DELEGATE_PRINT_ENUM(type) \
   RED_TEST_DELEGATE_PRINT(type,            \
     #type << "{" << +::std::underlying_type_t<::type>(x) << "}")
 
+
+namespace redemption_unit_test__
+{
+
+struct int_variation
+{
+    int left;
+    int right;
+    int value;
+    int variant;
+    bool is_percent;
+};
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator==(T const& x, int_variation const& variation) noexcept
+{
+    return variation.left <= x && x <= variation.right;
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator!=(T const& x, int_variation const& variation) noexcept
+{
+    return !(x == variation);
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator<(T const& x, int_variation const& variation) noexcept
+{
+    return x < variation.right;
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator>(T const& x, int_variation const& variation) noexcept
+{
+    return x > variation.left;
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator<=(T const& x, int_variation const& variation) noexcept
+{
+    return x <= variation.right;
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator>=(T const& x, int_variation const& variation) noexcept
+{
+    return x >= variation.left;
+}
+
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator==(int_variation const& variation, T const& x) noexcept
+{
+    return x == variation;
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator!=(int_variation const& variation, T const& x) noexcept
+{
+    return !(x == variation);
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator<(int_variation const& variation, T const& x) noexcept
+{
+    return x >= variation;
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator>(int_variation const& variation, T const& x) noexcept
+{
+    return x <= variation;
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator<=(int_variation const& variation, T const& x) noexcept
+{
+    return x > variation;
+}
+
+template<class T>
+std::enable_if_t<std::is_integral_v<T>, bool>
+operator>=(int_variation const& variation, T const& x) noexcept
+{
+    return x < variation;
+}
+
+struct def_variation1
+{
+    int variantion;
+    bool is_percent;
+};
+
+struct def_variation2
+{
+    int variantion;
+    bool is_percent;
+};
+
+inline def_variation2 operator-(def_variation1 const& variation)
+{
+    return {variation.variantion, variation.is_percent};
+}
+
+template<class T>
+int_variation operator+(T const& x_, def_variation2 const& variation)
+{
+    const int x = x_;
+    if (variation.is_percent) {
+        auto a = x * variation.variantion / 100;
+        return {x - a, x + a, x, variation.variantion, true};
+    }
+    return {x - variation.variantion, x + variation.variantion, x, variation.variantion, false};
+}
+
+namespace literals
+{
+    inline def_variation1 operator""_percent(unsigned long long x) { return {int(x), true}; }
+    inline def_variation1 operator""_v(unsigned long long x) { return {int(x), false}; }
+}
+
+} // namespace redemption_unit_test__
+
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
+using namespace redemption_unit_test__::literals; // NOLINT
+REDEMPTION_DIAGNOSTIC_POP
+
+RED_TEST_DELEGATE_PRINT(redemption_unit_test__::int_variation,
+    x.value << "+-" << x.variant << (x.is_percent ? "%" : "") << " [" << x.left << ", " << x.right << "]");
 
 /// CHECK
 //@{
