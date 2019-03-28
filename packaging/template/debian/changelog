@@ -1,3 +1,10 @@
+redemption (1.1.149%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Add mechanism to disable some features of Session Probe.
+  * Reset parameters of application after returning to Selector.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 28 Mar 2019 15:04:52 +0200
+
 redemption (1.1.147%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Close encrypted recorded file before rename it.
