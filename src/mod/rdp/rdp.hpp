@@ -391,6 +391,8 @@ protected:
     const uint32_t                    session_probe_handle_usage_limit;
     const uint32_t                    session_probe_memory_usage_limit;
 
+    const uint32_t                    session_probe_disabled_features;
+
     const bool                        session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
     const bool                        session_probe_childless_window_as_unidentified_input_field;
@@ -1038,6 +1040,7 @@ public:
         , session_probe_enable_crash_dump(mod_rdp_params.session_probe_enable_crash_dump)
         , session_probe_handle_usage_limit(mod_rdp_params.session_probe_handle_usage_limit)
         , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
+        , session_probe_disabled_features(mod_rdp_params.session_probe_disabled_features)
         , session_probe_ignore_ui_less_processes_during_end_of_session_check(mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
         , session_probe_childless_window_as_unidentified_input_field(mod_rdp_params.session_probe_childless_window_as_unidentified_input_field)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
@@ -1937,10 +1940,13 @@ protected:
         session_probe_virtual_channel_params.session_probe_enable_crash_dump        =
             this->session_probe_enable_crash_dump;
 
-        session_probe_virtual_channel_params.session_probe_handle_usage_limit        =
+        session_probe_virtual_channel_params.session_probe_handle_usage_limit       =
             this->session_probe_handle_usage_limit;
-        session_probe_virtual_channel_params.session_probe_memory_usage_limit        =
+        session_probe_virtual_channel_params.session_probe_memory_usage_limit       =
             this->session_probe_memory_usage_limit;
+
+        session_probe_virtual_channel_params.session_probe_disabled_features        =
+            this->session_probe_disabled_features;
 
         session_probe_virtual_channel_params.session_probe_ignore_ui_less_processes_during_end_of_session_check =
             this->session_probe_ignore_ui_less_processes_during_end_of_session_check;

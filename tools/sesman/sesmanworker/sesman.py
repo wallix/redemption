@@ -1953,6 +1953,7 @@ class Sesman():
                 u'session_probe_enable_crash_dump' : 'enable_crash_dump',
                 u'session_probe_handle_usage_limit' : 'handle_usage_limit',
                 u'session_probe_memory_usage_limit' : 'memory_usage_limit',
+                u'session_probe_disabled_features': 'disabled_features',
                 u'session_probe_ignore_ui_less_processes_during_end_of_session_check': 'ignore_ui_less_processes_during_end_of_session_check',
                 u'session_probe_childless_window_as_unidentified_input_field': 'childless_window_as_unidentified_input_field',
                 u'session_probe_windows_of_these_applications_as_unidentified_input_field': 'windows_of_these_applications_as_unidentified_input_field',

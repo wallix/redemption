@@ -1442,6 +1442,8 @@ public:
                 mod_rdp_params.session_probe_handle_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
                 mod_rdp_params.session_probe_memory_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
 
+                mod_rdp_params.session_probe_disabled_features     = this->ini.get<cfg::mod_rdp::session_probe_disabled_features>();
+
                 mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = this->ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
 
                 mod_rdp_params.session_probe_childless_window_as_unidentified_input_field = ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();

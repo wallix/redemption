@@ -405,6 +405,13 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, sesman_to_proxy, type_<types::u32>(), "session_probe_memory_usage_limit", set(0));
         W.sep();
 
+        W.member(hidden_in_gui, sesman_to_proxy, type_<types::u32>(), "session_probe_disabled_features", desc{
+            "Disable some features of Session Probe:\n"
+            "  0x00000001: Java Access Bridge\n"
+            "  0x00000002: MS Active Accessbility\n"
+            "  0x00000004: MS UI Automation\n"
+        }, set(0x0));
+
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", set(true));
         W.sep();
 

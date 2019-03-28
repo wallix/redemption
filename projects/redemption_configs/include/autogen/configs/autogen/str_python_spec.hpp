@@ -480,6 +480,13 @@
 "#_advanced\n"
 "session_probe_memory_usage_limit = integer(min=0, default=0)\n\n"
 
+"# Disable some features of Session Probe:\n"
+"#   0x00000001: Java Access Bridge\n"
+"#   0x00000002: MS Active Accessbility\n"
+"#   0x00000004: MS UI Automation\n"
+"#_hidden\n"
+"session_probe_disabled_features = integer(min=0, default=0)\n\n"
+
 "#_hidden\n"
 "session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)\n\n"
 
