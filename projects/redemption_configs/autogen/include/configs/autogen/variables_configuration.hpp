@@ -981,7 +981,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// Enables support of Clent Fast-Path Input Event PDUs. <br/>
+    /// Enables support of Client Fast-Path Input Event PDUs. <br/>
     /// type: bool <br/>
     /// value{true} <br/>
     struct client::fast_path {
@@ -989,6 +989,19 @@ namespace cfg {
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "client";
         static constexpr char const * name = "fast_path";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
+    /// Enables support of the remoteFX codec. <br/>
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct client::remotefx {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "remotefx";
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4771,6 +4784,7 @@ struct client
 , cfg::client::persist_bitmap_cache_on_disk
 , cfg::client::bitmap_compression
 , cfg::client::fast_path
+, cfg::client::remotefx
 , cfg::client::enable_suppress_output
 , cfg::client::show_target_user_in_f12_message
 , cfg::client::enable_new_pointer_update

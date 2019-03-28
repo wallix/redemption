@@ -493,6 +493,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "remotefx")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::remotefx&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "enable_suppress_output")) {
             ::configs::parse_and_log(
                 context, key,

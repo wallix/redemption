@@ -2873,7 +2873,7 @@ private:
                     send_multifrag_caps = true;
                 }
 
-                if (this->client_info.screen_info.bpp == BitsPerPixel{32}) {
+                if (this->ini.get<cfg::client::remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
                 	BitmapCodecCaps bitmap_codec_caps(false);
 
                 	bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);

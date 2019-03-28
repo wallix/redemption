@@ -278,10 +278,15 @@
 "#_advanced\n"
 "#bitmap_compression = 1\n\n"
 
-"# Enables support of Clent Fast-Path Input Event PDUs.\n"
+"# Enables support of Client Fast-Path Input Event PDUs.\n"
 "# value: 0 or 1\n"
 "#_advanced\n"
 "#fast_path = 1\n\n"
+
+"# Enables support of the remoteFX codec.\n"
+"# value: 0 or 1\n"
+"#_advanced\n"
+"#remotefx = 1\n\n"
 
 "# value: 0 or 1\n"
 "#enable_suppress_output = 1\n\n"
