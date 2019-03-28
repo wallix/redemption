@@ -220,8 +220,6 @@ RED_AUTO_TEST_CASE(TestFront)
     LCGRandom gen2(0);
     LCGTime timeobj;
 
-    RED_CHECK(true);
-
     front.clear_channels();
     NullAuthentifier authentifier;
     class RDPMetrics * metrics = nullptr;
@@ -375,8 +373,6 @@ RED_AUTO_TEST_CASE(TestFront2)
     GeneratorTransport front_trans(indata, sizeof(indata)-1);
     front_trans.disable_remaining_error();
 
-    RED_CHECK(true);
-
     LCGRandom gen1(0);
     CryptoContext cctx;
     const bool fastpath_support = false;
@@ -422,8 +418,6 @@ RED_AUTO_TEST_CASE(TestFront2)
     //     LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     // }
     //
-    // RED_CHECK(true);
-    //
     // ModRDPParams mod_rdp_params( "administrateur"
     //                            , "S3cur3!1nux"
     //                            , "10.10.47.36"
@@ -455,13 +449,10 @@ RED_AUTO_TEST_CASE(TestFront2)
     // LCGRandom gen2(0);
     // LCGTime timeobj;
     //
-    // RED_CHECK(true);
-    //
     // front.clear_channels();
     //
     // NullAuthentifier authentifier;
     // auto mod = new_mod_rdp(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
-    // RED_CHECK(true);
     //
     // if (verbose > 2){
     //     LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -554,8 +545,6 @@ RED_AUTO_TEST_CASE(TestFront3)
     // GeneratorTransport front_trans(indata, sizeof(indata), verbose);
     TestTransport front_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
-    RED_CHECK(true);
-
     LCGRandom gen1(0);
     CryptoContext cctx;
     const bool fastpath_support = false;
@@ -603,8 +592,6 @@ RED_AUTO_TEST_CASE(TestFront3)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    RED_CHECK(true);
-
     ModRDPParams mod_rdp_params( "administrateur"
                                , "S3cur3!1nux"
                                , "10.10.47.36"
@@ -636,13 +623,10 @@ RED_AUTO_TEST_CASE(TestFront3)
     LCGRandom gen2(0);
     LCGTime timeobj;
 
-    RED_CHECK(true);
-
     front.clear_channels();
 
     NullAuthentifier authentifier;
     mod_rdp mod(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
-    RED_CHECK(true);
 
 
     if (verbose > 2){

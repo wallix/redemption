@@ -42,7 +42,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test COPY
     {
-        RED_CHECK_EQUAL(1, 1);
         BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x01, 0x02, 0x03, 0x04,
@@ -153,7 +152,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test interleaved COLOR and COPY
     {
-        RED_CHECK_EQUAL(1, 1);
         BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x01, 0x02, 0x03, 0x04,
@@ -316,7 +314,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xd6, 0xd0, 0x04, 0xbb, 0xd6, 0x0c, 0x81, 0x00, // 48 FOM SET
         };
 
-        RED_CHECK(1);
         Bitmap bmp2(bpp, bpp, &palette332, 256, 3, compressed, sizeof(compressed), true);
     }
 
@@ -418,7 +415,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xf8, 0x12, 0x01, 0x10, 0xe5, 0xef, 0x1a,
         };
 
-        RED_CHECK(1);
         Bitmap bmp2(bpp, bpp, &palette332, 548, 1, compressed, sizeof(compressed), true);
 
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
@@ -522,7 +518,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xf8, 0x12, 0x01, 0x10, 0xe5, 0xef, 0x1a,
         };
 
-        RED_CHECK(1);
         Bitmap bmp2(BitsPerPixel{16}, BitsPerPixel{16}, &palette332, 548, 1, compressed, sizeof(compressed), true);
 
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
@@ -769,7 +764,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     {
         BitsPerPixel bpp{16};
-        RED_CHECK(1);
 
         uint8_t uncompressed[] = {
         0x1d, 0x99, 0x1d, 0x99, 0x1d, 0x99, 0x1d, 0x99, 0x1d, 0x99, 0x1d, 0x99, 0x1d, 0x99, 0x1d, 0x99,
@@ -3037,7 +3031,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     {
         BitsPerPixel bpp{24};
-        RED_CHECK(1);
 
         uint8_t uncompressed[3072] = {
         /* 0000 */ 0x84, 0x61, 0x29, 0x84, 0x69, 0x29, 0x84, 0x61, 0x29, 0x84, 0x69, 0x29, 0x84, 0x61, 0x29, 0xbd,

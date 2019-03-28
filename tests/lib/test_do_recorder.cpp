@@ -214,8 +214,6 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    RED_CHECK_EQUAL(true, true);
-
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
@@ -324,8 +322,6 @@ RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
             "10",
     };
     int argc = sizeof(argv)/sizeof(char*);
-
-    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
@@ -436,8 +432,6 @@ RED_AUTO_TEST_CASE(TestDecrypterEncrypted)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    RED_CHECK_EQUAL(true, true);
-
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
@@ -456,8 +450,6 @@ RED_AUTO_TEST_CASE(TestDecrypterEncrypted1)
         "--verbose", "10",
     };
     int argc = sizeof(argv)/sizeof(char*);
-
-    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
@@ -483,8 +475,6 @@ RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    RED_CHECK_EQUAL(true, true);
-
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
@@ -509,8 +499,6 @@ RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    RED_CHECK_EQUAL(true, true);
-
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
@@ -534,8 +522,6 @@ RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    RED_CHECK_EQUAL(true, true);
-
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
@@ -557,8 +543,6 @@ RED_AUTO_TEST_CASE(TestVerifier4714)
         "--verbose", "10",
     };
     int argc = sizeof(argv)/sizeof(char*);
-
-    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
@@ -585,8 +569,6 @@ RED_AUTO_TEST_CASE(TestVerifier7192)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    RED_CHECK_EQUAL(true, true);
-
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
@@ -611,8 +593,6 @@ RED_AUTO_TEST_CASE(TestVerifier2510)
         "--verbose", "10",
     };
     int argc = sizeof(argv)/sizeof(char*);
-
-    RED_CHECK_EQUAL(true, true);
 
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
@@ -876,8 +856,6 @@ RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    RED_CHECK_EQUAL(true, true);
-
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
@@ -910,8 +888,6 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    RED_CHECK_EQUAL(true, true);
-
     int res = -1;
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
@@ -942,10 +918,9 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
     int argc = sizeof(argv)/sizeof(char*);
 
     LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    int res = do_main(argc, argv, hmac_fn, trace_fn);
+    RED_CHECK_EQUAL(0, do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"./recorder.1.flva\".\n\n");
-    RED_CHECK_EQUAL(0, res);
 
     RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1-000000.flv", 13450874);
     RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1-000001.flv", 1641583);

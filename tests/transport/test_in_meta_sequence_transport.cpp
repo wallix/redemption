@@ -256,8 +256,6 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
     ));
     cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
 
-    RED_CHECK(true);
-
     // two files: 5 and 10 bytes
     {
         LCGRandom rnd(0);
@@ -277,7 +275,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         crypto_trans.send("BBBBXCCCCX", 10);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
-        RED_CHECK(true);
+        RED_TEST_PASSPOINT();
     }
 
     {

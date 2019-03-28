@@ -3319,43 +3319,29 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
           , "./" , "resizing-capture-1", ".png"
         );
 
-        const char * filename;
-
-        filename = png_seq.get(0);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3102 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(1);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3127 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(2);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3145 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(3);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 3162 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(4);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 2304 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(5);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 2320 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(6);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 2334 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(7);
-        RED_CHECK_FILE_SIZE_AND_CLEAN(filename, 2345 +- 100_v);
-        if (remove_files) { ::unlink(filename); }
-        filename = png_seq.get(8);
+        int i = 0;
+        for (auto size : {
+            3102 +- 100_v,
+            3127 +- 100_v,
+            3145 +- 100_v,
+            3162 +- 100_v,
+            2304 +- 100_v,
+            2320 +- 100_v,
+            2334 +- 100_v,
+            2345 +- 100_v
+        }) {
+            char const* filename = png_seq.get(i);
+            RED_TEST_CONTEXT(i << " filename: " << filename) {
+                RED_CHECK(filesize(filename) == size);
+                if (remove_files) { ::unlink(filename); }
+            }
+            ++i;
+        }
+        char const* filename = png_seq.get(i);
         RED_CHECK_PREDICATE(file_not_exists, (filename));
     }
 
     for (auto x: fileinfo) {
-        auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
-        if (remove_files) { ::unlink(x.filename); }
+        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
     }
 }

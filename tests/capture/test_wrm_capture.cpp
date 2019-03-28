@@ -225,8 +225,6 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
              "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
         ));
 
-        RED_CHECK(true);
-
         cctx.set_trace_type(TraceType::localfile_hashed);
 
         WrmParams wrm_params(
@@ -242,15 +240,11 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             0 //0xFFFF VERBOSE
         );
 
-        RED_CHECK(true);
-
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
             CaptureParams{now, "capture", "", "./", 1000, nullptr, SmartVideoCropping::disable, 0},
             wrm_params/* authentifier */, gd_drawable);
-
-        RED_CHECK(true);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -260,21 +254,15 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        RED_CHECK(true);
-
         gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        RED_CHECK(true);
-
         gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        RED_CHECK(true);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
@@ -283,21 +271,15 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        RED_CHECK(true);
-
         gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        RED_CHECK(true);
-
         gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        RED_CHECK(true);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
@@ -306,10 +288,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
-        RED_CHECK(true);
 
+        RED_TEST_PASSPOINT();
     }
-    RED_CHECK(true);
 
     // TODO: we may have several mwrm sizes as it contains varying length numbers
     // the right solution would be to inject predictable fstat in test environment

@@ -114,7 +114,6 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
         timeout.tv_sec = 5;
         timeout.tv_usec = 0;
 
-        RED_CHECK_EQUAL(true, true);
         int max = sck_server.fd();
         FD_SET(max, &rfds);
 

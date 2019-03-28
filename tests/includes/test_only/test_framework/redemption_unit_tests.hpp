@@ -39,6 +39,8 @@ namespace redemption_unit_test__
         {
             return *this;
         }
+
+        explicit operator bool() const { return true; }
     };
 
     template<class> class red_test_print_type_t;
@@ -64,6 +66,8 @@ namespace redemption_unit_test__
 //@{
 # define RED_TEST(expr) RED_TEST_CHECK(expr)
 # define RED_TEST_CHECK(expr) RED_CHECK(expr)
+# define RED_TEST_CONTEXT(iostream_expr) if (::redemption_unit_test__::Stream{} << iostream_expr)
+
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
@@ -122,12 +126,6 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_FILE_SIZE_AND_CLEAN(filename, size) \
     ::redemption_unit_test__::X(bool(filesize(filename) == (size)))
 
-# define RED_REQUIRE_FILE_SIZE_AND_CLEAN2(filename, size1, size2) \
-    ::redemption_unit_test__::X(bool(filesize(filename) == (void(size1), size2)))
-
-# define RED_REQUIRE_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) \
-    ::redemption_unit_test__::X(bool(filesize(filename) == (void(size1), void(size2), size3)))
-
 // require #include "test_only/get_file_contents.hpp"
 # define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
     ::redemption_unit_test__::X(bool(get_file_contents(filename) == (contents)))
@@ -157,12 +155,6 @@ namespace redemption_unit_test__
 # define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size) \
     RED_TEST_FILE_SIZE_AND_CLEAN(CHECK, filename, size)
 
-# define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) \
-    RED_TEST_FILE_SIZE_AND_CLEAN2(CHECK, filename, size1, size2)
-
-# define RED_CHECK_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) \
-    RED_TEST_FILE_SIZE_AND_CLEAN3(CHECK, filename, size1, size2, size3)
-
 // require #include "test_only/get_fikle_contents.hpp"
 # define RED_CHECK_FILE_CONTENTS(filename, contents) \
     RED_TEST_FILE_CONTENTS(CHECK, filename, contents)
@@ -179,12 +171,6 @@ namespace redemption_unit_test__
 // require #include "utils/fileutils.hpp"
 # define RED_REQUIRE_FILE_SIZE_AND_CLEAN(filename, size) \
     RED_TEST_FILE_SIZE_AND_CLEAN(REQUIRE, filename, size)
-
-# define RED_REQUIRE_FILE_SIZE_AND_CLEAN2(filename, size1, size2) \
-    RED_TEST_FILE_SIZE_AND_CLEAN2(REQUIRE, filename, size1, size2)
-
-# define RED_REQUIRE_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) \
-    RED_TEST_FILE_SIZE_AND_CLEAN3(REQUIRE, filename, size1, size2, size3)
 
 // require #include "test_only/get_fikle_contents.hpp"
 # define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
@@ -240,45 +226,18 @@ namespace redemption_unit_test__
 
 # define RED_TEST_FILE_SIZE_AND_CLEAN(lvl, filename, size) \
     [](auto&& filename__, auto const size__) {             \
-        BOOST_TEST_CONTEXT("filename: " << filename__) {   \
+        RED_TEST_CONTEXT("filename: " << filename__) {     \
             RED_##lvl(filesize(filename__) == size__);     \
             ::unlink(filename__);                          \
         }                                                  \
     }(filename, size)
 
-# define RED_TEST_FILE_SIZE_AND_CLEAN2(lvl, filename, size1, size2)   \
-    [](auto&& filename__, int const size1__, int const size2__) {     \
-        int const fsize__ = filesize(filename__);                     \
-        RED_##lvl##_MESSAGE(                                          \
-            fsize__ == size1__ || fsize__ == size2__,                 \
-            RED_TEST_STRING_##lvl << fsize__ << " == (" << size1__ << \
-            " or " << size2__ << ") has failed [filesize(" #filename  \
-            ") != (" #size1 " or " #size2 ")]");                      \
-        ::unlink(filename__);                                         \
-    }(filename, size1, size2)
-
-
-# define RED_TEST_FILE_SIZE_AND_CLEAN3(lvl, filename, size1, size2, size3)                 \
-    [](auto&& filename__, int const size1__, int const size2__, int const size3__) {       \
-        int const fsize__ = filesize(filename__);                                          \
-        RED_##lvl##_MESSAGE(                                                               \
-            fsize__ == size1__ || fsize__ == size2__ || fsize__ == size3__,                \
-            RED_TEST_STRING_##lvl << fsize__ << " == (" << size1__ << " or " << size2__ << \
-            " or " << size3__ << ") has failed [filesize(" #filename                       \
-            ") != (" #size1 " or " #size2 " or " #size3 ")]");                             \
-        ::unlink(filename__);                                                              \
-    }(filename, size1, size2, size3)
-
-
 // require #include "test_only/get_file_contents.hpp"
-# define RED_TEST_FILE_CONTENTS(lvl, filename, contents)      \
-    [](auto&& filename__, auto&& contents__) {                \
-        auto fcontents__ = get_file_contents(filename__);     \
-        RED_##lvl##_MESSAGE(                                  \
-            contents__ == fcontents__,                        \
-            RED_TEST_STRING_##lvl << fcontents__ << " == " << \
-            contents__ << " has failed [get_file_contents("   \
-            #filename ") != " #contents "]");                 \
+# define RED_TEST_FILE_CONTENTS(lvl, filename, contents)            \
+    [](auto&& filename__, auto&& contents__) {                      \
+        RED_TEST_CONTEXT("filename: " << filename__) {              \
+            RED_##lvl(contents__ == get_file_contents(filename__)); \
+        }                                                           \
     }(filename, contents)
 
 

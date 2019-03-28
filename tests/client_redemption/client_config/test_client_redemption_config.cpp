@@ -37,7 +37,7 @@
 #include <sys/statvfs.h>
 #include <linux/hdreg.h>
 
-RED_TEST_DELEGATE_PRINT(RDPVerbose, long(x))
+RED_TEST_DELEGATE_PRINT_ENUM(RDPVerbose);
 
 inline void write_file(std::string const& filename, array_view_const_char data)
 {
