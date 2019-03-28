@@ -185,6 +185,13 @@ inline void config_type_definition(type_enumerations & e)
       .value("forbid")
       .set_string_parser()
     ;
+
+    e.enumeration_flags("SessionProbeDisabledFeature")
+      .value("none")
+      .value("jab", "Java Access Bridge")
+      .value("msaa", "MS Active Accessbility")
+      .value("msuia", "MS UI Automation")
+    ;
 }
 
 }

@@ -407,6 +407,22 @@ inline parse_error parse(RdpModeConsole & x, spec_type<RdpModeConsole> /*type*/,
     });
 }
 
+template<> struct zstr_buffer_traits<SessionProbeDisabledFeature> : zstr_buffer_traits<unsigned long> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<SessionProbeDisabledFeature> & buf,
+    cfg_s_type<SessionProbeDisabledFeature> /*type*/,
+    SessionProbeDisabledFeature x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+inline parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, array_view_const_char value)
+{
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
+}
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 inline array_view_const_char assign_zbuf_from_cfg(

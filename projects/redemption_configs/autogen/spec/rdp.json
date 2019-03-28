@@ -355,13 +355,37 @@
           "description": ""
         },
         {
-          "name": "session_probe_disabled_features",
+          "name": "disabled_features",
           "type": "integer",
           "min": 0,
+          "max": 7,
           "default": 0,
+          "subtype": "bitset",
+          "values": [
+            {
+               "value": 0,
+               "label": "none",
+               "description": ""
+            },
+            {
+               "value": 1,
+               "label": "jab",
+               "description": "Java Access Bridge"
+            },
+            {
+               "value": 2,
+               "label": "msaa",
+               "description": "MS Active Accessbility"
+            },
+            {
+               "value": 4,
+               "label": "msuia",
+               "description": "MS UI Automation"
+            }
+          ],
           "advanced": true,
           "prefered_representation": "hex",
-          "description": "Disable some features of Session Probe:\n  0x00000001: Java Access Bridge\n  0x00000002: MS Active Accessbility\n  0x00000004: MS UI Automation\n"
+          "description": ""
         },
         {
           "name": "public_session",

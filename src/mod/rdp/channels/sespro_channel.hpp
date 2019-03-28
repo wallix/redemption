@@ -699,7 +699,7 @@ public:
                         {
                             char cstr[128];
                             std::snprintf(cstr, sizeof(cstr), "0x%08X",
-                                this->sespro_params.disabled_features);
+                                static_cast<unsigned>(this->sespro_params.disabled_features));
                             out_s.out_copy_bytes(cstr, strlen(cstr));
                         }
                 });

@@ -1977,14 +1977,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// Disable some features of Session Probe: <br/>
-    ///   0x00000001: Java Access Bridge <br/>
-    ///   0x00000002: MS Active Accessbility <br/>
-    ///   0x00000004: MS UI Automation <br/>
-    /// type: uint32_t <br/>
+    /// type: SessionProbeDisabledFeature <br/>
     /// sesman -> proxy <br/>
-    /// connpolicy -> proxy    [name: session_probe::session_probe_disabled_features] <br/>
-    /// value{0} <br/>
+    /// connpolicy -> proxy    [name: session_probe::disabled_features] <br/>
+    /// value = static_cast<type>(0) <br/>
     struct mod_rdp::session_probe_disabled_features {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1993,10 +1989,10 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(58);
-        using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
+        using type = SessionProbeDisabledFeature;
+        using sesman_and_spec_type = SessionProbeDisabledFeature;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value = static_cast<type>(0);
     };
     /// If enabled, disconnected session can be recovered by a different primary user. <br/>
     /// type: bool <br/>
