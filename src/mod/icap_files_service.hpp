@@ -37,15 +37,19 @@
 
 struct ICAPService
 {
-
+public:
     unique_fd fd;
 
-public:
+    int result;
+    std::string content;
+
+
     int file_id_int;
 
     ICAPService(std::string const& socket_path/*,
                 std::string & session_id*/)
     : fd(local_connect(socket_path.c_str()))
+    , result(-1)
     , file_id_int(0)
     {}
 
@@ -189,6 +193,7 @@ struct ICAPNewFile {
     void emit(OutStream & stream) {
 
         stream.out_uint32_be(this->file_id);
+
         stream.out_uint32_be(this->file_name.length());
         stream.out_string(this->file_name.c_str());
     }
@@ -341,38 +346,41 @@ struct ICAPResult {
 
 
 
-ICAPService * icap_open_session(std::string & socket_path);
-int icap_open_file(ICAPService * service, std::string & file_name);
-int icap_send_data(const ICAPService * service, const int file_id, const char * data, const size_t size);
-LocalICAPServiceProtocol::ICAPResult icap_get_result(const ICAPService * service);
+ICAPService * icap_open_session(const std::string & socket_path);
+int icap_open_file(ICAPService * service, const std::string & file_name);
+int icap_send_data(const ICAPService * service, const int file_id, const char * data, const int size);
+void icap_receive_result(ICAPService * service);
 int icap_end_of_file(ICAPService * service, const int file_id);
 int icap_close_session(ICAPService * service);
 
 
 
-ICAPService * icap_open_session(std::string & socket_path) {
+ICAPService * icap_open_session(const std::string & socket_path) {
 
     return new ICAPService(socket_path);
 }
 
-int icap_open_file(ICAPService * service, std::string & file_name) {
+int icap_open_file(ICAPService * service, const std::string & file_name) {
 
     int file_id = -1;
 
     if (service->fd.is_open()) {
         file_id = service->generate_id();
 
+        std::string file_name_tmp = file_name;
         if (file_name.length() > 512) {
-            file_name = file_name.substr(0, 512);
+            file_name_tmp = file_name.substr(0, 512);
         }
 
         StaticOutStream<1024> message;
 
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 8+file_name.length());
+        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 8+file_name_tmp.length());
         header.emit(message);
 
-        LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name);
+        LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name_tmp);
         icap_new_file.emit(message);
+
+
 
         int n = write(service->fd.fd(), message.get_data(), message.get_offset());
 
@@ -384,7 +392,7 @@ int icap_open_file(ICAPService * service, std::string & file_name) {
     return file_id;
 }
 
-int icap_send_data(const ICAPService * service, const int file_id, const char * data, const size_t size) {
+int icap_send_data(const ICAPService * service, const int file_id, const char * data, const int size) {
 
     int total_n = -1;
 
@@ -397,14 +405,14 @@ int icap_send_data(const ICAPService * service, const int file_id, const char * 
 
             size_t partial_data_size = data_len_to_send;
 
-            if (data_len_to_send > 2048) {
-                data_len_to_send -= 2048;
-                partial_data_size = 2048;
+            if (data_len_to_send > 1024) {
+                data_len_to_send -= 1024;
+                partial_data_size = 1024;
             } else {
                 data_len_to_send = 0;
             }
 
-            StaticOutStream<2600> message;
+            StaticOutStream<1600> message;
 
             LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::DATA_FILE_FLAG, 4+partial_data_size);
             header.emit(message);
@@ -427,9 +435,9 @@ int icap_send_data(const ICAPService * service, const int file_id, const char * 
     return total_n;
 }
 
-LocalICAPServiceProtocol::ICAPResult icap_get_result(const ICAPService * service) {
+void icap_receive_result(ICAPService * service) {
 
-    LocalICAPServiceProtocol::ICAPResult result;
+
     int read_data_len = -1;
 
     if (service->fd.is_open()) {
@@ -440,11 +448,11 @@ LocalICAPServiceProtocol::ICAPResult icap_get_result(const ICAPService * service
         }
 
         InStream stream_data(buff, read_data_len);
-
+        LocalICAPServiceProtocol::ICAPResult result;
         result.receive(stream_data);
+        service->result = result.result;
+        service->content = result.content;
     }
-
-    return result;
 }
 
 int icap_end_of_file(ICAPService * service, const int file_id) {

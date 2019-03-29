@@ -162,8 +162,9 @@ RED_AUTO_TEST_CASE(testFileValid)
         n = icap_end_of_file(service, file_id);
         RED_CHECK(n>0);
 
-        LocalICAPServiceProtocol::ICAPResult result = icap_get_result(service);
-        RED_CHECK_EQUAL(result.result, LocalICAPServiceProtocol::ACCEPTED_FLAG);
+        icap_receive_result(service);
+        RED_CHECK_EQUAL(service->result, LocalICAPServiceProtocol::ACCEPTED_FLAG);
+        RED_CHECK_EQUAL(service->content, "");
     }
 
     n = icap_close_session(service);
@@ -212,8 +213,8 @@ RED_AUTO_TEST_CASE(testFileInvalid)
             RED_CHECK(n>0);
         }
 
-        LocalICAPServiceProtocol::ICAPResult result = icap_get_result(service);
-        RED_CHECK_EQUAL(result.result, LocalICAPServiceProtocol::REJECTED_FLAG);
+        icap_receive_result(service);
+        RED_CHECK_EQUAL(service->result, LocalICAPServiceProtocol::REJECTED_FLAG);
 
         std::string expected_content =
         "\xaVIRUS FOUND\xa"
@@ -228,7 +229,7 @@ RED_AUTO_TEST_CASE(testFileInvalid)
         "\xa"
         "  For more information contact your system administrator\xa";
 
-        RED_CHECK_EQUAL(result.content.substr(0, expected_content.length()) , expected_content);
+        RED_CHECK_EQUAL(service->content.substr(0, expected_content.length()) , expected_content);
 
     }
 
