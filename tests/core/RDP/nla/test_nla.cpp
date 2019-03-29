@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     TpduBuffer buf;
     while (rdpCredsspClient::State::Cont == st) {
         buf.load_data(logtrans);
-        while (buf.next_credssp() && rdpCredsspClient::State::Cont == st) {
+        while (buf.next(TpduBuffer::CREDSSP) && rdpCredsspClient::State::Cont == st) {
             InStream in_stream(buf.current_pdu_buffer());
             st = credssp.credssp_client_authenticate_next(in_stream);
         }
@@ -210,7 +210,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     TpduBuffer buf;
     while (rdpCredsspServer::State::Cont == st) {
         buf.load_data(logtrans);
-        while (buf.next_credssp() && rdpCredsspServer::State::Cont == st) {
+        while (buf.next(TpduBuffer::CREDSSP) && rdpCredsspServer::State::Cont == st) {
             InStream in_stream(buf.current_pdu_buffer());
             st = credssp.credssp_server_authenticate_next(in_stream);
         }

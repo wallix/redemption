@@ -86,9 +86,9 @@ RED_AUTO_TEST_CASE(Test1Read1)
     TpduBuffer buf;
 
     for (int i = 0; i < 84; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next_pdu());
+        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -103,9 +103,9 @@ RED_AUTO_TEST_CASE(Test1Read10)
     TpduBuffer buf;
 
     for (int i = 0; i < 8; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next_pdu());
+        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(Test1Read100)
     BlockTransport t(data1, 100);
     TpduBuffer buf;
 
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -135,9 +135,9 @@ RED_AUTO_TEST_CASE(Test2Read1)
     TpduBuffer buf;
 
     for (int i = 0; i < 84; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next_pdu());
+        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 85);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -146,9 +146,9 @@ RED_AUTO_TEST_CASE(Test2Read1)
     RED_CHECK_MEM(av, data2.array_from_offset(85));
 
     for (int i = 0; i < 84; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next_pdu());
+        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -163,9 +163,9 @@ RED_AUTO_TEST_CASE(Test2Read10)
     TpduBuffer buf;
 
     for (int i = 0; i < 8; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next_pdu());
+        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 80);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -174,9 +174,9 @@ RED_AUTO_TEST_CASE(Test2Read10)
     RED_CHECK_MEM(av, data2.array_from_offset(85));
 
     for (int i = 0; i < 7; ++i) {
-        buf.load_data(t); RED_CHECK(!buf.next_pdu());
+        buf.load_data(t); RED_CHECK(!buf.next(TpduBuffer::PDU));
     }
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -190,7 +190,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     BlockTransport t(data2, 100);
     TpduBuffer buf;
 
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 70);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -198,7 +198,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.array_from_offset(85));
 
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -212,7 +212,7 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     BlockTransport t(data2, 1000);
     TpduBuffer buf;
 
-    buf.load_data(t); RED_CHECK(buf.next_pdu());
+    buf.load_data(t); RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());
@@ -220,7 +220,7 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     auto av = buf.current_pdu_buffer();
     RED_CHECK_MEM(av, data2.array_from_offset(85));
 
-    RED_CHECK(buf.next_pdu());
+    RED_CHECK(buf.next(TpduBuffer::PDU));
     RED_CHECK_EQ(t.remaining(), 0);
 
     RED_CHECK(!buf.current_pdu_is_fast_path());

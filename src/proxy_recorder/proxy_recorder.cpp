@@ -24,11 +24,15 @@
 
 void ProxyRecorder::front_step1()
 {
-    if (this->verbosity > 8) {
-        LOG(LOG_INFO, "NEGOCIATING_FRONT_STEP1");
-    }
-    if (frontBuffer.next_pdu()) {
+    if (frontBuffer.next(TpduBuffer::PDU)) {
+
+        LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_STEP1 frontbuffer content ======");
         array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
+        if (this->verbosity > 2048){
+            ::hexdump_av_d(currentPacket);
+        }
+        LOG_IF(this->verbosity > 2048, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
+
         InStream x224_stream(currentPacket);
         X224::CR_TPDU_Recv x224(x224_stream, true);
         if (x224._header_size != x224_stream.get_capacity()) {
@@ -90,9 +94,6 @@ void ProxyRecorder::front_step1()
 
 void ProxyRecorder::front_nla()
 {
-    if (this->verbosity > 8) {
-        LOG(LOG_INFO, "NEGOCIATING_FRONT_NLA");
-    }
     rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
     switch (st) {
     case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
@@ -106,17 +107,37 @@ void ProxyRecorder::front_nla()
         this->pstate = NEGOCIATING_BACK_NLA;
         break;
     }
+    
+    // Note by CGR:
+    // We are performing the dump afterward, because when entering back_nla_negociation()
+    // We don't yet know which type it will be. We could get the data from dump()
+    // but another issue is that the read is not typed at transport layer. This makes
+    // things more complicated and harder to read that it should be
+    {
+        LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA (DELAYED) frontbuffer content ======");
+        array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
+        if (this->verbosity > 2048){
+            ::hexdump_av_d(currentPacket);
+        }
+        LOG_IF(this->verbosity > 2048, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_NLA (DELAYED)  frontbuffer content >>>>>>");
+    }
 }
 
 
 void ProxyRecorder::front_initial_pdu_negociation()
 {
-    if (this->verbosity > 8) {
-        LOG(LOG_INFO, "NEGOCIATING_INITIAL_PDU");
-    }
-    if (frontBuffer.next_pdu()) {
+    if (frontBuffer.next(TpduBuffer::PDU)) {
+        LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_INITIAL_PDU frontbuffer content ======");
         array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
+        if (this->verbosity > 2048){
+            ::hexdump_av_d(currentPacket);
+        }
+        LOG_IF(this->verbosity > 8, LOG_INFO, ">>>>>>>> NEGOCIATING_INITIAL_PDU frontbuffer content >>>>>>");
 
+
+        if (this->verbosity > 2048){
+            hexdump_av_d(currentPacket);
+        }
         if (!nla_username.empty()) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "Back: force protocol PROTOCOL_HYBRID");
@@ -158,15 +179,31 @@ void ProxyRecorder::back_nla_negociation()
         this->pstate = NEGOCIATING_FRONT_INITIAL_PDU;
         outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
     }
+    
+    // Note by CGR:
+    // We are performing the dump afterward, because when entering back_nla_negociation()
+    // We don't yet know which type it will be. We could get the data from dump()
+    // but another issue is that the read is not typed at transport layer. This makes
+    // things more complicated and harder to read that it should be
+    {
+        LOG(LOG_INFO, "======== NEGOCIATING_BACK_NLA (DELAYED) backbuffer content ======");
+        array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
+        if (this->verbosity > 2048){
+            ::hexdump_av_d(currentPacket);
+        }
+        LOG(LOG_INFO, ">>>>>>>> NEGOCIATING_BACK_NLA (DELAYED)  backbuffer content >>>>>>");
+    }
 }
 
 void ProxyRecorder::back_initial_pdu_negociation()
 {
-    if (this->verbosity > 8) {
-        LOG(LOG_INFO, "NEGOCIATING_BACK_INITIAL_PDU");
-    }
-    if (backBuffer.next_pdu()) {
+    if (backBuffer.next(TpduBuffer::PDU)) {
+        LOG_IF(this->verbosity > 8, LOG_INFO, "======== BACK_INITIAL_PDU_NEGOCIATION backbuffer content ======");
         array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
+        if (this->verbosity > 2048){
+            ::hexdump_av_d(currentPacket);
+        }
+        LOG_IF(this->verbosity > 2048, LOG_INFO, ">>>>>>>> BACK_INITIAL_PDU_NEGOCIATION backbuffer content >>>>>>");
 
         if (!nla_username.empty()) {
             if (this->verbosity > 4) {
@@ -181,11 +218,11 @@ void ProxyRecorder::back_initial_pdu_negociation()
                 GCC::UserData::SCCore sc_core;
                 sc_core.recv(f.payload);
                 if (sc_core.length >= 12) {
-                    hexdump(f.payload.get_data(), f.payload.get_capacity());
+                    hexdump_av_d(f.payload.get_bytes());
                     auto const offset = (sc_core.length >= 16) ? 8 : 4;
                     auto const idx = f.payload.get_current() - currentPacket.data() - offset;
                     currentPacket[idx] = select_client_protocol();
-                    hexdump(f.payload.get_data(), f.payload.get_capacity());
+                    hexdump_av_d(f.payload.get_bytes());
                 }
             }
         }
@@ -204,8 +241,8 @@ void ProxyRecorder::run()
     int const front_fd = frontConn.get_fd();
     int const back_fd = backConn.get_fd();
 
-    frontConn.enable_trace = this->verbosity > 16;
-    backConn.enable_trace = this->verbosity > 16;
+    frontConn.enable_trace = this->verbosity > 256;
+    backConn.enable_trace = this->verbosity > 256;
 
     for (;;) {
         FD_ZERO(&rset);

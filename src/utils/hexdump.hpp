@@ -27,7 +27,6 @@ Author(s): Christophe Grosjean, Jonathan Poelen
 // hexdump for humans
 void hexdump(const_byte_ptr data, size_t size, unsigned line_length = 16);
 void hexdump_av(const_bytes_view data, unsigned line_length = 16);
-
 /**
  *  hexdump for c++ integer array.
  *  0x23, 0x53 .....

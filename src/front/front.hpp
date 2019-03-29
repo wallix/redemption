@@ -1263,7 +1263,7 @@ public:
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 
         this->rbuf.load_data(this->trans);
-        while (this->rbuf.next_pdu())
+        while (this->rbuf.next(TpduBuffer::PDU))
         {
             InStream new_x224_stream(this->rbuf.current_pdu_buffer());
 

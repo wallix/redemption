@@ -219,7 +219,7 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& 
     switch (this->state) {
         case State::Negociate:
             buf.load_data(trans);
-            if (!buf.next_pdu()) {
+            if (!buf.next(TpduBuffer::PDU)) {
                 return true;
             }
             do {
@@ -229,7 +229,7 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& 
                                     (this->tls) ? "TLS" :
                                                   "RDP");
                 this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), notifier);
-            } while (this->state == State::Negociate && buf.next_pdu());
+            } while (this->state == State::Negociate && buf.next(TpduBuffer::PDU));
             return (this->state != State::Final);
 
         case State::SslHybrid:
@@ -249,11 +249,11 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& 
                 return true;
             }
 
-            while (this->state == State::Credssp && buf.next_credssp()) {
+            while (this->state == State::Credssp && buf.next(TpduBuffer::CREDSSP)) {
                 this->state = this->recv_credssp(trans, InStream(buf.current_pdu_buffer()));
             }
 
-            while (this->state == State::Negociate && buf.next_pdu()) {
+            while (this->state == State::Negociate && buf.next(TpduBuffer::PDU)) {
                 this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), notifier);
             }
             return (this->state != State::Final);

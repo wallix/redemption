@@ -3123,7 +3123,7 @@ public:
 
     void draw_event_impl(gdi::GraphicApi & gd)
     {
-        while (this->buf.next_pdu()) {
+        while (this->buf.next(TpduBuffer::PDU)) {
             InStream x224_data(this->buf.current_pdu_buffer());
 
             try{
