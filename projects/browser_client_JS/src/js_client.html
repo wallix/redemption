@@ -62,7 +62,7 @@ const Module = WallixModule({
     TOTAL_MEMORY: 268435456, // 16**7
 });
 
-const createRdpClient = (function(Module, window) {
+const redemption = (function(Module, window) {
     const HEAPU8 = Module.HEAPU8;
     const HEAP16 = Module.HEAP16;
     const identity = (x) => x;
@@ -76,13 +76,13 @@ const createRdpClient = (function(Module, window) {
     };
 
     const wCb_em2js_U8p = function(cb) {
-        return function(idata, w, h, ...args) {
+        return function(idata, len, ...args) {
             const data = HEAPU8.subarray(idata, idata + len);
             cb(data, ...args);
         };
     };
 
-    const wrappersCbMod = {
+    const wrappersFrontMod = {
         // idata, w, h, dx, dy, sz, sy, dw, dh
         drawImage: wCb_em2js_ImageData,
         drawPolyline: function(cb) {
@@ -100,15 +100,13 @@ const createRdpClient = (function(Module, window) {
         newPointer: wCb_em2js_ImageData,
         cachedPointer: identity,
 
-        setClipboardUtf8: identity,
-
         resizeCanvas: identity,
 
         random: wCb_em2js_U8p,
     };
 
-    const wrappersCb = {
-        ...wrappersCbMod,
+    const wrappersFront = {
+        ...wrappersFrontMod,
         socketOpen: identity,
         socketClose: identity,
         socketMessage: identity,
@@ -124,7 +122,9 @@ const createRdpClient = (function(Module, window) {
 
     const noop = function(){};
 
-    return function(url, width, height, username, password, verbosity) {
+    resultFuncs = {};
+
+    resultFuncs.newRDPClient = function(url, width, height, username, password, verbosity) {
         const socket = new WebSocket(url, "RDP");
         socket.binaryType = 'arraybuffer';
 
@@ -137,7 +137,7 @@ const createRdpClient = (function(Module, window) {
 
         const client = {
             on: function(eventName, cb) {
-                const wrapCb = wrappersCb[eventName];
+                const wrapCb = wrappersFront[eventName];
                 if (!wrapCb) {
                     console.log('RdpClient: Unknown event ' + eventName);
                     return false;
@@ -240,7 +240,7 @@ const createRdpClient = (function(Module, window) {
             }
             channelCreators = undefined
 
-            for (eventName in wrappersCbMod) {
+            for (eventName in wrappersFrontMod) {
                 if (!(eventName in events)) {
                     events[eventName] = noop;
                 }
@@ -309,8 +309,36 @@ const createRdpClient = (function(Module, window) {
         };
 
         return client;
-    }
+    };
+
+    const UTF8Decoder = new TextDecoder("utf-8");
+    const wCb_em2js_Str = function(cb) {
+        return function(idata, len) {
+            // best of Pointer_stringify
+            cb(UTF8Decoder.decode(HEAPU8.subarray(idata, idata + len)));
+        };
+    };
+
+    const wrappersClipboard = {
+        receiveUtf8: wCb_em2js_Str,
+        receiveFormatData: wCb_em2js_Str,
+    };
+
+    resultFuncs.newClipboardChannel = function(callback, events, verbose) {
+        for (eventName in wrappersClipboard) {
+            const event = events[eventName];
+            events[eventName] = event ? wrappersClipboard[eventName](event) : noop;
+        }
+        return new Module.ClipboardChannel(callback, events, verbose);
+    };
+
+    return resultFuncs;
+
 })(Module, window);
+
+const newRDPClient = redemption.newRDPClient;
+const newClipboardChannel = redemption.newClipboardChannel;
+
 
 const ecanvasFocus = document.getElementById('canvasFocus');
 const ecurCanvas = document.getElementById('curCanvas');
@@ -697,7 +725,7 @@ function canvasStopEvents()
 
 function canvasFocus()
 {
-    console.log('focus')
+    // console.log('focus')
     addEvents(document, docEvents);
     ecanvas.onclick = (e) => e.preventDefault();
     ecurCanvas.onclick = (e) => e.preventDefault();
@@ -711,7 +739,7 @@ function canvasEnableFocus()
 
 function canvasBlur()
 {
-    console.log('blur')
+    // console.log('blur')
     removeEvents(document, docEvents);
     ecanvas.onclick = canvasEnableFocus;
     ecurCanvas.onclick = canvasEnableFocus;
@@ -724,7 +752,7 @@ function bgrToCss(color)
 
 function run()
 {
-    rdpclient = createRdpClient(
+    rdpclient = newRDPClient(
         "ws://localhost:3390",
         // "ws://localhost:8080",
         ecanvas.width,
@@ -837,41 +865,49 @@ function run()
     rdpclient.on('cachedPointer', function(offset) {
         ecanvas.style.cursor = cachePointers[offset];
     });
-    rdpclient.on('setClipboardUtf8', function(str) {
-        receiveCbUtf8_data.value = str;
-    });
 
+
+    const CF = Object.freeze({
+      TEXT: 1,
+      BITMAP: 2,
+      METAFILEPICT: 3,
+      WAVE: 12,
+      UNICODETEXT: 13,
+    })
     let clipboardCtx = {
         formats: {},
+        cf: 0,
     };
-
     let clipboard;
     rdpclient.addChannelCreator((cb) => {
-        return clipboard = new Module.ClipboardChannel(cb, {
+        return clipboard = newClipboardChannel(cb, {
+            receiveFormatStart: function() {
+                clipboardCtx.cb = 0;
+            },
+            receiveFormatStop: function() {
+                if (clipboardCtx.cf) {
+                    clipboard.sendRequestFormat(clipboardCtx.cf);
+                }
+            },
             receiveFormat: function(id, iname, name_len) {
-                console.log(id,iname,name_len)
-                if (id === false) {
-                    if (iname) {
-                        clipboardCtx.formats = {};
+                console.log(id,iname,name_len);
+                switch (id) {
+                case CF.TEXT:
+                    if (clipboardCtx.cf == CF.UNICODETEXT) {
+                        break;
                     }
-                    else {
-                        for (const id in clipboardCtx.formats) {
-                            console.log(id)
-                        }
-                        clipboardCtx.formats = {};
-                    }
+                case CF.UNICODETEXT:
+                    clipboardCtx.cf = id;
+                    break;
                 }
-                else {
-                    clipboardCtx.formats[id] = true;
-                    // TODO this
-                    clipboard.sendRequestFormat(id);
-                }
+                console.log(CF.UNICODETEXT, clipboardCtx.cf)
             },
-            receiveUtf8: function(idata, len) {
-                console.log("utf8", idata, len);
+            receiveUtf8: function(str) {
+                console.log("utf8", str);
+                receiveCbUtf8_data.value = str;
             },
-            receiveFormatData: function(idata, len) {
-                console.log("formatData", idata, len);
+            receiveFormatData: function(data) {
+                console.log("formatData", data);
             },
         }, 0x04000000);
     });
