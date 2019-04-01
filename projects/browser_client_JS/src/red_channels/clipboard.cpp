@@ -164,7 +164,7 @@ struct redjs::ClipboardChannel::D
         this->send_to_mod_channel(out_stream);
     }
 
-    void receive(InStream chunk, int flags)
+    void receive(InStream chunk, int channel_flags)
     {
         RDPECLIP::CliprdrHeader header;
         header.recv(chunk);
@@ -172,11 +172,11 @@ struct redjs::ClipboardChannel::D
         if (this->response_buffer.waiting_for_data)
         {
             LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Response PDU continuation");
-            this->process_format_data_response(chunk, header.msgFlags());
+            this->process_format_data_response(chunk, channel_flags);
             return;
         }
 
-        if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST))
+        if (!(channel_flags & CHANNELS::CHANNEL_FLAG_FIRST))
         {
             return;
         }
@@ -211,7 +211,7 @@ struct redjs::ClipboardChannel::D
                 "Server Format List PDU data length(%u) longer than chunk(%zu)",
                 header.dataLen(), chunk.in_remain());
 
-            this->process_format_list(chunk, header.msgFlags());
+            this->process_format_list(chunk, channel_flags);
             break;
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
@@ -222,7 +222,7 @@ struct redjs::ClipboardChannel::D
             else
             {
                 LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Response PDU");
-                this->process_format_data_response(chunk, header.msgFlags());
+                this->process_format_data_response(chunk, channel_flags);
             }
         break;
 
@@ -306,6 +306,8 @@ struct redjs::ClipboardChannel::D
             emval_call(this->callbacks, fname, data.data(), data.size());
         };
 
+        LOG(LOG_DEBUG, "id = %u", this->requested_format_id);
+
         switch (this->requested_format_id)
         {
             case RDPECLIP::CF_TEXT:
@@ -351,9 +353,8 @@ struct redjs::ClipboardChannel::D
     static cbytes_view to_utf8(BufArrayMaker<256>& buf, cbytes_view data)
     {
         auto av = buf.dyn_array(data.size() * 2 + 1);
-        av = av.first(::UTF16toUTF8(data.data(), data.size(), av.data(), av.size()) + 1);
-        av.back() = '\0';
-        return av;
+        // removed null char
+        return av.first(::UTF16toUTF8(data.data(), data.size(), av.data(), av.size()) - 1);
     }
 
     void process_format_list(InStream& chunk, uint32_t channel_flags)
@@ -361,7 +362,7 @@ struct redjs::ClipboardChannel::D
         FormatListExtractorData data;
         BufArrayMaker<256> buf;
 
-        emval_call(this->callbacks, "receiveFormat", false, true);
+        emval_call(this->callbacks, "receiveFormatStart");
 
         while (format_list_extractor(
             data, chunk,
@@ -420,7 +421,7 @@ struct redjs::ClipboardChannel::D
 
         this->send_format_list_response_ok();
 
-        emval_call(this->callbacks, "receiveFormat", false, false);
+        emval_call(this->callbacks, "receiveFormatStop");
     }
 
     void send_format_list_response_ok()
