@@ -34,12 +34,7 @@ namespace redjs
 
 struct BrowserTransport : Transport
 {
-    TlsResult enable_client_tls(
-        bool /*server_cert_store*/,
-        ServerCertCheck /*server_cert_check*/,
-        ServerNotifier & /*server_notifier*/,
-        const char * /*certif_path*/
-    ) override;
+    TlsResult enable_client_tls(ServerNotifier& server_notifier) override;
 
     size_t do_partial_read(uint8_t * data, size_t len) override;
 
