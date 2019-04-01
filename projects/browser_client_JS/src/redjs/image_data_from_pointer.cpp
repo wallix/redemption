@@ -21,7 +21,6 @@ Author(s): Jonathan Poelen
 #include "redjs/image_data_from_pointer.hpp"
 
 #include "core/RDP/rdp_pointer.hpp"
-#include "utils/drawable_pointer.hpp"
 
 
 namespace redjs
@@ -39,95 +38,92 @@ namespace
         return true;
     }
 
-    void apply_reversed_color(uint8_t* data, uint8_t const* pixel_data) noexcept
+    void apply_reversed_color(uint8_t* data, uint8_t const* pointer_data) noexcept
     {
         if (!data[3]) {
-            data[0] = 0xFFu - pixel_data[0];
-            data[1] = 0xFFu - pixel_data[1];
-            data[2] = 0xFFu - pixel_data[2];
+            data[0] = 0xFFu - pointer_data[0];
+            data[1] = 0xFFu - pointer_data[1];
+            data[2] = 0xFFu - pointer_data[2];
             data[3] = 255;
         }
+    }
+
+    void apply_color(uint8_t* data, uint8_t const* pointer_data)
+    {
+        data[0] = pointer_data[0];
+        data[1] = pointer_data[1];
+        data[2] = pointer_data[2];
+        data[3] = 255;
     }
 }
 
 ImageData image_data_from_pointer(Pointer const& pointer)
 {
     auto const dimensions = pointer.get_dimensions();
+    auto const av_and_1byte = pointer.get_monochrome_and_mask();
+    auto const av_xor = pointer.get_24bits_xor_mask();
+    bool const is_empty_mask = redjs::is_empty_mask(av_and_1byte);
+    auto const width = dimensions.width + is_empty_mask * 2;
+    auto const height = dimensions.height + is_empty_mask * 2;
+    auto const d3 = dimensions.width * 3;
+    auto const w4 = width * 4;
+    auto const decrement_next_line = w4 * 2 - is_empty_mask * 8;
 
-    uint8_t* pdata = new uint8_t[dimensions.width * dimensions.height * 4]{};
-    ImageData img{dimensions.width, dimensions.height, std::unique_ptr<uint8_t[]>(pdata)};
+    uint8_t* pdata = new uint8_t[width * height * 4]{};
+    ImageData img{width, height, std::unique_ptr<uint8_t[]>(pdata)};
+    pdata += width * height * 4 - w4 + is_empty_mask * (4 - w4);
 
-    if (is_empty_mask(pointer.get_monochrome_and_mask()))
+    auto for_each_pixel = [&](auto f)
     {
-        auto const w3 = dimensions.width * 3;
-        auto const w4 = dimensions.width * 4;
-        auto const av_xor = pointer.get_24bits_xor_mask();
-        uint8_t* data = pdata + av_xor.size() / 3 * 4 - dimensions.width * 4;
-        for (auto pixel_data = av_xor.begin(), pixel_data_end = av_xor.end();
-             pixel_data < pixel_data_end;
-        ) {
-            auto pixel_data_begin_line = pixel_data;
-            for (auto pixel_data_end_line = pixel_data + dimensions.width * 3;
-                pixel_data < pixel_data_end_line; void(data += 4), pixel_data += 3
-            ) {
-                if (pixel_data[0] || pixel_data[1] || pixel_data[2]) {
-                    data[0] = pixel_data[0];
-                    data[1] = pixel_data[1];
-                    data[2] = pixel_data[2];
-                    data[3] = 255;
-
-                    // border left
-                    if (pixel_data - 3 >= pixel_data_begin_line) {
-                        apply_reversed_color(data - 4, pixel_data - 3);
-                    }
-
-                    // border right
-                    if (pixel_data + 3 < pixel_data_end_line) {
-                        apply_reversed_color(data + 4, pixel_data + 3);
-                    }
-
-                    // border top
-                    if (pixel_data - w3 >= av_xor.begin()) {
-                        apply_reversed_color(data - w4, pixel_data - w3);
-                        if (pixel_data - 3 >= pixel_data_begin_line) {
-                            apply_reversed_color(data - 4 + w4, pixel_data - 3 - w3);
-                        }
-                        if (pixel_data + 3 < pixel_data_end_line) {
-                            apply_reversed_color(data + 4 + w4, pixel_data + 3 - w3);
-                        }
-                    }
-
-                    // border bottom
-                    if (pixel_data + w3 < av_xor.end()) {
-                        apply_reversed_color(data + w4, pixel_data + w3);
-                        if (pixel_data - 3 >= pixel_data_begin_line) {
-                            apply_reversed_color(data - 4 - w4, pixel_data - 3 + w3);
-                        }
-                        if (pixel_data + 3 < pixel_data_end_line) {
-                            apply_reversed_color(data + 4 - w4, pixel_data + 3 + w3);
-                        }
-                    }
-                }
+        for (auto pointer_data = av_xor.begin(), pointer_data_end = av_xor.end();
+             pointer_data < pointer_data_end;
+        )
+        {
+            for (auto pointer_data_end_line = pointer_data + d3;
+                pointer_data < pointer_data_end_line; void(pdata += 4), pointer_data += 3
+            )
+            {
+                f(pdata, pointer_data);
             }
-            data -= dimensions.width * 4 * 2;
+            pointer_data += (d3 & 1);
+            pdata -= decrement_next_line;
         }
+    };
+
+    if (is_empty_mask)
+    {
+        for_each_pixel([&](uint8_t* data, uint8_t const* pointer_data)
+        {
+            if (pointer_data[0] || pointer_data[1] || pointer_data[2])
+            {
+                apply_color(data, pointer_data);
+
+                // border top
+                apply_reversed_color(data - w4 - 4, data);
+                apply_reversed_color(data - w4, data);
+                apply_reversed_color(data - w4 + 4, data);
+                // border left
+                apply_reversed_color(data - 4, data);
+                // border right
+                apply_reversed_color(data + 4, data);
+                // border bottom
+                apply_reversed_color(data + w4 - 4, data);
+                apply_reversed_color(data + w4, data);
+                apply_reversed_color(data + w4 + 4, data);
+            }
+        });
     }
     else
     {
-        DrawablePointer drawable_pointer;
-        drawable_pointer.initialize(pointer);
-
-        for (DrawablePointer::ContiguousPixels const & contiguous_pixels : drawable_pointer.contiguous_pixels_view()) {
-            uint8_t* data = pdata + (contiguous_pixels.y * img.width() + contiguous_pixels.x) * 4;
-            uint8_t const* pixel_data = contiguous_pixels.data;
-            uint8_t const* pixel_end = pixel_data + contiguous_pixels.data_size;
-            while (pixel_data < pixel_end) {
-                *data++ = *pixel_data++;
-                *data++ = *pixel_data++;
-                *data++ = *pixel_data++;
-                *data++ = 255;
+        unsigned i = 0;
+        for_each_pixel([&](uint8_t* data, uint8_t const* pointer_data)
+        {
+            if (!(av_and_1byte[i / 8u] & (1u << (7u - (i % 8u)))))
+            {
+                apply_color(data, pointer_data);
             }
-        }
+            ++i;
+        });
     }
 
     return img;

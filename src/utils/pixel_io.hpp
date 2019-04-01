@@ -26,17 +26,17 @@ static inline uint8_t get_pixel_1bpp(const uint8_t* data, size_t line_bytes, siz
 {
     const size_t index =  y * line_bytes * 8 + x;
 
-    return (((*(data + index / 8)) & (1 << (7 - (index % 8)))) ? 0xFF : 0);
+    return ((data[index / 8] & (1 << (7 - (index % 8)))) ? 0xFF : 0);
 }
 
 static inline void put_pixel_1bpp(uint8_t* data, size_t line_bytes, size_t x, size_t y, uint8_t value) {
     const size_t index =  y * line_bytes * 8 + x;
 
     if (value) {
-        (*(data + index / 8)) |= (1 << (7 - (index % 8)));
+        data[index / 8] |= (1 << (7 - (index % 8)));
     }
     else {
-        (*(data + index / 8)) &= ~(1 << (7 - (index % 8)));
+        data[index / 8] &= ~(1 << (7 - (index % 8)));
     }
 }
 

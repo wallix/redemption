@@ -12,6 +12,7 @@ exe-js js_client :
   crypto.bc
   gssapi_krb5.bc
   krb5.bc
+  openssl.bc
   src/red_channels/clipboard.bc
   src/redjs/browser_front.bc
   src/redjs/browser_graphic.bc
