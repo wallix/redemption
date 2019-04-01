@@ -31,12 +31,7 @@ namespace
 namespace redjs
 {
 
-BrowserTransport::TlsResult BrowserTransport::enable_client_tls(
-    bool /*server_cert_store*/,
-    ServerCertCheck /*server_cert_check*/,
-    ServerNotifier & /*server_notifier*/,
-    const char * /*certif_path*/
-)
+BrowserTransport::TlsResult BrowserTransport::enable_client_tls(ServerNotifier& /*server_notifier*/)
 {
     LOG(LOG_ERR, "BrowserTransport: enable_client_tls is not implemented.");
     return TlsResult::Fail;

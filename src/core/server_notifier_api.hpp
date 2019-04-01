@@ -22,7 +22,11 @@
 
 #pragma once
 
-#include <openssl/ossl_typ.h>
+#ifndef __EMSCRIPTEN__
+#  include <openssl/ossl_typ.h>
+#else
+  struct X509 {};
+#endif
 
 #include <string>
 

@@ -23,11 +23,14 @@ Author(s): Jonathan Poelen
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
 
-#include <openssl/ssl.h>
+#ifndef __EMSCRIPTEN__
+# include <openssl/ssl.h>
+#endif
 
 namespace
 {
 
+#ifndef __EMSCRIPTEN__
     bool cert_to_escaped_string(X509& cert, std::string& output)
     {
         // TODO unique_ptr<BIO, BIO_delete>
@@ -52,14 +55,17 @@ namespace
 
         return true;
     }
+#endif
 
     struct PrivateRdpNegociation
     {
         RdpNegociation rdp_negociation;
         SessionReactor::GraphicEventPtr graphic_event;
         const std::chrono::seconds open_session_timeout;
+#ifndef __EMSCRIPTEN__
         SessionReactor::SesmanEventPtr sesman_event;
         CertificateResult result = CertificateResult::wait;
+#endif
 
         template<class... Ts>
         explicit PrivateRdpNegociation(
@@ -155,6 +161,7 @@ void mod_rdp::init_negociate_event_(
         gdi_clear_screen(gd, this->get_dim());
         LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
 
+#ifndef __EMSCRIPTEN__
         if (enable_server_cert_external_validation) {
             rdp_negociation.set_cert_callback([this, &private_rdp_negociation](
                 X509& certificate
@@ -217,6 +224,7 @@ void mod_rdp::init_negociate_event_(
                 return result;
             });
         }
+#endif
 
         rdp_negociation.start_negociation();
 
