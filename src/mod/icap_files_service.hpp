@@ -78,10 +78,14 @@ namespace LocalICAPServiceProtocol {
     // | END_OF_FILE_FLAG   | Indicates data file end                 |
     // | 0x03               |                                         |
     // +--------------------+-----------------------------------------+
+    // | ABORT_FILE_FLAG    | Abort file.                                     |
+    // | 0x04               |                                                 |
+    // +--------------------+-------------------------------------------------+
         NEW_FILE_FLAG      = 0x00,
         DATA_FILE_FLAG     = 0x01,
         CLOSE_SESSION_FLAG = 0x02,
-        END_OF_FILE_FLAG   = 0x03
+        END_OF_FILE_FLAG   = 0x03,
+        ABORT_FILE_FLAG    = 0x04
     };
 
     enum {
@@ -229,6 +233,34 @@ struct ICAPEndOfFile {
 };
 
 
+struct ICAPAbortFile {
+
+    const int file_id;
+
+    // AbortFile
+
+    // This message is sent when file request must be aborted.
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                            File_id                            |
+    // +---------------------------------------------------------------+
+
+    // File_id: An unsigned, 32-bit integer that contains the complete file id.
+
+
+    ICAPAbortFile(const int file_id)
+    : file_id(file_id) {}
+
+    void emit(OutStream & stream) {
+
+        stream.out_uint32_be(this->file_id);
+    }
+};
+
+
 struct ICAPFileDataHeader
 {
     const int file_id;
@@ -352,6 +384,7 @@ int icap_send_data(const ICAPService * service, const int file_id, const char * 
 void icap_receive_result(ICAPService * service);
 int icap_end_of_file(ICAPService * service, const int file_id);
 int icap_close_session(ICAPService * service);
+int icap_abort_file(ICAPService * service, const int file_id);
 
 
 
@@ -473,6 +506,26 @@ int icap_end_of_file(ICAPService * service, const int file_id) {
 
     return n;
 }
+
+int icap_abort_file(ICAPService * service, const int file_id) {
+
+    int n = -1;
+
+    if (service->fd.is_open()) {
+        StaticOutStream<16> message;
+
+        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::ABORT_FILE_FLAG, 4);
+        header.emit(message);
+
+        LocalICAPServiceProtocol::ICAPAbortFile abort_file(file_id);
+        abort_file.emit(message);
+
+        n = write(service->fd.fd(), message.get_data(), message.get_offset());
+    }
+
+    return n;
+}
+
 
 int icap_close_session(ICAPService * service) {
 

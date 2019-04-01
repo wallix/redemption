@@ -115,6 +115,23 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPEndOfFile) {
     RED_CHECK_MEM(exp_data, message.get_bytes());
 }
 
+RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPAbortFile) {
+
+    const int file_id = 1;
+
+    StaticOutStream<16> message;
+
+    LocalICAPServiceProtocol::ICAPAbortFile icap_abort_file(file_id);
+    icap_abort_file.emit(message);
+
+    auto exp_data = cstr_array_view(
+        "\x00\x00\x00\x01"                         //....
+    );
+
+    RED_CHECK_EQUAL(message.get_offset(), 4);
+    RED_CHECK_MEM(exp_data, message.get_bytes());
+}
+
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPResult) {
 
     const uint8_t expected_result = LocalICAPServiceProtocol::ACCEPTED_FLAG;
