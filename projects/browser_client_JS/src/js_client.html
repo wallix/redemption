@@ -817,23 +817,20 @@ function run()
 		canvas.stroke();
 		canvas.restore();
     });
-    const imageToURL = function(image) {
+    const image2CSS = function(image, x, y) {
         ecurCanvas.width = image.width;
         ecurCanvas.height = image.height;
         ecurCanvas.getContext('2d').putImageData(image, 0, 0);
         const dataURL = ecurCanvas.toDataURL();
-        return dataURL;
-    };
-    const dataURL2CSS = function(dataURL, x, y) {
         // console.log('url(' + dataURL + ') ' + x + ' ' + y + ', auto');
         return 'url(' + dataURL + ') ' + x + ' ' + y + ', auto';
     };
     rdpclient.on('setPointer', function(image, x, y) {
-        ecanvas.style.cursor = dataURL2CSS(imageToURL(image), x, y);
+        ecanvas.style.cursor = image2CSS(image, x, y);
     });
     let cachePointers = [];
     rdpclient.on('newPointer', function(image, offset, x, y) {
-        const data = dataURL2CSS(imageToURL(image), x, y);
+        const data = image2CSS(image, x, y);
         cachePointers[offset] = data;
         ecanvas.style.cursor = data;
     });
