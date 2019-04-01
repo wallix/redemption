@@ -19,7 +19,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "mod/files_validator_api.hpp"
+#include "lib/files_validator_api.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "utils/log.hpp"
 

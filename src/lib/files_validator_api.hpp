@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2019
    Author(s): Clement Moroldo
-
 */
 
 #pragma once
@@ -47,7 +46,7 @@ extern "C"
     int validator_close_session(ICAPService * service) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int icap_abort_file(ICAPService * service, const int file_id) noexcept;
+    int validator_abort_file(ICAPService * service, const int file_id) noexcept;
 
 
     //test utilitaries functions

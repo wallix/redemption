@@ -46,8 +46,7 @@ public:
 
     int file_id_int;
 
-    ICAPService(std::string const& socket_path/*,
-                std::string & session_id*/)
+    ICAPService(std::string const& socket_path)
     : fd(local_connect(socket_path.c_str()))
     , result(-1)
     , file_id_int(0)
@@ -78,9 +77,9 @@ namespace LocalICAPServiceProtocol {
     // | END_OF_FILE_FLAG   | Indicates data file end                 |
     // | 0x03               |                                         |
     // +--------------------+-----------------------------------------+
-    // | ABORT_FILE_FLAG    | Abort file.                                     |
-    // | 0x04               |                                                 |
-    // +--------------------+-------------------------------------------------+
+    // | ABORT_FILE_FLAG    | Abort file.                             |
+    // | 0x04               |                                         |
+    // +--------------------+-----------------------------------------+
         NEW_FILE_FLAG      = 0x00,
         DATA_FILE_FLAG     = 0x01,
         CLOSE_SESSION_FLAG = 0x02,
@@ -127,18 +126,24 @@ struct ICAPHeader {
     // msg_type: An unsigned, 8-bit integer that indicate message type. Value must be
     //           NEW_FILE_FLAG, DATA_FILE_FLAG or CLOSE_SESSION_FLAG.
 
-    // +--------------------+-------------------------------------------------+
-    // | Value              | Meaning                                         |
-    // +--------------------+-------------------------------------------------+
-    // | NEW_FILE_FLAG      | Create a new file to analyse.                   |
-    // | 0x00               |                                                 |
-    // +--------------------+-------------------------------------------------+
-    // | DATA_FILE_FLAG     | Send data from a file.                          |
-    // | 0x01               |                                                 |
-    // +--------------------+-------------------------------------------------+
-    // | CLOSE_SESSION_FLAG | Close the session.                              |
-    // | 0x02               |                                                 |
-    // +--------------------+-------------------------------------------------+
+    // +--------------------+-----------------------------------------+
+    // | Value              | Meaning                                 |
+    // +--------------------+-----------------------------------------+
+    // | NEW_FILE_FLAG      | Create a new file to analyse.           |
+    // | 0x00               |                                         |
+    // +--------------------+-----------------------------------------+
+    // | DATA_FILE_FLAG     | Send data from a file.                  |
+    // | 0x01               |                                         |
+    // +--------------------+-----------------------------------------+
+    // | CLOSE_SESSION_FLAG | Close the session.                      |
+    // | 0x02               |                                         |
+    // +--------------------+-----------------------------------------+
+    // | END_OF_FILE_FLAG   | Indicates data file end                 |
+    // | 0x03               |                                         |
+    // +--------------------+-----------------------------------------+
+    // | ABORT_FILE_FLAG    | Abort file.                             |
+    // | 0x04               |                                         |
+    // +--------------------+-----------------------------------------+
 
     // msg_size: An unsigned, 32-bit integer that indicate length of following message
     //           data.

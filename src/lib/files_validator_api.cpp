@@ -16,11 +16,10 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2019
    Author(s): Clément Moroldo
-
 */
 
-#include "mod/icap_files_service.hpp"
-#include "mod/files_validator_api.hpp"
+#include "lib/icap_files_service.hpp"
+#include "lib/files_validator_api.hpp"
 
 
 
@@ -51,7 +50,7 @@ extern "C"
     }
 
     int validator_abort_file(ICAPService * service, const int file_id) noexcept {
-        return icap_abort_file(service, file_id)
+        return icap_abort_file(service, file_id);
     }
 
 

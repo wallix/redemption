@@ -19,7 +19,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "mod/icap_files_service.hpp"
+#include "lib/icap_files_service.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "utils/log.hpp"
 
