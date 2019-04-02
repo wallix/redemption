@@ -75,10 +75,10 @@ const redemption = (function(Module, window) {
         };
     };
 
-    const wCb_em2js_U8p = function(cb) {
+    const wCb_em2js_U8p = function(cb, thisp) {
         return function(idata, len, ...args) {
             const data = HEAPU8.subarray(idata, idata + len);
-            cb(data, ...args);
+            cb.call(thisp, data, ...args);
         };
     };
 
@@ -122,7 +122,9 @@ const redemption = (function(Module, window) {
 
     const noop = function(){};
 
-    resultFuncs = {};
+    resultFuncs = {
+        HEAPU8: HEAPU8,
+    };
 
     resultFuncs.newRDPClient = function(url, width, height, username, password, verbosity) {
         const socket = new WebSocket(url, "RDP");
@@ -142,7 +144,7 @@ const redemption = (function(Module, window) {
                     console.log('RdpClient: Unknown event ' + eventName);
                     return false;
                 }
-                events[eventName] = wrapCb(cb);
+                events[eventName] = wrapCb(cb, events);
                 return this;
             },
             close: noop,
@@ -316,12 +318,14 @@ const redemption = (function(Module, window) {
         receiveFormatStop: identity,
         receiveFormat: identity,
         receiveData: wCb_em2js_U8p,
+        receiveFilename: wCb_em2js_U8p,
+        receiveFileContents: wCb_em2js_U8p,
     };
 
     resultFuncs.newClipboardChannel = function(callback, events, verbose) {
         for (eventName in wrappersClipboard) {
             const event = events[eventName];
-            events[eventName] = event ? wrappersClipboard[eventName](event) : noop;
+            events[eventName] = event ? wrappersClipboard[eventName](event, events) : noop;
         }
         return new Module.ClipboardChannel(callback, events, verbose);
     };
@@ -332,6 +336,7 @@ const redemption = (function(Module, window) {
 
 const newRDPClient = redemption.newRDPClient;
 const newClipboardChannel = redemption.newClipboardChannel;
+const HEAPU8 = redemption.HEAPU8;
 
 
 const ecanvasFocus = document.getElementById('canvasFocus');
@@ -747,14 +752,10 @@ function bgrToCss(color)
 const UTF8Decoder = new TextDecoder("utf-8");
 const UTF16Decoder = new TextDecoder("utf-16");
 
-function utf8decode(data)
+function decodeName(iname, inameLen, isUTF8)
 {
-    UTF8Decoder.decode(data.slice(0, data.length-1));
-}
-
-function utf16decode(data)
-{
-    return UTF16Decoder.decode(data.slice(0, data.length-2));
+    const uname = HEAPU8.subarray(iname, iname + inameLen);
+    return (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(uname);
 }
 
 function run()
@@ -876,39 +877,77 @@ function run()
 
     const CF = Object.freeze({
       TEXT: 1,
-      BITMAP: 2,
       UTF16: 13,
+
+      BITMAP: 2,
+
+      DIB: 5,
+      DIBV5: 17,
+
+      FileGroupDescriptor: 953100,
+    });
+    const CustomCF = Object.freeze({
+      FileGroupDescriptor: 1,
+      FileContents: 2,
     })
     let clipboard;
     rdpclient.addChannelCreator((cb) => {
         return clipboard = newClipboardChannel(cb, {
             receiveFormatStart: function() {
                 this.cf = 0;
+                this.customCf = 0;
             },
             receiveFormatStop: function() {
-                if (this.cf) {
-                    clipboard.sendRequestFormat(this.cf);
+                if (this.cf || this.customCf) {
+                    console.log(this.cf, this.customCf, this.formatId);
+                    clipboard.sendRequestFormat(this.formatId, this.customCf);
                 }
             },
-            receiveFormat: function(id, iname, name_len) {
-                console.log(id,iname,name_len);
-                switch (id) {
+            receiveFormat: function(formatId, iname, inameLen, isUTF8) {
+                console.log(formatId,iname,inameLen);
+                switch (formatId) {
                 case CF.TEXT:
                     if (this.cf == CF.UTF16) {
                         break;
                     }
                 case CF.UTF16:
-                    this.cf = id;
+                    this.cf = formatId;
+                    this.formatId = formatId;
                     break;
+
+                default:
+                    const name = decodeName(iname, inameLen, isUTF8);
+                    console.log(name);
+                    switch (name) {
+                    case "FileGroupDescriptorW":
+                        this.customCf = CustomCF.FileGroupDescriptor;
+                        this.formatId = formatId;
+                        break;
+                    case "FileContents":
+                        this.fileContentsId = formatId;
+                        break;
+                    }
                 }
             },
-            receiveData: function(data, id) {
-                console.log(id)
-                switch (id) {
-                case CF.TEXT: receiveCbUtf8_data.value = utf8decode(data); break;
-                case CF.UTF16: receiveCbUtf8_data.value = utf16decode(data); break;
-                default: console.log('Unknown data', id)
+            receiveData: function(data, formatId) {
+                console.log(formatId, this.cf)
+                switch (this.cf) {
+                case CF.TEXT: receiveCbUtf8_data.value = UTF8Decoder.decode(data); break;
+                case CF.UTF16: receiveCbUtf8_data.value = UTF16Decoder.decode(data); break;
+                default: console.log('Unknown data', formatId);
                 }
+            },
+            receiveFilename: function(utf16Name, sizeLow, sizeHigh, isLast) {
+                console.log(UTF16Decoder.decode(utf16Name), sizeLow, sizeHigh);
+
+                console.log(isLast , this.fileContentsId);
+                if (isLast && this.fileContentsId)
+                {
+                    clipboard.sendRequestFormat(this.fileContentsId, CustomCF.FileContents);
+                }
+            },
+            receiveFileContents: function(data) {
+                console.log(UTF16Decoder.decode(data));
             },
         }, 0x04000000);
     });

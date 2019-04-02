@@ -27,7 +27,7 @@
 class X509;
 class ServerNotifier;
 
-[[nodiscard]] bool tls_check_certificate(
+[[nodiscard]] inline bool tls_check_certificate(
     X509& /*x509*/,
     bool /*server_cert_store*/,
     bool /*ensure_server_certificate_match*/,
@@ -38,5 +38,5 @@ class ServerNotifier;
     const char* /*ip_address*/,
     int /*port*/)
 {
-
+  return false;
 }
