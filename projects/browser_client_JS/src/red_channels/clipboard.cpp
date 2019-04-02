@@ -172,7 +172,7 @@ struct redjs::ClipboardChannel::D
         if (this->response_buffer.waiting_for_data)
         {
             LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Response PDU continuation");
-            this->process_format_data_response(chunk, channel_flags);
+            this->process_format_data_response(chunk, channel_flags, header);
             return;
         }
 
@@ -222,7 +222,7 @@ struct redjs::ClipboardChannel::D
             else
             {
                 LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Response PDU");
-                this->process_format_data_response(chunk, channel_flags);
+                this->process_format_data_response(chunk, channel_flags, header);
             }
         break;
 
@@ -277,50 +277,40 @@ struct redjs::ClipboardChannel::D
         }
     }
 
-    void process_format_data_response(InStream& chunk, uint32_t channel_flags)
+    void process_format_data_response(InStream& chunk, uint32_t channel_flags, RDPECLIP::CliprdrHeader& header)
     {
         if (channel_flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            response_buffer.reserve(chunk.in_remain());
+            this->response_buffer.reserve(header.dataLen());
         }
 
         hexdump_av(chunk.remaining_bytes());
 
-        if (!this->response_buffer.add(chunk.remaining_bytes()))
-        {
-            LOG(LOG_ERR, "Clipboard: buffer too small");
-            if ((channel_flags & CHANNELS::CHANNEL_FLAG_LAST))
-            {
-                this->response_buffer.final();
-            }
-            this->response_buffer.release();
-            return ;
-        }
+        this->response_buffer.add(chunk.remaining_bytes());
 
         if (!(channel_flags & CHANNELS::CHANNEL_FLAG_LAST))
         {
             return ;
         }
 
-        auto callback_data = [&](char const* fname, cbytes_view data){
+        auto callback_data = [&](char const* fname, cbytes_view data, auto const&... args){
             hexdump_av(data);
-            emval_call(this->callbacks, fname, data.data(), data.size());
+            emval_call(this->callbacks, fname, data.data(), data.size(), args...);
         };
 
         LOG(LOG_DEBUG, "id = %u", this->requested_format_id);
 
+        callback_data("receiveData", this->response_buffer.final(), this->requested_format_id);
+
         switch (this->requested_format_id)
         {
-            case RDPECLIP::CF_TEXT:
-                callback_data("receiveUtf8", this->response_buffer.final());
-                break;
-            case RDPECLIP::CF_UNICODETEXT: {
-                BufArrayMaker<256> buf;
-                callback_data("receiveUtf8", to_utf8(buf, this->response_buffer.final()));
-                break;
-            }
-            default:
-                callback_data("receiveFormatData", this->response_buffer.final());
-                break;
+            // case RDPECLIP::CF_TEXT:
+            //     break;
+            // case RDPECLIP::CF_UNICODETEXT:
+            //     callback_data("receiveUtf16", this->response_buffer.final());
+            //     break;
+            // default:
+            //     callback_data("receiveFormatData", this->response_buffer.final());
+            //     break;
             // case RDPECLIP::CF_BITMAP:          utf8_name = "bitmap"_av; break;
             // case RDPECLIP::CF_METAFILEPICT:    utf8_name = "metafilepict"_av; break;
             // case RDPECLIP::CF_SYLK:            utf8_name = "sylk"_av; break;
@@ -530,16 +520,12 @@ struct redjs::ClipboardChannel::D
             this->p.reset();
         }
 
-        [[nodiscard]] bool add(cbytes_view data) noexcept
+        void add(cbytes_view data) noexcept
         {
-            std::size_t remaining = this->len - this->ipos;
-            if (remaining < data.size())
-            {
-                return false;
-            }
-            memcpy(this->p.get() + this->ipos, data.as_u8p(), data.size());
-            this->ipos += data.size();
-            return true;
+            std::size_t const remaining = this->len - this->ipos;
+            std::size_t const len = std::min(remaining, data.size());
+            memcpy(this->p.get() + this->ipos, data.as_u8p(), len);
+            this->ipos += len;
         }
 
         // bytes_view remaining_buffer() noexcept
