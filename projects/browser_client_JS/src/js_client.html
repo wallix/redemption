@@ -87,7 +87,7 @@ const redemption = (function(Module, window) {
         drawImage: wCb_em2js_ImageData,
         drawPolyline: function(cb) {
             return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
-                const datas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
+                const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
                 cb(xStart, yStart, deltas, penColor)
             };
         },
