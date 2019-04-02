@@ -32,6 +32,7 @@ export BOOST_TEST_COLOR_OUTPUT=0
 rm -rf bin
 
 # export REDEMPTION_LOG_PRINT=1
+export REDEMPTION_LOG_PRINT=0
 
 # release for -Warray-bounds and not assert
 #bjam -q toolset=gcc-7 cxxflags=-g
@@ -50,15 +51,13 @@ bjam -q toolset=gcc-7 cxxflags=-g -j2
 
 
 # coverage
-export REDEMPTION_LOG_PRINT=0
-bjam -a -q toolset=gcc-7 coverage covbin=gcov-7
+bjam -q toolset=gcc-7 coverage covbin=gcov-7
 
-export REDEMPTION_LOG_PRINT=0
 #bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
 # multi-thread
-bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san -j3 ocr_tools
-bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san $big_mem
-bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san -j2
+bjam -q toolset=clang-6.0 -sNO_FFMPEG=1 san -j3 ocr_tools
+bjam -q toolset=clang-6.0 -sNO_FFMPEG=1 san $big_mem
+bjam -q toolset=clang-6.0 -sNO_FFMPEG=1 san -j2
 
 # cppcheck
 # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
