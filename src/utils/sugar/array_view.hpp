@@ -100,48 +100,56 @@ struct array_view
 
     // TODO free functions
     //@{
+    [[nodiscard]]
     constexpr array_view first(std::size_t n) noexcept
     {
         assert(n <= this->size());
         return {this->data(), n};
     }
 
+    [[nodiscard]]
     constexpr array_view last(std::size_t n) noexcept
     {
         assert(n <= this->size());
         return {this->data() + this->size() - n, n};
     }
 
+    [[nodiscard]]
     constexpr array_view<const T> first(std::size_t n) const noexcept
     {
         assert(n <= this->size());
         return {this->data(), n};
     }
 
+    [[nodiscard]]
     constexpr array_view<const T> last(std::size_t n) const noexcept
     {
         assert(n <= this->size());
         return {this->data() + this->size() - n, n};
     }
 
+    [[nodiscard]]
     constexpr array_view array_from_offset(std::size_t offset) noexcept
     {
         assert(offset <= this->size());
         return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
     }
 
+    [[nodiscard]]
     constexpr array_view subarray(std::size_t offset, std::size_t count) noexcept
     {
         assert(offset <= this->size() && count <= this->size() - offset);
         return {this->data() + offset, count};
     }
 
+    [[nodiscard]]
     constexpr array_view<T const> array_from_offset(std::size_t offset) const noexcept
     {
         assert(offset <= this->size());
         return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
     }
 
+    [[nodiscard]]
     constexpr array_view<T const> subarray(std::size_t offset, std::size_t count) const noexcept
     {
         assert(offset <= this->size() && count <= this->size() - offset);

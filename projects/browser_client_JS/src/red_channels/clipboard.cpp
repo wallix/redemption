@@ -46,6 +46,35 @@ namespace
         UnicodeText = 13,
     };
 
+    cbytes_view quick_utf16_av(cbytes_view av)
+    {
+        auto first = av.begin();
+        auto count = av.size() / 2;
+
+        while (count > 0)
+        {
+            auto it = first;
+            auto step = count / 2;
+            it += step * 2;
+            if (it[0] | it[1])
+            {
+                first = it + 2;
+                count -= step + 1;
+            }
+            else
+            {
+                count = step;
+            }
+        }
+
+        return av = av.first(first - av.begin());
+    }
+
+    cbytes_view utf16_av(uint8_t const* p)
+    {
+        return {p, UTF16StrLen(p) * 2};
+    }
+
     struct FormatListEmptyName
     {
         std::size_t size() const noexcept
@@ -99,7 +128,8 @@ namespace
         constexpr size_t min_long_format_name_data_length = 6;
 
         // formatId(4) + formatName(32)
-        constexpr size_t short_format_name_data_length = 36;
+        constexpr size_t short_format_name_length = 32;
+        constexpr size_t short_format_name_data_length = short_format_name_length + 4;
 
         constexpr size_t format_name_data_length[] = {
             short_format_name_data_length,
@@ -116,23 +146,23 @@ namespace
         if (bool(is_long_format))
         {
             data.charset = Charset::Utf16;
-            data.av_name = {stream.get_current(), ::UTF16StrLen(stream.get_current())};
+            data.av_name = utf16_av(stream.get_current());
 
-            stream.in_skip_bytes((data.av_name.size() + 1) * sizeof(uint16_t));
+            stream.in_skip_bytes(data.av_name.size() + 2);
         }
         else if (bool(is_ascii))
         {
             data.charset = Charset::Ascii;
-            data.av_name = {stream.get_current(), strlen(char_ptr_cast(stream.get_current()))};
+            data.av_name = quick_utf16_av(stream.remaining_bytes());
 
-            stream.in_skip_bytes(short_format_name_data_length - 4 /* formatId(4) */);
+            stream.in_skip_bytes(short_format_name_length);
         }
         else
         {
             data.charset = Charset::Utf16;
-            data.av_name = {stream.get_current(), ::UTF16StrLen(stream.get_current())};
+            data.av_name = quick_utf16_av(stream.remaining_bytes().first(short_format_name_length));
 
-            stream.in_skip_bytes(short_format_name_data_length - 4 /* formatId(4) */);
+            stream.in_skip_bytes(short_format_name_length);
         }
 
         return true;
@@ -140,6 +170,17 @@ namespace
 
 }
 
+namespace
+{
+
+enum class CustomClipboardFormat : uint32_t
+{
+    None = 0,
+    FileGroupDescriptorW,
+    FileContents,
+};
+
+}
 
 struct redjs::ClipboardChannel::D
 {
@@ -149,7 +190,7 @@ struct redjs::ClipboardChannel::D
     , verbose(bool(verbose & RDPVerbose::cliprdr))
     {}
 
-    void send_request_format(uint32_t format_id)
+    void send_request_format(uint32_t format_id, CustomClipboardFormat custom_cf)
     {
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Request Format");
 
@@ -160,6 +201,7 @@ struct redjs::ClipboardChannel::D
         formatDataRequestPDU.emit(out_stream);
         InStream chunkRequest(out_stream.get_bytes());
         this->requested_format_id = format_id;
+        this->custom_cf = custom_cf;
 
         this->send_to_mod_channel(out_stream);
     }
@@ -267,12 +309,10 @@ struct redjs::ClipboardChannel::D
             //     }
             // break;
             //
-            // default:
-            //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            //         "SERVER >> Default Process server PDU data");
-            //     this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
-            //
-            // break;
+            default:
+                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Default Process server PDU data");
+                // this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
+                break;
 
         }
     }
@@ -285,6 +325,8 @@ struct redjs::ClipboardChannel::D
 
         hexdump_av(chunk.remaining_bytes());
 
+        // TODO direct send, no buffer
+
         this->response_buffer.add(chunk.remaining_bytes());
 
         if (!(channel_flags & CHANNELS::CHANNEL_FLAG_LAST))
@@ -292,59 +334,90 @@ struct redjs::ClipboardChannel::D
             return ;
         }
 
-        auto callback_data = [&](char const* fname, cbytes_view data, auto const&... args){
+        auto send_data = [&](char const* fname, cbytes_view data, auto const&... args){
             hexdump_av(data);
             emval_call(this->callbacks, fname, data.data(), data.size(), args...);
         };
 
-        LOG(LOG_DEBUG, "id = %u", this->requested_format_id);
+        auto remove_last_char = [](cbytes_view data, std::size_t strip_n) {
+            return data.size() >= strip_n ? data.first(data.size() - strip_n) : cbytes_view{};
+        };
 
-        callback_data("receiveData", this->response_buffer.final(), this->requested_format_id);
+        LOG(LOG_DEBUG, "id = %u  customcf = %u", this->requested_format_id, this->custom_cf);
 
-        switch (this->requested_format_id)
+        auto data = this->response_buffer.final();
+
+        switch (this->custom_cf)
         {
-            // case RDPECLIP::CF_TEXT:
-            //     break;
-            // case RDPECLIP::CF_UNICODETEXT:
-            //     callback_data("receiveUtf16", this->response_buffer.final());
-            //     break;
-            // default:
-            //     callback_data("receiveFormatData", this->response_buffer.final());
-            //     break;
-            // case RDPECLIP::CF_BITMAP:          utf8_name = "bitmap"_av; break;
-            // case RDPECLIP::CF_METAFILEPICT:    utf8_name = "metafilepict"_av; break;
-            // case RDPECLIP::CF_SYLK:            utf8_name = "sylk"_av; break;
-            // case RDPECLIP::CF_DIF:             utf8_name = "dif"_av; break;
-            // case RDPECLIP::CF_TIFF:            utf8_name = "tiff"_av; break;
-            // case RDPECLIP::CF_OEMTEXT:         utf8_name = "oemtext"_av; break;
-            // case RDPECLIP::CF_DIB:             utf8_name = "dib"_av; break;
-            // case RDPECLIP::CF_PALETTE:         utf8_name = "palette"_av; break;
-            // case RDPECLIP::CF_PENDATA:         utf8_name = "pendata"_av; break;
-            // case RDPECLIP::CF_RIFF:            utf8_name = "riff"_av; break;
-            // case RDPECLIP::CF_WAVE:            utf8_name = "wave"_av; break;
-            // case RDPECLIP::CF_ENHMETAFILE:     utf8_name = "enhmetafile"_av; break;
-            // case RDPECLIP::CF_HDROP:           utf8_name = "hdrop"_av; break;
-            // case RDPECLIP::CF_LOCALE:          utf8_name = "locale"_av; break;
-            // case RDPECLIP::CF_DIBV5:           utf8_name = "dibv5"_av; break;
-            // case RDPECLIP::CF_OWNERDISPLAY:    utf8_name = "ownerdisplay"_av; break;
-            // case RDPECLIP::CF_DSPTEXT:         utf8_name = "dsptext"_av; break;
-            // case RDPECLIP::CF_DSPBITMAP:       utf8_name = "dspbitmap"_av; break;
-            // case RDPECLIP::CF_DSPMETAFILEPICT: utf8_name = "dspmetafilepict"_av; break;
-            // case RDPECLIP::CF_DSPENHMETAFILE:  utf8_name = "dspenhmetafile"_av; break;
-            // case RDPECLIP::CF_PRIVATEFIRST:    utf8_name = "privatefirst"_av; break;
-            // case RDPECLIP::CF_PRIVATELAST:     utf8_name = "privatelast"_av; break;
-            // case RDPECLIP::CF_GDIOBJFIRST:     utf8_name = "gdiobjfirst"_av; break;
-            // case RDPECLIP::CF_GDIOBJLAST:      utf8_name = "gdiobjlast"_av; break;
+        case CustomClipboardFormat::None:
+            switch (this->requested_format_id)
+            {
+                case RDPECLIP::CF_TEXT:
+                    data = remove_last_char(data, 1);
+                    break;
+                case RDPECLIP::CF_UNICODETEXT:
+                    data = remove_last_char(data, 2);
+                    break;
+                // case RDPECLIP::CF_BITMAP:          utf8_name = "bitmap"_av; break;
+                // case RDPECLIP::CF_METAFILEPICT:    utf8_name = "metafilepict"_av; break;
+                // case RDPECLIP::CF_SYLK:            utf8_name = "sylk"_av; break;
+                // case RDPECLIP::CF_DIF:             utf8_name = "dif"_av; break;
+                // case RDPECLIP::CF_TIFF:            utf8_name = "tiff"_av; break;
+                // case RDPECLIP::CF_OEMTEXT:         utf8_name = "oemtext"_av; break;
+                // case RDPECLIP::CF_DIB:             utf8_name = "dib"_av; break;
+                // case RDPECLIP::CF_PALETTE:         utf8_name = "palette"_av; break;
+                // case RDPECLIP::CF_PENDATA:         utf8_name = "pendata"_av; break;
+                // case RDPECLIP::CF_RIFF:            utf8_name = "riff"_av; break;
+                // case RDPECLIP::CF_WAVE:            utf8_name = "wave"_av; break;
+                // case RDPECLIP::CF_ENHMETAFILE:     utf8_name = "enhmetafile"_av; break;
+                // case RDPECLIP::CF_HDROP:           utf8_name = "hdrop"_av; break;
+                // case RDPECLIP::CF_LOCALE:          utf8_name = "locale"_av; break;
+                // case RDPECLIP::CF_DIBV5:           utf8_name = "dibv5"_av; break;
+                // case RDPECLIP::CF_OWNERDISPLAY:    utf8_name = "ownerdisplay"_av; break;
+                // case RDPECLIP::CF_DSPTEXT:         utf8_name = "dsptext"_av; break;
+                // case RDPECLIP::CF_DSPBITMAP:       utf8_name = "dspbitmap"_av; break;
+                // case RDPECLIP::CF_DSPMETAFILEPICT: utf8_name = "dspmetafilepict"_av; break;
+                // case RDPECLIP::CF_DSPENHMETAFILE:  utf8_name = "dspenhmetafile"_av; break;
+                // case RDPECLIP::CF_PRIVATEFIRST:    utf8_name = "privatefirst"_av; break;
+                // case RDPECLIP::CF_PRIVATELAST:     utf8_name = "privatelast"_av; break;
+                // case RDPECLIP::CF_GDIOBJFIRST:     utf8_name = "gdiobjfirst"_av; break;
+                // case RDPECLIP::CF_GDIOBJLAST:      utf8_name = "gdiobjlast"_av; break;
+            }
+            send_data("receiveData", data);
+            break;
+
+        case CustomClipboardFormat::FileGroupDescriptorW: {
+            InStream in_stream(data);
+            // flags(4) + reserved1(32) + fileAttributes(4) + reserved2(16) + lastWriteTime(8)
+            // sizeHigh(4) + sizeLow(4) + filenameUtf16(520)
+            constexpr std::size_t file_packet_size = 592;
+            if (in_stream.in_remain() >= file_packet_size + 4)
+            {
+                // auto nb_item = in_stream.in_uint32_le();
+                in_stream.in_skip_bytes(4);
+                bool is_last;
+                do
+                {
+                    in_stream.in_skip_bytes(64);
+                    auto size_high = in_stream.in_uint32_le();
+                    auto size_low = in_stream.in_uint32_le();
+                    auto name = quick_utf16_av(in_stream.remaining_bytes().first(520));
+                    in_stream.in_skip_bytes(520);
+                    is_last = in_stream.in_remain() < 592;
+                    send_data("receiveFilename", name, size_low, size_high, is_last);
+                }
+                while (/*--nb_item && */ !is_last);
+            }
+            break;
+        }
+
+        case CustomClipboardFormat::FileContents: {
+            send_data("receiveFileContents", data);
+            break;
+        }
         }
 
         this->response_buffer.release();
-    }
-
-    static cbytes_view to_utf8(BufArrayMaker<256>& buf, cbytes_view data)
-    {
-        auto av = buf.dyn_array(data.size() * 2 + 1);
-        // removed null char
-        return av.first(::UTF16toUTF8(data.data(), data.size(), av.data(), av.size()) - 1);
     }
 
     void process_format_list(InStream& chunk, uint32_t channel_flags)
@@ -359,54 +432,51 @@ struct redjs::ClipboardChannel::D
             IsLongFormat(this->format_list.use_long_format_names),
             IsAscii(channel_flags & RDPECLIP::CB_ASCII_NAMES)))
         {
-            cbytes_view utf8_name = ""_av;
+            cbytes_view name = data.av_name;
+            bool is_utf8 = true;
 
-            if (data.av_name.size())
+            if (name.size())
             {
                 switch (data.charset)
                 {
-                case Charset::Ascii:
-                    utf8_name = data.av_name;
-                    break;
-                case Charset::Utf16:
-                    utf8_name = to_utf8(buf, data.av_name);
-                    break;
+                case Charset::Ascii: break;
+                case Charset::Utf16: is_utf8 = false; break;
                 }
             }
             else
             {
                 switch (data.format_id)
                 {
-                case RDPECLIP::CF_TEXT:            utf8_name = "text"_av; break;
-                case RDPECLIP::CF_BITMAP:          utf8_name = "bitmap"_av; break;
-                case RDPECLIP::CF_METAFILEPICT:    utf8_name = "metafilepict"_av; break;
-                case RDPECLIP::CF_SYLK:            utf8_name = "sylk"_av; break;
-                case RDPECLIP::CF_DIF:             utf8_name = "dif"_av; break;
-                case RDPECLIP::CF_TIFF:            utf8_name = "tiff"_av; break;
-                case RDPECLIP::CF_OEMTEXT:         utf8_name = "oemtext"_av; break;
-                case RDPECLIP::CF_DIB:             utf8_name = "dib"_av; break;
-                case RDPECLIP::CF_PALETTE:         utf8_name = "palette"_av; break;
-                case RDPECLIP::CF_PENDATA:         utf8_name = "pendata"_av; break;
-                case RDPECLIP::CF_RIFF:            utf8_name = "riff"_av; break;
-                case RDPECLIP::CF_WAVE:            utf8_name = "wave"_av; break;
-                case RDPECLIP::CF_UNICODETEXT:     utf8_name = "unicodetext"_av; break;
-                case RDPECLIP::CF_ENHMETAFILE:     utf8_name = "enhmetafile"_av; break;
-                case RDPECLIP::CF_HDROP:           utf8_name = "hdrop"_av; break;
-                case RDPECLIP::CF_LOCALE:          utf8_name = "locale"_av; break;
-                case RDPECLIP::CF_DIBV5:           utf8_name = "dibv5"_av; break;
-                case RDPECLIP::CF_OWNERDISPLAY:    utf8_name = "ownerdisplay"_av; break;
-                case RDPECLIP::CF_DSPTEXT:         utf8_name = "dsptext"_av; break;
-                case RDPECLIP::CF_DSPBITMAP:       utf8_name = "dspbitmap"_av; break;
-                case RDPECLIP::CF_DSPMETAFILEPICT: utf8_name = "dspmetafilepict"_av; break;
-                case RDPECLIP::CF_DSPENHMETAFILE:  utf8_name = "dspenhmetafile"_av; break;
-                case RDPECLIP::CF_PRIVATEFIRST:    utf8_name = "privatefirst"_av; break;
-                case RDPECLIP::CF_PRIVATELAST:     utf8_name = "privatelast"_av; break;
-                case RDPECLIP::CF_GDIOBJFIRST:     utf8_name = "gdiobjfirst"_av; break;
-                case RDPECLIP::CF_GDIOBJLAST:      utf8_name = "gdiobjlast"_av; break;
+                case RDPECLIP::CF_TEXT:            name = "text"_av; break;
+                case RDPECLIP::CF_BITMAP:          name = "bitmap"_av; break;
+                case RDPECLIP::CF_METAFILEPICT:    name = "metafilepict"_av; break;
+                case RDPECLIP::CF_SYLK:            name = "sylk"_av; break;
+                case RDPECLIP::CF_DIF:             name = "dif"_av; break;
+                case RDPECLIP::CF_TIFF:            name = "tiff"_av; break;
+                case RDPECLIP::CF_OEMTEXT:         name = "oemtext"_av; break;
+                case RDPECLIP::CF_DIB:             name = "dib"_av; break;
+                case RDPECLIP::CF_PALETTE:         name = "palette"_av; break;
+                case RDPECLIP::CF_PENDATA:         name = "pendata"_av; break;
+                case RDPECLIP::CF_RIFF:            name = "riff"_av; break;
+                case RDPECLIP::CF_WAVE:            name = "wave"_av; break;
+                case RDPECLIP::CF_UNICODETEXT:     name = "unicodetext"_av; break;
+                case RDPECLIP::CF_ENHMETAFILE:     name = "enhmetafile"_av; break;
+                case RDPECLIP::CF_HDROP:           name = "hdrop"_av; break;
+                case RDPECLIP::CF_LOCALE:          name = "locale"_av; break;
+                case RDPECLIP::CF_DIBV5:           name = "dibv5"_av; break;
+                case RDPECLIP::CF_OWNERDISPLAY:    name = "ownerdisplay"_av; break;
+                case RDPECLIP::CF_DSPTEXT:         name = "dsptext"_av; break;
+                case RDPECLIP::CF_DSPBITMAP:       name = "dspbitmap"_av; break;
+                case RDPECLIP::CF_DSPMETAFILEPICT: name = "dspmetafilepict"_av; break;
+                case RDPECLIP::CF_DSPENHMETAFILE:  name = "dspenhmetafile"_av; break;
+                case RDPECLIP::CF_PRIVATEFIRST:    name = "privatefirst"_av; break;
+                case RDPECLIP::CF_PRIVATELAST:     name = "privatelast"_av; break;
+                case RDPECLIP::CF_GDIOBJFIRST:     name = "gdiobjfirst"_av; break;
+                case RDPECLIP::CF_GDIOBJLAST:      name = "gdiobjlast"_av; break;
                 }
             }
 
-            emval_call(this->callbacks, "receiveFormat", data.format_id, utf8_name.data(), utf8_name.size());
+            emval_call(this->callbacks, "receiveFormat", data.format_id, name.data(), name.size(), is_utf8);
         }
 
         this->send_format_list_response_ok();
@@ -544,6 +614,7 @@ struct redjs::ClipboardChannel::D
     FormatListEmptyName format_list;
     ResponseBuffer response_buffer;
     uint32_t requested_format_id = 0;
+    CustomClipboardFormat custom_cf {};
     bool verbose;
 };
 
@@ -579,8 +650,8 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             };
             return redjs::ChannelReceiver(channel_names::cliprdr, receiver);
         })
-        .function_ptr("sendRequestFormat", [](redjs::ClipboardChannel& clip, uint32_t id) {
-            clip.d->send_request_format(id);
+        .function_ptr("sendRequestFormat", [](redjs::ClipboardChannel& clip, uint32_t id, int custom_cf) {
+            clip.d->send_request_format(id, CustomClipboardFormat(custom_cf));
         })
         // .function("receive", &redjs::ClipboardChannel::receive)
     ;
