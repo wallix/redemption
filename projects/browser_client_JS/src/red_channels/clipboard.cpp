@@ -173,12 +173,11 @@ namespace
 namespace
 {
 
-enum class CustomClipboardFormat : uint32_t
+enum class CustomFormat : uint32_t
 {
     None = 0,
-    FileGroupDescriptorW,
 
-    //private:
+    FileGroupDescriptorW,
     FileContentsSize,
     FileContentsRange,
 };
@@ -186,7 +185,9 @@ enum class CustomClipboardFormat : uint32_t
 enum class CustomMessageType : int
 {
     None = 0,
-    FileContents,
+    // Is CustomFormat
+    FileContentsSize,
+    FileContentsRange,
 };
 
 }
@@ -199,46 +200,39 @@ struct redjs::ClipboardChannel::D
     , verbose(bool(verbose & RDPVerbose::cliprdr))
     {}
 
-    void send_message_type(CustomMessageType message_type, cbytes_view data)
+    void send_file_contents_request(
+        uint32_t request_type,
+        uint32_t stream_id, uint32_t lindex,
+        uint32_t pos_low, uint32_t pos_high)
     {
-        switch (message_type)
-        {
-            case CustomMessageType::None:
-                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Custom Message");
+        StaticOutStream<64> out_stream;
 
-                this->send_to_mod_channel(data);
-                break;
+        RDPECLIP::FileContentsRequestPDU request(
+            stream_id,
+            lindex,
+            request_type,
+            pos_low,
+            pos_high,
+            request_type == RDPECLIP::FILECONTENTS_SIZE
+            ? RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED
+            : 0x0000ffff // TODO maximum number of bytes to read from the remote file
+        );
 
-            case CustomMessageType::FileContents: {
-                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send File Contents Request");
+        RDPECLIP::CliprdrHeader header(
+            RDPECLIP::CB_FILECONTENTS_REQUEST,
+            RDPECLIP::CB_RESPONSE__NONE_,
+            request.size());
 
-                StaticOutStream<32> out_stream;
+        header.emit(out_stream);
+        request.emit(out_stream);
+        this->send_to_mod_channel(out_stream);
 
-                RDPECLIP::FileContentsRequestPDU request(
-                    0,
-                    this->file_contents_datas.lindex,
-                    RDPECLIP::FILECONTENTS_SIZE,
-                    0,
-                    0,
-                    RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED);
-
-                RDPECLIP::CliprdrHeader header(
-                    RDPECLIP::CB_FILECONTENTS_REQUEST,
-                    RDPECLIP::CB_RESPONSE__NONE_,
-                    request.size());
-
-                header.emit(out_stream);
-                request.emit(out_stream);
-                this->send_to_mod_channel(out_stream);
-
-                this->custom_cf = CustomClipboardFormat::FileContentsSize;
-
-                break;
-            }
-        }
+        this->custom_cf = (request_type == RDPECLIP::FILECONTENTS_SIZE)
+            ? CustomFormat::FileContentsSize
+            : CustomFormat::FileContentsRange ;
     }
 
-    void send_request_format(uint32_t format_id, CustomClipboardFormat custom_cf)
+    void send_request_format(uint32_t format_id, CustomFormat custom_cf)
     {
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Request Format");
 
@@ -371,6 +365,10 @@ struct redjs::ClipboardChannel::D
             emval_call(this->callbacks, fname, data.data(), data.size(), args...);
         };
 
+        auto send_data2 = [&](char const* fname, auto const&... args){
+            emval_call(this->callbacks, fname, args...);
+        };
+
         auto remove_last_char = [](cbytes_view data, std::size_t strip_n) {
             return data.size() >= strip_n ? data.first(data.size() - strip_n) : cbytes_view{};
         };
@@ -382,7 +380,7 @@ struct redjs::ClipboardChannel::D
 
         switch (this->custom_cf)
         {
-        case CustomClipboardFormat::None:
+        case CustomFormat::None:
             switch (this->requested_format_id)
             {
                 case RDPECLIP::CF_TEXT:
@@ -419,7 +417,7 @@ struct redjs::ClipboardChannel::D
             send_data("receiveData", data);
             break;
 
-        case CustomClipboardFormat::FileGroupDescriptorW: {
+        case CustomFormat::FileGroupDescriptorW: {
             LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Group Descriptor Response PDU");
             InStream in_stream(data);
             // flags(4) + reserved1(32) + fileAttributes(4) + reserved2(16) + lastWriteTime(8)
@@ -433,13 +431,12 @@ struct redjs::ClipboardChannel::D
               + filename_attribute_size
               + filesize_attribute_size;
             constexpr std::size_t size_chunk_attribute_size = 4;
-            this->file_contents_datas.nb_file = 0;
-            this->file_contents_datas.lindex = 0;
-            this->file_contents_datas.stream_id = 0;
+
             if (in_stream.in_remain() >= file_packet_size + size_chunk_attribute_size)
             {
-                // auto nb_item = in_stream.in_uint32_le();
+                auto nb_item = in_stream.in_uint32_le();
                 in_stream.in_skip_bytes(size_chunk_attribute_size);
+
                 bool is_last;
                 do
                 {
@@ -449,69 +446,35 @@ struct redjs::ClipboardChannel::D
                     auto remaining_buffer = in_stream.remaining_bytes();
                     auto name = quick_utf16_av(remaining_buffer.first(filename_attribute_size));
                     in_stream.in_skip_bytes(filename_attribute_size);
-                    is_last = in_stream.in_remain() < file_packet_size;
-                    send_data("receiveFilename", name, size_low, size_high, is_last);
-                    ++this->file_contents_datas.nb_file;
+
+                    is_last = (in_stream.in_remain() < file_packet_size);
+
+                    send_data("receiveFileName", name, size_low, size_high, is_last, nb_item);
                 }
                 while (/*--nb_item && */ !is_last);
             }
             break;
         }
 
-        case CustomClipboardFormat::FileContentsSize: {
+        case CustomFormat::FileContentsSize: {
             LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU SIZE");
 
             InStream in_stream(data);
-            uint32_t stream_id = in_stream.in_uint32_le();
-            // uint32_t filesize = in_stream.in_uint64_le();
-            LOG(LOG_DEBUG, "stream id = %u", stream_id);
+            auto stream_id = in_stream.in_uint32_le();
+            auto size_low = in_stream.in_uint32_le();
+            auto size_high = in_stream.in_uint32_le();
 
-            StaticOutStream<64> out_streamRequest;
-
-            RDPECLIP::CliprdrHeader fileContentsRequestHeader(
-                RDPECLIP::CB_FILECONTENTS_REQUEST,
-                RDPECLIP::CB_RESPONSE__NONE_,
-                28);
-
-            RDPECLIP::FileContentsRequestPDU fileContentsRequest(
-                stream_id,
-                this->file_contents_datas.lindex,
-                RDPECLIP::FILECONTENTS_RANGE,
-                0, 0, 0x0000ffff, 0, true);
-
-            fileContentsRequestHeader.emit(out_streamRequest);
-            fileContentsRequest.emit(out_streamRequest);
-
-            InStream chunkRequest(out_streamRequest.get_bytes());
-
-            this->cb.send_to_mod_channel(
-                channel_names::cliprdr,
-                chunkRequest,
-                chunkRequest.get_capacity(),
-                first_last_channel_flags);
-
-            this->custom_cf = CustomClipboardFormat::FileContentsRange;
+            send_data2("receiveFileSize", size_high, size_low, stream_id);
             break;
         }
 
-        case CustomClipboardFormat::FileContentsRange: {
+        case CustomFormat::FileContentsRange: {
             LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU RANGE");
 
             InStream in_stream(data);
             uint32_t stream_id = in_stream.in_uint32_le();
-            // uint32_t lindex = 0;
-            LOG(LOG_DEBUG, "stream id = %u", stream_id);
-            send_data("receiveFileContents", in_stream.remaining_bytes());
 
-            ++this->file_contents_datas.lindex;
-            if (this->file_contents_datas.lindex < this->file_contents_datas.nb_file)
-            {
-                this->send_message_type(CustomMessageType::FileContents, {});
-            }
-            else
-            {
-                this->custom_cf = CustomClipboardFormat::None;
-            }
+            send_data("receiveFileContents", in_stream.remaining_bytes(), stream_id);
             break;
         }
         }
@@ -718,18 +681,8 @@ struct redjs::ClipboardChannel::D
     FormatListEmptyName format_list;
     ResponseBuffer response_buffer;
     uint32_t requested_format_id = 0;
-    CustomClipboardFormat custom_cf {};
+    CustomFormat custom_cf {};
     bool verbose;
-
-    struct FileContentsDatas
-    {
-        uint32_t nb_file;
-        // TODO always 0 ?
-        uint32_t stream_id;
-        uint32_t lindex;
-    };
-
-    FileContentsDatas file_contents_datas;
 };
 
 namespace redjs
@@ -765,18 +718,17 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             return redjs::ChannelReceiver(channel_names::cliprdr, receiver);
         })
         .function_ptr("sendRequestFormat", [](redjs::ClipboardChannel& clip, uint32_t id, int custom_cf) {
-            clip.d->send_request_format(id, CustomClipboardFormat(custom_cf));
+            clip.d->send_request_format(id, CustomFormat(custom_cf));
         })
-        .function_ptr("sendMessageType", [](redjs::ClipboardChannel& clip, int msg_type, emscripten::val val) {
-            if (val.isUndefined())
-            {
-                clip.d->send_message_type(CustomMessageType(msg_type), {});
-            }
-            else
-            {
-                auto data = val.as<std::string>();
-                clip.d->send_message_type(CustomMessageType(msg_type), data);
-            }
+        .function_ptr("sendMessage", [](redjs::ClipboardChannel& clip, emscripten::val val) {
+            // TODO abort copy
+            auto data = val.as<std::string>();
+            clip.d->send_to_mod_channel(data);
+        })
+        .function_ptr("sendFileContentsRequest", [](redjs::ClipboardChannel& clip,
+            uint32_t request_type, uint32_t stream_id, uint32_t lindex, uint32_t pos_low, uint32_t pos_high)
+        {
+            clip.d->send_file_contents_request(request_type, stream_id, lindex, pos_low, pos_high);
         })
         // .function("receive", &redjs::ClipboardChannel::receive)
     ;
