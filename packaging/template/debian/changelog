@@ -1,3 +1,15 @@
+redemption (7.1.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Add mechanism to disable some features of Session Probe.
+  * Fix text cursor issue.
+  * Fix renaming files of encrypted recorded sessions over CIFS remote storage.
+  * Fix showing session remaining time notification.
+  * Fix pasting text in input fields of internal modules.
+  * Fix disabling some Proxy Options cause RDP session to crash.
+  * Fix key mapping in VNC session.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 03 Apr 2019 16:13:44 +0200
+
 redemption (7.0.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * RDP proxy log
