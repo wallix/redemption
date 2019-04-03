@@ -616,12 +616,12 @@
 
                                 this->send_UnlockPDU(cb_filesList.streamIDToRequest);
 
-                                 this->file_content_flag = RDPECLIP::FILECONTENTS_SIZE;
+                                this->file_content_flag = RDPECLIP::FILECONTENTS_SIZE;
 
                             } else {
                                 cb_filesList.lindexToRequest++;
 
-                                 this->file_content_flag = RDPECLIP::FILECONTENTS_SIZE;
+                                this->file_content_flag = RDPECLIP::FILECONTENTS_SIZE;
 
                                 StaticOutStream<32> out_streamRequest;
                                 RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
@@ -646,7 +646,7 @@
                             }
 
                             std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
-                            long duration = time.count();;
+                            long duration = time.count();
                             LOG(LOG_INFO, "RDPECLIP::FILE size=%ld octets  duration=%ld us", this->paste_data_len, duration);
 
                             this->empty_buffer();

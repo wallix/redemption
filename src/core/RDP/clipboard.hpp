@@ -1446,7 +1446,6 @@ public:
         , has_optional_clipDataId_(has_optional_clipDataId)
     {}
 
-public:
     FileContentsRequestPDU(uint32_t streamId, uint32_t lindex,
         uint32_t dwFlags, uint32_t nPositionLow, uint32_t nPositionHigh,
         uint32_t cbRequested) :

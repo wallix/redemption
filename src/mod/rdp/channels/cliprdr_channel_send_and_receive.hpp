@@ -401,7 +401,7 @@ struct ClientFormatDataResponseReceive {
              while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
                 RDPECLIP::FileDescriptor fd;
 
-                    fd.receive(chunk);
+                fd.receive(chunk);
 
                 if (bool(verbose & RDPVerbose::cliprdr)) {
                     fd.log(LOG_INFO);

@@ -177,6 +177,15 @@ enum class CustomClipboardFormat : uint32_t
 {
     None = 0,
     FileGroupDescriptorW,
+
+    //private:
+    FileContentsSize,
+    FileContentsRange,
+};
+
+enum class CustomMessageType : int
+{
+    None = 0,
     FileContents,
 };
 
@@ -189,6 +198,45 @@ struct redjs::ClipboardChannel::D
     , callbacks(std::move(callbacks))
     , verbose(bool(verbose & RDPVerbose::cliprdr))
     {}
+
+    void send_message_type(CustomMessageType message_type, cbytes_view data)
+    {
+        switch (message_type)
+        {
+            case CustomMessageType::None:
+                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Custom Message");
+
+                this->send_to_mod_channel(data);
+                break;
+
+            case CustomMessageType::FileContents: {
+                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send File Contents Request");
+
+                StaticOutStream<32> out_stream;
+
+                RDPECLIP::FileContentsRequestPDU request(
+                    0,
+                    this->file_contents_datas.lindex,
+                    RDPECLIP::FILECONTENTS_SIZE,
+                    0,
+                    0,
+                    RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED);
+
+                RDPECLIP::CliprdrHeader header(
+                    RDPECLIP::CB_FILECONTENTS_REQUEST,
+                    RDPECLIP::CB_RESPONSE__NONE_,
+                    request.size());
+
+                header.emit(out_stream);
+                request.emit(out_stream);
+                this->send_to_mod_channel(out_stream);
+
+                this->custom_cf = CustomClipboardFormat::FileContentsSize;
+
+                break;
+            }
+        }
+    }
 
     void send_request_format(uint32_t format_id, CustomClipboardFormat custom_cf)
     {
@@ -210,6 +258,13 @@ struct redjs::ClipboardChannel::D
     {
         RDPECLIP::CliprdrHeader header;
         header.recv(chunk);
+
+        if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL)
+        {
+            LOG(LOG_WARNING, "Clipboard: Format List Response PDU");
+            this->response_buffer.release();
+            return ;
+        }
 
         if (this->response_buffer.waiting_for_data)
         {
@@ -236,14 +291,7 @@ struct redjs::ClipboardChannel::D
             break;
 
         case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-            if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL)
-            {
-                LOG(LOG_WARNING, "Clipboard: Format List Response PDU");
-            }
-            else
-            {
-                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format List Response PDU Failed");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format List Response PDU Failed");
             break;
 
         case RDPECLIP::CB_FORMAT_LIST:
@@ -257,14 +305,14 @@ struct redjs::ClipboardChannel::D
             break;
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-            if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL)
-            {
-                LOG(LOG_WARNING, "Clipboard: Format Data Response PDU FAILED");
-            }
-            else
-            {
-                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Response PDU");
-                this->process_format_data_response(chunk, channel_flags, header);
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Response PDU");
+            this->process_format_data_response(chunk, channel_flags, header);
+        break;
+
+        case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU");
+            // TODO
+            this->process_format_data_response(chunk, channel_flags, header);
             }
         break;
 
@@ -292,25 +340,9 @@ struct redjs::ClipboardChannel::D
             //     this->process_filecontents_request(chunk);
             // break;
             //
-            // case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-            //     if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
-            //         LOG(LOG_WARNING, "SERVER >> CB Channel: File Contents Response PDU FAILED");
-            //     } else {
-            //         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            //             "SERVER >> CB Channel: File Contents Response PDU");
-            //
-            //         if (this->_requestedFormatId == ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW) {
-            //             this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
-            //         }
-            //
-            //         this->_cb_buffers.sizeTotal = header.dataLen();
-            //
-            //         this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
-            //     }
-            // break;
-            //
             default:
-                LOG_IF(this->verbose, LOG_INFO, "Clipboard: Default Process server PDU data");
+                LOG_IF(this->verbose, LOG_ERR,
+                    "Clipboard: Default Process server PDU data (%" PRIu16 ")", header.msgType());
                 // this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
                 break;
 
@@ -346,6 +378,7 @@ struct redjs::ClipboardChannel::D
         LOG(LOG_DEBUG, "id = %u  customcf = %u", this->requested_format_id, this->custom_cf);
 
         auto data = this->response_buffer.final();
+        hexdump_av(data);
 
         switch (this->custom_cf)
         {
@@ -387,32 +420,98 @@ struct redjs::ClipboardChannel::D
             break;
 
         case CustomClipboardFormat::FileGroupDescriptorW: {
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Group Descriptor Response PDU");
             InStream in_stream(data);
             // flags(4) + reserved1(32) + fileAttributes(4) + reserved2(16) + lastWriteTime(8)
-            // sizeHigh(4) + sizeLow(4) + filenameUtf16(520)
-            constexpr std::size_t file_packet_size = 592;
-            if (in_stream.in_remain() >= file_packet_size + 4)
+            constexpr std::size_t useless_attributes_size = 64;
+            // sizeHigh(4) + sizeLow(4)
+            constexpr std::size_t filesize_attribute_size = 8;
+            // filenameUtf16(520)
+            constexpr std::size_t filename_attribute_size = 520;
+            constexpr std::size_t file_packet_size
+              = useless_attributes_size
+              + filename_attribute_size
+              + filesize_attribute_size;
+            constexpr std::size_t size_chunk_attribute_size = 4;
+            this->file_contents_datas.nb_file = 0;
+            this->file_contents_datas.lindex = 0;
+            this->file_contents_datas.stream_id = 0;
+            if (in_stream.in_remain() >= file_packet_size + size_chunk_attribute_size)
             {
                 // auto nb_item = in_stream.in_uint32_le();
-                in_stream.in_skip_bytes(4);
+                in_stream.in_skip_bytes(size_chunk_attribute_size);
                 bool is_last;
                 do
                 {
-                    in_stream.in_skip_bytes(64);
+                    in_stream.in_skip_bytes(useless_attributes_size);
                     auto size_high = in_stream.in_uint32_le();
                     auto size_low = in_stream.in_uint32_le();
-                    auto name = quick_utf16_av(in_stream.remaining_bytes().first(520));
-                    in_stream.in_skip_bytes(520);
-                    is_last = in_stream.in_remain() < 592;
+                    auto remaining_buffer = in_stream.remaining_bytes();
+                    auto name = quick_utf16_av(remaining_buffer.first(filename_attribute_size));
+                    in_stream.in_skip_bytes(filename_attribute_size);
+                    is_last = in_stream.in_remain() < file_packet_size;
                     send_data("receiveFilename", name, size_low, size_high, is_last);
+                    ++this->file_contents_datas.nb_file;
                 }
                 while (/*--nb_item && */ !is_last);
             }
             break;
         }
 
-        case CustomClipboardFormat::FileContents: {
-            send_data("receiveFileContents", data);
+        case CustomClipboardFormat::FileContentsSize: {
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU SIZE");
+
+            InStream in_stream(data);
+            uint32_t stream_id = in_stream.in_uint32_le();
+            // uint32_t filesize = in_stream.in_uint64_le();
+            LOG(LOG_DEBUG, "stream id = %u", stream_id);
+
+            StaticOutStream<64> out_streamRequest;
+
+            RDPECLIP::CliprdrHeader fileContentsRequestHeader(
+                RDPECLIP::CB_FILECONTENTS_REQUEST,
+                RDPECLIP::CB_RESPONSE__NONE_,
+                28);
+
+            RDPECLIP::FileContentsRequestPDU fileContentsRequest(
+                stream_id,
+                this->file_contents_datas.lindex,
+                RDPECLIP::FILECONTENTS_RANGE,
+                0, 0, 0x0000ffff, 0, true);
+
+            fileContentsRequestHeader.emit(out_streamRequest);
+            fileContentsRequest.emit(out_streamRequest);
+
+            InStream chunkRequest(out_streamRequest.get_bytes());
+
+            this->cb.send_to_mod_channel(
+                channel_names::cliprdr,
+                chunkRequest,
+                chunkRequest.get_capacity(),
+                first_last_channel_flags);
+
+            this->custom_cf = CustomClipboardFormat::FileContentsRange;
+            break;
+        }
+
+        case CustomClipboardFormat::FileContentsRange: {
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU RANGE");
+
+            InStream in_stream(data);
+            uint32_t stream_id = in_stream.in_uint32_le();
+            // uint32_t lindex = 0;
+            LOG(LOG_DEBUG, "stream id = %u", stream_id);
+            send_data("receiveFileContents", in_stream.remaining_bytes());
+
+            ++this->file_contents_datas.lindex;
+            if (this->file_contents_datas.lindex < this->file_contents_datas.nb_file)
+            {
+                this->send_message_type(CustomMessageType::FileContents, {});
+            }
+            else
+            {
+                this->custom_cf = CustomClipboardFormat::None;
+            }
             break;
         }
         }
@@ -552,12 +651,17 @@ struct redjs::ClipboardChannel::D
 
     void send_to_mod_channel(OutStream const& out_stream)
     {
-        InStream chunk(out_stream.get_bytes());
+        this->send_to_mod_channel(out_stream.get_bytes());
+    }
+
+    void send_to_mod_channel(cbytes_view av)
+    {
+        InStream chunk(av);
 
         this->cb.send_to_mod_channel(
             channel_names::cliprdr,
             chunk,
-            out_stream.get_offset(),
+            av.size(),
             first_last_channel_flags
         );
     }
@@ -616,6 +720,16 @@ struct redjs::ClipboardChannel::D
     uint32_t requested_format_id = 0;
     CustomClipboardFormat custom_cf {};
     bool verbose;
+
+    struct FileContentsDatas
+    {
+        uint32_t nb_file;
+        // TODO always 0 ?
+        uint32_t stream_id;
+        uint32_t lindex;
+    };
+
+    FileContentsDatas file_contents_datas;
 };
 
 namespace redjs
@@ -652,6 +766,17 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
         })
         .function_ptr("sendRequestFormat", [](redjs::ClipboardChannel& clip, uint32_t id, int custom_cf) {
             clip.d->send_request_format(id, CustomClipboardFormat(custom_cf));
+        })
+        .function_ptr("sendMessageType", [](redjs::ClipboardChannel& clip, int msg_type, emscripten::val val) {
+            if (val.isUndefined())
+            {
+                clip.d->send_message_type(CustomMessageType(msg_type), {});
+            }
+            else
+            {
+                auto data = val.as<std::string>();
+                clip.d->send_message_type(CustomMessageType(msg_type), data);
+            }
         })
         // .function("receive", &redjs::ClipboardChannel::receive)
     ;

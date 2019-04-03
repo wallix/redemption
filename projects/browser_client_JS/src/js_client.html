@@ -885,11 +885,14 @@ function run()
       DIBV5: 17,
 
       FileGroupDescriptor: 953100,
+      FileGroupDescriptorW: 953101,
     });
     const CustomCF = Object.freeze({
-      FileGroupDescriptor: 1,
-      FileContents: 2,
-    })
+      FileGroupDescriptorW: 1,
+    });
+    const CustomMsgType = Object.freeze({
+      FileContents: 1,
+    });
     let clipboard;
     rdpclient.addChannelCreator((cb) => {
         return clipboard = newClipboardChannel(cb, {
@@ -919,12 +922,13 @@ function run()
                     const name = decodeName(iname, inameLen, isUTF8);
                     console.log(name);
                     switch (name) {
-                    case "FileGroupDescriptorW":
+                    case "FileGroupDescriptor":
                         this.customCf = CustomCF.FileGroupDescriptor;
                         this.formatId = formatId;
                         break;
-                    case "FileContents":
-                        this.fileContentsId = formatId;
+                    case "FileGroupDescriptorW":
+                        this.customCf = CustomCF.FileGroupDescriptorW;
+                        this.formatId = formatId;
                         break;
                     }
                 }
@@ -940,10 +944,10 @@ function run()
             receiveFilename: function(utf16Name, sizeLow, sizeHigh, isLast) {
                 console.log(UTF16Decoder.decode(utf16Name), sizeLow, sizeHigh);
 
-                console.log(isLast , this.fileContentsId);
-                if (isLast && this.fileContentsId)
+                console.log(isLast);
+                if (isLast)
                 {
-                    clipboard.sendRequestFormat(this.fileContentsId, CustomCF.FileContents);
+                    clipboard.sendMessageType(CustomMsgType.FileContents, undefined);
                 }
             },
             receiveFileContents: function(data) {
