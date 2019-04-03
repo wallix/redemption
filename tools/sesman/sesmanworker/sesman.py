@@ -10,6 +10,7 @@
 # Module description:  Sesman Worker
 ##
 from __future__ import with_statement
+from __future__ import absolute_import
 
 import random
 import os
@@ -33,8 +34,8 @@ from socket     import gethostname
 
 from .sesmanconf import TR, SESMANCONF
 from . import engine
-from sesmanconnpolicyspec import cp_spec
-from sesmanbacktoselector import back_to_selector_default_reinit, back_to_selector_default_sent
+from .sesmanconnpolicyspec import cp_spec
+from .sesmanbacktoselector import back_to_selector_default_reinit, back_to_selector_default_sent
 
 from .engine import LOCAL_TRACE_PATH_RDP
 from .engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
