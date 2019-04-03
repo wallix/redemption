@@ -318,8 +318,9 @@ const redemption = (function(Module, window) {
         receiveFormatStop: identity,
         receiveFormat: identity,
         receiveData: wCb_em2js_U8p,
-        receiveFilename: wCb_em2js_U8p,
+        receiveFileName: wCb_em2js_U8p,
         receiveFileContents: wCb_em2js_U8p,
+        receiveFileSize: identity,
     };
 
     resultFuncs.newClipboardChannel = function(callback, events, verbose) {
@@ -884,14 +885,16 @@ function run()
       DIB: 5,
       DIBV5: 17,
 
-      FileGroupDescriptor: 953100,
-      FileGroupDescriptorW: 953101,
+      FileGroupDescriptorW: 953100,
+      FileContentsSize: 953101,
+      FileContentsRange: 953102,
     });
     const CustomCF = Object.freeze({
       FileGroupDescriptorW: 1,
     });
-    const CustomMsgType = Object.freeze({
-      FileContents: 1,
+    const FileContentsOp = Object.freeze({
+        Size: 1,
+        Range: 2,
     });
     let clipboard;
     rdpclient.addChannelCreator((cb) => {
@@ -922,10 +925,6 @@ function run()
                     const name = decodeName(iname, inameLen, isUTF8);
                     console.log(name);
                     switch (name) {
-                    case "FileGroupDescriptor":
-                        this.customCf = CustomCF.FileGroupDescriptor;
-                        this.formatId = formatId;
-                        break;
                     case "FileGroupDescriptorW":
                         this.customCf = CustomCF.FileGroupDescriptorW;
                         this.formatId = formatId;
@@ -941,17 +940,22 @@ function run()
                 default: console.log('Unknown data', formatId);
                 }
             },
-            receiveFilename: function(utf16Name, sizeLow, sizeHigh, isLast) {
+
+            receiveFileName: function(utf16Name, sizeLow, sizeHigh, isLast, nbFile) {
                 console.log(UTF16Decoder.decode(utf16Name), sizeLow, sizeHigh);
 
                 console.log(isLast);
                 if (isLast)
                 {
-                    clipboard.sendMessageType(CustomMsgType.FileContents, undefined);
+                    clipboard.sendFileContentsRequest(FileContentsOp.Size, 0, 0, 0, 0);
                 }
             },
-            receiveFileContents: function(data) {
+            receiveFileContents: function(data, stream_id) {
                 console.log(UTF16Decoder.decode(data));
+            },
+            receiveFileSize: function(sizeHigh, sizeLow, streamId) {
+                console.log('id=', streamId, '  size=', sizeHigh << 32 | sizeLow);
+                clipboard.sendFileContentsRequest(FileContentsOp.Range, 0, 0, 0, 0);
             },
         }, 0x04000000);
     });
