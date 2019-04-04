@@ -62,16 +62,23 @@ public:
         return false;
     }
 
-    bool on_device_announce_responded() override {
+    bool on_device_announce_responded(bool bSucceeded) override {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
-            "SessionProbeAlternateShellBasedLauncher :=> on_device_announce_responded");
+            "SessionProbeAlternateShellBasedLauncher :=> on_device_announce_responded, Succeeded=%s", (bSucceeded ? "Yes" : "No"));
 
-        if (this->stopped) {
-            return false;
-        }
+        if (!this->stopped) {
+            if (bSucceeded) {
+                if (this->sespro_channel) {
+                    this->sespro_channel->give_additional_launch_time();
+                }
+            }
+            else {
+                this->drive_redirection_initialized = false;
 
-        if (this->sespro_channel) {
-            this->sespro_channel->give_additional_launch_time();
+                if (this->sespro_channel) {
+                    this->sespro_channel->abort_launch();
+                }
+            }
         }
 
         return false;

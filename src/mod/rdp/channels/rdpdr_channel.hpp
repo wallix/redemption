@@ -822,13 +822,13 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 this->remove_known_device(
                     server_device_announce_response.DeviceId());
             }
-            else {
-                if (server_device_announce_response.DeviceId() ==
-                    this->file_system_drive_manager.get_session_probe_drive_id()) {
-                    if (this->file_system_virtual_channel.session_probe_device_announce_responded_notifier) {
-                        if (!this->file_system_virtual_channel.session_probe_device_announce_responded_notifier->on_device_announce_responded()) {
-                            this->file_system_virtual_channel.session_probe_device_announce_responded_notifier = nullptr;
-                        }
+
+            if (server_device_announce_response.DeviceId() ==
+                this->file_system_drive_manager.get_session_probe_drive_id()) {
+                if (this->file_system_virtual_channel.session_probe_device_announce_responded_notifier) {
+                    if (!this->file_system_virtual_channel.session_probe_device_announce_responded_notifier->on_device_announce_responded(
+                            server_device_announce_response.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS)) {
+                        this->file_system_virtual_channel.session_probe_device_announce_responded_notifier = nullptr;
                     }
                 }
             }
