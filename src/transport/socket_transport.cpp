@@ -126,26 +126,34 @@ Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_
             REDEMPTION_CXX_FALLTHROUGH;
         case TLSState::Want: {
             Transport::TlsResult ret = this->tls->enable_client_tls_loop(this->error_message);
-            if (ret == Transport::TlsResult::Ok) {
-                try {
-                    ret = this->tls->check_certificate(
-                        server_notifier, this->error_message, this->ip_address, this->port);
-
-                    if (ret == Transport::TlsResult::WaitExternalEvent) {
-                        this->tls_state = TLSState::WaitCertCb;
-                        return ret;
-                    }
-                    assert(ret != Transport::TlsResult::Want);
-                }
-                catch (...) {
-                    this->tls_state = TLSState::Uninit;
-                    // Disconnect tls if needed
+            switch (ret) {
+                case TlsResult::Fail:
                     this->tls.reset();
-                    LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
-                    throw;
+                    break;
+                case TlsResult::Want:
+                case TlsResult::WaitExternalEvent:
+                    break;
+                case Transport::TlsResult::Ok: {
+                    try {
+                        ret = this->tls->check_certificate(
+                            server_notifier, this->error_message, this->ip_address, this->port);
+
+                        if (ret == Transport::TlsResult::WaitExternalEvent) {
+                            this->tls_state = TLSState::WaitCertCb;
+                            return ret;
+                        }
+                        assert(ret != Transport::TlsResult::Want);
+                    }
+                    catch (...) {
+                        this->tls_state = TLSState::Uninit;
+                        // Disconnect tls if needed
+                        this->tls.reset();
+                        LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
+                        throw;
+                    }
+                    LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
+                    this->tls_state = TLSState::Ok;
                 }
-                LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
-                this->tls_state = TLSState::Ok;
             }
             return ret;
         }
