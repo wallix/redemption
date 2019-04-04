@@ -34,6 +34,17 @@ rm -rf bin
 # export REDEMPTION_LOG_PRINT=1
 export REDEMPTION_LOG_PRINT=0
 
+build()
+{
+    local e=0
+    bjam -q "$@" || {
+        e=$?
+        export REDEMPTION_LOG_PRINT=1
+        bjam -q "$@"
+        exit 1
+    }
+}
+
 # release for -Warray-bounds and not assert
 #bjam -q toolset=gcc-7 cxxflags=-g
 # multi-thread
@@ -45,19 +56,19 @@ big_mem='exe libs
   tests/client_redemption/client_channels
   tests/mod/rdp.norec
   tests/mod/vnc.norec'
-bjam -q toolset=gcc-7 cxxflags=-g -j2 ocr_tools
-bjam -q toolset=gcc-7 cxxflags=-g $big_mem
-bjam -q toolset=gcc-7 cxxflags=-g -j2
+build -q toolset=gcc-7 cxxflags=-g -j2 ocr_tools
+build -q toolset=gcc-7 cxxflags=-g $big_mem
+build -q toolset=gcc-7 cxxflags=-g -j2
 
 
 # coverage
-bjam -q toolset=gcc-7 coverage covbin=gcov-7
+build -q toolset=gcc-7 coverage covbin=gcov-7
 
 #bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
 # multi-thread
-bjam -q toolset=clang-6.0 -sNO_FFMPEG=1 san -j3 ocr_tools
-bjam -q toolset=clang-6.0 -sNO_FFMPEG=1 san $big_mem
-bjam -q toolset=clang-6.0 -sNO_FFMPEG=1 san -j2
+build -q toolset=clang-6.0 -sNO_FFMPEG=1 san -j3 ocr_tools
+build -q toolset=clang-6.0 -sNO_FFMPEG=1 san $big_mem
+build -q toolset=clang-6.0 -sNO_FFMPEG=1 san -j2
 
 # cppcheck
 # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
