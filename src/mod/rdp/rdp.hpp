@@ -2760,20 +2760,7 @@ public:
                 if ((e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) ||
                     (e.id == ERR_RAIL_CLIENT_EXECUTE) ||
                     (e.id == ERR_RAIL_STARTING_PROGRAM) ||
-                    (e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM) ||
-
-                    (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
-                    (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
-                    (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
-                    (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
-                    (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
-                    (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
-                    (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
-                    (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
-                    (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
-                    (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG) ||
-
-                    (e.id == ERR_SESSION_PROBE_LAUNCH)) {
+                    (e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM)) {
                     throw;
                 }
 

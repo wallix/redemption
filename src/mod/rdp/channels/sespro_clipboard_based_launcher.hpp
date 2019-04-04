@@ -172,23 +172,30 @@ public:
         return false;
     }
 
-    bool on_device_announce_responded() override {
+    bool on_device_announce_responded(bool bSucceeded) override {
         if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
-                "SessionProbeClipboardBasedLauncher :=> on_device_announce_responded");
+                "SessionProbeClipboardBasedLauncher :=> on_device_announce_responded, Succeeded=%s", (bSucceeded ? "Yes" : "No"));
         }
 
-        if (this->state != State::START) {
-            return false;
+        if (this->state == State::START) {
+            this->drive_ready = bSucceeded;
+
+            if (bSucceeded) {
+                if (this->sesprob_channel) {
+                    this->sesprob_channel->give_additional_launch_time();
+                }
+
+                this->do_state_start();
+            }
+            else {
+                this->drive_redirection_initialized = false;
+
+                if (this->sesprob_channel) {
+                    this->sesprob_channel->abort_launch();
+                }
+            }
         }
-
-        if (this->sesprob_channel) {
-            this->sesprob_channel->give_additional_launch_time();
-        }
-
-        this->drive_ready = true;
-
-        this->do_state_start();
 
         return false;
     }

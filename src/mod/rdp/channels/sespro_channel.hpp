@@ -544,6 +544,15 @@ public:
         }
     }
 
+    void abort_launch()
+    {
+        this->session_probe_timer = this->session_reactor.create_timer()
+        .set_delay(std::chrono::seconds())
+        .on_action(jln::one_shot([this](){
+            this->process_event_launch();
+        }));
+    }
+
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
         override
@@ -567,6 +576,7 @@ public:
         return this->disconnection_reconnection_required;
     }
 
+private:
     void request_keep_alive() {
         this->session_probe_keep_alive_received = false;
 
@@ -721,6 +731,7 @@ public:
             out_s.get_data(), out_s.get_offset());
     }
 
+public:
     void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length,
@@ -1060,7 +1071,7 @@ public:
                         {
                             char cstr[128];
                             std::snprintf(cstr, sizeof(cstr), "0x%08X",
-                                this->param_disabled_features);
+                                static_cast<unsigned int>(this->param_disabled_features));
                             out_s.out_copy_bytes(cstr, strlen(cstr));
                         }
                 });
