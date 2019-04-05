@@ -435,23 +435,23 @@ struct redjs::ClipboardChannel::D
             if (in_stream.in_remain() >= file_packet_size + size_chunk_attribute_size)
             {
                 auto nb_item = in_stream.in_uint32_le();
-                in_stream.in_skip_bytes(size_chunk_attribute_size);
-
-                bool is_last;
+                send_data2("receiveNbFileName", nb_item);
                 do
                 {
-                    in_stream.in_skip_bytes(useless_attributes_size);
+                    auto flags = in_stream.in_uint32_le();
+                    in_stream.in_skip_bytes(32);
+                    auto file_attrs = in_stream.in_uint32_le();
+                    in_stream.in_skip_bytes(16);
+                    auto last_write_time_high = in_stream.in_uint32_le();
+                    auto last_write_time_low = in_stream.in_uint32_le();
                     auto size_high = in_stream.in_uint32_le();
                     auto size_low = in_stream.in_uint32_le();
                     auto remaining_buffer = in_stream.remaining_bytes();
                     auto name = quick_utf16_av(remaining_buffer.first(filename_attribute_size));
                     in_stream.in_skip_bytes(filename_attribute_size);
-
-                    is_last = (in_stream.in_remain() < file_packet_size);
-
-                    send_data("receiveFileName", name, size_low, size_high, is_last, nb_item);
+                    send_data("receiveFileName", name, file_attrs, flags, size_low, size_high, last_write_time_low, last_write_time_high);
                 }
-                while (/*--nb_item && */ !is_last);
+                while (/*--nb_item && */ in_stream.in_remain() >= file_packet_size);
             }
             break;
         }
