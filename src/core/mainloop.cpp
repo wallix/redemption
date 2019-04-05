@@ -88,6 +88,9 @@ void init_signals()
     sa.sa_flags = 0;
 
     sigemptyset(&sa.sa_mask);
+#ifdef NDEBUG
+    sigaddset(&sa.sa_mask, SIGSEGV);
+#endif
     sigaddset(&sa.sa_mask, SIGBUS);
     sigaddset(&sa.sa_mask, SIGTERM);
     sigaddset(&sa.sa_mask, SIGHUP);
@@ -104,6 +107,12 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
+
+#ifdef NDEBUG
+    sa.sa_handler = SIG_IGN; /*NOLINT*/
+    sigaction(SIGSEGV, &sa, nullptr);
+#endif
+
     sa.sa_handler = SIG_DFL;
     sigaction(SIGBUS, &sa, nullptr);
 
