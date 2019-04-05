@@ -531,7 +531,6 @@ int icap_abort_file(ICAPService * service, const int file_id) {
     return n;
 }
 
-
 int icap_close_session(ICAPService * service) {
 
     int n = -1;
