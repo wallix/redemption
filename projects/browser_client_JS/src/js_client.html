@@ -13,8 +13,12 @@
         }
 
         input {
-            display: flex;
-            flex-direction: column;
+            /* display: flex; */
+            /* flex-direction: column; */
+        }
+
+        section {
+            background: cyan
         }
     </style>
 </head>
@@ -46,13 +50,16 @@
         <input id="sendCbFile_data" name="myFile" type="file">
     </form>
     <form id="sendCbUtf8" method="get" action="#">
-        <input type="submit" value="Send Clipboard">
         <textarea id="sendCbUtf8_data"></textarea>
+        <input type="submit" value="Send Clipboard">
     </form>
     <!-- <form id="receiveCbUtf8" method="get" action="#"> -->
         <!-- <input type="submit" value="Send Clipboard"> -->
         <textarea id="receiveCbUtf8_data"></textarea>
     <!-- </form> -->
+    <p id="cbFmts"></p>
+    <p id="cbFiles"></p>
+
 <section>
 
 <script src="js_client.js"></script>
@@ -272,6 +279,7 @@ const redemption = (function(Module, window) {
                 rdpclient.clipboardSendRequestFormat(id);
                 send_data();
             }
+            client.sendBufferedData = send_data;
 
             rdpclient.updateTime();
             timeoutDate = Date.now();
@@ -318,6 +326,7 @@ const redemption = (function(Module, window) {
         receiveFormatStop: identity,
         receiveFormat: identity,
         receiveData: wCb_em2js_U8p,
+        receiveNbFileName: identity,
         receiveFileName: wCb_em2js_U8p,
         receiveFileContents: wCb_em2js_U8p,
         receiveFileSize: identity,
@@ -355,6 +364,8 @@ const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
 const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
+const cbFmts = document.getElementById('cbFmts');
+const cbFiles = document.getElementById('cbFiles');
 
 let rdpclient;
 
@@ -682,13 +693,24 @@ const docEvents = {
     keypress: onKeyPress,
 };
 
-const canvasEvent = {
+const canvasEvents = {
     mousemove: onMouseMove,
     mousedown: onMouseDown,
     mouseup: onMouseUp,
     wheel: onMouseWheel,
     contextmenu: event => event.preventDefault()
 };
+
+const canvasFocusEvents = {
+    onblur: canvasBlur,
+    onfocus: canvasFocus,
+};
+
+const eventTable = [
+    [document, docEvents],
+    [ecanvas, canvasEvents],
+    [ecanvasFocus, canvasFocusEvents],
+];
 
 function addEvents(elem, events)
 {
@@ -706,19 +728,17 @@ function removeEvents(elem, events)
 
 function canvasStartEvents()
 {
-    addEvents(document, docEvents);
-    addEvents(ecanvas, canvasEvent);
-    ecanvasFocus.onblur = canvasBlur;
-    ecanvasFocus.onfocus = canvasFocus;
+    for (const a of eventTable) {
+        addEvents(a[0], a[1]);
+    }
     canvasEnableFocus();
 }
 
 function canvasStopEvents()
 {
-    removeEvents(document, docEvents);
-    removeEvents(ecanvas, canvasEvent);
-    ecanvasFocus.onblur = () => {};
-    ecanvasFocus.onfocus = () => {};
+    for (const a of eventTable) {
+        removeEvents(a[0], a[1]);
+    }
     ecanvas.onclick = () => {};
     ecurCanvas.onclick = () => {};
 }
@@ -875,62 +895,80 @@ function run()
         ecanvas.style.cursor = cachePointers[offset];
     });
 
-
-    const CF = Object.freeze({
-      TEXT: 1,
-      UTF16: 13,
-
-      BITMAP: 2,
-
-      DIB: 5,
-      DIBV5: 17,
-
-      FileGroupDescriptorW: 953100,
-      FileContentsSize: 953101,
-      FileContentsRange: 953102,
-    });
-    const CustomCF = Object.freeze({
-      FileGroupDescriptorW: 1,
-    });
-    const FileContentsOp = Object.freeze({
-        Size: 1,
-        Range: 2,
-    });
-    let clipboard;
     rdpclient.addChannelCreator((cb) => {
+        const CF = Object.freeze({
+        TEXT: 1,
+        UTF16: 13,
+
+        BITMAP: 2,
+
+        DIB: 5,
+        DIBV5: 17,
+
+        FileGroupDescriptorW: 953100,
+        FileContentsSize: 953101,
+        FileContentsRange: 953102,
+        });
+        const CustomCF = Object.freeze({
+        FileGroupDescriptorW: 1,
+        });
+        const FileContentsOp = Object.freeze({
+            Size: 1,
+            Range: 2,
+        });
+        const FileAttributes = Object.freeze({
+            Readonly: 0x1,
+            Hidden: 0x2,
+            System: 0x4,
+            Directory: 0x10,
+            Archive: 0x20,
+            Normal: 0x80,
+        });
+        const FileFlags = Object.freeze({
+            Attributes: 0X4,
+            FileSize: 0x40,
+            WriteTime: 0x20,
+            ShowProgressUI: 0x4000,
+        });
+        let clipboard;
+        cbFmts.onclick = (e) => {
+            e.preventDefault();
+            const name = e.originalTarget.dataset.name;
+            const fmtId = e.originalTarget.dataset.id | 0;
+            let customCf = 0;
+            if (name === "FileGroupDescriptorW") {
+                customCf = CustomCF.FileGroupDescriptorW;
+            }
+            console.log(fmtId, customCf);
+            clipboard.sendRequestFormat(fmtId, customCf);
+            rdpclient.sendBufferedData();
+        };
+        cbFiles.onclick = (e) => {
+            e.preventDefault();
+            const ifile = e.originalTarget.dataset.ifile | 0;
+            console.log(ifile);
+            clipboard.sendFileContentsRequest(FileContentsOp.Range, 0, ifile, 0, 0);
+            rdpclient.sendBufferedData();
+        };
         return clipboard = newClipboardChannel(cb, {
             receiveFormatStart: function() {
                 this.cf = 0;
                 this.customCf = 0;
+                for (const e of [cbFmts, cbFiles]) {
+                    while (e.firstChild) {
+                        e.removeChild(e.firstChild);
+                    }
+                }
             },
             receiveFormatStop: function() {
-                if (this.cf || this.customCf) {
-                    console.log(this.cf, this.customCf, this.formatId);
-                    clipboard.sendRequestFormat(this.formatId, this.customCf);
-                }
             },
             receiveFormat: function(formatId, iname, inameLen, isUTF8) {
                 console.log(formatId,iname,inameLen);
-                switch (formatId) {
-                case CF.TEXT:
-                    if (this.cf == CF.UTF16) {
-                        break;
-                    }
-                case CF.UTF16:
-                    this.cf = formatId;
-                    this.formatId = formatId;
-                    break;
-
-                default:
-                    const name = decodeName(iname, inameLen, isUTF8);
-                    console.log(name);
-                    switch (name) {
-                    case "FileGroupDescriptorW":
-                        this.customCf = CustomCF.FileGroupDescriptorW;
-                        this.formatId = formatId;
-                        break;
-                    }
-                }
+                const button = cbFmts.appendChild(document.createElement('button'));
+                const name = decodeName(iname, inameLen, isUTF8);
+                button.appendChild(new Text(formatId + " " + name));
+                button.dataset.id = formatId;
+                button.dataset.name = name;
             },
             receiveData: function(data, formatId) {
                 console.log(formatId, this.cf)
@@ -941,21 +979,32 @@ function run()
                 }
             },
 
-            receiveFileName: function(utf16Name, sizeLow, sizeHigh, isLast, nbFile) {
-                console.log(UTF16Decoder.decode(utf16Name), sizeLow, sizeHigh);
-
-                console.log(isLast);
-                if (isLast)
-                {
-                    clipboard.sendFileContentsRequest(FileContentsOp.Size, 0, 0, 0, 0);
+            receiveNbFileName: function(nb) {
+                console.log(nb);
+                this.ifile = 0;
+                this.irfile = 0;
+                this.nbfile = nb;
+                while (cbFiles.firstChild) {
+                    cbFiles.removeChild(cbFiles.firstChild);
                 }
+                // this.files = []
+            },
+            receiveFileName: function(utf16Name, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
+                const filename = UTF16Decoder.decode(utf16Name);
+                console.log(filename, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
+                const button = cbFiles.appendChild(document.createElement('button'));
+                button.appendChild(new Text(attr + "," + flags + ","
+                    + ((sizeHigh << 32) | sizeLow) + ","
+                    + ((lastWriteTimeHigh << 32) | lastWriteTimeLow)
+                    + "  " + filename));
+                button.dataset.ifile = this.ifile;
+                ++this.ifile;
             },
             receiveFileContents: function(data, stream_id) {
-                console.log(UTF16Decoder.decode(data));
+                receiveCbUtf8_data.value = UTF8Decoder.decode(data);
             },
             receiveFileSize: function(sizeHigh, sizeLow, streamId) {
                 console.log('id=', streamId, '  size=', sizeHigh << 32 | sizeLow);
-                clipboard.sendFileContentsRequest(FileContentsOp.Range, 0, 0, 0, 0);
             },
         }, 0x04000000);
     });
