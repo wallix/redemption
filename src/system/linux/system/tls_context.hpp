@@ -132,7 +132,7 @@ public:
 
         SSL* ssl = SSL_new(ctx);
 
-        if (ctx == nullptr) {
+        if (ssl == nullptr) {
             return tls_ctx_print_error("enable_client_tls", "SSL_new returned NULL", error_message);
         }
 
@@ -511,10 +511,10 @@ public:
             break;
         }
 
-//        LOG(LOG_INFO, "TLSContext::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
-//        SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
-// Not compatible with MSTSC 6.1 on XP and W2K3
-//        SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
+        // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
+        // SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
+        // Not compatible with MSTSC 6.1 on XP and W2K3
+        // SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
         if (ssl_cipher_list && *ssl_cipher_list) {
             LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL cipher list");
             SSL_CTX_set_cipher_list(ctx, ssl_cipher_list);
@@ -525,7 +525,7 @@ public:
         // --------Start of session specific init code ---------------------------------
 
         /* Load our keys and certificates*/
-        if(!(SSL_CTX_use_certificate_chain_file(ctx, app_path(AppPath::CfgCrt))))
+        if(!SSL_CTX_use_certificate_chain_file(ctx, app_path(AppPath::CfgCrt)))
         {
             return tls_ctx_print_error("enable_server_tls", "Can't read certificate file", nullptr);
         }
@@ -544,19 +544,24 @@ public:
                 return int(pass_len);
             }
         );
-        SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<void*>(static_cast<const void*>(certificate_password))); /*NOLINT*/
-        if(!(SSL_CTX_use_PrivateKey_file(ctx, app_path(AppPath::CfgKey), SSL_FILETYPE_PEM)))
+        SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<char*>(certificate_password)); /*NOLINT*/
+        if(!SSL_CTX_use_PrivateKey_file(ctx, app_path(AppPath::CfgKey), SSL_FILETYPE_PEM))
         {
             return tls_ctx_print_error("enable_server_tls", "Can't read key file", nullptr);
         }
 
-        BIO *bio = BIO_new_file(app_path(AppPath::CfgDhPem), "r");
+        BIO* bio = BIO_new_file(app_path(AppPath::CfgDhPem), "r");
         if (bio == nullptr){
             return tls_ctx_print_error("enable_server_tls", "Couldn't open DH file", nullptr);
         }
 
-        DH *ret = PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
+        DH* ret = PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
         BIO_free(bio);
+        if(ret == nullptr)
+        {
+            return tls_ctx_print_error("enable_server_tls", "Can't read DH parameters", nullptr);
+        }
+
         if(SSL_CTX_set_tmp_dh(ctx, ret) < 0) /*NOLINT*/
         {
             DH_free(ret);
@@ -573,18 +578,22 @@ public:
         // return value: nullptr: The creation of a new SSL structure failed. Check the error stack
         // to find out the reason.
         // TODO add error management
-        BIO * sbio = BIO_new_socket(sck, BIO_NOCLOSE);
+        BIO* sbio = BIO_new_socket(sck, BIO_NOCLOSE);
+        if (bio == nullptr){
+            return tls_ctx_print_error("enable_server_tls", "Couldn't open socket", nullptr);
+        }
+
         this->allocated_ssl = SSL_new(ctx);
 
         // get public_key
         {
-            X509 * px509 = SSL_get_certificate(this->allocated_ssl);
+            X509* px509 = SSL_get_certificate(this->allocated_ssl);
             LOG(LOG_INFO, "TLSContext::X509_get_pubkey()");
             // extract the public key
             EVP_PKEY* pkey = X509_get_pubkey(px509);
             if (!pkey)
             {
-                LOG(LOG_WARNING, "TLSContext::crypto_cert_get_public_key: X509_get_pubkey() failed");
+                tls_ctx_print_error("X509_get_pubkey()", "failed", nullptr);
                 BIO_free(sbio);
                 return false;
             }
@@ -618,13 +627,13 @@ public:
 
         // TODO: the commented code belows shows the list of all enabled cipher suite on server,
         // We could enable it but put that under some configuration variable.
-//        int priority = 0;
-//        while(1){
-//            const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);
-//            if (not cipher_name) { break; }
-//            priority++;
-//            LOG(LOG_INFO, "TLSContext::Server cipher %d: %s", priority, cipher_name);
-//        }
+        // int priority = 0;
+        // while(1){
+        //     const char * cipher_name = SSL_get_cipher_list(this->allocated_ssl, priority);
+        //     if (not cipher_name) { break; }
+        //     priority++;
+        //     LOG(LOG_INFO, "TLSContext::Server cipher %d: %s", priority, cipher_name);
+        // }
 
         LOG(LOG_INFO, "TLSContext::Negociated cipher used %s", SSL_CIPHER_get_name(SSL_get_current_cipher(this->allocated_ssl)));
 
