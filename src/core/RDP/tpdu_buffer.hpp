@@ -98,7 +98,11 @@ struct TpduBuffer
     array_view_u8 current_pdu_buffer() noexcept
     {
         assert(this->pdu_len);
-        return this->buf.av(this->pdu_len);
+        auto av = this->buf.av(this->pdu_len);
+//        if (this->trace_pdu){
+            ::hexdump_av_d(av);
+//        }
+        return av;
     }
 
     bool current_pdu_is_fast_path() const noexcept
@@ -216,4 +220,6 @@ private:
     uint16_t pdu_len = 0;
     Buf64k buf;
     bool data_ready = false;
+public:
+    bool trace_pdu = false;
 };

@@ -214,12 +214,13 @@ void RdpNego::set_lb_info(uint8_t * lb_info, size_t lb_info_length)
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
-bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& notifier)
+bool RdpNego::recv_next_data(TpduBuffer& tpdubuf, Transport& trans, ServerNotifier& notifier)
 {
     switch (this->state) {
         case State::Negociate:
-            buf.load_data(trans);
-            if (!buf.next(TpduBuffer::PDU)) {
+            LOG(LOG_INFO, "RdpNego::recv_next_data::Negociate");
+            tpdubuf.load_data(trans);
+            if (!tpdubuf.next(TpduBuffer::PDU)) {
                 return true;
             }
             do {
@@ -228,33 +229,36 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& 
                                     (this->nla) ? "NLA" :
                                     (this->tls) ? "TLS" :
                                                   "RDP");
-                this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), notifier);
-            } while (this->state == State::Negociate && buf.next(TpduBuffer::PDU));
+                this->state = this->recv_connection_confirm(trans, InStream(tpdubuf.current_pdu_buffer()), notifier);
+            } while (this->state == State::Negociate && tpdubuf.next(TpduBuffer::PDU));
             return (this->state != State::Final);
 
         case State::SslHybrid:
+            LOG(LOG_INFO, "RdpNego::recv_next_data::SslHybrid");
             this->state = this->activate_ssl_hybrid(trans, notifier);
             return (this->state != State::Final);
 
         case State::Tls:
+            LOG(LOG_INFO, "RdpNego::recv_next_data::Tls");
             this->state = this->activate_ssl_tls(trans, notifier);
             return (this->state != State::Final);
 
         case State::Credssp:
+            LOG(LOG_INFO, "RdpNego::recv_next_data::Credssp");
             try {
-                buf.load_data(trans);
+                tpdubuf.load_data(trans);
             }
             catch (Error const &) {
                 this->state = this->fallback_to_tls(trans);
                 return true;
             }
 
-            while (this->state == State::Credssp && buf.next(TpduBuffer::CREDSSP)) {
-                this->state = this->recv_credssp(trans, InStream(buf.current_pdu_buffer()));
+            while (this->state == State::Credssp && tpdubuf.next(TpduBuffer::CREDSSP)) {
+                this->state = this->recv_credssp(trans, InStream(tpdubuf.current_pdu_buffer()));
             }
 
-            while (this->state == State::Negociate && buf.next(TpduBuffer::PDU)) {
-                this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), notifier);
+            while (this->state == State::Negociate && tpdubuf.next(TpduBuffer::PDU)) {
+                this->state = this->recv_connection_confirm(trans, InStream(tpdubuf.current_pdu_buffer()), notifier);
             }
             return (this->state != State::Final);
 
@@ -367,6 +371,8 @@ RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& not
 
 RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier)
 {
+    LOG(LOG_INFO, "RdpNego::activate_ssl_hybrid");
+
     // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
     //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
     //     this->restricted_admin_mode = true;
@@ -400,7 +406,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
 
 RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
 {
-    // LOG(LOG_INFO, "RdpNego::recv_credssp");
+    LOG(LOG_INFO, "RdpNego::recv_credssp");
 
     switch (this->credssp->credssp_client_authenticate_next(stream))
     {
@@ -418,6 +424,7 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
 
 RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
 {
+    LOG(LOG_INFO, "RdpNego::fallback_to_tls");
     trans.disconnect();
 
     if (!trans.connect()){

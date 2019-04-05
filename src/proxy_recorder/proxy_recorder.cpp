@@ -28,9 +28,6 @@ void ProxyRecorder::front_step1()
 
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_STEP1 frontbuffer content ======");
         array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
-        if (this->verbosity > 2048){
-            ::hexdump_av_d(currentPacket);
-        }
         LOG_IF(this->verbosity > 2048, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
 
         InStream x224_stream(currentPacket);
@@ -94,6 +91,7 @@ void ProxyRecorder::front_step1()
 
 void ProxyRecorder::front_nla()
 {
+    LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
     rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
     switch (st) {
     case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
@@ -107,20 +105,6 @@ void ProxyRecorder::front_nla()
         this->pstate = NEGOCIATING_BACK_NLA;
         break;
     }
-    
-    // Note by CGR:
-    // We are performing the dump afterward, because when entering back_nla_negociation()
-    // We don't yet know which type it will be. We could get the data from dump()
-    // but another issue is that the read is not typed at transport layer. This makes
-    // things more complicated and harder to read that it should be
-    {
-        LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA (DELAYED) frontbuffer content ======");
-        array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
-        if (this->verbosity > 2048){
-            ::hexdump_av_d(currentPacket);
-        }
-        LOG_IF(this->verbosity > 2048, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_NLA (DELAYED)  frontbuffer content >>>>>>");
-    }
 }
 
 
@@ -129,15 +113,8 @@ void ProxyRecorder::front_initial_pdu_negociation()
     if (frontBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_INITIAL_PDU frontbuffer content ======");
         array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
-        if (this->verbosity > 2048){
-            ::hexdump_av_d(currentPacket);
-        }
         LOG_IF(this->verbosity > 8, LOG_INFO, ">>>>>>>> NEGOCIATING_INITIAL_PDU frontbuffer content >>>>>>");
 
-
-        if (this->verbosity > 2048){
-            hexdump_av_d(currentPacket);
-        }
         if (!nla_username.empty()) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "Back: force protocol PROTOCOL_HYBRID");
@@ -167,9 +144,8 @@ void ProxyRecorder::front_initial_pdu_negociation()
 
 void ProxyRecorder::back_nla_negociation()
 {
-    if (this->verbosity > 8) {
-        LOG(LOG_INFO, "NEGOCIATING_BACK_NLA");
-    }
+    LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_BACK_NLA frontbuffer content ======");
+
     NullServerNotifier null_notifier;
     if (not nego_client->recv_next_data(backBuffer, null_notifier)) {
         if (this->verbosity > 4) {
@@ -180,19 +156,6 @@ void ProxyRecorder::back_nla_negociation()
         outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
     }
     
-    // Note by CGR:
-    // We are performing the dump afterward, because when entering back_nla_negociation()
-    // We don't yet know which type it will be. We could get the data from dump()
-    // but another issue is that the read is not typed at transport layer. This makes
-    // things more complicated and harder to read that it should be
-    {
-        LOG(LOG_INFO, "======== NEGOCIATING_BACK_NLA (DELAYED) backbuffer content ======");
-        array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
-        if (this->verbosity > 2048){
-            ::hexdump_av_d(currentPacket);
-        }
-        LOG(LOG_INFO, ">>>>>>>> NEGOCIATING_BACK_NLA (DELAYED)  backbuffer content >>>>>>");
-    }
 }
 
 void ProxyRecorder::back_initial_pdu_negociation()
@@ -200,9 +163,6 @@ void ProxyRecorder::back_initial_pdu_negociation()
     if (backBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== BACK_INITIAL_PDU_NEGOCIATION backbuffer content ======");
         array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
-        if (this->verbosity > 2048){
-            ::hexdump_av_d(currentPacket);
-        }
         LOG_IF(this->verbosity > 2048, LOG_INFO, ">>>>>>>> BACK_INITIAL_PDU_NEGOCIATION backbuffer content >>>>>>");
 
         if (!nla_username.empty()) {

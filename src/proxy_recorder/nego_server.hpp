@@ -45,24 +45,34 @@ public:
         this->trans, false, false, rand, timeobj, extra_message, Translation::EN,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             LOG(LOG_INFO, "NTLM Check identity");
-            auto check = [vec = std::vector<uint8_t>{}](
-                std::string const& str, Array& arr
-            ) mutable {
-                vec.resize(str.size() * 2);
-                UTF8toUTF16(str, vec.data(), vec.size());
-                return vec.size() == arr.size()
-                    && 0 == memcmp(vec.data(), arr.get_data(), vec.size());
-            };
 
             auto [username, domain] = extract_user_domain(user.c_str());
-            std::string NTLMUser((char*)identity.User.get_data());
-            std::string NTLMDomain((char*)identity.Domain.get_data());
+            
+            char utf8_user_buffer[1024] = {};
+            UTF16toUTF8(identity.User.get_data(), identity.User.size(), byte_ptr(utf8_user_buffer), sizeof(utf8_user_buffer));
+
+            char utf8_domain_buffer[1024] = {};
+            UTF16toUTF8(identity.Domain.get_data(), identity.Domain.size(), byte_ptr(utf8_domain_buffer), sizeof(utf8_domain_buffer));
+
+            bool check_identities = false;
+            if (utf8_domain_buffer[0] == 0){
+                auto [identity_username, identity_domain] = extract_user_domain(utf8_user_buffer);
+                LOG(LOG_INFO, "NTML IDENTITY: identity.User=%s identity.Domain=%s username=%s, domain=%s",
+                    identity_username, identity_domain, username, domain); 
+                if ((username == identity_username) && (domain == identity_domain)) {
+                    check_identities = true;
+                }
+            }
+            else {
+                if ((username == std::string(utf8_user_buffer)) && (domain == std::string(utf8_domain_buffer))) {
+                    check_identities = true;
+                }
+            }
+
             LOG(LOG_INFO, "NTML IDENTITY: identity.User=%s identity.Domain=%s username=%s, domain=%s",
-                NTLMUser.c_str(), NTLMDomain.c_str(), username, domain); 
-            if (check(username, identity.User)
-             // domain is empty
-             && check(domain, identity.Domain)
-            ) {
+                utf8_user_buffer, utf8_domain_buffer, username, domain); 
+
+            if (check_identities){
                 identity.SetPasswordFromUtf8(byte_ptr_cast(password.c_str()));
                 return Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
             }

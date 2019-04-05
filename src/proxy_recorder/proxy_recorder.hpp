@@ -69,6 +69,9 @@ public:
         , enable_kerberos(enable_kerberos)
         , verbosity(verbosity)
     {
+        this->frontBuffer.trace_pdu = (this->verbosity > 32);
+        this->backBuffer.trace_pdu = (this->verbosity > 32);;
+
         if (!this->nla_password.empty()) {
             this->nla_password.push_back('\0');
         }
