@@ -35,6 +35,9 @@
     z-index: -10;
     top: -800px;
 }
+#cbDownload {
+    display: hidden
+}
 </style>
 </div>
 <canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
@@ -59,6 +62,7 @@
     <!-- </form> -->
     <p id="cbFmts"></p>
     <p id="cbFiles"></p>
+    <a id="cbDownload"></a>
 
 <section>
 
@@ -366,6 +370,7 @@ const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
 const cbFmts = document.getElementById('cbFmts');
 const cbFiles = document.getElementById('cbFiles');
+const cbDownload = document.getElementById('cbDownload');
 
 let rdpclient;
 
@@ -1001,6 +1006,10 @@ function run()
                 ++this.ifile;
             },
             receiveFileContents: function(data, stream_id) {
+                // const blob = new Blob([data], {type: "application/octet-stream"});
+                // cbDownload.href = URL.createObjectURL(blob);
+                // cbDownload.download = 'filename';
+                // cbDownload.click();
                 receiveCbUtf8_data.value = UTF8Decoder.decode(data);
             },
             receiveFileSize: function(sizeHigh, sizeLow, streamId) {
