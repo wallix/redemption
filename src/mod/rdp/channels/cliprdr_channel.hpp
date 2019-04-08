@@ -32,8 +32,8 @@
 #include "utils/stream.hpp"
 #include "utils/difftimeval.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
-// "mod/rdp/channels/channel_file.hpp"
-#include "lib/files_validator_api.hpp"
+#include "mod/rdp/channels/channel_file.hpp"
+#include "lib/icap_files_service.hpp"
 #include "core/session_reactor.hpp"
 #include "core/clipboard_virtual_channels_params.hpp"
 #include "core/stream_throw_helpers.hpp"
@@ -64,7 +64,7 @@ private:
 
     SessionReactor& session_reactor;
 
-    ICAPService * icap_servic;
+    ChannelFile channel_file;
 
 public:
 
@@ -73,7 +73,7 @@ public:
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         const bool channel_filter_on,
-//         const std::string & channel_files_directory,
+        const std::string & channel_files_directory,
         SessionReactor& session_reactor,
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
@@ -87,7 +87,8 @@ public:
     , channel_filter_on(channel_filter_on)
     , last_file_to_scan_id(0)
     , session_reactor(session_reactor)
-    , icap_servic(icap_servic) {}
+    , channel_file(channel_files_directory, false, false, icap_service)
+    {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -231,10 +232,9 @@ public:
                 if (!this->params.clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 } else if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
+                    const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
 
-                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
-                    this->last_file_to_scan_id = validator_open_file(this->icap_service, desc.file_name.c_str());
-
+                    this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_CLIENT, tvtime());
                 }
                 send_message_to_server = this->params.clipboard_file_authorized;
             }
@@ -280,13 +280,8 @@ public:
 
                 if (this->channel_filter_on && (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
 
-                    validator_send_data(this->icap_service, this->last_file_to_scan_id, char_ptr_cast(chunk.get_current()), chunk.in_remain());
-
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        validator_end_of_file(this->icap_service, this->last_file_to_scan_id);
-                    }
-
-//                     send_message_to_server = false;
+                    this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
+                    send_message_to_server = this->channel_file.is_interupting();
                 }
                 if (receive.must_log_file_info_type) {
                     const bool from_remote_session = false;
@@ -481,7 +476,8 @@ public:
 
                 if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
-                    this->last_file_to_scan_id = validator_open_file(this->icap_service, desc.file_name.c_str());
+
+                    this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_SERVER, tvtime());
                 }
 
                 if (!this->params.clipboard_file_authorized) {
@@ -504,12 +500,8 @@ public:
 
                 if (this->channel_filter_on && (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
 
-                    validator_send_data(this->icap_service, this->last_file_to_scan_id, char_ptr_cast(chunk.get_current()), chunk.in_remain());
-
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        validator_end_of_file(this->icap_service, this->last_file_to_scan_id);
-                    }
-//                     send_message_to_client = false;
+                    this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
+                    send_message_to_client = this->channel_file.is_interupting();
                 }
 
                 if (receive.must_log_file_info_type) {

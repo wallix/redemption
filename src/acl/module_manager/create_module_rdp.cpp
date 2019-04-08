@@ -34,8 +34,10 @@
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
+
 #ifndef __EMSCRIPTEN__
 # include "mod/metrics_hmac.hpp"
+#include "lib/files_validator_api.hpp"
 #endif
 
 void ModuleManager::create_mod_rdp(
@@ -301,7 +303,11 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
+        ICAPService * icap_service = nullptr;
+        bool const enable_validator = false;
+
 #ifndef __EMSCRIPTEN__
+
         struct ModRDPWithMetrics : public mod_rdp
         {
             struct ModMetrics : Metrics
@@ -319,6 +325,7 @@ void ModuleManager::create_mod_rdp(
 
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
+
 
         std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
 
@@ -343,6 +350,11 @@ void ModuleManager::create_mod_rdp(
                 this->timeobj.get_time(),
                 ini.get<cfg::metrics::log_file_turnover_interval>(),
                 ini.get<cfg::metrics::log_interval>());
+        }
+
+        if (enable_validator) {
+            const std::string validator_socket_path = "icap_to_a_repertory_that_does_not_exist";
+            icap_service = validator_open_session(validator_socket_path.c_str());
         }
 #else
         using ModRDPWithMetrics = mod_rdp;
@@ -370,7 +382,8 @@ void ModuleManager::create_mod_rdp(
             authentifier,
             report_message,
             ini,
-            enable_metrics ? &metrics->protocol_metrics : nullptr
+            enable_metrics ? &metrics->protocol_metrics : nullptr,
+            /*enable_validator ?*/ icap_service
         );
 
 #ifndef __EMSCRIPTEN__

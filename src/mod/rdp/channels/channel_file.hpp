@@ -14,23 +14,26 @@
      675 Mass Ave, Cambridge, MA 02139, USA.
 
     Product name: redemption, a FLOSS RDP proxy
-    Copyright (C) Wallix 2015
+    Copyright (C) Wallix 2019
     Author(s): Clément Moroldo
 */
 
 #pragma once
 
+#include <fstream>
+#include <unistd.h>
+
+#include "utils/sugar/cast.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/texttime.hpp"
-#include <fstream>
-#include <unistd.h>
+
+#include "lib/icap_files_service.hpp"
 
 
 class ChannelFile {
 
 private:
-
     std::string dir_path;
     std::string filename;
     std::string file_path;
@@ -44,6 +47,11 @@ private:
 
     uint8_t direction = NONE;
 
+    bool is_interupting_channel;
+    bool is_saving_files;
+
+    ICAPService * icap_service;
+
 public:
 
     enum : uint8_t {
@@ -52,16 +60,19 @@ public:
         FILE_FROM_CLIENT
     };
 
-//     ChannelFile()
-//     : fd(invalid_fd())
-//     , total_file_size(0)
-//     , current_file_size(0)
-//     , valid(false)
-//     {}
-
-    ChannelFile(std::string dir_path) noexcept
-    : dir_path(std::move(dir_path))
-    {}
+    ChannelFile(std::string dir_path
+    , bool is_interupting_channel
+    , bool is_saving_files
+    , ICAPService * icap_service) noexcept
+        : streamID(0)
+        , is_interupting_channel(is_interupting_channel)
+        , is_saving_files(is_saving_files)
+        , icap_service(icap_service)
+    {
+        if (!dir_path.empty()) {
+            this->fd = unique_fd(std::move(dir_path), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        }
+    }
 
 //     void operator=(const ChannelFile & channel_file) {
 //         this->dir_path = channel_file.dir_path;
@@ -105,43 +116,54 @@ public:
         this->total_file_size = total_file_size;
     }
 
-    void new_file(const std::string & filename, const size_t total_file_size, const uint32_t streamID, const uint8_t direction, const timeval tv) {
+    void new_file(const std::string & filename, const size_t total_file_size, const uint8_t direction, const timeval tv) {
         this->direction = direction;
-        this->streamID = streamID;
         this->total_file_size = total_file_size;
         this->filename = filename;
         this->current_file_size = 0;
         this->fd.close();
 
-        this->file_path = this->dir_path + get_full_text_sec_and_usec(tv) + "_" + this->filename;
-        std::ifstream file(this->file_path.c_str());
-        if (!file.good()) {
-            this->fd = unique_fd(this->file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-            if (!this->fd.is_open()) {
-                LOG(LOG_WARNING,"File error, can't open %s", file_path);
+        if (this->is_saving_files) {
+            this->file_path = this->dir_path + get_full_text_sec_and_usec(tv) + "_" + this->filename;
+            std::ifstream file(this->file_path.c_str());
+            if (!file.good()) {
+                this->fd = unique_fd(this->file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+                if (!this->fd.is_open()) {
+                    LOG(LOG_WARNING,"File error, can't open %s", file_path);
+                }
+            } else {
+                LOG(LOG_WARNING,"Error,file %s already exist", file_path);
             }
-        } else {
-            LOG(LOG_WARNING,"Error,file %s already exist", file_path);
         }
+
+        this->streamID = icap_open_file(this->icap_service, filename.c_str());
     }
 
     void set_data(const uint8_t * data, const size_t data_size) {
-        if (this->fd.is_open()) {
-            size_t new_size = this->current_file_size + data_size;
-            size_t over_data_len = 0;
-            if (new_size > this->total_file_size) {
-                over_data_len = new_size - this->total_file_size;
-            }
-            int written_data_size = ::write(this->fd.fd(), data, (data_size - over_data_len));
+        if (this->is_saving_files) {
+            if (this->fd.is_open()) {
+                size_t new_size = this->current_file_size + data_size;
+                size_t over_data_len = 0;
+                if (new_size > this->total_file_size) {
+                    over_data_len = new_size - this->total_file_size;
+                }
+                int written_data_size = ::write(this->fd.fd(), data, (data_size - over_data_len));
 
-            if (written_data_size == -1 && (int(data_size) == written_data_size)) {
-                LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data_size, written_data_size);
-            } else {
-                this->current_file_size += (data_size - over_data_len);
-                if ( this->current_file_size == this->total_file_size) {
-                    this->fd.close();
+                if (written_data_size == -1 && (int(data_size) == written_data_size)) {
+                    LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data_size, written_data_size);
+                } else {
+                    this->current_file_size += (data_size - over_data_len);
+                    if ( this->current_file_size == this->total_file_size) {
+                        this->fd.close();
+                    }
                 }
             }
+        }
+
+        icap_send_data(this->icap_service, this->streamID, char_ptr_cast(data), data_size);
+
+        if ( this->current_file_size == this->total_file_size) {
+            icap_end_of_file(this->icap_service, this->streamID);
         }
     }
 
@@ -184,6 +206,10 @@ public:
 
     ~ChannelFile() {
         this->fd.close();
+    }
+
+    bool is_interupting() {
+        return this->is_interupting_channel;
     }
 
 };

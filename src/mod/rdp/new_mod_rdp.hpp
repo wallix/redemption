@@ -36,6 +36,7 @@ class Transport;
 class RedirectionInfo;
 class Random;
 class RDPMetrics;
+class ICAPService;
 namespace gdi { class GraphicApi; }
 
 std::unique_ptr<mod_api> new_mod_rdp(
@@ -52,5 +53,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
     AuthApi& authentifier,
     ReportMessageApi& report_message,
     ModRdpVariables vars,
-    RDPMetrics * metrics
+    RDPMetrics * metrics,
+    ICAPService * icap_service
 );

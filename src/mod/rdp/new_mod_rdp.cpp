@@ -36,11 +36,12 @@ std::unique_ptr<mod_api> new_mod_rdp(
     AuthApi& authentifier,
     ReportMessageApi& report_message,
     ModRdpVariables vars,
-    RDPMetrics * metrics
+    RDPMetrics * metrics,
+    ICAPService * icap_service
 )
 {
     return std::make_unique<mod_rdp>(
         trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
         std::move(channels_authorizations), mod_rdp_params, authentifier,
-        report_message, vars, metrics);
+        report_message, vars, metrics, icap_service);
 }
