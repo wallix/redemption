@@ -33,7 +33,7 @@
 #include "utils/difftimeval.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "mod/rdp/channels/channel_file.hpp"
-#include "lib/icap_files_service.hpp"
+#include "mod/icap_files_service.hpp"
 #include "core/session_reactor.hpp"
 #include "core/clipboard_virtual_channels_params.hpp"
 #include "core/stream_throw_helpers.hpp"

@@ -37,8 +37,10 @@
 
 #ifndef __EMSCRIPTEN__
 # include "mod/metrics_hmac.hpp"
-#include "lib/files_validator_api.hpp"
+#include "mod/icap_files_service.hpp"
 #endif
+
+
 
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -303,7 +305,7 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-        ICAPService * icap_service = nullptr;
+
         bool const enable_validator = false;
 
 #ifndef __EMSCRIPTEN__
@@ -352,13 +354,10 @@ void ModuleManager::create_mod_rdp(
                 ini.get<cfg::metrics::log_interval>());
         }
 
-        if (enable_validator) {
-            const std::string validator_socket_path = "icap_to_a_repertory_that_does_not_exist";
-            icap_service = validator_open_session(validator_socket_path.c_str());
-        }
 #else
         using ModRDPWithMetrics = mod_rdp;
 #endif
+        const std::string validator_socket_path = "";
 
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
@@ -383,7 +382,7 @@ void ModuleManager::create_mod_rdp(
             report_message,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,
-            /*enable_validator ?*/ icap_service
+            enable_validator ? icap_open_session(validator_socket_path.c_str()) : nullptr
         );
 
 #ifndef __EMSCRIPTEN__

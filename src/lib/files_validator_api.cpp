@@ -18,9 +18,9 @@
    Author(s): Clément Moroldo
 */
 
-#include "lib/icap_files_service.hpp"
-#include "lib/files_validator_api.hpp"
 
+#include "lib/files_validator_api.hpp"
+#include "mod/icap_files_service.hpp"
 
 
 

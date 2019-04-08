@@ -28,7 +28,7 @@
 #include "utils/difftimeval.hpp"
 #include "utils/texttime.hpp"
 
-#include "lib/icap_files_service.hpp"
+#include "mod/icap_files_service.hpp"
 
 
 class ChannelFile {

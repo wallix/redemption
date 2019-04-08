@@ -25,7 +25,6 @@
 #include "test_only/working_directory.hpp"
 
 #include "utils/netutils.hpp"
-#include "lib/files_validator_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
 #include "test_only/transport/test_transport.hpp"

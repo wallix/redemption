@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, authentifier, report_message,
-        ini, nullptr);
+        ini, nullptr, nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
@@ -225,7 +225,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         channels_authorizations, mod_rdp_params, authentifier, report_message,
-        ini, nullptr);
+        ini, nullptr, nullptr);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);

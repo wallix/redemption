@@ -92,7 +92,7 @@ struct ICAPService;
 # include "mod/rdp/windowing_api.hpp"
 #else
 # include "mod/rdp/rdp_metrics.hpp"
-# include "lib/icap_files_service.hpp"
+# include "mod/icap_files_service.hpp"
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
 # include "mod/rdp/channels/rail_session_manager.hpp"
 # include "mod/rdp/channels/rail_channel.hpp"
