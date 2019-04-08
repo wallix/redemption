@@ -270,6 +270,7 @@ struct redjs::ClipboardChannel::D
     {
         if (this->wating_for_data)
         {
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU Continuation");
             this->process_format_data_response(chunk.remaining_bytes(), channel_flags, 0);
             return ;
         }
@@ -316,7 +317,6 @@ struct redjs::ClipboardChannel::D
 
         case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
             LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU");
-            // TODO
             this->process_format_data_response(chunk.remaining_bytes(), channel_flags, header.dataLen());
             }
         break;
@@ -354,7 +354,7 @@ struct redjs::ClipboardChannel::D
         }
     }
 
-    void process_format_data_response(cbytes_view data, uint32_t channel_flags, uint16_t data_len)
+    void process_format_data_response(cbytes_view data, uint32_t channel_flags, uint32_t data_len)
     {
         const bool is_first_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_FIRST);
         const bool is_last_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_LAST);
@@ -379,6 +379,7 @@ struct redjs::ClipboardChannel::D
             return data.size() >= strip_n ? data.first(data.size() - strip_n) : cbytes_view{};
         };
 
+        LOG(LOG_DEBUG, "data_len=%u  data.size()=%zu  remaining=%u", data_len, data.size(), this->data_len);
         if (data.size() > this->data_len)
         {
             data = data.first(this->data_len);
@@ -510,19 +511,16 @@ struct redjs::ClipboardChannel::D
             LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU RANGE");
 
             InStream in_stream(data);
-            uint32_t stream_id;
 
             if (is_first_packet)
             {
-                this->response_buffer.set(in_stream.remaining_bytes().first(4));
-                stream_id = in_stream.in_uint32_le();
-            }
-            else
-            {
-                stream_id = Parse(this->response_buffer.data.data()).in_uint32_le();
+                this->response_buffer.set(in_stream.in_bytes(4));
             }
 
-            send_data("receiveFileContents", in_stream.remaining_bytes(), stream_id);
+            uint32_t stream_id = Parse(this->response_buffer.data.data()).in_uint32_le();
+
+            send_data("receiveFileContents", in_stream.remaining_bytes(), stream_id,
+                channel_flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
             break;
         }
         }

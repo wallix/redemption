@@ -67,7 +67,7 @@ namespace Extractors
     {
         HeaderResult read_header(Buf64k & buf)
         {
-            // fast path header occupies 2 or 3 octets, but assume then data len at least 2 octets.
+            // fast path header occupies 2 or 3 bytes, but assume then data len at least 2 bytes.
             if (buf.remaining() < 4)
             {
                 return HeaderResult::fail();
