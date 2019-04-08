@@ -504,6 +504,13 @@ public:
         return this->session_probe_ready;
     }
 
+    void abort_launch()
+    {
+        if (this->session_probe_event.is_trigger_time_set()) {
+            this->session_probe_event.set_trigger_time(wait_obj::NOW);
+        }
+    }
+
     void start_launch_timeout_timer()
     {
         if ((this->session_probe_effective_launch_timeout.count() > 0) &&
