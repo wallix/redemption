@@ -3854,8 +3854,10 @@ test-run tests/mod/rdp/channels/test_channel_file :
 :
   <library>src/core/error.o
   <library>src/utils/fileutils.o
+  <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/channel_file.hpp
@@ -3935,6 +3937,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -3967,6 +3970,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o

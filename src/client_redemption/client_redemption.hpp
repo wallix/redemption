@@ -418,6 +418,7 @@ public:
                   , this->reportMessage
                   , this->ini
                   , nullptr
+                  , nullptr
                 );
 
                 if (is_remote_app) {
