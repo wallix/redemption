@@ -977,10 +977,10 @@ function run()
                 button.dataset.id = formatId;
                 button.dataset.name = name;
             },
-            receiveData: function(data, formatId, flag) {
-                console.log(formatId, flag)
-                const opt = (flag & ChannelFlags.Last) ? undefined : {stream: true};
-                const accu = (flag & ChannelFlags.First)
+            receiveData: function(data, formatId, channelFlags) {
+                console.log(formatId, channelFlags)
+                const opt = (channelFlags & ChannelFlags.Last) ? undefined : {stream: true};
+                const accu = (channelFlags & ChannelFlags.First)
                     ? decoder => { receiveCbUtf8_data.value = decoder.decode(data, opt) }
                     : decoder => { receiveCbUtf8_data.value += decoder.decode(data, opt) }
                     ;
@@ -1012,11 +1012,16 @@ function run()
                 button.dataset.ifile = this.ifile;
                 ++this.ifile;
             },
-            receiveFileContents: function(data, stream_id) {
+            receiveFileContents: function(data, streamId, channelFlags) {
                 // const blob = new Blob([data], {type: "application/octet-stream"});
                 // cbDownload.href = URL.createObjectURL(blob);
                 // cbDownload.download = 'filename';
                 // cbDownload.click();
+                if (channelFlags & ChannelFlags.First) {
+                    this.fileaccu = 0;
+                }
+                this.fileaccu += data.length;
+                console.log(data.length, this.fileaccu, channelFlags);
                 receiveCbUtf8_data.value = UTF8Decoder.decode(data);
             },
             receiveFileSize: function(sizeHigh, sizeLow, streamId) {
