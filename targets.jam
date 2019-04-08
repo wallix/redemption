@@ -1689,6 +1689,7 @@ test-run tests/core/RDP/nla/test_nla :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
+  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -2051,7 +2052,6 @@ test-run tests/core/RDP/test_nego :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
-  <library>openssl
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/error.o
@@ -2162,8 +2162,12 @@ test-run tests/core/RDP/test_slowpath :
 test-run tests/core/RDP/test_tpdu_buffer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_tpdu_buffer.cpp
 :
+  <library>crypto
+  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/tpdu_buffer.hpp
 ;

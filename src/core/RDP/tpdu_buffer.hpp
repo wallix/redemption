@@ -22,7 +22,7 @@
 
 #include "core/buf64k.hpp"
 #include "core/RDP/packet_extractors.hpp"
-
+#include "utils/hexdump.hpp"
 #include "transport/transport.hpp"
 
 struct TpduBuffer
@@ -97,11 +97,12 @@ struct TpduBuffer
     // We can use it to trace CREDSSP buffer
     array_view_u8 current_pdu_buffer() noexcept
     {
+        LOG(LOG_INFO, "current_pdu_buffer %s",this->trace_pdu?"trace":"do not trace");
         assert(this->pdu_len);
         auto av = this->buf.av(this->pdu_len);
-//        if (this->trace_pdu){
+        if (this->trace_pdu){
             ::hexdump_av_d(av);
-//        }
+        }
         return av;
     }
 

@@ -384,6 +384,28 @@ enum {
 //   2.2.1.1.1) was sent to the server. If this field is present,
 //   then all of the preceding fields MUST also be present.
 
+// Possible values (from RDP Negociation Response):
+// +-------------------------------+----------------------------------------------+
+// | 0x00000000 PROTOCOL_RDP       | Standard RDP Security (section 5.3)          |
+// +-------------------------------+----------------------------------------------+
+// | 0x00000001 PROTOCOL_SSL       | TLS 1.0, 1.1 or 1.2 (section 5.4.5.1)        |
+// +-------------------------------+----------------------------------------------+
+// | 0x00000002 PROTOCOL_HYBRID    | CredSSP (section 5.4.5.2)                    |
+// +-------------------------------+----------------------------------------------+
+// | 0x00000004 PROTOCOL_RDSTLS    | RDSTLS protocol (section 5.4.5.3).           |
+// +-------------------------------+----------------------------------------------+
+// | 0x00000008 PROTOCOL_HYBRID_EX | Credential Security Support Provider protocol|
+// |                               | (CredSSP) (section 5.4.5.2) coupled with the |
+// |                               | Early User Authorization Result PDU (section |
+// |                               | 2.2.10.2). If this flag is set, then the     |
+// |                               | PROTOCOL_HYBRID (0x00000002) flag SHOULD     |
+// |                               | also be set. For more information on the     |
+// |                               | sequencing of the CredSSP messages and the   |
+// |                               | Early User Authorization Result PDU, see     |
+// |                               | sections 5.4.2.1 and 5.4.2.2.CredSSP         |
+// |                               | (section 5.4.5.2)                            |
+// +-------------------------------+----------------------------------------------+
+
 // desktopPhysicalWidth (4 bytes): A 32-bit, unsigned integer. The requested 
 //   physical width of the desktop, in millimeters (mm). This value MUST be
 //   ignored if it is less than 10 mm or greater than 10,000 mm or 

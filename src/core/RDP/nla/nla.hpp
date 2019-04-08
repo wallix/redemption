@@ -111,7 +111,7 @@ public:
         , class_name_log(class_name_log)
         , set_password_cb(std::move(set_password_cb))
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s:: Initialization", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "%s::Initialization", this->class_name_log);
         this->set_credentials(user, domain, pass, hostname);
     }
 
@@ -131,7 +131,7 @@ protected:
 
     void credssp_send()
     {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::send");
+        LOG_IF(this->verbose, LOG_INFO, "%s::send", this->class_name_log);
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         this->trans.send(ts_request_emit.get_bytes());
@@ -140,7 +140,7 @@ protected:
 protected:
     void set_credentials(uint8_t const* user, uint8_t const* domain,
                          uint8_t const* pass, uint8_t const* hostname) {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::set_credentials");
+        LOG_IF(this->verbose, LOG_INFO, "%s::set_credentials", this->class_name_log);
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
@@ -165,7 +165,7 @@ protected:
         SecInterface secInter, const char* pszPrincipal,
         Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
     {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::InitSecurityInterface");
+        LOG_IF(this->verbose, LOG_INFO, "%s::InitSecurityInterface", this->class_name_log);
 
         this->table.reset();
 
@@ -212,19 +212,19 @@ private:
 
 protected:
     void credssp_generate_client_nonce() {
-        LOG(LOG_DEBUG, "credssp generate client nonce");
+        LOG(LOG_DEBUG, "%s::credssp generate client nonce", this->class_name_log);
         this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
         this->credssp_set_client_nonce();
     }
 
     void credssp_get_client_nonce() {
-        LOG(LOG_DEBUG, "credssp get client nonce");
+        LOG(LOG_DEBUG, "%s::credssp get client nonce", this->class_name_log);
         if (this->ts_request.clientNonce.size() == CLIENT_NONCE_LENGTH) {
             memcpy(this->SavedClientNonce, this->ts_request.clientNonce.get_data(), CLIENT_NONCE_LENGTH);
         }
     }
     void credssp_set_client_nonce() {
-        LOG(LOG_DEBUG, "credssp set client nonce");
+        LOG(LOG_DEBUG, "%s::credssp set client nonce",this->class_name_log);
         if (this->ts_request.clientNonce.size() == 0) {
             this->ts_request.clientNonce.init(CLIENT_NONCE_LENGTH);
             memcpy(this->ts_request.clientNonce.get_data(), this->SavedClientNonce, CLIENT_NONCE_LENGTH);
@@ -232,8 +232,8 @@ protected:
     }
 
     void credssp_generate_public_key_hash(bool client_to_server) {
-        LOG(LOG_DEBUG, "generate credssp public key hash (%s)",
-            client_to_server ? "client->server" : "server->client");
+        LOG(LOG_DEBUG, "%s::generate credssp public key hash (%s)",
+            client_to_server ? "client->server" : "server->client", this->class_name_log);
         Array & SavedHash = client_to_server
             ? this->ClientServerHash
             : this->ServerClientHash;
@@ -251,7 +251,7 @@ protected:
     }
 
     SEC_STATUS credssp_encrypt_public_key_echo() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
+        LOG_IF(this->verbose, LOG_INFO, "%s::encrypt_public_key_echo",this->class_name_log);
         uint32_t version = this->ts_request.use_version;
 
         array_view_u8 public_key = this->PublicKey.av();
@@ -278,7 +278,7 @@ protected:
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
+        LOG_IF(this->verbose, LOG_INFO, "%s::decrypt_public_key_echo",this->class_name_log);
 
         Array Buffer;
 
@@ -337,7 +337,7 @@ protected:
     }
 
     void credssp_buffer_free() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
+        LOG_IF(this->verbose, LOG_INFO, "%s::buffer_free",this->class_name_log);
         this->ts_request.negoTokens.init(0);
         this->ts_request.pubKeyAuth.init(0);
         this->ts_request.authInfo.init(0);
@@ -687,7 +687,7 @@ private:
 public:
     Res sm_credssp_server_authenticate_recv(InStream & in_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO,"sm_credssp_server_authenticate_recv");
+        LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
 
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
@@ -756,7 +756,7 @@ public:
 
     Res sm_credssp_server_authenticate_final(InStream & in_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO, "sm_credssp_server_authenticate_final");
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
         /* Receive encrypted credentials */
         this->ts_request.recv(in_stream);
 
@@ -773,7 +773,7 @@ public:
 public:
     bool credssp_server_authenticate_init()
     {
-        LOG_IF(this->verbose, LOG_INFO, "credssp_server_authenticate_init");
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init");
 
         this->server_auth_data.state = ServerAuthenticateData::Start;
         if (Res::Err == this->sm_credssp_server_authenticate_start()) {
@@ -787,7 +787,7 @@ public:
 
     State credssp_server_authenticate_next(InStream & in_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO, "credssp_server_authenticate_next");
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
     
         switch (this->server_auth_data.state)
         {

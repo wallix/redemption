@@ -69,8 +69,8 @@ public:
         , enable_kerberos(enable_kerberos)
         , verbosity(verbosity)
     {
-        this->frontBuffer.trace_pdu = (this->verbosity > 32);
-        this->backBuffer.trace_pdu = (this->verbosity > 32);;
+        this->frontBuffer.trace_pdu = (this->verbosity > 512);
+        this->backBuffer.trace_pdu = (this->verbosity > 512);;
 
         if (!this->nla_password.empty()) {
             this->nla_password.push_back('\0');
@@ -107,23 +107,28 @@ private:
 
         Transport::Read do_atomic_read(uint8_t * buffer, std::size_t len) override
         {
-            LOG_IF(enable_trace, LOG_DEBUG, "%s do_atomic_read", name);
+//            LOG_IF(this->enable_trace, LOG_DEBUG, "%s do_atomic_read", name);
             return SocketTransport::do_atomic_read(buffer, len);
         }
 
         std::size_t do_partial_read(uint8_t * buffer, std::size_t len) override
         {
-            LOG_IF(enable_trace, LOG_DEBUG, "%s do_partial_read", name);
+//            LOG_IF(this->enable_trace, LOG_DEBUG, "%s do_partial_read", name);
             return SocketTransport::do_partial_read(buffer, len);
         }
 
         void do_send(const uint8_t * buffer, std::size_t len) override
         {
-            LOG_IF(enable_trace, LOG_DEBUG, "%s do_send", name);
+            LOG_IF(this->enable_trace_send, LOG_DEBUG, "%s do_send", name);
+            if (this->enable_trace_send){
+                hexdump_av_d({buffer, len});
+            }
             SocketTransport::do_send(buffer, len);
         }
 
+//        private:
         bool enable_trace = false;
+        bool enable_trace_send = false;
     };
 
     TraceTransport frontConn;
