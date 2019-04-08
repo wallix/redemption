@@ -935,6 +935,10 @@ function run()
             WriteTime: 0x20,
             ShowProgressUI: 0x4000,
         });
+        const ChannelFlags = Object.freeze({
+            First: 1,
+            Last: 2,
+        });
         let clipboard;
         cbFmts.onclick = (e) => {
             e.preventDefault();
@@ -957,8 +961,6 @@ function run()
         };
         return clipboard = newClipboardChannel(cb, {
             receiveFormatStart: function() {
-                this.cf = 0;
-                this.customCf = 0;
                 for (const e of [cbFmts, cbFiles]) {
                     while (e.firstChild) {
                         e.removeChild(e.firstChild);
@@ -975,11 +977,16 @@ function run()
                 button.dataset.id = formatId;
                 button.dataset.name = name;
             },
-            receiveData: function(data, formatId) {
-                console.log(formatId, this.cf)
-                switch (this.cf) {
-                case CF.TEXT: receiveCbUtf8_data.value = UTF8Decoder.decode(data); break;
-                case CF.UTF16: receiveCbUtf8_data.value = UTF16Decoder.decode(data); break;
+            receiveData: function(data, formatId, flag) {
+                console.log(formatId, flag)
+                const opt = (flag & ChannelFlags.Last) ? undefined : {stream: true};
+                const accu = (flag & ChannelFlags.First)
+                    ? decoder => { receiveCbUtf8_data.value = decoder.decode(data, opt) }
+                    : decoder => { receiveCbUtf8_data.value += decoder.decode(data, opt) }
+                    ;
+                switch (formatId) {
+                case CF.TEXT: accu(UTF8Decoder); break;
+                case CF.UTF16: accu(UTF16Decoder); break;
                 default: console.log('Unknown data', formatId);
                 }
             },

@@ -255,9 +255,19 @@ public:
         return this->p.in_uint8p(n);
     }
 
-    void in_skip_bytes(unsigned int n) noexcept {
+    array_view_const_u8 in_skip_bytes(unsigned int n) noexcept {
         assert(this->in_check_rem(n));
-        return this->p.in_skip_bytes(n);
+        array_view_const_u8 ret(this->get_current(), n);
+        this->p.in_skip_bytes(n);
+        return ret;
+    }
+
+    [[nodiscard]]
+    array_view_const_u8 in_bytes(unsigned int n) noexcept {
+        assert(this->in_check_rem(n));
+        array_view_const_u8 ret(this->get_current(), n);
+        this->p.in_skip_bytes(n);
+        return ret;
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
