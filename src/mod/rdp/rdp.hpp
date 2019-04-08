@@ -87,10 +87,12 @@
 
 #ifdef __EMSCRIPTEN__
 class RDPMetrics;
+struct ICAPService;
 # define IF_ENABLE_METRICS(m) do {} while(0)
 # include "mod/rdp/windowing_api.hpp"
 #else
 # include "mod/rdp/rdp_metrics.hpp"
+# include "mod/icap_files_service.hpp"
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
 # include "mod/rdp/channels/rail_session_manager.hpp"
 # include "mod/rdp/channels/rail_channel.hpp"
@@ -360,12 +362,14 @@ private:
 
     SessionReactor & session_reactor;
 
+    ICAPService * icap_service;
+
 public:
     mod_rdp_channels(
         ChannelsAuthorizations&& channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor)
+        SessionReactor & session_reactor, ICAPService * icap_service)
     : channels_authorizations(std::move(channels_authorizations))
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
@@ -389,6 +393,7 @@ public:
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
     , verbose(verbose)
     , session_reactor(session_reactor)
+    , icap_service(icap_service)
     {}
 
     void DLP_antivirus_check_channels_files() {
@@ -519,7 +524,7 @@ private:
         return std::make_unique<ToClientSender>(front, *channel, verbose);
     }
 
-    inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc) {
+    inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc, ICAPService * icap_service) {
         assert(!this->clipboard_to_client_sender
             && !this->clipboard_to_server_sender);
 
@@ -539,7 +544,8 @@ private:
             this->session_reactor,
             base_params,
             cvc_params,
-            nullptr);
+            icap_service
+            );
     }
 
 
@@ -818,10 +824,11 @@ public:
 
     void process_cliprdr_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         FrontAPI& front,
-        ServerTransportContext & stc
+        ServerTransportContext & stc,
+        ICAPService * icap_service
     ) {
         if (!this->clipboard_virtual_channel) {
-            this->create_clipboard_virtual_channel(front, stc);
+            this->create_clipboard_virtual_channel(front, stc, icap_service);
         }
 
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
@@ -1008,7 +1015,7 @@ public:
                             ServerTransportContext & stc) {
 
         if (!this->clipboard_virtual_channel) {
-            this->create_clipboard_virtual_channel(front, stc);
+            this->create_clipboard_virtual_channel(front, stc, this->icap_service);
         }
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
 
@@ -1584,12 +1591,13 @@ public:
         const char (& client_name)[128],
         const uint32_t monitor_count,
         const bool bogus_refresh_rect,
-        const Translation::language_t & lang)
+        const Translation::language_t & lang,
+        ICAPService * icap_service)
     {
         assert(this->session_probe.enable_session_probe);
         if (this->session_probe.session_probe_launcher){
             if (!this->clipboard_virtual_channel) {
-                this->create_clipboard_virtual_channel(front, stc);
+                this->create_clipboard_virtual_channel(front, stc, icap_service);
             }
             ClipboardVirtualChannel& cvc = *this->clipboard_virtual_channel;
             cvc.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
@@ -1868,6 +1876,7 @@ class mod_rdp : public mod_api, public rdp_api
 
 #ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
+    ICAPService * icap_service;
 #endif
 
     static constexpr auto order_indexes_supported() noexcept
@@ -1926,8 +1935,9 @@ public:
       , ReportMessageApi & report_message
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
+      , [[maybe_unused]] ICAPService * icap_service
     )
-        : channels(std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor)
+        : channels(std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor, icap_service)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
@@ -1990,6 +2000,7 @@ public:
         , vars(vars)
         #ifndef __EMSCRIPTEN__
         , metrics(metrics)
+        , icap_service(icap_service)
         #endif
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -2647,7 +2658,7 @@ public:
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc);
+                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->icap_service);
             }
             else if (mod_channel.name == channel_names::rail) {
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
@@ -2837,7 +2848,8 @@ public:
                                         this->client_name,
                                         this->monitor_count,
                                         this->bogus_refresh_rect,
-                                        this->lang);
+                                        this->lang,
+                                        this->icap_service);
                                 }
 #endif
                                 this->already_upped_and_running = true;

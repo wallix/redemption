@@ -1044,6 +1044,8 @@ private:
         return client_sck;
     }
 
+    class ICAPService;
+
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info,

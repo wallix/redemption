@@ -24,6 +24,9 @@
 #include "test_only/get_file_contents.hpp"
 #include "test_only/working_directory.hpp"
 
+#include "utils/netutils.hpp"
+#include "lib/files_validator_api.hpp"
+
 #include "core/RDP/clipboard.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
@@ -39,6 +42,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
+    ICAPService * ipca_service = nullptr;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
@@ -54,10 +58,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, false, "",session_reactor,
                 base_params,
-                clipboard_virtual_channel_params,
-                nullptr);
+                clipboard_virtual_channel_params, ipca_service);
+
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -68,6 +72,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
+    ICAPService * ipca_service = nullptr;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
@@ -85,8 +90,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
         base_params,
-        clipboard_virtual_channel_params,
-        nullptr);
+        clipboard_virtual_channel_params, ipca_service);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -100,6 +104,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
     NullReportMessage report_message;
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+    ICAPService * ipca_service = nullptr;
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
@@ -115,9 +120,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
         base_params,
-        clipboard_virtual_channel_params,
-        nullptr
-                                                     );
+        clipboard_virtual_channel_params, ipca_service);
+
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -128,6 +132,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     FakeFront front(screen_info);
 
     SessionReactor session_reactor;
+
+    ICAPService * ipca_service = nullptr;
 
     NullReportMessage report_message;
 
@@ -147,9 +153,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
         base_params,
-        clipboard_virtual_channel_params,
-        nullptr
-                                                     );
+        clipboard_virtual_channel_params, ipca_service);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -165,6 +169,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
+    ICAPService * ipca_service = nullptr;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
@@ -179,9 +184,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
         base_params,
-        clipboard_virtual_channel_params,
-        nullptr
-                                                     );
+        clipboard_virtual_channel_params, ipca_service);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -219,6 +222,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
+    ICAPService * ipca_service = nullptr;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
@@ -233,9 +237,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
         base_params,
-        clipboard_virtual_channel_params,
-        nullptr
-                                                     );
+        clipboard_virtual_channel_params, ipca_service);
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
 // Recv done on channel (28) n bytes
@@ -891,8 +893,12 @@ public:
 //
 //     RED_CHECK_WORKSPACE(wd);
 // }
+
 //
 //
+
+
+
 // RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
 //     WorkingDirectory wd("TestCliprdrChannelFilterClientDataFile");
 //
@@ -1386,4 +1392,6 @@ public:
 //     RED_CHECK_WORKSPACE(wd);
 // }
 
+//
+//
 
