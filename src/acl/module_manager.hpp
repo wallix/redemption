@@ -143,6 +143,8 @@ public:
     }
 };
 
+class ICAPService;
+
 class ModuleManager : public MMIni
 {
     class ModOSD : public gdi::ProtectedGraphics, public mod_api
@@ -416,6 +418,10 @@ class ModuleManager : public MMIni
     };
 
 public:
+    void DLP_antivirus_check_channels_files() {
+        this->mod->DLP_antivirus_check_channels_files();
+    }
+
     gdi::GraphicApi & get_graphic_wrapper()
     {
         gdi::GraphicApi& gd = this->mod_osd.get_protected_rect().isempty()
@@ -469,11 +475,15 @@ private:
     ModuleIndex old_target_module = MODULE_UNKNOWN;
 
 public:
+
+
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
         new_mod = 0x1,
     };
+
+    int validator_fd = -1;
 
 private:
     rdp_api*       rdpapi = nullptr;
@@ -493,7 +503,8 @@ public:
         , rail_client_execute(session_reactor, front, front,
             this->front.client_info.window_list_caps,
             ini.get<cfg::debug::mod_internal>() & 1)
-        , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
+        , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>())
+        )
     {
         this->mod = &this->no_mod;
     }
@@ -1044,7 +1055,7 @@ private:
         return client_sck;
     }
 
-    class ICAPService;
+
 
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,

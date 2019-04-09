@@ -304,9 +304,15 @@ void ModuleManager::create_mod_rdp(
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
         ICAPService * icap_service = nullptr;
-        bool const enable_validator = false;
+
 
 #ifndef __EMSCRIPTEN__
+
+        if (mod_rdp_params.enable_validator) {
+            const std::string validator_socket_path = "tools/ICAP_socket/redemption-icap-service-sock";
+            icap_service = icap_open_session(validator_socket_path.c_str());
+            this->validator_fd = icap_service->fd.fd();
+        }
 
         struct ModRDPWithMetrics : public mod_rdp
         {
@@ -382,8 +388,7 @@ void ModuleManager::create_mod_rdp(
             authentifier,
             report_message,
             ini,
-            enable_metrics ? &metrics->protocol_metrics : nullptr,
-            /*enable_validator ?*/ icap_service
+            icap_service
         );
 
 #ifndef __EMSCRIPTEN__
