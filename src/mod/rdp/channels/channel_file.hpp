@@ -183,6 +183,11 @@ public:
         }
     }
 
+    void receive_result() {
+        icap_receive_result(this->icap_service);
+        LOG(LOG_INFO, "%s", this->icap_service->content);
+    }
+
     uint8_t get_direction() {
         return this->direction;
     }

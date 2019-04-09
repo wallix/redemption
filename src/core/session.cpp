@@ -671,7 +671,7 @@ private:
     static SckNoRead set_fds(
         Select& ioswitch,
         SessionReactor& session_reactor, SessionReactor::EnableGraphics enable_graphics,
-        SocketTransport const& front_trans,
+        FrontTransport const& front_trans,
         ModuleManager const& mm,
         std::unique_ptr<Acl> const& acl)
     {
@@ -683,6 +683,10 @@ private:
         }
         else if (mm.get_mod()->is_up_and_running() || !bool(enable_graphics)) {
             ioswitch.set_read_sck(front_trans.sck);
+
+            if (mm.validator_fd > 0) {
+                ioswitch.set_read_sck(mm.validator_fd);
+            }
         }
 
         if (mm.get_socket() && !mm.has_pending_data()) {

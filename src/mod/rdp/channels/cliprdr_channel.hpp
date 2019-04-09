@@ -660,7 +660,9 @@ public:
             flags&CHANNELS::CHANNEL_FLAG_LAST?"LAST":"");
     }
 
-    void DLP_antivirus_check_channels_files() {}
+    void DLP_antivirus_check_channels_files() {
+        this->channel_file.receive_result();
+    }
 //
 //         if (this->channel_file.is_valid()) {
 //

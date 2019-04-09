@@ -363,6 +363,7 @@ private:
     SessionReactor & session_reactor;
 
     ICAPService * icap_service;
+    bool enable_validator;
 
 public:
     mod_rdp_channels(
@@ -394,10 +395,11 @@ public:
     , verbose(verbose)
     , session_reactor(session_reactor)
     , icap_service(icap_service)
+    , enable_validator(mod_rdp_params.enable_validator)
     {}
 
     void DLP_antivirus_check_channels_files() {
-//         this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
+        this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
     }
 
     void init_remote_program_and_session_probe(
@@ -539,7 +541,7 @@ private:
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
             front,
-            false,
+            this->enable_validator,
             "",
             this->session_reactor,
             base_params,
@@ -1874,6 +1876,8 @@ class mod_rdp : public mod_api, public rdp_api
 
     ModRdpVariables vars;
 
+    bool enable_validator;
+
 #ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
     ICAPService * icap_service;
@@ -1998,6 +2002,7 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
+        , enable_validator(mod_rdp_params.enable_validator)
         #ifndef __EMSCRIPTEN__
         , metrics(metrics)
         , icap_service(icap_service)
@@ -2056,6 +2061,10 @@ public:
 
 #ifndef __EMSCRIPTEN__
         this->channels.remote_programs_session_manager.reset();
+
+        if (this->enable_validator) {
+            icap_close_session(this->icap_service);
+        }
 #endif
 
         if (!this->server_redirection_packet_received) {

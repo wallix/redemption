@@ -76,6 +76,7 @@ struct ModRDPParams
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
+    bool enable_validator = false;
 
     struct ClipboardParams
     {
