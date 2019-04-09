@@ -15,7 +15,6 @@ back_to_selector_default_sent = {
   u'formflag': 0,
   u'is_rec': False,
   u'message': u'',
-  u'module': u'login',
   u'opt_message': u'',
   u'pattern_kill': u'',
   u'pattern_notify': u'',

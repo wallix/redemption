@@ -662,7 +662,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), "showform", set(false));
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<unsigned>(), "formflag", set(0));
 
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "module", set("login"));
+        W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "module", set("login"));
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), "forcemodule", set(false));
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "proxy_opt");
 

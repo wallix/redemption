@@ -372,6 +372,7 @@ class Sesman():
         # Should set context values back to default
         for key, value in back_to_selector_default_reinit.iteritems():
             self.shared[key] = value
+        back_to_selector_default_sent[u"module"] = u'transitory'
         self.send_data(back_to_selector_default_sent)
         self.engine.reset_proxy_rights()
         self.rtmanager.reset()
