@@ -431,6 +431,10 @@ public:
         return  this->end - this->p;
     }
 
+    bytes_view get_tailroom_bytes() const noexcept {
+        return {this->get_current(), this->tailroom()};
+    }
+
     bool has_room(size_t n) const noexcept {
         return  n <= this->tailroom();
     }

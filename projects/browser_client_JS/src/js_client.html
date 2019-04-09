@@ -49,8 +49,8 @@
         <input type="submit" value="New Connection">
     </form>
     <form id="sendCbFile" method="get" action="#">
-        <input type="submit" value="Send File">
         <input id="sendCbFile_data" name="myFile" type="file">
+        <input type="submit" value="Send File">
     </form>
     <form id="sendCbUtf8" method="get" action="#">
         <textarea id="sendCbUtf8_data"></textarea>
@@ -162,8 +162,6 @@ const redemption = (function(Module, window) {
             sendUnicode: noop,
             sendScancode: noop,
             sendMouseEvent: noop,
-            sendClipboardUtf8: noop,
-            sendFile: noop,
             addChannelCreator: (f) => { channelCreators.push(f); },
         };
 
@@ -269,18 +267,6 @@ const redemption = (function(Module, window) {
             }
             client.sendMouseEvent = function(flag, x, y) {
                 rdpclient.sendMouseEvent(flag, x, y);
-                send_data();
-            }
-            client.sendClipboardUtf8 = (utf8String) => {
-                rdpclient.sendClipboardUtf8(utf8String);
-                send_data();
-            }
-            client.sendFile = (filename, binary) => {
-                rdpclient.sendFile(filename, binary);
-                send_data();
-            }
-            client.clipboardSendRequestFormat = (id) => {
-                rdpclient.clipboardSendRequestFormat(id);
                 send_data();
             }
             client.sendBufferedData = send_data;
@@ -714,7 +700,6 @@ const canvasFocusEvents = {
 const eventTable = [
     [document, docEvents],
     [ecanvas, canvasEvents],
-    [ecanvasFocus, canvasFocusEvents],
 ];
 
 function addEvents(elem, events)
@@ -736,6 +721,8 @@ function canvasStartEvents()
     for (const a of eventTable) {
         addEvents(a[0], a[1]);
     }
+    ecanvasFocus.onblur = canvasBlur;
+    ecanvasFocus.onfocus = canvasFocus;
     canvasEnableFocus();
 }
 
@@ -744,13 +731,15 @@ function canvasStopEvents()
     for (const a of eventTable) {
         removeEvents(a[0], a[1]);
     }
+    ecanvasFocus.onblur = () => {};
+    ecanvasFocus.onfocus = () => {};
     ecanvas.onclick = () => {};
     ecurCanvas.onclick = () => {};
 }
 
 function canvasFocus()
 {
-    // console.log('focus')
+    console.log('focus')
     addEvents(document, docEvents);
     ecanvas.onclick = (e) => e.preventDefault();
     ecurCanvas.onclick = (e) => e.preventDefault();
@@ -764,7 +753,7 @@ function canvasEnableFocus()
 
 function canvasBlur()
 {
-    // console.log('blur')
+    console.log('blur')
     removeEvents(document, docEvents);
     ecanvas.onclick = canvasEnableFocus;
     ecurCanvas.onclick = canvasEnableFocus;
@@ -777,6 +766,7 @@ function bgrToCss(color)
 
 const UTF8Decoder = new TextDecoder("utf-8");
 const UTF16Decoder = new TextDecoder("utf-16");
+const UTF16Encoder = new TextEncoder("utf-16");
 
 function decodeName(iname, inameLen, isUTF8)
 {
@@ -901,21 +891,23 @@ function run()
     });
 
     rdpclient.addChannelCreator((cb) => {
+        const maxPacketSize = 1600;
+        const headerSize = 8;
         const CF = Object.freeze({
-        TEXT: 1,
-        UTF16: 13,
+            TEXT: 1,
+            UTF16: 13,
 
-        BITMAP: 2,
+            BITMAP: 2,
 
-        DIB: 5,
-        DIBV5: 17,
+            DIB: 5,
+            DIBV5: 17,
 
-        FileGroupDescriptorW: 953100,
-        FileContentsSize: 953101,
-        FileContentsRange: 953102,
+            FileGroupDescriptorW: 953100,
+            FileContentsSize: 953101,
+            FileContentsRange: 953102,
         });
         const CustomCF = Object.freeze({
-        FileGroupDescriptorW: 1,
+            FileGroupDescriptorW: 1,
         });
         const FileContentsOp = Object.freeze({
             Size: 1,
@@ -939,6 +931,12 @@ function run()
             First: 1,
             Last: 2,
         });
+        const MsgFlags = Object.freeze({
+            None: 0,
+            Ok: 1,
+            Fail: 2,
+            AsciiName: 4,
+        });
         let clipboard;
         cbFmts.onclick = (e) => {
             e.preventDefault();
@@ -958,6 +956,17 @@ function run()
             console.log(ifile);
             clipboard.sendFileContentsRequest(FileContentsOp.Range, 0, ifile, 0, 0);
             rdpclient.sendBufferedData();
+        };
+        sendCbUtf8.onsubmit = (e) => {
+            e.preventDefault();
+            clipboard.sendFormat(CF.UTF16, 0, "UNICODETEXT", true);
+        };
+        sendCbFile.onsubmit = (e) => {
+            e.preventDefault();
+            if (rdpclient) {
+                const file = sendCbFile_data.files[0]
+                rdpclient.sendFile(file.name, file.binary);
+            }
         };
         return clipboard = newClipboardChannel(cb, {
             receiveFormatStart: function() {
@@ -1027,6 +1036,15 @@ function run()
             receiveFileSize: function(sizeHigh, sizeLow, streamId) {
                 console.log('id=', streamId, '  size=', sizeHigh << 32 | sizeLow);
             },
+            receiveFormatId: function(id) {
+                console.log("receiveFormatId", id);
+                let data = sendCbUtf8_data.value
+                switch (id)
+                {
+                case CF.UTF16: data = UTF16Encoder.encode(data); break;
+                }
+                clipboard.sendData(MsgFlags.Ok, data, 0, ChannelFlags.First | ChannelFlags.Last);
+            }
         }, 0x04000000);
     });
 }
@@ -1042,21 +1060,6 @@ login.onsubmit = (e) => {
         rdpclient = null;
     }
     run();
-};
-
-sendCbUtf8.onsubmit = (e) => {
-    e.preventDefault();
-    if (rdpclient) {
-        rdpclient.sendClipboardUtf8(sendCbUtf8_data.value);
-    }
-};
-
-sendCbFile.onsubmit = (e) => {
-    e.preventDefault();
-    if (rdpclient) {
-        const file = sendCbUtf8_data.files[0]
-        rdpclient.sendFile(file.name, file.binary);
-    }
 };
 
 canvas.fillStyle = 'black';

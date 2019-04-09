@@ -3439,7 +3439,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
                 VirtualChannelCaps virtual_channel_caps;
-                virtual_channel_caps.VCChunkSize = 1600;
+                virtual_channel_caps.VCChunkSize = CHANNELS::CHANNEL_CHUNK_LENGTH;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                 	virtual_channel_caps.log("Sending to server");
                 }

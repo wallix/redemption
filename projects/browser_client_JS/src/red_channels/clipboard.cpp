@@ -120,21 +120,22 @@ namespace
     enum class IsLongFormat : bool;
     enum class IsAscii : bool;
 
-    bool format_list_extractor(
+    // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
+    constexpr size_t min_long_format_name_data_length = 6;
+
+    // formatId(4) + formatName(32)
+    constexpr size_t short_format_name_length = 32;
+    constexpr size_t short_format_name_data_length = short_format_name_length + 4;
+
+    constexpr size_t format_name_data_length[] = {
+        short_format_name_data_length,
+        min_long_format_name_data_length
+    };
+
+    bool format_list_extract(
         FormatListExtractorData& data, InStream& stream,
         IsLongFormat is_long_format, IsAscii is_ascii)
     {
-        // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
-        constexpr size_t min_long_format_name_data_length = 6;
-
-        // formatId(4) + formatName(32)
-        constexpr size_t short_format_name_length = 32;
-        constexpr size_t short_format_name_data_length = short_format_name_length + 4;
-
-        constexpr size_t format_name_data_length[] = {
-            short_format_name_data_length,
-            min_long_format_name_data_length
-        };
 
         if (stream.in_remain() < format_name_data_length[int(is_long_format)])
         {
@@ -153,7 +154,8 @@ namespace
         else if (bool(is_ascii))
         {
             data.charset = Charset::Ascii;
-            data.av_name = quick_utf16_av(stream.remaining_bytes());
+            auto av = stream.remaining_bytes();
+            data.av_name = av.first(strnlen(av.as_charp(), 32));
 
             stream.in_skip_bytes(short_format_name_length);
         }
@@ -163,6 +165,70 @@ namespace
             data.av_name = quick_utf16_av(stream.remaining_bytes().first(short_format_name_length));
 
             stream.in_skip_bytes(short_format_name_length);
+        }
+
+        return true;
+    }
+
+    bool format_list_serialize(
+        OutStream& out_stream, cbytes_view name,
+        uint32_t id, IsLongFormat is_long_format, Charset charset)
+    {
+        if (bool(is_long_format))
+        {
+            switch (charset)
+            {
+            case Charset::Ascii: {
+                if (!out_stream.has_room(4 + name.size() * 2 + 2))
+                {
+                    return false;
+                }
+                out_stream.out_uint32_le(id);
+
+                auto data = out_stream.get_tailroom_bytes();
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data));
+                out_stream.out_uint16_le(0);
+                break;
+            }
+            case Charset::Utf16: {
+                if (!out_stream.has_room(4 + name.size() + 1))
+                {
+                    return false;
+                }
+                out_stream.out_uint32_le(id);
+                out_stream.out_copy_bytes(name);
+                out_stream.out_uint8(0);
+                break;
+            }
+            }
+        }
+        else
+        {
+            if (!out_stream.has_room(4 + 32))
+            {
+                return false;
+            }
+
+            out_stream.out_uint32_le(id);
+
+            switch (charset)
+            {
+            case Charset::Ascii: {
+                auto data = out_stream.get_tailroom_bytes();
+                auto len = std::min(data.size(), std::size_t(short_format_name_length-2u));
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
+                char zero_data[short_format_name_length]{};
+                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
+                break;
+            }
+            case Charset::Utf16: {
+                auto len = std::min(name.size(), std::size_t(short_format_name_length-1u));
+                out_stream.out_copy_bytes(name);
+                char zero_data[short_format_name_length]{};
+                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
+                break;
+            }
+            }
         }
 
         return true;
@@ -297,7 +363,7 @@ struct redjs::ClipboardChannel::D
             break;
 
         case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-            LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format List Response PDU Failed");
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format List Response PDU");
             break;
 
         case RDPECLIP::CB_FORMAT_LIST:
@@ -321,6 +387,12 @@ struct redjs::ClipboardChannel::D
             }
         break;
 
+        case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+            LOG_IF(this->verbose, LOG_INFO, "Clipboard: Format Data Request PDU");
+            this->process_format_data_request(chunk);
+        break;
+
+
             // case RDPECLIP::CB_LOCK_CLIPDATA:
             //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             //         "SERVER >> CB Channel: Lock Clipboard Data PDU");
@@ -329,13 +401,6 @@ struct redjs::ClipboardChannel::D
             // case RDPECLIP::CB_UNLOCK_CLIPDATA:
             //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             //         "SERVER >> CB Channel: Unlock Clipboard Data PDU");
-            // break;
-            //
-            // case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-            //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            //         "SERVER >> CB Channel: Format Data Request PDU");
-            //
-            //     this->process_format_data_request(chunk);
             // break;
             //
             // case RDPECLIP::CB_FILECONTENTS_REQUEST:
@@ -352,6 +417,86 @@ struct redjs::ClipboardChannel::D
             break;
 
         }
+    }
+
+    void process_format_data_request(InStream& chunk)
+    {
+        auto id = chunk.in_uint32_le();
+        emval_call(this->callbacks, "receiveFormatId", id);
+    }
+
+    void send_format(uint32_t id, Charset charset, cbytes_view name, bool is_last)
+    {
+        StaticOutStream<512> out_stream;
+        format_list_serialize(
+            out_stream, name, id,
+            IsLongFormat(this->format_list.use_long_format_names),
+            charset);
+
+        if (is_last)
+        {
+            hexdump_av(out_stream.get_bytes(), 32);
+            this->send_to_mod_channel(out_stream);
+        }
+    }
+
+    void send_data(
+        uint16_t msg_flags, cbytes_view data,
+        uint32_t total_data_len, uint32_t channel_flags)
+    {
+        StaticOutStream<512> out_stream;
+
+        LOG(LOG_DEBUG, "data.size() = %zu", data.size());
+
+        if (msg_flags)
+        {
+            RDPECLIP::CliprdrHeader header(
+                RDPECLIP::CB_FORMAT_DATA_RESPONSE,
+                msg_flags,
+                total_data_len ? total_data_len : data.size());
+            header.emit(out_stream);
+            header.log();
+        }
+
+        out_stream.out_copy_bytes(data);
+        InStream in_stream(out_stream.get_bytes());
+        hexdump_av(in_stream.remaining_bytes(), 32);
+        this->cb.send_to_mod_channel(
+            channel_names::cliprdr,
+            in_stream,
+            in_stream.get_capacity(),
+            channel_flags
+        );
+
+
+        // if (msg_flags)
+        // {
+        //     StaticOutStream<32> out_stream;
+        //     RDPECLIP::CliprdrHeader header(
+        //         RDPECLIP::CB_FORMAT_DATA_RESPONSE,
+        //         msg_flags,
+        //         total_data_len ? total_data_len : data.size());
+        //     header.emit(out_stream);
+        //
+        //     InStream stream(out_stream.get_bytes());
+        //     this->cb.send_to_mod_channel(
+        //         channel_names::cliprdr,
+        //         stream,
+        //         stream.get_capacity(),
+        //         channel_flags & ~uint32_t(data.empty() ? 0u : CHANNELS::CHANNEL_FLAG_LAST)
+        //     );
+        // }
+        //
+        // if (!data.empty())
+        // {
+        //     InStream stream(data);
+        //     this->cb.send_to_mod_channel(
+        //         channel_names::cliprdr,
+        //         stream,
+        //         stream.get_capacity(),
+        //         channel_flags & ~uint32_t(msg_flags ? CHANNELS::CHANNEL_FLAG_FIRST : 0u)
+        //     );
+        // }
     }
 
     void process_format_data_response(cbytes_view data, uint32_t channel_flags, uint32_t data_len)
@@ -410,7 +555,7 @@ struct redjs::ClipboardChannel::D
                 {
                     if (is_first_packet)
                     {
-                        data = remove_last_char(data, 3);
+                        data = remove_last_char(data, 2);
                     }
                     else if (data.size() > 2)
                     {
@@ -533,7 +678,7 @@ struct redjs::ClipboardChannel::D
 
         emval_call(this->callbacks, "receiveFormatStart");
 
-        while (format_list_extractor(
+        while (format_list_extract(
             data, chunk,
             IsLongFormat(this->format_list.use_long_format_names),
             IsAscii(channel_flags & RDPECLIP::CB_ASCII_NAMES)))
@@ -758,6 +903,17 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             uint32_t request_type, uint32_t stream_id, uint32_t lindex, uint32_t pos_low, uint32_t pos_high)
         {
             clip.d->send_file_contents_request(request_type, stream_id, lindex, pos_low, pos_high);
+        })
+        .function_ptr("sendData", [](redjs::ClipboardChannel& clip,
+            uint16_t msg_flags, std::string data,
+            uint32_t total_data_len, uint32_t channel_flags)
+        {
+            clip.d->send_data(msg_flags, data, total_data_len, channel_flags);
+        })
+        .function_ptr("sendFormat", [](redjs::ClipboardChannel& clip,
+            uint32_t id, int charset, std::string name, bool is_last)
+        {
+            clip.d->send_format(id, Charset(charset), name, is_last);
         })
         // .function("receive", &redjs::ClipboardChannel::receive)
     ;
