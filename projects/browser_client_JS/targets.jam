@@ -14,6 +14,7 @@ exe-js js_client :
   krb5.bc
   openssl.bc
   src/red_channels/clipboard.bc
+  src/red_channels/clipboard_binding.bc
   src/redjs/browser_front.bc
   src/redjs/browser_graphic.bc
   src/redjs/browser_transport.bc
@@ -52,6 +53,18 @@ exe-js js_client :
 ;
 
 
+test-run-js tests/red_channels/test_clipboard :
+  tests/red_channels/test_clipboard.cpp
+:
+  src/red_channels/clipboard.bc
+  src/core/RDP/mppc.bc
+  src/core/error.bc
+  src/utils/crypto/ssl_mod_exp_direct.bc
+  src/utils/hexdump.bc
+  src/utils/stacktrace.bc
+  src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run-js tests/redjs/test_browser_transport :
   tests/redjs/test_browser_transport.cpp
 :
@@ -81,8 +94,9 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
-objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
+objjs src/main/js_client.bc : src/main/js_client.cpp ;
 objjs src/red_channels/clipboard.bc : src/red_channels/clipboard.cpp ;
+objjs src/red_channels/clipboard_binding.bc : src/red_channels/clipboard_binding.cpp ;
 objjs src/redjs/browser_front.bc : src/redjs/browser_front.cpp ;
 objjs src/redjs/browser_graphic.bc : src/redjs/browser_graphic.cpp ;
 objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
@@ -116,24 +130,34 @@ objjs src/utils/strutils.bc : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 objjs src/utils/sugar/multisz.bc : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 objjs src/utils/utf.bc : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 
+alias test_clipboard : tests/red_channels/test_clipboard ;
 alias test_browser_transport : tests/redjs/test_browser_transport ;
 alias test_image_data_test_from_bitmap : tests/redjs/test_image_data_test_from_bitmap ;
 alias test_image_data_test_from_pointer : tests/redjs/test_image_data_test_from_pointer ;
+alias tests/red_channels.norec :
+  tests/red_channels/test_clipboard
+;
 alias tests/redjs.norec :
   tests/redjs/test_browser_transport
   tests/redjs/test_image_data_test_from_bitmap
   tests/redjs/test_image_data_test_from_pointer
 ;
+alias tests/red_channels :
+  tests/red_channels.norec
+;
+alias tests :
+  tests/red_channels
+  tests/redjs
+;
 alias tests/redjs :
   tests/redjs.norec
 ;
-alias tests :
-  tests/redjs
-;
 explicit
+  tests/red_channels.norec
   tests/redjs.norec
 ;
 explicit
-  tests/redjs
+  tests/red_channels
   tests
+  tests/redjs
 ;

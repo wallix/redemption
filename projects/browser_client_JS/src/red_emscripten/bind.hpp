@@ -52,4 +52,11 @@ namespace redjs
             return *this;
         }
     };
+
+    template<class F, class... Policies>
+    void function(const char* name, F f, Policies... policies)
+    {
+        emscripten::function(name, +f, policies...);
+
+    }
 }

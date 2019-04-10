@@ -84,16 +84,21 @@ objjs register_exception.bc :
     $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/impl/register_exception.cpp
 :
     $(CXXFLAGS_TEST)
+    <cxxflags>-O3
 ;
 objjs test_framework.bc :
     $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/impl/test_framework.cpp
 :
     $(CXXFLAGS_TEST)
+    <define>BOOST_TEST_DYN_LINK
+    <cxxflags>-O3
 ;
 objjs redemption_unit_test.bc :
     $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/redemption_unit_tests.cpp
 :
     $(CXXFLAGS_TEST)
+    <define>BOOST_TEST_DYN_LINK
+    <cxxflags>-O3
 ;
 
 alias unit_test.bc :
@@ -103,6 +108,10 @@ alias unit_test.bc :
 
 constant TEST_DEPENDENCIES :
     $(CXXFLAGS_TEST)
+    <cxxflags>--bind
+    <cxxflags>-fno-rtti&&-frtti
+    # TODO only if include ".../bind.h"
+    <cxxflags>-Wno-missing-prototypes
 ;
 
 objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
@@ -155,7 +164,10 @@ rule test-run ( name : objs + : requirements * )
         objs += register_exception.bc ;
     }
 
-    exejs $(name).em : $(objs) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
+    exejs $(name).em
+        : $(objs) unit_test.bc log_test.bc
+        : $(TEST_DEPENDENCIES) $(requirements)
+        ;
     make $(name) : $(name).em : @exenode ;
 }
 
@@ -164,7 +176,9 @@ rule exe-js ( name : src : objs + : deps * )
     exejs $(name).em : $(src) $(objs) log_test.bc :
         $(deps)
         <cxxflags>--bind
+        # TODO rtti
         <cxxflags>-fno-rtti&&-frtti
+        # TODO only if include ".../bind.h"
         <cxxflags>-Wno-missing-prototypes
         <cxxflags>"-s MODULARIZE=1"
         <cxxflags>"-s EXPORT_NAME="$(JS_MODULE_NAME)
@@ -174,7 +188,12 @@ rule exe-js ( name : src : objs + : deps * )
 
 rule test-run-js ( name : src : objs + : deps * )
 {
-    objjs $(name).bc : $(src) : <include>$(REDEMPTION_TEST_PATH)/includes ;
+    objjs $(name).bc : $(src) :
+        <include>$(REDEMPTION_TEST_PATH)/includes
+        <define>RED_TEST_MODULE=$(name)
+        <define>BOOST_AUTO_TEST_MAIN
+        <define>BOOST_TEST_DYN_LINK
+    ;
     test-run $(name) : $(name).bc $(objs) : $(deps) ;
 }
 

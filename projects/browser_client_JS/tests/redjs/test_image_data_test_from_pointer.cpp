@@ -18,7 +18,6 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
-#define RED_TEST_MODULE TestImageDataFromPointer
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "redjs/image_data_from_pointer.hpp"

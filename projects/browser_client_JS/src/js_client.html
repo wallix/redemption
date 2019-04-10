@@ -978,7 +978,7 @@ function run()
             },
             receiveFormatStop: function() {
             },
-            receiveFormat: function(formatId, iname, inameLen, isUTF8) {
+            receiveFormat: function(iname, inameLen, formatId, isUTF8) {
                 console.log(formatId,iname,inameLen);
                 const button = cbFmts.appendChild(document.createElement('button'));
                 const name = decodeName(iname, inameLen, isUTF8);
