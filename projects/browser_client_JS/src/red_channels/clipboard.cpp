@@ -708,7 +708,6 @@ void ClipboardChannel::send_format_list_response_ok()
     RDPECLIP::CliprdrHeader formatListResponsePDUHeader(
         RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
     formatListResponsePDUHeader.emit(out_stream);
-    InStream chunk_format_list(out_stream.get_bytes());
     this->send_to_mod_channel(out_stream.get_bytes());
 }
 
@@ -738,7 +737,7 @@ void ClipboardChannel::process_monitor_ready()
 
         RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(cCapabilitiesSets);
         RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, generalFlags);
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_CLIP_CAPS, 0,
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
             clipboard_caps_pdu.size() + general_cap_set.size());
 
         StaticOutStream<1024> out_stream;

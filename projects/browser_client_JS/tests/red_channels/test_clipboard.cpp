@@ -40,6 +40,10 @@ Author(s): Jonathan Poelen
 #include <boost/preprocessor/seq/for_each.hpp>
 #include <boost/preprocessor/tuple/enum.hpp>
 
+
+namespace
+{
+
 template<class>
 struct js_to_tuple;
 
@@ -49,11 +53,34 @@ struct js_to_tuple<void(Ts...)>
     using type = std::tuple<Ts...>;
 };
 
-#define JS_c(classname)                                                        \
-    (classname, struct classname {                                             \
-        friend std::ostream& operator<<(std::ostream& out, classname const& x) \
-        { return out << #classname "{}"; }                                     \
-        bool operator == (classname const&) const { return true; }             \
+void print_bytes(std::ostream& out, cbytes_view v);
+
+template<class T>
+struct WVector
+{
+    std::vector<T> v;
+
+    WVector(cbytes_view av)
+    : v(av.begin(), av.end())
+    {}
+
+    WVector() = default;
+
+    template<class U>
+    friend std::ostream& operator<<(std::ostream& out, WVector<U> const& x)
+    {
+        print_bytes(out, x.v);
+        return out;
+    }
+
+    bool operator == (WVector const& x) const { return v == x.v; }
+};
+
+#define JS_c(classname)                                                      \
+    (classname, struct classname {                                           \
+        friend std::ostream& operator<<(std::ostream& out, classname const&) \
+        { return out << #classname "{}"; }                                   \
+        bool operator == (classname const) const { return true; }            \
     }, +[]() { clip_datas.push_back(classname{}); })
 
 #define JS_x(classname, ...) (                                                 \
@@ -62,7 +89,7 @@ struct js_to_tuple<void(Ts...)>
     {                                                                          \
         using decltype(js_to_tuple<void(__VA_ARGS__)>::type{})::tuple;         \
         friend std::ostream& operator<<(std::ostream& out, classname const& x) \
-        { out << #classname; print_tuple(out, x); return out << "}"; }         \
+        { out << #classname << "{"; print_tuple(out, x); return out << "}"; }  \
     },                                                                         \
     static_cast<void(*)(__VA_ARGS__)>(                                         \
         [](auto... args) { clip_datas.push_back(classname{args...}); }         \
@@ -72,18 +99,18 @@ struct js_to_tuple<void(Ts...)>
 #define JS_d(classname, data_type, ...) (                                      \
     classname,                                                                 \
     struct classname                                                           \
-    : decltype(js_to_tuple<void(std::vector<data_type>, __VA_ARGS__)>::type{}) \
+    : decltype(js_to_tuple<void(WVector<data_type>, __VA_ARGS__)>::type{})     \
     {                                                                          \
         using decltype(js_to_tuple<void(                                       \
-            std::vector<data_type>, __VA_ARGS__)>::type{})::tuple;             \
+            WVector<data_type>, __VA_ARGS__)>::type{})::tuple;                 \
         friend std::ostream& operator<<(std::ostream& out, classname const& x) \
-        { out << #classname; print_tuple(out, x); return out << "}"; }         \
+        { out << #classname << "{"; print_tuple(out, x); return out << "}"; }  \
     },                                                                         \
     static_cast<void(*)(uintptr_t, uint32_t, __VA_ARGS__)>(                    \
         [](uintptr_t iptr_, uint32_t n_, auto... args) {                       \
             auto p_ = reinterpret_cast<data_type*>(iptr_);                     \
             clip_datas.push_back(classname{                                    \
-                std::vector<data_type>{p_, p_+n_}, args...});                  \
+                WVector<data_type>{{p_, p_+n_}}, args...});                    \
     })                                                                         \
 )
 
@@ -97,9 +124,9 @@ struct js_to_tuple<void(Ts...)>
 #define MAKE_JS_TO_CPP_E(r, data, elem) MAKE_JS_TO_CPP_E_S elem
 #define MAKE_JS_TO_CPP_E_S(classname, struct_def, func) struct_def;
 
-#define MAKE_JS_CALL_E(r, data, elem) \
-    MAKE_TYPE_NAME elem: (...args) => \
-        BOOST_PP_CAT(Module.test_clip_, MAKE_TYPE_NAME elem),
+#define MAKE_JS_CALL_E(r, data, elem)   \
+    MAKE_TYPE_NAME elem: (...args) => { \
+        BOOST_PP_CAT(Module.test_clip_, MAKE_TYPE_NAME elem)(...args) },
 
 #define MAKE_CPP_BINDING_E(r, data, elem) \
     redjs::function("test_clip_" MAKE_CPP_BINDING_F elem);
@@ -133,35 +160,49 @@ struct js_to_tuple<void(Ts...)>
         });});                                          \
     }
 
-namespace
+inline void print_bytes(std::ostream& out, cbytes_view v)
 {
-
-namespace detail
-{
-    template<class T>
-    std::ostream& print_value(std::ostream& out, T const& x)
+    out << "\"";
+    char const* s = "0123456789abcdef";
+    uint8_t previous = 1;
+    for (auto const& x : v)
     {
-        return out << x;
-    }
-
-    template<class T>
-    void print_value(std::ostream& out, std::vector<T> const& v)
-    {
-        out << "{";
-        for (auto const& x : v)
+        if (x >= 0x20 && x < 127)
         {
-            out << +x << ", ";
+            auto ishex = [](uint8_t c){
+                return ('0' <= c && c <= '9')
+                    || ('a' <= c && c <= 'f')
+                    || ('A' <= c && c <= 'F');
+            };
+
+            if ((!previous && ishex(x)) || ishex(previous))
+            {
+                out << "\"\"";
+            }
+            out << x;
         }
-        out << "}";
+        else
+        {
+            previous = x;
+            if (x)
+            {
+                out << "\\x" << s[x>>4] << s[x&0xf];
+            }
+            else
+            {
+                out << "\\0";
+            }
+        }
     }
+    out << "\"_av";
 }
 
 template<class... Ts>
 void print_tuple(std::ostream& out, std::tuple<Ts...> const& t)
 {
     std::apply([&](auto const& x, auto const&... xs){
-        detail::print_value(out, x);
-        (detail::print_value(out << ", ", xs), ...);
+        out << x;
+        ((out << ", " << xs), ...);
     }, t);
 }
 
@@ -170,7 +211,18 @@ struct DataChan : DataChan_tuple
 {
     using DataChan_tuple::tuple;
     friend std::ostream& operator<<(std::ostream& out, DataChan const& x)
-    { out << "DataChan{"; print_tuple(out, x); return out << "}"; }
+    {
+        DataChan_tuple const& t = x;
+        out << "DataChan{" << std::get<0>(t) << ", {";
+        InStream in_stream(std::get<1>(t));
+        RDPECLIP::CliprdrHeader header;
+        header.recv(in_stream);
+        out << "0x" << std::hex << header.msgType() << ", 0x" << header.msgFlags()
+            << std::dec << ", " << header.dataLen() << ", ";
+        print_bytes(out, in_stream.remaining_bytes());
+        out << "}, " << std::get<2>(t) << ", 0x" << std::hex << std::get<3>(t) << std::dec << "}";
+        return out;
+    }
 };
 
 MAKE_BINDING_CALLBACKS(
@@ -215,30 +267,68 @@ EMSCRIPTEN_BINDINGS(test_clipboard)
     });
 }
 
-constexpr int first_last_channel_flags
-    = CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST
+constexpr int first_last_show_proto_channel_flags
+    = CHANNELS::CHANNEL_FLAG_LAST
+    | CHANNELS::CHANNEL_FLAG_FIRST
+    | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
 ;
 
-void raw_send(cbytes_view data, int channel_flags = first_last_channel_flags)
+constexpr int first_last_channel_flags
+    = CHANNELS::CHANNEL_FLAG_LAST
+    | CHANNELS::CHANNEL_FLAG_FIRST
+;
+
+void raw_send(cbytes_view data, int channel_flags = first_last_show_proto_channel_flags)
 {
     clip->receive(data, channel_flags);
 }
 
 enum class Padding : unsigned;
 
-void send(
-    uint16_t msgType, uint16_t msgFlags, cbytes_view data, Padding padding_data = Padding{},
-    int channel_flags = first_last_channel_flags)
+struct Serializer
 {
     StaticOutStream<65536> out_stream;
-    RDPECLIP::CliprdrHeader header(msgType, msgFlags, data.size());
-    header.emit(out_stream);
-    out_stream.out_copy_bytes(data);
-    auto padding = unsigned(padding_data);
-    while (padding--) {
-        out_stream.out_uint8(0);
+
+    Serializer(uint16_t msgType, uint16_t msgFlags, cbytes_view data, Padding padding_data)
+    {
+        RDPECLIP::CliprdrHeader header(msgType, msgFlags, data.size());
+        header.emit(out_stream);
+        out_stream.out_copy_bytes(data);
+        auto padding = unsigned(padding_data);
+        while (padding--) {
+            out_stream.out_uint8(0);
+        }
     }
-    clip->receive(out_stream.get_bytes(), channel_flags);
+
+    operator cbytes_view () const
+    {
+        return out_stream.get_bytes();
+    }
+};
+
+void send(
+    uint16_t msgType, uint16_t msgFlags,
+    cbytes_view data = {},
+    Padding padding_data = Padding{},
+    int channel_flags = first_last_show_proto_channel_flags)
+{
+    raw_send(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
+}
+
+DataChan data_chan(
+    uint16_t msgType, uint16_t msgFlags,
+    cbytes_view data = {},
+    Padding padding_data = Padding{},
+    std::size_t len = 0, int channel_flags = first_last_show_proto_channel_flags)
+{
+    Serializer s(msgType, msgFlags, data, padding_data);
+    cbytes_view av = s;
+    return DataChan{
+        channel_names::cliprdr,
+        {av.begin(), av.end()},
+        len ? len : av.size(),
+        channel_flags
+    };
 }
 
 template<class... Fs>
@@ -250,28 +340,8 @@ struct Overload : Fs...
 template<class... Fs>
 Overload(Fs...) -> Overload<Fs...>;
 
-template<class F>
-struct run_f
-{
-    int i;
-    F f;
-
-    template<class FT>
-    void operator=(FT f)
-    {
-        std::visit(Overload{f, this->f}, clip_datas[i]);
-    }
-};
-
-template<class F>
-run_f(int, F) -> run_f<F>;
-
 template<class T>
 using remove_cvref_t = std::remove_const_t<std::remove_reference_t<T>>;
-
-template<class> class extract_p1;
-template<class T> struct extract_p1<void(T)> { using type = T; };
-template<class T> using extract_p1_t = remove_cvref_t<typename extract_p1<T>::type>;
 
 template<class T>
 std::string_view get_type()
@@ -280,6 +350,33 @@ std::string_view get_type()
         return std::string_view(a+79, sizeof(a)-81);
     }(__PRETTY_FUNCTION__);
 }
+
+// template<class F>
+// struct run_f
+// {
+//     int i;
+//     F f;
+//
+//     template<class FT>
+//     void operator=(FT f)
+//     {
+//         std::visit(Overload{f, this->f}, clip_datas[i]);
+//     }
+// };
+//
+// template<class F>
+// run_f(int, F) -> run_f<F>;
+
+// template<class> class extract_p1;
+// template<class T> struct extract_p1<void(T)> { using type = T; };
+// template<class T> using extract_p1_t = remove_cvref_t<typename extract_p1<T>::type>;
+
+// #define RED_CHECK_TYPE(i, Type) ::run_f{i,                    \
+//     [&](auto const& x){ RED_CHECK_MESSAGE(false, "check "     \
+//         << ::get_type<::extract_p1_t<void(Type)>>() << " == " \
+//         << ::get_type<::remove_cvref_t<decltype(x)>>()        \
+//         << " has failed"                                      \
+//     ); } } = [&](Type)
 
 struct datas_checker
 {
@@ -293,20 +390,12 @@ struct datas_checker
         {
             err(*this);
         }
-        clip_datas.clear();
     }
 };
 
-#define RED_CHECK_TYPE(i, Type) ::run_f{i,                    \
-    [&](auto const& x){ RED_CHECK_MESSAGE(false, "check "     \
-        << ::get_type<::extract_p1_t<void(Type)>>() << " == " \
-        << ::get_type<::remove_cvref_t<decltype(x)>>()        \
-        << " has failed"                                      \
-    ); } } = [&](Type)
-
 #define RED_CHECK_V(i, ...) std::visit(Overload{                  \
     [&](decltype(__VA_ARGS__) const& x) {                         \
-        RED_CHECK(x == (__VA_ARGS__)); },                         \
+        RED_CHECK((__VA_ARGS__) == x); },                         \
     [&](auto const& x){ RED_CHECK_MESSAGE(false, "check "         \
         << ::get_type<::remove_cvref_t<decltype(__VA_ARGS__)>>()  \
         << " == " << ::get_type<::remove_cvref_t<decltype(x)>>()  \
@@ -314,12 +403,13 @@ struct datas_checker
     ); }                                                          \
 }, clip_datas[i])
 
-#define RED_CHECK_COUNT(n) RED_REQUIRE(::clip_datas.size() == n);
+// #define RED_CHECK_COUNT(n) RED_CHECK(::clip_datas.size() == n);
 
-#define CTX_DATAS() ::datas_checker{[](datas_checker& _data_checker){ \
-    RED_CHECK_MESSAGE(false, "there is " << ::clip_datas.size()       \
-        << " elements, " << _data_checker.i << " checked");           \
-}, 0} = [&](datas_checker& _data_checker)
+#define CTX_DATAS(...) clip_datas.clear(); ::send(__VA_ARGS__);     \
+    ::datas_checker{[](datas_checker& _data_checker){               \
+        RED_CHECK_MESSAGE(false, "there is " << ::clip_datas.size() \
+            << " elements, " << _data_checker.i << " checked");     \
+    }, 0} = [&]([[maybe_unused]] datas_checker& _data_checker)
 
 #define CHECK_NEXT_DATA(...) do {                   \
     if (_data_checker.i == clip_datas.size()) {     \
@@ -330,36 +420,70 @@ struct datas_checker
     RED_CHECK_V(_data_checker.i++, __VA_ARGS__);    \
 } while (0);
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+template<class C, C... cs>
+std::array<uint8_t, sizeof...(cs) * 2> const operator "" _utf16()
+{
+    std::array<uint8_t, sizeof...(cs) * 2> a;
+    char s[] {cs...};
+    auto p = a.data();
+    for (char c : s)
+    {
+        p[0] = c;
+        p[1] = 0;
+        p += 2;
+    }
+    return a;
+}
+REDEMPTION_DIAGNOSTIC_POP
+
 }
 
 RED_AUTO_TEST_CASE(TestClipboardChannel)
 {
+    using namespace RDPECLIP;
+    namespace cbchan = redjs::channels::clipboard;
     init_clip();
 
-    send(RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
-        "\x01\x00\x00\x00\x01\x00\x0c\x00\x02\x00\x00\x00\x1e\x00\x00\x00"_av, Padding(4));
+    const bool is_utf = true;
+    // const bool not_utf = false;
 
-    RED_CHECK_COUNT(0);
-
-    send(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_, {});
-
-    RED_CHECK_COUNT(2);
-    RED_CHECK_V(0, DataChan{channel_names::cliprdr, {}, 0, 0});
-    RED_CHECK_TYPE(0, DataChan& x){
-
+    CTX_DATAS(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
+        "\x01\x00\x00\x00\x01\x00\x0c\x00\x02\x00\x00\x00\x1e\x00\x00\x00"_av, Padding(4))
+    {
     };
 
-    CTX_DATAS() {
+    CTX_DATAS(CB_MONITOR_READY, CB_RESPONSE__NONE_)
+    {
+        CHECK_NEXT_DATA(data_chan(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
+            "\x01\0\0\0\x01\0\x0C\0\x02\0\0\0.\0\0\0"_av));
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST, CB_ASCII_NAMES,
+            "\x0d\0\0\0\0\0"_av));
     };
 
-    CTX_DATAS() {
-        CHECK_NEXT_DATA(DataChan{channel_names::cliprdr, {}, 0, 0});
-        CHECK_NEXT_DATA(DataChan{channel_names::cliprdr, {}, 0, 0});
+    CTX_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK)
+    {
     };
 
-    CTX_DATAS() {
-        CHECK_NEXT_DATA(DataChan{channel_names::cliprdr, {}, 0, 0});
-        CHECK_NEXT_DATA(DataChan{channel_names::cliprdr, {}, 0, 0});
-        CHECK_NEXT_DATA(DataChan{channel_names::cliprdr, {}, 0, 0});
+    CTX_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
+        "\x0d\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00"
+        "\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00"_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveFormatStart{});
+        CHECK_NEXT_DATA(receiveFormat{"unicodetext"_av, CF_UNICODETEXT, is_utf});
+        CHECK_NEXT_DATA(receiveFormat{"locale"_av, CF_LOCALE, is_utf});
+        CHECK_NEXT_DATA(receiveFormat{"text"_av, CF_TEXT, is_utf});
+        CHECK_NEXT_DATA(receiveFormat{"oemtext"_av, CF_OEMTEXT, is_utf});
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
+        CHECK_NEXT_DATA(receiveFormatStop{});
+    };
+
+    clip->send_request_format(CF_UNICODETEXT, cbchan::CustomFormat::None);
+
+    CTX_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK,
+        "\x70\x00\x6c\x00\x6f\x00\x70\x00\x00\x00"_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveData("plop"_utf16, CF_UNICODETEXT, first_last_channel_flags));
     };
 }
