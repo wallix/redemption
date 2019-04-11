@@ -39,6 +39,7 @@ struct ICAPService
 public:
     unique_fd fd ;
 
+
     int result;
     std::string content;
 
