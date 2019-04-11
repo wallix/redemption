@@ -39,7 +39,6 @@ struct ICAPService
 public:
     unique_fd fd ;
 
-
     int result;
     std::string content;
 
@@ -47,6 +46,7 @@ public:
     int file_id_int;
 
     ICAPService(std::string const& socket_path)
+
     : fd(invalid_fd())
     , result(-1)
     , last_result_file_id_received(0)
