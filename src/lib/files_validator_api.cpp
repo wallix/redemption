@@ -64,6 +64,10 @@ extern "C"
         return service->content.c_str();
     }
 
+    int validator_get_fd(ICAPService * service) noexcept {
+        return service.fd.fd();
+    }
+
     bool validator_session_is_open(ICAPService * service) noexcept {
         return service->fd.is_open();
     }
