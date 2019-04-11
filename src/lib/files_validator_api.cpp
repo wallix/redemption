@@ -18,9 +18,9 @@
    Author(s): Clément Moroldo
 */
 
-#include "lib/icap_files_service.hpp"
-#include "lib/files_validator_api.hpp"
 
+#include "lib/files_validator_api.hpp"
+#include "lib/icap_files_service.hpp"
 
 
 
@@ -62,6 +62,10 @@ extern "C"
 
     const char * validator_get_content(ICAPService * service) noexcept {
         return service->content.c_str();
+    }
+
+    int validator_get_fd(ICAPService * service) noexcept {
+        return service.fd.fd();
     }
 
     bool validator_session_is_open(ICAPService * service) noexcept {
