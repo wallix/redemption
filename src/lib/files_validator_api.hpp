@@ -59,4 +59,7 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     int validator_get_fd(ICAPService * service) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    int validator_get_result_file_id(ICAPService * service) noexcept;
 }

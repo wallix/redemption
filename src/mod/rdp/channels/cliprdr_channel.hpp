@@ -32,7 +32,7 @@
 #include "utils/stream.hpp"
 #include "utils/difftimeval.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
-// "mod/rdp/channels/channel_file.hpp"
+#include "mod/rdp/channels/channel_file.hpp"
 #include "lib/files_validator_api.hpp"
 #include "core/session_reactor.hpp"
 #include "core/clipboard_virtual_channels_params.hpp"
@@ -64,7 +64,7 @@ private:
 
     SessionReactor& session_reactor;
 
-    ICAPService * icap_servic;
+    ICAPService * icap_service;
 
 public:
 
@@ -73,7 +73,7 @@ public:
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         const bool channel_filter_on,
-//         const std::string & channel_files_directory,
+        const std::string & channel_files_directory,
         SessionReactor& session_reactor,
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
@@ -87,7 +87,7 @@ public:
     , channel_filter_on(channel_filter_on)
     , last_file_to_scan_id(0)
     , session_reactor(session_reactor)
-    , icap_servic(icap_servic) {}
+    , icap_service(icap_service) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
