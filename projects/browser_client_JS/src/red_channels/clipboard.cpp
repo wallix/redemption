@@ -304,6 +304,9 @@ void ClipboardChannel::receive(cbytes_view data, int channel_flags)
         return ;
     }
 
+    LOG(LOG_DEBUG, "receive:");
+    hexdump_av_c(data, 32);
+
     InStream chunk(data);
     RDPECLIP::CliprdrHeader header;
     header.recv(chunk);
