@@ -58,8 +58,6 @@ extern "C"
         return icap_abort_file(service, file_id);
     }
 
-
-    //test utilitaries functions
     int validator_get_result(ICAPService * service) noexcept {
         return service->result;
     }

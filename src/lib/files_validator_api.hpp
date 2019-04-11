@@ -48,8 +48,6 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     int validator_abort_file(ICAPService * service, const int file_id) noexcept;
 
-
-    //test utilitaries functions
     REDEMPTION_LIB_EXPORT
     int validator_get_result(ICAPService * service) noexcept;
 
