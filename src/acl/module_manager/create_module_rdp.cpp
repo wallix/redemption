@@ -305,12 +305,7 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-<<<<<<< HEAD
         ICAPService * icap_service = nullptr;
-=======
-
-        bool const enable_validator = false;
->>>>>>> 2c62e8080... merge
 
 #ifndef __EMSCRIPTEN__
 
@@ -367,11 +362,7 @@ void ModuleManager::create_mod_rdp(
 #else
         using ModRDPWithMetrics = mod_rdp;
 #endif
-<<<<<<< HEAD
-=======
-        const std::string validator_socket_path = "";
 
->>>>>>> 2c62e8080... merge
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
             authentifier,
@@ -395,11 +386,7 @@ void ModuleManager::create_mod_rdp(
             report_message,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,
-<<<<<<< HEAD
-            nullptr
-=======
-            enable_validator ? icap_open_session(validator_socket_path.c_str()) : nullptr
->>>>>>> 2c62e8080... merge
+            icap_service
         );
 
 #ifndef __EMSCRIPTEN__

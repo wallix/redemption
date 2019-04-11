@@ -70,4 +70,8 @@ extern "C"
     bool validator_session_is_open(ICAPService * service) noexcept {
         return service->fd.is_open();
     }
+
+    int validator_get_result_file_id(ICAPService * service) noexcept {
+        return service->last_result_file_id_received;
+    }
 }

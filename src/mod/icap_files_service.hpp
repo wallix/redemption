@@ -43,12 +43,13 @@ public:
     int result;
     std::string content;
 
-
+    int last_result_file_id_received;
     int file_id_int;
 
     ICAPService(std::string const& socket_path)
     : fd(local_connect(socket_path.c_str()))
     , result(-1)
+    , last_result_file_id_received(0)
     , file_id_int(0)
     {}
 
@@ -488,6 +489,7 @@ inline void icap_receive_result(ICAPService * service) {
         result.receive(stream_data);
         service->result = result.result;
         service->content = result.content;
+        service->last_result_file_id_received = result.id;
     }
 }
 
