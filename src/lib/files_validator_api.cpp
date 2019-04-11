@@ -20,11 +20,8 @@
 
 
 #include "lib/files_validator_api.hpp"
-<<<<<<< HEAD
 #include "mod/icap_files_service.hpp"
-=======
-#include "lib/icap_files_service.hpp"
->>>>>>> d2ca37c04... update files_validator_api
+
 
 
 

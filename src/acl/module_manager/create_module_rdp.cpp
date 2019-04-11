@@ -304,6 +304,7 @@ void ModuleManager::create_mod_rdp(
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
         ICAPService * icap_service = nullptr;
+        bool const enable_validator = false;
 
 
 #ifndef __EMSCRIPTEN__
