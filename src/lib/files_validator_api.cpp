@@ -65,7 +65,7 @@ extern "C"
     }
 
     int validator_get_fd(ICAPService * service) noexcept {
-        return service.fd.fd();
+        return service->fd.fd();
     }
 
     bool validator_session_is_open(ICAPService * service) noexcept {

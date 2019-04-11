@@ -39,7 +39,6 @@ struct ICAPService
 {
 public:
     unique_fd fd;
-    int fd_socket;
 
     int result;
     std::string content;
@@ -49,7 +48,6 @@ public:
 
     ICAPService(std::string const& socket_path)
     : fd(local_connect(socket_path.c_str()))
-    , fd_socket(fd.fd())
     , result(-1)
     , file_id_int(0)
     {}
