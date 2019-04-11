@@ -20,7 +20,11 @@
 
 
 #include "lib/files_validator_api.hpp"
+<<<<<<< HEAD
 #include "mod/icap_files_service.hpp"
+=======
+#include "lib/icap_files_service.hpp"
+>>>>>>> d2ca37c04... update files_validator_api
 
 
 
@@ -63,7 +67,7 @@ extern "C"
     }
 
     int validator_get_fd(ICAPService * service) noexcept {
-        return service->fd.fd();
+        return service.fd.fd();
     }
 
     bool validator_session_is_open(ICAPService * service) noexcept {
