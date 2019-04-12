@@ -937,6 +937,19 @@ function run()
             Fail: 2,
             AsciiName: 4,
         });
+        const CbType = Object.freeze({
+            MonitorReady: 0x0001,
+            FormatList: 0x0002,
+            ListResponse: 0x0003,
+            DataRequest: 0x0004,
+            DataResponse: 0x0005,
+            TempDirectory: 0x0006,
+            Capabilities: 0x0007,
+            FileContentsRequest: 0x0008,
+            FileContentsResponse: 0x0009,
+            Lock: 0x000A,
+            Unlock: 0x000B,
+        });
         let clipboard;
         cbFmts.onclick = (e) => {
             e.preventDefault();
@@ -1038,7 +1051,8 @@ function run()
             },
             receiveFormatId: function(formatId) {
                 console.log("receiveFormatId", formatId, CF.UTF16);
-                let data = sendCbUtf8_data.value
+                // let data = sendCbUtf8_data.value
+                let data = new Uint8Array([72,0,71,0,73,0,0,0])
                 // switch (formatId)
                 // {
                 // case CF.UTF16:
@@ -1046,8 +1060,8 @@ function run()
                 //     data += "\0\0"
                 //     break;
                 // }
-                clipboard.sendData(MsgFlags.Ok, data, 0, ChannelFlags.First | ChannelFlags.Last |0x10,
-                    formatId === CF.UTF16);
+                clipboard.sendHeader(CbType.DataResponse, MsgFlags.Ok, data.length, 0);
+                clipboard.sendData(data, 0, ChannelFlags.Last);
             }
         }, 0x04000000);
     });

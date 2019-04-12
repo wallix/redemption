@@ -210,6 +210,15 @@ using DataChan_tuple = std::tuple<CHANNELS::ChannelNameId, std::vector<uint8_t>,
 struct DataChan : DataChan_tuple
 {
     using DataChan_tuple::tuple;
+
+    DataChan(cbytes_view av, size_t total_len, uint32_t channel_flags)
+    : DataChan(
+        channel_names::cliprdr,
+        {av.begin(), av.end()},
+        total_len != ~0u ? total_len : av.size(),
+        channel_flags)
+    {}
+
     friend std::ostream& operator<<(std::ostream& out, DataChan const& x)
     {
         DataChan_tuple const& t = x;
@@ -311,7 +320,7 @@ void clip_receive(
     uint16_t msgType, uint16_t msgFlags,
     cbytes_view data = {},
     Padding padding_data = Padding{},
-    int channel_flags = first_last_show_proto_channel_flags)
+    uint32_t channel_flags = first_last_show_proto_channel_flags)
 {
     clip_raw_receive(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
 }
@@ -320,16 +329,9 @@ DataChan data_chan(
     uint16_t msgType, uint16_t msgFlags,
     cbytes_view data = {},
     Padding padding_data = Padding{},
-    std::size_t len = 0, int channel_flags = first_last_show_proto_channel_flags)
+    std::size_t len = ~0u, uint32_t channel_flags = first_last_show_proto_channel_flags)
 {
-    Serializer s(msgType, msgFlags, data, padding_data);
-    cbytes_view av = s;
-    return DataChan{
-        channel_names::cliprdr,
-        {av.begin(), av.end()},
-        len ? len : av.size(),
-        channel_flags
-    };
+    return DataChan{Serializer(msgType, msgFlags, data, padding_data), len, channel_flags};
 }
 
 template<class... Fs>
@@ -514,8 +516,15 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     };
 
     const auto paste1 = "xyz\0"_utf16;
-    CALL_CB(send_data(CB_RESPONSE_OK, paste1, 8, first_last_channel_flags, false))
+    CALL_CB(send_header(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, paste1.size(), 0))
     {
-        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, paste1));
+        CHECK_NEXT_DATA(DataChan{"\x05\0\1\0\x08\0\0\0"_av, paste1.size() + 8,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL});
+    };
+
+    CALL_CB(send_data(paste1, 0, CHANNELS::CHANNEL_FLAG_LAST))
+    {
+        CHECK_NEXT_DATA(DataChan{paste1, 0,
+            CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL});
     };
 }

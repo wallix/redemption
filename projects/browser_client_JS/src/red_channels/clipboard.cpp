@@ -271,7 +271,7 @@ void ClipboardChannel::send_file_contents_request(
 
     header.emit(out_stream);
     request.emit(out_stream);
-    this->send_to_mod_channel(out_stream.get_bytes());
+    this->send_data(out_stream.get_bytes());
 
     this->custom_cf = (request_type == RDPECLIP::FILECONTENTS_SIZE)
         ? CustomFormat::FileContentsSize
@@ -292,7 +292,7 @@ void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat cust
     this->requested_format_id = format_id;
     this->custom_cf = custom_cf;
 
-    this->send_to_mod_channel(out_stream.get_bytes());
+    this->send_data(out_stream.get_bytes());
 }
 
 void ClipboardChannel::receive(cbytes_view data, int channel_flags)
@@ -412,82 +412,35 @@ void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_v
         out_stream.set_out_uint32_le(out_stream.get_offset()-8, 4);
         LOG(LOG_DEBUG, "send_format %d", this->format_list.use_long_format_names);
         hexdump_av(out_stream.get_bytes(), 32);
-        this->send_to_mod_channel(out_stream.get_bytes());
+        this->send_data(out_stream.get_bytes());
     }
 }
 
-void ClipboardChannel::send_data(
-    uint16_t msg_flags, cbytes_view data,
-    uint32_t total_data_len, uint32_t channel_flags,
-    bool encode_utf8_to_utf16)
+void ClipboardChannel::send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags)
 {
-    StaticOutStream<512> out_stream;
+    StaticOutStream<12> out_stream;
 
-    LOG(LOG_DEBUG, "data.size() = %zu", data.size());
+    RDPECLIP::CliprdrHeader header(type, flags, total_data_len);
+    header.emit(out_stream);
 
-    if (msg_flags)
-    {
-        RDPECLIP::CliprdrHeader header(
-            RDPECLIP::CB_FORMAT_DATA_RESPONSE,
-            msg_flags,
-            total_data_len ? total_data_len : data.size());
-        header.emit(out_stream);
-        header.log();
-    }
+    this->send_data(out_stream.get_bytes(), total_data_len + out_stream.get_offset(),
+        channel_flags | CHANNELS::CHANNEL_FLAG_FIRST);
+}
 
-    if (encode_utf8_to_utf16)
-    {
-        auto len = UTF8toUTF16(data, out_stream.get_tailroom_bytes());
-        out_stream.out_skip_bytes(len);
-        out_stream.out_uint16_le(0);
-        if (!total_data_len)
-        {
-            out_stream.set_out_uint32_le(len+2, 4);
-        }
-    }
-    else
-    {
-        out_stream.out_copy_bytes(data);
-    }
-
-    InStream in_stream(out_stream.get_bytes());
-    hexdump_av(in_stream.remaining_bytes(), 32);
+void ClipboardChannel::send_data(cbytes_view data, uint32_t total_data_len, uint32_t channel_flags)
+{
+    InStream in_stream(data);
     this->cb.send_to_mod_channel(
         channel_names::cliprdr,
         in_stream,
-        in_stream.get_capacity(),
+        total_data_len,
         channel_flags | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
     );
+}
 
-
-    // if (msg_flags)
-    // {
-    //     StaticOutStream<32> out_stream;
-    //     RDPECLIP::CliprdrHeader header(
-    //         RDPECLIP::CB_FORMAT_DATA_RESPONSE,
-    //         msg_flags,
-    //         total_data_len ? total_data_len : data.size());
-    //     header.emit(out_stream);
-    //
-    //     InStream stream(out_stream.get_bytes());
-    //     this->cb.send_to_mod_channel(
-    //         channel_names::cliprdr,
-    //         stream,
-    //         stream.get_capacity(),
-    //         channel_flags & ~uint32_t(data.empty() ? 0u : CHANNELS::CHANNEL_FLAG_LAST)
-    //     );
-    // }
-    //
-    // if (!data.empty())
-    // {
-    //     InStream stream(data);
-    //     this->cb.send_to_mod_channel(
-    //         channel_names::cliprdr,
-    //         stream,
-    //         stream.get_capacity(),
-    //         channel_flags & ~uint32_t(msg_flags ? CHANNELS::CHANNEL_FLAG_FIRST : 0u)
-    //     );
-    // }
+void ClipboardChannel::send_data(cbytes_view av)
+{
+    this->send_data(av, av.size(), first_last_channel_flags);
 }
 
 void ClipboardChannel::process_format_data_response(cbytes_view data, uint32_t channel_flags, uint32_t data_len)
@@ -732,7 +685,7 @@ void ClipboardChannel::send_format_list_response_ok()
     RDPECLIP::CliprdrHeader formatListResponsePDUHeader(
         RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
     formatListResponsePDUHeader.emit(out_stream);
-    this->send_to_mod_channel(out_stream.get_bytes());
+    this->send_data(out_stream.get_bytes());
 }
 
 void ClipboardChannel::process_capabilities(InStream& chunk)
@@ -769,7 +722,7 @@ void ClipboardChannel::process_monitor_ready()
         clipboard_caps_pdu.emit(out_stream);
         general_cap_set.emit(out_stream);
 
-        this->send_to_mod_channel(out_stream.get_bytes());
+        this->send_data(out_stream.get_bytes());
 
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Capabilities PDU");
     }
@@ -785,22 +738,10 @@ void ClipboardChannel::process_monitor_ready()
         header.emit(out_stream);
         this->format_list.emit(ClipboardFormat::UnicodeText, out_stream);
 
-        this->send_to_mod_channel(out_stream.get_bytes());
+        this->send_data(out_stream.get_bytes());
 
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: Send Format List PDU");
     }
-}
-
-void ClipboardChannel::send_to_mod_channel(cbytes_view av)
-{
-    InStream chunk(av);
-
-    this->cb.send_to_mod_channel(
-        channel_names::cliprdr,
-        chunk,
-        av.size(),
-        first_last_channel_flags
-    );
 }
 
 

@@ -71,8 +71,6 @@ struct ClipboardChannel
 
     void receive(cbytes_view data, int flags);
 
-    void send_to_mod_channel(cbytes_view av);
-
     void send_file_contents_request(
         uint32_t request_type,
         uint32_t stream_id, uint32_t lindex,
@@ -80,10 +78,9 @@ struct ClipboardChannel
 
     void send_request_format(uint32_t format_id, CustomFormat custom_cf);
     void send_format(uint32_t format_id, Charset charset, cbytes_view name, bool is_last);
-    void send_data(
-        uint16_t msg_flags, cbytes_view data,
-        uint32_t total_data_len, uint32_t channel_flags,
-        bool encode_utf8_to_utf16);
+    void send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags);
+    void send_data(cbytes_view data, uint32_t total_data_len, uint32_t channel_flags);
+    void send_data(cbytes_view av);
 
 private:
     void process_format_data_request(InStream& chunk);
