@@ -79,10 +79,11 @@ struct ClipboardChannel
         uint32_t pos_low, uint32_t pos_high);
 
     void send_request_format(uint32_t format_id, CustomFormat custom_cf);
-    void send_format(uint32_t id, Charset charset, cbytes_view name, bool is_last);
+    void send_format(uint32_t format_id, Charset charset, cbytes_view name, bool is_last);
     void send_data(
         uint16_t msg_flags, cbytes_view data,
-        uint32_t total_data_len, uint32_t channel_flags);
+        uint32_t total_data_len, uint32_t channel_flags,
+        bool encode_utf8_to_utf16);
 
 private:
     void process_format_data_request(InStream& chunk);

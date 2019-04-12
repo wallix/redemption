@@ -959,7 +959,7 @@ function run()
         };
         sendCbUtf8.onsubmit = (e) => {
             e.preventDefault();
-            clipboard.sendFormat(CF.UTF16, 0, "UNICODETEXT", true);
+            clipboard.sendFormat(CF.UTF16, 0, "", true);
         };
         sendCbFile.onsubmit = (e) => {
             e.preventDefault();
@@ -1036,14 +1036,18 @@ function run()
             receiveFileSize: function(sizeHigh, sizeLow, streamId) {
                 console.log('id=', streamId, '  size=', sizeHigh << 32 | sizeLow);
             },
-            receiveFormatId: function(id) {
-                console.log("receiveFormatId", id);
+            receiveFormatId: function(formatId) {
+                console.log("receiveFormatId", formatId, CF.UTF16);
                 let data = sendCbUtf8_data.value
-                switch (id)
-                {
-                case CF.UTF16: data = UTF16Encoder.encode(data); break;
-                }
-                clipboard.sendData(MsgFlags.Ok, data, 0, ChannelFlags.First | ChannelFlags.Last);
+                // switch (formatId)
+                // {
+                // case CF.UTF16:
+                //     data = UTF16Encoder.encode(data);
+                //     data += "\0\0"
+                //     break;
+                // }
+                clipboard.sendData(MsgFlags.Ok, data, 0, ChannelFlags.First | ChannelFlags.Last |0x10,
+                    formatId === CF.UTF16);
             }
         }, 0x04000000);
     });

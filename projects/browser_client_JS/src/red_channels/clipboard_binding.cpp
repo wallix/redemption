@@ -58,14 +58,15 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
         })
         .function_ptr("sendData", [](clipboard::ClipboardChannel& clip,
             uint16_t msg_flags, std::string data,
-            uint32_t total_data_len, uint32_t channel_flags)
+            uint32_t total_data_len, uint32_t channel_flags,
+            bool encode_utf8_to_utf16)
         {
-            clip.send_data(msg_flags, data, total_data_len, channel_flags);
+            clip.send_data(msg_flags, data, total_data_len, channel_flags, encode_utf8_to_utf16);
         })
         .function_ptr("sendFormat", [](clipboard::ClipboardChannel& clip,
-            uint32_t id, int charset, std::string name, bool is_last)
+            uint32_t format_id, int charset, std::string name, bool is_last)
         {
-            clip.send_format(id, clipboard::Charset(charset), name, is_last);
+            clip.send_format(format_id, clipboard::Charset(charset), name, is_last);
         })
         // .function("receive", &clipboard::ClipboardChannel::receive)
     ;

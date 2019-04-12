@@ -150,13 +150,13 @@ namespace
                 break;
             }
             case Charset::Utf16: {
-                if (!out_stream.has_room(4 + name.size() + 1))
+                if (!out_stream.has_room(4 + name.size() + 2))
                 {
                     return false;
                 }
                 out_stream.out_uint32_le(id);
                 out_stream.out_copy_bytes(name);
-                out_stream.out_uint8(0);
+                out_stream.out_uint16_le(0);
                 break;
             }
             }
@@ -388,20 +388,29 @@ void ClipboardChannel::receive(cbytes_view data, int channel_flags)
 
 void ClipboardChannel::process_format_data_request(InStream& chunk)
 {
-    auto id = chunk.in_uint32_le();
-    emval_call(this->callbacks, "receiveFormatId", id);
+    auto format_id = chunk.in_uint32_le();
+    emval_call(this->callbacks, "receiveFormatId", format_id);
 }
 
-void ClipboardChannel::send_format(uint32_t id, Charset charset, cbytes_view name, bool is_last)
+void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_view name, bool is_last)
 {
+    // TODO is_last=false not supported
+
     StaticOutStream<512> out_stream;
+
+    out_stream.out_uint16_le(RDPECLIP::CB_FORMAT_LIST);
+    out_stream.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
+    out_stream.out_skip_bytes(4);
+
     format_list_serialize(
-        out_stream, name, id,
+        out_stream, name, format_id,
         IsLongFormat(this->format_list.use_long_format_names),
         charset);
 
     if (is_last)
     {
+        out_stream.set_out_uint32_le(out_stream.get_offset()-8, 4);
+        LOG(LOG_DEBUG, "send_format %d", this->format_list.use_long_format_names);
         hexdump_av(out_stream.get_bytes(), 32);
         this->send_to_mod_channel(out_stream.get_bytes());
     }
@@ -409,7 +418,8 @@ void ClipboardChannel::send_format(uint32_t id, Charset charset, cbytes_view nam
 
 void ClipboardChannel::send_data(
     uint16_t msg_flags, cbytes_view data,
-    uint32_t total_data_len, uint32_t channel_flags)
+    uint32_t total_data_len, uint32_t channel_flags,
+    bool encode_utf8_to_utf16)
 {
     StaticOutStream<512> out_stream;
 
@@ -425,14 +435,28 @@ void ClipboardChannel::send_data(
         header.log();
     }
 
-    out_stream.out_copy_bytes(data);
+    if (encode_utf8_to_utf16)
+    {
+        auto len = UTF8toUTF16(data, out_stream.get_tailroom_bytes());
+        out_stream.out_skip_bytes(len);
+        out_stream.out_uint16_le(0);
+        if (!total_data_len)
+        {
+            out_stream.set_out_uint32_le(len+2, 4);
+        }
+    }
+    else
+    {
+        out_stream.out_copy_bytes(data);
+    }
+
     InStream in_stream(out_stream.get_bytes());
     hexdump_av(in_stream.remaining_bytes(), 32);
     this->cb.send_to_mod_channel(
         channel_names::cliprdr,
         in_stream,
         in_stream.get_capacity(),
-        channel_flags
+        channel_flags | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
     );
 
 

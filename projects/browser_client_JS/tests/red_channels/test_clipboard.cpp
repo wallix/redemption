@@ -234,7 +234,7 @@ MAKE_BINDING_CALLBACKS(
     (JS_d(receiveFileName, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
     (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t channelFlags))
     (JS_x(receiveFileSize, uint32_t sizeHigh, uint32_t sizeLow, uint32_t streamId))
-    (JS_x(receiveFormatId, uint32_t id)),
+    (JS_x(receiveFormatId, uint32_t format_id)),
     (DataChan)
 )
 
@@ -264,6 +264,7 @@ EMSCRIPTEN_BINDINGS(test_clipboard)
 {
     redjs::function("test_init_clip", [](emscripten::val&& v){
         clip = std::make_unique<redjs::ClipboardChannel>(mod, std::move(v), RDPVerbose{});
+        clip_datas.clear();
     });
 }
 
@@ -278,7 +279,7 @@ constexpr int first_last_channel_flags
     | CHANNELS::CHANNEL_FLAG_FIRST
 ;
 
-void raw_send(cbytes_view data, int channel_flags = first_last_show_proto_channel_flags)
+void clip_raw_receive(cbytes_view data, int channel_flags = first_last_show_proto_channel_flags)
 {
     clip->receive(data, channel_flags);
 }
@@ -306,13 +307,13 @@ struct Serializer
     }
 };
 
-void send(
+void clip_receive(
     uint16_t msgType, uint16_t msgFlags,
     cbytes_view data = {},
     Padding padding_data = Padding{},
     int channel_flags = first_last_show_proto_channel_flags)
 {
-    raw_send(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
+    clip_raw_receive(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
 }
 
 DataChan data_chan(
@@ -390,6 +391,7 @@ struct datas_checker
         {
             err(*this);
         }
+        clip_datas.clear();
     }
 };
 
@@ -405,11 +407,14 @@ struct datas_checker
 
 // #define RED_CHECK_COUNT(n) RED_CHECK(::clip_datas.size() == n);
 
-#define CTX_DATAS(...) clip_datas.clear(); ::send(__VA_ARGS__);     \
+#define CTX_CHECK_DATAS()                                           \
     ::datas_checker{[](datas_checker& _data_checker){               \
         RED_CHECK_MESSAGE(false, "there is " << ::clip_datas.size() \
             << " elements, " << _data_checker.i << " checked");     \
     }, 0} = [&]([[maybe_unused]] datas_checker& _data_checker)
+
+#define RECEIVE_DATAS(...) ::clip_receive(__VA_ARGS__); CTX_CHECK_DATAS()
+#define CALL_CB(...) clip->__VA_ARGS__; CTX_CHECK_DATAS()
 
 #define CHECK_NEXT_DATA(...) do {                   \
     if (_data_checker.i == clip_datas.size()) {     \
@@ -449,12 +454,12 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
     const bool is_utf = true;
     // const bool not_utf = false;
 
-    CTX_DATAS(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
+    RECEIVE_DATAS(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
         "\x01\x00\x00\x00\x01\x00\x0c\x00\x02\x00\x00\x00\x1e\x00\x00\x00"_av, Padding(4))
     {
     };
 
-    CTX_DATAS(CB_MONITOR_READY, CB_RESPONSE__NONE_)
+    RECEIVE_DATAS(CB_MONITOR_READY, CB_RESPONSE__NONE_)
     {
         CHECK_NEXT_DATA(data_chan(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
             "\x01\0\0\0\x01\0\x0C\0\x02\0\0\0.\0\0\0"_av));
@@ -462,11 +467,13 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
             "\x0d\0\0\0\0\0"_av));
     };
 
-    CTX_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK)
+    RECEIVE_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK)
     {
     };
 
-    CTX_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
+    // copy
+
+    RECEIVE_DATAS(CB_FORMAT_LIST, CB_RESPONSE__NONE_,
         "\x0d\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x01\x00"
         "\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00"_av, Padding(4))
     {
@@ -479,11 +486,36 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
         CHECK_NEXT_DATA(receiveFormatStop{});
     };
 
-    clip->send_request_format(CF_UNICODETEXT, cbchan::CustomFormat::None);
+    CALL_CB(send_request_format(CF_UNICODETEXT, cbchan::CustomFormat::None))
+    {
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_, "\x0d\0\0\0"_av));
+    };
 
-    CTX_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK,
+    RECEIVE_DATAS(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK,
         "\x70\x00\x6c\x00\x6f\x00\x70\x00\x00\x00"_av, Padding(4))
     {
         CHECK_NEXT_DATA(receiveData("plop"_utf16, CF_UNICODETEXT, first_last_channel_flags));
+    };
+
+    // paste
+
+    CALL_CB(send_format(CF_UNICODETEXT, cbchan::Charset::Utf16, ""_av, true))
+    {
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST, CB_RESPONSE__NONE_, "\x0d\0\0\0\0\0"_av));
+    };
+
+    RECEIVE_DATAS(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK, ""_av, Padding(4))
+    {
+    };
+
+    RECEIVE_DATAS(CB_FORMAT_DATA_REQUEST, CB_RESPONSE__NONE_, "\x0d\x00\x00\x00"_av, Padding(4))
+    {
+        CHECK_NEXT_DATA(receiveFormatId{CF_UNICODETEXT});
+    };
+
+    const auto paste1 = "xyz\0"_utf16;
+    CALL_CB(send_data(CB_RESPONSE_OK, paste1, 8, first_last_channel_flags, false))
+    {
+        CHECK_NEXT_DATA(data_chan(CB_FORMAT_DATA_RESPONSE, CB_RESPONSE_OK, paste1));
     };
 }
