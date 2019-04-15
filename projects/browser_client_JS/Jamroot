@@ -19,7 +19,10 @@ constant NO_FFMPEG : 1 ;
 constant BOOST_STACKTRACE : 0 ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
 
-EXE_DEPENDENCIES += <cxxflags>"-s ABORTING_MALLOC=0" ;
+EXE_DEPENDENCIES +=
+    <cxxflags>"-s ABORTING_MALLOC=0"
+    <cxxflags>"-s EXTRA_EXPORTED_RUNTIME_METHODS=['stringToUTF16']"
+;
 
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
 constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "http://localhost:3389//" ] ; # last `/` removed by bjam...

@@ -1050,18 +1050,22 @@ function run()
                 console.log('id=', streamId, '  size=', sizeHigh << 32 | sizeLow);
             },
             receiveFormatId: function(formatId) {
+                let data = sendCbUtf8_data.value;
                 console.log("receiveFormatId", formatId, CF.UTF16);
-                // let data = sendCbUtf8_data.value
-                let data = new Uint8Array([72,0,71,0,73,0,0,0])
-                // switch (formatId)
-                // {
-                // case CF.UTF16:
-                //     data = UTF16Encoder.encode(data);
-                //     data += "\0\0"
-                //     break;
-                // }
-                clipboard.sendHeader(CbType.DataResponse, MsgFlags.Ok, data.length, 0);
-                clipboard.sendData(data, 0, ChannelFlags.Last);
+                switch (formatId)
+                {
+                case CF.UTF16:
+                    let len = data.length * 2 + 2;
+                    const ptr = Module._malloc(len);
+                    len = Module.stringToUTF16(data, ptr, len) + 2;
+                    clipboard.sendHeader(CbType.DataResponse, MsgFlags.Ok, len, 0);
+                    clipboard.sendData(ptr, len, 0, ChannelFlags.Last);
+                    Module._free(ptr);
+                    break;
+                default:
+                    clipboard.sendHeader(CbType.DataResponse, MsgFlags.Ok, data.length, 0);
+                    clipboard.sendData(data, 0, ChannelFlags.Last);
+                }
             }
         }, 0x04000000);
     });
