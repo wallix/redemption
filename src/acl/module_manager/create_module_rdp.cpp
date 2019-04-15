@@ -268,7 +268,7 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.file_system_params.bogus_ios_rdpdr_virtual_channel     = ini.get<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel>();
 
-    mod_rdp_params.file_system_params.enable_rdpdr_data_analysis          = ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
+    mod_rdp_params.file_system_params.enable_rdpdr_data_analysis          =  ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
 
     mod_rdp_params.remote_app_params.bypass_legal_notice_delay = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay>();
     mod_rdp_params.remote_app_params.bypass_legal_notice_timeout
@@ -279,8 +279,10 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.clipboard_params.log_only_relevant_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
-    mod_rdp_params.enable_validator = false;
-    mod_rdp_params.validator_socket_path = "tools/ICAP_socket/redemption-icap-service-sock";
+    mod_rdp_params.enable_validator = ini.get<cfg::validator::enable_validator>();
+    mod_rdp_params.enable_interupting_validator = ini.get<cfg::validator::enable_interupting_validator>();
+    mod_rdp_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
+    mod_rdp_params.validator_socket_path = ini.get<cfg::validator::validator_socket_path>().c_str();
 
     try {
         const char * const name = "RDP Target";

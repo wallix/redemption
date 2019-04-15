@@ -616,6 +616,29 @@
           "description": "Disable keyboard log:"
         }
       ]
+    },
+    {
+      "name": "validator",
+      "members": [
+        {
+          "name": "enable_validator",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "enable_interupting_validator",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "enable_save_files",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        }
+      ]
     }
   ]
 }

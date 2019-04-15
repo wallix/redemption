@@ -1137,3 +1137,8 @@
 "#_advanced\n"
 "#load_theme = \n\n"
 
+"[validator]\n\n"
+
+"#_advanced\n"
+"#validator_socket_path = tools/ICAP_socket/redemption-icap-service-sock\n\n"
+

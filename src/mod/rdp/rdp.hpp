@@ -364,6 +364,8 @@ private:
 
     ICAPService * icap_service;
     bool enable_validator;
+    bool enable_interupting_validator;
+    bool enable_save_files;
 
 public:
     mod_rdp_channels(
@@ -396,6 +398,8 @@ public:
     , session_reactor(session_reactor)
     , icap_service(icap_service)
     , enable_validator(mod_rdp_params.enable_validator)
+    , enable_save_files(mod_rdp_params.enable_save_files)
+    , enable_interupting_validator(mod_rdp_params.enable_interupting_validator)
     {}
 
     void DLP_antivirus_check_channels_files() {
@@ -536,12 +540,14 @@ private:
         BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
 
         ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->clipboard.disable_log_syslog, this->clipboard.disable_log_wrm, this->clipboard.log_only_relevant_activities);
+        cvc_params.enable_validator = this->enable_validator;
+        cvc_params.enable_save_files = this->enable_save_files;
+        cvc_params.enable_interupting_validator = this->enable_interupting_validator;
 
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
             front,
-            this->enable_validator,
             "",
             this->session_reactor,
             base_params,

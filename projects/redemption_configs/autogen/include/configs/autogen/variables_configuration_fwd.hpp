@@ -290,6 +290,13 @@ namespace cfg {
         struct theme;
     };
 
+    struct validator {
+        struct enable_validator;
+        struct enable_interupting_validator;
+        struct enable_save_files;
+        struct validator_socket_path;
+    };
+
     struct context {
         struct psid;
         struct opt_bitrate;

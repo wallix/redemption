@@ -40,6 +40,8 @@
 
 #include <memory>
 
+
+
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
@@ -72,7 +74,6 @@ public:
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
-        const bool channel_filter_on,
         const std::string & channel_files_directory,
         SessionReactor& session_reactor,
         const BaseVirtualChannel::Params & base_params,
@@ -84,10 +85,13 @@ public:
     , params(params)
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
-    , channel_filter_on(channel_filter_on)
+    , channel_filter_on(params.enable_validator)
     , last_file_to_scan_id(0)
     , session_reactor(session_reactor)
-    , channel_file(channel_files_directory, false, false, icap_service)
+    , channel_file(channel_files_directory,
+                   params.enable_interupting_validator,
+                   params.enable_save_files,
+                   icap_service)
     {}
 
 protected:

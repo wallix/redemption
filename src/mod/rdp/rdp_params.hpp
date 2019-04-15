@@ -77,6 +77,8 @@ struct ModRDPParams
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
     bool enable_validator = false;
+    bool enable_interupting_validator = false;
+    bool enable_save_files = false;
     const char * validator_socket_path =  "";
 
     struct ClipboardParams

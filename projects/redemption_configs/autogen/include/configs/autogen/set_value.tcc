@@ -1887,6 +1887,21 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
+    else if (0 == strcmp(context, "validator")) {
+        if (0) {}
+        else if (0 == strcmp(key, "validator_socket_path")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::validator::validator_socket_path&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
     else if (static_cast<cfg::debug::config>(this->variables).value) {
         LOG(LOG_ERR, "unknown section [%s]", context);
     }
