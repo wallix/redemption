@@ -904,9 +904,8 @@ function run()
             DIB: 5,
             DIBV5: 17,
 
+            // my custom format
             FileGroupDescriptorW: 953100,
-            FileContentsSize: 953101,
-            FileContentsRange: 953102,
         });
         const CustomCF = Object.freeze({
             FileGroupDescriptorW: 1,
@@ -975,15 +974,13 @@ function run()
         };
         sendCbUtf8.onsubmit = (e) => {
             e.preventDefault();
-            clipboard.sendFormat(CF.UTF16, 0, "", true);
+            clipboard.sendFormat(CF.UTF16, 0, "");
+            rdpclient.sendBufferedData();
         };
         sendCbFile.onsubmit = (e) => {
             e.preventDefault();
-            clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW", true);
-            // if (rdpclient) {
-            //     const file = sendCbFile_data.files[0]
-            //     rdpclient.sendFile(file.name, file.binary);
-            // }
+            clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW");
+            rdpclient.sendBufferedData();
         };
         return clipboard = newClipboardChannel(cb, {
             receiveFormatStart: function() {
@@ -1068,9 +1065,11 @@ function run()
                 }
 
                 case CF.FileGroupDescriptorW: {
+                    const file = sendCbFile_data.files[0]
+
                     const ptr = Module._malloc(700);
                     const H = Module.HEAPU8;
-                    const flags = FileFlags.FileSize | FileFlags.ShowProgressUI;
+                    const flags = FileFlags.FileSize | FileFlags.ShowProgressUI /*| FileFlags.WriteTime*/;
                     const attrs = FileAttributes.Normal;
                     let i = ptr;
 
@@ -1110,34 +1109,31 @@ function run()
                         H[i++] = 0;
                     }
 
-                    // last write time
+                    // lastWriteTime (8 bytes): An unsigned 64-bit integer that specifies the number of 100-nanoseconds intervals that have elapsed since 1 January 1601 to the time of the last write operation on the file.
                     for (let j = 0; j < 8; ++j) {
                         H[i++] = 0;
                     }
 
                     // size high
-                    H[i++] = 0;
-                    H[i++] = 0;
+                    if (file.size > 0xffffffff) {
+                        H[i++] = (file.size - 0xffffffff) & 0xff;
+                        H[i++] = ((file.size - 0xffffffff) >> 8) & 0xff;
+                    }
+                    else {
+                        H[i++] = 0;
+                        H[i++] = 0;
+                    }
                     H[i++] = 0;
                     H[i++] = 0;
 
                     // size low
-                    H[i++] = 10;
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
+                    H[i++] = file.size & 0xff;
+                    H[i++] = (file.size >> 8) & 0xff;
+                    H[i++] = (file.size >> 16) & 0xff;
+                    H[i++] = (file.size >> 24) & 0xff;
 
                     // name
-                    H[i++] = 66;
-                    H[i++] = 0;
-                    H[i++] = 67;
-                    H[i++] = 0;
-                    H[i++] = 69;
-                    H[i++] = 0;
-                    for (let j = 0; j < 260-3; ++j) {
-                        H[i++] = 0;
-                        H[i++] = 0;
-                    }
+                    i += Module.stringToUTF16(file.name, i, i-ptr) + 2;
 
                     const totalLen = i-ptr;
 
@@ -1158,6 +1154,8 @@ function run()
             },
             receiveFileContentsRequest: function(streamId, type, lindex, nposLow, nposHigh, szRequested) {
                 console.log("fileContentsRequest", ...arguments);
+                const file = sendCbFile_data.files[lindex];
+                console.log(file.size, file.name);
 
                 switch (type)
                 {
@@ -1182,13 +1180,21 @@ function run()
                     H[i++] = (streamId >> 16) & 0xff;
                     H[i++] = (streamId >> 24) & 0xff;
 
-                    H[i++] = 10;
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
+                    // size low
+                    H[i++] = file.size & 0xff;
+                    H[i++] = (file.size >> 8) & 0xff;
+                    H[i++] = (file.size >> 16) & 0xff;
+                    H[i++] = (file.size >> 24) & 0xff;
 
-                    H[i++] = 0;
-                    H[i++] = 0;
+                    // size high
+                    if (file.size > 0xffffffff) {
+                        H[i++] = (file.size - 0xffffffff) & 0xff;
+                        H[i++] = ((file.size - 0xffffffff) >> 8) & 0xff;
+                    }
+                    else {
+                        H[i++] = 0;
+                        H[i++] = 0;
+                    }
                     H[i++] = 0;
                     H[i++] = 0;
 
@@ -1202,49 +1208,52 @@ function run()
                     clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
 
                     Module._free(ptr);
+                    rdpclient.sendBufferedData();
                     break;
                 }
 
                 case FileContentsOp.Range: {
-                    const ptr = Module._malloc(32);
-                    const H = Module.HEAPU8;
-                    let i = ptr;
+                    const reader = new FileReader();
 
-                    H[i++] = CbType.FileContentsResponse & 0xff;
-                    H[i++] = (CbType.FileContentsResponse >> 8) & 0xff;
+                    // Closure to capture the file information.
+                    reader.onload = function(e) {
+                        const contents = new Uint8Array(e.target.result);
+                        console.log(contents.length);
+                        const ptr = Module._malloc(32 + contents.length);
+                        const H = Module.HEAPU8;
+                        let i = ptr;
 
-                    H[i++] = MsgFlags.Ok & 0xff;
-                    H[i++] = (MsgFlags.Ok >> 8) & 0xff;
+                        H[i++] = CbType.FileContentsResponse & 0xff;
+                        H[i++] = (CbType.FileContentsResponse >> 8) & 0xff;
 
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
+                        H[i++] = MsgFlags.Ok & 0xff;
+                        H[i++] = (MsgFlags.Ok >> 8) & 0xff;
 
-                    H[i++] = streamId & 0xff;
-                    H[i++] = (streamId >> 8) & 0xff;
-                    H[i++] = (streamId >> 16) & 0xff;
-                    H[i++] = (streamId >> 24) & 0xff;
+                        H[i++] = 0;
+                        H[i++] = 0;
+                        H[i++] = 0;
+                        H[i++] = 0;
 
-                    for (j = 0; j < 10; ++j) {
-                        H[i++] = j + 65;
-                    }
+                        H[i++] = streamId & 0xff;
+                        H[i++] = (streamId >> 8) & 0xff;
+                        H[i++] = (streamId >> 16) & 0xff;
+                        H[i++] = (streamId >> 24) & 0xff;
 
-                    const totalLen = i-ptr;
+                        H.set(contents, i);
+                        i += contents.length;
 
-                    H[ptr+4] = totalLen & 0xff;
-                    H[ptr+5] = (totalLen >> 8) & 0xff;
+                        const totalLen = i-ptr;
 
-                    clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+                        H[ptr+4] = totalLen & 0xff;
+                        H[ptr+5] = (totalLen >> 8) & 0xff;
 
-                    // clipboard.sendDataWithHeader(CbType.FileContentsResponse, ptr, len);
-                    // // if first {
-                    // clipboard.sendHeader(CbType.FileContentsResponse, MsgFlags.Ok, 10 + 4, 0);
-                    // clipboard.sendData("\0\0\0\0", 0, ChannelFlags.None);
-                    // // }
-                    // clipboard.sendData("abcdefghij", 0, ChannelFlags.Last);
+                        clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
 
-                    Module._free(ptr);
+                        Module._free(ptr);
+                        rdpclient.sendBufferedData();
+                    };
+
+                    reader.readAsArrayBuffer(file);
                     break;
                 }
                 }
