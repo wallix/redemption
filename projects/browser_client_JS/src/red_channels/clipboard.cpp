@@ -304,9 +304,6 @@ void ClipboardChannel::receive(cbytes_view data, int channel_flags)
         return ;
     }
 
-    LOG(LOG_DEBUG, "receive:");
-    hexdump_av_c(data, 32);
-
     InStream chunk(data);
     RDPECLIP::CliprdrHeader header;
     header.recv(chunk);
@@ -482,7 +479,6 @@ void ClipboardChannel::process_format_data_response(cbytes_view data, uint32_t c
         return data.size() >= strip_n ? data.first(data.size() - strip_n) : cbytes_view{};
     };
 
-    LOG(LOG_DEBUG, "data_len=%u  data.size()=%zu  remaining=%u", data_len, data.size(), this->data_len);
     if (data.size() > this->data_len)
     {
         data = data.first(this->data_len);
