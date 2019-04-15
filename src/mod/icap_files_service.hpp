@@ -34,11 +34,10 @@
 
 
 
-
 struct ICAPService
 {
 public:
-    unique_fd fd;
+    unique_fd fd ;
 
     int result;
     std::string content;
@@ -47,11 +46,19 @@ public:
     int file_id_int;
 
     ICAPService(std::string const& socket_path)
-    : fd(local_connect(socket_path.c_str()))
+
+    : fd(invalid_fd())
     , result(-1)
     , last_result_file_id_received(0)
     , file_id_int(0)
-    {}
+    {
+        if (!socket_path.empty()) {
+            this->fd = ::addr_connect(socket_path.c_str());
+        }
+        if (fd.fd() == -1) {
+            perror("Validator socket error");
+        }
+    }
 
     int generate_id() {
         this->file_id_int++;

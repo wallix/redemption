@@ -69,8 +69,10 @@ public:
         , is_saving_files(is_saving_files)
         , icap_service(icap_service)
     {
-        if (!dir_path.empty()) {
-            this->fd = unique_fd(std::move(dir_path), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        if (this->is_saving_files) {
+            if (!dir_path.empty()) {
+                this->fd = unique_fd(std::move(dir_path), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+            }
         }
     }
 
@@ -162,9 +164,13 @@ public:
 
         icap_send_data(this->icap_service, this->streamID, char_ptr_cast(data), data_size);
 
-        if ( this->current_file_size == this->total_file_size) {
-            icap_end_of_file(this->icap_service, this->streamID);
-        }
+//         if ( this->current_file_size >= this->total_file_size) {
+//             icap_end_of_file(this->icap_service, this->streamID);
+//         }
+    }
+
+    void set_end_of_file() {
+        icap_end_of_file(this->icap_service, this->streamID);
     }
 
     void read_data(uint8_t * buffer, const size_t data_len) {
@@ -181,6 +187,10 @@ public:
         } else {
             LOG(LOG_WARNING,"File error, can't open %s", this->file_path);
         }
+    }
+
+    std::string get_result_content() {
+        return this->icap_service->content;
     }
 
     void receive_result() {
