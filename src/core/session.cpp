@@ -683,10 +683,6 @@ private:
         }
         else if (mm.get_mod()->is_up_and_running() || !bool(enable_graphics)) {
             ioswitch.set_read_sck(front_trans.sck);
-
-            if (mm.validator_fd > 0) {
-                ioswitch.set_read_sck(mm.validator_fd);
-            }
         }
 
         if (mm.get_socket() && !mm.has_pending_data()) {

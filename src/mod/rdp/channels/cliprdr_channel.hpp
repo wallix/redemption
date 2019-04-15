@@ -288,7 +288,10 @@ public:
                 if (this->channel_filter_on && (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
 
                     this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
-                    send_message_to_server = this->channel_file.is_interupting();
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                        this->channel_file.set_end_of_file();
+                    }
+                    send_message_to_server = !this->channel_file.is_interupting();
                 }
                 if (receive.must_log_file_info_type) {
                     const bool from_remote_session = false;
@@ -508,7 +511,12 @@ public:
                 if (this->channel_filter_on && (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
 
                     this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
-                    send_message_to_client = this->channel_file.is_interupting();
+
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                        this->channel_file.set_end_of_file();
+                    }
+
+                    send_message_to_client = !this->channel_file.is_interupting();
                 }
 
                 if (receive.must_log_file_info_type) {
@@ -669,6 +677,16 @@ public:
 
     void DLP_antivirus_check_channels_files() {
         this->channel_file.receive_result();
+
+//         ArcsightLogInfo arc_info;
+//         arc_info.name = type;
+//         arc_info.ApplicationProtocol = "rdp";
+//         arc_info.fileName = file_info.file_name;
+//         arc_info.fileSize = file_info.size;
+//         arc_info.WallixBastionSHA256Digest = std::string(digest_s);
+//         arc_info.direction_flag = from_remote_session ? ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
+//
+//         this->report_message.log6(info, arc_info, tvtime());
     }
 //
 //         if (this->channel_file.is_valid()) {

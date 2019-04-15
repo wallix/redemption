@@ -55,6 +55,9 @@ public:
         if (!socket_path.empty()) {
             this->fd = ::addr_connect(socket_path.c_str());
         }
+        if (fd.fd() == -1) {
+            perror("Validator socket error");
+        }
     }
 
     int generate_id() {

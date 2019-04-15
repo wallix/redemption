@@ -277,6 +277,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.clipboard_params.log_only_relevant_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
+    mod_rdp_params.enable_validator = false;
+    mod_rdp_params.validator_socket_path = "tools/ICAP_socket/redemption-icap-service-sock";
 
     try {
         const char * const name = "RDP Target";
@@ -310,11 +312,7 @@ void ModuleManager::create_mod_rdp(
 
 #ifndef __EMSCRIPTEN__
 
-        if (mod_rdp_params.enable_validator) {
-            const std::string validator_socket_path = "tools/ICAP_socket/redemption-icap-service-sock";
-            icap_service = icap_open_session(validator_socket_path.c_str());
-            this->validator_fd = icap_service->fd.fd();
-        }
+
 
         struct ModRDPWithMetrics : public mod_rdp
         {
@@ -328,14 +326,23 @@ void ModuleManager::create_mod_rdp(
 
             std::unique_ptr<ModMetrics> metrics;
 
+            SessionReactor::TopFdPtr validator_event;
+
             using mod_rdp::mod_rdp;
         };
 
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
-
         std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
+
+
+        if (mod_rdp_params.enable_validator) {
+            icap_service = icap_open_session(mod_rdp_params.validator_socket_path);
+            LOG(LOG_INFO, "icap_service->fd.fd() = %d", icap_service->fd.fd());
+            mod_rdp_params.enable_validator = icap_service->fd.fd() > 0;
+            this->validator_fd = icap_service->fd.fd();
+        }
 
         if (enable_metrics) {
             metrics = std::make_unique<ModRDPWithMetrics::ModMetrics>(
@@ -360,10 +367,6 @@ void ModuleManager::create_mod_rdp(
                 ini.get<cfg::metrics::log_interval>());
         }
 
-        if (enable_validator) {
-            const std::string validator_socket_path = "icap_to_a_repertory_that_does_not_exist";
-            icap_service = validator_open_session(validator_socket_path.c_str());
-        }
 #else
         using ModRDPWithMetrics = mod_rdp;
 #endif
@@ -394,6 +397,17 @@ void ModuleManager::create_mod_rdp(
         );
 
 #ifndef __EMSCRIPTEN__
+
+        if (mod_rdp_params.enable_validator) {
+            new_mod->validator_event = this->session_reactor.create_fd_event(this->validator_fd)
+            .on_timeout(jln::always_ready([]() {}))
+            .set_timeout(std::chrono::milliseconds::max())
+            .on_exit(jln::propagate_exit())
+            .on_action(jln::always_ready([rdp=new_mod.get()]() {
+                rdp->DLP_antivirus_check_channels_files();
+            }));
+        }
+
         if (enable_metrics) {
             new_mod->metrics = std::move(metrics);
             new_mod->metrics->metrics_timer = session_reactor.create_timer()
