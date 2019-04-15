@@ -83,6 +83,7 @@ struct ClipboardChannel
     void send_data(cbytes_view av);
 
 private:
+    void process_filecontents_request(InStream& chunk);
     void process_format_data_request(InStream& chunk);
     void process_capabilities(InStream& chunk);
     void process_monitor_ready();

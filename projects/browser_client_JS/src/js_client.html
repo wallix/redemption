@@ -320,6 +320,8 @@ const redemption = (function(Module, window) {
         receiveFileName: wCb_em2js_U8p,
         receiveFileContents: wCb_em2js_U8p,
         receiveFileSize: identity,
+        receiveFormatId: identity,
+        fileContentsRequest: identity,
     };
 
     resultFuncs.newClipboardChannel = function(callback, events, verbose) {
@@ -928,6 +930,7 @@ function run()
             ShowProgressUI: 0x4000,
         });
         const ChannelFlags = Object.freeze({
+            None: 1,
             First: 1,
             Last: 2,
         });
@@ -976,10 +979,11 @@ function run()
         };
         sendCbFile.onsubmit = (e) => {
             e.preventDefault();
-            if (rdpclient) {
-                const file = sendCbFile_data.files[0]
-                rdpclient.sendFile(file.name, file.binary);
-            }
+            clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW", true);
+            // if (rdpclient) {
+            //     const file = sendCbFile_data.files[0]
+            //     rdpclient.sendFile(file.name, file.binary);
+            // }
         };
         return clipboard = newClipboardChannel(cb, {
             receiveFormatStart: function() {
@@ -1054,17 +1058,195 @@ function run()
                 console.log("receiveFormatId", formatId, CF.UTF16);
                 switch (formatId)
                 {
-                case CF.UTF16:
+                case CF.UTF16: {
                     let len = data.length * 2 + 2;
                     const ptr = Module._malloc(len);
                     len = Module.stringToUTF16(data, ptr, len) + 2;
-                    clipboard.sendHeader(CbType.DataResponse, MsgFlags.Ok, len, 0);
-                    clipboard.sendData(ptr, len, 0, ChannelFlags.Last);
+                    clipboard.sendDataWithHeader(CbType.DataResponse, ptr, len);
                     Module._free(ptr);
                     break;
+                }
+
+                case CF.FileGroupDescriptorW: {
+                    const ptr = Module._malloc(700);
+                    const H = Module.HEAPU8;
+                    const flags = FileFlags.FileSize | FileFlags.ShowProgressUI;
+                    const attrs = FileAttributes.Normal;
+                    let i = ptr;
+
+                    H[i++] = CbType.DataResponse & 0xff;
+                    H[i++] = (CbType.DataResponse >> 8) & 0xff;
+
+                    H[i++] = MsgFlags.Ok & 0xff;
+                    H[i++] = (MsgFlags.Ok >> 8) & 0xff;
+
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+
+                    // nb item
+                    H[i++] = 1;
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+
+                    // flag
+                    H[i++] = flags & 0xff;
+                    H[i++] = (flags >> 8) & 0xff;
+                    H[i++] = (flags >> 16) & 0xff;
+                    H[i++] = (flags >> 24) & 0xff;
+
+                    for (let j = 0; j < 32; ++j) {
+                        H[i++] = 0;
+                    }
+
+                    H[i++] = attrs & 0xff;
+                    H[i++] = (attrs >> 8) & 0xff;
+                    H[i++] = (attrs >> 16) & 0xff;
+                    H[i++] = (attrs >> 24) & 0xff;
+
+                    for (let j = 0; j < 16; ++j) {
+                        H[i++] = 0;
+                    }
+
+                    // last write time
+                    for (let j = 0; j < 8; ++j) {
+                        H[i++] = 0;
+                    }
+
+                    // size high
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+
+                    // size low
+                    H[i++] = 10;
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+
+                    // name
+                    H[i++] = 66;
+                    H[i++] = 0;
+                    H[i++] = 67;
+                    H[i++] = 0;
+                    H[i++] = 69;
+                    H[i++] = 0;
+                    for (let j = 0; j < 260-3; ++j) {
+                        H[i++] = 0;
+                        H[i++] = 0;
+                    }
+
+                    const totalLen = i-ptr;
+
+                    H[ptr+4] = totalLen & 0xff;
+                    H[ptr+5] = (totalLen >> 8) & 0xff;
+
+                    console.log(totalLen);
+
+                    clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+                    Module._free(ptr);
+                    break;
+                }
+
                 default:
                     clipboard.sendHeader(CbType.DataResponse, MsgFlags.Ok, data.length, 0);
                     clipboard.sendData(data, 0, ChannelFlags.Last);
+                }
+            },
+            receiveFileContentsRequest: function(streamId, type, lindex, nposLow, nposHigh, szRequested) {
+                console.log("fileContentsRequest", ...arguments);
+
+                switch (type)
+                {
+                case FileContentsOp.Size: {
+                    const ptr = Module._malloc(32);
+                    const H = Module.HEAPU8;
+                    let i = ptr;
+
+                    H[i++] = CbType.FileContentsResponse & 0xff;
+                    H[i++] = (CbType.FileContentsResponse >> 8) & 0xff;
+
+                    H[i++] = MsgFlags.Ok & 0xff;
+                    H[i++] = (MsgFlags.Ok >> 8) & 0xff;
+
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+
+                    H[i++] = streamId & 0xff;
+                    H[i++] = (streamId >> 8) & 0xff;
+                    H[i++] = (streamId >> 16) & 0xff;
+                    H[i++] = (streamId >> 24) & 0xff;
+
+                    H[i++] = 10;
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+
+                    const totalLen = i-ptr;
+
+                    H[ptr+4] = totalLen & 0xff;
+                    H[ptr+5] = (totalLen >> 8) & 0xff;
+
+                    console.log(totalLen);
+
+                    clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+
+                    Module._free(ptr);
+                    break;
+                }
+
+                case FileContentsOp.Range: {
+                    const ptr = Module._malloc(32);
+                    const H = Module.HEAPU8;
+                    let i = ptr;
+
+                    H[i++] = CbType.FileContentsResponse & 0xff;
+                    H[i++] = (CbType.FileContentsResponse >> 8) & 0xff;
+
+                    H[i++] = MsgFlags.Ok & 0xff;
+                    H[i++] = (MsgFlags.Ok >> 8) & 0xff;
+
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+                    H[i++] = 0;
+
+                    H[i++] = streamId & 0xff;
+                    H[i++] = (streamId >> 8) & 0xff;
+                    H[i++] = (streamId >> 16) & 0xff;
+                    H[i++] = (streamId >> 24) & 0xff;
+
+                    for (j = 0; j < 10; ++j) {
+                        H[i++] = j + 65;
+                    }
+
+                    const totalLen = i-ptr;
+
+                    H[ptr+4] = totalLen & 0xff;
+                    H[ptr+5] = (totalLen >> 8) & 0xff;
+
+                    clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+
+                    // clipboard.sendDataWithHeader(CbType.FileContentsResponse, ptr, len);
+                    // // if first {
+                    // clipboard.sendHeader(CbType.FileContentsResponse, MsgFlags.Ok, 10 + 4, 0);
+                    // clipboard.sendData("\0\0\0\0", 0, ChannelFlags.None);
+                    // // }
+                    // clipboard.sendData("abcdefghij", 0, ChannelFlags.Last);
+
+                    Module._free(ptr);
+                    break;
+                }
                 }
             }
         }, 0x04000000);

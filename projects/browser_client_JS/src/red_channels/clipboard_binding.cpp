@@ -61,12 +61,19 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
         {
             clip.send_data(data, total_data_len, channel_flags);
         })
-        .function_ptr("sendData", [](clipboard::ClipboardChannel& clip,
+        .function_ptr("sendRawData", [](clipboard::ClipboardChannel& clip,
             std::ptrdiff_t idata, std::size_t idata_len,
             uint32_t total_data_len, uint32_t channel_flags)
         {
             auto* ptr = reinterpret_cast<uint8_t const*>(idata);
             clip.send_data({ptr, idata_len}, total_data_len, channel_flags);
+        })
+        .function_ptr("sendDataWithHeader", [](clipboard::ClipboardChannel& clip,
+            uint16_t type, std::ptrdiff_t idata, std::size_t idata_len)
+        {
+            auto* ptr = reinterpret_cast<uint8_t const*>(idata);
+            clip.send_header(type, 1/*Ok*/, idata_len, 0);
+            clip.send_data({ptr, idata_len}, 0, 2/*last*/);
         })
         .function_ptr("sendFormat", [](clipboard::ClipboardChannel& clip,
             uint32_t format_id, int charset, std::string name, bool is_last)

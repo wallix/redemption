@@ -243,7 +243,8 @@ MAKE_BINDING_CALLBACKS(
     (JS_d(receiveFileName, uint8_t, uint32_t attr, uint32_t flags, uint32_t sizeLow, uint32_t sizeHigh, uint32_t lastWriteTimeLow, uint32_t lastWriteTimeHigh))
     (JS_d(receiveFileContents, uint8_t, uint32_t streamId, uint32_t channelFlags))
     (JS_x(receiveFileSize, uint32_t sizeHigh, uint32_t sizeLow, uint32_t streamId))
-    (JS_x(receiveFormatId, uint32_t format_id)),
+    (JS_x(receiveFormatId, uint32_t format_id))
+    (JS_x(receiveFileContentsRequest, uint32_t streamId, uint32_t type, uint32_t lindex, uint32_t nposLow, uint32_t nposHigh, uint32_t szRequested)),
     (DataChan)
 )
 

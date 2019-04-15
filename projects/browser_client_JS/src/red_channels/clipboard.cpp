@@ -275,7 +275,7 @@ void ClipboardChannel::send_file_contents_request(
 
     this->custom_cf = (request_type == RDPECLIP::FILECONTENTS_SIZE)
         ? CustomFormat::FileContentsSize
-        : CustomFormat::FileContentsRange ;
+        : CustomFormat::FileContentsRange;
 }
 
 void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat custom_cf)
@@ -351,7 +351,7 @@ void ClipboardChannel::receive(cbytes_view data, int channel_flags)
     case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
         LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Response PDU");
         this->process_format_data_response(chunk.remaining_bytes(), channel_flags, header.dataLen());
-        }
+    }
     break;
 
     case RDPECLIP::CB_FORMAT_DATA_REQUEST:
@@ -359,24 +359,22 @@ void ClipboardChannel::receive(cbytes_view data, int channel_flags)
         this->process_format_data_request(chunk);
     break;
 
+    case RDPECLIP::CB_FILECONTENTS_REQUEST:
+        LOG_IF(this->verbose, LOG_INFO, "Clipboard: File Contents Request PDU");
 
-        // case RDPECLIP::CB_LOCK_CLIPDATA:
-        //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-        //         "SERVER >> CB Channel: Lock Clipboard Data PDU");
-        // break;
-        //
-        // case RDPECLIP::CB_UNLOCK_CLIPDATA:
-        //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-        //         "SERVER >> CB Channel: Unlock Clipboard Data PDU");
-        // break;
-        //
-        // case RDPECLIP::CB_FILECONTENTS_REQUEST:
-        //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-        //         "SERVER >> CB Channel: File Contents Resquest PDU");
-        //
-        //     this->process_filecontents_request(chunk);
-        // break;
-        //
+        this->process_filecontents_request(chunk);
+    break;
+
+    // case RDPECLIP::CB_LOCK_CLIPDATA:
+    //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+    //         "SERVER >> CB Channel: Lock Clipboard Data PDU");
+    // break;
+
+    // case RDPECLIP::CB_UNLOCK_CLIPDATA:
+    //     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+    //         "SERVER >> CB Channel: Unlock Clipboard Data PDU");
+    // break;
+
     default:
         LOG_IF(this->verbose, LOG_ERR,
             "Clipboard: Default Process server PDU data (%" PRIu16 ")", header.msgType());
@@ -390,6 +388,19 @@ void ClipboardChannel::process_format_data_request(InStream& chunk)
 {
     auto format_id = chunk.in_uint32_le();
     emval_call(this->callbacks, "receiveFormatId", format_id);
+}
+
+void ClipboardChannel::process_filecontents_request(InStream& chunk)
+{
+    auto stream_id = chunk.in_uint32_le();
+    auto lindex = chunk.in_sint32_le();
+    auto type = chunk.in_uint32_le();
+    auto npos_low= chunk.in_uint32_le();
+    auto npos_high = chunk.in_uint32_le();
+    auto cb_requested = chunk.in_uint32_le();
+    // auto clip_data_id = chunk.in_uint32_le();
+    emval_call(this->callbacks, "receiveFileContentsRequest",
+        stream_id, type, lindex, npos_low, npos_high, cb_requested);
 }
 
 void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_view name, bool is_last)
