@@ -3584,7 +3584,7 @@ public:
                     }
                 }
 				if (this->multifragment_update_data.get_capacity() < multi_fragment_update_caps.MaxRequestSize) {
-					this->multifragment_update_buffer.reset(new uint8_t[multi_fragment_update_caps.MaxRequestSize]());
+					this->multifragment_update_buffer = std::make_unique<uint8_t[]>(multi_fragment_update_caps.MaxRequestSize);
 					this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), multi_fragment_update_caps.MaxRequestSize);
 				}
 

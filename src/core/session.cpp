@@ -724,7 +724,7 @@ private:
     }
 };
 
-}
+} // anonymous namespace
 
 void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {

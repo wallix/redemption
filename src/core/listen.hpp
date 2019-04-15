@@ -201,15 +201,13 @@ inline bool is_no_error_server_loop() noexcept
 {
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wlogical-op")
-    if (errno == EAGAIN
-     || errno == EWOULDBLOCK
-     || errno == EINPROGRESS
-     || errno == EINTR
-    ) {
-        return true; /* these are not really errors */
-    }
+    // these are not really errors
+    return errno == EAGAIN
+        || errno == EWOULDBLOCK
+        || errno == EINPROGRESS
+        || errno == EINTR
+    ;
     REDEMPTION_DIAGNOSTIC_POP
-    return false;
 }
 
 template<class CbNewConn>
