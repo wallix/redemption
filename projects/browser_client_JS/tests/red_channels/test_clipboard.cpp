@@ -502,7 +502,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
 
     // paste
 
-    CALL_CB(send_format(CF_UNICODETEXT, cbchan::Charset::Utf16, ""_av, true))
+    CALL_CB(send_format(CF_UNICODETEXT, cbchan::Charset::Utf16, ""_av))
     {
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST, CB_RESPONSE__NONE_, "\x0d\0\0\0\0\0"_av));
     };

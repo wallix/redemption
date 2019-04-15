@@ -75,10 +75,16 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             clip.send_header(type, 1/*Ok*/, idata_len, 0);
             clip.send_data({ptr, idata_len}, 0, 2/*last*/);
         })
-        .function_ptr("sendFormat", [](clipboard::ClipboardChannel& clip,
-            uint32_t format_id, int charset, std::string name, bool is_last)
+        .function_ptr("addFormat", [](clipboard::ClipboardChannel& clip,
+            std::ptrdiff_t idata, std::size_t idata_len, uint32_t format_id, int charset, std::string name)
         {
-            clip.send_format(format_id, clipboard::Charset(charset), name, is_last);
+            auto* ptr = reinterpret_cast<uint8_t*>(idata);
+            return clip.add_format({ptr, idata_len}, format_id, clipboard::Charset(charset), name);
+        })
+        .function_ptr("sendFormat", [](clipboard::ClipboardChannel& clip,
+            uint32_t format_id, int charset, std::string name)
+        {
+            clip.send_format(format_id, clipboard::Charset(charset), name);
         })
         // .function("receive", &clipboard::ClipboardChannel::receive)
     ;

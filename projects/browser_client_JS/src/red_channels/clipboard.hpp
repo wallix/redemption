@@ -77,7 +77,8 @@ struct ClipboardChannel
         uint32_t pos_low, uint32_t pos_high);
 
     void send_request_format(uint32_t format_id, CustomFormat custom_cf);
-    void send_format(uint32_t format_id, Charset charset, cbytes_view name, bool is_last);
+    void send_format(uint32_t format_id, Charset charset, cbytes_view name);
+    unsigned add_format(bytes_view data, uint32_t format_id, Charset charset, cbytes_view name);
     void send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags);
     void send_data(cbytes_view data, uint32_t total_data_len, uint32_t channel_flags);
     void send_data(cbytes_view av);

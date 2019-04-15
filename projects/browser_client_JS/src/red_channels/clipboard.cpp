@@ -403,11 +403,19 @@ void ClipboardChannel::process_filecontents_request(InStream& chunk)
         stream_id, type, lindex, npos_low, npos_high, cb_requested);
 }
 
-void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_view name, bool is_last)
+unsigned ClipboardChannel::add_format(bytes_view data, uint32_t format_id, Charset charset, cbytes_view name)
 {
-    // TODO is_last=false not supported
+    OutStream out_stream(data);
+    format_list_serialize(
+        out_stream, name, format_id,
+        IsLongFormat(this->format_list.use_long_format_names),
+        charset);
+    return out_stream.get_offset();
+}
 
-    StaticOutStream<512> out_stream;
+void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_view name)
+{
+    StaticOutStream<128> out_stream;
 
     out_stream.out_uint16_le(RDPECLIP::CB_FORMAT_LIST);
     out_stream.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
@@ -418,13 +426,8 @@ void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_v
         IsLongFormat(this->format_list.use_long_format_names),
         charset);
 
-    if (is_last)
-    {
-        out_stream.set_out_uint32_le(out_stream.get_offset()-8, 4);
-        LOG(LOG_DEBUG, "send_format %d", this->format_list.use_long_format_names);
-        hexdump_av(out_stream.get_bytes(), 32);
-        this->send_data(out_stream.get_bytes());
-    }
+    out_stream.set_out_uint32_le(out_stream.get_offset() - 8, 4);
+    this->send_data(out_stream.get_bytes());
 }
 
 void ClipboardChannel::send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags)
