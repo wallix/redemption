@@ -307,8 +307,6 @@ void ModuleManager::create_mod_rdp(
 
         ICAPService * icap_service = nullptr;
 
-        bool const enable_validator = false;
-
 
 #ifndef __EMSCRIPTEN__
 
@@ -393,6 +391,7 @@ void ModuleManager::create_mod_rdp(
             authentifier,
             report_message,
             ini,
+            enable_metrics ? &metrics->protocol_metrics : nullptr,
             icap_service
         );
 
