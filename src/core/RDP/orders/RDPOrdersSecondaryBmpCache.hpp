@@ -543,11 +543,11 @@ class RDPBmpCache {
         uint32_t bufsize = stream.get_offset() - offset_buf_start;
 
         if (!use_compact_packets){
-            stream.set_out_uint16_le(bufsize, offset_compression_header + 2);
+            stream.stream_at(offset_compression_header + 2).out_uint16_le(bufsize);
         }
 
-        stream.set_out_uint16_le(stream.get_offset() - offset_compression_header, offset);
-        stream.set_out_uint16_le(stream.get_offset() - offset_after_type - 7, offset_header);
+        stream.stream_at(offset).out_uint16_le(stream.get_offset() - offset_compression_header);
+        stream.stream_at(offset_header).out_uint16_le(stream.get_offset() - offset_after_type - 7);
     }
 
     void emit_raw_v1(OutStream & stream) const
@@ -803,8 +803,8 @@ class RDPBmpCache {
         uint32_t offset_startBitmap = stream.get_offset();
         this->bmp.compress(session_color_depth, stream);
 
-        stream.set_out_uint16_be((stream.get_offset() - offset_startBitmap) | 0x4000, offset_bitmapLength); // set the actual size
-        stream.set_out_uint16_le(stream.get_offset() - (offset_header+12), offset_header); // length after type minus 7
+        stream.stream_at(offset_bitmapLength).out_uint16_be((stream.get_offset() - offset_startBitmap) | 0x4000); // set the actual size
+        stream.stream_at(offset_header).out_uint16_le(stream.get_offset() - (offset_header+12)); // length after type minus 7
     }
 
     void emit_raw_v2(OutStream & stream) const
@@ -910,7 +910,7 @@ class RDPBmpCache {
         // for uncompressed bitmaps the format is quite simple
         stream.out_copy_bytes(this->bmp.data(), this->bmp.bmp_size());
 
-        stream.set_out_uint16_le(stream.get_offset() - (offset_header + 12), offset_header);
+        stream.stream_at(offset_header).out_uint16_le(stream.get_offset() - (offset_header + 12));
     }
 
     void receive(InStream & stream, const RDPSecondaryOrderHeader & header, const BGRPalette & palette, BitsPerPixel session_color_depth)

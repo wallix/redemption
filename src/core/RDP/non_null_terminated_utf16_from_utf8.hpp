@@ -38,7 +38,7 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
     const size_t size_of_unicode_data = ::UTF8toUTF16(utf8_string, unicode_data, maximum_length_in_bytes);
     out.out_skip_bytes(size_of_unicode_data);
 
-    out.set_out_uint16_le(size_of_unicode_data, offset_of_data_length);
+    out.stream_at(offset_of_data_length).out_uint16_le(size_of_unicode_data);
 
     return size_of_unicode_data;
 }

@@ -471,12 +471,13 @@ struct ConfirmActivePDU_Send {
               2 // numberCapabilities(2)
             + 2 // pad2Octets(2)
             + payload.get_offset() - this->offset_capabilitySets;
-        this->payload.set_out_uint16_le( lengthCombinedCapabilities
-                                       , this->offset_lengthCombinedCapabilities);
+        this->payload.stream_at(this->offset_lengthCombinedCapabilities)
+            .out_uint16_le(lengthCombinedCapabilities);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. Number of
         //  capability sets included in the Confirm Active PDU.
-        this->payload.set_out_uint16_le(this->numberCapabilities, this->offset_numberCapabilities);
+        this->payload.stream_at(this->offset_numberCapabilities)
+            .out_uint16_le(this->numberCapabilities);
     }
 };  // struct ConfirmActivePDU_Send
 

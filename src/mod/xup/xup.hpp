@@ -108,7 +108,7 @@ enum {
         stream.out_uint32_le(cxcy);
         stream.out_uint32_le(0);
         stream.out_uint32_le(0);
-        stream.set_out_uint32_le(stream.get_offset(), 0);
+        stream.stream_at(0).out_uint32_le(stream.get_offset());
         this->t.send(stream.get_bytes());
     }
 
@@ -199,7 +199,7 @@ enum {
         stream.out_uint32_le(param3);
         stream.out_uint32_le(param4);
         uint32_t len = stream.get_offset();
-        stream.set_out_uint32_le(len, 0);
+        stream.stream_at(0).out_uint32_le(len);
         this->t.send(stream.get_data(), len);
     }
 

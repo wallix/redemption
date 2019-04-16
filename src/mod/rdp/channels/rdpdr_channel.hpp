@@ -761,8 +761,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             }
 
             if (number_of_removable_device) {
-                client_drive_device_list_remove_stream.set_out_uint32_le(
-                    number_of_removable_device, device_count_offset);
+                client_drive_device_list_remove_stream.stream_at(device_count_offset)
+                  .out_uint32_le(number_of_removable_device);
 
                 assert(this->to_server_sender);
 

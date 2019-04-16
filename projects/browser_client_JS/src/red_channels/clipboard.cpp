@@ -423,7 +423,7 @@ void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_v
         IsLongFormat(this->format_list.use_long_format_names),
         charset);
 
-    out_stream.set_out_uint32_le(out_stream.get_offset() - 8, 4);
+    out_stream.stream_at(4).out_uint32_le(out_stream.get_offset() - 8);
     this->send_data(out_stream.get_bytes());
 }
 

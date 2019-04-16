@@ -187,10 +187,9 @@ public:
     }
 
     void emit_end() const {
-        this->output_stream->set_out_uint16_le(
+        this->output_stream->stream_at(this->offset_of_orderLength).out_uint16_le(
             this->output_stream->get_offset() - this->offset_of_orderLength +
-                2 /* orderType(2) */,
-            this->offset_of_orderLength);
+                2 /* orderType(2) */);
     }
 
     void receive(InStream & stream) {
@@ -1144,7 +1143,7 @@ public:
         stream.out_skip_bytes(size_of_unicode_data);
         stream.out_clear_bytes(2);  // null-terminator
 
-        stream.set_out_uint32_le(size_of_unicode_data + 2 /*null-terminator*/, offset_of_data_length);
+        stream.stream_at(offset_of_data_length).out_uint32_le(size_of_unicode_data + 2 /*null-terminator*/);
     }
 
     void receive(InStream & stream) {

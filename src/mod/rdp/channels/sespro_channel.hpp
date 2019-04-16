@@ -248,10 +248,8 @@ private:
 
             out_s.out_clear_bytes(1);   // Null-terminator.
 
-            out_s.set_out_uint16_le(
-                out_s.get_offset() - message_length_offset -
-                    sizeof(uint16_t),
-                message_length_offset);
+            out_s.stream_at(message_length_offset).out_uint16_le(
+                out_s.get_offset() - message_length_offset - sizeof(uint16_t));
 
             this->send_message_to_server(out_s.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
@@ -372,10 +370,8 @@ private:
 
         out_s.out_clear_bytes(1);   // Null-terminator.
 
-        out_s.set_out_uint16_le(
-            out_s.get_offset() - message_length_offset -
-                sizeof(uint16_t),
-            message_length_offset);
+        out_s.stream_at(message_length_offset).out_uint16_le(
+            out_s.get_offset() - message_length_offset - sizeof(uint16_t));
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
@@ -1590,10 +1586,8 @@ public:
 
         out_s.out_clear_bytes(1);   // Null-terminator.
 
-        out_s.set_out_uint16_le(
-            out_s.get_offset() - message_length_offset -
-                sizeof(uint16_t),
-            message_length_offset);
+        out_s.stream_at(message_length_offset).out_uint16_le(
+            out_s.get_offset() - message_length_offset - sizeof(uint16_t));
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
@@ -1648,10 +1642,8 @@ public:
 
         out_s.out_clear_bytes(1);   // Null-terminator.
 
-        out_s.set_out_uint16_le(
-            out_s.get_offset() - message_length_offset -
-                sizeof(uint16_t),
-            message_length_offset);
+        out_s.stream_at(message_length_offset).out_uint16_le(
+            out_s.get_offset() - message_length_offset - sizeof(uint16_t));
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,

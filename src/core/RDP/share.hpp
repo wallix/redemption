@@ -663,9 +663,7 @@ struct ShareData
     //==============================================================================
     {
         if (!this->uncompressedLen) {
-            stream.set_out_uint16_le(  stream.get_offset()
-                                     + 6,                   // TS_SHARECONTROLHEADER(6)
-                                     6);
+            stream.stream_at(6).out_uint16_le(stream.get_offset() + 6 /*TS_SHARECONTROLHEADER*/);
         }
     } // END METHOD emit_end
 }; // END CLASS ShareData

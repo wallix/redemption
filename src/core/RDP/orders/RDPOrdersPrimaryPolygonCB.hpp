@@ -346,7 +346,7 @@ public:
                 }
             }
 
-            stream.set_out_uint8(stream.get_offset() - offset_cbData - 1, offset_cbData);
+            stream.stream_at(offset_cbData).out_uint8(stream.get_offset() - offset_cbData - 1);
         }
     }
 

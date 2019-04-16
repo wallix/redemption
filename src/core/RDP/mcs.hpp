@@ -416,7 +416,7 @@ namespace MCS
                 LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
                 throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
             }
-            this->stream.set_out_uint8(static_cast<uint8_t>(v), offset+0);
+            this->stream.stream_at(offset).out_uint8(static_cast<uint8_t>(v));
         }
 
         void out_ber_len_uint7(unsigned int v){
@@ -428,8 +428,9 @@ namespace MCS
         }
 
         void set_out_ber_len_uint16(unsigned int v, size_t offset){
-            this->stream.set_out_uint8(0x82, offset+0);
-            this->stream.set_out_uint16_be(v, offset+1);
+            auto out_stream = this->stream.stream_at(offset);
+            out_stream.out_uint8(0x82);
+            out_stream.out_uint16_be(v);
         }
 
         void out_ber_len_uint16(unsigned int v){
