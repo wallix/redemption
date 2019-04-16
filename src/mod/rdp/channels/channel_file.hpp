@@ -195,7 +195,7 @@ public:
 
     void receive_result() {
         icap_receive_result(this->icap_service);
-        LOG(LOG_INFO, "%s", this->icap_service->content);
+//         LOG(LOG_INFO, "%s", this->icap_service->content);
     }
 
     uint8_t get_direction() {
@@ -225,6 +225,10 @@ public:
 
     bool is_interupting() {
         return this->is_interupting_channel;
+    }
+
+    std::string get_file_name() {
+        return this->filename;
     }
 
 };

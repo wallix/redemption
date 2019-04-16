@@ -398,8 +398,8 @@ public:
     , session_reactor(session_reactor)
     , icap_service(icap_service)
     , enable_validator(mod_rdp_params.enable_validator)
-    , enable_save_files(mod_rdp_params.enable_save_files)
     , enable_interupting_validator(mod_rdp_params.enable_interupting_validator)
+    , enable_save_files(mod_rdp_params.enable_save_files)
     {}
 
     void DLP_antivirus_check_channels_files() {
