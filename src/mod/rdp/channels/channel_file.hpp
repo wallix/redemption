@@ -49,6 +49,7 @@ private:
 
     bool is_interupting_channel;
     bool is_saving_files;
+    bool enable_validator;
 
     ICAPService * icap_service;
 
@@ -60,59 +61,18 @@ public:
         FILE_FROM_CLIENT
     };
 
-    ChannelFile(std::string dir_path
+    ChannelFile(const std::string & dir_path
     , bool is_interupting_channel
     , bool is_saving_files
+    , bool enable_validator
     , ICAPService * icap_service) noexcept
-        : streamID(0)
+        : dir_path(dir_path)
+        , streamID(0)
         , is_interupting_channel(is_interupting_channel)
         , is_saving_files(is_saving_files)
+        , enable_validator(enable_validator)
         , icap_service(icap_service)
-    {
-        if (this->is_saving_files) {
-            if (!dir_path.empty()) {
-                this->fd = unique_fd(std::move(dir_path), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-            }
-        }
-    }
-
-//     void operator=(const ChannelFile & channel_file) {
-//         this->dir_path = channel_file.dir_path;
-//         this->total_file_size = channel_file.total_file_size;
-//         this->current_file_size = 0;
-//         this->valid = false;
-//
-//         std::string file_path = this->dir_path + this->filename;
-//         std::ifstream file(file_path.c_str());
-//         if (!file.good()) {
-//             this->fd = unique_fd(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-//             if (!this->fd.is_open()) {
-//                 LOG(LOG_WARNING,"File error, can't open %s", file_path);
-//             }
-//         } else {
-//             LOG(LOG_WARNING,"Error,file %s already exist", file_path);
-//         }
-//     }
-//
-//     ChannelFile(const std::string & dir_path, const std::string & filename)
-//     : dir_path(dir_path)
-//     , filename(filename)
-//     , fd(invalid_fd())
-//     , total_file_size(0)
-//     , current_file_size(0)
-//     , valid(false)
-//     {
-//         std::string file_path = this->dir_path + filename;
-//         std::ifstream file(file_path.c_str());
-//         if (!file.good()) {
-//             this->fd = unique_fd(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-//             if (!this->fd.is_open()) {
-//                 LOG(LOG_WARNING,"File error, can't open %s", file_path);
-//             }
-//         } else {
-//             LOG(LOG_WARNING,"Error,file %s already exist", file_path);
-//         }
-//     }
+    {}
 
     void set_total_file_size(const size_t total_file_size) {
         this->total_file_size = total_file_size;
@@ -123,25 +83,26 @@ public:
         this->total_file_size = total_file_size;
         this->filename = filename;
         this->current_file_size = 0;
+        this->valid = false;
         this->fd.close();
 
         if (this->is_saving_files) {
+
             this->file_path = this->dir_path + get_full_text_sec_and_usec(tv) + "_" + this->filename;
-            std::ifstream file(this->file_path.c_str());
-            if (!file.good()) {
-                this->fd = unique_fd(this->file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-                if (!this->fd.is_open()) {
-                    LOG(LOG_WARNING,"File error, can't open %s", file_path);
-                }
-            } else {
-                LOG(LOG_WARNING,"Error,file %s already exist", file_path);
+
+            this->fd = unique_fd(this->file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+            if (!this->fd.is_open()) {
+                LOG(LOG_WARNING,"File error, can't open %s", file_path);
             }
         }
 
-        this->streamID = icap_open_file(this->icap_service, filename.c_str());
+        if (this->enable_validator) {
+            this->streamID = icap_open_file(this->icap_service, filename.c_str());
+        }
     }
 
     void set_data(const uint8_t * data, const size_t data_size) {
+
         if (this->is_saving_files) {
             if (this->fd.is_open()) {
                 size_t new_size = this->current_file_size + data_size;
@@ -162,11 +123,12 @@ public:
             }
         }
 
-        icap_send_data(this->icap_service, this->streamID, char_ptr_cast(data), data_size);
-
-//         if ( this->current_file_size >= this->total_file_size) {
-//             icap_end_of_file(this->icap_service, this->streamID);
-//         }
+        if (this->enable_validator) {
+            icap_send_data(this->icap_service, this->streamID, char_ptr_cast(data), data_size);
+            if (this->icap_service->result == 0) {
+                this->valid = true;
+            }
+        }
     }
 
     void set_end_of_file() {
@@ -174,18 +136,20 @@ public:
     }
 
     void read_data(uint8_t * buffer, const size_t data_len) {
-        this->fd = unique_fd(this->file_path.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-//         std::ifstream file(this->file_path.c_str());
-        if (this->fd.is_open()) {
+        if (this->is_saving_files) {
+            this->fd = unique_fd(this->file_path.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
-            size_t read_size = ::read(fd.fd(), buffer, data_len);
+            if (this->fd.is_open()) {
 
-            if (read_size != data_len) {
-                LOG(LOG_WARNING,"Read error, can't read data (%zu/%zu) in %s ", read_size, data_len, this->file_path);
+                size_t read_size = ::read(fd.fd(), buffer, data_len);
+
+                if (read_size != data_len) {
+                    LOG(LOG_WARNING,"Read error, can't read data (%zu/%zu) in %s ", read_size, data_len, this->file_path);
+                }
+                this->fd.close();
+            } else {
+                LOG(LOG_WARNING,"File error, can't open %s", this->file_path);
             }
-            this->fd.close();
-        } else {
-            LOG(LOG_WARNING,"File error, can't open %s", this->file_path);
         }
     }
 
@@ -195,7 +159,7 @@ public:
 
     void receive_result() {
         icap_receive_result(this->icap_service);
-//         LOG(LOG_INFO, "%s", this->icap_service->content);
+//         LOG(LOG_INFO, "%d %s", this->icap_service->result, this->icap_service->content);
     }
 
     uint8_t get_direction() {
@@ -215,8 +179,7 @@ public:
     }
 
     bool is_valid() {
-        this->valid = true;
-        return this->is_complete() && this->valid;
+        return /*this->is_complete() &&*/ (this->icap_service->result == 0);
     }
 
     ~ChannelFile() {
@@ -230,5 +193,11 @@ public:
     std::string get_file_name() {
         return this->filename;
     }
+
+    bool is_save_files() {
+        return this->is_saving_files;
+    }
+
+
 
 };

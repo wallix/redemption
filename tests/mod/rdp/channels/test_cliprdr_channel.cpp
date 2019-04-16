@@ -407,6 +407,7 @@ public:
 //     session_reactor.set_current_time(time_test);
 //
 //     NullReportMessage report_message;
+//     ICAPService * icap_service = nullptr;
 //
 //     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 //
@@ -414,14 +415,17 @@ public:
 //     clipboard_virtual_channel_params.clipboard_down_authorized = true;
 //     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
 //     clipboard_virtual_channel_params.clipboard_file_authorized = true;
+//     clipboard_virtual_channel_params.enable_interupting_validator = true;
+//     clipboard_virtual_channel_params.enable_save_files = true;
+//     clipboard_virtual_channel_params.enable_validator = true;
 //
 //     TestResponseSender to_client_sender;
 //     NullSender to_server_sender;
 //
 //     ClipboardVirtualChannel clipboard_virtual_channel(
-//         &to_client_sender, &to_server_sender, front, true, wd.dirname(), session_reactor,
+//         &to_client_sender, &to_server_sender, front, wd.dirname(), session_reactor,
 //         base_params,
-//         clipboard_virtual_channel_params);
+//         clipboard_virtual_channel_params, icap_service);
 //
 //     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 //
@@ -890,8 +894,8 @@ public:
 //
 //     RED_CHECK_WORKSPACE(wd);
 // }
-
-
+//
+//
 // RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
 //     WorkingDirectory wd("TestCliprdrChannelFilterClientDataFile");
 //
