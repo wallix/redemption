@@ -215,8 +215,9 @@
 "#   15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)\n"
 "#   16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)\n"
 "#   24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)\n"
+"#   32: 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)\n"
 "#_advanced\n"
-"max_color_depth = option(8, 15, 16, 24, default=24)\n\n"
+"max_color_depth = option(8, 15, 16, 24, 32, default=24)\n\n"
 
 "# Persistent Disk Bitmap Cache on the front side.\n"
 "#_advanced\n"
@@ -234,9 +235,13 @@
 "#_advanced\n"
 "bitmap_compression = boolean(default=True)\n\n"
 
-"# Enables support of Clent Fast-Path Input Event PDUs.\n"
+"# Enables support of Client Fast-Path Input Event PDUs.\n"
 "#_advanced\n"
 "fast_path = boolean(default=True)\n\n"
+
+"# Enables support of the remoteFX codec.\n"
+"#_advanced\n"
+"remotefx = boolean(default=True)\n\n"
 
 "enable_suppress_output = boolean(default=True)\n\n"
 

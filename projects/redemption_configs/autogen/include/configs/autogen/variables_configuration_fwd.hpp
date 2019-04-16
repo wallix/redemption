@@ -86,6 +86,7 @@ namespace cfg {
         struct persist_bitmap_cache_on_disk;
         struct bitmap_compression;
         struct fast_path;
+        struct remotefx;
         struct enable_suppress_output;
         struct ssl_cipher_list;
         struct show_target_user_in_f12_message;

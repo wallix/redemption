@@ -231,7 +231,8 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client Fast-Path Input Event PDUs."}, set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "remotefx", desc{"Enables support of the remoteFX codec."}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_suppress_output", set(true));
 

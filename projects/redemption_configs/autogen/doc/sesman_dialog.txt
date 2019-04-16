@@ -206,6 +206,7 @@ cfg::context::opt_bpp <-> bpp   [ColorDepth]
       15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
       16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
       24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
+      32: 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)
 cfg::context::opt_height <-> height   [uint16_t]
 cfg::context::opt_width <-> width   [uint16_t]
 cfg::context::selector <- selector   [bool]

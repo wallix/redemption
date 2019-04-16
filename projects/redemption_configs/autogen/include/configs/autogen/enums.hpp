@@ -548,6 +548,8 @@ enum class ColorDepth : unsigned char
     depth16 = 16,
     // 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
     depth24 = 24,
+    // 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)
+    depth32 = 32,
 };
 
 inline bool is_valid_enum_value(ColorDepth e)
@@ -558,6 +560,7 @@ inline bool is_valid_enum_value(ColorDepth e)
      || i == 15
      || i == 16
      || i == 24
+     || i == 32
     ;
 }
 
