@@ -163,7 +163,7 @@ namespace MCS
     {
         InStream & stream;
 
-        explicit InBerStream(InStream & stream)
+        explicit InBerStream(InStream & stream) noexcept
         : stream(stream)
         {
         }
@@ -317,7 +317,8 @@ namespace MCS
             return l;
         }
 
-        uint16_t in_uint16_be_with_check(bool & result) {
+        uint16_t in_uint16_be_with_check(bool & result) noexcept
+        {
             if (this->in_check_rem(2)){
                 result = true;
                 return this->stream.in_uint16_be();
@@ -327,7 +328,8 @@ namespace MCS
             return 0;
         }
 
-        unsigned char in_uint8_with_check(bool & result) {
+        unsigned char in_uint8_with_check(bool & result) noexcept
+        {
             if (this->stream.in_check_rem(1)){
                 result = true;
                 return this->stream.in_uint8();
@@ -337,24 +339,26 @@ namespace MCS
             return 0;
         }
 
-        unsigned in_bytes_le(const uint8_t nb){
+        unsigned in_bytes_le(const uint8_t nb) noexcept
+        {
             return this->stream.in_bytes_le(nb);
         }
 
-
-        bool in_check_rem(const unsigned n) const {
+        bool in_check_rem(const unsigned n) const noexcept
+        {
             // returns true if there is enough data available to read n bytes
             return this->stream.in_check_rem(n);
         }
 
-        size_t in_remain() const {
+        size_t in_remain() const noexcept
+        {
             return this->stream.in_remain();
         }
 
-        uint32_t get_offset() const {
+        uint32_t get_offset() const noexcept
+        {
             return this->stream.get_offset();
         }
-
     };
 
     struct OutBerStream
@@ -373,12 +377,13 @@ namespace MCS
 
         OutStream & stream;
 
-        explicit OutBerStream(OutStream & stream)
+        explicit OutBerStream(OutStream & stream) noexcept
         : stream(stream)
         {
         }
 
-        void out_ber_len(unsigned int v){
+        void out_ber_len(unsigned int v) noexcept
+        {
             if (v < 0x80){
                 this->stream.out_uint8(static_cast<uint8_t>(v));
             }
@@ -392,7 +397,8 @@ namespace MCS
             }
         }
 
-        void out_ber_integer(unsigned int v){
+        void out_ber_integer(unsigned int v) noexcept
+        {
             this->stream.out_uint8(BER_TAG_INTEGER);
             if (v < 0x80) {
                 this->stream.out_uint8(1);
@@ -411,42 +417,41 @@ namespace MCS
             }
         }
 
-        void set_out_ber_len_uint7(unsigned int v, size_t offset){
-            if (v >= 0x80) {
-                LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
-                throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
-            }
-            this->stream.stream_at(offset).out_uint8(static_cast<uint8_t>(v));
+        void set_out_ber_len_uint7(unsigned int v, size_t offset) noexcept
+        {
+            auto out_stream = this->stream.stream_at(offset);
+            OutBerStream(out_stream).out_ber_len_uint7(v);
         }
 
-        void out_ber_len_uint7(unsigned int v){
-            if (v >= 0x80) {
-                LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
-                throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
-            }
+        void out_ber_len_uint7(unsigned int v) noexcept
+        {
             this->stream.out_uint8(static_cast<uint8_t>(v));
         }
 
-        void set_out_ber_len_uint16(unsigned int v, size_t offset){
+        void set_out_ber_len_uint16(unsigned int v, size_t offset) noexcept
+        {
             auto out_stream = this->stream.stream_at(offset);
-            out_stream.out_uint8(0x82);
-            out_stream.out_uint16_be(v);
+            OutBerStream(out_stream).out_ber_len_uint16(v);
         }
 
-        void out_ber_len_uint16(unsigned int v){
+        void out_ber_len_uint16(unsigned int v) noexcept
+        {
             this->stream.out_uint8(0x82);
             this->stream.out_uint16_be(v);
         }
 
-        uint32_t get_offset() const {
+        uint32_t get_offset() const noexcept
+        {
             return this->stream.get_offset();
         }
 
-        void out_uint16_be(unsigned int v) {
+        void out_uint16_be(unsigned int v) noexcept
+        {
             return this->stream.out_uint16_be(v);
         }
 
-        void out_uint8(unsigned char v) {
+        void out_uint8(unsigned char v) noexcept
+        {
             return this->stream.out_uint8(v);
         }
     };
