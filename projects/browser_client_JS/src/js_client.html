@@ -133,9 +133,7 @@ const redemption = (function(Module, window) {
 
     const noop = function(){};
 
-    resultFuncs = {
-        HEAPU8: HEAPU8,
-    };
+    let resultFuncs = {};
 
     resultFuncs.newRDPClient = function(url, width, height, username, password, verbosity) {
         const socket = new WebSocket(url, "RDP");
@@ -338,7 +336,8 @@ const redemption = (function(Module, window) {
 
 const newRDPClient = redemption.newRDPClient;
 const newClipboardChannel = redemption.newClipboardChannel;
-const HEAPU8 = redemption.HEAPU8;
+const HEAPU8 = Module.HEAPU8;
+const HEAPU16 = Module.HEAPU16;
 
 
 const ecanvasFocus = document.getElementById('canvasFocus');
@@ -776,6 +775,71 @@ function decodeName(iname, inameLen, isUTF8)
     return (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(uname);
 }
 
+
+class OutStream
+{
+    constructor(ptr) {
+        this.i = ptr;
+    }
+
+    skip(n) {
+        this.i += n;
+    }
+
+    u64lem(x) {
+        if (x > 0xffffffff) {
+            this.u32le(x - 0xffffffff);
+        }
+        else {
+            this.bzero(4);
+        }
+        this.u32le(x);
+    }
+
+    u64le(x) {
+        this.u32le(x);
+        if (x > 0xffffffff) {
+            this.u32le(x - 0xffffffff);
+        }
+        else {
+            this.bzero(4);
+        }
+    }
+
+    u32le(x) {
+        HEAPU8[this.i++] = x;
+        HEAPU8[this.i++] = (x >> 8);
+        HEAPU8[this.i++] = (x >> 16);
+        HEAPU8[this.i++] = (x >> 24);
+    }
+
+    u16le(x) {
+        HEAPU8[this.i++] = x;
+        HEAPU8[this.i++] = (x >> 8);
+    }
+
+    bzero(n) {
+        HEAPU8.fill(0, this.i, this.i + n);
+        this.i += n;
+    }
+
+    copyAsArray(array) {
+        HEAPU8.set(array, this.i);
+        this.i += array.length;
+    }
+
+    copyStringAsAlignedUTF16(str) {
+        // Module.stringToUTF16(str, this.i, 0x7FFFFFFF/*, this.iend - this.i*/) + 2;
+        let iheap = this.i / 2;
+        const iend = str.length;
+        for (let i = 0; i < iend; ++i, ++iheap) {
+            HEAPU16[iheap] = str.charCodeAt(i);
+        }
+        this.i = iheap * 2
+    }
+}
+
+
 function run()
 {
     rdpclient = newRDPClient(
@@ -1068,77 +1132,29 @@ function run()
                     const file = sendCbFile_data.files[0]
 
                     const ptr = Module._malloc(700);
-                    const H = Module.HEAPU8;
                     const flags = FileFlags.FileSize | FileFlags.ShowProgressUI /*| FileFlags.WriteTime*/;
                     const attrs = FileAttributes.Normal;
-                    let i = ptr;
+                    const stream = new OutStream(ptr);
 
-                    H[i++] = CbType.DataResponse & 0xff;
-                    H[i++] = (CbType.DataResponse >> 8) & 0xff;
+                    stream.u16le(CbType.DataResponse);
+                    stream.u16le(MsgFlags.Ok);
+                    const headerSizePos = stream.i;
+                    stream.skip(4);
 
-                    H[i++] = MsgFlags.Ok & 0xff;
-                    H[i++] = (MsgFlags.Ok >> 8) & 0xff;
+                    stream.u32le(1/*files.length*/);
+                    stream.u32le(flags);
+                    stream.bzero(32);
+                    stream.u32le(attrs);
+                    stream.bzero(16);
+                    // lastWriteTime: specifies the number of 100-nanoseconds intervals that have elapsed since 1 January 1601.
+                    stream.u64le((file.lastModified + 11644473600) * 10000000);
+                    stream.u64lem(file.size);
+                    stream.copyStringAsAlignedUTF16(file.name);
+                    stream.bzero(520 - file.name.length * 2);
 
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
-
-                    // nb item
-                    H[i++] = 1;
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
-
-                    // flag
-                    H[i++] = flags & 0xff;
-                    H[i++] = (flags >> 8) & 0xff;
-                    H[i++] = (flags >> 16) & 0xff;
-                    H[i++] = (flags >> 24) & 0xff;
-
-                    for (let j = 0; j < 32; ++j) {
-                        H[i++] = 0;
-                    }
-
-                    H[i++] = attrs & 0xff;
-                    H[i++] = (attrs >> 8) & 0xff;
-                    H[i++] = (attrs >> 16) & 0xff;
-                    H[i++] = (attrs >> 24) & 0xff;
-
-                    for (let j = 0; j < 16; ++j) {
-                        H[i++] = 0;
-                    }
-
-                    // lastWriteTime (8 bytes): An unsigned 64-bit integer that specifies the number of 100-nanoseconds intervals that have elapsed since 1 January 1601 to the time of the last write operation on the file.
-                    for (let j = 0; j < 8; ++j) {
-                        H[i++] = 0;
-                    }
-
-                    // size high
-                    if (file.size > 0xffffffff) {
-                        H[i++] = (file.size - 0xffffffff) & 0xff;
-                        H[i++] = ((file.size - 0xffffffff) >> 8) & 0xff;
-                    }
-                    else {
-                        H[i++] = 0;
-                        H[i++] = 0;
-                    }
-                    H[i++] = 0;
-                    H[i++] = 0;
-
-                    // size low
-                    H[i++] = file.size & 0xff;
-                    H[i++] = (file.size >> 8) & 0xff;
-                    H[i++] = (file.size >> 16) & 0xff;
-                    H[i++] = (file.size >> 24) & 0xff;
-
-                    // name
-                    i += Module.stringToUTF16(file.name, i, i-ptr) + 2;
-
-                    const totalLen = i-ptr;
-
-                    H[ptr+4] = totalLen & 0xff;
-                    H[ptr+5] = (totalLen >> 8) & 0xff;
+                    const totalLen = stream.i - ptr;
+                    stream.i = headerSizePos;
+                    stream.u32le(totalLen);
 
                     console.log(totalLen);
 
@@ -1161,47 +1177,19 @@ function run()
                 {
                 case FileContentsOp.Size: {
                     const ptr = Module._malloc(32);
-                    const H = Module.HEAPU8;
-                    let i = ptr;
+                    const stream = new OutStream(ptr);
 
-                    H[i++] = CbType.FileContentsResponse & 0xff;
-                    H[i++] = (CbType.FileContentsResponse >> 8) & 0xff;
+                    stream.u16le(CbType.FileContentsResponse);
+                    stream.u16le(MsgFlags.Ok);
+                    const headerSizePos = stream.i;
+                    stream.skip(4);
 
-                    H[i++] = MsgFlags.Ok & 0xff;
-                    H[i++] = (MsgFlags.Ok >> 8) & 0xff;
+                    stream.u32le(streamId);
+                    stream.u64le(file.size);
 
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
-                    H[i++] = 0;
-
-                    H[i++] = streamId & 0xff;
-                    H[i++] = (streamId >> 8) & 0xff;
-                    H[i++] = (streamId >> 16) & 0xff;
-                    H[i++] = (streamId >> 24) & 0xff;
-
-                    // size low
-                    H[i++] = file.size & 0xff;
-                    H[i++] = (file.size >> 8) & 0xff;
-                    H[i++] = (file.size >> 16) & 0xff;
-                    H[i++] = (file.size >> 24) & 0xff;
-
-                    // size high
-                    if (file.size > 0xffffffff) {
-                        H[i++] = (file.size - 0xffffffff) & 0xff;
-                        H[i++] = ((file.size - 0xffffffff) >> 8) & 0xff;
-                    }
-                    else {
-                        H[i++] = 0;
-                        H[i++] = 0;
-                    }
-                    H[i++] = 0;
-                    H[i++] = 0;
-
-                    const totalLen = i-ptr;
-
-                    H[ptr+4] = totalLen & 0xff;
-                    H[ptr+5] = (totalLen >> 8) & 0xff;
+                    const totalLen = stream.i - ptr;
+                    stream.i = headerSizePos;
+                    stream.u32le(totalLen);
 
                     console.log(totalLen);
 
@@ -1220,32 +1208,21 @@ function run()
                         const contents = new Uint8Array(e.target.result);
                         console.log(contents.length);
                         const ptr = Module._malloc(32 + contents.length);
-                        const H = Module.HEAPU8;
-                        let i = ptr;
+                        const stream = new OutStream(ptr);
 
-                        H[i++] = CbType.FileContentsResponse & 0xff;
-                        H[i++] = (CbType.FileContentsResponse >> 8) & 0xff;
+                        stream.u16le(CbType.FileContentsResponse);
+                        stream.u16le(MsgFlags.Ok);
+                        const headerSizePos = stream.i;
+                        stream.skip(4);
 
-                        H[i++] = MsgFlags.Ok & 0xff;
-                        H[i++] = (MsgFlags.Ok >> 8) & 0xff;
+                        stream.u32le(streamId);
+                        stream.copyAsArray(contents);
 
-                        H[i++] = 0;
-                        H[i++] = 0;
-                        H[i++] = 0;
-                        H[i++] = 0;
+                        const totalLen = stream.i - ptr;
+                        stream.i = headerSizePos;
+                        stream.u32le(totalLen);
 
-                        H[i++] = streamId & 0xff;
-                        H[i++] = (streamId >> 8) & 0xff;
-                        H[i++] = (streamId >> 16) & 0xff;
-                        H[i++] = (streamId >> 24) & 0xff;
-
-                        H.set(contents, i);
-                        i += contents.length;
-
-                        const totalLen = i-ptr;
-
-                        H[ptr+4] = totalLen & 0xff;
-                        H[ptr+5] = (totalLen >> 8) & 0xff;
+                        console.log(totalLen);
 
                         clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
 
