@@ -28,6 +28,7 @@
 #include <cinttypes>
 
 
+
 /** 2.2.2.1.6 TS_RFX_RECT
  * The TS_RFX_RECT structure is used to specify a rectangle.
  *
@@ -555,7 +556,7 @@ void TS_RFX_TILE::draw(const RDPSetSurfaceCommand &/*cmd*/, const TS_RFX_TILESET
 	Primitives *prims = Primitives::instance();
 	Primitives::pstatus_t status = prims->yCbCrToRGB_16s8u_P3AC4R(yCbCr_channels, 64 * sizeof(int16_t),
 			dest, content.stride,
-			Primitives::PIXEL_FORMAT_RGBX32, &roi_64x64);
+			Primitives::PIXEL_FORMAT_BGRX32, &roi_64x64);
 
 	delete [] destBuffer;
 
@@ -670,7 +671,7 @@ static size_t roundTo(size_t l, size_t mod) {
 //		number of structures present in the array is indicated in the numTiles field, while the total
 //	size, in bytes, of this field is specified by the tilesDataSize field.
 
-void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, const TS_RFX_RECT &/*rect*/, gdi::GraphicApi & drawable) {
+void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, const SubRegion &region, gdi::GraphicApi & drawable) {
 	TS_RFX_CODEC_CHANNELT::recv(stream);
 
 	size_t expected = 12;
@@ -734,7 +735,8 @@ void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, co
     	tiles[i].recv(tilesStream);
 
     uint16_t width = roundTo(cmd.width, 64);
-    RDPSurfaceContent content(width, roundTo(cmd.height, 64), width * 4);
+    uint16_t height = roundTo(cmd.height, 64);
+    RDPSurfaceContent content(width, height, width * 4, cmd.destRect, region);
     for (int i = 0; i < numTiles; i++)
     	tiles[i].draw(cmd, *this, content);
 
@@ -841,13 +843,16 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 			}
 			case WBT_REGION: {
 				currentRegion.recv(packetStream);
-				currentRegionIndex = 0;
 				break;
 			}
 			case WBT_EXTENSION: {
 				TS_RFX_TILESET tileset;
-				tileset.recv(packetStream, cmd, currentRegion.rects[currentRegionIndex], drawable);
-				currentRegionIndex++;
+				SubRegion region;
+				for (int i = 0; i < currentRegion.numRects; i++) {
+					const TS_RFX_RECT &rfxRect = currentRegion.rects[i];
+					region.add_rect( Rect(rfxRect.x, rfxRect.y, rfxRect.width, rfxRect.height) );
+				}
+				tileset.recv(packetStream, cmd, region, drawable);
 				break;
 			}
 			default:

@@ -65,6 +65,7 @@
 #include "core/RDP/capabilities/pointer.hpp"
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
+#include "core/RDP/orders/RDPSurfaceCommands.hpp"
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/lic.hpp"
@@ -656,7 +657,7 @@ public:
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override { }
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override { this->draw_impl(cmd, content); }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
@@ -2275,7 +2276,7 @@ public:
                                 FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
 
                                 LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PUD, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
+                                    "Front::incoming: Received Fast-Path PDU, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
                                     ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
 
                                 if ((1 == num_events) &&
@@ -2298,7 +2299,7 @@ public:
                                 FastPath::MouseEvent_Recv me(cfpie.payload, byte);
 
                                 LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                                    "Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
                                     me.pointerFlags, me.xPos, me.yPos);
 
                                 this->mouse_x = me.xPos;
@@ -2347,7 +2348,7 @@ public:
                                 FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
 
                                 LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PUD, sync eventFlags=0x%X",
+                                    "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
                                     se.eventFlags);
                                 LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
                                     static_cast<unsigned int>(se.eventFlags));
@@ -2365,7 +2366,7 @@ public:
                                 FastPath::UnicodeKeyboardEvent_Recv uke(cfpie.payload, byte);
 
                                 LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PUD, unicode unicode=0x%04X",
+                                    "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
                                     uke.unicodeCode);
 
                                 if (this->up_and_running) {
@@ -4149,6 +4150,30 @@ protected:
         else {
             LOG(LOG_WARNING, "Front::draw_impl(RDPPatBlt): This Primary Drawing Order is not supported by client!");
         }
+    }
+
+    void draw_impl(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) {
+    	for (const Rect & rect1 : content.region.rects) {
+    		Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
+
+			Bitmap bitmap(content.data, content.stride, rect);
+
+			LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
+					rect1.left(), rect1.top(), rect1.width(), rect1.height(),
+					rect.left(), rect.top(), rect.width(), rect.height());
+			RDPBitmapData bitmap_data;
+			bitmap_data.dest_left = rect.left();
+			bitmap_data.dest_right = rect.right() - 1;
+			bitmap_data.dest_top = rect.top();
+			bitmap_data.dest_bottom = rect.bottom() - 1;
+			bitmap_data.width = rect.width();
+			bitmap_data.height = rect.height();
+			bitmap_data.bits_per_pixel = 32;
+			bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
+			bitmap_data.bitmap_length = bitmap.bmp_size();
+
+			this->draw_impl(bitmap_data, bitmap);
+    	}
     }
 
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {

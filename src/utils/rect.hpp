@@ -57,6 +57,14 @@ struct Rect {
         return static_cast<int16_t>(this->y + this->cy);
     }
 
+    uint16_t width() const {
+    	return this->cx;
+    }
+
+    uint16_t height() const {
+    	return this->cy;
+    }
+
     Rect() = default;
 
     Rect(int16_t left, int16_t top, uint16_t width, uint16_t height) noexcept
