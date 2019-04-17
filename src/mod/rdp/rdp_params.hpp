@@ -113,6 +113,8 @@ struct ModRDPParams {
 
     bool                         session_probe_childless_window_as_unidentified_input_field = true;
 
+    std::chrono::milliseconds    session_probe_launcher_abort_delay {};
+
     bool                         session_probe_public_session = false;
 
     Transport  * persistent_key_list_transport = nullptr;
@@ -314,6 +316,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_ignore_ui_less_processes_during_end_of_session_check);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_childless_window_as_unidentified_input_field);
+
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_launcher_abort_delay);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_public_session);
 

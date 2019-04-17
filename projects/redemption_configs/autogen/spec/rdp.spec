@@ -209,6 +209,10 @@ smart_launcher_long_delay = integer(min=0, default=500)
 #_advanced
 smart_launcher_short_delay = integer(min=0, default=50)
 
+# (is in millisecond)
+#_advanced
+abort_delay = integer(min=0, default=2000)
+
 #_advanced
 enable_crash_dump = boolean(default=False)
 

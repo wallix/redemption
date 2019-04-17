@@ -343,6 +343,8 @@ private:
 
     const bool param_session_probe_childless_window_as_unidentified_input_field;
 
+    const std::chrono::milliseconds param_session_probe_launcher_abort_delay;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -436,6 +438,8 @@ public:
 
         uninit_checked<bool> show_maximized;
 
+        uninit_checked<std::chrono::milliseconds> session_probe_launcher_abort_delay;
+
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message)
         {}
@@ -490,6 +494,7 @@ public:
     , param_disabled_features(params.session_probe_disabled_features)
     , param_session_probe_ignore_ui_less_processes_during_end_of_session_check(params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
     , param_session_probe_childless_window_as_unidentified_input_field(params.session_probe_childless_window_as_unidentified_input_field)
+    , param_session_probe_launcher_abort_delay(params.session_probe_launcher_abort_delay)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -547,7 +552,7 @@ public:
     void abort_launch()
     {
         this->session_probe_timer = this->session_reactor.create_timer()
-        .set_delay(std::chrono::seconds())
+        .set_delay(this->param_session_probe_launcher_abort_delay)
         .on_action(jln::one_shot([this](){
             this->process_event_launch();
         }));

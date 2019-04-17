@@ -465,6 +465,10 @@
 "#_hidden\n"
 "session_probe_clipboard_based_launcher_short_delay = integer(min=0, default=50)\n\n"
 
+"# (is in millisecond)\n"
+"#_hidden\n"
+"session_probe_launcher_abort_delay = integer(min=0, default=2000)\n\n"
+
 "#_advanced\n"
 "session_probe_allow_multiple_handshake = boolean(default=False)\n\n"
 

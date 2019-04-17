@@ -369,6 +369,8 @@ private:
 
     const bool                        session_probe_childless_window_as_unidentified_input_field;
 
+    const std::chrono::milliseconds   session_probe_launcher_abort_delay;
+
     const bool                        session_probe_public_session;
 
     const bool                        bogus_ios_rdpdr_virtual_channel;
@@ -797,6 +799,7 @@ public:
         , session_probe_disabled_features(mod_rdp_params.session_probe_disabled_features)
         , session_probe_ignore_ui_less_processes_during_end_of_session_check(mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
         , session_probe_childless_window_as_unidentified_input_field(mod_rdp_params.session_probe_childless_window_as_unidentified_input_field)
+        , session_probe_launcher_abort_delay(mod_rdp_params.session_probe_launcher_abort_delay)
         , session_probe_public_session(mod_rdp_params.session_probe_public_session)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
@@ -1398,6 +1401,9 @@ private:
              (this->monitor_count > 1));
         session_probe_virtual_channel_params.show_maximized                         =
             (!this->remote_program);
+
+        session_probe_virtual_channel_params.session_probe_launcher_abort_delay     =
+            this->session_probe_launcher_abort_delay;
 
         return session_probe_virtual_channel_params;
     }

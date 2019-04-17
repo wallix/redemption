@@ -145,6 +145,8 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.session_probe_childless_window_as_unidentified_input_field = ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
 
+    mod_rdp_params.session_probe_launcher_abort_delay                         = ini.get<cfg::mod_rdp::session_probe_launcher_abort_delay>();
+
     mod_rdp_params.session_probe_public_session        = ini.get<cfg::mod_rdp::session_probe_public_session>();
 
     mod_rdp_params.disable_clipboard_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
