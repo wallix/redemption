@@ -373,7 +373,7 @@ RdpNegociation::RdpNegociation(
     , trans(trans)
     , password_printing_mode(mod_rdp_params.password_printing_mode)
     , enable_session_probe(mod_rdp_params.session_probe_params.enable_session_probe)
-    , enable_remotefx(mod_rdp_params.enable_remotefx)
+    , enable_remotefx(mod_rdp_params.enable_remotefx && info.bitmap_codec_caps.haveRemoteFxCodec)
     , rdp_compression(mod_rdp_params.rdp_compression)
     , session_probe_use_clipboard_based_launcher(
         mod_rdp_params.session_probe_params.used_clipboard_based_launcher
