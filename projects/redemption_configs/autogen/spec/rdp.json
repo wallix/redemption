@@ -316,6 +316,15 @@
           "description": ""
         },
         {
+          "name": "launcher_abort_delay",
+          "type": "integer",
+          "min": 0,
+          "max": 300000,
+          "default": 2000,
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "enable_crash_dump",
           "type": "bool",
           "default": false,

@@ -204,7 +204,7 @@ public:
     void abort_launch()
     {
         this->session_probe_timer = this->session_reactor.create_timer()
-        .set_delay(std::chrono::seconds())
+        .set_delay(this->sespro_params.launcher_abort_delay)
         .on_action(jln::one_shot([this](){
             this->process_event_launch();
         }));
