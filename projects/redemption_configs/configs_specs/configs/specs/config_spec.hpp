@@ -378,7 +378,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", connpolicy::name{"smart_launcher_long_delay"}, sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", connpolicy::name{"smart_launcher_short_delay"}, sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_launcher_abort_delay", connpolicy::name{"abort_delay"}, sesman::name{"session_probe_launcher_abort_delay"}, set(2000));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_launcher_abort_delay", connpolicy::name{"launcher_abort_delay"}, sesman::name{"session_probe_launcher_abort_delay"}, set(2000));
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_allow_multiple_handshake", set(false));
