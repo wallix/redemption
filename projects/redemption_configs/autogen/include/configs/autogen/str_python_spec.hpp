@@ -467,7 +467,7 @@
 
 "# (is in millisecond)\n"
 "#_hidden\n"
-"session_probe_launcher_abort_delay = integer(min=0, default=2000)\n\n"
+"session_probe_launcher_abort_delay = integer(min=0, max=300000, default=2000)\n\n"
 
 "#_advanced\n"
 "session_probe_allow_multiple_handshake = boolean(default=False)\n\n"

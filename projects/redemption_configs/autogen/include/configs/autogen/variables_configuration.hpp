@@ -1850,7 +1850,7 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(53);
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         using mapped_type = sesman_and_spec_type;
         type value{2000};
     };
@@ -4716,7 +4716,6 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay
-, cfg::mod_rdp::session_probe_launcher_abort_delay
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::rdp_compression
@@ -4765,6 +4764,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_idle_session_limit
 , cfg::mod_rdp::session_probe_exe_or_file
 , cfg::mod_rdp::session_probe_arguments
+, cfg::mod_rdp::session_probe_launcher_abort_delay
 , cfg::mod_rdp::session_probe_allow_multiple_handshake
 , cfg::mod_rdp::session_probe_enable_crash_dump
 , cfg::mod_rdp::session_probe_handle_usage_limit

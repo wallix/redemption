@@ -944,7 +944,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_launcher_abort_delay&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
                 av
             );
         }
