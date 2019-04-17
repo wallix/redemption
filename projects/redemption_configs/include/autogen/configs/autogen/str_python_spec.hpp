@@ -493,6 +493,10 @@
 "#_hidden\n"
 "session_probe_childless_window_as_unidentified_input_field = boolean(default=True)\n\n"
 
+"# (is in millisecond)\n"
+"#_hidden\n"
+"session_probe_launcher_abort_delay = integer(min=0, default=2000)\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "server_cert_store = boolean(default=True)\n\n"

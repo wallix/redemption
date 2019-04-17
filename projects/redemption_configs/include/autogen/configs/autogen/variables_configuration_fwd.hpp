@@ -154,6 +154,7 @@ namespace cfg {
         struct session_probe_disabled_features;
         struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
         struct session_probe_childless_window_as_unidentified_input_field;
+        struct session_probe_launcher_abort_delay;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;

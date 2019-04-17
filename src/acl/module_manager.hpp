@@ -1448,6 +1448,8 @@ public:
 
                 mod_rdp_params.session_probe_childless_window_as_unidentified_input_field = ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
 
+                mod_rdp_params.session_probe_launcher_abort_delay                         = this->ini.get<cfg::mod_rdp::session_probe_launcher_abort_delay>();
+
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());
                 mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::checkout_channel>());

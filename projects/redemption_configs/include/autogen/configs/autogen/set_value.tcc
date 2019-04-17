@@ -1492,6 +1492,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "session_probe_launcher_abort_delay")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_launcher_abort_delay&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::session_probe_launcher_abort_delay&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "server_cert_store")) {
             ::configs::parse_and_log(
                 context, key,

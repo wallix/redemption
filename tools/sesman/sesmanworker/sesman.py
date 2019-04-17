@@ -1957,6 +1957,7 @@ class Sesman():
                 u'session_probe_ignore_ui_less_processes_during_end_of_session_check': 'ignore_ui_less_processes_during_end_of_session_check',
                 u'session_probe_childless_window_as_unidentified_input_field': 'childless_window_as_unidentified_input_field',
                 u'session_probe_windows_of_these_applications_as_unidentified_input_field': 'windows_of_these_applications_as_unidentified_input_field',
+                u'session_probe_launcher_abort_delay' : 'launcher_abort_delay',
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',

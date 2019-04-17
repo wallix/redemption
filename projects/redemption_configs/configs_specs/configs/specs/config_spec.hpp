@@ -418,6 +418,9 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", set(true));
         W.sep();
 
+        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_launcher_abort_delay", set(2000));
+        W.sep();
+
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, sesman_to_proxy, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 
