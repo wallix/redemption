@@ -88,11 +88,19 @@ namespace LocalICAPServiceProtocol {
     // | ABORT_FILE_FLAG    | Abort file.                             |
     // | 0x04               |                                         |
     // +--------------------+-----------------------------------------+
+    // | RESULT_FLAG        | Result received from Validator          |
+    // | 0x05               |                                         |
+    // +--------------------+-----------------------------------------+
+    // | CHECK_FLAG         | File validator check server icap result |
+    // | 0x06               |                                         |
+    // +--------------------+-----------------------------------------+
         NEW_FILE_FLAG      = 0x00,
         DATA_FILE_FLAG     = 0x01,
         CLOSE_SESSION_FLAG = 0x02,
         END_OF_FILE_FLAG   = 0x03,
-        ABORT_FILE_FLAG    = 0x04
+        ABORT_FILE_FLAG    = 0x04,
+        RESULT_FLAG        = 0x05,
+        CHECK_FLAG         = 0x06
     };
 
     enum {
@@ -113,14 +121,29 @@ namespace LocalICAPServiceProtocol {
         ERROR_FLAG    = 0x02
     };
 
+    enum {
+    // +--------------------+-----------------------------------------+
+    // | Value              | Meaning                                 |
+    // +--------------------+-----------------------------------------+
+    // | ACCEPTED_FLAG      | File is valid                           |
+    // | 0x00               |                                         |
+    // +--------------------+-----------------------------------------+
+    // | REJECTED_FLAG      | File is NOT valid                       |
+    // | 0x01               |                                         |
+    // +--------------------+-----------------------------------------+
+        SERVICE_UP_FLAG   = 0x00,
+        SERVICE_DOWN_FLAG = 0x01
+    };
+
+
 
 struct ICAPHeader {
-    const uint8_t msg_type;
-    const uint32_t msg_len;
+    uint8_t msg_type;
+    uint32_t msg_len;
 
     // HeaderMessage
 
-    // This header starts every message receive from sessions to the local service.
+    // This header starts every message receive from or emit to the local service.
 
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -152,6 +175,12 @@ struct ICAPHeader {
     // | ABORT_FILE_FLAG    | Abort file.                             |
     // | 0x04               |                                         |
     // +--------------------+-----------------------------------------+
+    // | RESULT_FLAG        | Result received from Validator          |
+    // | 0x05               |                                         |
+    // +--------------------+-----------------------------------------+
+    // | CHECK_FLAG         | File validator check server icap result |
+    // | 0x06               |                                         |
+    // +--------------------+-----------------------------------------+
 
     // msg_size: An unsigned, 32-bit integer that indicate length of following message
     //           data.
@@ -161,9 +190,25 @@ struct ICAPHeader {
     : msg_type(msg_type)
     , msg_len(msg_len) {}
 
+    ICAPHeader()
+    : msg_type(42)
+    , msg_len(-1) {}
+
     void emit(OutStream & stream) {
         stream.out_uint8(msg_type);
         stream.out_uint32_be(msg_len);
+    }
+
+    void receive(InStream & stream) {
+        const unsigned expected = 5;    /* msg_type(1) + msg_len(4) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_INFO, "ICAPHeader truncated, need=%u remains=%zu"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+        this->msg_type = stream.in_uint8();
+
+        this->msg_len = stream.in_uint32_be();
     }
 };
 
@@ -309,7 +354,43 @@ struct ICAPFileDataHeader
     }
 };
 
+struct ICAPCheck {
+    uint8_t up_flag;
+    int max_connections_number;
 
+//     Check message
+
+//     This message is send from the local service to sessions. It begins with an
+//     ICAPHeader, its msg_type must be RESULT_FLAG.
+
+//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//     | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+//     |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//     |    up_flag    |            max_connections_number             |
+//     +---------------+-----------------------------------------------+
+//     |               |
+//     +---------------+
+
+//     up_flag: An unsigned, 8-bit integer that contains flag SERVICE_UP_FLAG
+//              or SERVICE_DOWN_FLAG
+
+//     max_connections_number: An unsigned, 32-bit integer that contains the
+//                             maximum number of connection icap service support
+
+    void receive(InStream & stream) {
+        const unsigned expected = 5;    /* up_flag(1) + max_connections_number(4) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_INFO, "ICAPCheck truncated, need=%u remains=%zu"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+        this->up_flag = stream.in_uint8();
+
+        this->max_connections_number = stream.in_uint32_be();
+    }
+
+};
 
 struct ICAPResult {
 
@@ -409,6 +490,7 @@ inline ICAPService * icap_open_session(const std::string & socket_path) {
 inline int icap_open_file(ICAPService * service, const std::string & file_name) {
 
     int file_id = -1;
+    service->result = -1;
 
     if (service->fd.is_open()) {
         file_id = service->generate_id();

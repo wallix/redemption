@@ -43,13 +43,13 @@ private:
 
     uint32_t streamID = 0;
 
-    bool valid = false;
-
     uint8_t direction = NONE;
 
     bool is_interupting_channel;
     bool is_saving_files;
     bool enable_validator;
+
+    bool current_analysis_done;
 
     ICAPService * icap_service;
 
@@ -72,6 +72,7 @@ public:
         , is_saving_files(is_saving_files)
         , enable_validator(enable_validator)
         , icap_service(icap_service)
+        , current_analysis_done(false)
     {}
 
     void set_total_file_size(const size_t total_file_size) {
@@ -83,12 +84,13 @@ public:
         this->total_file_size = total_file_size;
         this->filename = filename;
         this->current_file_size = 0;
-        this->valid = false;
         this->fd.close();
 
         if (this->is_saving_files) {
 
             this->file_path = this->dir_path + get_full_text_sec_and_usec(tv) + "_" + this->filename;
+
+            LOG(LOG_INFO, "this->file_path = %s", this->file_path);
 
             this->fd = unique_fd(this->file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
             if (!this->fd.is_open()) {
@@ -97,6 +99,10 @@ public:
         }
 
         if (this->enable_validator) {
+            if (this->streamID && !this->current_analysis_done) {
+                icap_abort_file(this->icap_service, this->streamID);
+            }
+            this->current_analysis_done = false;
             this->streamID = icap_open_file(this->icap_service, filename.c_str());
         }
     }
@@ -125,14 +131,13 @@ public:
 
         if (this->enable_validator) {
             icap_send_data(this->icap_service, this->streamID, char_ptr_cast(data), data_size);
-            if (this->icap_service->result == 0) {
-                this->valid = true;
-            }
         }
     }
 
     void set_end_of_file() {
-        icap_end_of_file(this->icap_service, this->streamID);
+        if (this->enable_validator) {
+            icap_end_of_file(this->icap_service, this->streamID);
+        }
     }
 
     void read_data(uint8_t * buffer, const size_t data_len) {
@@ -154,12 +159,20 @@ public:
     }
 
     std::string get_result_content() {
-        return this->icap_service->content;
+        if (this->enable_validator) {
+            return this->icap_service->content;
+        }
+        return "";
     }
 
     void receive_result() {
-        icap_receive_result(this->icap_service);
-//         LOG(LOG_INFO, "%d %s", this->icap_service->result, this->icap_service->content);
+        if (this->enable_validator) {
+            icap_receive_result(this->icap_service);
+
+            this->current_analysis_done = true;
+    //       LOG(LOG_INFO, "%d %s", this->icap_service->result, this->icap_service->content);
+        }
+
     }
 
     uint8_t get_direction() {
@@ -179,7 +192,10 @@ public:
     }
 
     bool is_valid() {
-        return /*this->is_complete() &&*/ (this->icap_service->result == 0);
+        if (this->icap_service == nullptr) {
+            return true;
+        }
+        return (this->icap_service->result == 0);
     }
 
     ~ChannelFile() {
@@ -196,6 +212,10 @@ public:
 
     bool is_save_files() {
         return this->is_saving_files;
+    }
+
+    bool is_validating() {
+        return this->enable_validator;
     }
 
 

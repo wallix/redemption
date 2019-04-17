@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_icap_open_session) {
     RED_CHECK_EQUAL(n, -1);
 }
 
-RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPHeader) {
+RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPHeaderEmit) {
     const uint8_t msg_type = LocalICAPServiceProtocol::NEW_FILE_FLAG;
     const uint32_t msg_len = 12;
 
@@ -60,6 +60,34 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPHeader) {
 
     RED_CHECK_EQUAL(message.get_offset(), 5);
     RED_CHECK_MEM(exp_data, message.get_bytes());
+}
+
+RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPHeaderReceive) {
+
+    auto data = cstr_array_view(
+        "\x00\x00\x00\x00\x0c");
+
+    InStream message(data);
+
+    LocalICAPServiceProtocol::ICAPHeader header;
+    header.receive(message);
+
+    RED_CHECK_EQUAL(header.msg_type, LocalICAPServiceProtocol::NEW_FILE_FLAG);
+    RED_CHECK_EQUAL(header.msg_len, 12);
+}
+
+RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPCheck) {
+
+    auto data = cstr_array_view(
+        "\x00\x00\x00\x00\x0c");
+
+    InStream message(data);
+
+    LocalICAPServiceProtocol::ICAPCheck check;
+    check.receive(message);
+
+    RED_CHECK_EQUAL(check.up_flag, LocalICAPServiceProtocol::SERVICE_UP_FLAG);
+    RED_CHECK_EQUAL(check.max_connections_number, 12);
 }
 
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPNewFile) {

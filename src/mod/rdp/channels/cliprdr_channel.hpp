@@ -61,7 +61,7 @@ private:
 
     const bool proxy_managed;   // Has not client.
 
-    bool channel_filter_on;
+//     bool channel_filter_on;
     uint32_t last_file_to_scan_id;
 
     SessionReactor& session_reactor;
@@ -85,7 +85,6 @@ public:
     , params(params)
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
-    , channel_filter_on(params.enable_validator)
     , last_file_to_scan_id(0)
     , session_reactor(session_reactor)
     , channel_file(channel_files_directory,
@@ -236,10 +235,10 @@ public:
                 FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
                 if (!this->params.clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
-                } else if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
+                } else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
 
-                    this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_CLIENT, tvtime());
+                    this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_SERVER, this->session_reactor.get_current_time());
                 }
                 send_message_to_server = this->params.clipboard_file_authorized;
             }
@@ -283,7 +282,7 @@ public:
 
                 FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
 
-                if (this->channel_filter_on && (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
+                if (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
 
                     this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -482,10 +481,10 @@ public:
                         "File Contents Request PDU");
                 FilecontentsRequestReceive receiver(this->clip_data.server_data, chunk, this->verbose, header.dataLen());
 
-                if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
+                if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
 
-                    this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_SERVER, tvtime());
+                    this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_CLIENT, this->session_reactor.get_current_time());
                 }
 
                 if (!this->params.clipboard_file_authorized) {
@@ -506,7 +505,7 @@ public:
 
                 FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
 
-                if (this->channel_filter_on && (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
+                if (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
 
                     this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
 
@@ -674,9 +673,10 @@ public:
     }
 
     void DLP_antivirus_check_channels_files() {
+
         this->channel_file.receive_result();
 
-        if (!this->channel_file.is_valid()) {
+        if (!this->channel_file.is_valid() && this->channel_file.is_validating()) {
             auto const info = key_qvalue_pairs({
                 { "type", "FILE_SCAN_RESULT" },
                 { "file_name", this->channel_file.get_file_name()},
