@@ -101,6 +101,7 @@ cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_de
 cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay <- session_probe_smart_launcher_start_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay <- session_probe_smart_launcher_long_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay <- session_probe_smart_launcher_short_delay   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_launcher_abort_delay <- session_probe_launcher_abort_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_enable_crash_dump <- session_probe_enable_crash_dump   [bool]
 cfg::mod_rdp::session_probe_handle_usage_limit <- session_probe_handle_usage_limit   [uint32_t]
 cfg::mod_rdp::session_probe_memory_usage_limit <- session_probe_memory_usage_limit   [uint32_t]

@@ -141,6 +141,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.exe_or_file           = ini.get<cfg::mod_rdp::session_probe_exe_or_file>();
     mod_rdp_params.session_probe_params.arguments             = ini.get<cfg::mod_rdp::session_probe_arguments>();
 
+    mod_rdp_params.session_probe_params.vc_params.launcher_abort_delay                             = ini.get<cfg::mod_rdp::session_probe_launcher_abort_delay>();
+
     mod_rdp_params.session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
     mod_rdp_params.session_probe_params.clipboard_based_launcher.start_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
     mod_rdp_params.session_probe_params.clipboard_based_launcher.long_delay_ms                     = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
