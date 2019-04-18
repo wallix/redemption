@@ -453,6 +453,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/acl_serializer.hpp
 ;
@@ -484,6 +485,7 @@ test-run tests/acl/test_authentifier :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/authentifier.hpp
 ;
@@ -689,6 +691,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(FFMPEG_CXXFLAGS)
@@ -849,6 +852,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -932,6 +936,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -984,6 +989,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -1202,6 +1208,7 @@ test-run tests/core/RDP/caches/test_bmpcachepersister :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/caches/bmpcachepersister.hpp
 ;
@@ -1444,6 +1451,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_cluster :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_cluster.hpp
 ;
@@ -1453,6 +1461,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_core :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_core.hpp
 ;
@@ -1462,6 +1471,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp
 ;
@@ -1471,6 +1481,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_monitor :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_monitor.hpp
 ;
@@ -1480,6 +1491,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_monitor_ex :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_monitor_ex.hpp
 ;
@@ -1489,6 +1501,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_multitransport :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_multitransport.hpp
 ;
@@ -1498,6 +1511,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_net :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_net.hpp
 ;
@@ -1507,6 +1521,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_security :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_security.hpp
 ;
@@ -1535,6 +1550,7 @@ test-run tests/core/RDP/gcc/userdata/test_sc_sec1 :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/sc_sec1.hpp
 ;
@@ -1694,6 +1710,7 @@ test-run tests/core/RDP/nla/test_nla :
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/nla/nla.hpp
 ;
@@ -1898,6 +1915,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/RDPDrawable.cpp
   <covfile>src/core/RDP/RDPDrawable.hpp
@@ -1926,6 +1944,7 @@ test-run tests/core/RDP/test_RefreshRectPDU :
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/RefreshRectPDU.hpp
 ;
@@ -1992,6 +2011,7 @@ test-run tests/core/RDP/test_fastpath :
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/fastpath.hpp
 ;
@@ -2002,6 +2022,7 @@ test-run tests/core/RDP/test_gcc :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc.hpp
 ;
@@ -2031,6 +2052,7 @@ test-run tests/core/RDP/test_mcs :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/mcs.hpp
 ;
@@ -2059,6 +2081,7 @@ test-run tests/core/RDP/test_nego :
   <library>src/utils/stacktrace.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/nego.cpp
   <covfile>src/core/RDP/nego.hpp
@@ -2136,6 +2159,7 @@ test-run tests/core/RDP/test_sec :
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/sec.hpp
 ;
@@ -2156,6 +2180,7 @@ test-run tests/core/RDP/test_slowpath :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/slowpath.hpp
 ;
@@ -2180,6 +2205,7 @@ test-run tests/core/RDP/test_x224 :
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/x224.hpp
 ;
@@ -2624,6 +2650,7 @@ test-run tests/front/test_front :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/front/front.hpp
@@ -3881,6 +3908,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/transport/test_transport.o
   <library>tests/includes/test_only/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
@@ -3918,6 +3946,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/rdpdr_asynchronous_task.hpp
 ;
@@ -3941,6 +3970,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/rdpdr_channel.hpp
 ;
@@ -4054,6 +4084,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp.cpp
   <covfile>src/mod/rdp/rdp.hpp
@@ -4222,6 +4253,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/vnc/vnc.hpp
@@ -4345,6 +4377,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
@@ -4401,6 +4434,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
@@ -4457,6 +4491,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
@@ -4556,6 +4591,7 @@ test-run tests/transport/test_gzip_compression_transport :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/gzip_compression_transport.hpp
@@ -4595,6 +4631,7 @@ test-run tests/transport/test_mwrm_reader :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/mwrm_reader.cpp
   <covfile>src/transport/mwrm_reader.hpp
@@ -4620,6 +4657,7 @@ test-run tests/transport/test_recorder_transport :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/recorder_transport.cpp
   <covfile>src/transport/recorder_transport.hpp
@@ -4631,6 +4669,7 @@ test-run tests/transport/test_snappy_compression_transport :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/snappy_compression_transport.hpp
 ;
@@ -4655,6 +4694,7 @@ test-run tests/transport/test_test_transport :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run tests/transport/test_transport :
@@ -4852,6 +4892,7 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/bitmap.cpp
   <covfile>src/utils/bitmap.hpp
@@ -5330,6 +5371,7 @@ obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test_only/core/font.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/gdi/test_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/gdi/test_graphic.cpp : $(CXXFLAGS_TEST) ;
+obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/working_directory.cpp : $(CXXFLAGS_TEST) ;
 
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
