@@ -163,6 +163,17 @@ Bitmap::Bitmap(
     }
 }
 
+Bitmap::Bitmap(const uint8_t *data, size_t stride, const Rect &rect)
+	: data_bitmap(DataBitmap::construct(BitsPerPixel{32}, rect.width(), rect.height()))
+{
+	uint8_t *dest = this->data_bitmap->get();
+	const uint8_t *src = data + ((rect.bottom() - 1) * stride) + (4 * rect.left());
+
+	for (uint16_t i = 0; i < rect.height(); i++, src-= stride, dest += rect.width() * 4) {
+		memcpy(dest, src, rect.width() * 4);
+	}
+}
+
 Bitmap::Bitmap(const Bitmap & src_bmp, const Rect r)
 : data_bitmap(src_bmp.data_bitmap)
 {
