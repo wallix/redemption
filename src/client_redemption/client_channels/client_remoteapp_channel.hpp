@@ -53,6 +53,7 @@ public:
       , config(config)
       , screen_max_width(max_width)
       , screen_max_height(max_height)
+      , client_replay(nullptr)
     {}
 
     virtual ~ClientRemoteAppGraphicAPI() = default;

@@ -23,15 +23,18 @@
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 #include "utils/rect.hpp"
+#include "utils/region.hpp"
 #include "core/error.hpp"
 
 /** @brief a surface content update */
 class RDPSurfaceContent {
 public:
-	RDPSurfaceContent(uint16_t width, uint16_t height, uint16_t stride)
+	RDPSurfaceContent(uint16_t width, uint16_t height, uint16_t stride, const Rect &rect, const SubRegion &region)
 	: stride(stride)
 	, width(width)
 	, data(new uint8_t[stride * height * 4]())
+	, rect(rect)
+	, region(region)
 	{
 	}
 
@@ -43,6 +46,8 @@ public:
 	uint16_t stride;
 	uint16_t width;
 	uint8_t *data;
+	Rect rect;
+	const SubRegion &region;
 };
 
 /** @brief a SetSurface command */
