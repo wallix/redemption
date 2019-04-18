@@ -37,8 +37,8 @@ s/^terminate called.*$/'$term_mess'&'$reset'/;t
 s/^  what\(\): .*$/'$exception'&'$reset'/;t
 s/^     "([^"]+)" /    "'$exec'\1'$reset'" /;t
 s/^\*\*\* [0-9]+ failures? .*$/'$err'&'$reset'/;t
-s/^(    #[0-9]+)( [^ ]+ in )(.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?/'$err'\1'$reset'\2'$name'\3'$file'\4'$line'\5\6'$reset'/;t
-s/^(    #[0-9]+)( [^ ]+ in )(.*) \(([^+]+)\+0x/'$err'\1'$reset'\2'$name'\3'$reset' (\4+0x/;t
+s/^ *(#[0-9]+ )(.+ )at (.+)(:[0-9]+)?$/'$err'\1'$name'\2'$reset'at '$file'\3'$line'\4'$reset'/;t
+s/^ *(#[0-9]+ )(0x[^ ]+) in (.+)(:[0-9]+)?$/'$err'\1'$reset'\2 in '$cat'\3'$line'\4'$reset'/;t
 /Assert/{
   s/([^:]+): ([^:]+:[^:]+): ([^:]+): Assertion `(.*) failed.$/'$file'\2'$reset': '$err'failed'$reset' (\1): '$op'\3'$reset': Assertion `'$code'\4'$reset'`/;t
   s/^.*$/'$err'[[&]]'$reset'/;t
