@@ -14,7 +14,7 @@ JAM_INCLUDE_PATH ?= jam ;
 #
 # # Compilation
 #
-# (Extra `cxx-*` options list with `sed -E 's/^feature <([^>]+)> : ([^:]+).*/\1 = \2/;t;d' jam/cxxflags.jam`)
+# (Extra `cxx_*` options list with `sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/\1 = \2/;t;d' jam/cxxflags.jam`)
 #
 # Compile executables without tests (as user):
 #
@@ -59,7 +59,7 @@ project redemption
     <toolset>clang:<linkflags>-fuse-ld=gold
     <toolset>gcc:<cxxflags>-pipe
 
-    # <cxx-lto>on
+    # <cxx-lto-default>on
 
     $(GCOV)
     # <lto>on

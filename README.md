@@ -143,18 +143,18 @@ List default values with `sed -E 's/^([A-Z_]+)_DEFAULT [^=]+= (.*) ;/\1 = \2/;t;
 
 ## Modes and options
 
-$ `bjam [variant=]{release|debug|san} [cxx-options=value] [target...]`
+$ `bjam [variant=]{release|debug|san} [-s cxx_option=value] [target...]`
 
 - `release`: default
 - `debug`: debug mode (compile with `-g -D_GLIBCXX_DEBUG`)
 - `san`: enable sanitizers: asan, lsan, usan
 
-- `cxx-color`: default auto never always
-- `cxx-lto`: off on fat
-- `cxx-relro`: default off on full
-- `cxx-stack-protector`: off on strong all
+- `-s cxx_color`: default auto never always
+- `-s cxx_lto`: off on fat
+- `-s cxx_relro`: default off on full
+- `-s cxx_stack_protector`: off on strong all
 
-(`cxx-*` options list with `sed -E 's/^feature <([^>]+)> : ([^:]+).*/\1 = \2/;t;d' jam/cxxflags.jam`)
+(`cxx_*` options list with `sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/\1 = \2/;t;d' jam/cxxflags.jam`)
 
 
 # Run ReDemPtion
