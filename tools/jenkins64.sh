@@ -97,3 +97,8 @@ CLANG_TIDY=clang-tidy-6.0 ./tools/c++-analyzer/clang-tidy \
 #  ./tools/c++-analyzer/valgrind -qd '{}' \;
 find ./bin/gcc-7/release/tests/ -type d -exec \
   parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
+
+
+# jsclient (emscipten)
+cd projects/browser_client_JS
+bjam -qj2 toolset=clang debug
