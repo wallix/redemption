@@ -49,9 +49,9 @@ private:
     bool is_saving_files;
     bool enable_validator;
 
-    bool current_analysis_done;
-
     ICAPService * icap_service;
+
+    bool current_analysis_done;
 
 public:
 

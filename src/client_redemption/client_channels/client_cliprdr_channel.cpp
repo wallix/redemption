@@ -777,9 +777,9 @@
 
     void ClientCLIPRDRChannel::process_monitor_ready()
     {
-        // if (this->server_use_long_format_names) {
-            this->generalFlags = this->generalFlags | RDPECLIP::CB_USE_LONG_FORMAT_NAMES;
-        // }
+//         if (this->server_use_long_format_names) {
+        this->generalFlags = this->generalFlags | RDPECLIP::CB_USE_LONG_FORMAT_NAMES;
+//         }
 
         {
             RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, this->generalFlags);

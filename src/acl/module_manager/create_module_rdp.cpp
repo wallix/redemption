@@ -279,7 +279,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.clipboard_params.log_only_relevant_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
-    mod_rdp_params.enable_validator = ini.get<cfg::validator::enable_validator>();
+    mod_rdp_params.enable_validator = true;/*ini.get<cfg::validator::enable_validator>();*/
     mod_rdp_params.enable_interupting_validator = ini.get<cfg::validator::enable_interupting_validator>();
     mod_rdp_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
     mod_rdp_params.validator_socket_path = ini.get<cfg::validator::validator_socket_path>().c_str();
@@ -340,7 +340,10 @@ void ModuleManager::create_mod_rdp(
         if (mod_rdp_params.enable_validator) {
             icap_service = icap_open_session(mod_rdp_params.validator_socket_path);
             LOG(LOG_INFO, "icap_service->fd.fd() = %d", icap_service->fd.fd());
-            mod_rdp_params.enable_validator = icap_service->fd.fd() > 0;
+            if (icap_service->fd.fd() <= 0) {
+                mod_rdp_params.enable_validator = false;
+                LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
+            }
             this->validator_fd = icap_service->fd.fd();
         }
 
@@ -402,7 +405,7 @@ void ModuleManager::create_mod_rdp(
         if (mod_rdp_params.enable_validator) {
             new_mod->validator_event = this->session_reactor.create_fd_event(this->validator_fd)
             .on_timeout(jln::always_ready([]() {}))
-            .set_timeout(std::chrono::milliseconds::max())
+            .set_timeout(std::chrono::milliseconds::max() / 1000000 )
             .on_exit(jln::propagate_exit())
             .on_action(jln::always_ready([rdp=new_mod.get()]() {
                 rdp->DLP_antivirus_check_channels_files();

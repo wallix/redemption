@@ -45,6 +45,8 @@ public:
     int last_result_file_id_received;
     int file_id_int;
 
+    bool service_is_up;
+
     ICAPService(std::string const& socket_path)
 
     : fd(invalid_fd())
@@ -563,7 +565,6 @@ inline int icap_send_data(const ICAPService * service, const int file_id, const 
 
 inline void icap_receive_result(ICAPService * service) {
 
-
     int read_data_len = -1;
 
     if (service->fd.is_open()) {
@@ -574,11 +575,29 @@ inline void icap_receive_result(ICAPService * service) {
         }
 
         InStream stream_data(buff, read_data_len);
-        LocalICAPServiceProtocol::ICAPResult result;
-        result.receive(stream_data);
-        service->result = result.result;
-        service->content = result.content;
-        service->last_result_file_id_received = result.id;
+        LocalICAPServiceProtocol::ICAPHeader header;
+        header.receive(stream_data);
+
+        switch(header.msg_type) {
+
+            case LocalICAPServiceProtocol::RESULT_FLAG:
+            {
+                LocalICAPServiceProtocol::ICAPResult result;
+                result.receive(stream_data);
+                service->result = result.result;
+                service->content = result.content;
+                service->last_result_file_id_received = result.id;
+            }
+                break;
+
+            case LocalICAPServiceProtocol::CHECK_FLAG:
+            {
+                LocalICAPServiceProtocol::ICAPCheck check;
+                check.receive(stream_data);
+                service->service_is_up = (check.up_flag == LocalICAPServiceProtocol::SERVICE_UP_FLAG);
+            }
+                break;
+        }
     }
 }
 
@@ -636,5 +655,6 @@ inline int icap_close_session(ICAPService * service) {
 
     return n;
 }
+
 
 
