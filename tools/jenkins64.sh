@@ -33,6 +33,7 @@ rm -rf bin
 
 # export REDEMPTION_LOG_PRINT=1
 export REDEMPTION_LOG_PRINT=0
+export cxx_color=never
 
 build()
 {
