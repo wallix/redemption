@@ -109,7 +109,6 @@ source ~/emsdk-master/emsdk_set_env.sh
 rm -rf bin
 version=$(clang++ --version | sed -E 's/clang version ([0-9]+\.[0-9]+).*/\1/;q')
 echo "using clang : $version : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-cp ../../project-config.jam .
 if [ -d system_include/boost ]; then
     mkdir system_include
     ln -s /usr/include/boost/ system_include
