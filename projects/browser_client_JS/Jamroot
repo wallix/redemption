@@ -27,6 +27,21 @@ EXE_DEPENDENCIES +=
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
 constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "''" ] ;
 
+rule filter_flags ( e )
+{
+    if $(e) = <cxxflags>-msse3
+    {
+        return ;
+    }
+    else
+    {
+        return $(e) ;
+    }
+}
+
+import sequence ;
+REDEMPTION_CXXFLAGS = [ sequence.filter filter_flags : $(REDEMPTION_CXXFLAGS) ] ;
+
 project redjs
     : requirements
 
@@ -47,11 +62,13 @@ project redjs
     # DISABLE_EXCEPTION_CATCHING = 1 - disable exception catching at all
     # DISABLE_EXCEPTION_CATCHING = 2 - disable exception catching, but enables catching in whitelist
     <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
-    <cxxflags>"-s FS_LOG"
+    <cxxflags>"-s USE_PTHREADS=0"
+    # <linkflags>"-s SIMD=1"
+    # <cxxflags>"-s FS_LOG=1"
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
 
-    <cxxflags>"-s USE_LIBPNG=1"
-    <cxxflags>"-s USE_ZLIB=1"
+    # <cxxflags>"-s USE_LIBPNG=1"
+    # <cxxflags>"-s USE_ZLIB=1"
 
     # <cxx-lto>on
 

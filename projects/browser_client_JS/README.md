@@ -52,9 +52,10 @@ node test.js
 
 # Compile RdpClient
 
-## Configure boost path (for test targets)
+## Configure boost path for test targets
 
 ```bash
+mkdir system_include/
 ln -s /usr/include/boost system_include/
 ```
 
