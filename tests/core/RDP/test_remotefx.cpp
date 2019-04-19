@@ -757,9 +757,9 @@ static bool fuzzyCompareImage(const uint32_t *refImage, const uint8_t *img, size
 
 	for(i = 0; i < npixels; i++, refImage++)
 	{
-		uint8_t R = *img++;
-		uint8_t G = *img++;
 		uint8_t B = *img++;
+		uint8_t G = *img++;
+		uint8_t R = *img++;
 		uint8_t A = *img++;
 		size_t delta;
 
