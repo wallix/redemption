@@ -1140,5 +1140,8 @@
 "[validator]\n\n"
 
 "#_advanced\n"
+"#channel_files_directory = \n\n"
+
+"#_advanced\n"
 "#validator_socket_path = tools/ICAP_socket/redemption-icap-service-sock\n\n"
 

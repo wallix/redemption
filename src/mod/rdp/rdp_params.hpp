@@ -80,6 +80,7 @@ struct ModRDPParams
     bool enable_interupting_validator = false;
     bool enable_save_files = false;
     const char * validator_socket_path =  "";
+    const char * channel_files_directory = "";
 
     struct ClipboardParams
     {

@@ -3486,6 +3486,18 @@ namespace cfg {
         type value{false};
     };
     /// type: std::string <br/>
+    /// value = "" <br/>
+    struct validator::channel_files_directory {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "channel_files_directory";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "";
+    };
+    /// type: std::string <br/>
     /// value = "tools/ICAP_socket/redemption-icap-service-sock" <br/>
     struct validator::validator_socket_path {
         static constexpr bool is_sesman_to_proxy = false;
@@ -5039,7 +5051,8 @@ struct internal_mod
 { static constexpr bool is_section = true; };
 
 struct validator
-: cfg::validator::validator_socket_path
+: cfg::validator::channel_files_directory
+, cfg::validator::validator_socket_path
 , cfg::validator::enable_validator
 , cfg::validator::enable_interupting_validator
 , cfg::validator::enable_save_files

@@ -57,7 +57,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, "",session_reactor,
+        &to_client_sender, &to_server_sender, front,session_reactor,
                 base_params,
                 clipboard_virtual_channel_params, ipca_service);
 
@@ -86,7 +86,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
         clipboard_virtual_channel_params, ipca_service);
 
@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
         clipboard_virtual_channel_params, ipca_service);
 
@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
         clipboard_virtual_channel_params, ipca_service);
 
@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
         clipboard_virtual_channel_params, ipca_service);
 
@@ -232,7 +232,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
         clipboard_virtual_channel_params, ipca_service);
 
@@ -418,12 +418,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     clipboard_virtual_channel_params.enable_interupting_validator = true;
     clipboard_virtual_channel_params.enable_save_files = true;
     clipboard_virtual_channel_params.enable_validator = false;
+    clipboard_virtual_channel_params.channel_files_directory = wd.dirname();
 
     TestResponseSender to_client_sender;
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, wd.dirname(), session_reactor,
+        &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
         clipboard_virtual_channel_params, icap_service);
 
@@ -920,12 +921,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
     clipboard_virtual_channel_params.enable_interupting_validator = true;
     clipboard_virtual_channel_params.enable_save_files = true;
     clipboard_virtual_channel_params.enable_validator = false;
+    clipboard_virtual_channel_params.channel_files_directory = wd.dirname();
 
     NullSender to_client_sender;
     TestResponseSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, wd.dirname(), session_reactor,
+        &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
         clipboard_virtual_channel_params, icap_service);
 

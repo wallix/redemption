@@ -366,6 +366,7 @@ private:
     bool enable_validator;
     bool enable_interupting_validator;
     bool enable_save_files;
+    std::string channel_files_directory;
 
 public:
     mod_rdp_channels(
@@ -400,6 +401,7 @@ public:
     , enable_validator(mod_rdp_params.enable_validator)
     , enable_interupting_validator(mod_rdp_params.enable_interupting_validator)
     , enable_save_files(mod_rdp_params.enable_save_files)
+    , channel_files_directory(mod_rdp_params.channel_files_directory)
     {}
 
     void DLP_antivirus_check_channels_files() {
@@ -543,12 +545,12 @@ private:
         cvc_params.enable_validator = this->enable_validator;
         cvc_params.enable_save_files = this->enable_save_files;
         cvc_params.enable_interupting_validator = this->enable_interupting_validator;
+        cvc_params.channel_files_directory = this->channel_files_directory;
 
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
             front,
-            "",
             this->session_reactor,
             base_params,
             cvc_params,

@@ -1889,6 +1889,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
     }
     else if (0 == strcmp(context, "validator")) {
         if (0) {}
+        else if (0 == strcmp(key, "channel_files_directory")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::validator::channel_files_directory&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "validator_socket_path")) {
             ::configs::parse_and_log(
                 context, key,

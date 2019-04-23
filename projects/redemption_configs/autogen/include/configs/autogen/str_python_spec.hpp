@@ -959,5 +959,8 @@
 "[validator]\n\n"
 
 "#_advanced\n"
+"channel_files_directory = string(default='')\n\n"
+
+"#_advanced\n"
 "validator_socket_path = string(default='tools/ICAP_socket/redemption-icap-service-sock')\n\n"
 
