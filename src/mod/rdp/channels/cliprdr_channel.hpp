@@ -89,7 +89,9 @@ public:
                    params.enable_interupting_validator,
                    params.enable_save_files,
                    params.enable_validator,
-                   icap_service)
+                   icap_service,
+                   "avscan"
+                   )
     {}
 
 protected:

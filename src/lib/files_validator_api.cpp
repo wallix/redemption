@@ -31,8 +31,8 @@ extern "C"
         return icap_open_session(socket_path);
     }
 
-    int validator_open_file(ICAPService * service, const char * file_name) noexcept {
-        return icap_open_file(service, file_name);
+    int validator_open_file(ICAPService * service, const char * file_name, const char * target_name) noexcept {
+        return icap_open_file(service, file_name, target_name);
     }
 
     int validator_send_data(const ICAPService * service, const int file_id, const char * data, const int size) noexcept {

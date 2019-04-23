@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestChannelFileCtr)
 {
     WorkingDirectory wd("channel_file");
 
-    ChannelFile file(wd.dirname(), false, true, false, nullptr);
+    ChannelFile file(wd.dirname(), false, true, false, nullptr, "avscan");
 
     uint8_t direction = ChannelFile::NONE;
 
@@ -55,7 +55,7 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
 {
     WorkingDirectory wd("channel_file");
 
-    ChannelFile file(wd.dirname(), false, true, false, nullptr);
+    ChannelFile file(wd.dirname(), false, true, false, nullptr, "avscan");
 
     auto const file1 = wd.add_file("12345_54321_new_file1.txt");
 

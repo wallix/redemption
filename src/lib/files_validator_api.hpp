@@ -32,7 +32,7 @@ extern "C"
     ICAPService * validator_open_session(const char * socket_path) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_open_file(ICAPService * service, const char * file_name) noexcept;
+    int validator_open_file(ICAPService * service, const char * file_name, const char * target_name) noexcept;
 
     REDEMPTION_LIB_EXPORT
     int validator_send_data(const ICAPService * service, const int file_id, const char * data, const int size) noexcept;

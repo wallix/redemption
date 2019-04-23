@@ -219,6 +219,7 @@ struct ICAPNewFile {
 
     const int file_id;
     const std::string file_name;
+    const std::string target_name;
 
     // NewFileMessage
 
@@ -237,6 +238,12 @@ struct ICAPNewFile {
     // +---------------------------------------------------------------+
     // |                              ...                              |
     // +---------------------------------------------------------------+
+    // |                       Target_name_size                        |
+    // +---------------------------------------------------------------+
+    // |                          Target_Name                          |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
 
     // File_id:  An unsigned, 32-bit integer that contains new file id.
 
@@ -249,10 +256,16 @@ struct ICAPNewFile {
     // File_size: An unsigned, 32-bit integer that indicate file length
     //            in bytes.
 
+    // Target_name_size: An unsigned, 32-bit integer that indicate target name
+    //                   length.
 
-    ICAPNewFile(const int file_id, const std::string & file_name)
+    // Target_Name: A variable length, ascii string that contains target name
+    //              to request.
+
+    ICAPNewFile(const int file_id, const std::string & file_name, const std::string & target_name)
     : file_id(file_id)
-    , file_name(file_name) {}
+    , file_name(file_name)
+    , target_name(target_name) {}
 
     void emit(OutStream & stream) {
 
@@ -260,6 +273,9 @@ struct ICAPNewFile {
 
         stream.out_uint32_be(this->file_name.length());
         stream.out_string(this->file_name.c_str());
+
+        stream.out_uint32_be(this->target_name.length());
+        stream.out_string(this->target_name.c_str());
     }
 };
 
@@ -346,7 +362,6 @@ struct ICAPFileDataHeader
 
     // DATA: A binary, variable length, pay load data from a file .
 
-
     ICAPFileDataHeader(const int file_id)
     : file_id(file_id) {}
 
@@ -418,7 +433,7 @@ struct ICAPResult {
     // |                             ...                               |
     // +---------------------------------------------------------------+
 
-    // Result: An unsigned, 8-bit integer that indicate result analysis. Value
+    // Result: An unsigned, 8-bit integer that indicate result analysis. Value
     //         must be ACCEPTED_FLAG, REJECTED_FLAG or ERROR_FLAG.
 
     //   +--------------------+----------------------------------------------+
@@ -475,7 +490,7 @@ struct ICAPResult {
 
 
 ICAPService * icap_open_session(const std::string & socket_path);
-int icap_open_file(ICAPService * service, const std::string & file_name);
+int icap_open_file(ICAPService * service, const std::string & file_name, const std::string & target_name);
 int icap_send_data(const ICAPService * service, const int file_id, const char * data, const int size);
 void icap_receive_result(ICAPService * service);
 int icap_end_of_file(ICAPService * service, const int file_id);
@@ -489,7 +504,7 @@ inline ICAPService * icap_open_session(const std::string & socket_path) {
     return new ICAPService(socket_path);
 }
 
-inline int icap_open_file(ICAPService * service, const std::string & file_name) {
+inline int icap_open_file(ICAPService * service, const std::string & file_name, const std::string & target_name) {
 
     int file_id = -1;
     service->result = -1;
@@ -504,10 +519,10 @@ inline int icap_open_file(ICAPService * service, const std::string & file_name) 
 
         StaticOutStream<1024> message;
 
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 8+file_name_tmp.length());
+        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 8+file_name_tmp.length()+target_name.length());
         header.emit(message);
 
-        LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name_tmp);
+        LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name_tmp, target_name);
         icap_new_file.emit(message);
 
         int n = write(service->fd.fd(), message.get_data(), message.get_offset());
@@ -655,6 +670,3 @@ inline int icap_close_session(ICAPService * service) {
 
     return n;
 }
-
-
-

@@ -45,9 +45,10 @@ RED_AUTO_TEST_CASE(testFileValid)
 
         std::string file_name("README.md");
         std::string file_content(get_file_contents("README.md"));
+        std::string target_service("avscan");
         int file_size = 30; /*file_content.length();*/
 
-        int file_id = validator_open_file(service, file_name.c_str());
+        int file_id = validator_open_file(service, file_name.c_str(), target_service.c_str());
         RED_CHECK_EQUAL(file_id, 1);
 
         n = validator_send_data(service, file_id, file_content.c_str(), file_size);
@@ -85,9 +86,10 @@ RED_AUTO_TEST_CASE(testFileInvalid)
 
         std::string file_path("../ICAPService/python/tests/the_zeus_binary_chapros");
         std::string file_name("the_zeus_binary_chapros");
+        std::string target_service("avscan");
         int file_size = 227328;
 
-        int file_id = validator_open_file(service, file_name.c_str());
+        int file_id = validator_open_file(service, file_name.c_str(), target_service.c_str());
         RED_CHECK_EQUAL(file_id, 1);
 
         int sent_data = 0;

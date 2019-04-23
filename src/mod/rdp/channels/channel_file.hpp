@@ -53,6 +53,8 @@ private:
 
     bool current_analysis_done;
 
+    const std::string target_name;
+
 public:
 
     enum : uint8_t {
@@ -65,7 +67,9 @@ public:
     , bool is_interupting_channel
     , bool is_saving_files
     , bool enable_validator
-    , ICAPService * icap_service) noexcept
+    , ICAPService * icap_service
+    , const std::string target_name
+    ) noexcept
         : dir_path(dir_path)
         , streamID(0)
         , is_interupting_channel(is_interupting_channel)
@@ -73,6 +77,7 @@ public:
         , enable_validator(enable_validator)
         , icap_service(icap_service)
         , current_analysis_done(false)
+        , target_name(target_name)
     {}
 
     void set_total_file_size(const size_t total_file_size) {
@@ -103,7 +108,7 @@ public:
                 icap_abort_file(this->icap_service, this->streamID);
             }
             this->current_analysis_done = false;
-            this->streamID = icap_open_file(this->icap_service, filename.c_str());
+            this->streamID = icap_open_file(this->icap_service, filename.c_str(), "");
         }
     }
 

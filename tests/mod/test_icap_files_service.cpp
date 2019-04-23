@@ -94,18 +94,20 @@ RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPNewFile) {
 
     const int file_id = 1;
     const std::string file_name = "file_name.file";
+    const std::string target_name = "traget_service";
 
     StaticOutStream<512> message;
 
-    LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name);
+    LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name, target_name);
     icap_new_file.emit(message);
 
     auto exp_data = cstr_array_view(
         "\x00\x00\x00\x01\x00\x00\x00\x0e\x66\x69\x6c\x65\x5f\x6e\x61\x6d" //........file_nam
-        "\x65\x2e\x66\x69\x6c\x65"                                         //e.file
+        "\x65\x2e\x66\x69\x6c\x65\x00\x00\x00\x0e\x74\x72\x61\x67\x65\x74" //e.file....traget !
+        "\x5f\x73\x65\x72\x76\x69\x63\x65"                                 //_service !
     );
 
-    RED_CHECK_EQUAL(message.get_offset(), 22);
+    RED_CHECK_EQUAL(message.get_offset(), 40);
     RED_CHECK_MEM(exp_data, message.get_bytes());
 }
 
@@ -196,9 +198,10 @@ RED_AUTO_TEST_CASE(testFileValid)
 
         std::string file_name("README.md");
         std::string file_content(get_file_contents("README.md"));
+        std::string target_service("avscan");
         int file_size = 30; /*file_content.length();*/
 
-        int file_id = icap_open_file(service, file_name);
+        int file_id = icap_open_file(service, file_name, target_service);
         RED_CHECK_EQUAL(file_id, 1);
 
         n = icap_send_data(service, file_id, file_content.c_str(), file_size);
@@ -235,9 +238,10 @@ RED_AUTO_TEST_CASE(testFileInvalid)
 
         std::string file_path("../ICAPService/python/tests/the_zeus_binary_chapros");
         std::string file_name("the_zeus_binary_chapros");
+        std::string target_service("avscan");
         int file_size = 227328;
 
-        int file_id = icap_open_file(service, file_name);
+        int file_id = icap_open_file(service, file_name, target_service);
         RED_CHECK_EQUAL(file_id, 1);
 
         int sent_data = 0;
