@@ -21,8 +21,8 @@ git submodule update --init
 
 # BJAM Build Test
 echo -e "using gcc : 7.0 : g++-7 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 6.0 : clang++-6.0 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-gcc=toolset=gcc-7
-clang=toolset=clang-6.0
+gcc=gcc-7
+clang=clang-6.0
 toolset_gcc=toolset=$gcc
 toolset_clang=toolset=$clang
 export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
