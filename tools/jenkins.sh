@@ -21,10 +21,9 @@ git submodule update --init
 
 # BJAM Build Test
 echo -e "using gcc : 7.0 : g++-7 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 6.0 : clang++-6.0 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-gcc=gcc-7
-clang=clang-6.0
-toolset_gcc=toolset=$gcc
-toolset_clang=toolset=$clang
+valgrind_compiler=gcc-7
+toolset_gcc=toolset=gcc-7
+toolset_clang=toolset=clang-6.0
 export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
 export FFMPEG_LIB_PATH=/usr/local/lib/ffmpeg
 export FFMPEG_LINK_MODE=static
@@ -99,7 +98,7 @@ CLANG_TIDY=clang-tidy-6.0 ./tools/c++-analyzer/clang-tidy \
 # valgrind
 #find ./bin/$gcc/release/tests/ -type d -exec \
 #  ./tools/c++-analyzer/valgrind -qd '{}' \;
-find ./bin/$gcc/release/tests/ -type d -exec \
+find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
   parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
 
 
@@ -107,7 +106,7 @@ find ./bin/$gcc/release/tests/ -type d -exec \
 cd projects/browser_client_JS
 source ~/emsdk-master/emsdk_set_env.sh
 rm -rf bin
-version=$(clang++ --version | sed -E 's/clang version ([0-9]+\.[0-9]+).*/\1/;q')
+version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
 echo "using clang : $version : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 if [ -d system_include/boost ]; then
     mkdir system_include
