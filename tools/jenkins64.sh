@@ -23,8 +23,8 @@ git submodule update --init
 echo -e "using gcc : 7.0 : g++-7 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 6.0 : clang++-6.0 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 gcc=toolset=gcc-7
 clang=toolset=clang-6.0
-toolsetgcc=toolset=$gcc
-toolsetclang=toolset=$clang
+toolset_gcc=toolset=$gcc
+toolset_clang=toolset=$clang
 export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
 export FFMPEG_LIB_PATH=/usr/local/lib/ffmpeg
 export FFMPEG_LINK_MODE=static
