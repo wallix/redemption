@@ -813,8 +813,8 @@ public:
 
 RED_AUTO_TEST_CASE(TestRemoteFx) {
 	TS_RFX_TILESET tileSet;
-	InStream negoStream(encodeHeaderSample, sizeof(encodeHeaderSample));
-	InStream tilesetStream(encodeDataSample, sizeof(encodeDataSample));
+	InStream negoStream(encodeHeaderSample);
+	InStream tilesetStream(encodeDataSample);
 	RfxDecoder decoder;
 	CustomGdi gdi;
 
