@@ -315,7 +315,7 @@ public:
 
         ClientRedemption::draw(cmd, content);
 
-		QImage img(content.data, content.width, cmd.height, QImage::Format_RGBA8888);
+		QImage img(content.data, content.width, cmd.height, QImage::Format_RGB888);
 		img = img.copy(QRect(0, 0, cmd.width, cmd.height));
 
 #if 0
