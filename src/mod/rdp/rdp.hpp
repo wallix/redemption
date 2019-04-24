@@ -2705,7 +2705,7 @@ public:
                 }
             }
             catch(Error const & e){
-                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());
 
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     this->front.must_be_stop_capture();
