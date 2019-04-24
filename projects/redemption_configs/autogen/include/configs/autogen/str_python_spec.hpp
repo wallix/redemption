@@ -958,9 +958,15 @@
 
 "[validator]\n\n"
 
-"#_advanced\n"
+"enable_validator = boolean(default=False)\n\n"
+
+"enable_interupting_validator = boolean(default=False)\n\n"
+
+"enable_save_files = boolean(default=False)\n\n"
+
 "channel_files_directory = string(default='')\n\n"
 
-"#_advanced\n"
 "validator_socket_path = string(default='tools/ICAP_socket/redemption-icap-service-sock')\n\n"
+
+"validator_target_name = string(default='avscan')\n\n"
 

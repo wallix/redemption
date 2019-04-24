@@ -252,13 +252,3 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 # (note: values can be added (everyone: 1+2+4=7, mute: 0))
 disable_keyboard_log = integer(min=0, max=3, default=1)
 
-[validator]
-
-enable_validator = boolean(default=False)
-
-enable_interupting_validator = boolean(default=False)
-
-enable_save_files = boolean(default=False)
-
-validator_target_name = string(default='avscan')
-

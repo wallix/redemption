@@ -1139,9 +1139,18 @@
 
 "[validator]\n\n"
 
-"#_advanced\n"
+"# value: 0 or 1\n"
+"#enable_validator = 0\n\n"
+
+"# value: 0 or 1\n"
+"#enable_interupting_validator = 0\n\n"
+
+"# value: 0 or 1\n"
+"#enable_save_files = 0\n\n"
+
 "#channel_files_directory = \n\n"
 
-"#_advanced\n"
 "#validator_socket_path = tools/ICAP_socket/redemption-icap-service-sock\n\n"
+
+"#validator_target_name = avscan\n\n"
 
