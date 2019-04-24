@@ -398,6 +398,8 @@ private:
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> ext_caps;
 
+    bool old_kbd_input_mask_state = false;
+
     bool capture_drawable = false;
 
 public:
@@ -445,6 +447,12 @@ public:
     }
 
     void enable_kbd_input_mask(bool enable) override {
+        if (this->old_kbd_input_mask_state != enable) {
+            this->possible_active_window_change();
+
+            this->old_kbd_input_mask_state = enable;
+        }
+
         for (gdi::KbdInputApi & kbd : this->kbds) {
             kbd.enable_kbd_input_mask(enable);
         }
