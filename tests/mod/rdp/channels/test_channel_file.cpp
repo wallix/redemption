@@ -12,7 +12,7 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program; if not, write to the Free Software
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*1324
+*
 *   Product name: redemption, a FLOSS RDP proxy
 *   Copyright (C) Wallix 2018
 *   Author(s): Clément Moroldo

@@ -519,7 +519,7 @@ inline int icap_open_file(ICAPService * service, const std::string & file_name, 
 
         StaticOutStream<1024> message;
 
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 8+file_name_tmp.length()+target_name.length());
+        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 12+file_name_tmp.length()+target_name.length());
         header.emit(message);
 
         LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name_tmp, target_name);

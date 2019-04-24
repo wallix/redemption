@@ -81,6 +81,7 @@ struct ModRDPParams
     bool enable_save_files = false;
     const char * validator_socket_path =  "";
     const char * channel_files_directory = "";
+    const char * validator_target_name = "";
 
     struct ClipboardParams
     {

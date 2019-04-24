@@ -637,6 +637,12 @@
           "type": "bool",
           "default": false,
           "description": ""
+        },
+        {
+          "name": "validator_target_name",
+          "type": "string",
+          "default": "avscan",
+          "description": ""
         }
       ]
     }

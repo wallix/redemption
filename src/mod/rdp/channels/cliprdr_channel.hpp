@@ -90,7 +90,7 @@ public:
                    params.enable_save_files,
                    params.enable_validator,
                    icap_service,
-                   "avscan"
+                   params.validator_target_name
                    )
     {}
 

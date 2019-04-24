@@ -296,6 +296,7 @@ namespace cfg {
         struct enable_save_files;
         struct channel_files_directory;
         struct validator_socket_path;
+        struct validator_target_name;
     };
 
     struct context {

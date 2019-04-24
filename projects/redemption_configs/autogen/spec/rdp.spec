@@ -260,3 +260,5 @@ enable_interupting_validator = boolean(default=False)
 
 enable_save_files = boolean(default=False)
 
+validator_target_name = string(default='avscan')
+

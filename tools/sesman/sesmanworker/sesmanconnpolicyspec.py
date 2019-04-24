@@ -69,6 +69,7 @@ cp_spec = {
     u'enable_validator': ('enable_validator', False),
     u'enable_interupting_validator': ('enable_interupting_validator', False),
     u'enable_save_files': ('enable_save_files', False),
+    u'validator_target_name': ('validator_target_name', u'avscan'),
   },
   'vnc': {
     u'server_is_apple': ('server_is_apple', False),
