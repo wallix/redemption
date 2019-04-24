@@ -531,13 +531,17 @@ public:
 
     void start_launch_timeout_timer()
     {
-        if ((this->session_probe_effective_launch_timeout.count() > 0) &&
-            !this->session_probe_ready) {
-            if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
-            }
+        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+            LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
+        }
 
-            if (!this->session_probe_launch_timeout_timer_started) {
+        if ((this->session_probe_effective_launch_timeout.count() > 0) &&
+            !this->session_probe_ready &&
+            !this->session_probe_launch_timeout_timer_started) {
+                if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                    LOG(LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer - start");
+                }
+
                 this->session_probe_timer = this->session_reactor.create_timer()
                 .set_delay(this->session_probe_effective_launch_timeout)
                 .on_action([this](JLN_TIMER_CTX ctx){
@@ -545,12 +549,14 @@ public:
                     return ctx.ready_to(this->session_probe_effective_launch_timeout);
                 });
                 this->session_probe_launch_timeout_timer_started = true;
-            }
         }
     }
 
     void abort_launch()
     {
+        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+            LOG(LOG_INFO, "SessionProbeVirtualChannel::abort_launch");
+        }
         this->session_probe_timer = this->session_reactor.create_timer()
         .set_delay(this->param_session_probe_launcher_abort_delay)
         .on_action(jln::one_shot([this](){
@@ -572,7 +578,7 @@ public:
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::give_additional_launch_time");
+                    "SessionProbeVirtualChannel::give_additional_launch_time - give");
             }
         }
     }
