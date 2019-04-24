@@ -759,6 +759,8 @@ public:
 
         std::unique_ptr<uint8_t[]> data_file = std::make_unique<uint8_t[]>(this->channel_file.get_file_size());
 
+        LOG(LOG_INFO, "send_filtered_file_content_message_to_server");
+
         this->channel_file.read_data(data_file.get(), this->channel_file.get_file_size());
 
         const_bytes_view data = {data_file.get(), this->channel_file.get_file_size()};
@@ -827,6 +829,7 @@ public:
 
         std::unique_ptr<uint8_t[]> data_file = std::make_unique<uint8_t[]>(this->channel_file.get_file_size());
 
+        LOG(LOG_INFO, "send_filtered_file_content_message_to_client");
 
         this->channel_file.read_data(data_file.get(), this->channel_file.get_file_size());
 

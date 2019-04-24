@@ -108,7 +108,7 @@ public:
                 icap_abort_file(this->icap_service, this->streamID);
             }
             this->current_analysis_done = false;
-            this->streamID = icap_open_file(this->icap_service, filename.c_str(), "");
+            this->streamID = icap_open_file(this->icap_service, filename.c_str(), this->target_name.c_str());
         }
     }
 
