@@ -287,4 +287,5 @@ cfg::context::use_session_probe_to_launch_remote_program <- use_session_probe_to
 cfg::context::session_probe_launch_error_message -> session_probe_launch_error_message   [std::string]
 cfg::context::pm_response <- pm_response   [std::string]
 cfg::context::pm_request -> pm_request   [std::string]
+cfg::context::native_session_id -> native_session_id   [unsigned int]
 

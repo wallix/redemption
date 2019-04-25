@@ -1821,6 +1821,13 @@ class Sesman():
                                 if self.shared.get("pm_request"):
                                     self._manage_pm()
 
+                                if self.shared.get("native_session_id"):
+                                    update_args = {}
+                                    update_args["native_session_id"] = self.shared.get("native_session_id")
+                                    self.engine.update_session(**update_args)
+                                    Logger().info(u"NativeSessionId=%s" % self.shared.get("native_session_id"))
+                                    self.shared["native_session_id"] = u""
+
                                 if self.shared.get(u'reporting'):
                                     _reporting      = self.shared.get(u'reporting')
                                     _reporting_reason, _, _remains = \

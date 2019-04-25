@@ -162,4 +162,10 @@ public:
             this->acl_serial->ini.set_acl<cfg::context::pm_request>(request);
         }
     }
+
+    void set_native_session_id(unsigned int session_id) override {
+        if (this->acl_serial){
+            this->acl_serial->ini.set_acl<cfg::context::native_session_id>(session_id);
+        }
+    }
 };

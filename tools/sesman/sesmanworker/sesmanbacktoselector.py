@@ -52,5 +52,6 @@ back_to_selector_default_sent = {
 }
 back_to_selector_default_reinit = {
   u'auth_notify': u'',
+  u'native_session_id': 0,
   u'recording_started': False,
 }

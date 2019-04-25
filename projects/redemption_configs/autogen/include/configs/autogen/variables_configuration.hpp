@@ -4717,6 +4717,22 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// type: unsigned int <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
+    struct context::native_session_id {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "native_session_id";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(160);
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
 
 } // namespace cfg
 
@@ -5068,6 +5084,7 @@ struct context
 , cfg::context::auth_notify_rail_exec_flags
 , cfg::context::auth_command_rail_exec_exec_result
 , cfg::context::auth_command_rail_exec_flags
+, cfg::context::native_session_id
 , cfg::context::opt_bpp
 , cfg::context::opt_height
 , cfg::context::opt_width
@@ -5269,6 +5286,7 @@ using VariablesAclPack = Pack<
 , cfg::context::session_probe_launch_error_message
 , cfg::context::pm_response
 , cfg::context::pm_request
+, cfg::context::native_session_id
 >;
 
 
@@ -5280,7 +5298,7 @@ struct BitFlags {
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111111101111111111
 , 0b1111111111111111111010111110111111111111111111001111111111111111
-, 0b0000000000000000000000000000000011111011111111111111111111111111
+, 0b0000000000000000000000000000000111111011111111111111111111111111
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
