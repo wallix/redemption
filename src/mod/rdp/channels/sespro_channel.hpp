@@ -109,6 +109,8 @@ private:
     SessionReactor::TimerPtr session_probe_timer;
     SessionReactor::GraphicEventPtr freeze_mod_screen;
 
+    bool launch_aborted = false;
+
     uint32_t options = 0;
 
     static long long ms2ll(std::chrono::milliseconds const& ms)
@@ -203,6 +205,8 @@ public:
 
     void abort_launch()
     {
+        this->launch_aborted = true;
+
         this->session_probe_timer = this->session_reactor.create_timer()
         .set_delay(this->sespro_params.launcher_abort_delay)
         .on_action(jln::one_shot([this](){
@@ -219,7 +223,7 @@ protected:
 
 public:
     void give_additional_launch_time() {
-        if (!this->session_probe_ready && this->session_probe_timer) {
+        if (!this->session_probe_ready && this->session_probe_timer && !this->launch_aborted) {
             this->session_probe_timer->set_delay(this->sespro_params.effective_launch_timeout);
 
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
