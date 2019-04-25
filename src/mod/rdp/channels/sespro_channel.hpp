@@ -368,6 +368,8 @@ private:
 
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
+    bool launch_aborted = false;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         std::chrono::milliseconds session_probe_launch_timeout;
@@ -511,6 +513,8 @@ public:
 
     void abort_launch()
     {
+        this->launch_aborted = true;
+
         if (this->session_probe_event.is_trigger_time_set()) {
             this->session_probe_event.set_trigger_time(this->param_session_probe_launcher_abort_delay);
         }
@@ -561,7 +565,7 @@ public:
     }
 
     void give_additional_launch_time() {
-        if (!this->session_probe_ready) {
+        if (!this->session_probe_ready && !this->launch_aborted) {
             this->has_additional_launch_time = true;
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
