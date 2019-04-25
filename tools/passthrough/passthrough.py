@@ -20,6 +20,9 @@ from struct     import pack
 from select     import select
 import socket
 
+# import uuid # for random rec_path
+
+
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 DEBUG = True
 
@@ -247,6 +250,8 @@ class ACLPassthrough():
         # self.selector_target(selector_data)
 
         kv = {}
+        # kv[u'is_rec'] = u'1'
+        # kv[u'rec_path'] = datetime.now().strftime("%Y-%m-%d/%H:%M-") + str(uuid.uuid4())
         kv[u'login'] = self.shared.get(u'target_login')
         kv[u'proto_dest'] = "RDP"
         kv[u'target_port'] = "3389"

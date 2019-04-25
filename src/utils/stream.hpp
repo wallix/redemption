@@ -443,6 +443,11 @@ public:
         return {this->get_data(), this->get_offset()};
     }
 
+    OutStream stream_at(std::size_t i) const noexcept {
+        assert(i < this->get_capacity());
+        return OutStream({this->get_data() + i, this->end});
+    }
+
     uint8_t * get_data() const noexcept {
         return this->begin;
     }
@@ -519,10 +524,6 @@ public:
     void out_uint8(uint8_t v) noexcept {
         assert(this->has_room(1));
         *(this->p++) = v;
-    }
-
-    void set_out_uint8(uint8_t v, size_t offset) noexcept {
-        (this->get_data())[offset] = v;
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
@@ -692,11 +693,6 @@ public:
         this->p+=2;
     }
 
-    void set_out_uint16_le(unsigned int v, size_t offset) noexcept {
-        (this->get_data())[offset] = v & 0xFF;
-        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
-    }
-
     void out_sint16_le(signed int v) noexcept {
         assert(this->has_room(2));
         this->p[0] = v & 0xFF;
@@ -711,11 +707,6 @@ public:
         this->p+=2;
     }
 
-    void set_out_uint16_be(unsigned int v, size_t offset) noexcept {
-        (this->get_data())[offset+1] = v & 0xFF;
-        (this->get_data())[offset] = (v >> 8) & 0xFF;
-    }
-
     void out_uint32_le(unsigned int v) noexcept {
         assert(this->has_room(4));
         this->p[0] = v & 0xFF;
@@ -725,13 +716,6 @@ public:
         this->p+=4;
     }
 
-    void set_out_uint32_le(unsigned int v, size_t offset) noexcept {
-        (this->get_data())[offset+0] = v & 0xFF;
-        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
-        (this->get_data())[offset+2] = (v >> 16) & 0xFF;
-        (this->get_data())[offset+3] = (v >> 24) & 0xFF;
-    }
-
     void out_uint32_be(unsigned int v) noexcept {
         assert(this->has_room(4));
         this->p[0] = (v >> 24) & 0xFF;
@@ -739,14 +723,6 @@ public:
         this->p[2] = (v >> 8) & 0xFF;
         this->p[3] = v & 0xFF;
         this->p+=4;
-    }
-
-    void set_out_uint32_be(unsigned int v, size_t offset) noexcept {
-        assert(this->has_room(4));
-        (this->get_data())[offset+0] = (v >> 24) & 0xFF;
-        (this->get_data())[offset+1] = (v >> 16) & 0xFF;
-        (this->get_data())[offset+2] = (v >> 8) & 0xFF;
-        (this->get_data())[offset+3] = v & 0xFF;
     }
 
     void out_sint32_le(int64_t v) noexcept {

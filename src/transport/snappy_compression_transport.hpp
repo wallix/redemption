@@ -160,7 +160,7 @@ private:
 
         data_stream.out_skip_bytes(compressed_data_length);
 
-        data_stream.set_out_uint16_le(compressed_data_length, compressed_data_length_offset);
+        data_stream.stream_at(compressed_data_length_offset).out_uint16_le(compressed_data_length);
 
         this->target_transport.send(data_stream.get_bytes());
     }

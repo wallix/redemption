@@ -252,7 +252,7 @@ public:
                 }
             }
 
-            stream.set_out_uint16_le(stream.get_offset() - offset_cbData - 2, offset_cbData);
+            stream.stream_at(offset_cbData).out_uint16_le(stream.get_offset() - offset_cbData - 2);
         }
     }   // void emit( OutStream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiScrBlt & oldcmd) const
 

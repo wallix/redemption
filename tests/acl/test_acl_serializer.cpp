@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.out_copy_bytes(string_from_authid(cfg::context::password::index)); stream.out_string("\nASK\n");
 
     stream.out_copy_bytes(string_from_authid(cfg::context::session_id::index)); stream.out_string("\n!6455\n");
-    stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
+    stream.stream_at(0).out_uint32_be(stream.get_offset() - 4);
 
     LCGRandom rnd(0);
     Fstat fstat;

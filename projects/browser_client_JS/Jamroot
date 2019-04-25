@@ -25,15 +25,28 @@ EXE_DEPENDENCIES +=
 ;
 
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
-constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "http://localhost:3389//" ] ; # last `/` removed by bjam...
+constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "''" ] ;
+
+rule filter_flags ( e )
+{
+    if $(e) = <cxxflags>-msse3
+    {
+        return ;
+    }
+    else
+    {
+        return $(e) ;
+    }
+}
+
+import sequence ;
+REDEMPTION_CXXFLAGS = [ sequence.filter filter_flags : $(REDEMPTION_CXXFLAGS) ] ;
 
 project redjs
     : requirements
 
-    # <conditional>@flags
-
     $(REDEMPTION_CXXFLAGS)
-    $(REDEMPTION_FFMPEG_FLAGS)
+    # $(REDEMPTION_FFMPEG_FLAGS)
     # $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
     <define>REDEMPTION_NO_STACKTRACE
 
@@ -49,11 +62,13 @@ project redjs
     # DISABLE_EXCEPTION_CATCHING = 1 - disable exception catching at all
     # DISABLE_EXCEPTION_CATCHING = 2 - disable exception catching, but enables catching in whitelist
     <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
-    <cxxflags>"-s FS_LOG"
+    <cxxflags>"-s USE_PTHREADS=0"
+    # <linkflags>"-s SIMD=1"
+    # <cxxflags>"-s FS_LOG=1"
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
 
-    <cxxflags>"-s USE_LIBPNG=1"
-    <cxxflags>"-s USE_ZLIB=1"
+    # <cxxflags>"-s USE_LIBPNG=1"
+    # <cxxflags>"-s USE_ZLIB=1"
 
     # <cxx-lto>on
 
@@ -211,3 +226,20 @@ rule htmljs ( name : objs + : deps * )
 
 
 include targets.jam ;
+
+actions copy_client
+{
+    cp $(>[1]) $(<) && echo $(>[1])
+}
+# depends to js_client for a path with toolset
+make rdpclient.html : src/js_client.html js_client : @copy_client ;
+
+constant browser : [ setvar browser : xdg-open ] ;
+constant username : [ setvar username : '' ] ;
+constant password : [ setvar password : '' ] ;
+actions open_client
+{
+    $(browser) $(>[1])"?user="$(username)"&pass="$(password)
+}
+make open_client : rdpclient.html rdpclient.html : @open_client ;
+explicit open_client ;

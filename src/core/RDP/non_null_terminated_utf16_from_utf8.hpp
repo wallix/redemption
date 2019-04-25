@@ -33,12 +33,12 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
     OutStream & out, const_bytes_view utf8_string,
     const size_t maximum_length_in_bytes,
     const size_t offset_of_data_length
-) {
+) noexcept {
     uint8_t * const unicode_data = out.get_current();
     const size_t size_of_unicode_data = ::UTF8toUTF16(utf8_string, unicode_data, maximum_length_in_bytes);
     out.out_skip_bytes(size_of_unicode_data);
 
-    out.set_out_uint16_le(size_of_unicode_data, offset_of_data_length);
+    out.stream_at(offset_of_data_length).out_uint16_le(size_of_unicode_data);
 
     return size_of_unicode_data;
 }
@@ -47,7 +47,7 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
 inline size_t put_non_null_terminated_utf16_from_utf8(
     OutStream & out, const_bytes_view utf8_string,
     const size_t maximum_length_in_bytes
-) {
+) noexcept {
     const size_t offset_of_data_length = out.get_offset();
     out.out_skip_bytes(2);
     return put_non_null_terminated_utf16_from_utf8(

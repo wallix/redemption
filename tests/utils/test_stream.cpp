@@ -417,3 +417,13 @@ RED_AUTO_TEST_CASE(TestInSInt64Le)
         RED_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
     }
 }
+
+RED_AUTO_TEST_CASE(TestStreamAt)
+{
+    StaticOutStream<12> stream;
+    stream.out_copy_bytes("abcde"_av);
+
+    RED_CHECK(stream.get_bytes()[1] == 'b');
+    stream.stream_at(1).out_uint8('x');
+    RED_CHECK(stream.get_bytes()[1] == 'x');
+}

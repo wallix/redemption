@@ -489,8 +489,7 @@ public:
                           - this->offset_of_OrderSize
                           + 1;  // Alternate Secondary Order Header(1)
 
-        this->output_stream->set_out_uint16_le(this->OrderSize,
-            this->offset_of_OrderSize);
+        this->output_stream->stream_at(this->offset_of_OrderSize).out_uint16_le(this->OrderSize);
 
         this->output_stream = nullptr;
     }
@@ -2274,8 +2273,7 @@ public:
                           - this->offset_of_OrderSize
                           + 1;  // Alternate Secondary Order Header(1)
 
-        this->output_stream->set_out_uint16_le(this->OrderSize,
-            this->offset_of_OrderSize);
+        this->output_stream->stream_at(this->offset_of_OrderSize).out_uint16_le(this->OrderSize);
 
         this->output_stream = nullptr;
     }
@@ -3043,8 +3041,7 @@ public:
                           - this->offset_of_OrderSize
                           + 1;  // Alternate Secondary Order Header(1)
 
-        this->output_stream->set_out_uint16_le(this->OrderSize,
-            this->offset_of_OrderSize);
+        this->output_stream->stream_at(this->offset_of_OrderSize).out_uint16_le(this->OrderSize);
 
         this->output_stream = nullptr;
     }

@@ -49,9 +49,9 @@ namespace redemption_unit_test__
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
 
-# define RED_FAIL(mess) ::redemption_unit_test__::Stream{} << mess
-# define RED_ERROR(mess) ::redemption_unit_test__::Stream{} << mess
-# define RED_TEST_CHECKPOINT(name) do { } while(0)
+# define RED_FAIL(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_ERROR(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_TEST_CHECKPOINT(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_PASSPOINT() do { } while(0)
 # define RED_TEST_DONT_PRINT_LOG_VALUE(type)
 # define RED_TEST_PRINT_TYPE_FUNCTION_NAME red_test_print_type
@@ -66,15 +66,15 @@ namespace redemption_unit_test__
 //@{
 # define RED_TEST(expr) RED_TEST_CHECK(expr)
 # define RED_TEST_CHECK(expr) RED_CHECK(expr)
-# define RED_TEST_CONTEXT(iostream_expr) if (::redemption_unit_test__::Stream{} << iostream_expr)
+# define RED_TEST_CONTEXT(ostream_expr) if (::redemption_unit_test__::Stream{} << ostream_expr)
 
 # define RED_TEST_INVOKER(fname) fname
 # define RED_TEST_FUNC_CTX(fname) ([](auto&&... xs) { \
     return fname(static_cast<decltype(xs)&&>(xs)...); })
-# define RED_TEST_F(fname) ::redemption_unit_test__::X(bool(fname RED_TEST_F_I
-# define RED_TEST_F_I(...) __VA_ARGS__))
-# define RED_REQUIRE_F(fname) ::redemption_unit_test__::X(bool(fname RED_REQUIRE_F_I
-# define RED_REQUIRE_F_I(...) __VA_ARGS__))
+# define RED_TEST_FUNC(fname) ::redemption_unit_test__::X(bool(fname RED_TEST_FUNC_I
+# define RED_TEST_FUNC_I(...) __VA_ARGS__))
+# define RED_REQUIRE_FUNC(fname) ::redemption_unit_test__::X(bool(fname RED_REQUIRE_FUNC_I
+# define RED_REQUIRE_FUNC_I(...) __VA_ARGS__))
 
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
@@ -88,8 +88,8 @@ namespace redemption_unit_test__
 # define RED_CHECK_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
 # define RED_CHECK_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
 # define RED_CHECK(a) ::redemption_unit_test__::X(bool(a))
-# define RED_CHECK_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
-    ::redemption_unit_test__::Stream{} << iostream_expr
+# define RED_CHECK_MESSAGE(a, ostream_expr) ::redemption_unit_test__::X(bool(a)), \
+    ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_CHECK_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
     ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
 # define RED_CHECK_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
@@ -121,8 +121,8 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
 # define RED_REQUIRE_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
 # define RED_REQUIRE(a) ::redemption_unit_test__::X(bool(a))
-# define RED_REQUIRE_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
-    ::redemption_unit_test__::Stream{} << iostream_expr
+# define RED_REQUIRE_MESSAGE(a, ostream_expr) ::redemption_unit_test__::X(bool(a)), \
+    ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_REQUIRE_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
     ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
 # define RED_REQUIRE_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))

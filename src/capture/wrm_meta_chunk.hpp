@@ -116,7 +116,7 @@ struct WrmMetaChunk
             }
         }
 
-        payload.set_out_uint32_le(payload.get_offset(), pos);
+        payload.stream_at(pos).out_uint32_le(payload.get_offset());
 
         t.send(payload.get_bytes());
     }

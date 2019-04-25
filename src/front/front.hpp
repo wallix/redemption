@@ -2891,8 +2891,8 @@ private:
                 }
 
                 size_t caps_size = stream.get_offset() - caps_count_offset;
-                stream.set_out_uint16_le(caps_size, caps_size_offset);
-                stream.set_out_uint32_le(caps_count, caps_count_offset);
+                stream.stream_at(caps_size_offset).out_uint16_le(caps_size);
+                stream.stream_at(caps_count_offset).out_uint32_le(caps_count);
 
                 stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
             },

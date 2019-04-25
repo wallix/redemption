@@ -198,14 +198,14 @@ constexpr fn_invoker_t<F> fn_invoker(char const* name, F f)
 #define RED_TEST_INVOKER(fname) redemption_unit_test__::fn_invoker( \
     #fname, [&](auto&&... args){ return fname(args...); })
 
-#define RED_TEST_F(fname) [&]{                                     \
+#define RED_TEST_FUNC(fname) [&]{                                  \
     auto BOOST_PP_CAT(fctx__, __LINE__) = RED_TEST_INVOKER(fname); \
-    RED_TEST_F_I
+    RED_TEST_FUNC_I
 
-#define RED_TEST_F_I(...) RED_TEST(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()
+#define RED_TEST_FUNC_I(...) RED_TEST(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()
 
-#define RED_REQUIRE_F(fname) [&]{                                  \
+#define RED_REQUIRE_FUNC(fname) [&]{                               \
     auto BOOST_PP_CAT(fctx__, __LINE__) = RED_TEST_INVOKER(fname); \
-    RED_REQUIRE_F_I
+    RED_REQUIRE_FUNC_I
 
-#define RED_REQUIRE_F_I(...) RED_REQUIRE(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()
+#define RED_REQUIRE_FUNC_I(...) RED_REQUIRE(BOOST_PP_CAT(fctx__, __LINE__)__VA_ARGS__); }()

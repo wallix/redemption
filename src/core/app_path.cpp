@@ -70,7 +70,7 @@ char const * app_path(AppPath k) noexcept
         case AppPath::CfgIni: return CFG_PATH "/" RDPPROXY_INI;
         case AppPath::CfgCrt: return CFG_PATH "/rdpproxy.crt";
         case AppPath::CfgKey: return CFG_PATH "/rdpproxy.key";
-        case AppPath::CfgDhPem: return CFG_PATH "/dh2048.pem";
+        case AppPath::CfgDhPem: return CFG_PATH "/dh3072.pem";
         case AppPath::LockDir: return PID_PATH "/redemption";
         case AppPath::LockFile: return PID_PATH "/redemption/" LOCKFILE;
         case AppPath::DefaultFontFile: return SHARE_PATH "/" DEFAULT_FONT_NAME;

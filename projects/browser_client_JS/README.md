@@ -33,28 +33,29 @@ source ./emsdk_set_env.sh
 ./emsdk_env.sh
 ```
 
-# Transpilation
+## Test
 
-```bash
-em++ file.cpp -o file.html
+```cpp
+// test.cpp
+#include <cstdio>
+int main()
+{
+    puts("ok");
+}
 ```
 
-## Options
-
-`--preload-file path1`
-
-`--embed-file path1`
-
-`--exclude-file path1`
-
-`-O1`, `-O2`, `-O3`
+```bash
+em++ test.cpp -o test.js
+node test.js
+```
 
 
-# Compilation
+# Compile RdpClient
 
-## Include path
+## Configure boost path for test targets
 
 ```bash
+mkdir system_include/
 ln -s /usr/include/boost system_include/
 ```
 
@@ -67,34 +68,36 @@ source $EMSDK_PATH/emsdk_set_env.sh
 ## Run bjam
 
 ```bash
-bjam -j7 toolset=clang "cxxflags=-fcolor-diagnostics" debug js_client
+bjam -j7 toolset=clang debug rdpclient.html
 ```
 
 Set module name with `-s JS_MODULE_NAME=xxx`
 
+Set source map with `-s JS_SOURCE_MAP='prefix//'`
 
-# Test
 
-```bash
-cd bin/clang.../debug
-ln -s ../../../src/js_client.html rdpclient.html
-# run proxy, with nla and tls disabled
-# open http://localhost:7542/rdpclient.html
+# Open client
+
+## Enable websocket
+
+Inner `rdpproxy.ini`.
+
+```ini
+[globals]
+enable_websocket=yes
 ```
 
-## Proxy websocket -> tcp
+Or use `websocat` (websocket -> tcp).
 
 ```bash
+sudo apt install cargo
 wget https://github.com/vi/websocat/archive/master.zip
+unzip master.zip
 cd websocat-master
 cargo build --release --bin websocat
 ./target/release/websocat --binary ws-l:127.0.0.1:8080 tcp:127.0.0.1:3389
 ```
 
-## Http server
+## Open rdpclient.html
 
-
-```bash
-cd bin/clang.../debug
-python -m SimpleHTTPServer 7542
-```
+`bjam open_client` or `bjam open_client -s browser='my browser' -s username=x -p password=x`

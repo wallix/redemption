@@ -258,4 +258,6 @@ private:
 
     std::vector<WindowRecord> windows;
     std::vector<WindowVisibilityRectRecord> window_visibility_rects;
+
+    bool old_kbd_input_mask_state = false;
 };

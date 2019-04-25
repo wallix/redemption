@@ -39,14 +39,14 @@ VideoParams video_params_from_ini(
     std::chrono::seconds video_break_interval,
     const Inifile & ini);
 
-OcrParams ocr_params_from_ini(Inifile & ini);
+OcrParams ocr_params_from_ini(const Inifile & ini);
 
-MetaParams meta_params_from_ini(Inifile & ini);
+MetaParams meta_params_from_ini(const Inifile & ini);
 
-KbdLogParams kbd_log_params_from_ini(Inifile & ini);
+KbdLogParams kbd_log_params_from_ini(const Inifile & ini);
 
-PatternParams pattern_params_from_ini(Inifile & ini);
+PatternParams pattern_params_from_ini(const Inifile & ini);
 
 WrmParams wrm_params_from_ini(
     BitsPerPixel capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd, Fstat & fstat,
-    const char * hash_path, Inifile & ini);
+    const char * hash_path, const Inifile & ini);

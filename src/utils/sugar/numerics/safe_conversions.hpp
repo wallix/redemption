@@ -31,19 +31,19 @@
 // analogous to static_cast<> for integral types
 // with an assert macro if the conversion is overflow or underflow.
 template <class Dst, class Src>
-constexpr Dst checked_cast(Src value);
+constexpr Dst checked_cast(Src value) noexcept;
 
 
 // analogous to static_cast<> for integral types,
 // except that use std::clamp if the conversion is overflow or underflow.
 template <class Dst, class Src>
-constexpr Dst saturated_cast(Src value);
+constexpr Dst saturated_cast(Src value) noexcept;
 
 
 // analogous to static_cast<> for integral types
 // with an static_assert if the conversion is possibly overflow or underflow.
 template <class Dst, class Src>
-constexpr Dst safe_cast(Src value);
+constexpr Dst safe_cast(Src value) noexcept;
 
 
 // integer type with checked_cast
@@ -127,9 +127,9 @@ private:
 };
 
 
-template<class T> inline checked_int<T>   make_checked_int(T i)   { return {i}; }
-template<class T> inline saturated_int<T> make_saturated_int(T i) { return {i}; }
-template<class T> inline safe_int<T>      make_safe_int(T i)      { return {i}; }
+template<class T> inline checked_int<T>   make_checked_int(T i)   noexcept { return {i}; }
+template<class T> inline saturated_int<T> make_saturated_int(T i) noexcept { return {i}; }
+template<class T> inline safe_int<T>      make_safe_int(T i)      noexcept { return {i}; }
 
 
 namespace std
@@ -170,7 +170,7 @@ namespace detail
     }
 
     template <class Dst, class Src>
-    constexpr Dst checked_cast(type_<Dst> /*unused*/, Src value)
+    constexpr Dst checked_cast(type_<Dst> /*unused*/, Src value) noexcept
     {
     #ifndef NDEBUG
         REDEMPTION_DIAGNOSTIC_PUSH
@@ -184,13 +184,13 @@ namespace detail
     }
 
     template <class Dst>
-    constexpr Dst checked_cast(type_<Dst> /*unused*/, Dst value)
+    constexpr Dst checked_cast(type_<Dst> /*unused*/, Dst value) noexcept
     {
         return value;
     }
 
     template <class Dst, class Src>
-    constexpr Dst saturated_cast(type_<Dst> /*unused*/, Src value)
+    constexpr Dst saturated_cast(type_<Dst> /*unused*/, Src value) noexcept
     {
         if constexpr (std::is_signed<Dst>::value == std::is_signed<Src>::value && sizeof(Dst) >= sizeof(Src)) {
             return static_cast<Dst>(value);
@@ -208,7 +208,7 @@ namespace detail
     }
 
     template <class Dst>
-    constexpr Dst saturated_cast(type_<Dst> /*unused*/, Dst value)
+    constexpr Dst saturated_cast(type_<Dst> /*unused*/, Dst value) noexcept
     {
         return value;
     }
@@ -237,7 +237,7 @@ namespace detail
 
 
 template <class Dst, class Src>
-constexpr Dst checked_cast(Src value)
+constexpr Dst checked_cast(Src value) noexcept
 {
     static_assert(detail::check_int<Dst>(value) );
     using dst_type = detail::underlying_type_or_integral_t<Dst>;
@@ -247,7 +247,7 @@ constexpr Dst checked_cast(Src value)
 
 
 template <class Dst, class Src>
-constexpr Dst saturated_cast(Src value)
+constexpr Dst saturated_cast(Src value) noexcept
 {
     static_assert(detail::check_int<Dst>(value) );
     using dst_type = detail::underlying_type_or_integral_t<Dst>;
@@ -263,7 +263,7 @@ using is_safe_convertible = std::integral_constant<bool, detail::is_safe_convert
 >::value>;
 
 template <class Dst, class Src>
-constexpr Dst safe_cast(Src value)
+constexpr Dst safe_cast(Src value) noexcept
 {
     static_assert(detail::check_int<Dst>(value) );
     static_assert(is_safe_convertible<Src, Dst>::value, "Unsafe conversion.");
