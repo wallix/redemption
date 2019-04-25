@@ -1,3 +1,10 @@
+redemption (1.1.151%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Flush keyboard input buffer before mask state change.
+  * (SP) Fix detection of deactivation of Drive Redirection on Windows Server 2008 R2 target.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Apr 2019 17:23:24 +0200
+
 redemption (1.1.149%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Add mechanism to disable some features of Session Probe.
