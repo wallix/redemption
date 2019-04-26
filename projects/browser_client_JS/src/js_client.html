@@ -309,7 +309,17 @@ const redemption = (function(Module, window) {
         return client;
     };
 
-    const wrappersClipboard = {
+    const addChannelClass = (ChannelClassName, wrapEvents) => {
+        resultFuncs['new' + ChannelClassName] = function(cb, events, ...channelArgs) {
+            for (eventName in wrapEvents) {
+                const event = events[eventName];
+                events[eventName] = event ? wrapEvents[eventName](event, events) : noop;
+            }
+            return new Module[ChannelClassName](cb, events, ...channelArgs);
+        };
+    };
+
+    addChannelClass('ClipboardChannel', {
         receiveFormatStart: identity,
         receiveFormatStop: identity,
         receiveFormat: identity,
@@ -320,15 +330,11 @@ const redemption = (function(Module, window) {
         receiveFileSize: identity,
         receiveFormatId: identity,
         fileContentsRequest: identity,
-    };
+    });
 
-    resultFuncs.newClipboardChannel = function(callback, events, verbose) {
-        for (eventName in wrappersClipboard) {
-            const event = events[eventName];
-            events[eventName] = event ? wrappersClipboard[eventName](event, events) : noop;
-        }
-        return new Module.ClipboardChannel(callback, events, verbose);
-    };
+    addChannelClass('CustomChannel', {
+        receiveData: wCb_em2js_U8p,
+    });
 
     return resultFuncs;
 
