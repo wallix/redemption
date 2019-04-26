@@ -743,47 +743,22 @@ static uint32_t refImage[] = { /* 4.2.4.4 Inverse Color Conversion */
 };
 
 
-
-static size_t fuzzyCompare(uint8_t b1, uint8_t b2)
+static void checkFuzzyCompareImage(const uint32_t *refImage, const uint8_t *img, size_t npixels)
 {
-	if (b1 > b2)
-		return b1 - b2;
-	return b2 - b1;
-}
-
-static bool fuzzyCompareImage(const uint32_t *refImage, const uint8_t *img, size_t npixels) {
-	size_t i;
-	size_t totalDelta = 0;
-
-	for(i = 0; i < npixels; i++, refImage++)
+	for(size_t i = 0; i < npixels; i++, refImage++)
 	{
 		uint8_t B = *img++;
 		uint8_t G = *img++;
 		uint8_t R = *img++;
 		uint8_t A = *img++;
-		size_t delta;
 
-		if (A != 0x00 && A != 0xff)
-			return false;
+		RED_TEST((A == 0x00 || A == 0xff));
+        RED_TEST(R == ((*refImage >> 16) & 0xFF) +- 1_v);
+        RED_TEST(G == ((*refImage >> 8 ) & 0xFF) +- 1_v);
+        RED_TEST(B == ((*refImage >> 0 ) & 0xFF) +- 1_v);
 
-		delta = fuzzyCompare(R, (*refImage & 0x00ff0000) >> 16);
-		if (delta > 1)
-			return false;
-		totalDelta += delta;
-
-		delta = fuzzyCompare(G, (*refImage & 0x0000ff00) >> 8);
-		if (delta > 1)
-			return false;
-		totalDelta += delta;
-
-		delta = fuzzyCompare(B, (*refImage & 0x0000ff));
-		if (delta > 1)
-			return false;
-		totalDelta += delta;
+        if (RED_ERROR_COUNT > 0) return;
 	}
-
-	// WLog_DBG("test", "totalDelta=%d (npixels=%d)", totalDelta, npixels);
-	return true;
 }
 
 
@@ -800,14 +775,13 @@ public:
 #endif
 
 		testPassed = true;
-		testResult = fuzzyCompareImage(refImage, content.data, cmd.width * cmd.height);
+		checkFuzzyCompareImage(refImage, content.data, cmd.width * cmd.height);
 	}
 
 	using gdi::NullGraphic::draw;
 
 public:
 	bool testPassed = false;
-	bool testResult = false;
 };
 
 
@@ -828,5 +802,4 @@ RED_AUTO_TEST_CASE(TestRemoteFx) {
 
 	decoder.recv(tilesetStream, cmd, gdi);
 	RED_CHECK(gdi.testPassed);
-	RED_CHECK(gdi.testResult);
 }
