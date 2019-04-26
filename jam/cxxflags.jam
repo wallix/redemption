@@ -655,9 +655,9 @@ rule flags ( properties * )
     {
       if ! ( $(x_stl_debug) = "off" )
       {
-        flags +=
-          <cxxflags>"-D_LIBCPP_DEBUG=1"
-        ;
+        # flags +=
+        #   <cxxflags>"-D_LIBCPP_DEBUG=1"
+        # ;
         if ( $(x_stl_debug) = "assert-as-exception" )
         {
           flags +=

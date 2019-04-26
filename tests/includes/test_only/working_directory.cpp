@@ -25,6 +25,7 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "cxx/compiler_version.hpp"
+#include "cxx/cxx.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -39,6 +40,46 @@ Author(s): Jonathan Poelen
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
+
+#ifndef WD_NO_UUID
+# if REDEMPTION_HAS_INCLUDE(<boost/uuid/uuid.hpp>)
+#  include <boost/uuid/uuid.hpp>
+#  include <boost/uuid/random_generator.hpp>
+namespace
+{
+    boost::uuids::uuid generate_random_uuid()
+    {
+        return boost::uuids::random_generator()();
+    }
+}
+# else
+#  ifdef EXTERNAL_GENERATE_RANDOM_UUID
+void generate_random_uuid(unsigned char uuid[16]);
+namespace
+{
+    std::array<uint8_t, 16> generate_random_uuid()
+    {
+        std::array<uint8_t, 16> uuid;
+        generate_random_uuid(uuid.data());
+        return uuid;
+    }
+}
+#  else
+#   include <sys/types.h>
+#   include <unistd.h>
+namespace
+{
+    std::array<uint8_t, 16> generate_random_uuid()
+    {
+        std::array<uint8_t, 16> uuid;
+        int r = std::snprintf(char_ptr_cast(uuid.data()), sizeof(uuid), "%*16d", getpid());
+        memset(uuid.data(), uuid.size() - r, 0);
+        return uuid;
+    }
+}
+#  endif
+# endif
+#endif
 
 namespace
 {
@@ -63,12 +104,41 @@ namespace
         return base;
     }
 
-    constexpr std::string_view suffix_by_compiler()
+    #ifdef WD_NO_UUID
+    std::string_view
+    #else
+    std::string
+    #endif
+    suffix_by_compiler()
     {
+    #ifdef WD_NO_UUID
         return
             "-red_" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
             REDEMPTION_COMP_STRING_VERSION "/"
         ;
+    #else
+        static const std::string suffix = [&]{
+            char uuid_string[36];
+            char* p = uuid_string;
+            auto to_char = [](uint8_t c){ return (c <= 9) ? '0'+c : 'a' + (c-10); };
+            int i = 0;
+            for (uint8_t byte : generate_random_uuid()) {
+                *p++ = to_char(0xF & (byte >> 4));
+                *p++ = to_char(0xF &  byte);
+                if (i == 3 || i == 5 || i == 7 || i == 9) {
+                    *p++ += '-';
+                }
+                ++i;
+            }
+            return str_concat(
+                "-red_" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
+                REDEMPTION_COMP_STRING_VERSION "-",
+                make_array_view(uuid_string),
+                '/'
+            );
+        }();
+        return suffix;
+    #endif
     }
 
 #define WD_ERROR_S(ostream_expr) RED_ERROR("WorkingDirectory: " ostream_expr)

@@ -24,12 +24,30 @@ Author(s): Jonathan Poelen
 
 #include "./redemption_unit_tests.hpp"
 
+#include <boost/test/results_collector.hpp>
+// #include <boost/test/results_reporter.hpp>
+#include <boost/test/framework.hpp>
+
 #include <algorithm>
 #include <ostream>
 
 
 namespace redemption_unit_test__
 {
+    unsigned long current_count_error()
+    {
+        using boost::unit_test::results_collector;
+        using boost::unit_test::framework::current_test_case;
+        using boost::unit_test::test_case;
+        using boost::unit_test::test_results;
+        return results_collector.results(current_test_case().p_id).p_assertions_failed.get();
+    }
+
+    // std::ostream& current_stream()
+    // {
+    //     return boost::unit_test::results_reporter::get_stream();
+    // }
+
     namespace
     {
         bool xarray_cmp(size_t& res, cbytes_view sig, cbytes_view other_sig) noexcept

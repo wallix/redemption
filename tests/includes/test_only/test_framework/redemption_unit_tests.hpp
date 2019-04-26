@@ -305,23 +305,25 @@ namespace redemption_unit_test__
 
 #endif
 
-#define RED_TEST_DELEGATE_PRINT(type, stream_expr)             \
-  template<>                                                   \
-  struct RED_TEST_PRINT_TYPE_STRUCT_NAME< ::type>              \
-  {                                                            \
-    void operator()(std::ostream& out, ::type const & x) const \
-    {                                                          \
-      out << stream_expr;                                      \
-    }                                                          \
+#define RED_TEST_DELEGATE_PRINT(type, stream_expr)          \
+  template<>                                                \
+  struct RED_TEST_PRINT_TYPE_STRUCT_NAME<type>              \
+  {                                                         \
+    void operator()(std::ostream& out,type const & x) const \
+    {                                                       \
+      out << stream_expr;                                   \
+    }                                                       \
   }
 
 #define RED_TEST_DELEGATE_PRINT_ENUM(type) \
   RED_TEST_DELEGATE_PRINT(type,            \
-    #type << "{" << +::std::underlying_type_t<::type>(x) << "}")
+    #type << "{" << +::std::underlying_type_t<type>(x) << "}")
 
 
 namespace redemption_unit_test__
 {
+
+unsigned long current_count_error();
 
 struct int_variation
 {
@@ -503,3 +505,5 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
 #define RED_REQUIRE_SMEM_AA(mem, memref) \
     RED_REQUIRE_SMEM(make_array_view(mem), make_array_view(memref))
 //@}
+
+#define RED_ERROR_COUNT redemption_unit_test__::current_count_error()
