@@ -15,7 +15,7 @@ cd emsdk-master/
 
 ```bash
 ./emsdk activate latest
-./emsdk_env.sh
+source ./emsdk_env.sh
 ```
 
 ## Environment
@@ -30,7 +30,7 @@ source ./emsdk_set_env.sh
 ./emsdk update
 ./emsdk install latest
 ./emsdk activate latest
-./emsdk_env.sh
+source ./emsdk_env.sh
 ```
 
 ## Test
