@@ -70,10 +70,10 @@ namespace
         Rect cmd_rect;
 
         for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
-            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
-            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
-            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
-            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
+            cmd_rect.x += cmd.deltaEncodedRectangles[i].leftDelta;
+            cmd_rect.y += cmd.deltaEncodedRectangles[i].topDelta;
+            cmd_rect.cx = cmd.deltaEncodedRectangles[i].width;
+            cmd_rect.cy = cmd.deltaEncodedRectangles[i].height;
             f(clip_drawable_cmd_intersect.intersect(cmd_rect));
         }
     }
