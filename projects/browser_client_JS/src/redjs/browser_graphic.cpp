@@ -79,6 +79,12 @@ namespace
     }
 }
 
+
+inline uint32_t emval_call_arg(BGRColor const& bgr) noexcept
+{
+    return BGRColor(BGRasRGBColor(bgr)).as_u32();
+}
+
 namespace redjs
 {
 
@@ -114,7 +120,7 @@ void BrowserGraphic::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx co
         trect.y,
         trect.cx,
         trect.cy,
-        color_decode(cmd.color, color_ctx).as_u32()
+        color_decode(cmd.color, color_ctx)
     );
 }
 
@@ -122,7 +128,7 @@ void BrowserGraphic::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorC
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPMultiOpaqueRect");
 
-    const auto color = color_decode(cmd._Color, color_ctx).as_u32();
+    const auto color = color_decode(cmd._Color, color_ctx);
     draw_multi(this->width, this->height, cmd, clip, [color, this](const Rect & trect) {
         emval_call(this->callbacks, "drawRect",
             trect.x,
@@ -280,10 +286,10 @@ void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_
         equa.segin.a.y,
         equa.segin.b.x,
         equa.segin.b.y,
-        color_decode(cmd.back_color, color_ctx).as_u32(),
+        color_decode(cmd.back_color, color_ctx),
         cmd.pen.style,
         cmd.pen.width,
-        color_decode(cmd.pen.color, color_ctx).as_u32()
+        color_decode(cmd.pen.color, color_ctx)
     );
 }
 
@@ -296,7 +302,7 @@ void BrowserGraphic::draw(RDPPolyline const & cmd, Rect /*clip*/, gdi::ColorCtx 
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPPolyline");
 
-    const auto color = color_decode(cmd.PenColor, color_ctx).as_u32();
+    const auto color = color_decode(cmd.PenColor, color_ctx);
 
     emval_call(this->callbacks, "drawPolyline",
         cmd.xStart,
