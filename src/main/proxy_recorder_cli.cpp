@@ -49,6 +49,7 @@ public:
 
     bool start(int sck)
     {
+        LOG(LOG_INFO, "Starting FrontServer");
         unique_fd sck_in {accept(sck, nullptr, nullptr)};
         if (!sck_in) {
             LOG(LOG_ERR, "Accept failed on socket %d (%s)", sck, strerror(errno));
@@ -72,9 +73,14 @@ public:
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
 
             TimeSystem timeobj;
+            SocketTransport lowFrontConn("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
+            SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort), 
+                this->targetHost.c_str(), this->targetPort, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
+                
             ProxyRecorder conn(
-                std::move(sck_in), targetHost, targetPort, finalPath, timeobj,
-                nla_username, nla_password, enable_kerberos, verbosity);
+                lowFrontConn, lowBackConn, finalPath, timeobj,
+                this->nla_username, this->nla_password, enable_kerberos, verbosity);
+                
             try {
                 conn.run();
             } catch(Error const& e) {
@@ -84,8 +90,10 @@ public:
                 else {
                     LOG(LOG_ERR, "Recording front connection ending: %s", e.errmsg());
                 }
+                LOG(LOG_INFO, "Exiting FrontServer (1)");
                 exit(1);
             }
+            LOG(LOG_INFO, "Exiting FrontServer (0)");
             exit(0);
         }
         else if (!this->forkable) {
@@ -177,10 +185,10 @@ int main(int argc, char *argv[])
 {
     char const* target_host = nullptr;
     int target_port = 3389;
-    int listen_port = 3389;
-    char const* capture_file = nullptr;
+    int listen_port = 8001;
     std::string nla_username;
     std::string nla_password;
+    char const* capture_file = nullptr;
     bool no_forkable = false;
     bool enable_kerberos = false;
     uint64_t verbosity = 0;

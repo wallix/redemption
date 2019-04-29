@@ -31,7 +31,7 @@ void ProxyRecorder::front_step1()
         LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
 
         InStream x224_stream(currentPacket);
-        X224::CR_TPDU_Recv x224(x224_stream, true);
+        X224::CR_TPDU_Recv x224(x224_stream, false, this->verbosity);
         if (x224._header_size != x224_stream.get_capacity()) {
             LOG(LOG_WARNING,
                 "Front::incoming: connection request: all data should have been consumed,"
@@ -39,8 +39,8 @@ void ProxyRecorder::front_step1()
                 x224_stream.get_capacity() - x224._header_size);
         }
 
-        is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
-        is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
+        this->is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
+        this->is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
 
         StaticOutStream<256> front_x224_stream;
         X224::CC_TPDU_Send(
@@ -51,18 +51,18 @@ void ProxyRecorder::front_step1()
         outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
         this->frontConn.send(front_x224_stream.get_bytes());
 
-        if (is_tls_client || is_nla_client) {
+        if (this->is_tls_client || this->is_nla_client) {
             this->frontConn.enable_server_tls("inquisition", nullptr, 0);
         }
 
-        if (is_nla_client) {
+        if (this->is_nla_client) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "start NegoServer");
             }
-            nego_server = std::make_unique<NegoServer>(
+            this->nego_server = std::make_unique<NegoServer>(
                 this->frontConn, outFile, nla_username, nla_password, this->verbosity > 8);
 
-            rdpCredsspServer::State st = nego_server->recv_data(this->frontBuffer);
+            rdpCredsspServer::State st = this->nego_server->recv_data(this->frontBuffer);
 
             if (rdpCredsspServer::State::Err == st) {
                 throw Error(ERR_NLA_AUTHENTICATION_FAILED);
@@ -85,14 +85,14 @@ void ProxyRecorder::front_step1()
         outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
         this->backConn.send(back_x224_stream.get_bytes());
 
-        this->pstate = nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
+        this->pstate = this->nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
     }
 }
 
 void ProxyRecorder::front_nla()
 {
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
-    rdpCredsspServer::State st = nego_server->recv_data(this->frontBuffer);
+    rdpCredsspServer::State st = this->nego_server->recv_data(this->frontBuffer);
     switch (st) {
     case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
     case rdpCredsspServer::State::Cont: break;
@@ -101,7 +101,7 @@ void ProxyRecorder::front_nla()
             LOG(LOG_INFO, "stop NegoServer");
             LOG(LOG_INFO, "start NegoClient");
         }
-        nego_server.reset();
+        this->nego_server.reset();
         this->pstate = NEGOCIATING_BACK_NLA;
         break;
     }

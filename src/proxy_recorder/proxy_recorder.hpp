@@ -32,6 +32,7 @@
 #include "core/server_notifier_api.hpp"
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
+#include "transport/socket_trace_transport.hpp"
 #include "utils/cli.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/netutils.hpp"
@@ -55,13 +56,12 @@ class ProxyRecorder
 {
     using PacketType = RecorderFile::PacketType;
 public:
-    ProxyRecorder(unique_fd sck, std::string host, int port, std::string const& captureFile,
+    ProxyRecorder(SocketTransport & lowFrontConn, SocketTransport & lowBackConn, std::string const& captureFile,
         TimeObj& timeobj,std::string nla_username, std::string nla_password, bool enable_kerberos,
         uint64_t verbosity
     )
-        : frontConn("front", std::move(sck), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity))
-        , backConn("back", ip_connect(host.c_str(), port),
-            host.c_str(), port, std::chrono::milliseconds(100), to_verbose_flags(verbosity))
+        : frontConn(lowFrontConn)
+        , backConn(lowBackConn)
         , outFile(timeobj, captureFile.c_str())
         , host(std::move(host))
         , nla_username(std::move(nla_username))
@@ -87,8 +87,8 @@ public:
 private:
     uint8_t select_client_protocol() const
     {
-        return is_nla_client ? X224::PROTOCOL_HYBRID :
-               is_tls_client ? X224::PROTOCOL_TLS
+        return this->is_nla_client ? X224::PROTOCOL_HYBRID :
+               this->is_tls_client ? X224::PROTOCOL_TLS
                              : X224::PROTOCOL_RDP;
     }
 
@@ -101,35 +101,6 @@ private:
         FORWARD
     } pstate = NEGOCIATING_FRONT_STEP1;
 
-    struct TraceTransport final : SocketTransport
-    {
-        using SocketTransport::SocketTransport;
-
-        Transport::Read do_atomic_read(uint8_t * buffer, std::size_t len) override
-        {
-//            LOG_IF(this->enable_trace, LOG_DEBUG, "%s do_atomic_read", name);
-            return SocketTransport::do_atomic_read(buffer, len);
-        }
-
-        std::size_t do_partial_read(uint8_t * buffer, std::size_t len) override
-        {
-//            LOG_IF(this->enable_trace, LOG_DEBUG, "%s do_partial_read", name);
-            return SocketTransport::do_partial_read(buffer, len);
-        }
-
-        void do_send(const uint8_t * buffer, std::size_t len) override
-        {
-            LOG_IF(this->enable_trace_send, LOG_DEBUG, "%s do_send", name);
-            if (this->enable_trace_send){
-                hexdump_av_d({buffer, len});
-            }
-            SocketTransport::do_send(buffer, len);
-        }
-
-//        private:
-        bool enable_trace = false;
-        bool enable_trace_send = false;
-    };
 
     TraceTransport frontConn;
     TraceTransport backConn;

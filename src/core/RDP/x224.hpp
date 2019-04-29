@@ -691,6 +691,7 @@ namespace X224
                 this->rdp_neg_requestedProtocols = stream.in_uint32_le();
 
                 if (bogus_neg_req){
+                    LOG_IF(verbose, LOG_INFO, "Bogus Negotiation Request Structure");
                     // for broken clients like jrdp
                     stream.in_skip_bytes(end_of_header - stream.get_current());
                 }
@@ -700,6 +701,8 @@ namespace X224
                             this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_requestedProtocols);
                         throw Error(ERR_X224);
                     }
+
+                    LOG_IF(verbose, LOG_INFO, "RequestedProtocols:%u", this->rdp_neg_requestedProtocols);
 
                     LOG_IF(this->rdp_neg_requestedProtocols & X224::PROTOCOL_RDP,
                         LOG_INFO, "CR Recv: PROTOCOL RDP");
@@ -717,6 +720,9 @@ namespace X224
                         LOG_INFO, "CR Recv: Unknown protocol flags %x",
                         this->rdp_neg_requestedProtocols);
                 }
+            }
+            else {
+                LOG_IF(verbose, LOG_INFO, "No RDP Negotiation Request Structure");
             }
             // 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
             if (this->rdp_neg_flags & CORRELATION_INFO_PRESENT) {
