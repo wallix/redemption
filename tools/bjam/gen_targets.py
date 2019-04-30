@@ -660,13 +660,21 @@ test_targets_counter = OrderedDict(test_targets)
 for t in test_targets:
     test_targets_counter[t[0]][0] += 1
 
+coverages = []
 for k,t in test_targets_counter.items():
     if t[0] == 1:
         f = t[1]
         unprefixed = unprefixed_file(f)
         print('alias', k, ':', unprefixed, ';')
         if f.have_coverage:
-            print('alias ', k+'.coverage', ' : ', unprefixed+'.coverage', ' ;', sep='')
+            coverages.append((k,unprefixed))
+
+if coverages:
+    print('if $(ENABLE_COVERAGE) = yes')
+    print('{')
+    for t in coverages:
+        print('alias ', t[0]+'.coverage', ' : ', t[1]+'.coverage', ' ;', sep='')
+    print('}')
 
 # alias by directory
 dir_tests = OrderedDict()

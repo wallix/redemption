@@ -131,7 +131,7 @@ rule test-run ( target : source : requirements * : )
 
     unit-test $(target) : $(source) : $(TEST_DEPENDENCIES) $(requirements) <define>RED_TEST_MODULE=$(source) ;
 
-    if ! <covflag>nocover in $(requirements)
+    if $(ENABLE_COVERAGE) = yes && ! <covflag>nocover in $(requirements)
     {
         local ps = [ property-set.create $(requirements) ] ;
         local files = [ $(ps).get <covfile> ] ;
