@@ -75,10 +75,6 @@ actions cover
     : > $(<)
 }
 
-actions id {
-    : > $(<)
-}
-
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
@@ -131,16 +127,13 @@ rule test-run ( target : source : requirements * : )
 
     unit-test $(target) : $(source) : $(TEST_DEPENDENCIES) $(requirements) <define>RED_TEST_MODULE=$(source) ;
 
-    if ! <covflag>nocover in $(requirements)
+    if $(ENABLE_COVERAGE) = yes && ! <covflag>nocover in $(requirements)
     {
         local ps = [ property-set.create $(requirements) ] ;
         local files = [ $(ps).get <covfile> ] ;
         if $(files)
         {
-            make $(target:S=.coverage) : $(target) : id :
-                <variant>coverage:<action>@cover
-                <covfile>$(files)
-            ;
+            make $(target:S=.coverage) : $(target) : @cover : <covfile>$(files) ;
         }
     }
 }

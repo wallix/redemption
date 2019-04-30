@@ -71,10 +71,8 @@ namespace redemption_unit_test__
 # define RED_TEST_INVOKER(fname) fname
 # define RED_TEST_FUNC_CTX(fname) ([](auto&&... xs) { \
     return fname(static_cast<decltype(xs)&&>(xs)...); })
-# define RED_TEST_FUNC(fname) ::redemption_unit_test__::X(bool(fname RED_TEST_FUNC_I
-# define RED_TEST_FUNC_I(...) __VA_ARGS__))
-# define RED_REQUIRE_FUNC(fname) ::redemption_unit_test__::X(bool(fname RED_REQUIRE_FUNC_I
-# define RED_REQUIRE_FUNC_I(...) __VA_ARGS__))
+# define RED_TEST_FUNC(fname, ...) ::redemption_unit_test__::X(bool(fname __VA_ARGS__))
+# define RED_REQUIRE_FUNC(fname, ...) ::redemption_unit_test__::X(bool(fname __VA_ARGS__))
 
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
@@ -207,29 +205,28 @@ namespace redemption_unit_test__
         );                                    \
     }(a, b)
 
-# define RED_TEST_MEM(lvl, mem, memref)                                     \
-    [](auto const& x_mem__, auto const& x_memref__){                        \
-        size_t res__ = 0;                                                   \
-        ::redemption_unit_test__::xarray_color mem__{res__, x_mem__};       \
-        ::redemption_unit_test__::xarray_color memref__{res__, x_memref__}; \
-        RED_##lvl##_EQUAL(                                                  \
-            (void("mem__ = " #mem), mem__.size()),                          \
-            (void("memref__ = " #memref), memref__.size()));                \
-        RED_##lvl##_EQUAL(                                                  \
-            (void("mem__ = " #mem), mem__),                                 \
-            (void("memref__ = " #memref), memref__));                       \
+# define RED_TEST_MEM(lvl, mem, memref)                             \
+    [](auto const& x_mem__, auto const& x_memref__){                \
+        size_t res__ = 0;                                           \
+        ::redemption_unit_test__::xarray rng1__{res__, x_mem__};    \
+        ::redemption_unit_test__::xarray rng2__{res__, x_memref__}; \
+        RED_TEST_CONTEXT(#mem " == " #memref)                       \
+        {                                                           \
+            RED_##lvl(rng1__.size() == rng2__.size());              \
+            RED_##lvl(rng1__ == rng2__);                            \
+        }                                                           \
     }(mem, memref)
 
-# define RED_TEST_SMEM(lvl, mem, memref)                        \
-    [](auto const& x_mem__, auto const& x_memref__){            \
-        ::redemption_unit_test__::xsarray mem__{x_mem__};       \
-        ::redemption_unit_test__::xsarray memref__{x_memref__}; \
-        RED_##lvl##_EQUAL(                                      \
-            (void("mem__ = " #mem), mem__.size()),              \
-            (void("memref__ = " #memref), memref__.size()));    \
-        RED_##lvl##_EQUAL(                                      \
-            (void("mem__ = " #mem), mem__),                     \
-            (void("memref__ = " #memref), memref__));           \
+# define RED_TEST_SMEM(lvl, mem, memref)                             \
+    [](auto const& x_mem__, auto const& x_memref__){                 \
+        size_t res__ = 0;                                            \
+        ::redemption_unit_test__::xsarray rng1__{res__, x_mem__};    \
+        ::redemption_unit_test__::xsarray rng2__{res__, x_memref__}; \
+        RED_TEST_CONTEXT(#mem " == " #memref)                        \
+        {                                                            \
+            RED_##lvl(rng1__.size() == rng2__.size());               \
+            RED_##lvl(rng1__ == rng2__);                             \
+        }                                                            \
     }(mem, memref)
 
 # define RED_TEST_FILE_SIZE_AND_CLEAN(lvl, filename, size) \
@@ -253,6 +250,7 @@ namespace redemption_unit_test__
 {
     struct xarray
     {
+        size_t & res;
         const_bytes_view sig;
 
         std::size_t size() const noexcept
@@ -263,24 +261,11 @@ namespace redemption_unit_test__
         bool operator == (xarray const & other) const noexcept;
     };
 
-    struct xarray_color
-    {
-        size_t & res;
-        const_bytes_view sig;
-
-        std::size_t size() const noexcept
-        {
-            return sig.size();
-        }
-
-        bool operator == (xarray_color const & other) const noexcept;
-    };
-
-    std::ostream & operator<<(std::ostream & out, xarray_color const & x);
     std::ostream & operator<<(std::ostream & out, xarray const & x);
 
     struct xsarray
     {
+        size_t & res;
         const_bytes_view sig;
 
         std::size_t size() const noexcept
@@ -320,23 +305,25 @@ namespace redemption_unit_test__
 
 #endif
 
-#define RED_TEST_DELEGATE_PRINT(type, stream_expr)             \
-  template<>                                                   \
-  struct RED_TEST_PRINT_TYPE_STRUCT_NAME< ::type>              \
-  {                                                            \
-    void operator()(std::ostream& out, ::type const & x) const \
-    {                                                          \
-      out << stream_expr;                                      \
-    }                                                          \
+#define RED_TEST_DELEGATE_PRINT(type, stream_expr)          \
+  template<>                                                \
+  struct RED_TEST_PRINT_TYPE_STRUCT_NAME<type>              \
+  {                                                         \
+    void operator()(std::ostream& out,type const & x) const \
+    {                                                       \
+      out << stream_expr;                                   \
+    }                                                       \
   }
 
 #define RED_TEST_DELEGATE_PRINT_ENUM(type) \
   RED_TEST_DELEGATE_PRINT(type,            \
-    #type << "{" << +::std::underlying_type_t<::type>(x) << "}")
+    #type << "{" << +::std::underlying_type_t<type>(x) << "}")
 
 
 namespace redemption_unit_test__
 {
+
+unsigned long current_count_error();
 
 struct int_variation
 {
@@ -518,3 +505,5 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
 #define RED_REQUIRE_SMEM_AA(mem, memref) \
     RED_REQUIRE_SMEM(make_array_view(mem), make_array_view(memref))
 //@}
+
+#define RED_ERROR_COUNT redemption_unit_test__::current_count_error()

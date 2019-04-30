@@ -6,7 +6,6 @@ JAM_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/jam ;
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
 
-INSTALLDIR_DEFAULT = ./sandbox ;
 SYSTEM_TYPE = emscripten ;
 
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
@@ -26,6 +25,7 @@ EXE_DEPENDENCIES +=
 
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
 constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "''" ] ;
+constant JS_CLIENT_COPY_MODE : [ setvar copy_html_mode : "copy" ] ;
 
 rule filter_flags ( e )
 {
@@ -46,9 +46,8 @@ project redjs
     : requirements
 
     $(REDEMPTION_CXXFLAGS)
+    $(BOOST_STACKTRACE_CXXFLAGS)
     # $(REDEMPTION_FFMPEG_FLAGS)
-    # $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
-    <define>REDEMPTION_NO_STACKTRACE
 
     # <define>REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING=1
 
@@ -191,7 +190,7 @@ rule test-run ( name : objs + : requirements * )
 
 rule exe-js ( name : src : objs + : deps * )
 {
-    exejs $(name).em : $(src) $(objs) log_test.bc :
+    exejs $(name).em : $(src) $(objs) log_print.bc :
         $(deps)
         <cxxflags>--bind
         # TODO rtti
@@ -227,12 +226,25 @@ rule htmljs ( name : objs + : deps * )
 
 include targets.jam ;
 
-actions copy_client
+if $(JS_CLIENT_COPY_MODE) = "copy"
 {
-    cp $(>[1]) $(<) && echo $(>[1])
+    actions copy_client
+    {
+        cp $(>[1]) $(<) && echo $(>[1])
+    }
+}
+else
+{
+    actions copy_client
+    {
+        rm $(<) ||:
+        ln -s "$PWD/"$(>[1]) $(<) && echo $(>[1])
+    }
 }
 # depends to js_client for a path with toolset
 make rdpclient.html : src/js_client.html js_client : @copy_client ;
+
+explicit rdpclient.html ;
 
 constant browser : [ setvar browser : xdg-open ] ;
 constant username : [ setvar username : '' ] ;

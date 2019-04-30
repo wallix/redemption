@@ -371,6 +371,7 @@ namespace cfg {
         struct close_box_extra_message;
         struct pm_response;
         struct pm_request;
+        struct native_session_id;
     };
 
 } // namespace cfg

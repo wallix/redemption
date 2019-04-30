@@ -24,6 +24,8 @@
 
 
 #include "acl/acl_serializer.hpp"
+#include "configs/config.hpp"
+#include "main/version.hpp"
 #include "utils/genfstat.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/mwrm_reader.hpp"

@@ -4642,7 +4642,9 @@ public:
         }
     }   // process_error_info
 
-    void process_logon_info(const char * domain, const char * username) {
+    void process_logon_info(const char * domain, const char * username, uint32_t native_session_id) {
+        this->authentifier.set_native_session_id(native_session_id);
+
         char domain_username_format_0[2048];
         char domain_username_format_1[2048];
 
@@ -4711,7 +4713,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon");
             RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
 
-            this->process_logon_info(char_ptr_cast(liv1.Domain), char_ptr_cast(liv1.UserName));
+            this->process_logon_info(char_ptr_cast(liv1.Domain), char_ptr_cast(liv1.UserName), liv1.SessionId);
 
             this->front.send_savesessioninfo();
 
@@ -4723,7 +4725,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon long");
             RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
 
-            this->process_logon_info(char_ptr_cast(liv2.Domain), char_ptr_cast(liv2.UserName));
+            this->process_logon_info(char_ptr_cast(liv2.Domain), char_ptr_cast(liv2.UserName), liv2.SessionId);
 
             this->front.send_savesessioninfo();
 

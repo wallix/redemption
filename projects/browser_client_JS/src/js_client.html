@@ -309,7 +309,17 @@ const redemption = (function(Module, window) {
         return client;
     };
 
-    const wrappersClipboard = {
+    const addChannelClass = (ChannelClassName, wrapEvents) => {
+        resultFuncs['new' + ChannelClassName] = function(cb, events, ...channelArgs) {
+            for (eventName in wrapEvents) {
+                const event = events[eventName];
+                events[eventName] = event ? wrapEvents[eventName](event, events) : noop;
+            }
+            return new Module[ChannelClassName](cb, events, ...channelArgs);
+        };
+    };
+
+    addChannelClass('ClipboardChannel', {
         receiveFormatStart: identity,
         receiveFormatStop: identity,
         receiveFormat: identity,
@@ -320,15 +330,11 @@ const redemption = (function(Module, window) {
         receiveFileSize: identity,
         receiveFormatId: identity,
         fileContentsRequest: identity,
-    };
+    });
 
-    resultFuncs.newClipboardChannel = function(callback, events, verbose) {
-        for (eventName in wrappersClipboard) {
-            const event = events[eventName];
-            events[eventName] = event ? wrappersClipboard[eventName](event, events) : noop;
-        }
-        return new Module.ClipboardChannel(callback, events, verbose);
-    };
+    addChannelClass('CustomChannel', {
+        receiveData: wCb_em2js_U8p,
+    });
 
     return resultFuncs;
 
@@ -760,7 +766,7 @@ function canvasBlur()
     ecurCanvas.onclick = canvasEnableFocus;
 }
 
-function bgrToCss(color)
+function rgbToCss(color)
 {
     return '#'+color.toString(16).padStart(6, '0');
 }
@@ -870,7 +876,7 @@ function run()
     // });
     rdpclient.on('drawRect', function(x, y, w, h, color) {
         // console.log('drawRect');
-        canvas.fillStyle = bgrToCss(color);
+        canvas.fillStyle = rgbToCss(color);
         canvas.fillRect(x,y,w,h);
     });
     rdpclient.on('drawSrcBlt', function(sx, sy, w, h, dx, dy, rop) {
@@ -903,8 +909,8 @@ function run()
 		canvas.moveTo(nXStart, nYStart);
 		canvas.lineTo(nXEnd, nYEnd);
 		canvas.lineWidth = penWidth;
-		canvas.fillStyle = bgrToCss(backColor);
-		canvas.strokeStyle = bgrToCss(penColor);
+		canvas.fillStyle = rgbToCss(backColor);
+		canvas.strokeStyle = rgbToCss(penColor);
 		switch (penStyle) {
 		case 1: canvas.setLineDash([ 10, 6, 10, 6 ]); break;
 		case 2: canvas.setLineDash([ 3, 3, 3, 3 ]); break;
@@ -921,7 +927,7 @@ function run()
     rdpclient.on('drawPolyline', function(xStart, yStart, deltas, penColor) {
         // console.log('drawPolyline');
 		canvas.save();
-		canvas.strokeStyle = bgrToCss(penColor);
+		canvas.strokeStyle = rgbToCss(penColor);
 		canvas.beginPath();
 		canvas.moveTo(xStart, yStart);
         let endx = xStart;

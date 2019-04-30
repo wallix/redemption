@@ -24,10 +24,12 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "configs/config.hpp"
 #include "acl/acl_serializer.hpp"
 #include "acl/auth_api.hpp"
+#include "acl/module_manager/enums.hpp"
+#include "configs/config.hpp"
+#include "utils/log.hpp"
+#include "utils/difftimeval.hpp"
 
 #include "utils/verbose_flags.hpp"
 
@@ -160,6 +162,12 @@ public:
     void set_pm_request(const char * request) override {
         if (this->acl_serial){
             this->acl_serial->ini.set_acl<cfg::context::pm_request>(request);
+        }
+    }
+
+    void set_native_session_id(unsigned int session_id) override {
+        if (this->acl_serial){
+            this->acl_serial->ini.set_acl<cfg::context::native_session_id>(session_id);
         }
     }
 };

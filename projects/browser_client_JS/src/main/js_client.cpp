@@ -47,8 +47,8 @@ struct RdpClient
         void report(const char * reason, const char * message) override
         {
             RED_EM_ASM({
-                console.log("RdpClient: " + Pointer_stringify($0) + ": " + Pointer_stringify($1));
-            }, reason, message);
+                console.log("RdpClient: " + UTF8ToString($0, $1) + ": " + UTF8ToString($2, $3));
+            }, reason, strlen(reason), message, strlen(message));
         }
     };
 
@@ -71,8 +71,8 @@ struct RdpClient
         void set_auth_error_message(const char * error_message) override
         {
             RED_EM_ASM({
-                console.log("RdpClient: " + Pointer_stringify($0));
-            }, error_message);
+                console.log("RdpClient: " + UTF8ToString($0, $1));
+            }, error_message, strlen(error_message));
         }
     };
 

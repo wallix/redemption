@@ -64,9 +64,10 @@ build -q $toolset_gcc cxxflags=-g -j2 ocr_tools
 build -q $toolset_gcc cxxflags=-g $big_mem
 build -q $toolset_gcc cxxflags=-g -j2
 
-
 # coverage
-build -q $toolset_gcc coverage covbin=gcov-7
+build -q $toolset_gcc debug -scoverage=yes covbin=gcov-7
+# other debug target
+build -q $toolset_gcc debug
 
 #bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
 # multi-thread
@@ -78,7 +79,7 @@ build -q $toolset_clang -sNO_FFMPEG=1 san -j2
 # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
 
 
-# TODO comments
+# extract TODO, BUG, etc
 find \
   src \
   tests \

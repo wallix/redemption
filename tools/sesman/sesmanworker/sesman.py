@@ -46,6 +46,15 @@ from .engine import TargetContext
 
 import syslog
 
+
+def to_utf8(item):
+    if not item:
+        return ""
+    if isinstance(item, unicode):
+        return item.encode('utf8')
+    return item
+
+
 class RdpProxyLog(object):
     def __init__(self):
         syslog.openlog('rdpproxy')
@@ -62,9 +71,8 @@ class RdpProxyLog(object):
         arg_list[:0] = [('type', type)]
         args = ' '.join(('%s="%s"' % (k, self.escape_bs_dq(v)))
                         for (k, v) in arg_list if v)
-        syslog.syslog(syslog.LOG_INFO,
-            ' '.join((self._context, args))
-        )
+        line = to_utf8(' '.join((self._context, args)))
+        syslog.syslog(syslog.LOG_INFO, line)
 
     @staticmethod
     def escape_bs_dq(string):
@@ -1820,6 +1828,13 @@ class Sesman():
 
                                 if self.shared.get("pm_request"):
                                     self._manage_pm()
+
+                                if self.shared.get("native_session_id"):
+                                    update_args = {}
+                                    update_args["native_session_id"] = self.shared.get("native_session_id")
+                                    self.engine.update_session(**update_args)
+                                    Logger().info(u"NativeSessionId=%s" % self.shared.get("native_session_id"))
+                                    self.shared["native_session_id"] = u""
 
                                 if self.shared.get(u'reporting'):
                                     _reporting      = self.shared.get(u'reporting')

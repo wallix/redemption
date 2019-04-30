@@ -192,8 +192,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
 #ifdef __EMSCRIPTEN__
         char buffer[4096];
         int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap); /*NOLINT*/
-        buffer[len] = 0;
-        RED_EM_ASM({console.log(Pointer_stringify($0));}, buffer);
+        RED_EM_ASM({console.log(UTF8ToString($0, $1));}, buffer, len);
 #else
         std::vprintf(format, ap); /*NOLINT*/
         std::puts("");

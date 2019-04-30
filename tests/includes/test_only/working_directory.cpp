@@ -25,7 +25,9 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "cxx/compiler_version.hpp"
+#include "cxx/cxx.hpp"
 
+#include <numeric>
 #include <algorithm>
 #include <stdexcept>
 #include <string_view>
@@ -40,9 +42,13 @@ Author(s): Jonathan Poelen
 #include <sys/types.h>
 #include <dirent.h>
 
+
+#include <boost/test/framework.hpp>
+
+
 namespace
 {
-    std::string const& tempbase()
+    std::string_view tempbase()
     {
         static const std::string base = []{
             std::string dirname;
@@ -63,12 +69,38 @@ namespace
         return base;
     }
 
-    constexpr std::string_view suffix_by_compiler()
+    std::string_view test_module_name()
     {
-        return
-            "-red_" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
-            REDEMPTION_COMP_STRING_VERSION "/"
-        ;
+        static const std::string name = []{
+            std::string modname = boost::unit_test::framework::master_test_suite().p_name.get();
+            auto pos = std::find_if(modname.begin(), modname.end(), [](char c) {
+                return c != '.' && c != '/';
+            });
+            pos = std::transform(pos, modname.end(), modname.begin(), [](char c){
+                return c == '/' ? '-' : c;
+            });
+            modname.erase(pos, modname.end());
+            return modname;
+        }();
+        return name;
+    }
+
+    std::string suffix_by_test(std::string_view name)
+    {
+        using namespace boost::unit_test::framework;
+        std::string_view suffix_comp =
+            "@" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
+            REDEMPTION_COMP_STRING_VERSION "/";
+        std::string test_module = master_test_suite().p_name.get();
+        return str_concat(
+            tempbase(),
+            current_test_case().p_name.get(),
+            '@',
+            name,
+            '@',
+            test_module_name(),
+            suffix_comp
+        );
     }
 
 #define WD_ERROR_S(ostream_expr) RED_ERROR("WorkingDirectory: " ostream_expr)
@@ -137,13 +169,13 @@ std::size_t WorkingDirectory::HashPath::operator()(Path const& path) const
 }
 
 
-WorkingDirectory::WorkingDirectory(std::string_view dirname)
+WorkingDirectory::WorkingDirectory(std::string_view name)
 {
-    if (dirname.empty() || dirname.find_first_of("/.") != std::string::npos) {
+    if (name.empty() || name.find_first_of("/.") != std::string::npos) {
         WD_ERROR_S("invalid dirname");
     }
 
-    this->directory = str_concat(tempbase(), dirname, suffix_by_compiler());
+    this->directory = suffix_by_test(name);
 
     recursive_delete_directory(this->directory.c_str());
     if (-1 == mkdir(this->directory.c_str(), 0755) && errno != EEXIST) {

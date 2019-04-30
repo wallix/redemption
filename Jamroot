@@ -82,7 +82,7 @@ include $(JAM_INCLUDE_PATH)/redemption-dependencies.jam ;
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 make test_libredrec : libredrec : @test_libredrec
-: <variant>san:<build>no <variant>coverage:<build>no ;
+: <variant>san:<build>no $(GCOV_NO_BUILD) ;
 
 actions test_libredrec
 {
@@ -99,7 +99,6 @@ actions gen_targets
     ./tools/bjam/gen_targets.py src/main/headlessclient.cpp |
         sed 's#^obj #add_obj #;t
              /^\s*</!d
-             /^\s*<variant>coverage:/d
              s/^\s*</requirement_list += </
              s/$/ ;/' \
         | sort > projects/ClientQtGraphicAPI/redemption_deps.jam
