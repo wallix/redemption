@@ -56,7 +56,7 @@ struct [[nodiscard]] WorkingDirectory
 
     WorkingDirectory(WorkingDirectory const&) = delete;
 
-    WorkingDirectory(std::string_view dirname);
+    WorkingDirectory(std::string_view name);
 
     SubDirectory create_subdirectory(std::string_view dirname);
 
