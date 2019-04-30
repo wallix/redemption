@@ -44,6 +44,20 @@ public:
     }
 };
 
+class FrozenTime : public TimeObj {
+    timeval tv;
+public:
+    explicit FrozenTime(std::chrono::microseconds ustime = 1533211681s)
+    {
+        tv.tv_sec = ustime.count()/1000000;
+        tv.tv_usec = ustime.count()%1000000;
+    }
+    ~FrozenTime() override = default;
+    timeval get_time() override {
+        return tv;
+    }
+};
+
 class LCGTime : public TimeObj {
     uint32_t seed;
 public:

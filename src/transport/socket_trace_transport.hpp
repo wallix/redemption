@@ -27,30 +27,31 @@ struct TraceTransport final : public Transport
 {
     using Transport::send;
 
-    TraceTransport(SocketTransport & sck_trans) 
+    TraceTransport(const char * name, SocketTransport & sck_trans) 
     : strans(sck_trans)
+    , name(name)
         {}
 
     Transport::Read do_atomic_read(uint8_t * buffer, std::size_t len) override
     {
-        LOG_IF(this->enable_trace, LOG_DEBUG, "%s do_atomic_read", this->strans.name);
-        return this->strans.do_atomic_read(buffer, len);
+        LOG_IF(this->enable_trace, LOG_DEBUG, "%s do_atomic_read", this->name);
+        return this->strans.atomic_read(buffer, len);
     }
 
     std::size_t do_partial_read(uint8_t * buffer, std::size_t len) override
     {
-        LOG_IF(this->enable_trace, LOG_DEBUG, "%s do_partial_read", this->strans.name);
-        return this->strans.do_partial_read(buffer, len);
+        LOG_IF(this->enable_trace, LOG_DEBUG, "%s do_partial_read", this->name);
+        return this->strans.partial_read(buffer, len);
     }
 
-    public:
+public:
     void do_send(const uint8_t * buffer, std::size_t len) override
     {
-        LOG_IF(this->enable_trace_send, LOG_DEBUG, "%s do_send", this->strans.name);
+        LOG_IF(this->enable_trace_send, LOG_DEBUG, "%s do_send", this->name);
         if (this->enable_trace_send){
             hexdump_av_d({buffer, len});
         }
-        this->strans.do_send(buffer, len);
+        this->strans.send(buffer, len);
     }
 
     int get_fd() const override 
@@ -83,9 +84,21 @@ struct TraceTransport final : public Transport
         return this->strans.connect();
     }
 
+    void set_trace_send(bool send_trace) override
+    {
+        this->enable_trace_send = send_trace;
+    }
+
+    void set_trace_receive(bool receive_trace) override
+    {
+        this->enable_trace = receive_trace;
+    }
+
 //        private:
     SocketTransport & strans;
-    bool enable_trace = true;
-    bool enable_trace_send = true;
+    const char * name;
+    
+    bool enable_trace = false;
+    bool enable_trace_send = false;
 };
 

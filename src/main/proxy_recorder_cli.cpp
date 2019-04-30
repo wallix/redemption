@@ -21,6 +21,7 @@
 */
 
 #include "proxy_recorder/proxy_recorder.hpp"
+#include "proxy_recorder/nla_tee_transport.hpp"
 
 using PacketType = RecorderFile::PacketType;
 
@@ -71,15 +72,17 @@ public:
             char finalPathBuffer[256];
             char const* finalPath = captureTemplate.format(finalPathBuffer, connection_counter);
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
-
             TimeSystem timeobj;
+            RecorderFile outFile(timeobj, finalPath);
+
             SocketTransport lowFrontConn("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
             SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort), 
                 this->targetHost.c_str(), this->targetPort, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
-                
-            ProxyRecorder conn(
-                lowFrontConn, lowBackConn, finalPath, timeobj,
-                this->nla_username, this->nla_password, enable_kerberos, verbosity);
+            TraceTransport frontConn("front", lowFrontConn);
+            TraceTransport backConn("back", lowBackConn); 
+            NlaTeeTransport nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
+            
+            ProxyRecorder conn(frontConn, nla_tee_trans, backConn, outFile, this->nla_username, this->nla_password, enable_kerberos, verbosity);
                 
             try {
                 conn.run();

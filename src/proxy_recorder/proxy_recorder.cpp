@@ -24,7 +24,9 @@
 
 void ProxyRecorder::front_step1()
 {
+    LOG(LOG_INFO, "front step 1");
     if (this->frontBuffer.next(TpduBuffer::PDU)) {
+        LOG(LOG_INFO, "front buffer.next");
 
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_STEP1 frontbuffer content ======");
         array_view_u8 currentPacket = this->frontBuffer.current_pdu_buffer();
@@ -55,18 +57,14 @@ void ProxyRecorder::front_step1()
             this->frontConn.enable_server_tls("inquisition", nullptr, 0);
         }
 
+        LOG_IF((this->verbosity > 8) && this->is_tls_client, LOG_INFO, "TLS Client");
+        LOG_IF((this->verbosity > 8) && this->is_nla_client, LOG_INFO, "NLA Client");
+        
         if (this->is_nla_client) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "start NegoServer");
             }
-            this->nego_server = std::make_unique<NegoServer>(
-                this->frontConn, outFile, nla_username, nla_password, this->verbosity > 8);
-
-            rdpCredsspServer::State st = this->nego_server->recv_data(this->frontBuffer);
-
-            if (rdpCredsspServer::State::Err == st) {
-                throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-            }
+            this->nego_server = std::make_unique<NegoServer>(this->nla_tee_trans, nla_username, nla_password, this->verbosity > 8);
         }
 
         nego_client = std::make_unique<NegoClient>(
@@ -200,8 +198,8 @@ void ProxyRecorder::run()
     int const front_fd = this->frontConn.get_fd();
     int const back_fd = this->backConn.get_fd();
 
-    this->frontConn.enable_trace_send = (this->verbosity > 512);
-    this->backConn.enable_trace_send = (this->verbosity > 512);
+    this->frontConn.set_trace_send(this->verbosity > 512);
+    this->backConn.set_trace_send(this->verbosity > 512);
 
     for (;;) {
         FD_ZERO(&rset);
@@ -230,17 +228,17 @@ void ProxyRecorder::run()
         }
 
         switch(this->pstate) {
-        case NEGOCIATING_FRONT_NLA:
-            if (FD_ISSET(front_fd, &rset)) {
-                this->frontBuffer.load_data(this->frontConn);
-                this->front_nla();
-            }
-            break;
-
         case NEGOCIATING_FRONT_STEP1:
             if (FD_ISSET(front_fd, &rset)) {
                 this->frontBuffer.load_data(this->frontConn);
                 this->front_step1();
+            }
+            break;
+
+        case NEGOCIATING_FRONT_NLA:
+            if (FD_ISSET(front_fd, &rset)) {
+                this->frontBuffer.load_data(this->frontConn);
+                this->front_nla();
             }
             break;
 
@@ -268,8 +266,8 @@ void ProxyRecorder::run()
 
         case FORWARD:
             if (FD_ISSET(front_fd, &rset)) {
-                this->frontConn.enable_trace = (this->verbosity > 1024);
-                this->backConn.enable_trace_send = (this->verbosity > 1024);
+                this->frontConn.set_trace_receive(this->verbosity > 1024);
+                this->backConn.set_trace_send(this->verbosity > 1024);
                 LOG_IF(this->verbosity > 1024, LOG_INFO, "FORWARD (FRONT TO BACK)");
                 uint8_t tmpBuffer[0xffff];
                 size_t ret = this->frontConn.partial_read(make_array_view(tmpBuffer));
@@ -279,8 +277,8 @@ void ProxyRecorder::run()
                 }
             }
             if (FD_ISSET(back_fd, &rset)) {
-                this->frontConn.enable_trace_send = (this->verbosity > 1024);
-                this->backConn.enable_trace = (this->verbosity > 1024);
+                this->frontConn.set_trace_send(this->verbosity > 1024);
+                this->backConn.set_trace_receive(this->verbosity > 1024);
                 LOG_IF(this->verbosity > 1024, LOG_INFO, "FORWARD (BACK to FRONT)");
                 uint8_t tmpBuffer[0xffff];
                 size_t ret = this->backConn.partial_read(make_array_view(tmpBuffer));

@@ -24,7 +24,6 @@
 #include "utils/difftimeval.hpp"
 #include "utils/fixed_random.hpp"
 #include "core/RDP/nego.hpp"
-#include "proxy_recorder/nla_tee_transport.hpp"
 #include "proxy_recorder/extract_user_domain.hpp"
 
 class NegoServer
@@ -32,17 +31,11 @@ class NegoServer
     FixedRandom rand;
     LCGTime timeobj;
     std::string extra_message;
-    NlaTeeTransport trans;
     rdpCredsspServer credssp;
 
 public:
-    NegoServer(
-        Transport& trans, RecorderFile& outFile,
-        std::string const& user, std::string const& password,
-        uint64_t verbosity)
-    : trans(trans, outFile, NlaTeeTransport::Type::Server)
-    , credssp(
-        this->trans, false, false, rand, timeobj, extra_message, Translation::EN,
+    NegoServer(Transport& trans, std::string const& user, std::string const& password, uint64_t verbosity)
+    : credssp(trans, false, false, rand, timeobj, extra_message, Translation::EN,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             LOG(LOG_INFO, "NTLM Check identity");
 

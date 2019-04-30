@@ -56,13 +56,13 @@ class ProxyRecorder
 {
     using PacketType = RecorderFile::PacketType;
 public:
-    ProxyRecorder(SocketTransport & lowFrontConn, SocketTransport & lowBackConn, std::string const& captureFile,
-        TimeObj& timeobj,std::string nla_username, std::string nla_password, bool enable_kerberos,
+    ProxyRecorder(Transport & frontConn, NlaTeeTransport & nla_tee_trans, Transport & backConn, RecorderFile & outFile, std::string nla_username, std::string nla_password, bool enable_kerberos,
         uint64_t verbosity
     )
-        : frontConn(lowFrontConn)
-        , backConn(lowBackConn)
-        , outFile(timeobj, captureFile.c_str())
+        : frontConn(frontConn)
+        , backConn(backConn)
+        , nla_tee_trans(nla_tee_trans)
+        , outFile(outFile)
         , host(std::move(host))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
@@ -102,10 +102,11 @@ private:
     } pstate = NEGOCIATING_FRONT_STEP1;
 
 
-    TraceTransport frontConn;
-    TraceTransport backConn;
-
-    RecorderFile outFile;
+public:
+    Transport & frontConn;
+    Transport & backConn;
+    NlaTeeTransport & nla_tee_trans;
+    RecorderFile & outFile;
 
     TpduBuffer frontBuffer;
     TpduBuffer backBuffer;

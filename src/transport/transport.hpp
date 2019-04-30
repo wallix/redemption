@@ -176,6 +176,10 @@ private:
     }
 
 public:
+    virtual void set_trace_send(bool /*send_trace*/) {}
+
+    virtual void set_trace_receive(bool /*receive_trace*/) {}
+
     virtual bool disconnect()
     {
         return true;
