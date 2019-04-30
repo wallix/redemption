@@ -30,23 +30,21 @@
 
 class NegoClient
 {
-    LCGTime timeobj;
     FixedRandom random;
     std::string extra_message;
+    Transport & trans;
     RdpNego nego;
-    NlaTeeTransport trans;
 
 public:
     NegoClient(
-        bool is_nla, bool is_admin_mode,
-        Transport& trans, RecorderFile& outFile,
+        bool is_nla, bool is_admin_mode, Transport& trans, TimeObj & timeobj,
         char const* host, char const* target_user, char const* password,
         bool enable_kerberos, uint64_t verbosity
     )
-    : nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
-        this->random, this->timeobj, this->extra_message, Translation::EN,
+    : trans(trans)
+    , nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
+        this->random, timeobj, this->extra_message, Translation::EN,
         to_verbose_flags(verbosity))
-    , trans(trans, outFile, NlaTeeTransport::Type::Client)
     {
         auto [username, domain] = extract_user_domain(target_user);
         nego.set_identity(username.c_str(), domain.c_str(), password, "ProxyRecorder");

@@ -80,9 +80,10 @@ public:
                 this->targetHost.c_str(), this->targetPort, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
             TraceTransport frontConn("front", lowFrontConn);
             TraceTransport backConn("back", lowBackConn); 
-            NlaTeeTransport nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
-            
-            ProxyRecorder conn(frontConn, nla_tee_trans, backConn, outFile, this->nla_username, this->nla_password, enable_kerberos, verbosity);
+            NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
+            NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
+
+            ProxyRecorder conn(frontConn, front_nla_tee_trans, backConn, back_nla_tee_trans, outFile, timeobj, this->targetHost.c_str(), this->nla_username, this->nla_password, enable_kerberos, verbosity);
                 
             try {
                 conn.run();

@@ -56,14 +56,24 @@ class ProxyRecorder
 {
     using PacketType = RecorderFile::PacketType;
 public:
-    ProxyRecorder(Transport & frontConn, NlaTeeTransport & nla_tee_trans, Transport & backConn, RecorderFile & outFile, std::string nla_username, std::string nla_password, bool enable_kerberos,
-        uint64_t verbosity
+    ProxyRecorder(Transport & frontConn,
+            NlaTeeTransport & front_nla_tee_trans,
+            Transport & backConn,
+            NlaTeeTransport & back_nla_tee_trans, 
+            RecorderFile & outFile,
+            TimeObj & timeobj,
+            const char * host,
+            std::string nla_username, std::string nla_password,
+            bool enable_kerberos,
+            uint64_t verbosity
     )
         : frontConn(frontConn)
         , backConn(backConn)
-        , nla_tee_trans(nla_tee_trans)
+        , front_nla_tee_trans(front_nla_tee_trans)
+        , back_nla_tee_trans(back_nla_tee_trans)
         , outFile(outFile)
-        , host(std::move(host))
+        , timeobj(timeobj)
+        , host(host)
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
         , enable_kerberos(enable_kerberos)
@@ -105,8 +115,11 @@ private:
 public:
     Transport & frontConn;
     Transport & backConn;
-    NlaTeeTransport & nla_tee_trans;
+    NlaTeeTransport & front_nla_tee_trans;
+    NlaTeeTransport & back_nla_tee_trans;
     RecorderFile & outFile;
+    TimeObj & timeobj;
+    const char * host;
 
     TpduBuffer frontBuffer;
     TpduBuffer backBuffer;
@@ -114,7 +127,6 @@ public:
     std::unique_ptr<NegoClient> nego_client;
     std::unique_ptr<NegoServer> nego_server;
 
-    std::string host;
     std::string nla_username;
     std::string nla_password;
     bool enable_kerberos;

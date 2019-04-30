@@ -64,14 +64,14 @@ void ProxyRecorder::front_step1()
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "start NegoServer");
             }
-            this->nego_server = std::make_unique<NegoServer>(this->nla_tee_trans, nla_username, nla_password, this->verbosity > 8);
+            this->nego_server = std::make_unique<NegoServer>(this->front_nla_tee_trans, nla_username, nla_password, this->verbosity > 8);
         }
 
         nego_client = std::make_unique<NegoClient>(
             !nla_username.empty(),
             x224.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
-            this->backConn, outFile,
-            host.c_str(), nla_username.c_str(),
+            this->back_nla_tee_trans, this->timeobj,
+            this->host, nla_username.c_str(),
             nla_password.empty() ? "\0" : nla_password.c_str(),
             enable_kerberos, this->verbosity > 8);
 
