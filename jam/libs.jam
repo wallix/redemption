@@ -64,7 +64,6 @@ if $(BOOST_STACKTRACE) = 1
         <library>boost_stacktrace
         <variant>debug:<library>dl
         <variant>san:<library>dl
-        <variant>coverage:<library>dl
     ;
 }
 else

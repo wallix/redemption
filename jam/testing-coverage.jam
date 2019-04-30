@@ -75,10 +75,6 @@ actions cover
     : > $(<)
 }
 
-actions id {
-    : > $(<)
-}
-
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
@@ -137,10 +133,7 @@ rule test-run ( target : source : requirements * : )
         local files = [ $(ps).get <covfile> ] ;
         if $(files)
         {
-            make $(target:S=.coverage) : $(target) : id :
-                <variant>coverage:<action>@cover
-                <covfile>$(files)
-            ;
+            make $(target:S=.coverage) : $(target) : @cover : <covfile>$(files) ;
         }
     }
 }
