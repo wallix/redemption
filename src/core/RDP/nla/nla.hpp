@@ -45,8 +45,6 @@ static const size_t CLIENT_NONCE_LENGTH = 32;
 
 class rdpCredsspClient
 {
-    const bool is_server;
-
 protected:
     int send_seq_num = 0;
     int recv_seq_num = 0;
@@ -217,7 +215,7 @@ protected:
 
         array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            const bool client_to_server = !this->is_server;
+            const bool client_to_server = true;
             if (client_to_server) {
                 this->credssp_generate_client_nonce();
             } else {
@@ -227,11 +225,6 @@ protected:
             public_key = client_to_server
               ? this->ClientServerHash.av()
               : this->ServerClientHash.av();
-        }
-        else if (this->is_server) {
-            // if we are server and protocol is 2,3,4
-            // then echos the public key +1
-            this->ap_integer_increment_le(public_key);
         }
 
         return this->table->EncryptMessage(
@@ -261,7 +254,7 @@ protected:
 
         array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            bool client_to_server = this->is_server;
+            bool client_to_server = false;
             this->credssp_get_client_nonce();
             this->credssp_generate_public_key_hash(client_to_server);
             public_key = client_to_server
@@ -276,7 +269,7 @@ protected:
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
-        if (!this->is_server && version < 5) {
+        if (version < 5) {
             // if we are client and protocol is 2,3,4
             // then get the public key minus one
             ap_integer_decrement_le(public_key2);
@@ -320,8 +313,7 @@ public:
                std::string& extra_message,
                Translation::language_t lang,
                const bool verbose = false)
-        : is_server(false)
-        , ts_request(6) // Credssp Version 6 Supported
+        : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
@@ -564,8 +556,6 @@ public:
 
 class rdpCredsspServer
 {
-    const bool is_server;
-
 protected:
     int send_seq_num = 0;
     int recv_seq_num = 0;
@@ -738,7 +728,7 @@ protected:
 
         array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            const bool client_to_server = !this->is_server;
+            const bool client_to_server = false;
             if (client_to_server) {
                 this->credssp_generate_client_nonce();
             } else {
@@ -749,7 +739,7 @@ protected:
               ? this->ClientServerHash.av()
               : this->ServerClientHash.av();
         }
-        else if (this->is_server) {
+        else {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
             this->ap_integer_increment_le(public_key);
@@ -782,7 +772,7 @@ protected:
 
         array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            bool client_to_server = this->is_server;
+            bool client_to_server = true;
             this->credssp_get_client_nonce();
             this->credssp_generate_public_key_hash(client_to_server);
             public_key = client_to_server
@@ -795,12 +785,6 @@ protected:
         if (public_key2.size() != public_key.size()) {
             LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-        }
-
-        if (!this->is_server && version < 5) {
-            // if we are client and protocol is 2,3,4
-            // then get the public key minus one
-            ap_integer_decrement_le(public_key2);
         }
 
         if (memcmp(public_key.data(), public_key2.data(), public_key.size()) != 0) {
@@ -838,8 +822,7 @@ public:
                Translation::language_t lang,
                std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
-        : is_server(true)
-        , ts_request(6) // Credssp Version 6 Supported
+        : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
