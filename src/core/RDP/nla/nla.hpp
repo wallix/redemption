@@ -72,13 +72,12 @@ protected:
 
 private:
     Transport & trans;
-    char const* class_name_log;
     std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
 
 protected:
     void set_credentials(uint8_t const* user, uint8_t const* domain,
                          uint8_t const* pass, uint8_t const* hostname) {
-        LOG_IF(this->verbose, LOG_INFO, "%s::set_credentials", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::set_credentials");
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
@@ -92,7 +91,7 @@ protected:
 
     void init_public_key()
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s::ntlm_init", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::ntlm_init");
 
         // ============================================
         /* Get Public Key From TLS Layer and hostname */
@@ -105,7 +104,7 @@ protected:
 
     void credssp_send()
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s::send", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::send");
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         this->trans.send(ts_request_emit.get_bytes());
@@ -124,7 +123,7 @@ protected:
         SecInterface secInter, const char* pszPrincipal,
         Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s::InitSecurityInterface", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::InitSecurityInterface");
 
         this->table.reset();
 
@@ -171,34 +170,43 @@ private:
 
 protected:
     void credssp_generate_client_nonce() {
-        LOG(LOG_DEBUG, "%s::credssp generate client nonce", this->class_name_log);
+        LOG(LOG_DEBUG, "rdpCredsspClient::credssp generate client nonce");
         this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
         this->credssp_set_client_nonce();
     }
 
     void credssp_get_client_nonce() {
-        LOG(LOG_DEBUG, "%s::credssp get client nonce", this->class_name_log);
+        LOG(LOG_DEBUG, "rdpCredsspClient::credssp get client nonce");
         if (this->ts_request.clientNonce.size() == CLIENT_NONCE_LENGTH) {
             memcpy(this->SavedClientNonce, this->ts_request.clientNonce.get_data(), CLIENT_NONCE_LENGTH);
         }
     }
     void credssp_set_client_nonce() {
-        LOG(LOG_DEBUG, "%s::credssp set client nonce",this->class_name_log);
+        LOG(LOG_DEBUG, "rdpCredsspClient::credssp set client nonce");
         if (this->ts_request.clientNonce.size() == 0) {
             this->ts_request.clientNonce.init(CLIENT_NONCE_LENGTH);
             memcpy(this->ts_request.clientNonce.get_data(), this->SavedClientNonce, CLIENT_NONCE_LENGTH);
         }
     }
 
-    void credssp_generate_public_key_hash(bool client_to_server) {
-        LOG(LOG_DEBUG, "%s::generate credssp public key hash (%s)",
-            client_to_server ? "client->server" : "server->client", this->class_name_log);
-        Array & SavedHash = client_to_server
-            ? this->ClientServerHash
-            : this->ServerClientHash;
-        auto magic_hash = make_array_view(client_to_server
-            ? client_server_hash_magic
-            : server_client_hash_magic);
+    void credssp_generate_public_key_hash_client_to_server() {
+        LOG(LOG_DEBUG, "rdpCredsspClient::generate credssp public key hash (client->server)");
+        Array & SavedHash = this->ClientServerHash;
+        auto magic_hash = make_array_view(client_server_hash_magic);
+        SslSha256 sha256;
+        uint8_t hash[SslSha256::DIGEST_LENGTH];
+        sha256.update(magic_hash);
+        sha256.update(make_array_view(this->SavedClientNonce));
+        sha256.update(this->PublicKey.av());
+        sha256.final(hash);
+        SavedHash.init(sizeof(hash));
+        memcpy(SavedHash.get_data(), hash, sizeof(hash));
+    }
+
+    void credssp_generate_public_key_hash_server_to_client() {
+        LOG(LOG_DEBUG, "rdpCredsspClient::generate credssp public key hash (server->client)");
+        Array & SavedHash = this->ServerClientHash;
+        auto magic_hash = make_array_view(server_client_hash_magic);
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update(magic_hash);
@@ -210,21 +218,14 @@ protected:
     }
 
     SEC_STATUS credssp_encrypt_public_key_echo() {
-        LOG_IF(this->verbose, LOG_INFO, "%s::encrypt_public_key_echo",this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
         array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            const bool client_to_server = true;
-            if (client_to_server) {
-                this->credssp_generate_client_nonce();
-            } else {
-                this->credssp_get_client_nonce();
-            }
-            this->credssp_generate_public_key_hash(client_to_server);
-            public_key = client_to_server
-              ? this->ClientServerHash.av()
-              : this->ServerClientHash.av();
+            this->credssp_generate_client_nonce();
+            this->credssp_generate_public_key_hash_client_to_server();
+            public_key = this->ClientServerHash.av();
         }
 
         return this->table->EncryptMessage(
@@ -232,7 +233,7 @@ protected:
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
-        LOG_IF(this->verbose, LOG_INFO, "%s::decrypt_public_key_echo",this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
 
         Array Buffer;
 
@@ -254,12 +255,9 @@ protected:
 
         array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            bool client_to_server = false;
             this->credssp_get_client_nonce();
-            this->credssp_generate_public_key_hash(client_to_server);
-            public_key = client_to_server
-              ? this->ClientServerHash.av()
-              : this->ServerClientHash.av();
+            this->credssp_generate_public_key_hash_server_to_client();
+            public_key = this->ServerClientHash.av();
         }
 
         array_view_u8 public_key2 = Buffer.av();
@@ -291,7 +289,7 @@ protected:
     }
 
     void credssp_buffer_free() {
-        LOG_IF(this->verbose, LOG_INFO, "%s::buffer_free",this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::buffer_free");
         this->ts_request.negoTokens.init(0);
         this->ts_request.pubKeyAuth.init(0);
         this->ts_request.authInfo.init(0);
@@ -324,9 +322,8 @@ public:
         , lang(lang)
         , verbose(verbose)
         , trans(transport.get_transport())
-        , class_name_log("rdpCredsspClient")
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s::Initialization", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::Initialization");
         this->set_credentials(user, domain, pass, hostname);
     }
 
@@ -583,13 +580,12 @@ protected:
 
 private:
     Transport & trans;
-    char const* class_name_log;
     std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
 
 protected:
     void init_public_key()
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s::ntlm_init", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::ntlm_init");
 
         // ============================================
         /* Get Public Key From TLS Layer and hostname */
@@ -602,7 +598,7 @@ protected:
 
     void credssp_send()
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s::send", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::send");
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         this->trans.send(ts_request_emit.get_bytes());
@@ -612,7 +608,7 @@ public:
 
     void set_credentials(uint8_t const* user, uint8_t const* domain,
                          uint8_t const* pass, uint8_t const* hostname) {
-        LOG_IF(this->verbose, LOG_INFO, "%s::set_credentials", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::set_credentials");
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
@@ -637,7 +633,7 @@ protected:
         SecInterface secInter, const char* pszPrincipal,
         Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s::InitSecurityInterface", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::InitSecurityInterface");
 
         this->table.reset();
 
@@ -684,34 +680,43 @@ private:
 
 protected:
     void credssp_generate_client_nonce() {
-        LOG(LOG_DEBUG, "%s::credssp generate client nonce", this->class_name_log);
+        LOG(LOG_DEBUG, "rdpCredsspServer::credssp generate client nonce");
         this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
         this->credssp_set_client_nonce();
     }
 
     void credssp_get_client_nonce() {
-        LOG(LOG_DEBUG, "%s::credssp get client nonce", this->class_name_log);
+        LOG(LOG_DEBUG, "rdpCredsspServer::credssp get client nonce");
         if (this->ts_request.clientNonce.size() == CLIENT_NONCE_LENGTH) {
             memcpy(this->SavedClientNonce, this->ts_request.clientNonce.get_data(), CLIENT_NONCE_LENGTH);
         }
     }
     void credssp_set_client_nonce() {
-        LOG(LOG_DEBUG, "%s::credssp set client nonce",this->class_name_log);
+        LOG(LOG_DEBUG, "rdpCredsspServer::credssp set client nonce");
         if (this->ts_request.clientNonce.size() == 0) {
             this->ts_request.clientNonce.init(CLIENT_NONCE_LENGTH);
             memcpy(this->ts_request.clientNonce.get_data(), this->SavedClientNonce, CLIENT_NONCE_LENGTH);
         }
     }
 
-    void credssp_generate_public_key_hash(bool client_to_server) {
-        LOG(LOG_DEBUG, "%s::generate credssp public key hash (%s)",
-            client_to_server ? "client->server" : "server->client", this->class_name_log);
-        Array & SavedHash = client_to_server
-            ? this->ClientServerHash
-            : this->ServerClientHash;
-        auto magic_hash = make_array_view(client_to_server
-            ? client_server_hash_magic
-            : server_client_hash_magic);
+    void credssp_generate_public_key_hash_client_to_server() {
+        LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (client->server)");
+        Array & SavedHash = this->ClientServerHash;
+        auto magic_hash = make_array_view(client_server_hash_magic);
+        SslSha256 sha256;
+        uint8_t hash[SslSha256::DIGEST_LENGTH];
+        sha256.update(magic_hash);
+        sha256.update(make_array_view(this->SavedClientNonce));
+        sha256.update(this->PublicKey.av());
+        sha256.final(hash);
+        SavedHash.init(sizeof(hash));
+        memcpy(SavedHash.get_data(), hash, sizeof(hash));
+    }
+
+    void credssp_generate_public_key_hash_server_to_client() {
+        LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (server->client)");
+        Array & SavedHash = this->ServerClientHash;
+        auto magic_hash = make_array_view(server_client_hash_magic);
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update(magic_hash);
@@ -723,21 +728,14 @@ protected:
     }
 
     SEC_STATUS credssp_encrypt_public_key_echo() {
-        LOG_IF(this->verbose, LOG_INFO, "%s::encrypt_public_key_echo",this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
         array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            const bool client_to_server = false;
-            if (client_to_server) {
-                this->credssp_generate_client_nonce();
-            } else {
-                this->credssp_get_client_nonce();
-            }
-            this->credssp_generate_public_key_hash(client_to_server);
-            public_key = client_to_server
-              ? this->ClientServerHash.av()
-              : this->ServerClientHash.av();
+            this->credssp_get_client_nonce();
+            this->credssp_generate_public_key_hash_server_to_client();
+            public_key = this->ServerClientHash.av();
         }
         else {
             // if we are server and protocol is 2,3,4
@@ -750,7 +748,7 @@ protected:
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
-        LOG_IF(this->verbose, LOG_INFO, "%s::decrypt_public_key_echo",this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_public_key_echo");
 
         Array Buffer;
 
@@ -772,12 +770,9 @@ protected:
 
         array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            bool client_to_server = true;
             this->credssp_get_client_nonce();
-            this->credssp_generate_public_key_hash(client_to_server);
-            public_key = client_to_server
-              ? this->ClientServerHash.av()
-              : this->ServerClientHash.av();
+            this->credssp_generate_public_key_hash_client_to_server();
+            public_key = this->ClientServerHash.av();
         }
 
         array_view_u8 public_key2 = Buffer.av();
@@ -803,7 +798,7 @@ protected:
     }
 
     void credssp_buffer_free() {
-        LOG_IF(this->verbose, LOG_INFO, "%s::buffer_free",this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
         this->ts_request.negoTokens.init(0);
         this->ts_request.pubKeyAuth.init(0);
         this->ts_request.authInfo.init(0);
@@ -833,10 +828,9 @@ public:
         , lang(lang)
         , verbose(verbose)
         , trans(transport)
-        , class_name_log("rdpCredsspServer")
         , set_password_cb(std::move(set_password_cb))
     {
-        LOG_IF(this->verbose, LOG_INFO, "%s::Initialization", this->class_name_log);
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
     }
 
