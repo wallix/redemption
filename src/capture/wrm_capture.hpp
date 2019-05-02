@@ -513,16 +513,29 @@ class WrmCaptureImpl :
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
-                StaticOutStream<65535> bmp_stream;
-                bmp.compress(this->capture_bpp, bmp_stream);
+            	size_t linesPerPacket = (16384 / bmp.line_size());
 
-                RDPBitmapData target_bitmap_data = bitmap_data;
+            	for (uint16_t yoff = 0; yoff < bitmap_data.height; yoff += linesPerPacket) {
+            		uint16_t currentHeight = linesPerPacket;
+            		if (yoff + linesPerPacket > bitmap_data.height)
+            			currentHeight = bitmap_data.height - yoff;
+            		Rect subRect(0, yoff, bitmap_data.width, currentHeight);
+            		// LOG(LOG_ERR, "subRect: (%d,%d) - %dx%d", subRect.x, subRect.y, subRect.cx, subRect.cy);
+					StaticOutStream<65535> bmp_stream;
+					Bitmap subBmp(bmp, subRect);
 
-                target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
-                target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;  /*NOLINT*/
-                target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+					subBmp.compress(this->capture_bpp, bmp_stream);
 
-                GraphicToFile::draw(target_bitmap_data, bmp);
+					RDPBitmapData target_bitmap_data = bitmap_data;
+					target_bitmap_data.dest_top = bitmap_data.dest_top + yoff;
+					target_bitmap_data.dest_bottom = target_bitmap_data.dest_top + currentHeight - 1;
+					target_bitmap_data.height = currentHeight;
+					target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
+					target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;  /*NOLINT*/
+					target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+					GraphicToFile::draw(target_bitmap_data, subBmp);
+            	}
             };
 
             if (bmp.bpp() > this->capture_bpp) {
