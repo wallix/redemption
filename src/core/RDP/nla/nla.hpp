@@ -45,7 +45,7 @@ static const size_t CLIENT_NONCE_LENGTH = 32;
 
 class rdpCredsspClient
 {
-protected:
+private:
     int send_seq_num = 0;
     int recv_seq_num = 0;
 
@@ -70,11 +70,9 @@ protected:
     Translation::language_t lang;
     const bool verbose;
 
-private:
     Transport & trans;
     std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
 
-protected:
     void set_credentials(uint8_t const* user, uint8_t const* domain,
                          uint8_t const* pass, uint8_t const* hostname) {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::set_credentials");
@@ -110,7 +108,6 @@ protected:
         this->trans.send(ts_request_emit.get_bytes());
     }
 
-private:
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
         this->ServicePrincipalName.init(length + 1);
@@ -118,7 +115,6 @@ private:
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
-protected:
     SEC_STATUS InitSecurityInterface(
         SecInterface secInter, const char* pszPrincipal,
         Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
@@ -147,7 +143,6 @@ protected:
         return this->table->AcquireCredentialsHandle(pszPrincipal, pvLogonID, pAuthData);
     }
 
-private:
     static void ap_integer_increment_le(array_view_u8 number) {
         for (uint8_t& i : number) {
             if (i < 0xFF) {
@@ -168,7 +163,6 @@ private:
         }
     }
 
-protected:
     void credssp_generate_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspClient::credssp generate client nonce");
         this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
@@ -297,67 +291,6 @@ protected:
         this->ts_request.error_code = 0;
     }
 
-public:
-    rdpCredsspClient(OutTransport transport,
-               uint8_t * user,
-               uint8_t * domain,
-               uint8_t * pass,
-               uint8_t * hostname,
-               const char * target_host,
-               const bool krb,
-               const bool restricted_admin_mode,
-               Random & rand,
-               TimeObj & timeobj,
-               std::string& extra_message,
-               Translation::language_t lang,
-               const bool verbose = false)
-        : ts_request(6) // Credssp Version 6 Supported
-        , SavedClientNonce()
-        , RestrictedAdminMode(restricted_admin_mode)
-        , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
-        , target_host(target_host)
-        , rand(rand)
-        , timeobj(timeobj)
-        , extra_message(extra_message)
-        , lang(lang)
-        , verbose(verbose)
-        , trans(transport.get_transport())
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::Initialization");
-        this->set_credentials(user, domain, pass, hostname);
-    }
-
-public:
-    void credssp_encode_ts_credentials() {
-        if (this->RestrictedAdminMode) {
-            LOG(LOG_INFO, "Restricted Admin Mode");
-            this->ts_credentials.set_credentials(nullptr, 0,
-                                                 nullptr, 0,
-                                                 nullptr, 0);
-        }
-        else {
-            this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
-                                                 this->identity.Domain.size(),
-                                                 this->identity.User.get_data(),
-                                                 this->identity.User.size(),
-                                                 this->identity.Password.get_data(),
-                                                 this->identity.Password.size());
-        }
-    }
-
-    SEC_STATUS credssp_encrypt_ts_credentials() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::encrypt_ts_credentials");
-        this->credssp_encode_ts_credentials();
-
-        StaticOutStream<65536> ts_credentials_send;
-        this->ts_credentials.emit(ts_credentials_send);
-
-        return this->table->EncryptMessage(
-            {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
-            this->ts_request.authInfo, this->send_seq_num++);
-    }
-
-private:
     enum class Res : bool { Err, Ok };
 
     Res sm_credssp_client_authenticate_start()
@@ -514,6 +447,64 @@ private:
     }
 
 public:
+    rdpCredsspClient(OutTransport transport,
+               uint8_t * user,
+               uint8_t * domain,
+               uint8_t * pass,
+               uint8_t * hostname,
+               const char * target_host,
+               const bool krb,
+               const bool restricted_admin_mode,
+               Random & rand,
+               TimeObj & timeobj,
+               std::string& extra_message,
+               Translation::language_t lang,
+               const bool verbose = false)
+        : ts_request(6) // Credssp Version 6 Supported
+        , SavedClientNonce()
+        , RestrictedAdminMode(restricted_admin_mode)
+        , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
+        , target_host(target_host)
+        , rand(rand)
+        , timeobj(timeobj)
+        , extra_message(extra_message)
+        , lang(lang)
+        , verbose(verbose)
+        , trans(transport.get_transport())
+    {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::Initialization");
+        this->set_credentials(user, domain, pass, hostname);
+    }
+
+    void credssp_encode_ts_credentials() {
+        if (this->RestrictedAdminMode) {
+            LOG(LOG_INFO, "Restricted Admin Mode");
+            this->ts_credentials.set_credentials(nullptr, 0,
+                                                 nullptr, 0,
+                                                 nullptr, 0);
+        }
+        else {
+            this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
+                                                 this->identity.Domain.size(),
+                                                 this->identity.User.get_data(),
+                                                 this->identity.User.size(),
+                                                 this->identity.Password.get_data(),
+                                                 this->identity.Password.size());
+        }
+    }
+
+    SEC_STATUS credssp_encrypt_ts_credentials() {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClient::encrypt_ts_credentials");
+        this->credssp_encode_ts_credentials();
+
+        StaticOutStream<65536> ts_credentials_send;
+        this->ts_credentials.emit(ts_credentials_send);
+
+        return this->table->EncryptMessage(
+            {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
+            this->ts_request.authInfo, this->send_seq_num++);
+    }
+
     bool credssp_client_authenticate_init()
     {
         this->client_auth_data.state = ClientAuthenticateData::Start;
@@ -553,7 +544,7 @@ public:
 
 class rdpCredsspServer
 {
-protected:
+private:
     int send_seq_num = 0;
     int recv_seq_num = 0;
 
@@ -578,11 +569,9 @@ protected:
     Translation::language_t lang;
     const bool verbose;
 
-private:
     Transport & trans;
     std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
 
-protected:
     void init_public_key()
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::ntlm_init");
@@ -604,23 +593,6 @@ protected:
         this->trans.send(ts_request_emit.get_bytes());
     }
 
-public:
-
-    void set_credentials(uint8_t const* user, uint8_t const* domain,
-                         uint8_t const* pass, uint8_t const* hostname) {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::set_credentials");
-        this->identity.SetUserFromUtf8(user);
-        this->identity.SetDomainFromUtf8(domain);
-        this->identity.SetPasswordFromUtf8(pass);
-        this->SetHostnameFromUtf8(hostname);
-        // hexdump_c(user, strlen((char*)user));
-        // hexdump_c(domain, strlen((char*)domain));
-        // hexdump_c(pass, strlen((char*)pass));
-        // hexdump_c(hostname, strlen((char*)hostname));
-        this->identity.SetKrbAuthIdentity(user, pass);
-    }
-
-private:
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
         this->ServicePrincipalName.init(length + 1);
@@ -628,7 +600,6 @@ private:
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
-protected:
     SEC_STATUS InitSecurityInterface(
         SecInterface secInter, const char* pszPrincipal,
         Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
@@ -657,7 +628,6 @@ protected:
         return this->table->AcquireCredentialsHandle(pszPrincipal, pvLogonID, pAuthData);
     }
 
-private:
     static void ap_integer_increment_le(array_view_u8 number) {
         for (uint8_t& i : number) {
             if (i < 0xFF) {
@@ -678,7 +648,6 @@ private:
         }
     }
 
-protected:
     void credssp_generate_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspServer::credssp generate client nonce");
         this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
@@ -806,65 +775,6 @@ protected:
         this->ts_request.error_code = 0;
     }
 
-
-public:
-    rdpCredsspServer(Transport & transport,
-               const bool krb,
-               const bool restricted_admin_mode,
-               Random & rand,
-               TimeObj & timeobj,
-               std::string& extra_message,
-               Translation::language_t lang,
-               std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
-               const bool verbose = false)
-        : ts_request(6) // Credssp Version 6 Supported
-        , SavedClientNonce()
-        , RestrictedAdminMode(restricted_admin_mode)
-        , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
-        , target_host("")
-        , rand(rand)
-        , timeobj(timeobj)
-        , extra_message(extra_message)
-        , lang(lang)
-        , verbose(verbose)
-        , trans(transport)
-        , set_password_cb(std::move(set_password_cb))
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
-        this->set_credentials(nullptr, nullptr, nullptr, nullptr);
-    }
-
-    SEC_STATUS credssp_decrypt_ts_credentials() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
-
-        if (this->ts_request.authInfo.size() < 1) {
-            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
-            return SEC_E_INVALID_TOKEN;
-        }
-
-        Array Buffer;
-
-        const SEC_STATUS status = this->table->DecryptMessage(
-            this->ts_request.authInfo.av(), Buffer, this->recv_seq_num++);
-
-        if (status != SEC_E_OK) {
-            return status;
-        }
-
-        InStream decrypted_creds(Buffer.get_data(), Buffer.size());
-        this->ts_credentials.recv(decrypted_creds);
-
-        // hexdump(this->ts_credentials.passCreds.userName,
-        //         this->ts_credentials.passCreds.userName_length);
-        // hexdump(this->ts_credentials.passCreds.domainName,
-        //         this->ts_credentials.passCreds.domainName_length);
-        // hexdump(this->ts_credentials.passCreds.password,
-        //         this->ts_credentials.passCreds.password_length);
-
-        return SEC_E_OK;
-    }
-
-private:
     struct ServerAuthenticateData
     {
         enum : uint8_t { Start, Loop, Final } state = Start;
@@ -898,10 +808,79 @@ private:
         return Res::Ok;
     }
 
-private:
     SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
 
 public:
+    rdpCredsspServer(Transport & transport,
+               const bool krb,
+               const bool restricted_admin_mode,
+               Random & rand,
+               TimeObj & timeobj,
+               std::string& extra_message,
+               Translation::language_t lang,
+               std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
+               const bool verbose = false)
+        : ts_request(6) // Credssp Version 6 Supported
+        , SavedClientNonce()
+        , RestrictedAdminMode(restricted_admin_mode)
+        , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
+        , target_host("")
+        , rand(rand)
+        , timeobj(timeobj)
+        , extra_message(extra_message)
+        , lang(lang)
+        , verbose(verbose)
+        , trans(transport)
+        , set_password_cb(std::move(set_password_cb))
+    {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
+        this->set_credentials(nullptr, nullptr, nullptr, nullptr);
+    }
+
+    void set_credentials(uint8_t const* user, uint8_t const* domain,
+                         uint8_t const* pass, uint8_t const* hostname) {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::set_credentials");
+        this->identity.SetUserFromUtf8(user);
+        this->identity.SetDomainFromUtf8(domain);
+        this->identity.SetPasswordFromUtf8(pass);
+        this->SetHostnameFromUtf8(hostname);
+        // hexdump_c(user, strlen((char*)user));
+        // hexdump_c(domain, strlen((char*)domain));
+        // hexdump_c(pass, strlen((char*)pass));
+        // hexdump_c(hostname, strlen((char*)hostname));
+        this->identity.SetKrbAuthIdentity(user, pass);
+    }
+
+    SEC_STATUS credssp_decrypt_ts_credentials() {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
+
+        if (this->ts_request.authInfo.size() < 1) {
+            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
+            return SEC_E_INVALID_TOKEN;
+        }
+
+        Array Buffer;
+
+        const SEC_STATUS status = this->table->DecryptMessage(
+            this->ts_request.authInfo.av(), Buffer, this->recv_seq_num++);
+
+        if (status != SEC_E_OK) {
+            return status;
+        }
+
+        InStream decrypted_creds(Buffer.get_data(), Buffer.size());
+        this->ts_credentials.recv(decrypted_creds);
+
+        // hexdump(this->ts_credentials.passCreds.userName,
+        //         this->ts_credentials.passCreds.userName_length);
+        // hexdump(this->ts_credentials.passCreds.domainName,
+        //         this->ts_credentials.passCreds.domainName_length);
+        // hexdump(this->ts_credentials.passCreds.password,
+        //         this->ts_credentials.passCreds.password_length);
+
+        return SEC_E_OK;
+    }
+
     Res sm_credssp_server_authenticate_recv(InStream & in_stream)
     {
         LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
@@ -987,7 +966,6 @@ public:
         return Res::Ok;
     }
 
-public:
     bool credssp_server_authenticate_init()
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init");
