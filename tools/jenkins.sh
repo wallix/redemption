@@ -64,10 +64,8 @@ build -q $toolset_gcc cxxflags=-g -j2 ocr_tools
 build -q $toolset_gcc cxxflags=-g $big_mem
 build -q $toolset_gcc cxxflags=-g -j2
 
-# coverage
+# debug with coverage
 build -q $toolset_gcc debug -scoverage=yes covbin=gcov-7
-# other debug target
-build -q $toolset_gcc debug
 
 #bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
 # multi-thread

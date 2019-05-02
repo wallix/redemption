@@ -5726,7 +5726,7 @@ alias test_utf : tests/utils/test_utf ;
 alias test_video_cropper : tests/utils/test_video_cropper ;
 alias test_zlib : tests/utils/test_zlib ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
-if $(ENABLE_COVERAGE) = yes
+if $(ENABLE_COVERAGE) = "on"
 {
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
