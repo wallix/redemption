@@ -184,8 +184,8 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     LCGTime timeobj;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    rdpCredsspServer credssp(
-        logtrans, false, false, rand, timeobj, extra_message, lang,
+    rdpCredsspServerNTLM credssp(
+        logtrans, false, rand, timeobj, extra_message, lang,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             auto arr2av = [&](Array& arr){ return make_array_view(arr.get_data(), arr.size()); };
             std::vector<uint8_t> vec;

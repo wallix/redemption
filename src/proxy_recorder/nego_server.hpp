@@ -31,11 +31,11 @@ class NegoServer
     FixedRandom rand;
     LCGTime timeobj;
     std::string extra_message;
-    rdpCredsspServer credssp;
+    rdpCredsspServerNTLM credssp;
 
 public:
     NegoServer(Transport& trans, std::string const& user, std::string const& password, uint64_t verbosity)
-    : credssp(trans, false, false, rand, timeobj, extra_message, Translation::EN,
+    : credssp(trans, false, rand, timeobj, extra_message, Translation::EN,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             LOG(LOG_INFO, "NTLM Check identity");
 
