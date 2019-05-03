@@ -535,8 +535,6 @@ private:
             this->clipboard_to_server_sender.get(),
             front,
             false,
-            "",
-            this->session_reactor,
             base_params,
             cvc_params,
             nullptr);

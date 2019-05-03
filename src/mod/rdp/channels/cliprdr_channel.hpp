@@ -34,7 +34,6 @@
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "mod/rdp/channels/channel_file.hpp"
 #include "lib/files_validator_api.hpp"
-#include "core/session_reactor.hpp"
 #include "core/clipboard_virtual_channels_params.hpp"
 #include "core/stream_throw_helpers.hpp"
 
@@ -62,8 +61,6 @@ private:
     bool channel_filter_on;
     uint32_t last_file_to_scan_id;
 
-    SessionReactor& session_reactor;
-
     ICAPService * icap_service;
 
 public:
@@ -73,8 +70,6 @@ public:
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         const bool channel_filter_on,
-        const std::string & channel_files_directory,
-        SessionReactor& session_reactor,
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         ICAPService * icap_service)
@@ -86,7 +81,6 @@ public:
     , proxy_managed(to_client_sender_ == nullptr)
     , channel_filter_on(channel_filter_on)
     , last_file_to_scan_id(0)
-    , session_reactor(session_reactor)
     , icap_service(icap_service) {}
 
 protected:
