@@ -256,19 +256,12 @@ class rdpCredsspServerNTLM final : public rdpCredsspServer
         // GSS_Acquire_cred
         // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
         SEC_STATUS AcquireCredentialsHandle(
-            const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+            const char * /*pszPrincipal*/,
+            Array * /*pvLogonID*/,
+            SEC_WINNT_AUTH_IDENTITY const* /*pAuthData*/
         ) override
         {
-            LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-            (void)pszPrincipal;
-            (void)pvLogonID;
-
             this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
-
-            if (pAuthData) {
-                this->identity->CopyAuthIdentity(*pAuthData);
-            }
-
             return SEC_E_OK;
         }
 
@@ -417,17 +410,11 @@ class rdpCredsspServerNTLM final : public rdpCredsspServer
 
             data_out.init(data_in.size() + cbMaxSignature);
             auto message_out = data_out.av().array_from_offset(cbMaxSignature);
-
             uint8_t digest[SslMd5::DIGEST_LENGTH];
             this->compute_hmac_md5(digest, *this->context->SendSigningKey, data_in, MessageSeqNo);
-
-            /* Encrypt message using with RC4, result overwrites original buffer */
             // this->context->confidentiality == true
             this->context->SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
-
-            this->compute_signature(
-                data_out.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
-
+            this->compute_signature(data_out.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
             return SEC_E_OK;
         }
 
@@ -474,7 +461,6 @@ class rdpCredsspServerNTLM final : public rdpCredsspServer
         }
     } sspi;
 
-
 public:
     rdpCredsspServerNTLM(Transport & transport,
                const bool restricted_admin_mode,
@@ -496,10 +482,7 @@ public:
         this->init_public_key();
         
         // Note: NTLMAcquireCredentialHandle never fails
-        this->sspi.AcquireCredentialsHandle(
-                            /*char* pszPrincipal*/nullptr, 
-                            /*Array* pvLogonID*/nullptr, 
-                            /*SEC_WINNT_AUTH_IDENTITY const* pAuthData*/nullptr);
+        this->sspi.AcquireCredentialsHandle(nullptr, nullptr, nullptr);
 
         /*
         * from tspkg.dll: 0x00000112
