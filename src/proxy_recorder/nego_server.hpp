@@ -67,11 +67,11 @@ public:
 
             if (check_identities){
                 identity.SetPasswordFromUtf8(byte_ptr_cast(password.c_str()));
-                return Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
+                return rdpCredsspServerNTLM::Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
             }
 
             LOG(LOG_ERR, "Ntlm: bad identity");
-            return Ntlm_SecurityFunctionTable::PasswordCallback::Error;
+            return rdpCredsspServerNTLM::Ntlm_SecurityFunctionTable::PasswordCallback::Error;
         }, verbosity)
     {
     }

@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             UTF8toUTF16(domain, vec.data(), vec.size());
             RED_CHECK_MEM_AA(arr2av(identity.Domain), vec);
             identity.SetPasswordFromUtf8(byte_ptr_cast(pass.data()));
-            return Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
+            return rdpCredsspServerNTLM::Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
         }
     );
     credssp.set_credentials(
