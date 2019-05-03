@@ -35,15 +35,14 @@
 
 #include "transport/transport.hpp"
 
-
 class rdpCredsspServer
 {
-private:
+protected:
+
     int send_seq_num = 0;
     int recv_seq_num = 0;
 
     TSCredentials ts_credentials;
-protected:
 
     TSRequest ts_request = {6}; // Credssp Version 6 Supported
     static const size_t CLIENT_NONCE_LENGTH = 32;
@@ -161,6 +160,149 @@ protected:
         memcpy(SavedHash.get_data(), hash, sizeof(hash));
     }
 
+
+    void credssp_buffer_free() {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
+        this->ts_request.negoTokens.init(0);
+        this->ts_request.pubKeyAuth.init(0);
+        this->ts_request.authInfo.init(0);
+        this->ts_request.clientNonce.init(0);
+        this->ts_request.error_code = 0;
+    }
+
+public:    
+
+    struct ServerAuthenticateData
+    {
+        enum : uint8_t { Start, Loop, Final } state = Start;
+    };
+
+    ServerAuthenticateData server_auth_data;
+    
+    enum class Res : bool { Err, Ok };
+
+protected:
+    SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
+
+
+
+protected: 
+    rdpCredsspServer(Transport & transport, Random & rand, TimeObj & timeobj, std::string& extra_message,
+               Translation::language_t lang,
+               std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
+               bool restricted_admin_mode,
+               const bool verbose = false)
+        : trans(transport)
+        , rand(rand)
+        , timeobj(timeobj)
+        , extra_message(extra_message)
+        , lang(lang)
+        , set_password_cb(set_password_cb)
+        , restricted_admin_mode(restricted_admin_mode)
+        , verbose(verbose)
+        {
+        }
+
+public:
+    void set_credentials(uint8_t const* user, uint8_t const* domain,
+                         uint8_t const* pass, uint8_t const* hostname) {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::set_credentials");
+        this->identity.SetUserFromUtf8(user);
+        this->identity.SetDomainFromUtf8(domain);
+        this->identity.SetPasswordFromUtf8(pass);
+        this->SetHostnameFromUtf8(hostname);
+        // hexdump_c(user, strlen((char*)user));
+        // hexdump_c(domain, strlen((char*)domain));
+        // hexdump_c(pass, strlen((char*)pass));
+        // hexdump_c(hostname, strlen((char*)hostname));
+        this->identity.SetKrbAuthIdentity(user, pass);
+    }
+
+    enum class State { Err, Cont, Finish, };
+};
+
+
+class rdpCredsspServerNTLM final : public rdpCredsspServer
+{
+
+//struct Ntlm_SecurityFunctionTable  {
+//} sspi;
+
+public:
+    rdpCredsspServerNTLM(Transport & transport,
+               const bool restricted_admin_mode,
+               Random & rand,
+               TimeObj & timeobj,
+               std::string& extra_message,
+               Translation::language_t lang,
+               std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
+               const bool verbose = false)
+        : rdpCredsspServer(transport, rand, timeobj, extra_message, lang, set_password_cb, restricted_admin_mode, verbose)
+    {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
+        this->set_credentials(nullptr, nullptr, nullptr, nullptr);
+//        this->credssp_server_authenticate_init();
+
+    }
+
+public:  
+    bool credssp_server_authenticate_init()
+    {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init: NTLM Authentication");
+
+        this->server_auth_data.state = ServerAuthenticateData::Start;
+        // TODO: sspi_GlobalInit();
+
+        this->init_public_key();
+        this->table.reset();
+        this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
+
+        // Note: NTLMAcquireCredentialHandle never fails
+        this->table->AcquireCredentialsHandle(
+                            /*char* pszPrincipal*/nullptr, 
+                            /*Array* pvLogonID*/nullptr, 
+                            /*SEC_WINNT_AUTH_IDENTITY const* pAuthData*/nullptr);
+
+        /*
+        * from tspkg.dll: 0x00000112
+        * ASC_REQ_MUTUAL_AUTH
+        * ASC_REQ_CONFIDENTIALITY
+        * ASC_REQ_ALLOCATE_MEMORY
+        */
+        this->server_auth_data.state = ServerAuthenticateData::Loop;
+        return true;
+    }
+
+public:
+    State credssp_server_authenticate_next(InStream & in_stream)
+    {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
+    
+        switch (this->server_auth_data.state)
+        {
+            case ServerAuthenticateData::Start:
+              LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Start");
+              return State::Err;
+            case ServerAuthenticateData::Loop:
+                LOG(LOG_INFO, "ServerAuthenticateData::Loop");
+                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream)) {
+                    LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
+                    return State::Err;
+                }
+                return State::Cont;
+            case ServerAuthenticateData::Final:
+               LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final");
+               if (Res::Err == this->sm_credssp_server_authenticate_final(in_stream)) {
+                   LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
+                    return State::Err;
+                }
+                this->server_auth_data.state = ServerAuthenticateData::Start;
+                return State::Finish;
+        }
+
+        return State::Err;
+    }    
+private:
     SEC_STATUS credssp_encrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
@@ -230,29 +372,6 @@ protected:
 
         return SEC_E_OK;
     }
-
-    void credssp_buffer_free() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
-        this->ts_request.negoTokens.init(0);
-        this->ts_request.pubKeyAuth.init(0);
-        this->ts_request.authInfo.init(0);
-        this->ts_request.clientNonce.init(0);
-        this->ts_request.error_code = 0;
-    }
-
-public:    
-
-    struct ServerAuthenticateData
-    {
-        enum : uint8_t { Start, Loop, Final } state = Start;
-    };
-
-    ServerAuthenticateData server_auth_data;
-    
-    enum class Res : bool { Err, Ok };
-
-protected:
-    SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
 
     SEC_STATUS credssp_decrypt_ts_credentials() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
@@ -353,7 +472,6 @@ protected:
         return Res::Ok;
     }
 
-
     Res sm_credssp_server_authenticate_final(InStream & in_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
@@ -369,40 +487,68 @@ protected:
 
         return Res::Ok;
     }
-protected: 
-    rdpCredsspServer(Transport & transport, Random & rand, TimeObj & timeobj, std::string& extra_message,
+};
+
+
+
+class rdpCredsspServerKerberos final : public rdpCredsspServer
+{
+public:
+    rdpCredsspServerKerberos(Transport & transport,
+               const bool restricted_admin_mode,
+               Random & rand,
+               TimeObj & timeobj,
+               std::string& extra_message,
                Translation::language_t lang,
                std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
-               bool restricted_admin_mode,
                const bool verbose = false)
-        : trans(transport)
-        , rand(rand)
-        , timeobj(timeobj)
-        , extra_message(extra_message)
-        , lang(lang)
-        , set_password_cb(set_password_cb)
-        , restricted_admin_mode(restricted_admin_mode)
-        , verbose(verbose)
-        {
-        }
-
-public:
-    void set_credentials(uint8_t const* user, uint8_t const* domain,
-                         uint8_t const* pass, uint8_t const* hostname) {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::set_credentials");
-        this->identity.SetUserFromUtf8(user);
-        this->identity.SetDomainFromUtf8(domain);
-        this->identity.SetPasswordFromUtf8(pass);
-        this->SetHostnameFromUtf8(hostname);
-        // hexdump_c(user, strlen((char*)user));
-        // hexdump_c(domain, strlen((char*)domain));
-        // hexdump_c(pass, strlen((char*)pass));
-        // hexdump_c(hostname, strlen((char*)hostname));
-        this->identity.SetKrbAuthIdentity(user, pass);
+        : rdpCredsspServer(transport, rand, timeobj, extra_message, lang, set_password_cb, restricted_admin_mode, verbose)
+    {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
+        this->set_credentials(nullptr, nullptr, nullptr, nullptr);
     }
 
-    enum class State { Err, Cont, Finish, };
+private:
+    bool credssp_server_authenticate_init()
+    {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init: KERBEROS Authentication");
 
+        this->server_auth_data.state = ServerAuthenticateData::Start;
+
+        // TODO: sspi_GlobalInit();
+
+        this->init_public_key();
+        this->table.reset();
+
+        #ifndef __EMSCRIPTEN__
+        this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
+        #else
+        this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
+        LOG(LOG_ERR, "Could not Initiate Kerberos Security Interface!");
+        assert(!"Unsupported Kerberos");
+        #endif
+
+        if (SEC_E_OK != this->table->AcquireCredentialsHandle(
+                            /*char* pszPrincipal*/nullptr, 
+                            /*Array* pvLogonID*/nullptr, 
+                            /*SEC_WINNT_AUTH_IDENTITY const* pAuthData*/nullptr))
+        {
+            LOG(LOG_ERR, "InitSecurityInterface status: SEC_E_NO_CREDENTIALS");
+            return false;
+        }
+
+        /*
+        * from tspkg.dll: 0x00000112
+        * ASC_REQ_MUTUAL_AUTH
+        * ASC_REQ_CONFIDENTIALITY
+        * ASC_REQ_ALLOCATE_MEMORY
+        */
+
+        this->server_auth_data.state = ServerAuthenticateData::Loop;
+        return true;
+    }
+
+public:
     State credssp_server_authenticate_next(InStream & in_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
@@ -431,180 +577,192 @@ public:
 
         return State::Err;
     }
-};
 
 
-class rdpCredsspServerNTLM final : public rdpCredsspServer
-{
-    SecInterface sec_interface;
+private:
+    SEC_STATUS credssp_encrypt_public_key_echo() {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
+        uint32_t version = this->ts_request.use_version;
 
-public:
-    rdpCredsspServerNTLM(Transport & transport,
-               const bool restricted_admin_mode,
-               Random & rand,
-               TimeObj & timeobj,
-               std::string& extra_message,
-               Translation::language_t lang,
-               std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
-               const bool verbose = false)
-        : rdpCredsspServer(transport, rand, timeobj, extra_message, lang, set_password_cb, restricted_admin_mode, verbose)
-        , sec_interface(NTLM_Interface)
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
-        this->set_credentials(nullptr, nullptr, nullptr, nullptr);
-    }
-   
-    SEC_STATUS InitSecurityInterface(
-        SecInterface secInter, const char* pszPrincipal,
-        Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::InitSecurityInterface");
-
-        this->table.reset();
-
-        switch (secInter) {
-            case NTLM_Interface:
-                LOG(LOG_INFO, "Credssp: NTLM Authentication");
-                this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
-                break;
-            case Kerberos_Interface:
-                LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
-                #ifndef __EMSCRIPTEN__
-                this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
-                #else
-                this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
-                LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
-                assert(!"Unsupported Kerberos");
-                #endif
-                break;
+        array_view_u8 public_key = this->PublicKey.av();
+        if (version >= 5) {
+            this->credssp_get_client_nonce();
+            this->credssp_generate_public_key_hash_server_to_client();
+            public_key = this->ServerClientHash.av();
+        }
+        else {
+            // if we are server and protocol is 2,3,4
+            // then echos the public key +1
+            this->ap_integer_increment_le(public_key);
         }
 
-        return this->table->AcquireCredentialsHandle(pszPrincipal, pvLogonID, pAuthData);
+        return this->table->EncryptMessage(
+            public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
     }
 
-    bool credssp_server_authenticate_init()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init");
+    SEC_STATUS credssp_decrypt_public_key_echo() {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_public_key_echo");
 
-        this->server_auth_data.state = ServerAuthenticateData::Start;
-        if (Res::Err == this->sm_credssp_server_authenticate_start()) {
-            return false;
-        }
-        this->server_auth_data.state = ServerAuthenticateData::Loop;
-        return true;
-    }
+        Array Buffer;
 
-    Res sm_credssp_server_authenticate_start()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::server_authenticate");
-        // TODO
-        // sspi_GlobalInit();
-
-        this->init_public_key();
-
-        SEC_STATUS status = this->InitSecurityInterface(NTLM_Interface, nullptr,
-                                                        nullptr, nullptr);
+        SEC_STATUS const status = this->table->DecryptMessage(
+            this->ts_request.pubKeyAuth.av(), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "InitSecurityInterface status: 0x%08X", status);
+            if (this->ts_request.pubKeyAuth.size() == 0) {
+                // report_error
+                this->extra_message = " ";
+                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
+                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+            }
+            LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
+            return status;
+        }
+
+        const uint32_t version = this->ts_request.use_version;
+
+        array_view_const_u8 public_key = this->PublicKey.av();
+        if (version >= 5) {
+            this->credssp_get_client_nonce();
+            this->credssp_generate_public_key_hash_client_to_server();
+            public_key = this->ClientServerHash.av();
+        }
+
+        array_view_u8 public_key2 = Buffer.av();
+
+        if (public_key2.size() != public_key.size()) {
+            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
+            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+        }
+
+        if (memcmp(public_key.data(), public_key2.data(), public_key.size()) != 0) {
+            LOG(LOG_ERR, "Could not verify server's public key echo");
+
+            LOG(LOG_ERR, "Expected (length = %zu):", public_key.size());
+            hexdump_av_c(public_key);
+
+            LOG(LOG_ERR, "Actual (length = %zu):", public_key.size());
+            hexdump_av_c(public_key2);
+
+            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+        }
+
+        return SEC_E_OK;
+    }
+    
+        SEC_STATUS credssp_decrypt_ts_credentials() {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
+
+        if (this->ts_request.authInfo.size() < 1) {
+            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
+            return SEC_E_INVALID_TOKEN;
+        }
+
+        Array Buffer;
+
+        const SEC_STATUS status = this->table->DecryptMessage(
+            this->ts_request.authInfo.av(), Buffer, this->recv_seq_num++);
+
+        if (status != SEC_E_OK) {
+            return status;
+        }
+
+        InStream decrypted_creds(Buffer.get_data(), Buffer.size());
+        this->ts_credentials.recv(decrypted_creds);
+
+        // hexdump(this->ts_credentials.passCreds.userName,
+        //         this->ts_credentials.passCreds.userName_length);
+        // hexdump(this->ts_credentials.passCreds.domainName,
+        //         this->ts_credentials.passCreds.domainName_length);
+        // hexdump(this->ts_credentials.passCreds.password,
+        //         this->ts_credentials.passCreds.password_length);
+
+        return SEC_E_OK;
+    }
+
+    Res sm_credssp_server_authenticate_recv(InStream & in_stream)
+    {
+        LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
+
+        if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
+            /* receive authentication token */
+            this->ts_request.recv(in_stream);
+        }
+
+        if (this->ts_request.negoTokens.size() < 1) {
+            LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
             return Res::Err;
         }
 
-        /*
-        * from tspkg.dll: 0x00000112
-        * ASC_REQ_MUTUAL_AUTH
-        * ASC_REQ_CONFIDENTIALITY
-        * ASC_REQ_ALLOCATE_MEMORY
-        */
-
-        return Res::Ok;
-    }
-
-};
-
-class rdpCredsspServerKerberos final : public rdpCredsspServer
-{
-    SecInterface sec_interface;
-
-public:
-    rdpCredsspServerKerberos(Transport & transport,
-               const bool restricted_admin_mode,
-               Random & rand,
-               TimeObj & timeobj,
-               std::string& extra_message,
-               Translation::language_t lang,
-               std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
-               const bool verbose = false)
-        : rdpCredsspServer(transport, rand, timeobj, extra_message, lang, set_password_cb, restricted_admin_mode, verbose)
-        , sec_interface(Kerberos_Interface)
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
-        this->set_credentials(nullptr, nullptr, nullptr, nullptr);
-    }
-
-    bool credssp_server_authenticate_init()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init");
-
-        this->server_auth_data.state = ServerAuthenticateData::Start;
-        if (Res::Err == this->sm_credssp_server_authenticate_start()) {
-            return false;
+        // unsigned long const fContextReq = 0
+        //     | ASC_REQ_MUTUAL_AUTH
+        //     | ASC_REQ_CONFIDENTIALITY
+        //     | ASC_REQ_CONNECTION
+        //     | ASC_REQ_USE_SESSION_KEY
+        //     | ASC_REQ_REPLAY_DETECT
+        //     | ASC_REQ_SEQUENCE_DETECT
+        //     | ASC_REQ_EXTENDED_ERROR;
+        SEC_STATUS status = this->table->AcceptSecurityContext(
+            this->ts_request.negoTokens.av(),
+            /*output*/this->ts_request.negoTokens);
+        this->state_accept_security_context = status;
+        if (status == SEC_I_LOCAL_LOGON) {
+            return Res::Ok;
         }
-        this->server_auth_data.state = ServerAuthenticateData::Loop;
-        return true;
-    }
 
-    Res sm_credssp_server_authenticate_start()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::server_authenticate");
-        // TODO
-        // sspi_GlobalInit();
+        if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
+            if (status == SEC_I_COMPLETE_NEEDED) {
+                status = SEC_E_OK;
+            }
+            else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
+                status = SEC_I_CONTINUE_NEEDED;
+            }
+        }
 
-        this->init_public_key();
+        if (status == SEC_E_OK) {
+            if (this->credssp_decrypt_public_key_echo() != SEC_E_OK) {
+                LOG(LOG_ERR, "Error: could not verify client's public key echo");
+                return Res::Err;
+            }
 
-        SEC_STATUS status = this->InitSecurityInterface(NTLM_Interface, nullptr, nullptr, nullptr);
+            this->ts_request.negoTokens.init(0);
 
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "InitSecurityInterface status: 0x%08X", status);
+            this->credssp_encrypt_public_key_echo();
+        }
+
+        if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
+            LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
             return Res::Err;
         }
 
-        /*
-        * from tspkg.dll: 0x00000112
-        * ASC_REQ_MUTUAL_AUTH
-        * ASC_REQ_CONFIDENTIALITY
-        * ASC_REQ_ALLOCATE_MEMORY
-        */
+        this->credssp_send();
+        this->credssp_buffer_free();
+
+        if (status != SEC_I_CONTINUE_NEEDED) {
+            if (status != SEC_E_OK) {
+                LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
+                return Res::Err;
+            }
+            this->server_auth_data.state = ServerAuthenticateData::Final;
+        }
 
         return Res::Ok;
     }
-
-    SEC_STATUS InitSecurityInterface(
-        SecInterface secInter, const char* pszPrincipal,
-        Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
+    
+    Res sm_credssp_server_authenticate_final(InStream & in_stream)
     {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::InitSecurityInterface");
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
+        /* Receive encrypted credentials */
+        this->ts_request.recv(in_stream);
 
-        this->table.reset();
+        SEC_STATUS status = this->credssp_decrypt_ts_credentials();
 
-        switch (secInter) {
-            case NTLM_Interface:
-                LOG(LOG_INFO, "Credssp: NTLM Authentication");
-                this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
-                break;
-            case Kerberos_Interface:
-                LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
-                #ifndef __EMSCRIPTEN__
-                this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
-                #else
-                this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
-                LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
-                assert(!"Unsupported Kerberos");
-                #endif
-                break;
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", status);
+            return Res::Err;
         }
 
-        return this->table->AcquireCredentialsHandle(pszPrincipal, pvLogonID, pAuthData);
+        return Res::Ok;
     }
 
 };

@@ -22,7 +22,8 @@
 */
 
 #include "core/RDP/nego.hpp"
-#include "core/RDP/nla/nla.hpp"
+#include "core/RDP/nla/nla_server.hpp"
+#include "core/RDP/nla/nla_client.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/RDP/x224.hpp"
 

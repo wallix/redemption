@@ -21,6 +21,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/nla/nla.hpp"
+#include "core/RDP/nla/nla_client.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 
 #include "test_only/transport/test_transport.hpp"
