@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd "$(dirname "$0")/../.."
+
+# export BJAMPATH=/home/jpoelen/game/bjam
+SCAN_BUILD="${SCAN_BUILD:-scan-build}"
+
+extract_checker()
+{
+    $SCAN_BUILD -h | sed -E '/^AVAILABLE CHECKERS/,/^N/!d;/^   [a-zA-Z]/!d;/^   debug\.|osx\./d;s/^   ([-._0-9a-zA-Z]+).*/-enable-checker \1/'
+}
+
+use_cxx=
+if [ -n "${CXX}" ]; then
+    use_cxx="--use-c++ $CXX"
+fi
+$SCAN_BUILD $(extract_checker) $use_cxx ./tools/c++-analyzer/scan-build-bjam "$@"

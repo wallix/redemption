@@ -262,13 +262,13 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                        int len_bmpdata = stream.in_uint32_le();
+                        const uint32_t len_bmpdata = stream.in_uint32_le();
                         const uint8_t * bmpdata = stream.in_uint8p(len_bmpdata);
                         int width = stream.in_uint16_le();
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        Bitmap bmp(this->bpp, this->bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
+                        Bitmap bmp(this->bpp, this->bpp, &this->palette332, width, height, bmpdata, len_bmpdata);
                         gd.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;

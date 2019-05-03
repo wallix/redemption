@@ -45,7 +45,7 @@ DateDirFromFilename::DateDirFromFilename(array_view_const_char path) noexcept
          && is_digit(0) && is_digit(1) && is_digit(2) && is_digit(3)
          && before_senti[4] == '-'
          && is_digit(5) && is_digit(6)
-         && before_senti[4] == '-'
+         && before_senti[7] == '-'
          && is_digit(8) && is_digit(9)
          && before_senti[10] == '/'
         ) {
