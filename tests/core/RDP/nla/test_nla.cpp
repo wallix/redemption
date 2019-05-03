@@ -20,7 +20,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "core/RDP/nla/nla.hpp"
+#include "core/RDP/nla/nla_server.hpp"
 #include "core/RDP/nla/nla_client.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 
@@ -205,7 +205,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         byte_ptr_cast(domain.data()),
         byte_ptr_cast(pass.data()),
         byte_ptr_cast(host.data()));
-    RED_CHECK(credssp.credssp_server_authenticate_init());
+//    RED_CHECK(credssp.credssp_server_authenticate_init());
 
     rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
     TpduBuffer buf;

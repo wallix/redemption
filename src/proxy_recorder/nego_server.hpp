@@ -74,7 +74,6 @@ public:
             return Ntlm_SecurityFunctionTable::PasswordCallback::Error;
         }, verbosity)
     {
-        this->credssp.credssp_server_authenticate_init();
     }
 
     rdpCredsspServer::State recv_data(TpduBuffer& buffer)

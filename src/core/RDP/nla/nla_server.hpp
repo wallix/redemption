@@ -241,36 +241,8 @@ public:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
-//        this->credssp_server_authenticate_init();
+        this->credssp_server_authenticate_init();
 
-    }
-
-public:  
-    bool credssp_server_authenticate_init()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init: NTLM Authentication");
-
-        this->server_auth_data.state = ServerAuthenticateData::Start;
-        // TODO: sspi_GlobalInit();
-
-        this->init_public_key();
-        this->table.reset();
-        this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
-
-        // Note: NTLMAcquireCredentialHandle never fails
-        this->table->AcquireCredentialsHandle(
-                            /*char* pszPrincipal*/nullptr, 
-                            /*Array* pvLogonID*/nullptr, 
-                            /*SEC_WINNT_AUTH_IDENTITY const* pAuthData*/nullptr);
-
-        /*
-        * from tspkg.dll: 0x00000112
-        * ASC_REQ_MUTUAL_AUTH
-        * ASC_REQ_CONFIDENTIALITY
-        * ASC_REQ_ALLOCATE_MEMORY
-        */
-        this->server_auth_data.state = ServerAuthenticateData::Loop;
-        return true;
     }
 
 public:
@@ -303,6 +275,34 @@ public:
         return State::Err;
     }    
 private:
+    bool credssp_server_authenticate_init()
+    {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init: NTLM Authentication");
+
+        this->server_auth_data.state = ServerAuthenticateData::Start;
+        // TODO: sspi_GlobalInit();
+
+        this->init_public_key();
+        this->table.reset();
+        this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
+
+        // Note: NTLMAcquireCredentialHandle never fails
+        this->table->AcquireCredentialsHandle(
+                            /*char* pszPrincipal*/nullptr, 
+                            /*Array* pvLogonID*/nullptr, 
+                            /*SEC_WINNT_AUTH_IDENTITY const* pAuthData*/nullptr);
+
+        /*
+        * from tspkg.dll: 0x00000112
+        * ASC_REQ_MUTUAL_AUTH
+        * ASC_REQ_CONFIDENTIALITY
+        * ASC_REQ_ALLOCATE_MEMORY
+        */
+        this->server_auth_data.state = ServerAuthenticateData::Loop;
+        return true;
+    }
+
+
     SEC_STATUS credssp_encrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
