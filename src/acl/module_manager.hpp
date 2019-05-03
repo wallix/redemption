@@ -942,10 +942,7 @@ public:
                 this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
-                this->ini.get<cfg::context::opt_width>(),
-                this->ini.get<cfg::context::opt_height>(),
-                // TODO use safe_int
-                checked_int(this->ini.get<cfg::context::opt_bpp>())
+                safe_int(this->ini.get<cfg::context::opt_bpp>())
                 // TODO: shouldn't alls mods have access to sesman authentifier ?
             ));
 

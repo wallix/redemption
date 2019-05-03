@@ -177,6 +177,7 @@ exe rdpproxy :
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
@@ -590,6 +591,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
@@ -2422,6 +2424,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
@@ -2552,6 +2555,7 @@ test-run tests/core/test_session :
   <library>src/mod/vnc/encoder/raw.o
   <library>src/mod/vnc/encoder/rre.o
   <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
@@ -4284,11 +4288,14 @@ test-run tests/mod/xup/test_xup :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/screen_functions.o
+  <library>src/mod/xup/xup.o
   <library>src/utils/bitmap.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/xup/xup.cpp
   <covfile>src/mod/xup/xup.hpp
 ;
 test-run tests/regex/test_regex :
@@ -5345,6 +5352,7 @@ obj src/mod/vnc/encoder/raw.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/raw.cpp ;
 obj src/mod/vnc/encoder/rre.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/rre.cpp ;
 obj src/mod/vnc/encoder/zrle.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/zrle.cpp : <define>ZLIB_CONST ;
 obj src/mod/vnc/new_mod_vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/new_mod_vnc.cpp : <define>ZLIB_CONST ;
+obj src/mod/xup/xup.o : $(REDEMPTION_SRC_PATH)/mod/xup/xup.cpp ;
 obj src/proxy_recorder/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/proxy_recorder/proxy_recorder.cpp ;
 obj src/system/linux/system/tls_check_certificate.o : $(REDEMPTION_SRC_PATH)/system/linux/system/tls_check_certificate.cpp ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
