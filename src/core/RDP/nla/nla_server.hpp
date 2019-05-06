@@ -48,7 +48,6 @@ protected:
     static const size_t CLIENT_NONCE_LENGTH = 32;
     uint8_t SavedClientNonce[CLIENT_NONCE_LENGTH] = {};
 
-    Transport & trans;
     Random & rand;
     TimeObj & timeobj;
     std::string& extra_message;
@@ -65,7 +64,7 @@ protected:
     std::unique_ptr<SecurityFunctionTable> table = std::make_unique<UnimplementedSecurityFunctionTable>();
 
 
-    void init_public_key()
+    void init_public_key(Transport & trans)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::ntlm_init");
 
@@ -73,17 +72,17 @@ protected:
         /* Get Public Key From TLS Layer and hostname */
         // ============================================
 
-        auto const key = this->trans.get_public_key();
+        auto const key = trans.get_public_key();
         this->PublicKey.init(key.size());
         this->PublicKey.copy(key);
     }
 
-    void credssp_send()
+    void credssp_send(Transport & trans)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::send");
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
-        this->trans.send(ts_request_emit.get_bytes());
+        trans.send(ts_request_emit.get_bytes());
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
@@ -186,12 +185,11 @@ protected:
 
 
 protected: 
-    rdpCredsspServer(Transport & transport, Random & rand, TimeObj & timeobj, std::string& extra_message,
+    rdpCredsspServer(Random & rand, TimeObj & timeobj, std::string& extra_message,
                Translation::language_t lang,
                bool restricted_admin_mode,
                const bool verbose = false)
-        : trans(transport)
-        , rand(rand)
+        : rand(rand)
         , timeobj(timeobj)
         , extra_message(extra_message)
         , lang(lang)
@@ -470,7 +468,7 @@ public:
                Translation::language_t lang,
                std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
-        : rdpCredsspServer(transport, rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
+        : rdpCredsspServer(rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
         , sspi(rand, timeobj, set_password_cb, verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
@@ -479,7 +477,7 @@ public:
         this->server_auth_data.state = ServerAuthenticateData::Start;
         // TODO: sspi_GlobalInit();
 
-        this->init_public_key();
+        this->init_public_key(transport);
         
         // Note: NTLMAcquireCredentialHandle never fails
         this->sspi.AcquireCredentialsHandle(nullptr, nullptr, nullptr);
@@ -494,7 +492,7 @@ public:
     }
 
 public:
-    State credssp_server_authenticate_next(InStream & in_stream)
+    State credssp_server_authenticate_next(InStream & in_stream, Transport & trans)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
     
@@ -505,7 +503,7 @@ public:
               return State::Err;
             case ServerAuthenticateData::Loop:
                 LOG(LOG_INFO, "ServerAuthenticateData::Loop");
-                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream)) {
+                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream, trans)) {
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     return State::Err;
                 }
@@ -624,7 +622,7 @@ private:
         return SEC_E_OK;
     }
 
-    Res sm_credssp_server_authenticate_recv(InStream & in_stream)
+    Res sm_credssp_server_authenticate_recv(InStream & in_stream, Transport & trans)
     {
         LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
 
@@ -679,7 +677,7 @@ private:
             return Res::Err;
         }
 
-        this->credssp_send();
+        this->credssp_send(trans);
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {
@@ -722,14 +720,15 @@ public:
                std::string& extra_message,
                Translation::language_t lang,
                const bool verbose = false)
-        : rdpCredsspServer(transport, rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
+        : rdpCredsspServer(rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
+        this->credssp_server_authenticate_init(transport);
     }
 
 private:
-    bool credssp_server_authenticate_init()
+    bool credssp_server_authenticate_init(Transport & trans)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init: KERBEROS Authentication");
 
@@ -737,7 +736,7 @@ private:
 
         // TODO: sspi_GlobalInit();
 
-        this->init_public_key();
+        this->init_public_key(trans);
         this->table.reset();
 
         #ifndef __EMSCRIPTEN__
@@ -769,7 +768,7 @@ private:
     }
 
 public:
-    State credssp_server_authenticate_next(InStream & in_stream)
+    State credssp_server_authenticate_next(InStream & in_stream, Transport & trans)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
     
@@ -780,7 +779,7 @@ public:
               return State::Err;
             case ServerAuthenticateData::Loop:
                 LOG(LOG_INFO, "ServerAuthenticateData::Loop");
-                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream)) {
+                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream, trans)) {
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     return State::Err;
                 }
@@ -900,7 +899,7 @@ private:
         return SEC_E_OK;
     }
 
-    Res sm_credssp_server_authenticate_recv(InStream & in_stream)
+    Res sm_credssp_server_authenticate_recv(InStream & in_stream, Transport & trans)
     {
         LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
 
@@ -955,7 +954,7 @@ private:
             return Res::Err;
         }
 
-        this->credssp_send();
+        this->credssp_send(trans);
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {

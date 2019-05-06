@@ -213,7 +213,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         buf.load_data(logtrans);
         while (buf.next(TpduBuffer::CREDSSP) && rdpCredsspServer::State::Cont == st) {
             InStream in_stream(buf.current_pdu_buffer());
-            st = credssp.credssp_server_authenticate_next(in_stream);
+            st = credssp.credssp_server_authenticate_next(in_stream, logtrans);
         }
     }
     RED_CHECK_EQUAL(0, buf.remaining());
