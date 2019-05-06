@@ -434,13 +434,13 @@ struct def_variation2
     bool is_percent;
 };
 
-inline def_variation2 operator-(def_variation1 const& variation)
+inline def_variation2 operator-(def_variation1 const& variation) noexcept
 {
     return {variation.variantion, variation.is_percent};
 }
 
 template<class T>
-int_variation operator+(T const& x_, def_variation2 const& variation)
+int_variation operator+(T const& x_, def_variation2 const& variation) noexcept
 {
     const int x = x_;
     if (variation.is_percent) {
@@ -452,8 +452,8 @@ int_variation operator+(T const& x_, def_variation2 const& variation)
 
 namespace literals
 {
-    inline def_variation1 operator""_percent(unsigned long long x) { return {int(x), true}; }
-    inline def_variation1 operator""_v(unsigned long long x) { return {int(x), false}; }
+    inline def_variation1 operator""_percent(unsigned long long x) noexcept { return {int(x), true}; }
+    inline def_variation1 operator""_v(unsigned long long x) noexcept { return {int(x), false}; }
 }
 
 } // namespace redemption_unit_test__

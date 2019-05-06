@@ -51,11 +51,13 @@ Author(s): Jonathan Poelen
 
 struct [[nodiscard]] WorkingFileBase
 {
-    WorkingFileBase(std::string name) noexcept;
-    char const* c_str() const noexcept;
+    WorkingFileBase(std::string name) noexcept : filename_(std::move(name)) {}
+    char const* c_str() const noexcept { return this->filename_.c_str(); }
     std::string const& filename() const noexcept { return this->filename_; }
     operator std::string const& () const noexcept { return this->filename_; }
     operator char const* () const noexcept { return this->c_str(); }
+    std::size_t size() const noexcept { return this->filename_.size(); }
+    ssize_t ssize() const noexcept { return ssize_t(this->filename_.size()); }
 
 protected:
     std::string filename_;
@@ -70,6 +72,7 @@ struct [[nodiscard]] WorkingFile : WorkingFileBase
     void set_removed(bool x = true) noexcept { this->is_removed = x; }
 
 private:
+    unsigned start_error_count;
     bool is_removed = false;
 };
 
@@ -117,7 +120,7 @@ struct [[nodiscard]] WorkingDirectory
 
     std::string path_of(std::string_view path) const;
 
-    std::string const& dirname() const noexcept;
+    WorkingFileBase const& dirname() const noexcept { return this->directory; }
 
     [[nodiscard]] std::string unmached_files();
 
@@ -153,8 +156,9 @@ private:
     };
 
     std::unordered_set<Path, HashPath> paths;
-    std::string directory;
+    WorkingFileBase directory;
     bool has_error = false;
     bool is_checked = true;
     int counter_id = 0;
+    unsigned start_error_count;
 };

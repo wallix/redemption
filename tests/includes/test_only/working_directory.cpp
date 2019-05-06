@@ -98,31 +98,23 @@ namespace
         using namespace boost::unit_test::framework;
         std::string_view suffix_comp =
             "@" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
-            REDEMPTION_COMP_STRING_VERSION "/";
+            REDEMPTION_COMP_STRING_VERSION;
         std::string test_module = master_test_suite().p_name.get();
         return str_concat(
             tempbase(),
             '@',
             current_test_case().p_name.get(),
             '@',
-            name,
-            '@',
             test_module_name(),
-            suffix_comp
+            suffix_comp,
+            '@',
+            name,
+            '/'
         );
     }
 
 #define WD_ERROR_S(ostream_expr) RED_ERROR("WorkingDirectory: " ostream_expr)
 #define WD_ERROR(ostream_expr) RED_ERROR("WorkingDirectory: " << ostream_expr)
-}
-
-WorkingFileBase::WorkingFileBase(std::string name) noexcept
-: filename_(std::move(name))
-{}
-
-char const* WorkingFileBase::c_str() const noexcept
-{
-    return this->filename_.c_str();
 }
 
 std::ostream& operator<<(std::ostream& out, WorkingFileBase const& wf)
@@ -132,6 +124,7 @@ std::ostream& operator<<(std::ostream& out, WorkingFileBase const& wf)
 
 WorkingFile::WorkingFile(std::string_view name)
 : WorkingFileBase(suffix_by_test({}))
+, start_error_count(RED_ERROR_COUNT)
 {
     recursive_delete_directory(this->c_str());
     if (-1 == mkdir(this->c_str(), 0755) && errno != EEXIST) {
@@ -144,7 +137,12 @@ WorkingFile::WorkingFile(std::string_view name)
 WorkingFile::~WorkingFile()
 {
     if (!this->is_removed) {
-        RED_TEST_FUNC(unlink, (this->filename_.c_str()) == 0);
+        if (this->start_error_count == RED_ERROR_COUNT) {
+            RED_TEST_FUNC(unlink, (this->filename_.c_str()) == 0);
+        }
+        else {
+            RED_TEST_FUNC(file_exist, (this->filename_.c_str()));
+        }
     }
 }
 
@@ -211,11 +209,11 @@ std::size_t WorkingDirectory::HashPath::operator()(Path const& path) const
 
 
 WorkingDirectory::WorkingDirectory(std::string_view name)
+: directory(suffix_by_test(name))
+, start_error_count(RED_ERROR_COUNT)
 {
-    this->directory = suffix_by_test(name);
-
-    recursive_delete_directory(this->directory.c_str());
-    if (-1 == mkdir(this->directory.c_str(), 0755) && errno != EEXIST) {
+    recursive_delete_directory(this->directory);
+    if (-1 == mkdir(this->directory, 0755) && errno != EEXIST) {
         WD_ERROR(strerror(errno) << ": " << this->directory);
     }
 }
@@ -292,11 +290,6 @@ WorkingDirectory& WorkingDirectory::remove_files(std::initializer_list<std::stri
 std::string WorkingDirectory::path_of(std::string_view path) const
 {
     return str_concat(this->directory, path);
-}
-
-std::string const& WorkingDirectory::dirname() const noexcept
-{
-    return this->directory;
 }
 
 std::string WorkingDirectory::unmached_files()
@@ -385,7 +378,9 @@ std::string WorkingDirectory::unmached_files()
 WorkingDirectory::~WorkingDirectory() noexcept(false)
 {
     if (!this->has_error) {
-        recursive_delete_directory(this->dirname().c_str());
+        if (this->start_error_count == RED_ERROR_COUNT) {
+            recursive_delete_directory(this->dirname().c_str());
+        }
         if (!this->is_checked) {
             WD_ERROR_S("unchecked entries");
         }

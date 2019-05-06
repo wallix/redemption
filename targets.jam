@@ -796,6 +796,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/working_directory.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/capture/wrm_capture.hpp
