@@ -698,6 +698,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/transport/test_transport.o
+  <library>tests/includes/test_only/working_directory.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(FFMPEG_CXXFLAGS)

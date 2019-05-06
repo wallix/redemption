@@ -107,7 +107,7 @@ namespace
             '@',
             test_module_name(),
             suffix_comp,
-            '@',
+            "__"_av,
             name,
             '/'
         );
@@ -119,7 +119,7 @@ namespace
 
 std::ostream& operator<<(std::ostream& out, WorkingFileBase const& wf)
 {
-    return out << wf.filename();
+    return out << wf.string();
 }
 
 WorkingFile::WorkingFile(std::string_view name)
@@ -128,7 +128,7 @@ WorkingFile::WorkingFile(std::string_view name)
 {
     recursive_delete_directory(this->c_str());
     if (-1 == mkdir(this->c_str(), 0755) && errno != EEXIST) {
-        WD_ERROR(strerror(errno) << ": " << this->filename());
+        WD_ERROR(strerror(errno) << ": " << this->string());
     }
 
     this->filename_ += name;

@@ -49,11 +49,12 @@ Author(s): Jonathan Poelen
     };                                        \
     void WF_TU_ ## name ::test(WorkingFile& wf)
 
+
 struct [[nodiscard]] WorkingFileBase
 {
     WorkingFileBase(std::string name) noexcept : filename_(std::move(name)) {}
     char const* c_str() const noexcept { return this->filename_.c_str(); }
-    std::string const& filename() const noexcept { return this->filename_; }
+    std::string const& string() const noexcept { return this->filename_; }
     operator std::string const& () const noexcept { return this->filename_; }
     operator char const* () const noexcept { return this->c_str(); }
     std::size_t size() const noexcept { return this->filename_.size(); }

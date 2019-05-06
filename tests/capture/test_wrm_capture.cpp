@@ -70,6 +70,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 {
     WorkingDirectory record_wd("record");
     WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     {
         // Timestamps are applied only when flushing
@@ -113,7 +114,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, "capture", "", record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
+          CaptureParams{now, "capture", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
           wrm_params, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -171,12 +172,14 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
     WorkingDirectory record_wd("record");
     WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     {
         // Timestamps are applied only when flushing
@@ -221,7 +224,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-            CaptureParams{now, "capture", "", record_wd.dirname(), 1000, nullptr, SmartVideoCropping::disable, 0},
+            CaptureParams{now, "capture", tmp_wd.dirname(), record_wd.dirname(), 1000, nullptr, SmartVideoCropping::disable, 0},
             wrm_params/* authentifier */, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -281,6 +284,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 
@@ -343,6 +347,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 {
     WorkingDirectory record_wd("record");
     WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     unsigned sec_start = 1352304810;
     {
@@ -403,6 +408,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 
@@ -410,6 +416,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
     WorkingDirectory record_wd("record");
     WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     unsigned sec_start = 1352304810;
     {
@@ -466,12 +473,14 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 {
     WorkingDirectory record_wd("record");
     WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     {
         // Timestamps are applied only when flushing
@@ -515,7 +524,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         TestGraphic gd_drawable(4, 1);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, "capture_kbd_input", "", record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
+          CaptureParams{now, "capture_kbd_input", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
           wrm_params, gd_drawable);
 
         bool ignore_frame_in_timeval = false;
@@ -601,12 +610,14 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
 {
     WorkingDirectory record_wd("record");
     WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     {
         // Timestamps are applied only when flushing
@@ -648,7 +659,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         TestGraphic gd_drawable(800, 600);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, "capture_remoteapp", "", record_wd.dirname(), groupid, nullptr, SmartVideoCropping::v1, 0},
+          CaptureParams{now, "capture_remoteapp", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::v1, 0},
           wrm_params, gd_drawable);
 
         bool ignore_frame_in_timeval = false;
@@ -698,4 +709,5 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }

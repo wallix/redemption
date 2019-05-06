@@ -21,6 +21,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/working_directory.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
@@ -40,31 +41,25 @@
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
 
+namespace
+{
+    constexpr auto fsize = ::redemption_unit_test__::fn_invoker("filesize",
+        [](std::string const& filename){ return filesize(filename); });
+
+    int int_(int n) { return n; }
+}
+
+#define TEST_FSIZE(filename, len) RED_TEST(fsize(filename) == int_(len));
+
+
 const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
-constexpr auto fsize = RED_TEST_FUNC_CTX(filesize);
+
 
 RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo[] = {
-        {"./test_capture-000000.wrm", 1646},
-        {"./test_capture-000001.wrm", 3508},
-        {"./test_capture-000002.wrm", 3463},
-        {"./test_capture-000003.wrm", -1},
-        {"./test_capture.mwrm", 180},
-        // hash
-        {"/tmp/test_capture-000000.wrm", 45},
-        {"/tmp/test_capture-000001.wrm", 45},
-        {"/tmp/test_capture-000002.wrm", 45},
-        {"/tmp/test_capture-000003.wrm", -1},
-        {"/tmp/test_capture.mwrm", 39},
-    };
-
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
+    WorkingDirectory tmp_wd("tmp");
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
 
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
@@ -83,15 +78,17 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
         ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
-        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
         CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
+        ini.set<cfg::video::capture_flags>(capture_flags);
 
         ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
-        ini.set<cfg::video::record_tmp_path>("./");
-        ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp/");
-        ini.set<cfg::globals::movie_path>("test_capture");
+        char const* basename = "test_capture";
+
+        ini.set<cfg::video::record_tmp_path>(record_wd.dirname().string());
+        ini.set<cfg::video::record_path>(tmp_wd.dirname().string());
+        ini.set<cfg::video::hash_path>(hash_wd.dirname().string());
+        ini.set<cfg::globals::movie_path>(basename);
 
         LCGRandom rnd(0);
         FakeFstat fstat;
@@ -128,17 +125,6 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
-        strcat(path, "/");
-        strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
-
-        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
 
         PngParams png_params = {
             0, 0, std::chrono::milliseconds{60}, 100, 0, false,
@@ -230,38 +216,35 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         // The destruction of capture object will finalize the metafile content
     }
 
-    {
-        FilenameGenerator png_seq(
-//            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-          , "./" , "test_capture", ".png"
-        );
+    TEST_FSIZE(record_wd.add_file("test_capture-000000.wrm"), 1646);
+    TEST_FSIZE(record_wd.add_file("test_capture-000001.wrm"), 3508);
+    TEST_FSIZE(record_wd.add_file("test_capture-000002.wrm"), 3463);
+    TEST_FSIZE(record_wd.add_file("test_capture.mwrm"), 174 + record_wd.dirname().size() * 3);
 
-        int i = 0;
-        for (auto size : {
-            3102,
-            3127,
-            3145,
-            3162,
-            3175,
-            3201,
-            3225
-        }) {
-            char const* filename = png_seq.get(i++);
-            RED_CHECK(fsize(filename) == size);
-            ::unlink(filename);
-        }
-        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
-    }
+    TEST_FSIZE(record_wd.add_file("test_capture-000000.png"), 3102);
+    TEST_FSIZE(record_wd.add_file("test_capture-000001.png"), 3127);
+    TEST_FSIZE(record_wd.add_file("test_capture-000002.png"), 3145);
+    TEST_FSIZE(record_wd.add_file("test_capture-000003.png"), 3162);
+    TEST_FSIZE(record_wd.add_file("test_capture-000004.png"), 3175);
+    TEST_FSIZE(record_wd.add_file("test_capture-000005.png"), 3201);
+    TEST_FSIZE(record_wd.add_file("test_capture-000006.png"), 3225);
 
-    for (auto x: fileinfo) {
-        RED_CHECK(fsize(x.filename) == x.size);
-        ::unlink(x.filename);
-    }
+    TEST_FSIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
+    TEST_FSIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
+    TEST_FSIZE(hash_wd.add_file("test_capture-000002.wrm"), 45);
+    TEST_FSIZE(hash_wd.add_file("test_capture.mwrm"), 39);
+
+    RED_CHECK_WORKSPACE(tmp_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 }
 
 RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
+    WorkingDirectory tmp_wd("tmp");
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
     Inifile ini;
     ini.set<cfg::video::rt_display>(1);
 
@@ -286,10 +269,12 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
-    ini.set<cfg::video::record_tmp_path>("./");
-    ini.set<cfg::video::record_path>("./");
-    ini.set<cfg::video::hash_path>("/tmp");
-    ini.set<cfg::globals::movie_path>("test_capture");
+    char const* basename = "test_capture";
+
+    ini.set<cfg::video::record_tmp_path>(record_wd.dirname().string());
+    ini.set<cfg::video::record_path>(tmp_wd.dirname().string());
+    ini.set<cfg::video::hash_path>(hash_wd.dirname().string());
+    ini.set<cfg::globals::movie_path>(basename);
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -319,17 +304,6 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
     const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-    const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-    char path[1024];
-    char basename[1024];
-    char extension[128];
-    strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
-    strcat(path, "/");
-    strcpy(basename, movie_path);
-    strcpy(extension, "");          // extension is currently ignored
-
-    RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
 
     PngParams png_params = {
         0, 0, std::chrono::milliseconds{60}, 100, 0, false,
@@ -392,14 +366,14 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     now.tv_sec++;
     capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
 
-    const char * filename = "./test_capture-000000.png";
-
     RED_CHECK_SIG(
-        get_file_contents(filename), "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87");
-    ::unlink(filename);
+        get_file_contents(record_wd.add_file("test_capture-000000.png")),
+        "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87");
+
+    RED_CHECK_WORKSPACE(tmp_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 }
-
-
 
 RED_AUTO_TEST_CASE(TestPattern)
 {
@@ -945,29 +919,6 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 }
 
 
-class DrawableToFile
-{
-    Transport & trans;
-    const Drawable & drawable;
-
-public:
-    DrawableToFile(Transport & trans, const Drawable & drawable)
-    : trans(trans)
-    , drawable(drawable)
-    {
-    }
-
-    ~DrawableToFile() = default;
-
-    bool logical_frame_ended() const {
-        return this->drawable.logical_frame_ended;
-    }
-
-    void flush() {
-        ::dump_png24(this->trans, this->drawable, true);
-    }
-};
-
 const char expected_stripped_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
            "\x03\x00\x20\x03\x58\x02\x18\x00" // WRM version = 3, width = 800, height=600, bpp=24
@@ -1308,7 +1259,32 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     consumer.sync();
 }
 
-RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
+
+class DrawableToFile
+{
+    Transport & trans;
+    const Drawable & drawable;
+
+public:
+    DrawableToFile(Transport & trans, const Drawable & drawable)
+    : trans(trans)
+    , drawable(drawable)
+    {
+    }
+
+    ~DrawableToFile() = default;
+
+    bool logical_frame_ended() const {
+        return this->drawable.logical_frame_ended;
+    }
+
+    void flush() {
+        ::dump_png24(this->trans, this->drawable, true);
+    }
+};
+
+
+RED_AUTO_TEST_CASE_WD(TestCaptureToWrmReplayToPng, wd)
 {
     // Same as above, show timestamps are applied only when flushing
     timeval now;
@@ -1318,11 +1294,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     Rect screen_rect(0, 0, 800, 600);
     StaticOutStream<65536> stream;
 
-    const char * filename = "./testcap.wrm";
-    size_t len = strlen(filename);
-    char path[1024];
-    memcpy(path, filename, len);
-    path[len] = 0;
+    auto path = wd.add_file("testcap.wrm");
     int fd = ::creat(path, 0777);
     RED_REQUIRE_NE(fd, -1);
 
@@ -1357,19 +1329,16 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.sync();
     RED_CHECK_EQUAL(0, 0);
     trans.disconnect(); // close file before reading filesize
-    RED_CHECK_EQUAL(1588, filesize(filename));
+    TEST_FSIZE(path, 1588);
 
-    char in_path[1024];
-    len = strlen(filename);
-    memcpy(in_path, filename, len);
-    in_path[len] = 0;
-
-    fd = ::open(in_path, O_RDONLY);
+    fd = ::open(path, O_RDONLY);
     RED_REQUIRE_NE(fd, -1);
     InFileTransport in_wrm_trans(unique_fd{fd});
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, ReportError{});
+    OutFilenameSequenceTransport out_png_trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        wd.dirname(), "testcap", ".png", groupid, ReportError{});
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
@@ -1416,14 +1385,12 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     RED_CHECK_EQUAL(false, player.next_order());
     in_wrm_trans.disconnect();
 
-    // clear PNG files
-    size_t sz[6] = {1476, 2786, 2800, 2800, 2814, 2823};
-    for (int i = 0; i < 6 ; i++){
-        const char * filename = out_png_trans.seqgen()->get(i);
-        RED_CHECK_EQUAL(sz[i], ::filesize(filename));
-        ::unlink(filename);
-    }
-   ::unlink("./testcap.wrm");
+    TEST_FSIZE(wd.add_file("testcap-000000.png"), 1476);
+    TEST_FSIZE(wd.add_file("testcap-000001.png"), 2786);
+    TEST_FSIZE(wd.add_file("testcap-000002.png"), 2800);
+    TEST_FSIZE(wd.add_file("testcap-000003.png"), 2800);
+    TEST_FSIZE(wd.add_file("testcap-000004.png"), 2814);
+    TEST_FSIZE(wd.add_file("testcap-000005.png"), 2823);
 }
 
 
@@ -1508,31 +1475,6 @@ RED_AUTO_TEST_CASE(TestSaveCache)
     consumer.save_bmp_caches();
 
     consumer.sync();
-}
-
-RED_AUTO_TEST_CASE(TestReloadSaveCache)
-{
-    GeneratorTransport in_wrm_trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, ReportError{});
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-
-    const char * filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(298, ::filesize(filename));
-    ::unlink(filename);
 }
 
 const char expected_reset_rect_wrm[] =
@@ -1643,30 +1585,6 @@ RED_AUTO_TEST_CASE(TestSaveOrderStates)
     consumer.sync();
 }
 
-RED_AUTO_TEST_CASE(TestReloadOrderStates)
-{
-    GeneratorTransport in_wrm_trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, ReportError{});
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    const char * filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(341, ::filesize(filename));
-    ::unlink(filename);
-}
-
 const char expected_continuation_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
            "\x01\x00\x64\x00\x64\x00\x18\x00" // WRM version 1, width = 20, height=10, bpp=24
@@ -1734,32 +1652,6 @@ const char expected_continuation_wrm[] =
            "\x11\x3f\x0a\x0a\xec\xec\x00\xff" // Green Rect
            ;
 
-RED_AUTO_TEST_CASE(TestContinuationOrderStates)
-{
-    GeneratorTransport in_wrm_trans(expected_continuation_wrm, sizeof(expected_continuation_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, ReportError{});
-    const FilenameGenerator * seq = out_png_trans.seqgen();
-    RED_CHECK(seq);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    const char * filename = seq->get(0);
-    RED_CHECK_EQUAL(341, ::filesize(filename));
-    ::unlink(filename);
-}
-
 RED_AUTO_TEST_CASE(TestImageChunk)
 {
     const char expected_stripped_wrm[] =
@@ -1804,11 +1696,11 @@ RED_AUTO_TEST_CASE(TestImageChunk)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
     BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                        BmpCache::CacheOption(600, 256, false),
-                        BmpCache::CacheOption(300, 1024, false),
-                        BmpCache::CacheOption(262, 4096, false));
-    PointerCache ptr_cache;
+                       BmpCache::CacheOption(600, 256, false),
+                       BmpCache::CacheOption(300, 1024, false),
+                       BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
+    PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -2004,16 +1896,12 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
     read_png24(in_png_trans, gdi::get_mutable_image_view(d));
     const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
+    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     dump_png24(png_trans, d, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 
-
-
-RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
-{
-   const char source_wrm[] =
+const char source_wrm_png[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24 PAD: 2 bytes
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
@@ -2058,114 +1946,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         "\x42\x60\x82"
         ;
 
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    out_png_trans.disconnect();
-    const char * filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
-}
-
-
-RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
-{
-   const char source_wrm[] =
-    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
-               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-
-// Initial black PNG image
-/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
-/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
-/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
-/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
-/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
-/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
-
-
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x14\x00\x00\x00\x0a"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xb1\x00\x00\x00\x32\x49\x44\x41"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x91\xff\x0c\x28\x81\x37\x70"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x49\x45\x4e\x44\xae"
-    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x42\x60\x82"
-        ;
-
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
-
-    OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, ReportError{});
-    DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl());
-
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-
-    const char * filename;
-
-    png_recorder.flush();
-    filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
-
-    second_png_recorder.flush();
-    filename = second_out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
-}
-
-
-RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
-{
-   const char source_wrm[] =
+   const char source_wrm_png_then_other_chunk[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
@@ -2212,27 +1993,54 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     /* 0000 */ "\x00\xD3\xD7\x3B\x00\x00\x00\x00" // 0x000000003bd7d300 = 1004000000
        ;
 
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
+RED_AUTO_TEST_CASE(TestReload)
+{
+    struct Test
+    {
+        char const* name;
+        array_view_const_char data;
+        int file_len;
+        time_t time;
+    };
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
+    for (auto const& test : {
+        Test{"TestReloadSaveCache", cstr_array_view(expected_Red_on_Blue_wrm), 298, 1001},
+        Test{"TestReloadOrderStates", cstr_array_view(expected_reset_rect_wrm), 341, 1001},
+        Test{"TestContinuationOrderStates", cstr_array_view(expected_continuation_wrm), 341, 1001},
+        Test{"testimg", cstr_array_view(source_wrm_png), 107, 1000},
+        Test{"testimg_then_other_chunk", cstr_array_view(source_wrm_png_then_other_chunk), 107, 1004}
+    }) RED_TEST_CONTEXT(test.name)
+    {
+        WorkingDirectory wd(test.name);
+
+        {
+            GeneratorTransport in_wrm_trans(test.data);
+            timeval begin_capture;
+            begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+            timeval end_capture;
+            end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+            FileToGraphic player(
+                in_wrm_trans, begin_capture, end_capture,
+                false, false, to_verbose_flags(0));
+
+            const int groupid = 0;
+            OutFilenameSequenceTransport out_png_trans(
+                FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+                wd.dirname(), test.name, ".png", groupid, ReportError{});
+            RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+            DrawableToFile png_recorder(out_png_trans, drawable.impl());
+
+            player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
+            while (player.next_order()){
+                player.interpret_order();
+            }
+            png_recorder.flush();
+            RED_CHECK_EQUAL(test.time, static_cast<unsigned>(player.record_now.tv_sec));
+        }
+
+        TEST_FSIZE(wd.add_file(str_concat(test.name, "-000000.png")), test.file_len);
+        RED_CHECK_WORKSPACE(wd);
     }
-    png_recorder.flush();
-    RED_CHECK_EQUAL(1004u, static_cast<unsigned>(player.record_now.tv_sec));
-
-    const char * filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
 }
 
 RED_AUTO_TEST_CASE(TestKbdCapture)
@@ -2394,14 +2202,14 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, ReportError{});
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "first", ".png", groupid, ReportError{});
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
 //    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, ReportError{});
+    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "first", ".wrm", groupid, ReportError{});
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -2515,7 +2323,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     set_rows_from_image_chunk(in_png_trans, WrmChunkType(chunk_type), chunk_size, d.width(), {&gdi, 1});
 
     const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
+    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     dump_png24(png_trans, d, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
@@ -2535,7 +2343,7 @@ RED_AUTO_TEST_CASE(TestPatternSearcher)
 
 RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {
-    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), ReportError{});
+    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), ReportError{});
     fnt.send("We write, ", 10);
     fnt.send("and again, ", 11);
     fnt.send("and so on.", 10);
@@ -2892,8 +2700,8 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         ini.set<cfg::video::png_limit>(10); // one snapshot by second
         ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
 
-        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
         CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
+        ini.set<cfg::video::capture_flags>(capture_flags);
 
         ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
