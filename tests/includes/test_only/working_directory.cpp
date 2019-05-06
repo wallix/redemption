@@ -64,6 +64,14 @@ namespace
             else {
                 dirname = "/tmp/";
             }
+            char buf[1024*4];
+            auto dsz = dirname.size();
+            dirname += getcwd(buf, sizeof(buf));
+            for (char& c : array_view_char(dirname).array_from_offset(dsz)) {
+                if (c == '/') {
+                    c = ':';
+                }
+            }
             return dirname;
         }();
         return base;
@@ -94,6 +102,7 @@ namespace
         std::string test_module = master_test_suite().p_name.get();
         return str_concat(
             tempbase(),
+            '@',
             current_test_case().p_name.get(),
             '@',
             name,
@@ -105,6 +114,34 @@ namespace
 
 #define WD_ERROR_S(ostream_expr) RED_ERROR("WorkingDirectory: " ostream_expr)
 #define WD_ERROR(ostream_expr) RED_ERROR("WorkingDirectory: " << ostream_expr)
+}
+
+WorkingFile::WorkingFile(std::string_view name)
+{
+    auto directory = suffix_by_test({});
+
+    recursive_delete_directory(directory.c_str());
+    if (-1 == mkdir(directory.c_str(), 0755) && errno != EEXIST) {
+        WD_ERROR(strerror(errno) << ": " << directory);
+    }
+
+    this->filename_ = std::move(directory);
+    this->filename_ += name;
+}
+
+WorkingFile::~WorkingFile()
+{
+    RED_TEST_FUNC(unlink, (this->filename_.c_str()) == 0);
+}
+
+char const* WorkingFile::c_str() const noexcept
+{
+    return this->filename_.c_str();
+}
+
+std::ostream& operator<<(std::ostream& out, WorkingFile const& wf)
+{
+    return out << wf.filename();
 }
 
 
@@ -171,10 +208,6 @@ std::size_t WorkingDirectory::HashPath::operator()(Path const& path) const
 
 WorkingDirectory::WorkingDirectory(std::string_view name)
 {
-    if (name.empty() || name.find_first_of("/.") != std::string::npos) {
-        WD_ERROR_S("invalid dirname");
-    }
-
     this->directory = suffix_by_test(name);
 
     recursive_delete_directory(this->directory.c_str());

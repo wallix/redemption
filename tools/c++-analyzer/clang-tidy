@@ -58,13 +58,17 @@ ${CLANG_TIDY:=clang-tidy} -checks='*,
 $(find src/ -name '*.cpp' \
     -a -not -path 'src/ftests/*' \
     -a -not -path 'src/keyboard/*' \
-    -a -not -path 'src/openssl_c/*' \
     -a -not -path 'src/proto/*' \
     -a -not -path 'src/system/emscripten/*' \
     -a -not -path 'src/utils/crypto/*' \
     -a -not -path 'src/main/*' \
     -a -not -name app_path.cpp \
     -a -not -name log_as_logemasm.cpp) \
+$(find tests/ -name '*.cpp' \
+    -a -not -path 'src/keyboard/*' \
+    -a -not -path 'src/proto/*' \
+    -a -not -path 'src/system/emscripten/*' \
+    -a -not -path 'src/utils/crypto/*') \
 -- \
 -std=c++17 \
 -I'include' \

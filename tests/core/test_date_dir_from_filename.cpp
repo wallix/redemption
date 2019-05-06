@@ -83,4 +83,16 @@ RED_AUTO_TEST_CASE(TestDateDirFromFilename)
         RED_CHECK_SMEM(date, d.date_path());
         RED_CHECK_SMEM(dir, d.directory());
     }
+    {
+        // bad date format
+        auto s = cstr_array_view("var/recorder/2018-04:01/SESSIONID-0000,rec@127.0.0.1,Tester@PROXY@linux,2018041-104218,jpoelen-mini,5560.log");
+        auto base = cstr_array_view("var/recorder/2018-04:01/");
+        DateDirFromFilename d(s);
+        RED_CHECK(!d.has_date());
+        RED_CHECK_SMEM(s, d.full_path());
+        RED_CHECK_SMEM(base, d.base_path());
+        RED_CHECK_SMEM(base, d.directory());
+        RED_CHECK_SMEM(s.array_from_offset(base.size()), d.filename());
+        RED_CHECK_SMEM(array_view_char{}, d.date_path());
+    }
 }

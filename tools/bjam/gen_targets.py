@@ -670,7 +670,7 @@ for k,t in test_targets_counter.items():
             coverages.append((k,unprefixed))
 
 if coverages:
-    print('if $(ENABLE_COVERAGE) = yes')
+    print('if $(ENABLE_COVERAGE) = "on"')
     print('{')
     for t in coverages:
         print('alias ', t[0]+'.coverage', ' : ', t[1]+'.coverage', ' ;', sep='')

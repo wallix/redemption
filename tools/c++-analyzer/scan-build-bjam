@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ -z "$CCC_CXX" ]; then
+    echo '$CCC_CXX is empty' >&2
+    exit 1
+fi
+
+IFS='-' read compname compversion <<<"${CCC_CXX/*\/}"
+[ "$companame" == 'g++' ] && compname=gcc || compname=clang
+IFS='.' read compmajor compminor <<<"$compversion"
+compversion="$compmajor.${compminor:-0}"
+
+CONF=project-config.jam
+
+echo -e "using $compname : analyze~$compversion : $CXX ;" > $CONF
+${BJAM:-bjam} toolset="clang-analyze~$compversion" -a debug "$@"

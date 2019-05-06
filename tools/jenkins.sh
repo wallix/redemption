@@ -20,9 +20,9 @@ git submodule update --init
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
 
 # BJAM Build Test
-echo -e "using gcc : 7.0 : g++-7 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 6.0 : clang++-6.0 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-valgrind_compiler=gcc-7
-toolset_gcc=toolset=gcc-7
+echo -e "using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 6.0 : clang++-6.0 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
+valgrind_compiler=gcc-8
+toolset_gcc=toolset=gcc-8
 toolset_clang=toolset=clang-6.0
 export FFMPEG_INC_PATH=/usr/local/include/ffmpeg/
 export FFMPEG_LIB_PATH=/usr/local/lib/ffmpeg
@@ -64,10 +64,8 @@ build -q $toolset_gcc cxxflags=-g -j2 ocr_tools
 build -q $toolset_gcc cxxflags=-g $big_mem
 build -q $toolset_gcc cxxflags=-g -j2
 
-# coverage
-build -q $toolset_gcc debug -scoverage=yes covbin=gcov-7
-# other debug target
-build -q $toolset_gcc debug
+# debug with coverage
+build -q $toolset_gcc debug -scoverage=on covbin=gcov-8
 
 #bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
 # multi-thread

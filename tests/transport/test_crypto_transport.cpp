@@ -26,6 +26,7 @@
 #include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/fake_stat.hpp"
+#include "test_only/working_directory.hpp"
 
 #include <snappy.h> // for SNAPPY_VERSION
 
@@ -45,6 +46,20 @@ namespace
             "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
             "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
         ));
+    }
+
+    ssize_t write_file(WorkingFile const& wf, const_bytes_view data)
+    {
+        int fd = open(wf.c_str(), O_CREAT|O_TRUNC|O_WRONLY, S_IRWXU);
+        auto res = write(fd, data.data(), data.size());
+        close(fd);
+        return res;
+    }
+
+    template<class T, std::size_t N>
+    ssize_t write_file(WorkingFile const& wf, T const(&a)[N])
+    {
+        return write_file(wf, {a, N});
     }
 }
 
@@ -185,15 +200,10 @@ RED_AUTO_TEST_CASE(TestEncryption2)
                                   'M', 'F', 'C', 'W',    // EOF Magic
                                   0x04, 0x00, 0x00, 0x00 // Total Length of decrypted data
                                   };
-    RED_CHECK_MEM_AA(make_array_view(result, 68), expected_result);
+    RED_CHECK_MEM_AA(make_array_view(result, offset), expected_result);
 
-    {
-        ::unlink("./tmp.enc");
-        int fd = open("./tmp.enc", O_CREAT|O_TRUNC|O_WRONLY, S_IRWXU);
-        int res = write(fd, &result[0], offset);
-        RED_CHECK_EQUAL(res, 68);
-        close(fd);
-    }
+    WorkingFile wf("tmp.enc");
+    RED_TEST(write_file(wf, expected_result) == 68);
 
     auto expected_hash = cstr_array_view(
         "\x29\x5c\x52\xcd\xf6\x99\x92\xc3"
@@ -203,23 +213,16 @@ RED_AUTO_TEST_CASE(TestEncryption2)
     RED_CHECK_MEM_AA(qhash, expected_hash);
     RED_CHECK_MEM_AA(fhash, expected_hash);
 
-    char clear[8192] = {};
-//    read_encrypted decrypter(cctx, 1, result, offset);
-//    decrypter.open(derivator, sizeof(derivator));
-
-//    size_t res2 = decrypter.read(clear, sizeof(clear));
+    char clear[12] = {};
 
     InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-    decrypter.open("./tmp.enc", { derivator, sizeof(derivator)});
+    decrypter.open(wf.c_str(), { derivator, sizeof(derivator)});
     RED_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, 4));
     RED_CHECK_EQUAL(decrypter.partial_read(clear+4, 1), 0);
     RED_CHECK_EQUAL(decrypter.is_encrypted(), true);
     decrypter.close();
 
-//    RED_CHECK_EQUAL(res2, 4);
     RED_CHECK_MEM_C(make_array_view(clear, 4), "toto");
-
-    RED_CHECK(0 == ::unlink("./tmp.enc"));
 }
 
 RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
@@ -395,18 +398,13 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     }
     RED_CHECK_EQUAL(offset, 8660);
 
-    {
-        ::unlink("./tmp1.enc");
-        int fd = open("./tmp1.enc", O_CREAT|O_TRUNC|O_WRONLY,S_IRWXU);
-        int res = write(fd, &result[0], offset);
-        RED_CHECK_EQUAL(res, 8660);
-        close(fd);
-    }
+    WorkingFile wf("tmp.enc");
+    RED_TEST(write_file(wf, array_view{&result[0], offset}) == 8660);
 
     char clear[sizeof(randomSample)+sizeof(randomSample)] = {};
 
     InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Encrypted, fstat);
-    decrypter.open("./tmp1.enc", { derivator, sizeof(derivator)});
+    decrypter.open(wf.c_str(), {derivator, sizeof(derivator)});
     RED_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, sizeof(clear)));
     RED_CHECK_EQUAL(0, decrypter.partial_read(clear, 1));
     decrypter.close();
@@ -423,7 +421,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     hmac.update({result, offset});
     hmac.final(fhash2);
 
-    InCryptoTransport::HASH fh = decrypter.fhash("./tmp1.enc");
+    InCryptoTransport::HASH fh = decrypter.fhash(wf.c_str());
     RED_CHECK_MEM_AA(fh.hash, fhash);
     RED_CHECK_MEM_AA(fh.hash, fhash2);
 
@@ -461,8 +459,6 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
     RED_CHECK_MEM_AA(fhash, expected_fhash);
     RED_CHECK_MEM_AA(qhash2, expected_qhash);
     RED_CHECK_MEM_AA(fhash2, expected_fhash);
-
-    RED_CHECK(0 == ::unlink("./tmp1.enc"));
 }
 
 RED_AUTO_TEST_CASE(TestEncryptionLargeNoEncryptionChecksum)
@@ -858,16 +854,14 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
-    char tmpname1[128];
-    char tmpname2[128];
-    const char * finalname1 = "./encrypted001.txt";
-    const char * finalname2 = "./encrypted002.txt";
-    const char * hash_finalname1 = "./hash_encrypted001.txt";
-    const char * hash_finalname2 = "./hash_encrypted002.txt";
-    ::unlink(finalname1);
-    ::unlink(hash_finalname1);
-    ::unlink(finalname2);
-    ::unlink(hash_finalname2);
+
+    WorkingDirectory wd;
+
+    auto finalname1 = wd.add_file("encrypted001.txt");
+    auto finalname2 = wd.add_file("encrypted002.txt");
+    auto hash_finalname1 = wd.add_file("hash_encrypted001.txt");
+    auto hash_finalname2 = wd.add_file("hash_encrypted002.txt");
+
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
     {
@@ -875,22 +869,16 @@ RED_AUTO_TEST_CASE(TestOutCryptoTransportMultipleFiles)
 
         OutCryptoTransport ct(cctx, rnd, fstat);
 
-        ct.open(finalname1, hash_finalname1, 0);
-        ::strcpy(tmpname1, ct.get_tmp());
+        ct.open(finalname1.c_str(), hash_finalname1.c_str(), 0);
         ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
 
-        ct.open(finalname2, hash_finalname2, 0);
-        ::strcpy(tmpname2, ct.get_tmp());
+        ct.open(finalname2.c_str(), hash_finalname2.c_str(), 0);
         ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
     }
-    RED_CHECK(::unlink(tmpname1) == -1); // already removed while renaming
-    RED_CHECK(::unlink(finalname1) == 0); // finalname exists
-    RED_CHECK(::unlink(hash_finalname1) == 0); // finalname exists
-    RED_CHECK(::unlink(tmpname2) == -1); // already removed while renaming
-    RED_CHECK(::unlink(finalname2) == 0); // finalname exists
-    RED_CHECK(::unlink(hash_finalname2) == 0); // finalname exists
+
+    RED_CHECK_WORKSPACE(wd);
 }
 
 
@@ -906,20 +894,21 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    const char * finalname = "./clear.txt";
-    const char * hash_finalname = "./hash_clear.txt";
-    ::unlink(finalname);
-    ::unlink(hash_finalname);
-    char tmpname[256];
+    WorkingDirectory wd;
+
+    auto finalname = wd.add_file("clear.txt");
+    auto hash_finalname = wd.add_file("hash_clear.txt");
+
     {
         cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
-        ct.open(finalname, hash_finalname, 0);
-        ::strcpy(tmpname, ct.get_tmp());
+        ct.open(finalname.c_str(), hash_finalname.c_str(), 0);
         ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
     }
+
+    RED_CHECK_WORKSPACE(wd);
 
     auto expected_hash = cstr_array_view(
         "\xc5\x28\xb4\x74\x84\x3d\x8b\x14\xcf\x5b\xf4\x3a\x9c\x04\x9a\xf3"
@@ -928,13 +917,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
     RED_CHECK_MEM_AA(qhash, expected_hash);
     RED_CHECK_MEM_AA(fhash, expected_hash);
 
-    RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-
     {
         char buffer[40];
         Fstat fstat;
         InCryptoTransport ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(finalname);
+        ct.open(finalname.c_str());
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
         RED_CHECK_EQUAL(false, ct.is_eof());
@@ -945,7 +932,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
         // close followed by open
-        ct.open(finalname);
+        ct.open(finalname.c_str());
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
         RED_CHECK_EQUAL(false, ct.is_eof());
@@ -956,8 +943,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
 
-        auto qh = ct.qhash(finalname);
-        auto fh = ct.qhash(finalname);
+        auto qh = ct.qhash(finalname.c_str());
+        auto fh = ct.qhash(finalname.c_str());
 
         RED_CHECK_MEM_AA(qh.hash, expected_hash);
         RED_CHECK_MEM_AA(fh.hash, expected_hash);
@@ -969,8 +956,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
             " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b\n");
     }
 
-    RED_CHECK(::unlink(finalname) == 0);
-    RED_CHECK(::unlink(hash_finalname) == 0);
+    RED_CHECK_WORKSPACE(wd);
 }
 
 
@@ -984,18 +970,20 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    const char * finalname = "encrypted.txt";
-    const char * hash_finalname = "hash_encrypted.txt";
-    char tmpname[256];
+    WorkingDirectory wd;
+
+    auto finalname = wd.add_file("encrypted.txt");
+    auto hash_finalname = wd.add_file("hash_encrypted.txt");
     {
         cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
-        ct.open(finalname, hash_finalname, 0);
-        ::strcpy(tmpname, ct.get_tmp());
+        ct.open(finalname.c_str(), hash_finalname.c_str(), 0);
         ct.send(make_array_view(randomSample));
         ct.close(qhash, fhash);
     }
+
+    RED_CHECK_WORKSPACE(wd);
 
     auto expected_qhash = cstr_array_view(
         "\x04\x52\x16\x50\xdb\x48\xe6\x70\x36\x3c\x68\xa9\xcd\xdb\xeb\x60"
@@ -1009,13 +997,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
     RED_CHECK_MEM_AA(qhash, expected_qhash);
     RED_CHECK_MEM_AA(fhash, expected_fhash);
 
-    RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-
     {
         Fstat fstat;
         char buffer[sizeof(randomSample)];
         InCryptoTransport ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(finalname);
+        ct.open(finalname.c_str());
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, sizeof(buffer)-10));
@@ -1025,11 +1011,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
-                         make_array_view(make_array_view(randomSample)));
+        RED_CHECK_MEM_AA(buffer, randomSample);
 
-        auto qh = ct.qhash(finalname);
-        auto fh = ct.fhash(finalname);
+        auto qh = ct.qhash(finalname.c_str());
+        auto fh = ct.fhash(finalname.c_str());
 
         RED_CHECK_MEM_AA(qh.hash, expected_qhash);
         RED_CHECK_MEM_AA(fh.hash, expected_fhash);
@@ -1038,7 +1023,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         Fstat fstat;
         char hash_buf[512];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
+        ct.open(hash_finalname.c_str(), cstr_array_view("encrypted.txt"));
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
@@ -1047,8 +1032,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
             " 04521650db48e670363c68a9cddbeb60f92583bc0d2e093ff2c9375da69d7af0"
             " a87c5179e2cc2ce3516440c0b0bda899cc46ac423f220f6450bbbb7c45b81cc4\n");
     }
-    RED_CHECK(::unlink(finalname) == 0); // finalname exists
-    RED_CHECK(::unlink(hash_finalname) == 0); // hash_finalname exists
+
+    RED_CHECK_WORKSPACE(wd);
 }
 
 RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
@@ -1061,20 +1046,22 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    const char * finalname = "encrypted.txt";
-    const char * hash_finalname = "hash_encrypted.txt";
-    char tmpname[256];
+    WorkingDirectory wd;
+
+    auto finalname = wd.add_file("encrypted.txt");
+    auto hash_finalname = wd.add_file("hash_encrypted.txt");
     {
         cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
-        ct.open(finalname, hash_finalname, 0);
-        ::strcpy(tmpname, ct.get_tmp());
+        ct.open(finalname.c_str(), hash_finalname.c_str(), 0);
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
         ct.close(qhash, fhash);
     }
+
+    RED_CHECK_WORKSPACE(wd);
 
     auto expected_hash = cstr_array_view(
         "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce"
@@ -1083,13 +1070,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
     RED_CHECK_MEM_AA(qhash, expected_hash);
     RED_CHECK_MEM_AA(fhash, expected_hash);
 
-    RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-
     {
         Fstat fstat;
         char buffer[40];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(finalname);
+        ct.open(finalname.c_str());
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
@@ -1100,16 +1085,17 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         ct.close();
         RED_CHECK_MEM_AC(make_array_view(buffer, 31), "We write, and again, and so on.");
 
-        auto ct_qhash = ct.qhash(finalname);
+        auto ct_qhash = ct.qhash(finalname.c_str());
+        auto ct_fhash = ct.fhash(finalname.c_str());
+
         RED_CHECK_MEM_AA(ct_qhash.hash, qhash);
-        auto ct_fhash = ct.fhash(finalname);
         RED_CHECK_MEM_AA(ct_fhash.hash, fhash);
     }
     {
         Fstat fstat;
         char hash_buf[512];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
+        ct.open(hash_finalname.c_str(), cstr_array_view("encrypted.txt"));
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
         RED_CHECK_EQ(hash_buf,
@@ -1118,8 +1104,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
             " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5\n");
     }
 
-    RED_CHECK(::unlink(finalname) == 0); // finalname exists
-    RED_CHECK(::unlink(hash_finalname) == 0); // hash_finalname exists
+    RED_CHECK_WORKSPACE(wd);
 }
 
 static char clearSample[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas posuere, libero nec auctor auctor, leo sapien consequat nulla, non condimentum diam mauris eget ante. Nam in commodo elit, vel pulvinar risus. Sed commodo nisl aliquet nisl varius, non mollis ex sodales. Duis eu pellentesque odio, ac tincidunt libero. Aenean quam risus, lacinia non interdum ac, interdum ut neque. Morbi eget justo posuere, commodo erat et, elementum nisl. Nunc in tincidunt libero. Sed gravida purus in dolor iaculis dictum. Vivamus vel dolor eu purus scelerisque convallis lacinia vitae lacus. Nulla facilisi. Aliquam urna leo, facilisis id ipsum ac, rhoncus vulputate nibh. Nulla vitae aliquet lectus, ac finibus nulla. Suspendisse ut risus porttitor, rhoncus massa id, feugiat felis.\n\n"
@@ -1142,28 +1127,26 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    const char * finalname = "./clear.txt";
-    const char * hash_finalname = "./hash_clear.txt";
-    char tmpname[256];
+    WorkingDirectory wd;
+
+    auto finalname = wd.add_file("clear.txt");
+    auto hash_finalname = wd.add_file("hash_clear.txt");
     {
         cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
-        ct.open(finalname, hash_finalname, 0);
-        ::strcpy(tmpname, ct.get_tmp());
+        ct.open(finalname.c_str(), hash_finalname.c_str(), 0);
         ct.send(clearSample, sizeof(clearSample));
         ct.close(qhash, fhash);
     }
 
-
-
-    RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
+    RED_CHECK_WORKSPACE(wd);
 
     {
         Fstat fstat;
         char buffer[sizeof(clearSample)];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(finalname);
+        ct.open(finalname.c_str());
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, sizeof(buffer)-10));
@@ -1173,8 +1156,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
         RED_CHECK_EQUAL(true, ct.is_eof());
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
-                         make_array_view(clearSample, sizeof(clearSample)));
+        RED_CHECK_MEM_AA(buffer, clearSample);
 
         auto expected_qhash = cstr_array_view(
             "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04"
@@ -1187,8 +1169,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
             );
         RED_CHECK_MEM_AA(qhash, expected_qhash);
         RED_CHECK_MEM_AA(fhash, expected_fhash);
-        RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
-        RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
+        RED_CHECK_MEM_AA(ct.qhash(finalname.c_str()).hash, expected_qhash);
+        RED_CHECK_MEM_AA(ct.fhash(finalname.c_str()).hash, expected_fhash);
 
         auto hash_contents = get_file_contents(hash_finalname);
         RED_CHECK_EQ(hash_contents,
@@ -1196,8 +1178,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n");
     }
-    RED_CHECK(::unlink(finalname) == 0); // finalname exists
-    RED_CHECK(::unlink(hash_finalname) == 0); // hash_finalname exists
+
+    RED_CHECK_WORKSPACE(wd);
 }
 
 RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
@@ -1210,19 +1192,21 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    const char * finalname = "./clear.txt";
-    const char * hash_finalname = "./hash_clear.txt";
+    WorkingDirectory wd;
 
-    char tmpname[256];
+    auto finalname = wd.add_file("clear.txt");
+    auto hash_finalname = wd.add_file("hash_clear.txt");
+
     {
         cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
-        ct.open(finalname, hash_finalname, 0);
-        ::strcpy(tmpname, ct.get_tmp());
+        ct.open(finalname.c_str(), hash_finalname.c_str(), 0);
         ct.send(clearSample, sizeof(clearSample));
         ct.close(qhash, fhash);
     }
+
+    RED_CHECK_WORKSPACE(wd);
 
     auto expected_qhash = cstr_array_view(
         "\xcd\xbb\xf7\xcc\x04\x84\x8d\x87\x29\xaf\x68\xcb\x69\x6f\xb1\x04\x08\x2d\xc6\xf0\xc0\xc0\x99\xa0\xd9\x78\x32\x3b\x1f\x20\x3f\x5b"
@@ -1234,13 +1218,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
     RED_CHECK_MEM_AA(qhash, expected_qhash);
     RED_CHECK_MEM_AA(fhash, expected_fhash);
 
-    RED_CHECK(::unlink(tmpname) == -1); // already removed while renaming
-
     {
         Fstat fstat;
         char buffer[sizeof(clearSample)];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(finalname);
+        ct.open(finalname.c_str());
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(20, ct.partial_read(buffer, 20));
@@ -1250,11 +1232,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
 
 
         ct.close();
-        RED_CHECK_MEM_AA(make_array_view(buffer, sizeof(buffer)),
-                         make_array_view(clearSample, sizeof(clearSample)));
+        RED_CHECK_MEM_AA(buffer, clearSample);
 
-        auto qh = ct.qhash(finalname);
-        auto fh = ct.fhash(finalname);
+        auto qh = ct.qhash(finalname.c_str());
+        auto fh = ct.fhash(finalname.c_str());
 
         RED_CHECK_MEM_AA(qh.hash, expected_qhash);
         RED_CHECK_MEM_AA(fh.hash, expected_fhash);
@@ -1265,8 +1246,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n");
     }
-    RED_CHECK(::unlink(finalname) == 0); // finalname exists
-    RED_CHECK(::unlink(hash_finalname) == 0); // hash_finalname exists
+
+    RED_CHECK_WORKSPACE(wd);
 }
 
 RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
@@ -1276,11 +1257,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     CryptoContext cctx;
     init_keys(cctx);
 
+    WorkingDirectory wd;
+
     const char * original_filename = FIXTURES_PATH "/dump_TLSw2008.hpp";
-    const char * encrypted_file = "/tmp/encrypted_file.enc";
-    const char * hash_encrypted_file = "/tmp/hash_encrypted_file.enc";
-    ::unlink(encrypted_file);
-    ::unlink(hash_encrypted_file);
+    auto encrypted_file = wd.add_file("encrypted_file.enc");
+    auto hash_encrypted_file = wd.add_file("hash_encrypted_file.enc");
 
     constexpr std::size_t original_filesize = 4166665;
     auto original_contents = get_file_contents(original_filename);
@@ -1290,7 +1271,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         cctx.set_trace_type(TraceType::localfile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
-        ct.open(encrypted_file, hash_encrypted_file, 0);
+        ct.open(encrypted_file.c_str(), hash_encrypted_file.c_str(), 0);
         ct.send(original_contents.data(), original_contents.size());
     }
 
@@ -1298,7 +1279,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     {
         Fstat fstat;
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(encrypted_file);
+        ct.open(encrypted_file.c_str());
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
@@ -1309,7 +1290,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         Fstat fstat;
         char hash_buf[512];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(hash_encrypted_file, cstr_array_view("encrypted_file.enc"));
+        ct.open(hash_encrypted_file.c_str(), cstr_array_view("encrypted_file.enc"));
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
@@ -1317,8 +1298,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         RED_CHECK_EQ(hash_buf, "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0\n");
     }
     RED_CHECK_MEM_AA(buffer, original_contents);
-    RED_CHECK(::unlink(encrypted_file) == 0);
-    RED_CHECK(::unlink(hash_encrypted_file) == 0);
+
+    RED_CHECK_WORKSPACE(wd);
 }
 
 RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
@@ -1328,9 +1309,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     CryptoContext cctx;
     init_keys(cctx);
 
+    WorkingDirectory wd;
+
     const char * original_filename = FIXTURES_PATH "/dump_TLSw2008.hpp";
-    const char * encrypted_file = "/tmp/encrypted_file.enc";
-    const char * hash_encrypted_file = "/tmp/hash_encrypted_file.enc";
+    auto encrypted_file = wd.add_file("encrypted_file.enc");
+    auto hash_encrypted_file = wd.add_file("hash_encrypted_file.enc");
 
     constexpr std::size_t original_filesize = 4166665;
     auto original_contents = get_file_contents(original_filename);
@@ -1339,11 +1322,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH] = {};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH] = {};
     {
-
         cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
-        ct.open(encrypted_file, hash_encrypted_file, 0);
+        ct.open(encrypted_file.c_str(), hash_encrypted_file.c_str(), 0);
         ct.send(original_contents.data(), original_contents.size());
         ct.close(qhash, fhash);
     }
@@ -1352,14 +1334,14 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     {
         Fstat fstat;
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-        ct.open(encrypted_file);
+        ct.open(encrypted_file.c_str());
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         RED_CHECK_EQUAL(false, ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
         ct.close();
-        InCryptoTransport::HASH qhash2 = ct.qhash(encrypted_file);
-        InCryptoTransport::HASH fhash2 = ct.fhash(encrypted_file);
+        InCryptoTransport::HASH qhash2 = ct.qhash(encrypted_file.c_str());
+        InCryptoTransport::HASH fhash2 = ct.fhash(encrypted_file.c_str());
 
         RED_CHECK_MEM_AA(qhash2.hash, qhash);
         RED_CHECK_MEM_AA(qhash, qhash2.hash);
@@ -1367,7 +1349,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
         RED_CHECK_MEM_AA(fhash, fhash2.hash);
 
         char hash_buf[512];
-        ct.open(hash_encrypted_file, cstr_array_view("encrypted_file.enc"));
+        ct.open(hash_encrypted_file.c_str(), cstr_array_view("encrypted_file.enc"));
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
@@ -1381,13 +1363,12 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
         #else
             RED_CHECK_EQ(hash_buf,
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
-                " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6" 
+                " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
                 " f5b6a73d68ac7405d988bbb60a88afd59b72a47bab2e03068573e7510451e801"
                 "\n");
         #endif
     }
 
-    RED_CHECK(0 == memcmp(buffer, original_contents.data(), original_filesize));
-    RED_CHECK(::unlink(encrypted_file) == 0);
-    RED_CHECK(::unlink(hash_encrypted_file) == 0);
+    RED_CHECK_MEM(make_array_view(buffer, original_filesize), original_contents);
+    RED_CHECK_WORKSPACE(wd);
 }

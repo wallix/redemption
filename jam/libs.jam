@@ -72,3 +72,26 @@ else
     BOOST_STACKTRACE_CXXFLAGS = <define>REDEMPTION_NO_STACKTRACE ;
 }
 ## }
+
+
+## coverage {
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
+
+constant ENABLE_COVERAGE : [ setvar coverage : off ] ;
+
+if $(ENABLE_COVERAGE) = "on"
+{
+    lib gcov : : <toolset>gcc:<name>gcov : ;
+
+    constant GCOV_NO_BUILD : <covflag>nocover ;
+
+    constant GCOV :
+        <toolset>gcc:<cxxflags>--profile-arcs
+        <toolset>gcc:<cxxflags>--test-coverage
+        <toolset>gcc:<cxxflags>--coverage
+        <toolset>gcc:<cxxflags>-pg
+        <toolset>gcc:<linkflags>-pg
+        <toolset>gcc:<library>gcov
+    ;
+}
+## }

@@ -25,8 +25,23 @@ Author(s): Jonathan Poelen
 #include <string_view>
 #include <unordered_set>
 
+#include <iosfwd>
+
 
 #define RED_CHECK_WORKSPACE(wd) RED_CHECK_EQUAL(wd.unmached_files(), "")
+
+struct [[nodiscard]] WorkingFile
+{
+    WorkingFile(std::string_view name);
+    ~WorkingFile();
+    char const* c_str() const noexcept;
+    std::string const& filename() const noexcept { return this->filename_; }
+
+private:
+    std::string filename_;
+};
+
+std::ostream& operator<<(std::ostream& out, WorkingFile const& wf);
 
 struct [[nodiscard]] WorkingDirectory
 {
@@ -54,9 +69,9 @@ struct [[nodiscard]] WorkingDirectory
         SubDirectory(WorkingDirectory& wd, std::string fullpath, std::size_t dirname_pos);
     };
 
-    WorkingDirectory(WorkingDirectory const&) = delete;
+    WorkingDirectory(std::string_view name = {});
 
-    WorkingDirectory(std::string_view name);
+    WorkingDirectory(WorkingDirectory const&) = delete;
 
     SubDirectory create_subdirectory(std::string_view dirname);
 

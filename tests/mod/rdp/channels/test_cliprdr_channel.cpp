@@ -37,7 +37,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    SessionReactor session_reactor;
     NullReportMessage report_message;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
@@ -54,7 +53,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, false,
                 base_params,
                 clipboard_virtual_channel_params,
                 nullptr);
@@ -66,7 +65,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    SessionReactor session_reactor;
     NullReportMessage report_message;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
@@ -83,7 +81,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, false,
         base_params,
         clipboard_virtual_channel_params,
         nullptr);
@@ -95,8 +93,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-
-    SessionReactor session_reactor;
 
     NullReportMessage report_message;
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
@@ -113,7 +109,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, false,
         base_params,
         clipboard_virtual_channel_params,
         nullptr
@@ -126,8 +122,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-
-    SessionReactor session_reactor;
 
     NullReportMessage report_message;
 
@@ -145,7 +139,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, false,
         base_params,
         clipboard_virtual_channel_params,
         nullptr
@@ -163,7 +157,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    SessionReactor session_reactor;
     NullReportMessage report_message;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
@@ -177,7 +170,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, false,
         base_params,
         clipboard_virtual_channel_params,
         nullptr
@@ -217,7 +210,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    SessionReactor session_reactor;
     NullReportMessage report_message;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
@@ -231,7 +223,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        &to_client_sender, &to_server_sender, front, false,
         base_params,
         clipboard_virtual_channel_params,
         nullptr
@@ -401,12 +393,6 @@ public:
 //     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
 //     FakeFront front(screen_info);
 //
-//     SessionReactor session_reactor;
-//     timeval time_test;
-//     time_test.tv_sec = 12345;
-//     time_test.tv_usec = 54321;
-//     session_reactor.set_current_time(time_test);
-//
 //     NullReportMessage report_message;
 //
 //     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
@@ -420,7 +406,7 @@ public:
 //     NullSender to_server_sender;
 //
 //     ClipboardVirtualChannel clipboard_virtual_channel(
-//         &to_client_sender, &to_server_sender, front, true, wd.dirname(), session_reactor,
+//         &to_client_sender, &to_server_sender, front, true, wd.dirname(),
 //         base_params,
 //         clipboard_virtual_channel_params);
 //
@@ -899,12 +885,6 @@ public:
 //     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
 //     FakeFront front(screen_info);
 //
-//     SessionReactor session_reactor;
-//     timeval time_test;
-//     time_test.tv_sec = 12345;
-//     time_test.tv_usec = 54321;
-//     session_reactor.set_current_time(time_test);
-//
 //     NullReportMessage report_message;
 //
 //     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
@@ -918,7 +898,7 @@ public:
 //     TestResponseSender to_server_sender;
 //
 //     ClipboardVirtualChannel clipboard_virtual_channel(
-//         &to_client_sender, &to_server_sender, front, true, wd.dirname(), session_reactor,
+//         &to_client_sender, &to_server_sender, front, true, wd.dirname(),
 //         base_params,
 //         clipboard_virtual_channel_params);
 //

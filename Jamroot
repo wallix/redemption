@@ -44,7 +44,6 @@ include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 include $(JAM_INCLUDE_PATH)/sanitizer.jam ;
-include $(JAM_INCLUDE_PATH)/coverage.jam ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 project redemption
@@ -53,6 +52,7 @@ project redemption
     $(REDEMPTION_CXXFLAGS)
     $(REDEMPTION_FFMPEG_FLAGS)
     $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
+    $(GCOV)
 
     <cxxflags>-fno-rtti
     <toolset>gcc:<linkflags>-fuse-ld=gold
@@ -60,13 +60,7 @@ project redemption
     <toolset>gcc:<cxxflags>-pipe
 
     # <cxx-lto-default>on
-
-    $(GCOV)
-    # <lto>on
-    # <suggest>on
-    # <stack-protector>on
-    # <relro>on
-    # <security>on # strong, all
+    # <cxx-stack-protector-default>on # strong, all
 
     # <cxxflags>-fpie
 
@@ -81,8 +75,7 @@ include $(JAM_INCLUDE_PATH)/redemption-dependencies.jam ;
 
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
-make test_libredrec : libredrec : @test_libredrec
-: <variant>san:<build>no $(GCOV_NO_BUILD) ;
+make test_libredrec : libredrec : @test_libredrec : <variant>san:<build>no ;
 
 actions test_libredrec
 {
