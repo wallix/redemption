@@ -116,32 +116,36 @@ namespace
 #define WD_ERROR(ostream_expr) RED_ERROR("WorkingDirectory: " << ostream_expr)
 }
 
-WorkingFile::WorkingFile(std::string_view name)
-{
-    auto directory = suffix_by_test({});
+WorkingFileBase::WorkingFileBase(std::string name) noexcept
+: filename_(std::move(name))
+{}
 
-    recursive_delete_directory(directory.c_str());
-    if (-1 == mkdir(directory.c_str(), 0755) && errno != EEXIST) {
-        WD_ERROR(strerror(errno) << ": " << directory);
+char const* WorkingFileBase::c_str() const noexcept
+{
+    return this->filename_.c_str();
+}
+
+std::ostream& operator<<(std::ostream& out, WorkingFileBase const& wf)
+{
+    return out << wf.filename();
+}
+
+WorkingFile::WorkingFile(std::string_view name)
+: WorkingFileBase(suffix_by_test({}))
+{
+    recursive_delete_directory(this->c_str());
+    if (-1 == mkdir(this->c_str(), 0755) && errno != EEXIST) {
+        WD_ERROR(strerror(errno) << ": " << this->filename());
     }
 
-    this->filename_ = std::move(directory);
     this->filename_ += name;
 }
 
 WorkingFile::~WorkingFile()
 {
-    RED_TEST_FUNC(unlink, (this->filename_.c_str()) == 0);
-}
-
-char const* WorkingFile::c_str() const noexcept
-{
-    return this->filename_.c_str();
-}
-
-std::ostream& operator<<(std::ostream& out, WorkingFile const& wf)
-{
-    return out << wf.filename();
+    if (!this->is_removed) {
+        RED_TEST_FUNC(unlink, (this->filename_.c_str()) == 0);
+    }
 }
 
 
@@ -152,9 +156,9 @@ WorkingDirectory::SubDirectory::SubDirectory(
 , dirname_pos(dirname_pos)
 {}
 
-std::string WorkingDirectory::SubDirectory::add_file(std::string_view file)
+WorkingFileBase WorkingDirectory::SubDirectory::add_file(std::string_view file)
 {
-    return this->wd_.add_file(str_concat(this->dirname(), file));
+    return WorkingFileBase(this->wd_.add_file(str_concat(this->dirname(), file)));
 }
 
 WorkingDirectory::SubDirectory& WorkingDirectory::SubDirectory::add_files(
@@ -257,9 +261,9 @@ void WorkingDirectory::remove_file_(std::string file)
     }
 }
 
-std::string WorkingDirectory::add_file(std::string file)
+WorkingFileBase WorkingDirectory::add_file(std::string file)
 {
-    return this->path_of(this->add_file_(std::move(file)));
+    return WorkingFileBase(this->path_of(this->add_file_(std::move(file))));
 }
 
 WorkingDirectory& WorkingDirectory::add_files(std::initializer_list<std::string_view> files)

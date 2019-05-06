@@ -30,24 +30,54 @@ Author(s): Jonathan Poelen
 
 #define RED_CHECK_WORKSPACE(wd) RED_CHECK_EQUAL(wd.unmached_files(), "")
 
-struct [[nodiscard]] WorkingFile
+#define RED_AUTO_TEST_CASE_WD(name, wd)            \
+    struct WD_TU_ ## name {                        \
+        static void test(WorkingDirectory& wd); }; \
+    RED_AUTO_TEST_CASE(name) {                     \
+        WorkingDirectory wd;                       \
+        WD_TU_ ## name ::test(wd);                 \
+        RED_CHECK_WORKSPACE(wd);                   \
+    };                                             \
+    void WD_TU_ ## name ::test(WorkingDirectory& wd)
+
+#define RED_AUTO_TEST_CASE_WF(name, wf)       \
+    struct WF_TU_ ## name {                   \
+        static void test(WorkingFile& wf); }; \
+    RED_AUTO_TEST_CASE(name) {                \
+        WorkingFile wf(#name);                \
+        WF_TU_ ## name ::test(wf);            \
+    };                                        \
+    void WF_TU_ ## name ::test(WorkingFile& wf)
+
+struct [[nodiscard]] WorkingFileBase
 {
-    WorkingFile(std::string_view name);
-    ~WorkingFile();
+    WorkingFileBase(std::string name) noexcept;
     char const* c_str() const noexcept;
     std::string const& filename() const noexcept { return this->filename_; }
+    operator std::string const& () const noexcept { return this->filename_; }
+    operator char const* () const noexcept { return this->c_str(); }
 
-private:
+protected:
     std::string filename_;
 };
 
-std::ostream& operator<<(std::ostream& out, WorkingFile const& wf);
+std::ostream& operator<<(std::ostream& out, WorkingFileBase const& wf);
+
+struct [[nodiscard]] WorkingFile : WorkingFileBase
+{
+    WorkingFile(std::string_view name);
+    ~WorkingFile();
+    void set_removed(bool x = true) noexcept { this->is_removed = x; }
+
+private:
+    bool is_removed = false;
+};
 
 struct [[nodiscard]] WorkingDirectory
 {
     struct SubDirectory
     {
-        [[nodiscard]] std::string add_file(std::string_view file);
+        [[nodiscard]] WorkingFileBase add_file(std::string_view file);
         [[nodiscard]] SubDirectory& add_files(std::initializer_list<std::string_view> files);
         [[nodiscard]] SubDirectory& remove_files(std::initializer_list<std::string_view> files);
 
@@ -79,7 +109,7 @@ struct [[nodiscard]] WorkingDirectory
      * filename with '/' at back is a directory
      */
     /// @{
-    [[nodiscard]] std::string add_file(std::string file);
+    [[nodiscard]] WorkingFileBase add_file(std::string file);
     [[nodiscard]] WorkingDirectory& add_files(std::initializer_list<std::string_view> files);
     void remove_file(std::string file);
     [[nodiscard]] WorkingDirectory& remove_files(std::initializer_list<std::string_view> files);

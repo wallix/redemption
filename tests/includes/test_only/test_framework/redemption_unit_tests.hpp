@@ -301,7 +301,10 @@ namespace redemption_unit_test__
     };
 } // namespace redemption_unit_test__
 
-::std::ostream& operator<<(::std::ostream& ostr, redemption_unit_test__::Enum const& e);
+
+std::ostream& operator<<(std::ostream& out, const_bytes_view const& av);
+
+std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e);
 
 #endif
 
