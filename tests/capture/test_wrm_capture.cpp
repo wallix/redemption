@@ -280,7 +280,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     TEST_FSIZE(hash_wd.add_file("capture-000000.wrm"), 170);
     TEST_FSIZE(hash_wd.add_file("capture-000001.wrm"), 170);
     TEST_FSIZE(hash_wd.add_file("capture-000002.wrm"), 170);
-    TEST_FSIZE(hash_wd.add_file("capture.mwrm"), 21 + record_wd.dirname().size());
+    TEST_FSIZE(hash_wd.add_file("capture.mwrm"), 164);
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);

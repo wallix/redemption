@@ -486,7 +486,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
     write_file(test_file, "hello\nworld"_av);
 
     {
-        unique_fd fd_read = unique_fd(test_file.filename(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+        unique_fd fd_read = unique_fd(test_file.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
         std::string line;
 
