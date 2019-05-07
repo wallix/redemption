@@ -47,110 +47,70 @@ namespace
         [](std::string const& filename){ return filesize(filename); });
 
     int int_(int n) { return n; }
+    redemption_unit_test__::int_variation int_(redemption_unit_test__::int_variation n) { return n; }
 }
 
 #define TEST_FSIZE(filename, len) RED_TEST(fsize(filename) == int_(len));
 
-
-const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
-
-
-RED_AUTO_TEST_CASE(TestSplittedCapture)
+namespace
 {
-    WorkingDirectory tmp_wd("tmp");
-    WorkingDirectory hash_wd("hash");
-    WorkingDirectory record_wd("record");
-
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    template<class F>
+    void test_capture_context(
+        char const* basename, uint16_t cx, uint16_t cy,
+        WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
+        F f)
     {
         // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
-
-        Rect scr(0, 0, 800, 600);
-
-        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-        ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-        ini.set<cfg::video::capture_flags>(capture_flags);
-
-        ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-        char const* basename = "test_capture";
-
-        ini.set<cfg::video::record_tmp_path>(record_wd.dirname().string());
-        ini.set<cfg::video::record_path>(tmp_wd.dirname().string());
-        ini.set<cfg::video::hash_path>(hash_wd.dirname().string());
-        ini.set<cfg::globals::movie_path>(basename);
+        timeval now{1000, 0};
 
         LCGRandom rnd(0);
         FakeFstat fstat;
         CryptoContext cctx;
+        cctx.set_trace_type(TraceType::localfile);
 
-        // TODO remove this after unifying capture interface
-        bool full_video = false;
-
-        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-            std::chrono::seconds::zero(), ini);
-        video_params.no_timestamp = false;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        const char * record_tmp_path = record_wd.dirname();
         const char * record_path = record_tmp_path;
+        const char * hash_path = hash_wd.dirname();
+        const int groupid = 0;
 
-        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png);
-        bool capture_pattern_checker = false;
+        const bool capture_wrm = true;
+        const bool capture_png = true;
+        const bool capture_pattern_checker = false;
 
-        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_video = bool(capture_flags & CaptureFlags::video);
-        bool capture_video_full = full_video;
-        bool capture_meta = capture_ocr;
-        bool capture_kbd = false;
+        const bool capture_ocr = false;
+        const bool capture_video = false;
+        const bool capture_video_full = false;
+        const bool capture_meta = false;
+        const bool capture_kbd = false;
 
-        OcrParams ocr_params = {
-            ini.get<cfg::ocr::version>(),
-            ocr::locale::LocaleId(
-                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-            ini.get<cfg::ocr::on_title_bar_only>(),
-            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-            ini.get<cfg::ocr::interval>(),
-            ini.get<cfg::debug::ocr>()
-        };
 
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-
-        PngParams png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
-        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
-        kbd_log_params.session_log_enabled = false;
-
-        PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-        SequencedVideoParams sequenced_video_params;
+        MetaParams meta_params;
+        VideoParams video_params;
+        KbdLogParams kbd_log_params;
+        PatternParams pattern_params;
         FullVideoParams full_video_params;
+        SequencedVideoParams sequenced_video_params;
+        OcrParams const ocr_params {
+            OcrVersion::v1, ocr::locale::LocaleId::latin,
+            false, 0, std::chrono::seconds::zero(), 0};
 
-        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+        PngParams const png_params = {
+            0, 0, std::chrono::milliseconds{60}, 100, 0, false, false, true};
 
-        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
+        DrawableParams const drawable_params{cx, cy, nullptr};
+
+        WrmParams const wrm_params{
+            BitsPerPixel{24},
+            false,
+            cctx,
+            rnd,
+            fstat,
+            hash_path,
+            std::chrono::seconds{1},
+            std::chrono::seconds{3},
+            WrmCompressionAlgorithm::no_compression,
+            0
+        };
 
         CaptureParams capture_params{
             now,
@@ -164,20 +124,36 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         };
 
         Capture capture(
-                          capture_params
-                        , drawable_params
-                        , capture_wrm, wrm_params
-                        , capture_png, png_params
-                        , capture_pattern_checker, pattern_params
-                        , capture_ocr, ocr_params
-                        , capture_video, sequenced_video_params
-                        , capture_video_full, full_video_params
-                        , capture_meta, meta_params
-                        , capture_kbd, kbd_log_params
-                        , video_params
-                        , nullptr
-                        , Rect()
-                        );
+            capture_params, drawable_params,
+            capture_wrm, wrm_params,
+            capture_png, png_params,
+            capture_pattern_checker, pattern_params,
+            capture_ocr, ocr_params,
+            capture_video, sequenced_video_params,
+            capture_video_full, full_video_params,
+            capture_meta, meta_params,
+            capture_kbd, kbd_log_params,
+            video_params, nullptr, Rect()
+        );
+
+        f(capture, Rect{0, 0, cx, cy});
+    }
+
+
+    const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
+}
+
+
+RED_AUTO_TEST_CASE(TestSplittedCapture)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
+    test_capture_context("test_capture", 800, 600, record_wd, hash_wd,
+    [](Capture& capture, Rect scr)
+    {
+        // Timestamps are applied only when flushing
+        timeval now{1000, 0};
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -214,7 +190,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
-    }
+    });
 
     TEST_FSIZE(record_wd.add_file("test_capture-000000.wrm"), 1646);
     TEST_FSIZE(record_wd.add_file("test_capture-000001.wrm"), 3508);
@@ -234,7 +210,6 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
     TEST_FSIZE(hash_wd.add_file("test_capture-000002.wrm"), 45);
     TEST_FSIZE(hash_wd.add_file("test_capture.mwrm"), 39);
 
-    RED_CHECK_WORKSPACE(tmp_wd);
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
 }
@@ -2660,155 +2635,14 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
 RED_AUTO_TEST_CASE(TestResizingCapture)
 {
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo[] = {
-        {"./resizing-capture-0-000000.wrm", 1651},
-        {"./resizing-capture-0-000001.wrm", 3428},
-        {"./resizing-capture-0-000002.wrm", 4384},
-        {"./resizing-capture-0-000003.wrm", 4388},
-        {"./resizing-capture-0-000004.wrm", -1},
-        {"./resizing-capture-0.mwrm", 256},
-        // hash
-        {"/tmp/resizing-capture-0-000000.wrm", 51},
-        {"/tmp/resizing-capture-0-000001.wrm", 51},
-        {"/tmp/resizing-capture-0-000002.wrm", 51},
-        {"/tmp/resizing-capture-0-000003.wrm", 51},
-        {"/tmp/resizing-capture-0-000004.wrm", -1},
-        {"/tmp/resizing-capture-0.mwrm", 45},
-    };
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
 
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
-
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    test_capture_context("resizing-capture-0", 800, 600, record_wd, hash_wd,
+    [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
-
-        Rect scr(0, 0, 800, 600);
-
-        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-        ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-        ini.set<cfg::video::capture_flags>(capture_flags);
-
-        ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-        ini.set<cfg::video::record_tmp_path>("./");
-        ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp/");
-        ini.set<cfg::globals::movie_path>("resizing-capture-0");
-
-        LCGRandom rnd(0);
-        FakeFstat fstat;
-        CryptoContext cctx;
-
-        // TODO remove this after unifying capture interface
-        bool full_video = false;
-
-        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-            std::chrono::seconds::zero(), ini);
-        video_params.no_timestamp = false;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = record_tmp_path;
-
-        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png);
-        bool capture_pattern_checker = false;
-
-        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_video = bool(capture_flags & CaptureFlags::video);
-        bool capture_video_full = full_video;
-        bool capture_meta = capture_ocr;
-        bool capture_kbd = false;
-
-        OcrParams ocr_params = {
-            ini.get<cfg::ocr::version>(),
-            ocr::locale::LocaleId(
-                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-            ini.get<cfg::ocr::on_title_bar_only>(),
-            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-            ini.get<cfg::ocr::interval>(),
-            ini.get<cfg::debug::ocr>()
-        };
-
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
-        strcat(path, "/");
-        strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
-
-        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
-
-        PngParams png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
-        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
-        kbd_log_params.session_log_enabled = false;
-
-        PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-        SequencedVideoParams sequenced_video_params;
-        FullVideoParams full_video_params;
-
-        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
-
-        CaptureParams capture_params{
-            now,
-            basename,
-            record_tmp_path,
-            record_path,
-            groupid,
-            nullptr,
-            SmartVideoCropping::disable,
-            0
-        };
-
-        Capture capture(
-                          capture_params
-                        , drawable_params
-                        , capture_wrm, wrm_params
-                        , capture_png, png_params
-                        , capture_pattern_checker, pattern_params
-                        , capture_ocr, ocr_params
-                        , capture_video, sequenced_video_params
-                        , capture_video_full, full_video_params
-                        , capture_meta, meta_params
-                        , capture_kbd, kbd_log_params
-                        , video_params
-                        , nullptr
-                        , Rect()
-                        );
+        timeval now{1000, 0};
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -2857,191 +2691,43 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // The destruction of capture object will finalize the metafile content
-    }
+    });
 
-    bool remove_files = !getenv("TestResizingCapture");
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.wrm"), 1651);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.wrm"), 3428);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.wrm"), 4384);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.wrm"), 4388);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0.mwrm"), 248 + record_wd.dirname().size() * 4);
 
-    {
-        FilenameGenerator png_seq(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-          , "./" , "resizing-capture-0", ".png"
-        );
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.png"), 3102 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.png"), 3121 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.png"), 3131 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.png"), 3143 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000004.png"), 4079 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000005.png"), 4103 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000006.png"), 4122 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
 
-        int i = 0;
-        for (auto size : {
-            3102 +- 100_v,
-            3121 +- 100_v,
-            3131 +- 100_v,
-            3143 +- 100_v,
-            4079 +- 100_v,
-            4103 +- 100_v,
-            4122 +- 100_v,
-            4137 +- 100_v
-        }) {
-            char const* filename = png_seq.get(i++);
-            RED_CHECK(fsize(filename) == size);
-            if (remove_files) { ::unlink(filename); }
-        }
-        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
-    }
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000000.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000001.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000002.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000003.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0.mwrm"), 45);
 
-    for (auto x: fileinfo) {
-        RED_CHECK(fsize(x.filename) == x.size);
-        if (remove_files) { ::unlink(x.filename); }
-    }
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 }
 
 RED_AUTO_TEST_CASE(TestResizingCapture1)
 {
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo[] = {
-        {"./resizing-capture-1-000000.wrm", 1646},
-        {"./resizing-capture-1-000001.wrm", 3439},
-        {"./resizing-capture-1-000002.wrm", 2630},
-        {"./resizing-capture-1-000003.wrm", 2630},
-        {"./resizing-capture-1-000004.wrm", -1},
-        {"./resizing-capture-1.mwrm", 256},
-        // hash
-        {"/tmp/resizing-capture-1-000000.wrm", 51},
-        {"/tmp/resizing-capture-1-000001.wrm", 51},
-        {"/tmp/resizing-capture-1-000002.wrm", 51},
-        {"/tmp/resizing-capture-1-000003.wrm", 51},
-        {"/tmp/resizing-capture-1-000004.wrm", -1},
-        {"/tmp/resizing-capture-1.mwrm", 45},
-    };
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
 
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
-
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    test_capture_context("resizing-capture-1", 800, 600, record_wd, hash_wd,
+    [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
-
-        Rect scr(0, 0, 800, 600);
-
-        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-        ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-
-        ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-        ini.set<cfg::video::record_tmp_path>("./");
-        ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp/");
-        ini.set<cfg::globals::movie_path>("resizing-capture-1");
-
-        LCGRandom rnd(0);
-        FakeFstat fstat;
-        CryptoContext cctx;
-
-        // TODO remove this after unifying capture interface
-        bool full_video = false;
-
-        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-            std::chrono::seconds::zero(), ini);
-        video_params.no_timestamp = false;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = record_tmp_path;
-
-        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png);
-        bool capture_pattern_checker = false;
-
-        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_video = bool(capture_flags & CaptureFlags::video);
-        bool capture_video_full = full_video;
-        bool capture_meta = capture_ocr;
-        bool capture_kbd = false;
-
-        OcrParams ocr_params = {
-            ini.get<cfg::ocr::version>(),
-            ocr::locale::LocaleId(
-                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-            ini.get<cfg::ocr::on_title_bar_only>(),
-            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-            ini.get<cfg::ocr::interval>(),
-            ini.get<cfg::debug::ocr>()
-        };
-
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
-        strcat(path, "/");
-        strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
-
-        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
-
-        PngParams png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
-        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
-        kbd_log_params.session_log_enabled = false;
-
-        PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-        SequencedVideoParams sequenced_video_params;
-        FullVideoParams full_video_params;
-
-        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
-
-        CaptureParams capture_params{
-            now,
-            basename,
-            record_tmp_path,
-            record_path,
-            groupid,
-            nullptr,
-            SmartVideoCropping::disable,
-            0
-        };
-
-        Capture capture(
-                          capture_params
-                        , drawable_params
-                        , capture_wrm, wrm_params
-                        , capture_png, png_params
-                        , capture_pattern_checker, pattern_params
-                        , capture_ocr, ocr_params
-                        , capture_video, sequenced_video_params
-                        , capture_video_full, full_video_params
-                        , capture_meta, meta_params
-                        , capture_kbd, kbd_log_params
-                        , video_params
-                        , nullptr
-                        , Rect()
-                        );
+        timeval now{1000, 0};
 
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
@@ -3086,35 +2772,29 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
-    }
+    });
 
-    bool remove_files = !getenv("TestResizingCapture1");
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.wrm"), 1646);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.wrm"), 3439);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.wrm"), 2630);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.wrm"), 2630);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1.mwrm"), 248 + record_wd.dirname().size() * 4);
 
-    {
-        FilenameGenerator png_seq(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-          , "./" , "resizing-capture-1", ".png"
-        );
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.png"), 3102 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.png"), 3127 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.png"), 3145 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.png"), 3162 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000004.png"), 2304 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000005.png"), 2320 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000006.png"), 2334 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
 
-        int i = 0;
-        for (auto size : {
-            3102 +- 100_v,
-            3127 +- 100_v,
-            3145 +- 100_v,
-            3162 +- 100_v,
-            2304 +- 100_v,
-            2320 +- 100_v,
-            2334 +- 100_v,
-            2345 +- 100_v
-        }) {
-            char const* filename = png_seq.get(i++);
-            RED_CHECK(fsize(filename) == size);
-            if (remove_files) { ::unlink(filename); }
-        }
-        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
-    }
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000000.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000001.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000002.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000003.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1.mwrm"), 45);
 
-    for (auto x: fileinfo) {
-        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
-    }
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 }
