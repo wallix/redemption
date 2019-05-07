@@ -35,7 +35,7 @@ class NegoServer
 
 public:
     NegoServer(Transport& trans, std::string const& user, std::string const& password, uint64_t verbosity)
-    : credssp(trans, false, rand, timeobj, extra_message, Translation::EN,
+    : credssp(trans.get_public_key(), false, rand, timeobj, extra_message, Translation::EN,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             LOG(LOG_INFO, "NTLM Check identity");
 
@@ -76,12 +76,12 @@ public:
     {
     }
 
-    rdpCredsspServer::State recv_data(TpduBuffer& buffer, Transport & trans)
+    rdpCredsspServer::State recv_data(TpduBuffer& buffer, OutStream & out_stream)
     {
         rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
         while (buffer.next(TpduBuffer::CREDSSP) && rdpCredsspServer::State::Cont == st) {
             InStream in_stream(buffer.current_pdu_buffer());
-            st = this->credssp.credssp_server_authenticate_next(in_stream, trans);
+            st = this->credssp.credssp_server_authenticate_next(in_stream, out_stream);
         }
         return st;
     }

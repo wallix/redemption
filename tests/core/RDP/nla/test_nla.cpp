@@ -185,8 +185,10 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     LCGTime timeobj;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
+    
+    auto key = logtrans.get_public_key();
     rdpCredsspServerNTLM credssp(
-        logtrans, false, rand, timeobj, extra_message, lang,
+        key, false, rand, timeobj, extra_message, lang,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             auto arr2av = [&](Array& arr){ return make_array_view(arr.get_data(), arr.size()); };
             std::vector<uint8_t> vec;
@@ -213,7 +215,9 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         buf.load_data(logtrans);
         while (buf.next(TpduBuffer::CREDSSP) && rdpCredsspServer::State::Cont == st) {
             InStream in_stream(buf.current_pdu_buffer());
-            st = credssp.credssp_server_authenticate_next(in_stream, logtrans);
+            StaticOutStream<65536> out_stream;
+            st = credssp.credssp_server_authenticate_next(in_stream, out_stream);
+            logtrans.send(out_stream.get_bytes());
         }
     }
     RED_CHECK_EQUAL(0, buf.remaining());

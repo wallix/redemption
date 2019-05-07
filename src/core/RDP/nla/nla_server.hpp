@@ -64,7 +64,7 @@ protected:
     std::unique_ptr<SecurityFunctionTable> table = std::make_unique<UnimplementedSecurityFunctionTable>();
 
 
-    void init_public_key(Transport & trans)
+    void init_public_key(array_view_const_u8 key)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::ntlm_init");
 
@@ -72,17 +72,14 @@ protected:
         /* Get Public Key From TLS Layer and hostname */
         // ============================================
 
-        auto const key = trans.get_public_key();
         this->PublicKey.init(key.size());
         this->PublicKey.copy(key);
     }
 
-    void credssp_send(Transport & trans)
+    void credssp_send(OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::send");
-        StaticOutStream<65536> ts_request_emit;
-        this->ts_request.emit(ts_request_emit);
-        trans.send(ts_request_emit.get_bytes());
+        this->ts_request.emit(out_stream);
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
@@ -460,7 +457,7 @@ class rdpCredsspServerNTLM final : public rdpCredsspServer
     } sspi;
 
 public:
-    rdpCredsspServerNTLM(Transport & transport,
+    rdpCredsspServerNTLM(array_view_const_u8 key,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
@@ -477,7 +474,7 @@ public:
         this->server_auth_data.state = ServerAuthenticateData::Start;
         // TODO: sspi_GlobalInit();
 
-        this->init_public_key(transport);
+        this->init_public_key(key);
         
         // Note: NTLMAcquireCredentialHandle never fails
         this->sspi.AcquireCredentialsHandle(nullptr, nullptr, nullptr);
@@ -492,7 +489,7 @@ public:
     }
 
 public:
-    State credssp_server_authenticate_next(InStream & in_stream, Transport & trans)
+    State credssp_server_authenticate_next(InStream & in_stream, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
     
@@ -503,7 +500,7 @@ public:
               return State::Err;
             case ServerAuthenticateData::Loop:
                 LOG(LOG_INFO, "ServerAuthenticateData::Loop");
-                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream, trans)) {
+                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream, out_stream)) {
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     return State::Err;
                 }
@@ -622,7 +619,7 @@ private:
         return SEC_E_OK;
     }
 
-    Res sm_credssp_server_authenticate_recv(InStream & in_stream, Transport & trans)
+    Res sm_credssp_server_authenticate_recv(InStream & in_stream, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
 
@@ -677,7 +674,7 @@ private:
             return Res::Err;
         }
 
-        this->credssp_send(trans);
+        this->credssp_send(out_stream);
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {
@@ -713,7 +710,7 @@ private:
 class rdpCredsspServerKerberos final : public rdpCredsspServer
 {
 public:
-    rdpCredsspServerKerberos(Transport & transport,
+    rdpCredsspServerKerberos(array_view_const_u8 key,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
@@ -724,11 +721,11 @@ public:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
-        this->credssp_server_authenticate_init(transport);
+        this->credssp_server_authenticate_init(key);
     }
 
 private:
-    bool credssp_server_authenticate_init(Transport & trans)
+    bool credssp_server_authenticate_init(array_view_const_u8 key)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init: KERBEROS Authentication");
 
@@ -736,7 +733,7 @@ private:
 
         // TODO: sspi_GlobalInit();
 
-        this->init_public_key(trans);
+        this->init_public_key(key);
         this->table.reset();
 
         #ifndef __EMSCRIPTEN__
@@ -768,7 +765,7 @@ private:
     }
 
 public:
-    State credssp_server_authenticate_next(InStream & in_stream, Transport & trans)
+    State credssp_server_authenticate_next(InStream & in_stream, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
     
@@ -779,7 +776,7 @@ public:
               return State::Err;
             case ServerAuthenticateData::Loop:
                 LOG(LOG_INFO, "ServerAuthenticateData::Loop");
-                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream, trans)) {
+                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream, out_stream)) {
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
                     return State::Err;
                 }
@@ -899,7 +896,7 @@ private:
         return SEC_E_OK;
     }
 
-    Res sm_credssp_server_authenticate_recv(InStream & in_stream, Transport & trans)
+    Res sm_credssp_server_authenticate_recv(InStream & in_stream, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO,"rdpCredsspServer::sm_credssp_server_authenticate_recv");
 
@@ -954,7 +951,7 @@ private:
             return Res::Err;
         }
 
-        this->credssp_send(trans);
+        this->credssp_send(out_stream);
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {
