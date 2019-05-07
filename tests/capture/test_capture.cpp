@@ -2033,7 +2033,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 
 
 
-RED_AUTO_TEST_CASE(TestSample0WRM)
+RED_AUTO_TEST_CASE_WD(TestSample0WRM, wd)
 {
     const char * input_filename = FIXTURES_PATH "/sample0.wrm";
 
@@ -2048,14 +2048,17 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
 
     const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "first", ".png", groupid, ReportError{});
+    OutFilenameSequenceTransport out_png_trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        wd.dirname(), "first", ".png", groupid, ReportError{});
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
-//    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "first", ".wrm", groupid, ReportError{});
+    OutFilenameSequenceTransport out_wrm_trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        wd.dirname(), "first", ".wrm", groupid, ReportError{});
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -2097,27 +2100,17 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     RED_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
 
     graphic_to_file.sync();
-    const char * filename;
 
     out_png_trans.disconnect();
     out_wrm_trans.disconnect();
 
-    filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(21280, ::filesize(filename));
-    ::unlink(filename);
-
-    filename = out_wrm_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(490454, ::filesize(filename));
-    ::unlink(filename);
-    filename = out_wrm_trans.seqgen()->get(1);
-    RED_CHECK_EQUAL(1008253, ::filesize(filename));
-    ::unlink(filename);
-    filename = out_wrm_trans.seqgen()->get(2);
-    RED_CHECK_EQUAL(195756, ::filesize(filename));
-    ::unlink(filename);
+    TEST_FSIZE(wd.add_file("first-000000.png"), 21280);
+    TEST_FSIZE(wd.add_file("first-000000.wrm"), 490454);
+    TEST_FSIZE(wd.add_file("first-000001.wrm"), 1008253);
+    TEST_FSIZE(wd.add_file("first-000002.wrm"), 195756);
 }
 
-RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
+RED_AUTO_TEST_CASE_WD(TestReadPNGFromChunkedTransport, wd)
 {
     const char source_png[] =
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2157,8 +2150,6 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     in_png_trans.recv_boom(end, sz_buf); // skip first chunk header
     InStream stream(buf);
 
-//    in_png_trans.recv(&stream.end, 107); // skip first chunk header
-
     uint16_t chunk_type = stream.in_uint16_le();
     uint32_t chunk_size = stream.in_uint32_le();
     uint16_t chunk_count = stream.in_uint16_le();
@@ -2169,9 +2160,13 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     set_rows_from_image_chunk(in_png_trans, WrmChunkType(chunk_type), chunk_size, d.width(), {&gdi, 1});
 
     const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
+    OutFilenameSequenceTransport png_trans(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        wd.dirname(), "testimg", ".png", groupid, ReportError{});
     dump_png24(png_trans, d, true);
-    ::unlink(png_trans.seqgen()->get(0));
+    png_trans.disconnect();
+
+    TEST_FSIZE(wd.add_file("testimg-000000.png"), 107);
 }
 
 
@@ -2187,9 +2182,11 @@ RED_AUTO_TEST_CASE(TestPatternSearcher)
 }
 
 
-RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
+RED_AUTO_TEST_CASE_WD(TestOutFilenameSequenceTransport, wd)
 {
-    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), ReportError{});
+    OutFilenameSequenceTransport fnt(
+        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
+        wd.dirname(), "test_outfilenametransport", ".txt", getgid(), ReportError{});
     fnt.send("We write, ", 10);
     fnt.send("and again, ", 11);
     fnt.send("and so on.", 10);
@@ -2198,12 +2195,10 @@ RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
     fnt.send(" ", 1);
     fnt.send("A new file.", 11);
 
-    RED_CHECK_EQUAL(filesize(fnt.seqgen()->get(0)), 31);
-    RED_CHECK_EQUAL(filesize(fnt.seqgen()->get(1)), 12);
-
     fnt.disconnect();
-    unlink(fnt.seqgen()->get(0));
-    unlink(fnt.seqgen()->get(1));
+
+    TEST_FSIZE(wd.add_file("test_outfilenametransport-000000.txt"), 31);
+    TEST_FSIZE(wd.add_file("test_outfilenametransport-000001.txt"), 12);
 }
 
 extern "C" {

@@ -121,7 +121,7 @@ struct [[nodiscard]] WorkingDirectory
 
     std::string path_of(std::string_view path) const;
 
-    WorkingFileBase const& dirname() const noexcept { return this->directory; }
+    WorkingFileBase const& dirname() const noexcept { return this->dirname_; }
 
     [[nodiscard]] std::string unmached_files();
 
@@ -156,10 +156,10 @@ private:
         std::size_t operator()(Path const& path) const;
     };
 
-    std::unordered_set<Path, HashPath> paths;
-    WorkingFileBase directory;
-    bool has_error = false;
-    bool is_checked = true;
-    int counter_id = 0;
-    unsigned start_error_count;
+    std::unordered_set<Path, HashPath> paths_;
+    WorkingFileBase dirname_;
+    bool has_error_ = false;
+    bool is_checked_ = true;
+    int counter_id_ = 0;
+    unsigned start_error_count_;
 };
