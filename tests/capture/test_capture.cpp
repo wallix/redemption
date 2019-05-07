@@ -850,6 +850,37 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
     );
 }
 
+namespace
+{
+    struct TestGraphicToFile
+    {
+        timeval now{1000, 0};
+
+        BmpCache bmp_cache;
+        GlyphCache gly_cache;
+        PointerCache ptr_cache;
+        RDPDrawable drawable;
+        GraphicToFile consumer;
+
+        TestGraphicToFile(Transport& trans, Rect scr, bool small_cache)
+        : bmp_cache(
+            BmpCache::Recorder, BitsPerPixel{24}, 3, false,
+            BmpCache::CacheOption(small_cache ? 2 : 600, 256, false),
+            BmpCache::CacheOption(small_cache ? 2 : 300, 1024, false),
+            BmpCache::CacheOption(small_cache ? 2 : 262, 4096, false)
+        )
+        , drawable(scr.cx, scr.cy)
+        , consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression)
+        {}
+
+        void next_second(int n = 1)
+        {
+            now.tv_sec += n;
+            consumer.timestamp(now);
+        }
+    };
+}
+
 
 const char expected_stripped_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
@@ -980,53 +1011,29 @@ const char expected_stripped_wrm[] =
 
 RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 {
-    // Timestamps are applied only when flushing
-    struct timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect screen_rect(0, 0, 800, 600);
-    StaticOutStream<65536> stream;
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
+    CheckTransport trans(cstr_array_view(expected_stripped_wrm));
+    TestGraphicToFile tgtf(trans, screen_rect, false);
+    GraphicToFile& consumer = tgtf.consumer;
 
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
 
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), encode_color24()(BLUE)), screen_rect, color_ctx);
     consumer.sync();
-
-    now.tv_sec++;
-    consumer.timestamp(now);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
+    tgtf.next_second();
+    tgtf.next_second();
 
     consumer.draw(RDPOpaqueRect(Rect(0, 100, 700, 30), encode_color24()(WHITE)), screen_rect, color_ctx);
-    now.tv_sec++;
-    consumer.timestamp(now);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
+    tgtf.next_second();
 
     RDPOpaqueRect cmd3(Rect(0, 150, 700, 30), encode_color24()(RED));
     consumer.draw(cmd3, screen_rect, color_ctx);
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
 
     consumer.sync();
 }
@@ -1157,34 +1164,20 @@ const char expected_stripped_wrm2[] =
 
 RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 {
-    // Same as above, show timestamps are applied only when flushing
-    struct timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect screen_rect(0, 0, 800, 600);
-    StaticOutStream<65536> stream;
-    CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected_stripped_wrm2));
+    TestGraphicToFile tgtf(trans, screen_rect, false);
+    GraphicToFile& consumer = tgtf.consumer;
+
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), encode_color24()(BLUE)), screen_rect, color_ctx);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
 
     consumer.draw(RDPOpaqueRect(Rect(0, 100, 700, 30), encode_color24()(WHITE)), screen_rect, color_ctx);
     consumer.draw(RDPOpaqueRect(Rect(0, 150, 700, 30), encode_color24()(RED)), screen_rect, color_ctx);
-    now.tv_sec+=6;
-    consumer.timestamp(now);
+    tgtf.next_second(6);
 
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 10), encode_color24()(BLACK)), screen_rect, color_ctx);
 
@@ -1218,48 +1211,33 @@ public:
 
 RED_AUTO_TEST_CASE_WD(TestCaptureToWrmReplayToPng, wd)
 {
-    // Same as above, show timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect screen_rect(0, 0, 800, 600);
-    StaticOutStream<65536> stream;
 
     auto path = wd.add_file("testcap.wrm");
     int fd = ::creat(path, 0777);
     RED_REQUIRE_NE(fd, -1);
 
     OutFileTransport trans(unique_fd{fd});
-    RED_CHECK_EQUAL(0, 0);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    TestGraphicToFile tgtf(trans, screen_rect, false);
+    GraphicToFile& consumer = tgtf.consumer;
+
     auto const color_ctx = gdi::ColorCtx::depth24();
-    RED_CHECK_EQUAL(0, 0);
+
     RDPOpaqueRect cmd0(screen_rect, encode_color24()(GREEN));
     consumer.draw(cmd0, screen_rect, color_ctx);
     RDPOpaqueRect cmd1(Rect(0, 50, 700, 30), encode_color24()(BLUE));
     consumer.draw(cmd1, screen_rect, color_ctx);
-    now.tv_sec++;
-    RED_CHECK_EQUAL(0, 0);
-    consumer.timestamp(now);
+    tgtf.next_second();
     consumer.sync();
-    RED_CHECK_EQUAL(0, 0);
 
     RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), encode_color24()(WHITE));
     consumer.draw(cmd2, screen_rect, color_ctx);
     RDPOpaqueRect cmd3(Rect(0, 150, 700, 30), encode_color24()(RED));
     consumer.draw(cmd3, screen_rect, color_ctx);
-    now.tv_sec+=6;
-    consumer.timestamp(now);
+    tgtf.next_second(6);
     consumer.sync();
-    RED_CHECK_EQUAL(0, 0);
+
+    RED_TEST_PASSPOINT();
     trans.disconnect(); // close file before reading filesize
     TEST_FSIZE(path, 1588);
 
@@ -1284,37 +1262,24 @@ RED_AUTO_TEST_CASE_WD(TestCaptureToWrmReplayToPng, wd)
     png_recorder.flush();
     out_png_trans.next();
 
-    // Green Rect
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
+    for (int i = 0; i < 5; ++i)
+    {
+        // Green Rect
+        // Blue Rect
+        // Timestamp
+        // White Rect
+        // Red Rect
 
-    // Blue Rect
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
+        RED_TEST_CONTEXT(i)
+        {
+            RED_TEST(player.next_order());
+            player.interpret_order();
+            png_recorder.flush();
+            out_png_trans.next();
+        }
+    }
 
-    // Timestamp
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
-
-    // White Rect
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
-
-    // Red Rect
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
-
-    RED_CHECK_EQUAL(false, player.next_order());
+    RED_TEST(!player.next_order());
     in_wrm_trans.disconnect();
 
     TEST_FSIZE(wd.add_file("testcap-000000.png"), 1476);
@@ -1368,24 +1333,13 @@ const char expected_Red_on_Blue_wrm[] =
 
 RED_AUTO_TEST_CASE(TestSaveCache)
 {
-    // Timestamps are applied only when flushing
-    struct timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 100, 100);
-    CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
+    CheckTransport trans(cstr_array_view(expected_Red_on_Blue_wrm));
     trans.disable_remaining_error();
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(2, 256, false),
-                       BmpCache::CacheOption(2, 1024, false),
-                       BmpCache::CacheOption(2, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    TestGraphicToFile tgtf(trans, scr, true);
+    GraphicToFile& consumer = tgtf.consumer;
+
     auto const color_ctx = gdi::ColorCtx::depth24();
-    consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(BLUE)), scr, color_ctx);
 
@@ -1401,11 +1355,9 @@ RED_AUTO_TEST_CASE(TestSaveCache)
         bloc20x10);
     consumer.sync();
 
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
 
     consumer.save_bmp_caches();
-
     consumer.sync();
 }
 
@@ -1485,23 +1437,12 @@ const char expected_reset_rect_wrm[] =
 
 RED_AUTO_TEST_CASE(TestSaveOrderStates)
 {
-    // Timestamps are applied only when flushing
-    struct timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 100, 100);
-    CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(2, 256, false),
-                       BmpCache::CacheOption(2, 1024, false),
-                       BmpCache::CacheOption(2, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected_reset_rect_wrm));
+    TestGraphicToFile tgtf(trans, scr, true);
+    GraphicToFile& consumer = tgtf.consumer;
+
     auto const color_cxt = gdi::ColorCtx::depth24();
-    consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr.shrink(5), encode_color24()(BLUE)), scr, color_cxt);
@@ -1511,9 +1452,9 @@ RED_AUTO_TEST_CASE(TestSaveOrderStates)
 
     consumer.send_save_state_chunk();
 
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
     consumer.draw(RDPOpaqueRect(scr.shrink(20), encode_color24()(GREEN)), scr, color_cxt);
+
     consumer.sync();
 }
 
@@ -1620,21 +1561,12 @@ RED_AUTO_TEST_CASE(TestImageChunk)
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`
     ;
 
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected_stripped_wrm));
+    TestGraphicToFile tgtf(trans, scr, false);
+    GraphicToFile& consumer = tgtf.consumer;
+    RDPDrawable& drawable = tgtf.drawable;
+
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1694,21 +1626,12 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
         "\xae\x42\x60\x82"                                             //.B`.
         ;
 
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected, sizeof(expected)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected));
+    TestGraphicToFile tgtf(trans, scr, false);
+    GraphicToFile& consumer = tgtf.consumer;
+    RDPDrawable& drawable = tgtf.drawable;
+
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1778,21 +1701,12 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
         "\x42\x60\x82"
         ;
 
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected, sizeof(expected)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected));
+    TestGraphicToFile tgtf(trans, scr, false);
+    GraphicToFile& consumer = tgtf.consumer;
+    RDPDrawable& drawable = tgtf.drawable;
+
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
