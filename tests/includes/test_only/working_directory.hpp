@@ -37,7 +37,7 @@ Author(s): Jonathan Poelen
         WorkingDirectory wd;                       \
         WD_TU_ ## name ::test(wd);                 \
         RED_CHECK_WORKSPACE(wd);                   \
-    };                                             \
+    }                                              \
     void WD_TU_ ## name ::test(WorkingDirectory& wd)
 
 #define RED_AUTO_TEST_CASE_WF(name, wf)       \
@@ -46,7 +46,7 @@ Author(s): Jonathan Poelen
     RED_AUTO_TEST_CASE(name) {                \
         WorkingFile wf(#name);                \
         WF_TU_ ## name ::test(wf);            \
-    };                                        \
+    }                                         \
     void WF_TU_ ## name ::test(WorkingFile& wf)
 
 

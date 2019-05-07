@@ -546,7 +546,7 @@ public:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "Alternate secondary order");
 
                 RDP::AltsecDrawingOrderHeader header(drawing_order.control_flags);
-                switch (AltsecDrawingOrderType(header.orderType)) {
+                switch (header.orderType) {
                     case RDP::AltsecDrawingOrderType::SwitchSurface: {
                         uint16_t bitmapId = stream.in_uint16_le();
                         LOG(LOG_INFO, "switchSurface bitmapId=0x%x", bitmapId);

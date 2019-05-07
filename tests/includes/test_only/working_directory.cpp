@@ -156,7 +156,7 @@ WorkingDirectory::SubDirectory::SubDirectory(
 
 WorkingFileBase WorkingDirectory::SubDirectory::add_file(std::string_view file)
 {
-    return WorkingFileBase(this->wd_.add_file(str_concat(this->dirname(), file)));
+    return this->wd_.add_file(str_concat(this->dirname(), file));
 }
 
 WorkingDirectory::SubDirectory& WorkingDirectory::SubDirectory::add_files(
