@@ -26,7 +26,6 @@
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
 #include "capture/file_to_graphic.hpp"
-#include "capture/params_from_ini.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/get_file_contents.hpp"
@@ -57,7 +56,7 @@ namespace
     void test_capture_context(
         char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
         WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
-        F f)
+        F f, KbdLogParams kbd_log_params = KbdLogParams())
     {
         // Timestamps are applied only when flushing
         timeval now{1000, 0};
@@ -74,18 +73,17 @@ namespace
 
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
         const bool capture_png = bool(capture_flags & CaptureFlags::png);
-        const bool capture_pattern_checker = false;
 
+        const bool capture_pattern_checker = false;
         const bool capture_ocr = false;
         const bool capture_video = false;
         const bool capture_video_full = false;
         const bool capture_meta = false;
-        const bool capture_kbd = false;
+        const bool capture_kbd = kbd_log_params.wrm_keyboard_log;
 
 
         MetaParams meta_params;
         VideoParams video_params;
-        KbdLogParams kbd_log_params;
         PatternParams pattern_params;
         FullVideoParams full_video_params;
         SequencedVideoParams sequenced_video_params;
@@ -2235,129 +2233,19 @@ extern "C" {
 
 #ifndef REDEMPTION_NO_FFMPEG
 #include "lib/do_recorder.hpp"
-#include "configs/config.hpp"
 
 RED_AUTO_TEST_CASE(TestMetaCapture)
 {
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
-    WorkingDirectory output1_wd("output1");
-    WorkingDirectory output2_wd("output2");
 
-    char const* basename = "test_capture";
 
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
-    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-    ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-    ini.set<cfg::video::png_limit>(10); // one snapshot by second
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-    ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
-    CaptureFlags capture_flags = CaptureFlags::wrm;
-
-    ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-
-    ini.set<cfg::video::record_tmp_path>(record_wd.dirname().string());
-    ini.set<cfg::video::record_path>(record_wd.dirname().string());
-    ini.set<cfg::video::hash_path>(hash_wd.dirname().string());
-    ini.set<cfg::globals::movie_path>(basename);
-
-    LCGRandom rnd(0);
-    Fstat fstat;
-    CryptoContext cctx;
-
-    // TODO remove this after unifying capture interface
-    bool full_video = false;
-    // TODO remove this after unifying capture interface
-    bool no_timestamp = false;
-
-    Rect scr(0, 0, 100, 100);
-
-    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-        std::chrono::seconds::zero(), ini);
-    video_params.no_timestamp = no_timestamp;
-    const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-    const char * record_path = record_tmp_path;
-    bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-    bool capture_png = bool(capture_flags & CaptureFlags::png);
-    bool capture_pattern_checker = false;
-
-    bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-    bool capture_video = bool(capture_flags & CaptureFlags::video);
-    bool capture_video_full = full_video;
-    bool capture_meta = capture_ocr;
-    bool capture_kbd = true;
-
-    OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-    const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-    const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-
-    PngParams png_params = {
-        0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-        false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-    DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-    MetaParams meta_params{
-        MetaParams::EnableSessionLog::No,
-        MetaParams::HideNonPrintable::No,
-        MetaParams::LogClipboardActivities::Yes,
-        MetaParams::LogFileSystemActivities::Yes,
-        MetaParams::LogOnlyRelevantClipboardActivities::Yes
-    };
-
-    KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+    KbdLogParams kbd_log_params {};
     kbd_log_params.wrm_keyboard_log = true;
-    kbd_log_params.session_log_enabled = false;
-
-    PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-    SequencedVideoParams sequenced_video_params;
-    FullVideoParams full_video_params;
-
-    cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-    WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
-
-    CaptureParams capture_params{
-        now,
-        basename,
-        record_tmp_path,
-        record_path,
-        groupid,
-        nullptr,
-        SmartVideoCropping::disable,
-        0
-    };
-
+    test_capture_context("test_capture", CaptureFlags::wrm,
+        100, 100, record_wd, hash_wd, [](Capture& capture, Rect /*scr*/)
     {
-        Capture capture(
-                         capture_params
-                       , drawable_params
-                       , capture_wrm, wrm_params
-                       , capture_png, png_params
-                       , capture_pattern_checker, pattern_params
-                       , capture_ocr, ocr_params
-                       , capture_video, sequenced_video_params
-                       , capture_video_full, full_video_params
-                       , capture_meta, meta_params
-                       , capture_kbd, kbd_log_params
-                       , video_params
-                       , nullptr
-                       , Rect()
-                       );
-
+        timeval now{1000, 0};
         now.tv_sec += 10;
 
         bool ignore_frame_in_timeval = true;
@@ -2378,22 +2266,25 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         capture.kbd_input(now, 'x'); now.tv_sec++;
 
         capture.session_update(now, cstr_array_view("COMPLETED_PROCESS=abc")); now.tv_sec++;
-    }
+    }, kbd_log_params);
 
     auto mwrm_file = record_wd.add_file("test_capture.mwrm");
 
-    TEST_FSIZE(mwrm_file, 188 + record_wd.dirname().size() * 2 +- 10_v);
+    TEST_FSIZE(mwrm_file, 124 + record_wd.dirname().size() * 2);
     TEST_FSIZE(record_wd.add_file("test_capture-000000.wrm"), 166);
     TEST_FSIZE(record_wd.add_file("test_capture-000001.wrm"), 907);
 
-    TEST_FSIZE(hash_wd.add_file("test_capture-000000.wrm"), 77 +- 10_v);
-    TEST_FSIZE(hash_wd.add_file("test_capture-000001.wrm"), 77 +- 10_v);
-    TEST_FSIZE(hash_wd.add_file("test_capture.mwrm"), 71 +- 10_v);
+    TEST_FSIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
+    TEST_FSIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
+    TEST_FSIZE(hash_wd.add_file("test_capture.mwrm"), 39);
 
-    auto output_prefix1 = output1_wd.dirname().string() + "test_capture.mwrm";
-    auto output_prefix2 = output2_wd.dirname().string() + "test_capture.mwrm";
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 
     {
+        WorkingDirectory output_wd("output1");
+        auto output_prefix1 = output_wd.dirname().string() + "test_capture.mwrm";
+
         char const * argv[] {
             "recorder.py",
             "redrec",
@@ -2412,19 +2303,24 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         EVP_cleanup();
         RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix1, "\".\n\n"));
 
-        RED_CHECK_FILE_CONTENTS(output1_wd.add_file("test_capture.meta"),
+        RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"KBD_INPUT\" data=\"Wallix\"\n");
 
-        TEST_FSIZE(output1_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
-        TEST_FSIZE(output1_wd.add_file("test_capture-000000.png"), 244);
-        TEST_FSIZE(output1_wd.add_file("test_capture.pgs"), 37);
+        TEST_FSIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
+        TEST_FSIZE(output_wd.add_file("test_capture-000000.png"), 244);
+        TEST_FSIZE(output_wd.add_file("test_capture.pgs"), 37);
+
+        RED_CHECK_WORKSPACE(output_wd);
     }
 
     {
+        WorkingDirectory output_wd("output2");
+        auto output_prefix2 = output_wd.dirname().string() + "test_capture.mwrm";
+
         char const * argv[] {
             "recorder.py",
             "redrec",
@@ -2444,21 +2340,18 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         EVP_cleanup();
         RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix2, "\".\n\n"));
 
-        RED_CHECK_FILE_CONTENTS(output2_wd.add_file("test_capture.meta"),
+        RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n");
 
 
-        TEST_FSIZE(output2_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
-        TEST_FSIZE(output2_wd.add_file("test_capture-000000.png"), 244);
-        TEST_FSIZE(output2_wd.add_file("test_capture.pgs"), 37);
-    }
+        TEST_FSIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
+        TEST_FSIZE(output_wd.add_file("test_capture-000000.png"), 244);
+        TEST_FSIZE(output_wd.add_file("test_capture.pgs"), 37);
 
-    RED_CHECK_WORKSPACE(hash_wd);
-    RED_CHECK_WORKSPACE(record_wd);
-    RED_CHECK_WORKSPACE(output1_wd);
-    RED_CHECK_WORKSPACE(output2_wd);
+        RED_CHECK_WORKSPACE(output_wd);
+    }
 }
 #endif
