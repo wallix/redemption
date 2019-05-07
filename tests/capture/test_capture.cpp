@@ -27,7 +27,6 @@
 #include "capture/capture.cpp" // Yeaaahh...
 #include "capture/file_to_graphic.hpp"
 #include "capture/params_from_ini.hpp"
-#include "configs/config.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/get_file_contents.hpp"
@@ -56,7 +55,7 @@ namespace
 {
     template<class F>
     void test_capture_context(
-        char const* basename, uint16_t cx, uint16_t cy,
+        char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
         WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
         F f)
     {
@@ -73,8 +72,8 @@ namespace
         const char * hash_path = hash_wd.dirname();
         const int groupid = 0;
 
-        const bool capture_wrm = true;
-        const bool capture_png = true;
+        const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+        const bool capture_png = bool(capture_flags & CaptureFlags::png);
         const bool capture_pattern_checker = false;
 
         const bool capture_ocr = false;
@@ -139,6 +138,46 @@ namespace
         f(capture, Rect{0, 0, cx, cy});
     }
 
+    void capture_draw_color1(timeval& now, Capture& capture, Rect scr, uint16_t cy)
+    {
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(1, 50, cy, 30), encode_color24()(BLUE)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(2, 100, cy, 30), encode_color24()(WHITE)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(3, 150, cy, 30), encode_color24()(RED)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    }
+
+    void capture_draw_color2(timeval& now, Capture& capture, Rect scr, uint16_t cy)
+    {
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        capture.draw(RDPOpaqueRect(Rect(4, 200, cy, 30), encode_color24()(BLACK)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(5, 250, cy, 30), encode_color24()(PINK)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, cy, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    }
+
 
     const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
 }
@@ -149,47 +188,14 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
 
-    test_capture_context("test_capture", 800, 600, record_wd, hash_wd,
-    [](Capture& capture, Rect scr)
+    test_capture_context("test_capture", CaptureFlags::wrm | CaptureFlags::png,
+        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
         timeval now{1000, 0};
 
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
-
-        capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-        // The destruction of capture object will finalize the metafile content
+        capture_draw_color1(now, capture, scr, 700);
+        capture_draw_color2(now, capture, scr, 700);
     });
 
     TEST_FSIZE(record_wd.add_file("test_capture-000000.wrm"), 1646);
@@ -216,136 +222,131 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
 RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
-    WorkingDirectory tmp_wd("tmp");
     WorkingDirectory hash_wd("hash");
     WorkingDirectory record_wd("record");
 
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
+    test_capture_context("test_capture", CaptureFlags::png,
+        100, 100, record_wd, hash_wd, [](Capture& capture, Rect scr)
+    {
+        // Timestamps are applied only when flushing
+        timeval now{1000, 0};
 
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
+        auto const color_cxt = gdi::ColorCtx::depth16();
+        capture.set_pointer(0, edit_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
-//    Rect scr(0, 0, 12, 10);
+        bool ignore_frame_in_timeval = true;
 
-
-      Rect scr(0, 0, 100, 100);
-
-    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-    ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-    ini.set<cfg::video::png_limit>(10); // one snapshot by second
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-    ini.set<cfg::video::capture_flags>(CaptureFlags::png);
-    CaptureFlags capture_flags = CaptureFlags::png;
-
-    ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-    char const* basename = "test_capture";
-
-    ini.set<cfg::video::record_tmp_path>(record_wd.dirname().string());
-    ini.set<cfg::video::record_path>(tmp_wd.dirname().string());
-    ini.set<cfg::video::hash_path>(hash_wd.dirname().string());
-    ini.set<cfg::globals::movie_path>(basename);
-
-    LCGRandom rnd(0);
-    Fstat fstat;
-    CryptoContext cctx;
-
-    // TODO remove this after unifying capture interface
-    bool full_video = false;
-    // TODO remove this after unifying capture interface
-    bool no_timestamp = false;
-
-    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-        std::chrono::seconds::zero(), ini);
-    video_params.no_timestamp = no_timestamp;
-    const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-    const char * record_path = record_tmp_path;
-    bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-    bool capture_png = bool(capture_flags & CaptureFlags::png);
-    bool capture_pattern_checker = false;
-
-    bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-    bool capture_video = bool(capture_flags & CaptureFlags::video);
-    bool capture_video_full = full_video;
-    bool capture_meta = capture_ocr;
-    bool capture_kbd = false;
-
-    OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-    const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-    const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-
-    PngParams png_params = {
-        0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-        false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-    DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-    MetaParams meta_params{
-        MetaParams::EnableSessionLog::No,
-        MetaParams::HideNonPrintable::No,
-        MetaParams::LogClipboardActivities::Yes,
-        MetaParams::LogFileSystemActivities::Yes,
-        MetaParams::LogOnlyRelevantClipboardActivities::Yes
-    };
-
-    KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
-    kbd_log_params.session_log_enabled = false;
-
-    PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-    SequencedVideoParams sequenced_video_params;
-    FullVideoParams full_video_params;
-
-    cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-    WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
-
-    CaptureParams capture_params{
-        now,
-        basename,
-        record_tmp_path,
-        record_path,
-        groupid,
-        nullptr,
-        SmartVideoCropping::disable,
-        0
-    };
-
-    Capture capture(
-                     capture_params
-                   , drawable_params
-                   , capture_wrm, wrm_params
-                   , capture_png, png_params
-                   , capture_pattern_checker, pattern_params
-                   , capture_ocr, ocr_params
-                   , capture_video, sequenced_video_params
-                   , capture_video_full, full_video_params
-                   , capture_meta, meta_params
-                   , capture_kbd, kbd_log_params
-                   , video_params
-                   , nullptr
-                   , Rect()
-                   );
-    auto const color_cxt = gdi::ColorCtx::depth16();
-    capture.set_pointer(0, edit_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
-
-    bool ignore_frame_in_timeval = true;
-
-    capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
-    now.tv_sec++;
-    capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
+        capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
+    });
 
     RED_CHECK_SIG(
         get_file_contents(record_wd.add_file("test_capture-000000.png")),
         "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87");
 
-    RED_CHECK_WORKSPACE(tmp_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
+}
+
+RED_AUTO_TEST_CASE(TestResizingCapture)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
+    test_capture_context("resizing-capture-0", CaptureFlags::wrm | CaptureFlags::png,
+        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
+    {
+        // Timestamps are applied only when flushing
+        timeval now{1000, 0};
+
+        capture_draw_color1(now, capture, scr, 1200);
+
+        scr.cx = 1024;
+        scr.cy = 768;
+
+        capture.resize(scr.cx, scr.cy);
+
+        capture_draw_color2(now, capture, scr, 1200);
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        capture.draw(RDPOpaqueRect(Rect(7, 350, 1200, 30), encode_color24()(YELLOW)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    });
+
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.wrm"), 1651);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.wrm"), 3428);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.wrm"), 4384);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.wrm"), 4388);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0.mwrm"), 248 + record_wd.dirname().size() * 4);
+
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.png"), 3102 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.png"), 3121 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.png"), 3131 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.png"), 3143 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000004.png"), 4079 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000005.png"), 4103 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000006.png"), 4122 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
+
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000000.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000001.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000002.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000003.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-0.mwrm"), 45);
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
+}
+
+RED_AUTO_TEST_CASE(TestResizingCapture1)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
+    test_capture_context("resizing-capture-1", CaptureFlags::wrm | CaptureFlags::png,
+        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
+    {
+        timeval now{1000, 0};
+
+        capture_draw_color1(now, capture, scr, 700);
+
+        capture.resize(640, 480);
+
+        capture_draw_color2(now, capture, scr, 700);
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        capture.draw(RDPOpaqueRect(Rect(7, 350, 700, 30), encode_color24()(YELLOW)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    });
+
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.wrm"), 1646);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.wrm"), 3439);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.wrm"), 2630);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.wrm"), 2630);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1.mwrm"), 248 + record_wd.dirname().size() * 4);
+
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.png"), 3102 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.png"), 3127 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.png"), 3145 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.png"), 3162 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000004.png"), 2304 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000005.png"), 2320 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000006.png"), 2334 +- 100_v);
+    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
+
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000000.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000001.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000002.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000003.wrm"), 51);
+    TEST_FSIZE(hash_wd.add_file("resizing-capture-1.mwrm"), 45);
+
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
 }
@@ -2632,169 +2633,3 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     }
 }
 #endif
-
-RED_AUTO_TEST_CASE(TestResizingCapture)
-{
-    WorkingDirectory hash_wd("hash");
-    WorkingDirectory record_wd("record");
-
-    test_capture_context("resizing-capture-0", 800, 600, record_wd, hash_wd,
-    [](Capture& capture, Rect scr)
-    {
-        // Timestamps are applied only when flushing
-        timeval now{1000, 0};
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
-
-        capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 1200, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 1200, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 1200, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        scr.cx = 1024;
-        scr.cy = 768;
-
-        capture.resize(scr.cx, scr.cy);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 1200, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 1200, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 1200, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(7, 350, 1200, 30), encode_color24()(YELLOW)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // The destruction of capture object will finalize the metafile content
-    });
-
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.wrm"), 1651);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.wrm"), 3428);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.wrm"), 4384);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.wrm"), 4388);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0.mwrm"), 248 + record_wd.dirname().size() * 4);
-
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.png"), 3102 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.png"), 3121 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.png"), 3131 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.png"), 3143 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000004.png"), 4079 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000005.png"), 4103 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000006.png"), 4122 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
-
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000000.wrm"), 51);
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000001.wrm"), 51);
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000002.wrm"), 51);
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000003.wrm"), 51);
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-0.mwrm"), 45);
-
-    RED_CHECK_WORKSPACE(hash_wd);
-    RED_CHECK_WORKSPACE(record_wd);
-}
-
-RED_AUTO_TEST_CASE(TestResizingCapture1)
-{
-    WorkingDirectory hash_wd("hash");
-    WorkingDirectory record_wd("record");
-
-    test_capture_context("resizing-capture-1", 800, 600, record_wd, hash_wd,
-    [](Capture& capture, Rect scr)
-    {
-        // Timestamps are applied only when flushing
-        timeval now{1000, 0};
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
-
-        capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.resize(640, 480);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(7, 350, 700, 30), encode_color24()(YELLOW)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-        // The destruction of capture object will finalize the metafile content
-    });
-
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.wrm"), 1646);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.wrm"), 3439);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.wrm"), 2630);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.wrm"), 2630);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1.mwrm"), 248 + record_wd.dirname().size() * 4);
-
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.png"), 3102 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.png"), 3127 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.png"), 3145 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.png"), 3162 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000004.png"), 2304 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000005.png"), 2320 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000006.png"), 2334 +- 100_v);
-    TEST_FSIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
-
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000000.wrm"), 51);
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000001.wrm"), 51);
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000002.wrm"), 51);
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000003.wrm"), 51);
-    TEST_FSIZE(hash_wd.add_file("resizing-capture-1.mwrm"), 45);
-
-    RED_CHECK_WORKSPACE(hash_wd);
-    RED_CHECK_WORKSPACE(record_wd);
-}
