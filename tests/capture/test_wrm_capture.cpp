@@ -21,7 +21,8 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "capture/file_to_graphic.hpp"
 #include "capture/wrm_capture.hpp"
@@ -36,16 +37,6 @@
 
 #include <cstring>
 #include <string>
-
-namespace
-{
-    constexpr auto fsize = ::redemption_unit_test__::fn_invoker("filesize",
-        [](std::string const& filename){ return filesize(filename); });
-
-    int int_(int n) { return n; }
-}
-
-#define TEST_FSIZE(filename, len) RED_TEST(fsize(filename) == int_(len));
 
 
 template<class Writer>
@@ -161,14 +152,14 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         // The destruction of capture object will finalize the metafile content
     }
 
-    TEST_FSIZE(record_wd.add_file("capture-000000.wrm"), 1646);
-    TEST_FSIZE(record_wd.add_file("capture-000001.wrm"), 3508);
-    TEST_FSIZE(record_wd.add_file("capture-000002.wrm"), 3463);
-    TEST_FSIZE(record_wd.add_file("capture.mwrm"), 165 + hash_wd.dirname().size() * 3);
-    TEST_FSIZE(hash_wd.add_file("capture-000000.wrm"), 40);
-    TEST_FSIZE(hash_wd.add_file("capture-000001.wrm"), 40);
-    TEST_FSIZE(hash_wd.add_file("capture-000002.wrm"), 40);
-    TEST_FSIZE(hash_wd.add_file("capture.mwrm"), 34);
+    RED_TEST_FSIZE(record_wd.add_file("capture-000000.wrm"), 1646);
+    RED_TEST_FSIZE(record_wd.add_file("capture-000001.wrm"), 3508);
+    RED_TEST_FSIZE(record_wd.add_file("capture-000002.wrm"), 3463);
+    RED_TEST_FSIZE(record_wd.add_file("capture.mwrm"), 165 + hash_wd.dirname().size() * 3);
+    RED_TEST_FSIZE(hash_wd.add_file("capture-000000.wrm"), 40);
+    RED_TEST_FSIZE(hash_wd.add_file("capture-000001.wrm"), 40);
+    RED_TEST_FSIZE(hash_wd.add_file("capture-000002.wrm"), 40);
+    RED_TEST_FSIZE(hash_wd.add_file("capture.mwrm"), 34);
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -273,14 +264,14 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         RED_TEST_PASSPOINT();
     }
 
-    TEST_FSIZE(record_wd.add_file("capture-000000.wrm"), 1646);
-    TEST_FSIZE(record_wd.add_file("capture-000001.wrm"), 3508);
-    TEST_FSIZE(record_wd.add_file("capture-000002.wrm"), 3463);
-    TEST_FSIZE(record_wd.add_file("capture.mwrm"), 553 + hash_wd.dirname().size() * 3);
-    TEST_FSIZE(hash_wd.add_file("capture-000000.wrm"), 170);
-    TEST_FSIZE(hash_wd.add_file("capture-000001.wrm"), 170);
-    TEST_FSIZE(hash_wd.add_file("capture-000002.wrm"), 170);
-    TEST_FSIZE(hash_wd.add_file("capture.mwrm"), 164);
+    RED_TEST_FSIZE(record_wd.add_file("capture-000000.wrm"), 1646);
+    RED_TEST_FSIZE(record_wd.add_file("capture-000001.wrm"), 3508);
+    RED_TEST_FSIZE(record_wd.add_file("capture-000002.wrm"), 3463);
+    RED_TEST_FSIZE(record_wd.add_file("capture.mwrm"), 553 + hash_wd.dirname().size() * 3);
+    RED_TEST_FSIZE(hash_wd.add_file("capture-000000.wrm"), 170);
+    RED_TEST_FSIZE(hash_wd.add_file("capture-000001.wrm"), 170);
+    RED_TEST_FSIZE(hash_wd.add_file("capture-000002.wrm"), 170);
+    RED_TEST_FSIZE(hash_wd.add_file("capture.mwrm"), 164);
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -399,12 +390,12 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
     RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1));
     RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1));
 
-    TEST_FSIZE(file1, 10);
-    TEST_FSIZE(file2, 5);
-    TEST_FSIZE(record_wd.add_file(filename), meta_len_writer.len);
-    TEST_FSIZE(hash_wd.add_file("xxx-000000.wrm"), 36);
-    TEST_FSIZE(hash_wd.add_file("xxx-000001.wrm"), 36);
-    TEST_FSIZE(hash_wd.add_file("xxx.mwrm"), meta_file_buf.buffer().size());
+    RED_TEST_FSIZE(file1, 10);
+    RED_TEST_FSIZE(file2, 5);
+    RED_TEST_FSIZE(record_wd.add_file(filename), meta_len_writer.len);
+    RED_TEST_FSIZE(hash_wd.add_file("xxx-000000.wrm"), 36);
+    RED_TEST_FSIZE(hash_wd.add_file("xxx-000001.wrm"), 36);
+    RED_TEST_FSIZE(hash_wd.add_file("xxx.mwrm"), meta_file_buf.buffer().size());
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -464,12 +455,12 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1);
     meta_len_writer.len += hash_size * 2;
 
-    TEST_FSIZE(file1, 10);
-    TEST_FSIZE(file2, 5);
-    TEST_FSIZE(record_wd.add_file("xxx.mwrm"), meta_len_writer.len);
-    TEST_FSIZE(hash_wd.add_file("xxx-000000.wrm"), 166);
-    TEST_FSIZE(hash_wd.add_file("xxx-000001.wrm"), 166);
-    TEST_FSIZE(hash_wd.add_file("xxx.mwrm"), 160);
+    RED_TEST_FSIZE(file1, 10);
+    RED_TEST_FSIZE(file2, 5);
+    RED_TEST_FSIZE(record_wd.add_file("xxx.mwrm"), meta_len_writer.len);
+    RED_TEST_FSIZE(hash_wd.add_file("xxx-000000.wrm"), 166);
+    RED_TEST_FSIZE(hash_wd.add_file("xxx-000001.wrm"), 166);
+    RED_TEST_FSIZE(hash_wd.add_file("xxx.mwrm"), 160);
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -603,10 +594,10 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
     RED_CHECK_SMEM_AC(output, "ipconfig\rFOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE\x00");
 
-    TEST_FSIZE(first_file, 292);
-    TEST_FSIZE(record_wd.add_file("capture_kbd_input.mwrm"), 75 + record_wd.dirname().size());
-    TEST_FSIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 50);
-    TEST_FSIZE(hash_wd.add_file("capture_kbd_input.mwrm"), 44);
+    RED_TEST_FSIZE(first_file, 292);
+    RED_TEST_FSIZE(record_wd.add_file("capture_kbd_input.mwrm"), 75 + record_wd.dirname().size());
+    RED_TEST_FSIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 50);
+    RED_TEST_FSIZE(hash_wd.add_file("capture_kbd_input.mwrm"), 44);
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -702,10 +693,10 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
     RED_CHECK_EQUAL(player.max_image_frame_rect, Rect(50, 50, 320, 200).disjunct(Rect(125, 75, 370, 250)));
     RED_CHECK_EQUAL(player.min_image_frame_dim, Dimension(370, 250));
 
-    TEST_FSIZE(first_file, 1670);
-    TEST_FSIZE(record_wd.add_file("capture_remoteapp.mwrm"), 79 + record_wd.dirname().size());
-    TEST_FSIZE(hash_wd.add_file("capture_remoteapp-000000.wrm"), 50);
-    TEST_FSIZE(hash_wd.add_file("capture_remoteapp.mwrm"), 44);
+    RED_TEST_FSIZE(first_file, 1670);
+    RED_TEST_FSIZE(record_wd.add_file("capture_remoteapp.mwrm"), 79 + record_wd.dirname().size());
+    RED_TEST_FSIZE(hash_wd.add_file("capture_remoteapp-000000.wrm"), 50);
+    RED_TEST_FSIZE(hash_wd.add_file("capture_remoteapp.mwrm"), 44);
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);

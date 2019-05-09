@@ -44,6 +44,21 @@ namespace redemption_unit_test__
     };
 
     template<class> class red_test_print_type_t;
+
+    template<class F>
+    struct fn_caller
+    {
+        F f;
+
+        template<class... Ts>
+        constexpr auto operator()(Ts&&... xs) const
+        {
+            return f(static_cast<Ts>(xs)...);
+        }
+    };
+
+    template<class F>
+    constexpr fn_caller<F> fn_invoker(char const* /*name*/, F f);
 } // namespace redemption_unit_test__
 
 # define FIXTURES_PATH "./tests/fixtures"
