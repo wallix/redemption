@@ -43,9 +43,9 @@ private:
 
     TSCredentials ts_credentials;
     TSRequest ts_request;
-    static const size_t CLIENT_NONCE_LENGTH = 32;
+    
+    ClientNonce SavedClientNonce;
 
-    uint8_t SavedClientNonce[CLIENT_NONCE_LENGTH];
     Array PublicKey;
     Array ClientServerHash;
     Array ServerClientHash;
@@ -145,21 +145,21 @@ private:
 
     void credssp_generate_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspClient::credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
+        this->rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
+        this->SavedClientNonce.initialized = true;
         this->credssp_set_client_nonce();
     }
 
     void credssp_get_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspClient::credssp get client nonce");
-        if (this->ts_request.clientNonce.size() == CLIENT_NONCE_LENGTH) {
-            memcpy(this->SavedClientNonce, this->ts_request.clientNonce.get_data(), CLIENT_NONCE_LENGTH);
+        if (this->ts_request.clientNonce.isset()){
+            this->SavedClientNonce = this->ts_request.clientNonce;
         }
     }
     void credssp_set_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspClient::credssp set client nonce");
-        if (this->ts_request.clientNonce.size() == 0) {
-            this->ts_request.clientNonce.init(CLIENT_NONCE_LENGTH);
-            memcpy(this->ts_request.clientNonce.get_data(), this->SavedClientNonce, CLIENT_NONCE_LENGTH);
+        if (!this->ts_request.clientNonce.isset()) {
+            this->ts_request.clientNonce = this->SavedClientNonce;
         }
     }
 
@@ -170,7 +170,7 @@ private:
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce));
+        sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
         sha256.update(this->PublicKey.av());
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
@@ -183,7 +183,7 @@ private:
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce));
+        sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
         sha256.update(this->PublicKey.av());
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
@@ -266,7 +266,7 @@ private:
         this->ts_request.negoTokens.init(0);
         this->ts_request.pubKeyAuth.init(0);
         this->ts_request.authInfo.init(0);
-        this->ts_request.clientNonce.init(0);
+        this->ts_request.clientNonce.reset();
         this->ts_request.error_code = 0;
     }
 

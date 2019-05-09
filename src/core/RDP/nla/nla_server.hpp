@@ -46,7 +46,7 @@ protected:
 
     TSRequest ts_request = {6}; // Credssp Version 6 Supported
     static const size_t CLIENT_NONCE_LENGTH = 32;
-    uint8_t SavedClientNonce[CLIENT_NONCE_LENGTH] = {};
+    ClientNonce SavedClientNonce;
 
     Random & rand;
     TimeObj & timeobj;
@@ -74,12 +74,6 @@ protected:
 
         this->PublicKey.init(key.size());
         this->PublicKey.copy(key);
-    }
-
-    void credssp_send(OutStream & out_stream)
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::send");
-        this->ts_request.emit(out_stream);
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
@@ -111,21 +105,20 @@ protected:
 
     void credssp_generate_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspServer::credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
+        this->rand.random(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH);
         this->credssp_set_client_nonce();
     }
 
     void credssp_get_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspServer::credssp get client nonce");
-        if (this->ts_request.clientNonce.size() == CLIENT_NONCE_LENGTH) {
-            memcpy(this->SavedClientNonce, this->ts_request.clientNonce.get_data(), CLIENT_NONCE_LENGTH);
+        if (this->ts_request.clientNonce.isset()){
+            this->SavedClientNonce = this->ts_request.clientNonce;
         }
     }
     void credssp_set_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspServer::credssp set client nonce");
-        if (this->ts_request.clientNonce.size() == 0) {
-            this->ts_request.clientNonce.init(CLIENT_NONCE_LENGTH);
-            memcpy(this->ts_request.clientNonce.get_data(), this->SavedClientNonce, CLIENT_NONCE_LENGTH);
+        if (!this->ts_request.clientNonce.isset()) {
+            this->ts_request.clientNonce = this->SavedClientNonce;
         }
     }
 
@@ -135,7 +128,7 @@ protected:
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce));
+        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
         sha256.update(this->PublicKey.av());
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
@@ -148,7 +141,7 @@ protected:
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce));
+        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
         sha256.update(this->PublicKey.av());
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
@@ -161,7 +154,7 @@ protected:
         this->ts_request.negoTokens.init(0);
         this->ts_request.pubKeyAuth.init(0);
         this->ts_request.authInfo.init(0);
-        this->ts_request.clientNonce.init(0);
+        this->ts_request.clientNonce.reset();
         this->ts_request.error_code = 0;
     }
 
@@ -674,7 +667,7 @@ private:
             return Res::Err;
         }
 
-        this->credssp_send(out_stream);
+        this->ts_request.emit(out_stream);
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {
@@ -951,7 +944,7 @@ private:
             return Res::Err;
         }
 
-        this->credssp_send(out_stream);
+        this->ts_request.emit(out_stream);
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {

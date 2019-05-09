@@ -69,7 +69,66 @@
  *
  */
 
+
+struct ClientNonce {
+    static const int CLIENT_NONCE_LENGTH = 32;
+    bool initialized = false;
+    uint8_t data[CLIENT_NONCE_LENGTH] = {};
+
+    static inline int sizeof_client_nonce(int length) {
+        length = BER::sizeof_octet_string(length);
+        length += BER::sizeof_contextual_tag(length);
+        return length;
+    }
+
+    ClientNonce() {}
+
+    bool isset() {
+        return this->initialized;
+    }
+    
+    void reset()
+    {
+        this->initialized = false;
+    }
+
+    int ber_length(int use_version)
+    {
+        return (use_version >= 5 && this->initialized)
+            ? sizeof_client_nonce(CLIENT_NONCE_LENGTH)
+            : 0;
+    }
+
+    void ber_write(int version, OutStream & stream)
+    {
+        if (version >= 5 && this->initialized) {
+            LOG(LOG_INFO, "Credssp: TSCredentials::emit() clientNonce");
+            BER::write_sequence_octet_string(stream, 5, this->data, CLIENT_NONCE_LENGTH);
+        }
+    }
+    
+    int ber_read(int version, int & length, InStream & stream)
+    {
+        if (version >= 5 && BER::read_contextual_tag(stream, 5, length, true)) {
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
+            if(!BER::read_octet_string_tag(stream, length)){
+                return -1;
+            }
+            this->initialized = true;
+            if (length != CLIENT_NONCE_LENGTH){
+                LOG(LOG_ERR, "Truncated client nonce");
+                return -1;
+            }
+            stream.in_copy_bytes(this->data, CLIENT_NONCE_LENGTH);
+            this->initialized = true;
+        }
+        return 0;
+    }
+};
+
+
 namespace CredSSP {
+
 
     inline int sizeof_nego_token(int length) {
         length = BER::sizeof_octet_string(length);
@@ -97,11 +156,6 @@ namespace CredSSP {
         return length;
     }
 
-    inline int sizeof_client_nonce(int length) {
-        length = BER::sizeof_octet_string(length);
-        length += BER::sizeof_contextual_tag(length);
-        return length;
-    }
 
     inline int sizeof_octet_string_seq(int length) {
         length = BER::sizeof_octet_string(length);
@@ -129,8 +183,7 @@ struct TSRequest final {
     /* [4] errorCode (INTEGER OPTIONAL) */
     uint32_t error_code{0};
     /* [5] clientNonce (OCTET STRING OPTIONAL) */
-    Array clientNonce;
-
+    ClientNonce clientNonce;
 
     TSRequest(uint32_t version = 6)
         : version(version)
@@ -139,7 +192,6 @@ struct TSRequest final {
         , authInfo(0)
         , pubKeyAuth(0)
         , error_code(0)
-        , clientNonce(0)
     {
     }
 
@@ -165,9 +217,8 @@ struct TSRequest final {
         int auth_info_length = (this->authInfo.size() > 0)
             ? CredSSP::sizeof_auth_info(this->authInfo.size())
             : 0;
-        int client_nonce_length = (this->use_version >= 5 && this->clientNonce.size() > 0)
-            ? CredSSP::sizeof_client_nonce(this->clientNonce.size())
-            : 0;
+
+        int client_nonce_length = this->clientNonce.ber_length(use_version);
 
         if (this->version >= 3
             && this->version != 5
@@ -242,17 +293,9 @@ struct TSRequest final {
             BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->error_code), true);
             BER::write_integer(stream, this->error_code);
         }
+        
         /* [5] clientNonce (OCTET STRING) */
-        if (this->version >= 5
-            && client_nonce_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() clientNonce");
-            length = client_nonce_length;
-            length -= BER::write_sequence_octet_string(stream, 5,
-                                                       this->clientNonce.get_data(),
-                                                       this->clientNonce.size());
-            assert(length == 0);
-            (void)length;
-        }
+        this->clientNonce.ber_write(this->version, stream);
     }
 
     int recv(InStream & stream) {
@@ -271,8 +314,7 @@ struct TSRequest final {
         if (remote_version < this->use_version) {
             this->use_version = remote_version;
         }
-        LOG(LOG_INFO, "Credssp TSCredentials::recv() Negotiated version %u",
-            this->use_version);
+        LOG(LOG_INFO, "Credssp TSCredentials::recv() Negotiated version %u", this->use_version);
 
         /* [1] negoTokens (NegoData) */
         if (BER::read_contextual_tag(stream, 1, length, true))        {
@@ -328,15 +370,8 @@ struct TSRequest final {
                 );
         }
         /* [5] clientNonce (OCTET STRING) */
-        if (remote_version >= 5
-            && BER::read_contextual_tag(stream, 5, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-            this->clientNonce.init(length);
-            stream.in_copy_bytes(this->clientNonce.get_data(), length);
+        if (this->clientNonce.ber_read(remote_version, length, stream) == -1){
+            return -1;
         }
         return 0;
     }
