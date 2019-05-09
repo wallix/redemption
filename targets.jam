@@ -2759,6 +2759,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)

@@ -53,6 +53,10 @@ Author(s): Jonathan Poelen
 struct [[nodiscard]] WorkingFileBase
 {
     WorkingFileBase(std::string name) noexcept : filename_(std::move(name)) {}
+    WorkingFileBase(WorkingFileBase&&) = default;
+    WorkingFileBase(WorkingFileBase const&) = default;
+    WorkingFileBase&operator=(WorkingFileBase&&) = default;
+    WorkingFileBase&operator=(WorkingFileBase const&) = default;
     char const* c_str() const noexcept { return this->filename_.c_str(); }
     std::string const& string() const noexcept { return this->filename_; }
     operator std::string const& () const noexcept { return this->filename_; }
@@ -82,11 +86,12 @@ struct [[nodiscard]] WorkingDirectory
     struct SubDirectory
     {
         [[nodiscard]] WorkingFileBase add_file(std::string_view file);
-        [[nodiscard]] SubDirectory& add_files(std::initializer_list<std::string_view> files);
-        [[nodiscard]] SubDirectory& remove_files(std::initializer_list<std::string_view> files);
+        SubDirectory& add_files(std::initializer_list<std::string_view> files);
+        SubDirectory& remove_files(std::initializer_list<std::string_view> files);
 
         std::string path_of(std::string_view path) const;
-        std::string_view dirname() const;
+        WorkingFileBase const& dirname() const noexcept { return this->fullpath; }
+        std::string_view subdirname() const noexcept;
 
         WorkingDirectory& wd() const noexcept
         {
@@ -95,7 +100,7 @@ struct [[nodiscard]] WorkingDirectory
 
     private:
         WorkingDirectory& wd_;
-        std::string fullpath;
+        WorkingFileBase fullpath;
         std::size_t dirname_pos;
 
         friend class WorkingDirectory;
@@ -114,9 +119,9 @@ struct [[nodiscard]] WorkingDirectory
      */
     /// @{
     [[nodiscard]] WorkingFileBase add_file(std::string file);
-    [[nodiscard]] WorkingDirectory& add_files(std::initializer_list<std::string_view> files);
+    WorkingDirectory& add_files(std::initializer_list<std::string_view> files);
     void remove_file(std::string file);
-    [[nodiscard]] WorkingDirectory& remove_files(std::initializer_list<std::string_view> files);
+    WorkingDirectory& remove_files(std::initializer_list<std::string_view> files);
     /// @}
 
     std::string path_of(std::string_view path) const;

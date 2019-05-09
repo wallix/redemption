@@ -150,20 +150,26 @@ WorkingFile::~WorkingFile()
 WorkingDirectory::SubDirectory::SubDirectory(
     WorkingDirectory& wd, std::string fullpath, std::size_t dirname_pos)
 : wd_(wd)
-, fullpath(fullpath)
+, fullpath(std::move(fullpath))
 , dirname_pos(dirname_pos)
 {}
 
+std::string_view WorkingDirectory::SubDirectory::subdirname() const noexcept
+{
+    auto* s = this->fullpath.c_str();
+    return {s + this->dirname_pos, this->fullpath.size() - this->dirname_pos};
+}
+
 WorkingFileBase WorkingDirectory::SubDirectory::add_file(std::string_view file)
 {
-    return this->wd_.add_file(str_concat(this->dirname(), file));
+    return this->wd_.add_file(str_concat(this->subdirname(), file));
 }
 
 WorkingDirectory::SubDirectory& WorkingDirectory::SubDirectory::add_files(
     std::initializer_list<std::string_view> files)
 {
     for (auto sv : files) {
-        (void)this->wd_.add_file_(str_concat(this->dirname(), sv));
+        (void)this->wd_.add_file_(str_concat(this->subdirname(), sv));
     }
     return *this;
 }
@@ -172,14 +178,9 @@ WorkingDirectory::SubDirectory& WorkingDirectory::SubDirectory::remove_files(
     std::initializer_list<std::string_view> files)
 {
     for (auto sv : files) {
-        (void)this->wd_.remove_files({str_concat(this->dirname(), sv)});
+        (void)this->wd_.remove_files({str_concat(this->subdirname(), sv)});
     }
     return *this;
-}
-
-std::string_view WorkingDirectory::SubDirectory::dirname() const
-{
-    return std::string_view(this->fullpath).substr(this->dirname_pos);
 }
 
 std::string WorkingDirectory::SubDirectory::path_of(std::string_view path) const
@@ -378,11 +379,11 @@ std::string WorkingDirectory::unmached_files()
 WorkingDirectory::~WorkingDirectory() noexcept(false)
 {
     if (!this->has_error_) {
-        if (this->start_error_count_ == RED_ERROR_COUNT) {
-            recursive_delete_directory(this->dirname_.c_str());
-        }
         if (!this->is_checked_) {
             WD_ERROR_S("unchecked entries");
+        }
+        if (this->start_error_count_ == RED_ERROR_COUNT) {
+            recursive_delete_directory(this->dirname_.c_str());
         }
     }
 }
