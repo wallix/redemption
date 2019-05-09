@@ -63,23 +63,20 @@ namespace BER {
         }
         uint8_t byte = s.in_uint8();
         if (byte & 0x80) {
-            byte &= ~(0x80);
-            if (!s.in_check_rem(byte)) {
+            if (!s.in_check_rem(byte & 0x7F)) {
                 return false;
             }
-            if (byte == 1) {
+            if (byte == 0x81) {
                 length = s.in_uint8();
+                return true;
             }
-            else if (byte == 2) {
+            if (byte == 0x82) {
                 length = s.in_uint16_be();
+                return true;
             }
-            else {
-                return false;
-            }
+            return false;
         }
-        else {
-            length = byte;
-        }
+        length = byte;
         return true;
     }
 
