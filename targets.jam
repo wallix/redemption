@@ -5036,6 +5036,7 @@ test-run tests/utils/test_fileutils :
 :
   <library>src/utils/fileutils.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <covfile>src/utils/fileutils.cpp
   <covfile>src/utils/fileutils.hpp
 ;
