@@ -106,21 +106,11 @@ protected:
     void credssp_generate_client_nonce() {
         LOG(LOG_DEBUG, "rdpCredsspServer::credssp generate client nonce");
         this->rand.random(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH);
-        this->credssp_set_client_nonce();
-    }
-
-    void credssp_get_client_nonce() {
-        LOG(LOG_DEBUG, "rdpCredsspServer::credssp get client nonce");
-        if (this->ts_request.clientNonce.isset()){
-            this->SavedClientNonce = this->ts_request.clientNonce;
-        }
-    }
-    void credssp_set_client_nonce() {
-        LOG(LOG_DEBUG, "rdpCredsspServer::credssp set client nonce");
         if (!this->ts_request.clientNonce.isset()) {
             this->ts_request.clientNonce = this->SavedClientNonce;
         }
     }
+
 
     void credssp_generate_public_key_hash_client_to_server() {
         LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (client->server)");
@@ -518,7 +508,9 @@ private:
 
         array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            this->credssp_get_client_nonce();
+            if (this->ts_request.clientNonce.isset()){
+                this->SavedClientNonce = this->ts_request.clientNonce;
+            }
             this->credssp_generate_public_key_hash_server_to_client();
             public_key = this->ServerClientHash.av();
         }
@@ -555,7 +547,9 @@ private:
 
         array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            this->credssp_get_client_nonce();
+            if (this->ts_request.clientNonce.isset()){
+                this->SavedClientNonce = this->ts_request.clientNonce;
+            }
             this->credssp_generate_public_key_hash_client_to_server();
             public_key = this->ClientServerHash.av();
         }
@@ -795,7 +789,9 @@ private:
 
         array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            this->credssp_get_client_nonce();
+            if (this->ts_request.clientNonce.isset()){
+                this->SavedClientNonce = this->ts_request.clientNonce;
+            }
             this->credssp_generate_public_key_hash_server_to_client();
             public_key = this->ServerClientHash.av();
         }
@@ -832,7 +828,9 @@ private:
 
         array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            this->credssp_get_client_nonce();
+            if (this->ts_request.clientNonce.isset()){
+                this->SavedClientNonce = this->ts_request.clientNonce;
+            }
             this->credssp_generate_public_key_hash_client_to_server();
             public_key = this->ClientServerHash.av();
         }
