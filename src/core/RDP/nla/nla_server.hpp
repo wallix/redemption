@@ -103,15 +103,6 @@ protected:
         }
     }
 
-    void credssp_generate_client_nonce() {
-        LOG(LOG_DEBUG, "rdpCredsspServer::credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH);
-        if (!this->ts_request.clientNonce.isset()) {
-            this->ts_request.clientNonce = this->SavedClientNonce;
-        }
-    }
-
-
     void credssp_generate_public_key_hash_client_to_server() {
         LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (client->server)");
         Array & SavedHash = this->ClientServerHash;
@@ -867,8 +858,7 @@ private:
 
         Array Buffer;
 
-        const SEC_STATUS status = this->table->DecryptMessage(
-            this->ts_request.authInfo.av(), Buffer, this->recv_seq_num++);
+        const SEC_STATUS status = this->table->DecryptMessage(this->ts_request.authInfo.av(), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
