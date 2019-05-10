@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
     }) RED_TEST_CONTEXT(d.name)
     {
         WorkingFile wf(d.name);
-        int fd = ::open(wf.c_str(), O_RDWR|O_CREAT);
+        int fd = ::open(wf.c_str(), O_RDWR|O_CREAT, 0777);
         RED_CHECK_EQUAL(d.data.size(), write(fd, d.data.data(), d.data.size()));
         RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
         char transparent_target[256] = {};

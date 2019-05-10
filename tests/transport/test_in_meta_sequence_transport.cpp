@@ -20,6 +20,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 
 #include "transport/in_meta_sequence_transport.hpp"
@@ -233,19 +234,8 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
 
 RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 {
-    // cleanup of possible previous test files
-    const char * const files[] = {
-        "TESTOFS.mwrm",
-        "TESTOFS-000000.wrm",
-        "TESTOFS-000001.wrm",
-        // hash
-        "/tmp/TESTOFS.mwrm",
-        "/tmp/TESTOFS-000000.wrm",
-        "/tmp/TESTOFS-000001.wrm",
-    };
-    for (auto const & file : files) {
-        ::unlink(file);
-    }
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory recorded_wd("recorded");
 
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
@@ -267,7 +257,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         cctx.set_trace_type(TraceType::cryptofile);
 
-        OutMetaSequenceTransport crypto_trans(cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
+        OutMetaSequenceTransport crypto_trans(cctx, rnd, fstat, recorded_wd.dirname(), hash_wd.dirname(), "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;
         crypto_trans.timestamp(tv);
@@ -278,16 +268,18 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         RED_TEST_PASSPOINT();
     }
 
+    auto basepath = recorded_wd.dirname().string() + "TESTOFS";
+
     {
         Fstat fstat;
-        InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted, fstat);
+        InMetaSequenceTransport crypto_trans(cctx, basepath.c_str(), ".mwrm", is_encrypted, fstat);
         char buffer[15];
         // 5 + 10
         RED_CHECK_EXCEPTION_ERROR_ID(crypto_trans.recv_boom(buffer, 15), ERR_TRANSPORT_NO_MORE_DATA);
     }
     {
         Fstat fstat;
-        InMetaSequenceTransport crypto_trans(cctx, "TESTOFS", ".mwrm", is_encrypted, fstat);
+        InMetaSequenceTransport crypto_trans(cctx, basepath.c_str(), ".mwrm", is_encrypted, fstat);
 
         char buffer[15];
 
@@ -298,9 +290,19 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         RED_CHECK_EQUAL_RANGES(make_array_view(buffer), cstr_array_view("AAAAXBBBBXCCCCX"));
     }
 
-    for (auto const & file : files) {
-        RED_CHECK_MESSAGE(!::unlink(file), "failed to unlink " << file);
-    }
+    hash_wd.add_files({
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    });
+    recorded_wd.add_files({
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    });
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(recorded_wd);
 }
 
 RED_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)

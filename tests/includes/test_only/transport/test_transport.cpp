@@ -198,6 +198,28 @@ void BufTransport::do_send(const uint8_t * const data, size_t len)
 }
 
 
+BufSequenceTransport::BufSequenceTransport()
+{
+    this->datas.emplace_back();
+}
+
+bool BufSequenceTransport::empty() const noexcept
+{
+    return this->datas.size() == 1 && this->datas[0].empty();
+}
+
+void BufSequenceTransport::do_send(const uint8_t * const data, size_t len)
+{
+    this->datas.back().append(char_ptr_cast(data), len);
+}
+
+bool BufSequenceTransport::next()
+{
+    this->datas.emplace_back();
+    return true;
+}
+
+
 CheckTransport::CheckTransport(const_buffer_t buffer)
 : CheckTransport(buffer.as_charp(), buffer.size())
 {}

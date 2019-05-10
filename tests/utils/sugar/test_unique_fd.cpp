@@ -20,14 +20,15 @@
 
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "utils/sugar/unique_fd.hpp"
 
 #include <string>
 
-RED_AUTO_TEST_CASE(TestLocalFd)
+RED_AUTO_TEST_CASE_WF(TestLocalFd, wf)
 {
-    std::string const unknown_file = "/tmp/unique_fd_unknown_file";
+    char const* const unknown_file = wf.c_str();
     RED_CHECK(!unique_fd(unknown_file, O_RDONLY).is_open());
     RED_CHECK(!bool(unique_fd(unknown_file, O_RDONLY)));
     RED_CHECK(!unique_fd(unknown_file, O_RDONLY));
@@ -35,6 +36,4 @@ RED_AUTO_TEST_CASE(TestLocalFd)
     unique_fd fd(unknown_file, O_RDONLY | O_CREAT, 0666);
     RED_CHECK(fd.is_open());
     RED_CHECK_GE(fd.fd(), 0);
-
-    unlink(unknown_file.c_str());
 }

@@ -456,6 +456,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/acl_serializer.cpp
@@ -1924,11 +1925,9 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2618,8 +2617,11 @@ test-run tests/core/test_session_reactor :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/session_reactor.hpp
 ;
@@ -2721,13 +2723,12 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/gdi/protected_graphics.cpp
   <covfile>src/gdi/protected_graphics.hpp
@@ -2825,6 +2826,7 @@ test-run tests/lib/test_scytale :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -4018,6 +4020,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/rdpdr_channel.hpp
@@ -4727,6 +4730,7 @@ test-run tests/transport/test_in_meta_sequence_transport :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/in_meta_sequence_transport.hpp
 ;
@@ -4758,6 +4762,17 @@ test-run tests/transport/test_out_file_transport :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/out_file_transport.hpp
 ;
+test-run tests/transport/test_out_filename_sequence_transport :
+  $(REDEMPTION_TEST_PATH)/transport/test_out_filename_sequence_transport.cpp
+:
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/out_filename_sequence_transport.hpp
+;
 test-run tests/transport/test_recorder_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_recorder_transport.cpp
 :
@@ -4769,6 +4784,7 @@ test-run tests/transport/test_recorder_transport :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/recorder_transport.cpp
@@ -4968,6 +4984,9 @@ test-run tests/utils/sugar/test_splitter :
 test-run tests/utils/sugar/test_unique_fd :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_unique_fd.cpp
 :
+  <library>src/utils/fileutils.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <covfile>src/utils/sugar/unique_fd.hpp
 ;
 test-run tests/utils/sugar/test_update_lock :
@@ -5233,6 +5252,7 @@ test-run tests/utils/test_png :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/png.cpp
   <covfile>src/utils/png.hpp
@@ -5249,6 +5269,7 @@ test-run tests/utils/test_recording_progress :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/recording_progress.hpp
 ;
@@ -5750,6 +5771,7 @@ alias test_in_file_transport : tests/transport/test_in_file_transport ;
 alias test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport ;
 alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
 alias test_out_file_transport : tests/transport/test_out_file_transport ;
+alias test_out_filename_sequence_transport : tests/transport/test_out_filename_sequence_transport ;
 alias test_recorder_transport : tests/transport/test_recorder_transport ;
 alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
 alias test_socket_transport : tests/transport/test_socket_transport ;
@@ -6079,6 +6101,7 @@ alias test_in_file_transport.coverage : tests/transport/test_in_file_transport.c
 alias test_in_meta_sequence_transport.coverage : tests/transport/test_in_meta_sequence_transport.coverage ;
 alias test_mwrm_reader.coverage : tests/transport/test_mwrm_reader.coverage ;
 alias test_out_file_transport.coverage : tests/transport/test_out_file_transport.coverage ;
+alias test_out_filename_sequence_transport.coverage : tests/transport/test_out_filename_sequence_transport.coverage ;
 alias test_recorder_transport.coverage : tests/transport/test_recorder_transport.coverage ;
 alias test_snappy_compression_transport.coverage : tests/transport/test_snappy_compression_transport.coverage ;
 alias test_socket_transport.coverage : tests/transport/test_socket_transport.coverage ;
@@ -6500,6 +6523,7 @@ alias tests/transport.norec :
   tests/transport/test_in_meta_sequence_transport
   tests/transport/test_mwrm_reader
   tests/transport/test_out_file_transport
+  tests/transport/test_out_filename_sequence_transport
   tests/transport/test_recorder_transport
   tests/transport/test_snappy_compression_transport
   tests/transport/test_socket_transport

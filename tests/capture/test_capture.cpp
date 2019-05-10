@@ -33,8 +33,6 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "transport/in_file_transport.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/transport.hpp"
 #include "utils/drawable.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/png.hpp"
@@ -1173,39 +1171,11 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 }
 
 
-class DrawableToFile
-{
-    Transport & trans;
-    const Drawable & drawable;
-
-public:
-    DrawableToFile(Transport & trans, const Drawable & drawable)
-    : trans(trans)
-    , drawable(drawable)
-    {
-    }
-
-    ~DrawableToFile() = default;
-
-    bool logical_frame_ended() const {
-        return this->drawable.logical_frame_ended;
-    }
-
-    void flush() {
-        ::dump_png24(this->trans, this->drawable, true);
-    }
-};
-
-
-RED_AUTO_TEST_CASE_WD(TestCaptureToWrmReplayToPng, wd)
+RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 {
     Rect screen_rect(0, 0, 800, 600);
 
-    auto path = wd.add_file("testcap.wrm");
-    int fd = ::creat(path, 0777);
-    RED_REQUIRE_NE(fd, -1);
-
-    OutFileTransport trans(unique_fd{fd});
+    BufTransport trans;
     TestGraphicToFile tgtf(trans, screen_rect, false);
     GraphicToFile& consumer = tgtf.consumer;
 
@@ -1226,17 +1196,9 @@ RED_AUTO_TEST_CASE_WD(TestCaptureToWrmReplayToPng, wd)
     consumer.sync();
 
     RED_TEST_PASSPOINT();
-    trans.disconnect(); // close file before reading filesize
-    RED_TEST_FSIZE(path, 1588);
+    RED_TEST(trans.size() == 1588);
 
-    fd = ::open(path, O_RDONLY);
-    RED_REQUIRE_NE(fd, -1);
-    InFileTransport in_wrm_trans(unique_fd{fd});
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        wd.dirname(), "testcap", ".png", groupid, ReportError{});
+    GeneratorTransport in_wrm_trans(trans.data());
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
@@ -1244,38 +1206,29 @@ RED_AUTO_TEST_CASE_WD(TestCaptureToWrmReplayToPng, wd)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    png_recorder.flush();
-    out_png_trans.next();
+    BufTransport buftrans;
+    dump_png24(buftrans, drawable1, true);
+    RED_TEST(1476 == buftrans.size());
 
-    for (int i = 0; i < 5; ++i)
+    for (std::size_t sz : {2786, 2800, 2800, 2814, 2823})
     {
         // Green Rect
         // Blue Rect
         // Timestamp
         // White Rect
         // Red Rect
+        RED_TEST(player.next_order());
+        player.interpret_order();
 
-        RED_TEST_CONTEXT(i)
-        {
-            RED_TEST(player.next_order());
-            player.interpret_order();
-            png_recorder.flush();
-            out_png_trans.next();
-        }
+        buftrans.buf.clear();
+        dump_png24(buftrans, drawable1, true);
+        RED_TEST(sz == buftrans.size());
     }
 
     RED_TEST(!player.next_order());
     in_wrm_trans.disconnect();
-
-    RED_TEST_FSIZE(wd.add_file("testcap-000000.png"), 1476);
-    RED_TEST_FSIZE(wd.add_file("testcap-000001.png"), 2786);
-    RED_TEST_FSIZE(wd.add_file("testcap-000002.png"), 2800);
-    RED_TEST_FSIZE(wd.add_file("testcap-000003.png"), 2800);
-    RED_TEST_FSIZE(wd.add_file("testcap-000004.png"), 2814);
-    RED_TEST_FSIZE(wd.add_file("testcap-000005.png"), 2823);
 }
 
 
@@ -1729,10 +1682,8 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
     RDPDrawable d(20, 10);
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
     read_png24(in_png_trans, gdi::get_mutable_image_view(d));
-    const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
+    BufTransport png_trans;
     dump_png24(png_trans, d, true);
-    ::unlink(png_trans.seqgen()->get(0));
 }
 
 const char source_wrm_png[] =
@@ -1845,7 +1796,7 @@ RED_AUTO_TEST_CASE(TestReload)
         Test{"testimg_then_other_chunk", cstr_array_view(source_wrm_png_then_other_chunk), 107, 1004}
     }) RED_TEST_CONTEXT(test.name)
     {
-        WorkingDirectory wd(test.name);
+        BufTransport trans;
 
         {
             GeneratorTransport in_wrm_trans(test.data);
@@ -1856,24 +1807,16 @@ RED_AUTO_TEST_CASE(TestReload)
             FileToGraphic player(
                 in_wrm_trans, begin_capture, end_capture,
                 false, false, to_verbose_flags(0));
-
-            const int groupid = 0;
-            OutFilenameSequenceTransport out_png_trans(
-                FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-                wd.dirname(), test.name, ".png", groupid, ReportError{});
             RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-            DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
             player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
             while (player.next_order()){
                 player.interpret_order();
             }
-            png_recorder.flush();
+            ::dump_png24(trans, drawable, true);
             RED_CHECK_EQUAL(test.time, static_cast<unsigned>(player.record_now.tv_sec));
         }
 
-        RED_TEST_FSIZE(wd.add_file(str_concat(test.name, "-000000.png")), test.file_len);
-        RED_CHECK_WORKSPACE(wd);
+        RED_TEST(trans.size() == test.file_len);
     }
 }
 
@@ -2021,11 +1964,9 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 
 
 
-RED_AUTO_TEST_CASE_WD(TestSample0WRM, wd)
+RED_AUTO_TEST_CASE(TestSample0WRM)
 {
-    const char * input_filename = FIXTURES_PATH "/sample0.wrm";
-
-    int fd = ::open(input_filename, O_RDONLY);
+    int fd = ::open(FIXTURES_PATH "/sample0.wrm", O_RDONLY);
     RED_REQUIRE_NE(fd, -1);
 
     InFileTransport in_wrm_trans(unique_fd{fd});
@@ -2035,18 +1976,11 @@ RED_AUTO_TEST_CASE_WD(TestSample0WRM, wd)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
 
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        wd.dirname(), "first", ".png", groupid, ReportError{});
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    OutFilenameSequenceTransport out_wrm_trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        wd.dirname(), "first", ".wrm", groupid, ReportError{});
+    BufSequenceTransport out_wrm_trans;
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -2084,21 +2018,21 @@ RED_AUTO_TEST_CASE_WD(TestSample0WRM, wd)
     RED_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.record_now.tv_sec));
     player.play(requested_to_stop);
 
-    png_recorder.flush();
+    BufTransport out_png_trans;
+    ::dump_png24(out_png_trans, drawable, true);
+    RED_TEST(out_png_trans.size() == 21280);
+
     RED_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
 
     graphic_to_file.sync();
 
-    out_png_trans.disconnect();
-    out_wrm_trans.disconnect();
-
-    RED_TEST_FSIZE(wd.add_file("first-000000.png"), 21280);
-    RED_TEST_FSIZE(wd.add_file("first-000000.wrm"), 490454);
-    RED_TEST_FSIZE(wd.add_file("first-000001.wrm"), 1008253);
-    RED_TEST_FSIZE(wd.add_file("first-000002.wrm"), 195756);
+    RED_TEST(out_wrm_trans.size() == 3);
+    RED_TEST(out_wrm_trans[0].size() == 490454);
+    RED_TEST(out_wrm_trans[1].size() == 1008253);
+    RED_TEST(out_wrm_trans[2].size() == 195756);
 }
 
-RED_AUTO_TEST_CASE_WD(TestReadPNGFromChunkedTransport, wd)
+RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 {
     const char source_png[] =
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2147,14 +2081,9 @@ RED_AUTO_TEST_CASE_WD(TestReadPNGFromChunkedTransport, wd)
     gdi::GraphicApi * gdi = &d;
     set_rows_from_image_chunk(in_png_trans, WrmChunkType(chunk_type), chunk_size, d.width(), {&gdi, 1});
 
-    const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        wd.dirname(), "testimg", ".png", groupid, ReportError{});
-    dump_png24(png_trans, d, true);
-    png_trans.disconnect();
-
-    RED_TEST_FSIZE(wd.add_file("testimg-000000.png"), 107);
+    BufTransport png_trans;
+    ::dump_png24(png_trans, d, true);
+    RED_TEST(png_trans.size() == 107);
 }
 
 
@@ -2167,26 +2096,6 @@ RED_AUTO_TEST_CASE(TestPatternSearcher)
     searcher.test_uchar(byte_ptr_cast("a"), 1, report); RED_CHECK(!check);
     // #15241: Pattern detection crash
     searcher.test_uchar(byte_ptr_cast("e"), 1, report); RED_CHECK(check);
-}
-
-
-RED_AUTO_TEST_CASE_WD(TestOutFilenameSequenceTransport, wd)
-{
-    OutFilenameSequenceTransport fnt(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        wd.dirname(), "test_outfilenametransport", ".txt", getgid(), ReportError{});
-    fnt.send("We write, ", 10);
-    fnt.send("and again, ", 11);
-    fnt.send("and so on.", 10);
-
-    fnt.next();
-    fnt.send(" ", 1);
-    fnt.send("A new file.", 11);
-
-    fnt.disconnect();
-
-    RED_TEST_FSIZE(wd.add_file("test_outfilenametransport-000000.txt"), 31);
-    RED_TEST_FSIZE(wd.add_file("test_outfilenametransport-000001.txt"), 12);
 }
 
 extern "C" {

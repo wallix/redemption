@@ -28,13 +28,13 @@
 #include <cstdlib>
 
 
-RED_AUTO_TEST_CASE_WF(TestInFileTransport, wf)
+RED_AUTO_TEST_CASE_WF(TestOutFileTransport, wf)
 {
     {
-        OutFileTransport ft(unique_fd{creat(wf.c_str(), O_WRONLY|O_CREAT)});
+        OutFileTransport ft(unique_fd{open(wf.c_str(), O_RDWR|O_CREAT, 0777)});
         ft.send("We write, ", 10);
         ft.send("and again, ", 11);
         ft.send("and so on.", 10);
     }
-    RED_CHECK_FCONTENTS(wf.c_str(), "We write, and again, and so on.");
+    RED_CHECK_FCONTENTS(wf.c_str(), "We write, and again, and so on."_av);
 }

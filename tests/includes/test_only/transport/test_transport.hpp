@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <vector>
 #include <string>
 #include <memory>
 
@@ -60,8 +61,29 @@ struct BufTransport : Transport
 {
     std::string buf;
 
+    std::size_t size() const noexcept { return buf.size(); }
+    void clear() noexcept { buf.clear(); }
+    std::string& data() noexcept { return buf; }
+
 private:
     void do_send(const uint8_t * const data, size_t len) override;
+};
+
+
+struct BufSequenceTransport : Transport
+{
+    BufSequenceTransport();
+
+    std::string& operator[](std::size_t i) noexcept { return this->datas[i]; }
+    std::size_t size() const noexcept { return this->datas.size(); }
+    bool empty() const noexcept;
+
+private:
+    void do_send(const uint8_t * const data, size_t len) override;
+
+    bool next() override;
+
+    std::vector<std::string> datas;
 };
 
 

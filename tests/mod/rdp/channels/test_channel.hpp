@@ -55,9 +55,10 @@ public:
 using TestToClientSender = TestSender<0>;
 using TestToServerSender = TestSender<1>;
 
-bool test(Transport& t, BaseVirtualChannel& virtual_channel);
+namespace tu
+{
 
-bool test(Transport& t, BaseVirtualChannel& virtual_channel)
+inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
 {
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -115,4 +116,6 @@ bool test(Transport& t, BaseVirtualChannel& virtual_channel)
     return true;
 }
 
-#define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(test(t, virtual_channel));
+#define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(tu::test_channel(t, virtual_channel));
+
+}

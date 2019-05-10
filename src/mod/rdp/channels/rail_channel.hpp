@@ -22,6 +22,7 @@
 
 #include "utils/log.hpp"
 #include "configs/config.hpp"
+#include "core/misc.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"

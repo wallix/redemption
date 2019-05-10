@@ -39,19 +39,15 @@ namespace redemption_unit_test__
             return filesize(s.c_str());
         }
     };
+
+    constexpr auto fsize = fn_invoker("filesize", fsize_impl{});
+
+    inline int int_(int n) { return n; }
+    inline int_variation int_(int_variation n) { return n; }
 }
 
-namespace
-{
-    constexpr auto fsize = redemption_unit_test__::fn_invoker(
-        "filesize", redemption_unit_test__::fsize_impl{});
-
-    int int_(int n) { return n; }
-    redemption_unit_test__::int_variation int_(redemption_unit_test__::int_variation n) { return n; }
-}
-
-#define RED_TEST_FSIZE(filename, len) RED_TEST(::fsize(filename) == ::int_(len));
-#define RED_REQUIRE_FSIZE(filename, len) RED_TEST(::fsize(filename) == ::int_(len));
+#define RED_TEST_FSIZE(filename, len) RED_TEST(::redemption_unit_test__::fsize(filename) == ::redemption_unit_test__::int_(len));
+#define RED_REQUIRE_FSIZE(filename, len) RED_TEST(::redemption_unit_test__::fsize(filename) == ::redemption_unit_test__::int_(len));
 
 # define RED_TEST_FCONTENTS(lvl, filename, contents)            \
     [](auto&& filename__, auto&& contents__) {                  \

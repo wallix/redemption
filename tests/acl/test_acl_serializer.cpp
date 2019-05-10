@@ -21,7 +21,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "acl/acl_serializer.hpp"
 #include "configs/config.hpp"
@@ -341,7 +341,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 }
 
 
-RED_AUTO_TEST_CASE(TestAclSerializeLog)
+RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -355,19 +355,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
     ini.set_acl<cfg::globals::target_user>("user1");
     ini.set_acl<cfg::globals::host>("10.10.13.12");
     ini.set<cfg::session_log::enable_arcsight_log>(true);
-//     ini.set_acl<cfg::globals::target_host>("13.12.10.10");
-//     ini.set_acl<cfg::globals::ip_target>("13.12.10.10");
-//     ini.set_acl<cfg::globals::session_id>("0x520");
+    // ini.set_acl<cfg::globals::target_host>("13.12.10.10");
+    // ini.set_acl<cfg::globals::ip_target>("13.12.10.10");
+    // ini.set_acl<cfg::globals::session_id>("0x520");
 
-    {
-        char const* logfile = "/tmp/test_acl_dir/log5_6.log";
-        char const* hashdir = "/tmp/test_acl_dir/hash/";
-        char const* hashlog = "/tmp/test_acl_dir/hash/log5_6.log";
-        unlink(logfile);
-        unlink(hashlog);
-        ini.set<cfg::session_log::log_path>(logfile);
-        ini.set<cfg::video::hash_path>(hashdir);
-    }
+    auto logfile = wd.add_file("log5_6.log");
+    auto hashdir = wd.create_subdirectory("hash");
+    auto hashlog = hashdir.add_file("log5_6.log");
+
+    ini.set<cfg::session_log::log_path>(logfile.string());
+    ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
     GeneratorTransport trans("", 0);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0x20));
@@ -703,18 +700,12 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 }
 
 
-RED_AUTO_TEST_CASE(TestSessionLogFile)
+RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
 {
-    std::string const prefix_path = "/tmp/test_acl_dir/";
-    std::string const hashdir = prefix_path + "hash/";
     std::string const logname = "acl_log.txt";
-    std::string const filename = prefix_path + logname;
-    std::string const hashname = hashdir + logname;
-
-    ::unlink(filename.c_str());
-    ::unlink(hashname.c_str());
-    mkdir(prefix_path.c_str(), 0777);
-    mkdir(hashdir.c_str(), 0777);
+    auto filename = wd.add_file(logname);
+    auto hashdir = wd.create_subdirectory("hash");
+    auto hashname = hashdir.add_file(logname);
 
     LCGRandom rnd(0);
     Fstat fstat;

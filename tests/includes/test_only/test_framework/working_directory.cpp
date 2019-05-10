@@ -30,6 +30,7 @@ Author(s): Jonathan Poelen
 #include <numeric>
 #include <algorithm>
 #include <stdexcept>
+#include <exception>
 #include <string_view>
 
 #include <cerrno>
@@ -136,7 +137,7 @@ WorkingFile::WorkingFile(std::string_view name)
 
 WorkingFile::~WorkingFile()
 {
-    if (!this->is_removed) {
+    if (!this->is_removed && ! std::uncaught_exceptions()) {
         if (this->start_error_count == RED_ERROR_COUNT) {
             RED_TEST_FUNC(unlink, (this->filename_.c_str()) == 0);
         }
@@ -378,7 +379,7 @@ std::string WorkingDirectory::unmached_files()
 
 WorkingDirectory::~WorkingDirectory() noexcept(false)
 {
-    if (!this->has_error_) {
+    if (!this->has_error_ && ! std::uncaught_exceptions()) {
         if (!this->is_checked_) {
             WD_ERROR_S("unchecked entries");
         }
