@@ -18,13 +18,12 @@
    Author(s): Christophe Grosjean
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "mod/vnc/vnc_params.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "test_only/transport/test_transport.hpp"
 
-RED_AUTO_TEST_CASE(TestVncMouse)
+// TEST missing
+int main()
 {
     char data[] =
         "\x05\x00\x00\x0a\x00\x0a"                          // move 10, 10
@@ -45,5 +44,3 @@ RED_AUTO_TEST_CASE(TestVncMouse)
     mouse.move(t, 15, 17);
     mouse.click(t, 15, 18, 2, 0);
 }
-
-

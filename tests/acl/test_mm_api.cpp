@@ -20,9 +20,8 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
+// api
+#include "acl/mm_api.hpp"
 
-
-RED_AUTO_TEST_CASE(TestMMAPI1)
-{
-}
+int main()
+{}

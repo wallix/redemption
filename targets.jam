@@ -1175,6 +1175,7 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/client_redemption/client_config/client_redemption_config.cpp
@@ -1661,6 +1662,8 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_context :
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
 :
+  <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <covfile>src/core/RDP/nla/ntlm/ntlm_message.hpp
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate :
@@ -1974,6 +1977,11 @@ test-run tests/core/RDP/test_ServerRedirection :
 test-run tests/core/RDP/test_autoreconnect :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_autoreconnect.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/autoreconnect.hpp
 ;
 test-run tests/core/RDP/test_bitmapupdate :
@@ -1996,6 +2004,11 @@ test-run tests/core/RDP/test_bitmapupdate :
 test-run tests/core/RDP/test_capabilities :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_capabilities.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/capabilities.hpp
 ;
 test-run tests/core/RDP/test_clipboard :
@@ -2097,6 +2110,10 @@ test-run tests/core/RDP/test_nego :
 test-run tests/core/RDP/test_non_null_terminated_utf16_from_utf8 :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_non_null_terminated_utf16_from_utf8.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/non_null_terminated_utf16_from_utf8.hpp
 ;
 test-run tests/core/RDP/test_out_per_bstream :
@@ -2785,6 +2802,7 @@ test-run tests/lib/test_iametrics :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -3819,10 +3837,6 @@ test-run tests/mod/internal/widget/test_selector :
   <covfile>src/mod/internal/widget/selector.cpp
   <covfile>src/mod/internal/widget/selector.hpp
 ;
-test-run tests/mod/internal/widget/test_tab :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_tab.cpp
-:
-;
 test-run tests/mod/internal/widget/test_tooltip :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_tooltip.cpp
 :
@@ -3851,6 +3865,10 @@ test-run tests/mod/internal/widget/test_tooltip :
 test-run tests/mod/internal/widget/test_widget :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/widget.hpp
 ;
 test-run tests/mod/internal/widget/test_widget_rect :
@@ -3895,6 +3913,7 @@ test-run tests/mod/rdp/channels/test_channel_file :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/channel_file.hpp
 ;
@@ -3919,6 +3938,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
@@ -4111,6 +4131,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp_metrics.hpp
 ;
@@ -4276,6 +4297,7 @@ test-run tests/mod/vnc/test_vnc_metrics :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/vnc/vnc_metrics.hpp
 ;
@@ -4592,6 +4614,7 @@ test-run tests/transport/test_crypto_transport :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/crypto_transport.cpp
   <covfile>src/transport/crypto_transport.hpp
@@ -5594,7 +5617,6 @@ alias test_password : tests/mod/internal/widget/test_password ;
 alias test_screen : tests/mod/internal/widget/test_screen ;
 alias test_scroll : tests/mod/internal/widget/test_scroll ;
 alias test_selector : tests/mod/internal/widget/test_selector ;
-alias test_tab : tests/mod/internal/widget/test_tab ;
 alias test_tooltip : tests/mod/internal/widget/test_tooltip ;
 alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
@@ -6324,7 +6346,6 @@ alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_screen
   tests/mod/internal/widget/test_scroll
   tests/mod/internal/widget/test_selector
-  tests/mod/internal/widget/test_tab
   tests/mod/internal/widget/test_tooltip
   tests/mod/internal/widget/test_widget
   tests/mod/internal/widget/test_widget_rect

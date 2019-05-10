@@ -19,12 +19,10 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "core/RDP/caches/glyphcache.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
+// TEST missing
+int main()
 {
     GlyphCache();
 }

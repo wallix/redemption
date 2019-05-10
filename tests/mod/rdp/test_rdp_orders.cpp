@@ -19,12 +19,10 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "mod/rdp/rdp_orders.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
+// TEST missing
+int main()
 {
     rdp_orders("", 0, false, RDPVerbose::none, ReportError{});
 }

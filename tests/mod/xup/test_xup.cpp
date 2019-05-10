@@ -19,11 +19,8 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "mod/xup/xup.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
-{
-}
+// TEST missing
+int main()
+{}

@@ -20,22 +20,21 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "transport/out_file_transport.hpp"
-#include "test_only/get_file_contents.hpp"
 
 #include <cstdlib>
 
 
-RED_AUTO_TEST_CASE(TestInFileTransport)
+RED_AUTO_TEST_CASE_WF(TestInFileTransport, wf)
 {
-    char tmpname[128] = "/tmp/test_transportXXXXXX";
     {
-        OutFileTransport ft(unique_fd{::mkostemp(tmpname, O_WRONLY|O_CREAT)});
+        OutFileTransport ft(unique_fd{creat(wf.c_str(), O_WRONLY|O_CREAT)});
         ft.send("We write, ", 10);
         ft.send("and again, ", 11);
         ft.send("and so on.", 10);
     }
-    RED_CHECK_EQUAL(get_file_contents(tmpname), "We write, and again, and so on.");
-    ::unlink(tmpname);
+    RED_CHECK_FCONTENTS(wf.c_str(), "We write, and again, and so on.");
 }

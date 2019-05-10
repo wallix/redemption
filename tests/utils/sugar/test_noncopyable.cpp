@@ -18,8 +18,6 @@
 *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "utils/sugar/noncopyable.hpp"
 #include <type_traits>
 
@@ -30,13 +28,13 @@ struct NonCopyable : noncopyable{
 
 };
 
-RED_AUTO_TEST_CASE(TestSplitter)
+int main()
 {
-    RED_CHECK_EQUAL(std::is_copy_constructible<Copyable>::value, true);
-    RED_CHECK_EQUAL(std::is_copy_assignable<Copyable>::value, true);
+    static_assert(std::is_copy_constructible<Copyable>::value);
+    static_assert(std::is_copy_assignable<Copyable>::value);
 
-    RED_CHECK_EQUAL(std::is_copy_constructible<NonCopyable>::value, false);
-    RED_CHECK_EQUAL(std::is_copy_assignable<NonCopyable>::value, false);
+    static_assert(std::is_copy_constructible<NonCopyable>::value == false);
+    static_assert(std::is_copy_assignable<NonCopyable>::value == false);
 
     // test default constructible
     NonCopyable x; (void)x;

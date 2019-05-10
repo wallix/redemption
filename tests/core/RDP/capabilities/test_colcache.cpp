@@ -18,11 +18,10 @@
    Author(s): Christophe Grosjean
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "core/RDP/capabilities/colcache.hpp"
 
-RED_AUTO_TEST_CASE(TestColorCacheCaps)
+// TEST missing
+int main()
 {
     ColorCacheCaps cap;
 
