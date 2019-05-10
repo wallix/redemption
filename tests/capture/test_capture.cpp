@@ -74,7 +74,7 @@ namespace
 
         MetaParams meta_params;
         VideoParams video_params;
-        PatternParams pattern_params;
+        PatternParams pattern_params {}; // reading with capture_kbd = true
         FullVideoParams full_video_params;
         SequencedVideoParams sequenced_video_params;
         OcrParams const ocr_params {
