@@ -22,7 +22,7 @@
 
 #include "utils/fileutils.hpp"
 #include "test_only/get_file_contents.hpp"
-#include "test_only/working_directory.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "mod/vnc/vnc_metrics.hpp"
 #include "mod/metrics_hmac.hpp"
