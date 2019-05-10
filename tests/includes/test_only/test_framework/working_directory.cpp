@@ -131,7 +131,7 @@ WorkingFile::WorkingFile(std::string_view name)
         WD_ERROR(strerror(errno) << ": " << this->string());
     }
 
-    this->filename_ += name;
+    str_append(this->filename_, name);
 }
 
 WorkingFile::~WorkingFile()

@@ -1907,6 +1907,10 @@ test-run tests/core/RDP/test_GraphicUpdatePDU :
 test-run tests/core/RDP/test_PersistentKeyListPDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_PersistentKeyListPDU.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/PersistentKeyListPDU.hpp
 ;
 test-run tests/core/RDP/test_RDPDrawable :
@@ -1962,6 +1966,10 @@ test-run tests/core/RDP/test_RefreshRectPDU :
 test-run tests/core/RDP/test_SaveSessionInfoPDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_SaveSessionInfoPDU.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/SaveSessionInfoPDU.hpp
 ;
 test-run tests/core/RDP/test_ServerRedirection :
@@ -2110,10 +2118,7 @@ test-run tests/core/RDP/test_nego :
 test-run tests/core/RDP/test_non_null_terminated_utf16_from_utf8 :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_non_null_terminated_utf16_from_utf8.cpp
 :
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/non_null_terminated_utf16_from_utf8.hpp
 ;
 test-run tests/core/RDP/test_out_per_bstream :
@@ -2125,6 +2130,7 @@ test-run tests/core/RDP/test_out_per_bstream :
 test-run tests/core/RDP/test_protocol :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_protocol.cpp
 :
+  <library>src/utils/utf.o
   <covfile>src/core/RDP/protocol.hpp
 ;
 test-run tests/core/RDP/test_rdp_pointer :
@@ -2477,6 +2483,7 @@ test-run tests/core/test_mainloop :
 test-run tests/core/test_server_notifier_api :
   $(REDEMPTION_TEST_PATH)/core/test_server_notifier_api.cpp
 :
+  <library>crypto
   <covfile>src/core/server_notifier_api.hpp
 ;
 test-run tests/core/test_session :
@@ -3668,6 +3675,16 @@ test-run tests/mod/internal/widget/test_labelgrid :
 test-run tests/mod/internal/widget/test_language_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_language_button.cpp
 :
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/language_button.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/language_button.cpp
   <covfile>src/mod/internal/widget/language_button.hpp
 ;
@@ -3904,6 +3921,7 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
+  <library>src/utils/hexdump.o
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
 test-run tests/mod/rdp/channels/test_channel_file :
@@ -4007,11 +4025,49 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
 test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_file_system_drive_manager.cpp
 :
+  <library>app_path_test.o
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/rdpdr_file_system_drive_manager.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_alternate_shell_based_launcher.cpp
 :
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
+  <library>src/keyboard/keymap2.o
+  <library>src/lib/files_validator_api.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_channel :
@@ -4057,6 +4113,9 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
 test-run tests/mod/rdp/channels/test_sespro_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_launcher.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_launcher.hpp
 ;
 test-run tests/mod/rdp/channels/test_virtual_channel_data_sender :
@@ -4188,6 +4247,24 @@ test-run tests/mod/rdp/test_rdp_orders :
 test-run tests/mod/rdp/test_rdp_params :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_params.cpp
 :
+  <library>app_path_test.o
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/screen_functions.o
+  <library>src/lib/files_validator_api.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp_params.hpp
 ;
 test-run tests/mod/test_icap_files_service :
@@ -4677,6 +4754,7 @@ test-run tests/transport/test_out_file_transport :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/out_file_transport.hpp
 ;
@@ -5119,13 +5197,12 @@ test-run tests/utils/test_log_siem :
 test-run tests/utils/test_netutils :
   $(REDEMPTION_TEST_PATH)/utils/test_netutils.cpp
 :
+  <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <covfile>src/utils/netutils.cpp
   <covfile>src/utils/netutils.hpp
-;
-test-run tests/utils/test_outbound_connection_monitor_rules :
-  $(REDEMPTION_TEST_PATH)/utils/test_outbound_connection_monitor_rules.cpp
-:
 ;
 test-run tests/utils/test_parse :
   $(REDEMPTION_TEST_PATH)/utils/test_parse.cpp
@@ -5735,7 +5812,6 @@ alias test_load_theme : tests/utils/test_load_theme ;
 alias test_log : tests/utils/test_log ;
 alias test_log_siem : tests/utils/test_log_siem ;
 alias test_netutils : tests/utils/test_netutils ;
-alias test_outbound_connection_monitor_rules : tests/utils/test_outbound_connection_monitor_rules ;
 alias test_parse : tests/utils/test_parse ;
 alias test_parse_server_message : tests/utils/test_parse_server_message ;
 alias test_pattutils : tests/utils/test_pattutils ;
@@ -6496,7 +6572,6 @@ alias tests/utils.norec :
   tests/utils/test_log
   tests/utils/test_log_siem
   tests/utils/test_netutils
-  tests/utils/test_outbound_connection_monitor_rules
   tests/utils/test_parse
   tests/utils/test_parse_server_message
   tests/utils/test_pattutils
