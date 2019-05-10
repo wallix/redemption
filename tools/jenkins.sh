@@ -40,6 +40,8 @@ export cxx_color=never
 
 build()
 {
+    export BOOST_TEST_RANDOM=$RANDOM
+    echo random seed = $BOOST_TEST_RANDOM
     local e=0
     bjam -q "$@" || {
         e=$?
