@@ -44,6 +44,9 @@ void ProxyRecorder::front_step1()
         this->is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
         this->is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
 
+        LOG_IF((this->verbosity > 8) && this->is_tls_client, LOG_INFO, "TLS Client");
+        LOG_IF((this->verbosity > 8) && this->is_nla_client, LOG_INFO, "NLA Client");
+
         StaticOutStream<256> front_x224_stream;
         X224::CC_TPDU_Send(
             front_x224_stream,
@@ -57,8 +60,6 @@ void ProxyRecorder::front_step1()
             this->frontConn.enable_server_tls("inquisition", nullptr, 0);
         }
 
-        LOG_IF((this->verbosity > 8) && this->is_tls_client, LOG_INFO, "TLS Client");
-        LOG_IF((this->verbosity > 8) && this->is_nla_client, LOG_INFO, "NLA Client");
         
         if (this->is_nla_client) {
             if (this->verbosity > 4) {
@@ -66,6 +67,8 @@ void ProxyRecorder::front_step1()
             }
             this->nego_server = std::make_unique<NegoServer>(this->front_nla_tee_trans, nla_username, nla_password, this->verbosity > 8);
         }
+
+        // TODO: here I am starting back end client connection, maybe I should 
 
         nego_client = std::make_unique<NegoClient>(
             !nla_username.empty(),
