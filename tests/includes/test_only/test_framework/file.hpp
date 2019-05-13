@@ -40,7 +40,7 @@ namespace redemption_unit_test__
             return filesize(s.c_str());
         }
     };
-}
+} // namespace redemption_unit_test__
 
 namespace tu
 {
@@ -67,7 +67,7 @@ namespace tu
 
     inline int int_(int n) { return n; }
     inline redemption_unit_test__::int_variation int_(redemption_unit_test__::int_variation n) { return n; }
-}
+} // namespace tu
 
 #define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len));
 #define RED_REQUIRE_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len));
