@@ -29,9 +29,9 @@
 
 Bouncer2Mod::Bouncer2Mod(
     SessionReactor& session_reactor,
-    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
-    Font const & font)
-: InternalMod(drawable, front, width, height, font, Theme{})
+    uint16_t width, uint16_t height)
+: front_width(width)
+, front_height(height)
 , dancing_rect(0,0,100,100)
 , session_reactor(session_reactor)
 , timer(session_reactor.create_graphic_timer()
@@ -41,9 +41,14 @@ Bouncer2Mod::Bouncer2Mod(
     })))
 {}
 
-Bouncer2Mod::~Bouncer2Mod()
+Rect Bouncer2Mod::get_screen_rect() const
 {
-    this->screen.clear();
+    return Rect(0, 0, this->front_width, this->front_height);
+}
+
+Dimension Bouncer2Mod::get_dim() const
+{
+    return Dimension(this->front_width, this->front_height);
 }
 
 void Bouncer2Mod::rdp_input_scancode(
@@ -98,7 +103,7 @@ void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 
     if (this->draw_green_carpet) {
         update_lock lock{gd};
-        gd.draw(RDPOpaqueRect(this->screen.get_rect(), encode_color24()(GREEN)), this->screen.get_rect(), color_ctx);
+        gd.draw(RDPOpaqueRect(this->get_screen_rect(), encode_color24()(GREEN)), this->get_screen_rect(), color_ctx);
         this->draw_green_carpet = false;
     }
 
@@ -125,10 +130,10 @@ void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 
     gd.begin_update();
     // Drawing the RECT
-    gd.draw(RDPOpaqueRect(this->dancing_rect, encode_color24()(RED)), this->screen.get_rect(), color_ctx);
+    gd.draw(RDPOpaqueRect(this->dancing_rect, encode_color24()(RED)), this->get_screen_rect(), color_ctx);
 
     // And erase
-    this->wipe(oldrect, this->dancing_rect, encode_color24()(GREEN), this->screen.get_rect(), gd);
+    this->wipe(oldrect, this->dancing_rect, encode_color24()(GREEN), this->get_screen_rect(), gd);
     gd.end_update();
 }
 

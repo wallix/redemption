@@ -134,7 +134,6 @@ exe rdpproxy :
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -548,7 +547,6 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -872,26 +870,18 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
@@ -2404,7 +2394,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -2536,7 +2525,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -2837,18 +2825,12 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2901,7 +2883,6 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -2946,7 +2927,6 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -2991,7 +2971,6 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/flat_wab_close_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
@@ -3032,7 +3011,6 @@ test-run tests/mod/internal/test_flat_wait_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_wait_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -3072,7 +3050,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -3100,27 +3077,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/interactive_target_mod.cpp
   <covfile>src/mod/internal/interactive_target_mod.hpp
-;
-test-run tests/mod/internal/test_internal_mod :
-  $(REDEMPTION_TEST_PATH)/mod/internal/test_internal_mod.cpp
-:
-  <library>crypto
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/internal_mod.cpp
-  <covfile>src/mod/internal/internal_mod.hpp
 ;
 test-run tests/mod/internal/test_replay_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_replay_mod.cpp
@@ -3165,7 +3121,6 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/widget/composite.o
@@ -3196,20 +3151,13 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3227,11 +3175,6 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
@@ -4460,12 +4403,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
@@ -4517,12 +4455,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
@@ -4574,12 +4507,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
@@ -5417,7 +5345,6 @@ obj src/mod/internal/flat_login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat
 obj src/mod/internal/flat_wab_close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_wab_close_mod.cpp ;
 obj src/mod/internal/flat_wait_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_wait_mod.cpp ;
 obj src/mod/internal/interactive_target_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/interactive_target_mod.cpp ;
-obj src/mod/internal/internal_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/internal_mod.cpp ;
 obj src/mod/internal/locally_integrable_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/locally_integrable_mod.cpp ;
 obj src/mod/internal/rail_module_host_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/rail_module_host_mod.cpp ;
 obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;
@@ -5677,7 +5604,6 @@ alias test_flat_login_mod : tests/mod/internal/test_flat_login_mod ;
 alias test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod ;
 alias test_flat_wait_mod : tests/mod/internal/test_flat_wait_mod ;
 alias test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod ;
-alias test_internal_mod : tests/mod/internal/test_internal_mod ;
 alias test_replay_mod : tests/mod/internal/test_replay_mod ;
 alias test_selector_mod : tests/mod/internal/test_selector_mod ;
 alias test_test_card_mod : tests/mod/internal/test_test_card_mod ;
@@ -6010,7 +5936,6 @@ alias test_flat_login_mod.coverage : tests/mod/internal/test_flat_login_mod.cove
 alias test_flat_wab_close_mod.coverage : tests/mod/internal/test_flat_wab_close_mod.coverage ;
 alias test_flat_wait_mod.coverage : tests/mod/internal/test_flat_wait_mod.coverage ;
 alias test_interactive_target_mod.coverage : tests/mod/internal/test_interactive_target_mod.coverage ;
-alias test_internal_mod.coverage : tests/mod/internal/test_internal_mod.coverage ;
 alias test_replay_mod.coverage : tests/mod/internal/test_replay_mod.coverage ;
 alias test_selector_mod.coverage : tests/mod/internal/test_selector_mod.coverage ;
 alias test_test_card_mod.coverage : tests/mod/internal/test_test_card_mod.coverage ;
@@ -6405,7 +6330,6 @@ alias tests/mod/internal.norec :
   tests/mod/internal/test_flat_wab_close_mod
   tests/mod/internal/test_flat_wait_mod
   tests/mod/internal/test_interactive_target_mod
-  tests/mod/internal/test_internal_mod
   tests/mod/internal/test_replay_mod
   tests/mod/internal/test_selector_mod
   tests/mod/internal/test_test_card_mod

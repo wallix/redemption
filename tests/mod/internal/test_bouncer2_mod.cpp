@@ -22,7 +22,6 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"
-#include "test_only/core/font.hpp"
 
 // TEST missing
 int main()
@@ -36,6 +35,6 @@ int main()
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
     SessionReactor session_reactor;
-    Bouncer2Mod d(session_reactor, front.gd(), front, screen_info.width, screen_info.height, global_font());
+    Bouncer2Mod d(session_reactor, screen_info.width, screen_info.height);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

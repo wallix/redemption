@@ -20,14 +20,17 @@
 
 #pragma once
 
-#include "mod/internal/internal_mod.hpp"
-class SessionReactor;
+#include "mod/mod_api.hpp"
 
-class WidgetTestMod : public InternalMod
+class SessionReactor;
+class FrontAPI;
+class Font;
+
+class WidgetTestMod : public mod_api
 {
 public:
     WidgetTestMod(SessionReactor& session_reactor,
-        gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+        FrontAPI & front, uint16_t width, uint16_t height,
         Font const & font);
 
     ~WidgetTestMod() override;
@@ -38,6 +41,10 @@ public:
 
     void rdp_input_scancode(long /*param1*/, long /*param2*/, long /*param3*/,
                             long /*param4*/, Keymap2 * keymap) override;
+
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override;
+
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override;
 
     void refresh(Rect clip) override;
 

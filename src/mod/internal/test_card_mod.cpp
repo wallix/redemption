@@ -35,10 +35,10 @@
 
 TestCardMod::TestCardMod(
     SessionReactor& session_reactor,
-    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+    uint16_t width, uint16_t height,
     Font const & font, bool unit_test)
-: InternalMod(drawable, front, width, height, font, Theme{})
-, palette332(BGRPalette::classic_332())
+: front_width(width)
+, front_height(height)
 , font(font)
 , unit_test(unit_test)
 , session_reactor(session_reactor)
@@ -47,6 +47,16 @@ TestCardMod::TestCardMod(
         mod.draw_event(gd);
     })))
 {}
+
+Rect TestCardMod::get_screen_rect() const
+{
+    return Rect(0, 0, this->front_width, this->front_height);
+}
+
+Dimension TestCardMod::get_dim() const
+{
+    return Dimension(this->front_width, this->front_height);
+}
 
 void TestCardMod::rdp_input_scancode(
     long /*param1*/, long /*param2*/, long /*param3*/,
@@ -137,7 +147,7 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
         0xf0, 0xc0, 0x0f,
     };
 
-    Bitmap bloc64x64(BitsPerPixel{24}, BitsPerPixel{24}, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
+    Bitmap bloc64x64(BitsPerPixel{24}, BitsPerPixel{24}, &BGRPalette::classic_332(), 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
     gd.draw(RDPMemBlt(0,
         Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx(), bloc64x64.cy()), 0xCC,
             32, 32, 0), clip, bloc64x64);
