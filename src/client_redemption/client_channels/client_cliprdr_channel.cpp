@@ -624,12 +624,13 @@
                                 this->file_content_flag = RDPECLIP::FILECONTENTS_SIZE;
 
                                 StaticOutStream<32> out_streamRequest;
-                                RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
-                                                                                    , this->file_content_flag
-                                                                                    , cb_filesList.lindexToRequest
-                                                                                    , 0
-                                                                                    , 0
-                                                                                    , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED);
+                                RDPECLIP::FileContentsRequestPDU fileContentsRequest(
+                                                  cb_filesList.streamIDToRequest
+                                                , this->file_content_flag
+                                                , cb_filesList.lindexToRequest
+                                                , 0
+                                                , 0
+                                                , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED);
                                 fileContentsRequest.emit(out_streamRequest);
                                 const uint32_t total_length_FormatContentRequestPDU = out_streamRequest.get_offset();
 
