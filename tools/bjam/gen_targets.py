@@ -51,8 +51,6 @@ inc_test_dep = Dep(cxxflags=['<include>$(REDEMPTION_TEST_PATH)/includes']) # for
 
 src_requirements = dict((
     ('src/lib/scytale.cpp', inc_test_dep),
-    ('src/main/rdp_client.cpp', inc_test_dep),
-    ('src/main/main_client_redemption.cpp', inc_test_dep),
     ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
 ))
 

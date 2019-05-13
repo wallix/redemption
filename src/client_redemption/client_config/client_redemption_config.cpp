@@ -371,7 +371,7 @@ void ClientConfig::writeCustomKeyConfig(ClientRedemptionConfig & config)  {
 }
 
 
-// TODO PERF very inneficient. replace to get_file_contents()
+// TODO PERF very inneficient. replace to append_file_contents()
 bool ClientConfig::read_line(const int fd, std::string & line) {
     line.clear();
     if (fd < 0) {

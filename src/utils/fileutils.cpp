@@ -24,6 +24,7 @@
 #include "utils/log.hpp"
 #include "utils/file.hpp"
 #include "utils/strutils.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #include <cstdio>
 #include <cstddef>
@@ -378,4 +379,41 @@ int recursive_delete_directory(const char * directory_path)
     }
 
     return return_value;
+}
+
+FileContentsError append_file_contents(const char * filename, std::string& buffer)
+{
+    if (unique_fd ufd{open(filename, O_RDONLY)}) {
+        struct stat statbuf;
+        if (-1 == fstat(ufd.fd(), &statbuf)) {
+            return FileContentsError::Stat;
+        }
+
+        ssize_t remaining = statbuf.st_size;
+        buffer.resize(buffer.size() + remaining);
+        auto* p = buffer.data() + buffer.size() - remaining;
+        ssize_t r;
+        for (;;) {
+            r = read(ufd.fd(), p, remaining);
+            if (r > 0) {
+                remaining -= r;
+            }
+            else {
+                break;
+            }
+        }
+
+        if (remaining || r < 0) {
+            return FileContentsError::Read;
+        }
+
+        return FileContentsError::None;
+    }
+
+    return FileContentsError::Open;
+}
+
+FileContentsError append_file_contents(std::string const& filename, std::string& buffer)
+{
+    return append_file_contents(filename.c_str(), buffer);
 }

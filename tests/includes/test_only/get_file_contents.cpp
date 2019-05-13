@@ -18,20 +18,19 @@
 *   Author(s): Jonathan Poelen
 */
 
-#pragma once
+#include "test_only/get_file_contents.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include <string>
-#include "utils/fileutils.hpp"
+#include <cstring>
+#include <cerrno>
 
-std::string get_file_contents(const char * filename);
 
-inline std::string get_file_contents(std::string const& name)
+std::string get_file_contents(const char * filename)
 {
-    return get_file_contents(name.c_str());
-}
-
-template<class T>
-std::string get_file_contents(T const& name)
-{
-    return get_file_contents(static_cast<char const*>(name));
+    std::string s;
+    const FileContentsError error = append_file_contents(filename, s);
+    if (bool(error)) {
+        RED_FAIL("get_file_contents error for '" << filename << "': " << strerror(errno));
+    }
+    return s;
 }

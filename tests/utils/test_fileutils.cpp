@@ -187,3 +187,12 @@ RED_AUTO_TEST_CASE(TestFileEquals)
     RED_CHECK(file_equals(__FILE__, __FILE__));
     RED_CHECK(!file_equals(__FILE__, "/dev/zero"));
 }
+
+RED_AUTO_TEST_CASE(TestAppendFileContents)
+{
+    std::string buf;
+    RED_TEST(append_file_contents("/unknown_path/unknown_file", buf) != FileContentsError::None);
+    RED_TEST(buf.empty());
+    RED_TEST(append_file_contents(FIXTURES_PATH "/test_infile.txt", buf) == FileContentsError::None);
+    RED_TEST(buf == "We read what we provide!");
+}

@@ -60,3 +60,14 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
 int recursive_create_directory(const char * directory, mode_t mode, int groupid);
 
 int recursive_delete_directory(const char * directory_path);
+
+enum class [[nodiscard]] FileContentsError
+{
+    None,
+    Open,
+    Stat,
+    Read,
+};
+
+FileContentsError append_file_contents(const char * filename, std::string& buffer);
+FileContentsError append_file_contents(std::string const& filename, std::string& buffer);

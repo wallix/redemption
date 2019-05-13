@@ -28,10 +28,10 @@
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
 #include "program_options/program_options.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/cfgloader.hpp"
+#include "utils/fileutils.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/netutils.hpp"
@@ -156,7 +156,13 @@ int main(int argc, char** argv)
                 recorder.add_info({});
             }
             else {
-                auto contents = get_file_contents(ini_file);
+                std::string contents;
+                auto error = append_file_contents(ini_file, contents);
+                if (bool(error)) {
+                    int errnum = errno;
+                    LOG(LOG_ERR, "failed to read %s: %s", ini_file, strerror(errnum));
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errnum);
+                }
                 recorder.add_info(contents);
             }
             for (auto cstr : make_array_view(argv+1, argv+argc)) {

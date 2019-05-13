@@ -22,8 +22,8 @@
 #include "utils/netutils.hpp"
 #include "mod/icap_files_service.hpp"
 #include "test_only/get_file_contents.hpp"
-#include "utils/log.hpp"
 
+#include <fstream>
 
 
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPService) {

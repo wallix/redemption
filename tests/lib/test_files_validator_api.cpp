@@ -29,6 +29,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 
+#include <fstream>
 
 
 RED_AUTO_TEST_CASE(testFileValid)
