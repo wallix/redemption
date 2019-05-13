@@ -296,7 +296,6 @@ RED_AUTO_TEST_CASE(TestNLAOnSiteCapture)
     char finalPathBuffer[256];
     char const* finalPath = captureTemplate.format(finalPathBuffer, connection_counter);
     LOG(LOG_INFO, "Recording front connection in %s", finalPath);
-
     FrozenTime timeobj;
     RecorderFile outFile(timeobj, finalPath);
 
@@ -307,17 +306,17 @@ RED_AUTO_TEST_CASE(TestNLAOnSiteCapture)
 
     ProxyRecorder conn(frontConn, backConn, back_nla_tee_trans, outFile, timeobj, "0.0.0.0", nla_username, nla_password, enable_kerberos, verbosity);
 
-    uint8_t front_public_key[1024] = {};
-    array_view_u8 front_public_key_av = {};
+    uint8_t front_public_key[1024] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+    array_view_u8 front_public_key_av = {front_public_key, 16};
     
     conn.frontBuffer.load_data(conn.frontConn);
-//    conn.front_step1();
+    if (conn.frontBuffer.next(TpduBuffer::PDU)) {
+        conn.front_step1();
+        hexdump(front_public_key, 16);
+        // front public key ready from here
+        conn.back_step1(front_public_key_av);
+    }
 
-//    auto key = front_nla_tee_trans.get_public_key();
-//    memcpy(front_public_key, key.data(), key.size());
-//    front_public_key_av = array_view(front_public_key, key.size());
-//    
-//    conn.back_step1(front_public_key_av);
 }
 
 RED_AUTO_TEST_CASE(TestNLARedemptionToWindows2012DC)
