@@ -62,6 +62,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
     RED_CHECK_EQUAL(-60, cs_monitor.monitorDefArray[0].bottom);
 	RED_CHECK_EQUAL(0, (cs_monitor.monitorDefArray[0].flags & TS_MONITOR_PRIMARY) );
 
-    cs_monitor.log("Client Received");
-
+    // cs_monitor.log("Client Received");
 }

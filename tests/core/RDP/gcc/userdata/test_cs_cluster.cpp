@@ -51,5 +51,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     RED_CHECK_EQUAL(13, cs_cluster.flags);
     RED_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
 
-    cs_cluster.log("Client Received");
+    // cs_cluster.log("Client Received");
 }

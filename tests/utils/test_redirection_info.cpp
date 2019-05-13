@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestRedirectionInfo)
     memcpy(rinfo.domain, "domaine", sizeof("domaine"));
     rinfo.smart_card_logon = true;
 
-    rinfo.log(LOG_INFO, "test rinfo");
+    // rinfo.log(LOG_INFO, "test rinfo");
 
     RED_CHECK_EQUAL(rinfo.session_id, 3333u);
     rinfo = RedirectionInfo();

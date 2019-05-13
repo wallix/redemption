@@ -63,6 +63,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     RED_CHECK_EQUAL(120, cs_monitor_ex.monitorAttributesArray[0].desktopScaleFactor);
 	  RED_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].deviceScaleFactor);
 
-    cs_monitor_ex.log("Client Received");
-
+    // cs_monitor_ex.log("Client Received");
 }

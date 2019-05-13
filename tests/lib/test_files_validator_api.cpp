@@ -21,7 +21,6 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "lib/files_validator_api.hpp"
-#include "utils/log.hpp"
 
 
 #include "core/error.hpp"

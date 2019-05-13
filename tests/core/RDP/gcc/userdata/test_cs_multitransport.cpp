@@ -51,5 +51,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
                      GCC::UserData::CSMultiTransport::SOFTSYNC_TCP_TO_UDP),
                     cs_multitransport.flags);
 
-    cs_multitransport.log("Client Received");
+    // cs_multitransport.log("Client Received");
 }
