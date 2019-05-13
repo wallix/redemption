@@ -63,7 +63,8 @@ $(find src/ -name '*.cpp' \
     -a -not -path 'src/main/*' \
     -a -not -name app_path.cpp \
     -a -not -name log_as_logemasm.cpp) \
-$(find tests/ -name '*.cpp' \
+$(find tests/ -name 'test_*.cpp' \
+    -a -not -path 'tests/includes/*' \
     -a -not -path 'tests/keyboard/*' \
     -a -not -path 'tests/system/emscripten/*' \
     -a -not -path 'tests/utils/crypto/*') \
@@ -79,7 +80,11 @@ $(find tests/ -name '*.cpp' \
 -I'src' \
 -I'src/system/linux' \
 -I'tests/includes/' \
--DZLIB_CONST
+-DZLIB_CONST \
+-DFIXTURES_PATH='"mypath"' \
+-DREDEMPTION_DECL_LOG_TEST \
+-DBOOST_AUTO_TEST_MAIN \
+-DBOOST_TEST_DYN_LINK
 
 # highlighting
-# sed "s#`pwd`/##" | colout '(^[ps][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w
+# sed "s#`pwd`/##" | colout '(^[pst][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w
