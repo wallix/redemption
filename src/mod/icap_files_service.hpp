@@ -583,35 +583,42 @@ inline void icap_receive_result(ICAPService * service) {
     int read_data_len = -1;
 
     if (service->fd.is_open()) {
+
         char buff[512] = {0};
 
         while (read_data_len < 0) {
             read_data_len = read(service->fd.fd(), buff, 512);
         }
 
-        InStream stream_data(buff, read_data_len);
-        LocalICAPServiceProtocol::ICAPHeader header;
-        header.receive(stream_data);
+        if (read_data_len ) {
+            InStream stream_data(buff, read_data_len);
+            LocalICAPServiceProtocol::ICAPHeader header;
+            header.receive(stream_data);
 
-        switch(header.msg_type) {
+            switch(header.msg_type) {
 
-            case LocalICAPServiceProtocol::RESULT_FLAG:
-            {
-                LocalICAPServiceProtocol::ICAPResult result;
-                result.receive(stream_data);
-                service->result = result.result;
-                service->content = result.content;
-                service->last_result_file_id_received = result.id;
+                case LocalICAPServiceProtocol::RESULT_FLAG:
+                {
+                    LocalICAPServiceProtocol::ICAPResult result;
+                    result.receive(stream_data);
+                    service->result = result.result;
+                    service->content = result.content;
+                    service->last_result_file_id_received = result.id;
+                }
+                    break;
+
+                case LocalICAPServiceProtocol::CHECK_FLAG:
+                {
+                    LocalICAPServiceProtocol::ICAPCheck check;
+                    check.receive(stream_data);
+                    service->service_is_up = (check.up_flag == LocalICAPServiceProtocol::SERVICE_UP_FLAG);
+                }
+                    break;
             }
-                break;
-
-            case LocalICAPServiceProtocol::CHECK_FLAG:
-            {
-                LocalICAPServiceProtocol::ICAPCheck check;
-                check.receive(stream_data);
-                service->service_is_up = (check.up_flag == LocalICAPServiceProtocol::SERVICE_UP_FLAG);
-            }
-                break;
+        } else {
+            service->fd.close();
+            service->result = LocalICAPServiceProtocol::ERROR_FLAG;
+            service->content =  "Error, Validator local service is closed.";
         }
     }
 }

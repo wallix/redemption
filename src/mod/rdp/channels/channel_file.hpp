@@ -119,17 +119,19 @@ public:
         if (new_size > this->total_file_size) {
             over_data_len = new_size - this->total_file_size;
             LOG(LOG_INFO, "ChanneFile::set_data over_data_len=%zu data_size=%zu ", over_data_len, data_size);
+        } else {
+            this->current_file_size = new_size;
         }
-//         L
+
         if (this->is_saving_files) {
             if (this->fd.is_open()) {
 
                 int written_data_size = ::write(this->fd.fd(), data, (data_size - over_data_len));
 
-                if (written_data_size == -1 && (int(data_size) == written_data_size)) {
+                if (written_data_size == -1 && (int(data_size - over_data_len) == written_data_size)) {
                     LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data_size, written_data_size);
                 } else {
-                    this->current_file_size += data_size;
+                    //this->current_file_size += data_size;
                     if ( this->current_file_size == this->total_file_size) {
                         this->fd.close();
                     }
@@ -139,7 +141,7 @@ public:
         }
 
         if (this->enable_validator) {
-            icap_send_data(this->icap_service, this->streamID, char_ptr_cast(data), data_size);
+            icap_send_data(this->icap_service, this->streamID, char_ptr_cast(data), data_size - over_data_len);
         }
     }
 

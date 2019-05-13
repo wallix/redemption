@@ -238,6 +238,8 @@ public:
                 } else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
 
+                    LOG(LOG_INFO, "cliprdr_channel::process_client_message desc.file_size() = %" PRIu64 " ", desc.file_size());
+
                     this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_SERVER, this->session_reactor.get_current_time());
                 }
                 send_message_to_server = this->params.clipboard_file_authorized;
@@ -453,7 +455,7 @@ public:
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             /* msgType(2) + msgFlags(2) + dataLen(4) */
-            ::check_throw(chunk, 8, "ClipboardVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
+            ::check_throw(chunk, 8, "ClipboardVirtualChannel::process_server_message", ERR_RDP_DATA_TRUNCATED);
             header.recv(chunk);
 
             this->clip_data.server_data.message_type = header.msgType();
@@ -483,6 +485,8 @@ public:
 
                 if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
+
+                    LOG(LOG_INFO, "cliprdr_channel::process_server_message desc.file_size() = %" PRIu64 " ", desc.file_size());
 
                     this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_CLIENT, this->session_reactor.get_current_time());
                 }
