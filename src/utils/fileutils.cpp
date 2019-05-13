@@ -37,7 +37,7 @@
 #include <alloca.h>
 
 #ifdef __EMSCRIPTEN__
-char const* basename(char const* path)
+char const* basename(char const* path) noexcept
 {
     char const* p = path;
 
@@ -57,14 +57,14 @@ char const* basename(char const* path)
     return path;
 }
 
-char* basename(char* path)
+char* basename(char* path) noexcept
 {
     return const_cast<char*>(basename(const_cast<char const*>(path)));
 }
 #endif
 
 // two flavors of basename_len to make it const agnostic
-const char * basename_len(const char * path, size_t & len)
+const char * basename_len(const char * path, size_t & len) noexcept
 {
     const char * tmp = strrchr(path, '/');
     if (tmp){
@@ -75,13 +75,13 @@ const char * basename_len(const char * path, size_t & len)
     return path;
 }
 
-char * basename_len(char * path, size_t & len) /* NOLINT(readability-non-const-parameter) */
+char * basename_len(char * path, size_t & len) noexcept /* NOLINT(readability-non-const-parameter) */
 {
     char const * const_path = path;
     return const_cast<char*>(basename_len(const_path, len)); /*NOLINT*/
 }
 
-int filesize(const char * path)
+int filesize(const char * path) noexcept
 {
     struct stat sb;
     int status = stat(path, &sb);
@@ -92,13 +92,13 @@ int filesize(const char * path)
     return -1;
 }
 
-bool file_exist(const char * path)
+bool file_exist(const char * path) noexcept
 {
     struct stat sb;
     return (stat(path, &sb) == 0);
 }
 
-bool dir_exist(const char * path)
+bool dir_exist(const char * path) noexcept
 {
     struct stat sb;
     int statok = ::stat(path, &sb);
@@ -106,17 +106,17 @@ bool dir_exist(const char * path)
 }
 
 
-int filesize(std::string const& path)
+int filesize(std::string const& path) noexcept
 {
     return filesize(path.c_str());
 }
 
-bool file_exist(std::string const& path)
+bool file_exist(std::string const& path) noexcept
 {
     return file_exist(path.c_str());
 }
 
-bool dir_exist(std::string const& path)
+bool dir_exist(std::string const& path) noexcept
 {
     return dir_exist(path.c_str());
 }

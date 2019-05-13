@@ -27,23 +27,23 @@
 #include <sys/types.h> // mode_t
 
 #ifdef __EMSCRIPTEN__
-char* basename(char* path);
-char const* basename(char const* path);
+char* basename(char* path) noexcept;
+char const* basename(char const* path) noexcept;
 #endif
 
 // two flavors of basename_len to make it const agnostic
-const char * basename_len(const char * path, size_t & len);
+const char * basename_len(const char * path, size_t & len) noexcept;
 
-char * basename_len(char * path, size_t & len);
+char * basename_len(char * path, size_t & len) noexcept;
 
-int filesize(const char * path);
-int filesize(std::string const& path);
+int filesize(const char * path) noexcept;
+int filesize(std::string const& path) noexcept;
 
-bool file_exist(const char * path);
-bool file_exist(std::string const& path);
+bool file_exist(const char * path) noexcept;
+bool file_exist(std::string const& path) noexcept;
 
-bool dir_exist(const char * path);
-bool dir_exist(std::string const& path);
+bool dir_exist(const char * path) noexcept;
+bool dir_exist(std::string const& path) noexcept;
 
 bool file_equals(char const* filename1, char const* filename2);
 
