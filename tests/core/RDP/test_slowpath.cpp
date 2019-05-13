@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
         break;
 
         default:
-            RED_CHECK(false);
+            RED_FAIL(in_ie.messageType);
         break;
         }
     }
@@ -182,7 +182,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
         break;
 
         default:
-            RED_CHECK(false);
+            RED_FAIL(in_ie.messageType);
         break;
         }
     }

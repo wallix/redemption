@@ -102,7 +102,7 @@ RED_AUTO_TEST_CASE(TestCfgloader)
                     RED_CHECK_EQ(value, "x");
                     break;
                 default:
-                    RED_CHECK(false);
+                    RED_FAIL(i-1);
             }
         }
     } cfg;

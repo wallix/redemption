@@ -336,7 +336,7 @@ RED_AUTO_TEST_CASE(TestRect)
                     RED_CHECK(b == Rect(10, 25, 50, 35));
                 break;
                 default:
-                    RED_CHECK(false);
+                    RED_FAIL(counter);
             }
             ++counter;
         });

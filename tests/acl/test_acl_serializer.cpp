@@ -712,7 +712,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
     CryptoContext cctx;
     init_keys(cctx);
     SessionLogFile log_file(cctx, rnd, fstat, ReportError([](Error e){
-        RED_CHECK(false);
+        RED_FAIL(e.errmsg());
         return e;
     }));
 

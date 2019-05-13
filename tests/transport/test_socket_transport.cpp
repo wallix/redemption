@@ -189,17 +189,12 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
                 int sck = accept(sck_server.fd(), &u.s, &sin_size);
                 strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
                 LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
-                if (sck > 0){
-                    recv_sck[nb_recv_sck] = sck;
-                    sck_trans[nb_recv_sck] = std::make_unique<SocketTransport>(
-                        "Reader", unique_fd{sck}, "127.0.0.1", 4444,
-                        std::chrono::seconds(1), to_verbose_flags(511));
-                    nb_recv_sck++;
-                }
-                else {
-                    RED_CHECK(false);
-                    run = false;
-                }
+                RED_REQUIRE(sck > 0);
+                recv_sck[nb_recv_sck] = sck;
+                sck_trans[nb_recv_sck] = std::make_unique<SocketTransport>(
+                    "Reader", unique_fd{sck}, "127.0.0.1", 4444,
+                    std::chrono::seconds(1), to_verbose_flags(511));
+                nb_recv_sck++;
             }
         }
         break;

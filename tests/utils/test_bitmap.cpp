@@ -3787,7 +3787,7 @@ static int rle_bin_to_run_order(
                             };
 
                     default:
-                        RED_CHECK(false);
+                        RED_FAIL(image_data_current);
                         return {
                                 false,
                                 static_cast<CodeIdentifier>(image_data_current),
@@ -3856,7 +3856,7 @@ static int rle_bin_to_run_order(
                     };
 
             default:
-                RED_CHECK(false);
+                RED_FAIL(image_data_current);
                 return {
                         true,
                         static_cast<CodeIdentifier>(image_data_current),
@@ -3892,7 +3892,7 @@ static int rle_bin_to_run_order(
             break;
 
             default:
-                RED_CHECK(false);
+                RED_FAIL(run_order.code_identifier);
                 break;
         }
     }
