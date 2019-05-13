@@ -20,12 +20,12 @@
 
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/file.hpp"
 
 
 #include "gdi/graphic_api.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "test_only/get_file_contents.hpp"
 
 
 class TestToServerSender : public VirtualChannelDataSender {
@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 {
     uint32_t verbose = 1;
 
-    auto contents = get_file_contents(FIXTURES_PATH "/sample.bmp");
+    auto contents = tu::get_file_contents(FIXTURES_PATH "/sample.bmp");
     RED_CHECK_EQUAL(1974u, contents.size());
 
     //LogTransport log_transport;

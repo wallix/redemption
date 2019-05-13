@@ -21,7 +21,6 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "test_only/get_file_contents.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "core/RDP/clipboard.hpp"

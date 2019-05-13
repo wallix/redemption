@@ -397,6 +397,7 @@ FileContentsError append_file_contents(const char * filename, std::string& buffe
             r = read(ufd.fd(), p, remaining);
             if (r > 0) {
                 remaining -= r;
+                p += r;
             }
             else {
                 break;

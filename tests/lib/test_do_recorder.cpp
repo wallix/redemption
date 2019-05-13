@@ -28,8 +28,6 @@
 #include "utils/sugar/algostring.hpp"
 #include "transport/crypto_transport.hpp"
 
-#include "test_only/get_file_contents.hpp"
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -243,8 +241,8 @@ RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
       = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
         WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
 
-    RED_CHECK_NE(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents_before);
-    RED_CHECK_NE(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+    RED_CHECK_NE(tu::get_file_contents(tmp_hash_mwrm), mwrm_hash_contents_before);
+    RED_CHECK_NE(tu::get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
 
     char const * argv[] {
         "verifier.py",

@@ -22,6 +22,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "acl/acl_serializer.hpp"
 #include "configs/config.hpp"
@@ -31,7 +32,6 @@
 #include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
-#include "test_only/get_file_contents.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
@@ -723,9 +723,9 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
     log_file.write_line(1512484185, cstr_array_view("test second"));
     log_file.close();
 
-    RED_CHECK_EQ(get_file_contents(filename),
+    RED_CHECK_FILE_CONTENTS(filename,
         "2017-12-05 15:29:43 test first\n"
-        "2017-12-05 15:29:45 test second\n");
+        "2017-12-05 15:29:45 test second\n"_av);
 
     InFileTransport t(unique_fd{open(hashname.c_str(), O_RDONLY)});
     MwrmReader mwrm_reader(t);

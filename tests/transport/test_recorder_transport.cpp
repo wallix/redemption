@@ -20,11 +20,11 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "transport/recorder_transport.hpp"
 #include "transport/replay_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/select.hpp"
@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         }
     }
 
-    auto s = get_file_contents(wf);
+    auto s = tu::get_file_contents(wf);
     RED_CHECK_MEM_C(s,
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""abc"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00""defg"

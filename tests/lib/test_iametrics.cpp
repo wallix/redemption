@@ -20,12 +20,12 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/file.hpp"
 #include <chrono>
 
 using namespace std::chrono_literals;
 
 #include "utils/fileutils.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "lib/iametrics.hpp"
@@ -147,8 +147,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
 
     std::string expected_log_index("2018-08-02 12:08:01 connection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
 
-    RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
-    RED_CHECK_EQUAL(get_file_contents(logindex1), expected_log_index);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
+    RED_CHECK_FILE_CONTENTS(logindex1, expected_log_index);
 
     metrics_delete(metrics);
 
@@ -158,8 +158,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
 
     std::string expected_log_metrics1("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
 
-    RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics1);
-    RED_CHECK_EQUAL(get_file_contents(logindex1), expected_log_index+expected_disconnected_index);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics1);
+    RED_CHECK_FILE_CONTENTS(logindex1, expected_log_index+expected_disconnected_index);
 }
 
 
@@ -189,22 +189,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations)
     std::string expected_log_metrics1("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0\n");
 
     metrics_log(metrics, (epoch + 4) * 1000);
-    RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
+    RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
     metrics_log(metrics, (epoch + 5) * 1000);
-    RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics1);
-
-    std::string expected_log_metrics2("2018-08-02 12:08:11 164d89c1a56957b752540093e178 1 2 3 4 5 6 7 8 9 10\n");
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics1);
 
     for (unsigned index = 0; index < index_len; index++) {
         unsigned val = index+1u;
         metrics_add_to_current_data(metrics, index, val);
     }
     metrics_log(metrics, (epoch + 7) * 1000);
-    RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics1);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics1);
 
     metrics_log(metrics, (epoch + 10) * 1000);
-    RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics1+expected_log_metrics2);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics1+"2018-08-02 12:08:11 164d89c1a56957b752540093e178 1 2 3 4 5 6 7 8 9 10\n");
 
     metrics_delete(metrics);
 

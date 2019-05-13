@@ -29,7 +29,6 @@
 #include "capture/file_to_graphic.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/fake_stat.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "transport/in_file_transport.hpp"
@@ -227,8 +226,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
     });
 
-    RED_CHECK_SIG(
-        get_file_contents(record_wd.add_file("test_capture-000000.png")),
+    RED_CHECK_SIG(tu::get_file_contents(record_wd.add_file("test_capture-000000.png")),
         "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87");
 
     RED_CHECK_WORKSPACE(hash_wd);

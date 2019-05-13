@@ -25,6 +25,7 @@
 #include "utils/fileutils.hpp"
 
 #include <functional>
+#include <numeric>
 
 #include <cstring>
 #include <unistd.h> // for getgid
@@ -195,4 +196,10 @@ RED_AUTO_TEST_CASE(TestAppendFileContents)
     RED_TEST(buf.empty());
     RED_TEST(append_file_contents(FIXTURES_PATH "/test_infile.txt", buf) == FileContentsError::None);
     RED_TEST(buf == "We read what we provide!");
+    buf.clear();
+    RED_TEST(append_file_contents(FIXTURES_PATH "/sample1.wrm", buf) == FileContentsError::None);
+    unsigned accu = std::accumulate(buf.begin(), buf.end(), 0u, [](unsigned u, char c){
+        return u + uint8_t(c);
+    });
+    RED_TEST(accu == 47734549u);
 }

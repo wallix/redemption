@@ -25,7 +25,7 @@
 
 
 #include "utils/recording_progress.hpp"
-#include "test_only/get_file_contents.hpp"
+#include "utils/fileutils.hpp"
 
 
 RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)

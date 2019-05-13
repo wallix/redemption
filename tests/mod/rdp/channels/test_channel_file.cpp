@@ -19,9 +19,9 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "utils/fileutils.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "mod/rdp/channels/channel_file.hpp"
@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     file.set_data(reinterpret_cast<const uint8_t *>(word3), 5);
     RED_CHECK_EQUAL(file.is_complete(), true);
 
-    RED_CHECK_EQUAL(get_file_contents(file1), "hello world!");
+    RED_CHECK_FILE_CONTENTS(file1, "hello world!"_av);
 
     auto const file2 = wd.add_file("12345_54321_new_file2.txt");
     file.new_file("new_file2.txt", 14, streamID, direction, sec_and_usec_time);
@@ -98,18 +98,17 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     file.set_data(reinterpret_cast<const uint8_t *>(word3), 5);
     RED_CHECK_EQUAL(file.is_complete(), true);
 
-    RED_CHECK_EQUAL(get_file_contents(file1), "hello world!");
+    RED_CHECK_FILE_CONTENTS(file1, "hello world!"_av);
 
-    RED_CHECK_EQUAL(get_file_contents(file2), "goodbye world!");
+    RED_CHECK_FILE_CONTENTS(file2, "goodbye world!"_av);
 
     uint8_t buffer[15];
     file.read_data(buffer, 14);
     buffer[14] = 0;
 
     std::string file_read_data(reinterpret_cast<const char *>(buffer));
-    std::string expected_data("goodbye world!");
 
-    RED_CHECK_EQUAL(file_read_data, expected_data);
+    RED_CHECK_EQUAL(file_read_data, "goodbye world!");
 
     RED_CHECK_WORKSPACE(wd);
 

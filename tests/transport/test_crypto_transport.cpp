@@ -21,10 +21,10 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/data_test_case.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "transport/crypto_transport.hpp"
 
-#include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/test_framework/working_directory.hpp"
@@ -906,11 +906,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         RED_CHECK_MEM_AA(qh.hash, expected_hash);
         RED_CHECK_MEM_AA(fh.hash, expected_hash);
 
-        auto hash_contents = get_file_contents(hash_finalname);
-        RED_CHECK_EQ(hash_contents,
+        RED_CHECK_FILE_CONTENTS(hash_finalname,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
             " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b"
-            " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b\n");
+            " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b\n"_av);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1129,11 +1128,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         RED_CHECK_MEM_AA(ct.qhash(finalname).hash, expected_qhash);
         RED_CHECK_MEM_AA(ct.fhash(finalname).hash, expected_fhash);
 
-        auto hash_contents = get_file_contents(hash_finalname);
-        RED_CHECK_EQ(hash_contents,
+        RED_CHECK_FILE_CONTENTS(hash_finalname,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
-            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n");
+            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n"_av);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1197,11 +1195,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         RED_CHECK_MEM_AA(qh.hash, expected_qhash);
         RED_CHECK_MEM_AA(fh.hash, expected_fhash);
 
-        auto hash_contents = get_file_contents(hash_finalname);
-        RED_CHECK_EQ(hash_contents,
+        RED_CHECK_FILE_CONTENTS(hash_finalname,
             "v2\n\n\nclear.txt 0 0 0 0 0 0 0 0"
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
-            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n");
+            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n"_av);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1221,7 +1218,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     auto hash_encrypted_file = wd.add_file("hash_encrypted_file.enc");
 
     constexpr std::size_t original_filesize = 4166665;
-    auto original_contents = get_file_contents(original_filename);
+    auto original_contents = tu::get_file_contents(original_filename);
     RED_CHECK_EQUAL(original_contents.size(), original_filesize);
 
     {
@@ -1271,7 +1268,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
     auto hash_encrypted_file = wd.add_file("hash_encrypted_file.enc");
 
     constexpr std::size_t original_filesize = 4166665;
-    auto original_contents = get_file_contents(original_filename);
+    auto original_contents = tu::get_file_contents(original_filename);
     RED_REQUIRE_EQUAL(original_contents.size(), original_filesize);
 
     uint8_t qhash[MD_HASH::DIGEST_LENGTH] = {};
