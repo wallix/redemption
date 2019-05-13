@@ -54,6 +54,14 @@ src_requirements = dict((
     ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
 ))
 
+obj_requirements = dict((
+    ('tests/includes/test_only/test_framework/working_directory.cpp', Dep(cxxflags=[
+        '<variant>debug:<define>RED_COMPILE_TYPE=debug',
+        '<variant>release:<define>RED_COMPILE_TYPE=release',
+        '<variant>san:<define>RED_COMPILE_TYPE=san',
+    ])),
+))
+
 dir_requirements = dict((
 ))
 
@@ -430,6 +438,7 @@ for name, f in all_files.items():
 
     append(direct_link_deps, direct_cxx_deps, src_requirements, f.path)
     append(direct_link_deps, direct_cxx_deps, dir_requirements, f.root)
+    append(direct_link_deps, direct_cxx_deps, obj_requirements, f.path)
 
     direct_source_deps = set()
     for pf in f.user_includes:

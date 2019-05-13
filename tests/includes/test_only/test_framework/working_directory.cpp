@@ -100,6 +100,11 @@ namespace
         std::string_view suffix_comp =
             "@" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
             REDEMPTION_COMP_STRING_VERSION;
+#ifdef RED_COMPILE_TYPE
+        std::string_view comp_type = "@" RED_PP_STRINGIFY(RED_COMPILE_TYPE) "__";
+#else
+        std::string_view comp_type = "__";
+#endif
         std::string test_module = master_test_suite().p_name.get();
         return str_concat(
             tempbase(),
@@ -108,7 +113,7 @@ namespace
             '@',
             test_module_name(),
             suffix_comp,
-            "__"_av,
+            comp_type,
             name,
             '/'
         );
@@ -140,6 +145,8 @@ WorkingFile::~WorkingFile()
     if (!this->is_removed && ! std::uncaught_exceptions()) {
         if (this->start_error_count == RED_ERROR_COUNT) {
             RED_TEST_FUNC(unlink, (this->filename_.c_str()) == 0);
+            this->filename_.resize(this->filename_.find_last_of('/'));
+            rmdir(this->filename_.c_str());
         }
         else {
             RED_TEST_FUNC(file_exist, (this->filename_.c_str()));

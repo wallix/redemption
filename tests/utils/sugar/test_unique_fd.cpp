@@ -35,5 +35,5 @@ RED_AUTO_TEST_CASE_WF(TestLocalFd, wf)
 
     unique_fd fd(unknown_file, O_RDONLY | O_CREAT, 0666);
     RED_CHECK(fd.is_open());
-    RED_CHECK_GE(fd.fd(), 0);
+    RED_CHECK(fd.fd() > 0);
 }
