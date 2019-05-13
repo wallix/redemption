@@ -2202,12 +2202,12 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         EVP_cleanup();
         RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix1, "\".\n\n"));
 
-        RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
+        RED_CHECK_FCONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"
-            "1970-01-01 01:16:55 - type=\"KBD_INPUT\" data=\"Wallix\"\n");
+            "1970-01-01 01:16:55 - type=\"KBD_INPUT\" data=\"Wallix\"\n"_av);
 
         RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
         RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.png"), 244);
@@ -2239,11 +2239,11 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         EVP_cleanup();
         RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix2, "\".\n\n"));
 
-        RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
+        RED_CHECK_FCONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
-            "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n");
+            "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"_av);
 
 
         RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);

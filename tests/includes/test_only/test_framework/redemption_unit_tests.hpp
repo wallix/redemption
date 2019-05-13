@@ -109,14 +109,6 @@ namespace redemption_unit_test__
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 # define RED_CHECK_MEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_SMEM(mem, memref) void(mem), void(memref)
-
-// require #include "utils/fileutils.hpp"
-#define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size) \
-    ::redemption_unit_test__::X(bool(filesize(filename) == (size)))
-
-// require #include "test_only/get_file_contents.hpp"
-#define RED_CHECK_FILE_CONTENTS(filename, contents) \
-    ::redemption_unit_test__::X(bool(get_file_contents(filename) == (contents)))
 //@}
 
 /// REQUIRE
@@ -142,14 +134,6 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 # define RED_REQUIRE_MEM(mem, memref) void(mem), void(memref)
 # define RED_REQUIRE_SMEM(mem, memref) void(mem), void(memref)
-
-// require #include "utils/fileutils.hpp"
-# define RED_REQUIRE_FILE_SIZE_AND_CLEAN(filename, size) \
-    ::redemption_unit_test__::X(bool(filesize(filename) == (size)))
-
-// require #include "test_only/get_file_contents.hpp"
-# define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
-    ::redemption_unit_test__::X(bool(get_file_contents(filename) == (contents)))
 //@}
 
 /// WARN
@@ -171,14 +155,6 @@ namespace redemption_unit_test__
 
 # define RED_CHECK_EQUAL_RANGES(a, b) \
     RED_TEST_EQUAL_RANGES(CHECK, a, b)
-
-// require #include "utils/fileutils.hpp"
-# define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size) \
-    RED_TEST_FILE_SIZE_AND_CLEAN(CHECK, filename, size)
-
-// require #include "test_only/get_fikle_contents.hpp"
-# define RED_CHECK_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(CHECK, filename, contents)
 //@}
 
 /// REQUIRE
@@ -188,14 +164,6 @@ namespace redemption_unit_test__
 
 # define RED_REQUIRE_EQUAL_RANGES(a, b) \
     RED_TEST_EQUAL_RANGES(REQUIRE, a, b)
-
-// require #include "utils/fileutils.hpp"
-# define RED_REQUIRE_FILE_SIZE_AND_CLEAN(filename, size) \
-    RED_TEST_FILE_SIZE_AND_CLEAN(REQUIRE, filename, size)
-
-// require #include "test_only/get_fikle_contents.hpp"
-# define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(REQUIRE, filename, contents)
 //@}
 
 # define RED_TEST_STRING_CHECK "check"
@@ -243,22 +211,6 @@ namespace redemption_unit_test__
             RED_##lvl(rng1__ == rng2__);                             \
         }                                                            \
     }(mem, memref)
-
-# define RED_TEST_FILE_SIZE_AND_CLEAN(lvl, filename, size) \
-    [](auto&& filename__, auto const size__) {             \
-        RED_TEST_CONTEXT("filename: " << filename__) {     \
-            RED_##lvl(filesize(filename__) == size__);     \
-            ::unlink(filename__);                          \
-        }                                                  \
-    }(filename, size)
-
-// require #include "test_only/get_file_contents.hpp"
-# define RED_TEST_FILE_CONTENTS(lvl, filename, contents)            \
-    [](auto&& filename__, auto&& contents__) {                      \
-        RED_TEST_CONTEXT("filename: " << filename__) {              \
-            RED_##lvl(contents__ == get_file_contents(filename__)); \
-        }                                                           \
-    }(filename, contents)
 
 
 namespace redemption_unit_test__
