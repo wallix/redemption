@@ -19,9 +19,8 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
+// api
+#include "mod/internal/widget/widget.hpp"
 
-
-RED_AUTO_TEST_CASE(TestXXX)
-{
-}
+int main()
+{}

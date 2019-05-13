@@ -20,6 +20,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
@@ -64,12 +65,11 @@ inline uint8_t const * bytes(char const * p)
     return byte_ptr_cast(p);
 }
 
-RED_AUTO_TEST_CASE(Testscytale)
+RED_AUTO_TEST_CASE_WD(Testscytale, wd)
 {
-    const char * finalname = "encrypted.txt";
-    const char * hash_finalname = "hash_encrypted.txt";
-    ::unlink(finalname);
-    ::unlink(hash_finalname);
+    char const* derivator = "encrypted.txt";
+    auto finalname = wd.add_file(derivator);
+    auto hash_finalname = wd.add_file("hash_encrypted.txt");
 
     // Writer
     {
@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(Testscytale)
     {
         auto handle = scytale_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
         RED_REQUIRE(handle);
-        RED_CHECK_EQ(scytale_reader_open(handle, finalname, finalname), 0);
+        RED_CHECK_EQ(scytale_reader_open(handle, finalname, derivator), 0);
 
         uint8_t buf[31];
 
@@ -121,15 +121,12 @@ RED_AUTO_TEST_CASE(Testscytale)
 
         scytale_reader_delete(handle);
     }
-
-    RED_CHECK_EQ(::unlink(finalname), 0);
-    RED_CHECK_EQ(::unlink(hash_finalname), 0);
 }
 
-RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
+RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
 {
-    const char * finalname = "encrypted.txt";
-    const char * hash_finalname = "hash_encrypted.txt";
+    auto finalname = wd.add_file("encrypted.txt");
+    auto hash_finalname = wd.add_file("hash_encrypted.txt");
 
     HashHexArray qhash;
     HashHexArray fhash;
@@ -186,9 +183,6 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
 
         scytale_writer_delete(handle);
     }
-
-    RED_CHECK_EQ(::unlink(finalname), 0);
-    RED_CHECK_EQ(::unlink(hash_finalname), 0);
 }
 
 RED_AUTO_TEST_CASE(TestscytaleReaderOpenAutoDetectScheme)

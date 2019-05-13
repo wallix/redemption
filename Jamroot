@@ -55,8 +55,6 @@ project redemption
     $(GCOV)
 
     <cxxflags>-fno-rtti
-    <toolset>gcc:<linkflags>-fuse-ld=gold
-    <toolset>clang:<linkflags>-fuse-ld=gold
     <toolset>gcc:<cxxflags>-pipe
 
     # <cxx-lto-default>on

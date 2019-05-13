@@ -40,12 +40,14 @@ export cxx_color=never
 
 build()
 {
+    export BOOST_TEST_RANDOM=$RANDOM
+    echo random seed = $BOOST_TEST_RANDOM
     local e=0
     bjam -q "$@" || {
         e=$?
         export REDEMPTION_LOG_PRINT=1
         bjam -q "$@"
-        exit 1
+        exit $e
     }
 }
 
@@ -65,7 +67,7 @@ build -q $toolset_gcc cxxflags=-g $big_mem
 build -q $toolset_gcc cxxflags=-g -j2
 
 # debug with coverage
-build -q $toolset_gcc debug -scoverage=on covbin=gcov-8
+build -q $toolset_gcc debug -scoverage=on covbin=gcov-7
 
 #bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
 # multi-thread

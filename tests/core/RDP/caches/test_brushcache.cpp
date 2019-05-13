@@ -19,11 +19,8 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "core/RDP/caches/brushcache.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
-{
-    BrushCache();
-}
+// TEST missing
+int main()
+{}

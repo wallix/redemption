@@ -19,8 +19,7 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
+// api
+#include "core/callback.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
-{
-}
+int main() {}

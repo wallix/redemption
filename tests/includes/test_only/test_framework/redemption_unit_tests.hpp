@@ -44,6 +44,21 @@ namespace redemption_unit_test__
     };
 
     template<class> class red_test_print_type_t;
+
+    template<class F>
+    struct fn_caller
+    {
+        F f;
+
+        template<class... Ts>
+        constexpr auto operator()(Ts&&... xs) const
+        {
+            return f(static_cast<Ts>(xs)...);
+        }
+    };
+
+    template<class F>
+    constexpr fn_caller<F> fn_invoker(char const* /*name*/, F f);
 } // namespace redemption_unit_test__
 
 # define FIXTURES_PATH "./tests/fixtures"
@@ -301,7 +316,10 @@ namespace redemption_unit_test__
     };
 } // namespace redemption_unit_test__
 
-::std::ostream& operator<<(::std::ostream& ostr, redemption_unit_test__::Enum const& e);
+
+std::ostream& operator<<(std::ostream& out, const_bytes_view const& av);
+
+std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e);
 
 #endif
 
@@ -431,13 +449,13 @@ struct def_variation2
     bool is_percent;
 };
 
-inline def_variation2 operator-(def_variation1 const& variation)
+inline def_variation2 operator-(def_variation1 const& variation) noexcept
 {
     return {variation.variantion, variation.is_percent};
 }
 
 template<class T>
-int_variation operator+(T const& x_, def_variation2 const& variation)
+int_variation operator+(T const& x_, def_variation2 const& variation) noexcept
 {
     const int x = x_;
     if (variation.is_percent) {
@@ -449,8 +467,8 @@ int_variation operator+(T const& x_, def_variation2 const& variation)
 
 namespace literals
 {
-    inline def_variation1 operator""_percent(unsigned long long x) { return {int(x), true}; }
-    inline def_variation1 operator""_v(unsigned long long x) { return {int(x), false}; }
+    inline def_variation1 operator""_percent(unsigned long long x) noexcept { return {int(x), true}; }
+    inline def_variation1 operator""_v(unsigned long long x) noexcept { return {int(x), false}; }
 }
 
 } // namespace redemption_unit_test__

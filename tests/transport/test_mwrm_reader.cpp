@@ -22,6 +22,7 @@
 
 
 #include "utils/genfstat.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "transport/crypto_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -67,21 +68,16 @@ constexpr auto is_not_encrypted = InCryptoTransport::EncryptionMode::NotEncrypte
 
 RED_AUTO_TEST_CASE(TestMwrmLineReader)
 {
-    char const * filename = "/tmp/test_app_verifier_s.txt";
-
-    std::ofstream(filename) <<
-        "abcd\n"
-        "efghi\n"
-        "jklmno\n"
-    ;
     Fstat fstat;
     CryptoContext cctx;
 
     using Read = Transport::Read;
 
     {
-        InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
-        ifile.open(filename);
+        GeneratorTransport ifile(
+            "abcd\n"
+            "efghi\n"
+            "jklmno\n"_av);
         MwrmLineReader line_reader(ifile);
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok);
         RED_CHECK_EQUAL(line_reader.get_buf().size(), 5);
@@ -92,15 +88,11 @@ RED_AUTO_TEST_CASE(TestMwrmLineReader)
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Eof);
     }
 
-    std::size_t const big_line_len = 3000;
     {
+        std::size_t const big_line_len = 3000;
         std::string s(big_line_len, 'a');
-        std::ofstream(filename) << s << '\n' << s << '\n';
-    }
-
-    {
-        InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
-        ifile.open(filename);
+        std::string data = str_concat(s, '\n', s, '\n');
+        GeneratorTransport ifile(data);
         MwrmLineReader line_reader(ifile);
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok);
         RED_CHECK_EQUAL(line_reader.get_buf().size(), big_line_len+1);
@@ -109,18 +101,15 @@ RED_AUTO_TEST_CASE(TestMwrmLineReader)
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Eof);
     }
 
-    std::ofstream(filename) << std::string(10000, 'a');
-
     {
-        InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
-        ifile.open(filename);
+        std::string data(10000, 'a');
+        GeneratorTransport ifile(data);
+        ifile.disable_remaining_error();
         MwrmLineReader line_reader(ifile);
         RED_CHECK_EXCEPTION_ERROR_ID(
             RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok),
             ERR_TRANSPORT_READ_FAILED);
     }
-
-    remove(filename);
 }
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV1)

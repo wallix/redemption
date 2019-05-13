@@ -456,6 +456,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/acl_serializer.cpp
@@ -697,6 +698,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -767,6 +769,7 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(FFMPEG_CXXFLAGS)
   <covfile>src/capture/video_capture.cpp
@@ -796,6 +799,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/capture/wrm_capture.hpp
@@ -1172,7 +1176,7 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/working_directory.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/client_redemption/client_config/client_redemption_config.cpp
@@ -1659,6 +1663,8 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_context :
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
 :
+  <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <covfile>src/core/RDP/nla/ntlm/ntlm_message.hpp
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate :
@@ -1902,6 +1908,10 @@ test-run tests/core/RDP/test_GraphicUpdatePDU :
 test-run tests/core/RDP/test_PersistentKeyListPDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_PersistentKeyListPDU.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/PersistentKeyListPDU.hpp
 ;
 test-run tests/core/RDP/test_RDPDrawable :
@@ -1915,11 +1925,9 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -1957,6 +1965,10 @@ test-run tests/core/RDP/test_RefreshRectPDU :
 test-run tests/core/RDP/test_SaveSessionInfoPDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_SaveSessionInfoPDU.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/SaveSessionInfoPDU.hpp
 ;
 test-run tests/core/RDP/test_ServerRedirection :
@@ -1972,6 +1984,11 @@ test-run tests/core/RDP/test_ServerRedirection :
 test-run tests/core/RDP/test_autoreconnect :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_autoreconnect.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/autoreconnect.hpp
 ;
 test-run tests/core/RDP/test_bitmapupdate :
@@ -1994,6 +2011,11 @@ test-run tests/core/RDP/test_bitmapupdate :
 test-run tests/core/RDP/test_capabilities :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_capabilities.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/capabilities.hpp
 ;
 test-run tests/core/RDP/test_clipboard :
@@ -2095,6 +2117,7 @@ test-run tests/core/RDP/test_nego :
 test-run tests/core/RDP/test_non_null_terminated_utf16_from_utf8 :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_non_null_terminated_utf16_from_utf8.cpp
 :
+  <library>src/utils/utf.o
   <covfile>src/core/RDP/non_null_terminated_utf16_from_utf8.hpp
 ;
 test-run tests/core/RDP/test_out_per_bstream :
@@ -2106,6 +2129,7 @@ test-run tests/core/RDP/test_out_per_bstream :
 test-run tests/core/RDP/test_protocol :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_protocol.cpp
 :
+  <library>src/utils/utf.o
   <covfile>src/core/RDP/protocol.hpp
 ;
 test-run tests/core/RDP/test_rdp_pointer :
@@ -2458,6 +2482,7 @@ test-run tests/core/test_mainloop :
 test-run tests/core/test_server_notifier_api :
   $(REDEMPTION_TEST_PATH)/core/test_server_notifier_api.cpp
 :
+  <library>crypto
   <covfile>src/core/server_notifier_api.hpp
 ;
 test-run tests/core/test_session :
@@ -2592,8 +2617,11 @@ test-run tests/core/test_session_reactor :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/session_reactor.hpp
 ;
@@ -2695,13 +2723,12 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/gdi/protected_graphics.cpp
   <covfile>src/gdi/protected_graphics.hpp
@@ -2757,6 +2784,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
@@ -2782,7 +2810,7 @@ test-run tests/lib/test_iametrics :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
-  <library>tests/includes/test_only/working_directory.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -2798,6 +2826,7 @@ test-run tests/lib/test_scytale :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -3648,6 +3677,16 @@ test-run tests/mod/internal/widget/test_labelgrid :
 test-run tests/mod/internal/widget/test_language_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_language_button.cpp
 :
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/language_button.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/language_button.cpp
   <covfile>src/mod/internal/widget/language_button.hpp
 ;
@@ -3817,10 +3856,6 @@ test-run tests/mod/internal/widget/test_selector :
   <covfile>src/mod/internal/widget/selector.cpp
   <covfile>src/mod/internal/widget/selector.hpp
 ;
-test-run tests/mod/internal/widget/test_tab :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_tab.cpp
-:
-;
 test-run tests/mod/internal/widget/test_tooltip :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_tooltip.cpp
 :
@@ -3849,6 +3884,10 @@ test-run tests/mod/internal/widget/test_tooltip :
 test-run tests/mod/internal/widget/test_widget :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/widget.hpp
 ;
 test-run tests/mod/internal/widget/test_widget_rect :
@@ -3884,6 +3923,7 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
+  <library>src/utils/hexdump.o
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
 test-run tests/mod/rdp/channels/test_channel_file :
@@ -3893,7 +3933,7 @@ test-run tests/mod/rdp/channels/test_channel_file :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
-  <library>tests/includes/test_only/working_directory.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/channel_file.hpp
 ;
@@ -3918,8 +3958,8 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
-  <library>tests/includes/test_only/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
 ;
@@ -3980,6 +4020,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/rdpdr_channel.hpp
@@ -3987,11 +4028,49 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
 test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_file_system_drive_manager.cpp
 :
+  <library>app_path_test.o
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/rdpdr_file_system_drive_manager.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_alternate_shell_based_launcher.cpp
 :
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
+  <library>src/keyboard/keymap2.o
+  <library>src/lib/files_validator_api.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_channel :
@@ -4037,6 +4116,9 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
 test-run tests/mod/rdp/channels/test_sespro_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_launcher.cpp
 :
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_launcher.hpp
 ;
 test-run tests/mod/rdp/channels/test_virtual_channel_data_sender :
@@ -4111,7 +4193,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/working_directory.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp_metrics.hpp
 ;
@@ -4168,6 +4250,24 @@ test-run tests/mod/rdp/test_rdp_orders :
 test-run tests/mod/rdp/test_rdp_params :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_params.cpp
 :
+  <library>app_path_test.o
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/screen_functions.o
+  <library>src/lib/files_validator_api.o
+  <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp_params.hpp
 ;
 test-run tests/mod/test_icap_files_service :
@@ -4277,7 +4377,7 @@ test-run tests/mod/vnc/test_vnc_metrics :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
-  <library>tests/includes/test_only/working_directory.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/vnc/vnc_metrics.hpp
 ;
@@ -4618,7 +4718,7 @@ test-run tests/transport/test_crypto_transport :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
-  <library>tests/includes/test_only/working_directory.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/crypto_transport.cpp
   <covfile>src/transport/crypto_transport.hpp
@@ -4654,6 +4754,7 @@ test-run tests/transport/test_in_meta_sequence_transport :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/in_meta_sequence_transport.hpp
 ;
@@ -4681,8 +4782,20 @@ test-run tests/transport/test_out_file_transport :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/out_file_transport.hpp
+;
+test-run tests/transport/test_out_filename_sequence_transport :
+  $(REDEMPTION_TEST_PATH)/transport/test_out_filename_sequence_transport.cpp
+:
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/out_filename_sequence_transport.hpp
 ;
 test-run tests/transport/test_recorder_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_recorder_transport.cpp
@@ -4695,6 +4808,7 @@ test-run tests/transport/test_recorder_transport :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/recorder_transport.cpp
@@ -4894,6 +5008,9 @@ test-run tests/utils/sugar/test_splitter :
 test-run tests/utils/sugar/test_unique_fd :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_unique_fd.cpp
 :
+  <library>src/utils/fileutils.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <covfile>src/utils/sugar/unique_fd.hpp
 ;
 test-run tests/utils/sugar/test_update_lock :
@@ -5063,6 +5180,7 @@ test-run tests/utils/test_fileutils :
 :
   <library>src/utils/fileutils.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <covfile>src/utils/fileutils.cpp
   <covfile>src/utils/fileutils.hpp
 ;
@@ -5122,13 +5240,12 @@ test-run tests/utils/test_log_siem :
 test-run tests/utils/test_netutils :
   $(REDEMPTION_TEST_PATH)/utils/test_netutils.cpp
 :
+  <library>src/utils/fileutils.o
   <library>src/utils/netutils.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <covfile>src/utils/netutils.cpp
   <covfile>src/utils/netutils.hpp
-;
-test-run tests/utils/test_outbound_connection_monitor_rules :
-  $(REDEMPTION_TEST_PATH)/utils/test_outbound_connection_monitor_rules.cpp
-:
 ;
 test-run tests/utils/test_parse :
   $(REDEMPTION_TEST_PATH)/utils/test_parse.cpp
@@ -5159,6 +5276,7 @@ test-run tests/utils/test_png :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/png.cpp
   <covfile>src/utils/png.hpp
@@ -5175,6 +5293,7 @@ test-run tests/utils/test_recording_progress :
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/recording_progress.hpp
 ;
@@ -5411,8 +5530,8 @@ obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test_only/core/font.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/gdi/test_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/gdi/test_graphic.cpp : $(CXXFLAGS_TEST) ;
+obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/working_directory.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;
-obj tests/includes/test_only/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/working_directory.cpp : $(CXXFLAGS_TEST) ;
 
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
@@ -5620,7 +5739,6 @@ alias test_password : tests/mod/internal/widget/test_password ;
 alias test_screen : tests/mod/internal/widget/test_screen ;
 alias test_scroll : tests/mod/internal/widget/test_scroll ;
 alias test_selector : tests/mod/internal/widget/test_selector ;
-alias test_tab : tests/mod/internal/widget/test_tab ;
 alias test_tooltip : tests/mod/internal/widget/test_tooltip ;
 alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
@@ -5678,6 +5796,7 @@ alias test_in_file_transport : tests/transport/test_in_file_transport ;
 alias test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport ;
 alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
 alias test_out_file_transport : tests/transport/test_out_file_transport ;
+alias test_out_filename_sequence_transport : tests/transport/test_out_filename_sequence_transport ;
 alias test_recorder_transport : tests/transport/test_recorder_transport ;
 alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
 alias test_socket_transport : tests/transport/test_socket_transport ;
@@ -5740,7 +5859,6 @@ alias test_load_theme : tests/utils/test_load_theme ;
 alias test_log : tests/utils/test_log ;
 alias test_log_siem : tests/utils/test_log_siem ;
 alias test_netutils : tests/utils/test_netutils ;
-alias test_outbound_connection_monitor_rules : tests/utils/test_outbound_connection_monitor_rules ;
 alias test_parse : tests/utils/test_parse ;
 alias test_parse_server_message : tests/utils/test_parse_server_message ;
 alias test_pattutils : tests/utils/test_pattutils ;
@@ -6009,6 +6127,7 @@ alias test_in_file_transport.coverage : tests/transport/test_in_file_transport.c
 alias test_in_meta_sequence_transport.coverage : tests/transport/test_in_meta_sequence_transport.coverage ;
 alias test_mwrm_reader.coverage : tests/transport/test_mwrm_reader.coverage ;
 alias test_out_file_transport.coverage : tests/transport/test_out_file_transport.coverage ;
+alias test_out_filename_sequence_transport.coverage : tests/transport/test_out_filename_sequence_transport.coverage ;
 alias test_recorder_transport.coverage : tests/transport/test_recorder_transport.coverage ;
 alias test_snappy_compression_transport.coverage : tests/transport/test_snappy_compression_transport.coverage ;
 alias test_socket_transport.coverage : tests/transport/test_socket_transport.coverage ;
@@ -6352,7 +6471,6 @@ alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_screen
   tests/mod/internal/widget/test_scroll
   tests/mod/internal/widget/test_selector
-  tests/mod/internal/widget/test_tab
   tests/mod/internal/widget/test_tooltip
   tests/mod/internal/widget/test_widget
   tests/mod/internal/widget/test_widget_rect
@@ -6434,6 +6552,7 @@ alias tests/transport.norec :
   tests/transport/test_in_meta_sequence_transport
   tests/transport/test_mwrm_reader
   tests/transport/test_out_file_transport
+  tests/transport/test_out_filename_sequence_transport
   tests/transport/test_recorder_transport
   tests/transport/test_snappy_compression_transport
   tests/transport/test_socket_transport
@@ -6506,7 +6625,6 @@ alias tests/utils.norec :
   tests/utils/test_log
   tests/utils/test_log_siem
   tests/utils/test_netutils
-  tests/utils/test_outbound_connection_monitor_rules
   tests/utils/test_parse
   tests/utils/test_parse_server_message
   tests/utils/test_pattutils

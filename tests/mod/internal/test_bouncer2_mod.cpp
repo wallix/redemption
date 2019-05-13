@@ -19,15 +19,13 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 
-
-RED_AUTO_TEST_CASE(TestBouncer2Mod)
+// TEST missing
+int main()
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);

@@ -21,150 +21,81 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
 #include "capture/file_to_graphic.hpp"
-#include "capture/params_from_ini.hpp"
-#include "configs/config.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "transport/in_file_transport.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/transport.hpp"
 #include "utils/drawable.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
 
-const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
-constexpr auto fsize = RED_TEST_FUNC_CTX(filesize);
-
-RED_AUTO_TEST_CASE(TestSplittedCapture)
+namespace
 {
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo[] = {
-        {"./test_capture-000000.wrm", 1646},
-        {"./test_capture-000001.wrm", 3508},
-        {"./test_capture-000002.wrm", 3463},
-        {"./test_capture-000003.wrm", -1},
-        {"./test_capture.mwrm", 180},
-        // hash
-        {"/tmp/test_capture-000000.wrm", 45},
-        {"/tmp/test_capture-000001.wrm", 45},
-        {"/tmp/test_capture-000002.wrm", 45},
-        {"/tmp/test_capture-000003.wrm", -1},
-        {"/tmp/test_capture.mwrm", 39},
-    };
-
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
-
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    template<class F>
+    void test_capture_context(
+        char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
+        WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
+        F f, KbdLogParams kbd_log_params = KbdLogParams())
     {
         // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
-
-        Rect scr(0, 0, 800, 600);
-
-        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-        ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-
-        ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-        ini.set<cfg::video::record_tmp_path>("./");
-        ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp/");
-        ini.set<cfg::globals::movie_path>("test_capture");
+        timeval now{1000, 0};
 
         LCGRandom rnd(0);
         FakeFstat fstat;
         CryptoContext cctx;
+        cctx.set_trace_type(TraceType::localfile);
 
-        // TODO remove this after unifying capture interface
-        bool full_video = false;
-
-        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-            std::chrono::seconds::zero(), ini);
-        video_params.no_timestamp = false;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        const char * record_tmp_path = record_wd.dirname();
         const char * record_path = record_tmp_path;
+        const char * hash_path = hash_wd.dirname();
+        const int groupid = 0;
 
-        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png);
-        bool capture_pattern_checker = false;
+        const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+        const bool capture_png = bool(capture_flags & CaptureFlags::png);
 
-        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_video = bool(capture_flags & CaptureFlags::video);
-        bool capture_video_full = full_video;
-        bool capture_meta = capture_ocr;
-        bool capture_kbd = false;
+        const bool capture_pattern_checker = false;
+        const bool capture_ocr = false;
+        const bool capture_video = false;
+        const bool capture_video_full = false;
+        const bool capture_meta = false;
+        const bool capture_kbd = kbd_log_params.wrm_keyboard_log;
 
-        OcrParams ocr_params = {
-            ini.get<cfg::ocr::version>(),
-            ocr::locale::LocaleId(
-                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-            ini.get<cfg::ocr::on_title_bar_only>(),
-            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-            ini.get<cfg::ocr::interval>(),
-            ini.get<cfg::debug::ocr>()
-        };
 
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
-        strcat(path, "/");
-        strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
-
-        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
-
-        PngParams png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
-        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
-        kbd_log_params.session_log_enabled = false;
-
-        PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-        SequencedVideoParams sequenced_video_params;
+        MetaParams meta_params;
+        VideoParams video_params;
+        PatternParams pattern_params {}; // reading with capture_kbd = true
         FullVideoParams full_video_params;
+        SequencedVideoParams sequenced_video_params;
+        OcrParams const ocr_params {
+            OcrVersion::v1, ocr::locale::LocaleId::latin,
+            false, 0, std::chrono::seconds::zero(), 0};
 
-        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+        PngParams const png_params = {
+            0, 0, std::chrono::milliseconds{60}, 100, 0, false, false, true};
 
-        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
+        DrawableParams const drawable_params{cx, cy, nullptr};
+
+        WrmParams const wrm_params{
+            BitsPerPixel{24},
+            false,
+            cctx,
+            rnd,
+            fstat,
+            hash_path,
+            std::chrono::seconds{1},
+            std::chrono::seconds{3},
+            WrmCompressionAlgorithm::no_compression,
+            0
+        };
 
         CaptureParams capture_params{
             now,
@@ -178,21 +109,23 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         };
 
         Capture capture(
-                          capture_params
-                        , drawable_params
-                        , capture_wrm, wrm_params
-                        , capture_png, png_params
-                        , capture_pattern_checker, pattern_params
-                        , capture_ocr, ocr_params
-                        , capture_video, sequenced_video_params
-                        , capture_video_full, full_video_params
-                        , capture_meta, meta_params
-                        , capture_kbd, kbd_log_params
-                        , video_params
-                        , nullptr
-                        , Rect()
-                        );
+            capture_params, drawable_params,
+            capture_wrm, wrm_params,
+            capture_png, png_params,
+            capture_pattern_checker, pattern_params,
+            capture_ocr, ocr_params,
+            capture_video, sequenced_video_params,
+            capture_video_full, full_video_params,
+            capture_meta, meta_params,
+            capture_kbd, kbd_log_params,
+            video_params, nullptr, Rect()
+        );
 
+        f(capture, Rect{0, 0, cx, cy});
+    }
+
+    void capture_draw_color1(timeval& now, Capture& capture, Rect scr, uint16_t cy)
+    {
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
@@ -200,206 +133,209 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(1, 50, cy, 30), encode_color24()(BLUE)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(2, 100, cy, 30), encode_color24()(WHITE)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(3, 150, cy, 30), encode_color24()(RED)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-        // The destruction of capture object will finalize the metafile content
     }
 
+    void capture_draw_color2(timeval& now, Capture& capture, Rect scr, uint16_t cy)
     {
-        FilenameGenerator png_seq(
-//            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-          , "./" , "test_capture", ".png"
-        );
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
 
-        int i = 0;
-        for (auto size : {
-            3102,
-            3127,
-            3145,
-            3162,
-            3175,
-            3201,
-            3225
-        }) {
-            char const* filename = png_seq.get(i++);
-            RED_CHECK(fsize(filename) == size);
-            ::unlink(filename);
-        }
-        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
+        capture.draw(RDPOpaqueRect(Rect(4, 200, cy, 30), encode_color24()(BLACK)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(5, 250, cy, 30), encode_color24()(PINK)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, cy, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     }
 
-    for (auto x: fileinfo) {
-        RED_CHECK(fsize(x.filename) == x.size);
-        ::unlink(x.filename);
-    }
+
+    const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
+}
+
+
+RED_AUTO_TEST_CASE(TestSplittedCapture)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
+    test_capture_context("test_capture", CaptureFlags::wrm | CaptureFlags::png,
+        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
+    {
+        // Timestamps are applied only when flushing
+        timeval now{1000, 0};
+
+        capture_draw_color1(now, capture, scr, 700);
+        capture_draw_color2(now, capture, scr, 700);
+    });
+
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000000.wrm"), 1646);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000001.wrm"), 3508);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000002.wrm"), 3463);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture.mwrm"), 174 + record_wd.dirname().size() * 3);
+
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000000.png"), 3102);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000001.png"), 3127);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000002.png"), 3145);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000003.png"), 3162);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000004.png"), 3175);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000005.png"), 3201);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000006.png"), 3225);
+
+    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
+    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
+    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000002.wrm"), 45);
+    RED_TEST_FSIZE(hash_wd.add_file("test_capture.mwrm"), 39);
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 }
 
 RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 {
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
 
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
+    test_capture_context("test_capture", CaptureFlags::png,
+        100, 100, record_wd, hash_wd, [](Capture& capture, Rect scr)
+    {
+        // Timestamps are applied only when flushing
+        timeval now{1000, 0};
 
-//    Rect scr(0, 0, 12, 10);
+        auto const color_cxt = gdi::ColorCtx::depth16();
+        capture.set_pointer(0, edit_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
+        bool ignore_frame_in_timeval = true;
 
-      Rect scr(0, 0, 100, 100);
-
-    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-    ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-    ini.set<cfg::video::png_limit>(10); // one snapshot by second
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-    ini.set<cfg::video::capture_flags>(CaptureFlags::png);
-    CaptureFlags capture_flags = CaptureFlags::png;
-
-    ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-    ini.set<cfg::video::record_tmp_path>("./");
-    ini.set<cfg::video::record_path>("./");
-    ini.set<cfg::video::hash_path>("/tmp");
-    ini.set<cfg::globals::movie_path>("test_capture");
-
-    LCGRandom rnd(0);
-    Fstat fstat;
-    CryptoContext cctx;
-
-    // TODO remove this after unifying capture interface
-    bool full_video = false;
-    // TODO remove this after unifying capture interface
-    bool no_timestamp = false;
-
-    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-        std::chrono::seconds::zero(), ini);
-    video_params.no_timestamp = no_timestamp;
-    const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-    const char * record_path = record_tmp_path;
-    bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-    bool capture_png = bool(capture_flags & CaptureFlags::png);
-    bool capture_pattern_checker = false;
-
-    bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-    bool capture_video = bool(capture_flags & CaptureFlags::video);
-    bool capture_video_full = full_video;
-    bool capture_meta = capture_ocr;
-    bool capture_kbd = false;
-
-    OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-    const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-    const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-    const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-    char path[1024];
-    char basename[1024];
-    char extension[128];
-    strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
-    strcat(path, "/");
-    strcpy(basename, movie_path);
-    strcpy(extension, "");          // extension is currently ignored
-
-    RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
-
-    PngParams png_params = {
-        0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-        false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-    DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-    MetaParams meta_params{
-        MetaParams::EnableSessionLog::No,
-        MetaParams::HideNonPrintable::No,
-        MetaParams::LogClipboardActivities::Yes,
-        MetaParams::LogFileSystemActivities::Yes,
-        MetaParams::LogOnlyRelevantClipboardActivities::Yes
-    };
-
-    KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
-    kbd_log_params.session_log_enabled = false;
-
-    PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-    SequencedVideoParams sequenced_video_params;
-    FullVideoParams full_video_params;
-
-    cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-    WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
-
-    CaptureParams capture_params{
-        now,
-        basename,
-        record_tmp_path,
-        record_path,
-        groupid,
-        nullptr,
-        SmartVideoCropping::disable,
-        0
-    };
-
-    Capture capture(
-                     capture_params
-                   , drawable_params
-                   , capture_wrm, wrm_params
-                   , capture_png, png_params
-                   , capture_pattern_checker, pattern_params
-                   , capture_ocr, ocr_params
-                   , capture_video, sequenced_video_params
-                   , capture_video_full, full_video_params
-                   , capture_meta, meta_params
-                   , capture_kbd, kbd_log_params
-                   , video_params
-                   , nullptr
-                   , Rect()
-                   );
-    auto const color_cxt = gdi::ColorCtx::depth16();
-    capture.set_pointer(0, edit_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
-
-    bool ignore_frame_in_timeval = true;
-
-    capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
-    now.tv_sec++;
-    capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
-
-    const char * filename = "./test_capture-000000.png";
+        capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
+    });
 
     RED_CHECK_SIG(
-        get_file_contents(filename), "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87");
-    ::unlink(filename);
+        get_file_contents(record_wd.add_file("test_capture-000000.png")),
+        "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87");
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 }
 
+RED_AUTO_TEST_CASE(TestResizingCapture)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
 
+    test_capture_context("resizing-capture-0", CaptureFlags::wrm | CaptureFlags::png,
+        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
+    {
+        // Timestamps are applied only when flushing
+        timeval now{1000, 0};
+
+        capture_draw_color1(now, capture, scr, 1200);
+
+        scr.cx = 1024;
+        scr.cy = 768;
+
+        capture.resize(scr.cx, scr.cy);
+
+        capture_draw_color2(now, capture, scr, 1200);
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        capture.draw(RDPOpaqueRect(Rect(7, 350, 1200, 30), encode_color24()(YELLOW)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    });
+
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.wrm"), 1651);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.wrm"), 3428);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.wrm"), 4384);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.wrm"), 4388);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0.mwrm"), 248 + record_wd.dirname().size() * 4);
+
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.png"), 3102 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.png"), 3121 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.png"), 3131 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.png"), 3143 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000004.png"), 4079 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000005.png"), 4103 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000006.png"), 4122 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
+
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000000.wrm"), 51);
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000001.wrm"), 51);
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000002.wrm"), 51);
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000003.wrm"), 51);
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0.mwrm"), 45);
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
+}
+
+RED_AUTO_TEST_CASE(TestResizingCapture1)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
+    test_capture_context("resizing-capture-1", CaptureFlags::wrm | CaptureFlags::png,
+        800, 600, record_wd, hash_wd, [](Capture& capture, Rect scr)
+    {
+        timeval now{1000, 0};
+
+        capture_draw_color1(now, capture, scr, 700);
+
+        capture.resize(640, 480);
+
+        capture_draw_color2(now, capture, scr, 700);
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        capture.draw(RDPOpaqueRect(Rect(7, 350, 700, 30), encode_color24()(YELLOW)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    });
+
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.wrm"), 1646);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.wrm"), 3439);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.wrm"), 2630);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.wrm"), 2630);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1.mwrm"), 248 + record_wd.dirname().size() * 4);
+
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.png"), 3102 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.png"), 3127 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.png"), 3145 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.png"), 3162 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000004.png"), 2304 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000005.png"), 2320 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000006.png"), 2334 +- 100_v);
+    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
+
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000000.wrm"), 51);
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000001.wrm"), 51);
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000002.wrm"), 51);
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000003.wrm"), 51);
+    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1.mwrm"), 45);
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
+}
 
 RED_AUTO_TEST_CASE(TestPattern)
 {
@@ -437,23 +373,35 @@ RED_AUTO_TEST_CASE(TestPattern)
 }
 
 
-RED_AUTO_TEST_CASE(TestSessionMeta)
+namespace
 {
-    BufTransport trans;
-
+    MetaParams make_meta_params()
     {
-        MetaParams meta_params{
+        return MetaParams{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No,
             MetaParams::LogClipboardActivities::Yes,
             MetaParams::LogFileSystemActivities::Yes,
             MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
+    }
 
+    Capture::SessionMeta make_session_meta(timeval now, Transport& trans, bool key_markers_hidden_state = false)
+    {
+        return Capture::SessionMeta(now, trans, key_markers_hidden_state, make_meta_params());
+    }
+}
+
+
+RED_AUTO_TEST_CASE(TestSessionMeta)
+{
+    BufTransport trans;
+
+    {
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta = make_session_meta(now, trans);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -502,18 +450,10 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
     BufTransport trans;
 
     {
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta = make_session_meta(now, trans);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -549,18 +489,10 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
     BufTransport trans;
 
     {
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta = make_session_meta(now, trans);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -596,18 +528,10 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
     BufTransport trans;
 
     {
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta = make_session_meta(now, trans);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -649,18 +573,10 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
     BufTransport trans;
 
     {
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta = make_session_meta(now, trans);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -706,18 +622,10 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
     BufTransport trans;
 
     {
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta(now, trans, false, meta_params);
+        Capture::SessionMeta meta = make_session_meta(now, trans);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -811,19 +719,11 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
     BufTransport trans;
 
     {
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta(now, trans, false, meta_params);
-        Capture::SessionLogAgent log_agent(meta, meta_params);
+        Capture::SessionMeta meta = make_session_meta(now, trans);
+        Capture::SessionLogAgent log_agent(meta, make_meta_params());
 
         log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
         log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
@@ -842,18 +742,10 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
     BufTransport trans;
 
     {
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        Capture::SessionMeta meta(now, trans, true, meta_params);
+        Capture::SessionMeta meta = make_session_meta(now, trans, true);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -944,29 +836,37 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
     );
 }
 
-
-class DrawableToFile
+namespace
 {
-    Transport & trans;
-    const Drawable & drawable;
-
-public:
-    DrawableToFile(Transport & trans, const Drawable & drawable)
-    : trans(trans)
-    , drawable(drawable)
+    struct TestGraphicToFile
     {
-    }
+        timeval now{1000, 0};
 
-    ~DrawableToFile() = default;
+        BmpCache bmp_cache;
+        GlyphCache gly_cache;
+        PointerCache ptr_cache;
+        RDPDrawable drawable;
+        GraphicToFile consumer;
 
-    bool logical_frame_ended() const {
-        return this->drawable.logical_frame_ended;
-    }
+        TestGraphicToFile(Transport& trans, Rect scr, bool small_cache)
+        : bmp_cache(
+            BmpCache::Recorder, BitsPerPixel{24}, 3, false,
+            BmpCache::CacheOption(small_cache ? 2 : 600, 256, false),
+            BmpCache::CacheOption(small_cache ? 2 : 300, 1024, false),
+            BmpCache::CacheOption(small_cache ? 2 : 262, 4096, false)
+        )
+        , drawable(scr.cx, scr.cy)
+        , consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression)
+        {}
 
-    void flush() {
-        ::dump_png24(this->trans, this->drawable, true);
-    }
-};
+        void next_second(int n = 1)
+        {
+            now.tv_sec += n;
+            consumer.timestamp(now);
+        }
+    };
+}
+
 
 const char expected_stripped_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
@@ -1097,53 +997,29 @@ const char expected_stripped_wrm[] =
 
 RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 {
-    // Timestamps are applied only when flushing
-    struct timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect screen_rect(0, 0, 800, 600);
-    StaticOutStream<65536> stream;
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
+    CheckTransport trans(cstr_array_view(expected_stripped_wrm));
+    TestGraphicToFile tgtf(trans, screen_rect, false);
+    GraphicToFile& consumer = tgtf.consumer;
 
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
 
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), encode_color24()(BLUE)), screen_rect, color_ctx);
     consumer.sync();
-
-    now.tv_sec++;
-    consumer.timestamp(now);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
+    tgtf.next_second();
+    tgtf.next_second();
 
     consumer.draw(RDPOpaqueRect(Rect(0, 100, 700, 30), encode_color24()(WHITE)), screen_rect, color_ctx);
-    now.tv_sec++;
-    consumer.timestamp(now);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
+    tgtf.next_second();
 
     RDPOpaqueRect cmd3(Rect(0, 150, 700, 30), encode_color24()(RED));
     consumer.draw(cmd3, screen_rect, color_ctx);
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
 
     consumer.sync();
 }
@@ -1274,102 +1150,55 @@ const char expected_stripped_wrm2[] =
 
 RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 {
-    // Same as above, show timestamps are applied only when flushing
-    struct timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect screen_rect(0, 0, 800, 600);
-    StaticOutStream<65536> stream;
-    CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected_stripped_wrm2));
+    TestGraphicToFile tgtf(trans, screen_rect, false);
+    GraphicToFile& consumer = tgtf.consumer;
+
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), encode_color24()(BLUE)), screen_rect, color_ctx);
-
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
 
     consumer.draw(RDPOpaqueRect(Rect(0, 100, 700, 30), encode_color24()(WHITE)), screen_rect, color_ctx);
     consumer.draw(RDPOpaqueRect(Rect(0, 150, 700, 30), encode_color24()(RED)), screen_rect, color_ctx);
-    now.tv_sec+=6;
-    consumer.timestamp(now);
+    tgtf.next_second(6);
 
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 10), encode_color24()(BLACK)), screen_rect, color_ctx);
 
     consumer.sync();
 }
 
+
 RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 {
-    // Same as above, show timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect screen_rect(0, 0, 800, 600);
-    StaticOutStream<65536> stream;
 
-    const char * filename = "./testcap.wrm";
-    size_t len = strlen(filename);
-    char path[1024];
-    memcpy(path, filename, len);
-    path[len] = 0;
-    int fd = ::creat(path, 0777);
-    RED_REQUIRE_NE(fd, -1);
+    BufTransport trans;
+    TestGraphicToFile tgtf(trans, screen_rect, false);
+    GraphicToFile& consumer = tgtf.consumer;
 
-    OutFileTransport trans(unique_fd{fd});
-    RED_CHECK_EQUAL(0, 0);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
-    RED_CHECK_EQUAL(0, 0);
+
     RDPOpaqueRect cmd0(screen_rect, encode_color24()(GREEN));
     consumer.draw(cmd0, screen_rect, color_ctx);
     RDPOpaqueRect cmd1(Rect(0, 50, 700, 30), encode_color24()(BLUE));
     consumer.draw(cmd1, screen_rect, color_ctx);
-    now.tv_sec++;
-    RED_CHECK_EQUAL(0, 0);
-    consumer.timestamp(now);
+    tgtf.next_second();
     consumer.sync();
-    RED_CHECK_EQUAL(0, 0);
 
     RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), encode_color24()(WHITE));
     consumer.draw(cmd2, screen_rect, color_ctx);
     RDPOpaqueRect cmd3(Rect(0, 150, 700, 30), encode_color24()(RED));
     consumer.draw(cmd3, screen_rect, color_ctx);
-    now.tv_sec+=6;
-    consumer.timestamp(now);
+    tgtf.next_second(6);
     consumer.sync();
-    RED_CHECK_EQUAL(0, 0);
-    trans.disconnect(); // close file before reading filesize
-    RED_CHECK_EQUAL(1588, filesize(filename));
 
-    char in_path[1024];
-    len = strlen(filename);
-    memcpy(in_path, filename, len);
-    in_path[len] = 0;
+    RED_TEST_PASSPOINT();
+    RED_TEST(trans.size() == 1588);
 
-    fd = ::open(in_path, O_RDONLY);
-    RED_REQUIRE_NE(fd, -1);
-    InFileTransport in_wrm_trans(unique_fd{fd});
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testcap", ".png", groupid, ReportError{});
+    GeneratorTransport in_wrm_trans(trans.data());
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
@@ -1377,53 +1206,29 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    png_recorder.flush();
-    out_png_trans.next();
+    BufTransport buftrans;
+    dump_png24(buftrans, drawable1, true);
+    RED_TEST(1476 == buftrans.size());
 
-    // Green Rect
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
+    for (std::size_t sz : {2786, 2800, 2800, 2814, 2823})
+    {
+        // Green Rect
+        // Blue Rect
+        // Timestamp
+        // White Rect
+        // Red Rect
+        RED_TEST(player.next_order());
+        player.interpret_order();
 
-    // Blue Rect
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
-
-    // Timestamp
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
-
-    // White Rect
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
-
-    // Red Rect
-    RED_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-    png_recorder.flush();
-    out_png_trans.next();
-
-    RED_CHECK_EQUAL(false, player.next_order());
-    in_wrm_trans.disconnect();
-
-    // clear PNG files
-    size_t sz[6] = {1476, 2786, 2800, 2800, 2814, 2823};
-    for (int i = 0; i < 6 ; i++){
-        const char * filename = out_png_trans.seqgen()->get(i);
-        RED_CHECK_EQUAL(sz[i], ::filesize(filename));
-        ::unlink(filename);
+        buftrans.buf.clear();
+        dump_png24(buftrans, drawable1, true);
+        RED_TEST(sz == buftrans.size());
     }
-   ::unlink("./testcap.wrm");
+
+    RED_TEST(!player.next_order());
+    in_wrm_trans.disconnect();
 }
 
 
@@ -1469,24 +1274,13 @@ const char expected_Red_on_Blue_wrm[] =
 
 RED_AUTO_TEST_CASE(TestSaveCache)
 {
-    // Timestamps are applied only when flushing
-    struct timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 100, 100);
-    CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
+    CheckTransport trans(cstr_array_view(expected_Red_on_Blue_wrm));
     trans.disable_remaining_error();
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(2, 256, false),
-                       BmpCache::CacheOption(2, 1024, false),
-                       BmpCache::CacheOption(2, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    TestGraphicToFile tgtf(trans, scr, true);
+    GraphicToFile& consumer = tgtf.consumer;
+
     auto const color_ctx = gdi::ColorCtx::depth24();
-    consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(BLUE)), scr, color_ctx);
 
@@ -1502,37 +1296,10 @@ RED_AUTO_TEST_CASE(TestSaveCache)
         bloc20x10);
     consumer.sync();
 
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
 
     consumer.save_bmp_caches();
-
     consumer.sync();
-}
-
-RED_AUTO_TEST_CASE(TestReloadSaveCache)
-{
-    GeneratorTransport in_wrm_trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid, ReportError{});
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-
-    const char * filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(298, ::filesize(filename));
-    ::unlink(filename);
 }
 
 const char expected_reset_rect_wrm[] =
@@ -1611,23 +1378,12 @@ const char expected_reset_rect_wrm[] =
 
 RED_AUTO_TEST_CASE(TestSaveOrderStates)
 {
-    // Timestamps are applied only when flushing
-    struct timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 100, 100);
-    CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(2, 256, false),
-                       BmpCache::CacheOption(2, 1024, false),
-                       BmpCache::CacheOption(2, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected_reset_rect_wrm));
+    TestGraphicToFile tgtf(trans, scr, true);
+    GraphicToFile& consumer = tgtf.consumer;
+
     auto const color_cxt = gdi::ColorCtx::depth24();
-    consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr.shrink(5), encode_color24()(BLUE)), scr, color_cxt);
@@ -1637,34 +1393,10 @@ RED_AUTO_TEST_CASE(TestSaveOrderStates)
 
     consumer.send_save_state_chunk();
 
-    now.tv_sec++;
-    consumer.timestamp(now);
+    tgtf.next_second();
     consumer.draw(RDPOpaqueRect(scr.shrink(20), encode_color24()(GREEN)), scr, color_cxt);
+
     consumer.sync();
-}
-
-RED_AUTO_TEST_CASE(TestReloadOrderStates)
-{
-    GeneratorTransport in_wrm_trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid, ReportError{});
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    const char * filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(341, ::filesize(filename));
-    ::unlink(filename);
 }
 
 const char expected_continuation_wrm[] =
@@ -1734,32 +1466,6 @@ const char expected_continuation_wrm[] =
            "\x11\x3f\x0a\x0a\xec\xec\x00\xff" // Green Rect
            ;
 
-RED_AUTO_TEST_CASE(TestContinuationOrderStates)
-{
-    GeneratorTransport in_wrm_trans(expected_continuation_wrm, sizeof(expected_continuation_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid, ReportError{});
-    const FilenameGenerator * seq = out_png_trans.seqgen();
-    RED_CHECK(seq);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    const char * filename = seq->get(0);
-    RED_CHECK_EQUAL(341, ::filesize(filename));
-    ::unlink(filename);
-}
-
 RED_AUTO_TEST_CASE(TestImageChunk)
 {
     const char expected_stripped_wrm[] =
@@ -1796,21 +1502,12 @@ RED_AUTO_TEST_CASE(TestImageChunk)
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`
     ;
 
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                        BmpCache::CacheOption(600, 256, false),
-                        BmpCache::CacheOption(300, 1024, false),
-                        BmpCache::CacheOption(262, 4096, false));
-    PointerCache ptr_cache;
-    GlyphCache gly_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected_stripped_wrm));
+    TestGraphicToFile tgtf(trans, scr, false);
+    GraphicToFile& consumer = tgtf.consumer;
+    RDPDrawable& drawable = tgtf.drawable;
+
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1870,21 +1567,12 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
         "\xae\x42\x60\x82"                                             //.B`.
         ;
 
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected, sizeof(expected)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected));
+    TestGraphicToFile tgtf(trans, scr, false);
+    GraphicToFile& consumer = tgtf.consumer;
+    RDPDrawable& drawable = tgtf.drawable;
+
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1954,21 +1642,12 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
         "\x42\x60\x82"
         ;
 
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
     Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected, sizeof(expected)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
-                       BmpCache::CacheOption(600, 256, false),
-                       BmpCache::CacheOption(300, 1024, false),
-                       BmpCache::CacheOption(262, 4096, false));
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-    RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    CheckTransport trans(cstr_array_view(expected));
+    TestGraphicToFile tgtf(trans, scr, false);
+    GraphicToFile& consumer = tgtf.consumer;
+    RDPDrawable& drawable = tgtf.drawable;
+
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -2003,17 +1682,11 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
     RDPDrawable d(20, 10);
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
     read_png24(in_png_trans, gdi::get_mutable_image_view(d));
-    const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
+    BufTransport png_trans;
     dump_png24(png_trans, d, true);
-    ::unlink(png_trans.seqgen()->get(0));
 }
 
-
-
-RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
-{
-   const char source_wrm[] =
+const char source_wrm_png[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24 PAD: 2 bytes
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
@@ -2058,114 +1731,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         "\x42\x60\x82"
         ;
 
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
-
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    out_png_trans.disconnect();
-    const char * filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
-}
-
-
-RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
-{
-   const char source_wrm[] =
-    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
-               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-
-// Initial black PNG image
-/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
-/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
-/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
-/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
-/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
-/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
-
-
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x14\x00\x00\x00\x0a"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xb1\x00\x00\x00\x32\x49\x44\x41"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x91\xff\x0c\x28\x81\x37\x70"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x49\x45\x4e\x44\xae"
-    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x42\x60\x82"
-        ;
-
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
-
-    OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, ReportError{});
-    DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl());
-
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-
-    const char * filename;
-
-    png_recorder.flush();
-    filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
-
-    second_png_recorder.flush();
-    filename = second_out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
-}
-
-
-RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
-{
-   const char source_wrm[] =
+   const char source_wrm_png_then_other_chunk[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
@@ -2212,27 +1778,46 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     /* 0000 */ "\x00\xD3\xD7\x3B\x00\x00\x00\x00" // 0x000000003bd7d300 = 1004000000
        ;
 
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable.impl());
+RED_AUTO_TEST_CASE(TestReload)
+{
+    struct Test
+    {
+        char const* name;
+        array_view_const_char data;
+        int file_len;
+        time_t time;
+    };
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
-    while (player.next_order()){
-        player.interpret_order();
+    for (auto const& test : {
+        Test{"TestReloadSaveCache", cstr_array_view(expected_Red_on_Blue_wrm), 298, 1001},
+        Test{"TestReloadOrderStates", cstr_array_view(expected_reset_rect_wrm), 341, 1001},
+        Test{"TestContinuationOrderStates", cstr_array_view(expected_continuation_wrm), 341, 1001},
+        Test{"testimg", cstr_array_view(source_wrm_png), 107, 1000},
+        Test{"testimg_then_other_chunk", cstr_array_view(source_wrm_png_then_other_chunk), 107, 1004}
+    }) RED_TEST_CONTEXT(test.name)
+    {
+        BufTransport trans;
+
+        {
+            GeneratorTransport in_wrm_trans(test.data);
+            timeval begin_capture;
+            begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+            timeval end_capture;
+            end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+            FileToGraphic player(
+                in_wrm_trans, begin_capture, end_capture,
+                false, false, to_verbose_flags(0));
+            RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+            player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
+            while (player.next_order()){
+                player.interpret_order();
+            }
+            ::dump_png24(trans, drawable, true);
+            RED_CHECK_EQUAL(test.time, static_cast<unsigned>(player.record_now.tv_sec));
+        }
+
+        RED_TEST(trans.size() == test.file_len);
     }
-    png_recorder.flush();
-    RED_CHECK_EQUAL(1004u, static_cast<unsigned>(player.record_now.tv_sec));
-
-    const char * filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
 }
 
 RED_AUTO_TEST_CASE(TestKbdCapture)
@@ -2381,9 +1966,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 
 RED_AUTO_TEST_CASE(TestSample0WRM)
 {
-    const char * input_filename = FIXTURES_PATH "/sample0.wrm";
-
-    int fd = ::open(input_filename, O_RDONLY);
+    int fd = ::open(FIXTURES_PATH "/sample0.wrm", O_RDONLY);
     RED_REQUIRE_NE(fd, -1);
 
     InFileTransport in_wrm_trans(unique_fd{fd});
@@ -2393,15 +1976,11 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
 
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid, ReportError{});
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
-    DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
-//    png_recorder.update_config(ini);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, ReportError{});
+    BufSequenceTransport out_wrm_trans;
 
     const struct ToCacheOption {
         ToCacheOption(){}
@@ -2439,28 +2018,18 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     RED_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.record_now.tv_sec));
     player.play(requested_to_stop);
 
-    png_recorder.flush();
+    BufTransport out_png_trans;
+    ::dump_png24(out_png_trans, drawable, true);
+    RED_TEST(out_png_trans.size() == 21280);
+
     RED_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
 
     graphic_to_file.sync();
-    const char * filename;
 
-    out_png_trans.disconnect();
-    out_wrm_trans.disconnect();
-
-    filename = out_png_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(21280, ::filesize(filename));
-    ::unlink(filename);
-
-    filename = out_wrm_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(490454, ::filesize(filename));
-    ::unlink(filename);
-    filename = out_wrm_trans.seqgen()->get(1);
-    RED_CHECK_EQUAL(1008253, ::filesize(filename));
-    ::unlink(filename);
-    filename = out_wrm_trans.seqgen()->get(2);
-    RED_CHECK_EQUAL(195756, ::filesize(filename));
-    ::unlink(filename);
+    RED_TEST(out_wrm_trans.size() == 3);
+    RED_TEST(out_wrm_trans[0].size() == 490454);
+    RED_TEST(out_wrm_trans[1].size() == 1008253);
+    RED_TEST(out_wrm_trans[2].size() == 195756);
 }
 
 RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
@@ -2503,8 +2072,6 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     in_png_trans.recv_boom(end, sz_buf); // skip first chunk header
     InStream stream(buf);
 
-//    in_png_trans.recv(&stream.end, 107); // skip first chunk header
-
     uint16_t chunk_type = stream.in_uint16_le();
     uint32_t chunk_size = stream.in_uint32_le();
     uint16_t chunk_count = stream.in_uint16_le();
@@ -2514,10 +2081,9 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     gdi::GraphicApi * gdi = &d;
     set_rows_from_image_chunk(in_png_trans, WrmChunkType(chunk_type), chunk_size, d.width(), {&gdi, 1});
 
-    const int groupid = 0;
-    OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    dump_png24(png_trans, d, true);
-    ::unlink(png_trans.seqgen()->get(0));
+    BufTransport png_trans;
+    ::dump_png24(png_trans, d, true);
+    RED_TEST(png_trans.size() == 107);
 }
 
 
@@ -2530,26 +2096,6 @@ RED_AUTO_TEST_CASE(TestPatternSearcher)
     searcher.test_uchar(byte_ptr_cast("a"), 1, report); RED_CHECK(!check);
     // #15241: Pattern detection crash
     searcher.test_uchar(byte_ptr_cast("e"), 1, report); RED_CHECK(check);
-}
-
-
-RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
-{
-    OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), ReportError{});
-    fnt.send("We write, ", 10);
-    fnt.send("and again, ", 11);
-    fnt.send("and so on.", 10);
-
-    fnt.next();
-    fnt.send(" ", 1);
-    fnt.send("A new file.", 11);
-
-    RED_CHECK_EQUAL(filesize(fnt.seqgen()->get(0)), 31);
-    RED_CHECK_EQUAL(filesize(fnt.seqgen()->get(1)), 12);
-
-    fnt.disconnect();
-    unlink(fnt.seqgen()->get(0));
-    unlink(fnt.seqgen()->get(1));
 }
 
 extern "C" {
@@ -2589,156 +2135,16 @@ extern "C" {
 
 RED_AUTO_TEST_CASE(TestMetaCapture)
 {
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo1[] = {
-        {"./test_capture-000000.wrm", 226},
-        {"./test_capture-000001.wrm", 174},
-        {"./test_capture.mwrm", 198},
-    };
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
 
-    const struct CheckFiles fileinfo2[] = {
-        {"/tmp/test_capture-000000.mp4", 3565},
-        {"/tmp/test_capture-000000.png", 244},
-        {"/tmp/test_capture-000000.wrm", 80},
-        {"/tmp/test_capture-000001.wrm", 80},
-        {"/tmp/test_capture.mwrm", 74},
-        {"/tmp/test_capture.pgs", 37},
-    };
 
-    for (auto & f : fileinfo1) {
-        ::unlink(f.filename);
-    }
-    for (auto & f : fileinfo2) {
-        ::unlink(f.filename);
-    }
-
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-
-    // Timestamps are applied only when flushing
-    timeval now;
-    now.tv_usec = 0;
-    now.tv_sec = 1000;
-
-    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-    ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-    ini.set<cfg::video::png_limit>(10); // one snapshot by second
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-    ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
-    CaptureFlags capture_flags = CaptureFlags::wrm;
-
-    ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-
-    ini.set<cfg::video::record_tmp_path>("./");
-    ini.set<cfg::video::record_path>("./");
-    ini.set<cfg::video::hash_path>("/tmp");
-    ini.set<cfg::globals::movie_path>("test_capture");
-
-    LCGRandom rnd(0);
-    Fstat fstat;
-    CryptoContext cctx;
-
-    // TODO remove this after unifying capture interface
-    bool full_video = false;
-    // TODO remove this after unifying capture interface
-    bool no_timestamp = false;
-
-    Rect scr(0, 0, 100, 100);
-
-    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-        std::chrono::seconds::zero(), ini);
-    video_params.no_timestamp = no_timestamp;
-    const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-    const char * record_path = record_tmp_path;
-    bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-    bool capture_png = bool(capture_flags & CaptureFlags::png);
-    bool capture_pattern_checker = false;
-
-    bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-    bool capture_video = bool(capture_flags & CaptureFlags::video);
-    bool capture_video_full = full_video;
-    bool capture_meta = capture_ocr;
-    bool capture_kbd = true;
-
-    OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-    const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-    const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-    const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-    char path[1024];
-    char basename[1024];
-    char extension[128];
-    strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
-    strcat(path, "/");
-    strcpy(basename, movie_path);
-    strcpy(extension, "");          // extension is currently ignored
-
-    RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
-
-    PngParams png_params = {
-        0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-        false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-    DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-    MetaParams meta_params{
-        MetaParams::EnableSessionLog::No,
-        MetaParams::HideNonPrintable::No,
-        MetaParams::LogClipboardActivities::Yes,
-        MetaParams::LogFileSystemActivities::Yes,
-        MetaParams::LogOnlyRelevantClipboardActivities::Yes
-    };
-
-    KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+    KbdLogParams kbd_log_params {};
     kbd_log_params.wrm_keyboard_log = true;
-    kbd_log_params.session_log_enabled = false;
-
-    PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-    SequencedVideoParams sequenced_video_params;
-    FullVideoParams full_video_params;
-
-    cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-    WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
-
-    CaptureParams capture_params{
-        now,
-        basename,
-        record_tmp_path,
-        record_path,
-        groupid,
-        nullptr,
-        SmartVideoCropping::disable,
-        0
-    };
-
+    test_capture_context("test_capture", CaptureFlags::wrm,
+        100, 100, record_wd, hash_wd, [](Capture& capture, Rect /*scr*/)
     {
-        Capture capture(
-                         capture_params
-                       , drawable_params
-                       , capture_wrm, wrm_params
-                       , capture_png, png_params
-                       , capture_pattern_checker, pattern_params
-                       , capture_ocr, ocr_params
-                       , capture_video, sequenced_video_params
-                       , capture_video_full, full_video_params
-                       , capture_meta, meta_params
-                       , capture_kbd, kbd_log_params
-                       , video_params
-                       , nullptr
-                       , Rect()
-                       );
-    //    auto const color_cxt = gdi::ColorCtx::depth16();
-    //    capture.set_pointer(edit_pointer());
-
+        timeval now{1000, 0};
         now.tv_sec += 10;
 
         bool ignore_frame_in_timeval = true;
@@ -2759,33 +2165,31 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         capture.kbd_input(now, 'x'); now.tv_sec++;
 
         capture.session_update(now, cstr_array_view("COMPLETED_PROCESS=abc")); now.tv_sec++;
+    }, kbd_log_params);
 
-        //bool ignore_frame_in_timeval = true;
+    auto mwrm_file = record_wd.add_file("test_capture.mwrm");
 
-    //    capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
+    RED_TEST_FSIZE(mwrm_file, 124 + record_wd.dirname().size() * 2);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000000.wrm"), 166);
+    RED_TEST_FSIZE(record_wd.add_file("test_capture-000001.wrm"), 907);
 
+    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
+    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
+    RED_TEST_FSIZE(hash_wd.add_file("test_capture.mwrm"), 39);
 
-//        capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
-
-    //    const char * filename = "./test_capture-000000.png";
-
-    //    auto s = get_file_contents<std::string>(filename);
-    //    RED_CHECK_SIG2(
-    //        byte_ptr_cast(s.data()), s.size(),
-    //        "\xbd\x6a\x84\x08\x3e\xe7\x19\xab\xb0\x67\xeb\x72\x94\x1f\xea\x26\xc4\x69\xe1\x37"
-    //    );
-    //    ::unlink(filename);
-    }
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 
     {
+        WorkingDirectory output_wd("output1");
+        auto output_prefix1 = output_wd.dirname().string() + "test_capture.mwrm";
+
         char const * argv[] {
             "recorder.py",
             "redrec",
-            "-i",
-                "./test_capture.mwrm",
+            "-i", mwrm_file,
             "--mwrm-path", FIXTURES_PATH,
-            "-o",
-                "/tmp/test_capture",
+            "-o", output_prefix1.c_str(),
             "--chunk",
             "--video-codec", "mp4",
             "--json-pgs",
@@ -2794,33 +2198,35 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
         LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
         int res = do_main(argc, argv, hmac_fn, trace_fn);
-        EVP_cleanup();
-        RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/test_capture.mwrm\".\n\n");
         RED_CHECK_EQUAL(0, res);
+        EVP_cleanup();
+        RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix1, "\".\n\n"));
 
-        RED_CHECK_FILE_CONTENTS("/tmp/test_capture.meta",
+        RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"KBD_INPUT\" data=\"Wallix\"\n");
 
-        for (auto & f : fileinfo2) {
-            ::unlink(f.filename);
-        }
+        RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
+        RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.png"), 244);
+        RED_TEST_FSIZE(output_wd.add_file("test_capture.pgs"), 37);
+
+        RED_CHECK_WORKSPACE(output_wd);
     }
 
     {
+        WorkingDirectory output_wd("output2");
+        auto output_prefix2 = output_wd.dirname().string() + "test_capture.mwrm";
+
         char const * argv[] {
             "recorder.py",
             "redrec",
-            "-i",
-                "./test_capture.mwrm",
-            "--config-file",
-                FIXTURES_PATH "/disable_kbd_inpit_in_meta.ini",
+            "-i", mwrm_file,
+            "--config-file", FIXTURES_PATH "/disable_kbd_inpit_in_meta.ini",
             "--mwrm-path", FIXTURES_PATH,
-            "-o",
-                "/tmp/test_capture",
+            "-o", output_prefix2.c_str(),
             "--chunk",
             "--video-codec", "mp4",
             "--json-pgs",
@@ -2829,484 +2235,22 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
         LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
         int res = do_main(argc, argv, hmac_fn, trace_fn);
-        EVP_cleanup();
-        RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/test_capture.mwrm\".\n\n");
         RED_CHECK_EQUAL(0, res);
+        EVP_cleanup();
+        RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix2, "\".\n\n"));
 
-        RED_CHECK_FILE_CONTENTS("/tmp/test_capture.meta",
+        RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n");
 
-        for (auto & f : fileinfo2) {
-            ::unlink(f.filename);
-        }
-    }
 
-    for (auto & f : fileinfo1) {
-        ::unlink(f.filename);
+        RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
+        RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.png"), 244);
+        RED_TEST_FSIZE(output_wd.add_file("test_capture.pgs"), 37);
+
+        RED_CHECK_WORKSPACE(output_wd);
     }
 }
 #endif
-
-RED_AUTO_TEST_CASE(TestResizingCapture)
-{
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo[] = {
-        {"./resizing-capture-0-000000.wrm", 1651},
-        {"./resizing-capture-0-000001.wrm", 3428},
-        {"./resizing-capture-0-000002.wrm", 4384},
-        {"./resizing-capture-0-000003.wrm", 4388},
-        {"./resizing-capture-0-000004.wrm", -1},
-        {"./resizing-capture-0.mwrm", 256},
-        // hash
-        {"/tmp/resizing-capture-0-000000.wrm", 51},
-        {"/tmp/resizing-capture-0-000001.wrm", 51},
-        {"/tmp/resizing-capture-0-000002.wrm", 51},
-        {"/tmp/resizing-capture-0-000003.wrm", 51},
-        {"/tmp/resizing-capture-0-000004.wrm", -1},
-        {"/tmp/resizing-capture-0.mwrm", 45},
-    };
-
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
-
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-    {
-        // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
-
-        Rect scr(0, 0, 800, 600);
-
-        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-        ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-
-        ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-        ini.set<cfg::video::record_tmp_path>("./");
-        ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp/");
-        ini.set<cfg::globals::movie_path>("resizing-capture-0");
-
-        LCGRandom rnd(0);
-        FakeFstat fstat;
-        CryptoContext cctx;
-
-        // TODO remove this after unifying capture interface
-        bool full_video = false;
-
-        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-            std::chrono::seconds::zero(), ini);
-        video_params.no_timestamp = false;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = record_tmp_path;
-
-        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png);
-        bool capture_pattern_checker = false;
-
-        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_video = bool(capture_flags & CaptureFlags::video);
-        bool capture_video_full = full_video;
-        bool capture_meta = capture_ocr;
-        bool capture_kbd = false;
-
-        OcrParams ocr_params = {
-            ini.get<cfg::ocr::version>(),
-            ocr::locale::LocaleId(
-                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-            ini.get<cfg::ocr::on_title_bar_only>(),
-            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-            ini.get<cfg::ocr::interval>(),
-            ini.get<cfg::debug::ocr>()
-        };
-
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
-        strcat(path, "/");
-        strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
-
-        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
-
-        PngParams png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
-        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
-        kbd_log_params.session_log_enabled = false;
-
-        PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-        SequencedVideoParams sequenced_video_params;
-        FullVideoParams full_video_params;
-
-        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
-
-        CaptureParams capture_params{
-            now,
-            basename,
-            record_tmp_path,
-            record_path,
-            groupid,
-            nullptr,
-            SmartVideoCropping::disable,
-            0
-        };
-
-        Capture capture(
-                          capture_params
-                        , drawable_params
-                        , capture_wrm, wrm_params
-                        , capture_png, png_params
-                        , capture_pattern_checker, pattern_params
-                        , capture_ocr, ocr_params
-                        , capture_video, sequenced_video_params
-                        , capture_video_full, full_video_params
-                        , capture_meta, meta_params
-                        , capture_kbd, kbd_log_params
-                        , video_params
-                        , nullptr
-                        , Rect()
-                        );
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
-
-        capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 1200, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 1200, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 1200, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        scr.cx = 1024;
-        scr.cy = 768;
-
-        capture.resize(scr.cx, scr.cy);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 1200, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 1200, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 1200, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(7, 350, 1200, 30), encode_color24()(YELLOW)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // The destruction of capture object will finalize the metafile content
-    }
-
-    bool remove_files = !getenv("TestResizingCapture");
-
-    {
-        FilenameGenerator png_seq(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-          , "./" , "resizing-capture-0", ".png"
-        );
-
-        int i = 0;
-        for (auto size : {
-            3102 +- 100_v,
-            3121 +- 100_v,
-            3131 +- 100_v,
-            3143 +- 100_v,
-            4079 +- 100_v,
-            4103 +- 100_v,
-            4122 +- 100_v,
-            4137 +- 100_v
-        }) {
-            char const* filename = png_seq.get(i++);
-            RED_CHECK(fsize(filename) == size);
-            if (remove_files) { ::unlink(filename); }
-        }
-        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
-    }
-
-    for (auto x: fileinfo) {
-        RED_CHECK(fsize(x.filename) == x.size);
-        if (remove_files) { ::unlink(x.filename); }
-    }
-}
-
-RED_AUTO_TEST_CASE(TestResizingCapture1)
-{
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo[] = {
-        {"./resizing-capture-1-000000.wrm", 1646},
-        {"./resizing-capture-1-000001.wrm", 3439},
-        {"./resizing-capture-1-000002.wrm", 2630},
-        {"./resizing-capture-1-000003.wrm", 2630},
-        {"./resizing-capture-1-000004.wrm", -1},
-        {"./resizing-capture-1.mwrm", 256},
-        // hash
-        {"/tmp/resizing-capture-1-000000.wrm", 51},
-        {"/tmp/resizing-capture-1-000001.wrm", 51},
-        {"/tmp/resizing-capture-1-000002.wrm", 51},
-        {"/tmp/resizing-capture-1-000003.wrm", 51},
-        {"/tmp/resizing-capture-1-000004.wrm", -1},
-        {"/tmp/resizing-capture-1.mwrm", 45},
-    };
-
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
-
-    Inifile ini;
-    ini.set<cfg::video::rt_display>(1);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-    {
-        // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
-
-        Rect scr(0, 0, 800, 600);
-
-        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
-        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
-
-        ini.set<cfg::video::png_limit>(10); // one snapshot by second
-        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
-
-        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
-
-        ini.set<cfg::globals::trace_type>(TraceType::localfile);
-
-        ini.set<cfg::video::record_tmp_path>("./");
-        ini.set<cfg::video::record_path>("./");
-        ini.set<cfg::video::hash_path>("/tmp/");
-        ini.set<cfg::globals::movie_path>("resizing-capture-1");
-
-        LCGRandom rnd(0);
-        FakeFstat fstat;
-        CryptoContext cctx;
-
-        // TODO remove this after unifying capture interface
-        bool full_video = false;
-
-        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-            std::chrono::seconds::zero(), ini);
-        video_params.no_timestamp = false;
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = record_tmp_path;
-
-        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_png = bool(capture_flags & CaptureFlags::png);
-        bool capture_pattern_checker = false;
-
-        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_video = bool(capture_flags & CaptureFlags::video);
-        bool capture_video_full = full_video;
-        bool capture_meta = capture_ocr;
-        bool capture_kbd = false;
-
-        OcrParams ocr_params = {
-            ini.get<cfg::ocr::version>(),
-            ocr::locale::LocaleId(
-                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-            ini.get<cfg::ocr::on_title_bar_only>(),
-            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-            ini.get<cfg::ocr::interval>(),
-            ini.get<cfg::debug::ocr>()
-        };
-
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
-        strcat(path, "/");
-        strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
-
-        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
-
-        PngParams png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
-            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
-
-        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
-
-        MetaParams meta_params{
-            MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No,
-            MetaParams::LogClipboardActivities::Yes,
-            MetaParams::LogFileSystemActivities::Yes,
-            MetaParams::LogOnlyRelevantClipboardActivities::Yes
-        };
-
-        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
-        kbd_log_params.session_log_enabled = false;
-
-        PatternParams const pattern_params = pattern_params_from_ini(ini);
-
-        SequencedVideoParams sequenced_video_params;
-        FullVideoParams full_video_params;
-
-        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
-
-        CaptureParams capture_params{
-            now,
-            basename,
-            record_tmp_path,
-            record_path,
-            groupid,
-            nullptr,
-            SmartVideoCropping::disable,
-            0
-        };
-
-        Capture capture(
-                          capture_params
-                        , drawable_params
-                        , capture_wrm, wrm_params
-                        , capture_png, png_params
-                        , capture_pattern_checker, pattern_params
-                        , capture_ocr, ocr_params
-                        , capture_video, sequenced_video_params
-                        , capture_video_full, full_video_params
-                        , capture_meta, meta_params
-                        , capture_kbd, kbd_log_params
-                        , video_params
-                        , nullptr
-                        , Rect()
-                        );
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
-
-        capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.resize(640, 480);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(7, 350, 700, 30), encode_color24()(YELLOW)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-        // The destruction of capture object will finalize the metafile content
-    }
-
-    bool remove_files = !getenv("TestResizingCapture1");
-
-    {
-        FilenameGenerator png_seq(
-            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-          , "./" , "resizing-capture-1", ".png"
-        );
-
-        int i = 0;
-        for (auto size : {
-            3102 +- 100_v,
-            3127 +- 100_v,
-            3145 +- 100_v,
-            3162 +- 100_v,
-            2304 +- 100_v,
-            2320 +- 100_v,
-            2334 +- 100_v,
-            2345 +- 100_v
-        }) {
-            char const* filename = png_seq.get(i++);
-            RED_CHECK(fsize(filename) == size);
-            if (remove_files) { ::unlink(filename); }
-        }
-        RED_CHECK_PREDICATE(file_not_exists, (png_seq.get(i)));
-    }
-
-    for (auto x: fileinfo) {
-        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
-    }
-}

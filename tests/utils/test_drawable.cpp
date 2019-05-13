@@ -290,70 +290,36 @@ RED_AUTO_TEST_CASE(TestAddMouse)
     DrawablePointer current_pointer(drawable_default_pointer());
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
-    gd.trace_mouse(current_pointer, 100, 100, save_mouse);
 
-    // uncomment to see result in png file
-//    dump_png24("./test_mouse_000_.png", gd, true);
+    struct Data
+    {
+        int cx, cy;
+        array_view_const_char sig;
+    };
 
-    RED_CHECK_SIG(gd, "\x36\x62\x5c\x6b\x82\xba\xf9\x39\x32\x76\x5a\x73\x34\x82\xd2\x16\xaf\xc6\x69\xf3");
+    for (Data const& data : {
+        Data{100, 100,
+            "\x36\x62\x5c\x6b\x82\xba\xf9\x39\x32\x76\x5a\x73\x34\x82\xd2\x16\xaf\xc6\x69\xf3"_av},
+        Data{638, 470,
+            "\x41\x1d\x25\x87\x04\x28\xdb\x8f\x46\x35\x50\x2d\x19\x10\x3f\xd0\x5d\x7e\x2a\x62"_av},
+        Data{-8, -8,
+            "\x63\xdc\x47\x28\xf6\x76\x26\x5b\xfe\x9f\xa2\x57\xf5\x3a\xb3\x86\xda\xcb\x93\x2b"_av},
 
+    }) RED_TEST_CONTEXT("cx: " << data.cx << "  cy: " << data.cy)
+    {
+        gd.trace_mouse(current_pointer, data.cx, data.cy, save_mouse);
 
-    gd.clear_mouse(current_pointer, 100, 100, save_mouse);
-    // uncomment to see result in png file
-//    dump_png24("./test_mouse_001_.png", gd, true);
+        // uncomment to see result in png file
+        // dump_png24("./test_mouse_000_.png", gd, true);
 
-    RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
-}
+        RED_CHECK_SIG_A(gd, data.sig);
 
-RED_AUTO_TEST_CASE(TestAddMouse2)
-{
-    // Create a simple capture image and dump it to file
-    uint16_t width  = 640;
-    uint16_t height = 480;
-    Rect screen_rect(0, 0, width, height);
-    Drawable gd(width, height);
-    uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
-    DrawablePointer current_pointer;
-    current_pointer.set_cursor(drawable_default_pointer());
+        gd.clear_mouse(current_pointer, data.cx, data.cy, save_mouse);
+        // uncomment to see result in png file
+        // dump_png24("./test_mouse_001_.png", gd, true);
 
-    gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
-
-    gd.trace_mouse(current_pointer, 638, 470, save_mouse);
-    // uncomment to see result in png file
-//    dump_png24("test_mouse2_visible_.png", gd, true);
-
-    RED_CHECK_SIG(gd, "\x41\x1d\x25\x87\x04\x28\xdb\x8f\x46\x35\x50\x2d\x19\x10\x3f\xd0\x5d\x7e\x2a\x62");
-
-
-    gd.clear_mouse(current_pointer, 638, 470, save_mouse);
-    // uncomment to see result in png file
-//    dump_png24("test_mouse2_clear_.png", gd, true);
-    RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
-}
-
-RED_AUTO_TEST_CASE(TestAddMouse3)
-{
-    // Create a simple capture image and dump it to file
-    uint16_t width  = 640;
-    uint16_t height = 480;
-    Rect screen_rect(0, 0, width, height);
-    Drawable gd(width, height);
-    uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
-    DrawablePointer current_pointer(drawable_default_pointer());
-
-    gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
-    gd.trace_mouse(current_pointer, -8, -8, save_mouse);
-    // uncomment to see result in png file
-//    dump_png24("test_mouse3_visible_.png", gd, true);
-
-    RED_CHECK_SIG(gd, "\x63\xdc\x47\x28\xf6\x76\x26\x5b\xfe\x9f\xa2\x57\xf5\x3a\xb3\x86\xda\xcb\x93\x2b");
-
-
-    gd.clear_mouse(current_pointer, -8, -8, save_mouse);
-    RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
-
-    // uncomment to see result in png file
-    //dump_png("test_mouse3_clear_", gd.impl());
+        RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
+    }
 }
 
 RED_AUTO_TEST_CASE(TestTimestampMouse)
@@ -411,90 +377,47 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     //dump_png("/tmp/test_timestamp_002_", gd.impl());
 }
 
-inline void test_scrblt2_impl(Drawable & gd, const uint8_t rop, const int cx, const int cy, const char * name){
-    gd.opaquerect(Rect(90, 90, 120, 120), gd.u32bgr_to_color(RED));
-    gd.opaquerect(Rect(100, 100, 100, 100), gd.u32bgr_to_color(BLUE));
-    gd.opaquerect(Rect(120, 120, 60, 60).intersect(Rect(100, 100, 100, 100)), gd.u32bgr_to_color(PINK));
-    gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
-    gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
-
-    (void)name;
-    // uncomment to see result in png file
-    //char tmpname[128];
-    //sprintf(tmpname, "/tmp/test_scrblt_%s", name);
-    //dump_png(tmpname, gd.impl());
-}
-
-#define test_scrblt2(rop, cx, cy, name, sig) do { \
-    Drawable gd(640, 480);                        \
-    test_scrblt2_impl(gd, rop, cx, cy, name);     \
-    RED_CHECK_SIG(gd, sig);                           \
-} while (0)
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltDown)
+RED_AUTO_TEST_CASE(TestGraphicableScrBlt)
 {
-    test_scrblt2(0x00, 0, 20, "down00",
-    "\xf8\xbd\xd7\x1d\x93\x78\x8c\xd9\x7a\x88\x6d\xfe\x52\x71\xe5\xaf\x7d\xba\x61\x46");
-}
-
-//RED_AUTO_TEST_CASE(TestGraphicableScrBltDown)
-//{
-//    test_scrblt(0x00, 0, 20, "down00",
-//    "\x3c\x39\xae\x2b\x84\x5b\xc6\xa8\x75\xc1\xaf\xbb\x5c\x26\xa9\x1f\x94\x24\xc4\x68");
-//}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltRight)
-{
-    test_scrblt2(0x00, 20, 0, "right00",
-    "\x76\xbb\x56\xf5\x70\xec\x7e\x19\xc7\x68\xe6\x32\xb3\x43\xf1\xc8\xf1\x78\x6e\xf1");
-}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltLeft)
-{
-    test_scrblt2(0x00, -20, 0, "left00",
-    "\x05\xdf\xba\x3b\x9f\xa9\x5d\x1c\xa9\x12\xa0\x0b\x1d\x10\x26\x68\x41\xc7\x73\xd9");
-}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltUp)
-{
-    test_scrblt2(0x00, 0, -20, "up00",
-    "\x55\x73\x7e\xd8\x0a\x36\xde\x1c\x87\xb3\xbb\x78\x6c\xaf\xb2\xcf\x53\xab\xa2\xe6");
-}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltLeftUp)
-{
-    test_scrblt2(0x00, -20, -20, "left_up00",
-    "\xb6\x9a\xe7\xd0\x97\xe1\x3b\xce\x8d\xef\x73\x43\xd2\x50\xba\xd0\x06\xe1\x6c\xca");
-}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltDown11)
-{
-    test_scrblt2(0x11, 0, 20, "down11",
-    "\xd4\x3a\x6e\xea\x67\xe4\x0c\xe2\xc9\xde\xd0\x0f\x3f\xd7\x2d\x26\x93\xcf\x40\x53");
-}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltRight11)
-{
-    test_scrblt2(0x11, 20, 0, "right11",
-    "\x44\x93\x9e\xf8\x40\x9d\x18\x24\x27\xcf\x53\x76\xde\xd6\x05\x0f\x33\x65\x79\xfc");
-}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltLeft11)
-{
-    test_scrblt2(0x11, -20, 0, "left11",
-    "\x8b\x54\x94\x20\x65\xf3\x91\x64\x9a\x25\xca\x18\x18\x46\x0c\x1f\x00\x22\x18\x7c");
-}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltUp11)
-{
-    test_scrblt2(0x11, 0, -20, "up11",
-    "\x82\x1a\x1c\xa5\xe2\x53\x37\xbd\x39\x21\x74\xd6\xd8\x57\xd7\xaf\xaf\xe0\xc9\x18");
-}
-
-RED_AUTO_TEST_CASE(TestGraphicableScrBltLeftUp11)
-{
-    test_scrblt2(0x11, -20, -20, "left_up11",
-    "\x02\xb8\x82\xa6\x44\x12\x7c\xcd\xb6\x38\xa3\xef\x1c\xe7\xaa\x54\xcd\xf2\x75\xdb");
+    struct Data
+    {
+        uint8_t rop;
+        int cx, cy;
+        char const* name;
+        array_view_const_char sig;
+    };
+    Drawable gd(640, 480);
+    for (Data const& data : {
+        Data{0x00,   0,  20, "down00",
+            "\xf8\xbd\xd7\x1d\x93\x78\x8c\xd9\x7a\x88\x6d\xfe\x52\x71\xe5\xaf\x7d\xba\x61\x46"_av},
+        Data{0x00,  20,   0, "right00",
+            "\x76\xbb\x56\xf5\x70\xec\x7e\x19\xc7\x68\xe6\x32\xb3\x43\xf1\xc8\xf1\x78\x6e\xf1"_av},
+        Data{0x00, -20,   0, "left00",
+            "\x05\xdf\xba\x3b\x9f\xa9\x5d\x1c\xa9\x12\xa0\x0b\x1d\x10\x26\x68\x41\xc7\x73\xd9"_av},
+        Data{0x00,   0, -20, "up00",
+            "\x55\x73\x7e\xd8\x0a\x36\xde\x1c\x87\xb3\xbb\x78\x6c\xaf\xb2\xcf\x53\xab\xa2\xe6"_av},
+        Data{0x00, -20, -20, "left_up00",
+            "\xb6\x9a\xe7\xd0\x97\xe1\x3b\xce\x8d\xef\x73\x43\xd2\x50\xba\xd0\x06\xe1\x6c\xca"_av},
+        Data{0x11,   0,  20, "down11",
+            "\xd4\x3a\x6e\xea\x67\xe4\x0c\xe2\xc9\xde\xd0\x0f\x3f\xd7\x2d\x26\x93\xcf\x40\x53"_av},
+        Data{0x11,  20,   0, "right11",
+            "\x44\x93\x9e\xf8\x40\x9d\x18\x24\x27\xcf\x53\x76\xde\xd6\x05\x0f\x33\x65\x79\xfc"_av},
+        Data{0x11, -20,   0, "left11",
+            "\x8b\x54\x94\x20\x65\xf3\x91\x64\x9a\x25\xca\x18\x18\x46\x0c\x1f\x00\x22\x18\x7c"_av},
+        Data{0x11,   0, -20, "up11",
+            "\x82\x1a\x1c\xa5\xe2\x53\x37\xbd\x39\x21\x74\xd6\xd8\x57\xd7\xaf\xaf\xe0\xc9\x18"_av},
+        Data{0x11, -20, -20, "left_up11",
+            "\x02\xb8\x82\xa6\x44\x12\x7c\xcd\xb6\x38\xa3\xef\x1c\xe7\xaa\x54\xcd\xf2\x75\xdb"_av}
+    }) RED_TEST_CONTEXT("name: " << data.name)
+    {
+        gd.opaquerect(Rect(0, 0, gd.width(), gd.height()), gd.u32bgr_to_color(BLACK));
+        gd.opaquerect(Rect(90, 90, 120, 120), gd.u32bgr_to_color(RED));
+        gd.opaquerect(Rect(100, 100, 100, 100), gd.u32bgr_to_color(BLUE));
+        gd.opaquerect(Rect(120, 120, 60, 60).intersect(Rect(100, 100, 100, 100)), gd.u32bgr_to_color(PINK));
+        gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
+        gd.scrblt(90, 90, Rect(90 + data.cx, 90 + data.cy, 120, 120), data.rop);
+        RED_CHECK_SIG_A(gd, data.sig);
+    }
 }
 
 RED_AUTO_TEST_CASE(TestMemblt)

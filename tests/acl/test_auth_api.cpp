@@ -20,8 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "acl/auth_api.hpp"
 
-RED_AUTO_TEST_CASE(TestAuthAPI1)
-{
-}
+int main()
+{}

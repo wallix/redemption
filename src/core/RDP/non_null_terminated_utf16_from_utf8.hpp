@@ -18,15 +18,10 @@
 *   Author(s): Jonathan Poelen
 */
 
-
 #pragma once
 
-#include "core/error.hpp"
-#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/bytes_view.hpp"
-
-#include <string>
 
 /// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(

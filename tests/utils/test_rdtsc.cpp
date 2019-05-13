@@ -19,10 +19,7 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "utils/rdtsc.hpp"
 
-
-
-RED_AUTO_TEST_CASE(TestXXX)
-{
-}
+int main()
+{}

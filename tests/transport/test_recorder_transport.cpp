@@ -19,7 +19,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "transport/recorder_transport.hpp"
 #include "transport/replay_transport.hpp"
@@ -39,12 +39,8 @@ class ZeroTime : public TimeObj
 };
 
 
-RED_AUTO_TEST_CASE(TestRecorderTransport)
+RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
 {
-    char const* filename = "/tmp/recorder_test.out";
-    unlink(filename);
-    SCOPE_EXIT(unlink(filename));
-
     using Pck = RecorderFile::PacketType;
 
     struct {
@@ -73,7 +69,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
         TestTransport socket(
             cstr_array_view("123456789"),
             cstr_array_view("abcdefghijklmnopqrstuvwxyz"));
-        RecorderTransport trans(socket, timeobj, filename);
+        RecorderTransport trans(socket, timeobj, wf);
         char buf[10];
 
         for (auto m : a) {
@@ -95,7 +91,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
         }
     }
 
-    auto s = get_file_contents(filename);
+    auto s = get_file_contents(wf);
     RED_CHECK_MEM_C(s,
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""abc"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00""defg"
@@ -136,7 +132,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     {
         ZeroTime timeobj;
         ReplayTransport trans(
-            filename, "ip", 0/*port*/, timeobj, ReplayTransport::FdType::AlwaysReady,
+            wf, "ip", 0/*port*/, timeobj, ReplayTransport::FdType::AlwaysReady,
             ReplayTransport::FirstPacket::DisableTimer, ReplayTransport::UncheckedPacket::Send);
         RED_CHECK_EXCEPTION_ERROR_ID(trans.send("!@#", 3), ERR_TRANSPORT_DIFFERS);
     }
@@ -144,7 +140,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     // Replay
     {
         ZeroTime timeobj;
-        ReplayTransport trans(filename, "", 0, timeobj, ReplayTransport::FdType::AlwaysReady);
+        ReplayTransport trans(wf, "", 0, timeobj, ReplayTransport::FdType::AlwaysReady);
         char buf[10];
         auto av = make_array_view(buf);
         auto in = cstr_array_view("123456789");
@@ -183,7 +179,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     // Replay real time
     {
         ZeroTime timeobj;
-        ReplayTransport trans(filename, "", 0, timeobj, ReplayTransport::FdType::Timer);
+        ReplayTransport trans(wf, "", 0, timeobj, ReplayTransport::FdType::Timer);
         char buf[10];
         auto av = make_array_view(buf);
         auto in = cstr_array_view("123456789");

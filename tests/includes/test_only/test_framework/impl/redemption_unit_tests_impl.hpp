@@ -192,10 +192,10 @@ constexpr fn_invoker_t<F> fn_invoker(char const* name, F f)
 
 } // namespace redemption_unit_test__
 
-#define RED_TEST_FUNC_CTX(fname) redemption_unit_test__::fn_invoker( \
+#define RED_TEST_FUNC_CTX(fname) ::redemption_unit_test__::fn_invoker( \
     #fname, [](auto&&... args){ return fname(args...); })
 
-#define RED_TEST_INVOKER(fname) redemption_unit_test__::fn_invoker( \
+#define RED_TEST_INVOKER(fname) ::redemption_unit_test__::fn_invoker( \
     #fname, [&](auto&&... args){ return fname(args...); })
 
 #define RED_TEST_FUNC(fname, ...) [&]{                             \

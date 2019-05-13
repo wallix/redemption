@@ -1,4 +1,3 @@
-
 /*
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,11 +19,10 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "core/RDP/caches/pointercache.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
+// TEST missing
+int main()
 {
     PointerCache();
 }

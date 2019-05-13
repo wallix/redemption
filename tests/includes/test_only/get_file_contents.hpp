@@ -68,3 +68,9 @@ String get_file_contents(std::string const& name)
 {
     return get_file_contents<String>(name.c_str());
 }
+
+template<class T, class String = std::string>
+String get_file_contents(T const& name)
+{
+    return get_file_contents(static_cast<char const*>(name));
+}

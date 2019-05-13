@@ -48,6 +48,8 @@ public:
         const char * const filename,
         const char * const extension)
     {
+        assert(0 != strcmp(prefix, hash_prefix));
+
         if (!utils::strbcpy(this->path, prefix)
          || !utils::strbcpy(this->hash_path, hash_prefix)
          || !utils::strbcpy(this->filename, filename)

@@ -18,12 +18,10 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "core/RDP/nla/kerberos/kerberos.hpp"
 
-RED_AUTO_TEST_CASE(TestAcquireCredentials)
+// TEST missing
+int main()
 {
     Kerberos_SecurityFunctionTable table;
     uint8_t name[] = "tartempion";

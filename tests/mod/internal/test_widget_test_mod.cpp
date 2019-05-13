@@ -18,14 +18,13 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "core/session_reactor.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 
-RED_AUTO_TEST_CASE(TestDialogMod)
+// TEST missing
+int main()
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
 

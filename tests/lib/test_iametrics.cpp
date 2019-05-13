@@ -26,7 +26,7 @@ using namespace std::chrono_literals;
 
 #include "utils/fileutils.hpp"
 #include "test_only/get_file_contents.hpp"
-#include "test_only/working_directory.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "lib/iametrics.hpp"
 

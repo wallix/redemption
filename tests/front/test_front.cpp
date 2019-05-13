@@ -92,9 +92,6 @@ struct FrontTransport : GeneratorTransport
 
 RED_AUTO_TEST_CASE(TestFront)
 {
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
-
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -320,9 +317,6 @@ RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
 
 RED_AUTO_TEST_CASE(TestFront2)
 {
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
-
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -490,9 +484,6 @@ RED_AUTO_TEST_CASE(TestFront2)
 /*
 RED_AUTO_TEST_CASE(TestFront3)
 {
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
-
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;

@@ -18,11 +18,9 @@
    Author(s): Christophe Grosjean
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "core/RDP/capabilities/common.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
+int main()
 {
     Capability(CAPSTYPE_GENERAL, 0);
 }

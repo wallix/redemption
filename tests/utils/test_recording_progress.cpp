@@ -21,19 +21,20 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 
 #include "utils/recording_progress.hpp"
 #include "test_only/get_file_contents.hpp"
 
 
-RED_AUTO_TEST_CASE(TestRecordingProgress)
+RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
 {
     std::string contents;
 
     time_t const start_time = 123456789;
     time_t const end_time = start_time + 100;
-    char const * filename = "/tmp/test_progress_123.test";
+    char const * filename = wf.c_str();
 
     {
         unlink(filename);
@@ -217,6 +218,4 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
     }
     append_file_contents(contents, filename);
     RED_CHECK_EQUAL(contents, "-1 plouf (2)");
-
-    unlink(filename);
 }

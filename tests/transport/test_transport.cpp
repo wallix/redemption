@@ -19,10 +19,8 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
+// api
 #include "transport/transport.hpp"
 
-RED_AUTO_TEST_CASE(TestTransport)
-{
-}
+int main()
+{}

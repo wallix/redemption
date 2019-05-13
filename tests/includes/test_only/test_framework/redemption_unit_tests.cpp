@@ -181,6 +181,11 @@ void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::ope
     }
 }
 
+std::ostream& operator<<(std::ostream& out, const_bytes_view const& av)
+{
+    size_t r = av.size();
+    return out << redemption_unit_test__::xarray{r, av};
+}
 
 std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e)
 {

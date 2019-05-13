@@ -20,6 +20,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "utils/fileutils.hpp"
 
@@ -32,317 +33,132 @@
 RED_AUTO_TEST_CASE(TestBasename)
 {
     // basename() change behavior depending if <filegen.h> is included
-    // or not. The POSIX version chnage it's argument, not the glibc one
+    // or not. The POSIX version change it's argument, not the glibc one
     // we WANT to use the glibc one. This test below will fail if
     // <filegen.h> is included
 
-    //  Below expected behavior from the unix man pages
-    //       path        basename
-    //       "/usr/lib"  "lib"
-    //       "/usr/"     ""
-    //       "usr"       "usr"
-    //       "/"         "/"
-    //       "."         "."
-    //       ".."        ".."
-    RED_CHECK_EQ(basename("/usr/lib"), "lib");
+    struct Data
     {
-        size_t len = 0;
-        char const * base = basename_len("/usr/lib", len);
-        RED_CHECK_SMEM_C(make_array_view(base, len), "lib");
-    }
-
-    RED_CHECK_EQ(basename("/usr/lib/"), "");
+        char const* filename;
+        array_view_const_char basename;
+    };
+    for (Data const& data : {
+        //  Below expected behavior from the unix man pages
+        Data{"/usr/lib",  "lib"_av},
+        Data{"/usr/lib/", ""_av},
+        Data{"/usr/",     ""_av},
+        Data{"/usr",      "usr"_av},
+        Data{"usr",       "usr"_av},
+        Data{"/",         ""_av},
+        Data{".",         "."_av},
+        Data{"..",        ".."_av}
+    }) RED_TEST_CONTEXT(data.filename)
     {
+        RED_CHECK_EQ(basename(data.filename), data.basename.data());
         size_t len = 0;
-        /*char const * base = */basename_len("/usr/lib/", len);
-        RED_CHECK_EQUAL(0u, len);
-    }
-
-    RED_CHECK_EQ(basename("/usr/"), "");
-    {
-        size_t len = 0;
-        char const * base = basename_len("/usr", len);
-        RED_CHECK_SMEM_C(make_array_view(base, len), "usr");
-    }
-
-    RED_CHECK(0 == strcmp(basename("usr"), "usr"));
-    {
-        size_t len = 0;
-        char const * base = basename_len("usr", len);
-        RED_CHECK_SMEM_C(make_array_view(base, len), "usr");
-    }
-
-    RED_CHECK_EQ(basename("/"), "");
-    {
-        size_t len = 0;
-        /*char * base = */basename_len("/", len);
-        RED_CHECK_EQUAL(0u, len);
-    }
-
-    RED_CHECK_EQ(basename("."), ".");
-    {
-        size_t len = 0;
-        char const * base = basename_len(".", len);
-        RED_CHECK_SMEM_C(make_array_view(base, len), ".");
-    }
-
-    RED_CHECK_EQ(basename(".."), "..");
-    {
-        size_t len = 0;
-        char const * base = basename_len("..", len);
-        RED_CHECK_SMEM_C(make_array_view(base, len), "..");
+        char const * base = basename_len(data.filename, len);
+        RED_CHECK_SMEM(make_array_view(base, len), data.basename);
     }
 }
 
 
 RED_AUTO_TEST_CASE(CanonicalPath)
 {
-  // check that function that splits a path between canonical parts has expected behavior
-  // Parts are:
-  // - path : full path absolute or relative to directory containing file
-  // - basename : the filename without extension
-  // - extension : the extension = part following the last dot, removed from basename
-  //  if initial fullpath does not has any dot in it nothing is removed
+    struct Data
+    {
+        char const* filename;
+        char const* path;
+        char const* basename;
+        char const* extension;
+    };
+    char path[4096];
+    char basename[4096];
+    char extension[128];
+    // check that function that splits a path between canonical parts has expected behavior
+    // Parts are:
+    // - path : full path absolute or relative to directory containing file
+    // - basename : the filename without extension
+    // - extension : the extension = part following the last dot, removed from basename
+    //  if initial fullpath does not has any dot in it nothing is removed
+    for (Data const& data : {
+        Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
+        Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
+        Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
+        Data{"result",              "no path",  "result",       "no extension"},
+        Data{"result/",             "result/",  "no basename",  "no extension"},
+        Data{"result.tmp",          "no path",  "result",       ".tmp"},
+        Data{"tmp/.tmp",            "tmp/",     "no basename",  ".tmp"},
+        Data{".tmp",                "no path",  "no basename",  ".tmp"},
+        Data{"",                    "no path",  "no basename",  "no extension"}
+    }) RED_TEST_CONTEXT(data.filename)
+    {
+        strcpy(path, "no path");
+        strcpy(basename, "no basename");
+        strcpy(extension, "no extension");
 
-  char path[4096];
-  char basename[4096];
-  char extension[128];
-  strcpy(path, "no path");
-  strcpy(basename, "no basename");
-  strcpy(extension, "no extension");
-
-  canonical_path("./titi/result.tmp", path, 4096, basename, 4096, extension, 128);
-  RED_CHECK_EQUAL("./titi/", path);
-  RED_CHECK_EQUAL("result", basename);
-  RED_CHECK_EQUAL(".tmp", extension);
-
-
-  strcpy(path, "no path");
-  strcpy(basename, "no basename");
-  strcpy(extension, "no extension");
-  canonical_path("result", path, 4096, basename, 4096, extension, 128);
-  RED_CHECK_EQUAL("no path", path);
-  RED_CHECK_EQUAL("result", basename);
-  RED_CHECK_EQUAL("no extension", extension);
-
-  strcpy(path, "no path");
-  strcpy(basename, "no basename");
-  strcpy(extension, "no extension");
-  canonical_path("result/", path, 4096, basename, 4096, extension, 128);
-  RED_CHECK_EQUAL("result/", path);
-  RED_CHECK_EQUAL("no basename", basename);
-  RED_CHECK_EQUAL("no extension", extension);
-
-  strcpy(path, "no path");
-  strcpy(basename, "no basename");
-  strcpy(extension, "no extension");
-  canonical_path("result.tmp", path, 4096, basename, 4096, extension, 128);
-  RED_CHECK_EQUAL("no path", path);
-  RED_CHECK_EQUAL("result", basename);
-  RED_CHECK_EQUAL(".tmp", extension);
-
-  strcpy(path, "no extension");
-  strcpy(basename, "no basename");
-  strcpy(extension, "no extension");
-  canonical_path("tmp/.tmp", path, 4096, basename, 4096, extension, 128);
-  RED_CHECK_EQUAL("tmp/", path);
-  RED_CHECK_EQUAL("no basename", basename);
-  RED_CHECK_EQUAL(".tmp", extension);
-
-  strcpy(path, "no path");
-  strcpy(basename, "no basename");
-  strcpy(extension, "no extension");
-  canonical_path(".tmp", path, 4096, basename, 4096, extension, 128);
-  RED_CHECK_EQUAL("no path", path);
-  RED_CHECK_EQUAL("no basename", basename);
-  RED_CHECK_EQUAL(".tmp", extension);
-
-  strcpy(path, "no path");
-  strcpy(basename, "no basename");
-  strcpy(extension, "no extension");
-  canonical_path("", path, 4096, basename, 4096, extension, 128);
-  RED_CHECK_EQUAL("no path", path);
-  RED_CHECK_EQUAL("no basename", basename);
-  RED_CHECK_EQUAL("no extension", extension);
+        canonical_path(data.filename, path, 4096, basename, 4096, extension, 128);
+        RED_CHECK_EQUAL(data.path, path);
+        RED_CHECK_EQUAL(data.basename, basename);
+        RED_CHECK_EQUAL(data.extension, extension);
+    }
 }
 
 RED_AUTO_TEST_CASE(TestParsePath)
 {
+    struct Data
     {
-        std::string directory;
-        std::string filename ;
-        std::string extension;
-        ParsePath("/etc/rdpproxy/rdpproxy.ini", directory, filename, extension);
-        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        RED_CHECK_EQUAL("rdpproxy"      , filename );
-        RED_CHECK_EQUAL(".ini"          , extension);
-    }
-
+        char const* filename;
+        char const* directory;
+        char const* basename;
+        char const* extension;
+    };
+    for (Data const& data : {
+        Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
+        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     "zzz"},
+        Data{"/etc/rdpproxy/",              "/etc/rdpproxy/",   "yyy",          "zzz"},
+        Data{"rdpproxy.ini",                "xxx",              "rdpproxy",     ".ini"},
+        Data{"rdpproxy.",                   "xxx",              "rdpproxy",     "."},
+        Data{"rdpproxy",                    "xxx",              "rdpproxy",     "zzz"},
+        Data{".rdpproxy",                   "xxx",              ".rdpproxy",    "zzz"},
+        Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
+        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     "zzz"},
+        Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     "zzz"},
+        Data{"rdpproxy.ini",                "xxx",              "rdpproxy",     ".ini"},
+        Data{"rdpproxy",                    "xxx",              "rdpproxy",     "zzz"},
+        Data{".rdpproxy.ini",               "xxx",              ".rdpproxy",    ".ini"},
+        Data{"a",                           "xxx",              "a"     ,       "zzz"},
+        Data{"",                            "xxx",              "yyy",          "zzz"}
+    }) RED_TEST_CONTEXT(data.filename)
     {
-        std::string directory;
-        std::string filename ;
-        std::string extension;
-        ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
-        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        RED_CHECK_EQUAL("rdpproxy"      , filename );
-        RED_CHECK_EQUAL(""              , extension);
-    }
-
-    {
-        std::string directory;
-        std::string filename ;
-        std::string extension;
-        ParsePath("/etc/rdpproxy/", directory, filename, extension);
-        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        RED_CHECK_EQUAL(""              , filename );
-        RED_CHECK_EQUAL(""              , extension);
-    }
-
-    {
-        std::string directory;
-        std::string filename ;
-        std::string extension;
-        ParsePath("rdpproxy.ini", directory, filename, extension);
-        RED_CHECK_EQUAL(""        , directory);
-        RED_CHECK_EQUAL("rdpproxy", filename );
-        RED_CHECK_EQUAL(".ini"    , extension);
-    }
-
-    {
-        std::string directory;
-        std::string filename ;
-        std::string extension;
-        ParsePath("rdpproxy.", directory, filename, extension);
-        RED_CHECK_EQUAL(""        , directory);
-        RED_CHECK_EQUAL("rdpproxy", filename );
-        RED_CHECK_EQUAL("."       , extension);
-    }
-
-    {
-        std::string directory;
-        std::string filename ;
-        std::string extension;
-        ParsePath("rdpproxy", directory, filename, extension);
-        RED_CHECK_EQUAL(""        , directory);
-        RED_CHECK_EQUAL("rdpproxy", filename );
-        RED_CHECK_EQUAL(""        , extension);
-    }
-
-    {
-        std::string directory;
-        std::string filename ;
-        std::string extension;
-        ParsePath(".rdpproxy", directory, filename, extension);
-        RED_CHECK_EQUAL(""         , directory);
-        RED_CHECK_EQUAL(".rdpproxy", filename );
-        RED_CHECK_EQUAL(""         , extension);
-    }
-
-    {
-        std::string directory = "./"    ;
-        std::string filename  = "sesman";
-        std::string extension = ".conf" ;
-        ParsePath("/etc/rdpproxy/rdpproxy.ini", directory, filename, extension);
-        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        RED_CHECK_EQUAL("rdpproxy"      , filename );
-        RED_CHECK_EQUAL(".ini"          , extension);
-    }
-
-    {
-        std::string directory = "./"    ;
-        std::string filename  = "sesman";
-        std::string extension = ".conf" ;
-        ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
-        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        RED_CHECK_EQUAL("rdpproxy"      , filename );
-        RED_CHECK_EQUAL(".conf"         , extension);
-    }
-
-    {
-        std::string directory           ;
-        std::string filename            ;
-        std::string extension = ".conf" ;
-        ParsePath("/etc/rdpproxy/rdpproxy", directory, filename, extension);
-        RED_CHECK_EQUAL("/etc/rdpproxy/", directory);
-        RED_CHECK_EQUAL("rdpproxy"      , filename );
-        RED_CHECK_EQUAL(".conf"         , extension);
-    }
-
-    {
-        std::string directory = "./"    ;
-        std::string filename  = "sesman";
-        std::string extension = ".conf" ;
-        ParsePath("rdpproxy.ini", directory, filename, extension);
-        RED_CHECK_EQUAL("./"      , directory);
-        RED_CHECK_EQUAL("rdpproxy", filename );
-        RED_CHECK_EQUAL(".ini"    , extension);
-    }
-
-    {
-        std::string directory = "./"    ;
-        std::string filename  = "sesman";
-        std::string extension = ".conf" ;
-        ParsePath("rdpproxy", directory, filename, extension);
-        RED_CHECK_EQUAL("./"      , directory);
-        RED_CHECK_EQUAL("rdpproxy", filename );
-        RED_CHECK_EQUAL(".conf"   , extension);
-    }
-
-    {
-        std::string directory = "./"    ;
-        std::string filename  = "sesman";
-        std::string extension = ".conf" ;
-        ParsePath(".rdpproxy.ini", directory, filename, extension);
-        RED_CHECK_EQUAL("./"       , directory);
-        RED_CHECK_EQUAL(".rdpproxy", filename );
-        RED_CHECK_EQUAL(".ini"     , extension);
-    }
-
-    {
-        std::string directory = "./"    ;
-        std::string filename  = "sesman";
-        std::string extension = ".conf" ;
-        ParsePath("a", directory, filename, extension);
-        RED_CHECK_EQUAL("./"    , directory);
-        RED_CHECK_EQUAL("a"     , filename );
-        RED_CHECK_EQUAL(".conf" , extension);
-    }
-
-    {
-        std::string directory = "./"    ;
-        std::string filename  = "sesman";
-        std::string extension = ".conf" ;
-        ParsePath("", directory, filename, extension);
-        RED_CHECK_EQUAL("./"    , directory);
-        RED_CHECK_EQUAL("sesman", filename );
-        RED_CHECK_EQUAL(".conf" , extension);
+        std::string directory = "xxx";
+        std::string basename = "yyy";
+        std::string extension = "zzz";
+        ParsePath(data.filename, directory, basename, extension);
+        RED_CHECK_EQUAL(data.directory, directory);
+        RED_CHECK_EQUAL(data.basename,  basename);
+        RED_CHECK_EQUAL(data.extension, extension);
     }
 }
 
 RED_AUTO_TEST_CASE(TestMakePath)
 {
+    struct Data
+    {
+        char const* filename;
+        char const* directory;
+        char const* basename;
+        char const* extension;
+    };
+    for (Data const& data : {
+        Data{"", nullptr, nullptr, nullptr},
+        Data{"", "", "", ""},
+        Data{"/etc/rdpproxy/rdpproxy.ini", "/etc/rdpproxy/", "rdpproxy", ".ini"},
+        Data{"/etc/rdpproxy/rdpproxy.ini", "/etc/rdpproxy", "rdpproxy", "ini"}
+    })
     {
         std::string fullpath;
-        MakePath(fullpath, nullptr, nullptr, nullptr);
-        RED_CHECK_EQUAL("", fullpath);
-    }
-
-    {
-        std::string fullpath;
-        MakePath(fullpath, "", "", "");
-        RED_CHECK_EQUAL("", fullpath);
-    }
-
-    {
-        std::string fullpath;
-        MakePath(fullpath, "/etc/rdpproxy/", "rdpproxy", ".ini");
-        RED_CHECK_EQUAL("/etc/rdpproxy/rdpproxy.ini", fullpath);
-    }
-
-    {
-        std::string fullpath;
-        MakePath(fullpath, "/etc/rdpproxy", "rdpproxy", "ini");
-        RED_CHECK_EQUAL("/etc/rdpproxy/rdpproxy.ini", fullpath);
+        MakePath(fullpath, data.directory, data.basename, data.extension);
+        RED_CHECK_EQUAL(data.filename, fullpath);
     }
 }
 
@@ -350,52 +166,20 @@ const auto file_not_exists = std::not_fn<bool(*)(char const*)>(file_exist);
 
 RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
 {
-    char tmpdirname[128];
-    sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
-    RED_CHECK(nullptr != mkdtemp(tmpdirname));
-    RED_CHECK_PREDICATE(file_exist, (tmpdirname));
+    for (char const* subname : {"test_subdir", "test_subdir/"}) RED_TEST_CONTEXT(subname)
+    {
+        WorkingDirectory wd;
+        auto dir = wd.dirname().string() + "test_dir/";
+        auto subdir = dir + subname;
+        RED_CHECK_MESSAGE(!recursive_create_directory(subdir.c_str(), 0777, getgid()), strerror(errno));
 
-    recursive_delete_directory(tmpdirname);
+        RED_CHECK_PREDICATE(file_exist, (subdir.c_str()));
 
-    RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
+        recursive_delete_directory(dir.c_str());
 
-    RED_CHECK_MESSAGE(!recursive_create_directory(tmpdirname, 0777, getgid()), strerror(errno));
-
-    RED_CHECK_PREDICATE(file_exist, (tmpdirname));
-
-    char tmpfilename[128];
-    strcpy(tmpfilename, tmpdirname);
-    strcat(tmpfilename, "/test_file_XXXXXX");
-    close(mkstemp(tmpfilename));
-
-    RED_CHECK_MESSAGE(!recursive_delete_directory(tmpdirname), strerror(errno));
-    RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
-}
-
-RED_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
-{
-    char tmpdirname[128];
-    sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
-    RED_CHECK(nullptr != mkdtemp(tmpdirname));
-    RED_CHECK_PREDICATE(file_exist, (tmpdirname));
-
-    // Add a trailing slash to tmpdirname
-    strcat(tmpdirname, "/");
-    recursive_delete_directory(tmpdirname);
-
-    RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
-
-    RED_CHECK_MESSAGE(!recursive_create_directory(tmpdirname, 0777, getgid()), strerror(errno));
-
-    RED_CHECK_PREDICATE(file_exist, (tmpdirname));
-
-    char tmpfilename[128];
-    strcpy(tmpfilename, tmpdirname);
-    strcat(tmpfilename, "/test_file_XXXXXX");
-    close(mkstemp(tmpfilename));
-
-    RED_CHECK_MESSAGE(!recursive_delete_directory(tmpdirname), strerror(errno));
-    RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
+        RED_CHECK_PREDICATE(file_not_exists, (dir.c_str()));
+        RED_CHECK_PREDICATE(file_not_exists, (subdir.c_str()));
+    }
 }
 
 RED_AUTO_TEST_CASE(TestFileEquals)
