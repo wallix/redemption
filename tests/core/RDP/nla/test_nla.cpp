@@ -187,8 +187,14 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     Translation::language_t lang = Translation::EN;
     
     auto key = logtrans.get_public_key();
+
+    uint8_t front_public_key[1024] = {};
+    array_view_u8 front_public_key_av = {};
+    memcpy(front_public_key, key.data(), key.size());
+    front_public_key_av = array_view(front_public_key, key.size());
+
     rdpCredsspServerNTLM credssp(
-        key, false, rand, timeobj, extra_message, lang,
+        front_public_key_av, false, rand, timeobj, extra_message, lang,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             auto arr2av = [&](Array& arr){ return make_array_view(arr.get_data(), arr.size()); };
             std::vector<uint8_t> vec;

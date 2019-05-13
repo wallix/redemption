@@ -34,8 +34,8 @@ class NegoServer
     rdpCredsspServerNTLM credssp;
 
 public:
-    NegoServer(Transport& trans, std::string const& user, std::string const& password, uint64_t verbosity)
-    : credssp(trans.get_public_key(), false, rand, timeobj, extra_message, Translation::EN,
+    NegoServer(array_view_u8 key, std::string const& user, std::string const& password, uint64_t verbosity)
+    : credssp(key, false, rand, timeobj, extra_message, Translation::EN,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             LOG(LOG_INFO, "NTLM Check identity");
 

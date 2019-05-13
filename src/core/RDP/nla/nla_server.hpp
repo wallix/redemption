@@ -48,6 +48,7 @@ protected:
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
 
+    array_view_u8 public_key;
     Random & rand;
     TimeObj & timeobj;
     std::string& extra_message;
@@ -55,26 +56,12 @@ protected:
     bool restricted_admin_mode;
     const bool verbose;
 
-    Array PublicKey;
     Array ClientServerHash;
     Array ServerClientHash;
 
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     std::unique_ptr<SecurityFunctionTable> table = std::make_unique<UnimplementedSecurityFunctionTable>();
-
-
-    void init_public_key(array_view_const_u8 key)
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::ntlm_init");
-
-        // ============================================
-        /* Get Public Key From TLS Layer and hostname */
-        // ============================================
-
-        this->PublicKey.init(key.size());
-        this->PublicKey.copy(key);
-    }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
@@ -110,7 +97,7 @@ protected:
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
-        sha256.update(this->PublicKey.av());
+        sha256.update(this->public_key);
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
         memcpy(SavedHash.get_data(), hash, sizeof(hash));
@@ -123,7 +110,7 @@ protected:
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
-        sha256.update(this->PublicKey.av());
+        sha256.update(this->public_key);
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
         memcpy(SavedHash.get_data(), hash, sizeof(hash));
@@ -156,11 +143,12 @@ protected:
 
 
 protected: 
-    rdpCredsspServer(Random & rand, TimeObj & timeobj, std::string& extra_message,
+    rdpCredsspServer(array_view_u8 key, Random & rand, TimeObj & timeobj, std::string& extra_message,
                Translation::language_t lang,
                bool restricted_admin_mode,
                const bool verbose = false)
-        : rand(rand)
+        : public_key(key)
+        , rand(rand)
         , timeobj(timeobj)
         , extra_message(extra_message)
         , lang(lang)
@@ -431,7 +419,7 @@ class rdpCredsspServerNTLM final : public rdpCredsspServer
     } sspi;
 
 public:
-    rdpCredsspServerNTLM(array_view_const_u8 key,
+    rdpCredsspServerNTLM(array_view_u8 key,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
@@ -439,7 +427,7 @@ public:
                Translation::language_t lang,
                std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
-        : rdpCredsspServer(rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
+        : rdpCredsspServer(key, rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
         , sspi(rand, timeobj, set_password_cb, verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
@@ -448,8 +436,6 @@ public:
         this->server_auth_data.state = ServerAuthenticateData::Start;
         // TODO: sspi_GlobalInit();
 
-        this->init_public_key(key);
-        
         // Note: NTLMAcquireCredentialHandle never fails
         this->sspi.AcquireCredentialsHandle(nullptr, nullptr, nullptr);
 
@@ -497,22 +483,21 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
-        array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
             if (this->ts_request.clientNonce.isset()){
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
             this->credssp_generate_public_key_hash_server_to_client();
-            public_key = this->ServerClientHash.av();
+            this->public_key = this->ServerClientHash.av();
         }
         else {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
-            this->ap_integer_increment_le(public_key);
+            this->ap_integer_increment_le(this->public_key);
         }
 
         return this->sspi.EncryptMessage(
-            public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
+            this->public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -536,29 +521,28 @@ private:
 
         const uint32_t version = this->ts_request.use_version;
 
-        array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
             if (this->ts_request.clientNonce.isset()){
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
             this->credssp_generate_public_key_hash_client_to_server();
-            public_key = this->ClientServerHash.av();
+            this->public_key = this->ClientServerHash.av();
         }
 
         array_view_u8 public_key2 = Buffer.av();
 
-        if (public_key2.size() != public_key.size()) {
-            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
+        if (public_key2.size() != this->public_key.size()) {
+            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), this->public_key.size());
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
-        if (memcmp(public_key.data(), public_key2.data(), public_key.size()) != 0) {
+        if (memcmp(this->public_key.data(), public_key2.data(), public_key.size()) != 0) {
             LOG(LOG_ERR, "Could not verify server's public key echo");
 
-            LOG(LOG_ERR, "Expected (length = %zu):", public_key.size());
-            hexdump_av_c(public_key);
+            LOG(LOG_ERR, "Expected (length = %zu):", this->public_key.size());
+            hexdump_av_c(this->public_key);
 
-            LOG(LOG_ERR, "Actual (length = %zu):", public_key.size());
+            LOG(LOG_ERR, "Actual (length = %zu):", this->public_key.size());
             hexdump_av_c(public_key2);
 
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
@@ -688,30 +672,21 @@ private:
 class rdpCredsspServerKerberos final : public rdpCredsspServer
 {
 public:
-    rdpCredsspServerKerberos(array_view_const_u8 key,
+    rdpCredsspServerKerberos(array_view_u8 key,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
                const bool verbose = false)
-        : rdpCredsspServer(rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
+        : rdpCredsspServer(key, rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
-        this->credssp_server_authenticate_init(key);
-    }
-
-private:
-    bool credssp_server_authenticate_init(array_view_const_u8 key)
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_init: KERBEROS Authentication");
-
         this->server_auth_data.state = ServerAuthenticateData::Start;
 
         // TODO: sspi_GlobalInit();
 
-        this->init_public_key(key);
         this->table.reset();
 
         #ifndef __EMSCRIPTEN__
@@ -722,13 +697,17 @@ private:
         assert(!"Unsupported Kerberos");
         #endif
 
+        // TODO: see how to correctly support kerberos init error
+        // as we are in a constructor this should be done using exception
+        // or setting some status field in the object returning a value is
+        // not an option
         if (SEC_E_OK != this->table->AcquireCredentialsHandle(
                             /*char* pszPrincipal*/nullptr, 
                             /*Array* pvLogonID*/nullptr, 
                             /*SEC_WINNT_AUTH_IDENTITY const* pAuthData*/nullptr))
         {
             LOG(LOG_ERR, "InitSecurityInterface status: SEC_E_NO_CREDENTIALS");
-            return false;
+            return;
         }
 
         /*
@@ -739,7 +718,6 @@ private:
         */
 
         this->server_auth_data.state = ServerAuthenticateData::Loop;
-        return true;
     }
 
 public:
@@ -778,18 +756,17 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
-        array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
             if (this->ts_request.clientNonce.isset()){
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
             this->credssp_generate_public_key_hash_server_to_client();
-            public_key = this->ServerClientHash.av();
+            this->public_key = this->ServerClientHash.av();
         }
         else {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
-            this->ap_integer_increment_le(public_key);
+            this->ap_integer_increment_le(this->public_key);
         }
 
         return this->table->EncryptMessage(
@@ -817,13 +794,12 @@ private:
 
         const uint32_t version = this->ts_request.use_version;
 
-        array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
             if (this->ts_request.clientNonce.isset()){
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
             this->credssp_generate_public_key_hash_client_to_server();
-            public_key = this->ClientServerHash.av();
+            this->public_key = this->ClientServerHash.av();
         }
 
         array_view_u8 public_key2 = Buffer.av();

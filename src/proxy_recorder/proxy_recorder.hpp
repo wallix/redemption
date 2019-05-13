@@ -55,10 +55,11 @@
 /** @brief a front connection with a RDP client */
 class ProxyRecorder
 {
+    // NlaTeeTransport & front_nla_tee_trans,
+
     using PacketType = RecorderFile::PacketType;
 public:
     ProxyRecorder(Transport & frontConn,
-            NlaTeeTransport & front_nla_tee_trans,
             Transport & backConn,
             NlaTeeTransport & back_nla_tee_trans, 
             RecorderFile & outFile,
@@ -70,7 +71,6 @@ public:
     )
         : frontConn(frontConn)
         , backConn(backConn)
-        , front_nla_tee_trans(front_nla_tee_trans)
         , back_nla_tee_trans(back_nla_tee_trans)
         , outFile(outFile)
         , timeobj(timeobj)
@@ -89,11 +89,11 @@ public:
     }
 
     void front_step1();
+    void back_step1(array_view_u8 key);
     void front_nla();
     void front_initial_pdu_negociation();
     void back_nla_negociation();
     void back_initial_pdu_negociation();
-    void run();
 
 private:
     uint8_t select_client_protocol() const
@@ -103,6 +103,7 @@ private:
                              : X224::PROTOCOL_RDP;
     }
 
+public:
     enum {
         NEGOCIATING_FRONT_STEP1,
         NEGOCIATING_FRONT_NLA,
@@ -113,10 +114,8 @@ private:
     } pstate = NEGOCIATING_FRONT_STEP1;
 
 
-public:
     Transport & frontConn;
     Transport & backConn;
-    NlaTeeTransport & front_nla_tee_trans;
     NlaTeeTransport & back_nla_tee_trans;
     RecorderFile & outFile;
     TimeObj & timeobj;

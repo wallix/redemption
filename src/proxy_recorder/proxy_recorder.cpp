@@ -22,72 +22,72 @@
 
 #include "proxy_recorder/proxy_recorder.hpp"
 
+
 void ProxyRecorder::front_step1()
 {
     LOG(LOG_INFO, "front step 1");
-    if (this->frontBuffer.next(TpduBuffer::PDU)) {
-        LOG(LOG_INFO, "front buffer.next");
 
-        LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_STEP1 frontbuffer content ======");
-        array_view_u8 currentPacket = this->frontBuffer.current_pdu_buffer();
-        LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
+    LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_STEP1 frontbuffer content ======");
+    array_view_u8 currentPacket = this->frontBuffer.current_pdu_buffer();
+    LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
 
-        InStream x224_stream(currentPacket);
-        X224::CR_TPDU_Recv x224(x224_stream, false, this->verbosity);
-        if (x224._header_size != x224_stream.get_capacity()) {
-            LOG(LOG_WARNING,
-                "Front::incoming: connection request: all data should have been consumed,"
-                " %zu bytes remains",
-                x224_stream.get_capacity() - x224._header_size);
-        }
-
-        this->is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
-        this->is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
-
-        LOG_IF((this->verbosity > 8) && this->is_tls_client, LOG_INFO, "TLS Client");
-        LOG_IF((this->verbosity > 8) && this->is_nla_client, LOG_INFO, "NLA Client");
-
-        StaticOutStream<256> front_x224_stream;
-        X224::CC_TPDU_Send(
-            front_x224_stream,
-            X224::RDP_NEG_RSP,
-            RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
-            select_client_protocol());
-        outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
-        this->frontConn.send(front_x224_stream.get_bytes());
-
-        if (this->is_tls_client || this->is_nla_client) {
-            this->frontConn.enable_server_tls("inquisition", nullptr, 0);
-        }
-
-        
-        if (this->is_nla_client) {
-            if (this->verbosity > 4) {
-                LOG(LOG_INFO, "start NegoServer");
-            }
-            this->nego_server = std::make_unique<NegoServer>(this->front_nla_tee_trans, nla_username, nla_password, this->verbosity > 8);
-        }
-
-        // TODO: here I am starting back end client connection, maybe I should 
-
-        nego_client = std::make_unique<NegoClient>(
-            !nla_username.empty(),
-            x224.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
-            this->back_nla_tee_trans, this->timeobj,
-            this->host, nla_username.c_str(),
-            nla_password.empty() ? "\0" : nla_password.c_str(),
-            enable_kerberos, this->verbosity > 8);
-
-        // equivalent to nego_client->send_negotiation_request()
-        StaticOutStream<256> back_x224_stream;
-        X224::CR_TPDU_Send(
-            back_x224_stream, x224.cookie, x224.rdp_neg_type, x224.rdp_neg_flags,
-            !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
-        outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
-        this->backConn.send(back_x224_stream.get_bytes());
-
-        this->pstate = this->nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
+    InStream x224_stream(currentPacket);
+    X224::CR_TPDU_Recv x224(x224_stream, false, this->verbosity);
+    if (x224._header_size != x224_stream.get_capacity()) {
+        LOG(LOG_WARNING,
+            "Front::incoming: connection request: all data should have been consumed,"
+            " %zu bytes remains",
+            x224_stream.get_capacity() - x224._header_size);
     }
+
+    this->is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
+    this->is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
+
+    LOG_IF((this->verbosity > 8) && this->is_tls_client, LOG_INFO, "TLS Client");
+    LOG_IF((this->verbosity > 8) && this->is_nla_client, LOG_INFO, "NLA Client");
+
+    StaticOutStream<256> front_x224_stream;
+    X224::CC_TPDU_Send(
+        front_x224_stream,
+        X224::RDP_NEG_RSP,
+        RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
+        select_client_protocol());
+    outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
+    this->frontConn.send(front_x224_stream.get_bytes());
+
+    if (this->is_tls_client || this->is_nla_client) {
+        this->frontConn.enable_server_tls("inquisition", nullptr, 0);
+    }
+    
+    nego_client = std::make_unique<NegoClient>(
+    !nla_username.empty(),
+    x224.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
+    this->back_nla_tee_trans, this->timeobj,
+    this->host, nla_username.c_str(),
+    nla_password.empty() ? "\0" : nla_password.c_str(),
+    enable_kerberos, this->verbosity > 8);
+
+    // equivalent to nego_client->send_negotiation_request()
+    StaticOutStream<256> back_x224_stream;
+    X224::CR_TPDU_Send(
+        back_x224_stream, x224.cookie, x224.rdp_neg_type, x224.rdp_neg_flags,
+        !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
+    outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
+    this->backConn.send(back_x224_stream.get_bytes());
+
+}
+        
+void ProxyRecorder::back_step1(array_view_u8 key)
+{
+    if (this->is_nla_client) {
+        if (this->verbosity > 4) {
+            LOG(LOG_INFO, "start NegoServer");
+        }
+        this->nego_server = std::make_unique<NegoServer>(key, nla_username, nla_password, this->verbosity > 8);
+    }
+
+    // TODO: here I am starting back end client connection
+    this->pstate = this->nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
 }
 
 void ProxyRecorder::front_nla()
@@ -198,104 +198,5 @@ void ProxyRecorder::back_initial_pdu_negociation()
 }
 
 
-void ProxyRecorder::run()
-{
-    fd_set rset;
-    int const front_fd = this->frontConn.get_fd();
-    int const back_fd = this->backConn.get_fd();
-
-    this->frontConn.set_trace_send(this->verbosity > 512);
-    this->backConn.set_trace_send(this->verbosity > 512);
-
-    for (;;) {
-        FD_ZERO(&rset);
-        switch(this->pstate) {
-        case NEGOCIATING_FRONT_NLA:
-        case NEGOCIATING_FRONT_STEP1:
-        case NEGOCIATING_FRONT_INITIAL_PDU:
-            // Negotiation with back delayed until front finished
-            FD_SET(front_fd, &rset);
-            break;
-        case NEGOCIATING_BACK_NLA:
-        case NEGOCIATING_BACK_INITIAL_PDU:
-            // Now start negociation with back
-            // FIXME: use front NLA parameters!
-            FD_SET(back_fd, &rset);
-            break;
-        case FORWARD:
-            FD_SET(front_fd, &rset);
-            FD_SET(back_fd, &rset);
-            break;
-        }
-
-        int status = select(std::max(front_fd, back_fd) + 1, &rset, nullptr, nullptr, nullptr);
-        if (status < 0) {
-            break;
-        }
-
-        switch(this->pstate) {
-        case NEGOCIATING_FRONT_STEP1:
-            if (FD_ISSET(front_fd, &rset)) {
-                this->frontBuffer.load_data(this->frontConn);
-                this->front_step1();
-            }
-            break;
-
-        case NEGOCIATING_FRONT_NLA:
-            if (FD_ISSET(front_fd, &rset)) {
-                this->frontBuffer.load_data(this->frontConn);
-                this->front_nla();
-            }
-            break;
-
-        case NEGOCIATING_FRONT_INITIAL_PDU:
-            if (FD_ISSET(front_fd, &rset)) {
-                this->frontBuffer.load_data(this->frontConn);
-                this->front_initial_pdu_negociation();
-            }
-            break;
-
-        case NEGOCIATING_BACK_NLA:
-            if (FD_ISSET(back_fd, &rset)) {
-                this->back_nla_negociation();
-            }
-            break;
-
-        case NEGOCIATING_BACK_INITIAL_PDU:
-            // Now start negociation with back
-            // FIXME: use front NLA parameters!
-            if (FD_ISSET(back_fd, &rset)) {
-                backBuffer.load_data(this->backConn);
-                this->back_initial_pdu_negociation();
-            }
-            break;
-
-        case FORWARD:
-            if (FD_ISSET(front_fd, &rset)) {
-                this->frontConn.set_trace_receive(this->verbosity > 1024);
-                this->backConn.set_trace_send(this->verbosity > 1024);
-                LOG_IF(this->verbosity > 1024, LOG_INFO, "FORWARD (FRONT TO BACK)");
-                uint8_t tmpBuffer[0xffff];
-                size_t ret = this->frontConn.partial_read(make_array_view(tmpBuffer));
-                if (ret > 0) {
-                    outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
-                    this->backConn.send(tmpBuffer, ret);
-                }
-            }
-            if (FD_ISSET(back_fd, &rset)) {
-                this->frontConn.set_trace_send(this->verbosity > 1024);
-                this->backConn.set_trace_receive(this->verbosity > 1024);
-                LOG_IF(this->verbosity > 1024, LOG_INFO, "FORWARD (BACK to FRONT)");
-                uint8_t tmpBuffer[0xffff];
-                size_t ret = this->backConn.partial_read(make_array_view(tmpBuffer));
-                if (ret > 0) {
-                    this->frontConn.send(tmpBuffer, ret);
-                    outFile.write_packet(PacketType::DataIn, {tmpBuffer, ret});
-                }
-            }
-            break;
-        }
-    }
-}
 
 

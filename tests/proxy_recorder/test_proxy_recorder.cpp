@@ -305,10 +305,19 @@ RED_AUTO_TEST_CASE(TestNLAOnSiteCapture)
     NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
     NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
-    ProxyRecorder conn(frontConn, front_nla_tee_trans, backConn, back_nla_tee_trans, outFile, timeobj, "0.0.0.0", nla_username, nla_password, enable_kerberos, verbosity);
+    ProxyRecorder conn(frontConn, backConn, back_nla_tee_trans, outFile, timeobj, "0.0.0.0", nla_username, nla_password, enable_kerberos, verbosity);
 
+    uint8_t front_public_key[1024] = {};
+    array_view_u8 front_public_key_av = {};
+    
     conn.frontBuffer.load_data(conn.frontConn);
-    conn.front_step1();
+//    conn.front_step1();
+
+//    auto key = front_nla_tee_trans.get_public_key();
+//    memcpy(front_public_key, key.data(), key.size());
+//    front_public_key_av = array_view(front_public_key, key.size());
+//    
+//    conn.back_step1(front_public_key_av);
 }
 
 RED_AUTO_TEST_CASE(TestNLARedemptionToWindows2012DC)
