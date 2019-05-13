@@ -184,23 +184,23 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         capture_draw_color2(now, capture, scr, 700);
     });
 
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000000.wrm"), 1646);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000001.wrm"), 3508);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000002.wrm"), 3463);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture.mwrm"), 174 + record_wd.dirname().size() * 3);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.wrm"), 1646);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.wrm"), 3508);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000002.wrm"), 3463);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture.mwrm"), 174 + record_wd.dirname().size() * 3);
 
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000000.png"), 3102);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000001.png"), 3127);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000002.png"), 3145);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000003.png"), 3162);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000004.png"), 3175);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000005.png"), 3201);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000006.png"), 3225);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.png"), 3102);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.png"), 3127);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000002.png"), 3145);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000003.png"), 3162);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000004.png"), 3175);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000005.png"), 3201);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000006.png"), 3225);
 
-    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
-    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
-    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000002.wrm"), 45);
-    RED_TEST_FSIZE(hash_wd.add_file("test_capture.mwrm"), 39);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000002.wrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture.mwrm"), 39);
 
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
@@ -263,26 +263,26 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     });
 
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.wrm"), 1651);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.wrm"), 3428);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.wrm"), 4384);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.wrm"), 4388);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0.mwrm"), 248 + record_wd.dirname().size() * 4);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000000.wrm"), 1651);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000001.wrm"), 3428);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000002.wrm"), 4384);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000003.wrm"), 4388);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0.mwrm"), 248 + record_wd.dirname().size() * 4);
 
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000000.png"), 3102 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000001.png"), 3121 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000002.png"), 3131 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000003.png"), 3143 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000004.png"), 4079 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000005.png"), 4103 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000006.png"), 4122 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000000.png"), 3102 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000001.png"), 3121 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000002.png"), 3131 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000003.png"), 3143 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000004.png"), 4079 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000005.png"), 4103 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000006.png"), 4122 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
 
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000000.wrm"), 51);
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000001.wrm"), 51);
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000002.wrm"), 51);
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0-000003.wrm"), 51);
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-0.mwrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000000.wrm"), 51);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000001.wrm"), 51);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000002.wrm"), 51);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000003.wrm"), 51);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0.mwrm"), 45);
 
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
@@ -312,26 +312,26 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     });
 
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.wrm"), 1646);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.wrm"), 3439);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.wrm"), 2630);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.wrm"), 2630);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1.mwrm"), 248 + record_wd.dirname().size() * 4);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000000.wrm"), 1646);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000001.wrm"), 3439);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000002.wrm"), 2630);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000003.wrm"), 2630);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1.mwrm"), 248 + record_wd.dirname().size() * 4);
 
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000000.png"), 3102 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000001.png"), 3127 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000002.png"), 3145 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000003.png"), 3162 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000004.png"), 2304 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000005.png"), 2320 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000006.png"), 2334 +- 100_v);
-    RED_TEST_FSIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000000.png"), 3102 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000001.png"), 3127 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000002.png"), 3145 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000003.png"), 3162 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000004.png"), 2304 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000005.png"), 2320 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000006.png"), 2334 +- 100_v);
+    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
 
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000000.wrm"), 51);
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000001.wrm"), 51);
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000002.wrm"), 51);
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1-000003.wrm"), 51);
-    RED_TEST_FSIZE(hash_wd.add_file("resizing-capture-1.mwrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000000.wrm"), 51);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000001.wrm"), 51);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000002.wrm"), 51);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000003.wrm"), 51);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1.mwrm"), 45);
 
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
@@ -2169,13 +2169,13 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
     auto mwrm_file = record_wd.add_file("test_capture.mwrm");
 
-    RED_TEST_FSIZE(mwrm_file, 124 + record_wd.dirname().size() * 2);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000000.wrm"), 166);
-    RED_TEST_FSIZE(record_wd.add_file("test_capture-000001.wrm"), 907);
+    RED_TEST_FILE_SIZE(mwrm_file, 124 + record_wd.dirname().size() * 2);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.wrm"), 166);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.wrm"), 907);
 
-    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
-    RED_TEST_FSIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
-    RED_TEST_FSIZE(hash_wd.add_file("test_capture.mwrm"), 39);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture.mwrm"), 39);
 
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
@@ -2202,16 +2202,16 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         EVP_cleanup();
         RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix1, "\".\n\n"));
 
-        RED_CHECK_FCONTENTS(output_wd.add_file("test_capture.meta"),
+        RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"KBD_INPUT\" data=\"Wallix\"\n"_av);
 
-        RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
-        RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.png"), 244);
-        RED_TEST_FSIZE(output_wd.add_file("test_capture.pgs"), 37);
+        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
+        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.png"), 244);
+        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture.pgs"), 37);
 
         RED_CHECK_WORKSPACE(output_wd);
     }
@@ -2239,16 +2239,16 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         EVP_cleanup();
         RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix2, "\".\n\n"));
 
-        RED_CHECK_FCONTENTS(output_wd.add_file("test_capture.meta"),
+        RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
             "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"_av);
 
 
-        RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
-        RED_TEST_FSIZE(output_wd.add_file("test_capture-000000.png"), 244);
-        RED_TEST_FSIZE(output_wd.add_file("test_capture.pgs"), 37);
+        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.mp4"), 3565 +- 200_v);
+        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture-000000.png"), 244);
+        RED_TEST_FILE_SIZE(output_wd.add_file("test_capture.pgs"), 37);
 
         RED_CHECK_WORKSPACE(output_wd);
     }

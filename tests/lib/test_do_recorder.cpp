@@ -267,8 +267,8 @@ RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
       = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
 
     RED_CHECK_NE(mwrm_hash_contents_before, mwrm_hash_contents_after);
-    RED_CHECK_FCONTENTS(tmp_hash_mwrm, mwrm_hash_contents_after);
-    RED_CHECK_FCONTENTS(tmp_recorded_mwrm, mwrm_recorded_contents);
+    RED_CHECK_FILE_CONTENTS(tmp_hash_mwrm, mwrm_hash_contents_after);
+    RED_CHECK_FILE_CONTENTS(tmp_recorded_mwrm, mwrm_recorded_contents);
 
 #undef WRM_FILENAME
 #undef MWRM_FILENAME
@@ -842,12 +842,12 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorder, wd)
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, "\".\n\n"));
 
-    RED_TEST_FSIZE(wd.add_file("recorder.1-000000.flv"), 13450874);
-    RED_TEST_FSIZE(wd.add_file("recorder.1-000001.flv"), 1641583);
-    RED_TEST_FSIZE(wd.add_file("recorder.1.flv"), 14977057);
-    RED_TEST_FSIZE(wd.add_file("recorder.1.pgs"), 5);
-    RED_TEST_FSIZE(wd.add_file("recorder.1-000000.png"), 26981);
-    RED_TEST_FSIZE(wd.add_file("recorder.1-000001.png"), 27557);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 13450874);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 1641583);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.flv"), 14977057);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.pgs"), 5);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.png"), 26981);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.png"), 27557);
 }
 #endif
 
@@ -874,12 +874,12 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderVlc, wd)
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, "\".\n\n"));
 
-    RED_TEST_FSIZE(wd.add_file("recorder.1-000000.flv"), 62513357 +- 100_v);
-    RED_TEST_FSIZE(wd.add_file("recorder.1-000001.flv"), 7555247);
-    RED_TEST_FSIZE(wd.add_file("recorder.1.flv"), 70069293 +- 100_v);
-    RED_TEST_FSIZE(wd.add_file("recorder.1.pgs"), 5);
-    RED_TEST_FSIZE(wd.add_file("recorder.1-000000.png"), 26981);
-    RED_TEST_FSIZE(wd.add_file("recorder.1-000001.png"), 27557);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 62513357 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 7555247);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.flv"), 70069293 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.pgs"), 5);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.png"), 26981);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.png"), 27557);
 }
 #endif
 
@@ -904,12 +904,12 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,  str_concat("Output file is \"", output, ".mwrm\".\n\n"));
 
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-000000.png"), 26981);
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-000001.png"), 27536);
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-000000.mp4"), 11226843 +- 100_v);
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-000001.mp4"), 86037 +- 100_v);
-    RED_CHECK_FCONTENTS(wd.add_file("recorder-chunk.pgs"), R"js({"percentage":100,"eta":0,"videos":1})js"_av);
-    RED_CHECK_FCONTENTS(wd.add_file("recorder-chunk.meta"), "2016-02-18 18:27:01 + (break)\n"_av);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000000.png"), 26981);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000001.png"), 27536);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000000.mp4"), 11226843 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000001.mp4"), 86037 +- 100_v);
+    RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk.pgs"), R"js({"percentage":100,"eta":0,"videos":1})js"_av);
+    RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk.meta"), "2016-02-18 18:27:01 + (break)\n"_av);
 }
 #endif
 
@@ -1000,12 +1000,12 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
 
-    RED_CHECK_FCONTENTS(wd.add_file("recorder-chunk-meta.meta"), "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n"_av);
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-meta-000000.mp4"), 411572 +- 100_v);
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-meta-000000.png"), 15353 +- 0_v);
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-meta-000001.mp4"), 734140 +- 100_v);
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-meta-000001.png"), 40151 +- 0_v);
-    RED_TEST_FSIZE(wd.add_file("recorder-chunk-meta.pgs"),        37 +- 0_v);
+    RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk-meta.meta"), "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n"_av);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.mp4"), 411572 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.png"), 15353 +- 0_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.mp4"), 734140 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.png"), 40151 +- 0_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta.pgs"),        37 +- 0_v);
 }
 
 RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
@@ -1026,10 +1026,10 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
 
-    RED_TEST_FSIZE(wd.add_file("recorder-resize-0-000000.mp4"), 17275);
-    RED_TEST_FSIZE(wd.add_file("recorder-resize-0-000000.png"), 3972);
-    RED_TEST_FSIZE(wd.add_file("recorder-resize-0.meta"),       0);
-    RED_TEST_FSIZE(wd.add_file("recorder-resize-0.pgs"),        37);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.mp4"), 17275);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.png"), 3972);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0.meta"),       0);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0.pgs"),        37);
 }
 
 RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
@@ -1050,9 +1050,9 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
 
-    RED_TEST_FSIZE(wd.add_file("recorder-resize-1-000000.mp4"), 16476);
-    RED_TEST_FSIZE(wd.add_file("recorder-resize-1-000000.png"), 3080);
-    RED_TEST_FSIZE(wd.add_file("recorder-resize-1.meta"),       0);
-    RED_TEST_FSIZE(wd.add_file("recorder-resize-1.pgs"),        37);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.mp4"), 16476);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.png"), 3080);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.meta"),       0);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.pgs"),        37);
 }
 #endif

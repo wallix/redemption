@@ -46,10 +46,10 @@ namespace redemption_unit_test__
     inline int_variation int_(int_variation n) { return n; }
 }
 
-#define RED_TEST_FSIZE(filename, len) RED_TEST(::redemption_unit_test__::fsize(filename) == ::redemption_unit_test__::int_(len));
-#define RED_REQUIRE_FSIZE(filename, len) RED_TEST(::redemption_unit_test__::fsize(filename) == ::redemption_unit_test__::int_(len));
+#define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::redemption_unit_test__::fsize(filename) == ::redemption_unit_test__::int_(len));
+#define RED_REQUIRE_FILE_SIZE(filename, len) RED_TEST(::redemption_unit_test__::fsize(filename) == ::redemption_unit_test__::int_(len));
 
-# define RED_TEST_FCONTENTS(lvl, filename, contents)            \
+# define RED_TEST_FILE_CONTENTS(lvl, filename, contents)        \
     [](auto&& filename__, auto&& contents__) {                  \
         auto const fcontents__ = get_file_contents(filename__); \
         RED_TEST_CONTEXT("filename: " << filename__) {          \
@@ -57,8 +57,8 @@ namespace redemption_unit_test__
         }                                                       \
     }(filename, contents)
 
-# define RED_CHECK_FCONTENTS(filename, contents) \
-    RED_TEST_FCONTENTS(CHECK, filename, contents)
+# define RED_CHECK_FILE_CONTENTS(filename, contents) \
+    RED_TEST_FILE_CONTENTS(CHECK, filename, contents)
 
-# define RED_REQUIRE_FCONTENTS(filename, contents) \
-    RED_TEST_FCONTENTS(REQUIRE, filename, contents)
+# define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
+    RED_TEST_FILE_CONTENTS(REQUIRE, filename, contents)

@@ -39,6 +39,6 @@ RED_AUTO_TEST_CASE_WD(TestOutFilenameSequenceTransport, wd)
 
     fnt.disconnect();
 
-    RED_TEST_FSIZE(wd.add_file("test_outfilenametransport-000000.txt"), 31);
-    RED_TEST_FSIZE(wd.add_file("test_outfilenametransport-000001.txt"), 12);
+    RED_TEST_FILE_SIZE(wd.add_file("test_outfilenametransport-000000.txt"), 31);
+    RED_TEST_FILE_SIZE(wd.add_file("test_outfilenametransport-000001.txt"), 12);
 }
