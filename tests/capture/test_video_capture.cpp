@@ -114,7 +114,7 @@ namespace
             capture_params, drawable, drawable, video_params, FullVideoParams{false});
         simple_movie(now, loop_duration, drawable, video_capture, ignore_frame_in_timeval, mouse);
     }
-}
+} // namespace
 
 
 RED_AUTO_TEST_CASE_WD(TestSequencedVideoCapture, wd)

@@ -45,11 +45,11 @@
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
-}
+} // namespace dump2008
 
 namespace dump2008_PatBlt {
     #include "fixtures/dump_w2008_PatBlt.hpp"
-}
+} // namespace dump2008_PatBlt
 
 
 class MyFront : public Front
@@ -65,17 +65,17 @@ public:
         this->channel_list.clear_channels();
     }
 
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override
+    const CHANNELS::ChannelDefArray & get_channel_list() const override
     {
         return this->channel_list;
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef &,
-        uint8_t const *,
-        size_t ,
-        size_t ,
-        int ) override
+        const CHANNELS::ChannelDef & /*channel*/,
+        uint8_t const * /*chunk*/,
+        size_t  /*length*/,
+        size_t  /*chunk_size*/,
+        int  /*flags*/) override
     {
     }
 };
@@ -94,7 +94,7 @@ RED_AUTO_TEST_CASE(TestFront)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
-    info.console_session = 0;
+    info.console_session = false;
     info.brush_cache_code = 0;
     info.screen_info.bpp = BitsPerPixel{24};
     info.screen_info.width = 800;
@@ -232,7 +232,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     // Force Front to be up and running after Deactivation-Reactivation
     //  Sequence initiated by mod_rdp.
-    front.up_and_running = 1;
+    front.up_and_running = true;
 
     front.can_be_start_capture();
 
@@ -319,7 +319,7 @@ RED_AUTO_TEST_CASE(TestFront2)
 {
     ClientInfo info;
     info.keylayout = 0x04C;
-    info.console_session = 0;
+    info.console_session = false;
     info.brush_cache_code = 0;
     info.screen_info.bpp = BitsPerPixel{24};
     info.screen_info.width = 800;

@@ -141,15 +141,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
         &to_client_sender, &to_server_sender, front, false,
         base_params,
         clipboard_virtual_channel_params,
-        nullptr
-                                                     );
+        nullptr);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 class NullSender : public VirtualChannelDataSender {
 public:
-    virtual void operator() (uint32_t, uint32_t, const uint8_t*, uint32_t) override {}
+    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, const uint8_t* /*chunk_data*/, uint32_t /*chunk_data_length*/) override {}
 };
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
@@ -370,8 +369,7 @@ public:
     size_t total_in_stream = 0;
 
 
-    explicit TestResponseSender()
-    {}
+    explicit TestResponseSender() = default;
 
     void operator()(uint32_t /*total_length*/, uint32_t /*flags*/,
         const uint8_t* chunk_data, uint32_t chunk_data_length)

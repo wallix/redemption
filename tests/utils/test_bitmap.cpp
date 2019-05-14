@@ -3517,11 +3517,7 @@ RED_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     Drawable gd(368, 10);
     gd.mem_blt(Rect(0, 0, 368, 10), bmp2, 0, 0);
 
-    Bitmap bitmap_0_;
-
-    Bitmap bitmap_1_(bitmap_0_);
-
-    Bitmap bitmap_2_ = bitmap_1_;
+    RED_CHECK_SIG(gd, "\x2c\xcf\xe2\xe1\x02\x36\x69\x2d\x14\x10\x71\x99\xc7\x35\x1a\x2f\x2a\xb2\x53\x27");
 }
 
 

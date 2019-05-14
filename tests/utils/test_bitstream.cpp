@@ -36,8 +36,9 @@ RED_AUTO_TEST_CASE(TestBitStream) {
 
     // 0000 1000 1111 1111
     RED_CHECK_EQ(bs.getBits(3), 0x0u);
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 100; i++) {
         RED_CHECK_EQ(bs.peekBits(1), 0x0u); // peek is idempotent
+    }
 
     // 0 1000 1111 1111
     RED_CHECK_EQ(bs.getBits(1), 0x0u);

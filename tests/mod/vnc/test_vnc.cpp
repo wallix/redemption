@@ -38,9 +38,9 @@ int main()
     mod_vnc::Mouse mouse;
     mouse.move(t, 10, 10);
     mouse.scroll(t, 8);
-    mouse.click(t, 10, 10, 1, 1);
-    mouse.click(t, 10, 10, 2, 1);
-    mouse.click(t, 10, 10, 1, 0);
+    mouse.click(t, 10, 10, 1, true);
+    mouse.click(t, 10, 10, 2, true);
+    mouse.click(t, 10, 10, 1, false);
     mouse.move(t, 15, 17);
-    mouse.click(t, 15, 18, 2, 0);
+    mouse.click(t, 15, 18, 2, false);
 }

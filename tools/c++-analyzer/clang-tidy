@@ -81,7 +81,7 @@ $(find tests/ -name 'test_*.cpp' \
 -I'src/system/linux' \
 -I'tests/includes/' \
 -DZLIB_CONST \
--DFIXTURES_PATH='"mypath"' \
+-DFIXTURES_PATH='"mypath" /*NOLINT*/' \
 -DREDEMPTION_DECL_LOG_TEST \
 -DBOOST_AUTO_TEST_MAIN \
 -DBOOST_TEST_DYN_LINK

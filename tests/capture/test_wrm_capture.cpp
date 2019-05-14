@@ -375,7 +375,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
     struct {
         size_t len = 0;
-        ssize_t write(char const *, size_t len) {
+        ssize_t write(char const * /*unused*/, size_t len) {
             this->len += len;
             return len;
         }
@@ -438,7 +438,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     struct {
         size_t len = 0;
-        ssize_t write(char const *, size_t len) {
+        ssize_t write(char const * /*unused*/, size_t len) {
             this->len += len;
             return len;
         }

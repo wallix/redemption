@@ -37,8 +37,8 @@ RED_AUTO_TEST_CASE(TestUdevRandom)
     unsigned mem[128] = {};
     rnd.random(mem, sizeof(mem));
     unsigned count_null = 0;
-    for (size_t i = 0; i < 128 ; i++){
-        if (!mem[i]) { count_null++; }
+    for (unsigned int i : mem){
+        if (!i) { count_null++; }
     }
     // well, theoratically as we are testing a random generator,
     // this test may possibly fail and even generator yield as many zeroes
@@ -65,8 +65,8 @@ RED_AUTO_TEST_CASE(TestLCGRandom)
     unsigned mem[128] = {};
     rnd.random(mem, sizeof(mem));
     unsigned count_null = 0;
-    for (size_t i = 0; i < 128 ; i++){
-        if (!mem[i]) { count_null++; }
+    for (unsigned int i : mem){
+        if (!i) { count_null++; }
     }
     // well, theoratically as we are testing a random generator,
     // this test may possibly fail and even generator yield as many zeroes

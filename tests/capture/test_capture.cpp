@@ -165,7 +165,7 @@ namespace
 
 
     const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
-}
+} // namespace
 
 
 RED_AUTO_TEST_CASE(TestSplittedCapture)
@@ -388,7 +388,7 @@ namespace
     {
         return Capture::SessionMeta(now, trans, key_markers_hidden_state, make_meta_params());
     }
-}
+} // namespace
 
 
 RED_AUTO_TEST_CASE(TestSessionMeta)
@@ -418,19 +418,19 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
         send_kbd();
         send_kbd();
         send_kbd();
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         send_kbd();
         meta.title_changed(now.tv_sec, cstr_array_view("Blah1"));
         now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2"));
         now.tv_sec += 1;
         send_kbd();
         send_kbd();
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3"));
         now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
     }
 
     RED_CHECK_EQ(
@@ -461,15 +461,15 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
             now.tv_sec += 1;
         };
         send_kbd();
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         send_kbd();
         meta.title_changed(now.tv_sec, cstr_array_view("Bl\"ah1"));
         now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah\\2"));
         meta.session_update(now, cstr_array_view("INPUT_LANGUAGE=fr\x01xy\\z"));
         now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
     }
 
     RED_CHECK_EQ(
@@ -500,13 +500,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
         };
 
         meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.next_video(now.tv_sec);
     }
 
@@ -544,13 +544,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
 
         meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
 
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.next_video(now.tv_sec);
     }
 
@@ -593,13 +593,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
 
         send_kbd(); now.tv_sec += 1;
 
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.next_video(now.tv_sec);
     }
 
@@ -637,7 +637,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 
         meta.possible_active_window_change();
 
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         meta.kbd_input(now, 'D'); now.tv_sec += 1;
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
@@ -646,13 +646,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
         meta.kbd_input(now, 'G'); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
         meta.kbd_input(now, '\t'); now.tv_sec += 1;
         meta.kbd_input(now, 'H'); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.next_video(now.tv_sec);
         meta.kbd_input(now, 'I'); now.tv_sec += 1;
         meta.kbd_input(now, 'J'); now.tv_sec += 1;
@@ -757,7 +757,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 
         meta.possible_active_window_change();
 
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         meta.kbd_input(now, 'D'); now.tv_sec += 1;
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
@@ -766,13 +766,13 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
         meta.kbd_input(now, 'G'); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
         meta.kbd_input(now, '\r'); now.tv_sec += 1;
         meta.kbd_input(now, '\t'); now.tv_sec += 1;
         meta.kbd_input(now, 'H'); now.tv_sec += 1;
-        meta.periodic_snapshot(now, 0, 0, 0);
+        meta.periodic_snapshot(now, 0, 0, false);
         meta.next_video(now.tv_sec);
         meta.kbd_input(now, 'I'); now.tv_sec += 1;
         meta.kbd_input(now, 'J'); now.tv_sec += 1;
@@ -863,7 +863,7 @@ namespace
             consumer.timestamp(now);
         }
     };
-}
+} // namespace
 
 
 const char expected_stripped_wrm[] =
@@ -1786,13 +1786,13 @@ RED_AUTO_TEST_CASE(TestReload)
         time_t time;
     };
 
-    for (auto const& test : {
+    RED_TEST_CONTEXT_DATA(auto const& test, test.name, {
         Test{"TestReloadSaveCache", cstr_array_view(expected_Red_on_Blue_wrm), 298, 1001},
         Test{"TestReloadOrderStates", cstr_array_view(expected_reset_rect_wrm), 341, 1001},
         Test{"TestContinuationOrderStates", cstr_array_view(expected_continuation_wrm), 341, 1001},
         Test{"testimg", cstr_array_view(source_wrm_png), 107, 1000},
         Test{"testimg_then_other_chunk", cstr_array_view(source_wrm_png_then_other_chunk), 107, 1004}
-    }) RED_TEST_CONTEXT(test.name)
+    })
     {
         BufTransport trans;
 
@@ -1823,7 +1823,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
     struct : NullReportMessage {
         std::string s;
 
-        void log6(const std::string &info, const ArcsightLogInfo & , const timeval ) override {
+        void log6(const std::string &info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
             s += info;
         }
     } report_message;
@@ -1877,7 +1877,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
     struct : NullReportMessage {
         std::string s;
 
-        void log6(const std::string &info, const ArcsightLogInfo & , const timeval ) override {
+        void log6(const std::string &info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
             s += info;
         }
     } report_message;
@@ -1939,10 +1939,10 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
     struct : NullReportMessage {
-        bool is_killed = 0;
+        bool is_killed = false;
 
-        void report(const char* , const char* ) override {
-            this->is_killed = 1;
+        void report(const char*  /*reason*/, const char*  /*message*/) override {
+            this->is_killed = true;
         }
     } report_message;
 
@@ -1981,7 +1981,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     BufSequenceTransport out_wrm_trans;
 
     const struct ToCacheOption {
-        ToCacheOption(){}
+        ToCacheOption()= default;
         BmpCache::CacheOption operator()(const BmpCache::cache_ & cache) const {
             return BmpCache::CacheOption(cache.entries(), cache.bmp_size(), cache.persistent());
         }
@@ -2105,7 +2105,7 @@ extern "C" {
             0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
             0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
             0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
-        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH, "");
+        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH );
         memcpy(buffer, hmac_key, sizeof(hmac_key));
         return 0;
     }
@@ -2122,7 +2122,7 @@ extern "C" {
             0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
             0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
             0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
-        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH, "");
+        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH );
         memcpy(buffer, trace_key, sizeof(trace_key));
         return 0;
     }

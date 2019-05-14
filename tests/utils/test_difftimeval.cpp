@@ -32,7 +32,7 @@ namespace std
     {
         return out << duration.count();
     }
-}
+} // namespace std
 
 RED_AUTO_TEST_CASE(TestUstime)
 {

@@ -297,7 +297,7 @@ RED_AUTO_TEST_CASE(TestAddMouse)
         array_view_const_char sig;
     };
 
-    for (Data const& data : {
+    RED_TEST_CONTEXT_DATA(Data const& data, "cx: " << data.cx << "  cy: " << data.cy, {
         Data{100, 100,
             "\x36\x62\x5c\x6b\x82\xba\xf9\x39\x32\x76\x5a\x73\x34\x82\xd2\x16\xaf\xc6\x69\xf3"_av},
         Data{638, 470,
@@ -305,7 +305,7 @@ RED_AUTO_TEST_CASE(TestAddMouse)
         Data{-8, -8,
             "\x63\xdc\x47\x28\xf6\x76\x26\x5b\xfe\x9f\xa2\x57\xf5\x3a\xb3\x86\xda\xcb\x93\x2b"_av},
 
-    }) RED_TEST_CONTEXT("cx: " << data.cx << "  cy: " << data.cy)
+    })
     {
         gd.trace_mouse(current_pointer, data.cx, data.cy, save_mouse);
 
@@ -387,7 +387,7 @@ RED_AUTO_TEST_CASE(TestGraphicableScrBlt)
         array_view_const_char sig;
     };
     Drawable gd(640, 480);
-    for (Data const& data : {
+    RED_TEST_CONTEXT_DATA(Data const& data, "name: " << data.name, {
         Data{0x00,   0,  20, "down00",
             "\xf8\xbd\xd7\x1d\x93\x78\x8c\xd9\x7a\x88\x6d\xfe\x52\x71\xe5\xaf\x7d\xba\x61\x46"_av},
         Data{0x00,  20,   0, "right00",
@@ -408,7 +408,7 @@ RED_AUTO_TEST_CASE(TestGraphicableScrBlt)
             "\x82\x1a\x1c\xa5\xe2\x53\x37\xbd\x39\x21\x74\xd6\xd8\x57\xd7\xaf\xaf\xe0\xc9\x18"_av},
         Data{0x11, -20, -20, "left_up11",
             "\x02\xb8\x82\xa6\x44\x12\x7c\xcd\xb6\x38\xa3\xef\x1c\xe7\xaa\x54\xcd\xf2\x75\xdb"_av}
-    }) RED_TEST_CONTEXT("name: " << data.name)
+    })
     {
         gd.opaquerect(Rect(0, 0, gd.width(), gd.height()), gd.u32bgr_to_color(BLACK));
         gd.opaquerect(Rect(90, 90, 120, 120), gd.u32bgr_to_color(RED));

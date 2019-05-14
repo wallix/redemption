@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
-    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, 0);
+    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -62,7 +62,7 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
-    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, 0);
+    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -83,7 +83,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
-    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, 0);
+    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
-    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, 0);
+    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;

@@ -61,7 +61,7 @@ namespace
             , f(f)
             {}
 
-            void refresh_rects(array_view<Rect const>) override
+            void refresh_rects(array_view<Rect const> /*unused*/) override
             {
                 f();
             }
@@ -70,7 +70,7 @@ namespace
         };
         return OSD(drawable, rect, f);
     }
-}
+} // namespace
 
 
 RED_AUTO_TEST_CASE(TestModOSD)

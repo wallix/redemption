@@ -74,12 +74,12 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
         char const* name;
         array_view_const_char data;
     };
-    for (D const& d :  {
+    RED_TEST_CONTEXT_DATA(D const& d, d.name, {
         // "tcp      6 431979 ESTABLISHED src=10.10.43.13 dst=10.10.46.78 sport=41971 dport=3389 packets=96 bytes=10739 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=41971 packets=96 bytes=39071 [ASSURED] mark=0 secmark=0 use=2\n"
         D{"test1", conntrack1},
         // "tcp      6 431979 ESTABLISHED src=10.10.43.13 dst=10.10.46.78 sport=41971 dport=3389 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=41971 [ASSURED] mark=0 secmark=0 use=2\n"
         D{"test2", conntrack2}
-    }) RED_TEST_CONTEXT(d.name)
+    })
     {
         WorkingFile wf(d.name);
         int fd = ::open(wf.c_str(), O_RDWR|O_CREAT, 0777);

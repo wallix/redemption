@@ -42,7 +42,7 @@ namespace {
         RED_REQUIRE(bmp.is_valid());
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
     }
-}
+} // namespace
 
 RED_AUTO_TEST_CASE(TestNewOCR1)
 {

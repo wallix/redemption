@@ -41,7 +41,7 @@ namespace {
         Bitmap bmp = bitmap_from_file(bitmap_filename);
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
     }
-}
+} // namespace
 
 RED_AUTO_TEST_CASE(TestNewOCR4)
 {

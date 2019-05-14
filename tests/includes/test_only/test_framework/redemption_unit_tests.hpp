@@ -109,6 +109,7 @@ namespace redemption_unit_test__
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 # define RED_CHECK_MEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_SMEM(mem, memref) void(mem), void(memref)
+# define RED_CHECK_RMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// REQUIRE
@@ -147,6 +148,7 @@ namespace redemption_unit_test__
 
 # define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref)
 # define RED_CHECK_SMEM(mem, memref) RED_TEST_SMEM(CHECK, mem, memref)
+# define RED_CHECK_RMEM(mem, memref) RED_TEST_RMEM(CHECK, mem, memref)
 
 /// CHECK
 //@{
@@ -212,6 +214,18 @@ namespace redemption_unit_test__
         }                                                            \
     }(mem, memref)
 
+# define RED_TEST_RMEM(lvl, mem, memref)                             \
+    [](auto const& x_mem__, auto const& x_memref__){                 \
+        size_t res__ = 0;                                            \
+        ::redemption_unit_test__::xrarray rng1__{res__, x_mem__};    \
+        ::redemption_unit_test__::xrarray rng2__{res__, x_memref__}; \
+        RED_TEST_CONTEXT(#mem " == " #memref)                        \
+        {                                                            \
+            RED_##lvl(rng1__.size() == rng2__.size());               \
+            RED_##lvl(rng1__ == rng2__);                             \
+        }                                                            \
+    }(mem, memref)
+
 
 namespace redemption_unit_test__
 {
@@ -244,6 +258,21 @@ namespace redemption_unit_test__
     };
 
     std::ostream & operator<<(std::ostream & out, xsarray const & x);
+
+    struct xrarray
+    {
+        size_t & res;
+        const_bytes_view sig;
+
+        std::size_t size() const noexcept
+        {
+            return sig.size();
+        }
+
+        bool operator == (xrarray const & other) const noexcept;
+    };
+
+    std::ostream & operator<<(std::ostream & out, xrarray const & x);
 
     struct Enum
     {
@@ -289,6 +318,10 @@ std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& 
   RED_TEST_DELEGATE_PRINT(type,            \
     #type << "{" << +::std::underlying_type_t<type>(x) << "}")
 
+
+#define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
+    for (type_value : __VA_ARGS__)                        \
+        RED_TEST_CONTEXT(iocontext) /*NOLINT*/
 
 namespace redemption_unit_test__
 {
@@ -454,6 +487,13 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
     RED_CHECK_SMEM(make_array_view(mem), cstr_array_view("" memref))
 #define RED_CHECK_SMEM_AA(mem, memref) \
     RED_CHECK_SMEM(make_array_view(mem), make_array_view(memref))
+
+#define RED_CHECK_RMEM_C(mem, memref) \
+    RED_CHECK_RMEM(mem, cstr_array_view("" memref))
+#define RED_CHECK_RMEM_AC(mem, memref) \
+    RED_CHECK_RMEM(make_array_view(mem), cstr_array_view("" memref))
+#define RED_CHECK_RMEM_AA(mem, memref) \
+    RED_CHECK_RMEM(make_array_view(mem), make_array_view(memref))
 //@}
 
 /// REQUIRE
