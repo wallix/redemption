@@ -23,7 +23,7 @@
 #include "proxy_recorder/proxy_recorder.hpp"
 
 
-void ProxyRecorder::front_step1(Transport & frontConn)
+void ProxyRecorder::front_step1(Transport & frontConn, Transport & backConn)
 {
     LOG(LOG_INFO, "front step 1");
 
@@ -73,8 +73,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
         back_x224_stream, x224.cookie, x224.rdp_neg_type, x224.rdp_neg_flags,
         !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
     outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
-    this->backConn.send(back_x224_stream.get_bytes());
-
+    backConn.send(back_x224_stream.get_bytes());
 }
         
 void ProxyRecorder::back_step1(array_view_u8 key)
@@ -112,7 +111,7 @@ void ProxyRecorder::front_nla(Transport & frontConn)
 }
 
 
-void ProxyRecorder::front_initial_pdu_negociation()
+void ProxyRecorder::front_initial_pdu_negociation(Transport & backConn)
 {
     if (this->frontBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_INITIAL_PDU : front receive : frontbuffer content ======");
@@ -140,13 +139,13 @@ void ProxyRecorder::front_initial_pdu_negociation()
         }
 
         outFile.write_packet(PacketType::DataOut, this->frontBuffer.remaining_data());
-        this->backConn.send(this->frontBuffer.remaining_data());
+        backConn.send(this->frontBuffer.remaining_data());
 
         this->pstate = NEGOCIATING_BACK_INITIAL_PDU;
     }
 }
 
-void ProxyRecorder::back_nla_negociation()
+void ProxyRecorder::back_nla_negociation(Transport & backConn)
 {
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_BACK_NLA : front receive : frontbuffer content ======");
 
@@ -157,7 +156,7 @@ void ProxyRecorder::back_nla_negociation()
         }
         this->nego_client.reset();
         this->pstate = NEGOCIATING_FRONT_INITIAL_PDU;
-        outFile.write_packet(PacketType::ClientCert, this->backConn.get_public_key());
+        outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
     }
 }
 

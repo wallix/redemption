@@ -59,8 +59,7 @@ class ProxyRecorder
 
     using PacketType = RecorderFile::PacketType;
 public:
-    ProxyRecorder(Transport & backConn,
-            NlaTeeTransport & back_nla_tee_trans, 
+    ProxyRecorder(NlaTeeTransport & back_nla_tee_trans, 
             RecorderFile & outFile,
             TimeObj & timeobj,
             const char * host,
@@ -68,8 +67,7 @@ public:
             bool enable_kerberos,
             uint64_t verbosity
     )
-        : backConn(backConn)
-        , back_nla_tee_trans(back_nla_tee_trans)
+        : back_nla_tee_trans(back_nla_tee_trans)
         , outFile(outFile)
         , timeobj(timeobj)
         , host(host)
@@ -86,11 +84,11 @@ public:
         }
     }
 
-    void front_step1(Transport & frontConn);
+    void front_step1(Transport & frontConn, Transport & backConn);
     void back_step1(array_view_u8 key);
     void front_nla(Transport & frontConn);
-    void front_initial_pdu_negociation();
-    void back_nla_negociation();
+    void front_initial_pdu_negociation(Transport & backConn);
+    void back_nla_negociation(Transport & backConn);
     void back_initial_pdu_negociation(Transport & frontConn);
 
 private:
@@ -112,7 +110,6 @@ public:
     } pstate = NEGOCIATING_FRONT_STEP1;
 
 
-    Transport & backConn;
     NlaTeeTransport & back_nla_tee_trans;
     RecorderFile & outFile;
     TimeObj & timeobj;

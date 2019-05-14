@@ -83,7 +83,7 @@ public:
             NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
             NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
-            ProxyRecorder conn(backConn, back_nla_tee_trans, outFile, timeobj, this->targetHost.c_str(), this->nla_username, this->nla_password, enable_kerberos, verbosity);
+            ProxyRecorder conn(back_nla_tee_trans, outFile, timeobj, this->targetHost.c_str(), this->nla_username, this->nla_password, enable_kerberos, verbosity);
                 
             try {
                 // TODO: key becomes ready quite late (just before calling nego server) inside front_step1(), henceforth doing it here won't work
@@ -95,10 +95,10 @@ public:
 
                 fd_set rset;
                 int const front_fd = frontConn.get_fd();
-                int const back_fd = conn.backConn.get_fd();
+                int const back_fd = backConn.get_fd();
 
                 frontConn.set_trace_send(conn.verbosity > 512);
-                conn.backConn.set_trace_send(conn.verbosity > 512);
+                backConn.set_trace_send(conn.verbosity > 512);
 
                 for (;;) {
                     FD_ZERO(&rset);
@@ -131,7 +131,7 @@ public:
                         if (FD_ISSET(front_fd, &rset)) {
                             conn.frontBuffer.load_data(frontConn);
                             if (conn.frontBuffer.next(TpduBuffer::PDU)) {
-                                conn.front_step1(frontConn);
+                                conn.front_step1(frontConn, backConn);
                                 array_view_const_u8 key = front_nla_tee_trans.get_public_key();
                                 memcpy(front_public_key, key.data(), key.size());
                                 front_public_key_av = array_view(front_public_key, key.size());
@@ -150,13 +150,13 @@ public:
                     case ProxyRecorder::NEGOCIATING_FRONT_INITIAL_PDU:
                         if (FD_ISSET(front_fd, &rset)) {
                             conn.frontBuffer.load_data(frontConn);
-                            conn.front_initial_pdu_negociation();
+                            conn.front_initial_pdu_negociation(backConn);
                         }
                         break;
 
                     case ProxyRecorder::NEGOCIATING_BACK_NLA:
                         if (FD_ISSET(back_fd, &rset)) {
-                            conn.back_nla_negociation();
+                            conn.back_nla_negociation(backConn);
                         }
                         break;
 
@@ -164,7 +164,7 @@ public:
                         // Now start negociation with back
                         // FIXME: use front NLA parameters!
                         if (FD_ISSET(back_fd, &rset)) {
-                            conn.backBuffer.load_data(conn.backConn);
+                            conn.backBuffer.load_data(backConn);
                             conn.back_initial_pdu_negociation(frontConn);
                         }
                         break;
@@ -172,21 +172,21 @@ public:
                     case ProxyRecorder::FORWARD:
                         if (FD_ISSET(front_fd, &rset)) {
                             frontConn.set_trace_receive(conn.verbosity > 1024);
-                            conn.backConn.set_trace_send(conn.verbosity > 1024);
+                            backConn.set_trace_send(conn.verbosity > 1024);
                             LOG_IF(conn.verbosity > 1024, LOG_INFO, "FORWARD (FRONT TO BACK)");
                             uint8_t tmpBuffer[0xffff];
                             size_t ret = frontConn.partial_read(make_array_view(tmpBuffer));
                             if (ret > 0) {
                                 outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
-                                conn.backConn.send(tmpBuffer, ret);
+                                backConn.send(tmpBuffer, ret);
                             }
                         }
                         if (FD_ISSET(back_fd, &rset)) {
                             frontConn.set_trace_send(conn.verbosity > 1024);
-                            conn.backConn.set_trace_receive(conn.verbosity > 1024);
+                            backConn.set_trace_receive(conn.verbosity > 1024);
                             LOG_IF(conn.verbosity > 1024, LOG_INFO, "FORWARD (BACK to FRONT)");
                             uint8_t tmpBuffer[0xffff];
-                            size_t ret = conn.backConn.partial_read(make_array_view(tmpBuffer));
+                            size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
                             if (ret > 0) {
                                 frontConn.send(tmpBuffer, ret);
                                 outFile.write_packet(PacketType::DataIn, {tmpBuffer, ret});
