@@ -416,30 +416,38 @@ namespace X224
 
     };
 
+    struct Tpkt
+    {
+        uint8_t version = 0;
+        uint16_t len = 0;
+    };
+
+    inline Tpkt Tpkt_Recv(InStream & stream);
+    Tpkt Tpkt_Recv(InStream & stream) {
+        uint16_t length = stream.get_capacity();
+        if (length < 4){
+            LOG(LOG_ERR, "Truncated TPKT: stream=%u", length);
+        }
+
+        // TPKT
+        uint8_t tpkt_version = stream.in_uint8();
+        stream.in_skip_bytes(1);
+        uint16_t tpkt_len = stream.in_uint16_be();
+        if (length < tpkt_len){
+            LOG(LOG_ERR, "Truncated TPKT: stream=%u tpkt=%u",
+                length, tpkt_len);
+        }
+        return Tpkt{tpkt_version, tpkt_len};
+    }
+
     // ################################### COMMON CODE #################################
     struct Recv
     {
-        struct Tpkt
-        {
-            uint8_t version;
-            uint16_t len;
-        } tpkt;
+        Tpkt tpkt;
 
         explicit Recv(InStream & stream)
         {
-            uint16_t length = stream.get_capacity();
-            if (length < 4){
-                LOG(LOG_ERR, "Truncated TPKT: stream=%u", length);
-            }
-
-            // TPKT
-            this->tpkt.version = stream.in_uint8();
-            stream.in_skip_bytes(1);
-            this->tpkt.len = stream.in_uint16_be();
-            if (length < this->tpkt.len){
-                LOG(LOG_ERR, "Truncated TPKT: stream=%u tpkt=%u",
-                    length, this->tpkt.len);
-            }
+            this->tpkt = Tpkt_Recv(stream);
         }
     };
 
@@ -601,6 +609,198 @@ namespace X224
     // send the X.224 Connection Confirm PDU to the client (section 3.3.5.3.2) and update the
     // Connection Start Time store (section 3.3.1.12).
 
+    struct CR_Header
+    {
+        uint8_t LI = 0;
+        uint8_t code = 0;
+
+        uint16_t dst_ref = 0;
+        uint16_t src_ref = 0;
+        uint8_t class_option = 0;
+    };
+
+    inline CR_Header CR_Header_Recv(InStream & stream);
+    CR_Header CR_Header_Recv(InStream & stream) 
+    {
+        /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
+        if (!stream.in_check_rem(7)){
+            LOG(LOG_ERR, "Truncated TPDU header: expected=7 remains=%zu", stream.in_remain());
+            throw Error(ERR_X224);
+        }
+
+        uint8_t LI = stream.in_uint8();
+        uint8_t code = stream.in_uint8();
+
+        if (!(code == X224::CR_TPDU)){
+            LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u", code);
+            throw Error(ERR_X224);
+        }
+
+        uint16_t dst_ref = stream.in_uint16_le();
+        uint16_t src_ref = stream.in_uint16_le();
+        uint8_t class_option = stream.in_uint8();
+
+        return CR_Header{LI, code, dst_ref, src_ref, class_option};
+    }
+
+    struct CR_Cookie {
+        size_t len = 0;
+        char data[1024];
+    };
+
+    inline CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose);
+    CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose) 
+    {
+        // TODO CGR: we should fix the code here to support routingtoken (or we may have some troubles with load balancing RDP hardware
+        CR_Cookie cookie;
+        uint8_t const * end_of_header = stream.get_data() + header_len;
+        for (uint8_t const * p = stream.get_current() + 1; p < end_of_header ; p++){
+            if (p[-1] == 0x0D && p[0] == 0x0A){
+                cookie.len = p - (stream.get_data() + 11) + 1;
+                // cookie can't be larger than header (HEADER_LEN + LI + 1 = 230)
+                memcpy(cookie.data, stream.get_data() + 11, cookie.len);
+                break;
+            }
+        }
+        cookie.data[cookie.len] = 0;
+        LOG_IF(verbose && cookie.len, LOG_INFO, "cookie: %s [%.2x][%.2x]",
+            cookie.data,
+            unsigned(cookie.data[cookie.len-2]),
+            unsigned(cookie.data[cookie.len-1]));
+        stream.in_skip_bytes(cookie.len);
+        return cookie;
+    }
+
+    struct CR_Cinfo {
+        uint8_t type = 0;
+        uint8_t flags = 0;
+        uint16_t length = 0;
+        uint8_t correlationid[16]{};
+    };
+
+    inline CR_Cinfo CR_Cinfo_Recv(InStream & stream, uint8_t rdp_neg_flags);
+    CR_Cinfo CR_Cinfo_Recv(InStream & stream, uint8_t rdp_neg_flags)
+    {
+        CR_Cinfo cinfo;
+        // 2.2.1.1.2 RDP Correlation Info (RDP_NEG_CORRELATION_INFO)
+        if (rdp_neg_flags & CORRELATION_INFO_PRESENT) {
+            cinfo.type = stream.in_uint8();
+            cinfo.flags = stream.in_uint8();
+            cinfo.length = stream.in_uint16_le();
+            stream.in_copy_bytes(cinfo.correlationid, 16);
+            stream.in_skip_bytes(16);
+            hexdump_c(cinfo.correlationid, 16);
+        }
+        return cinfo;
+    }
+
+
+    struct CR_TPDU_Data
+    {
+        Tpkt tpkt;
+        CR_Header header;
+
+        size_t _header_size = 0;
+
+        CR_Cookie cookie;
+
+        uint8_t rdp_neg_type = 0;
+        uint8_t rdp_neg_flags = 0;
+        uint16_t rdp_neg_length = 0;
+        uint32_t rdp_neg_requestedProtocols = 0;
+
+        CR_Cinfo cinfo;
+    }; // END CLASS CR_TPDU_Data
+
+
+    inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose);
+    CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose)
+    {
+        CR_TPDU_Data x224;
+        Tpkt tpkt = Tpkt_Recv(stream);
+        CR_Header header = CR_Header_Recv(stream);
+        size_t _header_size(X224::TPKT_HEADER_LEN + header.LI + 1);
+
+        if (stream.get_capacity() < _header_size){
+            LOG(LOG_ERR, "Truncated CR TPDU header: expected %zu, got %zu",
+                _header_size, stream.get_capacity());
+            throw Error(ERR_X224);
+        }
+
+        // extended negotiation header
+        // TODO: We'd rather provide a substream
+        auto cookie = CR_Cookie_Recv(stream, X224::TPKT_HEADER_LEN + header.LI + 1, verbose);
+
+        uint8_t rdp_neg_type = 0;
+        uint8_t rdp_neg_flags = 0;
+        uint16_t rdp_neg_length = 0;
+        uint32_t rdp_neg_requestedProtocols = 0;
+        // 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
+        uint8_t const * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + header.LI + 1;
+        if (end_of_header - stream.get_current() >= 8){
+            LOG_IF(verbose, LOG_INFO, "Found RDP Negotiation Request Structure");
+            rdp_neg_type = stream.in_uint8();
+            rdp_neg_flags = stream.in_uint8();
+            rdp_neg_length = stream.in_uint16_le();
+            rdp_neg_requestedProtocols = stream.in_uint32_le();
+
+            if (bogus_neg_req){
+                LOG_IF(verbose, LOG_INFO, "Bogus Negotiation Request Structure");
+                // for broken clients like jrdp
+                stream.in_skip_bytes(end_of_header - stream.get_current());
+            }
+            else {
+                if (rdp_neg_type != X224::RDP_NEG_REQ){
+                    LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
+                        header.LI, rdp_neg_type, rdp_neg_flags, rdp_neg_length, rdp_neg_requestedProtocols);
+                    throw Error(ERR_X224);
+                }
+
+                LOG_IF(verbose, LOG_INFO, "RequestedProtocols:%u", rdp_neg_requestedProtocols);
+
+                LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_RDP,
+                    LOG_INFO, "CR Recv: PROTOCOL RDP");
+                LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_TLS,
+                    LOG_INFO, "CR Recv: PROTOCOL TLS");
+                LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID,
+                    LOG_INFO, "CR Recv: PROTOCOL HYBRID");
+                LOG_IF(rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX,
+                    LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
+                LOG_IF(rdp_neg_requestedProtocols
+                    & ~(X224::PROTOCOL_RDP
+                       |X224::PROTOCOL_TLS
+                       |X224::PROTOCOL_HYBRID
+                       |X224::PROTOCOL_HYBRID_EX),
+                    LOG_INFO, "CR Recv: Unknown protocol flags %x",
+                    rdp_neg_requestedProtocols);
+            }
+        }
+        else {
+            LOG_IF(verbose, LOG_INFO, "No RDP Negotiation Request Structure");
+        }
+
+        CR_Cinfo cinfo = CR_Cinfo_Recv(stream, rdp_neg_flags);
+
+        if (end_of_header != stream.get_current()){
+            LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %ld", end_of_header - stream.get_current());
+            hexdump_c(stream.get_data(), stream.get_capacity());
+            throw Error(ERR_X224);
+        }
+        _header_size = stream.get_offset();
+        
+        return CR_TPDU_Data{
+                tpkt, 
+                header, 
+                _header_size, 
+                cookie, 
+                rdp_neg_type, 
+                rdp_neg_flags,
+                rdp_neg_length,
+                rdp_neg_requestedProtocols,
+                cinfo
+        };
+    }
+
     struct CR_TPDU_Recv : public Recv
     {
         struct CR_Header
@@ -733,7 +933,7 @@ namespace X224
                 stream.in_skip_bytes(16);
                 hexdump_c(this->rdp_cinfo_correlationid, 16);
             }
-                hexdump_c(stream.get_data(), stream.get_capacity());
+            
             if (end_of_header != stream.get_current()){
                 LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %ld", end_of_header - stream.get_current());
                 hexdump_c(stream.get_data(), stream.get_capacity());
@@ -856,7 +1056,7 @@ namespace X224
     // +-------------------------------+----------------------------------------------+
     // | 0x00000000 PROTOCOL_RDP       | Standard RDP Security (section 5.3)          |
     // +-------------------------------+----------------------------------------------+
-    // | 0x00000001 PROTOCOL_SSL       | TLS 1.0, 1.1 or 1.2 (section 5.4.5.1)                    |
+    // | 0x00000001 PROTOCOL_SSL       | TLS 1.0, 1.1 or 1.2 (section 5.4.5.1)        |
     // +-------------------------------+----------------------------------------------+
     // | 0x00000002 PROTOCOL_HYBRID    | CredSSP (section 5.4.5.2)                    |
     // +-------------------------------+----------------------------------------------+

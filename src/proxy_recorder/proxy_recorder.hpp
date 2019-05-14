@@ -62,6 +62,7 @@ class ProxyRecorder
         char cookie[1024];
         uint8_t rdp_neg_type;
         uint8_t rdp_neg_flags;
+        uint32_t rdp_neg_requestedProtocols;
     } front_connection_request;
     // NlaTeeTransport & front_nla_tee_trans,
 
@@ -98,14 +99,6 @@ public:
     void front_initial_pdu_negociation(Transport & backConn);
     void back_nla_negociation(Transport & backConn);
     void back_initial_pdu_negociation(Transport & frontConn);
-
-private:
-    uint8_t select_client_protocol() const
-    {
-        return this->is_nla_client ? X224::PROTOCOL_HYBRID :
-               this->is_tls_client ? X224::PROTOCOL_TLS
-                             : X224::PROTOCOL_RDP;
-    }
 
 public:
     enum {
