@@ -24,6 +24,7 @@
 #include "proxy_recorder/nego_client.hpp"
 #include "proxy_recorder/nego_server.hpp"
 
+#include "core/RDP/x224.hpp"
 #include "core/RDP/nla/nla_server.hpp"
 #include "core/RDP/nla/nla_client.hpp"
 #include "core/RDP/gcc.hpp"
@@ -55,6 +56,13 @@
 /** @brief a front connection with a RDP client */
 class ProxyRecorder
 {
+    struct CR_TPDU {
+        uint8_t rdp_cinfo_flags;
+        size_t cookie_len;
+        char cookie[1024];
+        uint8_t rdp_neg_type;
+        uint8_t rdp_neg_flags;
+    } front_connection_request;
     // NlaTeeTransport & front_nla_tee_trans,
 
     using PacketType = RecorderFile::PacketType;
@@ -84,8 +92,8 @@ public:
         }
     }
 
-    void front_step1(Transport & frontConn, Transport & backConn);
-    void back_step1(array_view_u8 key);
+    void front_step1(Transport & frontConn);
+    void back_step1(array_view_u8 key, Transport & backConn);
     void front_nla(Transport & frontConn);
     void front_initial_pdu_negociation(Transport & backConn);
     void back_nla_negociation(Transport & backConn);

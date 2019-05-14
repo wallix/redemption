@@ -131,11 +131,11 @@ public:
                         if (FD_ISSET(front_fd, &rset)) {
                             conn.frontBuffer.load_data(frontConn);
                             if (conn.frontBuffer.next(TpduBuffer::PDU)) {
-                                conn.front_step1(frontConn, backConn);
+                                conn.front_step1(frontConn);
                                 array_view_const_u8 key = front_nla_tee_trans.get_public_key();
                                 memcpy(front_public_key, key.data(), key.size());
                                 front_public_key_av = array_view(front_public_key, key.size());
-                                conn.back_step1(front_public_key_av);
+                                conn.back_step1(front_public_key_av, backConn);
                             }
                         }
                         break;

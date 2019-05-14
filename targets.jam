@@ -1724,7 +1724,6 @@ test-run tests/core/RDP/nla/test_nla :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/nla/nla.hpp
 ;
 test-run tests/core/RDP/nla/test_sspi :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_sspi.cpp
@@ -5958,7 +5957,6 @@ alias test_ntlm_message_authenticate.coverage : tests/core/RDP/nla/ntlm/test_ntl
 alias test_ntlm_message_challenge.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.coverage ;
 alias test_ntlm_message_negotiate.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.coverage ;
 alias test_credssp.coverage : tests/core/RDP/nla/test_credssp.coverage ;
-alias test_nla.coverage : tests/core/RDP/nla/test_nla.coverage ;
 alias test_sspi.coverage : tests/core/RDP/nla/test_sspi.coverage ;
 alias test_AlternateSecondaryWindowing.coverage : tests/core/RDP/orders/test_AlternateSecondaryWindowing.coverage ;
 alias test_RDPOrdersCommon.coverage : tests/core/RDP/orders/test_RDPOrdersCommon.coverage ;

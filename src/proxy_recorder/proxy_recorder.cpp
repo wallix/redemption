@@ -23,7 +23,7 @@
 #include "proxy_recorder/proxy_recorder.hpp"
 
 
-void ProxyRecorder::front_step1(Transport & frontConn, Transport & backConn)
+void ProxyRecorder::front_step1(Transport & frontConn)
 {
     LOG(LOG_INFO, "front step 1");
 
@@ -39,6 +39,13 @@ void ProxyRecorder::front_step1(Transport & frontConn, Transport & backConn)
             " %zu bytes remains",
             x224_stream.get_capacity() - x224._header_size);
     }
+
+    this->front_connection_request.rdp_cinfo_flags = x224.rdp_cinfo_flags;
+    this->front_connection_request.cookie_len = x224.cookie_len;
+    memcpy(this->front_connection_request.cookie, x224.cookie, x224.cookie_len);
+    this->front_connection_request.cookie[x224.cookie_len] = 0;
+    this->front_connection_request.rdp_neg_type = x224.rdp_neg_type;
+    this->front_connection_request.rdp_neg_flags = x224.rdp_neg_flags;
 
     this->is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
     this->is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
@@ -58,10 +65,13 @@ void ProxyRecorder::front_step1(Transport & frontConn, Transport & backConn)
     if (this->is_tls_client || this->is_nla_client) {
         frontConn.enable_server_tls("inquisition", nullptr, 0);
     }
-    
-    nego_client = std::make_unique<NegoClient>(
+}
+        
+void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
+{
+    this->nego_client = std::make_unique<NegoClient>(
     !nla_username.empty(),
-    x224.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
+    this->front_connection_request.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
     this->back_nla_tee_trans, this->timeobj,
     this->host, nla_username.c_str(),
     nla_password.empty() ? "\0" : nla_password.c_str(),
@@ -70,14 +80,15 @@ void ProxyRecorder::front_step1(Transport & frontConn, Transport & backConn)
     // equivalent to nego_client->send_negotiation_request()
     StaticOutStream<256> back_x224_stream;
     X224::CR_TPDU_Send(
-        back_x224_stream, x224.cookie, x224.rdp_neg_type, x224.rdp_neg_flags,
+        back_x224_stream, 
+        this->front_connection_request.cookie, 
+        this->front_connection_request.rdp_neg_type, 
+        this->front_connection_request.rdp_neg_flags,
         !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
+
     outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
     backConn.send(back_x224_stream.get_bytes());
-}
-        
-void ProxyRecorder::back_step1(array_view_u8 key)
-{
+
     if (this->is_nla_client) {
         if (this->verbosity > 4) {
             LOG(LOG_INFO, "start NegoServer");
@@ -150,7 +161,7 @@ void ProxyRecorder::back_nla_negociation(Transport & backConn)
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_BACK_NLA : front receive : frontbuffer content ======");
 
     NullServerNotifier null_notifier;
-    if (not nego_client->recv_next_data(backBuffer, null_notifier)) {
+    if (not this->nego_client->recv_next_data(backBuffer, null_notifier)) {
         if (this->verbosity > 4) {
             LOG(LOG_INFO, "stop NegoClient");
         }

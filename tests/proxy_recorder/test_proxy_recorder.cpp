@@ -310,10 +310,10 @@ RED_AUTO_TEST_CASE(TestNLAOnSiteCapture)
     
     conn.frontBuffer.load_data(frontConn);
     if (conn.frontBuffer.next(TpduBuffer::PDU)) {
-        conn.front_step1(frontConn, backConn);
+        conn.front_step1(frontConn);
         hexdump(front_public_key, 16);
         // front public key ready from here
-        conn.back_step1(front_public_key_av);
+        conn.back_step1(front_public_key_av, backConn);
     }
 
 }
