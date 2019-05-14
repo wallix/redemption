@@ -93,55 +93,32 @@ struct MetaFilename
 };
 
 
-class MetaSeqBuf
+struct OutMetaSequenceTransport : Transport
 {
-    OutCryptoTransport meta_buf_encrypt_transport;
-    OutCryptoTransport wrm_filter_encrypt_transport;
-
-    Fstat & fstat;
-
-    char current_filename_[1024];
-    WrmFGen filegen_;
-    unsigned num_file_;
-    int groupid_;
-
-    MetaFilename mf_;
-    MetaFilename hf_;
-    time_t start_sec_;
-    time_t stop_sec_;
-
-    CryptoContext & cctx;
-
-public:
-    explicit MetaSeqBuf(
+    OutMetaSequenceTransport(
         CryptoContext & cctx,
         Random & rnd,
         Fstat & fstat,
-        ReportError report_error,
-        time_t start_sec,
-        const char * const hash_prefix,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension,
-        const int groupid
-    )
-    : meta_buf_encrypt_transport(cctx, rnd, fstat, report_error)
-    , wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error)
+        const char * path,
+        const char * hash_path,
+        const char * basename,
+        timeval now,
+        uint16_t width,
+        uint16_t height,
+        const int groupid,
+        ReportMessageApi * report_message)
+    : meta_buf_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(report_message))
+    , wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(report_message))
     , fstat(fstat)
     , current_filename_{}
-    , filegen_(prefix, hash_prefix, filename, extension)
+    , filegen_(path, hash_path, basename, ".wrm")
     , num_file_(0)
     , groupid_(groupid)
-    , mf_(prefix, filename)
-    , hf_(hash_prefix, filename)
-    , start_sec_(start_sec)
-    , stop_sec_(start_sec)
+    , mf_(path, basename)
+    , hf_(hash_path, basename)
+    , start_sec_(now.tv_sec)
+    , stop_sec_(now.tv_sec)
     , cctx(cctx)
-    {
-        //LOG(LOG_INFO, "hash_prefix=%s prefix=%s", hash_prefix, prefix);
-    }
-
-    void open(uint16_t width, uint16_t height)
     {
         this->meta_buf_encrypt_transport.open(
             this->mf_.filename,
@@ -153,14 +130,37 @@ public:
         this->meta_buf_encrypt_transport.send(mwrm_file_buf.buffer());
     }
 
-    ~MetaSeqBuf()
+    ~OutMetaSequenceTransport()
     {
         if (this->meta_buf_encrypt_transport.is_open()) {
-            this->close();
+            this->do_close();
         }
     }
 
-    void write(const uint8_t * data, size_t len)
+    void timestamp(timeval now) override
+    {
+        this->stop_sec_ = now.tv_sec;
+    }
+
+    bool next() override
+    {
+        if (!this->wrm_filter_encrypt_transport.is_open()) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+
+        this->next_meta_file();
+        ++this->seqno;
+        return true;
+    }
+
+    bool disconnect() override
+    {
+        do_close();
+        return true;
+    }
+
+private:
+    void do_send(const uint8_t * data, size_t len) override
     {
         if (!this->wrm_filter_encrypt_transport.is_open()) {
             const char * filename = this->filegen_.get_filename(this->num_file_);
@@ -170,16 +170,7 @@ public:
         this->wrm_filter_encrypt_transport.send(data, len);
     }
 
-    bool next()
-    {
-        if (this->wrm_filter_encrypt_transport.is_open()) {
-            this->next_meta_file();
-            return true;
-        }
-        return false;
-    }
-
-    int close()
+    void do_close()
     {
         if (this->wrm_filter_encrypt_transport.is_open()) {
             this->next_meta_file();
@@ -189,13 +180,8 @@ public:
         uint8_t fhash[MD_HASH::DIGEST_LENGTH];
 
         this->meta_buf_encrypt_transport.close(qhash, fhash);
-        return 0;
     }
 
-    void update_sec(time_t sec)
-    { this->stop_sec_ = sec; }
-
-private:
     void next_meta_file()
     {
         uint8_t qhash[MD_HASH::DIGEST_LENGTH];
@@ -222,55 +208,21 @@ private:
 
         this->start_sec_ = this->stop_sec_+1;
     }
-};
 
+    OutCryptoTransport meta_buf_encrypt_transport;
+    OutCryptoTransport wrm_filter_encrypt_transport;
 
-struct OutMetaSequenceTransport : Transport
-{
-    OutMetaSequenceTransport(
-        CryptoContext & cctx,
-        Random & rnd,
-        Fstat & fstat,
-        const char * path,
-        const char * hash_path,
-        const char * basename,
-        timeval now,
-        uint16_t width,
-        uint16_t height,
-        const int groupid,
-        ReportMessageApi * report_message)
-    : buf(
-        cctx, rnd, fstat,
-        report_error_from_reporter(report_message),
-        now.tv_sec, hash_path, path, basename, ".wrm", groupid)
-    {
-        this->buf.open(width, height);
-    }
+    Fstat & fstat;
 
-    void timestamp(timeval now) override
-    {
-        this->buf.update_sec(now.tv_sec);
-    }
+    char current_filename_[1024];
+    WrmFGen filegen_;
+    unsigned num_file_ = 0;
+    int groupid_;
 
-    bool next() override
-    {
-        if (!this->buf.next()) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-        }
-        ++this->seqno;
-        return true;
-    }
+    MetaFilename mf_;
+    MetaFilename hf_;
+    time_t start_sec_;
+    time_t stop_sec_;
 
-    bool disconnect() override
-    {
-        return !this->buf.close();
-    }
-
-private:
-    void do_send(const uint8_t * data, size_t len) override
-    {
-        this->buf.write(data, len);
-    }
-
-    MetaSeqBuf buf;
+    CryptoContext & cctx;
 };
