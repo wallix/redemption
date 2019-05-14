@@ -23,7 +23,7 @@
 #include "proxy_recorder/proxy_recorder.hpp"
 
 
-void ProxyRecorder::front_step1()
+void ProxyRecorder::front_step1(Transport & frontConn)
 {
     LOG(LOG_INFO, "front step 1");
 
@@ -53,10 +53,10 @@ void ProxyRecorder::front_step1()
         RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
         select_client_protocol());
     outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
-    this->frontConn.send(front_x224_stream.get_bytes());
+    frontConn.send(front_x224_stream.get_bytes());
 
     if (this->is_tls_client || this->is_nla_client) {
-        this->frontConn.enable_server_tls("inquisition", nullptr, 0);
+        frontConn.enable_server_tls("inquisition", nullptr, 0);
     }
     
     nego_client = std::make_unique<NegoClient>(
@@ -90,12 +90,12 @@ void ProxyRecorder::back_step1(array_view_u8 key)
     this->pstate = this->nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
 }
 
-void ProxyRecorder::front_nla()
+void ProxyRecorder::front_nla(Transport & frontConn)
 {
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
     StaticOutStream<65535> frontResponse; 
     rdpCredsspServer::State st = this->nego_server->recv_data(this->frontBuffer, frontResponse);
-    this->frontConn.send(frontResponse.get_bytes());
+    frontConn.send(frontResponse.get_bytes());
 
     switch (st) {
     case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
@@ -161,7 +161,7 @@ void ProxyRecorder::back_nla_negociation()
     }
 }
 
-void ProxyRecorder::back_initial_pdu_negociation()
+void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
 {
     if (backBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== BACK_INITIAL_PDU_NEGOCIATION  : back receive : backbuffer content ======");
@@ -191,7 +191,7 @@ void ProxyRecorder::back_initial_pdu_negociation()
         }
 
         outFile.write_packet(PacketType::DataIn, backBuffer.remaining_data());
-       this->frontConn.send(backBuffer.remaining_data());
+       frontConn.send(backBuffer.remaining_data());
 
         this->pstate = FORWARD;
     }
