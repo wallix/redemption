@@ -386,12 +386,14 @@ std::string WorkingDirectory::unmached_files()
 
 WorkingDirectory::~WorkingDirectory() noexcept(false)
 {
-    if (!this->has_error_ && ! std::uncaught_exceptions()) {
-        if (!this->is_checked_) {
-            WD_ERROR_S("unchecked entries");
-        }
-        if (this->start_error_count_ == RED_ERROR_COUNT) {
-            recursive_delete_directory(this->dirname_.c_str());
-        }
+    if (!this->is_checked_) {
+        WD_ERROR_S("unchecked entries");
+    }
+
+    if (!this->has_error_
+     && !std::uncaught_exceptions()
+     && this->start_error_count_ == RED_ERROR_COUNT
+    ) {
+        recursive_delete_directory(this->dirname_.c_str());
     }
 }
