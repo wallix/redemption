@@ -94,7 +94,7 @@ struct unique_fd
         return std::exchange(this->fd_, -1);
     }
 
-    bool close()
+    bool close() noexcept
     {
         if (this->is_open()) {
             int res = ::close(this->fd_);

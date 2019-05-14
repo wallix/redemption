@@ -36,11 +36,11 @@ RED_AUTO_TEST_CASE(TestCompressionTransportBuilder)
         void flush() override { str += "none\n"; }
     };
     struct GzipTransport : Transport {
-        GzipTransport(Transport & /*unused*/, uint32_t /*unused*/) {}
+        GzipTransport(Transport & /*unused*/) {}
         void flush() override { str += "gzip\n"; }
     };
     struct SnappyTransport : Transport {
-        SnappyTransport(Transport & /*unused*/, uint32_t /*unused*/) {}
+        SnappyTransport(Transport & /*unused*/) {}
         void flush() override { str += "snappy\n"; }
     };
 

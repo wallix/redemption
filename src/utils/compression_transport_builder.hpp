@@ -29,19 +29,17 @@ struct CompressionTransportBuilder
 {
     CompressionTransportBuilder(
         Transport & trans,
-        WrmCompressionAlgorithm compression_algorithm,
-        uint32_t verbose = 0
+        WrmCompressionAlgorithm compression_algorithm
     ) {
-        this->construct_(trans, compression_algorithm, verbose);
+        this->construct_(trans, compression_algorithm);
     }
 
     Transport & reset(
         Transport & trans,
-        WrmCompressionAlgorithm compression_algorithm,
-        uint32_t verbose = 0
+        WrmCompressionAlgorithm compression_algorithm
     ) {
         this->destruct_();
-        return this->construct_(trans, compression_algorithm, verbose);
+        return this->construct_(trans, compression_algorithm);
     }
 
     ~CompressionTransportBuilder()
@@ -98,15 +96,15 @@ private:
         }
     }
 
-    Transport & construct_(Transport & trans, WrmCompressionAlgorithm compression_algorithm, uint32_t verbose)
+    Transport & construct_(Transport & trans, WrmCompressionAlgorithm compression_algorithm)
     {
         this->compression_algorithm = compression_algorithm;
         switch (this->get_algorithm()) {
             case WrmCompressionAlgorithm::gzip:
-                new (&this->compressors.gzip_trans) GZipTransport(trans, verbose);
+                new (&this->compressors.gzip_trans) GZipTransport(trans);
                 return this->compressors.gzip_trans;
             case WrmCompressionAlgorithm::snappy:
-                new (&this->compressors.snappy_trans) SnappyTransport(trans, verbose);
+                new (&this->compressors.snappy_trans) SnappyTransport(trans);
                 return this->compressors.snappy_trans;
             case WrmCompressionAlgorithm::no_compression:
                 this->compressors.trans = &trans;

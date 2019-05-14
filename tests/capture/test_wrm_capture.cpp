@@ -29,6 +29,7 @@
 #include "core/app_path.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/transport.hpp"
+#include "transport/mwrm_reader.hpp"
 
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
