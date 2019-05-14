@@ -155,7 +155,9 @@ public:
 
     ~MetaSeqBuf()
     {
-        this->close();
+        if (this->meta_buf_encrypt_transport.is_open()) {
+            this->close();
+        }
     }
 
     void write(const uint8_t * data, size_t len)

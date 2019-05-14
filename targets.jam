@@ -4694,6 +4694,21 @@ test-run tests/transport/test_out_filename_sequence_transport :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/out_filename_sequence_transport.hpp
 ;
+test-run tests/transport/test_out_meta_sequence_transport :
+  $(REDEMPTION_TEST_PATH)/transport/test_out_meta_sequence_transport.cpp
+:
+  <library>crypto
+  <library>snappy
+  <library>src/core/error.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/out_meta_sequence_transport.hpp
+;
 test-run tests/transport/test_recorder_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_recorder_transport.cpp
 :
@@ -5688,6 +5703,7 @@ alias test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_tr
 alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
 alias test_out_file_transport : tests/transport/test_out_file_transport ;
 alias test_out_filename_sequence_transport : tests/transport/test_out_filename_sequence_transport ;
+alias test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport ;
 alias test_recorder_transport : tests/transport/test_recorder_transport ;
 alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
 alias test_socket_transport : tests/transport/test_socket_transport ;
@@ -6017,6 +6033,7 @@ alias test_in_meta_sequence_transport.coverage : tests/transport/test_in_meta_se
 alias test_mwrm_reader.coverage : tests/transport/test_mwrm_reader.coverage ;
 alias test_out_file_transport.coverage : tests/transport/test_out_file_transport.coverage ;
 alias test_out_filename_sequence_transport.coverage : tests/transport/test_out_filename_sequence_transport.coverage ;
+alias test_out_meta_sequence_transport.coverage : tests/transport/test_out_meta_sequence_transport.coverage ;
 alias test_recorder_transport.coverage : tests/transport/test_recorder_transport.coverage ;
 alias test_snappy_compression_transport.coverage : tests/transport/test_snappy_compression_transport.coverage ;
 alias test_socket_transport.coverage : tests/transport/test_socket_transport.coverage ;
@@ -6438,6 +6455,7 @@ alias tests/transport.norec :
   tests/transport/test_mwrm_reader
   tests/transport/test_out_file_transport
   tests/transport/test_out_filename_sequence_transport
+  tests/transport/test_out_meta_sequence_transport
   tests/transport/test_recorder_transport
   tests/transport/test_snappy_compression_transport
   tests/transport/test_socket_transport
