@@ -29,7 +29,7 @@ RED_AUTO_TEST_CASE(TestGZipCompressionTransport)
     MemoryTransport mt;
 
     {
-        GZipCompressionOutTransport out_trans(mt, 0xFFFF);
+        GZipCompressionOutTransport out_trans(mt);
 
         RED_CHECK_NO_THROW(out_trans.send("azert" "azert" "azert" "azert" , 21));
         RED_CHECK_NO_THROW(out_trans.send("wallix" "wallix" "wallix" "wallix" "wallix", 31));
@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestGZipCompressionTransport)
     }
 
     {
-        GZipCompressionInTransport  in_trans(mt, 0xFFFF);
+        GZipCompressionInTransport  in_trans(mt);
 
         char   in_data[128] = { 0 };
 

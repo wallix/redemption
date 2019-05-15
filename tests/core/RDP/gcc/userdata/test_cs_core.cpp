@@ -79,5 +79,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
     RED_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
     RED_CHECK_EQUAL(216, cs_core.length);
 
-    cs_core.log("Client Received");
+    // cs_core.log("Client Received");
 }

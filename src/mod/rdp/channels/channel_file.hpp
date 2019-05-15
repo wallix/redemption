@@ -23,6 +23,7 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/texttime.hpp"
+#include "utils/log.hpp"
 #include <fstream>
 #include <unistd.h>
 

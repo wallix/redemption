@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
     RED_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     RED_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
 
-    sc_sec1.log("Server Received");
+    // sc_sec1.log("Server Received");
 }
 
 
@@ -68,7 +68,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     RED_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     RED_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
 
-    sc_sec1.log("Server Received");
+    // sc_sec1.log("Server Received");
 }
 
 
@@ -189,8 +189,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2), sc_sec1.dwVersion);
     RED_CHECK_EQUAL(true, sc_sec1.temporary);
 
-    sc_sec1.log("Server Received");
-
+    // sc_sec1.log("Server Received");
 }
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
@@ -237,5 +236,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     RED_CHECK_EQUAL(false, sc_sec1.temporary);
     RED_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
-    sc_sec1.log("Server Received");
+    // sc_sec1.log("Server Received");
 }

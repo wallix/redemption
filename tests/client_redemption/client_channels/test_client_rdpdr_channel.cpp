@@ -38,7 +38,7 @@ namespace rdpdr
     {
         return out << +underlying_cast(e); // '+' for transform u8/s8 to int
     }
-}
+} // namespace rdpdr
 
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)

@@ -18,13 +18,12 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "core/RDP/RefreshRectPDU.hpp"
 #include "test_only/transport/test_transport.hpp"
 
-RED_AUTO_TEST_CASE(TestRefreshRectPDU)
+
+// TEST missing
+int main()
 {
     const char *payload =
 /* 0000 */ "\x03\x00\x00\x2c\x02\xf0\x80\x64\x00\x07\x03\xeb\x70\x1e\x1e\x00" //...,...d....p...

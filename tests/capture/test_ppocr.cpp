@@ -48,7 +48,7 @@ namespace {
     }
 
     auto & ocr_constants = rdp_ppocr::get_ocr_constants(app_path_s(AppPath::Cfg) + "/ppocr.latin-cyrillic");
-}
+} // namespace
 
 RED_AUTO_TEST_CASE(TestPPOCR1)
 {

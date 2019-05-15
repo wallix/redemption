@@ -30,9 +30,9 @@ RED_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 {
     GlyphCacheCaps glyphcache_caps;
 
-    for (uint8_t i = 0; i < GlyphCacheCaps::NUMBER_OF_CACHE; ++i) {
-        glyphcache_caps.GlyphCache[i].CacheEntries         = 128;
-        glyphcache_caps.GlyphCache[i].CacheMaximumCellSize = 256;
+    for (auto & glyph_cache : glyphcache_caps.GlyphCache) {
+        glyph_cache.CacheEntries         = 128;
+        glyph_cache.CacheMaximumCellSize = 256;
     }
     glyphcache_caps.FragCache         = 16777216;
     glyphcache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
@@ -55,9 +55,9 @@ RED_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 
     glyphcache_caps2.recv(stream, GlyphCacheCaps::LENGTH_CAPABILITY);
 
-    for (uint8_t i = 0; i < GlyphCacheCaps::NUMBER_OF_CACHE; ++i) {
-        RED_CHECK_EQUAL(glyphcache_caps2.GlyphCache[i].CacheEntries,         128);
-        RED_CHECK_EQUAL(glyphcache_caps2.GlyphCache[i].CacheMaximumCellSize, 256);
+    for (auto & glyph_cache : glyphcache_caps2.GlyphCache) {
+        RED_CHECK_EQUAL(glyph_cache.CacheEntries,         128);
+        RED_CHECK_EQUAL(glyph_cache.CacheMaximumCellSize, 256);
     }
     RED_CHECK_EQUAL(glyphcache_caps2.FragCache,         16777216);
     RED_CHECK_EQUAL(glyphcache_caps2.GlyphSupportLevel, static_cast<uint16_t>(GlyphCacheCaps::GLYPH_SUPPORT_FULL));

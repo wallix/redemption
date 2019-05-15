@@ -268,6 +268,20 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         RED_TEST_PASSPOINT();
     }
 
+    hash_wd.add_files({
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    });
+    recorded_wd.add_files({
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    });
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(recorded_wd);
+
     auto basepath = recorded_wd.dirname().string() + "TESTOFS";
 
     {
@@ -289,20 +303,6 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
         RED_CHECK_EQUAL_RANGES(make_array_view(buffer), cstr_array_view("AAAAXBBBBXCCCCX"));
     }
-
-    hash_wd.add_files({
-        "TESTOFS.mwrm",
-        "TESTOFS-000000.wrm",
-        "TESTOFS-000001.wrm"
-    });
-    recorded_wd.add_files({
-        "TESTOFS.mwrm",
-        "TESTOFS-000000.wrm",
-        "TESTOFS-000001.wrm"
-    });
-
-    RED_CHECK_WORKSPACE(hash_wd);
-    RED_CHECK_WORKSPACE(recorded_wd);
 }
 
 RED_AUTO_TEST_CASE(CryptoTestInMetaSequenceTransport2)

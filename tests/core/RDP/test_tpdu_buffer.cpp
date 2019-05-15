@@ -61,7 +61,7 @@ constexpr auto data1 = cstr_array_view(
 /* 0040 */ "\x63\x52\xc7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //cR..............
 /* 0050 */ "\x00\x00\x00\x00\x00" //.....
 );
-static_assert(data1.size() == 85, "");
+static_assert(data1.size() == 85 );
 
 constexpr auto data2 = cstr_array_view(
 /* 0000 */ "\x03\x00\x00\x55\x50\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...UP......Cooki
@@ -77,7 +77,7 @@ constexpr auto data2 = cstr_array_view(
 /* 0040 */ "\x63\x52\xc7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //cR..............
 /* 0050 */ "\x00\x00\x00\x00\x00" //.....
 );
-static_assert(data2.size() == 85*2, "");
+static_assert(data2.size() == 85*2 );
 
 
 RED_AUTO_TEST_CASE(Test1Read1)

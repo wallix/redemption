@@ -57,5 +57,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
     RED_CHECK_EQUAL(27, cs_security.encryptionMethods);
     RED_CHECK_EQUAL(0, cs_security.extEncryptionMethods);
 
-    cs_security.log("Client Received");
+    // cs_security.log("Client Received");
 }

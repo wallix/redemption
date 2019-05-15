@@ -28,12 +28,12 @@
 #include <vector>
 
 template<class T, class U>
-constexpr auto is_callable_impl(U & x, int)
+constexpr auto is_callable_impl(U & x, int /*unused*/)
 -> decltype((void)(T(x)), std::true_type{})
 { return 1; }
 
 template<class T, class U>
-constexpr std::false_type is_callable_impl(U &, char)
+constexpr std::false_type is_callable_impl(U & /*unused*/, char /*unused*/)
 { return {}; }
 
 template<class T, class U>

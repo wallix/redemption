@@ -18,11 +18,10 @@
    Author(s): Christophe Grosjean
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "core/RDP/capabilities/bmpcache2.hpp"
 
-RED_AUTO_TEST_CASE(TestCapabilityBmpCache2)
+// TEST missing
+int main()
 {
     BmpCache2Caps cap;
 

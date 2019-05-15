@@ -21,8 +21,9 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "utils/fileutils.hpp"
+#include <cstring>
+
 
 namespace redemption_unit_test__
 {
@@ -39,26 +40,48 @@ namespace redemption_unit_test__
             return filesize(s.c_str());
         }
     };
+} // namespace redemption_unit_test__
 
-    constexpr auto fsize = fn_invoker("filesize", fsize_impl{});
+namespace tu
+{
+    inline std::string get_file_contents(const char * filename)
+    {
+        std::string s;
+        RED_TEST(append_file_contents(filename, s) == FileContentsError::None);
+        return s;
+    }
+
+    inline std::string get_file_contents(std::string const& name)
+    {
+        return get_file_contents(name.c_str());
+    }
+
+    template<class T>
+    std::string get_file_contents(T const& name)
+    {
+        return get_file_contents(static_cast<char const*>(name));
+    }
+
+    constexpr auto fsize = redemption_unit_test__::fn_invoker("filesize",
+        redemption_unit_test__::fsize_impl{});
 
     inline int int_(int n) { return n; }
-    inline int_variation int_(int_variation n) { return n; }
-}
+    inline redemption_unit_test__::int_variation int_(redemption_unit_test__::int_variation n) { return n; }
+} // namespace tu
 
-#define RED_TEST_FSIZE(filename, len) RED_TEST(::redemption_unit_test__::fsize(filename) == ::redemption_unit_test__::int_(len));
-#define RED_REQUIRE_FSIZE(filename, len) RED_TEST(::redemption_unit_test__::fsize(filename) == ::redemption_unit_test__::int_(len));
+#define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len));
+#define RED_REQUIRE_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len));
 
-# define RED_TEST_FCONTENTS(lvl, filename, contents)            \
-    [](auto&& filename__, auto&& contents__) {                  \
-        auto const fcontents__ = get_file_contents(filename__); \
-        RED_TEST_CONTEXT("filename: " << filename__) {          \
-            RED_##lvl##_SMEM(contents__, fcontents__);          \
-        }                                                       \
+# define RED_TEST_FILE_CONTENTS(lvl, filename, contents)                     \
+    [](auto&& filename__, auto&& contents__) {                               \
+        RED_TEST_CONTEXT("filename: " << filename__) {                       \
+            std::string file_contents__ = tu::get_file_contents(filename__); \
+            RED_##lvl##_SMEM(contents__, file_contents__);                   \
+        }                                                                    \
     }(filename, contents)
 
-# define RED_CHECK_FCONTENTS(filename, contents) \
-    RED_TEST_FCONTENTS(CHECK, filename, contents)
+# define RED_CHECK_FILE_CONTENTS(filename, contents) \
+    RED_TEST_FILE_CONTENTS(CHECK, filename, contents)
 
-# define RED_REQUIRE_FCONTENTS(filename, contents) \
-    RED_TEST_FCONTENTS(REQUIRE, filename, contents)
+# define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
+    RED_TEST_FILE_CONTENTS(REQUIRE, filename, contents)

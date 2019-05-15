@@ -36,5 +36,5 @@ RED_AUTO_TEST_CASE_WF(TestOutFileTransport, wf)
         ft.send("and again, ", 11);
         ft.send("and so on.", 10);
     }
-    RED_CHECK_FCONTENTS(wf.c_str(), "We write, and again, and so on."_av);
+    RED_CHECK_FILE_CONTENTS(wf.c_str(), "We write, and again, and so on."_av);
 }

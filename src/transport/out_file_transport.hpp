@@ -18,10 +18,9 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-
 #pragma once
 
-#include "utils/log.hpp"
+#include "core/error.hpp"
 #include "core/report_message_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -109,10 +108,7 @@ void report_and_transform_error(Error& error, F && report)
 
 struct LogReporter
 {
-    void operator()(char const * reason, char const * message)
-    {
-        LOG(LOG_ERR, "%s:%s", reason, message);
-    }
+    void operator()(char const * reason, char const * message);
 };
 
 struct ReportMessageReporter
@@ -130,24 +126,9 @@ private:
     ReportMessageApi & reporter;
 };
 
-inline Error ReportError::NullImpl::get_error(Error err)
-{
-    report_and_transform_error(err, LogReporter{});
-    return err;
-}
+ReportError report_error_from_reporter(ReportMessageApi & reporter);
+ReportError report_error_from_reporter(ReportMessageApi * reporter);
 
-inline ReportError report_error_from_reporter(ReportMessageApi & reporter)
-{
-    return ReportError([&reporter](Error error) {
-        report_and_transform_error(error, ReportMessageReporter{reporter});
-        return error;
-    });
-}
-
-inline ReportError report_error_from_reporter(ReportMessageApi * reporter)
-{
-    return reporter ? report_error_from_reporter(*reporter) : ReportError();
-}
 
 struct OutFileTransport : Transport
 {
@@ -161,12 +142,7 @@ struct OutFileTransport : Transport
         return this->file.close();
     }
 
-    void seek(int64_t offset, int whence) override
-    {
-        if (lseek64(this->file.fd(), offset, whence) == static_cast<off_t>(-1)) {
-            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-        }
-    }
+    void seek(int64_t offset, int whence) override;
 
     int get_fd() const override
     {
@@ -195,20 +171,7 @@ struct OutFileTransport : Transport
     }
 
 protected:
-    void do_send(const uint8_t * data, size_t len) override
-    {
-        size_t total_sent = 0;
-        while (len > total_sent) {
-            ssize_t const ret = ::write(this->file.fd(), data + total_sent, len - total_sent);
-            if (ret <= 0){
-                if (errno == EINTR) {
-                    continue;
-                }
-                throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
-            }
-            total_sent += ret;
-        }
-    }
+    void do_send(const uint8_t * data, size_t len) override;
 
 private:
     unique_fd file;

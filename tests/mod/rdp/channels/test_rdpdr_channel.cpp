@@ -35,7 +35,7 @@ namespace
     namespace data_normal
     {
         #include "fixtures/test_rdpdr_channel.hpp"
-        const auto file_system_virtual_channel_params = []{
+        const auto file_system_virtual_channel_params = []{ /*NOLINT*/
             FileSystemVirtualChannelParams file_system_virtual_channel_params;
             file_system_virtual_channel_params.file_system_read_authorized  = true;
             file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -45,11 +45,11 @@ namespace
             file_system_virtual_channel_params.smart_card_authorized        = true;
             return file_system_virtual_channel_params;
         }();
-    }
+    } // namespace data_normal
     namespace data_no_drive
     {
         #include "fixtures/test_rdpdr_channel_no_drive.hpp"
-        const auto file_system_virtual_channel_params = []{
+        const auto file_system_virtual_channel_params = []{ /*NOLINT*/
             FileSystemVirtualChannelParams file_system_virtual_channel_params;
             file_system_virtual_channel_params.file_system_read_authorized  = false;
             file_system_virtual_channel_params.file_system_write_authorized = false;
@@ -59,11 +59,11 @@ namespace
             file_system_virtual_channel_params.smart_card_authorized        = true;
             return file_system_virtual_channel_params;
         }();
-    }
+    } // namespace data_no_drive
     namespace data_no_print
     {
         #include "fixtures/test_rdpdr_channel_no_print.hpp"
-        const auto file_system_virtual_channel_params = []{
+        const auto file_system_virtual_channel_params = []{ /*NOLINT*/
             FileSystemVirtualChannelParams file_system_virtual_channel_params;
             file_system_virtual_channel_params.file_system_read_authorized  = true;
             file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -73,11 +73,11 @@ namespace
             file_system_virtual_channel_params.smart_card_authorized        = true;
             return file_system_virtual_channel_params;
         }();
-    }
+    } // namespace data_no_print
     namespace data_no_drive_no_print
     {
         #include "fixtures/test_rdpdr_channel_no_drive_no_print.hpp"
-        const auto file_system_virtual_channel_params = []{
+        const auto file_system_virtual_channel_params = []{ /*NOLINT*/
             FileSystemVirtualChannelParams file_system_virtual_channel_params;
             file_system_virtual_channel_params.file_system_read_authorized  = false;
             file_system_virtual_channel_params.file_system_write_authorized = false;
@@ -87,11 +87,11 @@ namespace
             file_system_virtual_channel_params.smart_card_authorized        = true;
             return file_system_virtual_channel_params;
         }();
-    }
+    } // namespace data_no_drive_no_print
     namespace data_device_remote
     {
         #include "fixtures/test_rdpdr_channel_device_remove.hpp"
-        const auto file_system_virtual_channel_params = []{
+        const auto file_system_virtual_channel_params = []{ /*NOLINT*/
             FileSystemVirtualChannelParams file_system_virtual_channel_params;
             file_system_virtual_channel_params.file_system_read_authorized  = true;
             file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -101,11 +101,11 @@ namespace
             file_system_virtual_channel_params.smart_card_authorized        = true;
             return file_system_virtual_channel_params;
         }();
-    }
+    } // namespace data_device_remote
     namespace data_fragment_header
     {
         #include "fixtures/test_rdpdr_channel_fragmented_header.hpp"
-        const auto file_system_virtual_channel_params = []{
+        const auto file_system_virtual_channel_params = []{ /*NOLINT*/
             FileSystemVirtualChannelParams file_system_virtual_channel_params;
             file_system_virtual_channel_params.file_system_read_authorized  = true;
             file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -115,11 +115,11 @@ namespace
             file_system_virtual_channel_params.smart_card_authorized        = true;
             return file_system_virtual_channel_params;
         }();
-    }
+    } // namespace data_fragment_header
     namespace data_capability_negotiation
     {
         #include "fixtures/test_rdpdr_channel_capability_negotiation.hpp"
-        const auto file_system_virtual_channel_params = []{
+        const auto file_system_virtual_channel_params = []{ /*NOLINT*/
             FileSystemVirtualChannelParams file_system_virtual_channel_params;
             file_system_virtual_channel_params.file_system_read_authorized  = true;
             file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -129,8 +129,8 @@ namespace
             file_system_virtual_channel_params.smart_card_authorized        = false;
             return file_system_virtual_channel_params;
         }();
-    }
-}
+    } // namespace data_capability_negotiation
+} // namespace
 
 RED_AUTO_TEST_CASE(TestRdpdrChannel)
 {
@@ -147,7 +147,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     cstr_array_view(name::outdata),           \
     name::file_system_virtual_channel_params, \
     enable_drive}
-    for (D const& d : {
+    RED_TEST_CONTEXT_DATA(D const& d, d.name, {
         F(data_normal, true),
         F(data_no_drive, true),
         F(data_no_print, true),
@@ -155,7 +155,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         F(data_device_remote, true),
         F(data_fragment_header, true),
         F(data_capability_negotiation, false)
-    }) RED_TEST_CONTEXT(d.name)
+    })
     {
         WorkingDirectory wd(d.name);
 

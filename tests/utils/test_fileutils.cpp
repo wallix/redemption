@@ -25,6 +25,7 @@
 #include "utils/fileutils.hpp"
 
 #include <functional>
+#include <numeric>
 
 #include <cstring>
 #include <unistd.h> // for getgid
@@ -42,7 +43,7 @@ RED_AUTO_TEST_CASE(TestBasename)
         char const* filename;
         array_view_const_char basename;
     };
-    for (Data const& data : {
+    RED_TEST_CONTEXT_DATA(Data const& data, data.filename, {
         //  Below expected behavior from the unix man pages
         Data{"/usr/lib",  "lib"_av},
         Data{"/usr/lib/", ""_av},
@@ -52,7 +53,7 @@ RED_AUTO_TEST_CASE(TestBasename)
         Data{"/",         ""_av},
         Data{".",         "."_av},
         Data{"..",        ".."_av}
-    }) RED_TEST_CONTEXT(data.filename)
+    })
     {
         RED_CHECK_EQ(basename(data.filename), data.basename.data());
         size_t len = 0;
@@ -80,7 +81,7 @@ RED_AUTO_TEST_CASE(CanonicalPath)
     // - basename : the filename without extension
     // - extension : the extension = part following the last dot, removed from basename
     //  if initial fullpath does not has any dot in it nothing is removed
-    for (Data const& data : {
+    RED_TEST_CONTEXT_DATA(Data const& data, data.filename, {
         Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
         Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
         Data{"./titi/result.tmp",   "./titi/",  "result",       ".tmp"},
@@ -90,7 +91,7 @@ RED_AUTO_TEST_CASE(CanonicalPath)
         Data{"tmp/.tmp",            "tmp/",     "no basename",  ".tmp"},
         Data{".tmp",                "no path",  "no basename",  ".tmp"},
         Data{"",                    "no path",  "no basename",  "no extension"}
-    }) RED_TEST_CONTEXT(data.filename)
+    })
     {
         strcpy(path, "no path");
         strcpy(basename, "no basename");
@@ -112,7 +113,7 @@ RED_AUTO_TEST_CASE(TestParsePath)
         char const* basename;
         char const* extension;
     };
-    for (Data const& data : {
+    RED_TEST_CONTEXT_DATA(Data const& data, data.filename, {
         Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
         Data{"/etc/rdpproxy/rdpproxy",      "/etc/rdpproxy/",   "rdpproxy",     "zzz"},
         Data{"/etc/rdpproxy/",              "/etc/rdpproxy/",   "yyy",          "zzz"},
@@ -128,7 +129,7 @@ RED_AUTO_TEST_CASE(TestParsePath)
         Data{".rdpproxy.ini",               "xxx",              ".rdpproxy",    ".ini"},
         Data{"a",                           "xxx",              "a"     ,       "zzz"},
         Data{"",                            "xxx",              "yyy",          "zzz"}
-    }) RED_TEST_CONTEXT(data.filename)
+    })
     {
         std::string directory = "xxx";
         std::string basename = "yyy";
@@ -166,7 +167,7 @@ const auto file_not_exists = std::not_fn<bool(*)(char const*)>(file_exist);
 
 RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
 {
-    for (char const* subname : {"test_subdir", "test_subdir/"}) RED_TEST_CONTEXT(subname)
+    RED_TEST_CONTEXT_DATA(char const* subname, subname, {"test_subdir", "test_subdir/"})
     {
         WorkingDirectory wd;
         auto dir = wd.dirname().string() + "test_dir/";
@@ -179,6 +180,8 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
 
         RED_CHECK_PREDICATE(file_not_exists, (dir.c_str()));
         RED_CHECK_PREDICATE(file_not_exists, (subdir.c_str()));
+
+        RED_CHECK_WORKSPACE(wd);
     }
 }
 
@@ -186,4 +189,19 @@ RED_AUTO_TEST_CASE(TestFileEquals)
 {
     RED_CHECK(file_equals(__FILE__, __FILE__));
     RED_CHECK(!file_equals(__FILE__, "/dev/zero"));
+}
+
+RED_AUTO_TEST_CASE(TestAppendFileContents)
+{
+    std::string buf;
+    RED_TEST(append_file_contents("/unknown_path/unknown_file", buf) != FileContentsError::None);
+    RED_TEST(buf.empty());
+    RED_TEST(append_file_contents(FIXTURES_PATH "/test_infile.txt", buf) == FileContentsError::None);
+    RED_TEST(buf == "We read what we provide!");
+    buf.clear();
+    RED_TEST(append_file_contents(FIXTURES_PATH "/sample1.wrm", buf) == FileContentsError::None);
+    unsigned accu = std::accumulate(buf.begin(), buf.end(), 0u, [](unsigned u, char c){
+        return u + uint8_t(c);
+    });
+    RED_TEST(accu == 47734549u);
 }

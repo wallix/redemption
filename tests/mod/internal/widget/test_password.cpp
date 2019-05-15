@@ -427,7 +427,7 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
         : Widget(drawable, *this, nullptr)
         {}
 
-        void rdp_input_invalidate(Rect) override
+        void rdp_input_invalidate(Rect /*r*/) override
         {}
 
         void notify(Widget* sender, NotifyApi::notify_event_t event) override

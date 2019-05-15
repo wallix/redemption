@@ -39,7 +39,7 @@ extern "C" {
             0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
             0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
             0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
-        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH, "");
+        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH );
         memcpy(buffer, hmac_key, sizeof(hmac_key));
         return 0;
     }
@@ -56,7 +56,7 @@ extern "C" {
             0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
             0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
             0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
-        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH, "");
+        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH );
         memcpy(buffer, trace_key, sizeof(trace_key));
         return 0;
     }
@@ -240,7 +240,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
     CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_2016_fn);
     cctx.set_get_trace_key_cb(trace_20161025_fn);
-    cctx.old_encryption_scheme = 1;
+    cctx.old_encryption_scheme = true;
 
     InCryptoTransport fd(cctx, is_encrypted, fstat);
     RED_REQUIRE_NO_THROW(fd.open(FIXTURES_PATH

@@ -32,7 +32,7 @@ int main()
 
 
     SessionReactor session_reactor;
-    WidgetTestMod d(session_reactor, front.gd(), front, screen_info.width, screen_info.height, global_font());
+    WidgetTestMod d(session_reactor, front, screen_info.width, screen_info.height, global_font());
 
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

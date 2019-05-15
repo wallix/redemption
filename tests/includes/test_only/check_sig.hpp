@@ -34,7 +34,7 @@
     do {                                                           \
         uint8_t obj_sig__[SslSha1::DIGEST_LENGTH];                 \
         ::redemption_unit_test__::compute_obj_sig(obj_sig__, obj); \
-        RED_CHECK_MEM(make_array_view(obj_sig__), expected_sig);   \
+        RED_CHECK_RMEM(make_array_view(obj_sig__), expected_sig);  \
     } while (0)
 
 #define RED_CHECK_SIG(obj, expected_sig) RED_CHECK_SIG_A(obj, cstr_array_view(expected_sig ""))

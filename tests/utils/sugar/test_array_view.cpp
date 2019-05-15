@@ -27,13 +27,13 @@
 
 namespace {
 
-int test_ambiguous(array_view_const_char) { return 1; }
-int test_ambiguous(array_view_const_s8) { return 2; }
-int test_ambiguous(array_view_const_u8) { return 3; }
+int test_ambiguous(array_view_const_char /*unused*/) { return 1; }
+int test_ambiguous(array_view_const_s8 /*unused*/) { return 2; }
+int test_ambiguous(array_view_const_u8 /*unused*/) { return 3; }
 
 using voidp = void const*;
 
-}
+} // namespace
 
 RED_AUTO_TEST_CASE(TestArrayView)
 {
@@ -170,14 +170,14 @@ RED_AUTO_TEST_CASE(TestSubArray)
 }
 
 template<class T>
-auto check_call(T && a, int) -> decltype(cstr_array_view(a), true)
+auto check_call(T && a, int /*unused*/) -> decltype(cstr_array_view(a), true)
 {
     return true;
 }
 
 
 template<class T>
-bool check_call(T &&, char)
+bool check_call(T && /*unused*/, char /*unused*/)
 {
     return false;
 }

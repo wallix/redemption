@@ -19,9 +19,8 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/file.hpp"
 #include "lib/files_validator_api.hpp"
-#include "test_only/get_file_contents.hpp"
-#include "utils/log.hpp"
 
 
 #include "core/error.hpp"
@@ -29,6 +28,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 
+#include <fstream>
 
 
 RED_AUTO_TEST_CASE(testFileValid)
@@ -44,7 +44,7 @@ RED_AUTO_TEST_CASE(testFileValid)
         mod_local_server = true;
 
         std::string file_name("README.md");
-        std::string file_content(get_file_contents("README.md"));
+        std::string file_content(tu::get_file_contents("README.md"));
         int file_size = 30; /*file_content.length();*/
 
         int file_id = validator_open_file(service, file_name.c_str());

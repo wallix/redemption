@@ -54,9 +54,15 @@ exe headlessclient :
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/replay_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -134,7 +140,6 @@ exe rdpproxy :
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -180,7 +185,14 @@ exe rdpproxy :
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
   <library>src/utils/base64.o
@@ -228,6 +240,7 @@ exe proxy_recorder :
   <library>src/core/RDP/nego.o
   <library>src/core/error.o
   <library>src/proxy_recorder/proxy_recorder.o
+  <library>src/transport/out_file_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/hexdump.o
@@ -281,6 +294,8 @@ exe rdpclient :
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/out_file_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
@@ -301,7 +316,6 @@ exe rdpclient :
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(EXE_DEPENDENCIES_NO_SYSLOG)
-  <include>$(REDEMPTION_TEST_PATH)/includes
 ;
 exe display_learning :
   src/capture/ocr/main/display_learning.o
@@ -358,7 +372,13 @@ lib libredrec :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
@@ -403,6 +423,7 @@ lib libscytale :
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -446,7 +467,9 @@ test-run tests/acl/test_acl_serializer :
   <library>src/core/error.o
   <library>src/core/set_server_redirection_target.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
@@ -482,6 +505,7 @@ test-run tests/acl/test_authentifier :
   <library>src/core/set_server_redirection_target.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
@@ -549,7 +573,6 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -595,7 +618,14 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -686,7 +716,14 @@ test-run tests/capture/test_capture :
   <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
@@ -761,6 +798,7 @@ test-run tests/capture/test_video_capture :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -788,7 +826,12 @@ test-run tests/capture/test_wrm_capture :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -846,6 +889,8 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -873,26 +918,18 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
-  <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
@@ -930,6 +967,8 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -983,6 +1022,8 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -1023,7 +1064,11 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -1059,7 +1104,11 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -1095,7 +1144,11 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -1131,7 +1184,11 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -1166,7 +1223,11 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -1212,6 +1273,7 @@ test-run tests/core/RDP/caches/test_bmpcachepersister :
 :
   <library>crypto
   <library>src/core/error.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/rle.o
@@ -2346,6 +2408,13 @@ test-run tests/core/test_front_api :
 :
   <covfile>src/core/front_api.hpp
 ;
+test-run tests/core/test_glyph_to_24_bitmap :
+  $(REDEMPTION_TEST_PATH)/core/test_glyph_to_24_bitmap.cpp
+:
+  <library>src/core/font.o
+  <library>src/utils/utf.o
+  <covfile>src/core/glyph_to_24_bitmap.hpp
+;
 test-run tests/core/test_listen :
   $(REDEMPTION_TEST_PATH)/core/test_listen.cpp
 :
@@ -2404,7 +2473,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -2450,7 +2518,14 @@ test-run tests/core/test_mainloop :
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
   <library>src/utils/base64.o
@@ -2536,7 +2611,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/replay_mod.o
@@ -2582,7 +2656,14 @@ test-run tests/core/test_session :
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
   <library>src/utils/base64.o
@@ -2669,7 +2750,13 @@ test-run tests/front/test_front :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2687,6 +2774,7 @@ test-run tests/front/test_front :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2771,7 +2859,13 @@ test-run tests/lib/test_do_recorder :
   <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
@@ -2804,13 +2898,10 @@ test-run tests/lib/test_files_validator_api :
 test-run tests/lib/test_iametrics :
   $(REDEMPTION_TEST_PATH)/lib/test_iametrics.cpp
 :
-  <library>src/core/error.o
   <library>src/lib/iametrics.o
   <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
 test-run tests/lib/test_scytale :
@@ -2822,6 +2913,7 @@ test-run tests/lib/test_scytale :
   <library>src/lib/scytale.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -2840,18 +2932,12 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -2904,7 +2990,6 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -2949,7 +3034,6 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -2994,7 +3078,6 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/flat_wab_close_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
@@ -3035,7 +3118,6 @@ test-run tests/mod/internal/test_flat_wait_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_wait_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -3075,7 +3157,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
@@ -3104,27 +3185,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <covfile>src/mod/internal/interactive_target_mod.cpp
   <covfile>src/mod/internal/interactive_target_mod.hpp
 ;
-test-run tests/mod/internal/test_internal_mod :
-  $(REDEMPTION_TEST_PATH)/mod/internal/test_internal_mod.cpp
-:
-  <library>crypto
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/internal/internal_mod.cpp
-  <covfile>src/mod/internal/internal_mod.hpp
-;
 test-run tests/mod/internal/test_replay_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_replay_mod.cpp
 :
@@ -3139,7 +3199,11 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -3168,7 +3232,6 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/selector_mod.o
   <library>src/mod/internal/widget/composite.o
@@ -3199,20 +3262,13 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -3230,11 +3286,6 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
@@ -3928,12 +3979,9 @@ test-run tests/mod/rdp/channels/test_base_channel :
 test-run tests/mod/rdp/channels/test_channel_file :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_channel_file.cpp
 :
-  <library>src/core/error.o
   <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/channel_file.hpp
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
@@ -4009,6 +4057,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/transport/in_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -4031,6 +4080,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/transport/in_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4059,6 +4109,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/transport/in_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4083,6 +4134,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/transport/in_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4103,6 +4155,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/gdi/screen_functions.o
   <library>src/lib/files_validator_api.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/transport/in_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
@@ -4159,6 +4212,8 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4215,6 +4270,7 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
+  <library>src/transport/in_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4236,6 +4292,8 @@ test-run tests/mod/rdp/test_rdp_orders :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4258,6 +4316,7 @@ test-run tests/mod/rdp/test_rdp_params :
   <library>src/gdi/screen_functions.o
   <library>src/lib/files_validator_api.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
+  <library>src/transport/in_file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4490,14 +4549,15 @@ test-run tests/server/test_mstsc_client :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4513,6 +4573,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4547,14 +4608,15 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4570,6 +4632,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4604,14 +4667,15 @@ test-run tests/server/test_rdesktop_client :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4627,6 +4691,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4714,6 +4779,7 @@ test-run tests/transport/test_crypto_transport :
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4726,11 +4792,13 @@ test-run tests/transport/test_gzip_compression_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_gzip_compression_transport.cpp
 :
   <library>src/core/error.o
+  <library>src/transport/gzip_compression_transport.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/gzip_compression_transport.cpp
   <covfile>src/transport/gzip_compression_transport.hpp
   <define>ZLIB_CONST
 ;
@@ -4738,8 +4806,10 @@ test-run tests/transport/test_in_file_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_in_file_transport.cpp
 :
   <library>src/core/error.o
+  <library>src/transport/in_file_transport.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/in_file_transport.cpp
   <covfile>src/transport/in_file_transport.hpp
 ;
 test-run tests/transport/test_in_meta_sequence_transport :
@@ -4749,12 +4819,16 @@ test-run tests/transport/test_in_meta_sequence_transport :
   <library>snappy
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/in_meta_sequence_transport.cpp
   <covfile>src/transport/in_meta_sequence_transport.hpp
 ;
 test-run tests/transport/test_mwrm_reader :
@@ -4765,6 +4839,7 @@ test-run tests/transport/test_mwrm_reader :
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4778,28 +4853,53 @@ test-run tests/transport/test_out_file_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_out_file_transport.cpp
 :
   <library>src/core/error.o
+  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/out_file_transport.cpp
   <covfile>src/transport/out_file_transport.hpp
 ;
 test-run tests/transport/test_out_filename_sequence_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_out_filename_sequence_transport.cpp
 :
   <library>src/core/error.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/out_filename_sequence_transport.cpp
   <covfile>src/transport/out_filename_sequence_transport.hpp
+;
+test-run tests/transport/test_out_meta_sequence_transport :
+  $(REDEMPTION_TEST_PATH)/transport/test_out_meta_sequence_transport.cpp
+:
+  <library>crypto
+  <library>snappy
+  <library>src/core/error.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/out_meta_sequence_transport.cpp
+  <covfile>src/transport/out_meta_sequence_transport.hpp
 ;
 test-run tests/transport/test_recorder_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_recorder_transport.cpp
 :
   <library>src/core/error.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/out_file_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/replay_transport.o
   <library>src/utils/fileutils.o
@@ -4818,10 +4918,12 @@ test-run tests/transport/test_snappy_compression_transport :
 :
   <library>snappy
   <library>src/core/error.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/snappy_compression_transport.cpp
   <covfile>src/transport/snappy_compression_transport.hpp
 ;
 test-run tests/transport/test_socket_transport :
@@ -5109,6 +5211,8 @@ test-run tests/utils/test_compression_transport_builder :
 :
   <library>snappy
   <library>src/core/error.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/snappy_compression_transport.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>z
@@ -5288,12 +5392,9 @@ test-run tests/utils/test_rdtsc :
 test-run tests/utils/test_recording_progress :
   $(REDEMPTION_TEST_PATH)/utils/test_recording_progress.cpp
 :
-  <library>src/core/error.o
   <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/recording_progress.hpp
 ;
 test-run tests/utils/test_rect :
@@ -5442,7 +5543,7 @@ obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp :
 obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/proxy_recorder_cli.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder_cli.cpp ;
-obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
+obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 obj src/mod/internal/flat_dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_dialog_mod.cpp ;
@@ -5450,7 +5551,6 @@ obj src/mod/internal/flat_login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat
 obj src/mod/internal/flat_wab_close_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_wab_close_mod.cpp ;
 obj src/mod/internal/flat_wait_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_wait_mod.cpp ;
 obj src/mod/internal/interactive_target_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/interactive_target_mod.cpp ;
-obj src/mod/internal/internal_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/internal_mod.cpp ;
 obj src/mod/internal/locally_integrable_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/locally_integrable_mod.cpp ;
 obj src/mod/internal/rail_module_host_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/rail_module_host_mod.cpp ;
 obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;
@@ -5499,9 +5599,16 @@ obj src/mod/xup/xup.o : $(REDEMPTION_SRC_PATH)/mod/xup/xup.cpp ;
 obj src/proxy_recorder/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/proxy_recorder/proxy_recorder.cpp ;
 obj src/system/linux/system/tls_check_certificate.o : $(REDEMPTION_SRC_PATH)/system/linux/system/tls_check_certificate.cpp ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
+obj src/transport/gzip_compression_transport.o : $(REDEMPTION_SRC_PATH)/transport/gzip_compression_transport.cpp : <define>ZLIB_CONST ;
+obj src/transport/in_file_transport.o : $(REDEMPTION_SRC_PATH)/transport/in_file_transport.cpp ;
+obj src/transport/in_meta_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/in_meta_sequence_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
+obj src/transport/out_file_transport.o : $(REDEMPTION_SRC_PATH)/transport/out_file_transport.cpp ;
+obj src/transport/out_filename_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/out_filename_sequence_transport.cpp ;
+obj src/transport/out_meta_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/out_meta_sequence_transport.cpp ;
 obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
 obj src/transport/replay_transport.o : $(REDEMPTION_SRC_PATH)/transport/replay_transport.cpp ;
+obj src/transport/snappy_compression_transport.o : $(REDEMPTION_SRC_PATH)/transport/snappy_compression_transport.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
 obj src/transport/ws_transport.o : $(REDEMPTION_SRC_PATH)/transport/ws_transport.cpp ;
 obj src/utils/base64.o : $(REDEMPTION_SRC_PATH)/utils/base64.cpp ;
@@ -5528,8 +5635,9 @@ obj src/utils/sugar/multisz.o : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test_only/core/font.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;
+obj tests/includes/test_only/front/front_wrapper.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/front_wrapper.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/gdi/test_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/gdi/test_graphic.cpp : $(CXXFLAGS_TEST) ;
-obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/working_directory.cpp : $(CXXFLAGS_TEST) ;
+obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/working_directory.cpp : <variant>debug:<define>RED_COMPILE_TYPE=debug <variant>release:<define>RED_COMPILE_TYPE=release <variant>san:<define>RED_COMPILE_TYPE=san $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;
 
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
@@ -5688,6 +5796,7 @@ alias test_date_dir_from_filename : tests/core/test_date_dir_from_filename ;
 alias test_error : tests/core/test_error ;
 alias test_font : tests/core/test_font ;
 alias test_front_api : tests/core/test_front_api ;
+alias test_glyph_to_24_bitmap : tests/core/test_glyph_to_24_bitmap ;
 alias test_listen : tests/core/test_listen ;
 alias test_mainloop : tests/core/test_mainloop ;
 alias test_server_notifier_api : tests/core/test_server_notifier_api ;
@@ -5710,7 +5819,6 @@ alias test_flat_login_mod : tests/mod/internal/test_flat_login_mod ;
 alias test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod ;
 alias test_flat_wait_mod : tests/mod/internal/test_flat_wait_mod ;
 alias test_interactive_target_mod : tests/mod/internal/test_interactive_target_mod ;
-alias test_internal_mod : tests/mod/internal/test_internal_mod ;
 alias test_replay_mod : tests/mod/internal/test_replay_mod ;
 alias test_selector_mod : tests/mod/internal/test_selector_mod ;
 alias test_test_card_mod : tests/mod/internal/test_test_card_mod ;
@@ -5796,6 +5904,7 @@ alias test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_tr
 alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
 alias test_out_file_transport : tests/transport/test_out_file_transport ;
 alias test_out_filename_sequence_transport : tests/transport/test_out_filename_sequence_transport ;
+alias test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport ;
 alias test_recorder_transport : tests/transport/test_recorder_transport ;
 alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
 alias test_socket_transport : tests/transport/test_socket_transport ;
@@ -6025,6 +6134,7 @@ alias test_date_dir_from_filename.coverage : tests/core/test_date_dir_from_filen
 alias test_error.coverage : tests/core/test_error.coverage ;
 alias test_font.coverage : tests/core/test_font.coverage ;
 alias test_front_api.coverage : tests/core/test_front_api.coverage ;
+alias test_glyph_to_24_bitmap.coverage : tests/core/test_glyph_to_24_bitmap.coverage ;
 alias test_listen.coverage : tests/core/test_listen.coverage ;
 alias test_mainloop.coverage : tests/core/test_mainloop.coverage ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
@@ -6043,7 +6153,6 @@ alias test_flat_login_mod.coverage : tests/mod/internal/test_flat_login_mod.cove
 alias test_flat_wab_close_mod.coverage : tests/mod/internal/test_flat_wab_close_mod.coverage ;
 alias test_flat_wait_mod.coverage : tests/mod/internal/test_flat_wait_mod.coverage ;
 alias test_interactive_target_mod.coverage : tests/mod/internal/test_interactive_target_mod.coverage ;
-alias test_internal_mod.coverage : tests/mod/internal/test_internal_mod.coverage ;
 alias test_replay_mod.coverage : tests/mod/internal/test_replay_mod.coverage ;
 alias test_selector_mod.coverage : tests/mod/internal/test_selector_mod.coverage ;
 alias test_test_card_mod.coverage : tests/mod/internal/test_test_card_mod.coverage ;
@@ -6126,6 +6235,7 @@ alias test_in_meta_sequence_transport.coverage : tests/transport/test_in_meta_se
 alias test_mwrm_reader.coverage : tests/transport/test_mwrm_reader.coverage ;
 alias test_out_file_transport.coverage : tests/transport/test_out_file_transport.coverage ;
 alias test_out_filename_sequence_transport.coverage : tests/transport/test_out_filename_sequence_transport.coverage ;
+alias test_out_meta_sequence_transport.coverage : tests/transport/test_out_meta_sequence_transport.coverage ;
 alias test_recorder_transport.coverage : tests/transport/test_recorder_transport.coverage ;
 alias test_snappy_compression_transport.coverage : tests/transport/test_snappy_compression_transport.coverage ;
 alias test_socket_transport.coverage : tests/transport/test_socket_transport.coverage ;
@@ -6407,6 +6517,7 @@ alias tests/core.norec :
   tests/core/test_error
   tests/core/test_font
   tests/core/test_front_api
+  tests/core/test_glyph_to_24_bitmap
   tests/core/test_listen
   tests/core/test_mainloop
   tests/core/test_server_notifier_api
@@ -6439,7 +6550,6 @@ alias tests/mod/internal.norec :
   tests/mod/internal/test_flat_wab_close_mod
   tests/mod/internal/test_flat_wait_mod
   tests/mod/internal/test_interactive_target_mod
-  tests/mod/internal/test_internal_mod
   tests/mod/internal/test_replay_mod
   tests/mod/internal/test_selector_mod
   tests/mod/internal/test_test_card_mod
@@ -6551,6 +6661,7 @@ alias tests/transport.norec :
   tests/transport/test_mwrm_reader
   tests/transport/test_out_file_transport
   tests/transport/test_out_filename_sequence_transport
+  tests/transport/test_out_meta_sequence_transport
   tests/transport/test_recorder_transport
   tests/transport/test_snappy_compression_transport
   tests/transport/test_socket_transport

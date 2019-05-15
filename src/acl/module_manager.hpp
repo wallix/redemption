@@ -703,11 +703,8 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
             this->set_mod(new Bouncer2Mod(
                 this->session_reactor,
-                this->front,
-                this->front,
                 this->front.client_info.screen_info.width,
-                this->front.client_info.screen_info.height,
-                this->load_font()
+                this->front.client_info.screen_info.height
             ));
             LOG_IF(bool(this->verbose & Verbose::new_mod),
                 LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
@@ -742,7 +739,6 @@ public:
             this->set_mod(new WidgetTestMod(
                 this->session_reactor,
                 this->front,
-                this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
                 this->load_font()
@@ -753,8 +749,6 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
             this->set_mod(new TestCardMod(
                 this->session_reactor,
-                this->front,
-                this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
                 this->load_font(),

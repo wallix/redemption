@@ -91,18 +91,14 @@ struct WidgetTestMod::WidgetTestModPrivate
 
 WidgetTestMod::WidgetTestMod(
     SessionReactor& session_reactor,
-    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
-    Font const & font)
-: InternalMod(drawable, front, width, height, font, Theme{})
-, d(std::make_unique<WidgetTestModPrivate>(session_reactor, *this))
+    FrontAPI & front, uint16_t width, uint16_t height,
+    Font const & /*font*/)
+: d(std::make_unique<WidgetTestModPrivate>(session_reactor, *this))
 {
     front.server_resize({width, height, BitsPerPixel{8}});
 }
 
-WidgetTestMod::~WidgetTestMod()
-{
-    this->screen.clear();
-}
+WidgetTestMod::~WidgetTestMod() = default;
 
 void WidgetTestMod::rdp_input_invalidate(Rect /*r*/)
 {}
@@ -118,6 +114,12 @@ void WidgetTestMod::rdp_input_scancode(
         this->d->session_reactor.set_next_event(BACK_EVENT_STOP);
     }
 }
+
+void WidgetTestMod::rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/)
+{}
+
+void WidgetTestMod::rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/, int16_t /*param1*/, int16_t /*param2*/)
+{}
 
 void WidgetTestMod::refresh(Rect clip)
 {

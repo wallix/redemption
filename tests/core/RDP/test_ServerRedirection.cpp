@@ -38,7 +38,7 @@ RED_AUTO_TEST_CASE(TestServerRedirectionPDU)
     ServerRedirectionPDU srv_redir_init;
     srv_redir_init.import_from_redirection_info(rinfo_init);
 
-    srv_redir_init.log(LOG_INFO, "test server_redirection_pdu");
+    // srv_redir_init.log(LOG_INFO, "test server_redirection_pdu");
 
     uint8_t buf[65536];
     OutStream out_buffer(buf);
@@ -48,11 +48,11 @@ RED_AUTO_TEST_CASE(TestServerRedirectionPDU)
     InStream in_stream(buf, out_buffer.get_offset());
     srv_redir_target.receive(in_stream);
 
-    srv_redir_target.log(LOG_INFO, "test 2 server_redirection_pdu");
+    // srv_redir_target.log(LOG_INFO, "test 2 server_redirection_pdu");
 
     RedirectionInfo rinfo_target;
     srv_redir_target.export_to_redirection_info(rinfo_target);
-    rinfo_target.log(LOG_INFO, "test 2 redirection_info");
+    // rinfo_target.log(LOG_INFO, "test 2 redirection_info");
 
     RED_CHECK_EQUAL(rinfo_init.valid, rinfo_target.valid);
     RED_CHECK_EQUAL(rinfo_init.session_id, rinfo_target.session_id);

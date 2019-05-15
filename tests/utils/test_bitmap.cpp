@@ -3517,11 +3517,7 @@ RED_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     Drawable gd(368, 10);
     gd.mem_blt(Rect(0, 0, 368, 10), bmp2, 0, 0);
 
-    Bitmap bitmap_0_;
-
-    Bitmap bitmap_1_(bitmap_0_);
-
-    Bitmap bitmap_2_ = bitmap_1_;
+    RED_CHECK_SIG(gd, "\x2c\xcf\xe2\xe1\x02\x36\x69\x2d\x14\x10\x71\x99\xc7\x35\x1a\x2f\x2a\xb2\x53\x27");
 }
 
 
@@ -3787,7 +3783,7 @@ static int rle_bin_to_run_order(
                             };
 
                     default:
-                        RED_CHECK(false);
+                        RED_FAIL(image_data_current);
                         return {
                                 false,
                                 static_cast<CodeIdentifier>(image_data_current),
@@ -3856,7 +3852,7 @@ static int rle_bin_to_run_order(
                     };
 
             default:
-                RED_CHECK(false);
+                RED_FAIL(image_data_current);
                 return {
                         true,
                         static_cast<CodeIdentifier>(image_data_current),
@@ -3892,7 +3888,7 @@ static int rle_bin_to_run_order(
             break;
 
             default:
-                RED_CHECK(false);
+                RED_FAIL(run_order.code_identifier);
                 break;
         }
     }

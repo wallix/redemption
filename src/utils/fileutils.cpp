@@ -24,6 +24,7 @@
 #include "utils/log.hpp"
 #include "utils/file.hpp"
 #include "utils/strutils.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #include <cstdio>
 #include <cstddef>
@@ -37,7 +38,7 @@
 #include <alloca.h>
 
 #ifdef __EMSCRIPTEN__
-char const* basename(char const* path)
+char const* basename(char const* path) noexcept
 {
     char const* p = path;
 
@@ -57,14 +58,14 @@ char const* basename(char const* path)
     return path;
 }
 
-char* basename(char* path)
+char* basename(char* path) noexcept
 {
     return const_cast<char*>(basename(const_cast<char const*>(path)));
 }
 #endif
 
 // two flavors of basename_len to make it const agnostic
-const char * basename_len(const char * path, size_t & len)
+const char * basename_len(const char * path, size_t & len) noexcept
 {
     const char * tmp = strrchr(path, '/');
     if (tmp){
@@ -75,13 +76,13 @@ const char * basename_len(const char * path, size_t & len)
     return path;
 }
 
-char * basename_len(char * path, size_t & len) /* NOLINT(readability-non-const-parameter) */
+char * basename_len(char * path, size_t & len) noexcept /* NOLINT(readability-non-const-parameter) */
 {
     char const * const_path = path;
     return const_cast<char*>(basename_len(const_path, len)); /*NOLINT*/
 }
 
-int filesize(const char * path)
+int filesize(const char * path) noexcept
 {
     struct stat sb;
     int status = stat(path, &sb);
@@ -92,13 +93,13 @@ int filesize(const char * path)
     return -1;
 }
 
-bool file_exist(const char * path)
+bool file_exist(const char * path) noexcept
 {
     struct stat sb;
     return (stat(path, &sb) == 0);
 }
 
-bool dir_exist(const char * path)
+bool dir_exist(const char * path) noexcept
 {
     struct stat sb;
     int statok = ::stat(path, &sb);
@@ -106,17 +107,17 @@ bool dir_exist(const char * path)
 }
 
 
-int filesize(std::string const& path)
+int filesize(std::string const& path) noexcept
 {
     return filesize(path.c_str());
 }
 
-bool file_exist(std::string const& path)
+bool file_exist(std::string const& path) noexcept
 {
     return file_exist(path.c_str());
 }
 
-bool dir_exist(std::string const& path)
+bool dir_exist(std::string const& path) noexcept
 {
     return dir_exist(path.c_str());
 }
@@ -378,4 +379,42 @@ int recursive_delete_directory(const char * directory_path)
     }
 
     return return_value;
+}
+
+FileContentsError append_file_contents(const char * filename, std::string& buffer)
+{
+    if (unique_fd ufd{open(filename, O_RDONLY)}) {
+        struct stat statbuf;
+        if (-1 == fstat(ufd.fd(), &statbuf)) {
+            return FileContentsError::Stat;
+        }
+
+        ssize_t remaining = statbuf.st_size;
+        buffer.resize(buffer.size() + remaining);
+        auto* p = buffer.data() + buffer.size() - remaining;
+        ssize_t r;
+        for (;;) {
+            r = read(ufd.fd(), p, remaining);
+            if (r > 0) {
+                remaining -= r;
+                p += r;
+            }
+            else {
+                break;
+            }
+        }
+
+        if (remaining || r < 0) {
+            return FileContentsError::Read;
+        }
+
+        return FileContentsError::None;
+    }
+
+    return FileContentsError::Open;
+}
+
+FileContentsError append_file_contents(std::string const& filename, std::string& buffer)
+{
+    return append_file_contents(filename.c_str(), buffer);
 }

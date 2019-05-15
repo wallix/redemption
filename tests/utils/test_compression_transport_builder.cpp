@@ -27,7 +27,7 @@
 namespace
 {
     std::string str;
-}
+} // namespace
 
 
 RED_AUTO_TEST_CASE(TestCompressionTransportBuilder)
@@ -36,11 +36,11 @@ RED_AUTO_TEST_CASE(TestCompressionTransportBuilder)
         void flush() override { str += "none\n"; }
     };
     struct GzipTransport : Transport {
-        GzipTransport(Transport &, uint32_t) {}
+        GzipTransport(Transport & /*unused*/) {}
         void flush() override { str += "gzip\n"; }
     };
     struct SnappyTransport : Transport {
-        SnappyTransport(Transport &, uint32_t) {}
+        SnappyTransport(Transport & /*unused*/) {}
         void flush() override { str += "snappy\n"; }
     };
 

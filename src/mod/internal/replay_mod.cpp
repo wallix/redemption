@@ -32,6 +32,8 @@
 #include "transport/mwrm_reader.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/genfstat.hpp"
+#include "utils/strutils.hpp"
+#include "utils/fileutils.hpp"
 #include "gdi/graphic_api.hpp"
 
 struct ReplayMod::Reader

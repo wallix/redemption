@@ -22,4 +22,4 @@ Author(s): Jonathan Poelen
 
 #include <boost/test/data/test_case.hpp>
 
-#define RED_DATA_TEST_CASE BOOST_DATA_TEST_CASE
+#define RED_DATA_TEST_CASE(...) BOOST_DATA_TEST_CASE(__VA_ARGS__) /*NOLINT*/

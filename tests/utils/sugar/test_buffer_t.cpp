@@ -20,12 +20,11 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "utils/sugar/buffer_t.hpp"
 
 
-RED_AUTO_TEST_CASE(TestBufferT)
+// test for compilation
+int main()
 {
     char a[2]{};
     uint8_t ua[2]{};

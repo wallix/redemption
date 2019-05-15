@@ -70,6 +70,11 @@ namespace redemption_unit_test__
         return xarray_cmp(this->res, this->sig, other.sig);
     }
 
+    bool xrarray::operator == (xrarray const & other) const noexcept
+    {
+        return xarray_cmp(this->res, this->sig, other.sig);
+    }
+
     std::ostream & operator<<(std::ostream & out, xarray const & x)
     {
         if (x.size() == 0){
@@ -147,6 +152,21 @@ namespace redemption_unit_test__
             else {
                 out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
             }
+        }
+        return out << "\"";
+    }
+
+    std::ostream & operator<<(std::ostream & out, xrarray const & x)
+    {
+        out << "\"";
+        char const * hex_table = "0123456789abcdef";
+        size_t q = 0;
+        for (unsigned c : x.sig) {
+            if (q++ == x.res){
+                out << "\x1b[31m";
+            }
+
+            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
         }
         return out << "\"";
     }

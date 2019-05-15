@@ -33,7 +33,7 @@ struct FakeFront::D
     CHANNELS::ChannelDefArray cl;
 };
 
-const CHANNELS::ChannelDefArray & FakeFront::get_channel_list(void) const
+const CHANNELS::ChannelDefArray & FakeFront::get_channel_list() const
 {
     return d->cl;
 }

@@ -19,9 +19,9 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "utils/fileutils.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "mod/rdp/rdp_metrics.hpp"
@@ -71,40 +71,28 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
     auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
     RED_CHECK_WORKSPACE(wd);
 
-    std::string expected_log_index("2018-08-02 12:08:01 connection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
+    RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
+    RED_CHECK_FILE_CONTENTS(logindex1, "2018-08-02 12:08:01 connection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n"_av);
 
-    RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
-    RED_CHECK_EQUAL(get_file_contents(logindex1), expected_log_index);
+    metrics.right_click_pressed();
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
-    {
-        metrics.right_click_pressed();
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
-    }
-    {
-        m.log(epoch+1s);
-        metrics.right_click_pressed();
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
-    }
-    {
-        m.log(epoch+3s);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
-    }
-    {
-        char const* expected_log_metrics = "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        m.log(epoch+5s);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        char const* expected_log_metrics = "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        m.log(epoch+7s);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        char const* expected_log_metrics = "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        m.log(epoch+10s);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
+    m.log(epoch+1s);
+    metrics.right_click_pressed();
+    RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
+
+    m.log(epoch+3s);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
+
+    m.log(epoch+5s);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"_av);
+
+    m.log(epoch+7s);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"_av);
+
+    m.log(epoch+10s);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"_av);
 
     RED_CHECK_WORKSPACE(wd);
 }
@@ -132,26 +120,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2)
         auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
         RED_CHECK_WORKSPACE(wd);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
+        RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
-        {
-            metrics.right_click_pressed();
-            m.log(epoch+0s);
-            RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
-        }
-        {
-            m.log(epoch+1s);
-            RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
-        }
-        {
-            m.log(epoch+2s);
-            RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
-        }
-        {
-            char const* expected_log_metrics = "2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-            m.log(epoch+3s);
-            RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-        }
+        metrics.right_click_pressed();
+        m.log(epoch+0s);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
+
+        m.log(epoch+1s);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
+
+        m.log(epoch+2s);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
+
+        m.log(epoch+3s);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"_av);
     }
 
    RED_CHECK_WORKSPACE(wd);
@@ -181,83 +163,71 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement)
 
     std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
 
-    {
-        epoch += 5s;
-        metrics.right_click_pressed();
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        metrics.right_click_pressed();
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:16 164d89c1a56957b752540093e178 3 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        metrics.client_main_channel_data(3);
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:21 164d89c1a56957b752540093e178 3 2 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        metrics.left_click_pressed();
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:26 164d89c1a56957b752540093e178 3 2 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        metrics.key_pressed();
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:31 164d89c1a56957b752540093e178 3 2 1 1 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        metrics.mouse_move(0, 0);
-        metrics.mouse_move(2, 2);
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:36 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
-        metrics.server_main_channel_data(3);
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:41 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0\n";
-        metrics.client_rail_channel_data(3);
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:46 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3 0 0\n";
-        metrics.server_rail_channel_data(3);
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:51 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3 3 0\n";
-        metrics.client_other_channel_data(3);
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
-    {
-        epoch += 5s;
-        expected_log_metrics += "2018-08-02 12:08:56 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3 3 3\n";
-        metrics.server_other_channel_data(3);
-        m.log(epoch);
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
-    }
+    epoch += 5s;
+    metrics.right_click_pressed();
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+    metrics.right_click_pressed();
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:16 164d89c1a56957b752540093e178 3 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+    metrics.client_main_channel_data(3);
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:21 164d89c1a56957b752540093e178 3 2 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+    metrics.left_click_pressed();
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:26 164d89c1a56957b752540093e178 3 2 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+    metrics.key_pressed();
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:31 164d89c1a56957b752540093e178 3 2 1 1 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+    metrics.mouse_move(0, 0);
+    metrics.mouse_move(2, 2);
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:36 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+    metrics.server_main_channel_data(3);
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:41 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0\n";
+    metrics.client_rail_channel_data(3);
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:46 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3 0 0\n";
+    metrics.server_rail_channel_data(3);
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:51 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3 3 0\n";
+    metrics.client_other_channel_data(3);
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+
+    epoch += 5s;
+    expected_log_metrics += "2018-08-02 12:08:56 164d89c1a56957b752540093e178 3 2 1 1 4 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3 3 3\n";
+    metrics.server_other_channel_data(3);
+    m.log(epoch);
+    RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
 
     RED_CHECK_WORKSPACE(wd);
 }
@@ -309,7 +279,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT TEXT DATA REQUEST PASTE ON CLIENT
@@ -327,7 +297,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT TEXT DATA RESPONSE FROM SERVER
@@ -347,7 +317,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -401,7 +371,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT FILE DATA REQUEST PASTE ON CLIENT
@@ -419,7 +389,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FILE CONTENT REQUEST SIZE FROM CLIENT
@@ -438,7 +408,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FILE CONTENT RESPONSE SIZE FROM CLIENT
@@ -456,7 +426,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -511,7 +481,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT TEXT DATA REQUEST PASTE ON CLIENT
@@ -529,7 +499,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT TEXT DATA RESPONSE FROM SERVER
@@ -549,7 +519,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -596,7 +566,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // READ FILE
@@ -617,7 +587,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // WRITE FILE
@@ -638,7 +608,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // RENAME FILE
@@ -659,7 +629,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // DELETE FILE
@@ -680,7 +650,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -734,7 +704,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT LIST IMAGE COPY ON SERVER
@@ -761,7 +731,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT IMAGE DATA REQUEST PASTE ON CLIENT
@@ -779,7 +749,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT IMAGE DATA RESPONSE FROM SERVER
@@ -799,7 +769,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -853,7 +823,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT LIST FILE COPY ON CLIENT
@@ -880,7 +850,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
 
             m.log(epoch);
 
-            RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+            RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT FILE DATA REQUEST PASTE ON CLIENT
@@ -898,7 +868,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FILE CONTENT REQUEST FROM CLIENT
@@ -916,7 +886,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FILE CONTENT RESPONSE SIZE FROM CLIENT
@@ -934,7 +904,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -988,7 +958,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT LIST TEXT COPY ON SERVER
@@ -1015,7 +985,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT TEXT DATA REQUEST PASTE ON CLIENT
@@ -1033,7 +1003,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT TEXT DATA RESPONSE FROM SERVER
@@ -1053,7 +1023,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
 
         m.log(epoch);
 
-        RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     RED_CHECK_WORKSPACE(wd);

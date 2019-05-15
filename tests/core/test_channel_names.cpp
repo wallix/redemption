@@ -26,15 +26,8 @@
 
 RED_AUTO_TEST_CASE(TestChannelName)
 {
-    switch (CHANNELS::ChannelNameId("ABc"))
-    {
-        case CHANNELS::ChannelNameId("abc"):
-            break;
-        case CHANNELS::ChannelNameId("abcdef"):
-        default:
-            RED_CHECK(false);
-    }
-
+    RED_TEST(CHANNELS::ChannelNameId("ABc") == CHANNELS::ChannelNameId("abc"));
+    RED_TEST(CHANNELS::ChannelNameId("ABc") != CHANNELS::ChannelNameId("abcdef"));
     RED_CHECK_EQ(CHANNELS::ChannelNameId("abcdefg").c_str(), "abcdefg");
     RED_CHECK_EQ(CHANNELS::ChannelNameId("aBC").c_str(), "abc");
     RED_CHECK_EQ(channel_names::rdpdr.c_str(), "rdpdr");

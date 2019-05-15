@@ -164,7 +164,7 @@ private:
     std::unordered_set<Path, HashPath> paths_;
     WorkingFileBase dirname_;
     bool has_error_ = false;
-    bool is_checked_ = true;
+    bool is_checked_ = false;
     int counter_id_ = 0;
     unsigned start_error_count_;
 };

@@ -24,5 +24,5 @@
 // TEST missing
 int main()
 {
-    rdp_orders("", 0, false, RDPVerbose::none, ReportError{});
+    rdp_orders("", false, false, RDPVerbose::none, ReportError{});
 }

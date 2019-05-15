@@ -86,6 +86,7 @@
 #include "core/error.hpp"
 #include "core/font.hpp"
 #include "core/front_api.hpp"
+#include "core/glyph_to_24_bitmap.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
 #include "gdi/clip_from_cmd.hpp"
@@ -2623,7 +2624,6 @@ public:
         );
     }
 
-private:
     void session_probe_started(bool started) override {
         this->session_probe_started_ = started;
 
@@ -2666,6 +2666,7 @@ private:
         }
     }
 
+private:
     /*****************************************************************************/
     void send_data_update_sync()
     {
@@ -3429,6 +3430,7 @@ private:
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_fontmap: done");
     }
 
+public:
     void send_savesessioninfo() override {
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::send_savesessioninfo");
@@ -3461,6 +3463,7 @@ private:
             "Front::send_savesessioninfo: done");
     }   // void send_savesessioninfo()
 
+private:
     void send_monitor_layout() {
         if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
             this->client_info.cs_monitor.monitorCount &&
@@ -4051,6 +4054,7 @@ private:
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_deactive: done");
     }
 
+public:
     void set_keyboard_indicators(uint16_t LedFlags) override
     {
         this->keymap.toggle_caps_lock(LedFlags & SlowPath::TS_SYNC_CAPS_LOCK);
@@ -4202,48 +4206,6 @@ protected:
 
         this->rail_window_rect.empty();
     }
-
-public:
-    class GlyphTo24Bitmap
-    {
-        // TODO BGRArray<n>
-        uint8_t raw_data[RDPSerializer::MAX_ORDERS_SIZE];
-
-    public:
-        uint8_t const * data() const noexcept { return this->raw_data; }
-
-        GlyphTo24Bitmap(
-            FontChar const & fc,
-            const BGRColor color_fore,
-            const BGRColor color_back) noexcept
-        {
-            assert(fc.width*fc.height*3 < int(sizeof(this->raw_data)));
-
-            const uint8_t * fc_data = fc.data.get();
-
-            for (int y = 0 ; y < fc.height; y++) {
-                uint8_t fc_bit_mask = 128;
-                for (int x = 0 ; x < fc.width; x++) {
-                    if (!fc_bit_mask) {
-                        fc_data++;
-                        fc_bit_mask = 128;
-                    }
-
-                    const uint16_t xpix = x * 3;
-                    const uint16_t ypix = y * fc.width * 3;
-
-                    const BGRColor color = (fc_bit_mask & *fc_data) ? color_back : color_fore;
-                    this->raw_data[xpix + ypix    ] = color.blue();
-                    this->raw_data[xpix + ypix + 1] = color.green();
-                    this->raw_data[xpix + ypix + 2] = color.red();
-
-                    fc_bit_mask >>= 1;
-                }
-                fc_data++;
-            }
-        }
-    };
-
 
 protected:
     void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)

@@ -22,7 +22,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/file.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 
@@ -30,7 +30,6 @@
 
 #include "utils/fileutils.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
 #include <sys/ioctl.h>
@@ -820,37 +819,34 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
 
     ClientConfig::writeClientInfo(config);
 
-    const char * expected_data =
-                           "current_user_profil_id 0"
-                           "\n"
-                           "\nid 0"
-                           "\nname Default"
-                           "\nkeylayout 1036"
-                           "\nbrush_cache_code 0"
-                           "\nbpp 24"
-                           "\nwidth 800"
-                           "\nheight 600"
-                           "\nrdp5_performanceflags 1"
-                           "\nmonitorCount 1"
-                           "\nspan 0"
-                           "\nrecord 0"
-                           "\ntls 1"
-                           "\nnla 1"
-                           "\nsound 0"
-                           "\nconsole_mode 0"
-    					   "\nremotefx 0"
-                           "\nenable_shared_clipboard 1"
-                           "\nenable_shared_virtual_disk 1"
-                           "\nenable_shared_remoteapp 0"
-                           "\nshare-dir /home"
-                           "\nremote-exe C:\\Windows\\system32\\notepad.exe "
-                           "\nremote-dir C:\\Users\\user1"
-                           "\nvnc-applekeyboard 0"
-                           "\nmod 1"
-                           "\n";
-
-    auto const userConfig = wd.add_file("DATA/config/userConfig.config");
-    RED_CHECK_EQUAL(get_file_contents(userConfig), expected_data);
+    RED_CHECK_FILE_CONTENTS(wd.add_file("DATA/config/userConfig.config"),
+        "current_user_profil_id 0"
+        "\n"
+        "\nid 0"
+        "\nname Default"
+        "\nkeylayout 1036"
+        "\nbrush_cache_code 0"
+        "\nbpp 24"
+        "\nwidth 800"
+        "\nheight 600"
+        "\nrdp5_performanceflags 1"
+        "\nmonitorCount 1"
+        "\nspan 0"
+        "\nrecord 0"
+        "\ntls 1"
+        "\nnla 1"
+        "\nsound 0"
+        "\nconsole_mode 0"
+        "\nremotefx 0"
+        "\nenable_shared_clipboard 1"
+        "\nenable_shared_virtual_disk 1"
+        "\nenable_shared_remoteapp 0"
+        "\nshare-dir /home"
+        "\nremote-exe C:\\Windows\\system32\\notepad.exe "
+        "\nremote-dir C:\\Users\\user1"
+        "\nvnc-applekeyboard 0"
+        "\nmod 1"
+        "\n"_av);
 
     RED_CHECK_WORKSPACE(wd.add_files({
         "DATA/",
@@ -877,20 +873,17 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
 
     ClientConfig::writeCustomKeyConfig(config);
 
-    const char * expected_data =
-                           "Key Setting\n\n"
-                           "- 1 2 x 256 key_x\n"
-                           "- 3 4 y 0 key_y\n";
+    RED_CHECK_FILE_CONTENTS(wd.add_file("DATA/config/keySetting.config"),
+        "Key Setting\n\n"
+        "- 1 2 x 256 key_x\n"
+        "- 3 4 y 0 key_y\n"_av);
 
-    auto key_setting = wd.add_file("DATA/config/keySetting.config");
     RED_CHECK_WORKSPACE(wd.add_files({
         "DATA/",
         "DATA/config/",
         "DATA/clipboard_temp/",
         "DATA/replay/",
         "DATA/sound_temp/"}));
-
-    RED_CHECK_EQUAL(get_file_contents(key_setting), expected_data);
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
@@ -909,28 +902,25 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
     ClientConfig::writeAccoundData("10.10.12.13", "account_name", "mdp", 3389, config);
     ClientConfig::writeAccoundData("10.10.13.12", "account_name2", "mdp_", 5900, config);
 
-    const char * expected_data =
-                           "save_pwd false\n"
-                           "last_target 2\n"
-                           "\n"
-                           "title 10.10.12.13 - account_name\n"
-                           "IP 10.10.12.13\n"
-                           "name account_name\n"
-                           "protocol 1\n"
-                           "pwd \n"
-                           "port 3389\n"
-                           "options_profil 0\n"
-                           "\n"
-                           "title 10.10.13.12 - account_name2\n"
-                           "IP 10.10.13.12\n"
-                           "name account_name2\n"
-                           "protocol 1\n"
-                           "pwd \n"
-                           "port 5900\n"
-                           "options_profil 0\n\n";
-
-    auto login = wd.add_file("DATA/config/login.config");
-    RED_CHECK_EQUAL(get_file_contents(login), expected_data);
+    RED_CHECK_FILE_CONTENTS(wd.add_file("DATA/config/login.config"),
+        "save_pwd false\n"
+        "last_target 2\n"
+        "\n"
+        "title 10.10.12.13 - account_name\n"
+        "IP 10.10.12.13\n"
+        "name account_name\n"
+        "protocol 1\n"
+        "pwd \n"
+        "port 3389\n"
+        "options_profil 0\n"
+        "\n"
+        "title 10.10.13.12 - account_name2\n"
+        "IP 10.10.13.12\n"
+        "name account_name2\n"
+        "protocol 1\n"
+        "pwd \n"
+        "port 5900\n"
+        "options_profil 0\n\n"_av);
 
     RED_CHECK_WORKSPACE(wd.add_files({
         "DATA/",
@@ -958,20 +948,17 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
 
     ClientConfig::writeWindowsData(config.windowsData);
 
-    auto win_data = wd.add_file("DATA/config/windows_config.config");
-
-    const char * expected_data =
+    RED_CHECK_FILE_CONTENTS(wd.path_of("DATA/config/windows_config.config"),
         "form_x 1\n"
         "form_y 2\n"
         "screen_x 3\n"
-        "screen_y 4\n";
-
-    RED_CHECK_EQUAL(get_file_contents(wd.path_of("DATA/config/windows_config.config")), expected_data);
+        "screen_y 4\n"_av);
 
     RED_CHECK_WORKSPACE(wd.add_files({
         "DATA/",
         "DATA/config/",
         "DATA/clipboard_temp/",
         "DATA/replay/",
-        "DATA/sound_temp/"}));
+        "DATA/sound_temp/",
+        "DATA/config/windows_config.config"}));
 }
