@@ -38,6 +38,8 @@ exe-js js_client :
   src/mod/rdp/new_mod_rdp.bc
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
+  src/transport/in_file_transport.bc
+  src/transport/out_file_transport.bc
   src/utils/bitmap.bc
   src/utils/cfgloader.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
@@ -134,6 +136,8 @@ objjs src/mod/rdp/channels/sespro_channel_params.bc : $(REDEMPTION_SRC_PATH)/mod
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
+objjs src/transport/in_file_transport.bc : $(REDEMPTION_SRC_PATH)/transport/in_file_transport.cpp ;
+objjs src/transport/out_file_transport.bc : $(REDEMPTION_SRC_PATH)/transport/out_file_transport.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/cfgloader.bc : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;

@@ -38,6 +38,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 , current_mouse_owner(MouseOwner::WidgetModule)
 , session_reactor(session_reactor)
 {
+    this->screen.set_wh(front_width, front_height);
     if (this->rail_enabled) {
         this->graphic_event = session_reactor.create_graphic_event()
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
