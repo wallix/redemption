@@ -1,0 +1,34 @@
+rdpproxy: ERR (6601/6601) -- ◢ In src/utils/fileutils.cpp:281
+rdpproxy: ERR (6601/6601) -- failed to create directory /var/run/redemption : Permission denied [13]
+rdpproxy: ERR (6601/6601) -- ◢ In src/main/main.cpp:349
+rdpproxy: ERR (6601/6601) -- Failed to create /var/run/redemption: No such file or directory
+rdpproxy: ERR (22154/22154) -- ◢ In src/system/linux/system/tls_context.hpp:54
+rdpproxy: ERR (22154/22154) -- TLSContext::enable_client_tls: Failure in SSL library (protocol error?)
+rdpproxy: INFO (6688/6688) -- ReDemPtion 7.0.9 starting
+rdpproxy: INFO (6688/6688) -- Listen: binding socket 4 on 0.0.0.0:3389
+rdpproxy: INFO (6688/6688) -- Listen: listening on socket 5
+rdpproxy: INFO (6712/6712) -- /* 0000 */ "\x03\x00\x00\x3c\x37\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" // ...<7......Cooki
+rdpproxy: INFO (6712/6712) -- /* 0030 */ "\x74\x65\x72\x32\x3a\x72\x64\x70\x3a\x78\x0d\x0a"                 // ter2:rdp:x..
+rdpproxy: INFO (6712/6712) -- Front::incoming: Fallback to legacy security protocol
+rdpproxy: INFO (6712/6712) -- -----------------> Front::incoming: TLS Support not Enabled
+rdpproxy: [rdpproxy] psid="15535069826712" user="x" type="AUTHENTICATION_TRY" method="Password"
+rdpproxy: INFO (6712/6712) -- receiving 'login'='x'
+rdpproxy: INFO (6712/6712) -- ===========> MODULE_NEXT
+rdpproxy: INFO (6712/6712) -- ----------> ACL next_module <--------
+rdpproxy: INFO (6712/6712) -- ===============> WAIT WITH CURRENT MODULE
+rdpproxy: INFO (6712/6712) -- ModuleManager::Creation of new mod 'RDP'
+rdpproxy: INFO (6712/6712) -- =================== SC_SECURITY =============
+rdpproxy: DEBUG (6712/6712) -- Create Error: Exception ERR_MCS_APPID_IS_MCS_DPUM no: 5003
+rdpproxy: DEBUG (6712/6712) -- #0 Error at src/core/error.cpp:109
+rdpproxy: DEBUG (6712/6712) -- #1 mod_rdp::connected_slow_path(gdi::GraphicApi&, InStream&) at src/mod/rdp/rdp.hpp:2600
+rdpproxy: DEBUG (6712/6712) -- #21 main at src/main/main.cpp:421
+rdpproxy: DEBUG (6712/6712) -- #22 0x00007F678B1B9B97 in /lib/x86_64-linux-gnu/libc.so.6
+rdpproxy: INFO (6712/6712) -- mod_rdp::draw_event() state switch raised exception
+rdpproxy: INFO (6712/6712) -- ---<>  Front::must_be_stop_capture  <>---
+rdpproxy: INFO (6712/6712) -- Connection to server closed
+rdpproxy: src/transport/ws_transport.cpp:115: virtual std::size_t WsTransport::do_partial_read(uint8_t *, std::size_t): Assertion `false' failed.
+#0 operator() at src/utils/stacktrace.cpp:40
+#1 __invoke at src/utils/stacktrace.cpp:38
+#2 0x00007F6A320D1F20 in /lib/x86_64-linux-gnu/libc.so.6
+#7 WsTransport::do_partial_read(unsigned char*, unsigned long) in /home/jpoelen/projects/build/redemption-public//redemption/clang-linux-7.0.0/debug/rdpproxy
+#8 Transport::partial_read(byte_ptr, unsigned long) at src/transport/transport.hpp:121
