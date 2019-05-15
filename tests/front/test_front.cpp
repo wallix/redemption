@@ -32,10 +32,10 @@
 //include "transport/socket_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/session_reactor_executor.hpp"
+#include "test_only/front/front_wrapper.hpp"
 #include "core/client_info.hpp"
 #include "utils/theme.hpp"
 
-#include "front/front.hpp"
 #include "mod/null/null.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 
@@ -52,22 +52,17 @@ namespace dump2008_PatBlt {
 } // namespace dump2008_PatBlt
 
 
-class MyFront : public Front
+class MyFront : public FrontWrapper
 {
 public:
     bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
-    using Front::Front;
+    using FrontWrapper::FrontWrapper;
 
     void clear_channels()
     {
-        this->channel_list.clear_channels();
-    }
-
-    const CHANNELS::ChannelDefArray & get_channel_list() const override
-    {
-        return this->channel_list;
+        this->get_mutable_channel_list().clear_channels();
     }
 
     void send_to_channel(
@@ -163,7 +158,7 @@ RED_AUTO_TEST_CASE(TestFront)
         report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 
-    while (front.up_and_running == 0) {
+    while (!front.is_up_and_running()) {
         front.incoming(no_mod);
         RED_CHECK(session_reactor.timer_events_.is_empty());
     }
@@ -227,92 +222,16 @@ RED_AUTO_TEST_CASE(TestFront)
         gen2, timeobj, channels_authorizations, mod_rdp_params, authentifier, report_message, ini, metrics);
 
     // incoming connexion data
-    RED_CHECK_EQUAL(front.client_info.screen_info.width, 1024);
-    RED_CHECK_EQUAL(front.client_info.screen_info.height, 768);
+    RED_CHECK_EQUAL(front.screen_info().width, 1024);
+    RED_CHECK_EQUAL(front.screen_info().height, 768);
 
     // Force Front to be up and running after Deactivation-Reactivation
     //  Sequence initiated by mod_rdp.
-    front.up_and_running = true;
-
-    front.can_be_start_capture();
+    front.set_up_and_running(true);
 
     execute_mod(session_reactor, *mod, front, 38);
 
-    front.must_be_stop_capture();
-
 //    front.dump_png("trace_w2008_");
-}
-
-RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
-{
-   const uint8_t bytes_data[] = "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff"
-                                "\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff"
-                                "\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff"
-                                "\xff\xff\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                                "\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff"
-                                "\xff\xff\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\xff"
-                                "\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08";
-
-    const uint8_t bits_data[] = "\x00\x00\x00\x08\x18\x10\x10\x30\x20\x20\x60\x40\x40\xc0\x80\x00"
-                                "\xc7\x00\x3e\x00\x05\x00\x14\x00\x31\x00\x00\x00\x00\x00\x00\x00";
-
-    int16_t offset = 0;
-    int16_t baseline = 2;
-    uint16_t width = 16;
-    uint16_t height = 16;
-    int16_t incby = 16;
-
-    FontChar fc(offset, baseline, width, height, incby);
-
-    for (int i = 0; i < 32; i++) {
-        fc.data[i] = bits_data[i];
-    }
-
-    Front::GlyphTo24Bitmap g24b(fc, BGRColor{ 96,  31,   8}, BGRColor{255, 255, 255});
-
-    const size_t len = width*height;
-    RED_CHECK_MEM(make_array_view(g24b.data(), len), make_array_view(bytes_data, len));
 }
 
 RED_AUTO_TEST_CASE(TestFront2)
@@ -391,7 +310,7 @@ RED_AUTO_TEST_CASE(TestFront2)
         session_reactor.execute_timers_at(
             SessionReactor::EnableGraphics{false},
             {ini.get<cfg::globals::handshake_timeout>().count(), 0},
-            [&]{ return std::ref(front); }),
+            [&]{ return std::ref(front.gd()); }),
         ERR_RDP_HANDSHAKE_TIMEOUT);
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);

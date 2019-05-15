@@ -2409,6 +2409,13 @@ test-run tests/core/test_front_api :
 :
   <covfile>src/core/front_api.hpp
 ;
+test-run tests/core/test_glyph_to_24_bitmap :
+  $(REDEMPTION_TEST_PATH)/core/test_glyph_to_24_bitmap.cpp
+:
+  <library>src/core/font.o
+  <library>src/utils/utf.o
+  <covfile>src/core/glyph_to_24_bitmap.hpp
+;
 test-run tests/core/test_listen :
   $(REDEMPTION_TEST_PATH)/core/test_listen.cpp
 :
@@ -2768,6 +2775,7 @@ test-run tests/front/test_front :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4542,6 +4550,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4600,6 +4609,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4658,6 +4668,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -5601,6 +5612,7 @@ obj src/utils/sugar/multisz.o : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test_only/core/font.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;
+obj tests/includes/test_only/front/front_wrapper.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/front_wrapper.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/gdi/test_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/gdi/test_graphic.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/working_directory.cpp : <variant>debug:<define>RED_COMPILE_TYPE=debug <variant>release:<define>RED_COMPILE_TYPE=release <variant>san:<define>RED_COMPILE_TYPE=san $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;
@@ -5761,6 +5773,7 @@ alias test_date_dir_from_filename : tests/core/test_date_dir_from_filename ;
 alias test_error : tests/core/test_error ;
 alias test_font : tests/core/test_font ;
 alias test_front_api : tests/core/test_front_api ;
+alias test_glyph_to_24_bitmap : tests/core/test_glyph_to_24_bitmap ;
 alias test_listen : tests/core/test_listen ;
 alias test_mainloop : tests/core/test_mainloop ;
 alias test_server_notifier_api : tests/core/test_server_notifier_api ;
@@ -6098,6 +6111,7 @@ alias test_date_dir_from_filename.coverage : tests/core/test_date_dir_from_filen
 alias test_error.coverage : tests/core/test_error.coverage ;
 alias test_font.coverage : tests/core/test_font.coverage ;
 alias test_front_api.coverage : tests/core/test_front_api.coverage ;
+alias test_glyph_to_24_bitmap.coverage : tests/core/test_glyph_to_24_bitmap.coverage ;
 alias test_listen.coverage : tests/core/test_listen.coverage ;
 alias test_mainloop.coverage : tests/core/test_mainloop.coverage ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
@@ -6479,6 +6493,7 @@ alias tests/core.norec :
   tests/core/test_error
   tests/core/test_font
   tests/core/test_front_api
+  tests/core/test_glyph_to_24_bitmap
   tests/core/test_listen
   tests/core/test_mainloop
   tests/core/test_server_notifier_api

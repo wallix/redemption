@@ -28,11 +28,12 @@
 // Uncomment the code block below to generate testing data.
 
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/front/front_wrapper.hpp"
+#include "core/report_message_api.hpp"
 #include "capture/cryptofile.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "configs/config.hpp"
-#include "front/front.hpp"
 // Uncomment the code block below to generate testing data.
 //include "core/listen.hpp"
 //include "core/session.hpp"
@@ -111,18 +112,18 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool mem3blt_support  = false;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    Front front(session_reactor, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
-    front.ignore_rdesktop_bogus_clip = true;
+    FrontWrapper front(session_reactor, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
+    front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 
-    while (front.up_and_running == 0) {
+    while (!front.is_up_and_running()) {
         front.incoming(no_mod);
     }
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-    RED_CHECK_EQUAL(1, front.up_and_running);
-    TestCardMod mod(session_reactor, front.client_info.screen_info.width, front.client_info.screen_info.height, global_font());
+    RED_CHECK_EQUAL(1, front.is_up_and_running());
+    TestCardMod mod(session_reactor, front.screen_info().width, front.screen_info().height, global_font());
     mod.draw_event(front);
 
     // Uncomment the code block below to generate testing data.
