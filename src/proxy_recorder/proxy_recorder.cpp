@@ -187,7 +187,7 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
 
         if (!nla_username.empty()) {
             if (this->verbosity > 4) {
-                LOG(LOG_INFO, "Front: force protocol tls=%d nla=%d", 
+                LOG(LOG_INFO, "Front: force protocol tls=%u nla=%u", 
                     (this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS), 
                     (this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID));
             }

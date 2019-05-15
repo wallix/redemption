@@ -440,6 +440,11 @@ namespace X224
         return Tpkt{tpkt_version, tpkt_len};
     }
 
+    inline void Tpkt_Log(const Tpkt & tpkt);
+    void Tpkt_Log(const Tpkt & tpkt) {
+        LOG(LOG_INFO, "Tpkt version=%u len=%u", tpkt.version, tpkt.len);
+    }
+
     // ################################### COMMON CODE #################################
     struct Recv
     {
@@ -619,6 +624,12 @@ namespace X224
         uint8_t class_option = 0;
     };
 
+    inline void CR_Header_Log(const CR_Header & header);
+    void CR_Header_Log(const CR_Header & header) {
+        LOG(LOG_INFO, "Connection Request Header: LI=%u code=%u dst_ref=%u src_ref=%u class_option=%u",
+            header.LI, header.code, header.dst_ref, header.src_ref, header.class_option);
+    }
+
     inline CR_Header CR_Header_Recv(InStream & stream);
     CR_Header CR_Header_Recv(InStream & stream) 
     {
@@ -648,6 +659,11 @@ namespace X224
         char data[1024];
     };
 
+    inline void CR_Cookie_Log(const CR_Cookie & cookie);
+    void CR_Cookie_Log(const CR_Cookie & cookie) {
+        LOG(LOG_INFO, "Connection Request cookie: (%zu) '%*s'", cookie.len, int(cookie.len), cookie.data);
+    }
+
     inline CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose);
     CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose) 
     {
@@ -676,7 +692,21 @@ namespace X224
         uint8_t flags = 0;
         uint16_t length = 0;
         uint8_t correlationid[16]{};
+        uint8_t reserved[16]{};
     };
+
+    inline void CR_Cinfo_Log(const CR_Cinfo & cinfo);
+    void CR_Cinfo_Log(const CR_Cinfo & cinfo) {
+        auto & id = cinfo.correlationid;
+        LOG(LOG_INFO, "Connection Request Correlation Info: type=%u flags=%.2X"
+        " id=[%.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X %.2X]",
+            cinfo.type, cinfo.flags,
+            id[0], id[1], id[2], id[3],
+            id[4], id[5], id[6], id[7],
+            id[8], id[9], id[10], id[11],
+            id[12], id[13], id[14], id[15]);
+    }
+
 
     inline CR_Cinfo CR_Cinfo_Recv(InStream & stream, uint8_t rdp_neg_flags);
     CR_Cinfo CR_Cinfo_Recv(InStream & stream, uint8_t rdp_neg_flags)
@@ -688,7 +718,7 @@ namespace X224
             cinfo.flags = stream.in_uint8();
             cinfo.length = stream.in_uint16_le();
             stream.in_copy_bytes(cinfo.correlationid, 16);
-            stream.in_skip_bytes(16);
+            stream.in_copy_bytes(cinfo.reserved, 16);
             hexdump_c(cinfo.correlationid, 16);
         }
         return cinfo;
@@ -712,6 +742,8 @@ namespace X224
         CR_Cinfo cinfo;
     }; // END CLASS CR_TPDU_Data
 
+
+    
 
     inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose);
     CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose)

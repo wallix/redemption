@@ -66,6 +66,48 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     RED_CHECK_EQUAL(x224._header_size, stream.get_capacity());
 }
 
+RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info_v2)
+{
+    size_t tpkt_len = 85;
+    GeneratorTransport t(
+/* 0000 */ "\x03\x00\x00\x55\x50\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...UP......Cooki
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x6a\x62\x62\x65" //e: mstshash=jbbe
+/* 0020 */ "\x72\x74\x68\x65\x6c\x69\x6e\x0d\x0a"                             //rthelin..
+           "\x01\x08\x08\x00\x0b\x00\x00" //.......
+/* 0030 */ "\x00"
+               "\x06\x00\x24\x00\x75\xcc\x9f\xac\x96\xa5\x41\x82\xbd\x1c\x2d" //...$.u.....A...-
+/* 0040 */ "\x63\x52\xc7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //cR..............
+/* 0050 */ "\x00\x00\x00\x00\x00" //.....
+        , tpkt_len);
+
+    constexpr size_t array_size = AUTOSIZE;
+    uint8_t array[array_size];
+    uint8_t * end = array;
+    X224::RecvFactory fac_x224(t, &end, array_size);
+
+    InStream stream(array, end - array);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
+    RED_CHECK_EQUAL(tpkt_len, fac_x224.length);
+
+    X224::CR_TPDU_Data x224 = X224::CR_TPDU_Data_Recv(stream, false, true);
+
+    RED_CHECK_EQUAL(3, x224.tpkt.version);
+    RED_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.header.code);
+    RED_CHECK_EQUAL(0x50, x224.header.LI);
+
+    RED_CHECK_EQUAL("Cookie: mstshash=jbberthelin\x0D\x0A", x224.cookie.data);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CORRELATION_INFO_PRESENT), x224.rdp_neg_flags);
+    RED_CHECK_EQUAL(8, x224.rdp_neg_length);
+    RED_CHECK_EQUAL(static_cast<uint32_t>(X224::PROTOCOL_TLS | X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX), x224.rdp_neg_requestedProtocols);
+
+    RED_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
+    // TODO: replace this test by a check that PDU is fully consumed
+    RED_CHECK_EQUAL(x224._header_size, stream.get_capacity());
+}
+
+
 RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Short_TPKT)
 {
     GeneratorTransport t("\x03\x00\x00\x02\x06\x10\x00\x00\x00\x00\x00", 11);
