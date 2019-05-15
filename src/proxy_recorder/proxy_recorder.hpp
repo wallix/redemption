@@ -56,15 +56,8 @@
 /** @brief a front connection with a RDP client */
 class ProxyRecorder
 {
-    struct CR_TPDU {
-        uint8_t rdp_cinfo_flags;
-        size_t cookie_len;
-        char cookie[1024];
-        uint8_t rdp_neg_type;
-        uint8_t rdp_neg_flags;
-        uint32_t rdp_neg_requestedProtocols;
-    } front_connection_request;
-    // NlaTeeTransport & front_nla_tee_trans,
+
+    X224::CR_TPDU_Data front_CR_TPDU;
 
     using PacketType = RecorderFile::PacketType;
 public:

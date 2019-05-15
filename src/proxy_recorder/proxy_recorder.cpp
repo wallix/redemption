@@ -32,39 +32,30 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
 
     InStream x224_stream(currentPacket);
-    X224::CR_TPDU_Recv x224(x224_stream, false, this->verbosity);
-    if (x224._header_size != x224_stream.get_capacity()) {
+    this->front_CR_TPDU = X224::CR_TPDU_Data_Recv(x224_stream, false, this->verbosity);
+    if (this->front_CR_TPDU._header_size != x224_stream.get_capacity()) {
         LOG(LOG_WARNING,
             "Front::incoming: connection request: all data should have been consumed,"
             " %zu bytes remains",
-            x224_stream.get_capacity() - x224._header_size);
+            x224_stream.get_capacity() - this->front_CR_TPDU._header_size);
     }
 
-    this->front_connection_request.rdp_cinfo_flags = x224.rdp_cinfo_flags;
-    this->front_connection_request.cookie_len = x224.cookie_len;
-    memcpy(this->front_connection_request.cookie, x224.cookie, x224.cookie_len);
-    this->front_connection_request.cookie[x224.cookie_len] = 0;
-    this->front_connection_request.rdp_neg_type = x224.rdp_neg_type;
-    this->front_connection_request.rdp_neg_flags = x224.rdp_neg_flags;
-    this->front_connection_request.rdp_neg_requestedProtocols = x224.rdp_neg_requestedProtocols;
-    this->front_connection_request.rdp_neg_requestedProtocols = x224.rdp_neg_requestedProtocols;
-
-    LOG_IF((this->verbosity > 8) && (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS), LOG_INFO, "TLS Front");
-    LOG_IF((this->verbosity > 8) && (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID), LOG_INFO, "Hybrid (NLA) Front");
+    LOG_IF((this->verbosity > 8) && (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS), LOG_INFO, "TLS Front");
+    LOG_IF((this->verbosity > 8) && (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID), LOG_INFO, "Hybrid (NLA) Front");
 
     StaticOutStream<256> front_x224_stream;
     X224::CC_TPDU_Send(
         front_x224_stream,
         X224::RDP_NEG_RSP,
         RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
-        (this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)?X224::PROTOCOL_HYBRID:
-        (this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)?X224::PROTOCOL_TLS:
+        (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)?X224::PROTOCOL_HYBRID:
+        (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)?X224::PROTOCOL_TLS:
         X224::PROTOCOL_RDP);
     outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
     frontConn.send(front_x224_stream.get_bytes());
 
-    if ((this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
-    || (this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
+    if ((this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
+    || (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
         frontConn.enable_server_tls("inquisition", nullptr, 0);
     }
     
@@ -75,7 +66,7 @@ void ProxyRecorder::front_step1(Transport & frontConn)
 void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
 {
 
-    if (this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
+    if (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
         if (this->verbosity > 4) {
             LOG(LOG_INFO, "start NegoServer");
         }
@@ -88,7 +79,7 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
 
     this->nego_client = std::make_unique<NegoClient>(
         !nla_username.empty(),
-        this->front_connection_request.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
+        this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
         this->back_nla_tee_trans, this->timeobj,
         this->host, nla_username.c_str(),
         nla_password.empty() ? "\0" : nla_password.c_str(),
@@ -98,9 +89,9 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
     StaticOutStream<256> back_x224_stream;
     X224::CR_TPDU_Send(
         back_x224_stream, 
-        this->front_connection_request.cookie, 
-        this->front_connection_request.rdp_neg_type, 
-        this->front_connection_request.rdp_neg_flags,
+        this->front_CR_TPDU.cookie.data, 
+        this->front_CR_TPDU.rdp_neg_type, 
+        this->front_CR_TPDU.rdp_neg_flags,
         !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
 
     outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
@@ -188,8 +179,8 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
         if (!nla_username.empty()) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "Front: force protocol tls=%u nla=%u", 
-                    (this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS), 
-                    (this->front_connection_request.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID));
+                    (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS), 
+                    (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID));
             }
             InStream new_x224_stream(currentPacket);
             X224::DT_TPDU_Recv x224(new_x224_stream);
@@ -203,7 +194,7 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
                     hexdump_av_d(f.payload.get_bytes());
                     auto const offset = (sc_core.length >= 16) ? 8 : 4;
                     auto const idx = f.payload.get_current() - currentPacket.data() - offset;
-                    currentPacket[idx] = this->front_connection_request.rdp_neg_requestedProtocols & 0xFF;
+                    currentPacket[idx] = this->front_CR_TPDU.rdp_neg_requestedProtocols & 0xFF;
                     hexdump_av_d(f.payload.get_bytes());
                 }
             }

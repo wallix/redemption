@@ -97,7 +97,6 @@ struct TpduBuffer
     // We can use it to trace CREDSSP buffer
     array_view_u8 current_pdu_buffer() noexcept
     {
-        LOG(LOG_INFO, "current_pdu_buffer %s",this->trace_pdu?"trace":"do not trace");
         assert(this->pdu_len);
         auto av = this->buf.av(this->pdu_len);
         if (this->trace_pdu){
