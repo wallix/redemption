@@ -25,7 +25,7 @@ EXE_DEPENDENCIES +=
 
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
 constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "''" ] ;
-constant JS_CLIENT_COPY_MODE : [ setvar copy_html_mode : "copy" ] ;
+constant JS_CLIENT_COPY_MODE : [ setvar copy_application_mode : "copy" ] ;
 
 rule filter_flags ( e )
 {
@@ -225,7 +225,7 @@ rule htmljs ( name : objs + : deps * )
 
 
 include targets.jam ;
-
+echo $(JS_CLIENT_COPY_MODE)  ;
 if $(JS_CLIENT_COPY_MODE) = "copy"
 {
     actions copy_client
@@ -237,14 +237,25 @@ else
 {
     actions copy_client
     {
-        rm $(<) ||:
+        rm $(<) 2>/dev/null ||:
         ln -s "$PWD/"$(>[1]) $(<) && echo $(>[1])
     }
 }
-# depends to js_client for a path with toolset
-make rdpclient.html : src/js_client.html js_client : @copy_client ;
 
-explicit rdpclient.html ;
+local app_files = ;
+rule app_rule ( file )
+{
+    # depends to js_client for a path with toolset
+    make $(file) : src/application/$(file) js_client : @copy_client ;
+    app_files += $(file) ;
+}
+
+# depends to js_client for a path with toolset
+app_rule to_scancode.js ;
+app_rule client.html ;
+
+alias rdpclient : $(app_files) ;
+explicit $(app_files) rdpclient ;
 
 constant browser : [ setvar browser : xdg-open ] ;
 constant username : [ setvar username : '' ] ;
@@ -253,5 +264,5 @@ actions open_client
 {
     $(browser) $(>[1])"?user="$(username)"&pass="$(password)
 }
-make open_client : rdpclient.html rdpclient.html : @open_client ;
+make open_client : client.html client.html : @open_client ;
 explicit open_client ;

@@ -54,26 +54,31 @@ node test.js
 
 ## Configure boost path for test targets
 
-```bash
-mkdir system_include/
-ln -s /usr/include/boost system_include/
-```
+    mkdir system_include/
+    ln -s /usr/include/boost system_include/
 
 ## Configure Emscripten
 
-```bash
-source $EMSDK_PATH/emsdk_set_env.sh
-```
+    source $EMSDK_PATH/emsdk_set_env.sh
+
 
 ## Run bjam
 
-```bash
-bjam -j7 toolset=clang debug rdpclient.html
-```
+    bjam -j7 toolset=clang debug js_client
+
+Or with tests:
+
+    bjam -j7 toolset=clang debug
+
+## Install
+
+    bjam -j7 toolset=clang debug -s copy_application_mode=symbolic rdpclient
 
 Set module name with `-s JS_MODULE_NAME=xxx`
 
 Set source map with `-s JS_SOURCE_MAP='prefix//'`
+
+By default `copy_application_mode` is equal to `copy`
 
 
 # Open client
