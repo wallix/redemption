@@ -2,7 +2,7 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
 // 0xE0 -> 0x01
 
-const toScancode_firefox = function(code)
+const toScancode_Firefox = function(code)
 {
     switch (code)
     {
@@ -89,7 +89,6 @@ const toScancode_firefox = function(code)
     case "Numpad3": return 0x0051;
     case "Numpad0": return 0x0052;
     case "NumpadDecimal": return 0x0053;
-    case "PrintScreen": return 0x0054;
     case "IntlBackslash": return 0x0056;
     case "F11": return 0x0057;
     case "F12": return 0x0058;
@@ -107,31 +106,39 @@ const toScancode_firefox = function(code)
     case "F23": return 0x006E;
     case "KanaMode": return 0x0070;
     case "Lang2": return 0x0071;
+    // case "Lang2": return 0x1F1; /* key with Korean keyboard layout */
     case "Lang1": return 0x0072;
+    // case "Lang1": return 0x1F2; /* key with Korean keyboard layout */
     case "IntlRo": return 0x0073;
     case "F24": return 0x0076;
     case "Convert": return 0x0079;
     case "NonConvert": return 0x007B;
     case "IntlYen": return 0x007D;
     case "NumpadComma": return 0x007E;
-    case "OSLeft": return 0x15B;
-    case "OSRight": return 0x15B;
+    case "Undo": return 0x108;
+    case "Paste": return 0x10A;
     case "MediaTrackPrevious": return 0x110;
+    case "Cut": return 0x117;
+    case "Copy": return 0x118;
     case "MediaTrackNext": return 0x119;
     case "NumpadEnter": return 0x11C;
     case "ControlRight": return 0x11D;
     case "AudioVolumeMute": return 0x120;
+    case "VolumeMute": return 0x120;
     case "LaunchApp2": return 0x121;
     case "MediaPlayPause": return 0x122;
     case "MediaStop": return 0x124;
+    case "Eject": return 0x12C;
     case "AudioVolumeDown": return 0x12E;
+    case "VolumeDown": return 0x12E;
     case "AudioVolumeUp": return 0x130;
+    case "VolumeUp": return 0x130;
     case "BrowserHome": return 0x132;
     case "NumpadDivide": return 0x135;
     case "PrintScreen": return 0x137;
     case "AltRight": return 0x138;
+    case "Help": return 0x13B;
     case "NumLock": return 0x145;
-    case "Pause": return 0x146;
     case "Home": return 0x147;
     case "ArrowUp": return 0x148;
     case "PageUp": return 0x149;
@@ -143,7 +150,9 @@ const toScancode_firefox = function(code)
     case "Insert": return 0x152;
     case "Delete": return 0x153;
     case "MetaLeft": return 0x15B;
+    case "OSLeft": return 0x15B;
     case "MetaRight": return 0x15C;
+    case "OSRight": return 0x15C;
     case "ContextMenu": return 0x15D;
     case "Power": return 0x15E;
     case "BrowserSearch": return 0x165;
@@ -155,8 +164,6 @@ const toScancode_firefox = function(code)
     case "LaunchApp1": return 0x16B;
     case "LaunchMail": return 0x16C;
     case "LaunchMediaPlayer": return 0x16D;
-    case "Lang2": return 0x1F1;
-    case "Lang1": return 0x1F2;
     }
 }
 
@@ -250,6 +257,7 @@ const toScancode_Chromium44 = function(code)
     case "IntlBackslash": return 0x0056;
     case "F11": return 0x0057;
     case "F12": return 0x0058;
+    case "NumpadEqual": return 0x0059;
     case "F13": return 0x005B;
     case "F14": return 0x005C;
     case "F15": return 0x005D;
@@ -262,7 +270,12 @@ const toScancode_Chromium44 = function(code)
     case "F22": return 0x0069;
     case "F23": return 0x006A;
     case "F24": return 0x006B;
+    case "KanaMode": return 0x0070;
+    case "IntlRo": return 0x0073;
+    case "Convert": return 0x0079;
+    case "NonConvert": return 0x007B;
     case "IntlYen": return 0x007D;
+    case "NumpadComma": return 0x007E;
     case "Undo": return 0x108;
     case "Paste": return 0x10A;
     case "MediaTrackPrevious": return 0x110;
@@ -273,10 +286,13 @@ const toScancode_Chromium44 = function(code)
     case "ControlRight": return 0x11D;
     case "LaunchMail": return 0x11E;
     case "AudioVolumeMute": return 0x120;
+    case "VolumeMute": return 0x120;
     case "MediaPlayPause": return 0x122;
     case "MediaStop": return 0x124;
     case "Eject": return 0x12C;
+    case "AudioVolumeDown": return 0x12E;
     case "VolumeDown": return 0x12E;
+    case "AudioVolumeUp": return 0x130;
     case "VolumeUp": return 0x130;
     case "BrowserHome": return 0x132;
     case "NumpadDivide": return 0x135;
@@ -284,7 +300,6 @@ const toScancode_Chromium44 = function(code)
     case "AltRight": return 0x138;
     case "Help": return 0x13B;
     case "NumLock": return 0x145;
-    case "Pause": return 0x146;
     case "Home": return 0x147;
     case "ArrowUp": return 0x148;
     case "PageUp": return 0x149;
@@ -296,7 +311,9 @@ const toScancode_Chromium44 = function(code)
     case "Insert": return 0x152;
     case "Delete": return 0x153;
     case "OSLeft": return 0x15B;
-    case "OSRight": return 0x15B;
+    case "MetaLeft": return 0x15B;
+    case "OSRight": return 0x15C;
+    case "MetaRight": return 0x15C;
     case "ContextMenu": return 0x15D;
     case "BrowserSearch": return 0x165;
     case "BrowserFavorites": return 0x166;
@@ -307,4 +324,4 @@ const toScancode_Chromium44 = function(code)
     }
 }
 
-const toScancode = (typeof InstallTrigger !== 'undefined') ? toScancode_firefox : toScancode_Chromium44;
+const toScancode = (typeof InstallTrigger !== 'undefined') ? toScancode_Firefox : toScancode_Chromium44;
