@@ -49,7 +49,7 @@
 //    |                    | RDP 4.0 bulk compression).                                                   |
 //    +--------------------+----------------------------------------------------------------------------- +
 
-// VCChunkSize (4 bytes): A 32-bit unsigned integer. When sent from server to client, this field
+// VCChunkSize (4 bytes) (optional): A 32-bit unsigned integer. When sent from server to client, this field
 //    contains the maximum allowed size of a virtual channel chunk. When sent from client to
 //    server, the value in this field is ignored by the server; the server determines the maximum
 //    virtual channel chunk size. This value MUST be greater than or equal to
@@ -79,14 +79,18 @@ struct VirtualChannelCaps : public Capability {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_uint32_le(this->flags);
-        stream.out_uint32_le(this->VCChunkSize);
+        if (this->len >= 12){
+            stream.out_uint32_le(this->VCChunkSize);
+        }
     }
 
     void recv(InStream & stream, uint16_t len)
     {
         this->len = len;
         this->flags = stream.in_uint32_le();
-        this->VCChunkSize = stream.in_uint32_le();
+        if (len >= 12){
+            this->VCChunkSize = stream.in_uint32_le();
+        }
     }
 
     void log(const char * msg) const
