@@ -26,47 +26,8 @@
 #include "test_only/transport/test_transport.hpp"
 #include "core/RDP/x224.hpp"
 
+
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
-{
-    size_t tpkt_len = 85;
-    GeneratorTransport t(
-/* 0000 */ "\x03\x00\x00\x55\x50\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...UP......Cooki
-/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x6a\x62\x62\x65" //e: mstshash=jbbe
-/* 0020 */ "\x72\x74\x68\x65\x6c\x69\x6e\x0d\x0a"                             //rthelin..
-           "\x01\x08\x08\x00\x0b\x00\x00" //.......
-/* 0030 */ "\x00"
-               "\x06\x00\x24\x00\x75\xcc\x9f\xac\x96\xa5\x41\x82\xbd\x1c\x2d" //...$.u.....A...-
-/* 0040 */ "\x63\x52\xc7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //cR..............
-/* 0050 */ "\x00\x00\x00\x00\x00" //.....
-        , tpkt_len);
-
-    constexpr size_t array_size = AUTOSIZE;
-    uint8_t array[array_size];
-    uint8_t * end = array;
-    X224::RecvFactory fac_x224(t, &end, array_size);
-
-    InStream stream(array, end - array);
-    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
-    RED_CHECK_EQUAL(tpkt_len, fac_x224.length);
-
-    X224::CR_TPDU_Recv x224(stream, false, true);
-
-    RED_CHECK_EQUAL(3, x224.tpkt.version);
-    RED_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
-    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
-    RED_CHECK_EQUAL(0x50, x224.tpdu_hdr.LI);
-
-    RED_CHECK_EQUAL("Cookie: mstshash=jbberthelin\x0D\x0A", x224.cookie);
-    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
-    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CORRELATION_INFO_PRESENT), x224.rdp_neg_flags);
-    RED_CHECK_EQUAL(8, x224.rdp_neg_length);
-    RED_CHECK_EQUAL(static_cast<uint32_t>(X224::PROTOCOL_TLS | X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX), x224.rdp_neg_requestedProtocols);
-
-    RED_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
-    RED_CHECK_EQUAL(x224._header_size, stream.get_capacity());
-}
-
-RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info_v2)
 {
     size_t tpkt_len = 85;
     GeneratorTransport t(
@@ -138,18 +99,19 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    X224::CR_TPDU_Recv x224(stream, false);
+    auto x224 = X224::CR_TPDU_Data_Recv(stream, false, false);
 
     RED_CHECK_EQUAL(3, x224.tpkt.version);
     RED_CHECK_EQUAL(11, x224.tpkt.len);
-    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
-    RED_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
-    RED_CHECK_EQUAL(0, strlen(x224.cookie));
+    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.header.code);
+    RED_CHECK_EQUAL(6, x224.header.LI);
+    RED_CHECK_EQUAL(0, strlen(x224.cookie.data));
     RED_CHECK_EQUAL(0, x224.rdp_neg_type);
 
     RED_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
     RED_CHECK_EQUAL(x224._header_size, stream.get_capacity());
 }
+
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
 {
@@ -172,7 +134,7 @@ RED_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv x224(stream, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
@@ -184,7 +146,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
@@ -202,7 +164,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
@@ -220,8 +182,9 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
+
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
 {
@@ -238,7 +201,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
     InStream stream(array, end - array);
-    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Recv(stream, false), ERR_X224);
+    RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
@@ -253,13 +216,13 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(size_t(11), fac_x224.length);
 
-    X224::CR_TPDU_Recv x224(stream, false);
+    auto x224 = X224::CR_TPDU_Data_Recv(stream, false, false);
 
     RED_CHECK_EQUAL(3, x224.tpkt.version);
     RED_CHECK_EQUAL(11, x224.tpkt.len);
-    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
-    RED_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
-    RED_CHECK_EQUAL(0, strlen(x224.cookie));
+    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.header.code);
+    RED_CHECK_EQUAL(6, x224.header.LI);
+    RED_CHECK_EQUAL(0, strlen(x224.cookie.data));
     RED_CHECK_EQUAL(0, x224.rdp_neg_type);
 
     RED_CHECK_EQUAL(stream.get_capacity(), x224.tpkt.len);
@@ -292,14 +255,14 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
-    X224::CR_TPDU_Recv x224(stream, false);
+    auto x224 = X224::CR_TPDU_Data_Recv(stream, false, false);
 
     RED_CHECK_EQUAL(3, x224.tpkt.version);
     RED_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
-    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.tpdu_hdr.code);
-    RED_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
+    RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), x224.header.code);
+    RED_CHECK_EQUAL(0x32, x224.header.LI);
 
-    RED_CHECK_EQUAL("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie);
+    RED_CHECK_EQUAL("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie.data);
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::RDP_NEG_REQ), x224.rdp_neg_type);
     RED_CHECK_EQUAL(0, x224.rdp_neg_flags);
     RED_CHECK_EQUAL(8, x224.rdp_neg_length);

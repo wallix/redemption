@@ -1290,7 +1290,7 @@ public:
                 }
 
                 {
-                    X224::CR_TPDU_Recv x224(new_x224_stream, this->ini.get<cfg::client::bogus_neg_request>());
+                    auto x224 = X224::CR_TPDU_Data_Recv(new_x224_stream, this->ini.get<cfg::client::bogus_neg_request>(), false);
                     if (x224._header_size != new_x224_stream.get_capacity()) {
                         LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
                                      " %zu bytes remains", new_x224_stream.get_capacity() - x224._header_size);
