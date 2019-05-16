@@ -252,6 +252,7 @@ rule app_rule ( file )
 
 # depends to js_client for a path with toolset
 app_rule to_scancode.js ;
+app_rule rdp_graphics.js ;
 app_rule client.html ;
 
 alias rdpclient : $(app_files) ;

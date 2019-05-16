@@ -156,23 +156,11 @@ struct RdpClient
             mod_rdp_params, authentifier, report_message, ini, nullptr);
     }
 
-    /// \return milliseconds before next timer, or 0 if no timer
-    Ms update_time(timeval current_time)
+    void send_first_packet()
     {
-        session_reactor.set_current_time(current_time);
-
         session_reactor.execute_timers(
             SessionReactor::EnableGraphics{true},
             [&]() -> gdi::GraphicApi& { return gd; });
-
-        std::chrono::microseconds us =
-            session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true}, 1h)
-          - session_reactor.get_current_time();
-
-        if (us <= 1ms) {
-            return 1ms;
-        }
-        return std::chrono::duration_cast<Ms>(us);
     }
 
     const_bytes_view get_sending_data_view() const
@@ -230,17 +218,13 @@ EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
         .constructor<emscripten::val, uint16_t, uint16_t, std::string, std::string, unsigned long>()
-        .function_ptr("updateTime", [](RdpClient& client) {
-            Ms ms = client.update_time(tvtime());
-            // long long is not embind type. Use long or double (safe for 53 bits);
-            return static_cast<unsigned long>(ms.count());
-        })
         .function_ptr("getSendingData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_sending_data_view());
         })
         .function_ptr("getCallbackAsVoidPtr", [](RdpClient& client) {
             return reinterpret_cast<uintptr_t>(&client.get_callback());
         })
+        .function("sendFirstPacket", &RdpClient::send_first_packet)
         .function("addChannelReceiver", &RdpClient::add_channel_receiver)
         .function("clearSendingData", &RdpClient::clear_sending_data)
         .function("addReceivingData", &RdpClient::add_receiving_data)
