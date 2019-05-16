@@ -4838,6 +4838,18 @@ public:
         throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
     }
 
+    // Note: this template is used for Caps we are merely using but doing nothing with
+    template<typename CAPS> const CAPS receive_caps(InStream & stream, uint16_t capset_length)
+    {
+        CAPS caps;
+        caps.recv(stream, capset_length);
+        if (bool(this->verbose & RDPVerbose::capabilities)) {
+            caps.log("Receiving from server");
+        }
+        return caps;
+    }
+
+
     // TODO CGR: this can probably be unified with process_confirm_active in front
     void process_server_caps(InStream & stream, uint16_t len) {
         // TODO check stream consumed and len
@@ -4857,205 +4869,90 @@ public:
             ::check_throw(stream, capset_length - 4, "mod_rdp::Demand active PDU (2)", ERR_RDP_DATA_TRUNCATED);
             uint8_t const * next = stream.get_current() + capset_length - 4;
 
+//            InStream substream(stream.get_current(), capset_length - 4);
             switch (capset_type) {
             case CAPSTYPE_GENERAL:
-                {
-                    GeneralCaps general_caps;
-                    general_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        general_caps.log("Received from server");
-                    }
-                }
+                this->receive_caps<GeneralCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_BITMAP:
-                {
-                    BitmapCaps bitmap_caps;
-                    bitmap_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        bitmap_caps.log("Received from server");
-                    }
-                    this->orders.bpp = checked_int(bitmap_caps.preferredBitsPerPixel);
-                    this->negociation_result.front_width = bitmap_caps.desktopWidth;
-                    this->negociation_result.front_height = bitmap_caps.desktopHeight;
-                }
-                break;
+            {
+                auto bitmap_caps = this->receive_caps<BitmapCaps>(stream, capset_length);
+                this->orders.bpp = checked_int(bitmap_caps.preferredBitsPerPixel);
+                this->negociation_result.front_width = bitmap_caps.desktopWidth;
+                this->negociation_result.front_height = bitmap_caps.desktopHeight;
+            }
+            break;
             case CAPSTYPE_ORDER:
-                {
-                    OrderCaps order_caps;
-                    order_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        order_caps.log("Received from server");
-                    }
-                }
+                this->receive_caps<OrderCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_INPUT:
-                {
-                    InputCaps input_caps;
-                    input_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        input_caps.log("Received from server");
-                    }
-
-                    this->enable_fastpath_client_input_event =
-                        (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
-                }
-                break;
+            {
+                auto input_caps = this->receive_caps<InputCaps>(stream, capset_length);
+                this->enable_fastpath_client_input_event =
+                    (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
+            }
+            break;
             case CAPSTYPE_RAIL:
-                {
-                    RailCaps rail_caps;
-                    rail_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        rail_caps.log("Received from server");
-                    }
-                }
+                this->receive_caps<RailCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_WINDOW:
-                {
-                    WindowListCaps window_list_caps;
-                    window_list_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        window_list_caps.log("Received from server");
-                    }
-                }
+                this->receive_caps<WindowListCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_POINTER:
-                {
-                    PointerCaps pointer_caps;
-                    pointer_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        pointer_caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<PointerCaps>(stream, capset_length);
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE:
-                {
-                    MultiFragmentUpdateCaps multifrag_caps;
-                    multifrag_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        multifrag_caps.log("Receiving from server");
-                    }
-                    this->front_multifragment_maxsize = multifrag_caps.MaxRequestSize;
-                }
-                break;
+            {
+                auto multi_fragment_update_caps = this->receive_caps<MultiFragmentUpdateCaps>(stream, capset_length);
+                this->front_multifragment_maxsize = multi_fragment_update_caps.MaxRequestSize;
+            }
+            break;
             case CAPSETTYPE_LARGE_POINTER:
-                {
-                    LargePointerCaps large_pointer_caps;
-                    large_pointer_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        large_pointer_caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<LargePointerCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_SOUND:
-                {
-                    SoundCaps sound_caps;
-                    sound_caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        sound_caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<SoundCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_FONT:
-                {
-                    FontCaps fontCaps;
-                    fontCaps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        fontCaps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<FontCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_ACTIVATION:
-                {
-                    ActivationCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<ActivationCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_VIRTUALCHANNEL:
-                {
-                    VirtualChannelCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<VirtualChannelCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_DRAWGDIPLUS:
-                {
-                    DrawGdiPlusCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<DrawGdiPlusCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_COLORCACHE:
-                {
-                    ColorCacheCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<ColorCacheCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT:
-                {
-                    BitmapCacheHostSupportCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<BitmapCacheHostSupportCaps>(stream, capset_length);
                 break;
             case CAPSTYPE_SHARE:
-                {
-                    ShareCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<ShareCaps>(stream, capset_length);
                 break;
             case CAPSETTYPE_COMPDESK:
-                {
-                    CompDeskCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<CompDeskCaps>(stream, capset_length);
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS:
-                {
-                    SurfaceCommandsCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                }
+                this->receive_caps<SurfaceCommandsCaps>(stream, capset_length);
                 break;
             case CAPSETTYPE_BITMAP_CODECS:
-                {
-                    BitmapCodecCaps caps(false);
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-
-                    this->haveRemoteFx = caps.haveRemoteFxCodec;
+            {
+                BitmapCodecCaps caps(false);
+                caps.recv(stream, capset_length);
+                if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    caps.log("Receiving from server");
                 }
-                break;
+                this->haveRemoteFx = caps.haveRemoteFxCodec;
+            }
+            break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE:
-                {
-                    FrameAcknowledgeCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
-                    this->haveSurfaceFrameAck = true;
-                }
+                this->receive_caps<FrameAcknowledgeCaps>(stream, capset_length);
+                this->haveSurfaceFrameAck = true;
                 break;
             default:
                 LOG_IF(bool(this->verbose & RDPVerbose::capabilities), LOG_WARNING,
