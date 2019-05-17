@@ -198,7 +198,7 @@ RED_AUTO_TEST_CASE(testFileValid)
 
         std::string file_name("README.md");
         std::string file_content(get_file_contents("README.md"));
-        std::string target_service("avscan");
+        std::string target_service("linux_scan");
         int file_size = 30; /*file_content.length();*/
 
         int file_id = icap_open_file(service, file_name, target_service);
@@ -238,7 +238,7 @@ RED_AUTO_TEST_CASE(testFileInvalid)
 
         std::string file_path("../ICAPService/python/tests/the_zeus_binary_chapros");
         std::string file_name("the_zeus_binary_chapros");
-        std::string target_service("avscan");
+        std::string target_service("linux_scan");
         int file_size = 227328;
 
         int file_id = icap_open_file(service, file_name, target_service);
