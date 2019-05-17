@@ -164,6 +164,10 @@ const redemption = (function(Module, window) {
             this._channels = [];
         }
 
+        close() {
+            this.socket.close()
+        }
+
         start() {
             this.native.sendFirstPacket();
             this.sendBufferedData();
@@ -847,11 +851,7 @@ login.onsubmit = (e) => {
     e.preventDefault();
     if (rdpclient) {
         rdpclient.close();
-        rdpclient.on('socketClose', () => {
-            console.log('RdpClient close (previous socket)');
-        });
         canvasStopEvents();
-        rdpclient = null;
     }
     run();
 };
