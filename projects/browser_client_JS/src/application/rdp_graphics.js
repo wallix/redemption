@@ -19,8 +19,9 @@ class RDPGraphics
         this.ecanvas.height = h;
     }
 
-    drawImage(...args) {
-        this.canvas.putImageData(...args);
+    drawImage(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight, rop) {
+        // rop supposed to 0xCC
+        this.canvas.putImageData(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
     }
 
     drawRect(x, y, w, h, color) {
@@ -32,11 +33,17 @@ class RDPGraphics
     drawSrcBlt(sx, sy, w, h, dx, dy, rop) {
         // console.log('drawSrcBlt');
         const sourceImageData = this.canvas.getImageData(sx, sy, w, h);
-        if (rop == 0xCC) {
+        if (rop === 0xCC) {
             this.canvas.putImageData(sourceImageData, dx, dy);
         }
         else {
-            const op = scrROp[rop]
+            let op;
+            switch (rop) {
+                case 0x00: op = 'darken'; break;
+                case 0xF0: op = 'source-over'; break;
+                case 0x55: op = 'xor'; break;
+                case 0xFF: op = 'lighten'; break;
+            }
             if (op) {
                 if (has_intersection(sx,sy,w,h,dx,dy,w,h)) {
                     // console.log(sx,sy,dx,dy,w,h);
@@ -57,7 +64,7 @@ class RDPGraphics
 		this.canvas.fillStyle = rgbToCss(backColor);
 		this.canvas.strokeStyle = rgbToCss(penColor);
         // behavior of stroke is strange (transparency color with a odd penWidth)
-        if (!penStyle && startX == endX) {
+        if (!penStyle && startX === endX) {
             if (endX < startX) {
                 startX = endX;
             }
@@ -66,7 +73,7 @@ class RDPGraphics
             }
             this.canvas.fillRect(startX, startY, penWidth||1, endY-startY+1);
         }
-        else if (!penStyle && startY == endY) {
+        else if (!penStyle && startY === endY) {
             if (endY < startY) {
                 startY = endY;
             }
@@ -88,7 +95,7 @@ class RDPGraphics
                 case 5: this.canvas.setLineDash([ 16, 0, 16, 0 ]); break;
             }
             // BackMode does not imply the transparency level of what is about too be drawn
-            // canvas.globalAlpha = (backMode == 1 /* TRANSPARENT */? 0.0 : 1.0);
+            // canvas.globalAlpha = (backMode === 1 /* TRANSPARENT */? 0.0 : 1.0);
             this.canvas.stroke();
         }
 		this.canvas.restore();

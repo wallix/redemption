@@ -102,14 +102,21 @@ struct RdpClient
     RdpClient(
         emscripten::val callbacks, uint16_t width, uint16_t height,
         std::string const& username, std::string const& password,
-        unsigned long verbose)
-    : front(callbacks, width, height, client_info.order_caps, RDPVerbose(verbose))
+        uint32_t disabled_orders, unsigned long verbose)
+    : front(callbacks, width, height, RDPVerbose(verbose))
     , gd(front.graphic_api())
     , js_rand(callbacks)
     {
         client_info.screen_info.width = width;
         client_info.screen_info.height = height;
         client_info.screen_info.bpp = BitsPerPixel{24};
+
+        const auto supported_orders = front.get_supported_orders()
+            & ~PrimaryDrawingOrdersSupport(disabled_orders);
+        for (unsigned i = 0; i < NB_ORDER_SUPPORT; ++i) {
+            client_info.order_caps.orderSupport[i] = supported_orders.test(OrdersIndexes(i));
+        }
+
 
         ini.set<cfg::mod_rdp::server_redirection_support>(false);
         ini.set<cfg::mod_rdp::enable_nla>(false);
@@ -136,13 +143,9 @@ struct RdpClient
         mod_rdp_params.enable_new_pointer         = true;
         mod_rdp_params.enable_glyph_cache         = true;
         mod_rdp_params.server_cert_check          = ServerCertCheck::always_succeed;
-        mod_rdp_params.primary_drawing_orders_support -= TS_NEG_GLYPH_INDEX;
-        mod_rdp_params.primary_drawing_orders_support -= TS_NEG_DSTBLT_INDEX;
-        mod_rdp_params.primary_drawing_orders_support -= TS_NEG_PATBLT_INDEX;
-        mod_rdp_params.primary_drawing_orders_support += TS_NEG_POLYLINE_INDEX;
-        mod_rdp_params.primary_drawing_orders_support += TS_NEG_MULTISCRBLT_INDEX;
-        mod_rdp_params.primary_drawing_orders_support += TS_NEG_MULTIOPAQUERECT_INDEX;
+        mod_rdp_params.primary_drawing_orders_support = supported_orders;
         mod_rdp_params.ignore_auth_channel = true;
+
 
         if (bool(RDPVerbose(verbose) & RDPVerbose::basic_trace)) {
             mod_rdp_params.log();
@@ -217,7 +220,7 @@ struct RdpClient
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor<emscripten::val, uint16_t, uint16_t, std::string, std::string, unsigned long>()
+        .constructor<emscripten::val, uint16_t, uint16_t, std::string, std::string, uint32_t, unsigned long>()
         .function_ptr("getSendingData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_sending_data_view());
         })

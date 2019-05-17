@@ -28,14 +28,19 @@ Author(s): Jonathan Poelen
 namespace redjs
 {
 
-BrowserFront::BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose)
-: gd(std::move(callbacks), width, height, order_caps)
+BrowserFront::BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, RDPVerbose verbose)
+: gd(std::move(callbacks), width, height)
 , verbose(verbose)
 {
     this->cl.push_back(CHANNELS::ChannelDef(channel_names::cliprdr, 0, 0));
 }
 
 BrowserFront::~BrowserFront() = default;
+
+PrimaryDrawingOrdersSupport BrowserFront::get_supported_orders() const
+{
+    return this->gd.get_supported_orders();
+}
 
 void BrowserFront::add_channel_receiver(ChannelReceiver&& channel_receiver)
 {

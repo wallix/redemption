@@ -25,14 +25,12 @@ Author(s): Jonathan Poelen
 #endif
 
 #include "gdi/graphic_api.hpp"
+#include "core/RDP/capabilities/order.hpp"
 
 #include <emscripten/val.h>
 
 #include <memory>
 
-
-class ScreenInfo;
-class OrderCaps;
 
 namespace redjs
 {
@@ -42,8 +40,10 @@ class ImageData;
 class BrowserGraphic : public gdi::GraphicApi
 {
 public:
-    BrowserGraphic(emscripten::val callbacks, uint16_t width, uint16_t height, OrderCaps& order_caps);
+    BrowserGraphic(emscripten::val callbacks, uint16_t width, uint16_t height);
     ~BrowserGraphic();
+
+    PrimaryDrawingOrdersSupport get_supported_orders() const;
 
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 

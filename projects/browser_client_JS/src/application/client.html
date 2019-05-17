@@ -139,7 +139,7 @@ const redemption = (function(Module, window) {
     }
 
     class RDPClient {
-        constructor(socket, width, height, events, username, password, verbosity) {
+        constructor(socket, width, height, events, username, password, disabled_orders, verbosity) {
             const rdpEvents = {}
             for (const eventName in wrappersFront) {
                 const cb = events[eventName];
@@ -158,6 +158,7 @@ const redemption = (function(Module, window) {
             this.native = new Module.RdpClient(
                 rdpEvents, width, height,
                 username || "", password || "",
+                disabled_orders || 0,
                 verbosity || 0,
             );
             this.socket = socket;
@@ -291,13 +292,6 @@ function has_intersection(x1,y1,w1,h1,x2,y2,w2,h2)
     return ((x2 >= x1 && x2 < x1 + w1) || (x1 >= x2 && x1 < x2 + w2))
         && ((y2 >= y1 && y2 < y1 + h1) || (y1 >= y2 && y1 < y2 + h2));
 }
-
-const scrROp = new Array(255);
-scrROp[0x00] = 'darken';
-scrROp[0xF0] = 'source-over';
-scrROp[0xCC] = 'source-over';
-scrROp[0x55] = 'xor';
-scrROp[0xFF] = 'lighten';
 
 const KbdFlags = Object.freeze({
     Extended: 0x0100,

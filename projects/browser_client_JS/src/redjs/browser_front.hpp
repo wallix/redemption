@@ -34,7 +34,6 @@ Author(s): Jonathan Poelen
 #include <string_view>
 
 class ScreenInfo;
-class OrderCaps;
 
 namespace redjs
 {
@@ -42,8 +41,10 @@ namespace redjs
 class BrowserFront : public FrontAPI
 {
 public:
-    BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, OrderCaps& order_caps, RDPVerbose verbose);
+    BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, RDPVerbose verbose);
     ~BrowserFront();
+
+    PrimaryDrawingOrdersSupport get_supported_orders() const;
 
     void add_channel_receiver(ChannelReceiver&& channel);
 
