@@ -82,8 +82,8 @@ const redemption = (function(Module, window) {
     const identity = function(cb, thisp) {
         return function(...args) {
             cb.call(thisp, ...args);
-        }
-    }
+        };
+    };
 
     const wCb_em2js_ImageData = function(cb, thisp) {
         return function(idata, w, h, ...args) {
@@ -100,60 +100,43 @@ const redemption = (function(Module, window) {
         };
     };
 
+    const noop = function(){};
+
+    // { funcname: [wrapCreator, defaultFunction], ... }
     const wrappersFront = {
-        // idata, w, h, dx, dy, sz, sy, dw, dh
-        drawImage: wCb_em2js_ImageData,
-        drawPolyline: function(cb) {
+        drawImage: [wCb_em2js_ImageData],
+        drawPolyline: [function(cb) {
             return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
                 const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
                 cb(xStart, yStart, deltas, penColor);
             };
-        },
+        }],
 
-        drawRect: identity,
-        drawSrcBlt: identity,
-        drawLineTo: identity,
+        drawRect: [identity],
+        drawSrcBlt: [identity],
+        drawLineTo: [identity],
 
-        setPointer: wCb_em2js_ImageData,
-        newPointer: wCb_em2js_ImageData,
-        cachedPointer: identity,
+        setPointer: [wCb_em2js_ImageData, noop],
+        newPointer: [wCb_em2js_ImageData, noop],
+        cachedPointer: [identity, noop],
 
-        resizeCanvas: identity,
+        resizeCanvas: [identity, noop],
 
-        random: wCb_em2js_U8p,
+        random: [wCb_em2js_U8p, function(idata, len) {
+            const data = HEAPU8.subarray(idata, idata + len);
+            window.crypto.getRandomValues(data);
+        }],
     };
-
-    const defaultRandom = function(idata, len) {
-        const data = HEAPU8.subarray(idata, idata + len);
-        window.crypto.getRandomValues(data);
-    };
-
-    const noop = function(){};
-
-    const resultFuncs = {};
-
-    resultFuncs.newRDPSocket = function(url) {
-        const socket = new WebSocket(url, "RDP");
-        socket.binaryType = 'arraybuffer';
-        return socket;
-    }
 
     class RDPClient {
         constructor(socket, width, height, events, username, password, disabled_orders, verbosity) {
-            const rdpEvents = {}
-            for (const eventName in wrappersFront) {
-                const cb = events[eventName];
-                if (cb) {
-                    const wrapCb = wrappersFront[eventName];
-                    rdpEvents[eventName] = wrapCb(cb, events);
-                }
-                else {
-                    // TODO only if mendatiry = true
-                    rdpEvents[eventName] = noop;
-                }
-            }
+            const rdpEvents = {};
 
-            rdpEvents.random = rdpEvents.random || defaultRandom
+            for (const eventName in wrappersFront) {
+                const wrapCb = wrappersFront[eventName];
+                const cb = events[eventName];
+                rdpEvents[eventName] = cb ? wrapCb[0](cb, events) : wrapCb[1];
+            }
 
             this.native = new Module.RdpClient(
                 rdpEvents, width, height,
@@ -166,7 +149,7 @@ const redemption = (function(Module, window) {
         }
 
         close() {
-            this.socket.close()
+            this.socket.close();
         }
 
         start() {
@@ -227,7 +210,14 @@ const redemption = (function(Module, window) {
         }
     };
 
-    resultFuncs.RDPClient = RDPClient;
+    const resultFuncs = {
+        RDPClient: RDPClient,
+        newRDPSocket: function(url) {
+            const socket = new WebSocket(url, "RDP");
+            socket.binaryType = 'arraybuffer';
+            return socket;
+        },
+    };
 
     const addChannelClass = (ChannelClassName, wrapEvents) => {
         resultFuncs['new' + ChannelClassName] = function(cb, events, ...channelArgs) {
