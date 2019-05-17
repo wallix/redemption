@@ -4,12 +4,14 @@ const rgbToCss = function(color) {
 
 class RDPGraphics
 {
-    constructor(canvasElement, cursorCanvasElement) {
+    constructor(canvasElement) {
         this.ecanvas = canvasElement
         this.canvas = canvasElement.getContext('2d');
-        this.ecusorCanvas = cursorCanvasElement
-        this.cusorCanvas = cursorCanvasElement.getContext('2d');
+        this.ecusorCanvas = document.createElement('canvas')
+        this.cusorCanvas = this.ecusorCanvas.getContext('2d');
         this.cachePointers = [];
+
+        this.canvas.imageSmoothingEnabled = false;
     }
 
     resizeCanvas(w, h) {
@@ -100,16 +102,16 @@ class RDPGraphics
     }
 
     setPointer(image, x, y) {
-        this.ecusorCanvas.style.cursor = this.image2CSS(image, x, y);
+        this.ecanvas.style.cursor = this.image2CSS(image, x, y);
     }
 
     newPointer(image, offset, x, y) {
         const data = this.image2CSS(image, x, y);
         this.cachePointers[offset] = data;
-        this.ecusorCanvas.style.cursor = data;
+        this.ecanvas.style.cursor = data;
     }
 
     cachedPointer(offset) {
-        this.ecusorCanvas.style.cursor = this.cachePointers[offset];
+        this.ecanvas.style.cursor = this.cachePointers[offset];
     }
 };

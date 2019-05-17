@@ -41,7 +41,6 @@
 </style>
 </div>
 <canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
-<canvas id="curCanvas" style="display:none"></canvas>
 <section>
     <form id="login" method="get" action="#">
         <input type="text" id="user" name="user" value="x" placeholder="Username"/>
@@ -264,7 +263,6 @@ const HEAPU16 = Module.HEAPU16;
 
 
 const ecanvasFocus = document.getElementById('canvasFocus');
-const ecurCanvas = document.getElementById('curCanvas');
 const ecanvas = document.getElementById('canvas');
 const ecanvas2 = document.getElementById('canvas2');
 const canvas = ecanvas.getContext('2d');
@@ -428,15 +426,13 @@ function canvasStopEvents()
     ecanvasFocus.onblur = () => {};
     ecanvasFocus.onfocus = () => {};
     ecanvas.onclick = () => {};
-    ecurCanvas.onclick = () => {};
 }
 
 function canvasFocus()
 {
-    console.log('focus')
+    console.log('focus');
     addEvents(document, docEvents);
     ecanvas.onclick = (e) => e.preventDefault();
-    ecurCanvas.onclick = (e) => e.preventDefault();
 }
 
 function canvasEnableFocus()
@@ -447,10 +443,9 @@ function canvasEnableFocus()
 
 function canvasBlur()
 {
-    console.log('blur')
+    console.log('blur');
     removeEvents(document, docEvents);
     ecanvas.onclick = canvasEnableFocus;
-    ecurCanvas.onclick = canvasEnableFocus;
 }
 
 const UTF8Decoder = new TextDecoder("utf-8");
@@ -537,7 +532,7 @@ function run()
             socket,
             ecanvas.width,
             ecanvas.height,
-            new RDPGraphics(ecanvas, ecurCanvas),
+            new RDPGraphics(ecanvas),
             user_input.value,
             pass_input.value,
             /*0x04000000*/);
