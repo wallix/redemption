@@ -1071,8 +1071,8 @@ namespace jln
         template<class I, class S>
         struct named_indexed
         {
-            static I index() noexcept { return I{}; }
-            static S name() noexcept { return S{}; }
+            static constexpr I index() noexcept { return I{}; }
+            static constexpr S name() noexcept { return S{}; }
         };
 
         template<class S, class I>
@@ -1249,9 +1249,9 @@ namespace jln
         {
             static_assert(CheckUniqueName<NamedIndexed...>::value, "name duplicated");
 
-            static const std::size_t count = sizeof...(NamedIndexed);
+            static constexpr std::size_t count = sizeof...(NamedIndexed);
 
-            static inline char const* const strings[sizeof...(NamedIndexed)]
+            static constexpr char const* const strings[sizeof...(NamedIndexed)]
                 = {NamedIndexed::name().c_str()...};
         };
 

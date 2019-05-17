@@ -27,7 +27,7 @@ namespace jln
     template<char... cs>
     struct string_c
     {
-        static inline char const value[sizeof...(cs)+1]{cs..., '\0'};
+        static constexpr char const value[sizeof...(cs)+1]{cs..., '\0'};
 
         static constexpr char const* c_str() noexcept { return value; }
     };
