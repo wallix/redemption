@@ -210,8 +210,8 @@ RED_AUTO_TEST_CASE(testFileValid)
         n = icap_end_of_file(service, file_id);
         RED_CHECK(n>0);
 
-        icap_receive_result(service);
-        RED_CHECK_EQUAL(service->result, LocalICAPServiceProtocol::ACCEPTED_FLAG);
+        icap_receive_response(service);
+        RED_CHECK_EQUAL(service->result_flag, LocalICAPServiceProtocol::ACCEPTED_FLAG);
         RED_CHECK_EQUAL(service->content, "");
     }
 
@@ -262,8 +262,8 @@ RED_AUTO_TEST_CASE(testFileInvalid)
             RED_CHECK(n>0);
         }
 
-        icap_receive_result(service);
-        RED_CHECK_EQUAL(service->result, LocalICAPServiceProtocol::REJECTED_FLAG);
+        icap_receive_response(service);
+        RED_CHECK_EQUAL(service->result_flag, LocalICAPServiceProtocol::REJECTED_FLAG);
 
         std::string expected_content =
         "\xaVIRUS FOUND\xa"

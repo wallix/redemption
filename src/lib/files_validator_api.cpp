@@ -39,8 +39,8 @@ extern "C"
         return icap_send_data(service, file_id, data, size);
     }
 
-    void validator_receive_result(ICAPService * service) noexcept {
-        return icap_receive_result(service);
+    void validator_receive_response(ICAPService * service) noexcept {
+        return icap_receive_response(service);
     }
 
     int validator_end_of_file(ICAPService * service, const int file_id) noexcept {
@@ -55,8 +55,8 @@ extern "C"
         return icap_abort_file(service, file_id);
     }
 
-    int validator_get_result(ICAPService * service) noexcept {
-        return service->result;
+    int validator_get_result_flag(ICAPService * service) noexcept {
+        return service->result_flag;
     }
 
     const char * validator_get_content(ICAPService * service) noexcept {

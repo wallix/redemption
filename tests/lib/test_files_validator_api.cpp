@@ -57,8 +57,8 @@ RED_AUTO_TEST_CASE(testFileValid)
         n = validator_end_of_file(service, file_id);
         RED_CHECK(n>0);
 
-        validator_receive_result(service);
-        RED_CHECK_EQUAL(validator_get_result(service), 0x00);
+        validator_receive_response(service);
+        RED_CHECK_EQUAL(validator_get_result_flag(service), 0x00);
         std::string result_content(validator_get_content(service));
         RED_CHECK_EQUAL(result_content, "");
     }
@@ -110,8 +110,8 @@ RED_AUTO_TEST_CASE(testFileInvalid)
             RED_CHECK(n>0);
         }
 
-        validator_receive_result(service);
-        RED_CHECK_EQUAL(validator_get_result(service), 0x01);
+        validator_receive_response(service);
+        RED_CHECK_EQUAL(validator_get_result_flag(service), 0x01);
 
         std::string expected_content =
         "\xaVIRUS FOUND\xa"

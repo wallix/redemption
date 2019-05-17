@@ -38,7 +38,7 @@ extern "C"
     int validator_send_data(const ICAPService * service, const int file_id, const char * data, const int size) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void validator_receive_result(ICAPService * service) noexcept;
+    void validator_receive_response(ICAPService * service) noexcept;
 
     REDEMPTION_LIB_EXPORT
     int validator_end_of_file(ICAPService * service, const int file_id) noexcept;
@@ -50,7 +50,7 @@ extern "C"
     int validator_abort_file(ICAPService * service, const int file_id) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_get_result(ICAPService * service) noexcept;
+    int validator_get_result_flag(ICAPService * service) noexcept;
 
     REDEMPTION_LIB_EXPORT
     const char * validator_get_content(ICAPService * service) noexcept;

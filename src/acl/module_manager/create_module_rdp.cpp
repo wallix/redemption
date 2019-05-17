@@ -279,7 +279,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.clipboard_params.log_only_relevant_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
-    mod_rdp_params.enable_validator = ini.get<cfg::validator::enable_validator>();
+    mod_rdp_params.enable_validator = true; //ini.get<cfg::validator::enable_validator>();
     mod_rdp_params.enable_interupting_validator = ini.get<cfg::validator::enable_interupting_validator>();
     mod_rdp_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
     mod_rdp_params.validator_socket_path = ini.get<cfg::validator::validator_socket_path>().c_str();
@@ -336,9 +336,7 @@ void ModuleManager::create_mod_rdp(
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
-
         std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
-
 
         if (mod_rdp_params.enable_validator) {
             icap_service = icap_open_session(mod_rdp_params.validator_socket_path);

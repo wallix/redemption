@@ -176,9 +176,9 @@ public:
         return "";
     }
 
-    void receive_result() {
+    void receive_response() {
         if (this->enable_validator) {
-            icap_receive_result(this->icap_service);
+            icap_receive_response(this->icap_service);
 
             this->current_analysis_done = true;
     //       LOG(LOG_INFO, "%d %s", this->icap_service->result, this->icap_service->content);
@@ -204,16 +204,16 @@ public:
 
     bool is_valid() {
         if (this->icap_service == nullptr) {
-            return true;
+            return !this->enable_validator;
         }
-        return (this->icap_service->result == 0);
+        return (this->icap_service->result_flag == LocalICAPServiceProtocol::ACCEPTED_FLAG);
     }
 
     ~ChannelFile() {
         this->fd.close();
     }
 
-    bool is_interupting() {
+    bool is_enable_interuption() {
         return this->is_interupting_channel;
     }
 
@@ -225,7 +225,7 @@ public:
         return this->is_saving_files;
     }
 
-    bool is_validating() {
+    bool is_enable_validation() {
         return this->enable_validator;
     }
 

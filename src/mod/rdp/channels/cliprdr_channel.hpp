@@ -288,7 +288,7 @@ public:
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                         this->channel_file.set_end_of_file();
                     }
-                    send_message_to_server = !this->channel_file.is_interupting();
+                    send_message_to_server = !this->channel_file.is_enable_interuption();
                 }
                 if (receive.must_log_file_info_type) {
                     const bool from_remote_session = false;
@@ -513,7 +513,7 @@ public:
                         this->channel_file.set_end_of_file();
                     }
 
-                    send_message_to_client = !this->channel_file.is_interupting();
+                    send_message_to_client = !this->channel_file.is_enable_interuption();
                 }
 
                 if (receive.must_log_file_info_type) {
@@ -674,9 +674,9 @@ public:
 
     void DLP_antivirus_check_channels_files() {
 
-        this->channel_file.receive_result();
+        this->channel_file.receive_response();
 
-        if (!this->channel_file.is_valid() && this->channel_file.is_validating()) {
+        if (!this->channel_file.is_valid() && this->channel_file.is_enable_validation()) {
             auto const info = key_qvalue_pairs({
                 { "type", "FILE_SCAN_RESULT" },
                 { "file_name", this->channel_file.get_file_name()},
@@ -696,7 +696,7 @@ public:
             this->report_message.log6(info, arc_info, tvtime());
         }
 
-        if (this->channel_file.is_interupting() && this->channel_file.is_save_files()) {
+        if (this->channel_file.is_enable_interuption() && this->channel_file.is_save_files()) {
             if (this->channel_file.is_valid()) {
 
                 switch (this->channel_file.get_direction()) {

@@ -39,7 +39,7 @@ struct ICAPService
 public:
     unique_fd fd ;
 
-    int result;
+    int result_flag;
     std::string content;
 
     int last_result_file_id_received;
@@ -50,7 +50,7 @@ public:
     ICAPService(std::string const& socket_path)
 
     : fd(invalid_fd())
-    , result(-1)
+    , result_flag(-1)
     , last_result_file_id_received(0)
     , file_id_int(0)
     {
@@ -507,7 +507,7 @@ inline ICAPService * icap_open_session(const std::string & socket_path) {
 inline int icap_open_file(ICAPService * service, const std::string & file_name, const std::string & target_name) {
 
     int file_id = -1;
-    service->result = -1;
+    service->result_flag = -1;
 
     if (service->fd.is_open()) {
         file_id = service->generate_id();
@@ -578,7 +578,7 @@ inline int icap_send_data(const ICAPService * service, const int file_id, const 
     return total_n;
 }
 
-inline void icap_receive_result(ICAPService * service) {
+inline void icap_receive_response(ICAPService * service) {
 
     int read_data_len = -1;
 
@@ -601,7 +601,7 @@ inline void icap_receive_result(ICAPService * service) {
                 {
                     LocalICAPServiceProtocol::ICAPResult result;
                     result.receive(stream_data);
-                    service->result = result.result;
+                    service->result_flag = result.result;
                     service->content = result.content;
                     service->last_result_file_id_received = result.id;
                 }
@@ -617,7 +617,7 @@ inline void icap_receive_result(ICAPService * service) {
             }
         } else {
             service->fd.close();
-            service->result = LocalICAPServiceProtocol::ERROR_FLAG;
+            service->result_flag = LocalICAPServiceProtocol::ERROR_FLAG;
             service->content =  "Error, Validator local service is closed.";
         }
     }
