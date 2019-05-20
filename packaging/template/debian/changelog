@@ -1,3 +1,8 @@
+redemption (7.1.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 20 May 2019 11:00:53 +0200
+
 redemption (7.1.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Feedback RDP target session ID.
