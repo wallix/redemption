@@ -38,13 +38,13 @@ rm -rf bin
 export REDEMPTION_LOG_PRINT=0
 export cxx_color=never
 
+export BOOST_TEST_RANDOM=$RANDOM
+echo random seed = $BOOST_TEST_RANDOM
+
 build()
 {
-    export BOOST_TEST_RANDOM=$RANDOM
-    echo random seed = $BOOST_TEST_RANDOM
-    local e=0
     bjam -q "$@" || {
-        e=$?
+        local e=$?
         export REDEMPTION_LOG_PRINT=1
         bjam -q "$@"
         exit $e
