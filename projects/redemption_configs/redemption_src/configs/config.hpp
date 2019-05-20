@@ -92,23 +92,6 @@ namespace configs
 
 #include "configs/autogen/enums_func_ini.hpp"
 
-namespace configs
-{
-    template<class T, class U>
-    parse_error parse_and_log(const char * context, const char * key, T & x, U u, array_view_const_char av)
-    {
-        auto const err = ::configs::parse(x, u, av);
-        if (err) {
-            LOG(
-                LOG_WARNING,
-                "parsing error with parameter '%s' in section [%s] for \"%.*s\": %s",
-                key, context, int(av.size()), av.data(), err.c_str()
-            );
-        }
-        return err;
-    }
-} // namespace configs
-
 
 class Inifile
 {
@@ -116,10 +99,14 @@ public:
     using authid_t = ::authid_t;
     using parse_error = configs::parse_error;
 
+    REDEMPTION_DIAGNOSTIC_PUSH
+    // Inifile::Field is a extern template
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wundefined-func-template")
     explicit Inifile()
     {
         this->initialize();
     }
+    REDEMPTION_DIAGNOSTIC_POP
 
     template<class T>
     typename T::type const & get() const noexcept {
@@ -196,28 +183,11 @@ private:
     template<class T>
     struct Field : FieldBase
     {
-        bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) override final
-        {
-            return ! ::configs::parse_and_log(
-                T::section, T::name,
-                static_cast<T&>(variables).value,
-                configs::spec_type<typename T::sesman_and_spec_type>{},
-                value
-            );
-        }
+        bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) override final;
 
         /// \return array_view_const_char::data() guarantee with null terminal
         array_view_const_char
-        to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const override final
-        {
-            return ::configs::assign_zbuf_from_cfg(
-                static_cast<configs::zstr_buffer_from<typename T::type>&>(
-                    static_cast<configs::CBuf<T>&>(buffers)
-                ),
-                configs::cfg_s_type<typename T::sesman_and_spec_type>{},
-                static_cast<T const &>(variables).value
-            );
-        }
+        to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const override final;
     };
 
 public:
