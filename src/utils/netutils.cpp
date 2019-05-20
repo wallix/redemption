@@ -311,7 +311,8 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
     //         source, dest, sport, dport
     // );
     sprintf(strre,
-            "^ *6 +\\d+ +ESTABLISHED +"
+            "^(?:ipv4 +2 +)?"
+            "tcp +6 +\\d+ +ESTABLISHED +"
             "src=" RE_IP_DEF " +"
             "dst=(" RE_IP_DEF ") +"
             "sport=\\d+ +dport=\\d+ .*"
@@ -335,10 +336,6 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         }
 
         const char * s = line.buffer + line.begin_line;
-        if (s[0] != 't' || s[1] != 'c' || s[2] != 'p' || s[3] != ' ') {
-            continue ;
-        }
-        s += 4;
 
         const bool contains_endl = line.buffer[line.eol-1] == '\n';
         if (contains_endl) {

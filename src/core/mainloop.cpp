@@ -212,7 +212,13 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
         const int source_port = 0;
         char target_ip[256];
         strlcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
-        int fd = open("/proc/net/ip_conntrack", O_RDONLY);
+        int fd = open("/proc/net/nf_conntrack", O_RDONLY);
+        if (fd < 0) {
+            fd = open("/proc/net/ip_conntrack", O_RDONLY);
+        }
+        if (fd < 0) {
+            LOG(LOG_WARNING, "Failed to read conntrack file");
+        }
         // source and dest are inverted because we get the information we want from reply path rule
         int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip));
         if (res){
