@@ -60,3 +60,31 @@ const char * Translation::translate(trkeys::TrKey_password k) const
 
     return k.translations[this->lang];
 }
+
+void Inifile::initialize()
+{
+    this->push_to_send_index<cfg::context::opt_bpp>();
+    this->push_to_send_index<cfg::context::opt_width>();
+    this->push_to_send_index<cfg::context::opt_height>();
+    this->push_to_send_index<cfg::context::selector_current_page>();
+    this->push_to_send_index<cfg::context::selector_device_filter>();
+    this->push_to_send_index<cfg::context::selector_group_filter>();
+    this->push_to_send_index<cfg::context::selector_proto_filter>();
+    this->push_to_send_index<cfg::context::selector_lines_per_page>();
+    this->ask<cfg::context::target_password>();
+    this->ask<cfg::context::target_host>();
+    this->ask<cfg::context::target_protocol>();
+    this->ask<cfg::context::password>();
+    this->push_to_send_index<cfg::context::reporting>();
+    this->push_to_send_index<cfg::context::auth_channel_target>();
+    this->push_to_send_index<cfg::context::accept_message>();
+    this->push_to_send_index<cfg::context::display_message>();
+    this->push_to_send_index<cfg::context::real_target_device>();
+    this->ask<cfg::globals::auth_user>();
+    this->push_to_send_index<cfg::globals::host>();
+    this->push_to_send_index<cfg::globals::target>();
+    this->ask<cfg::globals::target_device>();
+    this->ask<cfg::globals::target_user>();
+
+    static_cast<Field<cfg::context::target_port>&>(this->fields).asked_ = true;
+}
