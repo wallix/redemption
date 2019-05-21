@@ -330,13 +330,13 @@ struct WidgetModuleHost::Impl
                               sub_dest_rect.y + delta_y,
                               sub_dest_rect.cx, sub_dest_rect.cy);
 
-            LOG(LOG_INFO, "Rect(%d %d %u %u)", sub_src_rect.x, sub_src_rect.y, sub_src_rect.cx, sub_src_rect.cy);
+//            LOG(LOG_INFO, "Rect(%d %d %u %u)", sub_src_rect.x, sub_src_rect.y, sub_src_rect.cx, sub_src_rect.cy);
 
             src_rect = src_rect.disjunct(sub_src_rect);
         }
 
-        LOG(LOG_INFO, "Rect(%d %d %u %u)", wmh.mod_visible_rect.x, wmh.mod_visible_rect.y, wmh.mod_visible_rect.cx, wmh.mod_visible_rect.cy);
-        LOG(LOG_INFO, "Rect(%d %d %u %u)", src_rect.x, src_rect.y, src_rect.cx, src_rect.cy);
+//        LOG(LOG_INFO, "Rect(%d %d %u %u)", wmh.mod_visible_rect.x, wmh.mod_visible_rect.y, wmh.mod_visible_rect.cx, wmh.mod_visible_rect.cy);
+//        LOG(LOG_INFO, "Rect(%d %d %u %u)", src_rect.x, src_rect.y, src_rect.cx, src_rect.cy);
 
         if (wmh.mod_visible_rect.contains(src_rect)) {
             get_drawable(wmh).draw(new_cmd, new_clip);
