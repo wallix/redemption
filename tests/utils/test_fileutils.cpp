@@ -72,9 +72,6 @@ RED_AUTO_TEST_CASE(CanonicalPath)
         char const* basename;
         char const* extension;
     };
-    char path[4096];
-    char basename[4096];
-    char extension[128];
     // check that function that splits a path between canonical parts has expected behavior
     // Parts are:
     // - path : full path absolute or relative to directory containing file
@@ -93,9 +90,9 @@ RED_AUTO_TEST_CASE(CanonicalPath)
         Data{"",                    "no path",  "no basename",  "no extension"}
     })
     {
-        strcpy(path, "no path");
-        strcpy(basename, "no basename");
-        strcpy(extension, "no extension");
+        char path[4096] = "no path";
+        char basename[4096] = "no basename";
+        char extension[128] = "no extension";
 
         canonical_path(data.filename, path, 4096, basename, 4096, extension, 128);
         RED_CHECK_EQUAL(data.path, path);

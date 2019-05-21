@@ -201,9 +201,9 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
 RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
 {
 #define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
-    ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
+    ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm" /*NOLINT*/
 #define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
-    ",20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm"
+    ",20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm" /*NOLINT*/
 
     auto recorded_wd = wd.create_subdirectory("recorded");
     auto hash_wd = wd.create_subdirectory("hash");
@@ -925,12 +925,7 @@ RED_AUTO_TEST_CASE(TestClearTargetFiles)
     auto create_file = [&wd](std::string filename, auto... exists){
         filename[filename.find_last_of('_')] = '.';
         auto f = wd.add_file(filename);
-        int fd = ::creat(f.c_str(), 0777);
-        auto len = int(filename.size() + 1);
-        RED_TEST_CONTEXT(filename) {
-            RED_CHECK_EQUAL(len, write(fd, filename.data(), len));
-        }
-        ::close(fd);
+        RED_TEST(::close(::open(f.c_str(), 0777, O_RDONLY | O_CREAT)) == 0);
         return Data{std::move(filename), std::move(f), {bool(exists)...}};
     };
 #define F(filename, ...) create_file(#filename, __VA_ARGS__)

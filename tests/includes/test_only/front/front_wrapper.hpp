@@ -53,7 +53,7 @@ public:
     bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override;
+    const CHANNELS::ChannelDefArray & get_channel_list() const override;
 
     void send_to_channel( const CHANNELS::ChannelDef &, uint8_t const * data, size_t length
                         , size_t chunk_size, int flags) override;

@@ -80,7 +80,7 @@ namespace
         stream.stream_at(0).out_uint32_le(len);
         t.send(stream.get_data(), len);
     }
-}
+} // anonymous namespace
 
 
 xup_mod::xup_mod(

@@ -21,8 +21,8 @@
 #pragma once
 
 #include <string>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
 
 #include "core/error.hpp"
@@ -60,7 +60,8 @@ public:
 };
 
 
-namespace LocalICAPServiceProtocol {
+namespace LocalICAPServiceProtocol
+{
 
     enum {
     // +--------------------+-----------------------------------------+
@@ -161,10 +162,10 @@ struct ICAPHeader {
 };
 
 
-struct ICAPNewFile {
-
-    const int file_id;
-    const std::string file_name;
+struct ICAPNewFile
+{
+    int file_id;
+    std::string file_name;
 
     // NewFileMessage
 
@@ -196,12 +197,13 @@ struct ICAPNewFile {
     //            in bytes.
 
 
-    ICAPNewFile(const int file_id, const std::string & file_name)
+    ICAPNewFile(const int file_id, std::string file_name) noexcept
     : file_id(file_id)
-    , file_name(file_name) {}
+    , file_name(std::move(file_name))
+    {}
 
-    void emit(OutStream & stream) {
-
+    void emit(OutStream & stream) const
+    {
         stream.out_uint32_be(this->file_id);
 
         stream.out_uint32_be(this->file_name.length());
@@ -306,7 +308,7 @@ struct ICAPFileDataHeader
 
 struct ICAPResult {
 
-    uint8_t result;
+    uint8_t result = LocalICAPServiceProtocol::ERROR_FLAG;
     int id;
     std::string content;
 
@@ -353,8 +355,7 @@ struct ICAPResult {
     // content: A variable length, ascii string that contains analysis result.
 
 
-    ICAPResult()
-    : result(LocalICAPServiceProtocol::ERROR_FLAG) {}
+    ICAPResult() = default;
 
     void receive(InStream & stream) {
         const unsigned expected = 9;    /* Result(1) + File_id_size(4) + content_size(4)  */
@@ -380,7 +381,7 @@ struct ICAPResult {
 
 };
 
-}
+} // namespace LocalICAPServiceProtocol
 
 
 

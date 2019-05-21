@@ -117,8 +117,7 @@ public:
 
     std::string tmp_path;
 
-    FakeClientIOClipboard()
-      : ClientIOClipboardAPI() {}
+    FakeClientIOClipboard() = default;
 
     void emptyBuffer() override {}
 
@@ -162,7 +161,7 @@ public:
         return this->fileName;
     }
 
-    void set_local_clipboard_stream(bool ) override {}
+    void set_local_clipboard_stream(bool /*unused*/) override {}
     uint16_t get_buffer_type_id() override {return this->_bufferTypeID;}
     int get_citems_number() override {return this->_cItems;}
     size_t get_cliboard_data_length() override {return this->_cliboard_data_length;}

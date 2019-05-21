@@ -92,7 +92,7 @@ private:
     char current_filename_[1024];
     FilenameGenerator filegen_;
     OutFileTransport buf_;
-    unsigned num_file_;
+    unsigned num_file_ = 0;
     int groupid_;
     bool status = true;
 };

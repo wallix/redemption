@@ -207,11 +207,11 @@ struct TS_RFX_TILESET : public TS_RFX_CODEC_CHANNELT {
 class RfxDecoder {
 public:
 	/** @brief decoder states */
-	typedef enum {
+	enum DecoderState {
 		RFX_WAITING_SYNC,
 		RFX_WAITING_PROPERTIES,
 		RFX_WAITING_FRAME
-	} DecoderState;
+	};
 
 	/** @brief haveFlags */
 	enum {
