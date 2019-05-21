@@ -35,46 +35,39 @@
 #include "mod/internal/test_card_mod.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
-//include "core/listen.hpp"
-//include "core/session.hpp"
+//#include "core/listen.hpp"
+//#include "core/session.hpp"
+//#include "transport/socket_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
 
+// Uncomment the code block below to generate testing data.
+//#include <netinet/tcp.h>
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)
 {
     // Uncomment the code block below to generate testing data.
-    //// This server only support one incoming connection before closing listener
-    //class ServerOnce : public Server {
-    //public:
-    //    int  sck;
-    //    char ip_source[256];
-    //
-    //    ServerOnce() : sck(0) {
-    //        ip_source[0] = 0;
-    //    }
-    //
-    //    virtual Server_status start(int incoming_sck) {
-    //        union {
-    //            struct sockaddr s;
-    //            struct sockaddr_storage ss;
-    //            struct sockaddr_in s4;
-    //            struct sockaddr_in6 s6;
-    //        } u;
-    //        unsigned int sin_size = sizeof(u);
-    //        memset(&u, 0, sin_size);
-    //        this->sck = accept(incoming_sck, &u.s, &sin_size);
-    //        strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
-    //        LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
-    //        return START_WANT_STOP;
-    //    }
-    //} one_shot_server;
-    //Listen listener(one_shot_server, 0, 3389, true, 5); // 25 seconds to connect, or timeout
-    //listener.run();
+    //int port = 3389;
+    //unique_fd sck_server = create_server(0, port);
+    //unique_server_loop(std::move(sck_server), [&](int sck)
+    //{
+    //    union {
+    //        struct sockaddr s;
+    //        struct sockaddr_storage ss;
+    //        struct sockaddr_in s4;
+    //        struct sockaddr_in6 s6;
+    //    } u;
+    //    unsigned int sin_size = sizeof(u);
+    //    memset(&u, 0, sin_size);
+    //    int one_shot_server_sck = accept(sck, nullptr, nullptr);
+
+
+
+
 
     Inifile ini;
-    // ini.set<cfg::font>(Font(app_path_s(AppPath::Share) + "/sans-10.fv1"));
+    //ini.set<cfg::font>(Font(app_path_s(AppPath::Share) + "/sans-10.fv1"));
     ini.set<cfg::debug::front>(511);
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);
@@ -86,12 +79,12 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
 
     // Uncomment the code block below to generate testing data.
     //int nodelay = 1;
-    //if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY
-    //                    , (char *)&nodelay, sizeof(nodelay))) {
+    //if (-1 == setsockopt( one_shot_server_sck, IPPROTO_TCP, TCP_NODELAY
+    //                   , (char *)&nodelay, sizeof(nodelay))) {
     //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     //}
-    //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-    //                           , ini.get<cfg::debug::front>(), 0);
+    //SocketTransport front_trans( "RDP Client", unique_fd{one_shot_server_sck}, "0.0.0.0", 0
+    //                           , std::chrono::seconds(1), SocketTransport::Verbose::dump);
 
     // Comment the code block below to generate testing data.
     #include "fixtures/trace_mstsc_client.hpp"
@@ -120,7 +113,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
         front.incoming(no_mod);
     }
 
-    // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
+    //LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     RED_CHECK_EQUAL(1, front.is_up_and_running());
     TestCardMod mod(session_reactor, front.screen_info().width, front.screen_info().height, global_font());
@@ -128,11 +121,15 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
 
     // Uncomment the code block below to generate testing data.
     //sleep(5);
-    //shutdown(one_shot_server.sck, 2);
-    //close(one_shot_server.sck);
 
     // Uncomment the code block below to generate testing data.
     //LOG(LOG_INFO, "Listener closed\n");
-    //LOG( LOG_INFO, "Incoming socket %d (ip=%s)\n", one_shot_server.sck
-    //   , one_shot_server.ip_source);
+
+
+
+
+
+    // Uncomment the code block below to generate testing data.
+    //    return true;
+    //});
 }
