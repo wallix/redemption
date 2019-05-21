@@ -382,6 +382,8 @@ private:
 
     uint32_t stamp;
 
+    const uint16_t max_cell_size;
+
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -418,6 +420,7 @@ public:
     , lite_elements(use_waiting_list ? new cache_lite_element[this->size_lite_elements] : nullptr)
     , waiting_list(this->lite_elements.get(), CacheOption(use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0), this->lite_storage)
     , stamp(0)
+    , max_cell_size(std::max({ c0.bmp_size, c1.bmp_size, c2.bmp_size, c3.bmp_size, c4.bmp_size }))
     , verbose(verbose)
     {
         assert(
@@ -499,6 +502,10 @@ public:
         if (bool(this->verbose & Verbose::life)) {
             this->log();
         }
+    }
+
+    uint16_t get_max_cell_size() const {
+        return this->max_cell_size;
     }
 
     void reset() {
