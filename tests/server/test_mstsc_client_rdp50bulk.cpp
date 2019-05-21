@@ -25,9 +25,6 @@
 #define RED_TEST_MODULE TestFrontMstscClientRDP50Bulk
 #include "system/redemption_unit_tests.hpp"
 
-// Comment the code block below to generate testing data.
-// Uncomment the code block below to generate testing data.
-
 #include "core/font.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
@@ -35,8 +32,8 @@
 #include "configs/config.hpp"
 #include "front/front.hpp"
 // Uncomment the code block below to generate testing data.
-//include "core/listen.hpp"
-//include "core/session.hpp"
+//#include "core/listen.hpp"
+//#include "core/session.hpp"
 
 #include "test_only/lcg_random.hpp"
 
@@ -89,8 +86,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //                    , (char *)&nodelay, sizeof(nodelay))) {
     //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     //}
-    //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-    //                           , ini.get<cfg::debug::front>(), 0);
+    //SocketTransport front_trans( "RDP Client", unique_fd{one_shot_server.sck}, "0.0.0.0", 0
+    //                           , std::chrono::seconds(1), to_verbose_flags(511));
 
     // Comment the code block below to generate testing data.
     #include "fixtures/trace_mstsc_client_rdp50bulk.hpp"
