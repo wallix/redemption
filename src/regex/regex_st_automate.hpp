@@ -82,7 +82,7 @@ namespace re {
                         return impl(l, st->out1, stval, is_end, count, count_consume);
                     }
                 }
-                else if (st) {
+                else {
                     if (st->is_terminate()) {
                         if (count_consume > 0) {
                             l.push_back(st_step_elem_t(st, count_consume));
@@ -238,7 +238,7 @@ namespace re {
                         return impl(l, st->out1, stval, count, count_consume);
                     }
                 }
-                else if (st) {
+                else {
                     l.push_back(st_step_elem_t(st, count_consume));
                 }
                 return false;
