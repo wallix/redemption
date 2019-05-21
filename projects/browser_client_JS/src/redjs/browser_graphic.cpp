@@ -29,7 +29,6 @@ Author(s): Jonathan Poelen
 #include "gdi/screen_info.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/capabilities/order.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -53,7 +52,7 @@ namespace
         return a.intersect(w, h).intersect(b);
     }
 
-    // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
+    // TODO removed when RDPMultiScrBlt and RDPMultiOpaqueRect contains a rect member
     //@{
     Rect to_rect(RDPMultiOpaqueRect const & cmd)
     { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
@@ -77,6 +76,22 @@ namespace
             f(clip_drawable_cmd_intersect.intersect(cmd_rect));
         }
     }
+
+    namespace jsnames
+    {
+        constexpr char const* draw_rect = "drawRect";
+        constexpr char const* draw_scrblt = "drawSrcBlt";
+        constexpr char const* draw_memblt = "drawImage";
+        constexpr char const* draw_bitmap_data = draw_memblt;
+        constexpr char const* draw_lineto = "drawLineTo";
+        constexpr char const* draw_polyline = "drawPolyline";
+
+        constexpr char const* cached_pointer = "cachedPointer";
+        constexpr char const* new_pointer = "newPointer";
+        constexpr char const* set_pointer = "setPointer";
+
+        constexpr char const* resize_canvas = "resizeCanvas";
+    }
 }
 
 
@@ -88,18 +103,35 @@ inline uint32_t emval_call_arg(BGRColor const& bgr) noexcept
 namespace redjs
 {
 
-BrowserGraphic::BrowserGraphic(emscripten::val callbacks, uint16_t width, uint16_t height, OrderCaps& order_caps)
+BrowserGraphic::BrowserGraphic(emscripten::val callbacks, uint16_t width, uint16_t height)
 : width(width)
 , height(height)
 , callbacks(std::move(callbacks))
 {
-    // TODO check implementation from this->callbacks
-    order_caps.orderSupport[TS_NEG_POLYLINE_INDEX] = 1;
-    order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
-    order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] = 1;
-    order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
-    order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
-    order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
+}
+
+PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
+{
+    PrimaryDrawingOrdersSupport supported {};
+    auto set = [&](char const* name, auto f){
+        supported |= !!callbacks[name] ? f : PrimaryDrawingOrdersSupport{};
+    };
+
+    supported |= PrimaryDrawingOrdersSupport{}
+        | TS_NEG_OPAQUERECT_INDEX       // mendatory support
+        | TS_NEG_MULTIOPAQUERECT_INDEX; // based on opaque rect
+
+    set(jsnames::draw_scrblt, PrimaryDrawingOrdersSupport{}
+        | TS_NEG_SCRBLT_INDEX
+        | TS_NEG_MULTISCRBLT_INDEX);
+
+    set(jsnames::draw_memblt, TS_NEG_MEMBLT_INDEX);
+    set(jsnames::draw_lineto, TS_NEG_LINETO_INDEX);
+    set(jsnames::draw_polyline, TS_NEG_POLYLINE_INDEX);
+
+    static_assert(jsnames::draw_bitmap_data == jsnames::draw_memblt);
+
+    return supported;
 }
 
 BrowserGraphic::~BrowserGraphic() = default;
@@ -115,7 +147,7 @@ void BrowserGraphic::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx co
 
     const Rect trect = intersect(clip, cmd.rect);
 
-    emval_call(this->callbacks, "drawRect",
+    emval_call(this->callbacks, jsnames::draw_rect,
         trect.x,
         trect.y,
         trect.cx,
@@ -130,7 +162,7 @@ void BrowserGraphic::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorC
 
     const auto color = color_decode(cmd._Color, color_ctx);
     draw_multi(this->width, this->height, cmd, clip, [color, this](const Rect & trect) {
-        emval_call(this->callbacks, "drawRect",
+        emval_call(this->callbacks, jsnames::draw_rect,
             trect.x,
             trect.y,
             trect.cx,
@@ -149,7 +181,7 @@ void BrowserGraphic::draw(const RDPScrBlt & cmd, Rect clip)
     const auto deltax = cmd.srcx - cmd.rect.x;
     const auto deltay = cmd.srcy - cmd.rect.y;
 
-    emval_call(this->callbacks, "drawSrcBlt",
+    emval_call(this->callbacks, jsnames::draw_scrblt,
         drect.x + deltax,
         drect.y + deltay,
         drect.cx,
@@ -168,7 +200,7 @@ void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     const signed int deltay = cmd.nYSrc - cmd.rect.y;
 
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
-        emval_call(this->callbacks, "drawSrcBlt",
+        emval_call(this->callbacks, jsnames::draw_scrblt,
             trect.x,
             trect.y,
             trect.cx,
@@ -240,7 +272,7 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
     }
 
     // cmd.rop == 0xCC
-    emval_call(this->callbacks, "drawImage",
+    emval_call(this->callbacks, jsnames::draw_memblt,
         image.data(),
         image.width(),
         image.height(),
@@ -249,7 +281,8 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
         srcx,
         srcy,
         mincx,
-        mincy
+        mincy,
+        cmd.rop
     );
 
     // switch (cmd.rop) {
@@ -280,7 +313,7 @@ void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_
         return;
     }
 
-    emval_call(this->callbacks, "drawLineTo",
+    emval_call(this->callbacks, jsnames::draw_lineto,
         cmd.back_mode,
         equa.segin.a.x,
         equa.segin.a.y,
@@ -304,7 +337,7 @@ void BrowserGraphic::draw(RDPPolyline const & cmd, Rect /*clip*/, gdi::ColorCtx 
 
     const auto color = color_decode(cmd.PenColor, color_ctx);
 
-    emval_call(this->callbacks, "drawPolyline",
+    emval_call(this->callbacks, jsnames::draw_polyline,
         cmd.xStart,
         cmd.yStart,
         cmd.NumDeltaEntries,
@@ -333,7 +366,7 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 
     redjs::ImageData image = image_data_from_bitmap(bmp);
 
-    emval_call(this->callbacks, "drawImage",
+    emval_call(this->callbacks, jsnames::draw_bitmap_data,
         image.data(),
         image.width(),
         image.height(),
@@ -342,7 +375,8 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
         0,
         0,
         cmd.dest_right - cmd.dest_left + 1,
-        cmd.dest_bottom - cmd.dest_top + 1
+        cmd.dest_bottom - cmd.dest_top + 1,
+        0xCC
     );
 }
 
@@ -357,13 +391,13 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
 
     switch (mode) {
     case SetPointerMode::Cached:
-        emval_call(this->callbacks, "cachedPointer", cache_idx);
+        emval_call(this->callbacks, jsnames::cached_pointer, cache_idx);
         break;
     case SetPointerMode::New: {
         const redjs::ImageData image = redjs::image_data_from_pointer(cursor);
         const auto hotspot = cursor.get_hotspot();
 
-        emval_call(this->callbacks, "newPointer",
+        emval_call(this->callbacks, jsnames::new_pointer,
             image.data(),
             image.width(),
             image.height(),
@@ -377,7 +411,7 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
         const redjs::ImageData image = redjs::image_data_from_pointer(cursor);
         const auto hotspot = cursor.get_hotspot();
 
-        emval_call(this->callbacks, "setPointer",
+        emval_call(this->callbacks, jsnames::set_pointer,
             image.data(),
             image.width(),
             image.height(),
@@ -397,7 +431,7 @@ bool BrowserGraphic::resize_canvas(uint16_t width, uint16_t height)
     this->width = width;
     this->height = height;
 
-    emval_call(this->callbacks, "resizeCanvas",
+    emval_call(this->callbacks, jsnames::resize_canvas,
         width,
         height
     );

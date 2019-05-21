@@ -149,7 +149,7 @@ FrontWrapper::FrontWrapper(
 : d(new D{FrontWrapper::D::MyFront{
     session_reactor,
     trans, gen, ini, cctx, report_message,
-    fp_support, mem3blt_support, server_capabilities_filename
+    fp_support, mem3blt_support, std::move(server_capabilities_filename)
 }})
 {}
 

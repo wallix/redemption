@@ -1816,7 +1816,9 @@ class mod_rdp : public mod_api, public rdp_api
     SessionReactor& session_reactor;
     SessionReactor::GraphicFdPtr fd_event;
 
+#ifndef __EMSCRIPTEN__
     SessionReactor::TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
+#endif
 
     bool deactivation_reactivation_in_progress = false;
 
@@ -4715,7 +4717,9 @@ public:
 
             this->front.send_savesessioninfo();
 
+#ifndef __EMSCRIPTEN__
             this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+#endif
         }
         break;
         case RDP::INFOTYPE_LOGON_LONG:
@@ -4727,7 +4731,9 @@ public:
 
             this->front.send_savesessioninfo();
 
+#ifndef __EMSCRIPTEN__
             this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+#endif
         }
         break;
         case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
@@ -4772,7 +4778,9 @@ public:
 
                 this->is_server_auto_reconnec_packet_received = true;
 
+#ifndef __EMSCRIPTEN__
                 this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+#endif
             }
 
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {

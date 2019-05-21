@@ -70,6 +70,25 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
         "tcp      6 431997 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=46392 dport=3389 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=46392 [ASSURED] mark=0 secmark=0 use=2\n"
         "udp      17 0 src=10.10.43.31 dst=10.10.47.255 sport=57621 dport=57621 [UNREPLIED] src=10.10.47.255 dst=10.10.43.31 sport=57621 dport=57621 mark=0 secmark=0 use=2\n"_av;
 
+    std::string prefix =  "ipv4     2 ";
+    std::string conntrack3 = prefix;
+    for (char c: conntrack1) {
+        conntrack3 += c;
+        if (c == '\n') {
+            conntrack3 += prefix;
+        }
+    }
+    conntrack3.resize(conntrack3.size() - prefix.size());
+
+    std::string conntrack4 = prefix;
+    for (char c: conntrack2) {
+        conntrack4 += c;
+        if (c == '\n') {
+            conntrack4 += prefix;
+        }
+    }
+    conntrack4.resize(conntrack4.size() - prefix.size());
+
     struct D {
         char const* name;
         array_view_const_char data;
@@ -78,7 +97,9 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
         // "tcp      6 431979 ESTABLISHED src=10.10.43.13 dst=10.10.46.78 sport=41971 dport=3389 packets=96 bytes=10739 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=41971 packets=96 bytes=39071 [ASSURED] mark=0 secmark=0 use=2\n"
         D{"test1", conntrack1},
         // "tcp      6 431979 ESTABLISHED src=10.10.43.13 dst=10.10.46.78 sport=41971 dport=3389 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=41971 [ASSURED] mark=0 secmark=0 use=2\n"
-        D{"test2", conntrack2}
+        D{"test2", conntrack2},
+        D{"test3", conntrack3},
+        D{"test4", conntrack4}
     })
     {
         WorkingFile wf(d.name);

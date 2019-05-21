@@ -47,9 +47,9 @@ namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
 } // namespace dump2008
 
-namespace dump2008_PatBlt {
-    #include "fixtures/dump_w2008_PatBlt.hpp"
-} // namespace dump2008_PatBlt
+// namespace dump2008_PatBlt {
+//     #include "fixtures/dump_w2008_PatBlt.hpp"
+// } // namespace dump2008_PatBlt
 
 
 class MyFront : public FrontWrapper
@@ -153,6 +153,9 @@ RED_AUTO_TEST_CASE(TestFront)
 
     SessionReactor session_reactor;
     NullReportMessage report_message;
+
+    RED_TEST_PASSPOINT();
+
     MyFront front(
         session_reactor, front_trans, gen1, ini , cctx,
         report_message, fastpath_support, mem3blt_support);
@@ -229,6 +232,8 @@ RED_AUTO_TEST_CASE(TestFront)
     //  Sequence initiated by mod_rdp.
     front.set_up_and_running(true);
 
+    RED_TEST_PASSPOINT();
+
     execute_mod(session_reactor, *mod, front, 38);
 
 //    front.dump_png("trace_w2008_");
@@ -301,9 +306,14 @@ RED_AUTO_TEST_CASE(TestFront2)
 
     SessionReactor session_reactor;
     NullReportMessage report_message;
+
+    RED_TEST_PASSPOINT();
+
     MyFront front( session_reactor, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
+
+    RED_TEST_PASSPOINT();
 
     RED_REQUIRE(!session_reactor.timer_events_.is_empty());
     RED_CHECK_EXCEPTION_ERROR_ID(

@@ -454,6 +454,11 @@ private:
             return this->get_graphics().bmp_cache;
         }
 
+        uint16_t get_bmp_cache_max_cell_size() const
+        {
+            return this->get_graphics().bmp_cache.get_max_cell_size();
+        }
+
         int add_brush(uint8_t* brush_item_data, int& cache_idx)
         {
             return this->get_graphics().brush_cache.add_brush(brush_item_data, cache_idx);
@@ -4523,8 +4528,9 @@ private:
             Graphics::PrivateGraphicsUpdatePDU& graphics_update_pdu_ = this->orders.graphics_update_pdu();
             return graphics_update_pdu_.get_max_data_block_size();
         }();
-        if (front_bitmap_size <= serializer_max_data_block_size
-            && align4(dst_cx) < 128 && dst_cy < 128) {
+        size_t const bmp_cache_max_cell_size = this->orders.get_bmp_cache_max_cell_size();
+        size_t const max_bmp_size = std::min(serializer_max_data_block_size, bmp_cache_max_cell_size);
+        if (front_bitmap_size <= max_bmp_size) {
             // clip dst as it can be larger than source bitmap
             const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
             const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
@@ -4532,7 +4538,7 @@ private:
         }
         else {
             // if not we have to split it
-            const uint16_t TILE_CX = ((nb_bytes_per_pixel(this->client_info.screen_info.bpp) * 64 * 64 < serializer_max_data_block_size) ? 64 : 32);
+            const uint16_t TILE_CX = ((nb_bytes_per_pixel(this->client_info.screen_info.bpp) * 64 * 64 < max_bmp_size) ? 64 : 32);
             const uint16_t TILE_CY = TILE_CX;
 
             contiguous_sub_rect_f(CxCy{dst_cx, dst_cy}, SubCxCy{TILE_CX, TILE_CY}, [&](Rect r){

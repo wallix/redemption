@@ -25,5 +25,5 @@
 
 #pragma once
 
-#define VERSION "7.1.3-proxy_recorder"
+#define VERSION "7.1.5"
 

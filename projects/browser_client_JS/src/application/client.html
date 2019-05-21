@@ -41,7 +41,6 @@
 </style>
 </div>
 <canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
-<canvas id="curCanvas" style="display:none"></canvas>
 <section>
     <form id="login" method="get" action="#">
         <input type="text" id="user" name="user" value="x" placeholder="Username"/>
@@ -67,7 +66,10 @@
 <section>
 
 <script src="js_client.js"></script>
+<script src="to_scancode.js"></script>
+<script src="rdp_graphics.js"></script>
 <script>
+
 const Module = WallixModule({
     // TOTAL_MEMORY: 16777216, // 16**6
     TOTAL_MEMORY: 268435456, // 16**7
@@ -76,13 +78,18 @@ const Module = WallixModule({
 const redemption = (function(Module, window) {
     const HEAPU8 = Module.HEAPU8;
     const HEAP16 = Module.HEAP16;
-    const identity = (x) => x;
 
-    const wCb_em2js_ImageData = function(cb) {
+    const identity = function(cb, thisp) {
+        return function(...args) {
+            cb.call(thisp, ...args);
+        };
+    };
+
+    const wCb_em2js_ImageData = function(cb, thisp) {
         return function(idata, w, h, ...args) {
             const data = HEAPU8.subarray(idata, idata + w * h * 4);
             const image = new ImageData(new Uint8ClampedArray(data), w, h);
-            cb(image, ...args);
+            cb.call(thisp, image, ...args);
         };
     };
 
@@ -93,220 +100,123 @@ const redemption = (function(Module, window) {
         };
     };
 
-    const wrappersFrontMod = {
-        // idata, w, h, dx, dy, sz, sy, dw, dh
-        drawImage: wCb_em2js_ImageData,
-        drawPolyline: function(cb) {
-            return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
-                const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
-                cb(xStart, yStart, deltas, penColor)
-            };
-        },
-
-        drawRect: identity,
-        drawSrcBlt: identity,
-        drawLineTo: identity,
-
-        setPointer: wCb_em2js_ImageData,
-        newPointer: wCb_em2js_ImageData,
-        cachedPointer: identity,
-
-        resizeCanvas: identity,
-
-        random: wCb_em2js_U8p,
-    };
-
-    const wrappersFront = {
-        ...wrappersFrontMod,
-        socketOpen: identity,
-        socketClose: identity,
-        socketMessage: identity,
-        socketAfterMessage: identity,
-        socketError: identity,
-        socketSend: identity,
-    };
-
-    const defaultRandom = function(idata, len) {
-        const data = HEAPU8.subarray(idata, idata + len);
-        window.crypto.getRandomValues(data);
-    };
-
     const noop = function(){};
 
-    let resultFuncs = {};
+    // { funcname: [wrapCreator, defaultFunction], ... }
+    const wrappersFront = {
+        drawImage: [wCb_em2js_ImageData],
+        drawPolyline: [function(cb) {
+            return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
+                const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
+                cb(xStart, yStart, deltas, penColor);
+            };
+        }],
 
-    resultFuncs.newRDPClient = function(url, width, height, username, password, verbosity) {
-        const socket = new WebSocket(url, "RDP");
-        socket.binaryType = 'arraybuffer';
+        drawRect: [identity],
+        drawSrcBlt: [identity],
+        drawLineTo: [identity],
 
-        let rdpclient = null;
-        const events = {
-            random: defaultRandom,
-        };
-        let channelCreators = [];
-        let channels = [];
+        setPointer: [wCb_em2js_ImageData, noop],
+        newPointer: [wCb_em2js_ImageData, noop],
+        cachedPointer: [identity, noop],
 
-        const client = {
-            on: function(eventName, cb) {
+        resizeCanvas: [identity, noop],
+
+        random: [wCb_em2js_U8p, function(idata, len) {
+            const data = HEAPU8.subarray(idata, idata + len);
+            window.crypto.getRandomValues(data);
+        }],
+    };
+
+    class RDPClient {
+        constructor(socket, width, height, events, username, password, disabled_orders, verbosity) {
+            const rdpEvents = {};
+
+            for (const eventName in wrappersFront) {
                 const wrapCb = wrappersFront[eventName];
-                if (!wrapCb) {
-                    console.log('RdpClient: Unknown event ' + eventName);
-                    return false;
-                }
-                events[eventName] = wrapCb(cb, events);
-                return this;
-            },
-            close: noop,
-            sendUnicode: noop,
-            sendScancode: noop,
-            sendMouseEvent: noop,
-            addChannelCreator: (f) => { channelCreators.push(f); },
-        };
+                const cb = events[eventName];
+                rdpEvents[eventName] = cb ? wrapCb[0](cb, events) : wrapCb[1];
+            }
 
-        // let counter = 1;
+            this.native = new Module.RdpClient(
+                rdpEvents, width, height,
+                username || "", password || "",
+                disabled_orders || 0,
+                verbosity || 0,
+            );
+            this.socket = socket;
+            this._channels = [];
+        }
 
-        const send_data = function() {
-            const out = rdpclient.getSendingData()
+        close() {
+            this.socket.close();
+        }
+
+        start() {
+            this.native.sendFirstPacket();
+            this.sendBufferedData();
+        }
+
+        delete() {
+            for (channel of this._channels) {
+                channel.delete();
+            }
+            this.native.delete();
+        }
+
+        getCallback() {
+            return this.native.getCallbackAsVoidPtr();
+        }
+
+        addChannel(channel) {
+            this._channels.push(channel);
+            this.native.addChannelReceiver(channel.getChannelReceiver());
+        }
+
+        sendUnicode(unicode, flags) {
+            this.native.sendUnicode(unicode, flags);
+            this.sendBufferedData();
+        }
+
+        sendScancode(key, flags) {
+            this.native.sendScancode(key, flags);
+            this.sendBufferedData();
+        }
+
+        sendMouseEvent(flag, x, y) {
+            this.native.sendMouseEvent(flag, x, y);
+            this.sendBufferedData();
+        }
+
+        sendBufferedData() {
+            const out = this.native.getSendingData();
             if (out.length) {
-                // console.log("send " + out.length + " bytes")
-                const cb = events.socketSend;
-                if (cb) {
-                    cb(out);
-                }
-                socket.send(out);
+                this.socket.send(out);
 
                 // let text = "";
                 // console.log('Received Binary Message of ' + out.length + ' bytes');
                 // for (let byte of out) {
                 //     text += ":" + (byte+0x10000).toString(16).substr(-2);
                 // }
-                // console.log(counter, "Send: " + text);
-                // ++counter;
+                // this.counter = (this.counter || 0) + 1
+                // console.log(this.counter, "Send: " + text);
 
-                rdpclient.clearSendingData();
-            }
-        };
-
-        let timeoutID = -1;
-        let timeoutDate = 0xffffffff;
-        const timer_action = function() {
-            const now = Data.now();
-            const timeout = rdpclient.updateTime();
-            send_data();
-            timeoutDate = now + timeout;
-            timeoutID = setTimeout(timer_action, timeout);
-        }
-        const update_timer = function(nextDate) {
-            if (nextDate < timeoutDate) {
-                timeoutDate = nextDate;
-                clearTimeout(timeoutID);
-                timeoutID = setTimeout(timer_action, Math.max(0, nextDate - Data.now()));
+                this.native.clearSendingData();
             }
         }
 
-        const finally_ = function(cb, event) {
-            try {
-                if (cb) {
-                    cb(event);
-                }
-            }
-            finally {
-                if (rdpclient) {
-                    if (timeoutID) {
-                        clearTimeout(timeoutID);
-                    }
-                    for (channel of channels) {
-                        channel.delete()
-                    }
-                    channels = undefined
-                    rdpclient.delete();
-                    rdpclient = undefined;
-                }
-            }
+        addReceivingData(data) {
+            this.native.addReceivingData(data);
         }
+    };
 
-        socket.onopen = function(event) {
-            const cb = events.socketOpen;
-            if (cb) {
-                cb(event);
-            }
-
-            client.close = () => socket.close();
-            rdpclient = new Module.RdpClient(
-                events, width, height,
-                username || "", password || "",
-                verbosity || 0);
-            // client.rdpclient = rdpclient;
-
-            for (channelCreator of channelCreators) {
-                console.log(channelCreator);
-                const channel = channelCreator(rdpclient.getCallbackAsVoidPtr());
-                console.log(channel);
-                if (channel) {
-                    channels.push(channel);
-                    rdpclient.addChannelReceiver(channel.getChannelReceiver());
-                }
-            }
-            channelCreators = undefined
-
-            for (eventName in wrappersFrontMod) {
-                if (!(eventName in events)) {
-                    events[eventName] = noop;
-                }
-            }
-
-            client.sendUnicode = function(unicode, flags) {
-                rdpclient.sendUnicode(unicode, flags);
-                send_data();
-            }
-            client.sendScancode = function(key, flags) {
-                rdpclient.sendScancode(key, flags);
-                send_data();
-            }
-            client.sendMouseEvent = function(flag, x, y) {
-                rdpclient.sendMouseEvent(flag, x, y);
-                send_data();
-            }
-            client.sendBufferedData = send_data;
-
-            rdpclient.updateTime();
-            timeoutDate = Date.now();
-            send_data();
-        };
-
-        socket.onmessage = function(event) {
-            const cb1 = events.socketMessage;
-            if (cb1) {
-                cb1(event);
-            }
-
-            // console.log("receive " + event.data.byteLength + " bytes")
-            rdpclient.addReceivingData(event.data);
-            const now = Date.now();
-            const timeout = rdpclient.updateTime();
-            send_data();
-            const nextDateTimer = now + timeout;
-            if (nextDateTimer < timeoutDate) {
-                timeoutDate = nextDateTimer;
-                clearTimeout(timeoutID);
-                timeoutID = setTimeout(timer_action, Math.max(0, nextDateTimer - Data.now()));
-            }
-
-            const cb2 = events.socketAfterMessage;
-            if (cb2) {
-                cb2(event);
-            }
-        };
-
-        socket.onerror = function(event) {
-            finally_(events.socketError);
-        };
-
-        socket.onclose = function(event) {
-            finally_(events.socketClose);
-        };
-
-        return client;
+    const resultFuncs = {
+        RDPClient: RDPClient,
+        newRDPSocket: function(url) {
+            const socket = new WebSocket(url, "RDP");
+            socket.binaryType = 'arraybuffer';
+            return socket;
+        },
     };
 
     const addChannelClass = (ChannelClassName, wrapEvents) => {
@@ -340,14 +250,14 @@ const redemption = (function(Module, window) {
 
 })(Module, window);
 
-const newRDPClient = redemption.newRDPClient;
+const RDPClient = redemption.RDPClient;
+const newRDPSocket = redemption.newRDPSocket;
 const newClipboardChannel = redemption.newClipboardChannel;
 const HEAPU8 = Module.HEAPU8;
 const HEAPU16 = Module.HEAPU16;
 
 
 const ecanvasFocus = document.getElementById('canvasFocus');
-const ecurCanvas = document.getElementById('curCanvas');
 const ecanvas = document.getElementById('canvas');
 const ecanvas2 = document.getElementById('canvas2');
 const canvas = ecanvas.getContext('2d');
@@ -373,278 +283,41 @@ function has_intersection(x1,y1,w1,h1,x2,y2,w2,h2)
         && ((y2 >= y1 && y2 < y1 + h1) || (y1 >= y2 && y1 < y2 + h2));
 }
 
-const scrROp = new Array(255);
-scrROp[0x00] = 'darken';
-scrROp[0xF0] = 'source-over';
-scrROp[0xCC] = 'source-over';
-scrROp[0x55] = 'xor';
-scrROp[0xFF] = 'lighten';
+const KbdFlags = Object.freeze({
+    Extended: 0x0100,
+    Extended1: 0x0200,
+    Down: 0x4000,
+    Release: 0x8000,
+});
 
-const KBD_FLAGS_EXTENDED  = 0x0100
-const KBD_FLAGS_EXTENDED1 = 0x0200
-const KBD_FLAGS_DOWN      = 0x4000
-const KBD_FLAGS_RELEASE   = 0x8000
-
-const keymap = {
-    '!': 0x00000035,
-    '"': 0x00000004,
-    '#': 0x00000004,
-    '$': 0x0000001b,
-    '%': 0x00000028,
-    '&': 0x00000002,
-    ' ': 0x00000039,
-    '0': 0x0000000b,
-    '(': 0x00000006,
-    ')': 0x0000000c,
-    '*': 0x0000002b,
-    '+': 0x0000000d,
-    ',': 0x00000032,
-    '-': 0x00000007,
-    '.': 0x00000033,
-    '/': 0x00000034,
-    '1': 0x00000002,
-    '2': 0x00000003,
-    '3': 0x00000004,
-    '4': 0x00000005,
-    '5': 0x00000006,
-    '6': 0x00000007,
-    '7': 0x00000008,
-    '8': 0x00000009,
-    '9': 0x0000000a,
-    ':': 0x00000034,
-    ';': 0x00000033,
-    '<': 0x00000056,
-    '=': 0x0000000d,
-    '>': 0x00000056,
-    '?': 0x00000032,
-    '@': 0x0000000b,
-    'Alt': 0x00000038,
-    'AltGr': 0x00000138,
-    'Apps': 0x0000015d,
-    'ArrowDown': 0x00000150,
-    'ArrowLeft': 0x0000014b,
-    'ArrowRight': 0x0000014d,
-    'ArrowUp': 0x00000148,
-    'Backspace': 0x0000000e,
-    'BracketLeft': 0x0000001a,
-    'CapsLock': 0x0000003a,
-    'ContextMenu': 0x0000015d,
-    'Control': 0x0000001d,
-    'DeadCircumflex': 0x0000001a,
-    'DeadUmlaut': 0x0000001a,
-    'Del': 0x00000153,
-    'Delete': 0x00000153,
-    'Digit0': 0x0000000b,
-    'Digit2': 0x00000003,
-    'Digit7': 0x00000008,
-    'Down': 0x00000150,
-    'End': 0x0000014f,
-    'Enter': 0x0000001c,
-    'Esc': 0x00000001,
-    'Escape': 0x00000001,
-    'F1': 0x0000003b,
-    'F2': 0x0000003c,
-    'F3': 0x0000003d,
-    'F4': 0x0000003e,
-    'F5': 0x0000003f,
-    'F6': 0x00000040,
-    'F7': 0x00000041,
-    'F8': 0x00000042,
-    'F9': 0x00000043,
-    'F10': 0x00000044,
-    'F11': 0x00000057,
-    'F12': 0x00000058,
-    'Home': 0x00000147,
-    'Insert': 0x00000152,
-    'KeyE': 0x00000012,
-    'KeyI': 0x00000017,
-    'KeyO': 0x00000018,
-    'KeyQ': 0x00000010,
-    'KeyU': 0x00000016,
-    'Left': 0x0000014b,
-    'Menu': 0x0000015d,
-    'Meta': 0x0000015b,
-    'NumLock': 0x00000145,
-    'OS': 0x0000015b,
-    'PageDown': 0x00000151,
-    'PageUp': 0x00000149,
-    'Pause': 0x00000045,
-    'PrintScreen': 0x00000137,
-    'Quote': 0x00000028,
-    'Right': 0x0000014d,
-    'Scroll': 0x00000046,
-    'ScrollLock': 0x00000046,
-    'Shift': 0x0000002a,
-    'Spacebar': 0x00000039,
-    'Tab': 0x0000000f,
-    'Up': 0x00000148,
-    'Win': 0x0000015b,
-    '[': 0x00000006,
-    '\'': 0x00000005,
-    '\\': 0x00000009,
-    ']': 0x0000000c,
-    '^': 0x0000000a,
-    '_': 0x00000009,
-    '`': 0x00000008,
-    'a': 0x00000010,
-    'b': 0x00000030,
-    'c': 0x0000002e,
-    'd': 0x00000020,
-    'e': 0x00000012,
-    'extControl': 0x0000011d,
-    'f': 0x00000021,
-    'g': 0x00000022,
-    'h': 0x00000023,
-    'i': 0x00000017,
-    'j': 0x00000024,
-    'k': 0x00000025,
-    'l': 0x00000026,
-    'm': 0x00000027,
-    'n': 0x00000031,
-    'numpad0': 0x00000052,
-    'numpad*': 0x00000037,
-    'numpad+': 0x0000004e,
-    'numpad-': 0x0000004a,
-    'numpad.': 0x00000053,
-    'numpad/': 0x00000135,
-    'numpad1': 0x0000004f,
-    'numpad2': 0x00000050,
-    'numpad3': 0x00000051,
-    'numpad4': 0x0000004b,
-    'numpad5': 0x0000004c,
-    'numpad6': 0x0000004d,
-    'numpad7': 0x00000047,
-    'numpad8': 0x00000048,
-    'numpad9': 0x00000049,
-    'numpadAdd': 0x0000004e,
-    'numpadArrowDown': 0x00000050,
-    'numpadArrowLeft': 0x0000004b,
-    'numpadArrowRight': 0x0000004d,
-    'numpadArrowUp': 0x00000048,
-    'numpadClear': 0x0000004c,
-    'numpadDecimal': 0x00000053,
-    'numpadDel': 0x00000053,
-    'numpadDelete': 0x00000053,
-    'numpadDivide': 0x00000135,
-    'numpadDown': 0x00000050,
-    'numpadEnd': 0x0000004f,
-    'numpadEnter': 0x0000011c,
-    'numpadHome': 0x00000047,
-    'numpadInsert': 0x00000052,
-    'numpadLeft': 0x0000004b,
-    'numpadMultiply': 0x00000037,
-    'numpadPageDown': 0x00000051,
-    'numpadPageUp': 0x00000049,
-    'numpadRight': 0x0000004d,
-    'numpadSubtract': 0x0000004a,
-    'numpadUp': 0x00000048,
-    'o': 0x00000018,
-    'p': 0x00000019,
-    'q': 0x0000001e,
-    'r': 0x00000013,
-    's': 0x0000001f,
-    't': 0x00000014,
-    'u': 0x00000016,
-    'v': 0x0000002f,
-    'w': 0x0000002c,
-    'x': 0x0000002d,
-    'y': 0x00000015,
-    'z': 0x00000011,
-    '{': 0x00000005,
-    '|': 0x00000007,
-    '}': 0x0000000d,
-    '~': 0x00000003,
-    '£': 0x0000001b,
-    '¤': 0x0000001b,
-    '§': 0x00000035,
-    '¨': 0x0000001a,
-    '°': 0x0000000c,
-    '²': 0x00000029,
-    'µ': 0x0000002b,
-    'À': 0x00000010,
-    'È': 0x00000012,
-    'Ù': 0x00000016,
-    'à': 0x0000000b,
-    'â': 0x00000010,
-    'ã': 0x00000010,
-    'ä': 0x00000010,
-    'ç': 0x0000000a,
-    'è': 0x00000008,
-    'é': 0x00000003,
-    'ê': 0x00000012,
-    'ë': 0x00000012,
-    'ì': 0x00000017,
-    'î': 0x00000017,
-    'ï': 0x00000017,
-    'ñ': 0x00000031,
-    'ò': 0x00000018,
-    'ô': 0x00000018,
-    'õ': 0x00000018,
-    'ö': 0x00000018,
-    'ù': 0x00000028,
-    'û': 0x00000016,
-    'ü': 0x00000016,
-    'ÿ': 0x00000015,
-    '€': 0x00000012,
-}
-
-function getScanCode(kevt)
-{
-	let curKey = kevt.key;
-
-    if (curKey.length === 1)
-    {
-        const lower = curKey.toLowerCase();
-        if (lower !== curKey.toUpperCase())
-        {
-            curKey = lower;
-        }
-    }
-
-    return keymap[curKey];
-
-    // // Field present in Firefox and Internet Explorer
-    // // Managing num pad characters apart
-    // if ("1234567890.,/*-+".indexOf(curKey) === -1) // General case
-    // {
-    //     switch (kevt.location) {
-    //     case KeyboardEvent.DOM_KEY_LOCATION_NUMPAD:
-    //         return keymap['numpad' + kevt.key];
-    //     case KeyboardEvent.DOM_KEY_LOCATION_RIGHT:
-    //         if (curKey === 'Control') {
-    //             return keymap['numpad' + curKey];
-    //         }
-    //     default: return keymap[curKey];
-    //     }
-    // }
-    //
-    // return 0;
-};
-
-
-// let stateKey = 0;
 function onKeyEvent(flag, evt)
 {
-    const scancode = getScanCode(evt);
-    // console.log(flag, evt.key, evt.keyCode, scancode)
+    const scancode = toScancode(evt.code);
+    // console.log(flag, evt.key, evt.code, scancode)
     if (scancode) {
-        switch (scancode) {
-        case 0x1d: // control
-            console.log('control', flag !== KBD_FLAGS_RELEASE);
-            break;
-        case 0x38: // alt
-            console.log('alt', flag !== KBD_FLAGS_RELEASE);
-            break;
-        case 0x2a: // shift
-            console.log('shift', flag !== KBD_FLAGS_RELEASE);
-            break;
-        case 0x15b: // win
-            console.log('meta', flag !== KBD_FLAGS_RELEASE);
-            break;
-		}
+        // switch (scancode) {
+        // case 0x1d: // control left
+        // case 0x11d: // control right
+        //     console.log('control', flag !== KbdFlags.Release);
+        //     break;
+        // case 0x38: // alt left
+        // case 0x138: // alt right
+        //     console.log('alt', flag !== KbdFlags.Release);
+        //     break;
+        // case 0x2a: // shift left
+        // case 0x36: // shift right
+        //     console.log('shift', flag !== KbdFlags.Release);
+        //     break;
+        // case 0x15b: // win
+        //     console.log('meta', flag !== KbdFlags.Release);
+        //     break;
+        // }
         evt.preventDefault();
-        rdpclient.sendScancode(scancode & 0xFF, (scancode & KBD_FLAGS_EXTENDED) | flag);
+        rdpclient.sendScancode(scancode & 0xFF, (scancode & KbdFlags.Extended) | flag);
     }
+    // else {
+    //     console.log(flag, evt.key, evt.keyCode)
+    // }
 }
 
 function mouseButtonToFlag(evt)
@@ -668,9 +341,9 @@ function onMouseEvent(flag, evt)
 }
 
 
-const onKeyUp = (evt) => { onKeyEvent(KBD_FLAGS_RELEASE, evt); };
+const onKeyUp = (evt) => { onKeyEvent(KbdFlags.Release, evt); };
 const onKeyDown = (evt) => { onKeyEvent(0, evt); };
-const onKeyPress = (evt) => { onKeyEvent(KBD_FLAGS_DOWN, evt); };
+const onKeyPress = (evt) => { onKeyEvent(KbdFlags.Down, evt); };
 
 const onMouseMove = (evt) => {
     evt.preventDefault();
@@ -741,15 +414,13 @@ function canvasStopEvents()
     ecanvasFocus.onblur = () => {};
     ecanvasFocus.onfocus = () => {};
     ecanvas.onclick = () => {};
-    ecurCanvas.onclick = () => {};
 }
 
 function canvasFocus()
 {
-    console.log('focus')
+    console.log('focus');
     addEvents(document, docEvents);
     ecanvas.onclick = (e) => e.preventDefault();
-    ecurCanvas.onclick = (e) => e.preventDefault();
 }
 
 function canvasEnableFocus()
@@ -760,15 +431,9 @@ function canvasEnableFocus()
 
 function canvasBlur()
 {
-    console.log('blur')
+    console.log('blur');
     removeEvents(document, docEvents);
     ecanvas.onclick = canvasEnableFocus;
-    ecurCanvas.onclick = canvasEnableFocus;
-}
-
-function rgbToCss(color)
-{
-    return '#'+color.toString(16).padStart(6, '0');
 }
 
 const UTF8Decoder = new TextDecoder("utf-8");
@@ -848,123 +513,45 @@ class OutStream
 
 function run()
 {
-    rdpclient = newRDPClient(
-        "ws://localhost:3390",
-        // "ws://localhost:8080",
-        ecanvas.width,
-        ecanvas.height,
-        user_input.value,
-        pass_input.value,
-        0/*xff*/|0x04000000);
-    rdpclient.on('socketOpen', function() {
+    const socket = newRDPSocket('ws://localhost:3390');
+    socket.onopen = function(event) {
         console.log('RdpClient open');
-        canvasStartEvents();
-    });
-    rdpclient.on('socketClose', function() {
-        console.log('RdpClient close');
-        canvasStopEvents();
-        rdpclient = null;
-    });
-    rdpclient.on('resizeCanvas', function(w, h) {
-        ecanvas.width = w;
-        ecanvas.height = h;
-    });
-    rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
-    // rdpclient.on('drawImage', function() {
-    //     console.log('drawImage');
-    //     canvas.putImageData.apply(canvas, arguments);
-    // });
-    rdpclient.on('drawRect', function(x, y, w, h, color) {
-        // console.log('drawRect');
-        canvas.fillStyle = rgbToCss(color);
-        canvas.fillRect(x,y,w,h);
-    });
-    rdpclient.on('drawSrcBlt', function(sx, sy, w, h, dx, dy, rop) {
-        // console.log('drawSrcBlt');
-        const sourceImageData = canvas.getImageData(sx, sy, w, h);
-        if (rop == 0xCC) {
-            canvas.putImageData(sourceImageData, dx, dy);
-        }
-        else {
-            const op = scrROp[rop]
-            if (op) {
-                if (has_intersection(sx,sy,w,h,dx,dy,w,h)) {
-                    console.log(sx,sy,dx,dy,w,h)
-                    // canvas2.putImageData(sourceImageData, 0, 0);
-                    canvas.globalCompositeOperation = op
-                    // canvas.drawImage(ecanvas2, 0, 0, w, h, dx, dy, w, h);
-                    canvas.putImageData(sourceImageData, 0, 0, w, h, dx, dy, w, h);
-                    canvas.globalCompositeOperation = 'source-over'
-                }
-                else {
-                    canvas.putImageData(sourceImageData, dx, dy);
-                }
-            }
-        }
-    });
-    rdpclient.on('drawLineTo', function(backMode, nXStart, nYStart, nXEnd, nYEnd, backColor, penStyle, penWidth, penColor) {
-        // console.log('drawLineTo');
-		canvas.save();
-		canvas.beginPath();
-		canvas.moveTo(nXStart, nYStart);
-		canvas.lineTo(nXEnd, nYEnd);
-		canvas.lineWidth = penWidth;
-		canvas.fillStyle = rgbToCss(backColor);
-		canvas.strokeStyle = rgbToCss(penColor);
-		switch (penStyle) {
-		case 1: canvas.setLineDash([ 10, 6, 10, 6 ]); break;
-		case 2: canvas.setLineDash([ 3, 3, 3, 3 ]); break;
-		case 3: canvas.setLineDash([ 9, 6, 3, 6 ]); break;
-		case 4: canvas.setLineDash([ 9, 3, 3, 3 ]); break;
-		default: canvas.setLineDash([ 16, 0, 16, 0 ]);
-		}
-		canvas.setLineDash([ 16, 0, 16, 0 ]);
-		// BackMode does not imply the transparency level of what is about too be drawn
-        // canvas.globalAlpha = (backMode == 1 /* TRANSPARENT */? 0.0 : 1.0);
-		canvas.stroke();
-		canvas.restore();
-    });
-    rdpclient.on('drawPolyline', function(xStart, yStart, deltas, penColor) {
-        // console.log('drawPolyline');
-		canvas.save();
-		canvas.strokeStyle = rgbToCss(penColor);
-		canvas.beginPath();
-		canvas.moveTo(xStart, yStart);
-        let endx = xStart;
-        let endy = yStart;
-        const iend = deltas.length
-		for (let i = 0; i < iend; i += 2) {
-			endx += deltas[i];
-			endy += deltas[i+1];
-			canvas.lineTo(endx, endy);
-		}
-		canvas.stroke();
-		canvas.restore();
-    });
-    const image2CSS = function(image, x, y) {
-        ecurCanvas.width = image.width;
-        ecurCanvas.height = image.height;
-        ecurCanvas.getContext('2d').putImageData(image, 0, 0);
-        const dataURL = ecurCanvas.toDataURL();
-        // console.log('url(' + dataURL + ') ' + x + ' ' + y + ', auto');
-        return 'url(' + dataURL + ') ' + x + ' ' + y + ', auto';
-    };
-    rdpclient.on('setPointer', function(image, x, y) {
-        ecanvas.style.cursor = image2CSS(image, x, y);
-    });
-    let cachePointers = [];
-    rdpclient.on('newPointer', function(image, offset, x, y) {
-        const data = image2CSS(image, x, y);
-        cachePointers[offset] = data;
-        ecanvas.style.cursor = data;
-    });
-    rdpclient.on('cachedPointer', function(offset) {
-        ecanvas.style.cursor = cachePointers[offset];
-    });
+        rdpclient = new RDPClient(
+            socket,
+            ecanvas.width,
+            ecanvas.height,
+            new RDPGraphics(ecanvas),
+            user_input.value,
+            pass_input.value,
+            /*0x04000000*/);
+        init_rdpclient();
+        socket.onmessage = function(event) {
+            rdpclient.addReceivingData(event.data);
+            rdpclient.sendBufferedData();
+        };
 
-    rdpclient.addChannelCreator((cb) => {
-        const maxPacketSize = 1600;
-        const headerSize = 8;
+        socket.onerror = function(event) {
+            console.log('RdpClient error: ', event);
+            socket.close();
+        };
+
+        socket.onclose = function(event) {
+            console.log('RdpClient close');
+            rdpclient.delete();
+            rdpclient = null;
+            canvasStopEvents();
+        };
+
+        rdpclient.start();
+        canvasStartEvents();
+    }
+}
+
+
+function init_rdpclient()
+{
+        // const maxPacketSize = 1600;
+        // const headerSize = 8;
         const CF = Object.freeze({
             TEXT: 1,
             UTF16: 13,
@@ -1052,7 +639,7 @@ function run()
             clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW");
             rdpclient.sendBufferedData();
         };
-        return clipboard = newClipboardChannel(cb, {
+        return clipboard = newClipboardChannel(rdpclient.getCallback(), {
             receiveFormatStart: function() {
                 for (const e of [cbFmts, cbFiles]) {
                     while (e.firstChild) {
@@ -1242,18 +829,13 @@ function run()
                 }
             }
         }, 0x04000000);
-    });
 }
 
 login.onsubmit = (e) => {
     e.preventDefault();
     if (rdpclient) {
         rdpclient.close();
-        rdpclient.on('socketClose', () => {
-            console.log('RdpClient close (previous socket)');
-        });
         canvasStopEvents();
-        rdpclient = null;
     }
     run();
 };
