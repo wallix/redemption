@@ -105,18 +105,6 @@ RED_AUTO_TEST_CASE(TestOutBytesLe)
     RED_CHECK_EQUAL(0xBB, buffer[3]);
 }
 
-
-RED_AUTO_TEST_CASE(TestBufOutUint32)
-{
-    uint8_t buffer[4] = {};
-    buf_out_uint32(buffer, 0xFFEEDDCC);
-    RED_CHECK_EQUAL(0xCC, buffer[0]);
-    RED_CHECK_EQUAL(0xDD, buffer[1]);
-    RED_CHECK_EQUAL(0xEE, buffer[2]);
-    RED_CHECK_EQUAL(0xFF, buffer[3]);
-}
-
-
 // in_bytes_le is only defined for 1 to 4 bytes
 RED_AUTO_TEST_CASE(TestInBytesLe)
 {

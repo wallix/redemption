@@ -1399,14 +1399,14 @@ bool RdpNegociation::get_license(InStream & stream)
                 [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
                     if (this->lic_layer_license_size > 0) {
                         uint8_t hwid[LIC::LICENSE_HWID_SIZE];
-                        buf_out_uint32(hwid, 2);
+                        OutStream(hwid).out_uint32_le(2);
                         memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
 
                         /* Generate a signature for the HWID buffer */
                         uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
 
                         uint8_t lenhdr[4];
-                        buf_out_uint32(lenhdr, sizeof(hwid));
+                        OutStream(lenhdr).out_uint32_le(sizeof(hwid));
 
                         Sign sign(make_array_view(this->lic_layer_license_sign_key));
                         sign.update(make_array_view(lenhdr));
@@ -1463,7 +1463,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
                 /* Generate a signature for a buffer of token and HWID */
-                buf_out_uint32(hwid, 2);
+                OutStream(hwid).out_uint32_le(2);
                 memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
 
                 uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
@@ -1471,7 +1471,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
 
                 uint8_t lenhdr[4];
-                buf_out_uint32(lenhdr, sizeof(sealed_buffer));
+                OutStream(lenhdr).out_uint32_le(sizeof(sealed_buffer));
 
                 Sign sign(make_array_view(this->lic_layer_license_sign_key));
                 sign.update(make_array_view(lenhdr));
