@@ -98,20 +98,20 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGTime timeobj;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    rdpCredsspClient credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj, extra_message, lang);
+    rdpCredsspClientNTLM credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj, extra_message, lang);
     RED_CHECK(credssp.credssp_client_authenticate_init());
 
-    rdpCredsspClient::State st = rdpCredsspClient::State::Cont;
+    rdpCredsspClientNTLM::State st = rdpCredsspClientNTLM::State::Cont;
     TpduBuffer buf;
-    while (rdpCredsspClient::State::Cont == st) {
+    while (rdpCredsspClientNTLM::State::Cont == st) {
         buf.load_data(logtrans);
-        while (buf.next(TpduBuffer::CREDSSP) && rdpCredsspClient::State::Cont == st) {
+        while (buf.next(TpduBuffer::CREDSSP) && rdpCredsspClientNTLM::State::Cont == st) {
             InStream in_stream(buf.current_pdu_buffer());
             st = credssp.credssp_client_authenticate_next(in_stream);
         }
     }
     RED_CHECK_EQUAL(0, buf.remaining());
-    RED_CHECK_EQUAL(st, rdpCredsspClient::State::Finish);
+    RED_CHECK_EQUAL(st, rdpCredsspClientNTLM::State::Finish);
 }
 
 

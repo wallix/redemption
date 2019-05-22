@@ -29,7 +29,8 @@
 
 #include <memory>
 
-class rdpCredsspClient;
+class rdpCredsspClientNTLM;
+class rdpCredsspClientKerberos;
 class ServerNotifier;
 class Random;
 class TimeObj;
@@ -70,7 +71,8 @@ private:
     TimeObj & timeobj;
     char * lb_info;
 
-    std::unique_ptr<rdpCredsspClient> credssp;
+    std::unique_ptr<rdpCredsspClientNTLM> credsspNTLM;
+    std::unique_ptr<rdpCredsspClientKerberos> credsspKerberos;
 
     std::string& extra_message;
     Translation::language_t lang;

@@ -386,22 +386,41 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
     this->nla_tried = true;
 
     LOG(LOG_INFO, "activating CREDSSP");
-    this->credssp = std::make_unique<rdpCredsspClient>(
-        trans, this->user,
-        // this->domain, this->password,
-        this->domain, this->current_password,
-        this->hostname, this->target_host,
-        this->krb, this->restricted_admin_mode,
-        this->rand, this->timeobj, this->extra_message, this->lang,
-        bool(this->verbose & Verbose::credssp)
-    );
-
-    if (!this->credssp->credssp_client_authenticate_init())
-    {
-        LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
-        (void)this->fallback_to_tls(trans);
-        return State::Negociate;
+    if (this->krb) {
+        this->credsspKerberos = std::make_unique<rdpCredsspClientKerberos>(
+            trans, this->user,
+            // this->domain, this->password,
+            this->domain, this->current_password,
+            this->hostname, this->target_host,
+            this->krb, this->restricted_admin_mode,
+            this->rand, this->timeobj, this->extra_message, this->lang,
+            bool(this->verbose & Verbose::credssp)
+        );
+        if (!this->credsspKerberos->credssp_client_authenticate_init())
+        {
+            LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
+            (void)this->fallback_to_tls(trans);
+            return State::Negociate;
+        }
     }
+    else {
+        this->credsspNTLM = std::make_unique<rdpCredsspClientNTLM>(
+            trans, this->user,
+            // this->domain, this->password,
+            this->domain, this->current_password,
+            this->hostname, this->target_host,
+            this->krb, this->restricted_admin_mode,
+            this->rand, this->timeobj, this->extra_message, this->lang,
+            bool(this->verbose & Verbose::credssp)
+        );
+        if (!this->credsspNTLM->credssp_client_authenticate_init())
+        {
+            LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
+            (void)this->fallback_to_tls(trans);
+            return State::Negociate;
+        }
+    }
+    
 
     return State::Credssp;
 }
@@ -410,16 +429,31 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
 {
     LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::recv_credssp");
 
-    switch (this->credssp->credssp_client_authenticate_next(stream))
-    {
-        case rdpCredsspClient::State::Cont:
-            break;
-        case rdpCredsspClient::State::Err:
-            LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
-            return this->fallback_to_tls(trans);
-        case rdpCredsspClient::State::Finish:
-            this->credssp.reset();
-            return State::Final;
+    if (this->krb) {
+        switch (this->credsspKerberos->credssp_client_authenticate_next(stream))
+        {
+            case rdpCredsspClientKerberos::State::Cont:
+                break;
+            case rdpCredsspClientKerberos::State::Err:
+                LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
+                return this->fallback_to_tls(trans);
+            case rdpCredsspClientKerberos::State::Finish:
+                this->credsspKerberos.reset();
+                return State::Final;
+        }
+    }
+    else {
+        switch (this->credsspNTLM->credssp_client_authenticate_next(stream))
+        {
+            case rdpCredsspClientNTLM::State::Cont:
+                break;
+            case rdpCredsspClientNTLM::State::Err:
+                LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
+                return this->fallback_to_tls(trans);
+            case rdpCredsspClientNTLM::State::Finish:
+                this->credsspNTLM.reset();
+                return State::Final;
+        }
     }
     return State::Credssp;
 }
