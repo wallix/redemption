@@ -714,8 +714,6 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         this->gen.random(this->client_random, SEC_RANDOM_SIZE);
                         LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "mod_rdp: Generate client random");
 
-                        ssllib ssl;
-
 //                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
 //                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
 //                                        hexdump(this->client_random, SEC_RANDOM_SIZE);
@@ -732,7 +730,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 //                                        LOG(LOG_INFO, "================= SC_SECURITY exponent_size=%u",
 //                                            static_cast<unsigned>(SEC_EXPONENT_SIZE));
 
-                        ssl.rsa_encrypt(
+                        ssllib::rsa_encrypt(
                             this->client_crypt_random,
                             SEC_RANDOM_SIZE,
                             this->client_random,
@@ -749,7 +747,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         SEC::KeyBlock key_block(this->client_random, serverRandom);
                         memcpy(this->encrypt.sign_key, key_block.blob0, 16);
                         if (sc_sec1.encryptionMethod == 1){
-                            ssl.sec_make_40bit(this->encrypt.sign_key);
+                            ssllib::sec_make_40bit(this->encrypt.sign_key);
                         }
                         this->decrypt.generate_key(key_block.key1, sc_sec1.encryptionMethod);
                         this->encrypt.generate_key(key_block.key2, sc_sec1.encryptionMethod);

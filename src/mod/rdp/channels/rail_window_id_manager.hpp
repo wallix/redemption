@@ -106,7 +106,7 @@ private:
             return server_window_id;
         }
 
-        uint32_t client_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+        uint32_t client_window_id;
 
         if (this->client_to_server.find(server_window_id) == this->client_to_server.end()) {
             client_window_id = server_window_id;

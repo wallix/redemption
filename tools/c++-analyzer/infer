@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# https://github.com/facebook/infer
+
+${INFER:=infer} \
+--enable-issue-type=BUFFER_OVERRUN_L5,BUFFER_OVERRUN_U5,CONDITION_ALWAYS_FALSE,CONDITION_ALWAYS_TRUE,DANGLING_POINTER_DEREFERENCE,INTEGER_OVERFLOW_L5,INTEGER_OVERFLOW_U5,NULL_TEST_AFTER_DEREFERENCE,RETURN_VALUE_IGNORED,STACK_VARIABLE_ADDRESS_ESCAPE,UNARY_MINUS_APPLIED_TO_UNSIGNED_EXPRESSION,UNTRUSTED_BUFFER_ACCESS,UNTRUSTED_HEAP_ALLOCATION \
+"$@" -- clang \
+-fsyntax-only \
+-std=c++17 \
+-I'include' \
+-I'modules/includes' \
+-I'modules/ppocr/includes/mln' \
+-I'modules/ppocr/src' \
+-I'projects/ocr1/include' \
+-I'projects/redemption_configs/autogen/include' \
+-I'projects/redemption_configs/redemption_src' \
+-I'src' \
+-I'src/system/linux' \
+-I'tests/includes/' \
+-DZLIB_CONST \
+-DFIXTURES_PATH='"mypath" /*NOLINT*/' \
+-DREDEMPTION_DECL_LOG_TEST \
+-DBOOST_AUTO_TEST_MAIN \
+-DBOOST_TEST_DYN_LINK \
+$(find src/ -name '*.cpp' \
+    -a -not -path 'src/ftests/*' \
+    -a -not -path 'src/keyboard/*' \
+    -a -not -path 'src/system/emscripten/*' \
+    -a -not -path 'src/utils/crypto/*' \
+    -a -not -path 'src/main/*' \
+    -a -not -name app_path.cpp \
+    -a -not -name log_as_logemasm.cpp) \
+$(find tests/ -name 'test_*.cpp' \
+    -a -not -path 'tests/includes/*' \
+    -a -not -path 'tests/keyboard/*' \
+    -a -not -path 'tests/system/emscripten/*' \
+    -a -not -path 'tests/utils/crypto/*')
