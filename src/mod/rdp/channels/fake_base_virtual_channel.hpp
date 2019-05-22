@@ -45,8 +45,8 @@ public:
                             nullptr,
                             params) {}
 
-    inline void send_message_to_client(uint32_t ,
-        uint32_t , const uint8_t* chunk_data, uint32_t chunk_data_length) override
+    inline void send_message_to_client(uint32_t /*total_length*/,
+        uint32_t /*flags*/, const uint8_t* chunk_data, uint32_t chunk_data_length) override
     {
         if (this->index_client < 10) {
             this->to_client_stream[this->index_client].size = chunk_data_length;
@@ -55,8 +55,8 @@ public:
         }
     }
 
-    inline void send_message_to_server(uint32_t ,
-        uint32_t , const uint8_t* chunk_data, uint32_t chunk_data_length) override
+    inline void send_message_to_server(uint32_t /*total_length*/,
+        uint32_t /*flags*/, const uint8_t* chunk_data, uint32_t chunk_data_length) override
     {
         if (this->index_server < 10) {
             to_server_stream[this->index_server].size = chunk_data_length;         //chunk.in_remain();

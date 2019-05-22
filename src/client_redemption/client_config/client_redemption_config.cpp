@@ -68,9 +68,11 @@ void ClientConfig::openWindowsData(ClientRedemptionConfig & config)  {
         config.windowsData.no_data = false;
 
         std::string line;
-        int pos = 0;
+        std::string::size_type pos = 0;
 
         read_line(file.fd(), line);
+        // TODO strtol
+        //@{
         pos = line.find(' ');
         line = line.substr(pos, line.length());
         config.windowsData.form_x = std::stoi(line);
@@ -89,6 +91,7 @@ void ClientConfig::openWindowsData(ClientRedemptionConfig & config)  {
         pos = line.find(' ');
         line = line.substr(pos, line.length());
         config.windowsData.screen_y = std::stoi(line);
+        //@}
     }
 }
 
@@ -540,8 +543,8 @@ void ClientConfig::deleteCurrentProtile(ClientRedemptionConfig & config)  {
 
         while(ClientConfig::read_line(file_to_read.fd(), line)) {
             if (ligne_to_jump == 0) {
-                int pos = line.find(' ');
-                std::string info = line.substr(pos + 1);
+                std::string::size_type pos = line.find(' ');
+                std::string info = line.substr(pos + 1u);
 
                 if (line.compare(0, pos, "id") == 0 && std::stoi(info) == config.current_user_profil) {
                     ligne_to_jump = 18;
@@ -847,7 +850,7 @@ void ClientConfig::setCustomKeyConfig(ClientRedemptionConfig & config)  {
 
         while(read_line(fd.fd(), ligne)) {
 
-            int pos(ligne.find(' '));
+            std::string::size_type pos(ligne.find(' '));
 
             if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
 

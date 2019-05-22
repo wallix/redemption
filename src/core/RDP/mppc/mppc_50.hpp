@@ -477,7 +477,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc
 
     hash_table_manager hash_tab_mgr;
 
-    explicit rdp_mppc_50_enc(bool verbose = 0)
+    explicit rdp_mppc_50_enc(bool verbose = false)
         : rdp_mppc_enc(RDP_50_HIST_BUF_LEN - 1, verbose)
         , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */

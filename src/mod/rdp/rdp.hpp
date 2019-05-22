@@ -2261,7 +2261,7 @@ public:
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
 
         while (su.payload.in_remain()) {
-            FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
+            FastPath::Update_Recv upd(su.payload, this->mppc_dec);
 
             if (bool(this->verbose & RDPVerbose::connection)) {
                 const char * m = "UNKNOWN ORDER";
@@ -3353,8 +3353,11 @@ public:
 
                 BmpCache2Caps bmpcache2_caps;
                 bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG;
-                if (this->enable_cache_waiting_list || (this->enable_remotefx && this->haveRemoteFx))
-                	bmpcache2_caps.cacheFlags |= ALLOW_CACHE_WAITING_LIST_FLAG;
+                if (this->enable_cache_waiting_list
+                 || (this->enable_remotefx && this->haveRemoteFx)
+                ) {
+                    bmpcache2_caps.cacheFlags |= ALLOW_CACHE_WAITING_LIST_FLAG;
+                }
                 bmpcache2_caps.numCellCaches        = 3;
                 bmpcache2_caps.bitmapCache0CellInfo = this->BmpCacheRev2_Cache_NumEntries()[0];
                 bmpcache2_caps.bitmapCache1CellInfo = this->BmpCacheRev2_Cache_NumEntries()[1];
@@ -3513,8 +3516,9 @@ public:
 					 * bytes (so that a 96 x 96 pixel 32bpp pointer can be transported).
                      */
 					sendMultiFragmentUpdate = true;
-					if (multi_fragment_update_caps.MaxRequestSize < 38055)
+					if (multi_fragment_update_caps.MaxRequestSize < 38055) {
 						multi_fragment_update_caps.MaxRequestSize = 38055;
+					}
                 }
 
                 if (this->primary_drawing_orders_support.test(TS_NEG_DRAWNINEGRID_INDEX)) {

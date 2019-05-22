@@ -532,8 +532,7 @@ RED_AUTO_TEST_CASE(TestScaleImage)
     unsigned zoom_factor = 50;
     unsigned scaled_width = (((drawable.width() * zoom_factor) / 100) + 3) & 0xFFC;
     unsigned scaled_height = (drawable.height() * zoom_factor) / 100;
-    std::unique_ptr<uint8_t[]> scaled_buffer = nullptr;
-    scaled_buffer.reset(new uint8_t[scaled_width * scaled_height * 3]);
+    std::unique_ptr<uint8_t[]> scaled_buffer(new uint8_t[scaled_width * scaled_height * 3]);
 
     // Zoom 50
     scale_data(

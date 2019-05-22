@@ -99,4 +99,4 @@ namespace redemption_unit_test__
             ::redemption_unit_test__::compute_av_sig2(sig, ar.data(), 1, ar.size());
         }
     }
-}
+} // namespace redemption_unit_test__

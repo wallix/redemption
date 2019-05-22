@@ -122,7 +122,7 @@ namespace redemption_unit_test__
         out << ")";
         return out;
     }
-}
+} // namespace redemption_unit_test__
 
 
 #define RED_BIND_DATA_TEST_CASE_VARIABLE(r, data, elem) \

@@ -23,7 +23,7 @@
 
 #include "utils/difftimeval.hpp"
 
-namespace std
+namespace std /*NOLINT*/
 {
     // this is a hack...
     template<class Ch, class Tr>

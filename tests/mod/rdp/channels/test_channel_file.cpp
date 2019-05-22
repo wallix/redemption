@@ -77,11 +77,11 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     RED_CHECK_EQUAL(file.is_complete(), false);
 
 
-    file.set_data(reinterpret_cast<const uint8_t *>(word1), 6);
+    file.set_data(byte_ptr_cast(word1), 6);
     RED_CHECK_EQUAL(file.is_complete(), false);
-    file.set_data(reinterpret_cast<const uint8_t *>(word2), 6);
+    file.set_data(byte_ptr_cast(word2), 6);
     RED_CHECK_EQUAL(file.is_complete(), true);
-    file.set_data(reinterpret_cast<const uint8_t *>(word3), 5);
+    file.set_data(byte_ptr_cast(word3), 5);
     RED_CHECK_EQUAL(file.is_complete(), true);
 
     RED_CHECK_FILE_CONTENTS(file1, "hello world!"_av);
@@ -91,11 +91,11 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     RED_CHECK_WORKSPACE(wd);
     RED_CHECK_EQUAL(file.is_complete(), false);
 
-    file.set_data(reinterpret_cast<const uint8_t *>(word4), 8);
+    file.set_data(byte_ptr_cast(word4), 8);
     RED_CHECK_EQUAL(file.is_complete(), false);
-    file.set_data(reinterpret_cast<const uint8_t *>(word2), 6);
+    file.set_data(byte_ptr_cast(word2), 6);
     RED_CHECK_EQUAL(file.is_complete(), true);
-    file.set_data(reinterpret_cast<const uint8_t *>(word3), 5);
+    file.set_data(byte_ptr_cast(word3), 5);
     RED_CHECK_EQUAL(file.is_complete(), true);
 
     RED_CHECK_FILE_CONTENTS(file1, "hello world!"_av);
@@ -106,7 +106,7 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     file.read_data(buffer, 14);
     buffer[14] = 0;
 
-    std::string file_read_data(reinterpret_cast<const char *>(buffer));
+    std::string file_read_data(char_ptr_cast(buffer));
 
     RED_CHECK_EQUAL(file_read_data, "goodbye world!");
 

@@ -39,7 +39,7 @@ const CHANNELS::ChannelDefArray & FakeFront::get_channel_list() const
 }
 
 void FakeFront::send_to_channel(
-    const CHANNELS::ChannelDef &, uint8_t const * /*data*/, size_t /*length*/,
+    const CHANNELS::ChannelDef & /*channel*/, uint8_t const * /*data*/, size_t /*length*/,
     size_t /*chunk_size*/, int /*flags*/)
 {
 }

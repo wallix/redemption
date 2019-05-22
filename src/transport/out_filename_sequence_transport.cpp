@@ -91,7 +91,6 @@ OutFilenameSequenceTransport::OutFilenameSequenceTransport(
     ReportError report_error)
 : filegen_(format, prefix, filename, extension)
 , buf_(invalid_fd(), std::move(report_error))
-, num_file_(0)
 , groupid_(groupid)
 {
     this->current_filename_[0] = 0;

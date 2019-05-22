@@ -33,8 +33,8 @@ int main()
     static_assert(std::is_copy_constructible<Copyable>::value);
     static_assert(std::is_copy_assignable<Copyable>::value);
 
-    static_assert(std::is_copy_constructible<NonCopyable>::value == false);
-    static_assert(std::is_copy_assignable<NonCopyable>::value == false);
+    static_assert(!std::is_copy_constructible<NonCopyable>::value);
+    static_assert(!std::is_copy_assignable<NonCopyable>::value);
 
     // test default constructible
     NonCopyable x; (void)x;
