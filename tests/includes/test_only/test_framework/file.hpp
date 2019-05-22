@@ -62,7 +62,7 @@ namespace tu
         return get_file_contents(static_cast<char const*>(name));
     }
 
-    constexpr auto fsize = redemption_unit_test__::fn_invoker("filesize",
+    constexpr auto fsize = redemption_unit_test__::fn_invoker("filesize", /* NOLINT */
         redemption_unit_test__::fsize_impl{});
 
     inline int int_(int n) { return n; }

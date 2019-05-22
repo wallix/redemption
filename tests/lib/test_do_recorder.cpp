@@ -200,10 +200,10 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
 
 RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
 {
-#define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
-    ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm" /*NOLINT*/
-#define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
-    ",20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm" /*NOLINT*/
+#define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" /*NOLINT*/ \
+    ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
+#define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" /*NOLINT*/ \
+    ",20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm"
 
     auto recorded_wd = wd.create_subdirectory("recorded");
     auto hash_wd = wd.create_subdirectory("hash");

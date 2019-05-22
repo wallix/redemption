@@ -86,7 +86,7 @@ private:
 
     Fstat & fstat;
 
-    char current_filename_[1024];
+    char current_filename_[1024] {};
     WrmFGen filegen_;
     unsigned num_file_ = 0;
     int groupid_;
