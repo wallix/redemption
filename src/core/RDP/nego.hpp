@@ -91,7 +91,7 @@ public:
     {
         none,
         credssp     = 0x400,
-        negotiation = 128,
+        negotiation = 0x800,
     };
 
     bool enhanced_rdp_security_is_in_effect() const;

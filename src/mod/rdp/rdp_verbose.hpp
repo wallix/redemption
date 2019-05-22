@@ -42,7 +42,9 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
     input               = 0x00000100,
     rail_order          = 0x00000200,
     credssp             = 0x00000400,
-    cache_persister     = 0x00000800,
+    negotiation         = 0x00000800,
+
+    cache_persister     = 0x00001000,
 
     fsdrvmgr            = 0x00002000,
     sesprobe_launcher   = 0x00004000,

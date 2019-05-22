@@ -219,13 +219,13 @@ bool RdpNego::recv_next_data(TpduBuffer& tpdubuf, Transport& trans, ServerNotifi
 {
     switch (this->state) {
         case State::Negociate:
-            LOG(LOG_INFO, "RdpNego::recv_next_data::Negociate");
+            LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::recv_next_data::Negociate");
             tpdubuf.load_data(trans);
             if (!tpdubuf.next(TpduBuffer::PDU)) {
                 return true;
             }
             do {
-                LOG(LOG_INFO, "nego->state=RdpNego::NEGO_STATE_NEGOCIATE");
+                LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "nego->state=RdpNego::NEGO_STATE_NEGOCIATE");
                 LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s",
                                     (this->nla) ? "NLA" :
                                     (this->tls) ? "TLS" :
@@ -240,7 +240,7 @@ bool RdpNego::recv_next_data(TpduBuffer& tpdubuf, Transport& trans, ServerNotifi
             return (this->state != State::Final);
 
         case State::Tls:
-            LOG(LOG_INFO, "RdpNego::recv_next_data::Tls");
+            LOG(LOG_INFO, "RdpNego::recv_next_data::TLS");
             this->state = this->activate_ssl_tls(trans, notifier);
             return (this->state != State::Final);
 
@@ -272,7 +272,7 @@ bool RdpNego::recv_next_data(TpduBuffer& tpdubuf, Transport& trans, ServerNotifi
 
 RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier)
 {
-    LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
+    LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::recv_connection_confirm");
 
     X224::CC_TPDU_Recv x224(x224_stream);
 
@@ -288,18 +288,19 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
     {
         if (x224.rdp_neg_code == X224::PROTOCOL_HYBRID)
         {
-            LOG(LOG_INFO, "activating SSL");
+            LOG(LOG_INFO, "activating TLS (HYBRID)");
             return this->activate_ssl_hybrid(trans, notifier);
         }
 
         if (x224.rdp_neg_code == X224::PROTOCOL_TLS)
         {
-            LOG(LOG_INFO, "activating SSL");
+            LOG(LOG_INFO, "activating TLS");
             return this->activate_ssl_tls(trans, notifier);
         }
 
         if (x224.rdp_neg_code == X224::PROTOCOL_RDP)
         {
+            LOG(LOG_INFO, "activating RDP Legacy");
             return State::Final;
         }
     }
@@ -344,7 +345,7 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
         }
     }
 
-    LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
+    LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::recv_connection_confirm done");
     return State::Final;
 }
 
@@ -372,7 +373,7 @@ RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& not
 
 RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier)
 {
-    LOG(LOG_INFO, "RdpNego::activate_ssl_hybrid");
+    LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::activate_ssl_hybrid");
 
     // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
     //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
@@ -407,7 +408,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
 
 RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
 {
-    LOG(LOG_INFO, "RdpNego::recv_credssp");
+    LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::recv_credssp");
 
     switch (this->credssp->credssp_client_authenticate_next(stream))
     {
@@ -483,7 +484,7 @@ RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
 
 void RdpNego::send_negotiation_request(OutTransport trans)
 {
-    LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
+    LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
     char cookie[256];
     snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
     char * cookie_or_token = this->lb_info ? this->lb_info : cookie;
@@ -503,7 +504,7 @@ void RdpNego::send_negotiation_request(OutTransport trans)
                        this->restricted_admin_mode ? X224::RESTRICTED_ADMIN_MODE_REQUIRED : 0,
                        rdp_neg_requestedProtocols);
     trans.send(stream.get_bytes());
-    LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
+    LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
 }
 
 bool RdpNego::enhanced_rdp_security_is_in_effect() const

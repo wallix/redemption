@@ -144,27 +144,27 @@ private:
     }
 
     void credssp_generate_client_nonce() {
-        LOG(LOG_DEBUG, "rdpCredsspClient::credssp generate client nonce");
+        LOG(LOG_INFO, "rdpCredsspClient::credssp generate client nonce");
         this->rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
         this->SavedClientNonce.initialized = true;
         this->credssp_set_client_nonce();
     }
 
     void credssp_get_client_nonce() {
-        LOG(LOG_DEBUG, "rdpCredsspClient::credssp get client nonce");
+        LOG(LOG_INFO, "rdpCredsspClient::credssp get client nonce");
         if (this->ts_request.clientNonce.isset()){
             this->SavedClientNonce = this->ts_request.clientNonce;
         }
     }
     void credssp_set_client_nonce() {
-        LOG(LOG_DEBUG, "rdpCredsspClient::credssp set client nonce");
+        LOG(LOG_INFO, "rdpCredsspClient::credssp set client nonce");
         if (!this->ts_request.clientNonce.isset()) {
             this->ts_request.clientNonce = this->SavedClientNonce;
         }
     }
 
     void credssp_generate_public_key_hash_client_to_server() {
-        LOG(LOG_DEBUG, "rdpCredsspClient::generate credssp public key hash (client->server)");
+        LOG(LOG_INFO, "rdpCredsspClient::generate credssp public key hash (client->server)");
         Array & SavedHash = this->ClientServerHash;
 //        auto magic_hash = make_array_view("CredSSP Client-To-Server Binding Hash");
         SslSha256 sha256;
@@ -178,7 +178,7 @@ private:
     }
 
     void credssp_generate_public_key_hash_server_to_client() {
-        LOG(LOG_DEBUG, "rdpCredsspClient::generate credssp public key hash (server->client)");
+        LOG(LOG_INFO, "rdpCredsspClient::generate credssp public key hash (server->client)");
         Array & SavedHash = this->ServerClientHash;
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
