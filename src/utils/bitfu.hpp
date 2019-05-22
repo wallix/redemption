@@ -68,17 +68,6 @@ static inline unsigned in_uint32_from_nb_bytes_le(const uint8_t nb, const uint8_
     return res;
 }
 
-
-// this name because the fonction below is only defined for 1 to 4/8 bytes (works on underlying unsigned)
-static inline unsigned in_uint32_from_nb_bytes_be(const uint8_t nb, const uint8_t * ptr) noexcept
-{
-    unsigned res = 0;
-    for (int b = 0 ; b < nb ; ++b){
-        res = (res << 8) | ptr[b];
-    }
-    return res;
-}
-
 // The  rmemcpy() function copies n bytes from memory area src to memory area dest inverting end and beginning.
 // The memory areas must not overlap.
 static inline void rmemcpy(uint8_t *dest, const uint8_t *src, size_t n) noexcept
