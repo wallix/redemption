@@ -33,7 +33,6 @@
 //}
 
 
-// out_bytes_be is only defined for 1 to 4 bytes
 RED_AUTO_TEST_CASE(TestAlign4)
 {
 //  uint8_t buffer[4] = {};
@@ -90,7 +89,6 @@ RED_AUTO_TEST_CASE(TestNbBytes)
     RED_CHECK_EQUAL(320u, nbbytes_large(320 * 8));
 }
 
-// out_bytes_be is only defined for 1 to 4 bytes
 RED_AUTO_TEST_CASE(TestOutBytesLe)
 {
     uint8_t buffer[10] = {};
@@ -108,7 +106,6 @@ RED_AUTO_TEST_CASE(TestOutBytesLe)
 }
 
 
-// out_bytes_be is only defined for 1 to 4 bytes
 RED_AUTO_TEST_CASE(TestBufOutUint32)
 {
     uint8_t buffer[4] = {};
