@@ -1,4 +1,4 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
 // Front::Received fast-path PUD, remains=10 |
 // asking for selector |
@@ -662,7 +662,7 @@ const char outdata[] =
 // Session::Client Session Disconnected |
 } /* end outdata */;
 
-const char indata[] =
+const char indata[] = /* NOLINT */
 {
 // Front::Received fast-path PUD, remains=10 |
 // asking for selector |

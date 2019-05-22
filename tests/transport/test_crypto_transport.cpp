@@ -1213,7 +1213,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
 
     WorkingDirectory wd;
 
-    const char * original_filename = FIXTURES_PATH "/dump_TLSw2008.hpp";
+    const char * original_filename = FIXTURES_PATH "/dump_TLSw2008.txt";
     auto encrypted_file = wd.add_file("encrypted_file.enc");
     auto hash_encrypted_file = wd.add_file("hash_encrypted_file.enc");
 
@@ -1263,7 +1263,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
     CryptoContext cctx;
     init_keys(cctx);
 
-    const char * original_filename = FIXTURES_PATH "/dump_TLSw2008.hpp";
+    const char * original_filename = FIXTURES_PATH "/dump_TLSw2008.txt";
     auto encrypted_file = wd.add_file("encrypted_file.enc");
     auto hash_encrypted_file = wd.add_file("hash_encrypted_file.enc");
 

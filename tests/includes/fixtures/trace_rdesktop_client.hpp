@@ -1,4 +1,4 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
 // Listen: binding socket 4 on 0.0.0.0:3389 |
 // Listen: listening on socket 4 |
@@ -4403,7 +4403,7 @@ const char outdata[] =
 // RDP Client (0): total_received=1740, total_sent=28260 |
 } /* end outdata */;
 
-const char indata[] =
+const char indata[] = /* NOLINT */
 {
 // Listen: binding socket 4 on 0.0.0.0:3389 |
 // Listen: listening on socket 4 |

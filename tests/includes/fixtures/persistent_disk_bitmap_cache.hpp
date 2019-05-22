@@ -1,4 +1,4 @@
-const char outdata[] = {
+const char outdata[] = { /* NOLINT */
 /* 0000 */ "\x50\x44\x42\x43\x01"                                             //PDBC.
 /* 0000 */ "\x00\x00"                                                         //..
 /* 0000 */ "\x00\x00"                                                         //..

@@ -1,4 +1,4 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
 // connecting to 10.10.47.175:3389 |
 // connection to 10.10.47.175:3389 succeeded : socket 4 |
@@ -5393,7 +5393,7 @@ const char outdata[] =
 // RDP XP Target (0): total_received=60121, total_sent=1675 |
 } /* end outdata */;
 
-const char indata[] =
+const char indata[] = /* NOLINT */
 {
 // connecting to 10.10.47.175:3389 |
 // connection to 10.10.47.175:3389 succeeded : socket 4 |
