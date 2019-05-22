@@ -56,8 +56,7 @@ RED_AUTO_TEST_CASE(TestZLIB0)
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
     strm.opaque = nullptr;
-    int ret = deflateInit(&strm, 9);
-    RED_REQUIRE_EQ(ret, Z_OK);
+    RED_REQUIRE(deflateInit(&strm, 9) == Z_OK);
 
     /* compress until end of data */
     size_t total_compressed_size = 0;
@@ -71,19 +70,19 @@ RED_AUTO_TEST_CASE(TestZLIB0)
             strm.avail_out = CHUNK;
             strm.next_out = &out[0];
             last_avail_out = strm.avail_out;
-            ret = deflate(&strm, Z_NO_FLUSH);
+            (void)deflate(&strm, Z_NO_FLUSH);
             total_compressed_size += CHUNK-strm.avail_out;
 
             memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out-strm.avail_out);
             total_size += last_avail_out - strm.avail_out;
             // or copy result
-        } while (CHUNK != strm.avail_out);
+        } while (0 == strm.avail_out);
     }
     do {
         strm.avail_out = CHUNK;
         strm.next_out = &out[0];
         last_avail_out = strm.avail_out;
-        ret = deflate(&strm, Z_FINISH);
+        (void)deflate(&strm, Z_FINISH);
         total_compressed_size += last_avail_out-strm.avail_out;
 
         memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out-strm.avail_out);
@@ -91,7 +90,7 @@ RED_AUTO_TEST_CASE(TestZLIB0)
 
     } while (CHUNK != strm.avail_out);
 
-    ret = deflateEnd(&strm);
+    RED_REQUIRE(deflateEnd(&strm) == Z_OK);
 
     RED_CHECK_EQUAL(total_compressed_size, 262);
 
@@ -129,8 +128,7 @@ RED_AUTO_TEST_CASE(TestZLIB1)
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
     strm.opaque = nullptr;
-    int ret = deflateInit(&strm, 9);
-    RED_REQUIRE_EQ(ret, Z_OK);
+    RED_REQUIRE(deflateInit(&strm, 9) == Z_OK);
 
     /* compress until end of data */
     size_t total_compressed_size = 0;
@@ -146,7 +144,7 @@ RED_AUTO_TEST_CASE(TestZLIB1)
             strm.avail_out = CHUNK;
             strm.next_out = &out[0];
         }
-        ret = deflate(&strm, Z_NO_FLUSH);
+        RED_REQUIRE(deflate(&strm, Z_NO_FLUSH) == Z_OK);
         total_compressed_size += last_avail_out-strm.avail_out;
         memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out - strm.avail_out);
         total_size += last_avail_out - strm.avail_out;
@@ -154,14 +152,13 @@ RED_AUTO_TEST_CASE(TestZLIB1)
     do {
         strm.avail_out = CHUNK;
         strm.next_out = &out[0];
-        ret = deflate(&strm, Z_FINISH);
+        (void)deflate(&strm, Z_FINISH);
         total_compressed_size += CHUNK-strm.avail_out;
         memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out - strm.avail_out);
         total_size += last_avail_out - strm.avail_out;
     } while (CHUNK != strm.avail_out);
-    RED_CHECK_EQUAL(ret, Z_STREAM_END);
 
-    ret = deflateEnd(&strm);
+    RED_REQUIRE(deflateEnd(&strm) == Z_OK);
 
     // hexdump(&all_out[0], total_size);
 
