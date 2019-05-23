@@ -746,8 +746,8 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
 
 RED_AUTO_TEST_CASE(TestRecv_NotImplemented)
 {
-    StaticInStream<1024> istream;
-    StaticOutStream<1024> ostream;
+    InStream istream;
+    OutStream ostream;
     int const ERR_MCS = static_cast<int>(::ERR_MCS);
 
     RED_CHECK_EXCEPTION_ERROR_ID(MCS::PlumbDomainIndication_Recv mcs(istream, MCS::PER_ENCODING), ERR_MCS);

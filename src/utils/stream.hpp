@@ -840,19 +840,18 @@ public:
 };
 
 
-template<std::size_t N, class StreamBase>
-struct BasicStaticStream : StreamBase
+template<std::size_t N>
+struct StaticOutStream : OutStream
 {
-    explicit BasicStaticStream(std::size_t offset = 0) noexcept
-    : StreamBase(this->array_, N, offset)
+    explicit StaticOutStream(std::size_t offset = 0) noexcept
+    : OutStream(this->array_, N, offset)
     {}
 
-    BasicStaticStream(BasicStaticStream const &) = delete;
-    BasicStaticStream & operator = (BasicStaticStream const &) = delete;
+    StaticOutStream(StaticOutStream const &) = delete;
+    StaticOutStream & operator = (StaticOutStream const &) = delete;
 
-    using array_type = uint8_t[N];
-
-    static constexpr std::size_t original_capacity() noexcept {
+    static constexpr std::size_t original_capacity() noexcept
+    {
         return N;
     }
 
@@ -860,11 +859,6 @@ private:
     uint8_t array_[N];
 };
 
-template<std::size_t N>
-using StaticOutStream = BasicStaticStream<N, OutStream>;
-
-template<std::size_t N>
-using StaticInStream = BasicStaticStream<N, InStream>;
 
 template<std::size_t OrignalLen>
 struct StreamBufMaker
