@@ -164,12 +164,17 @@ struct ProtocolParseClientResult
 
     minimal header size = 6  (fin + opcode + payload_len)
     maximal header size = 16 (fin + opcode + payload_len + extended_payload + extended_payload_continuastion)
-    minimal supported header size = 8 ( 8bits isn't supported because maximal packet to RDP is equal to 16bits)
+    minimal supported header size = 8 ( 6bits isn't supported because maximal packet to RDP is equal to 16bits)
 */
 inline ProtocolParseClientResult ws_protocol_parse_client(bytes_view data) noexcept
 {
     if (data.size() < 8) {
-        return {ProtocolParseClientResult::State::UnsupportedPartialHeader, bytes_view{}};
+        return {
+            (data.size() > 0 && (data[0] & 0xF) == WsHeader::OpCode::Close)
+             ? ProtocolParseClientResult::State::Close
+             : ProtocolParseClientResult::State::UnsupportedPartialHeader,
+            bytes_view{}
+        };
     }
 
     uint8_t const opcode = data[0] & 0xF;
