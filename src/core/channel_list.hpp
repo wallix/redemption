@@ -88,6 +88,7 @@ namespace CHANNELS {
 
     class ChannelDefArray {
         // The number of requested static virtual channels (the maximum allowed is 31).
+        // TODO static_vector<., 32>
         size_t     channelCount{0};
         ChannelDef items[MAX_STATIC_VIRTUAL_CHANNELS + 2];  // + global channel + wab channel
 

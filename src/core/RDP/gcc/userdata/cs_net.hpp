@@ -127,6 +127,7 @@ struct CSNet {
         REMOTE_CONTROL_PERSISTENT    = 0x00100000
     };
 
+    // TODO static_vector<., 32>
     struct {
         char name[8]; // TODO ChannelNameId
         uint32_t options;

@@ -82,6 +82,7 @@ namespace GCC { namespace UserData {
 struct SCNet {
     uint16_t userDataType{SC_NET};
     uint16_t MCSChannelId{GCC::MCS_GLOBAL_CHANNEL};
+    // TODO static_vector<uint16_t, 32>
     uint16_t channelCount{0};
     struct {
         uint16_t id;

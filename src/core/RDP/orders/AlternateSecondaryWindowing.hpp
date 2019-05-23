@@ -3156,6 +3156,7 @@ public:
 private:
     mutable uint32_t ActiveWindowId_ = 0;
 
+    // TODO static_vector<., 32>
     mutable  uint8_t NumWindowIds_    = 0;
     mutable uint32_t window_ids_[255] = { 0 };
 

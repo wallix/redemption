@@ -426,6 +426,7 @@ struct CapabilityHeader {
 //   DR_DEVICE_REMOVE message to do so.
 
 struct ClientDriveDeviceListRemove {
+    // TODO static_vector<., 32>
 
     uint32_t DeviceCount;
     uint32_t DeviceIds[1592] = { 0 };

@@ -101,8 +101,7 @@ public:
 
         stream.out_uint8(this->cacheIndex);
         stream.out_uint16_le(256); /* num colors */
-        for (int i = 0; i < 256; i++) {
-            BGRColor const color = this->palette[i];
+        for (BGRColor const& color : this->palette) {
             stream.out_uint8(color.red());
             stream.out_uint8(color.green());
             stream.out_uint8(color.blue());
@@ -127,21 +126,6 @@ public:
             stream.in_skip_bytes(1);
             this->palette.set_color(i, BGRColor(b, g, r));
         }
-    }
-
-    //TODO remove printf in operator== and show palette differences in test code
-    bool operator==(const RDPColCache & other) const {
-        if (this->cacheIndex != other.cacheIndex) {
-            return false;
-        }
-        for (size_t i = 0; i < 256 ; ++i){
-            if (this->palette[i] != other.palette[i]){
-                printf("palette differs at index %d: %x != %x\n",
-                       static_cast<int>(i), this->palette[i].as_u32(), other.palette[i].as_u32());
-                return false;
-            }
-        }
-        return true;
     }
 
     size_t str(char * buffer, size_t sz) const
