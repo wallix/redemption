@@ -312,6 +312,8 @@
     fv(ERR_FSCC_DATA_TRUNCATED, 22400)                           \
                                                                  \
     fv(ERR_NLA_AUTHENTICATION_FAILED, 23000)                     \
+    f(ERR_CREDSSP_NTLM_INIT_FAILED)                              \
+    f(ERR_CREDSSP_KERBEROS_INIT_FAILED)                          \
                                                                  \
     fv(ERR_TRM_UNKNOWN_CHUNK_TYPE, 24000)                        \
     f(ERR_TRM_CHANNEL_NAME_TOO_LONG)                             \

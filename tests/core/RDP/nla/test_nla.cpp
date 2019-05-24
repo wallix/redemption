@@ -21,7 +21,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/nla/nla_server.hpp"
-#include "core/RDP/nla/nla_client.hpp"
+#include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 
 #include "test_only/transport/test_transport.hpp"
@@ -98,8 +98,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGTime timeobj;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    rdpCredsspClientNTLM credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj, extra_message, lang);
-    RED_CHECK(credssp.credssp_client_authenticate_init());
+    rdpCredsspClientNTLM credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, rand, timeobj, extra_message, lang);
 
     rdpCredsspClientNTLM::State st = rdpCredsspClientNTLM::State::Cont;
     TpduBuffer buf;

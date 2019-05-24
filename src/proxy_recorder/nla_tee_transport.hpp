@@ -23,7 +23,8 @@
 #pragma once
 
 #include "core/RDP/nla/nla_server.hpp"
-#include "core/RDP/nla/nla_client.hpp"
+#include "core/RDP/nla/nla_client_ntlm.hpp"
+#include "core/RDP/nla/nla_client_kerberos.hpp"
 #include "transport/recorder_transport.hpp"
 
 /// @brief Wrap a Transport and a RecorderFile for a nla negociation
