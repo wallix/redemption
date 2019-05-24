@@ -50,6 +50,10 @@
 
 class QtScreen : public QWidget
 {
+/*
+ * Basic screen to show drawn orders into a qt windows, track mouse and keyboard.
+ */
+
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
@@ -215,6 +219,11 @@ public:
 class RemoteAppQtScreen : public QtScreen
 {
 
+    /*
+     *  This screen inherit QtScreen but has a windows without border and button
+     *  to only show remote appl contents.
+     */
+
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
@@ -333,6 +342,16 @@ public:
 
 class RDPQtScreen :  public QtScreen
 {
+
+    /*
+     *  This screen inherit QtScreen and implement RDP mod interactions
+     *  specificaly for RDP connections.
+     *  The windows has three button:
+     *      - "CTRL+ALT+DELETE"
+     *      - "Refresh"
+     *      - "Connection/Disconnection"
+     */
+
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
@@ -435,6 +454,13 @@ public Q_SLOTS:
 
 class ReplayQtScreen : public QtScreen
 {
+    /*
+     * This screen show a windows with more button and video progress bar use to read a wrm replay *    * video. The progress bar is clicable to play from any video parts.
+     * It implement other buttons:
+     *      - "Play/Pause"
+     *      - "Stop"
+     *      - "Close"
+     */
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT

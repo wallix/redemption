@@ -676,6 +676,10 @@ public:
 
         this->channel_file.receive_response();
 
+        if (this->channel_file.response_wait_for_completion()) {
+            return;
+        }
+
         if (!this->channel_file.is_valid() && this->channel_file.is_enable_validation()) {
             auto const info = key_qvalue_pairs({
                 { "type", "FILE_SCAN_RESULT" },

@@ -183,7 +183,6 @@ public:
             this->current_analysis_done = true;
     //       LOG(LOG_INFO, "%d %s", this->icap_service->result, this->icap_service->content);
         }
-
     }
 
     uint8_t get_direction() {
@@ -229,6 +228,12 @@ public:
         return this->enable_validator;
     }
 
+    bool response_wait_for_completion() {
+        if (this->icap_service == nullptr) {
+            return false;
+        }
+        return this->icap_service->content.length() < this->icap_service->last_data_response_total_size;
+    }
 
 
 };

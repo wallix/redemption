@@ -47,12 +47,16 @@ public:
 
     bool service_is_up;
 
+    size_t last_data_response_total_size;
+
+
     ICAPService(std::string const& socket_path)
 
     : fd(invalid_fd())
     , result_flag(-1)
     , last_result_file_id_received(0)
     , file_id_int(0)
+    , last_data_response_total_size(0)
     {
         if (!socket_path.empty()) {
             this->fd = ::addr_connect(socket_path.c_str());
@@ -414,6 +418,7 @@ struct ICAPResult {
     uint8_t result;
     int id;
     std::string content;
+    size_t content_size;
 
     // ResultMessage
 
@@ -472,15 +477,15 @@ struct ICAPResult {
 
         this->id = stream.in_uint32_be();
 
-        uint32_t content_size = stream.in_uint32_be();
+        this->content_size = stream.in_uint32_be();
 
-        if (!stream.in_check_rem(content_size)) {
-            LOG( LOG_INFO, "ICAPResult truncated, need=%u remains=%zu"
-               , content_size, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+//         if (!stream.in_check_rem(content_size)) {
+//             LOG( LOG_INFO, "ICAPResult truncated, need=%u remains=%zu"
+//                , content_size, stream.in_remain());
+//             throw Error(ERR_RDP_DATA_TRUNCATED);
+//         }
 
-        this->content = std::string(char_ptr_cast(stream.get_current()), content_size);
+        this->content = std::string(char_ptr_cast(stream.get_current()), stream.in_remain());
     }
 
 };
@@ -508,6 +513,8 @@ inline int icap_open_file(ICAPService * service, const std::string & file_name, 
 
     int file_id = -1;
     service->result_flag = -1;
+    service->last_data_response_total_size = 0;
+    service->content = "";
 
     if (service->fd.is_open()) {
         file_id = service->generate_id();
@@ -586,34 +593,64 @@ inline void icap_receive_response(ICAPService * service) {
 
         char buff[512] = {0};
 
-        while (read_data_len < 0) {
+//         while (read_data_len < 0) {
             read_data_len = read(service->fd.fd(), buff, 512);
-        }
+//        }
 
-        if (read_data_len ) {
+        if (read_data_len > 0) {
+
             InStream stream_data(buff, read_data_len);
-            LocalICAPServiceProtocol::ICAPHeader header;
-            header.receive(stream_data);
 
-            switch(header.msg_type) {
+            if (service->content.length() < service->last_data_response_total_size) {
 
-                case LocalICAPServiceProtocol::RESULT_FLAG:
-                {
-                    LocalICAPServiceProtocol::ICAPResult result;
-                    result.receive(stream_data);
-                    service->result_flag = result.result;
-                    service->content = result.content;
-                    service->last_result_file_id_received = result.id;
+                int end = 0;
+                for (end = 511; end >= 0; end--) {
+                    if (buff[end] != 0) {
+                        break;
+                    }
                 }
-                    break;
 
-                case LocalICAPServiceProtocol::CHECK_FLAG:
-                {
-                    LocalICAPServiceProtocol::ICAPCheck check;
-                    check.receive(stream_data);
-                    service->service_is_up = (check.up_flag == LocalICAPServiceProtocol::SERVICE_UP_FLAG);
+                int start = 0;
+                for (start = 0; start < read_data_len; start++) {
+                    if (buff[start] != 0) {
+                        break;
+                    }
                 }
-                    break;
+
+                if (end < (start+1)) {
+                    return;
+                }
+
+                size_t len_text = end - start + 1;
+                char * info = buff + start;
+                std::string tmp_content = std::string(info, len_text);
+                service->content += tmp_content;
+
+            } else {
+                LocalICAPServiceProtocol::ICAPHeader header;
+                header.receive(stream_data);
+
+                switch(header.msg_type) {
+
+                    case LocalICAPServiceProtocol::RESULT_FLAG:
+                    {
+                        LocalICAPServiceProtocol::ICAPResult result;
+                        result.receive(stream_data);
+                        service->result_flag = result.result;
+                        service->content = result.content;
+                        service->last_result_file_id_received = result.id;
+                        service->last_data_response_total_size = result.content_size;
+                    }
+                        break;
+
+                    case LocalICAPServiceProtocol::CHECK_FLAG:
+                    {
+                        LocalICAPServiceProtocol::ICAPCheck check;
+                        check.receive(stream_data);
+                        service->service_is_up = (check.up_flag == LocalICAPServiceProtocol::SERVICE_UP_FLAG);
+                    }
+                        break;
+                }
             }
         } else {
             service->fd.close();
