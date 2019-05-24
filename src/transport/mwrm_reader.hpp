@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "capture/cryptofile.hpp"
+#include "capture/md_hash.hpp"
 #include "transport/transport.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 

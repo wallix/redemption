@@ -20,43 +20,19 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "utils/netutils.hpp"
-#include "utils/genfstat.hpp"
-#include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/sugar/algostring.hpp"
-
-#include "main/version.hpp"
-#include "utils/cli.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/redemption_info_version.hpp"
-#include "utils/theme.hpp"
-
-
 #include "core/client_info.hpp"
-#include "core/RDP/clipboard.hpp"
-#include "core/session_reactor.hpp"
-
+#include "core/RDP/capabilities/window.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
-
-#include "capture/cryptofile.hpp"
-
-#include "transport/crypto_transport.hpp"
-#include "transport/mwrm_reader.hpp"
+#include "utils/theme.hpp"
 
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
 
-#include <iostream>
-#include <algorithm>
+#include <chrono>
+#include <string>
+#include <vector>
 
-#include <cstdio>
-#include <climits>
-#include <cstdint>
-
-#include <dirent.h>
-#include <openssl/ssl.h>
 
 #define CLIENT_REDEMPTION_REPLAY_PATH "/DATA/replay"
 #define CLIENT_REDEMPTION_LOGINS_PATH "/DATA/config/login.config"

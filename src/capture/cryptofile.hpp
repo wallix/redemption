@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "capture/md_hash.hpp"
 #include "configs/autogen/enums.hpp"
 #include "core/error.hpp"
 #include "utils/log.hpp"
@@ -42,12 +43,6 @@
 
 #include <unistd.h>
 
-
-using MD_HASH = SslSha256;
-
-enum {
-    DERIVATOR_LENGTH = 8
-};
 
 extern "C" {
     using get_hmac_key_prototype = int (uint8_t *);

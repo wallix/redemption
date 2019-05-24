@@ -1049,7 +1049,6 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -1072,7 +1071,6 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1089,7 +1087,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -1112,7 +1109,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1129,7 +1125,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -1152,7 +1147,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1169,7 +1163,6 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -1192,7 +1185,6 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1208,7 +1200,6 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -1231,7 +1222,6 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o

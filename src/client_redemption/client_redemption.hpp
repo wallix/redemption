@@ -63,6 +63,9 @@
 #include "front/execute_events.hpp"
 #include "RAIL/client_execute.hpp"
 
+#include <iostream>
+
+#include <openssl/ssl.h>
 
 
 class ClientRedemption : public ClientRedemptionAPI, public gdi::GraphicApi

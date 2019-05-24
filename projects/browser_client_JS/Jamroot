@@ -62,6 +62,7 @@ project redjs
     # DISABLE_EXCEPTION_CATCHING = 2 - disable exception catching, but enables catching in whitelist
     <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
     <cxxflags>"-s USE_PTHREADS=0"
+    <cxxflags>"-s FILESYSTEM=0"
     # <linkflags>"-s SIMD=1"
     # <cxxflags>"-s FS_LOG=1"
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
@@ -259,21 +260,22 @@ else
     }
 }
 
-local app_files = ;
-rule app_rule ( file )
+rule app ( name : src + : deps_for_path )
 {
-    # depends to js_client for a path with toolset
-    make $(file) : src/application/$(file) js_client : @copy_client ;
-    app_files += $(file) ;
+    local app_files = ;
+    for file in $(src)
+    {
+        # depends to $(deps_for_path) for a path with toolset
+        make $(file) : src/application/$(file) $(deps_for_path) : @copy_client ;
+        app_files += $(file) ;
+    }
+
+    alias $(name) : $(app_files) ;
+    explicit $(app_files) $(name) ;
 }
 
-# depends to js_client for a path with toolset
-app_rule to_scancode.js ;
-app_rule rdp_graphics.js ;
-app_rule client.html ;
-
-alias rdpclient : $(app_files) ;
-explicit $(app_files) rdpclient ;
+app rdpclient : to_scancode.js rdp_graphics.js client.html : js_client ;
+app rdpplayer : player.html : js_player ;
 
 constant browser : [ setvar browser : xdg-open ] ;
 constant username : [ setvar username : '' ] ;
