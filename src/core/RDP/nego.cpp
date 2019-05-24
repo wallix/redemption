@@ -455,7 +455,7 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
         }
     }
     else {
-        switch (this->credsspNTLM->credssp_client_authenticate_next(stream))
+        switch (this->credsspNTLM->credssp_client_authenticate_next(stream, trans))
         {
             case rdpCredsspClientNTLM::State::Cont:
                 break;
