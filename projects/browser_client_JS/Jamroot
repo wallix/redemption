@@ -71,9 +71,13 @@ project redjs
 
     # <cxx-lto>on
 
+    # <cxxflags>"-s ASM_JS=0"
     <cxxflags>"-s WASM=0"
+    # <cxxflags>"-s BINARYEN_TRAP_MODE=js" # clamp, allow
+    # <cxxflags>"-s EMCC_WASM_BACKEND=1"
+
     <variant>debug:<cxxflags>-g
-    <variant>debug:<cxxflags>-g4
+    # <variant>debug:<cxxflags>-g4
     <variant>debug:<cxxflags>--emit-symbol-map
     <variant>debug:<cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
     <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
@@ -81,6 +85,19 @@ project redjs
     <variant>release:<cxxflags>-O3
     # <variant>release:<cxxflags>-Os
     # <variant>release:<cxxflags>-Oz
+
+    <variant>release:<cxxflags>"-s STRICT=1"
+    # <variant>release:<cxxflags>"-s AGGRESSIVE_VARIABLE_ELIMINATION=1"
+    <variant>release:<cxxflags>"-s EVAL_CTORS=1"
+    # <variant>release:<cxxflags>"-s ELIMINATE_DUPLICATE_FUNCTIONS=1" # slow
+    # <variant>release:<cxxflags>"-s ASSERTIONS=0"
+    # <variant>release:<cxxflags>"-s ALIASING_FUNCTION_POINTERS=1" #but can break code that compares function pointers across different types.
+    #
+    # # UNSAFE
+    # <variant>release:<cxxflags>"--closure 1"
+    # # UNSAFE
+    # <variant>release:<cxxflags>"--llvm-lto 1" # 2, 3
+    # # UNSAFE
 
     <cxxflags>-Wno-dollar-in-identifier-extension
 
