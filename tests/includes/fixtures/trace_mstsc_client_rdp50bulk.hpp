@@ -1,44 +1,5 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
-//  Listen: binding socket 7 on 0.0.0.0:3389 |
-//  Listen: listening on socket 7 |
-//  SocketTransport: recv_timeout=1000 |
-//  Front::incoming |
-//  Socket RDP Client (8) receiving 65535 bytes |
-//  Recv done on RDP Client (8) 39 bytes |
-//  /* 0000 */ "\x03\x00\x00\x27\x22\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" // ...'"......Cooki |
-//  /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x78\x0d\x0a\x01" // e: mstshash=x... |
-//  /* 0020 */ "\x00\x08\x00\x0b\x00\x00\x00"                                     // ....... |
-//  Dump done on RDP Client (8) 39 bytes |
-//  Front::incoming: CONNECTION_INITIATION |
-//  Front::incoming: receiving x224 request PDU |
-//  CR Recv: PROTOCOL TLS |
-//  CR Recv: PROTOCOL HYBRID |
-//  CR Recv: PROTOCOL HYBRID EX |
-//  /* 0000 */ "\x03\x00\x00\x27\x22\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" // ...'"......Cooki |
-//  /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x78\x0d\x0a\x01" // e: mstshash=x... |
-//  /* 0020 */ "\x00\x08\x00\x0b\x00\x00\x00"                                     // ....... |
-//  Front::incoming: sending x224 connection confirm PDU |
-//  -----------------> Front::incoming: TLS Support Enabled |
-//  CC Send: PROTOCOL TLS |
-//  Sending on RDP Client (8) 19 bytes |
- /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x01\x08\x00\x01" // ................ |
- /* 0010 */ "\x00\x00\x00"                                                     // ... |
-//  Sent dumped on RDP Client (8) 19 bytes |
-//  SocketTransport::enable_server_tls() start |
-//  TLSContext::enable_server_tls() set SSL options |
-//  TLSContext::enable_server_tls() set SSL cipher list |
-//  TLSContext::X509_get_pubkey() |
-//  TLSContext::i2d_PublicKey() |
-//  TLSContext::i2d_PublicKey() |
-//  Incoming connection to Bastion using TLS version TLSv1.2 |
-//  TLSContext::Negociated cipher used ECDHE-RSA-AES256-GCM-SHA384 |
-//  SocketTransport::enable_server_tls() done |
-//  Front::incoming |
-//  Socket RDP Client (8) receiving 65535 bytes |
-//  partial_recv_tls error:00000005:lib(0):func(0):DH lib |
-//  Create Error: Exception ERR_TRANSPORT_NO_MORE_DATA no: 1501 |
-//  RDP Client (-1): total_received=39, total_sent=19 |
 //  Listen: binding socket 3 on 0.0.0.0:3389 |
 //  Listen: listening on socket 3 |
 //  SocketTransport: recv_timeout=1000 |
@@ -263,7 +224,7 @@ const char outdata[] =
 //  Socket RDP Client (4) receiving 65535 bytes |
 //  Recv done on RDP Client (4) 329 bytes |
 //  /* 0000 */ "\x03\x00\x01\x49\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x3a\x40" // ...I...d....p.:@ |
-//  /* 0010 */ "\x00\xd3\x29\x0c\x04\x0c\x04\xb3\x47\x01\x00\x00\x00\x02\x00\x00" // ..).....G....... |
+//  /* 0010 */ "\x00\x35\x26\x0c\x04\x0c\x04\xb3\x47\x01\x00\x00\x00\x02\x00\x00" // .5&.....G....... |
 //  /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00" // .......x........ |
 //  /* 0030 */ "\x00\x02\x00\x18\x00\x31\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e" // .....1.0...1.0.. |
 //  /* 0040 */ "\x00\x34\x00\x34\x00\x2e\x00\x39\x00\x39\x00\x00\x00\x40\x00\x43" // .4.4...9.9...@.C |
@@ -387,14 +348,14 @@ const char outdata[] =
 //  Socket RDP Client (4) receiving 65535 bytes |
 //  Recv done on RDP Client (4) 164 bytes |
 //  /* 0000 */ "\x03\x00\x00\xa4\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x95\x80" // .......d....p... |
-//  /* 0010 */ "\x00\x24\xbf\x13\x83\x91\x00\x01\x00\x00\x00\x00\x00\x01\x08\x32" // .$.............2 |
-//  /* 0020 */ "\xbd\x0b\xa8\x37\xab\xa1\x54\x66\x14\x44\x19\xe9\x43\xf4\x9d\x45" // ...7..Tf.D..C..E |
-//  /* 0030 */ "\x6c\x58\x97\x18\x62\xd1\xeb\x1d\x27\x37\xf0\x1c\x84\x5c\x88\x00" // lX..b...'7...... |
-//  /* 0040 */ "\x00\x48\x00\x55\x59\x56\x19\x12\x38\xf7\x43\x48\xe3\x90\xbe\xf2" // .H.UYV..8.CH.... |
-//  /* 0050 */ "\x2c\xbe\x35\x1b\x2f\x7f\xfb\x25\xb8\x19\xe6\xbb\xb4\xa1\xf7\xb0" // ,.5./..%........ |
-//  /* 0060 */ "\xeb\x1e\x32\x56\xc6\x20\xcb\x30\x8a\x14\x43\x1f\xbb\xa1\x60\xbe" // ..2V. .0..C...`. |
-//  /* 0070 */ "\xb8\xed\x99\x59\x9d\x69\x6e\x54\x1e\xbd\x12\xda\x1d\xaa\x37\xa7" // ...Y.inT......7. |
-//  /* 0080 */ "\xad\xb5\x21\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0b\x00\x52" // ..!............R |
+//  /* 0010 */ "\x00\x00\x00\x13\x83\x91\x00\x01\x00\x00\x00\x00\x00\x01\x08\x2d" // ...............- |
+//  /* 0020 */ "\x14\x97\x25\xd0\x1c\x84\xd6\x6c\x72\x3a\x9e\xc9\x02\x5d\xbb\xdb" // ..%....lr:...].. |
+//  /* 0030 */ "\x6d\x8d\x58\x21\x27\x8a\x48\x92\x03\xb8\x9c\x28\x43\x4b\xb2\x00" // m.X!'.H....(CK.. |
+//  /* 0040 */ "\x00\x48\x00\x59\x1a\x52\x46\xaa\x8e\x3a\x41\xef\x6c\xf6\xef\x06" // .H.Y.RF..:A.l... |
+//  /* 0050 */ "\x32\x0c\x45\x4e\xbf\x38\x71\x29\xd6\xb8\x06\x5e\x76\xbb\xf8\x8f" // 2.EN.8q)...^v... |
+//  /* 0060 */ "\x9b\x8e\xf2\x28\x6c\xcf\x12\x50\x89\xff\xd1\x1e\x82\x6e\x1c\xd3" // ...(l..P.....n.. |
+//  /* 0070 */ "\xcc\x71\x34\x04\x42\xc7\xb3\xb9\x9d\x6e\x5b\x59\x55\x4c\x96\x6f" // .q4.B....n[YUL.o |
+//  /* 0080 */ "\x3f\x56\x38\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0b\x00\x52" // ?V8............R |
 //  /* 0090 */ "\x65\x64\x65\x6d\x70\x74\x69\x6f\x6e\x00\x10\x00\x06\x00\x43\x4c" // edemption.....CL |
 //  /* 00a0 */ "\x54\x30\x32\x00"                                                 // T02. |
 //  Dump done on RDP Client (4) 164 bytes |
@@ -739,7 +700,7 @@ const char outdata[] =
 //  Front::capability 17 / 18 |
 //  Front::process_confirm_active: Receiving from client MultifragmentUpdate caps (8 bytes) |
 //       MultifragmentUpdate caps::MaxRequestSize 0 |
-//  Front::process_confirm_active: done p=0x7fb3975eec85 end=0x7fb3975eec85 |
+//  Front::process_confirm_active: done p=0x7faa0dceec85 end=0x7faa0dceec85 |
 //  Front::reset: use_bitmap_comp=1 |
 //  Front::reset: use_compact_packets=1 |
 //  Front::reset: bitmap_cache_version=0 |
@@ -825,7 +786,7 @@ const char outdata[] =
 //  Socket RDP Client (4) receiving 65535 bytes |
 //  Recv done on RDP Client (4) 30 bytes |
 //  /* 0000 */ "\x30\x1e\x01\x0f\x62\x01\x2a\x01\x36\x01\x1d\x03\x1d\x01\x0f\x01" // 0...b.*.6....... |
-//  /* 0010 */ "\x38\x01\x0f\x03\x38\x01\x0f\x20\x00\x08\xec\x03\x79\x01"         // 8...8.. ....y. |
+//  /* 0010 */ "\x38\x01\x0f\x03\x38\x01\x0f\x20\x00\x08\xfd\x03\x73\x01"         // 8...8.. ....s. |
 //  Dump done on RDP Client (4) 30 bytes |
 //  Front::incoming: ACTIVATE_AND_PROCESS_DATA |
 //  Front::incoming: Received Fast-Path PDU, scancode eventCode=0x1 SPKeyboardFlags=0x8000, keyCode=0xF |
@@ -851,7 +812,7 @@ const char outdata[] =
 //  Front::incoming: Received Fast-Path PUD done |
 //  Front::incoming: Received Fast-Path PDU, scancode eventCode=0x1 SPKeyboardFlags=0x8000, keyCode=0xF |
 //  Front::incoming: Received Fast-Path PUD done |
-//  Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x800, xPos=0x3EC, yPos=0x179 |
+//  Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x800, xPos=0x3FD, yPos=0x173 |
 //  Front::incoming: Received Fast-Path PUD done |
 //  Front::incoming |
 //  Socket RDP Client (4) receiving 65535 bytes |
@@ -3325,47 +3286,8 @@ const char outdata[] =
 //  RDP Client (-1): total_received=1751, total_sent=28071 |
 } /* end outdata */;
 
-const char indata[] =
+const char indata[] = /* NOLINT */
 {
-//  Listen: binding socket 7 on 0.0.0.0:3389 |
-//  Listen: listening on socket 7 |
-//  SocketTransport: recv_timeout=1000 |
-//  Front::incoming |
-//  Socket RDP Client (8) receiving 65535 bytes |
-//  Recv done on RDP Client (8) 39 bytes |
- /* 0000 */ "\x03\x00\x00\x27\x22\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" // ...'"......Cooki |
- /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x78\x0d\x0a\x01" // e: mstshash=x... |
- /* 0020 */ "\x00\x08\x00\x0b\x00\x00\x00"                                     // ....... |
-//  Dump done on RDP Client (8) 39 bytes |
-//  Front::incoming: CONNECTION_INITIATION |
-//  Front::incoming: receiving x224 request PDU |
-//  CR Recv: PROTOCOL TLS |
-//  CR Recv: PROTOCOL HYBRID |
-//  CR Recv: PROTOCOL HYBRID EX |
-//  /* 0000 */ "\x03\x00\x00\x27\x22\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" // ...'"......Cooki |
-//  /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x78\x0d\x0a\x01" // e: mstshash=x... |
-//  /* 0020 */ "\x00\x08\x00\x0b\x00\x00\x00"                                     // ....... |
-//  Front::incoming: sending x224 connection confirm PDU |
-//  -----------------> Front::incoming: TLS Support Enabled |
-//  CC Send: PROTOCOL TLS |
-//  Sending on RDP Client (8) 19 bytes |
-//  /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x01\x08\x00\x01" // ................ |
-//  /* 0010 */ "\x00\x00\x00"                                                     // ... |
-//  Sent dumped on RDP Client (8) 19 bytes |
-//  SocketTransport::enable_server_tls() start |
-//  TLSContext::enable_server_tls() set SSL options |
-//  TLSContext::enable_server_tls() set SSL cipher list |
-//  TLSContext::X509_get_pubkey() |
-//  TLSContext::i2d_PublicKey() |
-//  TLSContext::i2d_PublicKey() |
-//  Incoming connection to Bastion using TLS version TLSv1.2 |
-//  TLSContext::Negociated cipher used ECDHE-RSA-AES256-GCM-SHA384 |
-//  SocketTransport::enable_server_tls() done |
-//  Front::incoming |
-//  Socket RDP Client (8) receiving 65535 bytes |
-//  partial_recv_tls error:00000005:lib(0):func(0):DH lib |
-//  Create Error: Exception ERR_TRANSPORT_NO_MORE_DATA no: 1501 |
-//  RDP Client (-1): total_received=39, total_sent=19 |
 //  Listen: binding socket 3 on 0.0.0.0:3389 |
 //  Listen: listening on socket 3 |
 //  SocketTransport: recv_timeout=1000 |
@@ -3590,7 +3512,7 @@ const char indata[] =
 //  Socket RDP Client (4) receiving 65535 bytes |
 //  Recv done on RDP Client (4) 329 bytes |
  /* 0000 */ "\x03\x00\x01\x49\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x3a\x40" // ...I...d....p.:@ |
- /* 0010 */ "\x00\xd3\x29\x0c\x04\x0c\x04\xb3\x47\x01\x00\x00\x00\x02\x00\x00" // ..).....G....... |
+ /* 0010 */ "\x00\x35\x26\x0c\x04\x0c\x04\xb3\x47\x01\x00\x00\x00\x02\x00\x00" // .5&.....G....... |
  /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00" // .......x........ |
  /* 0030 */ "\x00\x02\x00\x18\x00\x31\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e" // .....1.0...1.0.. |
  /* 0040 */ "\x00\x34\x00\x34\x00\x2e\x00\x39\x00\x39\x00\x00\x00\x40\x00\x43" // .4.4...9.9...@.C |
@@ -3714,14 +3636,14 @@ const char indata[] =
 //  Socket RDP Client (4) receiving 65535 bytes |
 //  Recv done on RDP Client (4) 164 bytes |
  /* 0000 */ "\x03\x00\x00\xa4\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x95\x80" // .......d....p... |
- /* 0010 */ "\x00\x24\xbf\x13\x83\x91\x00\x01\x00\x00\x00\x00\x00\x01\x08\x32" // .$.............2 |
- /* 0020 */ "\xbd\x0b\xa8\x37\xab\xa1\x54\x66\x14\x44\x19\xe9\x43\xf4\x9d\x45" // ...7..Tf.D..C..E |
- /* 0030 */ "\x6c\x58\x97\x18\x62\xd1\xeb\x1d\x27\x37\xf0\x1c\x84\x5c\x88\x00" // lX..b...'7...... |
- /* 0040 */ "\x00\x48\x00\x55\x59\x56\x19\x12\x38\xf7\x43\x48\xe3\x90\xbe\xf2" // .H.UYV..8.CH.... |
- /* 0050 */ "\x2c\xbe\x35\x1b\x2f\x7f\xfb\x25\xb8\x19\xe6\xbb\xb4\xa1\xf7\xb0" // ,.5./..%........ |
- /* 0060 */ "\xeb\x1e\x32\x56\xc6\x20\xcb\x30\x8a\x14\x43\x1f\xbb\xa1\x60\xbe" // ..2V. .0..C...`. |
- /* 0070 */ "\xb8\xed\x99\x59\x9d\x69\x6e\x54\x1e\xbd\x12\xda\x1d\xaa\x37\xa7" // ...Y.inT......7. |
- /* 0080 */ "\xad\xb5\x21\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0b\x00\x52" // ..!............R |
+ /* 0010 */ "\x00\x00\x00\x13\x83\x91\x00\x01\x00\x00\x00\x00\x00\x01\x08\x2d" // ...............- |
+ /* 0020 */ "\x14\x97\x25\xd0\x1c\x84\xd6\x6c\x72\x3a\x9e\xc9\x02\x5d\xbb\xdb" // ..%....lr:...].. |
+ /* 0030 */ "\x6d\x8d\x58\x21\x27\x8a\x48\x92\x03\xb8\x9c\x28\x43\x4b\xb2\x00" // m.X!'.H....(CK.. |
+ /* 0040 */ "\x00\x48\x00\x59\x1a\x52\x46\xaa\x8e\x3a\x41\xef\x6c\xf6\xef\x06" // .H.Y.RF..:A.l... |
+ /* 0050 */ "\x32\x0c\x45\x4e\xbf\x38\x71\x29\xd6\xb8\x06\x5e\x76\xbb\xf8\x8f" // 2.EN.8q)...^v... |
+ /* 0060 */ "\x9b\x8e\xf2\x28\x6c\xcf\x12\x50\x89\xff\xd1\x1e\x82\x6e\x1c\xd3" // ...(l..P.....n.. |
+ /* 0070 */ "\xcc\x71\x34\x04\x42\xc7\xb3\xb9\x9d\x6e\x5b\x59\x55\x4c\x96\x6f" // .q4.B....n[YUL.o |
+ /* 0080 */ "\x3f\x56\x38\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x0b\x00\x52" // ?V8............R |
  /* 0090 */ "\x65\x64\x65\x6d\x70\x74\x69\x6f\x6e\x00\x10\x00\x06\x00\x43\x4c" // edemption.....CL |
  /* 00a0 */ "\x54\x30\x32\x00"                                                 // T02. |
 //  Dump done on RDP Client (4) 164 bytes |
@@ -4066,7 +3988,7 @@ const char indata[] =
 //  Front::capability 17 / 18 |
 //  Front::process_confirm_active: Receiving from client MultifragmentUpdate caps (8 bytes) |
 //       MultifragmentUpdate caps::MaxRequestSize 0 |
-//  Front::process_confirm_active: done p=0x7fb3975eec85 end=0x7fb3975eec85 |
+//  Front::process_confirm_active: done p=0x7faa0dceec85 end=0x7faa0dceec85 |
 //  Front::reset: use_bitmap_comp=1 |
 //  Front::reset: use_compact_packets=1 |
 //  Front::reset: bitmap_cache_version=0 |
@@ -4152,7 +4074,7 @@ const char indata[] =
 //  Socket RDP Client (4) receiving 65535 bytes |
 //  Recv done on RDP Client (4) 30 bytes |
  /* 0000 */ "\x30\x1e\x01\x0f\x62\x01\x2a\x01\x36\x01\x1d\x03\x1d\x01\x0f\x01" // 0...b.*.6....... |
- /* 0010 */ "\x38\x01\x0f\x03\x38\x01\x0f\x20\x00\x08\xec\x03\x79\x01"         // 8...8.. ....y. |
+ /* 0010 */ "\x38\x01\x0f\x03\x38\x01\x0f\x20\x00\x08\xfd\x03\x73\x01"         // 8...8.. ....s. |
 //  Dump done on RDP Client (4) 30 bytes |
 //  Front::incoming: ACTIVATE_AND_PROCESS_DATA |
 //  Front::incoming: Received Fast-Path PDU, scancode eventCode=0x1 SPKeyboardFlags=0x8000, keyCode=0xF |
@@ -4178,7 +4100,7 @@ const char indata[] =
 //  Front::incoming: Received Fast-Path PUD done |
 //  Front::incoming: Received Fast-Path PDU, scancode eventCode=0x1 SPKeyboardFlags=0x8000, keyCode=0xF |
 //  Front::incoming: Received Fast-Path PUD done |
-//  Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x800, xPos=0x3EC, yPos=0x179 |
+//  Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x800, xPos=0x3FD, yPos=0x173 |
 //  Front::incoming: Received Fast-Path PUD done |
 //  Front::incoming |
 //  Socket RDP Client (4) receiving 65535 bytes |

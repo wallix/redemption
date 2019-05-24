@@ -378,7 +378,6 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
 
             cchWildcard = cchNextWildcard;
             lpWildcard = lpNextWildcard;
-            dwFlags = dwNextFlags;
 
             lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
         }

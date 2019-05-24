@@ -1221,8 +1221,7 @@ public:
 };  // FormatListPDUEx
 
 inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx & format_list_pdu, uint32_t formatId) {
-    for (size_t i = 0, c = format_list_pdu.num_format_names(); i < c; ++i) {
-        FormatName const & format_name = format_list_pdu.format_name(i);
+    for (FormatName const& format_name : format_list_pdu) {
         if (format_name.formatId() == formatId) {
             return true;
         }

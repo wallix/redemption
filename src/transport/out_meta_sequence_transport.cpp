@@ -90,9 +90,7 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
 : meta_buf_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(report_message))
 , wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(report_message))
 , fstat(fstat)
-, current_filename_{}
 , filegen_(path, hash_path, basename, ".wrm")
-, num_file_(0)
 , groupid_(groupid)
 , mf_(path, basename)
 , hf_(hash_path, basename)

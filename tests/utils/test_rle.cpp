@@ -471,8 +471,6 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapDecompressColorPlane) {
         0x60, 0x01, 0x67, 0x8B, 0xA3, 0x78, 0xAF
     };
 
-    StaticOutStream<1024> outbuffer;
-
     const uint8_t * compressed_data      = data;
     size_t          compressed_data_size = sizeof(data);
 

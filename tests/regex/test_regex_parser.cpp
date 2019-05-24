@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestRegexState)
         {
             this->stparser.compile(s);
             ///\ATTENTION not safe
-            this->str = st_to_string(const_cast<State*>(this->stparser.root()));
+            this->str = st_to_string(const_cast<State*>(this->stparser.root())); /*NOLINT*/
         }
 
         std::string to_string() const

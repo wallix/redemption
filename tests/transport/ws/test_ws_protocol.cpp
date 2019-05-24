@@ -92,6 +92,8 @@ RED_AUTO_TEST_CASE(TestWsParseClient)
     RED_CHECK(R::UnsupportedPartialHeader == ws_protocol_parse_client(av(1)).state);
     RED_CHECK(R::UnsupportedPartialHeader == ws_protocol_parse_client(av(7)).state);
     RED_CHECK(R::UnsupportedPartialData == ws_protocol_parse_client(av(9)).state);
+    uint8_t data_close[] = "\x88\x80\x40\xe9\x27\x4a";
+    RED_CHECK(R::Close == ws_protocol_parse_client(array_view_u8{data_close}).state);
     ProtocolParseClientResult r;
     RED_CHECK(R::Ok == (r = ws_protocol_parse_client(av(12))).state);
     RED_CHECK(s[12] == 0xff);

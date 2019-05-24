@@ -42,12 +42,12 @@ public:
         const uint8_t* chunk_data, uint32_t chunk_data_length
     ) override
     {
-        uint8_t tmp[sizeof(dest)+sizeof(total_length)+sizeof(flags)+sizeof(chunk_data_length)];
-        ::out_bytes_be(tmp, sizeof(dest), dest);
-        ::out_bytes_be(tmp + sizeof(dest), sizeof(total_length), total_length);
-        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length), sizeof(flags), flags);
-        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length) + sizeof(flags), sizeof(chunk_data_length), chunk_data_length);
-        this->transport.send(tmp,sizeof(tmp));
+        StaticOutStream<4*4> stream;
+        stream.out_uint32_le(dest);
+        stream.out_uint32_le(total_length);
+        stream.out_uint32_le(flags);
+        stream.out_uint32_le(chunk_data_length);
+        this->transport.send(stream.get_bytes());
         this->transport.send(chunk_data, chunk_data_length);
     }
 };

@@ -150,7 +150,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
                                    text.length());
     bool param_dont_log_data_into_syslog = false;
     uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-    StaticOutStream<1600> file_descriptor_stream;
     RDPVerbose verbose = RDPVerbose::none;
 
     ClipboardData clip_data;
@@ -188,7 +187,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     RDPECLIP::CliprdrHeader header (RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (cItems*RDPECLIP::FileDescriptor::size())+4);
     bool param_dont_log_data_into_syslog = false;
     uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-    StaticOutStream<1600> file_descriptor_stream;
     RDPVerbose verbose = RDPVerbose::none;
 
     uint32_t clipDataId = 7;

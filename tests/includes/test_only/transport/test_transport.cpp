@@ -50,16 +50,6 @@ namespace
     struct hexdump
     {
         const_bytes_view sig;
-
-        std::size_t size() const
-        {
-            return this->sig.size();
-        }
-
-        uint8_t const * data() const
-        {
-            return this->sig.data();
-        }
     };
 
     struct hexdump_trailing
@@ -68,19 +58,28 @@ namespace
         uint8_t const * p;
         std::size_t len;
 
-        std::size_t size() const
+        const_bytes_view sig() const
         {
-            return this->len;
-        }
-
-        uint8_t const * data() const
-        {
-            return p;
+            return {this->p, this->len};
         }
     };
 
-    std::ostream & operator<<(std::ostream & out, hexdump const & x)
+    bool is_full_dump()
     {
+        static bool x = []{
+            char const* s = std::getenv("REDEMPTION_FULL_DUMP");
+            return s && *s == '1';
+        }();
+        return x;
+    }
+
+    std::ostream & operator<<(std::ostream & out, hexdump const & data_dump)
+    {
+        auto x = data_dump.sig;
+        if (!is_full_dump()) {
+            x = x.first(std::min(data_dump.sig.size(), std::size_t(128)));
+        }
+
         char buffer[2048];
         for (size_t j = 0 ; j < x.size(); j += 16){
             char * line = buffer;
@@ -115,14 +114,19 @@ namespace
                 buffer[0]=0;
             }
         }
+
+        if (x.size() != data_dump.sig.size()) {
+            out << "... followed by " << (data_dump.sig.size() - x.size()) << " bytes (set REDEMPTION_FULL_DUMP to 1 for a complete trace)\n";
+        }
+
         return out;
     }
 
     std::ostream & operator<<(std::ostream & out, hexdump_trailing const & x)
     {
         return out
-            << hexdump{{x.data(), x.size()}} << '\n'
-            << "~" << x.type << "() remaining=" << x.size()
+            << hexdump{x.sig()} << '\n'
+            << "~" << x.type << "() remaining=" << x.sig().size()
         ;
     }
 } // anonymous namespace

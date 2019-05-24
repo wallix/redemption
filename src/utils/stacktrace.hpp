@@ -53,7 +53,7 @@ namespace red
                 auto&& file = frame.source_file();
                 is_test = (
                     0 == file.compare(0, 6, "tests/")
-                 || file.find_first_of("/tests/") != std::string::npos);
+                 || file.find("/tests/") != std::string::npos);
 #               endif
                 f(i, boost::stacktrace::to_string(frame));
                 ++i;

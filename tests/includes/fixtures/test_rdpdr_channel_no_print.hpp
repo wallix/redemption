@@ -1,4 +1,4 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
 // FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
 // Recv done on rdpdr (-1) n bytes |
@@ -1657,7 +1657,7 @@ const char outdata[] =
 // Sent dumped on channel (-1) n bytes |
 } /* end outdata */;
 
-const char indata[] =
+const char indata[] = /* NOLINT */
 {
 // FileSystemVirtualChannel::process_server_message: total_length=12 flags=0x00000003 chunk_data_length=12 |
 // Recv done on rdpdr (-1) n bytes |

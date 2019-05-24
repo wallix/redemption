@@ -4580,6 +4580,65 @@ test-run tests/server/test_mstsc_client :
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
+test-run tests/server/test_mstsc_client_rdp50bulk :
+  $(REDEMPTION_TEST_PATH)/server/test_mstsc_client_rdp50bulk.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>ffmpeg
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>png
+  <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/capture/capture.o
+  <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
+  <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/utils/match_finder.o
+  <library>src/capture/video_capture.o
+  <library>src/capture/video_recorder.o
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/test_card_mod.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/out_file_transport.o
+  <library>src/transport/out_filename_sequence_transport.o
+  <library>src/transport/out_meta_sequence_transport.o
+  <library>src/transport/snappy_compression_transport.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/confdescriptor.o
+  <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/pattutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/front_wrapper.o
+  <library>tests/includes/test_only/transport/test_transport.o
+  <library>z
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  $(GCOV_NO_BUILD)
+;
 test-run tests/server/test_rdesktop_client :
   $(REDEMPTION_TEST_PATH)/server/test_rdesktop_client.cpp
 :
@@ -5047,6 +5106,11 @@ test-run tests/utils/sugar/test_splitter :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_splitter.cpp
 :
   <covfile>src/utils/sugar/splitter.hpp
+;
+test-run tests/utils/sugar/test_static_vector :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_static_vector.cpp
+:
+  <covfile>src/utils/sugar/static_vector.hpp
 ;
 test-run tests/utils/sugar/test_unique_fd :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_unique_fd.cpp
@@ -5828,6 +5892,7 @@ alias test_regex_state : tests/regex/test_regex_state ;
 alias test_regex_states_value : tests/regex/test_regex_states_value ;
 alias test_regex_utils : tests/regex/test_regex_utils ;
 alias test_mstsc_client : tests/server/test_mstsc_client ;
+alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
 alias test_rdesktop_client : tests/server/test_rdesktop_client ;
 alias test_ssl_aes : tests/system/linux/system/test_ssl_aes ;
 alias test_ssl_md4 : tests/system/linux/system/test_ssl_md4 ;
@@ -5877,6 +5942,7 @@ alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
 alias test_range : tests/utils/sugar/test_range ;
 alias test_safe_iterator : tests/utils/sugar/test_safe_iterator ;
 alias test_splitter : tests/utils/sugar/test_splitter ;
+alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
 alias test_update_lock : tests/utils/sugar/test_update_lock ;
 alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
@@ -6207,6 +6273,7 @@ alias test_noncopyable.coverage : tests/utils/sugar/test_noncopyable.coverage ;
 alias test_range.coverage : tests/utils/sugar/test_range.coverage ;
 alias test_safe_iterator.coverage : tests/utils/sugar/test_safe_iterator.coverage ;
 alias test_splitter.coverage : tests/utils/sugar/test_splitter.coverage ;
+alias test_static_vector.coverage : tests/utils/sugar/test_static_vector.coverage ;
 alias test_unique_fd.coverage : tests/utils/sugar/test_unique_fd.coverage ;
 alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
 alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
@@ -6580,6 +6647,7 @@ alias tests/regex.norec :
 ;
 alias tests/server.norec :
   tests/server/test_mstsc_client
+  tests/server/test_mstsc_client_rdp50bulk
   tests/server/test_rdesktop_client
 ;
 alias tests/system/linux/system.norec :
@@ -6641,6 +6709,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_range
   tests/utils/sugar/test_safe_iterator
   tests/utils/sugar/test_splitter
+  tests/utils/sugar/test_static_vector
   tests/utils/sugar/test_unique_fd
   tests/utils/sugar/test_update_lock
 ;

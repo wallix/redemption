@@ -131,12 +131,14 @@ WsTransport::TlsResult WsTransport::enable_client_tls(ServerNotifier& /*server_n
 
 bool WsTransport::disconnect()
 {
-    this->state = State::Closed;
-
     if (this->sck != INVALID_SOCKET) {
-        ws_protocol_server_send_close_frame(D::sender(*this));
+        if (this->state != State::Closed) {
+            this->state = State::Closed;
+            ws_protocol_server_send_close_frame(D::sender(*this));
+        }
         return SocketTransport::disconnect();
     }
 
+    this->state = State::Closed;
     return false;
 }

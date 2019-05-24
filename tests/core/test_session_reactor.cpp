@@ -170,10 +170,10 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 
     char dummy;
 
-    session_reactor.execute_sesman(*reinterpret_cast<Inifile*>(&dummy));
+    session_reactor.execute_sesman(*reinterpret_cast<Inifile*>(&dummy)); /*NOLINT*/
     RED_CHECK_EQ(s, "gd\n~gd\nini\n");
 
-    session_reactor.execute_callbacks(*reinterpret_cast<Callback*>(&dummy));
+    session_reactor.execute_callbacks(*reinterpret_cast<Callback*>(&dummy)); /*NOLINT*/
     RED_CHECK_EQ(s, "gd\n~gd\nini\ncallback\n~callback\n");
 
     RED_CHECK(!gd);
