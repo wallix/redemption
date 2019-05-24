@@ -501,6 +501,7 @@ void icap_receive_result(ICAPService * service);
 int icap_end_of_file(ICAPService * service, const int file_id);
 int icap_close_session(ICAPService * service);
 int icap_abort_file(ICAPService * service, const int file_id);
+bool icap_is_waitting_for_response_completion(ICAPService * service);
 
 
 
@@ -713,4 +714,11 @@ inline int icap_close_session(ICAPService * service) {
     delete service;
 
     return n;
+}
+
+inline bool icap_is_waitting_for_response_completion(ICAPService * service) {
+    if (service == nullptr) {
+        return false;
+    }
+    return service->content.length() < service->last_data_response_total_size;
 }

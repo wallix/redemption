@@ -228,12 +228,8 @@ public:
         return this->enable_validator;
     }
 
-    bool response_wait_for_completion() {
-        if (this->icap_service == nullptr) {
-            return false;
-        }
-        return this->icap_service->content.length() < this->icap_service->last_data_response_total_size;
+    bool is_waitting_for_response_completion() {
+        return icap_is_waitting_for_response_completion(this->icap_service);
     }
-
 
 };

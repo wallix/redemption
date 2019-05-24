@@ -75,7 +75,12 @@ extern "C"
         return service->last_result_file_id_received;
     }
 
-    bool service_is_up(ICAPService * service) noexcept {
+    bool validator_service_is_up(ICAPService * service) noexcept {
         return service->service_is_up;
     }
+
+    bool validator_is_waitting_for_response_completion(ICAPService * service) noexcept {
+        return icap_is_waitting_for_response_completion(service);
+    }
+
 }

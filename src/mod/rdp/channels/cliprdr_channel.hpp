@@ -676,7 +676,7 @@ public:
 
         this->channel_file.receive_response();
 
-        if (this->channel_file.response_wait_for_completion()) {
+        if (this->channel_file.is_waitting_for_response_completion()) {
             return;
         }
 

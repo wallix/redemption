@@ -65,5 +65,8 @@ extern "C"
     int validator_get_result_file_id(ICAPService * service) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    bool service_is_up(ICAPService * service) noexcept;
+    bool validator_service_is_up(ICAPService * service) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    bool validator_is_waitting_for_response_completion(ICAPService * service) noexcept;
 }
