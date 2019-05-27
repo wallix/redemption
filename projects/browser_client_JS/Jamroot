@@ -67,8 +67,8 @@ project redjs
     # <cxxflags>"-s FS_LOG=1"
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
 
-    # <cxxflags>"-s USE_LIBPNG=1"
-    # <cxxflags>"-s USE_ZLIB=1"
+    <cxxflags>"-s USE_LIBPNG=1"
+    <cxxflags>"-s USE_ZLIB=1"
 
     # <cxx-lto>on
 
@@ -243,7 +243,7 @@ rule htmljs ( name : objs + : deps * )
 
 
 include targets.jam ;
-echo $(JS_CLIENT_COPY_MODE)  ;
+# echo $(JS_CLIENT_COPY_MODE) ;
 if $(JS_CLIENT_COPY_MODE) = "copy"
 {
     actions copy_client

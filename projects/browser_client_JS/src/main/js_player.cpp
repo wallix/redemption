@@ -18,14 +18,36 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
+#include "capture/save_state_chunk.hpp"
+#include "capture/wrm_meta_chunk.hpp"
 #include "capture/wrm_chunk_type.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/state_chunk.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/log.hpp"
 
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/em_asm.hpp"
+#include "red_emscripten/val.hpp"
+#include "redjs/browser_graphic.hpp"
 
+#include <chrono>
+
+
+namespace
+{
+    namespace jsnames
+    {
+        constexpr char const* update_pointer_position = "setPointerPosition";
+        constexpr char const* set_delay = "setDelay";
+    }
+}
 
 struct WrmPlayer
 {
@@ -36,11 +58,11 @@ struct WrmPlayer
 
     bool next_order() noexcept
     {
-        if (!this->chunk.count) {
-            constexpr std::size_t header_size = 8;
-
+        if (!this->chunk.count)
+        {
             InStream header(this->data_remaining());
-            if (header.in_remain() < header_size) {
+            if (header.in_remain() < WRM_HEADER_SIZE)
+            {
                 return false;
             }
 
@@ -48,22 +70,112 @@ struct WrmPlayer
             this->chunk.size = header.in_uint32_le();
             this->chunk.count = header.in_uint16_le();
 
-            if (header.in_remain() < this->chunk.size) {
+            if (header.in_remain() + 8 < this->chunk.size)
+            {
                 return false;
             }
+
+            this->in_stream = InStream(header.get_current(), this->chunk.size);
+        }
+
+        if (this->chunk.count > 0)
+        {
+            --this->chunk.count;
         }
 
         return true;
     }
 
-    int interpret_order() noexcept
+    void interpret_order()
     {
-        RED_EM_ASM({
-            console.log("RdpClient: " + $0 + "/" + $1 + " " + $2 + " " + $3);
-        }, this->offset, this->data.size(), this->chunk.count, this->chunk.size);
-        --this->chunk.count;
-        this->offset += this->chunk.size;
-        return int(this->chunk.type) + 1;
+        switch (this->chunk.type)
+        {
+            case WrmChunkType::RDP_UPDATE_ORDERS:
+            {
+                uint8_t control = this->in_stream.in_uint8();
+
+                switch (control & (RDP::STANDARD | RDP::SECONDARY))
+                {
+                    case RDP::SECONDARY:
+                        this->_interpret_secondary_order(control);
+                        break;
+                    case RDP::STANDARD:
+                        this->_interpret_standard_order(control);
+                        break;
+                    case RDP::STANDARD | RDP::SECONDARY:
+                        this->_interpret_cache_order();
+                        break;
+                    default:
+                        LOG(LOG_ERR, "Unsupported drawing order detected : protocol error");
+                        throw Error(ERR_WRM);
+                }
+
+                break;
+            }
+
+            case WrmChunkType::TIMESTAMP:
+            {
+                timeval now;
+                this->in_stream.in_timeval_from_uint64le_usec(now);
+
+                if (this->in_stream.in_remain() > 0)
+                {
+                    if (this->in_stream.in_remain() < 4)
+                    {
+                        LOG(LOG_WARNING, "Input data truncated");
+                    }
+
+                    uint16_t mouse_x = this->in_stream.in_uint16_le();
+                    uint16_t mouse_y = this->in_stream.in_uint16_le();
+
+                    redjs::emval_call(this->callbacks, jsnames::update_pointer_position,
+                        mouse_x, mouse_y);
+
+                    this->in_stream.in_skip_bytes(this->in_stream.in_remain());
+                }
+
+                auto ms_now = to_ms(now);
+                redjs::emval_call(this->callbacks, jsnames::set_delay,
+                    uint32_t((this->record_now - ms_now).count()));
+                this->record_now = ms_now;
+
+                break;
+            }
+
+            case WrmChunkType::SAVE_STATE:
+                SaveStateChunk().recv(this->in_stream, this->ssc, this->wrm_meta.version);
+                break;
+
+            case WrmChunkType::LAST_IMAGE_CHUNK:
+            case WrmChunkType::PARTIAL_IMAGE_CHUNK:
+            {
+                /*if (this->graphic_consumers.size())
+                {
+                    set_rows_from_image_chunk(
+                        *this->trans,
+                        this->chunk_type,
+                        this->chunk_size,
+                        this->screen_rect.cx,
+                        this->graphic_consumers
+                    );
+                }
+                else*/
+                {
+                    this->in_stream.in_skip_bytes(this->in_stream.in_remain());
+                }
+                this->chunk.count = 0;
+            }
+            break;
+        }
+
+        this->offset += in_stream.get_offset();
+
+        this->chunk.count = 0;
+    }
+
+    void ignore_chunk() noexcept
+    {
+        this->chunk.count = 0;
     }
 
 private:
@@ -72,9 +184,13 @@ private:
         return const_bytes_view(this->data).array_from_offset(this->offset);
     }
 
+    void _interpret_secondary_order(uint8_t control);
+    void _interpret_standard_order(uint8_t control);
+    void _interpret_cache_order();
+
     struct Chunk
     {
-        uint32_t size;
+        uint32_t size = 0;
         WrmChunkType type;
         uint16_t count = 0;
     };
@@ -83,7 +199,14 @@ private:
     emscripten::val callbacks;
     std::string data;
     std::size_t offset = 0;
+    std::chrono::milliseconds record_now;
+    InStream in_stream;
+    StateChunk ssc;
+    WrmMetaChunk wrm_meta;
+    GlyphCache gly_cache;
+    redjs::BrowserGraphic gd;
 };
+
 
 EMSCRIPTEN_BINDINGS(player)
 {
@@ -92,4 +215,110 @@ EMSCRIPTEN_BINDINGS(player)
         .function("next", &WrmPlayer::next_order)
         .function("interpret", &WrmPlayer::interpret_order)
     ;
+}
+
+
+void WrmPlayer::_interpret_secondary_order(uint8_t control)
+{
+    RDP::AltsecDrawingOrderHeader header(control);
+    switch (header.orderType)
+    {
+        case RDP::AltsecDrawingOrderType::FrameMarker:
+        {
+            RDP::FrameMarker cmd;
+            cmd.receive(this->in_stream, header);
+            this->gd.draw(cmd);
+        }
+        break;
+
+        case RDP::AltsecDrawingOrderType::Window:
+        {
+            std::size_t len = this->in_stream.clone().in_uint16_le();
+            this->in_stream.in_skip_bytes(std::min(len, this->in_stream.in_remain()));
+        }
+        break;
+
+        default:
+            LOG(LOG_WARNING, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
+            throw Error(ERR_WRM);
+    }
+}
+
+void WrmPlayer::_interpret_cache_order()
+{
+    RDPSecondaryOrderHeader header(this->in_stream);
+    uint8_t const *next_order = this->in_stream.get_current() + header.order_data_length();
+
+    switch (header.type)
+    {
+        case RDP::TS_CACHE_BITMAP_COMPRESSED:
+        case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
+        case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
+        case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+        case RDP::TS_CACHE_BITMAP_COMPRESSED_REV3:
+        {
+            RDPBmpCache cmd;
+            cmd.receive(this->in_stream, header, BGRPalette::classic_332(), this->wrm_meta.bpp);
+            this->gd.draw(cmd);
+        }
+        break;
+
+        case RDP::TS_CACHE_GLYPH:
+        {
+            RDPGlyphCache cmd;
+            cmd.receive(this->in_stream, header);
+            this->gly_cache.set_glyph(
+                FontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1),
+                cmd.cacheId, cmd.cacheIndex
+            );
+        }
+        break;
+
+        default:
+            LOG(LOG_ERR, "unsupported SECONDARY ORDER (%u)", header.type);
+            throw Error(ERR_WRM);
+    }
+
+    this->in_stream.in_skip_bytes(next_order - this->in_stream.get_current());
+}
+
+void WrmPlayer::_interpret_standard_order(uint8_t control)
+{
+    RDPPrimaryOrderHeader header = this->ssc.common.receive(this->in_stream, control);
+    const Rect clip = (control & RDP::BOUNDS)
+      ? this->ssc.common.clip
+      : Rect(0, 0, this->wrm_meta.width, this->wrm_meta.height);
+
+    auto read_and_draw = [&](auto& cmd, auto const&... draw_args)
+    {
+        cmd.receive(this->in_stream, header);
+        this->gd.draw(cmd, clip, draw_args...);
+    };
+
+    auto color_ctx = [this]()
+    {
+        return gdi::ColorCtx::from_bpp(this->wrm_meta.bpp, BGRPalette::classic_332());
+    };
+
+    switch (this->ssc.common.order)
+    {
+        case RDP::GLYPHINDEX: read_and_draw(this->ssc.glyphindex, color_ctx(), this->gly_cache); break;
+        case RDP::DESTBLT: read_and_draw(this->ssc.destblt); break;
+        case RDP::MULTIDSTBLT: read_and_draw(this->ssc.multidstblt); break;
+        case RDP::MULTIOPAQUERECT: read_and_draw(this->ssc.multiopaquerect, color_ctx()); break;
+        case RDP::MULTIPATBLT: read_and_draw(this->ssc.multipatblt, color_ctx()); break;
+        case RDP::MULTISCRBLT: read_and_draw(this->ssc.multiscrblt); break;
+        case RDP::PATBLT: read_and_draw(this->ssc.patblt, color_ctx()); break;
+        case RDP::SCREENBLT: read_and_draw(this->ssc.scrblt); break;
+        case RDP::LINE: read_and_draw(this->ssc.lineto, color_ctx()); break;
+        case RDP::RECT: read_and_draw(this->ssc.opaquerect, color_ctx()); break;
+        case RDP::MEMBLT: read_and_draw(this->ssc.memblt); break;
+        case RDP::MEM3BLT: read_and_draw(this->ssc.mem3blt, color_ctx()); break;
+        case RDP::POLYLINE: read_and_draw(this->ssc.polyline, color_ctx()); break;
+        case RDP::ELLIPSESC: read_and_draw(this->ssc.ellipseSC, color_ctx()); break;
+        default:
+            /* error unknown order */
+            LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->ssc.common.order);
+            throw Error(ERR_WRM);
+    }
 }

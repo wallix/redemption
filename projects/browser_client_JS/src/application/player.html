@@ -20,8 +20,8 @@ fetch('test.wrm')
 .then(response => response.arrayBuffer())
 .then(buffer => {
     const player = new Module.WrmPlayer({}, buffer);
-    let i = 0;
-    while (player.next() && ++i<10) {
+    // let i = 0;
+    while (player.next() /*&& ++i<10*/) {
         console.log(player.interpret());
     }
 })
