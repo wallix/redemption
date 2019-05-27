@@ -39,11 +39,9 @@ struct get_alternate_shell_arguments
     ) const
     {
         auto replace = [&](char const* marker, char const* replacement){
-            if (replacement && *replacement) {
-                size_t pos = shell_arguments.find(marker, 0);
-                if (pos != std::string::npos) {
-                    shell_arguments.replace(pos, strlen(marker), replacement);
-                }
+            size_t pos = shell_arguments.find(marker, 0);
+            if (pos != std::string::npos) {
+                shell_arguments.replace(pos, strlen(marker), (replacement ? replacement : ""));
             }
         };
 
