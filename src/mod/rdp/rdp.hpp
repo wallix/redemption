@@ -1337,19 +1337,21 @@ public:
                 }
             }
 
-            if (mod_rdp_params.target_application_account && *mod_rdp_params.target_application_account) {
+            {
                 const char * user_marker = "${USER}";
                 size_t pos = shell_arguments.find(user_marker, 0);
                 if (pos != std::string::npos) {
-                    shell_arguments.replace(pos, strlen(user_marker), mod_rdp_params.target_application_account);
+                    shell_arguments.replace(pos, strlen(user_marker),
+                        (mod_rdp_params.target_application_account ? mod_rdp_params.target_application_account : "") );
                 }
             }
 
-            if (mod_rdp_params.target_application_password && *mod_rdp_params.target_application_password) {
+            {
                 const char * password_marker = "${PASSWORD}";
                 size_t pos = shell_arguments.find(password_marker, 0);
                 if (pos != std::string::npos) {
-                    shell_arguments.replace(pos, strlen(password_marker), mod_rdp_params.target_application_password);
+                    shell_arguments.replace(pos, strlen(password_marker),
+                        (mod_rdp_params.target_application_password ? mod_rdp_params.target_application_password : ""));
                 }
             }
         }
