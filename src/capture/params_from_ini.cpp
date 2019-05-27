@@ -111,11 +111,15 @@ KbdLogParams kbd_log_params_from_ini(const Inifile & ini)
     auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
     return KbdLogParams{
         !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
-        !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
+        !bool(disable_keyboard_log & KeyboardLogFlags::syslog)
+            && ini.get<cfg::session_log::keyboard_input_masking_level>()
+            != ::KeyboardInputMaskingLevel::fully_masked,
         ini.get<cfg::session_log::enable_session_log>()
             && ini.get<cfg::session_log::keyboard_input_masking_level>()
             != ::KeyboardInputMaskingLevel::fully_masked,
         !bool(disable_keyboard_log & KeyboardLogFlags::meta)
+            && ini.get<cfg::session_log::keyboard_input_masking_level>()
+            != ::KeyboardInputMaskingLevel::fully_masked
     };
 }
 
