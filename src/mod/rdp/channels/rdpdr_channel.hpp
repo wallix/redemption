@@ -81,7 +81,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     struct device_io_target_info_type
     {
-
         uint32_t device_id;
         uint32_t file_id;
 

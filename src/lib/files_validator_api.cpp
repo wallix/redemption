@@ -82,5 +82,4 @@ extern "C"
     bool validator_is_waitting_for_response_completion(ICAPService * service) noexcept {
         return icap_is_waitting_for_response_completion(service);
     }
-
 }

@@ -722,3 +722,4 @@ inline bool icap_is_waitting_for_response_completion(ICAPService * service) {
     }
     return service->content.length() < service->last_data_response_total_size;
 }
+
