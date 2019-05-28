@@ -2696,6 +2696,7 @@ namespace cfg {
         type value = app_path(AppPath::Record);
     };
     /// Disable keyboard log: <br/>
+    /// (Please see also 'Keyboard input masking level' in 'session_log' section of 'Connection Policy'.) <br/>
     /// AUTHID_VIDEO_DISABLE_KEYBOARD_LOG <br/>
     /// type: KeyboardLogFlags <br/>
     /// sesman -> proxy <br/>

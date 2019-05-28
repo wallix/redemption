@@ -721,6 +721,7 @@
 "#record_path = " << app_path(AppPath::Record) << "\n\n"
 
 "# Disable keyboard log:\n"
+"# (Please see also 'Keyboard input masking level' in 'session_log' section of 'Connection Policy'.)\n"
 "#   0: none\n"
 "#   1: disable keyboard log in syslog\n"
 "#   2: disable keyboard log in recorded sessions\n"
