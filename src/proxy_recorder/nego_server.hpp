@@ -76,10 +76,10 @@ public:
     {
     }
 
-    rdpCredsspServer::State recv_data(TpduBuffer& buffer, OutStream & out_stream)
+    credssp::State recv_data(TpduBuffer& buffer, OutStream & out_stream)
     {
-        rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
-        while (buffer.next(TpduBuffer::CREDSSP) && rdpCredsspServer::State::Cont == st) {
+        credssp::State st = credssp::State::Cont;
+        while (buffer.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
             InStream in_stream(buffer.current_pdu_buffer());
             st = this->credssp.credssp_server_authenticate_next(in_stream, out_stream);
         }

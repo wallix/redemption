@@ -457,12 +457,12 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
     else {
         switch (this->credsspNTLM->credssp_client_authenticate_next(stream, trans))
         {
-            case rdpCredsspClientNTLM::State::Cont:
+            case credssp::State::Cont:
                 break;
-            case rdpCredsspClientNTLM::State::Err:
+            case credssp::State::Err:
                 LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
                 return this->fallback_to_tls(trans);
-            case rdpCredsspClientNTLM::State::Finish:
+            case credssp::State::Finish:
                 this->credsspNTLM.reset();
                 return State::Final;
         }

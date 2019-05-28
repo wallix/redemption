@@ -102,13 +102,13 @@ void ProxyRecorder::front_nla(Transport & frontConn)
 {
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
     StaticOutStream<65535> frontResponse; 
-    rdpCredsspServer::State st = this->nego_server->recv_data(this->frontBuffer, frontResponse);
+    credssp::State st = this->nego_server->recv_data(this->frontBuffer, frontResponse);
     frontConn.send(frontResponse.get_bytes());
 
     switch (st) {
-    case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-    case rdpCredsspServer::State::Cont: break;
-    case rdpCredsspServer::State::Finish:
+    case credssp::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+    case credssp::State::Cont: break;
+    case credssp::State::Finish:
         if (this->verbosity > 4) {
             LOG(LOG_INFO, "stop NegoServer");
             LOG(LOG_INFO, "start NegoClient");

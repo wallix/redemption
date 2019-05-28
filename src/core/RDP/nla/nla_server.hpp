@@ -35,10 +35,8 @@
 
 #include "transport/transport.hpp"
 
-class rdpCredsspServer
+class rdpCredsspServerNTLM final
 {
-protected:
-
     int send_seq_num = 0;
     int recv_seq_num = 0;
 
@@ -142,21 +140,6 @@ protected:
 
 
 
-protected: 
-    rdpCredsspServer(array_view_u8 key, Random & rand, TimeObj & timeobj, std::string& extra_message,
-               Translation::language_t lang,
-               bool restricted_admin_mode,
-               const bool verbose = false)
-        : public_key(key)
-        , rand(rand)
-        , timeobj(timeobj)
-        , extra_message(extra_message)
-        , lang(lang)
-        , restricted_admin_mode(restricted_admin_mode)
-        , verbose(verbose)
-        {
-        }
-
 public:
     void set_credentials(uint8_t const* user, uint8_t const* domain,
                          uint8_t const* pass, uint8_t const* hostname) {
@@ -172,12 +155,6 @@ public:
         this->identity.SetKrbAuthIdentity(user, pass);
     }
 
-    enum class State { Err, Cont, Finish, };
-};
-
-
-class rdpCredsspServerNTLM final : public rdpCredsspServer
-{
     public:
     struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
     {
@@ -427,7 +404,13 @@ public:
                Translation::language_t lang,
                std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
-        : rdpCredsspServer(key, rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
+        : public_key(key)
+        , rand(rand)
+        , timeobj(timeobj)
+        , extra_message(extra_message)
+        , lang(lang)
+        , restricted_admin_mode(restricted_admin_mode)
+        , verbose(verbose)
         , sspi(rand, timeobj, set_password_cb, verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
@@ -449,7 +432,7 @@ public:
     }
 
 public:
-    State credssp_server_authenticate_next(InStream & in_stream, OutStream & out_stream)
+    credssp::State credssp_server_authenticate_next(InStream & in_stream, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
     
@@ -457,25 +440,25 @@ public:
         {
             case ServerAuthenticateData::Start:
               LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Start");
-              return State::Err;
+              return credssp::State::Err;
             case ServerAuthenticateData::Loop:
                 LOG(LOG_INFO, "ServerAuthenticateData::Loop");
                 if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream, out_stream)) {
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                    return State::Err;
+                    return credssp::State::Err;
                 }
-                return State::Cont;
+                return credssp::State::Cont;
             case ServerAuthenticateData::Final:
                LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final");
                if (Res::Err == this->sm_credssp_server_authenticate_final(in_stream)) {
                    LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    return State::Err;
+                    return credssp::State::Err;
                 }
                 this->server_auth_data.state = ServerAuthenticateData::Start;
-                return State::Finish;
+                return credssp::State::Finish;
         }
 
-        return State::Err;
+        return credssp::State::Err;
     }    
 private:
 
@@ -668,9 +651,126 @@ private:
 };
 
 
-
-class rdpCredsspServerKerberos final : public rdpCredsspServer
+class rdpCredsspServerKerberos final
 {
+
+    int send_seq_num = 0;
+    int recv_seq_num = 0;
+
+    TSCredentials ts_credentials;
+
+    TSRequest ts_request = {6}; // Credssp Version 6 Supported
+    static const size_t CLIENT_NONCE_LENGTH = 32;
+    ClientNonce SavedClientNonce;
+
+    array_view_u8 public_key;
+    Random & rand;
+    TimeObj & timeobj;
+    std::string& extra_message;
+    Translation::language_t lang;
+    bool restricted_admin_mode;
+    const bool verbose;
+
+    Array ClientServerHash;
+    Array ServerClientHash;
+
+    Array ServicePrincipalName;
+    SEC_WINNT_AUTH_IDENTITY identity;
+    std::unique_ptr<SecurityFunctionTable> table = std::make_unique<UnimplementedSecurityFunctionTable>();
+
+    void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
+        size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
+        this->ServicePrincipalName.init(length + 1);
+        this->ServicePrincipalName.copy({pszTargetName, length});
+        this->ServicePrincipalName.get_data()[length] = 0;
+    }
+
+    static void ap_integer_increment_le(array_view_u8 number) {
+        for (uint8_t& i : number) {
+            if (i < 0xFF) {
+                i++;
+                break;
+            }
+            i = 0;
+        }
+    }
+
+    static void ap_integer_decrement_le(array_view_u8 number) {
+        for (uint8_t& i : number) {
+            if (i > 0) {
+                i--;
+                break;
+            }
+            i = 0xFF;
+        }
+    }
+
+    void credssp_generate_public_key_hash_client_to_server() {
+        LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (client->server)");
+        Array & SavedHash = this->ClientServerHash;
+        SslSha256 sha256;
+        uint8_t hash[SslSha256::DIGEST_LENGTH];
+        sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
+        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(this->public_key);
+        sha256.final(hash);
+        SavedHash.init(sizeof(hash));
+        memcpy(SavedHash.get_data(), hash, sizeof(hash));
+    }
+
+    void credssp_generate_public_key_hash_server_to_client() {
+        LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (server->client)");
+        Array & SavedHash = this->ServerClientHash;
+        SslSha256 sha256;
+        uint8_t hash[SslSha256::DIGEST_LENGTH];
+        sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
+        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(this->public_key);
+        sha256.final(hash);
+        SavedHash.init(sizeof(hash));
+        memcpy(SavedHash.get_data(), hash, sizeof(hash));
+    }
+
+
+    void credssp_buffer_free() {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
+        this->ts_request.negoTokens.init(0);
+        this->ts_request.pubKeyAuth.init(0);
+        this->ts_request.authInfo.init(0);
+        this->ts_request.clientNonce.reset();
+        this->ts_request.error_code = 0;
+    }
+
+public:    
+
+    struct ServerAuthenticateData
+    {
+        enum : uint8_t { Start, Loop, Final } state = Start;
+    };
+
+    ServerAuthenticateData server_auth_data;
+    
+    enum class Res : bool { Err, Ok };
+
+protected:
+    SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
+
+
+public:
+    void set_credentials(uint8_t const* user, uint8_t const* domain,
+                         uint8_t const* pass, uint8_t const* hostname) {
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::set_credentials");
+        this->identity.SetUserFromUtf8(user);
+        this->identity.SetDomainFromUtf8(domain);
+        this->identity.SetPasswordFromUtf8(pass);
+        this->SetHostnameFromUtf8(hostname);
+        // hexdump_c(user, strlen((char*)user));
+        // hexdump_c(domain, strlen((char*)domain));
+        // hexdump_c(pass, strlen((char*)pass));
+        // hexdump_c(hostname, strlen((char*)hostname));
+        this->identity.SetKrbAuthIdentity(user, pass);
+    }
+
 public:
     rdpCredsspServerKerberos(array_view_u8 key,
                const bool restricted_admin_mode,
@@ -679,7 +779,13 @@ public:
                std::string& extra_message,
                Translation::language_t lang,
                const bool verbose = false)
-        : rdpCredsspServer(key, rand, timeobj, extra_message, lang, restricted_admin_mode, verbose)
+        : public_key(key)
+        , rand(rand)
+        , timeobj(timeobj)
+        , extra_message(extra_message)
+        , lang(lang)
+        , restricted_admin_mode(restricted_admin_mode)
+        , verbose(verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
@@ -721,7 +827,7 @@ public:
     }
 
 public:
-    State credssp_server_authenticate_next(InStream & in_stream, OutStream & out_stream)
+    credssp::State credssp_server_authenticate_next(InStream & in_stream, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
     
@@ -729,25 +835,25 @@ public:
         {
             case ServerAuthenticateData::Start:
               LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Start");
-              return State::Err;
+              return credssp::State::Err;
             case ServerAuthenticateData::Loop:
                 LOG(LOG_INFO, "ServerAuthenticateData::Loop");
                 if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream, out_stream)) {
                     LOG(LOG_INFO, "ServerAuthenticateData::Loop::Err");
-                    return State::Err;
+                    return credssp::State::Err;
                 }
-                return State::Cont;
+                return credssp::State::Cont;
             case ServerAuthenticateData::Final:
                LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final");
                if (Res::Err == this->sm_credssp_server_authenticate_final(in_stream)) {
                    LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    return State::Err;
+                    return credssp::State::Err;
                 }
                 this->server_auth_data.state = ServerAuthenticateData::Start;
-                return State::Finish;
+                return credssp::State::Finish;
         }
 
-        return State::Err;
+        return credssp::State::Err;
     }
 
 

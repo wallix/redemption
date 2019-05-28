@@ -585,15 +585,12 @@ public:
         }
     }
 
-
-    enum class State { Err, Cont, Finish, };
-
-    State credssp_client_authenticate_next(InStream & in_stream, OutTransport transport)
+    credssp::State credssp_client_authenticate_next(InStream & in_stream, OutTransport transport)
     {
         switch (this->client_auth_data.state)
         {
             case ClientAuthenticateData::Start:
-                return State::Err;
+                return credssp::State::Err;
 
             case ClientAuthenticateData::Loop:
             {
@@ -626,7 +623,7 @@ public:
                     (status != SEC_E_OK) &&
                     (status != SEC_I_CONTINUE_NEEDED)) {
                     LOG(LOG_ERR, "Initialize Security Context Error !");
-                    return State::Err;
+                    return credssp::State::Err;
                 }
 
                 this->client_auth_data.input_buffer.init(0);
@@ -669,17 +666,17 @@ public:
 
                     this->client_auth_data.state = ClientAuthenticateData::Final;
                 }
-                return State::Cont;
+                return credssp::State::Cont;
             }
             case ClientAuthenticateData::Final:
                 if (Res::Err == this->sm_credssp_client_authenticate_stop(in_stream, transport)) {
-                    return State::Err;
+                    return credssp::State::Err;
                 }
                 this->client_auth_data.state = ClientAuthenticateData::Start;
-                return State::Finish;
+                return credssp::State::Finish;
         }
 
-        return State::Err;
+        return credssp::State::Err;
     }
 };
 

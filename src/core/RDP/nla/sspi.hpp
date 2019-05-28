@@ -28,6 +28,10 @@
 
 #include <cstring>
 
+namespace credssp {
+    enum class State { Err, Cont, Finish, };
+}
+
 
 // TODO: CGR. This array here should be replaced by a plain std::vector<uint8_t>
 class Array

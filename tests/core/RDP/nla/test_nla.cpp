@@ -100,17 +100,17 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     Translation::language_t lang = Translation::EN;
     rdpCredsspClientNTLM credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, rand, timeobj, extra_message, lang);
 
-    rdpCredsspClientNTLM::State st = rdpCredsspClientNTLM::State::Cont;
+    credssp::State st = credssp::State::Cont;
     TpduBuffer buf;
-    while (rdpCredsspClientNTLM::State::Cont == st) {
+    while (credssp::State::Cont == st) {
         buf.load_data(logtrans);
-        while (buf.next(TpduBuffer::CREDSSP) && rdpCredsspClientNTLM::State::Cont == st) {
+        while (buf.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
             InStream in_stream(buf.current_pdu_buffer());
             st = credssp.credssp_client_authenticate_next(in_stream, logtrans);
         }
     }
     RED_CHECK_EQUAL(0, buf.remaining());
-    RED_CHECK_EQUAL(st, rdpCredsspClientNTLM::State::Finish);
+    RED_CHECK_EQUAL(static_cast<unsigned>(st), static_cast<unsigned>(credssp::State::Finish));
 }
 
 
@@ -214,11 +214,11 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         byte_ptr_cast(host.data()));
 //    RED_CHECK(credssp.credssp_server_authenticate_init());
 
-    rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
+    credssp::State st = credssp::State::Cont;
     TpduBuffer buf;
-    while (rdpCredsspServer::State::Cont == st) {
+    while (credssp::State::Cont == st) {
         buf.load_data(logtrans);
-        while (buf.next(TpduBuffer::CREDSSP) && rdpCredsspServer::State::Cont == st) {
+        while (buf.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
             InStream in_stream(buf.current_pdu_buffer());
             StaticOutStream<65536> out_stream;
             st = credssp.credssp_server_authenticate_next(in_stream, out_stream);
@@ -226,5 +226,5 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         }
     }
     RED_CHECK_EQUAL(0, buf.remaining());
-    RED_CHECK_EQUAL(st, rdpCredsspServer::State::Finish);
+    RED_CHECK_EQUAL(static_cast<unsigned>(st), static_cast<unsigned>(credssp::State::Finish));
 }
