@@ -1,3 +1,9 @@
+redemption (7.1.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix fully mask keyboard input in metadata of session.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 28 May 2019 10:35:07 +0200
+
 redemption (7.1.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix bitmap fragmentation.
