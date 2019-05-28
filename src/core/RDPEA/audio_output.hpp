@@ -24,7 +24,7 @@
 #include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "core/channel_list.hpp"
-
+#include "core/stream_throw_helpers.hpp"
 
 namespace rdpsnd {
 
@@ -152,23 +152,14 @@ struct RDPSNDPDUHeader {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;    // msgType(1) + bPad(1) + BodySize(2)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated RDPSNDPDUHeader (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 4, // msgType(1) + bPad(1) + BodySize(2)
+            "rdpsnd::RDPSNDPDUHeader",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->msgType  = stream.in_uint8();
         this->bPad     = stream.in_uint8();
         this->BodySize = stream.in_uint16_le();
-//         const unsigned expected2 = this->BodySize;    // BodySize
-//         if (!stream.in_check_rem(expected2)) {
-//             LOG(LOG_ERR,
-//                 "Truncated RDPSNDPDUHeader BodySize (0): expected=%u remains=%zu",
-//                 expected, stream.in_remain());
-//             throw Error(ERR_FSCC_DATA_TRUNCATED);
-//         }
     }
 
     void log() {
@@ -269,15 +260,13 @@ struct ServerAudioFormatsandVersionHeader{
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 20;           // dwFlags(4) + dwVolume(4) + dwPitch(4) + wDGramPort(2) +
+        ::check_throw(stream, 20,           // dwFlags(4) + dwVolume(4) + dwPitch(4)
+                                            // +  wDGramPort(2) +
                                                 // wNumberOfFormats(2) + cLastBlockConfirmed(1) +
                                                 // wVersion(2) + bPad(1)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated ServerAudioFormatsandVersionHeader (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+            "rdpsnd::ServerAudioFormatsandVersionHeader",
+            ERR_FSCC_DATA_TRUNCATED);
+
         stream.in_skip_bytes(14);
         this->wNumberOfFormats = stream.in_uint16_le();
         this->cLastBlockConfirmed = stream.in_uint8();
@@ -496,15 +485,12 @@ struct AudioFormat {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 18;   // wFormatTag(2) + nChannels(2) + nSamplesPerSec(4) +
+
+        ::check_throw(stream, 18,   // wFormatTag(2) + nChannels(2) + nSamplesPerSec(4) +
                                         // nAvgBytesPerSec(4) + nBlockAlign(2) + wBitsPerSample(2) +
                                         // cbSize(2)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated AudioFormat (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+            "rdpsnd::AudioFormat",
+            ERR_FSCC_DATA_TRUNCATED);
 
         this->wFormatTag = stream.in_uint16_le();
         this->nChannels = stream.in_uint16_le();
@@ -664,15 +650,13 @@ struct ClientAudioFormatsandVersionHeader{
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 20;           // dwFlags(4) + dwVolume(4) + dwPitch(4) + wDGramPort(2) +
+
+        ::check_throw(stream, 20,           // dwFlags(4) + dwVolume(4) + dwPitch(4) + wDGramPort(2) +
                                                 // wNumberOfFormats(2) + cLastBlockConfirmed(1) +
                                                 // wVersion(2) + bPad(1)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated ClientAudioFormatsandVersionHeader (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+            "rdpsnd::ClientAudioFormatsandVersionHeader",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->dwFlags = stream.in_uint32_le();
         this->dwVolume = stream.in_uint32_le();
         this->dwPitch = stream.in_uint32_le();
@@ -772,13 +756,11 @@ struct QualityModePDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;           // wQualityMode(2) + Reserved(2)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated QualityModePDU (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 4, // wQualityMode(2) + Reserved(2)
+            "rdpsnd::QualityModePDU",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->wQualityMode = stream.in_uint16_le();
         stream.in_skip_bytes(2);
     }
@@ -842,13 +824,11 @@ struct TrainingPDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;           // wTimeStamp(2) + wPackSize(2)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated TrainingPDU (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 4, // wTimeStamp(2) + wPackSize(2)
+            "rdpsnd::TrainingPDU",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->wTimeStamp = stream.in_uint16_le();
         this->wPackSize = stream.in_uint16_le();
        // stream.in_skip_bytes(this->wPackSize);
@@ -911,13 +891,11 @@ struct TrainingConfirmPDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;           // wTimeStamp(2) + wPackSize(2)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated TrainingConfirmPDU (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 4, // wTimeStamp(2) + wPackSize(2)
+            "rdpsnd::TrainingConfirmPDU",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->wTimeStamp = stream.in_uint16_le();
         this->wPackSize = stream.in_uint16_le();
        // stream.in_skip_bytes(this->wPackSize);
@@ -1004,13 +982,11 @@ struct WaveInfoPDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 12;   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3) + Data (4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated WaveInfoPDU (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 12,   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3) + Data (4)
+            "rdpsnd::WaveInfoPDU",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->wTimeStamp = stream.in_uint16_le();
         this->wFormatNo = stream.in_uint16_le();
         this->cBlockNo = stream.in_uint8();
@@ -1086,13 +1062,11 @@ struct WaveConfirmPDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;   // wTimeStamp(2) + cBlockNo(1) + bPad(1)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated WaveConfirmPDU (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 4,   // wTimeStamp(2) + cBlockNo(1) + bPad(1)
+            "rdpsnd::WaveConfirmPDU",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->wTimeStamp = stream.in_uint16_le();
         this->cConfBlockNo = stream.in_uint8();
         stream.in_skip_bytes(1);
@@ -1191,13 +1165,11 @@ struct Wave2PDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 8;   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated WaveInfoPDU (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 8,   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3)
+            "rdpsnd::WaveInfoPDU",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->wTimeStamp = stream.in_uint16_le();
         this->wFormatNo = stream.in_uint16_le();
         this->cBlockNo = stream.in_uint8();
@@ -1256,13 +1228,11 @@ struct VolumePDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;   // Volume(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Volume PDU (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 4, // Volume(4)
+            "rdpsnd::Volume PDU",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->Volume = stream.in_uint32_le();
     }
 
@@ -1311,13 +1281,11 @@ struct PitchPDU {
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;   // Pitch(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Pitch PDU (0): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_FSCC_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 4, // Pitch(4)
+            "rdpsnd::Pitch PDU",
+            ERR_FSCC_DATA_TRUNCATED);
+
         this->Pitch = stream.in_uint32_le();
     }
 
