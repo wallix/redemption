@@ -29,6 +29,7 @@ cfg::globals::mod_recv_timeout <- mod_recv_timeout   [std::chrono::milliseconds]
 
 cfg::session_log::log_path <- session_log_path   [std::string]
 cfg::session_log::keyboard_input_masking_level <- keyboard_input_masking_level   [KeyboardInputMaskingLevel]
+    (Please see also 'Disable keyboard log' in 'video' section of 'Confuguration Options'.)
       0: keyboard input are not masked
       1: only passwords are masked
       2: passwords and unidentified texts are masked
@@ -178,6 +179,7 @@ cfg::mod_replay::replay_on_loop <- replay_on_loop   [bool]
 
 cfg::video::disable_keyboard_log <- disable_keyboard_log   [KeyboardLogFlags]
     Disable keyboard log:
+    (Please see also 'Keyboard input masking level' in 'session_log' section of 'Connection Policy'.)
       0: none
       1: disable keyboard log in syslog
       2: disable keyboard log in recorded sessions

@@ -700,6 +700,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// (Please see also 'Disable keyboard log' in 'video' section of 'Confuguration Options'.) <br/>
     /// type: KeyboardInputMaskingLevel <br/>
     /// sesman -> proxy <br/>
     /// connpolicy -> proxy <br/>
@@ -2758,6 +2759,7 @@ namespace cfg {
         type value = app_path(AppPath::Record);
     };
     /// Disable keyboard log: <br/>
+    /// (Please see also 'Keyboard input masking level' in 'session_log' section of 'Connection Policy'.) <br/>
     /// type: KeyboardLogFlags <br/>
     /// sesman -> proxy <br/>
     /// connpolicy -> proxy <br/>

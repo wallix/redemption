@@ -167,6 +167,7 @@
 "#_hidden\n"
 "#log_path = \n\n"
 
+"# (Please see also 'Disable keyboard log' in 'video' section of 'Confuguration Options'.)\n"
 "# min = 0, max = 4\n"
 "#   0: keyboard input are not masked\n"
 "#   1: only passwords are masked\n"
@@ -867,6 +868,7 @@
 "#record_path = " << (app_path(AppPath::Record)) << "\n\n"
 
 "# Disable keyboard log:\n"
+"# (Please see also 'Keyboard input masking level' in 'session_log' section of 'Connection Policy'.)\n"
 "# min = 0, max = 4\n"
 "#   0: none\n"
 "#   1: disable keyboard log in syslog\n"
