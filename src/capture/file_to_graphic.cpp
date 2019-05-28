@@ -162,6 +162,7 @@ bool FileToGraphic::next_order()
                 case WrmChunkType::RDP_UPDATE_ORDERS:
                     this->statistics.graphics_update_chunk++; break;
                 case WrmChunkType::RDP_UPDATE_BITMAP:
+                case WrmChunkType::RDP_UPDATE_BITMAP2:
                     this->statistics.bitmap_update_chunk++;   break;
                 case WrmChunkType::TIMESTAMP:
                     this->statistics.timestamp_chunk.count++;
@@ -650,6 +651,38 @@ void FileToGraphic::interpret_order()
                 break;
             }
         }
+
+        const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
+
+        Bitmap bitmap( this->info.bpp
+                     , checked_int(bitmap_data.bits_per_pixel)
+                     , /*0*/&palette
+                     , bitmap_data.width
+                     , bitmap_data.height
+                     , data
+                     , bitmap_data.bitmap_size()
+                     , (bitmap_data.flags & BITMAP_COMPRESSION)
+                     );
+
+        for (gdi::GraphicApi * gd : this->graphic_consumers){
+            gd->draw(bitmap_data, bitmap);
+        }
+
+    }
+    break;
+    case WrmChunkType::RDP_UPDATE_BITMAP2:
+    {
+        if (!this->meta_ok) {
+            LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
+            throw Error(ERR_WRM);
+        }
+        if (!this->timestamp_ok) {
+            LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing");
+            throw Error(ERR_WRM);
+        }
+
+        auto bitmap_data = receive_order.read<RDPBitmapData>(
+            this->statistics.BitmapUpdate, Verbose::rdp_orders);
 
         const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
 

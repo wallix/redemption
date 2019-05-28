@@ -390,7 +390,7 @@ public:
 
     void send_bitmaps_chunk()
     {
-        send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
+        send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP2, this->stream_bitmaps.get_offset(), this->bitmap_count);
         this->trans.send(this->stream_bitmaps.get_bytes());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();

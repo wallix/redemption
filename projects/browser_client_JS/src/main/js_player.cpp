@@ -226,6 +226,28 @@ struct WrmPlayer
                 break;
             }
 
+            case WrmChunkType::RDP_UPDATE_BITMAP2:
+            {
+                RDPBitmapData bitmap_data;
+                bitmap_data.receive(this->in_stream);
+
+                const uint8_t * data = this->in_stream.in_uint8p(bitmap_data.bitmap_size());
+
+                Bitmap bitmap( this->wrm_info.bpp
+                            , checked_int(bitmap_data.bits_per_pixel)
+                            , /*0*/&BGRPalette::classic_332()
+                            , bitmap_data.width
+                            , bitmap_data.height
+                            , data
+                            , bitmap_data.bitmap_size()
+                            , (bitmap_data.flags & BITMAP_COMPRESSION)
+                            );
+
+                this->gd.draw(bitmap_data, bitmap);
+
+                break;
+            }
+
             case WrmChunkType::POINTER:
             {
                 this->_interpret_mouse_position();
