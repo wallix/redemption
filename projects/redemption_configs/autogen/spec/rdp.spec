@@ -22,6 +22,7 @@ vault_transformation_rule = string(default='')
 [video]
 
 # Disable keyboard log:
+# (Please see also 'Keyboard input masking level' in 'session_log' section of 'Connection Policy'.)
 #   0: none
 #   1: disable keyboard log in syslog
 #   2: disable keyboard log in recorded sessions
@@ -30,6 +31,7 @@ disable_keyboard_log = integer(min=0, max=3, default=1)
 
 [session_log]
 
+# (Please see also 'Disable keyboard log' in 'video' section of 'Confuguration Options'.)
 #   0: keyboard input are not masked
 #   1: only passwords are masked
 #   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
