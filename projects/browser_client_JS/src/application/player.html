@@ -22,37 +22,61 @@ const Module = WallixModule({
 const redemption = redemptionLoadModule(Module, window);
 const newWrmPlayer = redemption.newWrmPlayer
 
-class Player extends RDPGraphics
+class CbPlayer extends RDPGraphics
 {
     constructor(ecanvas)
     {
         super(ecanvas)
+        this.delay = 0;
     }
 
     setPointerPosition(x, y)
     {
-        console.log('setpos',x,y);
+        // console.log('setpos',x,y);
     }
 
     setDelay(delay)
     {
-        console.log('setdelay',delay);
+        // console.log(',',delay);
+        this.delay = delay;
     }
 }
 
 const ecanvas = document.getElementById('canvas');
 
-fetch('test.wrm')
-.then(response => response.arrayBuffer())
-.then(buffer => {
-    const player = newWrmPlayer(new Player(ecanvas), buffer);
-    let i = 0;
-    while (player.next() && ++i<10) {
-        console.log('interpret')
-        player.interpret();
+const playFile = function(ifile)
+{
+    if (ifile == 3) {
+        return ;
     }
-})
-.catch(error => console.error('Error:', error));
+
+    console.log('ifile = ', ifile)
+
+    fetch('sample'+ifile+'.wrm')
+    .then(response => response.arrayBuffer())
+    .then(buffer => {
+        const cbPlayer = new CbPlayer(ecanvas);
+        const player = newWrmPlayer(cbPlayer, buffer);
+        let i = 0;
+        const loop = function() {
+            console.log('loop', ++i);
+            while (player.next()) {
+                player.interpret();
+                if (cbPlayer.delay) {
+                    setTimeout(loop, cbPlayer.delay);
+                    cbPlayer.delay = 0;
+                    return;
+                }
+            }
+            playFile(ifile+1)
+        };
+        loop();
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+playFile(0)
+
 </script>
 
 </body>

@@ -47,11 +47,6 @@ const redemptionLoadModule = function(Module, window)
         resizeCanvas: identity,
     };
 
-    const wrappersPlayer = {
-        setPointerPosition: identity,
-        setDelay: identity,
-    };
-
     const wrappersFront = {
         random: wCb_em2js_U8p,
     };
@@ -149,6 +144,11 @@ const redemptionLoadModule = function(Module, window)
         }
     };
 
+    const wrappersPlayer = {
+        setPointerPosition: identity,
+        setDelay: identity,
+    };
+
     const resultFuncs = {
         RDPClient: RDPClient,
         newRDPSocket: function(url) {
@@ -159,6 +159,7 @@ const redemptionLoadModule = function(Module, window)
         newWrmPlayer: function(events, data) {
             const playerEvents = {};
             wrapEvents(playerEvents, wrappersGd, events, noop);
+            wrapEvents(playerEvents, wrappersPlayer, events, noop);
             return new Module.WrmPlayer(playerEvents, data);
         }
     };

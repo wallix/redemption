@@ -70,7 +70,6 @@ struct WrmPlayer
                 timeval now;
                 this->in_stream.in_timeval_from_uint64le_usec(now);
                 this->record_now = to_ms(now);
-                LOG(LOG_DEBUG, "record_now = %lld", this->record_now.count());
                 if (this->in_stream.in_remain() >= 4)
                 {
                     this->_interpret_mouse_position();
@@ -95,8 +94,6 @@ struct WrmPlayer
         {
             this->offset += this->in_stream.get_capacity();
 
-            LOG(LOG_DEBUG, "offset = %zu", this->offset);
-
             InStream header(const_bytes_view(this->data).array_from_offset(this->offset));
             if (header.in_remain() < WRM_HEADER_SIZE)
             {
@@ -120,8 +117,6 @@ struct WrmPlayer
             --this->chunk.count;
         }
 
-        LOG(LOG_DEBUG, "chunk count = %u  chunk type = %u  size = %u", this->chunk.count, this->chunk.type, this->chunk.size);
-
         return true;
     }
 
@@ -132,8 +127,6 @@ struct WrmPlayer
             case WrmChunkType::RDP_UPDATE_ORDERS:
             {
                 uint8_t control = this->in_stream.in_uint8();
-
-                LOG(LOG_DEBUG, "control = %d", control);
 
                 switch (uint8_t(control & (RDP::STANDARD | RDP::SECONDARY)))
                 {
@@ -364,7 +357,6 @@ private:
     void _update_time(timeval const& now)
     {
         auto ms_now = to_ms(now);
-        LOG(LOG_DEBUG, "now = %lld", ms_now.count());
         redjs::emval_call(this->callbacks, jsnames::set_delay,
             uint32_t((ms_now - this->record_now).count()));
         this->record_now = ms_now;
@@ -432,8 +424,6 @@ void WrmPlayer::_interpret_cache_order()
     RDPSecondaryOrderHeader header(this->in_stream);
     uint8_t const *next_order = this->in_stream.get_current() + header.order_data_length();
 
-    LOG(LOG_DEBUG, "header.type = %d", header.type);
-
     switch (header.type)
     {
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
@@ -469,7 +459,6 @@ void WrmPlayer::_interpret_cache_order()
 
 void WrmPlayer::_interpret_standard_order(uint8_t control)
 {
-    LOG(LOG_DEBUG, "control = %d", control);
     RDPPrimaryOrderHeader header = this->ssc.common.receive(this->in_stream, control);
     const Rect clip = (control & RDP::BOUNDS)
       ? this->ssc.common.clip
