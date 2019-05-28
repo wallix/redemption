@@ -619,8 +619,8 @@ void FileToGraphic::interpret_order()
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         if (this->play_video_with_corrupted_bitmap && !(bitmap_data.flags & BITMAP_COMPRESSION)) {
-            InStream RM18446_stream2(this->stream.get_current(), this->stream.in_remain());
-            const uint8_t * RM18446_test_data = RM18446_stream2.in_uint8p(std::min<size_t>(RM18446_stream2.in_remain(), bitmap_data.bitmap_size()));
+            assert(this->stream.in_remain() < bitmap_data.bitmap_size());
+            const uint8_t * RM18446_test_data = this->stream.get_current();
 
             size_t RM18446_adjusted_size = 0;
 
@@ -677,7 +677,8 @@ void FileToGraphic::interpret_order()
         this->mouse_y         = this->stream.in_uint16_le();
         uint8_t cache_idx     = this->stream.in_uint8();
 
-        if (  chunk_size - 8 /*header(8)*/ > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
+        // this->stream.in_remain() ?
+        if (  chunk_size - WRM_HEADER_SIZE > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
             size_t start_offset = this->stream.get_offset();
             const Pointer cursor = pointer_loader_32x32(this->stream);
 

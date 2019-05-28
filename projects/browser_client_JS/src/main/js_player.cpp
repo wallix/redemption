@@ -26,6 +26,8 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
@@ -44,9 +46,11 @@ namespace
 {
     namespace jsnames
     {
-        constexpr char const* update_pointer_position = "setPointerPosition";
+        constexpr char const* update_mouse_position = "setPointerPosition";
         constexpr char const* set_delay = "setDelay";
     }
+
+    using SetPointerMode = gdi::GraphicApi::SetPointerMode;
 }
 
 struct WrmPlayer
@@ -54,6 +58,7 @@ struct WrmPlayer
     WrmPlayer(emscripten::val callbacks, std::string data) noexcept
     : callbacks(std::move(callbacks))
     , data(std::move(data))
+    , gd(this->callbacks, 0, 0)
     {}
 
     bool next_order() noexcept
@@ -125,25 +130,24 @@ struct WrmPlayer
                         LOG(LOG_WARNING, "Input data truncated");
                     }
 
-                    uint16_t mouse_x = this->in_stream.in_uint16_le();
-                    uint16_t mouse_y = this->in_stream.in_uint16_le();
-
-                    redjs::emval_call(this->callbacks, jsnames::update_pointer_position,
-                        mouse_x, mouse_y);
+                    this->_interpret_mouse_position();
 
                     this->in_stream.in_skip_bytes(this->in_stream.in_remain());
                 }
 
-                auto ms_now = to_ms(now);
-                redjs::emval_call(this->callbacks, jsnames::set_delay,
-                    uint32_t((this->record_now - ms_now).count()));
-                this->record_now = ms_now;
-
+                this->_update_time(now);
                 break;
             }
 
+            case WrmChunkType::META_FILE:
+                this->wrm_info.receive(this->in_stream);
+                this->in_stream.in_skip_bytes(this->in_stream.in_remain());
+                this->gd.resize_canvas(this->wrm_info.width, this->wrm_info.height);
+                // TODO this->wrm_info.compression_algorithm
+                break;
+
             case WrmChunkType::SAVE_STATE:
-                SaveStateChunk().recv(this->in_stream, this->ssc, this->wrm_meta.version);
+                SaveStateChunk().recv(this->in_stream, this->ssc, this->wrm_info.version);
                 break;
 
             case WrmChunkType::LAST_IMAGE_CHUNK:
@@ -164,8 +168,117 @@ struct WrmPlayer
                     this->in_stream.in_skip_bytes(this->in_stream.in_remain());
                 }
                 this->chunk.count = 0;
+
+                break;
             }
-            break;
+
+            case WrmChunkType::RDP_UPDATE_BITMAP:
+            {
+                RDPBitmapData bitmap_data;
+                bitmap_data.receive(this->in_stream);
+
+                // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+                if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
+                    assert(this->in_stream.in_remain() < bitmap_data.bitmap_size());
+                    const uint8_t * RM18446_test_data = this->in_stream.get_current();
+
+                    size_t RM18446_adjusted_size = 0;
+
+                    Bitmap RM18446_test_bitmap( this->wrm_info.bpp
+                                    , checked_int(bitmap_data.bits_per_pixel)
+                                    , /*0*/&BGRPalette::classic_332()
+                                    , bitmap_data.width
+                                    , bitmap_data.height
+                                    , RM18446_test_data
+                                    , this->in_stream.in_remain()
+                                    , true
+                                    , &RM18446_adjusted_size
+                                    );
+
+                    if (RM18446_adjusted_size) {
+                        RDPBitmapData RM18446_test_bitmap_data = bitmap_data;
+
+                        RM18446_test_bitmap_data.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                        RM18446_test_bitmap_data.bitmap_length = RM18446_adjusted_size;
+
+                        this->in_stream.in_skip_bytes(RM18446_adjusted_size);
+
+                        this->gd.draw(RM18446_test_bitmap_data, RM18446_test_bitmap);
+
+                        break;
+                    }
+                }
+
+                const uint8_t * data = this->in_stream.in_uint8p(bitmap_data.bitmap_size());
+
+                Bitmap bitmap( this->wrm_info.bpp
+                            , checked_int(bitmap_data.bits_per_pixel)
+                            , /*0*/&BGRPalette::classic_332()
+                            , bitmap_data.width
+                            , bitmap_data.height
+                            , data
+                            , bitmap_data.bitmap_size()
+                            , (bitmap_data.flags & BITMAP_COMPRESSION)
+                            );
+
+                this->gd.draw(bitmap_data, bitmap);
+
+                break;
+            }
+
+            case WrmChunkType::POINTER:
+            {
+                this->_interpret_mouse_position();
+
+                uint8_t const cache_idx = this->in_stream.in_uint8();
+
+                if (this->in_stream.in_remain()) {
+                    const Pointer cursor = pointer_loader_32x32(this->in_stream);
+                    this->gd.set_pointer(cache_idx, cursor, SetPointerMode::New);
+                }
+                this->gd.set_pointer(cache_idx, this->dummy_cursor, SetPointerMode::Cached);
+                break;
+            }
+
+            case WrmChunkType::POINTER2:
+            {
+                this->_interpret_mouse_position();
+
+                uint8_t cache_idx = this->in_stream.in_uint8();
+                const Pointer cursor = pointer_loader_2(this->in_stream);
+                this->gd.set_pointer(cache_idx, cursor, SetPointerMode::New);
+                break;
+            }
+
+            case WrmChunkType::RESET_CHUNK:
+                this->wrm_info.compression_algorithm = WrmCompressionAlgorithm::no_compression;
+                // TODO
+                break;
+
+            case WrmChunkType::SESSION_UPDATE:
+            {
+                timeval now;
+                this->in_stream.in_timeval_from_uint64le_usec(now);
+                this->in_stream.in_skip_bytes(this->in_stream.in_uint16_le());;
+                this->_update_time(now);
+                break;
+            }
+
+            case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:
+                // nothing
+                break;
+
+            case WrmChunkType::IMAGE_FRAME_RECT:
+                this->in_stream.in_skip_bytes(this->in_stream.in_remain());
+                break;
+
+            case WrmChunkType::KBD_INPUT_MASK:
+                this->in_stream.in_skip_bytes(1);
+                break;
+
+            default:
+                LOG(LOG_ERR, "unknown chunk type %d", this->chunk.type);
+                throw Error(ERR_WRM);
         }
 
         this->offset += in_stream.get_offset();
@@ -188,6 +301,23 @@ private:
     void _interpret_standard_order(uint8_t control);
     void _interpret_cache_order();
 
+    void _interpret_mouse_position()
+    {
+        uint16_t mouse_x = this->in_stream.in_uint16_le();
+        uint16_t mouse_y = this->in_stream.in_uint16_le();
+
+        redjs::emval_call(this->callbacks, jsnames::update_mouse_position,
+            mouse_x, mouse_y);
+    }
+
+    void _update_time(timeval const& now)
+    {
+        auto ms_now = to_ms(now);
+        redjs::emval_call(this->callbacks, jsnames::set_delay,
+            uint32_t((this->record_now - ms_now).count()));
+        this->record_now = ms_now;
+    }
+
     struct Chunk
     {
         uint32_t size = 0;
@@ -202,9 +332,10 @@ private:
     std::chrono::milliseconds record_now;
     InStream in_stream;
     StateChunk ssc;
-    WrmMetaChunk wrm_meta;
+    WrmMetaChunk wrm_info;
     GlyphCache gly_cache;
     redjs::BrowserGraphic gd;
+    Pointer dummy_cursor; // for gdi::GraphicApi::SetPointerMode::Cached
 };
 
 
@@ -228,15 +359,15 @@ void WrmPlayer::_interpret_secondary_order(uint8_t control)
             RDP::FrameMarker cmd;
             cmd.receive(this->in_stream, header);
             this->gd.draw(cmd);
+            break;
         }
-        break;
 
         case RDP::AltsecDrawingOrderType::Window:
         {
             std::size_t len = this->in_stream.clone().in_uint16_le();
             this->in_stream.in_skip_bytes(std::min(len, this->in_stream.in_remain()));
+            break;
         }
-        break;
 
         default:
             LOG(LOG_WARNING, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
@@ -258,10 +389,10 @@ void WrmPlayer::_interpret_cache_order()
         case RDP::TS_CACHE_BITMAP_COMPRESSED_REV3:
         {
             RDPBmpCache cmd;
-            cmd.receive(this->in_stream, header, BGRPalette::classic_332(), this->wrm_meta.bpp);
+            cmd.receive(this->in_stream, header, BGRPalette::classic_332(), this->wrm_info.bpp);
             this->gd.draw(cmd);
+            break;
         }
-        break;
 
         case RDP::TS_CACHE_GLYPH:
         {
@@ -271,8 +402,8 @@ void WrmPlayer::_interpret_cache_order()
                 FontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1),
                 cmd.cacheId, cmd.cacheIndex
             );
+            break;
         }
-        break;
 
         default:
             LOG(LOG_ERR, "unsupported SECONDARY ORDER (%u)", header.type);
@@ -287,7 +418,7 @@ void WrmPlayer::_interpret_standard_order(uint8_t control)
     RDPPrimaryOrderHeader header = this->ssc.common.receive(this->in_stream, control);
     const Rect clip = (control & RDP::BOUNDS)
       ? this->ssc.common.clip
-      : Rect(0, 0, this->wrm_meta.width, this->wrm_meta.height);
+      : Rect(0, 0, this->wrm_info.width, this->wrm_info.height);
 
     auto read_and_draw = [&](auto& cmd, auto const&... draw_args)
     {
@@ -297,7 +428,7 @@ void WrmPlayer::_interpret_standard_order(uint8_t control)
 
     auto color_ctx = [this]()
     {
-        return gdi::ColorCtx::from_bpp(this->wrm_meta.bpp, BGRPalette::classic_332());
+        return gdi::ColorCtx::from_bpp(this->wrm_info.bpp, BGRPalette::classic_332());
     };
 
     switch (this->ssc.common.order)

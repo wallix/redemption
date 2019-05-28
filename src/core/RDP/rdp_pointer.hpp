@@ -121,23 +121,16 @@ public:
     };
 
 private:
-    uint8_t data[DATA_SIZE];
-    uint8_t mask[MASK_SIZE];
+    uint8_t data[DATA_SIZE] {};
+    uint8_t mask[MASK_SIZE] {};
 
     bool only_black_white = false;
 
-    CursorSize dimensions;
-    Hotspot hotspot;
+    CursorSize dimensions {32,32};
+    Hotspot hotspot {0, 0};
 
 public:
-
-    explicit Pointer()
-        : dimensions(CursorSize(32,32))
-        , hotspot(Hotspot(0, 0))
-    {
-        memset(this->mask, 0, sizeof(this->mask));
-        memset(this->data, 0, sizeof(this->data));
-    }
+    explicit Pointer() = default;
 
     bool operator==(const Pointer & other) const {
         return (other.hotspot.x == this->hotspot.x
