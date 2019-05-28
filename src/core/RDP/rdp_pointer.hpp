@@ -731,7 +731,7 @@ inline Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, cons
     uint16_t dlen = stream.in_uint16_le(); /* data length */
 
     assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-    assert(::even_pad_length(::nbbytes(width * underlying_cast(data_bpp))) == dlen / height);
+    assert(::even_pad_length(::nbbytes_large(width * underlying_cast(data_bpp))) == dlen / height);
 
     if (!stream.in_check_rem(mlen + dlen)){
         LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
