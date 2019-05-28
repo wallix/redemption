@@ -5,6 +5,12 @@
 # run `tools/bjam/gen_targets.py`
 #
 
+exe-js _dummy :
+  src/main/_dummy.bc
+:
+:
+  $(EXE_DEPENDENCIES)
+;
 exe-js js_client :
   src/main/js_client.bc
 :
@@ -128,6 +134,7 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
+objjs src/main/_dummy.bc : src/main/_dummy.cpp ;
 objjs src/main/js_client.bc : src/main/js_client.cpp ;
 objjs src/main/js_player.bc : src/main/js_player.cpp ;
 objjs src/red_channels/clipboard.bc : src/red_channels/clipboard.cpp ;

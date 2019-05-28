@@ -62,13 +62,14 @@ project redjs
     # DISABLE_EXCEPTION_CATCHING = 2 - disable exception catching, but enables catching in whitelist
     <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
     <cxxflags>"-s USE_PTHREADS=0"
-    <cxxflags>"-s FILESYSTEM=0"
     # <linkflags>"-s SIMD=1"
     # <cxxflags>"-s FS_LOG=1"
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
 
-    <cxxflags>"-s USE_LIBPNG=1"
-    <cxxflags>"-s USE_ZLIB=1"
+    # TODO
+    # <cxxflags>"-s FILESYSTEM=0"
+    <cxxflags>"-s USE_LIBPNG=0"
+    <cxxflags>"-s USE_ZLIB=0"
 
     # <cxx-lto>on
 
@@ -206,7 +207,7 @@ rule test-run ( name : objs + : requirements * )
     make $(name) : $(name).em : @exenode ;
 }
 
-rule exe-js ( name : src : objs + : deps * )
+rule exe-js ( name : src : objs * : deps * )
 {
     exejs $(name).em : $(src) $(objs) log_print.bc :
         $(deps)
@@ -274,8 +275,10 @@ rule app ( name : src + : deps_for_path )
     explicit $(app_files) $(name) ;
 }
 
-app rdpclient : to_scancode.js rdp_graphics.js client.html : js_client ;
-app rdpplayer : player.html : js_player ;
+
+app common_js : rdp_graphics.js redemption_load_module.js : _dummy ;
+app rdpclient : to_scancode.js client.html : common_js ;
+app rdpplayer : player.html : common_js ;
 
 constant browser : [ setvar browser : xdg-open ] ;
 constant username : [ setvar username : '' ] ;

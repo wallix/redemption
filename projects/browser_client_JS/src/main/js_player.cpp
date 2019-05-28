@@ -55,17 +55,49 @@ namespace
 
 struct WrmPlayer
 {
+    static constexpr std::chrono::milliseconds invalid_time = std::chrono::milliseconds::max();
+
     WrmPlayer(emscripten::val callbacks, std::string data) noexcept
     : callbacks(std::move(callbacks))
     , data(std::move(data))
+    , record_now(invalid_time)
     , gd(this->callbacks, 0, 0)
-    {}
+    {
+        while (this->next_order())
+        {
+            if (this->chunk.type == WrmChunkType::TIMESTAMP)
+            {
+                timeval now;
+                this->in_stream.in_timeval_from_uint64le_usec(now);
+                this->record_now = to_ms(now);
+                LOG(LOG_DEBUG, "record_now = %lld", this->record_now.count());
+                if (this->in_stream.in_remain() >= 4)
+                {
+                    this->_interpret_mouse_position();
+                }
+                this->_skip_chunk();
+            }
+            else
+            {
+                this->interpret_order();
+            }
+
+            if (this->wrm_info.width && this->record_now != invalid_time)
+            {
+                break;
+            }
+        }
+    }
 
     bool next_order() noexcept
     {
         if (!this->chunk.count)
         {
-            InStream header(this->data_remaining());
+            this->offset += this->in_stream.get_capacity();
+
+            LOG(LOG_DEBUG, "offset = %zu", this->offset);
+
+            InStream header(const_bytes_view(this->data).array_from_offset(this->offset));
             if (header.in_remain() < WRM_HEADER_SIZE)
             {
                 return false;
@@ -75,18 +107,20 @@ struct WrmPlayer
             this->chunk.size = header.in_uint32_le();
             this->chunk.count = header.in_uint16_le();
 
-            if (header.in_remain() + 8 < this->chunk.size)
+            if (header.in_remain() + WRM_HEADER_SIZE < this->chunk.size)
             {
                 return false;
             }
 
-            this->in_stream = InStream(header.get_current(), this->chunk.size);
+            this->in_stream = InStream(header.get_data(), this->chunk.size, WRM_HEADER_SIZE);
         }
 
         if (this->chunk.count > 0)
         {
             --this->chunk.count;
         }
+
+        LOG(LOG_DEBUG, "chunk count = %u  chunk type = %u  size = %u", this->chunk.count, this->chunk.type, this->chunk.size);
 
         return true;
     }
@@ -99,7 +133,9 @@ struct WrmPlayer
             {
                 uint8_t control = this->in_stream.in_uint8();
 
-                switch (control & (RDP::STANDARD | RDP::SECONDARY))
+                LOG(LOG_DEBUG, "control = %d", control);
+
+                switch (uint8_t(control & (RDP::STANDARD | RDP::SECONDARY)))
                 {
                     case RDP::SECONDARY:
                         this->_interpret_secondary_order(control);
@@ -123,28 +159,30 @@ struct WrmPlayer
                 timeval now;
                 this->in_stream.in_timeval_from_uint64le_usec(now);
 
-                if (this->in_stream.in_remain() > 0)
+                if (this->in_stream.in_remain() >= 4)
                 {
-                    if (this->in_stream.in_remain() < 4)
-                    {
-                        LOG(LOG_WARNING, "Input data truncated");
-                    }
-
                     this->_interpret_mouse_position();
-
-                    this->in_stream.in_skip_bytes(this->in_stream.in_remain());
                 }
 
+                this->_skip_chunk();
                 this->_update_time(now);
                 break;
             }
 
             case WrmChunkType::META_FILE:
+            {
                 this->wrm_info.receive(this->in_stream);
-                this->in_stream.in_skip_bytes(this->in_stream.in_remain());
+                this->_skip_chunk();
                 this->gd.resize_canvas(this->wrm_info.width, this->wrm_info.height);
+                const uint16_t reserved_by_watning_list = this->wrm_info.use_waiting_list;
+                this->gd.set_bmp_cache_entries({
+                    uint16_t(this->wrm_info.cache_0_size + reserved_by_watning_list),
+                    uint16_t(this->wrm_info.cache_1_size + reserved_by_watning_list),
+                    uint16_t(this->wrm_info.cache_2_size + reserved_by_watning_list)
+                });
                 // TODO this->wrm_info.compression_algorithm
                 break;
+            }
 
             case WrmChunkType::SAVE_STATE:
                 SaveStateChunk().recv(this->in_stream, this->ssc, this->wrm_info.version);
@@ -165,9 +203,8 @@ struct WrmPlayer
                 }
                 else*/
                 {
-                    this->in_stream.in_skip_bytes(this->in_stream.in_remain());
+                    this->_skip_chunk();
                 }
-                this->chunk.count = 0;
 
                 break;
             }
@@ -281,7 +318,7 @@ struct WrmPlayer
             {
                 timeval now;
                 this->in_stream.in_timeval_from_uint64le_usec(now);
-                this->in_stream.in_skip_bytes(this->in_stream.in_uint16_le());;
+                this->in_stream.in_skip_bytes(this->in_stream.in_uint16_le());
                 this->_update_time(now);
                 break;
             }
@@ -291,7 +328,7 @@ struct WrmPlayer
                 break;
 
             case WrmChunkType::IMAGE_FRAME_RECT:
-                this->in_stream.in_skip_bytes(this->in_stream.in_remain());
+                this->_skip_chunk();
                 break;
 
             case WrmChunkType::KBD_INPUT_MASK:
@@ -302,21 +339,13 @@ struct WrmPlayer
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk.type);
                 throw Error(ERR_WRM);
         }
-
-        this->offset += in_stream.get_offset();
-
-        this->chunk.count = 0;
-    }
-
-    void ignore_chunk() noexcept
-    {
-        this->chunk.count = 0;
     }
 
 private:
-    const_bytes_view data_remaining() const noexcept
+    void _skip_chunk() noexcept
     {
-        return const_bytes_view(this->data).array_from_offset(this->offset);
+        this->chunk.count = 0;
+        this->in_stream.in_skip_bytes(this->in_stream.in_remain());
     }
 
     void _interpret_secondary_order(uint8_t control);
@@ -335,8 +364,9 @@ private:
     void _update_time(timeval const& now)
     {
         auto ms_now = to_ms(now);
+        LOG(LOG_DEBUG, "now = %lld", ms_now.count());
         redjs::emval_call(this->callbacks, jsnames::set_delay,
-            uint32_t((this->record_now - ms_now).count()));
+            uint32_t((ms_now - this->record_now).count()));
         this->record_now = ms_now;
     }
 
@@ -402,6 +432,8 @@ void WrmPlayer::_interpret_cache_order()
     RDPSecondaryOrderHeader header(this->in_stream);
     uint8_t const *next_order = this->in_stream.get_current() + header.order_data_length();
 
+    LOG(LOG_DEBUG, "header.type = %d", header.type);
+
     switch (header.type)
     {
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
@@ -437,6 +469,7 @@ void WrmPlayer::_interpret_cache_order()
 
 void WrmPlayer::_interpret_standard_order(uint8_t control)
 {
+    LOG(LOG_DEBUG, "control = %d", control);
     RDPPrimaryOrderHeader header = this->ssc.common.receive(this->in_stream, control);
     const Rect clip = (control & RDP::BOUNDS)
       ? this->ssc.common.clip

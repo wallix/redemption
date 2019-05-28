@@ -7,22 +7,49 @@
 </head>
 <body>
 
+<canvas id="canvas" width="800" height="600"></canvas>
+
 <script src="js_player.js"></script>
-<!-- <script src="rdp_graphics.js"></script> -->
+<script src="rdp_graphics.js"></script>
+<script src="redemption_load_module.js"></script>
 <script>
 
 const Module = WallixModule({
     // TOTAL_MEMORY: 16777216, // 16**6
-    TOTAL_MEMORY: 268435456, // 16**7
+    // TOTAL_MEMORY: 268435456, // 16**7
 });
+
+const redemption = redemptionLoadModule(Module, window);
+const newWrmPlayer = redemption.newWrmPlayer
+
+class Player extends RDPGraphics
+{
+    constructor(ecanvas)
+    {
+        super(ecanvas)
+    }
+
+    setPointerPosition(x, y)
+    {
+        console.log('setpos',x,y);
+    }
+
+    setDelay(delay)
+    {
+        console.log('setdelay',delay);
+    }
+}
+
+const ecanvas = document.getElementById('canvas');
 
 fetch('test.wrm')
 .then(response => response.arrayBuffer())
 .then(buffer => {
-    const player = new Module.WrmPlayer({}, buffer);
-    // let i = 0;
-    while (player.next() /*&& ++i<10*/) {
-        console.log(player.interpret());
+    const player = newWrmPlayer(new Player(ecanvas), buffer);
+    let i = 0;
+    while (player.next() && ++i<10) {
+        console.log('interpret')
+        player.interpret();
     }
 })
 .catch(error => console.error('Error:', error));
