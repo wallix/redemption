@@ -55,6 +55,17 @@ exe-js js_client :
 :
   $(EXE_DEPENDENCIES)
 ;
+exe-js js_player :
+  src/main/js_player.bc
+:
+  src/core/error.bc
+  src/transport/mwrm_reader.bc
+  src/utils/stacktrace.bc
+  src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
+:
+  $(EXE_DEPENDENCIES)
+;
 
 
 test-run-js tests/red_channels/test_clipboard :
@@ -111,6 +122,7 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
 ;
 
 objjs src/main/js_client.bc : src/main/js_client.cpp ;
+objjs src/main/js_player.bc : src/main/js_player.cpp ;
 objjs src/red_channels/clipboard.bc : src/red_channels/clipboard.cpp ;
 objjs src/red_channels/clipboard_binding.bc : src/red_channels/clipboard_binding.cpp ;
 objjs src/red_channels/js_channel.bc : src/red_channels/js_channel.cpp ;
@@ -137,6 +149,7 @@ objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cp
 objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 objjs src/transport/in_file_transport.bc : $(REDEMPTION_SRC_PATH)/transport/in_file_transport.cpp ;
+objjs src/transport/mwrm_reader.bc : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 objjs src/transport/out_file_transport.bc : $(REDEMPTION_SRC_PATH)/transport/out_file_transport.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/cfgloader.bc : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;

@@ -520,32 +520,12 @@ void FileToGraphic::interpret_order()
             }
             this->timestamp_ok = true;
         }
-        else {
-            if (this->real_time) {
-                for (gdi::GraphicApi * gd : this->graphic_consumers){
-                    gd->sync();
-                }
-
-                this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
-
-                /*struct timeval now     = tvtime();
-                uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
-
-                uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
-                this->movie_elapsed_client = movie_elapsed;
-
-                if (elapsed < movie_elapsed) {
-                    struct timespec wtime     = {
-                            static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
-                        , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
-                        };
-                    struct timespec wtime_rem = { 0, 0 };*/
-
-                    /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
-                        wtime = wtime_rem;
-                    }
-                } */
+        else if (this->real_time) {
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->sync();
             }
+
+            this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
         }
 
         this->statistics.timestamp_chunk.total_len += this->stream.get_current() - p;
@@ -770,32 +750,12 @@ void FileToGraphic::interpret_order()
             }
             this->timestamp_ok = true;
         }
-        else {
-            if (this->real_time) {
-                for (gdi::GraphicApi * gd : this->graphic_consumers){
-                    gd->sync();
-                }
-
-                this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
-
-                /*struct timeval now     = tvtime();
-                uint64_t       elapsed = difftimeval(now, this->start_synctime_now);
-
-                uint64_t movie_elapsed = difftimeval(this->record_now, this->start_record_now);
-
-
-                if (elapsed < movie_elapsed) {
-                    struct timespec wtime     = {
-                            static_cast<time_t>( (movie_elapsed - elapsed) / 1000000LL)
-                        , static_cast<time_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
-                        };
-                    struct timespec wtime_rem = { 0, 0 };*/
-
-                    /*while ((nanosleep(&wtime, &wtime_rem) == -1) && (errno == EINTR)) {
-                        wtime = wtime_rem;
-                    }
-                }*/
+        else if (this->real_time) {
+            for (gdi::GraphicApi * gd : this->graphic_consumers){
+                gd->sync();
             }
+
+            this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
         }
     break;
     case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:

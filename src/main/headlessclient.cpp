@@ -33,7 +33,7 @@
 #pragma GCC diagnostic pop
 
 #include <chrono>
-
+#include <iostream>
 
 
 class ClientHeadlessSocket : public ClientInputSocketAPI

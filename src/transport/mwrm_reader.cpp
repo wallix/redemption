@@ -20,6 +20,7 @@
 
 #include "transport/mwrm_reader.hpp"
 #include "utils/chex_to_int.hpp"
+#include "utils/log.hpp"
 
 #include <algorithm>
 

@@ -1097,18 +1097,9 @@ public:
         assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
             (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
-        {
-            const unsigned int expected = 4;    // numCapabilities(2) +
-                                                //     Padding(2)
-            if (!chunk.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "FileSystemVirtualChannel::process_client_core_capability_response: "
-                        "Truncated DR_CORE_CAPABILITY_RSP (1), "
-                        "need=%u remains=%zu",
-                    expected, chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
+        ::check_throw(chunk, 4, // numCapabilities(2) + Padding(2)
+            "FileSystemVirtualChannel::process_client_core_capability_response:DR_CORE_CAPABILITY_RSP (1)",
+            ERR_RDP_DATA_TRUNCATED);
 
         const uint16_t numCapabilities = chunk.in_uint16_le();
         LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
@@ -1119,19 +1110,10 @@ public:
 
         for (uint16_t idx_capabilities = 0; idx_capabilities < numCapabilities;
              ++idx_capabilities) {
-            {
-                const unsigned int expected = 8;    // CapabilityType(2) +
-                                                    //     CapabilityLength(2) +
-                                                    //     Version(4)
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "FileSystemVirtualChannel::process_client_core_capability_response: "
-                            "Truncated DR_CORE_CAPABILITY_RSP (2), "
-                            "need=%u remains=%zu",
-                        expected, chunk.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
+             
+             ::check_throw(chunk, 8, // CapabilityType(2) + CapabilityLength(2) + Version(4)
+                "FileSystemVirtualChannel::process_client_core_capability_response:DR_CORE_CAPABILITY_RSP (2)",
+                ERR_RDP_DATA_TRUNCATED);
 
             auto chunk_p = chunk.get_current();
 
@@ -1190,20 +1172,12 @@ public:
         switch (FsInformationClass) {
             case rdpdr::FileFullDirectoryInformation:
             {
-                {
-                    const unsigned int expected = 4;    // Length(4)
-                    if (!chunk.in_check_rem(expected)) {
-                        LOG(LOG_ERR,
-                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
-                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
-                                "FileFullDirectoryInformation, "
-                                "need=%u remains=%zu",
-                            expected, chunk.in_remain());
-                        throw Error(ERR_RDP_DATA_TRUNCATED);
-                    }
-                }
+                 ::check_throw(chunk, 4,  // Length(4)
+                    "FileSystemVirtualChannel::process_client_drive_directory_control_response:DR_DRIVE_QUERY_DIRECTORY_REQ"
+                    "FileFullDirectoryInformation",
+                    ERR_RDP_DATA_TRUNCATED);
 
-                uint32_t Length = chunk.in_uint32_le(); // Length(4)
+                 uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
                 if (Length) {
                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -1226,18 +1200,10 @@ public:
 
             case rdpdr::FileBothDirectoryInformation:
             {
-                {
-                    const unsigned int expected = 4;    // Length(4)
-                    if (!chunk.in_check_rem(expected)) {
-                        LOG(LOG_ERR,
-                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
-                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
-                                "FileBothDirectoryInformation, "
-                                "need=%u remains=%zu",
-                            expected, chunk.in_remain());
-                        throw Error(ERR_RDP_DATA_TRUNCATED);
-                    }
-                }
+                ::check_throw(chunk, 4,  // Length(4)
+                    "FileSystemVirtualChannel::process_client_drive_directory_control_response:DR_DRIVE_QUERY_DIRECTORY_REQ - "
+                    "FileBothDirectoryInformation",
+                    ERR_RDP_DATA_TRUNCATED);
 
                 uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
@@ -1262,18 +1228,10 @@ public:
 
             case rdpdr::FileNamesInformation:
             {
-                {
-                    const unsigned int expected = 4;    // Length(4)
-                    if (!chunk.in_check_rem(expected)) {
-                        LOG(LOG_ERR,
-                            "FileSystemVirtualChannel::process_client_drive_directory_control_response: "
-                                "Truncated DR_DRIVE_QUERY_DIRECTORY_REQ - "
-                                "FileNamesInformation, "
-                                "need=%u remains=%zu",
-                            expected, chunk.in_remain());
-                        throw Error(ERR_RDP_DATA_TRUNCATED);
-                    }
-                }
+                ::check_throw(chunk, 4,  // Length(4)
+                    "FileSystemVirtualChannel::process_client_drive_directory_control_response:DR_DRIVE_QUERY_DIRECTORY_REQ - "
+                    "FileNamesInformation",
+                    ERR_RDP_DATA_TRUNCATED);
 
                 uint32_t Length = chunk.in_uint32_le(); // Length(4)
 

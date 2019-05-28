@@ -20,6 +20,17 @@
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 
+#include "capture/cryptofile.hpp"
+#include "transport/crypto_transport.hpp"
+#include "transport/mwrm_reader.hpp"
+#include "utils/cli.hpp"
+#include "utils/genfstat.hpp"
+#include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/redemption_info_version.hpp"
+
+#include <iostream>
 
 
 ClientRedemptionConfig::ClientRedemptionConfig(RDPVerbose verbose, const std::string &MAIN_DIR )
