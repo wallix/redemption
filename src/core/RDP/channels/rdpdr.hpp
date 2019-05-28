@@ -1789,18 +1789,10 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // OutputBufferLength(4) + InputBufferLength(4) +
-                                           //     IoControlCode(4) + Padding(20)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceControlRequest (0): "
-                        "expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 32,// OutputBufferLength(4) + InputBufferLength(4) +
+                                        //     IoControlCode(4) + Padding(20)
+            "RDPDR::DeviceControlRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->OutputBufferLength = stream.in_uint32_le();
 
@@ -1810,16 +1802,9 @@ public:
 
         stream.in_skip_bytes(20);   // Padding(20)
 
-        {
-            const unsigned expected = InputBufferLength;  // InputBuffer(variable)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceControlRequest (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, InputBufferLength,  // InputBuffer(variable)
+                "RDPDR::DeviceControlRequest (1)",
+                ERR_RDPDR_PDU_TRUNCATED);
 
         this->input_buffer = {stream.get_current(), InputBufferLength};
         stream.in_skip_bytes(InputBufferLength);
@@ -1888,15 +1873,11 @@ struct DriveControlResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DriveControlResponse: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+
+        ::check_throw(stream, 4,  // InputBuffer(variable)
+            "RDPDR::DriveControlResponse (1)",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->OutputBufferLength = stream.in_uint32_le();
     }
 
@@ -1968,16 +1949,10 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // DeviceId(4) + CompletionId(4) + IoStatus(4)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceIOResponse: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 12,  // DeviceId(4) + CompletionId(4) + IoStatus(4)
+            "RDPDR::DeviceIOResponse (1)",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->DeviceId_     = stream.in_uint32_le();
         this->CompletionId_ = stream.in_uint32_le();
@@ -2120,46 +2095,24 @@ public:
     }
 
     void receive(InStream & stream, erref::NTSTATUS IoStatus) {
-        {
-            const unsigned expected =
-                    4 +                 // FileId(4)
-                    (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? 1 : 0)  // Information(1)
-                ;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceCreateResponse: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4 +                 // FileId(4)
+                    (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? 1 : 0),  // Information(1)
+            "RDPDR::DeviceCreateResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->FileId_     = stream.in_uint32_le();
         this->Information_ = (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? stream.in_uint8() : 0x00);
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected1 =
-                    4                  // FileId(4)
-                ;
 
-            const unsigned expected2 =
-                4 +                 // FileId(4)
-                1  // Information(1)
-            ;
-
-            if (!stream.in_check_rem(expected1) && !stream.in_check_rem(expected2)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceCreateResponse: expected= 4 or 5, remains=%zu",
-                    stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
-
+        ::check_throw(stream, 4,  // FileId(4)
+            "RDPDR::DeviceCreateResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->FileId_     = stream.in_uint32_le();
-        if (stream.in_check_rem(1)) {
+        if (stream.in_check_rem(1)) { // Information(1)
             this->Information_ = stream.in_uint8();
         }
     }
@@ -2276,15 +2229,11 @@ struct DeviceReadResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceReadResponse: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+
+        ::check_throw(stream, 4,  // Length(4)
+            "RDPDR::DeviceReadResponse (1)",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->Length = stream.in_uint32_le();
 //         {
 //             const unsigned expected = Length;
@@ -2359,16 +2308,10 @@ struct DeviceWriteResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
+        ::check_throw(stream, 4,  // Length(4)
+            "RDPDR::DeviceWriteResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceWriteResponse: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
         this->Length = stream.in_uint32_le();
     }
 
@@ -2428,16 +2371,9 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 8;   // DeviceId(4) + ResultCode(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDeviceAnnounceResponse: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 8,  // DeviceId(4) + ResultCode(4)
+            "RDPDR::ServerDeviceAnnounceResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->DeviceId_   = stream.in_uint32_le();
         this->ResultCode_ = erref::NTSTATUS(stream.in_uint32_le());
@@ -2513,16 +2449,10 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 8;   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerAnnounceRequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 8,  // VersionMajor(2) + VersionMajor(2) + ClientId(4)
+            "RDPDR::ServerAnnounceRequest",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->VersionMajor_  = stream.in_uint16_le();
         this->VersionMinor_ = stream.in_uint16_le();
@@ -2614,17 +2544,10 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 8;   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientAnnounceReply: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 8,   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
+            "RDPDR::ClientAnnounceReply",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->VersionMajor = stream.in_uint16_le();
         this->VersionMinor = stream.in_uint16_le();
@@ -2758,33 +2681,20 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;  // UnicodeFlag(4) + CodePage(4) +
-                                           //     ComputerNameLen(4)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientNameRequest (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 12,  // UnicodeFlag(4) + CodePage(4) +
+                                   //     ComputerNameLen(4)
+            "RDPDR::ClientNameRequest (0)",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->UnicodeFlag = stream.in_uint32_le();
         this->CodePage    = stream.in_uint32_le();
 
         this->ComputerNameLen = stream.in_uint32_le();
         if (this->ComputerNameLen) {
-            {
-                const unsigned expected = ComputerNameLen;  // ComputerName(variable)
-
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated ClientNameRequest (1): expected=%u remains=%zu",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
-                }
-            }
+            ::check_throw(stream, ComputerNameLen,  // ComputerName(variable)
+                    "RDPDR::ClientNameRequest (1)",
+                    ERR_RDPDR_PDU_TRUNCATED);
 
             // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
             //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
@@ -3057,19 +2967,12 @@ public:
     }
 
     void receive(InStream & stream, uint32_t version) {
-        {
-            const unsigned expected = 32 +  // osType(4) + osVersion(4) + protocolMajorVersion(2) +
+        ::check_throw(stream, 32 +  // osType(4) + osVersion(4) + protocolMajorVersion(2) +
                                             // protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) +
                                             // extendedPDU(4) + extraFlags1(4) + extraFlags2(4)
-                ((version == GENERAL_CAPABILITY_VERSION_02) ? 4 /* SpecialTypeDeviceCap(4) */ : 0);
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated GeneralCapabilitySet: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+                ((version == GENERAL_CAPABILITY_VERSION_02) ? 4 /* SpecialTypeDeviceCap(4) */ : 0),
+            "RDPDR::GeneralCapabilitySet",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->osType               = stream.in_uint32_le();
         this->osVersion            = stream.in_uint32_le();
@@ -3177,16 +3080,11 @@ struct ClientDeviceListAnnounceRequest {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDeviceListAnnounceRequest: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // DeviceCount(4)
+            "RDPDR::ClientDeviceListAnnounceRequest",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->DeviceCount = stream.in_uint32_le();
     }
 
@@ -3338,16 +3236,9 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryInformationRequest (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 32,  // FsInformationClass(4) + Length(4) + Padding(24)
+            "RDPDR::ServerDriveQueryInformationRequest (0)",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass_ = stream.in_uint32_le();
 
@@ -3356,16 +3247,9 @@ public:
 
         stream.in_skip_bytes(24);   // Padding(24)
 
-        {
-            const unsigned expected = Length;  // QueryBuffer(variable)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryInformationRequest (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, Length,  // QueryBuffer(variable)
+            "RDPDR::ServerDriveQueryInformationRequest (1)",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->query_buffer = {stream.get_current(), Length};
         stream.in_skip_bytes(Length);
@@ -3584,17 +3468,10 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // FsInformationClass(4) + Length(4) + Padding(24)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryVolumeInformationRequest (0): "
-                        "expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 32,  // FsInformationClass(4) + Length(4) + Padding(24)
+            "RDPDR::ServerDriveQueryVolumeInformationRequest (0)",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass_ = stream.in_uint32_le();
 
@@ -3603,16 +3480,9 @@ public:
 
         stream.in_skip_bytes(24);   // Padding(24)
 
-        {
-            const unsigned expected = Length;  // QueryVolumeBuffer(variable)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryVolumeInformationRequest (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, Length,  // QueryVolumeBuffer(variable)
+            "RDPDR::ServerDriveQueryVolumeInformationRequest (1)",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->query_volume_buffer = {stream.get_current(), Length};
         stream.in_skip_bytes(Length);
@@ -3698,16 +3568,11 @@ struct ClientDriveQueryVolumeInformationResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveQueryVolumeInformationResponse: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // Length(4)
+            "RDPDR::ClientDriveQueryVolumeInformationResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->Length = stream.in_uint32_le();
     }
 
@@ -3849,17 +3714,11 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // FsInformationClass(4) + Length(4) +
-                                           //     Padding(24)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveSetInformationRequest (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 32,  // FsInformationClass(4) + Length(4) +
+                                           //     Padding(24)
+            "RDPDR::ServerDriveSetInformationRequest",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass_ = stream.in_uint32_le();
         this->Length_             = stream.in_uint32_le();
@@ -3966,17 +3825,11 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 6;  // ReplaceIfExists(1) + RootDirectory(1) +
-                                           //     FileNameLength(4)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated RDP_FILE_RENAME_INFORMATION (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 6,  // ReplaceIfExists(1) + RootDirectory(1) +
+                                           //     FileNameLength(4)
+            "RDPDR::RDP_FILE_RENAME_INFORMATION (0)",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->replace_if_exists_ = (stream.in_uint8() != 0);
         this->RootDirectory_     = stream.in_uint8();
@@ -3984,16 +3837,10 @@ public:
         this->FileNameLength = stream.in_uint32_le();
 
         if (this->FileNameLength) {
-            {
-                const unsigned expected = this->FileNameLength;  // FileName(variable)
 
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated RDP_FILE_RENAME_INFORMATION (1): expected=%u remains=%zu",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
-                }
-            }
+            ::check_throw(stream, this->FileNameLength,  // FileName(variable)
+                "RDPDR::RDP_FILE_RENAME_INFORMATION (1)",
+                ERR_RDPDR_PDU_TRUNCATED);
 
             uint8_t const * const FileName_unicode_data = stream.get_current();
 
@@ -4189,17 +4036,11 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;  // FsInformationClass(4) + InitialQuery(1) +
-                                           //     PathLength(4) + Padding(23)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveQueryDirectoryRequest (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 32,  // FsInformationClass(4) + InitialQuery(1) +
+                                           //     PathLength(4) + Padding(23)
+            "RDPDR::ServerDriveQueryDirectoryRequest (0)",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass_ = stream.in_uint32_le();
         this->InitialQuery_       = stream.in_uint8();
@@ -4209,17 +4050,10 @@ public:
         stream.in_skip_bytes(23);   // Padding(23)
 
         if (this->PathLength) {
-            {
-                const unsigned expected = this->PathLength;   // Path(variable)
 
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated ServerDriveQueryDirectoryRequest (1): "
-                            "expected=%u remains=%zu",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
-                }
-            }
+            ::check_throw(stream, this->PathLength,   // Path(variable)
+                "RDPDR::ServerDriveQueryDirectoryRequest",
+                ERR_RDPDR_PDU_TRUNCATED);
 
             uint8_t const * const Path_unicode_data = stream.get_current();
 
@@ -4331,16 +4165,11 @@ struct ClientDriveQueryDirectoryResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveQueryDirectoryResponse (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // Length(4)
+            "RDPDR::ClientDriveQueryDirectoryResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->Length = stream.in_uint32_le();
     }
 
@@ -4437,16 +4266,11 @@ struct ClientDriveQueryInformationResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveQueryInformationResponse (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // Length(4)
+            "RDPDR::ClientDriveQueryInformationResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->Length = stream.in_uint32_le();
     }
 
@@ -4496,16 +4320,11 @@ struct ClientDriveSetVolumeInformationResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveSetVolumeInformationResponse (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // Length(4)
+            "RDPDR::ClientDriveSetVolumeInformationResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->Length = stream.in_uint32_le();
     }
 
@@ -4591,16 +4410,11 @@ struct ServerDriveSetVolumeInformationRequest {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveSetVolumeInformationResponse (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 32 ,  // FsInformationClass(4) + Length(4) + Padding(24)
+            "RDPDR::ClientDriveSetVolumeInformationResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->FsInformationClass = stream.in_uint32_le();
         this->Length = stream.in_uint32_le();
         stream.in_skip_bytes(24);
@@ -4669,16 +4483,11 @@ struct ClientDriveSetInformationResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveSetInformationResponse (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // Length(4)
+            "RDPDR::ClientDriveSetInformationResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->Length = stream.in_uint32_le();
     }
 
@@ -4781,16 +4590,11 @@ struct ServerDriveLockControlRequest {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveLockControlRequest (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 32,  // Operation(4) + F(1) + Padding(3) + NumLocks(4) + Padding(20)
+            "RDPDR::ServerDriveLockControlRequest",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->Operation = stream.in_uint32_le();
         this->F = stream.in_uint8() >> 7;
         stream.in_skip_bytes(3);
@@ -4842,16 +4646,9 @@ struct ClientDriveLockControlResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 5;
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveLockControlResponse (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 5,  // Padding(5)
+            "RDPDR::ClientDriveLockControlResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
 
         stream.in_skip_bytes(5);
     }
@@ -4906,16 +4703,10 @@ struct RDP_Lock_Info {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 16;
+        ::check_throw(stream, 16,  // Length(8) + Offset(8)
+            "RDPDR::RDP_Lock_Info",
+            ERR_RDPDR_PDU_TRUNCATED);
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated RDP_Lock_Info (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
         this->Length = stream.in_uint64_le();
         this->Offset = stream.in_uint64_le();
     }
@@ -4978,16 +4769,11 @@ struct ServerDriveNotifyChangeDirectoryRequest {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 5;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerDriveNotifyChangeDirectoryRequest (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 5,  // WatchTree(1) + CompletionFilter(4)
+            "RDPDR::ServerDriveNotifyChangeDirectoryRequest",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->WatchTree = stream.in_uint8();
         this->CompletionFilter = stream.in_uint32_le();
     }
@@ -5138,16 +4924,11 @@ struct ClientDriveNotifyChangeDirectoryResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveNotifyChangeDirectoryResponse (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // Length(4)
+            "RDPDR::ClientDriveNotifyChangeDirectoryResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->Length = stream.in_uint32_le();
     }
 
@@ -5200,16 +4981,11 @@ struct ServerCoreCapabilityRequest {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ServerCoreCapabilityRequest (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // numCapabilities(2) + Padding(2)
+            "RDPDR::ServerCoreCapabilityRequest",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->numCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2);
     }
@@ -5264,16 +5040,11 @@ struct ClientCoreCapabilityResponse {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientCoreCapabilityResponse (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        ::check_throw(stream, 4,  // numCapabilities(2) + Padding(2)
+            "RDPDR::ClientCoreCapabilityResponse",
+            ERR_RDPDR_PDU_TRUNCATED);
+
         this->numCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2);
     }

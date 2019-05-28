@@ -2606,7 +2606,7 @@ public:
                 {
                     ::check_throw(chunk, 12, // Length(4) + Offset(8)
                     "FileSystemVirtualChannel::process_server_drive_io_request Device Read Request",
-                    ERR_RDP_DATA_TRUNCATED);
+                    ERR_RDPDR_PDU_TRUNCATED);
 
 
                 length    = chunk.in_uint32_le();
@@ -2624,7 +2624,7 @@ public:
             {
                 ::check_throw(chunk, 32, // Length(4) + Offset(8) + Padding(20)
                     "FileSystemVirtualChannel::process_server_drive_io_request Device Write Request",
-                    ERR_RDP_DATA_TRUNCATED);
+                    ERR_RDPDR_PDU_TRUNCATED);
 
                 length    = chunk.in_uint32_le();
                 offset    = chunk.in_uint64_le();
@@ -2765,7 +2765,7 @@ public:
 
                         ::check_throw(chunk, 8, // EndOfFile(8)
                             "FileSystemVirtualChannel::process_server_drive_io_request FILE_END_OF_FILE_INFORMATION",
-                            ERR_RDP_DATA_TRUNCATED);
+                            ERR_RDPDR_PDU_TRUNCATED);
 
                         int64_t EndOfFile = chunk.in_sint64_le();
 
