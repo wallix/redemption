@@ -162,6 +162,7 @@ bool FileToGraphic::next_order()
                 case WrmChunkType::RDP_UPDATE_ORDERS:
                     this->statistics.graphics_update_chunk++; break;
                 case WrmChunkType::RDP_UPDATE_BITMAP:
+                case WrmChunkType::RDP_UPDATE_BITMAP2:
                     this->statistics.bitmap_update_chunk++;   break;
                 case WrmChunkType::TIMESTAMP:
                     this->statistics.timestamp_chunk.count++;
@@ -619,8 +620,8 @@ void FileToGraphic::interpret_order()
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         if (this->play_video_with_corrupted_bitmap && !(bitmap_data.flags & BITMAP_COMPRESSION)) {
-            InStream RM18446_stream2(this->stream.get_current(), this->stream.in_remain());
-            const uint8_t * RM18446_test_data = RM18446_stream2.in_uint8p(std::min<size_t>(RM18446_stream2.in_remain(), bitmap_data.bitmap_size()));
+            assert(this->stream.in_remain() < bitmap_data.bitmap_size());
+            const uint8_t * RM18446_test_data = this->stream.get_current();
 
             size_t RM18446_adjusted_size = 0;
 
@@ -669,6 +670,38 @@ void FileToGraphic::interpret_order()
 
     }
     break;
+    case WrmChunkType::RDP_UPDATE_BITMAP2:
+    {
+        if (!this->meta_ok) {
+            LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
+            throw Error(ERR_WRM);
+        }
+        if (!this->timestamp_ok) {
+            LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing");
+            throw Error(ERR_WRM);
+        }
+
+        auto bitmap_data = receive_order.read<RDPBitmapData>(
+            this->statistics.BitmapUpdate, Verbose::rdp_orders);
+
+        const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
+
+        Bitmap bitmap( this->info.bpp
+                     , checked_int(bitmap_data.bits_per_pixel)
+                     , /*0*/&palette
+                     , bitmap_data.width
+                     , bitmap_data.height
+                     , data
+                     , bitmap_data.bitmap_size()
+                     , (bitmap_data.flags & BITMAP_COMPRESSION)
+                     );
+
+        for (gdi::GraphicApi * gd : this->graphic_consumers){
+            gd->draw(bitmap_data, bitmap);
+        }
+
+    }
+    break;
     case WrmChunkType::POINTER:
     {
         LOG_IF(bool(this->verbose & Verbose::rdp_orders), LOG_INFO, "POINTER");
@@ -677,7 +710,8 @@ void FileToGraphic::interpret_order()
         this->mouse_y         = this->stream.in_uint16_le();
         uint8_t cache_idx     = this->stream.in_uint8();
 
-        if (  chunk_size - 8 /*header(8)*/ > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
+        // this->stream.in_remain() ?
+        if (  chunk_size - WRM_HEADER_SIZE > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
             size_t start_offset = this->stream.get_offset();
             const Pointer cursor = pointer_loader_32x32(this->stream);
 

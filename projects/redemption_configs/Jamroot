@@ -101,4 +101,5 @@ rule test-run ( name )
 test-run test_config ;
 test-run test_parser ;
 test-run test_config_assign ;
+test-run test_include ;
 ## }

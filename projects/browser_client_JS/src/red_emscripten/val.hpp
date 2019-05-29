@@ -19,10 +19,13 @@ Author(s): Jonathan Poelen
 */
 
 #pragma once
-#include <type_traits>
+
 #include "utils/sugar/bytes_view.hpp"
 
 #include <emscripten/val.h>
+
+#include <type_traits>
+
 
 namespace redjs
 {
@@ -49,8 +52,6 @@ namespace redjs
 
     template<class T> struct EmValPtr<T const> : EmValPtr<T> {};
 
-#undef MAKE_EmValPtr
-
     template<class T>
     inline uintptr_t emval_call_arg(T* p) noexcept
     {
@@ -60,6 +61,8 @@ namespace redjs
     template<class T>
     inline T const& emval_call_arg(T const& x) noexcept
     {
+        static_assert(std::is_integral_v<T>);
+        static_assert(sizeof(T) != 8, "uint64_t and int64_t are not supported");
         return x;
     }
 

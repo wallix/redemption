@@ -60,7 +60,7 @@
                "description": "keyboard input are fully masked"
             }
           ],
-          "description": "(Please see also 'Disable keyboard log' in 'video' section of 'Confuguration Options'.)"
+          "description": "(Please see also \"Disable keyboard log\" in \"video\" section of \"Configuration Options\".)"
         }
       ]
     },
@@ -622,7 +622,7 @@
                "description": "keyboard log in recorded sessions"
             }
           ],
-          "description": "Disable keyboard log:\n(Please see also 'Keyboard input masking level' in 'session_log' section of 'Connection Policy'.)"
+          "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
         }
       ]
     }
