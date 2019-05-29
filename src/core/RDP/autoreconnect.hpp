@@ -28,7 +28,6 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "core/stream_throw_helpers.hpp"
-
 namespace RDP {
 
 // [MS-RDPBCGR] - 2.2.4.2 Server Auto-Reconnect Packet (ARC_SC_PRIVATE_PACKET)
@@ -96,7 +95,9 @@ public:
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 28, // cbLen(4) + Version(4) + LogonId(4) + ArcRandomBits(16)
+        const unsigned expected = 28; // cbLen(4) + Version(4) + LogonId(4) + ArcRandomBits(16)
+
+        ::check_throw(stream, expected,
             "RDP::ServerAutoReconnectPacket Server Auto-Reconnect Packet (data)",
             ERR_RDP_DATA_TRUNCATED);
 

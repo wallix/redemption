@@ -152,32 +152,16 @@ public:
     }   // void emit(OutStream & stream) const
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;    // allowDisplayUpdates(1) + Padding(3)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated SuppressOutputPDUData: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
+        // allowDisplayUpdates(1) + Padding(3)
+        ::check_throw(stream, 4, "SuppressOutputPDUData::receive (0)", ERR_RDP_DATA_TRUNCATED);
 
         this->allowDisplayUpdates_ = stream.in_uint8();
 
         stream.in_skip_bytes(3);    // Padding(3)
 
         if (ALLOW_DISPLAY_UPDATES == this->allowDisplayUpdates_) {
-            {
-                const unsigned expected = 8;    // left(2) + top(2) + right(2) + bottom(2)
-
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated SuppressOutputPDUData(2): expected=%u remains=%zu",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
+            // left(2) + top(2) + right(2) + bottom(2)
+            ::check_throw(stream, 8, "SuppressOutputPDUData::receive (1)", ERR_RDP_DATA_TRUNCATED);
 
             this->left_   = stream.in_uint16_le();
             this->top_    = stream.in_uint16_le();

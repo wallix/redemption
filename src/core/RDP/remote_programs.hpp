@@ -28,6 +28,7 @@
 #include "utils/sugar/cast.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)
 // ========================================================
@@ -193,13 +194,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;    // orderType(2) + orderLength(2)
-
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated RAIL PDU header: expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
+        // orderType(2) + orderLength(2)
+        ::check_throw(stream, 4, "RAIL PDU header", ERR_RAIL_PDU_TRUNCATED);
 
         this->orderType_   = stream.in_uint16_le();
         this->orderLength_ = stream.in_uint16_le();
@@ -254,13 +250,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4;    // buildNumber(4)
-
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Handshake PDU: expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
+        // buildNumber(4)
+        ::check_throw(stream, 4, "Handshake::receive PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->buildNumber_ = stream.in_uint32_le();
     }
@@ -381,16 +372,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;    // Flags(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client Information PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // Flags(4)
+        ::check_throw(stream, 4, "Client Information PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->Flags_ = stream.in_uint32_le();
     }
@@ -486,13 +469,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 8;    // buildNumber(4) + railHandshakeFlags(4)
-
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "HandshakeEx PDU: expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
+        // buildNumber(4) + railHandshakeFlags(4)
+        ::check_throw(stream, 8, "HandshakeEx PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->buildNumber_        = stream.in_uint32_le();
         this->railHandshakeFlags_ = stream.in_uint32_le();
@@ -707,12 +685,8 @@ public:
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {
-        if (!in.in_check_rem(length_of_utf16_data_in_bytes)) {
-            LOG(LOG_ERR,
-                "Truncated %s: expected=%zu remains=%zu",
-                context_error, length_of_utf16_data_in_bytes, in.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
+        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
+
         uint8_t const * const utf16_data = in.get_current();
         in.in_skip_bytes(length_of_utf16_data_in_bytes);
 
@@ -725,17 +699,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected =
-                8;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client Execute PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
+        ::check_throw(stream, 8, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->client_execute.flags = stream.in_uint16_le();
 
@@ -943,12 +908,8 @@ class ServerExecuteResultPDU {
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {
-        if (!in.in_check_rem(length_of_utf16_data_in_bytes)) {
-            LOG(LOG_ERR,
-                "Truncated %s: expected=%zu remains=%zu",
-                context_error, length_of_utf16_data_in_bytes, in.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
+        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
+
         uint8_t const * const utf16_data = in.get_current();
         in.in_skip_bytes(length_of_utf16_data_in_bytes);
 
@@ -983,17 +944,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected =
-                12;  // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server Execute Result PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+         // Flags(2) + ExecResult(2) + RawResult(4) + Padding(2) + ExeOrFileLength(2)
+        ::check_throw(stream, 12, "Server Execute Result PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->Flags_            = stream.in_uint16_le();
         this->ExecResult_       = stream.in_uint16_le();
@@ -1109,12 +1061,8 @@ public:
         std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
         char const * context_error
     ) {
-        if (!in.in_check_rem(length_of_utf16_data_in_bytes)) {
-            LOG(LOG_ERR,
-                "Truncated %s: expected=%zu remains=%zu",
-                context_error, length_of_utf16_data_in_bytes, in.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
+        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
+
         uint8_t const * const utf16_data = in.get_current();
         in.in_skip_bytes(length_of_utf16_data_in_bytes);
 
@@ -1147,27 +1095,14 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 8;    // Flags(4) + ColorSchemeLength(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated High Contrast System Information Structure: expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // Flags(4) + ColorSchemeLength(4)
+        ::check_throw(stream, 8, "High Contrast System Information Structure", ERR_RAIL_PDU_TRUNCATED);
 
         this->Flags_ = stream.in_uint32_le();
 
         uint32_t const ColorSchemeLength = stream.in_uint32_le();
 
-        if (!stream.in_check_rem(ColorSchemeLength)) {
-            LOG(LOG_ERR,
-                "Truncated High Contrast System Information Structure: expected=%u remains=%zu (1)",
-                ColorSchemeLength, stream.in_remain());
-            throw Error(ERR_RAIL_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, ColorSchemeLength, "High Contrast System Information Structure ColorSchemeLength", ERR_RAIL_PDU_TRUNCATED);
 
 //        assert(ColorSchemeLength >= 2);
 
@@ -1437,16 +1372,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;    // SystemParam(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client System Parameters Update PDU (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // SystemParam(4)
+        ::check_throw(stream, 4, "Client System Parameters Update PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->SystemParam_ = stream.in_uint32_le();
 
@@ -1455,16 +1382,8 @@ public:
             case SPI_SETKEYBOARDCUES:
             case SPI_SETKEYBOARDPREF:
             case SPI_SETMOUSEBUTTONSWAP:
-                {
-                    const unsigned expected = 1;    // Body(variable)
-
-                    if (!stream.in_check_rem(expected)) {
-                        LOG(LOG_ERR,
-                            "Truncated Client System Parameters Update PDU (2): expected=%u remains=%zu",
-                            expected, stream.in_remain());
-                        throw Error(ERR_RAIL_PDU_TRUNCATED);
-                    }
-                }
+                // Body(variable)
+                ::check_throw(stream, 1, "Client System Parameters Update PDU", ERR_RAIL_PDU_TRUNCATED);
 
                 this->body_b_ = stream.in_uint8();
                 break;
@@ -1646,16 +1565,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 5;    // SystemParam(4) + Body(1)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server System Parameters Update PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // SystemParam(4) + Body(1)
+        ::check_throw(stream, 5, "Server System Parameters Update PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->SystemParam_ = stream.in_uint32_le();
         this->Body_        = stream.in_uint8();
@@ -1736,16 +1647,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 5;    // WindowId(4) + Enabled(1)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client Get Activate PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) + Enabled(1)
+        ::check_throw(stream, 5, "Client Get Activate PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
         this->Enabled_  = stream.in_uint8();
@@ -1848,16 +1751,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 8;    // WindowId(4) + Left(2) + Top(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client System Menu PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) + Left(2) + Top(2)
+        ::check_throw(stream, 8, "Client System Menu PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
         this->Left_     = stream.in_sint16_le();
@@ -2011,16 +1906,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 6;    // WindowId(4) + Command(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client System Command PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) + Command(2)
+        ::check_throw(stream, 6, "Client System Command PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
         this->Command_  = stream.in_uint16_le();
@@ -2237,16 +2124,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // WindowId(4) + NotifyIconId(4) + Message(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client Notify Event PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) + NotifyIconId(4) + Message(4)
+        ::check_throw(stream, 12, "Client Notify Event PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_     = stream.in_uint32_le();
         this->NotifyIconId_ = stream.in_uint32_le();
@@ -2341,16 +2220,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;    // WindowId(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client Get Application ID PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4)
+        ::check_throw(stream, 4, "Client Get Application ID PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
     }
@@ -2483,20 +2354,12 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 20;   // WindowId(4) + MaxWidth(2) +
-                                            //  MaxHeight(2) + MaxPosX(2) +
-                                            //  MaxPosY(2) + MinTrackWidth(2) +
-                                            //  MinTrackHeight(2) + MaxTrackWidth(2) +
-                                            //  MaxTrackHeight(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server Min Max Info PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) + MaxWidth(2) +
+        //  MaxHeight(2) + MaxPosX(2) +
+        //  MaxPosY(2) + MinTrackWidth(2) +
+        //  MinTrackHeight(2) + MaxTrackWidth(2) +
+        //  MaxTrackHeight(2)
+        ::check_throw(stream, 20, "Server Min Max Info PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_       = stream.in_uint32_le();
         this->MaxWidth_       = stream.in_uint16_le();
@@ -2874,19 +2737,11 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // WindowId(4) +
-                                            //  IsMoveSizeStart(2) +
-                                            //  MoveSizeType(2) + PosX/TopLeftX(2) +
-                                            //  PosY/TopLeftY(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server Move/Size Start/End PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) +
+        //  IsMoveSizeStart(2) +
+        //  MoveSizeType(2) + PosX/TopLeftX(2) +
+        //  PosY/TopLeftY(2)
+        ::check_throw(stream, 12, "Server Move/Size Start/End PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_        = stream.in_uint32_le();
         this->IsMoveSizeStart_ = stream.in_uint16_le();
@@ -3019,17 +2874,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // WindowId(4) + Left(2) +
-                                            //  Top(2) + Right(2) + Bottom(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Client Window Move PDU: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) + Left(2) + Top(2) + Right(2) + Bottom(2)
+        ::check_throw(stream, 12, "Client Window Move PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
         this->Left_     = stream.in_uint16_le();
@@ -3164,16 +3010,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 516;    // WindowId(4) + ApplicationId(512)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server Get Application ID Response PDU: expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) + ApplicationId(512)
+        ::check_throw(stream, 516, "Server Get Application ID Response PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
 
@@ -3345,16 +3183,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;    // LanguageBarStatus(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Language Bar Information PDU: expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // LanguageBarStatus(4)
+        ::check_throw(stream, 4, "Language Bar Information PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->LanguageBarStatus = stream.in_uint32_le();
     }
@@ -3463,21 +3293,13 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 16;   // codecGUID1(4) + codecGUID2(2) +
-                                            //  codecGUID3(2) + codecGUID4(1) +
-                                            //  codecGUID5(1) + codecGUID6(1) +
-                                            //  codecGUID7(1) + codecGUID8(1) +
-                                            //  codecGUID9(1) + codecGUID10(1) +
-                                            //  codecGUID11(1)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Globally Unique Identifier: expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // codecGUID1(4) + codecGUID2(2) +
+        //  codecGUID3(2) + codecGUID4(1) +
+        //  codecGUID5(1) + codecGUID6(1) +
+        //  codecGUID7(1) + codecGUID8(1) +
+        //  codecGUID9(1) + codecGUID10(1) +
+        //  codecGUID11(1)
+        ::check_throw(stream, 16, "Globally Unique Identifier", ERR_RAIL_PDU_TRUNCATED);
 
         this->codecGUID1  = stream.in_uint32_le();
         this->codecGUID2  = stream.in_uint16_le();
@@ -3698,16 +3520,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 6;    // ProfileType(4) + LanguageID(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Language Profile Information PDU (1): expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // ProfileType(4) + LanguageID(2)
+        ::check_throw(stream, 6, "Language Profile Information PDU (0)", ERR_RAIL_PDU_TRUNCATED);
 
         this->ProfileType = stream.in_uint32_le();
         this->LanguageID  = stream.in_uint16_le();
@@ -3715,16 +3529,8 @@ public:
         this->LanguageProfileCLSID.receive(stream);
         this->ProfileGUID.receive(stream);
 
-        {
-            const unsigned expected = 4;    // KeyboardLayout(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Language Profile Information PDU (2): expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // KeyboardLayout(4)
+        ::check_throw(stream, 4, "Language Profile Information PDU (1)", ERR_RAIL_PDU_TRUNCATED);
 
         this->KeyboardLayout = stream.in_uint32_le();
     }
@@ -3939,17 +3745,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 16;   // ImeState(4) + ImeConvMode(4) +
-                                            //  ImeSentenceMode(4) + KANAMode(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Compartment Status Information PDU: expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // ImeState(4) + ImeConvMode(4) + ImeSentenceMode(4) + KANAMode(4)
+        ::check_throw(stream, 16, "Compartment Status Information PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->ImeState        = stream.in_uint32_le();
         this->ImeConvMode     = stream.in_uint32_le();
@@ -4017,16 +3814,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;    // WindowIdMarker(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server Z-Order Sync Information PDU: expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowIdMarker(4)
+        ::check_throw(stream, 4, "Server Z-Order Sync Information PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowIdMarker_ = stream.in_uint32_le();
     }
@@ -4127,16 +3916,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 5;    // WindowId(4) + Cloaked(1)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Window Cloak State Change PDU: expected=%u remains=%zu (0)",
-                    expected, stream.in_remain());
-                throw Error(ERR_RAIL_PDU_TRUNCATED);
-            }
-        }
+        // WindowId(4) + Cloaked(1)
+        ::check_throw(stream, 5, "Window Cloak State Change PDU", ERR_RAIL_PDU_TRUNCATED);
 
         this->WindowId_ = stream.in_uint32_le();
         this->Cloaked   = stream.in_uint8();

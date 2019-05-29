@@ -23,6 +23,7 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <cstddef>
 #include <cstdio>
@@ -261,17 +262,8 @@ class DVCCapabilitiesRequestPDU
 
 public:
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;    // cbId(:2) + Sp(:2) + Cmd(:4) +
-                                            //     Pad(1) + Version(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DVCCapabilitiesRequestPDU (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // cbId(:2) + Sp(:2) + Cmd(:4) + Pad(1) + Version(2)
+        ::check_throw(stream, 4, "DVCCapabilitiesRequestPDU::receive (0)", ERR_RDPDR_PDU_TRUNCATED);
 
         uint8_t const tmp = stream.in_uint8();
 
@@ -285,19 +277,11 @@ public:
 
         if ((this->Version == CAPS_VERSION2) ||
             (this->Version == CAPS_VERSION3)) {
-            {
-                const unsigned expected = 8;    // PriorityCharge0(2) +
-                                                //  PriorityCharge1(2) +
-                                                //  PriorityCharge2(2) +
-                                                //  PriorityCharge3(2)
-
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "Truncated DVCCapabilitiesRequestPDU (2): expected=%u remains=%zu",
-                        expected, stream.in_remain());
-                    throw Error(ERR_RDPDR_PDU_TRUNCATED);
-                }
-            }
+            // PriorityCharge0(2) +
+            //  PriorityCharge1(2) +
+            //  PriorityCharge2(2) +
+            //  PriorityCharge3(2)
+            ::check_throw(stream, 8, "DVCCapabilitiesRequestPDU::receive (1)", ERR_RDPDR_PDU_TRUNCATED);
 
             this->PriorityCharge0 = stream.in_uint16_le();
             this->PriorityCharge1 = stream.in_uint16_le();

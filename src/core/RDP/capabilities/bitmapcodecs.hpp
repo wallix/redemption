@@ -29,6 +29,7 @@
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
 #include "core/RDP/capabilities/common.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <vector>
 #include <variant>
@@ -545,10 +546,7 @@ struct RFXClntCaps
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
-        if (!stream.in_check_rem(numIcaps * icapLen)) {
-            LOG(LOG_ERR, "not enough room for RFXIcaps");
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, numIcaps * icapLen, "not enough room for RFXIcaps", ERR_MCS_PDU_TRUNCATED);
 
         this->icapsData.resize(2);
 
@@ -656,20 +654,13 @@ struct BitmapCodec
     }
 
     void recv(InStream & stream, bool clientMode) {
-        if (!stream.in_check_rem(19)){
-            LOG(LOG_ERR, "Truncated BitmapCodecs, need=19 remains=%lu", stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, 19, "BitmapCodecs::recv", ERR_MCS_PDU_TRUNCATED);
 
         stream.in_copy_bytes(codecGUID, 16);
         this->codecID = stream.in_uint8();
         this->codecPropertiesLength = stream.in_uint16_le();
 
-        uint16_t expected = this->codecPropertiesLength;
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated codec properties in BitmapCodecs, need=%u remains=%lu", expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, this->codecPropertiesLength, "codec properties in BitmapCodec", ERR_MCS_PDU_TRUNCATED);
 
         if (memcmp(codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16) == 0) {
             /* CODEC_GUID_NSCODEC */

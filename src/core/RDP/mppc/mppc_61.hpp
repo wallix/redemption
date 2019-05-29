@@ -24,6 +24,7 @@
 #include "core/RDP/mppc/mppc_utils.hpp"
 #include "core/RDP/mppc/mppc_50.hpp"
 #include "utils/stream.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <type_traits> // std::is_base_of
 
@@ -196,22 +197,16 @@ private:
         size_t & literals_length)
     {
         if (compressed) {
-            unsigned expected = 2; // MatchCount(2)
-            if (!compressed_data_stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
-                    expected, compressed_data_stream.in_remain());
-                throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
-            }
+            // MatchCount(2)
+            ::check_throw(compressed_data_stream, 2, "rdp_mppc_61_dec::prepare_compressed_data RDP61_COMPRESSED_DATA (0)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
+
             MatchCount = compressed_data_stream.in_uint16_le();
 
-            expected = MatchCount * 8; // MatchCount(2) * (MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4))
-            if (!compressed_data_stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
-                    expected, compressed_data_stream.in_remain());
-                throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
-            }
+            // MatchCount(2) * (MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4))
+            ::check_throw(compressed_data_stream, MatchCount * 8, "rdp_mppc_61_dec::prepare_compressed_data RDP61_COMPRESSED_DATA (1)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
+
             MatchDetails = compressed_data_stream.get_current();
-            compressed_data_stream.in_skip_bytes(expected);
+            compressed_data_stream.in_skip_bytes(MatchCount * 8);
         }
         else {
             MatchCount   = 0;
@@ -235,12 +230,8 @@ public:
 
         InStream compressed_data_stream(compressed_data, compressed_data_size);
 
-        unsigned expected = 2; // Level1ComprFlags(1) + Level2ComprFlags(1)
-        if (!compressed_data_stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
-                expected, compressed_data_stream.in_remain());
-            throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
-        }
+        // Level1ComprFlags(1) + Level2ComprFlags(1)
+        ::check_throw(compressed_data_stream, 2, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (0)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
 
         uint8_t Level1ComprFlags = compressed_data_stream.in_uint8();
         uint8_t Level2ComprFlags = compressed_data_stream.in_uint8();
@@ -298,28 +289,21 @@ public:
         uint16_t   current_output_offset = 0;
 
         for (uint16_t match_index = 0; match_index < MatchCount; match_index++) {
-            expected = 8;   // MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4)
-            if (!match_details_stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
-                    expected, match_details_stream.in_remain());
-                throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
-            }
+
+            // MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4)
+            ::check_throw(literals_stream, 8, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (1)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
+
             uint16_t MatchLength        = match_details_stream.in_uint16_le();
             uint16_t MatchOutputOffset  = match_details_stream.in_uint16_le();
             uint32_t MatchHistoryOffset = match_details_stream.in_uint32_le();
             //LOG(LOG_INFO, "MatchHistoryOffset=%u MatchLength=%d MatchOutputOffset=%d", MatchHistoryOffset, MatchLength, MatchOutputOffset);
 
             if (MatchOutputOffset > current_output_offset) {
-                expected = MatchOutputOffset - current_output_offset;
-                if (!literals_stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "RDP61_COMPRESSED_DATA: data truncated, expected=%u remains=%zu",
-                        expected, literals_stream.in_remain());
-                    throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
-                }
+                ::check_throw(literals_stream, MatchOutputOffset - current_output_offset, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (1)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
 
                 literals_stream.in_copy_bytes(
                     current_output_buffer + current_output_offset,
-                    expected);
+                    MatchOutputOffset - current_output_offset);
 
                 current_output_offset = MatchOutputOffset;
             }

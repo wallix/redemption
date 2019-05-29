@@ -24,6 +24,7 @@
 #include "core/RDP/channels/drdynvc.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "utils/log.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 class DynamicChannelVirtualChannel final : public BaseVirtualChannel
 {

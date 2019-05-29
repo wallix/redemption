@@ -28,6 +28,8 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/stream_throw_helpers.hpp"
+
 
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
 // ============================================================
@@ -146,7 +148,7 @@ struct BitmapCaps : public Capability {
     uint16_t pad2octetsB{0};
     BitmapCaps()
     : Capability(CAPSTYPE_BITMAP, CAPLEN_BITMAP)
-     
+
     {
     }
 
@@ -177,12 +179,7 @@ struct BitmapCaps : public Capability {
          * desktopWidth(2) + desktopHeight(2) + pad2octets(2) + desktopResizeFlag(2) + bitmapCompressionFlag(2) +
          * highColorFlags(1) + drawingFlags(1) + multipleRectangleSupport(2) + pad2octetsB(2)
          */
-        const unsigned expected = 24;
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated BitmapCaps, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, 24, "BitmapCaps", ERR_MCS_PDU_TRUNCATED);
 
         this->preferredBitsPerPixel = stream.in_uint16_le();
         this->receive1BitPerPixel = stream.in_uint16_le();
