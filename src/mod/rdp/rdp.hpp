@@ -2452,14 +2452,11 @@ public:
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-        ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
+
 
     	while (stream.in_check_rem(2)) {
+            ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
 			unsigned expected = 2;
-			if (!stream.in_check_rem(expected)) {
-				LOG(LOG_ERR, "Truncated SurfaceCommand, need=%u remains=%zu", expected, stream.in_remain());
-				throw Error(ERR_RDP_DATA_TRUNCATED);
-			}
 
 			uint16_t cmdType = stream.in_uint16_le();
 

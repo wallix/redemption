@@ -219,10 +219,10 @@ private:
         }
 
         // orderLength(2)
-        if (!chunk.in_check_rem(2)) {
-            LOG(LOG_ERR, "Truncated RemoteProgramsVirtualChannel::%s::orderLength: expected=2 remains=%zu", message, chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        std::string error_message = "RemoteProgramsVirtualChannel::";
+        error_message += message;
+        error_message += "::orderLength";
+        ::check_throw(chunk, 2, error_message.c_str(), ERR_RDP_DATA_TRUNCATED);
 
         auto order_length = chunk.in_uint16_le(); // orderLength(2)
         if (total_length != order_length){
