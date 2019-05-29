@@ -65,7 +65,6 @@ private:
     const bool verbose;
 
     Transport & trans;
-    std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
 
     void init_public_key()
     {
@@ -103,22 +102,14 @@ private:
 
         this->table.reset();
 
-        switch (secInter) {
-            case NTLM_Interface:
-                LOG(LOG_INFO, "Credssp: NTLM Authentication");
-                this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
-                break;
-            case Kerberos_Interface:
-                LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
-                #ifndef __EMSCRIPTEN__
-                this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
-                #else
-                this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
-                LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
-                assert(!"Unsupported Kerberos");
-                #endif
-                break;
-        }
+        LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
+        #ifndef __EMSCRIPTEN__
+        this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
+        #else
+        this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
+        LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
+        assert(!"Unsupported Kerberos");
+        #endif
 
         return this->table->AcquireCredentialsHandle(pszPrincipal, pvLogonID, pAuthData);
     }
