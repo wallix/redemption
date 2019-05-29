@@ -21,6 +21,8 @@ Author(s): Jonathan Poelen
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
+#include "core/report_message_api.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"

@@ -1,7 +1,22 @@
-#!/bin/sh
+#!/bin/bash
 
 cd "$(dirname "$0")/../../.."
 d=projects/browser_client_JS
+
+disable_sources=''
+for f in \
+    src/mod/rdp/channels/*.hpp \
+    src/mod/rdp/rdp_metrics.hpp \
+    src/mod/metrics.hpp \
+    src/RAIL/client_execute.hpp \
+    src/core/RDP/capabilities/rail.hpp \
+    src/core/RDP/caches/bmpcachepersister.hpp \
+    src/mod/rdp/params/rdp_session_probe_params.hpp \
+    src/utils/fileutils.hpp \
+    src/transport/in_file_transport.hpp ;
+do
+    disable_sources+=" --disable-src $f"
+done
 
 ./tools/bjam/gen_targets.py \
     --main $d/src/main \
@@ -13,16 +28,7 @@ d=projects/browser_client_JS
     --src-system emscripten \
     --lib '' \
     --test $d/tests \
-    --disable-src src/mod/rdp/rdp_metrics.hpp \
-    --disable-src src/mod/metrics.hpp \
-    --disable-src src/mod/rdp/channels/rail_session_manager.hpp \
-    --disable-src src/mod/rdp/channels/rail_channel.hpp \
-    --disable-src src/mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp \
-    --disable-src src/mod/rdp/channels/sespro_channel.hpp \
-    --disable-src src/mod/rdp/channels/sespro_clipboard_based_launcher.hpp \
-    --disable-src src/RAIL/client_execute.hpp \
-    --disable-src src/core/RDP/capabilities/rail.hpp \
-    --disable-src core/RDP/caches/bmpcachepersister.hpp \
+    $disable_sources \
 | sed -E '
     /^  <variant>[^:]+:<library>dl$|^  <(covfile|variant)|^  \$\(GCOV_NO_BUILD\)|\.coverage ;$/d;
     s/^exe /exe-js /;t

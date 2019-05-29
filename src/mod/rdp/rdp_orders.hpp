@@ -29,11 +29,9 @@
 #include <cinttypes>
 
 #include "utils/log.hpp"
-#include "core/app_path.hpp"
-#include "transport/in_file_transport.hpp"
-#include "transport/out_file_transport.hpp"
 #include "utils/stream.hpp"
-#include "utils/fileutils.hpp"
+
+#include "core/report_error.hpp"
 
 #include "core/RDP/protocol.hpp"
 
@@ -60,9 +58,14 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
 #include "core/RDP/caches/bmpcache.hpp"
+
 #ifndef __EMSCRIPTEN__
+# include "core/app_path.hpp"
 # include "core/RDP/caches/bmpcachepersister.hpp"
+# include "transport/in_file_transport.hpp"
+# include "utils/fileutils.hpp"
 #endif
+
 #include "core/RDP/caches/glyphcache.hpp"
 
 #include "mod/rdp/rdp_verbose.hpp"

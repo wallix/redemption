@@ -18,29 +18,30 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#include "transport/out_file_transport.hpp"
+#include "core/report_error.hpp"
+#include "utils/log.hpp"
 
-#include <cerrno>
 
-
-void OutFileTransport::seek(int64_t offset, int whence)
+void LogReporter::operator()(char const * reason, char const * message)
 {
-    if (lseek64(this->file.fd(), offset, whence) == static_cast<off_t>(-1)) {
-        throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-    }
+    LOG(LOG_ERR, "%s:%s", reason, message);
 }
 
-void OutFileTransport::do_send(const uint8_t * data, size_t len)
+Error ReportError::NullImpl::get_error(Error err)
 {
-    size_t total_sent = 0;
-    while (len > total_sent) {
-        ssize_t const ret = ::write(this->file.fd(), data + total_sent, len - total_sent);
-        if (ret <= 0){
-            if (errno == EINTR) {
-                continue;
-            }
-            throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
-        }
-        total_sent += ret;
-    }
+    report_and_transform_error(err, LogReporter{});
+    return err;
+}
+
+ReportError report_error_from_reporter(ReportMessageApi & reporter)
+{
+    return ReportError([&reporter](Error error) {
+        report_and_transform_error(error, ReportMessageReporter{reporter});
+        return error;
+    });
+}
+
+ReportError report_error_from_reporter(ReportMessageApi * reporter)
+{
+    return reporter ? report_error_from_reporter(*reporter) : ReportError();
 }
