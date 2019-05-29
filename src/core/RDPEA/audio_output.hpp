@@ -153,9 +153,8 @@ struct RDPSNDPDUHeader {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4, // msgType(1) + bPad(1) + BodySize(2)
-            "rdpsnd::RDPSNDPDUHeader",
-            ERR_FSCC_DATA_TRUNCATED);
+        // msgType(1) + bPad(1) + BodySize(2)
+        ::check_throw(stream, 4, "rdpsnd::RDPSNDPDUHeader", ERR_FSCC_DATA_TRUNCATED);
 
         this->msgType  = stream.in_uint8();
         this->bPad     = stream.in_uint8();
@@ -260,12 +259,11 @@ struct ServerAudioFormatsandVersionHeader{
     }
 
     void receive(InStream & stream) {
-        ::check_throw(stream, 20,           // dwFlags(4) + dwVolume(4) + dwPitch(4)
-                                            // +  wDGramPort(2) +
-                                                // wNumberOfFormats(2) + cLastBlockConfirmed(1) +
-                                                // wVersion(2) + bPad(1)
-            "rdpsnd::ServerAudioFormatsandVersionHeader",
-            ERR_FSCC_DATA_TRUNCATED);
+        // dwFlags(4) + dwVolume(4) + dwPitch(4)
+        // +  wDGramPort(2) +
+        // wNumberOfFormats(2) + cLastBlockConfirmed(1) +
+        // wVersion(2) + bPad(1)
+        ::check_throw(stream, 20, "rdpsnd::ServerAudioFormatsandVersionHeader", ERR_FSCC_DATA_TRUNCATED);
 
         stream.in_skip_bytes(14);
         this->wNumberOfFormats = stream.in_uint16_le();
@@ -486,11 +484,10 @@ struct AudioFormat {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 18,   // wFormatTag(2) + nChannels(2) + nSamplesPerSec(4) +
-                                        // nAvgBytesPerSec(4) + nBlockAlign(2) + wBitsPerSample(2) +
-                                        // cbSize(2)
-            "rdpsnd::AudioFormat",
-            ERR_FSCC_DATA_TRUNCATED);
+        // wFormatTag(2) + nChannels(2) + nSamplesPerSec(4) +
+        // nAvgBytesPerSec(4) + nBlockAlign(2) + wBitsPerSample(2) +
+        // cbSize(2)
+        ::check_throw(stream, 18, "rdpsnd::AudioFormat", ERR_FSCC_DATA_TRUNCATED);
 
         this->wFormatTag = stream.in_uint16_le();
         this->nChannels = stream.in_uint16_le();
@@ -651,11 +648,10 @@ struct ClientAudioFormatsandVersionHeader{
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 20,           // dwFlags(4) + dwVolume(4) + dwPitch(4) + wDGramPort(2) +
-                                                // wNumberOfFormats(2) + cLastBlockConfirmed(1) +
-                                                // wVersion(2) + bPad(1)
-            "rdpsnd::ClientAudioFormatsandVersionHeader",
-            ERR_FSCC_DATA_TRUNCATED);
+        // dwFlags(4) + dwVolume(4) + dwPitch(4) + wDGramPort(2) +
+        // wNumberOfFormats(2) + cLastBlockConfirmed(1) +
+        // wVersion(2) + bPad(1)
+        ::check_throw(stream, 20, "rdpsnd::ClientAudioFormatsandVersionHeader", ERR_FSCC_DATA_TRUNCATED);
 
         this->dwFlags = stream.in_uint32_le();
         this->dwVolume = stream.in_uint32_le();
@@ -757,9 +753,8 @@ struct QualityModePDU {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4, // wQualityMode(2) + Reserved(2)
-            "rdpsnd::QualityModePDU",
-            ERR_FSCC_DATA_TRUNCATED);
+        // wQualityMode(2) + Reserved(2)
+        ::check_throw(stream, 4, "rdpsnd::QualityModePDU", ERR_FSCC_DATA_TRUNCATED);
 
         this->wQualityMode = stream.in_uint16_le();
         stream.in_skip_bytes(2);
@@ -825,9 +820,8 @@ struct TrainingPDU {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4, // wTimeStamp(2) + wPackSize(2)
-            "rdpsnd::TrainingPDU",
-            ERR_FSCC_DATA_TRUNCATED);
+        // wTimeStamp(2) + wPackSize(2)
+        ::check_throw(stream, 4, "rdpsnd::TrainingPDU", ERR_FSCC_DATA_TRUNCATED);
 
         this->wTimeStamp = stream.in_uint16_le();
         this->wPackSize = stream.in_uint16_le();
@@ -892,9 +886,8 @@ struct TrainingConfirmPDU {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4, // wTimeStamp(2) + wPackSize(2)
-            "rdpsnd::TrainingConfirmPDU",
-            ERR_FSCC_DATA_TRUNCATED);
+        // wTimeStamp(2) + wPackSize(2)
+        ::check_throw(stream, 4, "rdpsnd::TrainingConfirmPDU", ERR_FSCC_DATA_TRUNCATED);
 
         this->wTimeStamp = stream.in_uint16_le();
         this->wPackSize = stream.in_uint16_le();
@@ -983,9 +976,8 @@ struct WaveInfoPDU {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 12,   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3) + Data (4)
-            "rdpsnd::WaveInfoPDU",
-            ERR_FSCC_DATA_TRUNCATED);
+        // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3) + Data (4)
+        ::check_throw(stream, 12, "rdpsnd::WaveInfoPDU", ERR_FSCC_DATA_TRUNCATED);
 
         this->wTimeStamp = stream.in_uint16_le();
         this->wFormatNo = stream.in_uint16_le();
@@ -1063,9 +1055,8 @@ struct WaveConfirmPDU {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4,   // wTimeStamp(2) + cBlockNo(1) + bPad(1)
-            "rdpsnd::WaveConfirmPDU",
-            ERR_FSCC_DATA_TRUNCATED);
+        // wTimeStamp(2) + cBlockNo(1) + bPad(1)
+        ::check_throw(stream, 4, "rdpsnd::WaveConfirmPDU", ERR_FSCC_DATA_TRUNCATED);
 
         this->wTimeStamp = stream.in_uint16_le();
         this->cConfBlockNo = stream.in_uint8();
@@ -1166,9 +1157,8 @@ struct Wave2PDU {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 8,   // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3)
-            "rdpsnd::WaveInfoPDU",
-            ERR_FSCC_DATA_TRUNCATED);
+        // wTimeStamp(2) + wFormatNo(2) + cBlockNo(1) + bPad(3)
+        ::check_throw(stream, 8, "rdpsnd::WaveInfoPDU", ERR_FSCC_DATA_TRUNCATED);
 
         this->wTimeStamp = stream.in_uint16_le();
         this->wFormatNo = stream.in_uint16_le();
@@ -1229,9 +1219,8 @@ struct VolumePDU {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4, // Volume(4)
-            "rdpsnd::Volume PDU",
-            ERR_FSCC_DATA_TRUNCATED);
+        // Volume(4)
+        ::check_throw(stream, 4, "rdpsnd::Volume PDU", ERR_FSCC_DATA_TRUNCATED);
 
         this->Volume = stream.in_uint32_le();
     }
@@ -1282,9 +1271,8 @@ struct PitchPDU {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4, // Pitch(4)
-            "rdpsnd::Pitch PDU",
-            ERR_FSCC_DATA_TRUNCATED);
+        // Pitch(4)
+        ::check_throw(stream, 4, "rdpsnd::Pitch PDU", ERR_FSCC_DATA_TRUNCATED);
 
         this->Pitch = stream.in_uint32_le();
     }

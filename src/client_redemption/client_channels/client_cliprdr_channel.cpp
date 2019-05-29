@@ -235,9 +235,8 @@
                 return;
             }
 
-            ::check_throw(chunk, 8,  // msgType(2) + msgFlags(2) + dataLen(4)
-                "ClientCLIPRDRChannel::process_client_message CliprdrHeader",
-                ERR_RDP_DATA_TRUNCATED);
+            // msgType(2) + msgFlags(2) + dataLen(4)
+            ::check_throw(chunk, 8, "ClientCLIPRDRChannel::process_client_message CliprdrHeader", ERR_RDP_DATA_TRUNCATED);
 
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);

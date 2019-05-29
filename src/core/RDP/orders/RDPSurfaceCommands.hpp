@@ -108,9 +108,7 @@ public:
 		// bitmapData (variable): A variable-length array of bytes containing bitmap data encoded using the
 		//		codec identified by the ID in the codecID field.
 
-        ::check_throw(stream, 10 + 12,
-                "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand",
-                ERR_RDP_DATA_TRUNCATED);
+        ::check_throw(stream, 10 + 12, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand", ERR_RDP_DATA_TRUNCATED);
 
 		uint16_t destLeft = stream.in_uint16_le();
 		uint16_t destTop = stream.in_uint16_le();
@@ -130,9 +128,7 @@ public:
 
 		if (flags & EX_COMPRESSED_BITMAP_HEADER_PRESENT) {
 
-            ::check_throw(stream, 24,
-                "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand EX_COMPRESSED_BITMAP_HEADER_PRESENT",
-                ERR_RDP_DATA_TRUNCATED);
+            ::check_throw(stream, 24, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand EX_COMPRESSED_BITMAP_HEADER_PRESENT", ERR_RDP_DATA_TRUNCATED);
 
 			/*uint32_t highUniqueId = */stream.in_uint32_le();
 			/*uint32_t lowUniqueId = */ stream.in_uint32_le();
@@ -140,9 +136,7 @@ public:
 			/*uint64_t tmSeconds = */stream.in_uint64_le();
 		}
 
-		::check_throw(stream, bitmapDataLength,
-                "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand bitmapDataLength",
-                ERR_RDP_DATA_TRUNCATED);
+		::check_throw(stream, bitmapDataLength, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand bitmapDataLength", ERR_RDP_DATA_TRUNCATED);
 	}
 
 	void log(int level, const RDPSurfaceContent &/*content*/) const {

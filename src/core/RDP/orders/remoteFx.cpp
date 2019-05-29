@@ -40,9 +40,7 @@
  */
 void TS_RFX_RECT::recv(InStream & stream) {
 
-    ::check_throw(stream, 8,
-                "TS_RFX_SYNC::recv RFX_RECT",
-                ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 8, "TS_RFX_SYNC::recv RFX_RECT", ERR_MCS_PDU_TRUNCATED);
 
 	x = stream.in_uint16_le();
 	y = stream.in_uint16_le();
@@ -71,9 +69,7 @@ void TS_RFX_RECT::send(OutStream & stream) {
  */
 void TS_RFX_SYNC::recv(InStream & stream) {
 
-    ::check_throw(stream, 6,
-                "TS_RFX_SYNC::recv RFX_PACKET",
-                ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 6, "TS_RFX_SYNC::recv RFX_PACKET", ERR_MCS_PDU_TRUNCATED);
 
     magic = stream.in_uint32_le();
     if (magic != WF_MAGIC) {
@@ -107,9 +103,7 @@ void TS_RFX_SYNC::send(OutStream & /*stream*/) {
 
 void TS_RFX_CODEC_VERSIONS::recv(InStream & stream) {
 
-    ::check_throw(stream, 4,
-        "TS_RFX_CODEC_VERSIONS::recv invalid TS_RFX_CODEC_VERSIONS",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 4, "TS_RFX_CODEC_VERSIONS::recv invalid TS_RFX_CODEC_VERSIONS", ERR_MCS_PDU_TRUNCATED);
 
 	numCodecs = stream.in_uint8();
 	if (numCodecs != 1) {
@@ -147,9 +141,7 @@ void TS_RFX_CODEC_VERSIONS::send(OutStream & /*stream*/) {
 
 void TS_RFX_CODEC_CHANNELT::recv(InStream & stream) {
 
-    ::check_throw(stream, 2,
-        "TS_RFX_CODEC_CHANNELT::recv invalid TS_RFX_CODEC_CHANNELT",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 2, "TS_RFX_CODEC_CHANNELT::recv invalid TS_RFX_CODEC_CHANNELT", ERR_MCS_PDU_TRUNCATED);
 
 	codecId = stream.in_uint8();
 	channelId = stream.in_uint8();
@@ -201,9 +193,7 @@ void TS_RFX_CODEC_CHANNELT::send(OutStream & /*stream*/) {
 void TS_RFX_CONTEXT::recv(InStream & stream) {
 	TS_RFX_CODEC_CHANNELT::recv(stream);
 
-    ::check_throw(stream, 5,
-        "TS_RFX_CONTEXT::recv invalid TS_RFX_CONTEXT",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 5, "TS_RFX_CONTEXT::recv invalid TS_RFX_CONTEXT", ERR_MCS_PDU_TRUNCATED);
 
 	ctxId = stream.in_uint8();
 	tileSize = stream.in_uint16_le();
@@ -230,9 +220,7 @@ void TS_RFX_CONTEXT::send(OutStream & /*stream*/) {
 
 void TS_RFX_CHANNELT::recv(InStream & stream) {
 
-    ::check_throw(stream, 5,
-        "TS_RFX_CHANNELT::recv invalid TS_RFX_CHANNELT",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 5, "TS_RFX_CHANNELT::recv invalid TS_RFX_CHANNELT", ERR_MCS_PDU_TRUNCATED);
 
     channelId = stream.in_uint8();
     if (channelId != 0){
@@ -266,9 +254,7 @@ TS_RFX_CHANNELS::~TS_RFX_CHANNELS() {
 
 void TS_RFX_CHANNELS::recv(InStream & stream) {
 
-    ::check_throw(stream, 1,
-        "TS_RFX_CHANNELS::recv invalid TS_RFX_CHANNELS",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 1, "TS_RFX_CHANNELS::recv invalid TS_RFX_CHANNELS", ERR_MCS_PDU_TRUNCATED);
 
     numChannels = stream.in_uint8();
     if (numChannels) {
@@ -301,9 +287,7 @@ void TS_RFX_CHANNELS::send(OutStream & /*stream*/) {
 void TS_RFX_FRAME_BEGIN::recv(InStream & stream) {
 	TS_RFX_CODEC_CHANNELT::recv(stream);
 
-    ::check_throw(stream, 6,
-        "TS_RFX_FRAME_BEGIN::recv TS_RFX_FRAME_BEGIN",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 6, "TS_RFX_FRAME_BEGIN::recv TS_RFX_FRAME_BEGIN", ERR_MCS_PDU_TRUNCATED);
 
     frameIdx = stream.in_uint32_le();
     numRegions = stream.in_uint16_le();
@@ -350,9 +334,7 @@ TS_RFX_REGION::~TS_RFX_REGION() {
 void TS_RFX_REGION::recv(InStream & stream) {
 	TS_RFX_CODEC_CHANNELT::recv(stream);
 
-     ::check_throw(stream, 3,
-        "TS_RFX_REGION::recv invalid TS_RFX_REGION",
-        ERR_MCS_PDU_TRUNCATED);
+     ::check_throw(stream, 3, "TS_RFX_REGION::recv invalid TS_RFX_REGION", ERR_MCS_PDU_TRUNCATED);
 
     regionFlags = stream.in_uint8();
     if ((regionFlags & 0x1) != 0x1) {
@@ -368,9 +350,7 @@ void TS_RFX_REGION::recv(InStream & stream) {
     	}
     }
 
-    ::check_throw(stream, 4,
-        "TS_RFX_REGION::recv invalid TS_RFX_REGION",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 4, "TS_RFX_REGION::recv invalid TS_RFX_REGION", ERR_MCS_PDU_TRUNCATED);
 
 	regionType = stream.in_uint16_le();
 	if(regionType != CBT_REGION) {
@@ -429,9 +409,7 @@ void TS_RFX_REGION::send(OutStream & /*stream*/) {
 void TS_RFX_CODEC_QUANT::recv(InStream & stream) {
 	uint32_t val;
 
-    ::check_throw(stream, 5,
-        "TS_RFX_CODEC_QUANT::recv invalid TS_RFX_CODEC_QUANT",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 5, "TS_RFX_CODEC_QUANT::recv invalid TS_RFX_CODEC_QUANT", ERR_MCS_PDU_TRUNCATED);
 
     val = stream.in_uint32_le();
     ll3 = val & 0xF;  val >>= 4;
@@ -477,9 +455,7 @@ void TS_RFX_CODEC_QUANT::send(OutStream & /*stream*/) {
 
 void TS_RFX_TILE::recv(InStream & stream) {
 
-    ::check_throw(stream, 13,
-        "TS_RFX_TILE::recv invalid TS_RFX_TILE",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 13, "TS_RFX_TILE::recv invalid TS_RFX_TILE", ERR_MCS_PDU_TRUNCATED);
 
     uint16_t blockType = stream.in_uint16_le();
     if (blockType != CBT_TILE) {
@@ -504,9 +480,7 @@ void TS_RFX_TILE::recv(InStream & stream) {
     CbLen = tileStream.in_uint16_le();
     CrLen = tileStream.in_uint16_le();
 
-    ::check_throw(stream, YLen + CbLen + CrLen,
-        "TS_RFX_TILE::recv invalid TS_RFX_TILE",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, YLen + CbLen + CrLen, "TS_RFX_TILE::recv invalid TS_RFX_TILE", ERR_MCS_PDU_TRUNCATED);
 
 	YData = new uint8_t[YLen]();
 	tileStream.in_copy_bytes(YData, YLen);
@@ -655,9 +629,7 @@ static size_t roundTo(size_t l, size_t mod) {
 void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, const SubRegion &region, gdi::GraphicApi & drawable) {
 	TS_RFX_CODEC_CHANNELT::recv(stream);
 
-    ::check_throw(stream, 12,
-        "TS_RFX_TILESET::recv invalid TS_RFX_TILESET",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, 12, "TS_RFX_TILESET::recv invalid TS_RFX_TILESET", ERR_MCS_PDU_TRUNCATED);
 
     subType = stream.in_uint16_le();
     if (subType != CBT_TILESET) {
@@ -704,9 +676,7 @@ void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, co
     for (int i = 0; i < numQuant; i++)
     	quantVals[i].recv(stream);
 
-    ::check_throw(stream, tileDataSize,
-        "TS_RFX_TILESET::recv invalid TS_RFX_TILESET tileDataSize",
-        ERR_MCS_PDU_TRUNCATED);
+    ::check_throw(stream, tileDataSize, "TS_RFX_TILESET::recv invalid TS_RFX_TILESET tileDataSize", ERR_MCS_PDU_TRUNCATED);
 
     InStream tilesStream(stream.get_current(), tileDataSize);
     for (int i = 0; i < numTiles; i++)
@@ -730,9 +700,7 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 	LOG(LOG_INFO, "RfxDecoder::recv streamLen=%lu", stream.in_remain());
 	while (stream.in_check_rem(6)) {
 
-        ::check_throw(stream, 6,
-            "RfxDecoder::recv invalid RfxDecoder",
-            ERR_MCS_PDU_TRUNCATED);
+        ::check_throw(stream, 6, "RfxDecoder::recv invalid RfxDecoder", ERR_MCS_PDU_TRUNCATED);
 
 		LOG(LOG_INFO, "remaining size=%zu", stream.in_remain());
 		blockType = stream.in_uint16_le();
@@ -745,9 +713,7 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 			throw Error(ERR_MCS_PDU_TRUNCATED);
 		}
 
-		::check_throw(stream, blockLen-6,
-            "RFX_PACKET::recv invalid RFX_PACKET",
-            ERR_MCS_PDU_TRUNCATED);
+		::check_throw(stream, blockLen-6, "RFX_PACKET::recv invalid RFX_PACKET", ERR_MCS_PDU_TRUNCATED);
 
 		InStream packetStream(stream.get_current(), blockLen - 6);
 		stream.in_skip_bytes(blockLen - 6);
