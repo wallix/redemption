@@ -3603,6 +3603,9 @@ public:
                     large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
                     sendLargePointer = true;
                 }
+                else if (sendLargePointer) {
+                    large_pointer_caps = this->client_large_pointer_caps;
+                }
 
                 if (sendMultiFragmentUpdate && multi_fragment_update_caps.MaxRequestSize) {
 					if (bool(this->verbose & RDPVerbose::capabilities)) {
