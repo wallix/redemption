@@ -1,3 +1,9 @@
+redemption (7.1.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix recorded RDP session crash when using 64W*64H*4Bpp pointer.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 29 May 2019 15:21:06 +0200
+
 redemption (7.1.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix fully mask keyboard input in metadata of session.
