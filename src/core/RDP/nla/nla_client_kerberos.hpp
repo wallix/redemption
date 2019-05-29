@@ -509,30 +509,27 @@ public:
         return Res::Err != this->sm_credssp_client_authenticate_send();
     }
 
-
-    enum class State { Err, Cont, Finish, };
-
-    State credssp_client_authenticate_next(InStream & in_stream)
+    credssp::State credssp_client_authenticate_next(InStream & in_stream)
     {
         switch (this->client_auth_data.state)
         {
             case ClientAuthenticateData::Start:
-                return State::Err;
+                return credssp::State::Err;
             case ClientAuthenticateData::Loop:
                 if (Res::Err == this->sm_credssp_client_authenticate_recv(in_stream)
                  || Res::Err == this->sm_credssp_client_authenticate_send()) {
-                    return State::Err;
+                    return credssp::State::Err;
                 }
-                return State::Cont;
+                return credssp::State::Cont;
             case ClientAuthenticateData::Final:
                 if (Res::Err == this->sm_credssp_client_authenticate_stop(in_stream)) {
-                    return State::Err;
+                    return credssp::State::Err;
                 }
                 this->client_auth_data.state = ClientAuthenticateData::Start;
-                return State::Finish;
+                return credssp::State::Finish;
         }
 
-        return State::Err;
+        return credssp::State::Err;
     }
 };
 

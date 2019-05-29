@@ -444,12 +444,12 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
     if (this->krb) {
         switch (this->credsspKerberos->credssp_client_authenticate_next(stream))
         {
-            case rdpCredsspClientKerberos::State::Cont:
+            case credssp::State::Cont:
                 break;
-            case rdpCredsspClientKerberos::State::Err:
+            case credssp::State::Err:
                 LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
                 return this->fallback_to_tls(trans);
-            case rdpCredsspClientKerberos::State::Finish:
+            case credssp::State::Finish:
                 this->credsspKerberos.reset();
                 return State::Final;
         }
