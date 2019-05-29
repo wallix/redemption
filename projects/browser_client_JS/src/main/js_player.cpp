@@ -32,6 +32,7 @@ Author(s): Jonathan Poelen
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/difftimeval.hpp"
+#include "utils/timeval_ops.hpp"
 #include "utils/log.hpp"
 
 #include "red_emscripten/bind.hpp"
@@ -47,7 +48,7 @@ namespace
     namespace jsnames
     {
         constexpr char const* update_mouse_position = "setPointerPosition";
-        constexpr char const* set_delay = "setDelay";
+        constexpr char const* set_time = "setTime";
     }
 
     using SetPointerMode = gdi::GraphicApi::SetPointerMode;
@@ -55,33 +56,23 @@ namespace
 
 struct WrmPlayer
 {
-    static constexpr std::chrono::milliseconds invalid_time = std::chrono::milliseconds::max();
-
     WrmPlayer(emscripten::val callbacks, std::string data) noexcept
     : callbacks(std::move(callbacks))
     , data(std::move(data))
-    , record_now(invalid_time)
     , gd(this->callbacks, 0, 0)
     {
+        bool has_time = false;
         while (this->next_order())
         {
-            if (this->chunk.type == WrmChunkType::TIMESTAMP)
+            if (WrmChunkType::TIMESTAMP == this->chunk.type
+             || WrmChunkType::SESSION_UPDATE == this->chunk.type)
             {
-                timeval now;
-                this->in_stream.in_timeval_from_uint64le_usec(now);
-                this->record_now = to_ms(now);
-                if (this->in_stream.in_remain() >= 4)
-                {
-                    this->_interpret_mouse_position();
-                }
-                this->_skip_chunk();
-            }
-            else
-            {
-                this->interpret_order();
+                has_time = true;
             }
 
-            if (this->wrm_info.width && this->record_now != invalid_time)
+            this->interpret_order();
+
+            if (this->wrm_info.width && has_time)
             {
                 break;
             }
@@ -356,10 +347,10 @@ private:
 
     void _update_time(timeval const& now)
     {
-        auto ms_now = to_ms(now);
-        redjs::emval_call(this->callbacks, jsnames::set_delay,
-            uint32_t((ms_now - this->record_now).count()));
-        this->record_now = ms_now;
+        auto ms = to_ms(now);
+        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(ms);
+        redjs::emval_call(this->callbacks, jsnames::set_time,
+            uint32_t(seconds.count()), uint32_t((ms - seconds).count()));
     }
 
     struct Chunk
@@ -373,7 +364,6 @@ private:
     emscripten::val callbacks;
     std::string data;
     std::size_t offset = 0;
-    std::chrono::milliseconds record_now;
     InStream in_stream;
     StateChunk ssc;
     WrmMetaChunk wrm_info;

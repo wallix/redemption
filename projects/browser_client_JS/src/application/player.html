@@ -27,7 +27,7 @@ class CbPlayer extends RDPGraphics
     constructor(ecanvas)
     {
         super(ecanvas)
-        this.delay = 0;
+        this.time = 0;
     }
 
     setPointerPosition(x, y)
@@ -35,10 +35,10 @@ class CbPlayer extends RDPGraphics
         // console.log('setpos',x,y);
     }
 
-    setDelay(delay)
+    setTime(seconds, milliSeconds)
     {
-        // console.log(',',delay);
-        this.delay = delay;
+        // console.log('setTime',seconds, milliSeconds);
+        this.time = seconds * 1000 + milliSeconds;
     }
 }
 
@@ -57,17 +57,26 @@ const playFile = function(ifile)
     .then(buffer => {
         const cbPlayer = new CbPlayer(ecanvas);
         const player = newWrmPlayer(cbPlayer, buffer);
+        let previousTime = cbPlayer.time;
+        let currentDate = Date.now()
         let i = 0;
+        console.log(currentDate);
         const loop = function() {
             console.log('loop', ++i);
             while (player.next()) {
                 player.interpret();
-                if (cbPlayer.delay) {
-                    setTimeout(loop, cbPlayer.delay);
-                    cbPlayer.delay = 0;
+                if (cbPlayer.time != previousTime) {
+                    const delay = cbPlayer.time - previousTime;
+                    const now = Date.now();
+                    const elapsedTime = now - currentDate;
+                    previousTime = cbPlayer.time
+                    currentDate = now;
+                    // console.log(delay, elapsedTime)
+                    setTimeout(loop, Math.max(delay-elapsedTime, 0));
                     return;
                 }
             }
+            console.log(Date.now());
             playFile(ifile+1)
         };
         loop();

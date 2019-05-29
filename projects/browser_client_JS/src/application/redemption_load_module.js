@@ -146,7 +146,7 @@ const redemptionLoadModule = function(Module, window)
 
     const wrappersPlayer = {
         setPointerPosition: identity,
-        setDelay: identity,
+        setTime: identity,
     };
 
     const resultFuncs = {
