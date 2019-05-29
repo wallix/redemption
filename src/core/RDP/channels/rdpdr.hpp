@@ -604,17 +604,15 @@ public:
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader_Recv);
 
     void receive(InStream & stream) {
-        // // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4)
-        ::check_throw(stream, 20,
-            "RDPDR::DeviceAnnounceHeader_Recv (0)", ERR_RDPDR_PDU_TRUNCATED);
+        // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4)
+        ::check_throw(stream, 20, "RDPDR::DeviceAnnounceHeader_Recv (0)", ERR_RDPDR_PDU_TRUNCATED);
         this->DeviceType_ = RDPDR_DTYP(stream.in_uint32_le());
         this->DeviceId_   = stream.in_uint32_le();
 
         stream.in_copy_bytes(this->PreferredDosName_, 8);
 
         this->device_data.sz = stream.in_uint32_le();
-        ::check_throw(stream, this->device_data.sz,
-            "RDPDR::DeviceAnnounceHeader_Recv (1)", ERR_RDPDR_PDU_TRUNCATED);
+        ::check_throw(stream, this->device_data.sz, "RDPDR::DeviceAnnounceHeader_Recv (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->device_data.p = std::make_unique<uint8_t[]>(this->device_data.sz);
         stream.in_copy_bytes(this->device_data.p.get(), this->device_data.sz);
@@ -1102,8 +1100,7 @@ public:
     void receive(InStream & stream) {
         // DeviceId(4) + FileId(4) + CompletionId(4)
         //   + MajorFunction(4) + MinorFunction(4)
-        ::check_throw(stream, 20,
-            "RDPDR::DeviceIORequest", ERR_RDPDR_PDU_TRUNCATED);
+        ::check_throw(stream, 20, "RDPDR::DeviceIORequest", ERR_RDPDR_PDU_TRUNCATED);
 
         this->DeviceId_      = stream.in_uint32_le();
         this->FileId_        = stream.in_uint32_le();
@@ -1326,12 +1323,9 @@ public:
     }
 
     void receive(InStream & stream) {
-        // DesiredAccess(4) + AllocationSize(8)
-        //   + FileAttributes(4) + SharedAccess(4)
-        //   + CreateDisposition(4) + CreateOptions(4)
-        //   + PathLength(4)
-        ::check_throw(stream, 32,
-            "RDPDR::DeviceCreateRequest", ERR_RDPDR_PDU_TRUNCATED);
+        // DesiredAccess(4) + AllocationSize(8) + FileAttributes(4) + SharedAccess(4)
+        // + CreateDisposition(4) + CreateOptions(4) + PathLength(4)
+        ::check_throw(stream, 32, "RDPDR::DeviceCreateRequest", ERR_RDPDR_PDU_TRUNCATED);
         this->DesiredAccess_     = stream.in_uint32_le();
         this->AllocationSize_    = stream.in_uint64_le();
         this->FileAttributes_    = stream.in_uint32_le();
@@ -1343,8 +1337,7 @@ public:
         // TODO: create specialized helper for READ and convert UTF16 string
         if (this->PathLength_UTF16) {
             // Path(variable)
-            ::check_throw(stream, this->PathLength_UTF16,
-                "RDPDR::DeviceCreateRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
+            ::check_throw(stream, this->PathLength_UTF16, "RDPDR::DeviceCreateRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
             uint8_t const * const Path_unicode_data = stream.get_current();
 
             this->PathLength_UTF8 = ::UTF16toUTF8(Path_unicode_data,
@@ -1463,8 +1456,7 @@ public:
     void receive(InStream & stream) {
         // TODO: somewhat misleading because DeviceIORequestHeader of 24 bytes has already been read.
         // Padding(32)
-        ::check_throw(stream, 32,
-            "RDPDR::DeviceCloseRequest", ERR_RDPDR_PDU_TRUNCATED);
+        ::check_throw(stream, 32, "RDPDR::DeviceCloseRequest", ERR_RDPDR_PDU_TRUNCATED);
         stream.in_skip_bytes(32);   // Padding(32)
     }
 
@@ -1551,8 +1543,7 @@ public:
 
     void receive(InStream & stream) {
         // Length(4) + Offset(8) + Padding(20)
-        ::check_throw(stream, 32,
-            "RDPDR::DeviceReadRequest", ERR_RDPDR_PDU_TRUNCATED);
+        ::check_throw(stream, 32, "RDPDR::DeviceReadRequest", ERR_RDPDR_PDU_TRUNCATED);
         this->Length_ = stream.in_uint32_le();
         this->Offset_ = stream.in_uint64_le();
         stream.in_skip_bytes(20);
@@ -1667,8 +1658,7 @@ struct DeviceWriteRequest {
 
     void receive(InStream & stream) {
         // Length(4) + Offset(8) + Padding(20)
-        ::check_throw(stream, 32,
-            "RDPDR::DeviceWriteRequest", ERR_RDPDR_PDU_TRUNCATED);
+        ::check_throw(stream, 32, "RDPDR::DeviceWriteRequest", ERR_RDPDR_PDU_TRUNCATED);
         this->Length = stream.in_uint32_le();
         this->Offset = stream.in_uint64_le();
         stream.in_skip_bytes(20);
@@ -1682,8 +1672,7 @@ struct DeviceWriteRequest {
 //                exp = 1600-56;
 //            }
             // Length(variable)
-//            ::check_throw(stream, exp,
-//                "RDPDR::DeviceWriteRequest", ERR_RDPDR_PDU_TRUNCATED);
+//            ::check_throw(stream, exp, "RDPDR::DeviceWriteRequest", ERR_RDPDR_PDU_TRUNCATED);
 //        }
         this->WriteData = stream.get_current();
     }
@@ -1790,9 +1779,8 @@ public:
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 32,// OutputBufferLength(4) + InputBufferLength(4) +
-                                        //     IoControlCode(4) + Padding(20)
-            "RDPDR::DeviceControlRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
+        // OutputBufferLength(4) + InputBufferLength(4) + IoControlCode(4) + Padding(20)
+        ::check_throw(stream, 32, "RDPDR::DeviceControlRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->OutputBufferLength = stream.in_uint32_le();
 
@@ -1802,9 +1790,8 @@ public:
 
         stream.in_skip_bytes(20);   // Padding(20)
 
-        ::check_throw(stream, InputBufferLength,  // InputBuffer(variable)
-                "RDPDR::DeviceControlRequest (1)",
-                ERR_RDPDR_PDU_TRUNCATED);
+        // InputBufferLength(4)
+        ::check_throw(stream, InputBufferLength, "RDPDR::DeviceControlRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->input_buffer = {stream.get_current(), InputBufferLength};
         stream.in_skip_bytes(InputBufferLength);
@@ -1874,9 +1861,8 @@ struct DriveControlResponse {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4,  // InputBuffer(variable)
-            "RDPDR::DriveControlResponse (1)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // OutputBufferLength(4)
+        ::check_throw(stream, 4,  "RDPDR::DriveControlResponse (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->OutputBufferLength = stream.in_uint32_le();
     }
@@ -1950,9 +1936,8 @@ public:
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 12,  // DeviceId(4) + CompletionId(4) + IoStatus(4)
-            "RDPDR::DeviceIOResponse (1)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // DeviceId(4) + CompletionId(4) + IoStatus(4)
+        ::check_throw(stream, 12, "RDPDR::DeviceIOResponse (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->DeviceId_     = stream.in_uint32_le();
         this->CompletionId_ = stream.in_uint32_le();
@@ -2096,20 +2081,23 @@ public:
 
     void receive(InStream & stream, erref::NTSTATUS IoStatus) {
 
-        ::check_throw(stream, 4 +                 // FileId(4)
-                    (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? 1 : 0),  // Information(1)
+        // FileId(4) + Information(1)
+        ::check_throw(stream, 4 + (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? 1 : 0),  
             "RDPDR::DeviceCreateResponse",
             ERR_RDPDR_PDU_TRUNCATED);
 
         this->FileId_     = stream.in_uint32_le();
+        // TODO: see that, the documentation says that the field MAY be skipped
+        // here we do as if it is actually always skipped
+        // we should check with the enclosing payload size
+        // also check that all is consumed in that case
         this->Information_ = (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? stream.in_uint8() : 0x00);
     }
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4,  // FileId(4)
-            "RDPDR::DeviceCreateResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // FileId(4)
+        ::check_throw(stream, 4, "RDPDR::DeviceCreateResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         this->FileId_     = stream.in_uint32_le();
         if (stream.in_check_rem(1)) { // Information(1)
@@ -2229,21 +2217,10 @@ struct DeviceReadResponse {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // Length(4)
-            "RDPDR::DeviceReadResponse (1)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // Length(4)
+        ::check_throw(stream, 4, "RDPDR::DeviceReadResponse (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->Length = stream.in_uint32_le();
-//         {
-//             const unsigned expected = Length;
-//             if (!stream.in_check_rem(expected)) {
-//                 LOG(LOG_ERR,
-//                     "Truncated DeviceReadResponse: expected=%u remains=%zu",
-//                     expected, stream.in_remain());
-//                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
-//             }
-//         }
         //uint8_t data[0xffff];
         //stream.in_copy_bytes(data, Length);
         //this->ReadData = std::string(char_ptr_cast(data), Length/2);
@@ -2371,9 +2348,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        ::check_throw(stream, 8,  // DeviceId(4) + ResultCode(4)
-            "RDPDR::ServerDeviceAnnounceResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // DeviceId(4) + ResultCode(4)
+        ::check_throw(stream, 8, "RDPDR::ServerDeviceAnnounceResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         this->DeviceId_   = stream.in_uint32_le();
         this->ResultCode_ = erref::NTSTATUS(stream.in_uint32_le());
@@ -2449,10 +2425,8 @@ public:
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 8,  // VersionMajor(2) + VersionMajor(2) + ClientId(4)
-            "RDPDR::ServerAnnounceRequest",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // VersionMajor(2) + VersionMajor(2) + ClientId(4)
+        ::check_throw(stream, 8, "RDPDR::ServerAnnounceRequest", ERR_RDPDR_PDU_TRUNCATED);
 
         this->VersionMajor_  = stream.in_uint16_le();
         this->VersionMinor_ = stream.in_uint16_le();
@@ -2544,10 +2518,8 @@ public:
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 8,   // VersionMajor(2) + VersionMajor(2) + ClientId(4)
-            "RDPDR::ClientAnnounceReply",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // VersionMajor(2) + VersionMajor(2) + ClientId(4)
+        ::check_throw(stream, 8, "RDPDR::ClientAnnounceReply", ERR_RDPDR_PDU_TRUNCATED);
 
         this->VersionMajor = stream.in_uint16_le();
         this->VersionMinor = stream.in_uint16_le();
@@ -2681,20 +2653,16 @@ public:
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 12,  // UnicodeFlag(4) + CodePage(4) +
-                                   //     ComputerNameLen(4)
-            "RDPDR::ClientNameRequest (0)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // UnicodeFlag(4) + CodePage(4) +  ComputerNameLen(4)
+        ::check_throw(stream, 12, "RDPDR::ClientNameRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->UnicodeFlag = stream.in_uint32_le();
         this->CodePage    = stream.in_uint32_le();
 
         this->ComputerNameLen = stream.in_uint32_le();
         if (this->ComputerNameLen) {
-            ::check_throw(stream, ComputerNameLen,  // ComputerName(variable)
-                    "RDPDR::ClientNameRequest (1)",
-                    ERR_RDPDR_PDU_TRUNCATED);
+            // ComputerName(variable)
+            ::check_throw(stream, ComputerNameLen, "RDPDR::ClientNameRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
 
             // Remote Desktop Connection of Windows XP (Shell Version 6.1.7600,
             //  Control Version 6.1.7600) has a bug. The field UnicodeFlag
@@ -2967,10 +2935,11 @@ public:
     }
 
     void receive(InStream & stream, uint32_t version) {
-        ::check_throw(stream, 32 +  // osType(4) + osVersion(4) + protocolMajorVersion(2) +
-                                            // protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) +
-                                            // extendedPDU(4) + extraFlags1(4) + extraFlags2(4)
-                ((version == GENERAL_CAPABILITY_VERSION_02) ? 4 /* SpecialTypeDeviceCap(4) */ : 0),
+        // osType(4) + osVersion(4) + protocolMajorVersion(2)
+        // + protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) 
+        // + extendedPDU(4) + extraFlags1(4) + extraFlags2(4)
+        // + (optional) SpecialTypeDeviceCap(4)
+        ::check_throw(stream, 32 + ((version == GENERAL_CAPABILITY_VERSION_02) ? 4 : 0),
             "RDPDR::GeneralCapabilitySet",
             ERR_RDPDR_PDU_TRUNCATED);
 
@@ -3080,10 +3049,8 @@ struct ClientDeviceListAnnounceRequest {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // DeviceCount(4)
-            "RDPDR::ClientDeviceListAnnounceRequest",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // DeviceCount(4)
+        ::check_throw(stream, 4, "RDPDR::ClientDeviceListAnnounceRequest", ERR_RDPDR_PDU_TRUNCATED);
 
         this->DeviceCount = stream.in_uint32_le();
     }
@@ -3236,9 +3203,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        ::check_throw(stream, 32,  // FsInformationClass(4) + Length(4) + Padding(24)
-            "RDPDR::ServerDriveQueryInformationRequest (0)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // FsInformationClass(4) + Length(4) + Padding(24)
+        ::check_throw(stream, 32, "RDPDR::ServerDriveQueryInformationRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass_ = stream.in_uint32_le();
 
@@ -3247,9 +3213,8 @@ public:
 
         stream.in_skip_bytes(24);   // Padding(24)
 
-        ::check_throw(stream, Length,  // QueryBuffer(variable)
-            "RDPDR::ServerDriveQueryInformationRequest (1)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // QueryBuffer(variable)
+        ::check_throw(stream, Length, "RDPDR::ServerDriveQueryInformationRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->query_buffer = {stream.get_current(), Length};
         stream.in_skip_bytes(Length);
@@ -3469,9 +3434,8 @@ public:
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 32,  // FsInformationClass(4) + Length(4) + Padding(24)
-            "RDPDR::ServerDriveQueryVolumeInformationRequest (0)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // FsInformationClass(4) + Length(4) + Padding(24)
+        ::check_throw(stream, 32, "RDPDR::ServerDriveQueryVolumeInformationRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass_ = stream.in_uint32_le();
 
@@ -3480,9 +3444,8 @@ public:
 
         stream.in_skip_bytes(24);   // Padding(24)
 
-        ::check_throw(stream, Length,  // QueryVolumeBuffer(variable)
-            "RDPDR::ServerDriveQueryVolumeInformationRequest (1)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // QueryVolumeBuffer(variable)
+        ::check_throw(stream, Length, "RDPDR::ServerDriveQueryVolumeInformationRequest (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->query_volume_buffer = {stream.get_current(), Length};
         stream.in_skip_bytes(Length);
@@ -3569,9 +3532,8 @@ struct ClientDriveQueryVolumeInformationResponse {
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 4,  // Length(4)
-            "RDPDR::ClientDriveQueryVolumeInformationResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // Length(4)
+        ::check_throw(stream, 4, "RDPDR::ClientDriveQueryVolumeInformationResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         this->Length = stream.in_uint32_le();
     }
@@ -3715,10 +3677,8 @@ public:
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 32,  // FsInformationClass(4) + Length(4) +
-                                           //     Padding(24)
-            "RDPDR::ServerDriveSetInformationRequest",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // FsInformationClass(4) + Length(4) + Padding(24)
+        ::check_throw(stream, 32, "RDPDR::ServerDriveSetInformationRequest", ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass_ = stream.in_uint32_le();
         this->Length_             = stream.in_uint32_le();
@@ -3826,10 +3786,8 @@ public:
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 6,  // ReplaceIfExists(1) + RootDirectory(1) +
-                                           //     FileNameLength(4)
-            "RDPDR::RDP_FILE_RENAME_INFORMATION (0)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // ReplaceIfExists(1) + RootDirectory(1) + FileNameLength(4)
+        ::check_throw(stream, 6, "RDPDR::RDP_FILE_RENAME_INFORMATION (0)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->replace_if_exists_ = (stream.in_uint8() != 0);
         this->RootDirectory_     = stream.in_uint8();
@@ -3838,9 +3796,8 @@ public:
 
         if (this->FileNameLength) {
 
-            ::check_throw(stream, this->FileNameLength,  // FileName(variable)
-                "RDPDR::RDP_FILE_RENAME_INFORMATION (1)",
-                ERR_RDPDR_PDU_TRUNCATED);
+            // FileName(variable)
+            ::check_throw(stream, this->FileNameLength, "RDPDR::RDP_FILE_RENAME_INFORMATION (1)", ERR_RDPDR_PDU_TRUNCATED);
 
             uint8_t const * const FileName_unicode_data = stream.get_current();
 
@@ -4037,10 +3994,8 @@ public:
 
     void receive(InStream & stream) {
 
-        ::check_throw(stream, 32,  // FsInformationClass(4) + InitialQuery(1) +
-                                           //     PathLength(4) + Padding(23)
-            "RDPDR::ServerDriveQueryDirectoryRequest (0)",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // FsInformationClass(4) + InitialQuery(1) + PathLength(4) + Padding(23)
+        ::check_throw(stream, 32, "RDPDR::ServerDriveQueryDirectoryRequest (0)", ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass_ = stream.in_uint32_le();
         this->InitialQuery_       = stream.in_uint8();
@@ -4050,10 +4005,8 @@ public:
         stream.in_skip_bytes(23);   // Padding(23)
 
         if (this->PathLength) {
-
-            ::check_throw(stream, this->PathLength,   // Path(variable)
-                "RDPDR::ServerDriveQueryDirectoryRequest",
-                ERR_RDPDR_PDU_TRUNCATED);
+            // Path(variable)
+            ::check_throw(stream, this->PathLength, "RDPDR::ServerDriveQueryDirectoryRequest", ERR_RDPDR_PDU_TRUNCATED);
 
             uint8_t const * const Path_unicode_data = stream.get_current();
 
@@ -4165,10 +4118,8 @@ struct ClientDriveQueryDirectoryResponse {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // Length(4)
-            "RDPDR::ClientDriveQueryDirectoryResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // Length(4)
+        ::check_throw(stream, 4, "RDPDR::ClientDriveQueryDirectoryResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         this->Length = stream.in_uint32_le();
     }
@@ -4266,10 +4217,8 @@ struct ClientDriveQueryInformationResponse {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // Length(4)
-            "RDPDR::ClientDriveQueryInformationResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // Length(4)
+        ::check_throw(stream, 4, "RDPDR::ClientDriveQueryInformationResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         this->Length = stream.in_uint32_le();
     }
@@ -4320,11 +4269,8 @@ struct ClientDriveSetVolumeInformationResponse {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // Length(4)
-            "RDPDR::ClientDriveSetVolumeInformationResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
-
+        // Length(4)
+        ::check_throw(stream, 4, "RDPDR::ClientDriveSetVolumeInformationResponse", ERR_RDPDR_PDU_TRUNCATED);
         this->Length = stream.in_uint32_le();
     }
 
@@ -4410,10 +4356,8 @@ struct ServerDriveSetVolumeInformationRequest {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 32 ,  // FsInformationClass(4) + Length(4) + Padding(24)
-            "RDPDR::ClientDriveSetVolumeInformationResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // FsInformationClass(4) + Length(4) + Padding(24)
+        ::check_throw(stream, 32 , "RDPDR::ClientDriveSetVolumeInformationResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         this->FsInformationClass = stream.in_uint32_le();
         this->Length = stream.in_uint32_le();
@@ -4483,10 +4427,8 @@ struct ClientDriveSetInformationResponse {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // Length(4)
-            "RDPDR::ClientDriveSetInformationResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // Length(4)
+        ::check_throw(stream, 4, "RDPDR::ClientDriveSetInformationResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         this->Length = stream.in_uint32_le();
     }
@@ -4590,10 +4532,8 @@ struct ServerDriveLockControlRequest {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 32,  // Operation(4) + F(1) + Padding(3) + NumLocks(4) + Padding(20)
-            "RDPDR::ServerDriveLockControlRequest",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // Operation(4) + F(1) + Padding(3) + NumLocks(4) + Padding(20)
+        ::check_throw(stream, 32, "RDPDR::ServerDriveLockControlRequest", ERR_RDPDR_PDU_TRUNCATED);
 
         this->Operation = stream.in_uint32_le();
         this->F = stream.in_uint8() >> 7;
@@ -4646,9 +4586,8 @@ struct ClientDriveLockControlResponse {
     }
 
     void receive(InStream & stream) {
-        ::check_throw(stream, 5,  // Padding(5)
-            "RDPDR::ClientDriveLockControlResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+         // Padding(5)
+        ::check_throw(stream, 5, "RDPDR::ClientDriveLockControlResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         stream.in_skip_bytes(5);
     }
@@ -4703,9 +4642,8 @@ struct RDP_Lock_Info {
     }
 
     void receive(InStream & stream) {
-        ::check_throw(stream, 16,  // Length(8) + Offset(8)
-            "RDPDR::RDP_Lock_Info",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // Length(8) + Offset(8)
+        ::check_throw(stream, 16, "RDPDR::RDP_Lock_Info", ERR_RDPDR_PDU_TRUNCATED);
 
         this->Length = stream.in_uint64_le();
         this->Offset = stream.in_uint64_le();
@@ -4769,10 +4707,8 @@ struct ServerDriveNotifyChangeDirectoryRequest {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 5,  // WatchTree(1) + CompletionFilter(4)
-            "RDPDR::ServerDriveNotifyChangeDirectoryRequest",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // WatchTree(1) + CompletionFilter(4)
+        ::check_throw(stream, 5, "RDPDR::ServerDriveNotifyChangeDirectoryRequest", ERR_RDPDR_PDU_TRUNCATED);
 
         this->WatchTree = stream.in_uint8();
         this->CompletionFilter = stream.in_uint32_le();
@@ -4924,10 +4860,8 @@ struct ClientDriveNotifyChangeDirectoryResponse {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // Length(4)
-            "RDPDR::ClientDriveNotifyChangeDirectoryResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // Length(4)
+        ::check_throw(stream, 4, "RDPDR::ClientDriveNotifyChangeDirectoryResponse", ERR_RDPDR_PDU_TRUNCATED);
 
         this->Length = stream.in_uint32_le();
     }
@@ -4981,10 +4915,8 @@ struct ServerCoreCapabilityRequest {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // numCapabilities(2) + Padding(2)
-            "RDPDR::ServerCoreCapabilityRequest",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // numCapabilities(2) + Padding(2)
+        ::check_throw(stream, 4, "RDPDR::ServerCoreCapabilityRequest", ERR_RDPDR_PDU_TRUNCATED);
 
         this->numCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2);
@@ -5040,10 +4972,8 @@ struct ClientCoreCapabilityResponse {
     }
 
     void receive(InStream & stream) {
-
-        ::check_throw(stream, 4,  // numCapabilities(2) + Padding(2)
-            "RDPDR::ClientCoreCapabilityResponse",
-            ERR_RDPDR_PDU_TRUNCATED);
+        // numCapabilities(2) + Padding(2)
+        ::check_throw(stream, 4, "RDPDR::ClientCoreCapabilityResponse",  ERR_RDPDR_PDU_TRUNCATED);
 
         this->numCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2);
