@@ -36,10 +36,20 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
 
+// Uncomment the code block below to generate testing data.
+//#include "utils/netutils.hpp"
+
+// Uncomment the code block below to generate testing data.
+//#include "transport/socket_transport.hpp"
+
+// Uncomment the code block below to generate testing data.
+//#include <openssl/ssl.h>
+
+// Comment ++ in execute_negociate_mod method in includes/test_only/session_reactor_executor.hpp to generate testing data.
+
 
 RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 {
-/*
     // Uncomment the code block below to generate testing data.
     //SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
 
@@ -110,7 +120,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
-    mod_rdp_params.large_pointer_support             = false;
+    mod_rdp_params.large_pointer_support             = true;
     mod_rdp_params.experimental_fix_input_event_sync = false;
 
     // To always get the same client random, in tests
@@ -133,12 +143,10 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     execute_mod(session_reactor, *mod, front.gd(), 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_disabled_");
-*/
 }
 
 RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 {
-/*
     // Uncomment the code block below to generate testing data.
     //SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
 
@@ -167,17 +175,17 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     // Uncomment the code block below to generate testing data.
     //const char * name       = "RDP W2012 Target";
-    //int          client_sck = ip_connect("10.10.44.27", 3389, 3, 1000);
+    //auto         client_sck = ip_connect("10.10.44.89", 3389);
 
     // Uncomment the code block below to generate testing data.
     //std::string  error_message;
     //SocketTransport     t( name
-    //                     , client_sck
-    //                     , "10.10.44.27"
-    //                     , 3389
-    //                     , STVerbose
-    //                     , &error_message
-    //                     );
+    //                    , std::move(client_sck)
+    //                    , "10.10.44.89"
+    //                    , 3389
+    //                    , std::chrono::seconds(1)
+    //                    , STVerbose
+    //                    , nullptr);
 
     // Comment the code block below to generate testing data.
     #include "fixtures/dump_large_pointer_enabled.hpp"
@@ -189,9 +197,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     Theme theme;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
-    ModRDPParams mod_rdp_params( "RED\\RDUser"
-                               , "SecureKurwa$42"
-                               , "10.10.44.27"
+    ModRDPParams mod_rdp_params( "PROXY\\Tester"
+                               , "SecureLinux$42"
+                               , "10.10.44.89"
                                , "192.168.1.100"
                                , 7
                                , global_font()
@@ -213,7 +221,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     //mod_rdp_params.open_session_timeout            = 0;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
-    mod_rdp_params.large_pointer_support             = false;
+    mod_rdp_params.large_pointer_support             = true;
     mod_rdp_params.experimental_fix_input_event_sync = false;
 
     // To always get the same client random, in tests
@@ -236,5 +244,4 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     execute_mod(session_reactor, *mod, front.gd(), 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_enabled_");
-*/
 }
