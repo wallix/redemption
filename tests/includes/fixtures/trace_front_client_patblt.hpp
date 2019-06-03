@@ -1,4 +1,4 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
 // Listen: binding socket 4 on 0.0.0.0:3389 |
 // Listen: listening on socket 4 |
@@ -17506,7 +17506,7 @@ const char outdata[] =
 // Open to transport failed: code=13 |
 } /* end outdata */;
 
-const char indata[] =
+const char indata[] = /* NOLINT */
 {
 // Listen: binding socket 4 on 0.0.0.0:3389 |
 // Listen: listening on socket 4 |

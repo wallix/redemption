@@ -46,8 +46,8 @@ namespace {
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
     }
 
-    auto & ocr_constants = rdp_ppocr::get_ocr_constants(app_path_s(AppPath::Cfg) + "/ppocr.latin-cyrillic");
-}
+    auto & ocr_constants = rdp_ppocr::get_ocr_constants(app_path_s(AppPath::Cfg) + "/ppocr.latin-cyrillic"); /* NOLINT */
+} // namespace
 
 
 RED_AUTO_TEST_CASE(TestNewOCR4)

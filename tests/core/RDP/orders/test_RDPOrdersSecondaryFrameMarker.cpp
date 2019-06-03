@@ -20,12 +20,10 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 
-RED_AUTO_TEST_CASE(TestFrameMarker)
+// TEST missing
+int main()
 {
     RDP::FrameMarker();
 }

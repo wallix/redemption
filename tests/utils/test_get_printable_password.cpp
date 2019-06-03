@@ -21,8 +21,23 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "utils/get_printable_password.hpp"
 
 
-RED_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestPrintable)
 {
+    auto pass = "pass"_av;
+    auto empty = ""_av;
+    auto hidden = "<hidden>"_av;
+    auto null = "<null>"_av;
+
+    RED_CHECK_SMEM(hidden, get_printable_password(pass, 0));
+    RED_CHECK_SMEM(hidden, get_printable_password(pass, 1));
+    RED_CHECK_SMEM(pass, get_printable_password(pass, 2));
+    RED_CHECK_SMEM(hidden, get_printable_password(pass, 3));
+
+    RED_CHECK_SMEM(hidden, get_printable_password(empty, 0));
+    RED_CHECK_SMEM(null, get_printable_password(empty, 1));
+    RED_CHECK_SMEM(empty, get_printable_password(empty, 2));
+    RED_CHECK_SMEM(hidden, get_printable_password(empty, 3));
 }

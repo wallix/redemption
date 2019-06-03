@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+    </style>
+</head>
+<body>
+
+<canvas id="canvas" width="800" height="600"></canvas>
+
+<script src="js_player.js"></script>
+<script src="rdp_graphics.js"></script>
+<script src="redemption_load_module.js"></script>
+<script>
+
+const Module = WallixModule({
+    // TOTAL_MEMORY: 16777216, // 16**6
+    // TOTAL_MEMORY: 268435456, // 16**7
+});
+
+const redemption = redemptionLoadModule(Module, window);
+const newWrmPlayer = redemption.newWrmPlayer
+
+class CbPlayer extends RDPGraphics
+{
+    constructor(ecanvas)
+    {
+        super(ecanvas)
+        this.time = 0;
+    }
+
+    setPointerPosition(x, y)
+    {
+        // console.log('setpos',x,y);
+    }
+
+    setTime(seconds, milliSeconds)
+    {
+        // console.log('setTime',seconds, milliSeconds);
+        this.time = seconds * 1000 + milliSeconds;
+    }
+}
+
+const ecanvas = document.getElementById('canvas');
+
+const playFile = function(ifile)
+{
+    if (ifile == 3) {
+        return ;
+    }
+
+    console.log('ifile = ', ifile)
+
+    fetch('sample'+ifile+'.wrm')
+    .then(response => response.arrayBuffer())
+    .then(buffer => {
+        const cbPlayer = new CbPlayer(ecanvas);
+        const player = newWrmPlayer(cbPlayer, buffer);
+        let previousTime = cbPlayer.time;
+        let currentDate = Date.now()
+        let i = 0;
+        console.log(currentDate);
+        const loop = function() {
+            console.log('loop', ++i);
+            while (player.next()) {
+                player.interpret();
+                if (cbPlayer.time != previousTime) {
+                    const delay = cbPlayer.time - previousTime;
+                    const now = Date.now();
+                    const elapsedTime = now - currentDate;
+                    previousTime = cbPlayer.time
+                    currentDate = now;
+                    // console.log(delay, elapsedTime)
+                    setTimeout(loop, Math.max(delay-elapsedTime, 0));
+                    return;
+                }
+            }
+            console.log(Date.now());
+            playFile(ifile+1)
+        };
+        loop();
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+playFile(0)
+
+</script>
+
+</body>
+</html>

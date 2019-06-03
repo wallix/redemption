@@ -431,7 +431,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
         : Widget(drawable, *this, nullptr)
         {}
 
-        void rdp_input_invalidate(const Rect) override
+        void rdp_input_invalidate(const Rect /*r*/) override
         {}
 
         void notify(Widget* sender, NotifyApi::notify_event_t event) override

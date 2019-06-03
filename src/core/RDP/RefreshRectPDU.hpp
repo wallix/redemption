@@ -183,8 +183,7 @@ struct RefreshRectPDU {
     }
 
     void emit(OutTransport trans) /* TODO const*/ {
-        this->buffer_stream.set_out_uint8(this->area_count,
-                                          this->offset_area_count);
+        this->buffer_stream.stream_at(this->offset_area_count).out_uint8(this->area_count);
 
         this->sdata.emit_end();
 

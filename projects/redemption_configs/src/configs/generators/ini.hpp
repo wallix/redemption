@@ -40,6 +40,10 @@ namespace cfg_generators {
 
 namespace ini_writer {
 
+using python_spec_writer::begin_raw_string;
+using python_spec_writer::end_raw_string;
+
+
 using namespace cfg_attributes;
 
 namespace impl
@@ -220,7 +224,8 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
     {
         this->out_file_ <<
             "#include \"config_variant.hpp\"\n\n"
-            "\"## Config file for RDP proxy.\\n\\n\\n\"\n"
+            << begin_raw_string
+            << "## Config file for RDP proxy.\n\n\n"
         ;
     }
 
@@ -237,16 +242,16 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
             write_type_info(comments, enums, type);
             python_spec_writer::write_enumeration_value_description(comments, enums, type, infos);
 
-            this->out() << io_prefix_lines{comments.str().c_str(), "\"# ", "\\n\"", 0};
+            this->out() << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
             python_spec_writer::write_spec_attr(comments, get_elem<spec_attr_t>(infos).value);
 
-            this->out() << io_prefix_lines{comments.str().c_str(), "\"#", "\\n\"", 0};
+            this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
             python_spec_writer::write_member(this->out(), "#" + member_name);
             write_type(this->out(), enums, type, get_default(type, infos));
-            this->out() << "\\n\\n\"\n\n";
+            this->out() << "\n\n";
         }
     }
 };

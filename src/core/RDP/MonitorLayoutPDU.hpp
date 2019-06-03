@@ -21,6 +21,8 @@
 #pragma once
 
 #include "core/RDP/gcc.hpp"
+#include "core/stream_throw_helpers.hpp"
+
 
 // [MS-RDPBCGR] - 2.2.1.3.6.1 Monitor Definition (TS_MONITOR_DEF)
 // ==============================================================
@@ -167,7 +169,7 @@ class MonitorLayoutPDU {
 
 public:
     MonitorLayoutPDU()
-    : 
+    :
      monitorDefArray() {}
 
     void set(GCC::UserData::CSMonitor const & cs_monitor) {
@@ -211,12 +213,10 @@ public:
     }
 
     void recv(InStream & stream) {
-        if (!stream.in_check_rem(4)) {
-            LOG(LOG_ERR,
-                "MonitorLayoutPDU::recv: Truncated data, need=4, remains=%zu",
-                stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 4,
+                "MonitorLayoutPDU::recv",
+                ERR_RDP_DATA_TRUNCATED);
 
         this->monitorCount = stream.in_uint32_le();
 
@@ -229,12 +229,9 @@ public:
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        const unsigned expected = this->monitorCount * 20;  // monitorCount * monitorDefArray(20)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "MonitorLayoutPDU::recv: Truncated data, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        ::check_throw(stream, this->monitorCount * 20, // monitorCount * monitorDefArray(20)
+                "MonitorLayoutPDU::recv",
+                ERR_RDP_DATA_TRUNCATED);
 
         for (uint32_t monitorIndex = 0; monitorIndex < this->monitorCount; ++monitorIndex) {
             this->monitorDefArray[monitorIndex].left   = stream.in_sint32_le();

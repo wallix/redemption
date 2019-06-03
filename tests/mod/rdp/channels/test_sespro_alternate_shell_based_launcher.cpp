@@ -20,9 +20,8 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
 
-
-RED_AUTO_TEST_CASE(TestXXXXXXXXX)
-{
-}
+// TEST missing
+int main()
+{}

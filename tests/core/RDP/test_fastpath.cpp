@@ -109,6 +109,15 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     out_t.send(out_payload.get_bytes());
 }
 
+struct mppc_dec_error : rdp_mppc_dec
+{
+    int decompress(uint8_t const * /*cbuf*/, int /*len*/, int /*ctype*/, const uint8_t *& /*rdata*/, uint32_t & /*rlen*/) override
+    {
+        RED_ERROR("rdp_mppc_dec::decompress is called");
+        return 0;
+    }
+};
+
 RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     CryptContext decrypt;
 
@@ -221,7 +230,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     uint8_t i = 0;
 
     while (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload, nullptr);
+        mppc_dec_error dec;
+        FastPath::Update_Recv in_upd(in_su.payload, dec);
 
         RED_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
 
@@ -280,7 +290,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     uint8_t i = 0;
 
     while (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload, nullptr);
+        mppc_dec_error dec;
+        FastPath::Update_Recv in_upd(in_su.payload, dec);
 
         RED_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
     }
@@ -315,7 +326,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     uint8_t updateCode = static_cast<uint8_t>(FastPath::UpdateType::CACHED);
 
     if (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload, nullptr);
+        mppc_dec_error dec;
+        FastPath::Update_Recv in_upd(in_su.payload, dec);
 
         if (in_upd.updateCode == updateCode) {
             out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.get_capacity());

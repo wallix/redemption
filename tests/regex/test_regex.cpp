@@ -61,7 +61,7 @@ regex_test(p_regex, p_str, p_exact_result_search, p_result_search, p_exact_resul
 
 inline void test_re(re::Regex::flag_t flags)
 {
-    typedef re::StateMachine2::range_t range_t;
+    using range_t = re::StateMachine2::range_t;
 
     Regex::range_matches matches;
     Regex::range_matches matches2;

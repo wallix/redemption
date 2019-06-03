@@ -20,10 +20,8 @@
 
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
-#include "test_only/get_file_contents.hpp"
-#include "test_only/working_directory.hpp"
-
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 #include "utils/netutils.hpp"
 
 #include "core/RDP/clipboard.hpp"
@@ -39,7 +37,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    SessionReactor session_reactor;
     NullReportMessage report_message;
     ICAPService * ipca_service = nullptr;
 
@@ -56,6 +53,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
+
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front,session_reactor,
                 base_params,
@@ -68,7 +67,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    SessionReactor session_reactor;
     NullReportMessage report_message;
     ICAPService * ipca_service = nullptr;
 
@@ -85,6 +83,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
+
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
@@ -97,8 +97,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-
-    SessionReactor session_reactor;
 
     NullReportMessage report_message;
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
@@ -114,6 +112,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
+
+    SessionReactor session_reactor;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, session_reactor,
@@ -157,14 +157,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 
 class NullSender : public VirtualChannelDataSender {
 public:
-    virtual void operator() (uint32_t, uint32_t, const uint8_t*, uint32_t) override {}
+    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, const uint8_t* /*chunk_data*/, uint32_t /*chunk_data_length*/) override {}
 };
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    SessionReactor session_reactor;
     NullReportMessage report_message;
     ICAPService * ipca_service = nullptr;
 
@@ -177,6 +176,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
     NullSender to_client_sender;
     NullSender to_server_sender;
+
+    SessionReactor session_reactor;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, session_reactor,
@@ -217,7 +218,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    SessionReactor session_reactor;
     NullReportMessage report_message;
     ICAPService * ipca_service = nullptr;
 
@@ -230,6 +230,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     NullSender to_client_sender;
     NullSender to_server_sender;
+
+    SessionReactor session_reactor;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, session_reactor,
@@ -378,8 +380,7 @@ public:
     size_t total_in_stream = 0;
 
 
-    explicit TestResponseSender()
-    {}
+    explicit TestResponseSender() = default;
 
     void operator()(uint32_t /*total_length*/, uint32_t /*flags*/,
         const uint8_t* chunk_data, uint32_t chunk_data_length)
@@ -418,7 +419,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     clipboard_virtual_channel_params.enable_interupting_validator = true;
     clipboard_virtual_channel_params.enable_save_files = true;
     clipboard_virtual_channel_params.enable_validator = false;
-    clipboard_virtual_channel_params.channel_files_directory = wd.dirname();
+    clipboard_virtual_channel_params.channel_files_directory = wd.dirname().string();
 
     TestResponseSender to_client_sender;
     NullSender to_server_sender;
@@ -850,7 +851,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
             16,
             out_asynchronous_task);
 
-    RED_CHECK_EQUAL(get_file_contents(file_test), "test");
+    RED_CHECK_EQUAL(tu::get_file_contents(file_test), "test");
 
         clipboard_virtual_channel.process_server_message(
             22,
@@ -864,7 +865,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
 
     RED_CHECK_EQUAL(to_client_sender.total_in_stream, 5);
 
-    RED_CHECK_EQUAL(get_file_contents(file_test), "test  test");
+    RED_CHECK_EQUAL(tu::get_file_contents(file_test), "test  test");
 
     clipboard_virtual_channel.DLP_antivirus_check_channels_files();
 
@@ -921,7 +922,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
     clipboard_virtual_channel_params.enable_interupting_validator = true;
     clipboard_virtual_channel_params.enable_save_files = true;
     clipboard_virtual_channel_params.enable_validator = false;
-    clipboard_virtual_channel_params.channel_files_directory = wd.dirname();
+    clipboard_virtual_channel_params.channel_files_directory = wd.dirname().string();
 
     NullSender to_client_sender;
     TestResponseSender to_server_sender;
@@ -1356,7 +1357,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
                 ),
             16);
 
-    RED_CHECK_EQUAL(get_file_contents(file_test), "test");
+    RED_CHECK_EQUAL(tu::get_file_contents(file_test), "test");
 
         clipboard_virtual_channel.process_client_message(
             22,
@@ -1369,7 +1370,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
 
     RED_CHECK_EQUAL(to_server_sender.total_in_stream, 6);
 
-    RED_CHECK_EQUAL(get_file_contents(file_test), "test  test");
+    RED_CHECK_EQUAL(tu::get_file_contents(file_test), "test  test");
 
     clipboard_virtual_channel.DLP_antivirus_check_channels_files();
 

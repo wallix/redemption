@@ -1413,7 +1413,7 @@ namespace FastPath {
         uint16_t  size;
         InStream payload;
 
-        Update_Recv(InStream & stream, rdp_mppc_dec * dec)
+        Update_Recv(InStream & stream, rdp_mppc_dec& dec)
         : updateHeader([&stream](){
             unsigned expected = 1; // updateHeader(1)
             if (!stream.in_check_rem(expected)) {
@@ -1452,7 +1452,7 @@ namespace FastPath {
                 const uint8_t * rdata;
                 uint32_t        rlen;
 
-                dec->decompress(stream.get_current(), size, compressionFlags, rdata, rlen);
+                dec.decompress(stream.get_current(), size, compressionFlags, rdata, rlen);
 
                 return InStream(rdata, rlen);
             }

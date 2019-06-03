@@ -821,12 +821,15 @@ void ClientRDPDRChannel::process_iorequest_directory_control(InStream & chunk, r
 
             if (sdqdr.InitialQuery() && endPath != asterix) {
 
+                // TODO find_last_of
+                //@{
                 std::string tmp_path = path;
-                int tmp_path_index = tmp_path.find('/');
-                while (tmp_path_index != -1) {
-                    tmp_path = tmp_path.substr(tmp_path_index+1, tmp_path.length());
+                std::string::size_type tmp_path_index = tmp_path.find('/');
+                while (tmp_path_index != std::string::npos) {
+                    tmp_path = tmp_path.substr(tmp_path_index+1u, tmp_path.length());
                     tmp_path_index = tmp_path.find('/');
                 }
+                //@}
                 str_file_name = std::move(tmp_path);
 
                 std::string str_file_path_slash(this->share_dir + path);

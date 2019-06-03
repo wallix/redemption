@@ -65,7 +65,6 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP)
                      , cs_net.channelDefArray[1].options);
 
-    cs_net.log("Client Received");
-
+    // cs_net.log("Client Received");
 }
 

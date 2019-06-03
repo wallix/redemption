@@ -33,7 +33,6 @@
 //}
 
 
-// out_bytes_be is only defined for 1 to 4 bytes
 RED_AUTO_TEST_CASE(TestAlign4)
 {
 //  uint8_t buffer[4] = {};
@@ -90,7 +89,6 @@ RED_AUTO_TEST_CASE(TestNbBytes)
     RED_CHECK_EQUAL(320u, nbbytes_large(320 * 8));
 }
 
-// out_bytes_be is only defined for 1 to 4 bytes
 RED_AUTO_TEST_CASE(TestOutBytesLe)
 {
     uint8_t buffer[10] = {};
@@ -107,19 +105,6 @@ RED_AUTO_TEST_CASE(TestOutBytesLe)
     RED_CHECK_EQUAL(0xBB, buffer[3]);
 }
 
-
-// out_bytes_be is only defined for 1 to 4 bytes
-RED_AUTO_TEST_CASE(TestBufOutUint32)
-{
-    uint8_t buffer[4] = {};
-    buf_out_uint32(buffer, 0xFFEEDDCC);
-    RED_CHECK_EQUAL(0xCC, buffer[0]);
-    RED_CHECK_EQUAL(0xDD, buffer[1]);
-    RED_CHECK_EQUAL(0xEE, buffer[2]);
-    RED_CHECK_EQUAL(0xFF, buffer[3]);
-}
-
-
 // in_bytes_le is only defined for 1 to 4 bytes
 RED_AUTO_TEST_CASE(TestInBytesLe)
 {
@@ -128,16 +113,6 @@ RED_AUTO_TEST_CASE(TestInBytesLe)
 
     uint8_t buffer2[10] = {0x88, 0x99, 0xAA, 0xBB };
     RED_CHECK_EQUAL(0xBBAA9988u, in_uint32_from_nb_bytes_le(4, buffer2));
-}
-
-// in_bytes_be is only defined for 1 to 4 bytes
-RED_AUTO_TEST_CASE(TestInBytesBe)
-{
-    uint8_t buffer[10] = {0xCC, 0xDD, 0xEE, 0xFF };
-    RED_CHECK_EQUAL(0xCCDDEEu, in_uint32_from_nb_bytes_be(3, buffer));
-
-    uint8_t buffer2[10] = {0x88, 0x99, 0xAA, 0xBB };
-    RED_CHECK_EQUAL(0x8899AABBu, in_uint32_from_nb_bytes_be(4, buffer2));
 }
 
 // rmemcpy : the area must not overlap

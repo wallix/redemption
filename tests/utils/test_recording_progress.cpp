@@ -21,19 +21,20 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 
 #include "utils/recording_progress.hpp"
-#include "test_only/get_file_contents.hpp"
+#include "utils/fileutils.hpp"
 
 
-RED_AUTO_TEST_CASE(TestRecordingProgress)
+RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
 {
     std::string contents;
 
     time_t const start_time = 123456789;
     time_t const end_time = start_time + 100;
-    char const * filename = "/tmp/test_progress_123.test";
+    char const * filename = wf.c_str();
 
     {
         unlink(filename);
@@ -47,24 +48,24 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 //         {"percentage":0,"eta":-1,"videos":0}
 //         {"percentage":10,"eta":0,"videos":0}
 
         p(start_time + 90);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":0})");
 
         p(start_time + 100);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":0})");
     }
-    append_file_contents(contents, filename);
+    contents.clear(); (void)append_file_contents(filename, contents);
     RED_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":1})");
 
     {
@@ -79,22 +80,22 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 
         p.next_video(start_time + 90);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
 
         p(start_time + 100);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":1})");
     }
-    append_file_contents(contents, filename);
+    contents.clear(); (void)append_file_contents(filename, contents);
     RED_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":2})");
 
     {
@@ -109,23 +110,23 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 
         p.next_video(start_time + 90);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
 
         p.raise_error(2, "plouf");
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents,
             R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
     }
-    append_file_contents(contents, filename);
+    contents.clear(); (void)append_file_contents(filename, contents);
     RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
 
     {
@@ -140,22 +141,22 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "10 0");
 
         p(start_time + 90);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "90 0");
 
         p(start_time + 100);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "99 0");
     }
-    append_file_contents(contents, filename);
+    contents.clear(); (void)append_file_contents(filename, contents);
     RED_CHECK_EQUAL(contents, "100 0");
 
     {
@@ -170,22 +171,22 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "10 0");
 
         p.next_video(start_time + 90);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "90 0");
 
         p(start_time + 100);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "99 0");
     }
-    append_file_contents(contents, filename);
+    contents.clear(); (void)append_file_contents(filename, contents);
     RED_CHECK_EQUAL(contents, "100 0");
 
     {
@@ -200,23 +201,21 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "10 0");
 
         p.next_video(start_time + 90);
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "90 0");
 
         p.raise_error(2, "plouf");
-        append_file_contents(contents, filename);
+        contents.clear(); (void)append_file_contents(filename, contents);
         RED_CHECK_EQUAL(contents, "-1 plouf (2)");
     }
-    append_file_contents(contents, filename);
+    contents.clear(); (void)append_file_contents(filename, contents);
     RED_CHECK_EQUAL(contents, "-1 plouf (2)");
-
-    unlink(filename);
 }

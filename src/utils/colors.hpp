@@ -422,6 +422,18 @@ struct decode_color24
 };
 
 
+struct decode_color32
+{
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{32};
+
+    constexpr decode_color32() noexcept = default;
+
+    constexpr BGRColor operator()(RDPColor c) const noexcept
+    {
+        return c.as_bgr();
+    }
+};
+
 // colorN (variable): an index into the current palette or an RGB triplet
 //                    value; the actual interpretation depends on the color
 //                    depth of the bitmap data.
@@ -539,6 +551,19 @@ struct encode_color24
     }
 };
 
+struct encode_color32
+{
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{32};
+
+    constexpr encode_color32() noexcept = default;
+
+    RDPColor operator()(BGRColor c) const noexcept
+    {
+        return RDPColor::from(c.as_u32());
+    }
+};
+
+
 inline RDPColor color_encode(const BGRColor c, const BitsPerPixel out_bpp) noexcept
 {
     switch (out_bpp){
@@ -561,6 +586,7 @@ namespace shortcut_encode
     using enc15 = encode_color15;
     using enc16 = encode_color16;
     using enc24 = encode_color24;
+    using enc32 = encode_color32;
 } // namespace shortcut_encode
 
 namespace shortcut_decode_with_palette
@@ -569,4 +595,5 @@ namespace shortcut_decode_with_palette
     using dec15 = decode_color15;
     using dec16 = decode_color16;
     using dec24 = decode_color24;
+    using dec32 = decode_color32;
 } // namespace shortcut_decode_with_palette

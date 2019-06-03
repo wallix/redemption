@@ -89,6 +89,7 @@ inline void config_type_definition(type_enumerations & e)
       .value("depth15", 15, "15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)")
       .value("depth16", 16, "16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)")
       .value("depth24", 24, "24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)")
+      .value("depth32", 32, "32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)")
     ;
 
     e.enumeration_flags("ServerNotification")

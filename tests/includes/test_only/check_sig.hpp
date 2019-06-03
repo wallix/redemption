@@ -30,12 +30,14 @@
 // fix tests with:
 // bjam test_flat_wab_close | grep ^tests/ | while IFS='()"' read f l e n E s ; do sed $l,$(($l+1))'s/RED_CHECK_SIG(drawable.gd, .*/RED_CHECK_SIG(drawable.gd, "'${s//x/\\\\x}');/' -i "$f" ; done
 
-#define RED_CHECK_SIG(obj, expected_sig)                           \
+#define RED_CHECK_SIG_A(obj, expected_sig)                         \
     do {                                                           \
         uint8_t obj_sig__[SslSha1::DIGEST_LENGTH];                 \
         ::redemption_unit_test__::compute_obj_sig(obj_sig__, obj); \
-        RED_CHECK_MEM_AC(obj_sig__, expected_sig);                 \
+        RED_CHECK_RMEM(make_array_view(obj_sig__), expected_sig);  \
     } while (0)
+
+#define RED_CHECK_SIG(obj, expected_sig) RED_CHECK_SIG_A(obj, cstr_array_view(expected_sig ""))
 
 #define RED_CHECK_SIG_FROM(obj, array_for_sig)                     \
     do {                                                           \
@@ -97,4 +99,4 @@ namespace redemption_unit_test__
             ::redemption_unit_test__::compute_av_sig2(sig, ar.data(), 1, ar.size());
         }
     }
-}
+} // namespace redemption_unit_test__

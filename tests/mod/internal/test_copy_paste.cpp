@@ -51,8 +51,8 @@ struct CopyPasteFront : FakeFront
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t, int
-    ) override {
+        const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t /*unused*/, int
+     /*unused*/) override {
         RED_REQUIRE(channel.name == channel_names::cliprdr);
 
         InStream stream(data, length);

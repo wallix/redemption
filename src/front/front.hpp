@@ -65,6 +65,7 @@
 #include "core/RDP/capabilities/pointer.hpp"
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
+#include "core/RDP/orders/RDPSurfaceCommands.hpp"
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/lic.hpp"
@@ -85,6 +86,7 @@
 #include "core/error.hpp"
 #include "core/font.hpp"
 #include "core/front_api.hpp"
+#include "core/glyph_to_24_bitmap.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
 #include "gdi/clip_from_cmd.hpp"
@@ -452,6 +454,11 @@ private:
             return this->get_graphics().bmp_cache;
         }
 
+        uint16_t get_bmp_cache_max_cell_size() const
+        {
+            return this->get_graphics().bmp_cache.get_max_cell_size();
+        }
+
         int add_brush(uint8_t* brush_item_data, int& cache_idx)
         {
             return this->get_graphics().brush_cache.add_brush(brush_item_data, cache_idx);
@@ -656,7 +663,7 @@ public:
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override { }
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override { this->draw_impl(cmd, content); }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
@@ -1840,16 +1847,14 @@ public:
 
                     uint8_t client_random[64] = {};
                     {
-                        ssllib ssl;
-                        ssl.ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
+                        ssllib::ssl_xxxxxx(client_random, 64, sec.payload.get_data(), 64, this->pub_mod, 64, this->pri_exp);
                     }
                     // beware order of parameters for key generation (decrypt/encrypt)
                     // is inversed between server and client
                     SEC::KeyBlock key_block(client_random, this->server_random);
                     memcpy(this->encrypt.sign_key, key_block.blob0, 16);
                     if (this->encrypt.encryptionMethod == 1) {
-                        ssllib ssl;
-                        ssl.sec_make_40bit(this->encrypt.sign_key);
+                        ssllib::sec_make_40bit(this->encrypt.sign_key);
                     }
                     this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
                     this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
@@ -2275,7 +2280,7 @@ public:
                                 FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
 
                                 LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PUD, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
+                                    "Front::incoming: Received Fast-Path PDU, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
                                     ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
 
                                 if ((1 == num_events) &&
@@ -2298,7 +2303,7 @@ public:
                                 FastPath::MouseEvent_Recv me(cfpie.payload, byte);
 
                                 LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                                    "Front::incoming: Received Fast-Path PDU, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
                                     me.pointerFlags, me.xPos, me.yPos);
 
                                 this->mouse_x = me.xPos;
@@ -2347,7 +2352,7 @@ public:
                                 FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
 
                                 LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PUD, sync eventFlags=0x%X",
+                                    "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
                                     se.eventFlags);
                                 LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
                                     static_cast<unsigned int>(se.eventFlags));
@@ -2365,7 +2370,7 @@ public:
                                 FastPath::UnicodeKeyboardEvent_Recv uke(cfpie.payload, byte);
 
                                 LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                                    "Front::incoming: Received Fast-Path PUD, unicode unicode=0x%04X",
+                                    "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
                                     uke.unicodeCode);
 
                                 if (this->up_and_running) {
@@ -2622,7 +2627,6 @@ public:
         );
     }
 
-private:
     void session_probe_started(bool started) override {
         this->session_probe_started_ = started;
 
@@ -2665,6 +2669,7 @@ private:
         }
     }
 
+private:
     /*****************************************************************************/
     void send_data_update_sync()
     {
@@ -2873,7 +2878,7 @@ private:
                     send_multifrag_caps = true;
                 }
 
-                if (true) {
+                if (this->ini.get<cfg::client::remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
                 	BitmapCodecCaps bitmap_codec_caps(false);
 
                 	bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
@@ -2890,8 +2895,8 @@ private:
                 }
 
                 size_t caps_size = stream.get_offset() - caps_count_offset;
-                stream.set_out_uint16_le(caps_size, caps_size_offset);
-                stream.set_out_uint32_le(caps_count, caps_count_offset);
+                stream.stream_at(caps_size_offset).out_uint16_le(caps_size);
+                stream.stream_at(caps_count_offset).out_uint32_le(caps_count);
 
                 stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
             },
@@ -3428,6 +3433,7 @@ private:
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_fontmap: done");
     }
 
+public:
     void send_savesessioninfo() override {
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::send_savesessioninfo");
@@ -3460,6 +3466,7 @@ private:
             "Front::send_savesessioninfo: done");
     }   // void send_savesessioninfo()
 
+private:
     void send_monitor_layout() {
         if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
             this->client_info.cs_monitor.monitorCount &&
@@ -4050,6 +4057,7 @@ private:
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_deactive: done");
     }
 
+public:
     void set_keyboard_indicators(uint16_t LedFlags) override
     {
         this->keymap.toggle_caps_lock(LedFlags & SlowPath::TS_SYNC_CAPS_LOCK);
@@ -4151,6 +4159,30 @@ protected:
         }
     }
 
+    void draw_impl(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) {
+    	for (const Rect & rect1 : content.region.rects) {
+    		Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
+
+			Bitmap bitmap(content.data, content.stride, rect);
+
+			LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
+					rect1.left(), rect1.top(), rect1.width(), rect1.height(),
+					rect.left(), rect.top(), rect.width(), rect.height());
+			RDPBitmapData bitmap_data;
+			bitmap_data.dest_left = rect.left();
+			bitmap_data.dest_right = rect.right() - 1;
+			bitmap_data.dest_top = rect.top();
+			bitmap_data.dest_bottom = rect.bottom() - 1;
+			bitmap_data.width = rect.width();
+			bitmap_data.height = rect.height();
+			bitmap_data.bits_per_pixel = 32;
+			bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
+			bitmap_data.bitmap_length = bitmap.bmp_size();
+
+			this->draw_impl(bitmap_data, bitmap);
+    	}
+    }
+
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
         this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
     }
@@ -4177,48 +4209,6 @@ protected:
 
         this->rail_window_rect.empty();
     }
-
-public:
-    class GlyphTo24Bitmap
-    {
-        // TODO BGRArray<n>
-        uint8_t raw_data[RDPSerializer::MAX_ORDERS_SIZE];
-
-    public:
-        uint8_t const * data() const noexcept { return this->raw_data; }
-
-        GlyphTo24Bitmap(
-            FontChar const & fc,
-            const BGRColor color_fore,
-            const BGRColor color_back) noexcept
-        {
-            assert(fc.width*fc.height*3 < int(sizeof(this->raw_data)));
-
-            const uint8_t * fc_data = fc.data.get();
-
-            for (int y = 0 ; y < fc.height; y++) {
-                uint8_t fc_bit_mask = 128;
-                for (int x = 0 ; x < fc.width; x++) {
-                    if (!fc_bit_mask) {
-                        fc_data++;
-                        fc_bit_mask = 128;
-                    }
-
-                    const uint16_t xpix = x * 3;
-                    const uint16_t ypix = y * fc.width * 3;
-
-                    const BGRColor color = (fc_bit_mask & *fc_data) ? color_back : color_fore;
-                    this->raw_data[xpix + ypix    ] = color.blue();
-                    this->raw_data[xpix + ypix + 1] = color.green();
-                    this->raw_data[xpix + ypix + 2] = color.red();
-
-                    fc_bit_mask >>= 1;
-                }
-                fc_data++;
-            }
-        }
-    };
-
 
 protected:
     void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
@@ -4536,8 +4526,9 @@ private:
             Graphics::PrivateGraphicsUpdatePDU& graphics_update_pdu_ = this->orders.graphics_update_pdu();
             return graphics_update_pdu_.get_max_data_block_size();
         }();
-        if (front_bitmap_size <= serializer_max_data_block_size
-            && align4(dst_cx) < 128 && dst_cy < 128) {
+        size_t const bmp_cache_max_cell_size = this->orders.get_bmp_cache_max_cell_size();
+        size_t const max_bmp_size = std::min(serializer_max_data_block_size, bmp_cache_max_cell_size);
+        if (front_bitmap_size <= max_bmp_size) {
             // clip dst as it can be larger than source bitmap
             const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
             const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
@@ -4545,7 +4536,7 @@ private:
         }
         else {
             // if not we have to split it
-            const uint16_t TILE_CX = ((nb_bytes_per_pixel(this->client_info.screen_info.bpp) * 64 * 64 < serializer_max_data_block_size) ? 64 : 32);
+            const uint16_t TILE_CX = ((nb_bytes_per_pixel(this->client_info.screen_info.bpp) * 64 * 64 < max_bmp_size) ? 64 : 32);
             const uint16_t TILE_CY = TILE_CX;
 
             contiguous_sub_rect_f(CxCy{dst_cx, dst_cy}, SubCxCy{TILE_CX, TILE_CY}, [&](Rect r){

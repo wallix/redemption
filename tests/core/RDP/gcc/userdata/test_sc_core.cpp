@@ -23,7 +23,7 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
-#include "core/RDP/gcc/userdata/sc_core.hpp"  
+#include "core/RDP/gcc/userdata/sc_core.hpp"
 
 RED_AUTO_TEST_CASE(Test_gcc_sc_core)
 {
@@ -52,5 +52,5 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_core)
     RED_CHECK_EQUAL(0x0080004, sc_core2.version);
     RED_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
 
-    sc_core2.log("Server Received");
+    // sc_core2.log("Server Received");
 }

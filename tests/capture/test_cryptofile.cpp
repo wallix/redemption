@@ -68,7 +68,7 @@ namespace {
         g_trace_key_ob.visited = true;
         return 0;
     }
-}
+} // namespace
 
 
 RED_AUTO_TEST_CASE(TestNormalizeDerivedKey)
@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestSetMasterDerivator)
 namespace
 {
     bool visited_cb = false;
-}
+} // namespace
 
 RED_AUTO_TEST_CASE(TestErrCb)
 {

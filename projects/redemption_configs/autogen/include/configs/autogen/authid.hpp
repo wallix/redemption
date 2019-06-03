@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(159);
+constexpr authid_t MAX_AUTHID = authid_t(161);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -64,6 +64,7 @@ constexpr array_view_const_char const authstr[] = {
     "session_probe_smart_launcher_start_delay"_av,
     "session_probe_smart_launcher_long_delay"_av,
     "session_probe_smart_launcher_short_delay"_av,
+    "session_probe_launcher_abort_delay"_av,
     "session_probe_enable_crash_dump"_av,
     "session_probe_handle_usage_limit"_av,
     "session_probe_memory_usage_limit"_av,
@@ -170,4 +171,5 @@ constexpr array_view_const_char const authstr[] = {
     "session_probe_launch_error_message"_av,
     "pm_response"_av,
     "pm_request"_av,
+    "native_session_id"_av,
 };

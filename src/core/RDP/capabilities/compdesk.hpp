@@ -28,6 +28,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 // 2.2.7.2.8 Desktop Composition Capability Set (TS_COMPDESK_CAPABILITYSET)
 // ========================================================================
@@ -59,7 +60,7 @@ struct CompDeskCaps : public Capability {
 
     CompDeskCaps()
     : Capability(CAPSETTYPE_COMPDESK, CAPLEN_COMPDESK)
-    
+
     {
     }
 
@@ -74,11 +75,7 @@ struct CompDeskCaps : public Capability {
     {
         this->len = len;
 
-        if (!stream.in_check_rem(2)){
-            LOG(LOG_ERR, "Truncated CompDeskCaps, need=2 remains=%zu",
-                stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, 2, "CompDeskCaps::recv", ERR_MCS_PDU_TRUNCATED);
 
         this->CompDeskSupportLevel = stream.in_uint16_le();
     }

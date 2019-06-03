@@ -20,6 +20,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include <string>
 #include <sys/types.h>
@@ -169,10 +170,10 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 
     char dummy;
 
-    session_reactor.execute_sesman(*reinterpret_cast<Inifile*>(&dummy));
+    session_reactor.execute_sesman(*reinterpret_cast<Inifile*>(&dummy)); /*NOLINT*/
     RED_CHECK_EQ(s, "gd\n~gd\nini\n");
 
-    session_reactor.execute_callbacks(*reinterpret_cast<Callback*>(&dummy));
+    session_reactor.execute_callbacks(*reinterpret_cast<Callback*>(&dummy)); /*NOLINT*/
     RED_CHECK_EQ(s, "gd\n~gd\nini\ncallback\n~callback\n");
 
     RED_CHECK(!gd);
@@ -181,13 +182,13 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 }
 
 
-RED_AUTO_TEST_CASE(TestSessionReactorFd)
+RED_AUTO_TEST_CASE_WF(TestSessionReactorFd, wf)
 {
     SessionReactor session_reactor;
 
     std::string s;
 
-    unique_fd ufd("/tmp/execute_graphics.test", O_CREAT | O_RDONLY, 0777);
+    unique_fd ufd(wf.c_str(), O_CREAT | O_RDONLY, 0777);
     int const fd1 = ufd.fd();
     RED_REQUIRE_GT(fd1, 0);
 

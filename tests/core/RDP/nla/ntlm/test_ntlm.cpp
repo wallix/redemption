@@ -62,18 +62,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(output_buffer.size(), 40);
     // hexdump_c(output_buffer.get_data(), 40);
 
-    unsigned long fsContextReq = 0;
-    fsContextReq |= ASC_REQ_MUTUAL_AUTH;
-    fsContextReq |= ASC_REQ_CONFIDENTIALITY;
-
-    fsContextReq |= ASC_REQ_CONNECTION;
-    fsContextReq |= ASC_REQ_USE_SESSION_KEY;
-
-    fsContextReq |= ASC_REQ_REPLAY_DETECT;
-    fsContextReq |= ASC_REQ_SEQUENCE_DETECT;
-
-    fsContextReq |= ASC_REQ_EXTENDED_ERROR;
-
     Array input_buffer;
 
     // server first call, no context

@@ -28,7 +28,6 @@
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 {
-    LOG(LOG_INFO, "TestCLIPRDRChannelInitialization");
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 
@@ -103,7 +102,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
 {
-    LOG(LOG_INFO, "TestCLIPRDRChannelTextCopyFromServerToCLient");
     uint8_t clip_data_part1[1592] = {0};
     uint8_t clip_data_part2[208]  = {0};
     uint8_t clip_data_total[1800] = {0};
@@ -211,7 +209,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
 {
-    LOG(LOG_INFO, "TestCLIPRDRChannelTextCopyFromClientToServer");
     uint8_t clip_data_part1[1592] = {0};
     uint8_t clip_data_part2[208]  = {0};
     uint8_t clip_data_total[1800] = {0};
@@ -250,7 +247,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
     // Format List PDU
-    LOG(LOG_INFO, "Format List PDU");
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     InStream stream_formatListPDU(pdu_data->data, pdu_data->size);
     RED_CHECK_EQUAL(stream_formatListPDU.in_uint16_le(), RDPECLIP::CB_FORMAT_LIST);
@@ -260,7 +256,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatListPDU.in_uint16_le(), 0);
 
     // Format List Response PDU
-    LOG(LOG_INFO, "Format List Response PDU");
     StaticOutStream<512> out_FormatListResponsePDU;
     out_FormatListResponsePDU.out_uint16_le(RDPECLIP::CB_FORMAT_LIST_RESPONSE);
     out_FormatListResponsePDU.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
@@ -307,8 +302,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
 {
-    LOG(LOG_INFO, "TestCLIPRDRChannelFileCopyFromServerToCLient");
-
     uint8_t clip_data_part1[1588] = {0};
     uint8_t clip_data_part2[212]  = {0};
     uint8_t clip_data_total[1800] = {0};
@@ -506,8 +499,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
 {
-    LOG(LOG_INFO, "TestCLIPRDRChannelFileCopyFromClientToServer");
-
     uint8_t clip_data_part1[1588] = {0};
     uint8_t clip_data_part2[212]  = {0};
     uint8_t clip_data_total[1800] = {0};

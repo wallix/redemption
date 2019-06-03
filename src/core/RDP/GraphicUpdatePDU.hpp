@@ -517,7 +517,7 @@ protected:
             LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
               , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%zu offset=%" PRIu32
               , this->bitmap_count, this->offset_bitmap_count);
-            this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);
+            this->stream_bitmaps.stream_at(this->offset_bitmap_count).out_uint16_le(this->bitmap_count);
 
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel, this->encrypt

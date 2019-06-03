@@ -26,16 +26,16 @@
 
 #include "mod/internal/test_card_mod.hpp"
 
-#include "test_only/front/fake_front.hpp"
+#include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
 RED_AUTO_TEST_CASE(TestShowTestCard)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-
+    uint16_t width = 800;
+    uint16_t height = 600;
+    TestGraphic gd(width, height);
 
     SessionReactor session_reactor;
-    TestCardMod mod(session_reactor, front.gd(), front, screen_info.width, screen_info.height, global_font());
-    RED_CHECK_NO_THROW(mod.draw_event(front.gd()));
+    TestCardMod mod(session_reactor, width, height, global_font());
+    RED_CHECK_NO_THROW(mod.draw_event(gd));
 }

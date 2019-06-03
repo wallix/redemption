@@ -24,6 +24,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/RDP/capabilities/general.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 // 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
 // ------------------------------------------------
@@ -251,15 +252,11 @@ struct RDPBitmapData {
     }
 
     void receive(InStream & stream) {
-        unsigned expected = 18; /* destLeft(2) + destTop(2) + destRight(2) +
+        ::check_throw(stream, 18, /* destLeft(2) + destTop(2) + destRight(2) +
                                    destBottom(2) + width(2) + height(2) +
                                    bitsPerPixel(2) + flags(2) + bitmapLength(2) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_ERR
-               , "BitmapData::receive TS_BITMAP_DATA - Truncated data, need=%u, remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+            "BitmapData::receive TS_BITMAP_DATA",
+            ERR_RDP_DATA_TRUNCATED);
 
         this->dest_left      = stream.in_uint16_le();
         this->dest_top       = stream.in_uint16_le();
@@ -279,14 +276,11 @@ struct RDPBitmapData {
 
         if (    (this->flags & BITMAP_COMPRESSION)
             && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
-            expected = 8; /* cbCompFirstRowSize(2) + cbCompMainBodySize(2) +
+
+             ::check_throw(stream, 8, /* cbCompFirstRowSize(2) + cbCompMainBodySize(2) +
                              cbScanWidth(2) + cbUncompressedSize(2) */
-            if (!stream.in_check_rem(expected)) {
-                LOG( LOG_ERR
-                   , "BitmapData::receive TS_CD_HEADER - Truncated data, need=18, remains=%zu"
-                   , stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
+            "BitmapData::receive TS_CD_HEADER",
+            ERR_RDP_DATA_TRUNCATED);
 
             stream.in_skip_bytes(2);    /* cbCompFirstRowSize (2 bytes) */
 

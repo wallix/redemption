@@ -28,6 +28,7 @@ inactivity_timeout = integer(min=0, default=0)
 
 [session_log]
 
+# (Please see also "Disable keyboard log" in "video" section of "Configuration Options".)
 #   0: keyboard input are not masked
 #   1: only passwords are masked
 #   2: passwords and unidentified texts are masked
@@ -151,6 +152,10 @@ smart_launcher_long_delay = integer(min=0, default=500)
 #_advanced
 smart_launcher_short_delay = integer(min=0, default=50)
 
+# (is in millisecond)
+#_advanced
+launcher_abort_delay = integer(min=0, max=300000, default=2000)
+
 #_advanced
 enable_crash_dump = boolean(default=False)
 
@@ -246,6 +251,7 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 [video]
 
 # Disable keyboard log:
+# (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
 #   0: none
 #   1: disable keyboard log in syslog
 #   2: disable keyboard log in recorded sessions

@@ -18,13 +18,10 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "core/RDP/nla/kerberos/credentials.hpp"
 
-
-RED_AUTO_TEST_CASE(TestTSRequest)
+// TEST missing
+int main()
 {
     Krb5Creds();
 }

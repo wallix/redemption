@@ -24,6 +24,7 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <cstring>
 
@@ -117,12 +118,7 @@ struct SaveSessionInfoPDUData_Recv {
 
     explicit SaveSessionInfoPDUData_Recv(InStream & stream) :
     infoType([&stream](){
-        if (!stream.in_check_rem(4)) {
-            LOG(LOG_ERR,
-                "Truncated Save Session Info PDU (data): expected=4 remains=%zu",
-                 stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        ::check_throw(stream, 4, "Save Session Info PDU", ERR_RDP_DATA_TRUNCATED);
         return stream.in_uint32_le();
     }()),
     payload(stream.get_current(), stream.in_remain())
@@ -227,24 +223,13 @@ struct LogonInfoVersion1_Recv {
         memset(Domain,   0, sizeof(Domain));
         memset(UserName, 0, sizeof(UserName));
 
-        unsigned expected = 4;  // cbDomain(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Logon Info Version 1 (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        // cbDomain(4)
+        ::check_throw(stream, 4, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
 
         this->cbDomain = stream.in_uint32_le();
 
-        expected = 52 +	// Domain(52)
-                   4;   // cbUserName(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Logon Info Version 1 (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        // Domain(52) + cbUserName(4)
+        ::check_throw(stream, 56, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
 
         stream.in_uni_to_ascii_str(this->Domain, this->cbDomain,
             sizeof(this->Domain));
@@ -254,14 +239,8 @@ struct LogonInfoVersion1_Recv {
 
         this->cbUserName = stream.in_uint32_le();
 
-        expected = 512 +    // UserName(512)
-                   4;       // SessionId(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Logon Info Version 1 (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        // UserName(512) + SessionId(4)
+        ::check_throw(stream, 516, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
 
         stream.in_uni_to_ascii_str(this->UserName, this->cbUserName,
             sizeof(this->UserName));
@@ -407,18 +386,8 @@ struct LogonInfoVersion2_Recv {
         memset(Domain,   0, sizeof(Domain));
         memset(UserName, 0, sizeof(UserName));
 
-        unsigned expected = 2 +     // Version(2)
-                            4 +     // Size(4)
-                            4 +     // SessionId(4)
-                            4 +     // cbDomain(4)
-                            4 +     // cbUserName(4)
-                            558;    // Pad(558)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Logon Info Version 2 (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        // Version(2) +  Size(4) + SessionId(4) + cbDomain(4) + cbUserName(4) + Pad(558)
+        ::check_throw(stream, 576, "Logon Info Version 2", ERR_RDP_DATA_TRUNCATED);
 
         this->Version    = stream.in_uint16_le();
         this->Size       = stream.in_uint32_le();
@@ -428,14 +397,7 @@ struct LogonInfoVersion2_Recv {
 
         stream.in_copy_bytes(this->Pad, sizeof(this->Pad));
 
-        expected = this->cbDomain +
-                   this->cbUserName;    // SessionId(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Logon Info Version 2 (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        ::check_throw(stream, this->cbDomain + this->cbUserName, "Logon Info Version 2", ERR_RDP_DATA_TRUNCATED);
 
         stream.in_uni_to_ascii_str(this->Domain, this->cbDomain,
             sizeof(this->Domain));
@@ -485,13 +447,8 @@ struct PlainNotify_Recv {
     explicit PlainNotify_Recv(InStream & stream) {
         memset(Pad, 0, sizeof(Pad));
 
-        const unsigned expected = 576;  // Pad(576)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Plain Notify (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        // Pad(576)
+        ::check_throw(stream, 576, "PlainNotify_Recv Plain Notify", ERR_RDP_DATA_TRUNCATED);
 
         stream.in_copy_bytes(this->Pad, sizeof(this->Pad));
     }
@@ -582,14 +539,10 @@ struct LogonInfoExtended_Recv {
 
     explicit LogonInfoExtended_Recv(InStream & stream)
     : Length([&stream](){
-        const unsigned expected = 2 +   // Length(2)
-                                  4;    // FieldsPresent(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Logon Info Extended (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        // Length(2) + FieldsPresent(4)
+        ::check_throw(stream, 6, "Logon Info Extended", ERR_RDP_DATA_TRUNCATED);
+
         return stream.in_uint16_le();
     }())
     , FieldsPresent(stream.in_uint32_le())
@@ -650,13 +603,9 @@ struct LogonInfoField_Recv {
 
     explicit LogonInfoField_Recv(InStream & stream)
     : cbFieldData([&stream](){
-        const unsigned expected = 4;    // cbFieldData(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Logon Info Field (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        // cbFieldData(4)
+        ::check_throw(stream, 4, "Logon Info Field", ERR_RDP_DATA_TRUNCATED);
 
         return stream.in_uint32_le();
     }())
@@ -766,14 +715,9 @@ struct LogonErrorsInfo_Recv {
     explicit LogonErrorsInfo_Recv(InStream & stream) :
     ErrorNotificationData(0),
     ErrorNotificationType(0) {
-        const unsigned expected = 4 +   // ErrorNotificationData(4)
-                                  4;    // ErrorNotificationType(4)
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Logon Info Field (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        // ErrorNotificationData(4) + ErrorNotificationType(4)
+        ::check_throw(stream, 8, "Logon Info Field", ERR_RDP_DATA_TRUNCATED);
 
         this->ErrorNotificationType = stream.in_uint32_le();
         this->ErrorNotificationData = stream.in_uint32_le();

@@ -28,6 +28,8 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/stream_throw_helpers.hpp"
+
 
 // 2.2.7.1.7 Brush Capability Set (TS_BRUSH_CAPABILITYSET)
 // ======================================================
@@ -71,7 +73,7 @@ struct BrushCacheCaps : public Capability {
 
     BrushCacheCaps()
     : Capability(CAPSTYPE_BRUSH, CAPLEN_BRUSH)
-    
+
     {
     }
 
@@ -86,11 +88,7 @@ struct BrushCacheCaps : public Capability {
     {
         this->len = len;
 
-        if (!stream.in_check_rem(4)){
-            LOG(LOG_ERR, "Truncated BrushCacheCaps, need=4 remains=%zu",
-                stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, 4, "BrushCacheCaps::receive", ERR_MCS_PDU_TRUNCATED);
 
         this->brushSupportLevel = stream.in_uint32_le();
     }

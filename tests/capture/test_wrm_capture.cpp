@@ -21,15 +21,17 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/file.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "capture/file_to_graphic.hpp"
 #include "capture/wrm_capture.hpp"
 #include "core/app_path.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/transport.hpp"
+#include "transport/mwrm_reader.hpp"
 
 #include "test_only/fake_stat.hpp"
-#include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 
@@ -57,24 +59,9 @@ void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t hei
 
 RED_AUTO_TEST_CASE(TestWrmCapture)
 {
-    const struct CheckFiles {
-        const char * filename;
-        int size;
-    } fileinfos[] = {
-        {"./capture-000000.wrm", 1646},
-        {"./capture-000001.wrm", 3508},
-        {"./capture-000002.wrm", 3463},
-        {"./capture-000003.wrm", -1},
-        {"./capture.mwrm", 165},
-        {"/tmp/capture-000000.wrm", 40},
-        {"/tmp/capture-000001.wrm", 40},
-        {"/tmp/capture-000002.wrm", 40},
-        {"/tmp/capture-000003.wrm", -1},
-        {"/tmp/capture.mwrm", 34},
-    };
-    for (auto const & d : fileinfos) {
-        unlink(d.filename);
-    }
+    WorkingDirectory record_wd("record");
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     {
         // Timestamps are applied only when flushing
@@ -89,26 +76,16 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         CryptoContext cctx;
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0)
-    //     |GraphicToFile::Verbose::primary_orders)
-    //     |GraphicToFile::Verbose::secondary_orders)
-    //     |GraphicToFile::Verbose::bitmap_update)
+        //     |GraphicToFile::Verbose::primary_orders)
+        //     |GraphicToFile::Verbose::secondary_orders)
+        //     |GraphicToFile::Verbose::bitmap_update)
         ;
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
         std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
 
-        const char * record_path = "./";
         const int groupid = 0; // www-data
-        const char * hash_path = "/tmp/";
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
-        strcat(path, "/");
-        strcpy(basename, "capture");
-        strcpy(extension, "");          // extension is currently ignored
 
         cctx.set_trace_type(TraceType::localfile);
 
@@ -118,7 +95,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
             cctx,
             rnd,
             fstat,
-            hash_path,
+            hash_wd.dirname(),
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
@@ -128,7 +105,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::disable, 0},
+          CaptureParams{now, "capture", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
           wrm_params, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -175,30 +152,25 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         // The destruction of capture object will finalize the metafile content
     }
 
-    for (auto x : fileinfos) {
-        auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
-        ::unlink(x.filename);
-    }
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000000.wrm"), 1646);
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000001.wrm"), 3508);
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000002.wrm"), 3463);
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture.mwrm"), 165 + hash_wd.dirname().size() * 3);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000000.wrm"), 40);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000001.wrm"), 40);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000002.wrm"), 40);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture.mwrm"), 34);
+
+    RED_CHECK_WORKSPACE(record_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 {
-    const char * filesinfo[] = {
-        "./capture-000000.wrm",
-        "./capture-000001.wrm",
-        "./capture-000002.wrm",
-        "./capture-000003.wrm",
-        "./capture.mwrm",
-        "/tmp/capture.mwrm",
-    };
-    for (auto x: filesinfo) {
-        ::unlink(x);
-    }
+    WorkingDirectory record_wd("record");
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     {
         // Timestamps are applied only when flushing
@@ -233,7 +205,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             cctx,
             rnd,
             fstat,
-            "/tmp/",
+            hash_wd.dirname(),
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
@@ -243,7 +215,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-            CaptureParams{now, "capture", "", "./", 1000, nullptr, SmartVideoCropping::disable, 0},
+            CaptureParams{now, "capture", tmp_wd.dirname(), record_wd.dirname(), 1000, nullptr, SmartVideoCropping::disable, 0},
             wrm_params/* authentifier */, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -292,26 +264,18 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         RED_TEST_PASSPOINT();
     }
 
-    // TODO: we may have several mwrm sizes as it contains varying length numbers
-    // the right solution would be to inject predictable fstat in test environment
-    struct CheckFiles {
-        const char * filename;
-        size_t size;
-        size_t altsize;
-    } fileinfo[] = {
-        {"./capture-000000.wrm", 1646, 0},
-        {"./capture-000001.wrm", 3508, 0},
-        {"./capture-000002.wrm", 3463, 0},
-        {"./capture-000003.wrm", static_cast<size_t>(-1), static_cast<size_t>(-1)},
-        {"./capture.mwrm", 676, 553},
-    };
-    for (auto x: fileinfo) {
-        size_t fsize = filesize(x.filename);
-        if (x.size != fsize){
-            RED_CHECK_EQUAL(x.altsize, fsize);
-        }
-        ::unlink(x.filename);
-    }
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000000.wrm"), 1646);
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000001.wrm"), 3508);
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000002.wrm"), 3463);
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture.mwrm"), 553 + hash_wd.dirname().size() * 3);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000000.wrm"), 170);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000001.wrm"), 170);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000002.wrm"), 170);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture.mwrm"), 164);
+
+    RED_CHECK_WORKSPACE(record_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 
@@ -372,12 +336,9 @@ RED_AUTO_TEST_CASE(TestWriteFilename)
 
 RED_AUTO_TEST_CASE(TestOutmetaTransport)
 {
-    ::unlink("./xxx-000000.wrm");
-    ::unlink("./xxx-000001.wrm");
-    ::unlink("./xxx.mwrm");
-    ::unlink("./hash-xxx-000000.wrm");
-    ::unlink("./hash-xxx-000001.wrm");
-    ::unlink("./hash-xxx.mwrm");
+    WorkingDirectory record_wd("record");
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     unsigned sec_start = 1352304810;
     {
@@ -397,28 +358,25 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
         cctx.set_trace_type(TraceType::localfile);
 
-        OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
+        OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat,
+            record_wd.dirname(), hash_wd.dirname(), "xxx",
+            now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
         wrm_trans.send("CCCCX", 5);
     } // brackets necessary to force closing sequence
 
-    const char * meta_path = "./xxx.mwrm";
-    const char * filename = meta_path + 2;
-    const char * meta_hash_path = "./hash-xxx.mwrm";
+    const char * filename = "xxx.mwrm";
 
     MwrmWriterBuf meta_file_buf;
     MwrmWriterBuf::HashArray dummy_hash;
     struct stat st {};
     meta_file_buf.write_hash_file(filename, st, false, dummy_hash, dummy_hash);
 
-    RED_CHECK_EQUAL(meta_file_buf.buffer().size(), filesize(meta_hash_path));
-    RED_CHECK_EQUAL(0, ::unlink(meta_hash_path));
-
     struct {
         size_t len = 0;
-        ssize_t write(char const *, size_t len) {
+        ssize_t write(char const * /*unused*/, size_t len) {
             this->len += len;
             return len;
         }
@@ -427,30 +385,29 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
     wrmcapture_write_meta_headers(meta_len_writer, 800, 600, false);
 
     FakeFstat fstat;
-    const char * file1 = "./xxx-000000.wrm";
+    auto file1 = record_wd.add_file("xxx-000000.wrm");
+    auto file2 = record_wd.add_file("xxx-000001.wrm");
     RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1));
-    RED_CHECK_EQUAL(10, filesize(file1));
-    RED_CHECK_EQUAL(0, ::unlink(file1));
-    RED_CHECK_EQUAL(36, filesize("./hash-xxx-000000.wrm"));
-    RED_CHECK_EQUAL(0, ::unlink("./hash-xxx-000000.wrm"));
-
-    const char * file2 = "./xxx-000001.wrm";
     RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1));
-    RED_CHECK_EQUAL(5, filesize(file2));
-    RED_CHECK_EQUAL(0, ::unlink(file2));
-    RED_CHECK_EQUAL(36, filesize("./hash-xxx-000001.wrm"));
-    RED_CHECK_EQUAL(0, ::unlink("./hash-xxx-000001.wrm"));
 
-    RED_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
-    RED_CHECK_EQUAL(0, ::unlink(meta_path));
+    RED_TEST_FILE_SIZE(file1, 10);
+    RED_TEST_FILE_SIZE(file2, 5);
+    RED_TEST_FILE_SIZE(record_wd.add_file(filename), meta_len_writer.len);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx-000000.wrm"), 36);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx-000001.wrm"), 36);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx.mwrm"), meta_file_buf.buffer().size());
+
+    RED_CHECK_WORKSPACE(record_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 
 RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 {
-    ::unlink("/tmp/xxx-000000.wrm");
-    ::unlink("/tmp/xxx-000001.wrm");
-    ::unlink("/tmp/xxx.mwrm");
+    WorkingDirectory record_wd("record");
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     unsigned sec_start = 1352304810;
     {
@@ -471,7 +428,9 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
         cctx.set_trace_type(TraceType::localfile_hashed);
 
-        OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "/tmp/", "xxx", now, 800, 600, groupid, nullptr);
+        OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat,
+            record_wd.dirname(), hash_wd.dirname(), "xxx",
+            now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -480,7 +439,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     struct {
         size_t len = 0;
-        ssize_t write(char const *, size_t len) {
+        ssize_t write(char const * /*unused*/, size_t len) {
             this->len += len;
             return len;
         }
@@ -490,51 +449,29 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     const unsigned hash_size = (1 + MD_HASH::DIGEST_LENGTH*2) * 2;
 
     FakeFstat fstat;
-
-//    char file1[1024];
-//    snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
-    const char * file1 = "./xxx-000000.wrm";
+    auto file1 = record_wd.add_file("xxx-000000.wrm");
+    auto file2 = record_wd.add_file("xxx-000001.wrm");
     wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1);
-    meta_len_writer.len += hash_size;
-    RED_CHECK_EQUAL(10, filesize(file1));
-    RED_CHECK_EQUAL(0, ::unlink(file1));
-
-//    char file2[1024];
-//    snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
-    const char * file2 = "./xxx-000001.wrm";
     wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1);
-    meta_len_writer.len += hash_size;
-    RED_CHECK_EQUAL(5, filesize(file2));
-    RED_CHECK_EQUAL(0, ::unlink(file2));
+    meta_len_writer.len += hash_size * 2;
 
-//    char meta_path[1024];
-//    snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
-    const char * meta_path = "./xxx.mwrm";
-    RED_CHECK_EQUAL(meta_len_writer.len, filesize(meta_path));
-    RED_CHECK_EQUAL(0, ::unlink(meta_path));
+    RED_TEST_FILE_SIZE(file1, 10);
+    RED_TEST_FILE_SIZE(file2, 5);
+    RED_TEST_FILE_SIZE(record_wd.add_file("xxx.mwrm"), meta_len_writer.len);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx-000000.wrm"), 166);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx-000001.wrm"), 166);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx.mwrm"), 160);
 
-    RED_CHECK_EQUAL(166, filesize("/tmp/xxx-000000.wrm"));
-    RED_CHECK_EQUAL(0, ::unlink("/tmp/xxx-000000.wrm"));
-    RED_CHECK_EQUAL(166, filesize("/tmp/xxx-000001.wrm"));
-    RED_CHECK_EQUAL(0, ::unlink("/tmp/xxx-000001.wrm"));
-    RED_CHECK_EQUAL(160, filesize("/tmp/xxx.mwrm"));
-    RED_CHECK_EQUAL(0, ::unlink("/tmp/xxx.mwrm"));
+    RED_CHECK_WORKSPACE(record_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 {
-    const struct CheckFiles {
-        const char * filename;
-        int size;
-    } fileinfos[] = {
-        {"./capture_kbd_input-000000.wrm", 292},
-        {"./capture_kbd_input.mwrm", 77},
-        {"/tmp/capture_kbd_input-000000.wrm", 50},
-        {"/tmp/capture_kbd_input.mwrm", 44},
-    };
-    for (auto const & d : fileinfos) {
-        unlink(d.filename);
-    }
+    WorkingDirectory record_wd("record");
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     {
         // Timestamps are applied only when flushing
@@ -549,23 +486,16 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         CryptoContext cctx;
 
         GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0)
-    //     |GraphicToFile::Verbose::primary_orders)
-    //     |GraphicToFile::Verbose::secondary_orders)
-    //     |GraphicToFile::Verbose::bitmap_update)
+        //     |GraphicToFile::Verbose::primary_orders)
+        //     |GraphicToFile::Verbose::secondary_orders)
+        //     |GraphicToFile::Verbose::bitmap_update)
         ;
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
         std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
 
-        const char * record_path = "./";
         const int groupid = 0; // www-data
-        const char * hash_path = "/tmp/";
-
-        char basename[1024];
-        char extension[128];
-        strcpy(basename, "capture_kbd_input");
-        strcpy(extension, "");          // extension is currently ignored
 
         cctx.set_trace_type(TraceType::localfile);
 
@@ -575,7 +505,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
             cctx,
             rnd,
             fstat,
-            hash_path,
+            hash_wd.dirname(),
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
@@ -585,7 +515,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         TestGraphic gd_drawable(4, 1);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::disable, 0},
+          CaptureParams{now, "capture_kbd_input", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
           wrm_params, gd_drawable);
 
         bool ignore_frame_in_timeval = false;
@@ -644,7 +574,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         std::string & output;
     };
 
-    int fd = ::open(fileinfos[0].filename, O_RDONLY);
+    auto first_file = record_wd.add_file("capture_kbd_input-000000.wrm");
+
+    int fd = ::open(first_file.c_str(), O_RDONLY);
     RED_REQUIRE_NE(fd, -1);
     InFileTransport in_wrm_trans(unique_fd{fd});
 
@@ -660,35 +592,23 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         player.interpret_order();
     }
 
-//    RED_CHECK_EQUAL(output, "FOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE");
-
     RED_CHECK_SMEM_AC(output, "ipconfig\rFOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE\x00");
 
-    for (auto x : fileinfos) {
-        auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
-       ::unlink(x.filename);
-    }
+    RED_TEST_FILE_SIZE(first_file, 292);
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture_kbd_input.mwrm"), 75 + record_wd.dirname().size());
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 50);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input.mwrm"), 44);
+
+    RED_CHECK_WORKSPACE(record_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }
 
 RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
 {
-    const struct CheckFiles {
-        const char * filename;
-        int size;
-    } fileinfos[] = {
-        {"./capture_remoteapp-000000.wrm", 1670},
-        {"./capture_remoteapp.mwrm", 81},
-        {"/tmp/capture_remoteapp-000000.wrm", 50},
-        {"/tmp/capture_remoteapp.mwrm", 44},
-    };
-    for (auto const & d : fileinfos) {
-        unlink(d.filename);
-    }
+    WorkingDirectory record_wd("record");
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory tmp_wd("tmp");
 
     {
         // Timestamps are applied only when flushing
@@ -708,14 +628,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
         std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
 
-        const char * record_path = "./";
         const int groupid = 0; // www-data
-        const char * hash_path = "/tmp/";
-
-        char basename[1024];
-        char extension[128];
-        strcpy(basename, "capture_remoteapp");
-        strcpy(extension, "");          // extension is currently ignored
 
         cctx.set_trace_type(TraceType::localfile);
 
@@ -725,7 +638,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
             cctx,
             rnd,
             fstat,
-            hash_path,
+            hash_wd.dirname(),
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
@@ -737,7 +650,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         TestGraphic gd_drawable(800, 600);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::v1, 0},
+          CaptureParams{now, "capture_remoteapp", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::v1, 0},
           wrm_params, gd_drawable);
 
         bool ignore_frame_in_timeval = false;
@@ -763,7 +676,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
     }
 
-    int fd = ::open(fileinfos[0].filename, O_RDONLY);
+    auto first_file = record_wd.add_file("capture_remoteapp-000000.wrm");
+
+    int fd = ::open(first_file.c_str(), O_RDONLY);
     RED_REQUIRE_NE(fd, -1);
     InFileTransport in_wrm_trans(unique_fd{fd});
 
@@ -778,7 +693,12 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
     RED_CHECK_EQUAL(player.max_image_frame_rect, Rect(50, 50, 320, 200).disjunct(Rect(125, 75, 370, 250)));
     RED_CHECK_EQUAL(player.min_image_frame_dim, Dimension(370, 250));
 
-    for (auto x : fileinfos) {
-        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
-    }
+    RED_TEST_FILE_SIZE(first_file, 1670);
+    RED_TEST_FILE_SIZE(record_wd.add_file("capture_remoteapp.mwrm"), 79 + record_wd.dirname().size());
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_remoteapp-000000.wrm"), 50);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_remoteapp.mwrm"), 44);
+
+    RED_CHECK_WORKSPACE(record_wd);
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(tmp_wd);
 }

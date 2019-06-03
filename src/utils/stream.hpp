@@ -431,12 +431,21 @@ public:
         return  this->end - this->p;
     }
 
+    bytes_view get_tailroom_bytes() const noexcept {
+        return {this->get_current(), this->tailroom()};
+    }
+
     bool has_room(size_t n) const noexcept {
         return  n <= this->tailroom();
     }
 
     bytes_view get_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
+    }
+
+    OutStream stream_at(std::size_t i) const noexcept {
+        assert(i < this->get_capacity());
+        return OutStream({this->get_data() + i, this->end});
     }
 
     uint8_t * get_data() const noexcept {
@@ -515,10 +524,6 @@ public:
     void out_uint8(uint8_t v) noexcept {
         assert(this->has_room(1));
         *(this->p++) = v;
-    }
-
-    void set_out_uint8(uint8_t v, size_t offset) noexcept {
-        (this->get_data())[offset] = v;
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
@@ -688,11 +693,6 @@ public:
         this->p+=2;
     }
 
-    void set_out_uint16_le(unsigned int v, size_t offset) noexcept {
-        (this->get_data())[offset] = v & 0xFF;
-        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
-    }
-
     void out_sint16_le(signed int v) noexcept {
         assert(this->has_room(2));
         this->p[0] = v & 0xFF;
@@ -707,11 +707,6 @@ public:
         this->p+=2;
     }
 
-    void set_out_uint16_be(unsigned int v, size_t offset) noexcept {
-        (this->get_data())[offset+1] = v & 0xFF;
-        (this->get_data())[offset] = (v >> 8) & 0xFF;
-    }
-
     void out_uint32_le(unsigned int v) noexcept {
         assert(this->has_room(4));
         this->p[0] = v & 0xFF;
@@ -721,13 +716,6 @@ public:
         this->p+=4;
     }
 
-    void set_out_uint32_le(unsigned int v, size_t offset) noexcept {
-        (this->get_data())[offset+0] = v & 0xFF;
-        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
-        (this->get_data())[offset+2] = (v >> 16) & 0xFF;
-        (this->get_data())[offset+3] = (v >> 24) & 0xFF;
-    }
-
     void out_uint32_be(unsigned int v) noexcept {
         assert(this->has_room(4));
         this->p[0] = (v >> 24) & 0xFF;
@@ -735,14 +723,6 @@ public:
         this->p[2] = (v >> 8) & 0xFF;
         this->p[3] = v & 0xFF;
         this->p+=4;
-    }
-
-    void set_out_uint32_be(unsigned int v, size_t offset) noexcept {
-        assert(this->has_room(4));
-        (this->get_data())[offset+0] = (v >> 24) & 0xFF;
-        (this->get_data())[offset+1] = (v >> 16) & 0xFF;
-        (this->get_data())[offset+2] = (v >> 8) & 0xFF;
-        (this->get_data())[offset+3] = v & 0xFF;
     }
 
     void out_sint32_le(int64_t v) noexcept {
@@ -860,19 +840,18 @@ public:
 };
 
 
-template<std::size_t N, class StreamBase>
-struct BasicStaticStream : StreamBase
+template<std::size_t N>
+struct StaticOutStream : OutStream
 {
-    explicit BasicStaticStream(std::size_t offset = 0) noexcept
-    : StreamBase(this->array_, N, offset)
+    explicit StaticOutStream(std::size_t offset = 0) noexcept
+    : OutStream(this->array_, N, offset)
     {}
 
-    BasicStaticStream(BasicStaticStream const &) = delete;
-    BasicStaticStream & operator = (BasicStaticStream const &) = delete;
+    StaticOutStream(StaticOutStream const &) = delete;
+    StaticOutStream & operator = (StaticOutStream const &) = delete;
 
-    using array_type = uint8_t[N];
-
-    static constexpr std::size_t original_capacity() noexcept {
+    static constexpr std::size_t original_capacity() noexcept
+    {
         return N;
     }
 
@@ -880,11 +859,6 @@ private:
     uint8_t array_[N];
 };
 
-template<std::size_t N>
-using StaticOutStream = BasicStaticStream<N, OutStream>;
-
-template<std::size_t N>
-using StaticInStream = BasicStaticStream<N, InStream>;
 
 template<std::size_t OrignalLen>
 struct StreamBufMaker

@@ -63,6 +63,8 @@ public:
            uint16_t cx, uint16_t cy, const uint8_t * data, size_t size,
            bool compressed = false, size_t* RM18446_adjusted_size = nullptr);
 
+    Bitmap(const uint8_t *data, size_t stride, const Rect &rect);
+
     Bitmap(const Bitmap & src_bmp, Rect r);
 
     // TODO add palette support

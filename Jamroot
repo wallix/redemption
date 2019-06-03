@@ -14,7 +14,7 @@ JAM_INCLUDE_PATH ?= jam ;
 #
 # # Compilation
 #
-# (Extra `cxx-*` options list with `sed -E 's/^feature <([^>]+)> : ([^:]+).*/\1 = \2/;t;d' jam/cxxflags.jam`)
+# (Extra `cxx_*` options list with `sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/\1 = \2/;t;d' jam/cxxflags.jam`)
 #
 # Compile executables without tests (as user):
 #
@@ -44,7 +44,6 @@ include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 include $(JAM_INCLUDE_PATH)/sanitizer.jam ;
-include $(JAM_INCLUDE_PATH)/coverage.jam ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 project redemption
@@ -53,20 +52,13 @@ project redemption
     $(REDEMPTION_CXXFLAGS)
     $(REDEMPTION_FFMPEG_FLAGS)
     $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
+    $(GCOV)
 
     <cxxflags>-fno-rtti
-    <toolset>gcc:<linkflags>-fuse-ld=gold
-    <toolset>clang:<linkflags>-fuse-ld=gold
     <toolset>gcc:<cxxflags>-pipe
 
-    # <cxx-lto>on
-
-    $(GCOV)
-    # <lto>on
-    # <suggest>on
-    # <stack-protector>on
-    # <relro>on
-    # <security>on # strong, all
+    # <cxx-lto-default>on
+    # <cxx-stack-protector-default>on # strong, all
 
     # <cxxflags>-fpie
 
@@ -81,8 +73,7 @@ include $(JAM_INCLUDE_PATH)/redemption-dependencies.jam ;
 
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
-make test_libredrec : libredrec : @test_libredrec
-: <variant>san:<build>no <variant>coverage:<build>no ;
+make test_libredrec : libredrec : @test_libredrec : <variant>san:<build>no ;
 
 actions test_libredrec
 {
@@ -99,7 +90,6 @@ actions gen_targets
     ./tools/bjam/gen_targets.py src/main/headlessclient.cpp |
         sed 's#^obj #add_obj #;t
              /^\s*</!d
-             /^\s*<variant>coverage:/d
              s/^\s*</requirement_list += </
              s/$/ ;/' \
         | sort > projects/ClientQtGraphicAPI/redemption_deps.jam

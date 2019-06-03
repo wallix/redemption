@@ -84,8 +84,7 @@ struct CryptContext
 
         if (encryptionMethod == 1) {
             // 40 bits encryption
-            ssllib ssl;
-            ssl.sec_make_40bit(this->key);
+            ssllib::sec_make_40bit(this->key);
             memcpy(this->update_key, this->key, 16);
             this->rc4.set_key({this->key, 8});
         }
@@ -104,8 +103,6 @@ struct CryptContext
     /* Decrypt data using RC4 */
     void decrypt(uint8_t const * data, size_t data_size, uint8_t * out_data)
     {
-        ssllib ssl;
-
         if (this->use_count == 4096) {
             size_t keylen = (this->encryptionMethod==1)?8:16;
 
@@ -119,7 +116,7 @@ struct CryptContext
             this->rc4.crypt(keylen, this->key, this->key);
 
             if (this->encryptionMethod == 1){
-                ssl.sec_make_40bit(this->key);
+                ssllib::sec_make_40bit(this->key);
             }
             this->rc4.set_key({this->key, keylen});
             this->use_count = 0;

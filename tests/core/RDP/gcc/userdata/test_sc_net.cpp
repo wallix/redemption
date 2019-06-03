@@ -61,5 +61,5 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_net)
     RED_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
     RED_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
 
-    sc_net2.log("Server Received");
+    // sc_net2.log("Server Received");
 }

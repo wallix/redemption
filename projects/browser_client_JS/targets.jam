@@ -5,6 +5,12 @@
 # run `tools/bjam/gen_targets.py`
 #
 
+exe-js _dummy :
+  src/main/_dummy.bc
+:
+:
+  $(EXE_DEPENDENCIES)
+;
 exe-js js_client :
   src/main/js_client.bc
 :
@@ -14,6 +20,9 @@ exe-js js_client :
   krb5.bc
   openssl.bc
   src/red_channels/clipboard.bc
+  src/red_channels/clipboard_binding.bc
+  src/red_channels/js_channel.bc
+  src/red_channels/js_channel_binding.bc
   src/redjs/browser_front.bc
   src/redjs/browser_graphic.bc
   src/redjs/browser_transport.bc
@@ -35,6 +44,8 @@ exe-js js_client :
   src/mod/rdp/new_mod_rdp.bc
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
+  src/transport/in_file_transport.bc
+  src/transport/out_file_transport.bc
   src/utils/bitmap.bc
   src/utils/cfgloader.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
@@ -50,8 +61,50 @@ exe-js js_client :
 :
   $(EXE_DEPENDENCIES)
 ;
+exe-js js_player :
+  src/main/js_player.bc
+:
+  src/redjs/browser_graphic.bc
+  src/redjs/image_data_from_bitmap.bc
+  src/redjs/image_data_from_pointer.bc
+  src/core/error.bc
+  src/core/font.bc
+  src/gdi/graphic_api.bc
+  src/transport/mwrm_reader.bc
+  src/utils/bitmap.bc
+  src/utils/rle.bc
+  src/utils/stacktrace.bc
+  src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
+:
+  $(EXE_DEPENDENCIES)
+;
 
 
+test-run-js tests/red_channels/test_clipboard :
+  tests/red_channels/test_clipboard.cpp
+:
+  src/red_channels/clipboard.bc
+  src/core/RDP/mppc.bc
+  src/core/error.bc
+  src/utils/crypto/ssl_mod_exp_direct.bc
+  src/utils/hexdump.bc
+  src/utils/stacktrace.bc
+  src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
+test-run-js tests/red_channels/test_js_channel :
+  tests/red_channels/test_js_channel.cpp
+:
+  src/red_channels/js_channel.bc
+  src/core/RDP/mppc.bc
+  src/core/error.bc
+  src/utils/crypto/ssl_mod_exp_direct.bc
+  src/utils/hexdump.bc
+  src/utils/stacktrace.bc
+  src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run-js tests/redjs/test_browser_transport :
   tests/redjs/test_browser_transport.cpp
 :
@@ -81,8 +134,13 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
-objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
+objjs src/main/_dummy.bc : src/main/_dummy.cpp ;
+objjs src/main/js_client.bc : src/main/js_client.cpp ;
+objjs src/main/js_player.bc : src/main/js_player.cpp ;
 objjs src/red_channels/clipboard.bc : src/red_channels/clipboard.cpp ;
+objjs src/red_channels/clipboard_binding.bc : src/red_channels/clipboard_binding.cpp ;
+objjs src/red_channels/js_channel.bc : src/red_channels/js_channel.cpp ;
+objjs src/red_channels/js_channel_binding.bc : src/red_channels/js_channel_binding.cpp ;
 objjs src/redjs/browser_front.bc : src/redjs/browser_front.cpp ;
 objjs src/redjs/browser_graphic.bc : src/redjs/browser_graphic.cpp ;
 objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
@@ -104,6 +162,9 @@ objjs src/mod/rdp/channels/sespro_channel_params.bc : $(REDEMPTION_SRC_PATH)/mod
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
+objjs src/transport/in_file_transport.bc : $(REDEMPTION_SRC_PATH)/transport/in_file_transport.cpp ;
+objjs src/transport/mwrm_reader.bc : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
+objjs src/transport/out_file_transport.bc : $(REDEMPTION_SRC_PATH)/transport/out_file_transport.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/cfgloader.bc : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
@@ -116,24 +177,36 @@ objjs src/utils/strutils.bc : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 objjs src/utils/sugar/multisz.bc : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 objjs src/utils/utf.bc : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 
+alias test_clipboard : tests/red_channels/test_clipboard ;
+alias test_js_channel : tests/red_channels/test_js_channel ;
 alias test_browser_transport : tests/redjs/test_browser_transport ;
 alias test_image_data_test_from_bitmap : tests/redjs/test_image_data_test_from_bitmap ;
 alias test_image_data_test_from_pointer : tests/redjs/test_image_data_test_from_pointer ;
+alias tests/red_channels.norec :
+  tests/red_channels/test_clipboard
+  tests/red_channels/test_js_channel
+;
 alias tests/redjs.norec :
   tests/redjs/test_browser_transport
   tests/redjs/test_image_data_test_from_bitmap
   tests/redjs/test_image_data_test_from_pointer
 ;
+alias tests/red_channels :
+  tests/red_channels.norec
+;
+alias tests :
+  tests/red_channels
+  tests/redjs
+;
 alias tests/redjs :
   tests/redjs.norec
 ;
-alias tests :
-  tests/redjs
-;
 explicit
+  tests/red_channels.norec
   tests/redjs.norec
 ;
 explicit
-  tests/redjs
+  tests/red_channels
   tests
+  tests/redjs
 ;

@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(report_notify)
         bool has_log = false;
         bool has_report = false;
 
-        void log6(const std::string & info, const ArcsightLogInfo & , const timeval ) override {
+        void log6(const std::string & info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
             RED_CHECK_EQUAL(info, "type=\"NOTIFY_PATTERN_DETECTED\" pattern=\"$kbd:c| cacao\"");
             this->has_log = true;
         }
@@ -172,7 +172,7 @@ RED_AUTO_TEST_CASE(report_kill)
     struct : NullReportMessage {
         bool has_log = false;
         bool has_report = false;
-        void log6(const std::string & info, const ArcsightLogInfo & , const timeval ) override {
+        void log6(const std::string & info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
             RED_CHECK_EQUAL(info, "type=\"KILL_PATTERN_DETECTED\" pattern=\"$ocr:c| cacao\"");
             this->has_log = true;
         }

@@ -22,6 +22,7 @@
 
 
 #include "utils/genfstat.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "transport/crypto_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -38,7 +39,7 @@ extern "C" {
             0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
             0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
             0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
-        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH, "");
+        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH );
         memcpy(buffer, hmac_key, sizeof(hmac_key));
         return 0;
     }
@@ -55,7 +56,7 @@ extern "C" {
             0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
             0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
             0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
-        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH, "");
+        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH );
         memcpy(buffer, trace_key, sizeof(trace_key));
         return 0;
     }
@@ -67,21 +68,16 @@ constexpr auto is_not_encrypted = InCryptoTransport::EncryptionMode::NotEncrypte
 
 RED_AUTO_TEST_CASE(TestMwrmLineReader)
 {
-    char const * filename = "/tmp/test_app_verifier_s.txt";
-
-    std::ofstream(filename) <<
-        "abcd\n"
-        "efghi\n"
-        "jklmno\n"
-    ;
     Fstat fstat;
     CryptoContext cctx;
 
     using Read = Transport::Read;
 
     {
-        InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
-        ifile.open(filename);
+        GeneratorTransport ifile(
+            "abcd\n"
+            "efghi\n"
+            "jklmno\n"_av);
         MwrmLineReader line_reader(ifile);
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok);
         RED_CHECK_EQUAL(line_reader.get_buf().size(), 5);
@@ -92,15 +88,11 @@ RED_AUTO_TEST_CASE(TestMwrmLineReader)
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Eof);
     }
 
-    std::size_t const big_line_len = 3000;
     {
+        std::size_t const big_line_len = 3000;
         std::string s(big_line_len, 'a');
-        std::ofstream(filename) << s << '\n' << s << '\n';
-    }
-
-    {
-        InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
-        ifile.open(filename);
+        std::string data = str_concat(s, '\n', s, '\n');
+        GeneratorTransport ifile(data);
         MwrmLineReader line_reader(ifile);
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok);
         RED_CHECK_EQUAL(line_reader.get_buf().size(), big_line_len+1);
@@ -109,18 +101,15 @@ RED_AUTO_TEST_CASE(TestMwrmLineReader)
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Eof);
     }
 
-    std::ofstream(filename) << std::string(10000, 'a');
-
     {
-        InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
-        ifile.open(filename);
+        std::string data(10000, 'a');
+        GeneratorTransport ifile(data);
+        ifile.disable_remaining_error();
         MwrmLineReader line_reader(ifile);
         RED_CHECK_EXCEPTION_ERROR_ID(
             RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok),
             ERR_TRANSPORT_READ_FAILED);
     }
-
-    remove(filename);
 }
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV1)
@@ -251,7 +240,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
     CryptoContext cctx;
     cctx.set_get_hmac_key_cb(hmac_2016_fn);
     cctx.set_get_trace_key_cb(trace_20161025_fn);
-    cctx.old_encryption_scheme = 1;
+    cctx.old_encryption_scheme = true;
 
     InCryptoTransport fd(cctx, is_encrypted, fstat);
     RED_REQUIRE_NO_THROW(fd.open(FIXTURES_PATH

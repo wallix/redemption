@@ -34,13 +34,13 @@ struct basic_finally {
 };
 
 template<class F>
-basic_finally<F> finally(F&& f) {
+basic_finally<F> finally(F&& f) noexcept(noexcept(F(static_cast<F&&>(f)))) {
     return {static_cast<F&&>(f)};
 }
 
 template<class F>
-basic_finally<F> finally(F& f) {
-    return {static_cast<F&>(f)};
+basic_finally<F> finally(F& f) noexcept(noexcept(F(f))) {
+    return {f};
 }
 
 /// \attention finnaly not must throw an exception

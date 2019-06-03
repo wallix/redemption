@@ -390,7 +390,7 @@ public:
 
     void send_bitmaps_chunk()
     {
-        send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
+        send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP2, this->stream_bitmaps.get_offset(), this->bitmap_count);
         this->trans.send(this->stream_bitmaps.get_bytes());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
@@ -513,16 +513,31 @@ class WrmCaptureImpl :
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
-                StaticOutStream<65535> bmp_stream;
-                bmp.compress(this->capture_bpp, bmp_stream);
+                size_t linesPerPacket = (16384 / bmp.line_size());
 
-                RDPBitmapData target_bitmap_data = bitmap_data;
+                // TODO same to front.hpp ?
+                for (uint16_t yoff = 0; yoff < bitmap_data.height; yoff += linesPerPacket) {
+                    uint16_t currentHeight = linesPerPacket;
+                    if (yoff + linesPerPacket > bitmap_data.height) {
+                        currentHeight = bitmap_data.height - yoff;
+                    }
+                    Rect subRect(0, yoff, bitmap_data.width, currentHeight);
+                    // LOG(LOG_ERR, "subRect: (%d,%d) - %dx%d", subRect.x, subRect.y, subRect.cx, subRect.cy);
+                    StaticOutStream<65535> bmp_stream;
+                    Bitmap subBmp(bmp, subRect);
 
-                target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
-                target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;  /*NOLINT*/
-                target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+                    subBmp.compress(this->capture_bpp, bmp_stream);
 
-                GraphicToFile::draw(target_bitmap_data, bmp);
+                    RDPBitmapData target_bitmap_data = bitmap_data;
+                    target_bitmap_data.dest_top = bitmap_data.dest_top + yoff;
+                    target_bitmap_data.dest_bottom = target_bitmap_data.dest_top + currentHeight - 1;
+                    target_bitmap_data.height = currentHeight;
+                    target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
+                    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;  /*NOLINT*/
+                    target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+
+                    GraphicToFile::draw(target_bitmap_data, subBmp);
+                }
             };
 
             if (bmp.bpp() > this->capture_bpp) {
@@ -644,7 +659,7 @@ public:
     void draw(RDPNineGrid const & /*cmd*/, Rect /*rect*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
 
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {
-    	// TODO
+        // TODO
     }
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {

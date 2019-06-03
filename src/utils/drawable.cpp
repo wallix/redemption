@@ -525,13 +525,12 @@ namespace
             (void)org_y;
 
             P const base = dimpl.first_pixel(rect);
-            P       p    = base;
 
             int const origin_x = rect.x/* - org_x*/;
             int const origin_y = rect.y/* - org_y*/;
 
             for (size_t y = 0, cy = rect.cy; y < cy; ++y) {
-                p = base + dimpl.rowsize() * y;
+                P p = base + dimpl.rowsize() * y;
                 const uint8_t brush = brush_data[(y + origin_y) % 8];
                 for (size_t x = 0, cx = rect.cx; x < cx; ++x) {
                     if (brush & ((1 << 7) >> ((x + origin_x) % 8))) {

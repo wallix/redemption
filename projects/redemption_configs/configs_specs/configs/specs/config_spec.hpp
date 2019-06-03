@@ -185,8 +185,9 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_session_log", set(true));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_arcsight_log", set(false));
         W.member(hidden_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
-
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::password_and_unidentified));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", desc{
+            "(Please see also \"Disable keyboard log\" in \"video\" section of \"Configuration Options\".)"
+        }, set(KeyboardInputMaskingLevel::password_and_unidentified));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "hide_non_printable_kbd_input", set(false));
     });
 
@@ -231,7 +232,8 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bitmap_compression", desc{"Support of Bitmap Compression."}, set(true));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Clent Fast-Path Input Event PDUs."}, set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client Fast-Path Input Event PDUs."}, set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "remotefx", desc{"Enables support of the remoteFX codec."}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_suppress_output", set(true));
 
@@ -361,6 +363,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_start_delay", sesman::name{"session_probe_smart_launcher_start_delay"}, connpolicy::name{"smart_launcher_start_delay"}, set(0));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", connpolicy::name{"smart_launcher_long_delay"}, sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", connpolicy::name{"smart_launcher_short_delay"}, sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), "session_probe_launcher_abort_delay", connpolicy::name{"launcher_abort_delay"}, set(2000));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_allow_multiple_handshake", set(false));
 
@@ -495,7 +499,10 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp))));
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
 
-        W.member(ini_and_gui, allow_connpolicy_and_gui, rdp_connpolicy, L, type_<KeyboardLogFlags>{}, connpolicy::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog), connpolicy::set(KeyboardLogFlagsCP::syslog));
+        W.member(ini_and_gui, allow_connpolicy_and_gui, rdp_connpolicy, L, type_<KeyboardLogFlags>{}, connpolicy::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{
+            "Disable keyboard log:\n"
+            "(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
+        }, disable_prefix_val, set(KeyboardLogFlags::syslog), connpolicy::set(KeyboardLogFlagsCP::syslog));
 
         W.member(ini_and_gui, no_sesman, L, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{"Disable clipboard log:"}, disable_prefix_val, set(ClipboardLogFlags::syslog));
 
@@ -731,6 +738,8 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "pm_response");
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "pm_request");
+
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "native_session_id");
     });
 }
 

@@ -44,14 +44,29 @@ namespace redemption_unit_test__
     };
 
     template<class> class red_test_print_type_t;
+
+    template<class F>
+    struct fn_caller
+    {
+        F f;
+
+        template<class... Ts>
+        constexpr auto operator()(Ts&&... xs) const
+        {
+            return f(static_cast<Ts>(xs)...);
+        }
+    };
+
+    template<class F>
+    constexpr fn_caller<F> fn_invoker(char const* /*name*/, F f);
 } // namespace redemption_unit_test__
 
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
 
-# define RED_FAIL(mess) ::redemption_unit_test__::Stream{} << mess
-# define RED_ERROR(mess) ::redemption_unit_test__::Stream{} << mess
-# define RED_TEST_CHECKPOINT(name) do { } while(0)
+# define RED_FAIL(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_ERROR(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_TEST_CHECKPOINT(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_PASSPOINT() do { } while(0)
 # define RED_TEST_DONT_PRINT_LOG_VALUE(type)
 # define RED_TEST_PRINT_TYPE_FUNCTION_NAME red_test_print_type
@@ -66,15 +81,13 @@ namespace redemption_unit_test__
 //@{
 # define RED_TEST(expr) RED_TEST_CHECK(expr)
 # define RED_TEST_CHECK(expr) RED_CHECK(expr)
-# define RED_TEST_CONTEXT(iostream_expr) if (::redemption_unit_test__::Stream{} << iostream_expr)
+# define RED_TEST_CONTEXT(ostream_expr) if (::redemption_unit_test__::Stream{} << ostream_expr)
 
 # define RED_TEST_INVOKER(fname) fname
 # define RED_TEST_FUNC_CTX(fname) ([](auto&&... xs) { \
     return fname(static_cast<decltype(xs)&&>(xs)...); })
-# define RED_TEST_F(fname) ::redemption_unit_test__::X(bool(fname RED_TEST_F_I
-# define RED_TEST_F_I(...) __VA_ARGS__))
-# define RED_REQUIRE_F(fname) ::redemption_unit_test__::X(bool(fname RED_REQUIRE_F_I
-# define RED_REQUIRE_F_I(...) __VA_ARGS__))
+# define RED_TEST_FUNC(fname, ...) ::redemption_unit_test__::X(bool(fname __VA_ARGS__))
+# define RED_REQUIRE_FUNC(fname, ...) ::redemption_unit_test__::X(bool(fname __VA_ARGS__))
 
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
@@ -88,22 +101,15 @@ namespace redemption_unit_test__
 # define RED_CHECK_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
 # define RED_CHECK_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
 # define RED_CHECK(a) ::redemption_unit_test__::X(bool(a))
-# define RED_CHECK_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
-    ::redemption_unit_test__::Stream{} << iostream_expr
+# define RED_CHECK_MESSAGE(a, ostream_expr) ::redemption_unit_test__::X(bool(a)), \
+    ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_CHECK_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
     ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
 # define RED_CHECK_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 # define RED_CHECK_MEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_SMEM(mem, memref) void(mem), void(memref)
-
-// require #include "utils/fileutils.hpp"
-#define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size) \
-    ::redemption_unit_test__::X(bool(filesize(filename) == (size)))
-
-// require #include "test_only/get_file_contents.hpp"
-#define RED_CHECK_FILE_CONTENTS(filename, contents) \
-    ::redemption_unit_test__::X(bool(get_file_contents(filename) == (contents)))
+# define RED_CHECK_RMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// REQUIRE
@@ -121,22 +127,14 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
 # define RED_REQUIRE_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
 # define RED_REQUIRE(a) ::redemption_unit_test__::X(bool(a))
-# define RED_REQUIRE_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
-    ::redemption_unit_test__::Stream{} << iostream_expr
+# define RED_REQUIRE_MESSAGE(a, ostream_expr) ::redemption_unit_test__::X(bool(a)), \
+    ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_REQUIRE_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
     ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
 # define RED_REQUIRE_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 # define RED_REQUIRE_MEM(mem, memref) void(mem), void(memref)
 # define RED_REQUIRE_SMEM(mem, memref) void(mem), void(memref)
-
-// require #include "utils/fileutils.hpp"
-# define RED_REQUIRE_FILE_SIZE_AND_CLEAN(filename, size) \
-    ::redemption_unit_test__::X(bool(filesize(filename) == (size)))
-
-// require #include "test_only/get_file_contents.hpp"
-# define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
-    ::redemption_unit_test__::X(bool(get_file_contents(filename) == (contents)))
 //@}
 
 /// WARN
@@ -150,6 +148,7 @@ namespace redemption_unit_test__
 
 # define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref)
 # define RED_CHECK_SMEM(mem, memref) RED_TEST_SMEM(CHECK, mem, memref)
+# define RED_CHECK_RMEM(mem, memref) RED_TEST_RMEM(CHECK, mem, memref)
 
 /// CHECK
 //@{
@@ -158,14 +157,6 @@ namespace redemption_unit_test__
 
 # define RED_CHECK_EQUAL_RANGES(a, b) \
     RED_TEST_EQUAL_RANGES(CHECK, a, b)
-
-// require #include "utils/fileutils.hpp"
-# define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size) \
-    RED_TEST_FILE_SIZE_AND_CLEAN(CHECK, filename, size)
-
-// require #include "test_only/get_fikle_contents.hpp"
-# define RED_CHECK_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(CHECK, filename, contents)
 //@}
 
 /// REQUIRE
@@ -175,14 +166,6 @@ namespace redemption_unit_test__
 
 # define RED_REQUIRE_EQUAL_RANGES(a, b) \
     RED_TEST_EQUAL_RANGES(REQUIRE, a, b)
-
-// require #include "utils/fileutils.hpp"
-# define RED_REQUIRE_FILE_SIZE_AND_CLEAN(filename, size) \
-    RED_TEST_FILE_SIZE_AND_CLEAN(REQUIRE, filename, size)
-
-// require #include "test_only/get_fikle_contents.hpp"
-# define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(REQUIRE, filename, contents)
 //@}
 
 # define RED_TEST_STRING_CHECK "check"
@@ -207,52 +190,48 @@ namespace redemption_unit_test__
         );                                    \
     }(a, b)
 
-# define RED_TEST_MEM(lvl, mem, memref)                                     \
-    [](auto const& x_mem__, auto const& x_memref__){                        \
-        size_t res__ = 0;                                                   \
-        ::redemption_unit_test__::xarray_color mem__{res__, x_mem__};       \
-        ::redemption_unit_test__::xarray_color memref__{res__, x_memref__}; \
-        RED_##lvl##_EQUAL(                                                  \
-            (void("mem__ = " #mem), mem__.size()),                          \
-            (void("memref__ = " #memref), memref__.size()));                \
-        RED_##lvl##_EQUAL(                                                  \
-            (void("mem__ = " #mem), mem__),                                 \
-            (void("memref__ = " #memref), memref__));                       \
-    }(mem, memref)
-
-# define RED_TEST_SMEM(lvl, mem, memref)                        \
-    [](auto const& x_mem__, auto const& x_memref__){            \
-        ::redemption_unit_test__::xsarray mem__{x_mem__};       \
-        ::redemption_unit_test__::xsarray memref__{x_memref__}; \
-        RED_##lvl##_EQUAL(                                      \
-            (void("mem__ = " #mem), mem__.size()),              \
-            (void("memref__ = " #memref), memref__.size()));    \
-        RED_##lvl##_EQUAL(                                      \
-            (void("mem__ = " #mem), mem__),                     \
-            (void("memref__ = " #memref), memref__));           \
-    }(mem, memref)
-
-# define RED_TEST_FILE_SIZE_AND_CLEAN(lvl, filename, size) \
-    [](auto&& filename__, auto const size__) {             \
-        RED_TEST_CONTEXT("filename: " << filename__) {     \
-            RED_##lvl(filesize(filename__) == size__);     \
-            ::unlink(filename__);                          \
-        }                                                  \
-    }(filename, size)
-
-// require #include "test_only/get_file_contents.hpp"
-# define RED_TEST_FILE_CONTENTS(lvl, filename, contents)            \
-    [](auto&& filename__, auto&& contents__) {                      \
-        RED_TEST_CONTEXT("filename: " << filename__) {              \
-            RED_##lvl(contents__ == get_file_contents(filename__)); \
+# define RED_TEST_MEM(lvl, mem, memref)                             \
+    [](auto const& x_mem__, auto const& x_memref__){                \
+        size_t res__ = 0;                                           \
+        ::redemption_unit_test__::xarray rng1__{res__, x_mem__};    \
+        ::redemption_unit_test__::xarray rng2__{res__, x_memref__}; \
+        RED_TEST_CONTEXT(#mem " == " #memref)                       \
+        {                                                           \
+            RED_##lvl(rng1__.size() == rng2__.size());              \
+            RED_##lvl(rng1__ == rng2__);                            \
         }                                                           \
-    }(filename, contents)
+    }(mem, memref)
+
+# define RED_TEST_SMEM(lvl, mem, memref)                             \
+    [](auto const& x_mem__, auto const& x_memref__){                 \
+        size_t res__ = 0;                                            \
+        ::redemption_unit_test__::xsarray rng1__{res__, x_mem__};    \
+        ::redemption_unit_test__::xsarray rng2__{res__, x_memref__}; \
+        RED_TEST_CONTEXT(#mem " == " #memref)                        \
+        {                                                            \
+            RED_##lvl(rng1__.size() == rng2__.size());               \
+            RED_##lvl(rng1__ == rng2__);                             \
+        }                                                            \
+    }(mem, memref)
+
+# define RED_TEST_RMEM(lvl, mem, memref)                             \
+    [](auto const& x_mem__, auto const& x_memref__){                 \
+        size_t res__ = 0;                                            \
+        ::redemption_unit_test__::xrarray rng1__{res__, x_mem__};    \
+        ::redemption_unit_test__::xrarray rng2__{res__, x_memref__}; \
+        RED_TEST_CONTEXT(#mem " == " #memref)                        \
+        {                                                            \
+            RED_##lvl(rng1__.size() == rng2__.size());               \
+            RED_##lvl(rng1__ == rng2__);                             \
+        }                                                            \
+    }(mem, memref)
 
 
 namespace redemption_unit_test__
 {
     struct xarray
     {
+        size_t & res;
         const_bytes_view sig;
 
         std::size_t size() const noexcept
@@ -263,24 +242,11 @@ namespace redemption_unit_test__
         bool operator == (xarray const & other) const noexcept;
     };
 
-    struct xarray_color
-    {
-        size_t & res;
-        const_bytes_view sig;
-
-        std::size_t size() const noexcept
-        {
-            return sig.size();
-        }
-
-        bool operator == (xarray_color const & other) const noexcept;
-    };
-
-    std::ostream & operator<<(std::ostream & out, xarray_color const & x);
     std::ostream & operator<<(std::ostream & out, xarray const & x);
 
     struct xsarray
     {
+        size_t & res;
         const_bytes_view sig;
 
         std::size_t size() const noexcept
@@ -292,6 +258,21 @@ namespace redemption_unit_test__
     };
 
     std::ostream & operator<<(std::ostream & out, xsarray const & x);
+
+    struct xrarray
+    {
+        size_t & res;
+        const_bytes_view sig;
+
+        std::size_t size() const noexcept
+        {
+            return sig.size();
+        }
+
+        bool operator == (xrarray const & other) const noexcept;
+    };
+
+    std::ostream & operator<<(std::ostream & out, xrarray const & x);
 
     struct Enum
     {
@@ -316,27 +297,36 @@ namespace redemption_unit_test__
     };
 } // namespace redemption_unit_test__
 
-::std::ostream& operator<<(::std::ostream& ostr, redemption_unit_test__::Enum const& e);
+
+std::ostream& operator<<(std::ostream& out, const_bytes_view const& av);
+
+std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e);
 
 #endif
 
-#define RED_TEST_DELEGATE_PRINT(type, stream_expr)             \
-  template<>                                                   \
-  struct RED_TEST_PRINT_TYPE_STRUCT_NAME< ::type>              \
-  {                                                            \
-    void operator()(std::ostream& out, ::type const & x) const \
-    {                                                          \
-      out << stream_expr;                                      \
-    }                                                          \
+#define RED_TEST_DELEGATE_PRINT(type, stream_expr)          \
+  template<>                                                \
+  struct RED_TEST_PRINT_TYPE_STRUCT_NAME<type>              \
+  {                                                         \
+    void operator()(std::ostream& out,type const & x) const \
+    {                                                       \
+      out << stream_expr;                                   \
+    }                                                       \
   }
 
 #define RED_TEST_DELEGATE_PRINT_ENUM(type) \
   RED_TEST_DELEGATE_PRINT(type,            \
-    #type << "{" << +::std::underlying_type_t<::type>(x) << "}")
+    #type << "{" << +::std::underlying_type_t<type>(x) << "}")
 
+
+#define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
+    for (type_value : __VA_ARGS__)                        \
+        RED_TEST_CONTEXT(iocontext) /*NOLINT*/
 
 namespace redemption_unit_test__
 {
+
+unsigned long current_count_error();
 
 struct int_variation
 {
@@ -444,13 +434,13 @@ struct def_variation2
     bool is_percent;
 };
 
-inline def_variation2 operator-(def_variation1 const& variation)
+inline def_variation2 operator-(def_variation1 const& variation) noexcept
 {
     return {variation.variantion, variation.is_percent};
 }
 
 template<class T>
-int_variation operator+(T const& x_, def_variation2 const& variation)
+int_variation operator+(T const& x_, def_variation2 const& variation) noexcept
 {
     const int x = x_;
     if (variation.is_percent) {
@@ -462,8 +452,8 @@ int_variation operator+(T const& x_, def_variation2 const& variation)
 
 namespace literals
 {
-    inline def_variation1 operator""_percent(unsigned long long x) { return {int(x), true}; }
-    inline def_variation1 operator""_v(unsigned long long x) { return {int(x), false}; }
+    inline def_variation1 operator""_percent(unsigned long long x) noexcept { return {int(x), true}; }
+    inline def_variation1 operator""_v(unsigned long long x) noexcept { return {int(x), false}; }
 }
 
 } // namespace redemption_unit_test__
@@ -497,6 +487,13 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
     RED_CHECK_SMEM(make_array_view(mem), cstr_array_view("" memref))
 #define RED_CHECK_SMEM_AA(mem, memref) \
     RED_CHECK_SMEM(make_array_view(mem), make_array_view(memref))
+
+#define RED_CHECK_RMEM_C(mem, memref) \
+    RED_CHECK_RMEM(mem, cstr_array_view("" memref))
+#define RED_CHECK_RMEM_AC(mem, memref) \
+    RED_CHECK_RMEM(make_array_view(mem), cstr_array_view("" memref))
+#define RED_CHECK_RMEM_AA(mem, memref) \
+    RED_CHECK_RMEM(make_array_view(mem), make_array_view(memref))
 //@}
 
 /// REQUIRE
@@ -518,3 +515,5 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
 #define RED_REQUIRE_SMEM_AA(mem, memref) \
     RED_REQUIRE_SMEM(make_array_view(mem), make_array_view(memref))
 //@}
+
+#define RED_ERROR_COUNT redemption_unit_test__::current_count_error()

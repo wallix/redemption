@@ -29,6 +29,7 @@
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
 #include "core/RDP/capabilities/common.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <vector>
 #include <variant>
@@ -481,8 +482,8 @@ struct RFXClntCaps
         out.out_uint16_le(icapsData.size()); /* numIcaps */
         out.out_uint16_le(8); /* icapLen */
 
-        for(size_t i = 0; i < icapsData.size(); i++) {
-        	icapsData[i].emit(out);
+        for (RFXICap const& cap : icapsData) {
+        	cap.emit(out);
         }
     }
 
@@ -545,16 +546,14 @@ struct RFXClntCaps
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
-        if (!stream.in_check_rem(numIcaps * icapLen)) {
-            LOG(LOG_ERR, "not enough room for RFXIcaps");
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, numIcaps * icapLen, "not enough room for RFXIcaps", ERR_MCS_PDU_TRUNCATED);
 
         this->icapsData.resize(2);
 
-        for (int i = 0; i < numIcaps; i++)
+        // TODO this->icapsData.size() == 2, but loop from 0 to numIcaps
+        for (int i = 0; i < numIcaps; i++) {
         	this->icapsData[i].recv(stream, icapLen);
-
+        }
     }
 
     size_t computeSize() const {
@@ -655,20 +654,13 @@ struct BitmapCodec
     }
 
     void recv(InStream & stream, bool clientMode) {
-        if (!stream.in_check_rem(19)){
-            LOG(LOG_ERR, "Truncated BitmapCodecs, need=19 remains=%lu", stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, 19, "BitmapCodecs::recv", ERR_MCS_PDU_TRUNCATED);
 
         stream.in_copy_bytes(codecGUID, 16);
         this->codecID = stream.in_uint8();
         this->codecPropertiesLength = stream.in_uint16_le();
 
-        uint16_t expected = this->codecPropertiesLength;
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated codec properties in BitmapCodecs, need=%u remains=%lu", expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, this->codecPropertiesLength, "codec properties in BitmapCodec", ERR_MCS_PDU_TRUNCATED);
 
         if (memcmp(codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16) == 0) {
             /* CODEC_GUID_NSCODEC */
@@ -742,9 +734,7 @@ struct BitmapCodecCaps : public Capability {
     BitmapCodecCaps(bool client)
     : Capability(CAPSETTYPE_BITMAP_CODECS, CAPLEN_BITMAP_CODECS_CAPS)
     , clientMode(client)
-    , haveRemoteFxCodec(false)
-    {
-    }
+    {}
 
     uint8_t addCodec(uint8_t codecType) {
     	uint8_t ret = 1;
@@ -758,8 +748,9 @@ struct BitmapCodecCaps : public Capability {
             haveRemoteFxCodec = true;
             bitmapCodecCount++;
             codecCounter++;
-            if (codecCounter == 1) /* reserved for NSCodec */
+            if (codecCounter == 1) { /* reserved for NSCodec */
             	codecCounter++;
+            }
             break;
         }
         case CODEC_GUID_NSCODEC:
@@ -824,7 +815,8 @@ struct BitmapCodecCaps : public Capability {
         LOG(LOG_INFO, "%s BitmapCodecCaps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "BitmapCodecsCaps::BitmapCodecs::bitmapCodecCount %u", this->bitmapCodecCount);
 
-        for (auto i = 0; i < this->bitmapCodecCount; i++)
+        for (auto i = 0; i < this->bitmapCodecCount; i++) {
         	this->bitmapCodecArray[i].log();
+        }
     }
 };

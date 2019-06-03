@@ -1,4 +1,4 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
 // total_length=1974 flags=0x1 chunk_data=<0x1bbfc60> chunk_data_length=1600 |
 // Sending on target (-1) 8 bytes |

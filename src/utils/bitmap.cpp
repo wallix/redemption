@@ -163,6 +163,17 @@ Bitmap::Bitmap(
     }
 }
 
+Bitmap::Bitmap(const uint8_t *data, size_t stride, const Rect &rect)
+	: data_bitmap(DataBitmap::construct(BitsPerPixel{32}, rect.width(), rect.height()))
+{
+	uint8_t *dest = this->data_bitmap->get();
+	const uint8_t *src = data + ((rect.bottom() - 1) * stride) + (4 * rect.left());
+
+	for (uint16_t i = 0; i < rect.height(); i++, src-= stride, dest += rect.width() * 4) {
+		memcpy(dest, src, rect.width() * 4);
+	}
+}
+
 Bitmap::Bitmap(const Bitmap & src_bmp, const Rect r)
 : data_bitmap(src_bmp.data_bitmap)
 {
@@ -344,24 +355,34 @@ Bitmap::Bitmap(BitsPerPixel out_bpp, const Bitmap & bmp)
         auto buf2col_1B = [ ](uint8_t const * p) { return RDPColor::from(p[0]); };
         auto buf2col_2B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8)); };
         auto buf2col_3B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8) | (p[2] << 16)); };
+        auto buf2col_4B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8) | (p[2] << 16)); };
         auto col2buf_1B = [ ](RDPColor c, uint8_t * p) {                   p[0] = c.as_bgr().red(); };
         auto col2buf_2B = [=](RDPColor c, uint8_t * p) { col2buf_1B(c, p); p[1] = c.as_bgr().green(); };
         auto col2buf_3B = [=](RDPColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c.as_bgr().blue(); };
+        auto col2buf_4B = [=](RDPColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c.as_bgr().blue(); p[3] = 0xff; };
         using namespace shortcut_encode;
         using namespace shortcut_decode_with_palette;
         switch ((underlying_cast(bmp.bpp()) << 8) + underlying_cast(out_bpp)) {
             case  (8<<8)+15: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc15()); break;
             case  (8<<8)+16: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc16()); break;
             case  (8<<8)+24: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_3B, enc24()); break;
+            case  (8<<8)+32: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_4B, enc32()); break;
             case (15<<8)+8 : bpp2bpp(buf2col_2B, dec15(), col2buf_1B, enc8()); break;
             case (15<<8)+16: bpp2bpp(buf2col_2B, dec15(), col2buf_2B, enc16()); break;
             case (15<<8)+24: bpp2bpp(buf2col_2B, dec15(), col2buf_3B, enc24()); break;
+            case (15<<8)+32: bpp2bpp(buf2col_2B, dec15(), col2buf_4B, enc32()); break;
             case (16<<8)+8 : bpp2bpp(buf2col_2B, dec16(), col2buf_1B, enc8()); break;
             case (16<<8)+15: bpp2bpp(buf2col_2B, dec16(), col2buf_2B, enc15()); break;
             case (16<<8)+24: bpp2bpp(buf2col_2B, dec16(), col2buf_3B, enc24()); break;
+            case (16<<8)+32: bpp2bpp(buf2col_2B, dec16(), col2buf_4B, enc32()); break;
             case (24<<8)+8 : bpp2bpp(buf2col_3B, dec24(), col2buf_1B, enc8()); break;
             case (24<<8)+15: bpp2bpp(buf2col_3B, dec24(), col2buf_2B, enc15()); break;
             case (24<<8)+16: bpp2bpp(buf2col_3B, dec24(), col2buf_2B, enc16()); break;
+            case (24<<8)+32: bpp2bpp(buf2col_3B, dec24(), col2buf_4B, enc32()); break;
+            case (32<<8)+8 : bpp2bpp(buf2col_4B, dec32(), col2buf_1B, enc8()); break;
+            case (32<<8)+15: bpp2bpp(buf2col_4B, dec32(), col2buf_2B, enc15()); break;
+            case (32<<8)+16: bpp2bpp(buf2col_4B, dec32(), col2buf_2B, enc16()); break;
+            case (32<<8)+24: bpp2bpp(buf2col_4B, dec32(), col2buf_3B, enc24()); break;
             default: assert(!"unknown bpp");
         }
         if (out_bpp == BitsPerPixel{8}) {

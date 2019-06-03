@@ -21,15 +21,17 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "acl/acl_serializer.hpp"
+#include "configs/config.hpp"
+#include "main/version.hpp"
 #include "utils/genfstat.hpp"
 #include "transport/in_file_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
-#include "test_only/get_file_contents.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
@@ -74,7 +76,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 
     struct ThrowTransport : Transport
     {
-        void do_send(const uint8_t*, size_t) override
+        void do_send(const uint8_t* /*buffer*/, size_t /*len*/) override
         {
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
@@ -98,7 +100,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.out_copy_bytes(string_from_authid(cfg::context::password::index)); stream.out_string("\nASK\n");
 
     stream.out_copy_bytes(string_from_authid(cfg::context::session_id::index)); stream.out_string("\n!6455\n");
-    stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
+    stream.stream_at(0).out_uint32_be(stream.get_offset() - 4);
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -339,7 +341,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 }
 
 
-RED_AUTO_TEST_CASE(TestAclSerializeLog)
+RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -353,19 +355,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
     ini.set_acl<cfg::globals::target_user>("user1");
     ini.set_acl<cfg::globals::host>("10.10.13.12");
     ini.set<cfg::session_log::enable_arcsight_log>(true);
-//     ini.set_acl<cfg::globals::target_host>("13.12.10.10");
-//     ini.set_acl<cfg::globals::ip_target>("13.12.10.10");
-//     ini.set_acl<cfg::globals::session_id>("0x520");
+    // ini.set_acl<cfg::globals::target_host>("13.12.10.10");
+    // ini.set_acl<cfg::globals::ip_target>("13.12.10.10");
+    // ini.set_acl<cfg::globals::session_id>("0x520");
 
-    {
-        char const* logfile = "/tmp/test_acl_dir/log5_6.log";
-        char const* hashdir = "/tmp/test_acl_dir/hash/";
-        char const* hashlog = "/tmp/test_acl_dir/hash/log5_6.log";
-        unlink(logfile);
-        unlink(hashlog);
-        ini.set<cfg::session_log::log_path>(logfile);
-        ini.set<cfg::video::hash_path>(hashdir);
-    }
+    auto logfile = wd.add_file("log5_6.log");
+    auto hashdir = wd.create_subdirectory("hash");
+    auto hashlog = hashdir.add_file("log5_6.log");
+
+    ini.set<cfg::session_log::log_path>(logfile.string());
+    ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
     GeneratorTransport trans("", 0);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0x20));
@@ -383,10 +382,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"SESSION_CREATION_FAILED\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"SESSION_CREATION_FAILED\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|SESSION_CREATION|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=vnc WallixBastionStatus=FAIL\n");
-
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // CONNECTION FAIL
@@ -401,10 +398,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"CONNECTION_FAILED\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|CONNECTION|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral suser=admin duser=user1 src=10.10.13.12 dst= app=xup WallixBastionStatus=FAIL\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // NEW_REMOTE_MOD
@@ -416,10 +412,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"NEW_REMOTE_MOD\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"NEW_REMOTE_MOD\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|NEW_REMOTE_MOD|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // CERTIFICATE
@@ -436,10 +431,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"CERTIFICATE_CHECK_SUCCESS\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CERTIFICATE_CHECK_SUCCESS\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|CERTIFICATE_CHECK|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral suser=user1 duser=admin src= dst=10.10.13.12 app=rdp WallixBastionStatus=SUCCESS msg=\"Connexion<space>to<space>server<space>allowed\"\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // SESSION_DISCONNECTION
@@ -453,10 +447,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"SESSION_DISCONNECTION\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"SESSION_DISCONNECTION\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|SESSION_DISCONNECTION|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp msg=\"duration:906\"\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // SESSION_ESTABLISHED
@@ -470,10 +463,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|SESSION_ESTABLISHED|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp WallixBastionStatus=SUCCESS\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // DRIVE_REDIRECTION_USE
@@ -487,10 +479,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"DRIVE_REDIRECTION_USE\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_USE\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|DRIVE_REDIRECTION_USE|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp msg=\"device_name:winxp<space>device_type\\=win_server\"\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
 
@@ -505,10 +496,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"DRIVE_REDIRECTION_READ\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_READ\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|DRIVE_REDIRECTION_READ|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp filePath=/dir/file.ext\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // DRIVE_REDIRECTION _READ/_WRITE/_DELETE
@@ -523,10 +513,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"DRIVE_REDIRECTION_READ\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_READ\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|DRIVE_REDIRECTION_READ|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp filePath=/dir/file.ext\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // DRIVE_REDIRECTION_RENAME
@@ -541,10 +530,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"DRIVE_REDIRECTION_RENAME\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_RENAME\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|DRIVE_REDIRECTION_RENAME|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp oldFilePath=/dir/old_file.ext filePath=/dir/new_file.ext\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // CB_COPYING_PASTING_FILE _TO_REMOTE_SESSION/_FROM_REMOTE_SESSION
@@ -559,10 +547,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp filePath=/dir/file.ext fsize=1312\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // arcsight format: \ = |
@@ -576,10 +563,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"CLIENT_EXECUTE_REMOTEAPP\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CLIENT_EXECUTE_REMOTEAPP\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|CLIENT_EXECUTE_REMOTEAPP|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp filePath=/dir/file.exe\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // SESSION_ENDING_IN_PROGRESS
@@ -592,10 +578,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"SESSION_ENDING_IN_PROGRESS\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"SESSION_ENDING_IN_PROGRESS\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|SESSION_ENDING_IN_PROGRESS|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // PASSWORD_TEXT_BOX_GET_FOCUS
@@ -609,10 +594,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"PASSWORD_TEXT_BOX_GET_FOCUS\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"PASSWORD_TEXT_BOX_GET_FOCUS\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|PASSWORD_TEXT_BOX_GET_FOCUS|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp WallixBastionStatus=OnFocus\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // INPUT_LANGUAGE
@@ -626,10 +610,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"INPUT_LANGUAGE\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"INPUT_LANGUAGE\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|INPUT_LANGUAGE|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp msg=\"identifier:1<space>display_name:eng\"\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // STARTUP_APPLICATION
@@ -644,10 +627,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"STARTUP_APPLICATION\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"STARTUP_APPLICATION\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|STARTUP_APPLICATION|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp WallixBastionStatus=FAIL_TO_RUN msg=\"application_name:notepad<space>raw_result:-3698768\"\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // KBD_INPUT
@@ -659,10 +641,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"KBD_INPUT\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"KBD_INPUT\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|KBD_INPUT|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // CHANGE_TITLE_BAR
@@ -675,10 +656,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"CHANGE_TITLE_BAR\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CHANGE_TITLE_BAR\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|CHANGE_TITLE_BAR|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral msg=\"title:new_title\"\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     // KILL_PATTERN_DETECTED / NOTIFY_PATTERN_DETECTED
@@ -691,35 +671,28 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log6("type=\"KILL_PATTERN_DETECTED\"", arc_info, time);
 
-        std::string buff(logbuf.buf());
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"KILL_PATTERN_DETECTED\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|KILL_PATTERN_DETECTED|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral msg=\"message\"\n");
 
-        RED_CHECK_SMEM(buff, expected6);
+        RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
 
     acl.close_session_log();
 }
 
 
-RED_AUTO_TEST_CASE(TestSessionLogFile)
+RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
 {
-    std::string const prefix_path = "/tmp/test_acl_dir/";
-    std::string const hashdir = prefix_path + "hash/";
     std::string const logname = "acl_log.txt";
-    std::string const filename = prefix_path + logname;
-    std::string const hashname = hashdir + logname;
-
-    ::unlink(filename.c_str());
-    ::unlink(hashname.c_str());
-    mkdir(prefix_path.c_str(), 0777);
-    mkdir(hashdir.c_str(), 0777);
+    auto filename = wd.add_file(logname);
+    auto hashdir = wd.create_subdirectory("hash");
+    auto hashname = hashdir.add_file(logname);
 
     LCGRandom rnd(0);
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
     SessionLogFile log_file(cctx, rnd, fstat, ReportError([](Error e){
-        RED_CHECK(false);
+        RED_FAIL(e.errmsg());
         return e;
     }));
 
@@ -730,9 +703,9 @@ RED_AUTO_TEST_CASE(TestSessionLogFile)
     log_file.write_line(1512484185, cstr_array_view("test second"));
     log_file.close();
 
-    RED_CHECK_EQ(get_file_contents(filename),
+    RED_CHECK_FILE_CONTENTS(filename,
         "2017-12-05 15:29:43 test first\n"
-        "2017-12-05 15:29:45 test second\n");
+        "2017-12-05 15:29:45 test second\n"_av);
 
     InFileTransport t(unique_fd{open(hashname.c_str(), O_RDONLY)});
     MwrmReader mwrm_reader(t);

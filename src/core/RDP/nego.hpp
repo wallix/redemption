@@ -119,16 +119,16 @@ public:
 
     /// \return false if terminal state
     REDEMPTION_CXX_NODISCARD
-    bool recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& server_notifier);
+    bool recv_next_data(TpduBuffer& buf, Transport& trans, ServerNotifier& notifier);
 
 private:
     State fallback_to_tls(OutTransport trans);
 
-    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& server_notifier);
+    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier);
 
-    State activate_ssl_tls(OutTransport trans, ServerNotifier& server_notifier);
+    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier);
 
-    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& server_notifier);
+    State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier);
 
     State recv_credssp(OutTransport trans, InStream stream);
 };

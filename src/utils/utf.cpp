@@ -260,6 +260,11 @@ UTF8toUTF16_exit:
     return i_t;
 }
 
+size_t UTF8toUTF16(const_bytes_view source, bytes_view target) noexcept
+{
+    return UTF8toUTF16(source, target.as_u8p(), target.size());
+}
+
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, size_t t_len) noexcept

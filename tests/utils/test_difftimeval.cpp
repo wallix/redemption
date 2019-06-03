@@ -23,7 +23,7 @@
 
 #include "utils/difftimeval.hpp"
 
-namespace std
+namespace std /*NOLINT*/
 {
     // this is a hack...
     template<class Ch, class Tr>
@@ -32,7 +32,7 @@ namespace std
     {
         return out << duration.count();
     }
-}
+} // namespace std
 
 RED_AUTO_TEST_CASE(TestUstime)
 {

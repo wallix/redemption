@@ -88,10 +88,10 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
     uint32_t val2;
     int16_t* pOutput;
 
-    int k = 1;
+    size_t k = 1;
     int kp = k << LSGR;
 
-    int kr = 1;
+    size_t kr = 1;
     int krp = kr << LSGR;
 
     if (!pSrcData || !srcSize) { // TODO: asserts

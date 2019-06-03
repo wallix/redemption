@@ -30,7 +30,7 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext context(false, rand, timeobj, 0x400);
+    NTLMContext context(false, rand, timeobj, true);
     // context.init();
     context.ntlm_set_negotiate_flags();
     // context.hardcoded_tests = true;
@@ -202,8 +202,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext client_context(false, rand, timeobj, 0x400);
-    NTLMContext server_context(true, rand, timeobj, 0x400);
+    NTLMContext client_context(false, rand, timeobj, true);
+    NTLMContext server_context(true, rand, timeobj, true);
     const uint8_t password[] = {
         0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
         0x77, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00,
@@ -242,8 +242,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     // CLIENT BUILDS NEGOTIATE
     client_context.ntlm_set_negotiate_flags();
     client_context.NEGOTIATE_MESSAGE.negoFlags.flags = client_context.NegotiateFlags;
-    if (client_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+    if (client_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
         client_context.NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
+    }
 
     // send NEGOTIATE MESSAGE
     client_context.NEGOTIATE_MESSAGE.emit(out_client_to_server);
@@ -258,8 +259,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     server_context.ntlm_construct_challenge_target_info();
 
     server_context.CHALLENGE_MESSAGE.negoFlags.flags = server_context.NegotiateFlags;
-    if (server_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+    if (server_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
         server_context.CHALLENGE_MESSAGE.version.ntlm_get_version_info();
+    }
 
     // send CHALLENGE MESSAGE
     server_context.CHALLENGE_MESSAGE.emit(out_server_to_client);
@@ -279,8 +281,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     client_context.AUTHENTICATE_MESSAGE.negoFlags.flags = client_context.NegotiateFlags;
 
     uint32_t const flag = client_context.AUTHENTICATE_MESSAGE.negoFlags.flags;
-    if (flag & NTLMSSP_NEGOTIATE_VERSION)
+    if (flag & NTLMSSP_NEGOTIATE_VERSION) {
         client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
+    }
 
     if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
         auto & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.buffer;
@@ -452,10 +455,10 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext context_write(false, rand, timeobj, 0x400);
+    NTLMContext context_write(false, rand, timeobj, true);
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-    NTLMContext context_read(true, rand, timeobj, 0x400);
+    NTLMContext context_read(true, rand, timeobj, true);
     SEC_STATUS status;
 
     Array nego;

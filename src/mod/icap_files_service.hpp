@@ -21,8 +21,8 @@
 #pragma once
 
 #include <string>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
 
 #include "core/error.hpp"
@@ -73,7 +73,8 @@ public:
 };
 
 
-namespace LocalICAPServiceProtocol {
+namespace LocalICAPServiceProtocol
+{
 
     enum {
     // +--------------------+-----------------------------------------+
@@ -271,8 +272,8 @@ struct ICAPNewFile {
     , file_name(file_name)
     , target_name(target_name) {}
 
-    void emit(OutStream & stream) {
-
+    void emit(OutStream & stream) const
+    {
         stream.out_uint32_be(this->file_id);
 
         stream.out_uint32_be(this->file_name.length());
@@ -415,7 +416,7 @@ struct ICAPCheck {
 
 struct ICAPResult {
 
-    uint8_t result;
+    uint8_t result = LocalICAPServiceProtocol::ERROR_FLAG;
     int id;
     std::string content;
     size_t content_size;
@@ -463,8 +464,7 @@ struct ICAPResult {
     // content: A variable length, ascii string that contains analysis result.
 
 
-    ICAPResult()
-    : result(LocalICAPServiceProtocol::ERROR_FLAG) {}
+    ICAPResult() = default;
 
     void receive(InStream & stream) {
         const unsigned expected = 9;    /* Result(1) + File_id_size(4) + content_size(4)  */
@@ -490,7 +490,7 @@ struct ICAPResult {
 
 };
 
-}
+} // namespace LocalICAPServiceProtocol
 
 
 

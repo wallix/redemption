@@ -2250,7 +2250,7 @@ extern "C" {
             if (rp.output_filename.length()
             && !rp.full_video
             && !bool(rp.capture_flags)) {
-                std::cerr << "Missing target format : need --png, --ocr, --flv, --full, --wrm or --chunk" << std::endl;
+                std::cerr << "Missing target format : need --png, --ocr, --video, --full, --wrm or --chunk" << std::endl;
                 return 1;
             }
 

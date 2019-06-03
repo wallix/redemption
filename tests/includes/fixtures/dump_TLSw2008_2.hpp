@@ -1,4 +1,4 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
 // connecting to 10.10.47.16:3389 |
 // connection to 10.10.47.16:3389 succeeded : socket 4 |
@@ -9841,7 +9841,7 @@ const char outdata[] =
 // /* 0000 * |
 } /* end outdata */;
 
-const char indata[] =
+const char indata[] = /* NOLINT */
 {
 // connecting to 10.10.47.16:3389 |
 // connection to 10.10.47.16:3389 succeeded : socket 4 |

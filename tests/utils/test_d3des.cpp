@@ -19,10 +19,8 @@
 
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "utils/d3des.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
-{
-}
+// TEST missing
+int main()
+{}

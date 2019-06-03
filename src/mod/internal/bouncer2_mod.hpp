@@ -23,11 +23,16 @@
 
 #pragma once
 
-#include "mod/internal/internal_mod.hpp"
+#include "mod/mod_api.hpp"
 #include "core/session_reactor.hpp"
+#include "utils/colors.hpp"
 
-class Bouncer2Mod : public InternalMod
+
+class Bouncer2Mod : public mod_api
 {
+    uint16_t front_width;
+    uint16_t front_height;
+
     int speedx = 2;
     int speedy = 2;
 
@@ -41,13 +46,12 @@ class Bouncer2Mod : public InternalMod
     SessionReactor& session_reactor;
     SessionReactor::GraphicTimerPtr timer;
 
+    Rect get_screen_rect() const;
+
 public:
     Bouncer2Mod(
          SessionReactor& session_reactor,
-         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
-         Font const & font);
-
-    ~Bouncer2Mod() override;
+         uint16_t width, uint16_t height);
 
     void rdp_input_invalidate(Rect /*rect*/) override
     {
@@ -63,7 +67,16 @@ public:
     void rdp_input_scancode(long /*param1*/, long /*param2*/, long /*param3*/,
                             long /*param4*/, Keymap2 * keymap) override;
 
+    void rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/) override
+    {}
+
+    void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                               int16_t /*param1*/, int16_t /*param2*/) override
+    {}
+
     void refresh(Rect clip) override;
+
+    Dimension get_dim() const override;
 
 public:
     // This should come from BACK!

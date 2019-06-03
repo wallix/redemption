@@ -27,7 +27,10 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & rail_client_execute,
     Theme const & theme)
-: InternalMod(drawable, front, front_width, front_height, font, theme)
+: front_width(front_width)
+, front_height(front_height)
+, front(front)
+, screen(drawable, font, nullptr, theme)
 , rail_client_execute(rail_client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)
@@ -35,6 +38,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 , current_mouse_owner(MouseOwner::WidgetModule)
 , session_reactor(session_reactor)
 {
+    this->screen.set_wh(front_width, front_height);
     if (this->rail_enabled) {
         this->graphic_event = session_reactor.create_graphic_event()
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
@@ -56,7 +60,7 @@ LocallyIntegrableMod::~LocallyIntegrableMod()
 
 void LocallyIntegrableMod::rdp_input_invalidate(Rect r)
 {
-    InternalMod::rdp_input_invalidate(r);
+    this->screen.rdp_input_invalidate(r);
 
     if (this->rail_enabled) {
         this->rail_client_execute.input_invalidate(r);
@@ -75,7 +79,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
     }
 
     if (!this->rail_enabled) {
-        InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
     }
     else {
         bool out_mouse_captured = false;
@@ -156,7 +160,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
             }
         }
 
-        InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
 
         if (out_mouse_captured) {
             this->allow_mouse_pointer_change(true);
@@ -167,7 +171,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
 void LocallyIntegrableMod::rdp_input_scancode(
     long param1, long param2, long param3, long param4, Keymap2 * keymap)
 {
-    InternalMod::rdp_input_scancode(param1, param2, param3, param4, keymap);
+    this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
 
     if (this->rail_enabled) {
         if (!this->alt_key_pressed) {
@@ -190,7 +194,7 @@ void LocallyIntegrableMod::rdp_input_scancode(
 
 void LocallyIntegrableMod::refresh(Rect r)
 {
-    InternalMod::refresh(r);
+    this->screen.refresh(r);
 
     if (this->rail_enabled) {
         this->rail_client_execute.input_invalidate(r);

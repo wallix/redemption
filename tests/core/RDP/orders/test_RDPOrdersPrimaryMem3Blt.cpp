@@ -18,12 +18,9 @@
    Author(s): Christophe Grosjean
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
+int main()
 {
     RDPMem3Blt(0, {}, 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0);
 }

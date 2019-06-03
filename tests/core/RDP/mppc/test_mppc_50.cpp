@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(TestRDP50BlukCompression3)
     mppc_enc.bytes_in_opb  = 0;
     mppc_enc.flags         = 0;
     mppc_enc.flagsHold     = 0;
-    mppc_enc.first_pkt     = 1;
+    mppc_enc.first_pkt     = true;
     mppc_enc.hash_tab_mgr.initialize_hash_table(hash_table);
 
     uint8_t  compressionFlags;

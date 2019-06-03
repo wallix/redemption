@@ -24,25 +24,58 @@ Author(s): Jonathan Poelen
 
 #include "./redemption_unit_tests.hpp"
 
+#include <boost/test/results_collector.hpp>
+// #include <boost/test/results_reporter.hpp>
+#include <boost/test/framework.hpp>
+
 #include <algorithm>
 #include <ostream>
 
 
 namespace redemption_unit_test__
 {
+    unsigned long current_count_error()
+    {
+        using boost::unit_test::results_collector;
+        using boost::unit_test::framework::current_test_case;
+        using boost::unit_test::test_case;
+        using boost::unit_test::test_results;
+        return results_collector.results(current_test_case().p_id).p_assertions_failed.get();
+    }
+
+    // std::ostream& current_stream()
+    // {
+    //     return boost::unit_test::results_reporter::get_stream();
+    // }
+
+    namespace
+    {
+        bool xarray_cmp(size_t& res, cbytes_view sig, cbytes_view other_sig) noexcept
+        {
+            res = std::mismatch(
+                sig.begin(), sig.end(),
+                other_sig.begin(), other_sig.end()
+            ).first - sig.begin();
+            return res == sig.size() && sig.size() == other_sig.size();
+        }
+    }
+
     bool xarray::operator == (xarray const & other) const noexcept
     {
-        return sig.size() == other.sig.size()
-            && std::equal(sig.begin(), sig.end(), other.sig.begin());
+        return xarray_cmp(this->res, this->sig, other.sig);
     }
 
-    bool xarray_color::operator == (xarray_color const & other) const noexcept
+    bool xsarray::operator == (xsarray const & other) const noexcept
     {
-        this->res = std::mismatch(sig.begin(), sig.end(), other.sig.begin(), other.sig.end()).first - sig.begin();
-        return this->res == sig.size() && this->sig.size() == other.sig.size();
+        return xarray_cmp(this->res, this->sig, other.sig);
     }
 
-    std::ostream & operator<<(std::ostream & out, xarray_color const & x)
+    bool xrarray::operator == (xrarray const & other) const noexcept
+    {
+        return xarray_cmp(this->res, this->sig, other.sig);
+    }
+
+    std::ostream & operator<<(std::ostream & out, xarray const & x)
     {
         if (x.size() == 0){
             return out << "\"\"\n";
@@ -103,34 +136,37 @@ namespace redemption_unit_test__
         return out << "\x1b[0m";
     }
 
-    std::ostream & operator<<(std::ostream & out, xarray const & x)
-    {
-        out << "\"";
-        char const * hex_table = "0123456789abcdef";
-        for (unsigned c : x.sig) {
-            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-        }
-        return out << "\"";
-    }
-
-
-    bool xsarray::operator == (xsarray const & other) const noexcept
-    {
-        return sig.size() == other.sig.size()
-            && std::equal(sig.begin(), sig.end(), other.sig.begin());
-    }
-
     std::ostream & operator<<(std::ostream & out, xsarray const & x)
     {
         out << "\"";
         char const * hex_table = "0123456789abcdef";
+        size_t q = 0;
         for (unsigned c : x.sig) {
-            if ((c >= 0x20) && (c <= 127)) {
+            if (q++ == x.res){
+                out << "\x1b[31m";
+            }
+
+            if (c >= 0x20 && c <= 127) {
                 out << char(c);
             }
             else {
                 out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
             }
+        }
+        return out << "\"";
+    }
+
+    std::ostream & operator<<(std::ostream & out, xrarray const & x)
+    {
+        out << "\"";
+        char const * hex_table = "0123456789abcdef";
+        size_t q = 0;
+        for (unsigned c : x.sig) {
+            if (q++ == x.res){
+                out << "\x1b[31m";
+            }
+
+            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
         }
         return out << "\"";
     }
@@ -165,6 +201,11 @@ void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::ope
     }
 }
 
+std::ostream& operator<<(std::ostream& out, const_bytes_view const& av)
+{
+    size_t r = av.size();
+    return out << redemption_unit_test__::xarray{r, av};
+}
 
 std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e)
 {

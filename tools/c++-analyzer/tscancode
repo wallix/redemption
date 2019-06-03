@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# https://github.com/Tencent/TscanCode
+${TSCANCODE:=tscancode} --enable=all \
+-I'include' \
+-I'modules/includes' \
+-I'modules/ppocr/includes/mln' \
+-I'modules/ppocr/src' \
+-I'projects/ocr1/include' \
+-I'projects/redemption_configs/autogen/include' \
+-I'projects/redemption_configs/redemption_src' \
+-I'src' \
+-I'src/system/linux' \
+-I'tests/includes/' \
+-DZLIB_CONST \
+-DFIXTURES_PATH='"mypath" /*NOLINT*/' \
+-DREDEMPTION_DECL_LOG_TEST \
+-DBOOST_AUTO_TEST_MAIN \
+-DBOOST_TEST_DYN_LINK \
+"$@" src tests
+
+# highlighting
+# sort -k3 | colout '\[([^]]+)]: \(([^)]+)\)'

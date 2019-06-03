@@ -31,24 +31,14 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/out_filename_sequence_transport.hpp"
-#include "utils/bitmap_shrink.hpp"
-#include "utils/drawable.hpp"
-#include "utils/fileutils.hpp"
 #include "utils/png.hpp"
+#include "utils/bitmap_shrink.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
-#include "utils/sugar/cast.hpp"
-#include "utils/timestamp_tracer.hpp"
 
 #include <chrono>
 
-
-// #define STRINGIFY_I(x) #x
-// #define STRINGIFY(x) STRINGIFY_I(x)
-// #define DUMP_PNG(prefix, data) dump_png24(prefix STRINGIFY(__LINE__) ".png", data, true)
 
 inline void server_add_char(
     GlyphCache & gly_cache, uint8_t cacheId, uint16_t cacheIndex
@@ -484,168 +474,39 @@ RED_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 
 RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 {
-    const char * filename = "test.png";
-    size_t len = strlen(filename);
-    char path[1024];
-    memcpy(path, filename, len);
-    path[len] = 0;
-    int fd = ::creat(path, 0777);
-    RED_REQUIRE_NE(fd, -1);
-
-    OutFileTransport trans(unique_fd{fd});
+    BufTransport trans;
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
     dump_png24(trans, drawable, true);
-    trans.disconnect(); // close file before checking size
-    RED_CHECK_EQUAL(2786, filesize(filename));
-    ::unlink(filename);
+    RED_CHECK_EQUAL(2786, trans.buf.size());
 }
 
 RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
-    const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid, ReportError{});
+    BufTransport trans;
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
+
     dump_png24(trans, drawable, true);
+    RED_CHECK_EQUAL(2786, trans.buf.size());
+    trans.buf.clear();
 
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), encode_color24()(BLUE));
     drawable.draw(cmd2, screen_rect, color_cxt);
-    trans.next();
 
     dump_png24(trans, drawable, true);
-    trans.next();
-
-    const char * filename;
-
-    filename = trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(2786, ::filesize(filename));
-    ::unlink(filename);
-    filename = trans.seqgen()->get(1);
-    RED_CHECK_EQUAL(2806, ::filesize(filename));
-    ::unlink(filename);
-}
-
-RED_AUTO_TEST_CASE(TestOneRedScreen)
-{
-    struct timeval now;
-    now.tv_sec = 1000;
-    now.tv_usec = 0;
-
-    Rect screen_rect(0, 0, 800, 600);
-    const int groupid = 0;
-    struct CleanupTransport : OutFilenameSequenceTransport {
-        CleanupTransport()
-        : OutFilenameSequenceTransport(
-            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION,
-            "./", "xxxtest", ".png", groupid, ReportError{})
-        {}
-
-        ~CleanupTransport() {
-            for(unsigned until_num = this->get_seqno() + 1u; this->num_start < until_num; ++this->num_start) {
-                ::unlink(this->seqgen()->get(this->num_start));
-            }
-        }
-
-        bool next() override {
-            if (this->png_limit && this->get_seqno() >= this->png_limit) {
-                // unlink may fail, for instance if file does not exist, just don't care
-                ::unlink(this->seqgen()->get(this->get_seqno() - this->png_limit));
-            }
-            return OutFilenameSequenceTransport::next();
-        }
-
-        unsigned num_start = 0;
-        unsigned png_limit = 3;
-    } trans;
-    RDPDrawable drawable(800, 600);
-
-    class ImageCaptureLocal
-    {
-        Transport & trans;
-        Drawable & drawable;
-        TimestampTracer timestamp_tracer;
-
-    public:
-        ImageCaptureLocal(Drawable & drawable, Transport & trans)
-        : trans(trans)
-        , drawable(drawable)
-        , timestamp_tracer(gdi::get_mutable_image_view(drawable))
-        {}
-
-        std::chrono::microseconds do_snapshot(
-            const timeval & now, int x, int y, bool ignore_frame_in_timeval
-        ) {
-            (void)x;
-            (void)y;
-            (void)ignore_frame_in_timeval;
-            using std::chrono::microseconds;
-            tm ptm;
-            localtime_r(&now.tv_sec, &ptm);
-            this->timestamp_tracer.trace(ptm);
-            this->flush();
-            this->trans.next();
-            this->timestamp_tracer.clear();
-            return microseconds::zero();
-        }
-
-        void flush() {
-            dump_png24(this->trans, this->drawable, true);
-        }
-    };
-
-    ImageCaptureLocal consumer(drawable.impl(), trans);
-
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
-    auto const color_cxt = gdi::ColorCtx::depth24();
-    drawable.draw(cmd, screen_rect, color_cxt);
-
-    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
-    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
-
-    bool ignore_frame_in_timeval = false;
-
-    now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-    RED_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
-    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(1)));
-
-    now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-    RED_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
-    RED_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
-    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(2)));
-
-    now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-    RED_CHECK_EQUAL(3052, ::filesize(trans.seqgen()->get(0)));
-    RED_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
-    RED_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
-    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(3)));
-
-    now.tv_sec++; consumer.do_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(0)));
-    RED_CHECK_EQUAL(3061, ::filesize(trans.seqgen()->get(1)));
-    RED_CHECK_EQUAL(3057, ::filesize(trans.seqgen()->get(2)));
-    RED_CHECK_EQUAL(3059, ::filesize(trans.seqgen()->get(3)));
-    RED_CHECK_EQUAL(-1, ::filesize(trans.seqgen()->get(4)));
-
-    for (unsigned i = 1; i <= 3; ++i) {
-        unlink(trans.seqgen()->get(i));
-    }
+    RED_CHECK_EQUAL(2806, trans.buf.size());
 }
 
 RED_AUTO_TEST_CASE(TestSmallImage)
 {
-    const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, ReportError{});
+    BufTransport trans;
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -654,32 +515,24 @@ RED_AUTO_TEST_CASE(TestSmallImage)
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), encode_color24()(WHITE)), scr, color_cxt);
     dump_png24(trans, drawable, true);
     trans.next();
-    const char * filename = trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(107, ::filesize(filename));
-    ::unlink(filename);
+    RED_CHECK_EQUAL(107, trans.buf.size());
 }
 
 RED_AUTO_TEST_CASE(TestScaleImage)
 {
     const int width = 800;
     const int height = 600;
-    const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid, ReportError{});
     Rect scr(0, 0, width, height);
+    BufTransport trans;
     RDPDrawable drawable(scr.cx, scr.cy);
 
-    {
-        const char * filename = FIXTURES_PATH "/win2008capture10.png";
-        // TODO "Add ability to write image to file or read image from file in RDPDrawable"
-        read_png24(filename, gdi::get_mutable_image_view(drawable));
-    }
+    read_png24(FIXTURES_PATH "/win2008capture10.png", gdi::get_mutable_image_view(drawable));
 
     // TODO: zooming should be managed by some dedicated Drawable
     unsigned zoom_factor = 50;
     unsigned scaled_width = (((drawable.width() * zoom_factor) / 100) + 3) & 0xFFC;
     unsigned scaled_height = (drawable.height() * zoom_factor) / 100;
-    std::unique_ptr<uint8_t[]> scaled_buffer = nullptr;
-    scaled_buffer.reset(new uint8_t[scaled_width * scaled_height * 3]);
+    std::unique_ptr<uint8_t[]> scaled_buffer(new uint8_t[scaled_width * scaled_height * 3]);
 
     // Zoom 50
     scale_data(
@@ -692,18 +545,11 @@ RED_AUTO_TEST_CASE(TestScaleImage)
         trans, scaled_buffer.get(),
         scaled_width, scaled_height,
         scaled_width * 3, false);
-    trans.next();
-
-    // TODO "check this: BGR/RGB problem i changed 8176 to 8162 to fix test"
-    const char * filename = trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(8162, ::filesize(filename));
-    ::unlink(filename);
+    RED_CHECK_EQUAL(8162, trans.buf.size());
 }
 
 RED_AUTO_TEST_CASE(TestBogusBitmap)
 {
-    const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, ReportError{});
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -817,19 +663,13 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
     Bitmap bogus(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, 64, 64, stream.get_data(), stream.get_offset(), true);
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx(), bogus.cy()), 0xCC, 0, 0, 0), scr, bogus);
 
-//     dump_png24("/tmp/test_bmp.png", drawable, true);
-
+    BufTransport trans;
     dump_png24(trans, drawable, true);
-    trans.next();
-    const char * filename = trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(4094, ::filesize(filename));
-    ::unlink(filename);
+    RED_CHECK_EQUAL(4094, trans.buf.size());
 }
 
 RED_AUTO_TEST_CASE(TestBogusBitmap2)
 {
-    const int groupid = 0;
-    OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, ReportError{});
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
@@ -869,9 +709,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
     Bitmap bloc32x1(BitsPerPixel{16}, BitsPerPixel{16}, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true);
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
 
+    BufTransport trans;
     dump_png24(trans, drawable, true);
-    trans.next();
-    const char * filename = trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(2913, ::filesize(filename));
-    ::unlink(filename);
+    RED_CHECK_EQUAL(2913, trans.buf.size());
 }

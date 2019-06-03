@@ -42,12 +42,12 @@ public:
         const uint8_t* chunk_data, uint32_t chunk_data_length
     ) override
     {
-        uint8_t tmp[sizeof(dest)+sizeof(total_length)+sizeof(flags)+sizeof(chunk_data_length)];
-        ::out_bytes_be(tmp, sizeof(dest), dest);
-        ::out_bytes_be(tmp + sizeof(dest), sizeof(total_length), total_length);
-        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length), sizeof(flags), flags);
-        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length) + sizeof(flags), sizeof(chunk_data_length), chunk_data_length);
-        this->transport.send(tmp,sizeof(tmp));
+        StaticOutStream<4*4> stream;
+        stream.out_uint32_le(dest);
+        stream.out_uint32_le(total_length);
+        stream.out_uint32_le(flags);
+        stream.out_uint32_le(chunk_data_length);
+        this->transport.send(stream.get_bytes());
         this->transport.send(chunk_data, chunk_data_length);
     }
 };
@@ -55,9 +55,10 @@ public:
 using TestToClientSender = TestSender<0>;
 using TestToServerSender = TestSender<1>;
 
-bool test(Transport& t, BaseVirtualChannel& virtual_channel);
+namespace tu
+{
 
-bool test(Transport& t, BaseVirtualChannel& virtual_channel)
+inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
 {
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -115,4 +116,6 @@ bool test(Transport& t, BaseVirtualChannel& virtual_channel)
     return true;
 }
 
-#define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(test(t, virtual_channel));
+#define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(tu::test_channel(t, virtual_channel));
+
+} // namespace tu

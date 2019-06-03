@@ -153,6 +153,7 @@ void write_type_spec(std::ostream& out, type_<T> t) { write_type(out, t); }
 
 struct CppConfigWriterBase;
 
+void write_extern_template_field(std::ostream & out_set_value, CppConfigWriterBase& writer);
 void write_config_set_value(std::ostream & out_set_value, CppConfigWriterBase& writer);
 void write_variables_configuration(std::ostream & out_varconf, CppConfigWriterBase& writer);
 void write_variables_configuration_fwd(std::ostream & out_varconf, CppConfigWriterBase& writer);
@@ -197,7 +198,8 @@ struct CppConfigWriterBase
         std::string authid_hpp;
         std::string variable_configuration_fwd;
         std::string variable_configuration_hpp;
-        std::string congig_set_value;
+        std::string config_set_value;
+        std::string extern_template_field;
     };
     Filenames filenames;
 
@@ -216,7 +218,8 @@ struct CppConfigWriterBase
         sw.then(filenames.authid_hpp, &write_authid_hpp)
           .then(filenames.variable_configuration_fwd, &write_variables_configuration_fwd)
           .then(filenames.variable_configuration_hpp, &write_variables_configuration)
-          .then(filenames.congig_set_value, &write_config_set_value)
+          .then(filenames.config_set_value, &write_config_set_value)
+          .then(filenames.extern_template_field, &write_extern_template_field)
         ;
         if (sw.err) {
             std::cerr << "CppConfigWriterBase: " << sw.filename << ": " << strerror(errno) << "\n";
@@ -554,6 +557,13 @@ inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriter
         "    }\n"
         "}\n"
     ;
+}
+
+inline void write_extern_template_field(std::ostream & out_set_value, CppConfigWriterBase& writer)
+{
+    for (auto const& name : writer.variables_acl) {
+        out_set_value << "template class Inifile::Field<cfg::" << name << ">;\n";
+    }
 }
 
 }

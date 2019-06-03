@@ -86,6 +86,7 @@ namespace cfg {
         struct persist_bitmap_cache_on_disk;
         struct bitmap_compression;
         struct fast_path;
+        struct remotefx;
         struct enable_suppress_output;
         struct ssl_cipher_list;
         struct show_target_user_in_f12_message;
@@ -146,6 +147,7 @@ namespace cfg {
         struct session_probe_clipboard_based_launcher_start_delay;
         struct session_probe_clipboard_based_launcher_long_delay;
         struct session_probe_clipboard_based_launcher_short_delay;
+        struct session_probe_launcher_abort_delay;
         struct session_probe_allow_multiple_handshake;
         struct session_probe_enable_crash_dump;
         struct session_probe_handle_usage_limit;
@@ -378,6 +380,7 @@ namespace cfg {
         struct close_box_extra_message;
         struct pm_response;
         struct pm_request;
+        struct native_session_id;
     };
 
 } // namespace cfg

@@ -21,9 +21,11 @@
 #pragma once
 
 #include "utils/stream.hpp"
+#include "utils/region.hpp"
 #include "core/error.hpp"
 #include "core/RDP/rlgr.hpp"
 #include "gdi/graphic_api.hpp"
+
 
 enum {
 	WBT_SYNC = 0xCCC0,
@@ -197,7 +199,7 @@ struct TS_RFX_TILESET : public TS_RFX_CODEC_CHANNELT {
 
 	virtual ~TS_RFX_TILESET();
 
-	void recv(InStream & stream, const RDPSetSurfaceCommand &cmd, const TS_RFX_RECT &rect, gdi::GraphicApi & drawable);
+	void recv(InStream & stream, const RDPSetSurfaceCommand &cmd, const SubRegion &region, gdi::GraphicApi & drawable);
 };
 
 
@@ -205,11 +207,11 @@ struct TS_RFX_TILESET : public TS_RFX_CODEC_CHANNELT {
 class RfxDecoder {
 public:
 	/** @brief decoder states */
-	typedef enum {
+	enum DecoderState {
 		RFX_WAITING_SYNC,
 		RFX_WAITING_PROPERTIES,
 		RFX_WAITING_FRAME
-	} DecoderState;
+	};
 
 	/** @brief haveFlags */
 	enum {
@@ -223,7 +225,6 @@ public:
 	RfxDecoder(DecoderState initialState = RFX_WAITING_SYNC)
 		: decoderState(initialState)
 		, haveFlags(0)
-		, currentRegionIndex(0)
 	{
 	}
 
@@ -236,7 +237,6 @@ protected:
 	DecoderState decoderState;
 	uint8_t haveFlags;
 	TS_RFX_REGION currentRegion;
-	size_t currentRegionIndex;
 };
 
 

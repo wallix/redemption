@@ -225,15 +225,6 @@
             return;
         }
 
-        // TODO: from the above documentation, are we not expecting at least 8 bytes ?
-        if (!chunk.in_check_rem(8  /*msgType(2)*/ )) {
-            LOG(LOG_ERR,
-                "ClipboardVirtualChannel::process_client_message: "
-                    "Truncated CliprdrHeader, need=8 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
         if (this->_waiting_for_data) {
 
             LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
@@ -243,6 +234,9 @@
             if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
                 return;
             }
+
+            // msgType(2) + msgFlags(2) + dataLen(4)
+            ::check_throw(chunk, 8, "ClientCLIPRDRChannel::process_client_message CliprdrHeader", ERR_RDP_DATA_TRUNCATED);
 
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);

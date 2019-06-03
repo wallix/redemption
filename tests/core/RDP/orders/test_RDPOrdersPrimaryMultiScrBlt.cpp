@@ -21,12 +21,10 @@
     Using lib boost functions for testing
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 
-RED_AUTO_TEST_CASE(TestMultiScrBlt)
+// TEST missing
+int main()
 {
     RDP::RDPMultiScrBlt();
 }

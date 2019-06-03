@@ -22,16 +22,17 @@
 
 #pragma once
 
-#include "mod/internal/internal_mod.hpp"
+#include "mod/mod_api.hpp"
 #include "core/session_reactor.hpp"
 
 class BGRPalette;
 class Font;
 class FrontAPI;
 
-class TestCardMod : public InternalMod
+class TestCardMod : public mod_api
 {
-    BGRPalette const & palette332;
+    uint16_t front_width;
+    uint16_t front_height;
 
     Font const & font;
 
@@ -40,10 +41,12 @@ class TestCardMod : public InternalMod
     SessionReactor& session_reactor;
     SessionReactor::GraphicEventPtr gd_event;
 
+    Rect get_screen_rect() const;
+
 public:
     TestCardMod(
         SessionReactor& session_reactor,
-        gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+        uint16_t width, uint16_t height,
         Font const & font, bool unit_test = true);
 
     void rdp_input_invalidate(Rect /*rect*/) override
@@ -54,12 +57,17 @@ public:
     void rdp_input_scancode(long /*param1*/, long /*param2*/, long /*param3*/,
                             long /*param4*/, Keymap2 * keymap) override;
 
+    void rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/) override
+    {}
+
     void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
                                int16_t /*param1*/, int16_t /*param2*/) override
     {}
 
     void refresh(Rect /*rect*/) override
     {}
+
+    Dimension get_dim() const override;
 
     void draw_event(gdi::GraphicApi & gd);
 

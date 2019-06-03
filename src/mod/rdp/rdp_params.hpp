@@ -308,6 +308,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.childless_window_as_unidentified_input_field);
 
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc_params.launcher_abort_delay);
+
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.is_public_session);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);

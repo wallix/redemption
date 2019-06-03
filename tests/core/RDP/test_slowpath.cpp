@@ -29,28 +29,22 @@
 #include "test_only/transport/test_transport.hpp"
 #include "core/RDP/slowpath.hpp"
 
-RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
-    const char *payload =
+RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
+{
+   constexpr auto payload =
 /* 0000 */ "\x08\x00\x00\x00\xae\xcb\x72\x01\x04\x00\x00\x80\x0f\x00\x00\x00" // ......r......... |
 /* 0010 */ "\xae\xcb\x72\x01\x00\x00\x00\x00\x02\x00\x00\x00\xae\xcb\x72\x01" // ..r...........r. |
 /* 0020 */ "\x04\x00\x00\x80\x0f\x00\x00\x00\xae\xcb\x72\x01\x01\x80\x00\x08" // ..........r..... |
 /* 0030 */ "\xe6\x01\x6a\x01\xb8\xcb\x72\x01\x01\x80\x00\x08\xe0\x01\x72\x01" // ..j...r.......r. |
 /* 0040 */ "\xb8\xcb\x72\x01\x01\x80\x00\x08\xd9\x01\x7b\x01\xc2\xcb\x72\x01" // ..r.......{...r. |
 /* 0050 */ "\x01\x80\x00\x08\xd2\x01\x86\x01\xcc\xcb\x72\x01\x01\x80\x00\x08" // ..........r..... |
-/* 0060 */ "\xc7\x01\x92\x01"                                                 // ....             |
+/* 0060 */ "\xc7\x01\x92\x01"_av                                              // ....             |
         ;
-    size_t payload_length = 100;
 
-    GeneratorTransport in_t(payload, payload_length);
-    CheckTransport     out_t(payload, payload_length);
+    CheckTransport     out_t(payload);
 
-    StaticInStream<65536> in_s;
+    InStream in_s(payload);
     StaticOutStream<65536> out_s;
-
-    {
-        auto end = const_cast<uint8_t*>(in_s.get_data());
-        in_t.recv_boom(end, payload_length);
-    }
 
     SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
 
@@ -105,7 +99,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
         break;
 
         default:
-            RED_CHECK(false);
+            RED_FAIL(in_ie.messageType);
         break;
         }
     }
@@ -114,24 +108,18 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
 } // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 
 
-RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
-    const char *payload =
+RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)
+{
+   constexpr auto payload =
 /* 0000 */ "\x04\x00\x00\x00\xd6\xcb\x72\x01\x04\x00\x00\x80\x0f\x00\x00\x00" // ......r......... |
 /* 0010 */ "\xd6\xcb\x72\x01\x00\x00\x00\x00\x02\x00\x00\x00\xd6\xcb\x72\x01" // ..r...........r. |
 /* 0020 */ "\x04\x00\x00\x80\x0f\x00\x00\x00\xd6\xcb\x72\x01\x01\x80\x00\x08" // ..........r..... |
-/* 0030 */ "\xbb\x01\xa0\x01"                                                 // ....             |
+/* 0030 */ "\xbb\x01\xa0\x01"_av                                              // ....             |
         ;
-    size_t payload_length = 52;
-    GeneratorTransport in_t(payload, payload_length);
-    CheckTransport out_t(payload, payload_length);
+    CheckTransport out_t(payload);
 
-    StaticInStream<65536> in_s;
+    InStream in_s(payload);
     StaticOutStream<65536> out_s;
-
-    {
-        auto * end = const_cast<uint8_t*>(in_s.get_data());
-        in_t.recv_boom(end, payload_length);
-    }
 
     SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
 
@@ -182,7 +170,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
         break;
 
         default:
-            RED_CHECK(false);
+            RED_FAIL(in_ie.messageType);
         break;
         }
     }

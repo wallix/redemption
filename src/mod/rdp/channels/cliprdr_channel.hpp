@@ -35,6 +35,7 @@
 #include "mod/rdp/channels/channel_file.hpp"
 #include "mod/icap_files_service.hpp"
 #include "core/session_reactor.hpp"
+#include "lib/files_validator_api.hpp"
 #include "core/clipboard_virtual_channels_params.hpp"
 #include "core/stream_throw_helpers.hpp"
 
@@ -67,6 +68,7 @@ private:
 
     ChannelFile channel_file;
 
+
 public:
 
     ClipboardVirtualChannel(
@@ -93,6 +95,7 @@ public:
                    params.validator_target_name
                    )
     {}
+
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const

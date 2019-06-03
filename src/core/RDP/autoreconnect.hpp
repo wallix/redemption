@@ -27,7 +27,7 @@
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
-
+#include "core/stream_throw_helpers.hpp"
 namespace RDP {
 
 // [MS-RDPBCGR] - 2.2.4.2 Server Auto-Reconnect Packet (ARC_SC_PRIVATE_PACKET)
@@ -94,17 +94,12 @@ public:
     }
 
     void receive(InStream & stream) {
-        const unsigned expected = 4 +   // cbLen(4)
-                                  4 +   // Version(4)
-                                  4 +   // LogonId(4)
-                                  16;   // ArcRandomBits(16)
 
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Server Auto-Reconnect Packet (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        const unsigned expected = 28; // cbLen(4) + Version(4) + LogonId(4) + ArcRandomBits(16)
+
+        ::check_throw(stream, expected,
+            "RDP::ServerAutoReconnectPacket Server Auto-Reconnect Packet (data)",
+            ERR_RDP_DATA_TRUNCATED);
 
         // The length in bytes of the Server Auto-Reconnect packet.
         const uint32_t cbLen = stream.in_uint32_le();

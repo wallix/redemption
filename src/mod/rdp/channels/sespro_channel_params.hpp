@@ -157,6 +157,8 @@ struct SessionProbeVirtualChannelParams
 
     bool end_disconnected_session = false;
 
+    std::chrono::milliseconds launcher_abort_delay {};
+
     explicit SessionProbeVirtualChannelParams() = default;
 };
 

@@ -19,10 +19,13 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "mod/icap_files_service.hpp"
-#include "test_only/get_file_contents.hpp"
-#include "utils/log.hpp"
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
+#include "utils/netutils.hpp"
 
+#include "mod/icap_files_service.hpp"
+
+#include <fstream>
 
 
 RED_AUTO_TEST_CASE(TestICAPLocalProtocol_ICAPService) {
@@ -197,8 +200,9 @@ RED_AUTO_TEST_CASE(testFileValid)
         mod_local_server = true;
 
         std::string file_name("README.md");
-        std::string file_content(get_file_contents("README.md"));
+        std::string file_content(tu::get_file_contents("README.md"));
         std::string target_service("linux_scan");
+
         int file_size = 30; /*file_content.length();*/
 
         int file_id = icap_open_file(service, file_name, target_service);

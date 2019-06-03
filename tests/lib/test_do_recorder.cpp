@@ -20,49 +20,56 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "lib/do_recorder.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "transport/crypto_transport.hpp"
 
-#include "test_only/get_file_contents.hpp"
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 
-extern "C" {
-    inline int hmac_fn(uint8_t * buffer)
-    {
-        // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
-        uint8_t hmac_key[] = {
-            0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
-            0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
-            0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
-            0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
-        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH, "");
-        memcpy(buffer, hmac_key, sizeof(hmac_key));
-        return 0;
-    }
+inline int hmac_fn(uint8_t * buffer)
+{
+    // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
+    uint8_t hmac_key[] = {
+        0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
+        0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
+        0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
+        0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
+    static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH );
+    memcpy(buffer, hmac_key, sizeof(hmac_key));
+    return 0;
+}
 
-    inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
-    {
-        // in real uses actual trace_key is derived from base and some master key
-        (void)base;
-        (void)len;
-        (void)oldscheme;
-        // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
-        uint8_t trace_key[] = {
-            0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
-            0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
-            0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
-            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
-        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH, "");
-        memcpy(buffer, trace_key, sizeof(trace_key));
-        return 0;
-    }
+inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
+{
+    // in real uses actual trace_key is derived from base and some master key
+    (void)base;
+    (void)len;
+    (void)oldscheme;
+    // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
+    uint8_t trace_key[] = {
+        0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
+        0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
+        0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
+        0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
+    static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH );
+    memcpy(buffer, trace_key, sizeof(trace_key));
+    return 0;
+}
+
+#define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output) { \
+    int argc = sizeof(argv)/sizeof(char*);                          \
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;                    \
+    int res = do_main(argc, argv, hmac_fn, trace_fn);               \
+    EVP_cleanup();                                                  \
+    RED_CHECK_SMEM(cout_buf.str(), output);                         \
+    RED_TEST(res_result == res);                                    \
 }
 
 // tests/fixtures/verifier/recorded/toto@10.10.43.13\,Administrateur@QA@cible\,20160218-181658\,wab-5-0-0.yourdomain\,7681.mwrm
@@ -71,8 +78,9 @@ extern "C" {
 
 using EncryptionMode = InCryptoTransport::EncryptionMode;
 
-RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
+RED_AUTO_TEST_CASE_WD(TestDecrypterEncryptedData, wd)
 {
+    auto output = wd.add_file("decrypted.out");
     char const * argv[] {
         "decrypter.py",
         "reddec",
@@ -81,23 +89,18 @@ RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
             "toto@10.10.43.13,Administrateur@QA@cible,"
             "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm",
         "-o",
-            "./decrypted.out",
+            output.c_str(),
         "--verbose",
             "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"./decrypted.out\".\ndecrypt ok\n");
-    RED_CHECK_EQUAL(0, unlink("./decrypted.out"));
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
 }
 
-RED_AUTO_TEST_CASE(TestDecrypterClearData)
+RED_AUTO_TEST_CASE_WD(TestDecrypterClearData, wd)
 {
+    auto output = wd.dirname().string() + "decrypted.2.out";
     char const * argv[] {
         "decrypter.py",
         "reddec",
@@ -106,25 +109,20 @@ RED_AUTO_TEST_CASE(TestDecrypterClearData)
                 "toto@10.10.43.13,Administrateur@QA@cible"
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
         "-o",
-            "decrypted.2.out",
+            output.c_str(),
         "--verbose",
             "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/decrypted.2.out\".\nInput file is not encrypted.\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        str_concat("Output file is \"", output, "\".\nInput file is not encrypted.\n"));
 }
 
 // python tools/verifier.py -i toto@10.10.43.13\,Administrateur@QA@cible\,20160218-183009\,wab-5-0-0.yourdomain\,7335.mwrm --hash-path tests/fixtures/verifier/hash/ --mwrm-path tests/fixtures/verifier/recorded/ --verbose 10
 
 
 template<class Exception>
-bool is_except( Exception const & ) { return true; }
+bool is_except( Exception const &  /*unused*/) { return true; }
 
 RED_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
@@ -136,14 +134,8 @@ RED_AUTO_TEST_CASE(TestVerifierFileNotFound)
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/bad",
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "");
-    RED_CHECK_EQUAL(res, -1);
+    TEST_DO_MAIN(argv, -1, hmac_fn, trace_fn, ""_av);
 }
 
 RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
@@ -161,14 +153,8 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
         "--verbose",
             "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nverify failed\n");
-    RED_CHECK_EQUAL(1, res);
+    TEST_DO_MAIN(argv, 1, hmac_fn, trace_fn, "Input file is encrypted.\nverify failed\n"_av);
 }
 
 RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
@@ -186,14 +172,9 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
         "--verbose",
             "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n"_av);
 }
 
 RED_AUTO_TEST_CASE(TestVerifierClearData)
@@ -212,32 +193,25 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
             "10",
         "--ignore-stat-info"
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        "No error detected during the data verification.\n\nverify ok\n"_av);
 }
 
-
-RED_AUTO_TEST_CASE(TestVerifierUpdateData)
+RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
 {
-#define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
+#define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" /*NOLINT*/ \
     ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
-#define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
+#define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" /*NOLINT*/ \
     ",20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm"
-#define TMP_VERIFIER "/tmp/app_verifier_test"
 
-    char const * tmp_recorded_mwrm = TMP_VERIFIER "/recorded/" MWRM_FILENAME;
-    char const * tmp_recorded_wrm = TMP_VERIFIER "/recorded/" WRM_FILENAME;
-    char const * tmp_hash_mwrm = TMP_VERIFIER "/hash/" MWRM_FILENAME;
+    auto recorded_wd = wd.create_subdirectory("recorded");
+    auto hash_wd = wd.create_subdirectory("hash");
 
-    mkdir(TMP_VERIFIER, 0777);
-    mkdir(TMP_VERIFIER "/hash", 0777);
-    mkdir(TMP_VERIFIER "/recorded", 0777);
+    auto tmp_recorded_mwrm = recorded_wd.add_file(MWRM_FILENAME).string();
+    auto tmp_recorded_wrm = recorded_wd.add_file(WRM_FILENAME).string();
+    auto tmp_hash_mwrm = hash_wd.add_file(MWRM_FILENAME).string();
+
     std::ofstream(tmp_hash_mwrm, std::ios::trunc)
       << std::ifstream(FIXTURES_PATH "/verifier/hash/" MWRM_FILENAME).rdbuf();
     std::ofstream(tmp_recorded_mwrm, std::ios::trunc)
@@ -245,10 +219,10 @@ RED_AUTO_TEST_CASE(TestVerifierUpdateData)
     std::ofstream(tmp_recorded_wrm, std::ios::trunc | std::ios::binary)
       << std::ifstream(FIXTURES_PATH "/verifier/recorded/" WRM_FILENAME).rdbuf();
 
-    auto str_stat = [](char const * filename){
+    auto str_stat = [](std::string const& filename){
         std::string s;
         struct stat64 stat;
-        ::stat64(filename, &stat);
+        ::stat64(filename.c_str(), &stat);
         return str_concat(
             std::to_string(stat.st_size), ' ',
             std::to_string(stat.st_mode), ' ',
@@ -261,12 +235,14 @@ RED_AUTO_TEST_CASE(TestVerifierUpdateData)
         );
     };
 
-    std::string mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
-    std::string mwrm_recorded_contents = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
+    std::string mwrm_hash_contents_before
+      = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
+    std::string mwrm_recorded_contents
+      = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
         WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
 
-    RED_CHECK_NE(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
-    RED_CHECK_NE(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+    RED_CHECK_NE(tu::get_file_contents(tmp_hash_mwrm), mwrm_hash_contents_before);
+    RED_CHECK_NE(tu::get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
 
     char const * argv[] {
         "verifier.py",
@@ -274,34 +250,24 @@ RED_AUTO_TEST_CASE(TestVerifierUpdateData)
         "-i",
             MWRM_FILENAME,
         "--hash-path",
-            TMP_VERIFIER "/hash/",
+            hash_wd.dirname(),
         "--mwrm-path",
-            TMP_VERIFIER "/recorded/",
+            recorded_wd.dirname(),
         "--verbose",
             "10",
         "--update-stat-info"
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        "No error detected during the data verification.\n\nverify ok\n"_av);
 
-    mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
-    mwrm_recorded_contents = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
-        WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
+    std::string mwrm_hash_contents_after
+      = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
 
-    RED_CHECK_EQUAL(get_file_contents(tmp_hash_mwrm), mwrm_hash_contents);
-    RED_CHECK_EQUAL(get_file_contents(tmp_recorded_mwrm), mwrm_recorded_contents);
+    RED_CHECK_NE(mwrm_hash_contents_before, mwrm_hash_contents_after);
+    RED_CHECK_FILE_CONTENTS(tmp_hash_mwrm, mwrm_hash_contents_after);
+    RED_CHECK_FILE_CONTENTS(tmp_recorded_mwrm, mwrm_recorded_contents);
 
-    remove(tmp_hash_mwrm);
-    remove(tmp_recorded_mwrm);
-    remove(tmp_recorded_wrm);
-
-#undef TMP_VERIFIER
 #undef WRM_FILENAME
 #undef MWRM_FILENAME
 }
@@ -333,7 +299,6 @@ RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 
 inline int hmac_2016_fn(uint8_t * buffer)
 {
-
     uint8_t hmac_key[32] = {
         0x56 , 0xdd , 0xb2 , 0x92 , 0x47 , 0xbe , 0x4b , 0x89 ,
         0x1f , 0x12 , 0x62 , 0x39 , 0x0f , 0x10 , 0xb9 , 0x8e ,
@@ -413,100 +378,91 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
             return 0;
         }
     }
-    RED_CHECK(false);
+    RED_ERROR(base << " not found");
     return 0;
 }
 
 
 
-RED_AUTO_TEST_CASE(TestDecrypterEncrypted)
+RED_AUTO_TEST_CASE_WD(TestDecrypterEncrypted, wd)
 {
+    auto output = wd.add_file("out0.txt");
     char const * argv[] {
         "decrypter.py", "reddec",
-        "-i", FIXTURES_PATH "/verifier/recorded/"
-        "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm",
-//        "--hash-path", FIXTURES_PATH "/verifier/hash/",
-//        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-        "-o", "/tmp/out0.txt",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/"
+            "cgrosjean@10.10.43.13,proxyuser@local@win2008,"
+            "20161025-213153,wab-4-2-4.yourdomain,3243.mwrm",
+        // "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        // "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o",
+            output.c_str(),
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out0.txt\".\ndecrypt ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
 }
 
-RED_AUTO_TEST_CASE(TestDecrypterEncrypted1)
+RED_AUTO_TEST_CASE_WD(TestDecrypterEncrypted1, wd)
 {
+    auto output = wd.add_file("out8.txt");
     char const * argv[] {
         "decrypter.py", "reddec",
-        "-i", FIXTURES_PATH "/verifier/recorded/"
-        "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm",
-        "-o", "/tmp/out8.txt",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/"
+            "cgrosjean@10.10.43.13,proxyuser@local@win2008,"
+            "20161201-163203,wab-4-2-4.yourdomain,1046.mwrm",
+        "-o",
+            output.c_str(),
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out8.txt\".\ndecrypt ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
 }
 
-RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
+RED_AUTO_TEST_CASE_WD(TestDecrypterMigratedEncrypted, wd)
 {
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
+    auto output = wd.add_file("out8.txt");
+    char const * argv[] {
+        "decrypter.py", "reddec",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/"
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
+        // "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        // "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o",
+            output.c_str(),
+        "--verbose", "10",
+    };
 
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
+}
+
+RED_AUTO_TEST_CASE_WD(TestDecrypterMigratedEncrypted2, wd)
+{
+    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
+
+    auto output = wd.add_file("out2.txt");
     char const * argv[] {
         "decrypter.py", "reddec",
         "-i", FIXTURES_PATH "/verifier/recorded/" "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
             "-192304,wab-4-2-4.yourdomain,5560.mwrm",
-//        "--hash-path", FIXTURES_PATH "/verifier/hash/",
-//        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-        "-o", "/tmp/out.txt",
+        // "--hash-path", FIXTURES_PATH "/verifier/hash/",
+        // "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o",
+            output.c_str(),
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out.txt\".\ndecrypt ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
 }
-
-RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
-{
-    // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
-
-
-    char const * argv[] {
-        "decrypter.py", "reddec",
-        "-i", FIXTURES_PATH "/verifier/recorded/" "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
-            "-192304,wab-4-2-4.yourdomain,5560.mwrm",
-//        "--hash-path", FIXTURES_PATH "/verifier/hash/",
-//        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-        "-o", "/tmp/out2.txt",
-        "--verbose", "10",
-    };
-    int argc = sizeof(argv)/sizeof(char*);
-
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out2.txt\".\ndecrypt ok\n");
-    RED_CHECK_EQUAL(0, res);
-}
-
 
 RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
 {
@@ -520,14 +476,9 @@ RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
+        "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n"_av);
 }
 
 // "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-134039,wab-4-2-4.yourdomain,4714.mwrm".
@@ -542,14 +493,8 @@ RED_AUTO_TEST_CASE(TestVerifier4714)
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "");
-    RED_CHECK_EQUAL(-1, res);
+    TEST_DO_MAIN(argv, -1, hmac_2016_fn, trace_20161025_fn, ""_av);
 }
 
 
@@ -567,14 +512,8 @@ RED_AUTO_TEST_CASE(TestVerifier7192)
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn, "No error detected during the data verification.\n\nverify ok\n"_av);
 }
 
 
@@ -592,14 +531,8 @@ RED_AUTO_TEST_CASE(TestVerifier2510)
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn, "No error detected during the data verification.\n\nverify ok\n"_av);
 }
 
 
@@ -854,14 +787,8 @@ RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn, "No error detected during the data verification.\n\nverify ok\n"_av);
 }
 
 // cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm
@@ -886,19 +813,14 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "verify failed\n");
-    RED_CHECK_EQUAL(1, res);
+    TEST_DO_MAIN(argv, 1, hmac_2016_fn, trace_20161025_fn, "verify failed\n"_av);
 }
 
 #ifndef REDEMPTION_NO_FFMPEG
-RED_AUTO_TEST_CASE(TestAppRecorder)
+RED_AUTO_TEST_CASE_WD(TestAppRecorder, wd)
 {
+    auto output = wd.dirname().string() + "recorder.1.flva";
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -908,33 +830,29 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "-o",
-            "./recorder.1.flva",
+            output.c_str(),
         "--video",
         "--full",
         "--video-break-interval", "500",
         "--video-codec", "flv",
         "--disable-bogus-vlc",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_EQUAL(0, do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"./recorder.1.flva\".\n\n");
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, "\".\n\n"));
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1-000000.flv", 13450874);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1-000001.flv", 1641583);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1.flv", 14977057);
-
-    ::unlink("recorder.1.pgs");
-    ::unlink("recorder.1-000000.png");
-    ::unlink("recorder.1-000001.png");
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 13450874);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 1641583);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.flv"), 14977057);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.pgs"), 5);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.png"), 26981);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.png"), 27557);
 }
 #endif
 
 #ifndef REDEMPTION_NO_FFMPEG
-RED_AUTO_TEST_CASE(TestAppRecorderVlc)
+RED_AUTO_TEST_CASE_WD(TestAppRecorderVlc, wd)
 {
+    auto output = wd.dirname().string() + "recorder.1.flva";
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -944,34 +862,29 @@ RED_AUTO_TEST_CASE(TestAppRecorderVlc)
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "-o",
-            "./recorder.1.flva",
+            output.c_str(),
         "--video",
         "--full",
         "--video-break-interval", "500",
         "--video-codec", "flv",
         "--bogus-vlc",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    int res = do_main(argc, argv, hmac_fn, trace_fn);
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"./recorder.1.flva\".\n\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, "\".\n\n"));
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1-000000.flv", 62513357 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1-000001.flv", 7555247);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder.1.flv", 70069293 +- 100_v);
-
-    ::unlink("recorder.1.pgs");
-    ::unlink("recorder.1-000000.png");
-    ::unlink("recorder.1-000001.png");
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 62513357 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 7555247);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.flv"), 70069293 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.pgs"), 5);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.png"), 26981);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.png"), 27557);
 }
 #endif
 
 #ifndef REDEMPTION_NO_FFMPEG
-RED_AUTO_TEST_CASE(TestAppRecorderChunk)
+RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
 {
+    auto output = wd.dirname().string() + "recorder-chunk";
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -981,210 +894,88 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
             ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "-o",
-            "./recorder-chunk",
+            output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    int res = do_main(argc, argv, hmac_fn, trace_fn);
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"./recorder-chunk.mwrm\".\n\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,  str_concat("Output file is \"", output, ".mwrm\".\n\n"));
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000000.png", 26981);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000001.png", 27536);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000000.mp4", 11226843 +- 100_v);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("./recorder-chunk-000001.mp4", 86037 +- 100_v);
-    RED_CHECK_FILE_CONTENTS("./recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
-    ::unlink("./recorder-chunk.pgs");
-    RED_CHECK_FILE_CONTENTS("./recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");
-    ::unlink("./recorder-chunk.meta");
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000000.png"), 26981);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000001.png"), 27536);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000000.mp4"), 11226843 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000001.mp4"), 86037 +- 100_v);
+    RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk.pgs"), R"js({"percentage":100,"eta":0,"videos":1})js"_av);
+    RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk.meta"), "2016-02-18 18:27:01 + (break)\n"_av);
 }
 #endif
 
 RED_AUTO_TEST_CASE(TestClearTargetFiles)
 {
+    WorkingDirectory wd;
+
+    struct Data
     {
-        char tmpdirname[128];
-        sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
-        RED_CHECK(nullptr != mkdtemp(tmpdirname));
+        std::string name;
+        WorkingFileBase path;
+        std::array<bool, 5> sizes;
+    };
 
-//        int fd = ::mkostemp(tmpdirname, O_WRONLY|O_CREAT);
+    auto create_file = [&wd](std::string filename, auto... exists){
+        filename[filename.find_last_of('_')] = '.';
+        auto f = wd.add_file(filename);
+        RED_TEST(::close(::open(f.c_str(), 0777, O_RDONLY | O_CREAT)) == 0);
+        return Data{std::move(filename), std::move(f), {bool(exists)...}};
+    };
+#define F(filename, ...) create_file(#filename, __VA_ARGS__)
+    const std::array prefixes{"", "ddd", "toto", "titititi", "tititi"};
+    const std::array datas{
+        F(toto_mwrm,          1,   1,     1,      1,          1),
+        F(toto_0_wrm,         1,   1,     1,      1,          1),
+        F(toto_1_wrm,         1,   1,     1,      1,          1),
+        F(toto_0_flv,         1,   1,     0,      0,          0),
+        F(toto_1_flv,         1,   1,     0,      0,          0),
+        F(toto_meta,          1,   1,     0,      0,          0),
+        F(toto_0_png,         1,   1,     0,      0,          0),
+        F(toto_1_png,         1,   1,     0,      0,          0),
+        F(tititi_mwrm,        1,   1,     1,      1,          1),
+        F(tititi_0_wrm,       1,   1,     1,      1,          1),
+        F(tititi_1_wrm,       1,   1,     1,      1,          1),
+        F(tititi_0_flv,       1,   1,     1,      1,          0),
+        F(tititi_1_flv,       1,   1,     1,      1,          0),
+        F(tititi_meta,        1,   1,     1,      1,          0),
+        F(tititi_0_png,       1,   1,     1,      1,          0),
+        F(tititi_1_png,       1,   1,     1,      1,          0)
+    };
+#undef F
 
-        char toto_mwrm[512]; sprintf(toto_mwrm, "%s/%s", tmpdirname, "toto.mwrm");
-        { int fd = ::creat(toto_mwrm, 0777); RED_CHECK_EQUAL(10, write(fd, "toto_mwrm", sizeof("toto_mwrm"))); close(fd); }
+    for (std::size_t i = 0; i < prefixes.size(); ++i)
+    {
+        if (prefixes[i][0])
+        {
+            clear_files_flv_meta_png(wd.dirname(), prefixes[i]);
+        }
 
-        char toto_0_wrm[512]; sprintf(toto_0_wrm, "%s/%s", tmpdirname, "toto_0.mwrm");
-        { int fd = ::creat(toto_0_wrm, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_0_wrm", sizeof("toto_0_wrm"))); close(fd); }
-
-        char toto_1_wrm[512]; sprintf(toto_1_wrm, "%s/%s", tmpdirname, "toto_1.wrm");
-        { int fd = ::creat(toto_1_wrm, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_1_wrm", sizeof("toto_1_wrm"))); close(fd); }
-
-        char toto_0_flv[512]; sprintf(toto_0_flv, "%s/%s", tmpdirname, "toto_0.flv");
-        { int fd = ::creat(toto_0_flv, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_0_flv", sizeof("toto_0_flv"))); close(fd); }
-
-        char toto_1_flv[512]; sprintf(toto_1_flv, "%s/%s", tmpdirname, "toto_1.flv");
-        { int fd = ::creat(toto_1_flv, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_1_flv", sizeof("toto_1_flv"))); close(fd); }
-
-        char toto_meta[512]; sprintf(toto_meta, "%s/%s", tmpdirname, "toto.meta");
-        { int fd = ::creat(toto_meta, 0777); RED_CHECK_EQUAL(10, write(fd, "toto_meta", sizeof("toto_meta"))); close(fd); }
-
-        char toto_0_png[512]; sprintf(toto_0_png, "%s/%s", tmpdirname, "toto_0.png");
-        { int fd = ::creat(toto_0_png, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_0_png", sizeof("toto_0_png"))); close(fd); }
-
-        char toto_1_png[512]; sprintf(toto_1_png, "%s/%s", tmpdirname, "toto_1.png");
-        { int fd = ::creat(toto_1_png, 0777); RED_CHECK_EQUAL(11, write(fd, "toto_1_png", sizeof("toto_1_png"))); close(fd); }
-
-        char tititi_mwrm[512]; sprintf(tititi_mwrm, "%s/%s", tmpdirname, "tititi.mwrm");
-        { int fd = ::creat(tititi_mwrm, 0777); RED_CHECK_EQUAL(12, write(fd, "tititi_mwrm", sizeof("tititi_mwrm"))); close(fd); }
-
-        char tititi_0_wrm[512]; sprintf(tititi_0_wrm, "%s/%s", tmpdirname, "tititi_0.mwrm");
-        { int fd = ::creat(tititi_0_wrm, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_0_wrm", sizeof("tititi_0_wrm"))); close(fd); }
-
-        char tititi_1_wrm[512]; sprintf(tititi_1_wrm, "%s/%s", tmpdirname, "tititi_1.wrm");
-        { int fd = ::creat(tititi_1_wrm, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_1_wrm", sizeof("tititi_1_wrm"))); close(fd); }
-
-        char tititi_0_flv[512]; sprintf(tititi_0_flv, "%s/%s", tmpdirname, "tititi_0.flv");
-        { int fd = ::creat(tititi_0_flv, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_0_flv", sizeof("tititi_0_flv"))); close(fd); }
-
-        char tititi_1_flv[512]; sprintf(tititi_1_flv, "%s/%s", tmpdirname, "tititi_1.flv");
-        { int fd = ::creat(tititi_1_flv, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_1_flv", sizeof("tititi_1_flv"))); close(fd); }
-
-        char tititi_meta[512]; sprintf(tititi_meta, "%s/%s", tmpdirname, "tititi.meta");
-        { int fd = ::creat(tititi_meta, 0777); RED_CHECK_EQUAL(12, write(fd, "tititi_meta", sizeof("tititi_meta"))); close(fd); }
-
-        char tititi_0_png[512]; sprintf(tititi_0_png, "%s/%s", tmpdirname, "tititi_0.png");
-        { int fd = ::creat(tititi_0_png, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_0_png", sizeof("tititi_0_png"))); close(fd); }
-
-        char tititi_1_png[512]; sprintf(tititi_1_png, "%s/%s", tmpdirname, "tititi_1.png");
-        { int fd = ::creat(tititi_1_png, 0777); RED_CHECK_EQUAL(13, write(fd, "tititi_1_png", sizeof("tititi_1_png"))); close(fd); }
-
-        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
-        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        RED_CHECK_EQUAL(11, filesize(toto_0_flv));
-        RED_CHECK_EQUAL(11, filesize(toto_1_flv));
-        RED_CHECK_EQUAL(10, filesize(toto_meta));
-        RED_CHECK_EQUAL(11, filesize(toto_0_png));
-        RED_CHECK_EQUAL(11, filesize(toto_1_png));
-        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_flv));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_flv));
-        RED_CHECK_EQUAL(12, filesize(tititi_meta));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_png));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_png));
-
-        clear_files_flv_meta_png(tmpdirname, "ddd");
-
-        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
-        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        RED_CHECK_EQUAL(11, filesize(toto_0_flv));
-        RED_CHECK_EQUAL(11, filesize(toto_1_flv));
-        RED_CHECK_EQUAL(10, filesize(toto_meta));
-        RED_CHECK_EQUAL(11, filesize(toto_0_png));
-        RED_CHECK_EQUAL(11, filesize(toto_1_png));
-        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_flv));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_flv));
-        RED_CHECK_EQUAL(12, filesize(tititi_meta));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_png));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_png));
-
-        clear_files_flv_meta_png(tmpdirname, "toto");
-
-        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
-        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        RED_CHECK_EQUAL(-1, filesize(toto_0_flv));
-        RED_CHECK_EQUAL(-1, filesize(toto_1_flv));
-        RED_CHECK_EQUAL(-1, filesize(toto_meta));
-        RED_CHECK_EQUAL(-1, filesize(toto_0_png));
-        RED_CHECK_EQUAL(-1, filesize(toto_1_png));
-        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_flv));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_flv));
-        RED_CHECK_EQUAL(12, filesize(tititi_meta));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_png));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_png));
-
-        clear_files_flv_meta_png(tmpdirname, "titititi");
-
-        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
-        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        RED_CHECK_EQUAL(-1, filesize(toto_0_flv));
-        RED_CHECK_EQUAL(-1, filesize(toto_1_flv));
-        RED_CHECK_EQUAL(-1, filesize(toto_meta));
-        RED_CHECK_EQUAL(-1, filesize(toto_0_png));
-        RED_CHECK_EQUAL(-1, filesize(toto_1_png));
-        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_flv));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_flv));
-        RED_CHECK_EQUAL(12, filesize(tititi_meta));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_png));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_png));
-
-        clear_files_flv_meta_png(tmpdirname, "tititi");
-
-        RED_CHECK_EQUAL(10, filesize(toto_mwrm));
-        RED_CHECK_EQUAL(11, filesize(toto_0_wrm));
-        RED_CHECK_EQUAL(11, filesize(toto_1_wrm));
-        RED_CHECK_EQUAL(-1, filesize(toto_0_flv));
-        RED_CHECK_EQUAL(-1, filesize(toto_1_flv));
-        RED_CHECK_EQUAL(-1, filesize(toto_meta));
-        RED_CHECK_EQUAL(-1, filesize(toto_0_png));
-        RED_CHECK_EQUAL(-1, filesize(toto_1_png));
-        RED_CHECK_EQUAL(12, filesize(tititi_mwrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_0_wrm));
-        RED_CHECK_EQUAL(13, filesize(tititi_1_wrm));
-        RED_CHECK_EQUAL(-1, filesize(tititi_0_flv));
-        RED_CHECK_EQUAL(-1, filesize(tititi_1_flv));
-        RED_CHECK_EQUAL(-1, filesize(tititi_meta));
-        RED_CHECK_EQUAL(-1, filesize(tititi_0_png));
-        RED_CHECK_EQUAL(-1, filesize(tititi_1_png));
-
-        ::unlink(toto_mwrm);
-        ::unlink(toto_0_wrm);
-        ::unlink(toto_1_wrm);
-        ::unlink(tititi_mwrm);
-        ::unlink(tititi_0_wrm);
-        ::unlink(tititi_1_wrm);
-
-        ::rmdir(tmpdirname);
+        RED_TEST_CONTEXT("i = " << i)
+        {
+            for (Data const& data : datas)
+            {
+                if (!data.sizes[i] && data.sizes[i-1])
+                {
+                    wd.remove_file(data.name);
+                }
+            }
+            RED_CHECK_WORKSPACE(wd);
+        }
     }
 }
 
 #ifndef REDEMPTION_NO_FFMPEG
 
-RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
+RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
 {
-    const struct CheckFiles {
-        const char * filename;
-        redemption_unit_test__::int_variation size;
-    } fileinfo[] = {
-        {"/tmp/recorder-chunk-meta-000000.mp4", 411572 +- 100_v},
-        {"/tmp/recorder-chunk-meta-000000.png", 15353 +- 0_v},
-        {"/tmp/recorder-chunk-meta-000001.mp4", 734140 +- 100_v},
-        {"/tmp/recorder-chunk-meta-000001.png", 40151 +- 0_v},
-        {"/tmp/recorder-chunk-meta.pgs",        37 +- 0_v},
-    };
-
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
-
+    auto output = wd.dirname().string() + "recorder-chunk-meta";
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -1194,42 +985,25 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
             FIXTURES_PATH "/disable_kbd_inpit_in_meta.ini",
         "--mwrm-path", FIXTURES_PATH,
         "-o",
-            "/tmp/recorder-chunk-meta",
+            output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    int res = do_main(argc, argv, hmac_fn, trace_fn);
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-chunk-meta.mwrm\".\n\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
 
-    RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk-meta.meta", "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n");
-
-    for (auto x: fileinfo) {
-        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
-    }
+    RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk-meta.meta"), "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n"_av);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.mp4"), 411572 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.png"), 15353 +- 0_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.mp4"), 734140 +- 100_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.png"), 40151 +- 0_v);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta.pgs"),        37 +- 0_v);
 }
 
-RED_AUTO_TEST_CASE(TestAppRecorderResize)
+RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
 {
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo[] = {
-        {"/tmp/recorder-resize-0-000000.mp4", 17275},
-        {"/tmp/recorder-resize-0-000000.png", 3972},
-        {"/tmp/recorder-resize-0.meta",       0},
-        {"/tmp/recorder-resize-0.pgs",        37},
-    };
-
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
-
+    auto output = wd.dirname().string() + "recorder-resize-0";
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -1237,40 +1011,23 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize)
             FIXTURES_PATH "/resizing-capture-0.mwrm",
         "--mwrm-path", FIXTURES_PATH,
         "-o",
-            "/tmp/recorder-resize-0",
+            output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    int res = do_main(argc, argv, hmac_fn, trace_fn);
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-resize-0.mwrm\".\n\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
 
-    for (auto x: fileinfo) {
-        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
-    }
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.mp4"), 17275);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.png"), 3972);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0.meta"),       0);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0.pgs"),        37);
 }
 
-RED_AUTO_TEST_CASE(TestAppRecorderResize1)
+RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
 {
-    const struct CheckFiles {
-        const char * filename;
-        ssize_t size;
-    } fileinfo[] = {
-        {"/tmp/recorder-resize-1-000000.mp4", 16476},
-        {"/tmp/recorder-resize-1-000000.png", 3080},
-        {"/tmp/recorder-resize-1.meta",       0},
-        {"/tmp/recorder-resize-1.pgs",        37},
-    };
-
-    for (auto & f : fileinfo) {
-        ::unlink(f.filename);
-    }
-
+    auto output = wd.dirname().string() + "recorder-resize-1";
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -1278,21 +1035,17 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize1)
             FIXTURES_PATH "/resizing-capture-1.mwrm",
         "--mwrm-path", FIXTURES_PATH,
         "-o",
-            "/tmp/recorder-resize-1",
+            output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    int res = do_main(argc, argv, hmac_fn, trace_fn);
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-resize-1.mwrm\".\n\n");
-    RED_CHECK_EQUAL(0, res);
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
 
-    for (auto x: fileinfo) {
-        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
-    }
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.mp4"), 16476);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.png"), 3080);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.meta"),       0);
+    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.pgs"),        37);
 }
 #endif

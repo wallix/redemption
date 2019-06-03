@@ -33,8 +33,8 @@
 
 
 enum class AES_direction : bool {
-    SSL_AES_ENCRYPT = 0,
-    SSL_AES_DECRYPT = 1
+    SSL_AES_ENCRYPT = false,
+    SSL_AES_DECRYPT = true
 };
 
 template<std::size_t KeyLength>

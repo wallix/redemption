@@ -48,5 +48,5 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
     RED_CHECK_EQUAL(8, cs_mcs_msgchannel.length);
     RED_CHECK_EQUAL(0, cs_mcs_msgchannel.flags);
 
-    cs_mcs_msgchannel.log("Client Received");
+    // cs_mcs_msgchannel.log("Client Received");
 }

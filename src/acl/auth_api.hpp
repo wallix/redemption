@@ -35,6 +35,8 @@ struct AuthApi : noncopyable
 
     virtual void set_pm_request(const char * request) = 0;
 
+    virtual void set_native_session_id(unsigned int session_id) = 0;
+
     virtual ~AuthApi() = default;
 };
 
@@ -63,5 +65,10 @@ struct NullAuthentifier : AuthApi
     void set_pm_request(const char * request) override
     {
         (void)request;
+    }
+
+    void set_native_session_id(unsigned int session_id) override
+    {
+        (void)session_id;
     }
 };

@@ -1,4 +1,4 @@
-const char outdata[] =
+const char outdata[] = /* NOLINT */
 {
 // RdpdrDriveReadTask::run |
 // DeviceIOResponse: DeviceId=0 CompletionId=8 IoStatus=0x00000000 |

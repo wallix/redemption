@@ -58,40 +58,12 @@ static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned 
     }
 }
 
-static inline void out_bytes_be(uint8_t * ptr, const uint8_t nb, const unsigned value) noexcept
-{
-    for (uint8_t b = nb-1 ; b != 0 ; --b){
-        ptr[b] = static_cast<uint8_t>(value >> (8 * b));
-    }
-    ptr[0] = value & 0xFF;
-}
-
-// Output a uint32 into a buffer (little-endian)
-static inline void buf_out_uint32(uint8_t* buffer, int value) noexcept
-{
-  buffer[0] = value & 0xff;
-  buffer[1] = (value >> 8) & 0xff;
-  buffer[2] = (value >> 16) & 0xff;
-  buffer[3] = (value >> 24) & 0xff;
-}
-
 // this name because the fonction below is only defined for 1 to 4/8 bytes (works on underlying unsigned)
 static inline unsigned in_uint32_from_nb_bytes_le(const uint8_t nb, const uint8_t * ptr) noexcept
 {
     unsigned res = 0;
     for (int b = 0 ; b < nb ; ++b){
         res |= ptr[b] << (8 * b);
-    }
-    return res;
-}
-
-
-// this name because the fonction below is only defined for 1 to 4/8 bytes (works on underlying unsigned)
-static inline unsigned in_uint32_from_nb_bytes_be(const uint8_t nb, const uint8_t * ptr) noexcept
-{
-    unsigned res = 0;
-    for (int b = 0 ; b < nb ; ++b){
-        res = (res << 8) | ptr[b];
     }
     return res;
 }

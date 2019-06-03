@@ -373,7 +373,7 @@ RdpNegociation::RdpNegociation(
     , trans(trans)
     , password_printing_mode(mod_rdp_params.password_printing_mode)
     , enable_session_probe(mod_rdp_params.session_probe_params.enable_session_probe)
-    , enable_remotefx(mod_rdp_params.enable_remotefx)
+    , enable_remotefx(mod_rdp_params.enable_remotefx && info.bitmap_codec_caps.haveRemoteFxCodec)
     , rdp_compression(mod_rdp_params.rdp_compression)
     , session_probe_use_clipboard_based_launcher(
         mod_rdp_params.session_probe_params.used_clipboard_based_launcher
@@ -714,8 +714,6 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         this->gen.random(this->client_random, SEC_RANDOM_SIZE);
                         LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "mod_rdp: Generate client random");
 
-                        ssllib ssl;
-
 //                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
 //                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
 //                                        hexdump(this->client_random, SEC_RANDOM_SIZE);
@@ -732,7 +730,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 //                                        LOG(LOG_INFO, "================= SC_SECURITY exponent_size=%u",
 //                                            static_cast<unsigned>(SEC_EXPONENT_SIZE));
 
-                        ssl.rsa_encrypt(
+                        ssllib::rsa_encrypt(
                             this->client_crypt_random,
                             SEC_RANDOM_SIZE,
                             this->client_random,
@@ -749,7 +747,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         SEC::KeyBlock key_block(this->client_random, serverRandom);
                         memcpy(this->encrypt.sign_key, key_block.blob0, 16);
                         if (sc_sec1.encryptionMethod == 1){
-                            ssl.sec_make_40bit(this->encrypt.sign_key);
+                            ssllib::sec_make_40bit(this->encrypt.sign_key);
                         }
                         this->decrypt.generate_key(key_block.key1, sc_sec1.encryptionMethod);
                         this->encrypt.generate_key(key_block.key2, sc_sec1.encryptionMethod);
@@ -1401,14 +1399,14 @@ bool RdpNegociation::get_license(InStream & stream)
                 [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
                     if (this->lic_layer_license_size > 0) {
                         uint8_t hwid[LIC::LICENSE_HWID_SIZE];
-                        buf_out_uint32(hwid, 2);
+                        OutStream(hwid).out_uint32_le(2);
                         memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
 
                         /* Generate a signature for the HWID buffer */
                         uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
 
                         uint8_t lenhdr[4];
-                        buf_out_uint32(lenhdr, sizeof(hwid));
+                        OutStream(lenhdr).out_uint32_le(sizeof(hwid));
 
                         Sign sign(make_array_view(this->lic_layer_license_sign_key));
                         sign.update(make_array_view(lenhdr));
@@ -1465,7 +1463,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
                 /* Generate a signature for a buffer of token and HWID */
-                buf_out_uint32(hwid, 2);
+                OutStream(hwid).out_uint32_le(2);
                 memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
 
                 uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
@@ -1473,7 +1471,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
 
                 uint8_t lenhdr[4];
-                buf_out_uint32(lenhdr, sizeof(sealed_buffer));
+                OutStream(lenhdr).out_uint32_le(sizeof(sealed_buffer));
 
                 Sign sign(make_array_view(this->lic_layer_license_sign_key));
                 sign.update(make_array_view(lenhdr));

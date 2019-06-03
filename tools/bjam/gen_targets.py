@@ -51,9 +51,15 @@ inc_test_dep = Dep(cxxflags=['<include>$(REDEMPTION_TEST_PATH)/includes']) # for
 
 src_requirements = dict((
     ('src/lib/scytale.cpp', inc_test_dep),
-    ('src/main/rdp_client.cpp', inc_test_dep),
-    ('src/main/main_client_redemption.cpp', inc_test_dep),
     ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
+))
+
+obj_requirements = dict((
+    ('tests/includes/test_only/test_framework/working_directory.cpp', Dep(cxxflags=[
+        '<variant>debug:<define>RED_COMPILE_TYPE=debug',
+        '<variant>release:<define>RED_COMPILE_TYPE=release',
+        '<variant>san:<define>RED_COMPILE_TYPE=san',
+    ])),
 ))
 
 dir_requirements = dict((
@@ -432,6 +438,7 @@ for name, f in all_files.items():
 
     append(direct_link_deps, direct_cxx_deps, src_requirements, f.path)
     append(direct_link_deps, direct_cxx_deps, dir_requirements, f.root)
+    append(direct_link_deps, direct_cxx_deps, obj_requirements, f.path)
 
     direct_source_deps = set()
     for pf in f.user_includes:
@@ -660,13 +667,21 @@ test_targets_counter = OrderedDict(test_targets)
 for t in test_targets:
     test_targets_counter[t[0]][0] += 1
 
+coverages = []
 for k,t in test_targets_counter.items():
     if t[0] == 1:
         f = t[1]
         unprefixed = unprefixed_file(f)
         print('alias', k, ':', unprefixed, ';')
         if f.have_coverage:
-            print('alias ', k+'.coverage', ' : ', unprefixed+'.coverage', ' ;', sep='')
+            coverages.append((k,unprefixed))
+
+if coverages:
+    print('if $(ENABLE_COVERAGE) = "on"')
+    print('{')
+    for t in coverages:
+        print('alias ', t[0]+'.coverage', ' : ', t[1]+'.coverage', ' ;', sep='')
+    print('}')
 
 # alias by directory
 dir_tests = OrderedDict()

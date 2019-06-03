@@ -145,6 +145,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.exe_or_file           = ini.get<cfg::mod_rdp::session_probe_exe_or_file>();
     mod_rdp_params.session_probe_params.arguments             = ini.get<cfg::mod_rdp::session_probe_arguments>();
 
+    mod_rdp_params.session_probe_params.vc_params.launcher_abort_delay                             = ini.get<cfg::mod_rdp::session_probe_launcher_abort_delay>();
+
     mod_rdp_params.session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
     mod_rdp_params.session_probe_params.clipboard_based_launcher.start_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
     mod_rdp_params.session_probe_params.clipboard_based_launcher.long_delay_ms                     = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
@@ -279,12 +281,15 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.clipboard_params.log_only_relevant_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
-    mod_rdp_params.enable_validator = ini.get<cfg::validator::enable_validator>();
+
+    mod_rdp_params.enable_validator = true; //ini.get<cfg::validator::enable_validator>();
     mod_rdp_params.enable_interupting_validator = ini.get<cfg::validator::enable_interupting_validator>();
     mod_rdp_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
     mod_rdp_params.validator_socket_path = ini.get<cfg::validator::validator_socket_path>().c_str();
     mod_rdp_params.channel_files_directory = ini.get<cfg::validator::channel_files_directory>().c_str();
     mod_rdp_params.validator_target_name = ini.get<cfg::validator::validator_target_name>().c_str();
+
+    mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
 
 
     try {

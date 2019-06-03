@@ -80,7 +80,7 @@ VideoParams video_params_from_ini(
     return video_params;
 }
 
-OcrParams ocr_params_from_ini(Inifile & ini)
+OcrParams ocr_params_from_ini(const Inifile & ini)
 {
     return OcrParams{
         ini.get<cfg::ocr::version>(),
@@ -93,7 +93,7 @@ OcrParams ocr_params_from_ini(Inifile & ini)
     };
 }
 
-MetaParams meta_params_from_ini(Inifile & ini)
+MetaParams meta_params_from_ini(const Inifile & ini)
 {
     return MetaParams{
         MetaParams::EnableSessionLog(ini.get<cfg::session_log::enable_session_log>()),
@@ -106,20 +106,22 @@ MetaParams meta_params_from_ini(Inifile & ini)
     };
 }
 
-KbdLogParams kbd_log_params_from_ini(Inifile & ini)
+KbdLogParams kbd_log_params_from_ini(const Inifile & ini)
 {
     auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
+    auto const keyboard_input_fully_masked = (
+            ini.get<cfg::session_log::keyboard_input_masking_level>() ==
+            ::KeyboardInputMaskingLevel::fully_masked
+        );
     return KbdLogParams{
-        !bool(disable_keyboard_log & KeyboardLogFlags::wrm),
-        !bool(disable_keyboard_log & KeyboardLogFlags::syslog),
-        ini.get<cfg::session_log::enable_session_log>()
-            && ini.get<cfg::session_log::keyboard_input_masking_level>()
-            != ::KeyboardInputMaskingLevel::fully_masked,
-        !bool(disable_keyboard_log & KeyboardLogFlags::meta)
+          !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::wrm)
+        , !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::syslog)
+        , !keyboard_input_fully_masked && ini.get<cfg::session_log::enable_session_log>()
+        , !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlags::meta)
     };
 }
 
-PatternParams pattern_params_from_ini(Inifile & ini)
+PatternParams pattern_params_from_ini(const Inifile & ini)
 {
     return PatternParams{
         ini.get<cfg::context::pattern_notify>().c_str(),
@@ -130,7 +132,7 @@ PatternParams pattern_params_from_ini(Inifile & ini)
 
 WrmParams wrm_params_from_ini(
     BitsPerPixel capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd, Fstat & fstat,
-    const char * hash_path, Inifile & ini)
+    const char * hash_path, const Inifile & ini)
 {
     return WrmParams{
         capture_bpp,

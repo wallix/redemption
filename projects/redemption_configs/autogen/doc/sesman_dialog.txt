@@ -29,6 +29,7 @@ cfg::globals::mod_recv_timeout <- mod_recv_timeout   [std::chrono::milliseconds]
 
 cfg::session_log::log_path <- session_log_path   [std::string]
 cfg::session_log::keyboard_input_masking_level <- keyboard_input_masking_level   [KeyboardInputMaskingLevel]
+    (Please see also "Disable keyboard log" in "video" section of "Configuration Options".)
       0: keyboard input are not masked
       1: only passwords are masked
       2: passwords and unidentified texts are masked
@@ -101,6 +102,7 @@ cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_de
 cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay <- session_probe_smart_launcher_start_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay <- session_probe_smart_launcher_long_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay <- session_probe_smart_launcher_short_delay   [std::chrono::milliseconds]
+cfg::mod_rdp::session_probe_launcher_abort_delay <- session_probe_launcher_abort_delay   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_enable_crash_dump <- session_probe_enable_crash_dump   [bool]
 cfg::mod_rdp::session_probe_handle_usage_limit <- session_probe_handle_usage_limit   [uint32_t]
 cfg::mod_rdp::session_probe_memory_usage_limit <- session_probe_memory_usage_limit   [uint32_t]
@@ -177,6 +179,7 @@ cfg::mod_replay::replay_on_loop <- replay_on_loop   [bool]
 
 cfg::video::disable_keyboard_log <- disable_keyboard_log   [KeyboardLogFlags]
     Disable keyboard log:
+    (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
       0: none
       1: disable keyboard log in syslog
       2: disable keyboard log in recorded sessions
@@ -207,6 +210,7 @@ cfg::context::opt_bpp <-> bpp   [ColorDepth]
       15: 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
       16: 16-bit 565 RGB mask (5 bits for red, 6 bits for green, and 5 bits for blue)
       24: 24-bit RGB mask (8 bits for red, 8 bits for green, and 8 bits for blue)
+      32: 32-bit RGB mask (8 bits for alpha, 8 bits for red, 8 bits for green, and 8 bits for blue)
 cfg::context::opt_height <-> height   [uint16_t]
 cfg::context::opt_width <-> width   [uint16_t]
 cfg::context::selector <- selector   [bool]
@@ -286,4 +290,5 @@ cfg::context::use_session_probe_to_launch_remote_program <- use_session_probe_to
 cfg::context::session_probe_launch_error_message -> session_probe_launch_error_message   [std::string]
 cfg::context::pm_response <- pm_response   [std::string]
 cfg::context::pm_request -> pm_request   [std::string]
+cfg::context::native_session_id -> native_session_id   [unsigned int]
 

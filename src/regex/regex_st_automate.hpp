@@ -54,7 +54,7 @@ namespace re {
         std::cout.fill(oldfill);
     }
 
-    typedef std::pair<const State*, unsigned> st_step_elem_t;
+    using st_step_elem_t = std::pair<const State*, unsigned>;
     using st_step_range_list_t = std::vector<st_step_elem_t>;
     using st_step_range_iterator_t = st_step_range_list_t::iterator;
 
@@ -82,7 +82,7 @@ namespace re {
                         return impl(l, st->out1, stval, is_end, count, count_consume);
                     }
                 }
-                else if (st) {
+                else {
                     if (st->is_terminate()) {
                         if (count_consume > 0) {
                             l.push_back(st_step_elem_t(st, count_consume));
@@ -116,32 +116,32 @@ namespace re {
 
         const bool is_end = ! consumer.valid();
         unsigned r;
-        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
+        for (st_step_elem_t& ststep : l1) {
 #ifdef DISPLAY_TRACE
-            std::cout << (*first->first) << std::endl;
+            std::cout << (*ststep.first) << std::endl;
 #endif
-            if (first->second) {
+            if (ststep.second) {
 #ifdef DISPLAY_TRACE
-                std::cout << "continue " << first->second << std::endl;
+                std::cout << "continue " << ststep.second << std::endl;
 #endif
-                if (!--first->second) {
-                    if (add::push_next(l2, first->first, stval, is_end, count)) {
+                if (!--ststep.second) {
+                    if (add::push_next(l2, ststep.first, stval, is_end, count)) {
                         return true;
                     }
                 }
                 else {
-                    l2.push_back(*first);
+                    l2.push_back(ststep);
                 }
                 continue;
             }
-            if ( ! first->first->is_cap() && (r = first->first->check(c, consumer))) {
+            if ( ! ststep.first->is_cap() && (r = ststep.first->check(c, consumer))) {
 #ifdef DISPLAY_TRACE
                 std::cout << "ok" << std::endl;
 #endif
                 if (r != 1) {
-                    l2.push_back(st_step_elem_t(first->first, r-1));
+                    l2.push_back(st_step_elem_t(ststep.first, r-1));
                 }
-                else if (add::push_next(l2, first->first, stval, is_end, count)) {
+                else if (add::push_next(l2, ststep.first, stval, is_end, count)) {
                     return true;
                 }
             }
@@ -238,7 +238,7 @@ namespace re {
                         return impl(l, st->out1, stval, count, count_consume);
                     }
                 }
-                else if (st) {
+                else {
                     l.push_back(st_step_elem_t(st, count_consume));
                 }
                 return false;
@@ -246,25 +246,25 @@ namespace re {
         };
 
         unsigned r;
-        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
-            if (first->second && --first->second) {
-                l2.push_back(*first);
+        for (st_step_elem_t& ststep : l1) {
+            if (ststep.second && --ststep.second) {
+                l2.push_back(ststep);
                 continue;
             }
-            if ( ! first->first->is_cap() && (r = first->first->check(c, consumer))) {
+            if ( ! ststep.first->is_cap() && (r = ststep.first->check(c, consumer))) {
 #ifdef DISPLAY_TRACE
             std::cout << (*first->first) << std::endl;
 #endif
-                if ( ! first->first->out1 && ! first->first->out2) {
+                if ( ! ststep.first->out1 && ! ststep.first->out2) {
                     return true;
                 }
-                if (first->first->out1) {
-                    if (add::impl(l2, first->first->out1, stval, count, r)) {
+                if (ststep.first->out1) {
+                    if (add::impl(l2, ststep.first->out1, stval, count, r)) {
                         return true;
                     }
                 }
-                if (first->first->out2) {
-                    if (add::impl(l2, first->first->out2, stval, count, r)) {
+                if (ststep.first->out2) {
+                    if (add::impl(l2, ststep.first->out2, stval, count, r)) {
                         return true;
                     }
                 }
@@ -299,9 +299,9 @@ namespace re {
 #ifdef DISPLAY_TRACE
             std::cout << "\033[01;31mc: '" << utf8_char(consumer.getc()) << "'\033[0m\n";
 #endif
-            for (st_step_range_iterator_t first = lst.begin(), last = lst.end(); first != last; ++first) {
-                if (stval.get_num_at(first->first) != count) {
-                    l1.push_back(*first);
+            for (st_step_elem_t const& ststep : lst) {
+                if (stval.get_num_at(ststep.first) != count) {
+                    l1.push_back(ststep);
                 }
             }
             if (l1.empty()) {
@@ -319,8 +319,8 @@ namespace re {
         if (consumer.valid()) {
             return false;
         }
-        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
-            if (first->first->type == LAST) {
+        for (st_step_elem_t const& ststep : l1) {
+            if (ststep.first->type == LAST) {
                 return true;
             }
         }

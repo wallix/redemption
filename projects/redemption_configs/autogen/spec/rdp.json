@@ -60,7 +60,7 @@
                "description": "keyboard input are fully masked"
             }
           ],
-          "description": ""
+          "description": "(Please see also \"Disable keyboard log\" in \"video\" section of \"Configuration Options\".)"
         }
       ]
     },
@@ -312,6 +312,15 @@
           "default": 50,
           "subtype": "duration",
           "unit": "ms",
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "launcher_abort_delay",
+          "type": "integer",
+          "min": 0,
+          "max": 300000,
+          "default": 2000,
           "advanced": true,
           "description": ""
         },
@@ -613,7 +622,7 @@
                "description": "keyboard log in recorded sessions"
             }
           ],
-          "description": "Disable keyboard log:"
+          "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
         }
       ]
     }

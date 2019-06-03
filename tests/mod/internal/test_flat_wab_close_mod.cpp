@@ -18,8 +18,6 @@
    Author(s): Christophe Grosjean, Meng Tan
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "configs/config.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "RAIL/client_execute.hpp"
@@ -28,13 +26,14 @@
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 
-RED_AUTO_TEST_CASE(TestWabCloseMod)
+// TEST missing
+int main()
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
-    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, 0);
+    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;

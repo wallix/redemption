@@ -45,6 +45,9 @@ namespace cfg_generators
 namespace python_spec_writer
 {
 
+constexpr char const* begin_raw_string = "R\"gen_config_ini(";
+constexpr char const* end_raw_string = ")gen_config_ini\"";
+
 using cfg_attributes::type_;
 namespace types = cfg_attributes::types;
 
@@ -104,14 +107,14 @@ inline void write_spec_attr(std::ostream& out, spec_internal_attr attr)
 
 inline void write_member(std::ostream& out, std::string const& member_name)
 {
-    out << "\"" << member_name << " = ";
+    out << member_name << " = ";
 }
 
 
 inline void write_section(std::ostream& out, std::string const& section_name)
 {
     if (!section_name.empty()) {
-        out << "\"[" << section_name << "]\\n\\n\"\n\n";
+        out << "[" << section_name << "]\n\n";
     }
 }
 
@@ -122,7 +125,7 @@ namespace impl
     {
         const char * value;
         friend std::ostream & operator << (std::ostream & os, exprio const & eio) {
-            return os << "\" << (" << eio.value << ") << \"";
+            return os << end_raw_string <<  " << (" << eio.value << ") << " << begin_raw_string;
         }
     };
 
@@ -359,12 +362,15 @@ struct IniPythonSpecWriterBase
     {
         this->out_file_ <<
             "#include \"config_variant.hpp\"\n\n"
-            "\"## Python spec file for RDP proxy.\\n\\n\\n\"\n"
+            << begin_raw_string
+            << "## Python spec file for RDP proxy.\n\n\n"
         ;
     }
 
     int do_finish()
     {
+        this->out_file_ << end_raw_string << "\n";
+
         if (!this->out_file_) {
             std::cerr << this->filename_ << ": " << strerror(errno) << "\n";
         }
@@ -404,16 +410,16 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
             write_type_info(comments, type);
             write_enumeration_value_description(comments, enums, type, infos);
 
-            this->out() << io_prefix_lines{comments.str().c_str(), "\"# ", "\\n\"", 0};
+            this->out() << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
             write_spec_attr(comments, get_elem<spec_attr_t>(infos).value);
 
-            this->out() << io_prefix_lines{comments.str().c_str(), "\"#", "\\n\"", 0};
+            this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
             write_member(this->out(), member_name);
             write_type(this->out(), enums, type, get_default(type, infos));
-            this->out() << "\\n\\n\"\n\n";
+            this->out() << "\n\n";
         }
     }
 };

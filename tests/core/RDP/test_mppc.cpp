@@ -108,11 +108,10 @@ RED_AUTO_TEST_CASE(TestHashTableManager)
     const unsigned int length_of_data_to_sign = 3;
     const unsigned int max_undo_element       = 8;
 
-    typedef uint16_t offset_type;
-    typedef rdp_mppc_enc_hash_table_manager<offset_type,
-                                            length_of_data_to_sign,
-                                            max_undo_element> hash_table_manager;
-    typedef hash_table_manager::hash_type   hash_type;
+    using offset_type = uint16_t;
+    using hash_table_manager = rdp_mppc_enc_hash_table_manager<
+        offset_type, length_of_data_to_sign, max_undo_element>;
+    using hash_type = hash_table_manager::hash_type;
 
     hash_table_manager hash_tab_mgr;
 
@@ -161,7 +160,8 @@ RED_AUTO_TEST_CASE(TestHashTableManager)
 
     // Test of undoing last changes (out of undo buffer).
     hash_tab_mgr.reset();
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 10; i++) {
         hash_tab_mgr.update_indirect(data + i, offset);
+    }
     RED_CHECK_EQUAL(false, hash_tab_mgr.undo_last_changes());
 }

@@ -18,12 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
-
-
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
-RED_AUTO_TEST_CASE(TestWindowingCommon)
+// TEST missing
+int main()
 {
 /*
     const uint32_t WindowId = 1000;

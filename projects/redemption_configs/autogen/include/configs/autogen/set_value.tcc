@@ -493,6 +493,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "remotefx")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::remotefx&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "enable_suppress_output")) {
             ::configs::parse_and_log(
                 context, key,
@@ -937,6 +945,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay&>(this->variables).value,
                 ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_launcher_abort_delay")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_launcher_abort_delay&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
                 av
             );
         }

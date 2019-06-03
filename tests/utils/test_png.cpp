@@ -23,6 +23,7 @@
 
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "utils/png.hpp"
 #include "utils/image_data_view.hpp"
@@ -35,12 +36,11 @@ ConstImageDataView const img(
     byte_ptr_cast("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"),
     3, 3, 4, BytesPerPixel{3}, ConstImageDataView::Storage::TopToBottom);
 
-RED_AUTO_TEST_CASE(TestPngWriteFile)
+RED_AUTO_TEST_CASE_WF(TestPngWriteFile, wf)
 {
-    char const* filename = "/tmp/dump_png24_1.png";
+    char const* filename = wf.c_str();
     dump_png24(filename, img, false);
     RED_CHECK_EQ(filesize(filename), 68);
-    unlink(filename);
 }
 
 RED_AUTO_TEST_CASE(TestPngTransError)

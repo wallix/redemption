@@ -24,6 +24,7 @@
 #include "core/RDP/channels/drdynvc.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "utils/log.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 class DynamicChannelVirtualChannel final : public BaseVirtualChannel
 {
@@ -70,13 +71,8 @@ public:
         uint8_t Cmd = 0x00;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(1 /* cbId(:2) + Sp(:2) + Cmd(:4) */)) {
-                LOG(LOG_ERR,
-                    "DynamicChannelVirtualChannel::process_client_message: "
-                        "Truncated msgType, need=1 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
+            /* cbId(:2) + Sp(:2) + Cmd(:4) */
+            ::check_throw(chunk, 1, "DynamicChannelVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
 
             Cmd = ((chunk.in_uint8() & 0xF0) >> 4);
         }
@@ -127,13 +123,9 @@ public:
         uint8_t Cmd = 0x00;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(1 /* cbId(:2) + Sp(:2) + Cmd(:4) */)) {
-                LOG(LOG_ERR,
-                    "DynamicChannelVirtualChannel::process_server_message: "
-                        "Truncated msgType, need=1 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
+
+            /* cbId(:2) + Sp(:2) + Cmd(:4) */
+            ::check_throw(chunk, 1, "DynamicChannelVirtualChannel::process_server_message", ERR_RDP_DATA_TRUNCATED);
 
             Cmd = ((chunk.in_uint8() & 0xF0) >> 4);
         }

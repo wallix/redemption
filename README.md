@@ -12,8 +12,8 @@ Support of:
 - RDP client to RDP server and
 - RDP client to VNC server
 
-<!-- ./tools/update_table_of_contents.awk -->
-<!-- summary -->
+<!-- https://github.com/jonathanpoelen/gh-md-toc -->
+<!-- toc -->
 1. [Dependencies](#dependencies)
     1. [FFmpeg:](#ffmpeg)
         1. [Ubuntu:](#ubuntu)
@@ -29,10 +29,11 @@ Support of:
 6. [Compile proxy_recorder](#compile-proxy_recorder)
 7. [Packaging](#packaging)
 8. [Tag and Version](#tag-and-version)
-9. [FAQ](#faq)
+9. [Test files](#test-files)
+10. [FAQ](#faq)
     1. [Q - Why do you use bjam for ReDemPtion instead of make, cmake, scons, etc ?](#q---why-do-you-use-bjam-for-redemption-instead-of-make-cmake-scons-etc-)
     2. [Q - How to add configuration variables in rdpproxy.ini ?](#q---how-to-add-configuration-variables-in-rdpproxyini-)
-<!-- /summary -->
+<!-- /toc -->
 
 # Dependencies
 
@@ -143,18 +144,18 @@ List default values with `sed -E 's/^([A-Z_]+)_DEFAULT [^=]+= (.*) ;/\1 = \2/;t;
 
 ## Modes and options
 
-$ `bjam [variant=]{release|debug|san} [cxx-options=value] [target...]`
+$ `bjam [variant=]{release|debug|san} [-s cxx_option=value] [target...]`
 
 - `release`: default
-- `debug`: debug mode (compile with `-g -D_GLIBCXX_DEBUG`)
-- `san`: enable sanitizers: asan, lsan, usan
+- `debug`: debug mode
+- `san`: debug + enable sanitizers: asan, lsan, usan
 
-- `cxx-color`: default auto never always
-- `cxx-lto`: off on fat
-- `cxx-relro`: default off on full
-- `cxx-stack-protector`: off on strong all
+- `-s cxx_color`: default auto never always
+- `-s cxx_lto`: off on fat
+- `-s cxx_relro`: default off on full
+- `-s cxx_stack_protector`: off on strong all
 
-(`cxx-*` options list with `sed -E 's/^feature <([^>]+)> : ([^:]+).*/\1 = \2/;t;d' jam/cxxflags.jam`)
+(`cxx_*` options list with `sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/\1 = \2/;t;d' jam/cxxflags.jam`)
 
 
 # Run ReDemPtion
@@ -236,6 +237,52 @@ Exemple call line for proxy_recorder:
 # Tag and Version
 
     ./tools/packager.py --update-version 1.2.7 --git-tag --git-push-tag --git-push
+
+
+# Test files
+
+Based on [Boost.Test](https://www.boost.org/doc/libs/1_70_0/libs/test/doc/html/index.html) with a `RED_` prefix rather than `BOOST_`.
+
+Redemption extra macro (`tests/includes/test_only/test_framework/`):
+
+- `RED_TEST_EQ(a, b)`, `RED_CHECK_EQ`, `RED_REQUIRE_EQ`
+- `RED_FILE_CONTENTS(filename, contents)` require `#include "test_only/get_file_contents.hpp"`
+- `RED_TEST_DELEGATE_PRINT(type, expr)`: ex `RED_TEST_DELEGATE_PRINT(myvalue, x.get())`
+- `RED_TEST_DELEGATE_PRINT_ENUM(type)`
+- `RED_CHECK_EQ_RANGES(rng1, rng2)`
+- `RED_TEST_MEM(bytes1, bytes2)`, `RED_CHECK_MEM`, `RED_REQUIRE_MEM`
+- `RED_TEST_SMEM(bytes1, bytes2)`, `RED_TEST_MEM_C`, `RED_TEST_MEM_AC`, `RED_TEST_MEM_AA`
+- `RED_TEST_[S]MEM_C(bytes1, cstr)` = `RED_TEST_[S]MEM(bytes1, cstr ""_av)`
+- `RED_TEST_[S]MEM_AC(bytes1, cstr)` = `RED_TEST_[S]MEM(make_array_view(bytes1), cstr ""_av)`
+- `RED_TEST_[S]MEM_AA(bytes1, cstr)` = `RED_TEST_[S]MEM(make_array_view(bytes1), make_array_view(bytes2))`
+- `RED_TEST_FUNC(function)((args...) @ xxx)`: `RED_TEST_FUNC(strlen)(("test") == 4)`
+- `RED_TEST_FUNC_CTX(function)`: `auto fstrlen = RED_TEST_FUNC_CTX(function); RED_TEST(fstrlen("test") == 4)`
+- `RED_TEST_INVOKER(function)`: `auto foo = RED_TEST_INVOKER(my_local_lambda_or_func) RED_TEST(foo("test") == 4)`
+- `RED_CHECK_EXCEPTION_ERROR_ID(stmt, id)`: `CHECK_EXCEPTION_ERROR_ID(trans.send("message"_av), ERR_TRANSPORT_WRITE_FAILED)`
+- `RED_ERROR_COUNT`
+- `RED_BIND_DATA_TEST_CASE(name, dataset, varnames...)`
+
+```cpp
+RED_BIND_DATA_TEST_CASE(TestRdpLogonInfo, (std::array{
+    std::tuple{3, "3"},
+    std::tuple{5, "5"}
+}), number, string)
+{
+    RED_TEST(std::to_string(number) == string);
+}
+```
+
+Special values:
+
+```cpp
+RED_TEST(x == y +- 1_v); // x between y-1 to y+1
+RED_TEST(x == y +- 3_percent); // x between y-y*3/100 to y+y*3/100
+RED_TEST(x < y +- 1_v);
+```
+
+Special class:
+
+- WorkingDiretory: `tests/includes/test_only/working_directory.hpp`
 
 
 # FAQ

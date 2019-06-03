@@ -17,8 +17,11 @@
     Copyright (C) Wallix 2018
     Author(s): David Fort
 */
-#include <emmintrin.h>
-#include <pmmintrin.h>
+
+#ifndef __EMSCRIPTEN__
+# include <emmintrin.h>
+# include <pmmintrin.h>
+#endif
 
 #include "utils/primitives/primitives.hpp"
 
@@ -116,8 +119,10 @@ static Primitives::pstatus_t general_lShiftC_16s(const int16_t * pSrc, uint32_t 
     return Primitives::SUCCESS;
 }
 
+#ifndef __EMSCRIPTEN__
 /* ------------------------------------------------------------------------- */
 SSE3_SCD_ROUTINE(sse2_lShiftC_16s, int16_t, general_lShiftC_16s, _mm_slli_epi16, *dptr++ = *sptr++ << val)
+#endif
 
 /**
  *
@@ -222,6 +227,9 @@ static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
             return general_yCbCrToRGB_16s8u_P3AC4R_general(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
     }
 }
+
+
+#ifndef __EMSCRIPTEN__
 
 #define _mm_between_epi16(_val, _min, _max) \
 	do { _val = _mm_min_epi16(_max, _mm_max_epi16(_val, _min)); } while (0)
@@ -635,9 +643,6 @@ static Primitives::pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(
 }
 
 
-Primitives Primitives::s_instance;
-Primitives Primitives::s_genericInstance;
-
 #include <cpuid.h>
 
 static bool haveSSSE3() {
@@ -652,17 +657,23 @@ static bool haveSSSE3() {
     }
     return false;
 }
+#endif
 
+
+Primitives Primitives::s_instance;
+Primitives Primitives::s_genericInstance;
 
 Primitives::Primitives() noexcept
     : accel(Primitives::ACCEL_GENERIC)
     , lShiftC_16s(general_lShiftC_16s)
     , yCbCrToRGB_16s8u_P3AC4R(general_yCbCrToRGB_16s8u_P3AC4R)
 {
+#ifndef __EMSCRIPTEN__
 	if (haveSSSE3()) {
 		lShiftC_16s = sse2_lShiftC_16s;
 		yCbCrToRGB_16s8u_P3AC4R = sse2_yCbCrToRGB_16s8u_P3AC4R;
 	}
+#endif
 }
 
 Primitives *Primitives::instance() {

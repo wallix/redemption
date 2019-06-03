@@ -24,6 +24,8 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "core/stream_throw_helpers.hpp"
+
 #include <algorithm>
 
 namespace RDP {
@@ -271,16 +273,11 @@ struct PersistentKeyListPDUData {
     PersistentKeyListPDUData() = default;
 
     void receive(InStream & stream) {
-        unsigned expected = 24; /* numEntriesCache0(2) + numEntriesCache1(2) + numEntriesCache2(2) +
-                                   numEntriesCache3(2) + numEntriesCache4(2) + totalEntriesCache0(2) +
-                                   totalEntriesCache1(2) + totalEntriesCache2(2) + totalEntriesCache3(2) +
-                                   totalEntriesCache4(2) + bBitMask(1) + Pad2(1) + Pad3(2) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_ERR
-               , "PersistentKeyListPDUData::receive  - Truncated data, need=%u, remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        /* numEntriesCache0(2) + numEntriesCache1(2) + numEntriesCache2(2) +
+        numEntriesCache3(2) + numEntriesCache4(2) + totalEntriesCache0(2) +
+        totalEntriesCache1(2) + totalEntriesCache2(2) + totalEntriesCache3(2) +
+        totalEntriesCache4(2) + bBitMask(1) + Pad2(1) + Pad3(2) */
+        ::check_throw(stream, 24, "PersistentKeyListPDUData::receive (0)", ERR_RDP_DATA_TRUNCATED);
 
         this->numEntriesCache[0] = stream.in_uint16_le();
         this->numEntriesCache[1] = stream.in_uint16_le();
@@ -298,13 +295,8 @@ struct PersistentKeyListPDUData {
 
         unsigned int count = this->maximum_entries();
 
-        expected = count * 8; /* count * (Key1(4) + Key2(4)) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_ERR
-               , "PersistentKeyListPDUData::receive  - Truncated entries, need=%u, remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        /* count * (Key1(4) + Key2(4)) */
+        ::check_throw(stream, count * 8, "PersistentKeyListPDUData::receive (1)", ERR_RDP_DATA_TRUNCATED);
 
         for (unsigned int index = 0; index < count; index++) {
             this->entries[index].Key1 = stream.in_uint32_le();

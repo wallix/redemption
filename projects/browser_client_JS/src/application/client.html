@@ -1,0 +1,695 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            display: flex;
+        }
+        form {
+            /* display:inline; */
+            /* vertical-align:top; */
+            margin-bottom: 2em
+        }
+
+        input {
+            /* display: flex; */
+            /* flex-direction: column; */
+        }
+
+        section {
+            background: cyan
+        }
+    </style>
+</head>
+<body>
+
+<div>
+<canvas id="canvas" width="800" height="600"></canvas>
+<input id="canvasFocus" type="text"/>
+<style>
+#canvasFocus {
+    width: 0px;
+    height: 0px;
+    position: relative;
+    z-index: -10;
+    top: -800px;
+}
+#cbDownload {
+    display: hidden
+}
+</style>
+</div>
+<canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
+<section>
+    <form id="login" method="get" action="#">
+        <input type="text" id="user" name="user" value="x" placeholder="Username"/>
+        <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
+        <input type="submit" value="New Connection">
+    </form>
+    <form id="sendCbFile" method="get" action="#">
+        <input id="sendCbFile_data" name="myFile" type="file">
+        <input type="submit" value="Send File">
+    </form>
+    <form id="sendCbUtf8" method="get" action="#">
+        <textarea id="sendCbUtf8_data"></textarea>
+        <input type="submit" value="Send Clipboard">
+    </form>
+    <!-- <form id="receiveCbUtf8" method="get" action="#"> -->
+        <!-- <input type="submit" value="Send Clipboard"> -->
+        <textarea id="receiveCbUtf8_data"></textarea>
+    <!-- </form> -->
+    <p id="cbFmts"></p>
+    <p id="cbFiles"></p>
+    <a id="cbDownload"></a>
+
+<section>
+
+<script src="js_client.js"></script>
+<script src="to_scancode.js"></script>
+<script src="rdp_graphics.js"></script>
+<script src="redemption_load_module.js"></script>
+<script>
+
+const Module = WallixModule({
+    // TOTAL_MEMORY: 16777216, // 16**6
+    TOTAL_MEMORY: 268435456, // 16**7
+});
+
+const redemption = redemptionLoadModule(Module, window);
+
+const RDPClient = redemption.RDPClient;
+const newRDPSocket = redemption.newRDPSocket;
+const newClipboardChannel = redemption.newClipboardChannel;
+const HEAPU8 = Module.HEAPU8;
+const HEAPU16 = Module.HEAPU16;
+
+
+const ecanvasFocus = document.getElementById('canvasFocus');
+const ecanvas = document.getElementById('canvas');
+const ecanvas2 = document.getElementById('canvas2');
+const canvas = ecanvas.getContext('2d');
+const canvas2 = ecanvas2.getContext('2d');
+const login = document.getElementById('login');
+const sendCbUtf8 = document.getElementById('sendCbUtf8');
+const sendCbFile = document.getElementById('sendCbFile');
+// const receiveCbUtf8 = document.getElementById('receiveCbUtf8');
+const sendCbUtf8_data = document.getElementById('sendCbUtf8_data');
+const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
+const sendCbFile_data = document.getElementById('sendCbFile_data');
+const user_input = document.getElementById('user');
+const pass_input = document.getElementById('pass');
+const cbFmts = document.getElementById('cbFmts');
+const cbFiles = document.getElementById('cbFiles');
+const cbDownload = document.getElementById('cbDownload');
+
+let rdpclient;
+
+function has_intersection(x1,y1,w1,h1,x2,y2,w2,h2)
+{
+    return ((x2 >= x1 && x2 < x1 + w1) || (x1 >= x2 && x1 < x2 + w2))
+        && ((y2 >= y1 && y2 < y1 + h1) || (y1 >= y2 && y1 < y2 + h2));
+}
+
+const KbdFlags = Object.freeze({
+    Extended: 0x0100,
+    Extended1: 0x0200,
+    Down: 0x4000,
+    Release: 0x8000,
+});
+
+function onKeyEvent(flag, evt)
+{
+    const scancode = toScancode(evt.code);
+    // console.log(flag, evt.key, evt.code, scancode)
+    if (scancode) {
+        // switch (scancode) {
+        // case 0x1d: // control left
+        // case 0x11d: // control right
+        //     console.log('control', flag !== KbdFlags.Release);
+        //     break;
+        // case 0x38: // alt left
+        // case 0x138: // alt right
+        //     console.log('alt', flag !== KbdFlags.Release);
+        //     break;
+        // case 0x2a: // shift left
+        // case 0x36: // shift right
+        //     console.log('shift', flag !== KbdFlags.Release);
+        //     break;
+        // case 0x15b: // win
+        //     console.log('meta', flag !== KbdFlags.Release);
+        //     break;
+        // }
+        evt.preventDefault();
+        rdpclient.sendScancode(scancode & 0xFF, (scancode & KbdFlags.Extended) | flag);
+    }
+    // else {
+    //     console.log(flag, evt.key, evt.keyCode)
+    // }
+}
+
+function mouseButtonToFlag(evt)
+{
+    switch (evt.button) {
+    case 0: return 0x1000; // left button
+    case 1: return 0x4000; // middle button
+    case 2: return 0x2000; // right button
+    // case 3: return 0x0001;
+    // case 4: return 0x0002;
+    }
+    return 0x1000;
+}
+
+function onMouseEvent(flag, evt)
+{
+    evt.preventDefault();
+    // console.log(evt.offsetX, evt.offsetY, evt.button)
+    // console.log(flag, evt.button)
+    rdpclient.sendMouseEvent(flag | mouseButtonToFlag(evt), evt.offsetX, evt.offsetY);
+}
+
+
+const onKeyUp = (evt) => { onKeyEvent(KbdFlags.Release, evt); };
+const onKeyDown = (evt) => { onKeyEvent(0, evt); };
+const onKeyPress = (evt) => { onKeyEvent(KbdFlags.Down, evt); };
+
+const onMouseMove = (evt) => {
+    evt.preventDefault();
+    // console.log(evt.offsetX, evt.offsetY, evt.button)
+    rdpclient.sendMouseEvent(0x0800, evt.offsetX, evt.offsetY);
+};
+const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
+const onMouseUp = (evt) => { onMouseEvent(0, evt); };
+const onMouseWheel = (evt) => {
+    evt.preventDefault();
+    // 0x200 | delta
+    rdpclient.sendMouseEvent((evt.deltaY < 0) ? 0x287 : 0x388, 0, 0);
+};
+
+const docEvents = {
+    keyup: onKeyUp,
+    keydown: onKeyDown,
+    keypress: onKeyPress,
+};
+
+const canvasEvents = {
+    mousemove: onMouseMove,
+    mousedown: onMouseDown,
+    mouseup: onMouseUp,
+    wheel: onMouseWheel,
+    contextmenu: event => event.preventDefault()
+};
+
+const canvasFocusEvents = {
+    onblur: canvasBlur,
+    onfocus: canvasFocus,
+};
+
+const eventTable = [
+    [document, docEvents],
+    [ecanvas, canvasEvents],
+];
+
+function addEvents(elem, events)
+{
+    for (let [eventName, func] of Object.entries(events)) {
+        elem.addEventListener(eventName, func);
+    }
+}
+
+function removeEvents(elem, events)
+{
+    for (let [eventName, func] of Object.entries(events)) {
+        elem.removeEventListener(eventName, func);
+    }
+}
+
+function canvasStartEvents()
+{
+    for (const a of eventTable) {
+        addEvents(a[0], a[1]);
+    }
+    ecanvasFocus.onblur = canvasBlur;
+    ecanvasFocus.onfocus = canvasFocus;
+    canvasEnableFocus();
+}
+
+function canvasStopEvents()
+{
+    for (const a of eventTable) {
+        removeEvents(a[0], a[1]);
+    }
+    ecanvasFocus.onblur = () => {};
+    ecanvasFocus.onfocus = () => {};
+    ecanvas.onclick = () => {};
+}
+
+function canvasFocus()
+{
+    console.log('focus');
+    addEvents(document, docEvents);
+    ecanvas.onclick = (e) => e.preventDefault();
+}
+
+function canvasEnableFocus()
+{
+    // preventScroll don't work with firefox
+    ecanvasFocus.focus({preventScroll: true});
+}
+
+function canvasBlur()
+{
+    console.log('blur');
+    removeEvents(document, docEvents);
+    ecanvas.onclick = canvasEnableFocus;
+}
+
+const UTF8Decoder = new TextDecoder("utf-8");
+const UTF16Decoder = new TextDecoder("utf-16");
+const UTF16Encoder = new TextEncoder("utf-16");
+
+function decodeName(iname, inameLen, isUTF8)
+{
+    const uname = HEAPU8.subarray(iname, iname + inameLen);
+    return (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(uname);
+}
+
+
+class OutStream
+{
+    constructor(ptr) {
+        this.i = ptr;
+    }
+
+    skip(n) {
+        this.i += n;
+    }
+
+    u64lem(x) {
+        if (x > 0xffffffff) {
+            this.u32le(x - 0xffffffff);
+        }
+        else {
+            this.bzero(4);
+        }
+        this.u32le(x);
+    }
+
+    u64le(x) {
+        this.u32le(x);
+        if (x > 0xffffffff) {
+            this.u32le(x - 0xffffffff);
+        }
+        else {
+            this.bzero(4);
+        }
+    }
+
+    u32le(x) {
+        HEAPU8[this.i++] = x;
+        HEAPU8[this.i++] = (x >> 8);
+        HEAPU8[this.i++] = (x >> 16);
+        HEAPU8[this.i++] = (x >> 24);
+    }
+
+    u16le(x) {
+        HEAPU8[this.i++] = x;
+        HEAPU8[this.i++] = (x >> 8);
+    }
+
+    bzero(n) {
+        HEAPU8.fill(0, this.i, this.i + n);
+        this.i += n;
+    }
+
+    copyAsArray(array) {
+        HEAPU8.set(array, this.i);
+        this.i += array.length;
+    }
+
+    copyStringAsAlignedUTF16(str) {
+        // Module.stringToUTF16(str, this.i, 0x7FFFFFFF/*, this.iend - this.i*/) + 2;
+        let iheap = this.i / 2;
+        const iend = str.length;
+        for (let i = 0; i < iend; ++i, ++iheap) {
+            HEAPU16[iheap] = str.charCodeAt(i);
+        }
+        this.i = iheap * 2
+    }
+}
+
+
+function run()
+{
+    const socket = newRDPSocket('ws://localhost:3390');
+    socket.onopen = function(event) {
+        console.log('RdpClient open');
+        rdpclient = new RDPClient(
+            socket,
+            ecanvas.width,
+            ecanvas.height,
+            new RDPGraphics(ecanvas),
+            user_input.value,
+            pass_input.value,
+            /*0x04000000*/);
+        init_rdpclient();
+        socket.onmessage = function(event) {
+            rdpclient.addReceivingData(event.data);
+            rdpclient.sendBufferedData();
+        };
+
+        socket.onerror = function(event) {
+            console.log('RdpClient error: ', event);
+            socket.close();
+        };
+
+        socket.onclose = function(event) {
+            console.log('RdpClient close');
+            rdpclient.delete();
+            rdpclient = null;
+            canvasStopEvents();
+        };
+
+        rdpclient.start();
+        canvasStartEvents();
+    }
+}
+
+
+function init_rdpclient()
+{
+        // const maxPacketSize = 1600;
+        // const headerSize = 8;
+        const CF = Object.freeze({
+            TEXT: 1,
+            UTF16: 13,
+
+            BITMAP: 2,
+
+            DIB: 5,
+            DIBV5: 17,
+
+            // my custom format
+            FileGroupDescriptorW: 953100,
+        });
+        const CustomCF = Object.freeze({
+            FileGroupDescriptorW: 1,
+        });
+        const FileContentsOp = Object.freeze({
+            Size: 1,
+            Range: 2,
+        });
+        const FileAttributes = Object.freeze({
+            Readonly: 0x1,
+            Hidden: 0x2,
+            System: 0x4,
+            Directory: 0x10,
+            Archive: 0x20,
+            Normal: 0x80,
+        });
+        const FileFlags = Object.freeze({
+            Attributes: 0X4,
+            FileSize: 0x40,
+            WriteTime: 0x20,
+            ShowProgressUI: 0x4000,
+        });
+        const ChannelFlags = Object.freeze({
+            None: 1,
+            First: 1,
+            Last: 2,
+        });
+        const MsgFlags = Object.freeze({
+            None: 0,
+            Ok: 1,
+            Fail: 2,
+            AsciiName: 4,
+        });
+        const CbType = Object.freeze({
+            MonitorReady: 0x0001,
+            FormatList: 0x0002,
+            ListResponse: 0x0003,
+            DataRequest: 0x0004,
+            DataResponse: 0x0005,
+            TempDirectory: 0x0006,
+            Capabilities: 0x0007,
+            FileContentsRequest: 0x0008,
+            FileContentsResponse: 0x0009,
+            Lock: 0x000A,
+            Unlock: 0x000B,
+        });
+        let clipboard;
+        cbFmts.onclick = (e) => {
+            e.preventDefault();
+            const name = e.originalTarget.dataset.name;
+            const fmtId = e.originalTarget.dataset.id | 0;
+            let customCf = 0;
+            if (name === "FileGroupDescriptorW") {
+                customCf = CustomCF.FileGroupDescriptorW;
+            }
+            console.log(fmtId, customCf);
+            clipboard.sendRequestFormat(fmtId, customCf);
+            rdpclient.sendBufferedData();
+        };
+        cbFiles.onclick = (e) => {
+            e.preventDefault();
+            const ifile = e.originalTarget.dataset.ifile | 0;
+            console.log(ifile);
+            clipboard.sendFileContentsRequest(FileContentsOp.Range, 0, ifile, 0, 0);
+            rdpclient.sendBufferedData();
+        };
+        sendCbUtf8.onsubmit = (e) => {
+            e.preventDefault();
+            clipboard.sendFormat(CF.UTF16, 0, "");
+            rdpclient.sendBufferedData();
+        };
+        sendCbFile.onsubmit = (e) => {
+            e.preventDefault();
+            clipboard.sendFormat(CF.FileGroupDescriptorW, 0, "FileGroupDescriptorW");
+            rdpclient.sendBufferedData();
+        };
+        return clipboard = newClipboardChannel(rdpclient.getCallback(), {
+            receiveFormatStart: function() {
+                for (const e of [cbFmts, cbFiles]) {
+                    while (e.firstChild) {
+                        e.removeChild(e.firstChild);
+                    }
+                }
+            },
+            receiveFormatStop: function() {
+            },
+            receiveFormat: function(iname, inameLen, formatId, isUTF8) {
+                console.log(formatId,iname,inameLen);
+                const button = cbFmts.appendChild(document.createElement('button'));
+                const name = decodeName(iname, inameLen, isUTF8);
+                button.appendChild(new Text(formatId + " " + name));
+                button.dataset.id = formatId;
+                button.dataset.name = name;
+            },
+            receiveData: function(data, formatId, channelFlags) {
+                console.log(formatId, channelFlags)
+                const opt = (channelFlags & ChannelFlags.Last) ? undefined : {stream: true};
+                const accu = (channelFlags & ChannelFlags.First)
+                    ? decoder => { receiveCbUtf8_data.value = decoder.decode(data, opt) }
+                    : decoder => { receiveCbUtf8_data.value += decoder.decode(data, opt) }
+                    ;
+                switch (formatId) {
+                case CF.TEXT: accu(UTF8Decoder); break;
+                case CF.UTF16: accu(UTF16Decoder); break;
+                default: console.log('Unknown data', formatId);
+                }
+            },
+
+            receiveNbFileName: function(nb) {
+                console.log(nb);
+                this.ifile = 0;
+                this.irfile = 0;
+                this.nbfile = nb;
+                while (cbFiles.firstChild) {
+                    cbFiles.removeChild(cbFiles.firstChild);
+                }
+                // this.files = []
+            },
+            receiveFileName: function(utf16Name, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
+                const filename = UTF16Decoder.decode(utf16Name);
+                console.log(filename, attr, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
+                const button = cbFiles.appendChild(document.createElement('button'));
+                button.appendChild(new Text(attr + "," + flags + ","
+                    + ((sizeHigh << 32) | sizeLow) + ","
+                    + ((lastWriteTimeHigh << 32) | lastWriteTimeLow)
+                    + "  " + filename));
+                button.dataset.ifile = this.ifile;
+                ++this.ifile;
+            },
+            receiveFileContents: function(data, streamId, channelFlags) {
+                // const blob = new Blob([data], {type: "application/octet-stream"});
+                // cbDownload.href = URL.createObjectURL(blob);
+                // cbDownload.download = 'filename';
+                // cbDownload.click();
+                if (channelFlags & ChannelFlags.First) {
+                    this.fileaccu = 0;
+                }
+                this.fileaccu += data.length;
+                console.log(data.length, this.fileaccu, channelFlags);
+                receiveCbUtf8_data.value = UTF8Decoder.decode(data);
+            },
+            receiveFileSize: function(sizeHigh, sizeLow, streamId) {
+                console.log('id=', streamId, '  size=', sizeHigh << 32 | sizeLow);
+            },
+            receiveFormatId: function(formatId) {
+                let data = sendCbUtf8_data.value;
+                console.log("receiveFormatId", formatId, CF.UTF16);
+                switch (formatId)
+                {
+                case CF.UTF16: {
+                    let len = data.length * 2 + 2;
+                    const ptr = Module._malloc(len);
+                    len = Module.stringToUTF16(data, ptr, len) + 2;
+                    clipboard.sendDataWithHeader(CbType.DataResponse, ptr, len);
+                    Module._free(ptr);
+                    break;
+                }
+
+                case CF.FileGroupDescriptorW: {
+                    const file = sendCbFile_data.files[0]
+
+                    const ptr = Module._malloc(700);
+                    const flags = FileFlags.FileSize | FileFlags.ShowProgressUI /*| FileFlags.WriteTime*/;
+                    const attrs = FileAttributes.Normal;
+                    const stream = new OutStream(ptr);
+
+                    stream.u16le(CbType.DataResponse);
+                    stream.u16le(MsgFlags.Ok);
+                    const headerSizePos = stream.i;
+                    stream.skip(4);
+
+                    stream.u32le(1/*files.length*/);
+                    stream.u32le(flags);
+                    stream.bzero(32);
+                    stream.u32le(attrs);
+                    stream.bzero(16);
+                    // lastWriteTime: specifies the number of 100-nanoseconds intervals that have elapsed since 1 January 1601.
+                    stream.u64le((file.lastModified + 11644473600) * 10000000);
+                    stream.u64lem(file.size);
+                    stream.copyStringAsAlignedUTF16(file.name);
+                    stream.bzero(520 - file.name.length * 2);
+
+                    const totalLen = stream.i - ptr;
+                    stream.i = headerSizePos;
+                    stream.u32le(totalLen);
+
+                    console.log(totalLen);
+
+                    clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+                    Module._free(ptr);
+                    break;
+                }
+
+                default:
+                    clipboard.sendHeader(CbType.DataResponse, MsgFlags.Ok, data.length, 0);
+                    clipboard.sendData(data, 0, ChannelFlags.Last);
+                }
+            },
+            receiveFileContentsRequest: function(streamId, type, lindex, nposLow, nposHigh, szRequested) {
+                console.log("fileContentsRequest", ...arguments);
+                const file = sendCbFile_data.files[lindex];
+                console.log(file.size, file.name);
+
+                switch (type)
+                {
+                case FileContentsOp.Size: {
+                    const ptr = Module._malloc(32);
+                    const stream = new OutStream(ptr);
+
+                    stream.u16le(CbType.FileContentsResponse);
+                    stream.u16le(MsgFlags.Ok);
+                    const headerSizePos = stream.i;
+                    stream.skip(4);
+
+                    stream.u32le(streamId);
+                    stream.u64le(file.size);
+
+                    const totalLen = stream.i - ptr;
+                    stream.i = headerSizePos;
+                    stream.u32le(totalLen);
+
+                    console.log(totalLen);
+
+                    clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+
+                    Module._free(ptr);
+                    rdpclient.sendBufferedData();
+                    break;
+                }
+
+                case FileContentsOp.Range: {
+                    const reader = new FileReader();
+
+                    // Closure to capture the file information.
+                    reader.onload = function(e) {
+                        const contents = new Uint8Array(e.target.result);
+                        console.log(contents.length);
+                        const ptr = Module._malloc(32 + contents.length);
+                        const stream = new OutStream(ptr);
+
+                        stream.u16le(CbType.FileContentsResponse);
+                        stream.u16le(MsgFlags.Ok);
+                        const headerSizePos = stream.i;
+                        stream.skip(4);
+
+                        stream.u32le(streamId);
+                        stream.copyAsArray(contents);
+
+                        const totalLen = stream.i - ptr;
+                        stream.i = headerSizePos;
+                        stream.u32le(totalLen);
+
+                        console.log(totalLen);
+
+                        clipboard.sendRawData(ptr, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
+
+                        Module._free(ptr);
+                        rdpclient.sendBufferedData();
+                    };
+
+                    reader.readAsArrayBuffer(file);
+                    break;
+                }
+                }
+            }
+        }, 0x04000000);
+}
+
+login.onsubmit = (e) => {
+    e.preventDefault();
+    if (rdpclient) {
+        rdpclient.close();
+        canvasStopEvents();
+    }
+    run();
+};
+
+canvas.fillStyle = 'black';
+canvas.fillRect(0,0,800,600);
+
+const url = new URL(window.location.href)
+const inputs = {user: user_input, pass: pass_input};
+for (const k in inputs) {
+    const x = url.searchParams.get(k);
+    if (x) {
+        inputs[k].value = x
+    }
+}
+
+run();
+
+// const bytearray = new Uint8Array(event.data)
+// let text = ""
+// // console.log('Received Binary Message of ' + bytearray.length + ' bytes')
+// for (let byte of bytearray) {
+//     text += ":" + (byte+0x10000).toString(16).substr(-2)
+// }
+// console.log("Server Says: " + text)
+</script>
+
+</body>
+</html>

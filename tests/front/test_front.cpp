@@ -32,10 +32,10 @@
 //include "transport/socket_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/session_reactor_executor.hpp"
+#include "test_only/front/front_wrapper.hpp"
 #include "core/client_info.hpp"
 #include "utils/theme.hpp"
 
-#include "front/front.hpp"
 #include "mod/null/null.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 
@@ -45,37 +45,32 @@
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
-}
+} // namespace dump2008
 
-namespace dump2008_PatBlt {
-    #include "fixtures/dump_w2008_PatBlt.hpp"
-}
+// namespace dump2008_PatBlt {
+//     #include "fixtures/dump_w2008_PatBlt.hpp"
+// } // namespace dump2008_PatBlt
 
 
-class MyFront : public Front
+class MyFront : public FrontWrapper
 {
 public:
     bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
-    using Front::Front;
+    using FrontWrapper::FrontWrapper;
 
     void clear_channels()
     {
-        this->channel_list.clear_channels();
-    }
-
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override
-    {
-        return this->channel_list;
+        this->get_mutable_channel_list().clear_channels();
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef &,
-        uint8_t const *,
-        size_t ,
-        size_t ,
-        int ) override
+        const CHANNELS::ChannelDef & /*channel*/,
+        uint8_t const * /*chunk*/,
+        size_t  /*length*/,
+        size_t  /*chunk_size*/,
+        int  /*flags*/) override
     {
     }
 };
@@ -92,12 +87,9 @@ struct FrontTransport : GeneratorTransport
 
 RED_AUTO_TEST_CASE(TestFront)
 {
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
-
     ClientInfo info;
     info.keylayout = 0x04C;
-    info.console_session = 0;
+    info.console_session = false;
     info.brush_cache_code = 0;
     info.screen_info.bpp = BitsPerPixel{24};
     info.screen_info.width = 800;
@@ -161,12 +153,15 @@ RED_AUTO_TEST_CASE(TestFront)
 
     SessionReactor session_reactor;
     NullReportMessage report_message;
+
+    RED_TEST_PASSPOINT();
+
     MyFront front(
         session_reactor, front_trans, gen1, ini , cctx,
         report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
 
-    while (front.up_and_running == 0) {
+    while (!front.is_up_and_running()) {
         front.incoming(no_mod);
         RED_CHECK(session_reactor.timer_events_.is_empty());
     }
@@ -232,102 +227,25 @@ RED_AUTO_TEST_CASE(TestFront)
         gen2, timeobj, channels_authorizations, mod_rdp_params, authentifier, report_message, ini, metrics, icap_service);
 
     // incoming connexion data
-    RED_CHECK_EQUAL(front.client_info.screen_info.width, 1024);
-    RED_CHECK_EQUAL(front.client_info.screen_info.height, 768);
+    RED_CHECK_EQUAL(front.screen_info().width, 1024);
+    RED_CHECK_EQUAL(front.screen_info().height, 768);
 
     // Force Front to be up and running after Deactivation-Reactivation
     //  Sequence initiated by mod_rdp.
-    front.up_and_running = 1;
+    front.set_up_and_running(true);
 
-    front.can_be_start_capture();
+    RED_TEST_PASSPOINT();
 
     execute_mod(session_reactor, *mod, front, 38);
-
-    front.must_be_stop_capture();
 
 //    front.dump_png("trace_w2008_");
 }
 
-RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
-{
-   const uint8_t bytes_data[] = "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff"
-                                "\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff"
-                                "\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff"
-                                "\xff\xff\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
-                                "\xff\xff\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff"
-                                "\xff\xff\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\xff"
-                                "\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\xff\xff\xff\xff\xff\xff\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\xff\xff\xff\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08"
-                                "\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60"
-                                "\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f"
-                                "\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08\x60\x1f\x08";
-
-    const uint8_t bits_data[] = "\x00\x00\x00\x08\x18\x10\x10\x30\x20\x20\x60\x40\x40\xc0\x80\x00"
-                                "\xc7\x00\x3e\x00\x05\x00\x14\x00\x31\x00\x00\x00\x00\x00\x00\x00";
-
-    int16_t offset = 0;
-    int16_t baseline = 2;
-    uint16_t width = 16;
-    uint16_t height = 16;
-    int16_t incby = 16;
-
-    FontChar fc(offset, baseline, width, height, incby);
-
-    for (int i = 0; i < 32; i++) {
-        fc.data[i] = bits_data[i];
-    }
-
-    Front::GlyphTo24Bitmap g24b(fc, BGRColor{ 96,  31,   8}, BGRColor{255, 255, 255});
-
-    const size_t len = width*height;
-    RED_CHECK_MEM(make_array_view(g24b.data(), len), make_array_view(bytes_data, len));
-}
-
 RED_AUTO_TEST_CASE(TestFront2)
 {
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
-
     ClientInfo info;
     info.keylayout = 0x04C;
-    info.console_session = 0;
+    info.console_session = false;
     info.brush_cache_code = 0;
     info.screen_info.bpp = BitsPerPixel{24};
     info.screen_info.width = 800;
@@ -390,16 +308,21 @@ RED_AUTO_TEST_CASE(TestFront2)
 
     SessionReactor session_reactor;
     NullReportMessage report_message;
+
+    RED_TEST_PASSPOINT();
+
     MyFront front( session_reactor, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support, mem3blt_support);
     null_mod no_mod;
+
+    RED_TEST_PASSPOINT();
 
     RED_REQUIRE(!session_reactor.timer_events_.is_empty());
     RED_CHECK_EXCEPTION_ERROR_ID(
         session_reactor.execute_timers_at(
             SessionReactor::EnableGraphics{false},
             {ini.get<cfg::globals::handshake_timeout>().count(), 0},
-            [&]{ return std::ref(front); }),
+            [&]{ return std::ref(front.gd()); }),
         ERR_RDP_HANDSHAKE_TIMEOUT);
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
@@ -492,9 +415,6 @@ RED_AUTO_TEST_CASE(TestFront2)
 /*
 RED_AUTO_TEST_CASE(TestFront3)
 {
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
-    ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
-
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;

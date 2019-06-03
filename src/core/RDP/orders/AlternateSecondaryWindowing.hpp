@@ -456,7 +456,6 @@ class WindowInformationCommonHeader {
     mutable uint32_t WindowId_           = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
-    mutable OutStream* output_stream       = nullptr;
 
 public:
     //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
@@ -467,11 +466,8 @@ public:
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    void emit_begin(OutStream & stream) const {
-        assert(this->output_stream == nullptr);
-
-        this->output_stream = &stream;
-
+    void emit_begin(OutStream & stream) const
+    {
         uint8_t const controlFlags = SECONDARY | (uint8_t(AltsecDrawingOrderType::Window) << 2);
         stream.out_uint8(controlFlags);
 
@@ -482,17 +478,13 @@ public:
         stream.out_uint32_le(this->WindowId_);
     }
 
-    void emit_end() const {
-        assert(this->output_stream != nullptr);
-
-        this->OrderSize =   this->output_stream->get_offset()
+    void emit_end(OutStream & stream) const
+    {
+        this->OrderSize =   stream.get_offset()
                           - this->offset_of_OrderSize
                           + 1;  // Alternate Secondary Order Header(1)
 
-        this->output_stream->set_out_uint16_le(this->OrderSize,
-            this->offset_of_OrderSize);
-
-        this->output_stream = nullptr;
+        stream.stream_at(this->offset_of_OrderSize).out_uint16_le(this->OrderSize);
     }
 
     void receive(InStream & stream) {
@@ -1216,7 +1208,7 @@ public:
             stream.out_uint8(this->AppBarEdge_);
         }
 
-        this->header.emit_end();
+        this->header.emit_end(stream);
         //LOG(LOG_INFO, "Send NewOrExistingWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
         //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
@@ -1930,7 +1922,7 @@ public:
 
         this->icon_info.emit(stream);
 
-        this->header.emit_end();
+        this->header.emit_end(stream);
         //LOG(LOG_INFO, "Send WindowIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
         //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
@@ -2051,7 +2043,7 @@ const auto save_stream_p = stream.get_current();
 
         this->cached_icon_info.emit(stream);
 
-        this->header.emit_end();
+        this->header.emit_end(stream);
 
 LOG(LOG_INFO, "Send CachedIcon: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
@@ -2148,7 +2140,7 @@ public:
 
         this->header.emit_begin(stream);
 
-        this->header.emit_end();
+        this->header.emit_end(stream);
 
         //LOG(LOG_INFO, "Send DeletedWindow: size=%u", unsigned(stream.get_current() - save_stream_p));
         //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
@@ -2240,7 +2232,6 @@ class NotificationIconInformationCommonHeader {
             uint32_t NotifyIconId        = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
-    mutable OutStream* output_stream       = nullptr;
 
 public:
     //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
@@ -2251,11 +2242,8 @@ public:
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    void emit_begin(OutStream & stream) const {
-        assert(this->output_stream == nullptr);
-
-        this->output_stream = &stream;
-
+    void emit_begin(OutStream & stream) const
+    {
         uint8_t const controlFlags = SECONDARY | (uint8_t(AltsecDrawingOrderType::Window) << 2);
         stream.out_uint8(controlFlags);
 
@@ -2267,17 +2255,13 @@ public:
         stream.out_uint32_le(this->NotifyIconId);
     }
 
-    void emit_end() const {
-        assert(this->output_stream != nullptr);
-
-        this->OrderSize =   this->output_stream->get_offset()
+    void emit_end(OutStream & stream) const
+    {
+        this->OrderSize =   stream.get_offset()
                           - this->offset_of_OrderSize
                           + 1;  // Alternate Secondary Order Header(1)
 
-        this->output_stream->set_out_uint16_le(this->OrderSize,
-            this->offset_of_OrderSize);
-
-        this->output_stream = nullptr;
+        stream.stream_at(this->offset_of_OrderSize).out_uint16_le(this->OrderSize);
     }
 
     void receive(InStream & stream) {
@@ -2726,7 +2710,7 @@ const auto save_stream_p = stream.get_current() + 1;
             this->cached_icon.emit(stream);
         }
 
-        this->header.emit_end();
+        this->header.emit_end(stream);
 
 LOG(LOG_INFO, "Send IconInfo: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
@@ -2935,7 +2919,7 @@ const auto save_stream_p = stream.get_current() + 1;
 
         this->header.emit_begin(stream);
 
-        this->header.emit_end();
+        this->header.emit_end(stream);
 
 LOG(LOG_INFO, "Send DeletedNotificationIcons: size=%u", unsigned(stream.get_current() - save_stream_p));
 hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
@@ -3011,7 +2995,6 @@ class DesktopInformationCommonHeader {
             uint32_t FieldsPresentFlags_ = 0;
 
     mutable uint32_t   offset_of_OrderSize = 0;
-    mutable OutStream* output_stream       = nullptr;
 
 public:
     //void AddFieldsPresentFlags(uint32_t FieldsPresentFlagsToAdd) {
@@ -3022,11 +3005,8 @@ public:
     //    this->FieldsPresentFlags_ &= ~FieldsPresentFlagsToRemove;
     //}
 
-    void emit_begin(OutStream & stream) const {
-        assert(this->output_stream == nullptr);
-
-        this->output_stream = &stream;
-
+    void emit_begin(OutStream & stream) const
+    {
         uint8_t const controlFlags = SECONDARY | (uint8_t(AltsecDrawingOrderType::Window) << 2);
         stream.out_uint8(controlFlags);
 
@@ -3036,17 +3016,13 @@ public:
         stream.out_uint32_le(this->FieldsPresentFlags_);
     }
 
-    void emit_end() const {
-        assert(this->output_stream != nullptr);
-
-        this->OrderSize =   this->output_stream->get_offset()
+    void emit_end(OutStream & stream) const
+    {
+        this->OrderSize =   stream.get_offset()
                           - this->offset_of_OrderSize
                           + 1;  // Alternate Secondary Order Header(1)
 
-        this->output_stream->set_out_uint16_le(this->OrderSize,
-            this->offset_of_OrderSize);
-
-        this->output_stream = nullptr;
+        stream.stream_at(this->offset_of_OrderSize).out_uint16_le(this->OrderSize);
     }
 
     void receive(InStream & stream) {
@@ -3180,6 +3156,7 @@ public:
 private:
     mutable uint32_t ActiveWindowId_ = 0;
 
+    // TODO static_vector<., 32>
     mutable  uint8_t NumWindowIds_    = 0;
     mutable uint32_t window_ids_[255] = { 0 };
 
@@ -3200,7 +3177,7 @@ public:
             }
         }
 
-        this->header.emit_end();
+        this->header.emit_end(stream);
         //LOG(LOG_INFO, "Send ActivelyMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
         //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
@@ -3402,7 +3379,7 @@ public:
 
         this->header.emit_begin(stream);
 
-        this->header.emit_end();
+        this->header.emit_end(stream);
 
         //LOG(LOG_INFO, "Send NonMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
         //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));

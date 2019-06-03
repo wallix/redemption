@@ -3517,11 +3517,7 @@ RED_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     Drawable gd(368, 10);
     gd.mem_blt(Rect(0, 0, 368, 10), bmp2, 0, 0);
 
-    Bitmap bitmap_0_;
-
-    Bitmap bitmap_1_(bitmap_0_);
-
-    Bitmap bitmap_2_ = bitmap_1_;
+    RED_CHECK_SIG(gd, "\x2c\xcf\xe2\xe1\x02\x36\x69\x2d\x14\x10\x71\x99\xc7\x35\x1a\x2f\x2a\xb2\x53\x27");
 }
 
 
@@ -3642,21 +3638,25 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
 
     RED_CHECK_EQUAL(bmp24.bpp(), BitsPerPixel{24});
 
+    Bitmap bmp_24_to_32(BitsPerPixel{32}, bmp24);
     Bitmap bmp_24_to_24(BitsPerPixel{24}, bmp24);
     Bitmap bmp_24_to_16(BitsPerPixel{16}, bmp24);
     Bitmap bmp_24_to_15(BitsPerPixel{15}, bmp24);
     Bitmap bmp_24_to_8(BitsPerPixel{8}, bmp24);
 
+    Bitmap bmp_16_to_32(BitsPerPixel{32}, bmp_24_to_16);
     Bitmap bmp_16_to_24(BitsPerPixel{24}, bmp_24_to_16);
     Bitmap bmp_16_to_16(BitsPerPixel{16}, bmp_24_to_16);
     Bitmap bmp_16_to_15(BitsPerPixel{15}, bmp_24_to_16);
     Bitmap bmp_16_to_8(BitsPerPixel{8}, bmp_24_to_16);
 
+    Bitmap bmp_15_to_32(BitsPerPixel{32}, bmp_24_to_15);
     Bitmap bmp_15_to_24(BitsPerPixel{24}, bmp_24_to_15);
     Bitmap bmp_15_to_16(BitsPerPixel{16}, bmp_24_to_15);
     Bitmap bmp_15_to_15(BitsPerPixel{15}, bmp_24_to_15);
     Bitmap bmp_15_to_8(BitsPerPixel{8}, bmp_24_to_15);
 
+    Bitmap bmp_8_to_32(BitsPerPixel{32}, bmp_24_to_8);
     Bitmap bmp_8_to_24(BitsPerPixel{24}, bmp_24_to_8);
     Bitmap bmp_8_to_16(BitsPerPixel{16}, bmp_24_to_8);
     Bitmap bmp_8_to_15(BitsPerPixel{15}, bmp_24_to_8);
@@ -3783,7 +3783,7 @@ static int rle_bin_to_run_order(
                             };
 
                     default:
-                        RED_CHECK(false);
+                        RED_FAIL(image_data_current);
                         return {
                                 false,
                                 static_cast<CodeIdentifier>(image_data_current),
@@ -3852,7 +3852,7 @@ static int rle_bin_to_run_order(
                     };
 
             default:
-                RED_CHECK(false);
+                RED_FAIL(image_data_current);
                 return {
                         true,
                         static_cast<CodeIdentifier>(image_data_current),
@@ -3888,7 +3888,7 @@ static int rle_bin_to_run_order(
             break;
 
             default:
-                RED_CHECK(false);
+                RED_FAIL(run_order.code_identifier);
                 break;
         }
     }

@@ -29,7 +29,7 @@ constant FILEGEN_CONF : $(AUTOGEN_INC_DIR)/variables_configuration.hpp ;
 
 actions generate_cpp_enumeration
 {
-    $(>) $(FILEGEN_ENUM) $(AUTOGEN_INC_DIR)/enums_func_ini.hpp
+    $(>) $(FILEGEN_ENUM) $(AUTOGEN_INC_DIR)/enums_func_ini.hpp $(AUTOGEN_INC_DIR)/enums_func_ini.tcc
 }
 
 actions generate_config_spec
@@ -101,4 +101,5 @@ rule test-run ( name )
 test-run test_config ;
 test-run test_parser ;
 test-run test_config_assign ;
+test-run test_include ;
 ## }
