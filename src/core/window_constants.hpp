@@ -33,3 +33,9 @@ enum {
     SW_HIDE          = 0,
     SW_MINIMIZE      = 6
 };
+
+enum {
+    BST_UNCHECKED     = 0,
+    BST_CHECKED       = 1,
+    BST_INDETERMINATE = 2
+};

@@ -1020,6 +1020,9 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (cstr_equal("BUTTON_CLICKED", order)) {
             line_with_2_var("windows", "button");
         }
+        else if (cstr_equal("CHECKBOX_CLICKED", order)) {
+            line_with_3_var("windows", "checkbox", "state");
+        }
         else if (cstr_equal("EDIT_CHANGED", order)) {
             line_with_2_var("windows", "edit");
         }
