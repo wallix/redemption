@@ -21,14 +21,15 @@
 
 #pragma once
 
+#include "core/error.hpp"
 #include "core/front_api.hpp"
+#include "core/window_constants.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/make_unique.hpp"
-#include "core/error.hpp"
 #include "mod/mod_api.hpp"
 
 #include <chrono>
@@ -2149,6 +2150,34 @@ public:
                         message_format_invalid = true;
                     }
                 }
+
+                else if (!order.compare("CHECKBOX_CLICKED")) {
+                    if (parameters.size() == 3) {
+                        auto info = key_qvalue_pairs({
+                            {"type",     "CHECKBOX_CLICKED"},
+                            {"window",   parameters[0]},
+                            {"checkbox", parameters[1]},
+                            {"state",    [](int state) {
+                                    switch (state) {
+                                        case BST_UNCHECKED:     return "unchecked";
+                                        case BST_CHECKED:       return "checked";
+                                        case BST_INDETERMINATE: return "indeterminate";
+                                        default:                return "unavailable";
+                                    }
+                                }(::atoi(parameters[2].c_str()))}
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+
                 else if (!order.compare("EDIT_CHANGED")) {
                     if (parameters.size() == 2) {
                         auto info = key_qvalue_pairs({
