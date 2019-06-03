@@ -25,8 +25,12 @@
 #include "capture/wrm_chunk_type.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "cxx/diagnostic.hpp"
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
 constexpr inline std::size_t WRM_HEADER_SIZE = 8;
+REDEMPTION_DIAGNOSTIC_POP
 
 inline void send_wrm_chunk(Transport& t, WrmChunkType chunktype, uint16_t data_size, uint16_t count)
 {

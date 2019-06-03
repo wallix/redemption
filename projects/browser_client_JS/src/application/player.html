@@ -27,7 +27,7 @@ class CbPlayer extends RDPGraphics
     constructor(ecanvas)
     {
         super(ecanvas)
-        this.time = 0;
+        this.time = -1;
     }
 
     setPointerPosition(x, y)
@@ -44,9 +44,13 @@ class CbPlayer extends RDPGraphics
 
 const ecanvas = document.getElementById('canvas');
 
+const cbPlayer = new CbPlayer(ecanvas);
+const player = newWrmPlayer(cbPlayer);
+
 const playFile = function(ifile)
 {
     if (ifile == 3) {
+        player.delete();
         return ;
     }
 
@@ -55,28 +59,29 @@ const playFile = function(ifile)
     fetch('sample'+ifile+'.wrm')
     .then(response => response.arrayBuffer())
     .then(buffer => {
-        const cbPlayer = new CbPlayer(ecanvas);
-        const player = newWrmPlayer(cbPlayer, buffer);
+        player.nextData(buffer);
+        if (cbPlayer.time === -1) {
+            player.nextTimestampOrder();
+        }
         let previousTime = cbPlayer.time;
         let currentDate = Date.now()
         let i = 0;
         console.log(currentDate);
         const loop = function() {
             console.log('loop', ++i);
-            while (player.next()) {
-                player.interpret();
+            while (player.nextOrder()) {
+                player.interpretOrder();
                 if (cbPlayer.time != previousTime) {
                     const delay = cbPlayer.time - previousTime;
                     const now = Date.now();
                     const elapsedTime = now - currentDate;
                     previousTime = cbPlayer.time
                     currentDate = now;
-                    // console.log(delay, elapsedTime)
-                    setTimeout(loop, Math.max(delay-elapsedTime, 0));
+                    setTimeout(loop, Math.max(delay-elapsedTime, 0)/30);
                     return;
                 }
             }
-            console.log(Date.now());
+            // console.log(Date.now());
             playFile(ifile+1)
         };
         loop();

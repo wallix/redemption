@@ -52,14 +52,38 @@ namespace
     }
 
     using SetPointerMode = gdi::GraphicApi::SetPointerMode;
+
+    const Pointer dummy_cursor; // for gdi::GraphicApi::SetPointerMode::Cached
 }
 
 struct WrmPlayer
 {
-    WrmPlayer(emscripten::val callbacks, std::string data) noexcept
+    WrmPlayer(emscripten::val callbacks) noexcept
     : callbacks(std::move(callbacks))
-    , data(std::move(data))
     , gd(this->callbacks, 0, 0)
+    {}
+
+    std::size_t remaining_data_size() const noexcept
+    {
+        return this->offset;
+    }
+
+    void next_data(std::string data)
+    {
+        this->data.erase(0, this->offset);
+        this->_reset();
+
+        if (this->data.empty())
+        {
+            this->data = std::move(data);
+        }
+        else
+        {
+            this->data += data;
+        }
+    }
+
+    void next_timestamp_order()
     {
         bool has_time = false;
         while (this->next_order())
@@ -92,15 +116,15 @@ struct WrmPlayer
             }
 
             this->chunk.type = safe_cast<WrmChunkType>(header.in_uint16_le());
-            this->chunk.size = header.in_uint32_le();
+            auto chunk_size = header.in_uint32_le();
             this->chunk.count = header.in_uint16_le();
 
-            if (header.in_remain() + WRM_HEADER_SIZE < this->chunk.size)
+            if (header.in_remain() + WRM_HEADER_SIZE < chunk_size)
             {
                 return false;
             }
 
-            this->in_stream = InStream(header.get_data(), this->chunk.size, WRM_HEADER_SIZE);
+            this->in_stream = InStream(header.get_data(), chunk_size, WRM_HEADER_SIZE);
         }
 
         if (this->chunk.count > 0)
@@ -175,6 +199,7 @@ struct WrmPlayer
             case WrmChunkType::LAST_IMAGE_CHUNK:
             case WrmChunkType::PARTIAL_IMAGE_CHUNK:
             {
+                // TODO
                 /*if (this->graphic_consumers.size())
                 {
                     set_rows_from_image_chunk(
@@ -279,7 +304,7 @@ struct WrmPlayer
                     const Pointer cursor = pointer_loader_32x32(this->in_stream);
                     this->gd.set_pointer(cache_idx, cursor, SetPointerMode::New);
                 }
-                this->gd.set_pointer(cache_idx, this->dummy_cursor, SetPointerMode::Cached);
+                this->gd.set_pointer(cache_idx, dummy_cursor, SetPointerMode::Cached);
                 break;
             }
 
@@ -326,6 +351,13 @@ struct WrmPlayer
     }
 
 private:
+    void _reset() noexcept
+    {
+        this->offset = 0;
+        this->chunk.count = 0;
+        this->in_stream = InStream();
+    }
+
     void _skip_chunk() noexcept
     {
         this->chunk.count = 0;
@@ -355,9 +387,8 @@ private:
 
     struct Chunk
     {
-        uint32_t size = 0;
-        WrmChunkType type;
         uint16_t count = 0;
+        WrmChunkType type;
     };
 
     Chunk chunk;
@@ -369,16 +400,18 @@ private:
     WrmMetaChunk wrm_info;
     GlyphCache gly_cache;
     redjs::BrowserGraphic gd;
-    Pointer dummy_cursor; // for gdi::GraphicApi::SetPointerMode::Cached
 };
 
 
 EMSCRIPTEN_BINDINGS(player)
 {
     redjs::class_<WrmPlayer>("WrmPlayer")
-        .constructor<emscripten::val, std::string>()
-        .function("next", &WrmPlayer::next_order)
-        .function("interpret", &WrmPlayer::interpret_order)
+        .constructor<emscripten::val>()
+        .function("nextData", &WrmPlayer::next_data)
+        .function("nextOrder", &WrmPlayer::next_order)
+        .function("interpretOrder", &WrmPlayer::interpret_order)
+        .function("remainingDataSize", &WrmPlayer::remaining_data_size)
+        .function("nextTimestampOrder", &WrmPlayer::next_timestamp_order)
     ;
 }
 

@@ -37,6 +37,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
 #include "utils/log.hpp"
@@ -85,6 +86,8 @@ namespace
         constexpr char const* draw_bitmap_data = draw_memblt;
         constexpr char const* draw_lineto = "drawLineTo";
         constexpr char const* draw_polyline = "drawPolyline";
+        constexpr char const* draw_pat_blt = "drawPatBlt";
+        constexpr char const* draw_pat_blt_ex = "drawPatBltEx";
 
         constexpr char const* cached_pointer = "cachedPointer";
         constexpr char const* new_pointer = "newPointer";
@@ -212,11 +215,54 @@ void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     });
 }
 
-void BrowserGraphic::draw(const RDPDestBlt & /*cmd*/, Rect /*clip*/) { }
-void BrowserGraphic::draw(const RDPMultiDstBlt & /*cmd*/, Rect /*clip*/) { }
+void BrowserGraphic::draw(const RDPDestBlt & /*cmd*/, Rect /*clip*/)
+{
+    LOG(LOG_DEBUG, "RDPDestBlt unsupported");
+}
 
-void BrowserGraphic::draw(RDPPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
-void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
+void BrowserGraphic::draw(const RDPMultiDstBlt & /*cmd*/, Rect /*clip*/)
+{
+    LOG(LOG_DEBUG, "RDPMultiDstBlt unsupported");
+}
+
+void BrowserGraphic::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+{
+    const Rect trect = intersect(clip, cmd.rect);
+
+    auto back_color = color_decode(cmd.back_color, color_ctx);
+    if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
+        auto fore_color = color_decode(cmd.fore_color, color_ctx);
+        uint8_t brush_data[8];
+        memcpy(brush_data, cmd.brush.extra, 7);
+        brush_data[7] = cmd.brush.hatch;
+
+        emval_call(this->callbacks, jsnames::draw_pat_blt_ex,
+            trect.x,
+            trect.y,
+            trect.cx,
+            trect.cy,
+            cmd.rop,
+            back_color,
+            fore_color,
+            brush_data
+        );
+    }
+    else {
+        emval_call(this->callbacks, jsnames::draw_pat_blt,
+            trect.x,
+            trect.y,
+            trect.cx,
+            trect.cy,
+            cmd.rop,
+            back_color
+        );
+    }
+}
+
+void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+{
+    LOG(LOG_DEBUG, "RDPMultiPatBlt unsupported");
+}
 
 void BrowserGraphic::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_entries)
 {
@@ -326,10 +372,20 @@ void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_
     );
 }
 
-void BrowserGraphic::draw(RDPGlyphIndex const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const GlyphCache & /*gly_cache*/) { }
+void BrowserGraphic::draw(RDPGlyphIndex const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const GlyphCache & /*gly_cache*/)
+{
+    LOG(LOG_DEBUG, "RDPGlyphIndex unsupported");
+}
 
-void BrowserGraphic::draw(RDPPolygonSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
-void BrowserGraphic::draw(RDPPolygonCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
+void BrowserGraphic::draw(RDPPolygonSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+{
+    LOG(LOG_DEBUG, "RDPPolygonSC unsupported");
+}
+
+void BrowserGraphic::draw(RDPPolygonCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+{
+    LOG(LOG_DEBUG, "RDPPolygonCB unsupported");
+}
 
 void BrowserGraphic::draw(RDPPolyline const & cmd, Rect /*clip*/, gdi::ColorCtx color_ctx)
 {
@@ -346,19 +402,71 @@ void BrowserGraphic::draw(RDPPolyline const & cmd, Rect /*clip*/, gdi::ColorCtx 
     );
 }
 
-void BrowserGraphic::draw(RDPEllipseSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
-void BrowserGraphic::draw(RDPEllipseCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
-void BrowserGraphic::draw(const RDPColCache   & /*unused*/) { }
-void BrowserGraphic::draw(const RDPBrushCache & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::FrameMarker & /*cmd*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::WindowIcon & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::CachedIcon & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::DeletedWindow & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::DeletedNotificationIcons & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/) { }
+void BrowserGraphic::draw(RDPEllipseSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+{
+    LOG(LOG_DEBUG, "RDPEllipseSC unsupported");
+}
+
+void BrowserGraphic::draw(RDPEllipseCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+{
+    LOG(LOG_DEBUG, "RDPEllipseCB unsupported");
+}
+
+void BrowserGraphic::draw(const RDPColCache   & /*unused*/)
+{
+    LOG(LOG_DEBUG, "RDPColCache unsupported");
+}
+
+void BrowserGraphic::draw(const RDPBrushCache & /*unused*/)
+{
+    LOG(LOG_DEBUG, "RDPBrushCache unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::FrameMarker & /*cmd*/)
+{
+    LOG(LOG_DEBUG, "FrameMarker unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/)
+{
+    LOG(LOG_DEBUG, "NewOrExistingWindow unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::RAIL::WindowIcon & /*unused*/)
+{
+    LOG(LOG_DEBUG, "WindowIcon unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::RAIL::CachedIcon & /*unused*/)
+{
+    LOG(LOG_DEBUG, "CachedIcon unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::RAIL::DeletedWindow & /*unused*/)
+{
+    LOG(LOG_DEBUG, "DeletedWindow unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/)
+{
+    LOG(LOG_DEBUG, "NewOrExistingNotificationIcons unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::RAIL::DeletedNotificationIcons & /*unused*/)
+{
+    LOG(LOG_DEBUG, "DeletedNotificationIcons unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*unused*/)
+{
+    LOG(LOG_DEBUG, "ActivelyMonitoredDesktop unsupported");
+}
+
+void BrowserGraphic::draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/)
+{
+    LOG(LOG_DEBUG, "NonMonitoredDesktop unsupported");
+}
+
 
 void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 {
@@ -380,9 +488,21 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
     );
 }
 
-void BrowserGraphic::set_palette(const BGRPalette& /*unused*/) { }
-void BrowserGraphic::draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) {}
-void BrowserGraphic::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) { }
+void BrowserGraphic::set_palette(const BGRPalette& /*unused*/)
+{
+    LOG(LOG_DEBUG, "BGRPalette unsupported");
+}
+
+void BrowserGraphic::draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/)
+{
+    LOG(LOG_DEBUG, "RDPNineGrid unsupported");
+}
+
+void BrowserGraphic::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/)
+{
+    LOG(LOG_DEBUG, "RDPSetSurfaceCommand unsupported");
+}
+
 
 
 void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
@@ -423,8 +543,10 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
     }
 }
 
-void BrowserGraphic::begin_update() { }
-void BrowserGraphic::end_update() { }
+void BrowserGraphic::begin_update() {}
+
+void BrowserGraphic::end_update() {}
+
 
 bool BrowserGraphic::resize_canvas(uint16_t width, uint16_t height)
 {
