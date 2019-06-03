@@ -23,6 +23,7 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/log.hpp"

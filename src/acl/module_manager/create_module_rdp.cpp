@@ -287,7 +287,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
     mod_rdp_params.validator_socket_path = ini.get<cfg::validator::validator_socket_path>().c_str();
     mod_rdp_params.channel_files_directory = ini.get<cfg::validator::channel_files_directory>().c_str();
-    mod_rdp_params.validator_target_name = ini.get<cfg::validator::validator_target_name>().c_str();
+    mod_rdp_params.validator_target_name = "mcafee"; //ini.get<cfg::validator::validator_target_name>().c_str();
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
 
