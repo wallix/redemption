@@ -25,6 +25,7 @@
 #include "core/error.hpp"
 #include "core/front_api.hpp"
 #include "core/session_reactor.hpp"
+#include "core/window_constants.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel_params.hpp"
@@ -1515,6 +1516,37 @@ public:
                         message_format_invalid = true;
                     }
                 }
+                else if (!::strcasecmp(order_.c_str(), "CHECKBOX_CLICKED")) {
+                    if (parameters_.size() == 3) {
+                        auto info = key_qvalue_pairs({
+                            {"type",     "CHECKBOX_CLICKED"},
+                            {"window",   parameters_[0]},
+                            {"checkbox", parameters_[1]},
+                            {"state",    [](int state) {
+                                    switch (state) {
+                                        case BST_UNCHECKED:     return "unchecked";
+                                        case BST_CHECKED:       return "checked";
+                                        case BST_INDETERMINATE: return "indeterminate";
+                                        default:                return "unavailable";
+                                    }
+                                }(::atoi(parameters_[2].c_str()))}
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = order_;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+
                 else if (!::strcasecmp(order_.c_str(), "EDIT_CHANGED")) {
                     if (parameters_.size() == 2) {
                         auto info = key_qvalue_pairs({
