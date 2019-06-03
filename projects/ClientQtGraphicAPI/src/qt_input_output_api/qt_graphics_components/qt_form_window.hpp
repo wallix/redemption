@@ -23,7 +23,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 
+#include "utils/sugar/algostring.hpp"
 #include "utils/log.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
