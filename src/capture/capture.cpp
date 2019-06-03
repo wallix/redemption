@@ -1021,7 +1021,21 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             line_with_2_var("windows", "button");
         }
         else if (cstr_equal("CHECKBOX_CLICKED", order)) {
-            line_with_3_var("windows", "checkbox", "state");
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const text = left(parameters, subitem_separator);
+                auto const remaining = right(parameters, subitem_separator);
+                if (auto const subitem_separator2 = find(remaining, '\x01')) {
+                    auto const r = right(remaining, subitem_separator2);
+                    char r_sz[64];
+                    memcpy(r_sz, r.data(), std::min(r.size(), sizeof(r_sz) - 1));
+                    r_sz[sizeof(r_sz) - 1] = '\0';
+                    message.assign(order, {
+                        {zstr("window"),   text},
+                        {zstr("checkbox"), left(remaining, subitem_separator2)},
+                        {zstr("state"),    ::button_state_to_string(::atoi(r_sz))},
+                    });
+                }
+            }
         }
         else if (cstr_equal("EDIT_CHANGED", order)) {
             line_with_2_var("windows", "edit");
