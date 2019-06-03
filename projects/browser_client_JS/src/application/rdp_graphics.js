@@ -134,6 +134,10 @@ class RDPGraphics
         this.canvas.putImageData(imgData, x, y);
     }
 
+    _invert(x, y, w, h) {
+        this._transformPixels(x,y,w,h, (src) => src ^ 0xffffff);
+    }
+
     drawPatBlt(x, y, w, h, rop, color) {
         switch (rop) {
             case 0x00:
@@ -143,11 +147,11 @@ class RDPGraphics
             case 0x05: this._transformPixels(x,y,w,h, (src) => ~(color | src)); break;
             case 0x0f: this._transformPixels(x,y,w,h, (src) => ~src); break;
             case 0x50: this._transformPixels(x,y,w,h, (src) => src & ~color); break;
-            case 0x55: this._transformPixels(x,y,w,h, (src) => src ^ 0xffffff00); break;
+            case 0x55: this._invert(x,y,w,h); break;
             case 0x5a: this._transformPixels(x,y,w,h, (src) => color ^ src); break;
             case 0x5f: this._transformPixels(x,y,w,h, (src) => ~(color & src)); break;
             case 0xa0: this._transformPixels(x,y,w,h, (src) => color & src); break;
-            case 0xaa: break;
+            // case 0xaa: break;
             case 0xaf: this._transformPixels(x,y,w,h, (src) => color | ~src); break;
             case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~target); break;
             case 0xff:
@@ -180,6 +184,19 @@ class RDPGraphics
             case 0x5a: this._transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData, (src,c) => src ^ c); break;
             default: console.log('unsupported PatBltEx rop', rop);
         }
+    }
+
+    drawDestBlt(x, y, w, h, rop) {
+        case 0x00:
+            this.canvas.fillStyle = "#000";
+            this.canvas.fillRect(x,y,w,h);
+            break;
+        case 0x55: this._invert(x,y,w,h); break;
+        // case 0xAA: break;
+        case 0xff:
+            this.canvas.fillStyle = "#fff";
+            this.canvas.fillRect(x,y,w,h);
+            break;
     }
 
     image2CSS(image, x, y) {

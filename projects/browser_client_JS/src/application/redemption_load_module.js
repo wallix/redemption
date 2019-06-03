@@ -32,6 +32,7 @@ const redemptionLoadModule = function(Module, window)
         drawRect: identity,
         drawSrcBlt: identity,
         drawLineTo: identity,
+        drawDestBlt: identity,
 
         drawPolyline: function(cb, thisp) {
             return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
@@ -47,6 +48,7 @@ const redemptionLoadModule = function(Module, window)
                 cb.call(thisp, x, y, w, h, rop, backColor, foreColor, brushData);
             };
         },
+
 
         setPointer: wCb_em2js_ImageData,
         newPointer: wCb_em2js_ImageData,

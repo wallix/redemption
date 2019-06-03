@@ -33,6 +33,8 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -56,10 +58,16 @@ namespace
 
     // TODO removed when RDPMultiScrBlt and RDPMultiOpaqueRect contains a rect member
     //@{
+    Rect to_rect(RDPMultiDstBlt const & cmd)
+    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
+
     Rect to_rect(RDPMultiOpaqueRect const & cmd)
     { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
 
     Rect to_rect(RDP::RDPMultiScrBlt const & cmd)
+    { return cmd.rect; }
+
+    Rect to_rect(RDP::RDPMultiPatBlt const & cmd)
     { return cmd.rect; }
     //@}
 
@@ -82,13 +90,14 @@ namespace
     namespace jsnames
     {
         constexpr char const* draw_rect = "drawRect";
-        constexpr char const* draw_scrblt = "drawSrcBlt";
+        constexpr char const* draw_scr_blt = "drawSrcBlt";
         constexpr char const* draw_memblt = "drawImage";
         constexpr char const* draw_bitmap_data = draw_memblt;
-        constexpr char const* draw_lineto = "drawLineTo";
+        constexpr char const* draw_line_to = "drawLineTo";
         constexpr char const* draw_polyline = "drawPolyline";
         constexpr char const* draw_pat_blt = "drawPatBlt";
         constexpr char const* draw_pat_blt_ex = "drawPatBltEx";
+        constexpr char const* draw_dest_blt = "drawDestBlt";
 
         constexpr char const* cached_pointer = "cachedPointer";
         constexpr char const* new_pointer = "newPointer";
@@ -125,13 +134,15 @@ PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
         | TS_NEG_OPAQUERECT_INDEX       // mendatory support
         | TS_NEG_MULTIOPAQUERECT_INDEX; // based on opaque rect
 
-    set(jsnames::draw_scrblt, PrimaryDrawingOrdersSupport{}
+    set(jsnames::draw_scr_blt, PrimaryDrawingOrdersSupport{}
         | TS_NEG_SCRBLT_INDEX
         | TS_NEG_MULTISCRBLT_INDEX);
 
     set(jsnames::draw_memblt, TS_NEG_MEMBLT_INDEX);
-    set(jsnames::draw_lineto, TS_NEG_LINETO_INDEX);
+    set(jsnames::draw_line_to, TS_NEG_LINETO_INDEX);
     set(jsnames::draw_polyline, TS_NEG_POLYLINE_INDEX);
+
+    // TODO missing orders
 
     static_assert(jsnames::draw_bitmap_data == jsnames::draw_memblt);
 
@@ -185,7 +196,7 @@ void BrowserGraphic::draw(const RDPScrBlt & cmd, Rect clip)
     const auto deltax = cmd.srcx - cmd.rect.x;
     const auto deltay = cmd.srcy - cmd.rect.y;
 
-    emval_call(this->callbacks, jsnames::draw_scrblt,
+    emval_call(this->callbacks, jsnames::draw_scr_blt,
         drect.x + deltax,
         drect.y + deltay,
         drect.cx,
@@ -204,7 +215,7 @@ void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     const signed int deltay = cmd.nYSrc - cmd.rect.y;
 
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
-        emval_call(this->callbacks, jsnames::draw_scrblt,
+        emval_call(this->callbacks, jsnames::draw_scr_blt,
             trect.x,
             trect.y,
             trect.cx,
@@ -216,14 +227,29 @@ void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     });
 }
 
-void BrowserGraphic::draw(const RDPDestBlt & /*cmd*/, Rect /*clip*/)
+void BrowserGraphic::draw(const RDPDestBlt & cmd, Rect clip)
 {
-    LOG(LOG_DEBUG, "RDPDestBlt unsupported");
+    const Rect trect = intersect(clip, cmd.rect);
+    emval_call(this->callbacks, jsnames::draw_dest_blt,
+        trect.x,
+        trect.y,
+        trect.cx,
+        trect.cy,
+        cmd.rop
+    );
 }
 
-void BrowserGraphic::draw(const RDPMultiDstBlt & /*cmd*/, Rect /*clip*/)
+void BrowserGraphic::draw(const RDPMultiDstBlt & cmd, Rect clip)
 {
-    LOG(LOG_DEBUG, "RDPMultiDstBlt unsupported");
+    draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
+        emval_call(this->callbacks, jsnames::draw_dest_blt,
+            trect.x,
+            trect.y,
+            trect.cx,
+            trect.cy,
+            cmd.bRop
+        );
+    });
 }
 
 void BrowserGraphic::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
@@ -390,7 +416,7 @@ void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_
         return;
     }
 
-    emval_call(this->callbacks, jsnames::draw_lineto,
+    emval_call(this->callbacks, jsnames::draw_line_to,
         cmd.back_mode,
         equa.segin.a.x,
         equa.segin.a.y,
