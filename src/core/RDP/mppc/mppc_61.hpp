@@ -202,7 +202,7 @@ private:
 
             MatchCount = compressed_data_stream.in_uint16_le();
 
-            // MatchCount(2) * (MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4))
+            // MatchCount(variable) * (MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4))
             ::check_throw(compressed_data_stream, MatchCount * 8, "rdp_mppc_61_dec::prepare_compressed_data RDP61_COMPRESSED_DATA (1)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
 
             MatchDetails = compressed_data_stream.get_current();

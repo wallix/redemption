@@ -25,7 +25,7 @@
 #include <fstream>
 #include <vector>
 #include <memory>
-
+#include <dirent.h>
 
 #include "utils/log.hpp"
 #include "core/RDP/clipboard.hpp"
