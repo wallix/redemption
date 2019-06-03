@@ -291,7 +291,7 @@ public:
         for (uint16_t match_index = 0; match_index < MatchCount; match_index++) {
 
             // MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4)
-            ::check_throw(literals_stream, 8, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (1)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
+            ::check_throw(match_details_stream, 8, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (1)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
 
             uint16_t MatchLength        = match_details_stream.in_uint16_le();
             uint16_t MatchOutputOffset  = match_details_stream.in_uint16_le();
@@ -299,7 +299,7 @@ public:
             //LOG(LOG_INFO, "MatchHistoryOffset=%u MatchLength=%d MatchOutputOffset=%d", MatchHistoryOffset, MatchLength, MatchOutputOffset);
 
             if (MatchOutputOffset > current_output_offset) {
-                ::check_throw(literals_stream, MatchOutputOffset - current_output_offset, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (1)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
+                ::check_throw(literals_stream, MatchOutputOffset - current_output_offset, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (2)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
 
                 literals_stream.in_copy_bytes(
                     current_output_buffer + current_output_offset,
