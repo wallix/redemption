@@ -34,6 +34,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
@@ -259,9 +260,39 @@ void BrowserGraphic::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_
     }
 }
 
-void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    LOG(LOG_DEBUG, "RDPMultiPatBlt unsupported");
+    auto back_color = color_decode(cmd.BackColor, color_ctx);
+    if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
+        auto fore_color = color_decode(cmd.ForeColor, color_ctx);
+        uint8_t brush_data[8];
+        memcpy(brush_data, cmd.brush.extra, 7);
+        brush_data[7] = cmd.brush.hatch;
+        draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
+            emval_call(this->callbacks, jsnames::draw_pat_blt_ex,
+                trect.x,
+                trect.y,
+                trect.cx,
+                trect.cy,
+                cmd.bRop,
+                back_color,
+                fore_color,
+                brush_data
+            );
+        });
+    }
+    else {
+        draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
+            emval_call(this->callbacks, jsnames::draw_pat_blt,
+                trect.x,
+                trect.y,
+                trect.cx,
+                trect.cy,
+                cmd.bRop,
+                back_color
+            );
+        });
+    }
 }
 
 void BrowserGraphic::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_entries)
