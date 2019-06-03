@@ -26,6 +26,7 @@
 #include "utils/stream.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "core/channel_names.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <algorithm>
 
@@ -289,12 +290,8 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
             if (header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
 
                 if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
-                    if (!stream.in_check_rem(header.dataLen())) {
-                        LOG( LOG_ERR
-                            , "CopyPaste::send_to_mod_channel truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%" PRIu32 " remains=%zu"
-                            , header.dataLen(), stream.in_remain());
-                        throw Error(ERR_RDP_PROTOCOL);
-                    }
+
+                    ::check_throw(stream, header.dataLen(), "CopyPaste::send_to_mod_channel truncated CB_FORMAT_DATA_RESPONSE", ERR_RDP_PROTOCOL);
 
                     this->clipboard_str_.utf16_push_back(stream.get_current(), header.dataLen() / 2);
 

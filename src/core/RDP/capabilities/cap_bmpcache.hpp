@@ -30,6 +30,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 // 2.2.7.1.4 Bitmap Cache Capability Set
 
@@ -93,7 +94,7 @@ struct BmpCacheCaps : public Capability {
     uint16_t cache2MaximumCellSize{0};
     BmpCacheCaps()
     : Capability(CAPSTYPE_BITMAPCACHE, CAPLEN_BITMAPCACHE)
-     
+
     {
     }
 
@@ -122,12 +123,7 @@ struct BmpCacheCaps : public Capability {
         /* pad1(4) + pad2(4) + pad3(4) + pad4(4) + pad5(4) + pad6(4) + cache0Entries(2) + cache0MaximumCellSize(2) +
          * cache1Entries(2) + cache1MaximumCellSize(2) + cache2Entries(2) + cache2MaximumCellSize(2)
          */
-        const unsigned expected = 36;
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated BmpCacheCaps, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, 36, "BmpCacheCaps::recv", ERR_MCS_PDU_TRUNCATED);
 
         this->pad1 = stream.in_uint32_le();
         this->pad2 = stream.in_uint32_le();

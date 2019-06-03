@@ -28,6 +28,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 // 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
 
@@ -77,7 +78,7 @@ struct PointerCaps : public Capability {
     uint16_t pointerCacheSize{25};
     PointerCaps()
     : Capability(CAPSTYPE_POINTER, CAPLEN_POINTER)
-    
+
     {
     }
 
@@ -96,11 +97,7 @@ struct PointerCaps : public Capability {
         this->len = len;
 
         unsigned int expected = 2 + 2 + ((this->len < 10) ? 0 : 2); /* colorPointerFlag(2) + colorPointerCacheSize(2) + pointerCacheSize*/
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated CAPSTYPE_POINTER, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, expected, "CAPSTYPE_POINTER", ERR_MCS_PDU_TRUNCATED);
 
         this->colorPointerFlag = stream.in_uint16_le();
         this->colorPointerCacheSize = stream.in_uint16_le();

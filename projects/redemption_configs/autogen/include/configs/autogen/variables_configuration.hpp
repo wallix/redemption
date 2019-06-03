@@ -3466,6 +3466,79 @@ namespace cfg {
         type value{};
     };
 
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct validator::enable_validator {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "enable_validator";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct validator::enable_interupting_validator {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "enable_interupting_validator";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct validator::enable_save_files {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "enable_save_files";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// type: std::string <br/>
+    /// value = "" <br/>
+    struct validator::channel_files_directory {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "channel_files_directory";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "";
+    };
+    /// type: std::string <br/>
+    /// value = "tools/ICAP_socket/redemption-icap-service-sock" <br/>
+    struct validator::validator_socket_path {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "validator_socket_path";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "tools/ICAP_socket/redemption-icap-service-sock";
+    };
+    /// type: std::string <br/>
+    /// value = "avscan" <br/>
+    struct validator::validator_target_name {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "validator_target_name";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "avscan";
+    };
+
     /// Proxy session log id <br/>
     /// type: std::string <br/>
     /// sesman <- proxy <br/>
@@ -5024,6 +5097,15 @@ struct internal_mod
 : cfg::internal_mod::theme
 { static constexpr bool is_section = true; };
 
+struct validator
+: cfg::validator::channel_files_directory
+, cfg::validator::validator_socket_path
+, cfg::validator::validator_target_name
+, cfg::validator::enable_validator
+, cfg::validator::enable_interupting_validator
+, cfg::validator::enable_save_files
+{ static constexpr bool is_section = true; };
+
 struct context
 : cfg::context::psid
 , cfg::context::auth_error_message
@@ -5124,6 +5206,7 @@ struct VariablesConfiguration
 , cfg_section::remote_program
 , cfg_section::translation
 , cfg_section::internal_mod
+, cfg_section::validator
 , cfg_section::context
 {};
 

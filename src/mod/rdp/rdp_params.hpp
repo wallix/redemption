@@ -76,6 +76,12 @@ struct ModRDPParams
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
+    bool enable_validator = false;
+    bool enable_interupting_validator = false;
+    bool enable_save_files = false;
+    const char * validator_socket_path =  "";
+    const char * channel_files_directory = "";
+    const char * validator_target_name = "";
 
     struct ClipboardParams
     {

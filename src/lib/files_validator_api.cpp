@@ -24,22 +24,23 @@
 
 
 
+
 extern "C"
 {
     ICAPService * validator_open_session(const char * socket_path) noexcept {
         return icap_open_session(socket_path);
     }
 
-    int validator_open_file(ICAPService * service, const char * file_name) noexcept {
-        return icap_open_file(service, file_name);
+    int validator_open_file(ICAPService * service, const char * file_name, const char * target_name) noexcept {
+        return icap_open_file(service, file_name, target_name);
     }
 
     int validator_send_data(const ICAPService * service, const int file_id, const char * data, const int size) noexcept {
         return icap_send_data(service, file_id, data, size);
     }
 
-    void validator_receive_result(ICAPService * service) noexcept {
-        return icap_receive_result(service);
+    void validator_receive_response(ICAPService * service) noexcept {
+        return icap_receive_response(service);
     }
 
     int validator_end_of_file(ICAPService * service, const int file_id) noexcept {
@@ -54,8 +55,8 @@ extern "C"
         return icap_abort_file(service, file_id);
     }
 
-    int validator_get_result(ICAPService * service) noexcept {
-        return service->result;
+    int validator_get_result_flag(ICAPService * service) noexcept {
+        return service->result_flag;
     }
 
     const char * validator_get_content(ICAPService * service) noexcept {
@@ -72,5 +73,13 @@ extern "C"
 
     int validator_get_result_file_id(ICAPService * service) noexcept {
         return service->last_result_file_id_received;
+    }
+
+    bool validator_service_is_up(ICAPService * service) noexcept {
+        return service->service_is_up;
+    }
+
+    bool validator_is_waitting_for_response_completion(ICAPService * service) noexcept {
+        return icap_is_waitting_for_response_completion(service);
     }
 }

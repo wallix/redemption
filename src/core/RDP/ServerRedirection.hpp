@@ -28,7 +28,7 @@
 #include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "utils/redirection_info.hpp"
-
+#include "core/stream_throw_helpers.hpp"
 
 // [MS-RDPBCGR] - 2.2.13.1 Server Redirection Packet
 //  (RDP_SERVER_REDIRECTION_PACKET)
@@ -286,7 +286,7 @@ struct ServerRedirectionPDU {
     uint8_t  TargetNetAddresses[1024]{};
 
     ServerRedirectionPDU()
-         
+
     = default;
 
     unsigned recv_field_process(InStream & stream, uint8_t* field, size_t field_size,
@@ -294,11 +294,8 @@ struct ServerRedirectionPDU {
         unsigned offset = 0;
         field_length = stream.in_uint32_le();
         offset += 4;
-        if ((field_length > field_size) ||
-            !stream.in_check_rem(field_length)) {
-            LOG(LOG_INFO, "error recv_field_process field_length=%" PRIu32 ", sizeof(field)=%zu",
-                field_length, field_size);
-            throw Error(ERR_RDP_DATA_TRUNCATED);
+        if (field_length > field_size) {
+            ::check_throw(stream, field_length, "ServerRedirectionPDU::recv_field_process", ERR_RDP_DATA_TRUNCATED);
         }
         stream.in_copy_bytes(field, field_length);
         offset += field_length;
@@ -307,15 +304,10 @@ struct ServerRedirectionPDU {
 
     void receive(InStream & stream) {
         unsigned offset = 0;
-        unsigned expected = 12; /* Flags(2) + Length(2) +
-                                   SessionID(4) + RedirFlags(4) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_ERR
-               , "ServerRedirection::receive RDP_SERVER_REDIRECTION_PACKET"
-                 " - Truncated data, need=%u, remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+         /* Flags(2) + Length(2) + SessionID(4) + RedirFlags(4) */
+        ::check_throw(stream, 12, "ServerRedirectionPDU::receive RDP_SERVER_REDIRECTION_PACKET", ERR_RDP_DATA_TRUNCATED);
+
         this->Flags = stream.in_uint16_le();
         this->Length = stream.in_uint16_le();
         this->SessionID = stream.in_uint32_le();
@@ -374,8 +366,8 @@ struct ServerRedirectionPDU {
     }
 
     void emit(OutStream & stream) const {
-        unsigned expected = 12; /* Flags(2) + Length(2) +
-                                   SessionID(4) + RedirFlags(4) */
+        unsigned expected = 12; /* Flags(2) + Length(2) + SessionID(4) + RedirFlags(4) */
+
         if (!stream.has_room(expected)) {
             LOG( LOG_ERR
                , "ServerRedirectionPDU::emit - stream too small, need=%u, remains=%u"
@@ -383,6 +375,7 @@ struct ServerRedirectionPDU {
                , static_cast<unsigned>(stream.tailroom()));
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
+
         stream.out_uint16_le(this->Flags);
         stream.out_uint16_le(this->Length);
         stream.out_uint32_le(this->SessionID);

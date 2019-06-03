@@ -27,6 +27,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 // 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
 // ===========================================================
@@ -259,12 +260,7 @@ struct GeneralCaps : public Capability {
          * extraflags(2) + updateCapability(2) + remoteUnshare(2) + compressionLevel(2) +
          * + refreshRectSupport(1) + suppressOutputSupport(1)
          */
-        const unsigned expected = 20;
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated GeneralCaps, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, 20, "GeneralCaps::recv", ERR_MCS_PDU_TRUNCATED);
 
         this->os_major = stream.in_uint16_le();
         this->os_minor = stream.in_uint16_le();

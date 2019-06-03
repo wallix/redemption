@@ -87,10 +87,12 @@
 
 #ifdef __EMSCRIPTEN__
 class RDPMetrics;
+struct ICAPService;
 # define IF_ENABLE_METRICS(m) do {} while(0)
 # include "mod/rdp/windowing_api.hpp"
 #else
 # include "mod/rdp/rdp_metrics.hpp"
+# include "mod/icap_files_service.hpp"
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
 # include "mod/rdp/channels/rail_session_manager.hpp"
 # include "mod/rdp/channels/rail_channel.hpp"
@@ -360,12 +362,19 @@ private:
 
     SessionReactor & session_reactor;
 
+    ICAPService * icap_service;
+    bool enable_validator;
+    bool enable_interupting_validator;
+    bool enable_save_files;
+    std::string channel_files_directory;
+    std::string validator_target_name;
+
 public:
     mod_rdp_channels(
         ChannelsAuthorizations&& channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        SessionReactor & session_reactor)
+        SessionReactor & session_reactor, ICAPService * icap_service)
     : channels_authorizations(std::move(channels_authorizations))
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
@@ -389,10 +398,16 @@ public:
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
     , verbose(verbose)
     , session_reactor(session_reactor)
+    , icap_service(icap_service)
+    , enable_validator(mod_rdp_params.enable_validator)
+    , enable_interupting_validator(mod_rdp_params.enable_interupting_validator)
+    , enable_save_files(mod_rdp_params.enable_save_files)
+    , channel_files_directory(mod_rdp_params.channel_files_directory)
+    , validator_target_name(mod_rdp_params.validator_target_name)
     {}
 
     void DLP_antivirus_check_channels_files() {
-//         this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
+        this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
     }
 
     void init_remote_program_and_session_probe(
@@ -519,25 +534,31 @@ private:
         return std::make_unique<ToClientSender>(front, *channel, verbose);
     }
 
-    inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc) {
+    inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc, ICAPService * icap_service) {
         assert(!this->clipboard_to_client_sender
             && !this->clipboard_to_server_sender);
 
         this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
-        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
+        BaseVirtualChannel::Params base_params(this->report_message, RDPVerbose::cliprdr);
 
         ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->clipboard.disable_log_syslog, this->clipboard.disable_log_wrm, this->clipboard.log_only_relevant_activities);
+        cvc_params.enable_validator = this->enable_validator;
+        cvc_params.enable_save_files = this->enable_save_files;
+        cvc_params.enable_interupting_validator = this->enable_interupting_validator;
+        cvc_params.channel_files_directory = this->channel_files_directory;
+        cvc_params.validator_target_name = this->validator_target_name;
 
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
             front,
-            false,
+            this->session_reactor,
             base_params,
             cvc_params,
-            nullptr);
+            icap_service
+            );
     }
 
 
@@ -816,10 +837,11 @@ public:
 
     void process_cliprdr_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         FrontAPI& front,
-        ServerTransportContext & stc
+        ServerTransportContext & stc,
+        ICAPService * icap_service
     ) {
         if (!this->clipboard_virtual_channel) {
-            this->create_clipboard_virtual_channel(front, stc);
+            this->create_clipboard_virtual_channel(front, stc, icap_service);
         }
 
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
@@ -1006,7 +1028,7 @@ public:
                             ServerTransportContext & stc) {
 
         if (!this->clipboard_virtual_channel) {
-            this->create_clipboard_virtual_channel(front, stc);
+            this->create_clipboard_virtual_channel(front, stc, this->icap_service);
         }
         ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
 
@@ -1582,12 +1604,13 @@ public:
         const char (& client_name)[128],
         const uint32_t monitor_count,
         const bool bogus_refresh_rect,
-        const Translation::language_t & lang)
+        const Translation::language_t & lang,
+        ICAPService * icap_service)
     {
         assert(this->session_probe.enable_session_probe);
         if (this->session_probe.session_probe_launcher){
             if (!this->clipboard_virtual_channel) {
-                this->create_clipboard_virtual_channel(front, stc);
+                this->create_clipboard_virtual_channel(front, stc, icap_service);
             }
             ClipboardVirtualChannel& cvc = *this->clipboard_virtual_channel;
             cvc.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
@@ -1866,8 +1889,11 @@ class mod_rdp : public mod_api, public rdp_api
 
     ModRdpVariables vars;
 
+    bool enable_validator;
+
 #ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
+    ICAPService * icap_service;
 #endif
 
     static constexpr auto order_indexes_supported() noexcept
@@ -1926,8 +1952,9 @@ public:
       , ReportMessageApi & report_message
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
+      , [[maybe_unused]] ICAPService * icap_service
     )
-        : channels(std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor)
+        : channels(std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor, icap_service)
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
@@ -1988,8 +2015,10 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
+        , enable_validator(mod_rdp_params.enable_validator)
         #ifndef __EMSCRIPTEN__
         , metrics(metrics)
+        , icap_service(icap_service)
         #endif
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -2045,6 +2074,10 @@ public:
 
 #ifndef __EMSCRIPTEN__
         this->channels.remote_programs_session_manager.reset();
+
+        if (this->enable_validator) {
+            icap_close_session(this->icap_service);
+        }
 #endif
 
         if (!this->server_redirection_packet_received) {
@@ -2452,14 +2485,11 @@ public:
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-        ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
+
 
     	while (stream.in_check_rem(2)) {
+            ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
 			unsigned expected = 2;
-			if (!stream.in_check_rem(expected)) {
-				LOG(LOG_ERR, "Truncated SurfaceCommand, need=%u remains=%zu", expected, stream.in_remain());
-				throw Error(ERR_RDP_DATA_TRUNCATED);
-			}
 
 			uint16_t cmdType = stream.in_uint16_le();
 
@@ -2647,7 +2677,7 @@ public:
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc);
+                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->icap_service);
             }
             else if (mod_channel.name == channel_names::rail) {
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
@@ -2837,7 +2867,8 @@ public:
                                         this->client_name,
                                         this->monitor_count,
                                         this->bogus_refresh_rect,
-                                        this->lang);
+                                        this->lang,
+                                        this->icap_service);
                                 }
 #endif
                                 this->already_upped_and_running = true;

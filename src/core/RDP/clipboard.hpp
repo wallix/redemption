@@ -285,12 +285,10 @@ class RecvPredictor {
 public:
     explicit RecvPredictor(const InStream & stream) {
         InStream s = stream.clone();
-        const unsigned expected = 2;    /* msgType(2) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "RDPECLIP::RecvPredictor truncated msgType, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        /* msgType(2) */
+        ::check_throw(stream, 2, "RDPECLIP::RecvPredictor truncated msgType", ERR_RDP_DATA_TRUNCATED);
+
         this->msgType_ = s.in_uint16_le();
     }   // RecvFactory(InStream & stream)
 
@@ -330,12 +328,9 @@ public:
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
-        const unsigned expected = 8;    /* msgType(2) + msgFlags(2) + dataLen(4) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "RDPECLIP::CliprdrHeader::recv truncated data, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        /* msgType(2) + msgFlags(2) + dataLen(4) */
+        ::check_throw(stream, 8, "RDPECLIP::CliprdrHeader::recv truncated data", ERR_RDP_DATA_TRUNCATED);
 
         this->msgType_  = stream.in_uint16_le();
         this->msgFlags_ = stream.in_uint16_le();
@@ -414,13 +409,9 @@ public:
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
-        const unsigned expected = 4;    // cCapabilitiesSets(2) + pad1(2)
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO,
-                "RDPECLIP::ClipboardCapabilitiesPDU:recv(): recv truncated data, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        // cCapabilitiesSets(2) + pad1(2)
+        ::check_throw(stream, 4, "RDPECLIP::ClipboardCapabilitiesPDU:recv(): recv truncated data", ERR_RDP_DATA_TRUNCATED);
 
         this->cCapabilitiesSets_ = stream.in_uint16_le();
 
@@ -486,13 +477,9 @@ class CapabilitySetRecvFactory {
 
 public:
     explicit CapabilitySetRecvFactory(InStream & stream) {
-        const unsigned expected = 2;    /* capabilitySetType(2) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO
-               , "RDPECLIP::CapabilitySetRecvFactory truncated capabilitySetType, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        /* capabilitySetType(2) */
+        ::check_throw(stream, 2, "RDPECLIP::CapabilitySetRecvFactory truncated capabilitySetType", ERR_RDP_DATA_TRUNCATED);
 
         this->capabilitySetType_ = stream.in_uint16_le();
     }   // CapabilitySetRecvFactory(InStream & stream)
@@ -672,14 +659,8 @@ public:
         this->capabilitySetType_ = recv_factory.capabilitySetType();
         assert(this->capabilitySetType_ == CB_CAPSTYPE_GENERAL);
 
-        const unsigned expected = this->size() -
-                                  2;    // capabilitySetType(2)
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO
-               , "RDPECLIP::GeneralCapabilitySet::recv (1) truncated data, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        ::check_throw(stream, this->size() - 2, "RDPECLIP::GeneralCapabilitySet::recv (1) truncated data", ERR_RDP_DATA_TRUNCATED);
+        // capabilitySetType(2)
 
         this->lengthCapability  = stream.in_uint16_le();
         assert(this->size() == this->lengthCapability);
@@ -689,15 +670,9 @@ public:
     }
 
     void recv(InStream & stream) {
-        const unsigned expected = this->size(); // capabilitySetType(2) + lengthCapability(2) + version(4) +
-                                                //     generalFlags(4)
 
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO
-               , "RDPECLIP::GeneralCapabilitySet::recv (2) truncated data, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        // capabilitySetType(2) + lengthCapability(2) + version(4) + generalFlags(4)
+        ::check_throw(stream, this->size(), "RDPECLIP::GeneralCapabilitySet::recv (2) truncated data", ERR_RDP_DATA_TRUNCATED);
 
         this->capabilitySetType_ = stream.in_uint16_le();
 //         assert(this->capabilitySetType == CB_CAPSTYPE_GENERAL);
@@ -854,12 +829,8 @@ public:
 
     void recv(InStream & stream)
     {
-        const unsigned expected = this->size(); // wszTempDir(520)
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "RDPECLIP::ClientTemporaryDirectoryPDU::recv truncated data, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        // wszTempDir(520)
+        ::check_throw(stream, this->size(), "RDPECLIP::ClientTemporaryDirectoryPDU::recv truncated data", ERR_RDP_DATA_TRUNCATED);
 
         uint8_t const * const tempDir_unicode_data = stream.get_current();
         uint8_t tempDir_utf8_string[520 /* wszTempDir(520) */ / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes];
@@ -1314,13 +1285,9 @@ struct FormatDataRequestPDU
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
-        const unsigned expected = 4;   // requestedFormatId
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_INFO
-               , "FormatDataRequestPDU::recv truncated requestedFormatId, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        // requestedFormatId(4)
+        ::check_throw(stream, 4, "FormatDataRequestPDU::recv truncated requestedFormatId", ERR_RDP_DATA_TRUNCATED);
 
         this->requestedFormatId = stream.in_uint32_le();
     }
@@ -1472,15 +1439,7 @@ public:
     void receive(InStream& stream) {
         LOG(LOG_INFO, "====================== Receive File Contents Request PDU ========================");
 
-        const unsigned int expected = this->minimum_size();
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "FileContentsRequestPDUEx::recv: "
-                    "Truncated File Contents Request PDU, "
-                    "need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+        ::check_throw(stream, this->minimum_size(), "FileContentsRequestPDUEx::recv: File Contents Request PDU", ERR_RDP_DATA_TRUNCATED);
 
         this->streamId_      = stream.in_uint32_le();
         this->lindex_        = stream.in_uint32_le();

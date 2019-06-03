@@ -34,9 +34,13 @@
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
+
 #ifndef __EMSCRIPTEN__
 # include "mod/metrics_hmac.hpp"
+# include "mod/icap_files_service.hpp"
 #endif
+
+
 
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -266,7 +270,7 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.file_system_params.bogus_ios_rdpdr_virtual_channel     = ini.get<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel>();
 
-    mod_rdp_params.file_system_params.enable_rdpdr_data_analysis          = ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
+    mod_rdp_params.file_system_params.enable_rdpdr_data_analysis          =  ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
 
     mod_rdp_params.remote_app_params.bypass_legal_notice_delay = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay>();
     mod_rdp_params.remote_app_params.bypass_legal_notice_timeout
@@ -277,7 +281,16 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.clipboard_params.log_only_relevant_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
+
+    mod_rdp_params.enable_validator = ini.get<cfg::validator::enable_validator>();
+    mod_rdp_params.enable_interupting_validator = ini.get<cfg::validator::enable_interupting_validator>();
+    mod_rdp_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
+    mod_rdp_params.validator_socket_path = ini.get<cfg::validator::validator_socket_path>().c_str();
+    mod_rdp_params.channel_files_directory = ini.get<cfg::validator::channel_files_directory>().c_str();
+    mod_rdp_params.validator_target_name = ini.get<cfg::validator::validator_target_name>().c_str();
+
     mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
+
 
     try {
         const char * const name = "RDP Target";
@@ -304,7 +317,10 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
+        ICAPService * icap_service = nullptr;
+
 #ifndef __EMSCRIPTEN__
+
         struct ModRDPWithMetrics : public mod_rdp
         {
             struct ModMetrics : Metrics
@@ -317,6 +333,8 @@ void ModuleManager::create_mod_rdp(
 
             std::unique_ptr<ModMetrics> metrics;
 
+            SessionReactor::TopFdPtr validator_event;
+
             using mod_rdp::mod_rdp;
         };
 
@@ -324,6 +342,16 @@ void ModuleManager::create_mod_rdp(
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
         std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
+
+        if (mod_rdp_params.enable_validator) {
+            icap_service = icap_open_session(mod_rdp_params.validator_socket_path);
+            LOG(LOG_INFO, "icap_service->fd.fd() = %d", icap_service->fd.fd());
+            if (icap_service->fd.fd() <= 0) {
+                mod_rdp_params.enable_validator = false;
+                LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
+            }
+            this->validator_fd = icap_service->fd.fd();
+        }
 
         if (enable_metrics) {
             metrics = std::make_unique<ModRDPWithMetrics::ModMetrics>(
@@ -347,6 +375,7 @@ void ModuleManager::create_mod_rdp(
                 ini.get<cfg::metrics::log_file_turnover_interval>(),
                 ini.get<cfg::metrics::log_interval>());
         }
+
 #else
         using ModRDPWithMetrics = mod_rdp;
 #endif
@@ -373,10 +402,22 @@ void ModuleManager::create_mod_rdp(
             authentifier,
             report_message,
             ini,
-            enable_metrics ? &metrics->protocol_metrics : nullptr
+            enable_metrics ? &metrics->protocol_metrics : nullptr,
+            icap_service
         );
 
 #ifndef __EMSCRIPTEN__
+
+        if (mod_rdp_params.enable_validator) {
+            new_mod->validator_event = this->session_reactor.create_fd_event(this->validator_fd)
+            .on_timeout(jln::always_ready([]() {}))
+            .set_timeout(std::chrono::milliseconds::max() / 1000000 )
+            .on_exit(jln::propagate_exit())
+            .on_action(jln::always_ready([rdp=new_mod.get()]() {
+                rdp->DLP_antivirus_check_channels_files();
+            }));
+        }
+
         if (enable_metrics) {
             new_mod->metrics = std::move(metrics);
             new_mod->metrics->metrics_timer = session_reactor.create_timer()

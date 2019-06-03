@@ -969,4 +969,18 @@ password_fr = string(default='')
 #_advanced
 load_theme = string(default='')
 
+[validator]
+
+enable_validator = boolean(default=False)
+
+enable_interupting_validator = boolean(default=False)
+
+enable_save_files = boolean(default=False)
+
+channel_files_directory = string(default='')
+
+validator_socket_path = string(default='tools/ICAP_socket/redemption-icap-service-sock')
+
+validator_target_name = string(default='avscan')
+
 )gen_config_ini"

@@ -1152,4 +1152,21 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #load_theme = 
 
+[validator]
+
+# value: 0 or 1
+#enable_validator = 0
+
+# value: 0 or 1
+#enable_interupting_validator = 0
+
+# value: 0 or 1
+#enable_save_files = 0
+
+#channel_files_directory = 
+
+#validator_socket_path = tools/ICAP_socket/redemption-icap-service-sock
+
+#validator_target_name = avscan
+
 )gen_config_ini"

@@ -315,7 +315,7 @@ public:
 
         ClientRedemption::draw(cmd, content);
 
-		QImage img(content.data, content.width, cmd.height, QImage::Format_RGBA8888);
+		QImage img(content.data, content.width, cmd.height, QImage::Format_RGB888);
 		img = img.copy(QRect(0, 0, cmd.width, cmd.height));
 
 #if 0
@@ -338,7 +338,7 @@ int main(int argc, char** argv)
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;   //to_verbose_flags(0x0);
+    RDPVerbose verbose = to_verbose_flags(0x0); //RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;   
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, const_cast<const char**>(argv), config);
 

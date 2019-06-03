@@ -36,6 +36,8 @@
 
 
 class ProgressBarWindow : public QWidget {
+    /* This window progess bar is used when loading a wrm video
+     */
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")

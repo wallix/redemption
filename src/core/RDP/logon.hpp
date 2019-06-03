@@ -29,6 +29,7 @@
 #include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "utils/get_printable_password.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <cstdint>
 #include <string>
@@ -624,16 +625,9 @@ struct SystemTime {
     }
 
     void recv(InStream & stream){
-        const unsigned expected =
-              16 /* wYear(2) + wMonth(2) + wDayOfWeek(2) + wDay(2) + wHour(2) + wMinute(2) + wSecond(2) + wMilliseconds(2) */
-            ;
 
-        if (!stream.in_check_rem(expected))
-        {
-            LOG(LOG_ERR, "Truncated System Time structure: expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_SYSTEM_TIME_TRUNCATED);
-        }
+        /* wYear(2) + wMonth(2) + wDayOfWeek(2) + wDay(2) + wHour(2) + wMinute(2) + wSecond(2) + wMilliseconds(2) */
+        ::check_throw(stream, 16, "System Time structure", ERR_MCS_SYSTEM_TIME_TRUNCATED);
 
         this->wYear         = stream.in_uint16_le();
         this->wMonth        = stream.in_uint16_le();
@@ -701,16 +695,9 @@ struct ClientTimeZone {
     }
 
     void recv(InStream & stream) {
-        const unsigned expected =
-              172 /* Bias(4) + StandardName(64) + StandardDate(16) + StandardBias(4) + DaylightName(64) + DaylightDate(16) + DaylightBias(4) */
-            ;
 
-        if (!stream.in_check_rem(expected))
-        {
-            LOG(LOG_ERR, "Truncated Time Zone Information structure: expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_SYSTEM_TIME_TRUNCATED);
-        }
+        /* Bias(4) + StandardName(64) + StandardDate(16) + StandardBias(4) + DaylightName(64) + DaylightDate(16) + DaylightBias(4) */
+        ::check_throw(stream, 172, "Time Zone Information structure", ERR_MCS_SYSTEM_TIME_TRUNCATED);
 
         this->Bias = stream.in_uint32_le();
 
@@ -898,16 +885,9 @@ struct InfoPacket {
     } // END FUNCT : emit()
 
     void recv(InStream & stream){
-        unsigned expected =
-              18 /* CodePage(4) + flags(4) + cbDomain(2) + cbUserName(2) + cbPassword(2) + cbAlternateShell(2) + cbWorkingDir(2) */
-            ;
 
-        if (!stream.in_check_rem(expected))
-        {
-            LOG(LOG_ERR, "Truncated client InfoPacket: expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
-        }
+        /* CodePage(4) + flags(4) + cbDomain(2) + cbUserName(2) + cbPassword(2) + cbAlternateShell(2) + cbWorkingDir(2) */
+        ::check_throw(stream, 18, "client InfoPacke", ERR_MCS_INFOPACKET_TRUNCATED);
 
         this->CodePage = stream.in_uint32_le();
         this->flags = stream.in_uint32_le();
@@ -918,7 +898,7 @@ struct InfoPacket {
         this->cbAlternateShell = stream.in_uint16_le() + 2;
         this->cbWorkingDir = stream.in_uint16_le() + 2;
 
-        expected =
+        unsigned expected =
               this->cbDomain
             + this->cbUserName
             + this->cbPassword
@@ -926,12 +906,7 @@ struct InfoPacket {
             + this->cbWorkingDir
             ;
 
-        if (!stream.in_check_rem(expected))
-        {
-            LOG(LOG_ERR, "Truncated client InfoPacket (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
-        }
+        ::check_throw(stream, expected, "client client InfoPacket (data)", ERR_MCS_INFOPACKET_TRUNCATED);
 
         stream.in_uni_to_ascii_str(this->Domain, this->cbDomain, sizeof(this->Domain));
         stream.in_uni_to_ascii_str(this->UserName, this->cbUserName, sizeof(this->UserName));
@@ -951,50 +926,26 @@ struct InfoPacket {
             this->rdp5_support = true;
             LOG(LOG_INFO, "RDP-5 Style logon");
 
-            expected =
-                  4 /* clientAddressFamily(2) + cbClientAddress(2) */
-                ;
-
-            if (!stream.in_check_rem(expected))
-            {
-                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientAddress: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
-            }
+            /* clientAddressFamily(2) + cbClientAddress(2) */
+            ::check_throw(stream, 4, "client extendedInfoPacket clientAddress", ERR_MCS_INFOPACKET_TRUNCATED);
 
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
 
-            if (!stream.in_check_rem(this->extendedInfoPacket.cbClientAddress))
-            {
-                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientAddress (data): expected=%u remains=%zu",
-                    this->extendedInfoPacket.cbClientAddress, stream.in_remain());
-                throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
-            }
+            ::check_throw(stream, this->extendedInfoPacket.cbClientAddress, "client extendedInfoPacket clientAddress (data)", ERR_MCS_INFOPACKET_TRUNCATED);
+
 
             stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientAddress,
                                         this->extendedInfoPacket.cbClientAddress,
                                         sizeof(this->extendedInfoPacket.clientAddress));
 
-            // cbClientDir
-            expected = 2; /* cbClientDir(2) */
-
-            if (!stream.in_check_rem(expected))
-            {
-                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientDir: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
-            }
+            /* cbClientDir(2) */
+            ::check_throw(stream, 2, "client extendedInfoPacket clientDir", ERR_MCS_INFOPACKET_TRUNCATED);
 
             this->extendedInfoPacket.cbClientDir = stream.in_uint16_le();
 
-            if (!stream.in_check_rem(this->extendedInfoPacket.cbClientDir))
-            {
-                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientDir (data): expected=%u remains=%zu",
-                    this->extendedInfoPacket.cbClientAddress, stream.in_remain());
-                throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
-            }
+            ::check_throw(stream, this->extendedInfoPacket.cbClientDir, "client extendedInfoPacket clientDir (data)", ERR_MCS_INFOPACKET_TRUNCATED);
 
             stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientDir,
                                         this->extendedInfoPacket.cbClientDir,

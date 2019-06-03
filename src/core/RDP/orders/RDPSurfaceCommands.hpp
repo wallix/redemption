@@ -25,6 +25,8 @@
 #include "utils/rect.hpp"
 #include "utils/region.hpp"
 #include "core/error.hpp"
+#include "core/stream_throw_helpers.hpp"
+
 
 /** @brief a surface content update */
 class RDPSurfaceContent {
@@ -58,7 +60,6 @@ public:
     };
 
 	void recv(InStream & stream) {
-		unsigned expected = 2;
 		// 2.2.9.2.1 Set Surface Bits Command (TS_SURFCMD_SET_SURF_BITS)
 		// The Set Surface Bits Command is used to transport encoded bitmap data destined for a rectangular
 		// region of the primary drawing surface from an RDP server to an RDP client.
@@ -107,11 +108,7 @@ public:
 		// bitmapData (variable): A variable-length array of bytes containing bitmap data encoded using the
 		//		codec identified by the ID in the codecID field.
 
-		expected = 10 + 12;
-		if (!stream.in_check_rem(expected)) {
-			LOG(LOG_ERR, "Truncated SetSurfaceBitsCommand, need=%u remains=%zu", expected, stream.in_remain());
-			throw Error(ERR_RDP_DATA_TRUNCATED);
-		}
+        ::check_throw(stream, 10 + 12, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand", ERR_RDP_DATA_TRUNCATED);
 
 		uint16_t destLeft = stream.in_uint16_le();
 		uint16_t destTop = stream.in_uint16_le();
@@ -130,11 +127,8 @@ public:
 		Rect rect(destLeft, destTop, width, height);
 
 		if (flags & EX_COMPRESSED_BITMAP_HEADER_PRESENT) {
-			expected = 24;
-			if (!stream.in_check_rem(expected)) {
-				LOG(LOG_ERR, "Truncated SetSurfaceBitsCommand, need=%u remains=%zu", expected, stream.in_remain());
-				throw Error(ERR_RDP_DATA_TRUNCATED);
-			}
+
+            ::check_throw(stream, 24, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand EX_COMPRESSED_BITMAP_HEADER_PRESENT", ERR_RDP_DATA_TRUNCATED);
 
 			/*uint32_t highUniqueId = */stream.in_uint32_le();
 			/*uint32_t lowUniqueId = */ stream.in_uint32_le();
@@ -142,10 +136,7 @@ public:
 			/*uint64_t tmSeconds = */stream.in_uint64_le();
 		}
 
-		if (!stream.in_check_rem(bitmapDataLength)) {
-			LOG(LOG_ERR, "Truncated SetSurfaceBitsCommand, need=%u remains=%zu", bitmapDataLength, stream.in_remain());
-			throw Error(ERR_RDP_DATA_TRUNCATED);
-		}
+		::check_throw(stream, bitmapDataLength, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand bitmapDataLength", ERR_RDP_DATA_TRUNCATED);
 	}
 
 	void log(int level, const RDPSurfaceContent &/*content*/) const {

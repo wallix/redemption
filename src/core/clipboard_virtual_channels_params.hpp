@@ -31,19 +31,24 @@ struct ClipboardVirtualChannelParams {
     bool dont_log_data_into_syslog = false;
     bool dont_log_data_into_wrm    = false;
     bool log_only_relevant_clipboard_activities = false;
+    bool enable_validator = false;
+    bool enable_save_files = false;
+    bool enable_interupting_validator = false;
+    std::string channel_files_directory = "";
+    std::string  validator_target_name = "";
 
     // TODO Used for Tests only
     friend ::std::ostream& operator<<(::std::ostream& ostr, ClipboardVirtualChannelParams const& x)
     {
-        auto const & [a, b, c, d, e, f] = x;
+        auto const & [a, b, c, d, e, f, g, h, i, j, k] = x;
         return ostr << " down=" << a << " up=" << b << " file=" << c
-                    << " no syslog=" << d << " no wrm=" << e << " no verbose=" << f;
+                    << " no syslog=" << d << " no wrm=" << e << " no verbose=" << f << " enable_validator=" << g << " enable_save_files=" << h << " enable_interupting_validator=" << i << " channel_files_directory=" << j << " validator_target_name" << k;
     }
 
     bool operator==(const ClipboardVirtualChannelParams & other) const {
-        auto const & [a, b, c, d, e, f] = *this;
-        auto const & [a1, b1, c1, d1, e1, f1] = other;
-        return (a == a1 && b == b1 && c == c1 && d == d1 && e == e1 && f == f1);
+        auto const & [a, b, c, d, e, f, g, h, i, j, k] = *this;
+        auto const & [a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1] = other;
+        return (a == a1 && b == b1 && c == c1 && d == d1 && e == e1 && f == f1 && g == g1 && h == h1 && i == i1 && j == j1 && k == k1);
     }
 // End Used for Tests only
 

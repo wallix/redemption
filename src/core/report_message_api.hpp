@@ -63,6 +63,7 @@ struct ArcsightLogInfo {
             TITLE_BAR,
             MATCH_FINDER,
             UNIDENTIFIED_INPUT_FIELD_GET_FOCUS,
+            FILE_SCAN_RESULT
     };
 
     enum :  uint8_t {

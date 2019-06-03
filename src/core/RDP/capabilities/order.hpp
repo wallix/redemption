@@ -29,6 +29,8 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+#include "core/stream_throw_helpers.hpp"
+
 
 // 2.2.7.1.3 Order Capability Set (TS_ORDER_CAPABILITYSET)
 // =======================================================
@@ -390,12 +392,7 @@ struct OrderCaps : public Capability {
          * textFlags(2) + orderSupportExFlags(2) + pad4octetsB(4) + desktopSaveSize(4) + pad2octetsC(2) +
          * pad2octetsD(2) + textANSICodePage(2) + pad2octetsE(2)
          */
-        const unsigned expected = 32 + NB_ORDER_SUPPORT + 20;
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated OrderCaps, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        ::check_throw(stream, 32 + NB_ORDER_SUPPORT + 20, "OrderCaps::recv", ERR_MCS_PDU_TRUNCATED);
 
         stream.in_copy_bytes(this->terminalDescriptor, 16);
         this->pad4octetsA = stream.in_uint32_le();

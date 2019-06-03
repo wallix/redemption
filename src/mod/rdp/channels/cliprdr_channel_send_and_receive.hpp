@@ -155,6 +155,7 @@ struct ClipboardCapabilitiesReceive {
 
                 clip_data.use_long_format_names =
                     bool(general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+
             }
         }
     }
@@ -786,8 +787,10 @@ struct ClientFormatListReceive {
     uint32_t client_file_list_format_id = 0;
 
     ClientFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
+
         if (!client_use_long_format_names ||
             !server_use_long_format_names) {
+
             LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
                 "ClipboardVirtualChannel::process_client_format_list_pdu: "
                     "Short Format Name%s variant of Format List PDU is used "

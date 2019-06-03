@@ -599,6 +599,16 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "theme", spec::name{"load_theme"});
     });
 
+    W.section("validator", [&]
+    {
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_validator", set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interupting_validator", set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_save_files", set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "channel_files_directory", set(""));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "validator_socket_path", set("tools/ICAP_socket/redemption-icap-service-sock"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "validator_target_name", set("avscan"));
+    });
+
     W.section("context", [&]
     {
         auto co_rdp = connpolicy::section{"rdp"};

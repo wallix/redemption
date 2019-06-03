@@ -21,6 +21,7 @@
 #pragma once
 
 #include "core/front_api.hpp"
+#include "mod/mod_api.hpp"
 
 #include <chrono>
 #include <string>

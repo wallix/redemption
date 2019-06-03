@@ -20,10 +20,12 @@
 
 #pragma once
 
-
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 
+#include "utils/sugar/algostring.hpp"
 #include "utils/log.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
@@ -67,7 +69,12 @@
 
 #include <vector>
 
-
+/*
+ * Those Qt object are a part from the connection form window.
+ * This contains a form to connect to an VNC or RDP target, a recorded last target list,
+ * a WRM movie files lists and options set pages for VNC and RDP.
+ *
+ */
 
 class IconMovie :  public QWidget
 {
