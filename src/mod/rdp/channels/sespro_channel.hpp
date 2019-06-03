@@ -1940,14 +1940,7 @@ public:
                             {"type",     "CHECKBOX_CLICKED"},
                             {"window",   parameters_[0]},
                             {"checkbox", parameters_[1]},
-                            {"state",    [](int state) {
-                                    switch (state) {
-                                        case BST_UNCHECKED:     return "unchecked";
-                                        case BST_CHECKED:       return "checked";
-                                        case BST_INDETERMINATE: return "indeterminate";
-                                        default:                return "unavailable";
-                                    }
-                                }(::atoi(parameters_[2].c_str()))}
+                            {"state",    ::button_state_to_string(::atoi(parameters_[2].c_str()))}
                         });
 
                         ArcsightLogInfo arc_info;
