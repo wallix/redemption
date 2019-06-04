@@ -187,6 +187,7 @@ class RDPGraphics
     }
 
     drawDestBlt(x, y, w, h, rop) {
+        switch (rop) {
         case 0x00:
             this.canvas.fillStyle = "#000";
             this.canvas.fillRect(x,y,w,h);
@@ -197,6 +198,7 @@ class RDPGraphics
             this.canvas.fillStyle = "#fff";
             this.canvas.fillRect(x,y,w,h);
             break;
+        }
     }
 
     image2CSS(image, x, y) {
