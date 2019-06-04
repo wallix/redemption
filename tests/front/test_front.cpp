@@ -38,6 +38,8 @@
 
 #include "mod/null/null.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
+#include "core/report_message_api.hpp"
+#include "core/channel_list.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
