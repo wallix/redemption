@@ -46,7 +46,7 @@ private:
     
     ClientNonce SavedClientNonce;
 
-    Array PublicKey;
+    std::vector<uint8_t> PublicKey;
     Array ClientServerHash;
     Array ServerClientHash;
 
@@ -299,7 +299,8 @@ private:
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-        sha256.update(this->PublicKey.av());
+        
+        sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
         memcpy(SavedHash.get_data(), hash, sizeof(hash));
@@ -312,7 +313,7 @@ private:
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-        sha256.update(this->PublicKey.av());
+        sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
         memcpy(SavedHash.get_data(), hash, sizeof(hash));
@@ -322,7 +323,7 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
-        array_view_u8 public_key = this->PublicKey.av();
+        array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
             this->credssp_generate_client_nonce();
             this->credssp_generate_public_key_hash_client_to_server();
@@ -354,7 +355,7 @@ private:
 
         const uint32_t version = this->ts_request.use_version;
 
-        array_view_const_u8 public_key = this->PublicKey.av();
+        array_view_const_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
             this->credssp_get_client_nonce();
             this->credssp_generate_public_key_hash_server_to_client();
@@ -505,14 +506,13 @@ public:
         // ============================================
 
         auto const key = transport.get_transport().get_public_key();
-        this->PublicKey.init(key.size());
-        this->PublicKey.copy(key);
+        this->PublicKey.assign(key.data(), key.data()+key.size());
 
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
         SEC_STATUS status0 = this->table.AcquireCredentialsHandle(this->target_host, &this->ServicePrincipalName, &this->identity);
 
         if (status0 != SEC_E_OK) {
-            LOG(LOG_ERR, "InitSecurityInterface status: 0x%08X", status0);
+            LOG(LOG_ERR, "InitSecurityInterface NTLM status: 0x%08X", status0);
             throw ERR_CREDSSP_NTLM_INIT_FAILED;
         }
 

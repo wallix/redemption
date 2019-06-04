@@ -55,7 +55,6 @@ private:
     std::unique_ptr<SecurityFunctionTable> table
       = std::make_unique<UnimplementedSecurityFunctionTable>();
     bool restricted_admin_mode;
-    SecInterface sec_interface;
 
     const char * target_host;
     Random & rand;
@@ -94,8 +93,7 @@ private:
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
-    SEC_STATUS InitSecurityInterface(
-        SecInterface secInter, const char* pszPrincipal,
+    SEC_STATUS InitSecurityInterface(const char* pszPrincipal,
         Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::InitSecurityInterface");
@@ -107,7 +105,7 @@ private:
         this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
         #else
         this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
-        LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
+        LOG(LOG_ERR, "Could not Initiate Kerberos Security Interface!");
         assert(!"Unsupported Kerberos");
         #endif
 
@@ -262,32 +260,6 @@ private:
     }
 
     enum class Res : bool { Err, Ok };
-
-    Res sm_credssp_client_authenticate_start()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::client_authenticate");
-
-        this->init_public_key();
-
-        SEC_STATUS status = this->InitSecurityInterface(this->sec_interface, this->target_host,
-                                                        &this->ServicePrincipalName,
-                                                        &this->identity);
-
-        if (status == SEC_E_NO_CREDENTIALS && this->sec_interface == Kerberos_Interface) {
-            LOG(LOG_INFO, "Credssp: No Kerberos Credentials, fallback to NTLM");
-            status = this->InitSecurityInterface(NTLM_Interface, this->target_host,
-                                                 &this->ServicePrincipalName, &this->identity);
-        }
-
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "InitSecurityInterface status: 0x%08X", status);
-            return Res::Err;
-        }
-
-        this->client_auth_data.input_buffer.init(0);
-
-        return Res::Ok;
-    }
 
     struct ClientAuthenticateData
     {
@@ -476,7 +448,6 @@ public:
         : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
         , restricted_admin_mode(restricted_admin_mode)
-        , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_host(target_host)
         , rand(rand)
         , timeobj(timeobj)
@@ -487,17 +458,27 @@ public:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::Initialization");
         this->set_credentials(user, domain, pass, hostname);
-    }
-
-    bool credssp_client_authenticate_init()
-    {
         this->client_auth_data.state = ClientAuthenticateData::Start;
-        if (Res::Err == this->sm_credssp_client_authenticate_start()) {
-            return false;
+        
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::client_authenticate");
+        this->init_public_key();
+
+        SEC_STATUS status = this->InitSecurityInterface( this->target_host,
+                                                        &this->ServicePrincipalName,
+                                                        &this->identity);
+
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "Kerberos InitSecurityInterface status:%s0x%08X, fallback to NTLM", 
+                (status == SEC_E_NO_CREDENTIALS)?" No Credentials ":" ", status);
+            throw ERR_CREDSSP_KERBEROS_INIT_FAILED;
         }
 
+        this->client_auth_data.input_buffer.init(0);
+
         this->client_auth_data.state = ClientAuthenticateData::Loop;
-        return Res::Err != this->sm_credssp_client_authenticate_send();
+        if (Res::Err == this->sm_credssp_client_authenticate_send()){
+            throw ERR_CREDSSP_KERBEROS_INIT_FAILED;
+        }
     }
 
     credssp::State credssp_client_authenticate_next(InStream & in_stream)

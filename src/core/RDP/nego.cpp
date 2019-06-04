@@ -48,7 +48,7 @@ struct RdpNegoProtocols
 
 RdpNego::RdpNego(
     const bool tls, const char * username, bool nla, bool admin_mode,
-    const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
+    const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
     std::string& extra_message, Translation::language_t lang,
     const Verbose verbose)
 : tls(nla || tls)
@@ -398,22 +398,14 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 this->rand, this->timeobj, this->extra_message, this->lang,
                 bool(this->verbose & Verbose::credssp)
             );
-            if (!this->credsspKerberos->credssp_client_authenticate_init())
-            {
-                LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
-                (void)this->fallback_to_tls(trans);
-                return State::Negociate;
-            }
         }
         catch (const Error & e){
-//            if (e.id == ERR_CREDSSP_KERBEROS_INIT_FAILED){
-                LOG(LOG_INFO, "NLA/CREDSSP NTLM Authentication Failed (1)");
-                this->fallback_to_tls(trans);
-                return State::Negociate;
-//            }
+                LOG(LOG_INFO, "CREDSSP Kerberos Authentication Failed, fallback to NTLM");
+                this->krb = false;
         };
     }
-    else {
+
+    if (!this->krb) {
         try {
             this->credsspNTLM = std::make_unique<rdpCredsspClientNTLM>(
                 trans, this->user,

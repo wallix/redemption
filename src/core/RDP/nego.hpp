@@ -48,7 +48,7 @@ public:
     const bool nla;
 
 private:
-    const bool krb;
+    bool krb;
     const bool restricted_admin_mode;
 
     bool nla_tried = false;
@@ -101,7 +101,7 @@ public:
 
     RdpNego(
         const bool tls, const char * username, bool nla, bool admin_mode,
-        const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
+        const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
         std::string& extra_message, Translation::language_t lang,
         const Verbose verbose = {});
 
