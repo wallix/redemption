@@ -71,7 +71,9 @@ struct WrmPlayer
     void next_data(std::string data)
     {
         this->data.erase(0, this->offset);
-        this->_reset();
+        this->offset = 0;
+        this->chunk.count = 0;
+        this->in_stream = InStream();
 
         if (this->data.empty())
         {
@@ -83,24 +85,20 @@ struct WrmPlayer
         }
     }
 
-    void next_timestamp_order()
+    bool next_timestamp_order()
     {
-        bool has_time = false;
         while (this->next_order())
         {
+            this->interpret_order();
+
             if (WrmChunkType::TIMESTAMP == this->chunk.type
              || WrmChunkType::SESSION_UPDATE == this->chunk.type)
             {
-                has_time = true;
-            }
-
-            this->interpret_order();
-
-            if (this->wrm_info.width && has_time)
-            {
-                break;
+                return true;
             }
         }
+
+        return false;
     }
 
     bool next_order() noexcept
@@ -112,6 +110,7 @@ struct WrmPlayer
             InStream header(const_bytes_view(this->data).array_from_offset(this->offset));
             if (header.in_remain() < WRM_HEADER_SIZE)
             {
+                this->in_stream = InStream();
                 return false;
             }
 
@@ -121,6 +120,7 @@ struct WrmPlayer
 
             if (header.in_remain() + WRM_HEADER_SIZE < chunk_size)
             {
+                this->in_stream = InStream();
                 return false;
             }
 
@@ -351,13 +351,6 @@ struct WrmPlayer
     }
 
 private:
-    void _reset() noexcept
-    {
-        this->offset = 0;
-        this->chunk.count = 0;
-        this->in_stream = InStream();
-    }
-
     void _skip_chunk() noexcept
     {
         this->chunk.count = 0;

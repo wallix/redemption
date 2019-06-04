@@ -59,16 +59,18 @@ const playFile = function(ifile)
     fetch('sample'+ifile+'.wrm')
     .then(response => response.arrayBuffer())
     .then(buffer => {
-        player.nextData(buffer);
         if (cbPlayer.time === -1) {
+            player.nextData(buffer);
             player.nextTimestampOrder();
         }
         let previousTime = cbPlayer.time;
         let currentDate = Date.now()
         let i = 0;
+        let ibuf = 0;
         console.log(currentDate);
         const loop = function() {
             console.log('loop', ++i);
+            do {
             while (player.nextOrder()) {
                 player.interpretOrder();
                 if (cbPlayer.time != previousTime) {
@@ -81,6 +83,13 @@ const playFile = function(ifile)
                     return;
                 }
             }
+            if (ifile === 0 || ibuf >= buffer.byteLength) {
+                break;
+            }
+            const flen = 203;
+            player.nextData(buffer.slice(ibuf,ibuf+flen));
+            ibuf+=flen;
+            } while (true);
             // console.log(Date.now());
             playFile(ifile+1)
         };
