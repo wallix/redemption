@@ -2907,6 +2907,7 @@ test-run tests/lib/test_files_validator_api :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -4137,6 +4138,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4345,6 +4347,7 @@ test-run tests/mod/test_icap_files_service :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/icap_files_service.hpp
 ;
@@ -4475,15 +4478,19 @@ test-run tests/proxy_recorder/test_proxy_recorder :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/error.o
+  <library>src/core/report_error.o
   <library>src/proxy_recorder/proxy_recorder.o
   <library>src/transport/out_file_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/proxy_recorder/proxy_recorder.cpp

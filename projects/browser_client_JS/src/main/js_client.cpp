@@ -158,7 +158,7 @@ struct RdpClient
         this->mod = new_mod_rdp(
             browser_trans, session_reactor, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
-            mod_rdp_params, authentifier, report_message, ini, nullptr);
+            mod_rdp_params, authentifier, report_message, ini, nullptr, nullptr);
     }
 
     void send_first_packet()

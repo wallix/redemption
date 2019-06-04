@@ -20,47 +20,11 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include <sstream>
+#include "test_only/test_framework/working_directory.hpp"
 
 #include "test_only/transport/test_transport.hpp"
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
-
-struct CaptureTemplate
-{
-    std::string captureTemplate;
-    int startDigit = 0;
-    int endDigit = 0;
-
-    CaptureTemplate(std::string captureFile)
-        : captureTemplate(std::move(captureFile))
-    {
-        std::string::size_type pos = 0;
-        while ((pos = captureTemplate.find('%', pos)) != std::string::npos) {
-            if (captureTemplate[pos+1] == 'd') {
-                startDigit = int(pos);
-                endDigit = startDigit + 2;
-                break;
-            }
-            ++pos;
-        }
-    }
-
-    char const* format(array_view_char path, int counter) const
-    {
-        if (endDigit) {
-            std::snprintf(path.data(), path.size(), "%.*s%04d%s",
-                startDigit, captureTemplate.c_str(),
-                counter,
-                captureTemplate.c_str() + endDigit
-            );
-            path.back() = '\0';
-            return path.data();
-        }
-
-        return captureTemplate.c_str();
-    }
-}; 
 
 struct xxhexdump
 {
@@ -120,7 +84,7 @@ std::ostream & operator<<(std::ostream & out, xxhexdump const & x)
 
 struct ReplayBackTransport : public Transport
 {
-    
+
 uint8_t data0[0x2E] = {
 /* 0000 */ 0x03, 0x00, 0x00, 0x2e, 0x29, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x6f, 0x6b, 0x69,  // ....)......Cooki
 /* 0010 */ 0x65, 0x3a, 0x20, 0x6d, 0x73, 0x74, 0x73, 0x68, 0x61, 0x73, 0x68, 0x3d, 0x71, 0x61, 0x61, 0x31,  // e: mstshash=qaa1
@@ -147,7 +111,7 @@ private:
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
-    size_t do_partial_read(uint8_t* buffer, size_t len) override { 
+    size_t do_partial_read(uint8_t* buffer, size_t len) override {
         LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer", len);
         if (datas[index].type == 0 && len >= datas[index].len) {
         LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer, got %zu", len, datas[index].len);
@@ -267,7 +231,7 @@ private:
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
-    size_t do_partial_read(uint8_t* buffer, size_t len) override { 
+    size_t do_partial_read(uint8_t* buffer, size_t len) override {
         LOG(LOG_INFO, "asked to front for reading %zu bytes into buffer", len);
         if (datas[index].type == 0 && len >= datas[index].len) {
         LOG(LOG_INFO, "asked to front for reading %zu bytes into buffer, got %zu", len, datas[index].len);
@@ -298,21 +262,15 @@ private:
     }
 };
 
-RED_AUTO_TEST_CASE(TestNLAOnSiteCapture)
+RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
 {
-    int connection_counter = 0;
-    std::string targetHost("50.155.10.201");
     std::string nla_username("qaa16389@n1.hml.cnav");
     std::string nla_password("ZPPW120728");
     bool enable_kerberos = false;
-    uint64_t verbosity = 4096;    
+    uint64_t verbosity = 4096;
 
-    CaptureTemplate captureTemplate("dump-%d.log");
-    char finalPathBuffer[256];
-    char const* finalPath = captureTemplate.format(finalPathBuffer, connection_counter);
-    LOG(LOG_INFO, "Recording front connection in %s", finalPath);
     FrozenTime timeobj;
-    RecorderFile outFile(timeobj, finalPath);
+    RecorderFile outFile(timeobj, wf.c_str());
 
     ReplayBackTransport backConn;
     ReplayFrontTransport frontConn;
@@ -326,30 +284,26 @@ RED_AUTO_TEST_CASE(TestNLAOnSiteCapture)
 
     // Receiving data from Client : x224
     conn.frontBuffer.load_data(frontConn);
-    if (conn.frontBuffer.next(TpduBuffer::PDU)) {
-        conn.front_step1(frontConn);
-        hexdump(front_public_key, 16);
-        // front public key ready from here
-        conn.back_step1(front_public_key_av, backConn);
-    }
+
+    RED_REQUIRE(conn.frontBuffer.next(TpduBuffer::PDU));
+    conn.front_step1(frontConn);
+    hexdump(front_public_key, 16);
+    // front public key ready from here
+    conn.back_step1(front_public_key_av, backConn);
 
     // Receiving data from Client: CredSSP
     conn.frontBuffer.load_data(frontConn);
     conn.front_nla(frontConn);
 
-//    // Receiving data from Client: CredSSP
-//    conn.frontBuffer.load_data(frontConn);
-//    conn.front_nla(frontConn);
-
+    // // Receiving data from Client: CredSSP
+    // conn.frontBuffer.load_data(frontConn);
+    // conn.front_nla(frontConn);
 }
 
-RED_AUTO_TEST_CASE(TestNLARedemptionToWindows2012DC)
-{
-    RED_CHECK(1);
-}
-
-RED_AUTO_TEST_CASE(TestNLAWindows7ClientToRedemption)
-{
-    RED_CHECK(1);
-}
-
+// RED_AUTO_TEST_CASE(TestNLARedemptionToWindows2012DC)
+// {
+// }
+//
+// RED_AUTO_TEST_CASE(TestNLAWindows7ClientToRedemption)
+// {
+// }
