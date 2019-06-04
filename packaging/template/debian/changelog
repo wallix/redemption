@@ -1,3 +1,10 @@
+redemption (1.1.156%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Log state of Checkbox in meta-data of session.
+  * Fix fully masked keyboard input in metadata of session.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 04 Jun 2019 17:23:29 +0200
+
 redemption (1.1.153%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix bitmap fragmentation.
