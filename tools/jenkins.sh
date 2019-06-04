@@ -53,7 +53,7 @@ build()
 
 rootlist()
 {
-    ls -1 | sort
+    ls -1
 }
 
 # implicitly created by bjam
