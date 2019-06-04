@@ -27,8 +27,9 @@ Author(s): Jonathan Poelen
 #include "red_emscripten/val.hpp"
 
 #include "gdi/screen_info.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/rdp_pointer.hpp"
+#include "core/RDP/rdp_draw_glyphs.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -41,6 +42,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
 #include "utils/log.hpp"
@@ -92,7 +94,6 @@ namespace
         constexpr char const* draw_rect = "drawRect";
         constexpr char const* draw_scr_blt = "drawSrcBlt";
         constexpr char const* draw_memblt = "drawImage";
-        constexpr char const* draw_bitmap_data = draw_memblt;
         constexpr char const* draw_line_to = "drawLineTo";
         constexpr char const* draw_polyline = "drawPolyline";
         constexpr char const* draw_pat_blt = "drawPatBlt";
@@ -141,10 +142,6 @@ PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
     set(jsnames::draw_memblt, TS_NEG_MEMBLT_INDEX);
     set(jsnames::draw_line_to, TS_NEG_LINETO_INDEX);
     set(jsnames::draw_polyline, TS_NEG_POLYLINE_INDEX);
-
-    // TODO missing orders
-
-    static_assert(jsnames::draw_bitmap_data == jsnames::draw_memblt);
 
     return supported;
 }
@@ -429,9 +426,71 @@ void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_
     );
 }
 
-void BrowserGraphic::draw(RDPGlyphIndex const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const GlyphCache & /*gly_cache*/)
+void BrowserGraphic::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache)
 {
-    LOG(LOG_DEBUG, "RDPGlyphIndex unsupported");
+    Rect screen_rect = clip.intersect(this->width, this->height);
+    if (screen_rect.isempty()){
+        return ;
+    }
+
+    Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(screen_rect);
+    if (clipped_glyph_fragment_rect.isempty()) {
+        return;
+    }
+
+    // set a background color
+    {
+        Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
+        if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
+            ajusted.cy--;
+            emval_call(this->callbacks, jsnames::draw_rect,
+                ajusted.x,
+                ajusted.y,
+                ajusted.cx,
+                ajusted.cy,
+                color_decode(cmd.fore_color, color_ctx)
+            );
+        }
+    }
+
+    bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+    const BGRColor color = color_decode(cmd.back_color, color_ctx);
+    const int16_t offset_y = /*cmd.bk.cy - (*/cmd.glyph_y - cmd.bk.y/* + 1)*/;
+    const int16_t offset_x = cmd.glyph_x - cmd.bk.x;
+
+    const size_t len = clipped_glyph_fragment_rect.width() * clipped_glyph_fragment_rect.height();
+    auto img_data = std::make_unique<uint8_t[]>(len * 4);
+
+    auto set_point = [&](int16_t x, int16_t y) {
+        x -= clipped_glyph_fragment_rect.x;
+        y -= clipped_glyph_fragment_rect.y;
+        const auto i = y * clipped_glyph_fragment_rect.cx + x;
+        img_data[i+0] = color.red();
+        img_data[i+1] = color.green();
+        img_data[i+2] = color.blue();
+        img_data[i+3] = 255;
+    };
+
+    uint16_t draw_pos = 0;
+
+    rdp_draw_glyphs(
+        set_point, this->fragment_cache, cmd.data,
+        cmd.data_len, has_delta_bytes, cmd.ui_charinc,
+        draw_pos, offset_y, cmd.bk.x + offset_x, cmd.bk.y,
+        clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
+
+    emval_call(this->callbacks, jsnames::draw_memblt,
+        img_data.get(),
+        clipped_glyph_fragment_rect.width(),
+        clipped_glyph_fragment_rect.height(),
+        clipped_glyph_fragment_rect.x,
+        clipped_glyph_fragment_rect.y,
+        0,
+        0,
+        clipped_glyph_fragment_rect.width(),
+        clipped_glyph_fragment_rect.height(),
+        0xCC
+    );
 }
 
 void BrowserGraphic::draw(RDPPolygonSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
@@ -469,60 +528,20 @@ void BrowserGraphic::draw(RDPEllipseCB const & /*cmd*/, Rect /*clip*/, gdi::Colo
     LOG(LOG_DEBUG, "RDPEllipseCB unsupported");
 }
 
-void BrowserGraphic::draw(const RDPColCache   & /*unused*/)
-{
-    LOG(LOG_DEBUG, "RDPColCache unsupported");
-}
+void BrowserGraphic::draw(const RDPColCache   & /*unused*/) { }
 
-void BrowserGraphic::draw(const RDPBrushCache & /*unused*/)
-{
-    LOG(LOG_DEBUG, "RDPBrushCache unsupported");
-}
+void BrowserGraphic::draw(const RDPBrushCache & /*unused*/) { }
 
-void BrowserGraphic::draw(const RDP::FrameMarker & /*cmd*/)
-{
-    LOG(LOG_DEBUG, "FrameMarker unsupported");
-}
+void BrowserGraphic::draw(const RDP::FrameMarker & /*cmd*/) {}
 
-void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/)
-{
-    LOG(LOG_DEBUG, "NewOrExistingWindow unsupported");
-}
-
-void BrowserGraphic::draw(const RDP::RAIL::WindowIcon & /*unused*/)
-{
-    LOG(LOG_DEBUG, "WindowIcon unsupported");
-}
-
-void BrowserGraphic::draw(const RDP::RAIL::CachedIcon & /*unused*/)
-{
-    LOG(LOG_DEBUG, "CachedIcon unsupported");
-}
-
-void BrowserGraphic::draw(const RDP::RAIL::DeletedWindow & /*unused*/)
-{
-    LOG(LOG_DEBUG, "DeletedWindow unsupported");
-}
-
-void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/)
-{
-    LOG(LOG_DEBUG, "NewOrExistingNotificationIcons unsupported");
-}
-
-void BrowserGraphic::draw(const RDP::RAIL::DeletedNotificationIcons & /*unused*/)
-{
-    LOG(LOG_DEBUG, "DeletedNotificationIcons unsupported");
-}
-
-void BrowserGraphic::draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*unused*/)
-{
-    LOG(LOG_DEBUG, "ActivelyMonitoredDesktop unsupported");
-}
-
-void BrowserGraphic::draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/)
-{
-    LOG(LOG_DEBUG, "NonMonitoredDesktop unsupported");
-}
+void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) { }
+void BrowserGraphic::draw(const RDP::RAIL::WindowIcon & /*unused*/) { }
+void BrowserGraphic::draw(const RDP::RAIL::CachedIcon & /*unused*/) { }
+void BrowserGraphic::draw(const RDP::RAIL::DeletedWindow & /*unused*/) { }
+void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) { }
+void BrowserGraphic::draw(const RDP::RAIL::DeletedNotificationIcons & /*unused*/) { }
+void BrowserGraphic::draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*unused*/) { }
+void BrowserGraphic::draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/) { }
 
 
 void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
@@ -531,7 +550,7 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 
     redjs::ImageData image = image_data_from_bitmap(bmp);
 
-    emval_call(this->callbacks, jsnames::draw_bitmap_data,
+    emval_call(this->callbacks, jsnames::draw_memblt,
         image.data(),
         image.width(),
         image.height(),
@@ -545,21 +564,11 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
     );
 }
 
-void BrowserGraphic::set_palette(const BGRPalette& /*unused*/)
-{
-    LOG(LOG_DEBUG, "BGRPalette unsupported");
-}
+void BrowserGraphic::set_palette(const BGRPalette& /*unused*/) { }
 
-void BrowserGraphic::draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/)
-{
-    LOG(LOG_DEBUG, "RDPNineGrid unsupported");
-}
+void BrowserGraphic::draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) { }
 
-void BrowserGraphic::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/)
-{
-    LOG(LOG_DEBUG, "RDPSetSurfaceCommand unsupported");
-}
-
+void BrowserGraphic::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) { }
 
 
 void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)

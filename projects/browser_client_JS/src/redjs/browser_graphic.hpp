@@ -26,6 +26,7 @@ Author(s): Jonathan Poelen
 
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/capabilities/order.hpp"
+#include "core/RDP/capabilities/cap_glyphcache.hpp"
 
 #include <emscripten/val.h>
 
@@ -101,6 +102,8 @@ private:
     std::unique_ptr<ImageData[]> image_datas;
     std::array<size_t, 3> image_data_index {0};
     size_t nb_image_datas {0};
+
+    uint8_t fragment_cache[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE];
 };
 
 }
