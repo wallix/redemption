@@ -1026,11 +1026,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                 auto const remaining = right(parameters, subitem_separator);
                 if (auto const subitem_separator2 = find(remaining, '\x01')) {
                     auto const r = right(remaining, subitem_separator2);
-                    char r_sz[64];
+                    char r_sz[64] = {0};
                     memcpy(r_sz, r.data(), std::min(r.size(), sizeof(r_sz) - 1));
-                    r_sz[sizeof(r_sz) - 1] = '\0';
                     message.assign(order, {
-                        {zstr("window"),   text},
+                        {zstr("windows"),  text},
                         {zstr("checkbox"), left(remaining, subitem_separator2)},
                         {zstr("state"),    ::button_state_to_string(::atoi(r_sz))},
                     });
