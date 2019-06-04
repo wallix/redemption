@@ -73,8 +73,8 @@ build -q $toolset_gcc cxxflags=-g -j2 ocr_tools
 build -q $toolset_gcc cxxflags=-g $big_mem
 build -q $toolset_gcc cxxflags=-g -j2
 
-dirdiff=$(diff <(echo "$beforerun") <(rootlist))
-if [ $? -ne 0 ]; then
+dirdiff=$(diff <(echo "$beforerun") <(rootlist) ||:)
+if [ -n "$dirdiff" ]; then
   echo 'New file(s):'
   echo $dirdiff
   exit 1
