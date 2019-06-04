@@ -1,3 +1,8 @@
+redemption (1.1.157%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 04 Jun 2019 18:00:17 +0200
+
 redemption (1.1.156%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Log state of Checkbox in meta-data of session.
