@@ -37,3 +37,12 @@ enum {
     BST_CHECKED       = 1,
     BST_INDETERMINATE = 2
 };
+
+inline const char * button_state_to_string(int state) {
+    switch (state) {
+        case BST_UNCHECKED:     return "unchecked";
+        case BST_CHECKED:       return "checked";
+        case BST_INDETERMINATE: return "indeterminate";
+        default:                return "unavailable";
+    }
+}

@@ -638,6 +638,8 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
 
         meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
 
+        meta.session_update(now, {"CHECKBOX_CLICKED=User Properties\x01" "User cannot change password\x01" "1", 62}); now.tv_sec += 1;
+
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
         send_kbd(); now.tv_sec += 1;
@@ -652,10 +654,11 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         trans.buf,
         "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
         "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
-        "1970-01-01 01:16:43 + type=\"TITLE_BAR\" data=\"Blah2\"\n"
-        "1970-01-01 01:16:46 + type=\"TITLE_BAR\" data=\"Blah3\"\n"
-        "1970-01-01 01:16:47 + (break)\n"
-        "1970-01-01 01:16:47 - type=\"KBD_INPUT\" data=\"ABCDABCDABCD\"\n"
+        "1970-01-01 01:16:43 - type=\"CHECKBOX_CLICKED\" windows=\"User Properties\" checkbox=\"User cannot change password\" state=\"checked\"\n"
+        "1970-01-01 01:16:44 + type=\"TITLE_BAR\" data=\"Blah2\"\n"
+        "1970-01-01 01:16:47 + type=\"TITLE_BAR\" data=\"Blah3\"\n"
+        "1970-01-01 01:16:48 + (break)\n"
+        "1970-01-01 01:16:48 - type=\"KBD_INPUT\" data=\"ABCDABCDABCD\"\n"
     );
 }
 

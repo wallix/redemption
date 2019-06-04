@@ -2157,14 +2157,7 @@ public:
                             {"type",     "CHECKBOX_CLICKED"},
                             {"window",   parameters[0]},
                             {"checkbox", parameters[1]},
-                            {"state",    [](int state) {
-                                    switch (state) {
-                                        case BST_UNCHECKED:     return "unchecked";
-                                        case BST_CHECKED:       return "checked";
-                                        case BST_INDETERMINATE: return "indeterminate";
-                                        default:                return "unavailable";
-                                    }
-                                }(::atoi(parameters[2].c_str()))}
+                            {"state",    ::button_state_to_string(::atoi(parameters[2].c_str()))}
                         });
 
                         this->report_message.log5(info);
