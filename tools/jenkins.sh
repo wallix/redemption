@@ -75,12 +75,11 @@ build -q $toolset_gcc cxxflags=-g -j2 ocr_tools
 build -q $toolset_gcc cxxflags=-g $big_mem
 build -q $toolset_gcc cxxflags=-g -j2
 
-dirdiff=$(diff <(echo "$beforerun") <(rootlist) ||:)
-if [ -n "$dirdiff" ]; then
+dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
   echo 'New file(s):'
-  echo $dirdiff
+  echo "$dirdiff"
   exit 1
-fi
+}
 
 # debug with coverage
 build -q $toolset_gcc debug -scoverage=on covbin=gcov-7
