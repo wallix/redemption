@@ -2136,7 +2136,7 @@ public:
                     if (parameters.size() == 2) {
                         auto info = key_qvalue_pairs({
                             {"type",       "BUTTON_CLICKED"},
-                            {"window",     parameters[0]},
+                            {"windows",    parameters[0]},
                             {"button",     parameters[1]},
                         });
 
@@ -2155,7 +2155,7 @@ public:
                     if (parameters.size() == 3) {
                         auto info = key_qvalue_pairs({
                             {"type",     "CHECKBOX_CLICKED"},
-                            {"window",   parameters[0]},
+                            {"windows",  parameters[0]},
                             {"checkbox", parameters[1]},
                             {"state",    ::button_state_to_string(::atoi(parameters[2].c_str()))}
                         });
@@ -2174,9 +2174,9 @@ public:
                 else if (!order.compare("EDIT_CHANGED")) {
                     if (parameters.size() == 2) {
                         auto info = key_qvalue_pairs({
-                            {"type",   "EDIT_CHANGED"},
-                            {"window", parameters[0]},
-                            {"edit",   parameters[1]},
+                            {"type",    "EDIT_CHANGED"},
+                            {"windows", parameters[0]},
+                            {"edit",    parameters[1]},
                         });
 
                         this->report_message.log5(info);
