@@ -56,6 +56,8 @@ rootlist()
     ls -1 | sort
 }
 
+# implicitly created by bjam
+mkdir bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
