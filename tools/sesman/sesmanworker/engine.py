@@ -150,6 +150,12 @@ class Engine(object):
         except Exception, e:
             return self.wabuser.cn if self.wabuser else ""
 
+    def get_otp_client(self):
+        try:
+            return self.wabengine.get_otp_client()
+        except Exception as e:
+            return ''
+
     def check_license(self):
         res = self.wabengine.is_session_management_license()
         if not res:
