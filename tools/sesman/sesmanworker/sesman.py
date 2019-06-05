@@ -700,6 +700,8 @@ class Sesman():
             # At this point, User is authentified.
             if wab_login.startswith('_OTP_'):
                 real_wab_login = self.engine.get_username()
+                if re.search('WALLIX Access Manager', self.engine.get_otp_client(), re.IGNORECASE):
+                    self.send_data({u'is_wabam': u'True'})
                 self.shared[u'login'] = self.shared.get(u'login').replace(wab_login,
                                                                           real_wab_login)
 
