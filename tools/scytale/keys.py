@@ -1,25 +1,39 @@
+"""
+Here are defined callback functions called from C API
+used to get hmac_key and trace_key.
+
+The flag parameter is here to force use of old encryption scheme
+where the master encoding key is kept inside wabengine
+instead of being derivated. The key format also slightly changed.
+
+"""
+
 import ctypes
-import ctypes.util
 
-from ctypes import CFUNCTYPE, c_int, c_uint, c_char_p, c_void_p
+proxy = None
 
-
-hmac_key_str = '\x86\x41\x05\x58\xc4\x95\xcc\x4e\x49\x21\x57\x87\x47\x74\x08\x8a\x33\xb0\x2a\xb8\x65\xcc\x38\x41\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c'
-
-key_str = '\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd\xa6\x50\x38\xfc\xd8\x86\x51\x4f\x59\x7e\x8e\x90\x81\xf6\xf4\x48\x9c\x77\x41\x51\x0f\x53\x0e\xe8'
-
-GETHMACKEY = CFUNCTYPE(c_int, c_void_p)
-GETTRACEKEY = CFUNCTYPE(c_int, c_char_p, c_int, c_void_p, c_uint)
+# def hexdumpkey(key):
+#     return "".join(["\\x%s%s" % (hex((ord(x) >> 4)%16)[-1:], hex(ord(x)%16)[-1:]) for x in key])
 
 def get_hmac_key(resbuf):
-    ctypes.memmove(resbuf, hmac_key_str, 32)
-    return 0
+    try:
+        if not proxy:
+            return -1
+        sign_key = proxy.get_trace_sign_key()
+        # print "sign_key"+str(hexdumpkey(sign_key))
+        ctypes.memmove(resbuf, sign_key, 32)
+        return 0
+    except:
+        return -1
 
 def get_trace_key(base, lg, resbuf, flag):
-    name = base[:lg]
-    ctypes.memmove(resbuf, key_str, 32)
-    return 0
-
-get_hmac_key_func = GETHMACKEY(get_hmac_key)
-get_trace_key_func = GETTRACEKEY(get_trace_key)
-
+    try:
+        if not proxy:
+            return -1
+        name = base[:lg]
+        trace_key = proxy.get_trace_encryption_key(name, flag == 1)
+        # print "trace_key"+str(hexdumpkey(trace_key))
+        ctypes.memmove(resbuf, trace_key, 32)
+        return 0
+    except:
+        return -1
