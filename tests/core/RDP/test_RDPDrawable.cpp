@@ -205,6 +205,17 @@ RED_AUTO_TEST_CASE(TestPolyline)
     //DUMP_PNG("/tmp/test_polyline_000_", gd);
 }
 
+namespace
+{
+    void out_rect(OutStream& out_stream, int16_t x, int16_t y, int16_t cx, int16_t cy)
+    {
+        out_stream.out_sint16_le(x);
+        out_stream.out_sint16_le(y);
+        out_stream.out_sint16_le(cx);
+        out_stream.out_sint16_le(cy);
+    }
+}
+
 RED_AUTO_TEST_CASE(TestMultiDstBlt)
 {
     // Create a simple capture image and dump it to file
@@ -218,16 +229,10 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
 
     StaticOutStream<1024> deltaRectangles;
 
-    deltaRectangles.out_sint16_le(100);
-    deltaRectangles.out_sint16_le(100);
-    deltaRectangles.out_sint16_le(10);
-    deltaRectangles.out_sint16_le(10);
+    out_rect(deltaRectangles, 100, 100, 10, 10);
 
     for (int i = 0; i < 19; i++) {
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
+        out_rect(deltaRectangles, 10, 10, 10, 10);
     }
 
     InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
@@ -253,16 +258,10 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
     StaticOutStream<1024> deltaRectangles;
 
-    deltaRectangles.out_sint16_le(100);
-    deltaRectangles.out_sint16_le(100);
-    deltaRectangles.out_sint16_le(10);
-    deltaRectangles.out_sint16_le(10);
+    out_rect(deltaRectangles, 100, 100, 10, 10);
 
     for (int i = 0; i < 19; i++) {
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
+        out_rect(deltaRectangles, 10, 10, 10, 10);
     }
 
     InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
@@ -273,6 +272,31 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 
     // uncomment to see result in png file
     //DUMP_PNG("/tmp/test_multiopaquerect_000_", gd);
+}
+
+RED_AUTO_TEST_CASE(TestMultiScrBlt)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    Rect screen_rect(0, 0, width, height);
+    RDPDrawable gd(width, height);
+    auto const color_cxt = gdi::ColorCtx::depth24();
+    gd.draw(RDPOpaqueRect(screen_rect, encode_color24()(WHITE)), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), encode_color24()(GREEN)), screen_rect, color_cxt);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(50), encode_color24()(RED)), screen_rect, color_cxt);
+
+    StaticOutStream<1024> deltaRectangles;
+
+    out_rect(deltaRectangles, 0, 177, 1263, 530);
+    out_rect(deltaRectangles, 0, -4, 462, 4);
+    out_rect(deltaRectangles, 70, 0, 463, 4);
+
+    InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
+
+    gd.draw(RDP::RDPMultiScrBlt(Rect(0, 173, 1263, 534), 0xCC, 0, -105, 3, deltaRectangles_in), screen_rect);
+
+    RED_CHECK_SIG(gd, "\xed\x71\x68\xdc\xaa\xd6\x3c\x81\x88\x1f\x58\x50\x0a\x4a\xdd\x87\x1e\xd8\x69\x5c");
 }
 
 
