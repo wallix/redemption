@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(testFileValid)
 
         std::string file_name("README.md");
         std::string file_content(tu::get_file_contents("README.md"));
-        std::string target_service("linux_scan");
+        std::string target_service("clamav");
 
         int file_size = 30; /*file_content.length();*/
 
@@ -87,7 +87,7 @@ RED_AUTO_TEST_CASE(testFileInvalid)
 
         std::string file_path("../ICAPService/python/tests/the_zeus_binary_chapros");
         std::string file_name("the_zeus_binary_chapros");
-        std::string target_service("linux_scan");
+        std::string target_service("clamav");
         int file_size = 227328;
 
         int file_id = validator_open_file(service, file_name.c_str(), target_service.c_str());
