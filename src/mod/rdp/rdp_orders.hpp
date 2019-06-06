@@ -112,11 +112,13 @@ private:
     bool        enable_persistent_disk_bitmap_cache;
     bool        persist_bitmap_cache_on_disk;
 
+    bool silent_reject_windowing_orders;
+
     ReportError report_error;
 
 public:
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
-              , bool persist_bitmap_cache_on_disk, RDPVerbose verbose, ReportError report_error)
+              , bool persist_bitmap_cache_on_disk, bool silent_reject_windowing_orders, RDPVerbose verbose, ReportError report_error)
     : common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , memblt(0, Rect(), 0, 0, 0, 0)
     , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
@@ -138,28 +140,29 @@ public:
     , target_host(target_host)
     , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
     , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk)
+    , silent_reject_windowing_orders(silent_reject_windowing_orders)
     , report_error(std::move(report_error))
     {
     }
 
     void reset()
     {
-        this->common      = RDPOrderCommon(RDP::PATBLT, Rect(0, 0, 1, 1));
-        this->memblt      = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
-        this->mem3blt     = RDPMem3Blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0);
-        this->opaquerect  = RDPOpaqueRect(Rect(), RDPColor{});
-        this->scrblt      = RDPScrBlt(Rect(), 0, 0, 0);
-        this->destblt     = RDPDestBlt(Rect(), 0);
+        this->common          = RDPOrderCommon(RDP::PATBLT, Rect(0, 0, 1, 1));
+        this->memblt          = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
+        this->mem3blt         = RDPMem3Blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0);
+        this->opaquerect      = RDPOpaqueRect(Rect(), RDPColor{});
+        this->scrblt          = RDPScrBlt(Rect(), 0, 0, 0);
+        this->destblt         = RDPDestBlt(Rect(), 0);
         this->multidstblt     = RDPMultiDstBlt();
         this->multiopaquerect = RDPMultiOpaqueRect();
         this->multipatblt     = RDP::RDPMultiPatBlt();
         this->multiscrblt     = RDP::RDPMultiScrBlt();
-        this->patblt      = RDPPatBlt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush());
-        this->lineto      = RDPLineTo(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}));
-        this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
-                                         , RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
+        this->patblt          = RDPPatBlt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush());
+        this->lineto          = RDPLineTo(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}));
+        this->glyph_index     = RDPGlyphIndex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
+                                             , RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
         this->polyline        = RDPPolyline();
-        this->ninegrid     = RDPNineGrid();
+        this->ninegrid        = RDPNineGrid();
     }
 
     ~rdp_orders() {
@@ -312,7 +315,9 @@ private:
                     if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
-                    gd.draw(order);
+                    if (!this->silent_reject_windowing_orders) {
+                        gd.draw(order);
+                    }
                 }
                 break;
 
@@ -322,7 +327,9 @@ private:
                     if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
-                    gd.draw(order);
+                    if (!this->silent_reject_windowing_orders) {
+                        gd.draw(order);
+                    }
                 }
                 break;
 
@@ -332,7 +339,9 @@ private:
                     if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
-                    gd.draw(order);
+                    if (!this->silent_reject_windowing_orders) {
+                        gd.draw(order);
+                    }
                 }
                 break;
 
@@ -343,7 +352,9 @@ private:
                     if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
-                    gd.draw(order);
+                    if (!this->silent_reject_windowing_orders) {
+                        gd.draw(order);
+                    }
                 }
                 break;
 
@@ -372,7 +383,9 @@ private:
                     if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
-                    gd.draw(order);
+                    if (!this->silent_reject_windowing_orders) {
+                        gd.draw(order);
+                    }
                 }
                 break;
 
@@ -383,7 +396,9 @@ private:
                     if (bool(this->verbose & RDPVerbose::rail_order)) {
                         order.log(LOG_INFO);
                     }
-                    gd.draw(order);
+                    if (!this->silent_reject_windowing_orders) {
+                        gd.draw(order);
+                    }
                 }
                 break;
 
@@ -409,7 +424,9 @@ private:
             if (bool(this->verbose & RDPVerbose::rail_order)) {
                 order.log(LOG_INFO);
             }
-            gd.draw(order);
+            if (!this->silent_reject_windowing_orders) {
+                gd.draw(order);
+            }
         }
         else {
             RDP::RAIL::ActivelyMonitoredDesktop order;
@@ -417,7 +434,9 @@ private:
             if (bool(this->verbose & RDPVerbose::rail_order)) {
                 order.log(LOG_INFO);
             }
-            gd.draw(order);
+            if (!this->silent_reject_windowing_orders) {
+                gd.draw(order);
+            }
         }
     }
 

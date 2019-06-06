@@ -1510,14 +1510,23 @@ public:
 
                 mod_rdp_params.should_ignore_first_client_execute  = this->client_execute.should_ignore_first_client_execute();
 
-                mod_rdp_params.remote_program                      = (client_info.remote_program &&
-                                                                      this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>() &&
-                                                                      ((mod_rdp_params.target_application &&
-                                                                        (*mod_rdp_params.target_application)) ||
-                                                                       (this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>() &&
-                                                                        mod_rdp_params.client_execute_exe_or_file &&
-                                                                        (*mod_rdp_params.client_execute_exe_or_file))));
+                bool const rail_is_required = (
+                        this->ini.get<cfg::mod_rdp::use_native_remoteapp_capability>() &&
+                        ((mod_rdp_params.target_application &&
+                          (*mod_rdp_params.target_application)) ||
+                         (this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>() &&
+                          mod_rdp_params.client_execute_exe_or_file &&
+                          (*mod_rdp_params.client_execute_exe_or_file))));
+
+                mod_rdp_params.remote_program                      = ((client_info.remote_program ||
+                                                                       (this->ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() &&
+                                                                        this->ini.get<cfg::context::is_wabam>())) &&
+                                                                      rail_is_required);
                 mod_rdp_params.remote_program_enhanced             = client_info.remote_program_enhanced;
+                mod_rdp_params.convert_remoteapp_to_desktop        = (!client_info.remote_program &&
+                                                                      this->ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() &&
+                                                                      this->ini.get<cfg::context::is_wabam>() &&
+                                                                      rail_is_required);
                 mod_rdp_params.use_client_provided_remoteapp       = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
                 mod_rdp_params.clean_up_32_bpp_cursor              = this->ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();

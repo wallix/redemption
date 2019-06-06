@@ -585,6 +585,9 @@
 "#_advanced\n"
 "split_domain = boolean(default=False)\n\n"
 
+"#_hidden\n"
+"wabam_uses_translated_remoteapp = boolean(default=False)\n\n"
+
 "[metrics]\n\n"
 
 "#_advanced\n"

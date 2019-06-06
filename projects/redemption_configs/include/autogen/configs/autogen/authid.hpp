@@ -73,6 +73,7 @@ enum authid_t : unsigned {
     AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE,
     AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE,
     AUTHID_MOD_RDP_ENABLE_RDPDR_DATA_ANALYSIS,
+    AUTHID_MOD_RDP_WABAM_USES_TRANSLATED_REMOTEAPP,
     AUTHID_MOD_VNC_CLIPBOARD_UP,
     AUTHID_MOD_VNC_CLIPBOARD_DOWN,
     AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE,
@@ -160,6 +161,7 @@ enum authid_t : unsigned {
     AUTHID_CONTEXT_RAIL_DISCONNECT_MESSAGE_DELAY,
     AUTHID_CONTEXT_USE_SESSION_PROBE_TO_LAUNCH_REMOTE_PROGRAM,
     AUTHID_CONTEXT_SESSION_PROBE_LAUNCH_ERROR_MESSAGE,
+    AUTHID_CONTEXT_IS_WABAM,
     MAX_AUTHID,
     AUTHID_UNKNOWN
 };
@@ -232,6 +234,7 @@ constexpr char const * const authstr[] = {
     "server_cert_failure_message",
     "server_cert_error_message",
     "enable_rdpdr_data_analysis",
+    "wabam_uses_translated_remoteapp",
     "clipboard_up",
     "clipboard_down",
     "vnc_server_clipboard_encoding_type",
@@ -319,4 +322,5 @@ constexpr char const * const authstr[] = {
     "rail_disconnect_message_delay",
     "use_session_probe_to_launch_remote_program",
     "session_probe_launch_error_message",
+    "is_wabam",
 };

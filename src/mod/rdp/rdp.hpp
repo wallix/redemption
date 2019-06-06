@@ -454,6 +454,8 @@ protected:
     const bool remote_program;
     const bool remote_program_enhanced;
 
+    const bool convert_remoteapp_to_desktop;
+
     TransparentRecorder * transparent_recorder;
     Transport           * persistent_key_list_transport;
 
@@ -638,8 +640,11 @@ protected:
             assert(!this->remote_programs_to_client_sender &&
                 !this->remote_programs_to_server_sender);
 
-            this->remote_programs_to_client_sender =
-                this->create_to_client_sender(channel_names::rail);
+            if (!this->convert_remoteapp_to_desktop)
+            {
+                this->remote_programs_to_client_sender =
+                    this->create_to_client_sender(channel_names::rail);
+            }
             this->remote_programs_to_server_sender =
                 this->create_to_server_sender(channel_names::rail);
 
@@ -648,6 +653,9 @@ protected:
                     this->remote_programs_to_client_sender.get(),
                     this->remote_programs_to_server_sender.get(),
                     this->front,
+                    this->convert_remoteapp_to_desktop,
+                    this->front_width,
+                    this->front_height,
                     this->vars,
                     this->get_remote_programs_virtual_channel_params());
         }
@@ -967,7 +975,7 @@ public:
         , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
         , keylayout(info.keylayout)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
-                , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose
+                , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.convert_remoteapp_to_desktop, mod_rdp_params.verbose
                 , report_error_from_reporter(report_message))
         , share_id(0)
         , userid(0)
@@ -1087,6 +1095,7 @@ public:
         , enable_multiscrblt(false)
         , remote_program(mod_rdp_params.remote_program)
         , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
+        , convert_remoteapp_to_desktop(mod_rdp_params.convert_remoteapp_to_desktop)
         , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
@@ -1136,7 +1145,7 @@ public:
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
         , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
-    	, metrics(metrics)
+        , metrics(metrics)
 //        , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
 //                 , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
 //                 , vars.get<cfg::context::session_id>()
@@ -2938,6 +2947,62 @@ public:
                         }
                         this->mod_channel_list.push_back(def);
                         cs_net.channelCount++;
+                    }
+
+                    if (this->convert_remoteapp_to_desktop) {
+                        {
+                            memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::rail.c_str(), 8);
+                            cs_net.channelDefArray[cs_net.channelCount].options =
+                                  GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                | GCC::UserData::CSNet::REMOTE_CONTROL_PERSISTENT;
+                            CHANNELS::ChannelDef def;
+                            def.name = channel_names::rail;
+                            def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                            if (bool(this->verbose & RDPVerbose::channels)){
+                                def.log(cs_net.channelCount);
+                            }
+                            this->mod_channel_list.push_back(def);
+                            cs_net.channelCount++;
+                        }
+
+                        {
+                            memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::rail_wi.c_str(), 8);
+                            cs_net.channelDefArray[cs_net.channelCount].options =
+                                  GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                | GCC::UserData::CSNet::REMOTE_CONTROL_PERSISTENT;
+                            CHANNELS::ChannelDef def;
+                            def.name = channel_names::rail_wi;
+                            def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                            if (bool(this->verbose & RDPVerbose::channels)){
+                                def.log(cs_net.channelCount);
+                            }
+                            this->mod_channel_list.push_back(def);
+                            cs_net.channelCount++;
+                        }
+
+                        {
+                            memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::rail_ri.c_str(), 8);
+                            cs_net.channelDefArray[cs_net.channelCount].options =
+                                  GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                                | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                | GCC::UserData::CSNet::REMOTE_CONTROL_PERSISTENT;
+                            CHANNELS::ChannelDef def;
+                            def.name = channel_names::rail_ri;
+                            def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                            if (bool(this->verbose & RDPVerbose::channels)){
+                                def.log(cs_net.channelCount);
+                            }
+                            this->mod_channel_list.push_back(def);
+                            cs_net.channelCount++;
+                        }
                     }
 
                     if (bool(this->verbose & RDPVerbose::security)) {
@@ -5072,16 +5137,25 @@ public:
 
                 if (this->remote_program) {
                     RailCaps rail_caps = this->client_rail_caps;
+                    if (this->convert_remoteapp_to_desktop) {
+                        rail_caps.RailSupportLevel = 0x83;
+                    }
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         rail_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(rail_caps);
 
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        this->client_window_list_caps.log("Sending to server");
+                    WindowListCaps window_list_caps = this->client_window_list_caps;
+                    if (this->convert_remoteapp_to_desktop) {
+                        window_list_caps.WndSupportLevel = 0x2;
+                        window_list_caps.NumIconCaches = 3;
+                        window_list_caps.NumIconCacheEntries = 12;
                     }
-                    confirm_active_pdu.emit_capability_set(this->client_window_list_caps);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        window_list_caps.log("Sending to server");
+                    }
+                    confirm_active_pdu.emit_capability_set(window_list_caps);
                 }
 
                 if (this->large_pointer_support &&
@@ -8294,7 +8368,7 @@ private:
 
 public:
     windowing_api* get_windowing_api() const {
-        if (this->remote_programs_session_manager) {
+        if (this->remote_programs_session_manager && !this->convert_remoteapp_to_desktop) {
             return this->remote_programs_session_manager.get();
         }
 

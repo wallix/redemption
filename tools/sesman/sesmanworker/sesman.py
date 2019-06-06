@@ -1921,7 +1921,8 @@ class Sesman():
                 u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
                 u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
                 u'enable_nla': 'enable_nla',
-                u'enable_kerberos': 'enable_kerberos'
+                u'enable_kerberos': 'enable_kerberos',
+                u'wabam_uses_translated_remoteapp': 'wabam_uses_translated_remoteapp'
                 },
             'session_log': {
                 u'keyboard_input_masking_level': 'keyboard_input_masking_level'
