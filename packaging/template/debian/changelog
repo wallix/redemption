@@ -1,3 +1,9 @@
+redemption (1.1.161%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * 21520 [Records] - Video generation is stuck
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 06 Jun 2019 15:02:17 +0200
+
 redemption (1.1.159%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Translate RemoteApp to Alternate Shell for WABAM.
