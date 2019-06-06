@@ -25,12 +25,14 @@
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/channel_names.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
-#include "mod/rdp/params/rdp_session_probe_params.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
-#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/RDP/capabilities/order.hpp"
+
+#ifndef __EMSCRIPTEN__
+# include "mod/rdp/params/rdp_session_probe_params.hpp"
+#endif
 
 #include <chrono>
 #include <string>
@@ -62,7 +64,9 @@ using ModRdpVariables = vcfg::variables<
 
 struct ModRDPParams
 {
+#ifndef __EMSCRIPTEN__
     ModRdpSessionProbeParams session_probe_params;
+#endif
 
     const char * target_user;
     const char * target_password;
@@ -274,6 +278,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_remotefx);
+
+#ifndef __EMSCRIPTEN__
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_session_probe);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.enable_launch_mask);
 
@@ -310,7 +316,20 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc_params.launcher_abort_delay);
 
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.extra_system_processes.to_string());
+
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.outbound_connection_monitor_rules.to_string());
+
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.process_monitor_rules.to_string());
+
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.windows_of_these_applications_as_unidentified_input_field.to_string());
+
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.is_public_session);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.used_to_launch_remote_program);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.fix_too_long_cookie);
+#endif
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_wrm);
@@ -321,14 +340,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    persistent_key_list_transport);
 
         RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
-
-        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.extra_system_processes.to_string());
-
-        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.outbound_connection_monitor_rules.to_string());
-
-        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.process_monitor_rules.to_string());
-
-        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.vc_params.windows_of_these_applications_as_unidentified_input_field.to_string());
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel.c_str());
@@ -406,8 +417,6 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.rail_disconnect_message_delay);
 
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.used_to_launch_remote_program);
-
         RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.bogus_ios_rdpdr_virtual_channel);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             file_system_params.enable_rdpdr_data_analysis);
@@ -416,7 +425,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%u",     from_millisec,         remote_app_params.bypass_legal_notice_timeout);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_input_event_sync);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.fix_too_long_cookie);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.log_only_relevant_activities);
 

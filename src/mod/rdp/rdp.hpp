@@ -61,8 +61,6 @@
 #include "core/RDP/capabilities/surfacecommands.hpp"
 #include "core/RDP/capabilities/window.hpp"
 
-#include "core/RDP/channels/rdpdr.hpp"
-
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/mcs.hpp"
@@ -78,6 +76,8 @@
 #include "core/RDP/windows_execute_shell_params.hpp"
 
 #include "core/RDPEA/audio_output.hpp"
+
+#include "core/session_reactor.hpp"
 
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -99,16 +99,18 @@ struct ICAPService;
 # include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
 # include "mod/rdp/channels/sespro_channel.hpp"
 # include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
+# include "mod/rdp/channels/cliprdr_channel.hpp"
+# include "mod/rdp/channels/drdynvc_channel.hpp"
+# include "mod/rdp/channels/rdpdr_channel.hpp"
+# include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 # include "core/RDP/capabilities/rail.hpp"
 # include "RAIL/client_execute.hpp"
 #endif
 
 #include "mod/mod_api.hpp"
 
-#include "mod/rdp/channels/cliprdr_channel.hpp"
-#include "mod/rdp/channels/drdynvc_channel.hpp"
-#include "mod/rdp/channels/rdpdr_channel.hpp"
-#include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
+#include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
@@ -116,6 +118,7 @@ struct ICAPService;
 
 #include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
@@ -124,6 +127,7 @@ struct ICAPService;
 #include <cstdlib>
 #include <deque>
 
+#ifndef __EMSCRIPTEN__
 // TODO: AsynchronousTaskContainer ne serait pas une classe d'usage général qui mériterait son propre fichier ?
 struct AsynchronousTaskContainer
 {
@@ -163,6 +167,13 @@ private:
 public:
     SessionReactor& session_reactor;
 };
+#else
+struct AsynchronousTaskContainer
+{
+    explicit AsynchronousTaskContainer(SessionReactor&)
+    {}
+};
+#endif
 
 class mod_rdp_channels
 {

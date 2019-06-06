@@ -15,8 +15,13 @@ class RDPGraphics
     }
 
     resizeCanvas(w, h) {
-        this.ecanvas.width = w;
-        this.ecanvas.height = h;
+        if (this.ecanvas.width !== w || this.ecanvas.height !== h) {
+            // restore canvas after resize
+            const imgData = this.canvas.getImageData(0, 0, this.ecanvas.width, this.ecanvas.height);
+            this.ecanvas.width = w;
+            this.ecanvas.height = h;
+            this.canvas.putImageData(imgData, 0, 0);
+        }
     }
 
     drawImage(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight, rop) {
@@ -117,6 +122,83 @@ class RDPGraphics
 		}
 		this.canvas.stroke();
 		this.canvas.restore();
+    }
+
+    _transformPixels(x, y, w, h, f) {
+        const imgData = this.canvas.getImageData(x, y, w, h);
+        const u32a = new Uint32Array(imgData.data.buffer);
+        const len = imgData.width * imgData.height;
+        for (let i = 0; i < len; ++i) {
+            u32a[i] = f(u32a[i] - 0xff000000) + 0xff000000;
+        }
+        this.canvas.putImageData(imgData, x, y);
+    }
+
+    _invert(x, y, w, h) {
+        this._transformPixels(x,y,w,h, (src) => src ^ 0xffffff);
+    }
+
+    drawPatBlt(x, y, w, h, rop, color) {
+        switch (rop) {
+            case 0x00:
+                this.canvas.fillStyle = "#000";
+                this.canvas.fillRect(x,y,w,h);
+                break;
+            case 0x05: this._transformPixels(x,y,w,h, (src) => ~(color | src)); break;
+            case 0x0f: this._transformPixels(x,y,w,h, (src) => ~src); break;
+            case 0x50: this._transformPixels(x,y,w,h, (src) => src & ~color); break;
+            case 0x55: this._invert(x,y,w,h); break;
+            case 0x5a: this._transformPixels(x,y,w,h, (src) => color ^ src); break;
+            case 0x5f: this._transformPixels(x,y,w,h, (src) => ~(color & src)); break;
+            case 0xa0: this._transformPixels(x,y,w,h, (src) => color & src); break;
+            // case 0xaa: break;
+            case 0xaf: this._transformPixels(x,y,w,h, (src) => color | ~src); break;
+            case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~target); break;
+            case 0xff:
+                this.canvas.fillStyle = "#fff";
+                this.canvas.fillRect(x,y,w,h);
+                break;
+            default: console.log('unsupported PatBlt rop', rop);
+        }
+    }
+
+    _transformPixelsBrush(orgX, orgY, w, h, backColor, foreColor, brushData, f) {
+        const imgData = this.canvas.getImageData(orgX, orgY, w, h);
+        const u32a = new Uint32Array(imgData.data.buffer);
+        w = imgData.width;
+        h = imgData.height;
+        for (let y = 0; y < h; ++y) {
+            const brushU8 = brushData[(y + orgY) % 8];
+            const i = y * w;
+            for (let x = 0; x < w; ++x) {
+                const selectColor = (brushU8 & ((1 << 7) >> ((x + orgX) % 8)));
+                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] - 0xff000000) + 0xff000000;
+            }
+        }
+        this.canvas.putImageData(imgData, orgX, orgY);
+    }
+
+    drawPatBltEx(x, y, w, h, rop, backColor, foreColor, brushData) {
+        switch (rop) {
+            case 0xf0: this._transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData, (src,c) => src); break;
+            case 0x5a: this._transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData, (src,c) => src ^ c); break;
+            default: console.log('unsupported PatBltEx rop', rop);
+        }
+    }
+
+    drawDestBlt(x, y, w, h, rop) {
+        switch (rop) {
+        case 0x00:
+            this.canvas.fillStyle = "#000";
+            this.canvas.fillRect(x,y,w,h);
+            break;
+        case 0x55: this._invert(x,y,w,h); break;
+        // case 0xAA: break;
+        case 0xff:
+            this.canvas.fillStyle = "#fff";
+            this.canvas.fillRect(x,y,w,h);
+            break;
+        }
     }
 
     image2CSS(image, x, y) {

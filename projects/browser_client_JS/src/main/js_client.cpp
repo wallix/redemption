@@ -21,6 +21,8 @@ Author(s): Jonathan Poelen
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
+#include "core/report_message_api.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
@@ -156,7 +158,7 @@ struct RdpClient
         this->mod = new_mod_rdp(
             browser_trans, session_reactor, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
-            mod_rdp_params, authentifier, report_message, ini, nullptr);
+            mod_rdp_params, authentifier, report_message, ini, nullptr, nullptr);
     }
 
     void send_first_packet()

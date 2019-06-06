@@ -1496,9 +1496,9 @@ public:
                 else if (!::strcasecmp(order_.c_str(), "BUTTON_CLICKED")) {
                     if (parameters_.size() == 2) {
                         auto info = key_qvalue_pairs({
-                            {"type",   "BUTTON_CLICKED"},
-                            {"window", parameters_[0]},
-                            {"button", parameters_[1]},
+                            {"type",    "BUTTON_CLICKED"},
+                            {"windows", parameters_[0]},
+                            {"button",  parameters_[1]},
                         });
 
                         ArcsightLogInfo arc_info;
@@ -1520,16 +1520,9 @@ public:
                     if (parameters_.size() == 3) {
                         auto info = key_qvalue_pairs({
                             {"type",     "CHECKBOX_CLICKED"},
-                            {"window",   parameters_[0]},
+                            {"windows",  parameters_[0]},
                             {"checkbox", parameters_[1]},
-                            {"state",    [](int state) {
-                                    switch (state) {
-                                        case BST_UNCHECKED:     return "unchecked";
-                                        case BST_CHECKED:       return "checked";
-                                        case BST_INDETERMINATE: return "indeterminate";
-                                        default:                return "unavailable";
-                                    }
-                                }(::atoi(parameters_[2].c_str()))}
+                            {"state",    ::button_state_to_string(::atoi(parameters_[2].c_str()))}
                         });
 
                         ArcsightLogInfo arc_info;
@@ -1551,9 +1544,9 @@ public:
                 else if (!::strcasecmp(order_.c_str(), "EDIT_CHANGED")) {
                     if (parameters_.size() == 2) {
                         auto info = key_qvalue_pairs({
-                            {"type",   "EDIT_CHANGED"},
-                            {"window", parameters_[0]},
-                            {"edit",   parameters_[1]},
+                            {"type",    "EDIT_CHANGED"},
+                            {"windows", parameters_[0]},
+                            {"edit",    parameters_[1]},
                         });
 
                         ArcsightLogInfo arc_info;

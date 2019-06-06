@@ -250,13 +250,18 @@ try:
     def add_deps_src(arg):
         a = arg.split(',')
         src_deps[a[0]] = glob.glob(a[1])
+    def add_disable_src(arg):
+        disable_srcs.add(arg)
+        base = arg[-4:]
+        if base == '.hpp':
+            disable_srcs.add(base + '.cpp')
     options = {
         '--src': lambda arg: get_files(sources, arg),
         '--main': set_arg('main'),
         '--lib': set_arg('lib'),
         '--test': set_arg('test'),
         '--src-system': set_arg('system'),
-        '--disable-src': lambda arg: disable_srcs.add(arg),
+        '--disable-src': add_disable_src,
         '--deps-src': add_deps_src,
         '--include': lambda arg: includes.add(arg),
     }
@@ -399,11 +404,14 @@ def get_includes(path):
                                 user_includes.append(all_files[file_name])
                                 found = True
                                 break
+                            elif file_name in disable_srcs:
+                                found = True
+                                break
                         if not found:
                             file_name = os.path.normpath(path[0:path.rfind('/')] + '/' + inc)
                             if file_name in all_files:
                                 user_includes.append(all_files[file_name])
-                            else:
+                            elif file_name not in disable_srcs:
                                 unknown_user_includes.append(inc)
                     if len(line) and line[0] == '<':
                         system_includes.append(line[1:line.rfind('>')])

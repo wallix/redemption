@@ -29,16 +29,26 @@ const redemptionLoadModule = function(Module, window)
     // { funcname: [wrapCreator, defaultFunction], ... }
     const wrappersGd = {
         drawImage: wCb_em2js_ImageData,
-        drawPolyline: function(cb) {
-            return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
-                const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
-                cb(xStart, yStart, deltas, penColor);
-            };
-        },
-
         drawRect: identity,
         drawSrcBlt: identity,
         drawLineTo: identity,
+        drawDestBlt: identity,
+
+        drawPolyline: function(cb, thisp) {
+            return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
+                const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
+                cb.call(thisp, xStart, yStart, deltas, penColor);
+            };
+        },
+
+        drawPatBlt: identity,
+        drawPatBltEx: function(cb, thisp) {
+            return function(x, y, w, h, rop, backColor, foreColor, brush) {
+                const brushData = HEAPU8.subarray(brush, brush + 8);
+                cb.call(thisp, x, y, w, h, rop, backColor, foreColor, brushData);
+            };
+        },
+
 
         setPointer: wCb_em2js_ImageData,
         newPointer: wCb_em2js_ImageData,
@@ -156,11 +166,11 @@ const redemptionLoadModule = function(Module, window)
             socket.binaryType = 'arraybuffer';
             return socket;
         },
-        newWrmPlayer: function(events, data) {
+        newWrmPlayer: function(events) {
             const playerEvents = {};
             wrapEvents(playerEvents, wrappersGd, events, noop);
             wrapEvents(playerEvents, wrappersPlayer, events, noop);
-            return new Module.WrmPlayer(playerEvents, data);
+            return new Module.WrmPlayer(playerEvents);
         }
     };
 

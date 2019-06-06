@@ -372,15 +372,23 @@ RdpNegociation::RdpNegociation(
         )
     , trans(trans)
     , password_printing_mode(mod_rdp_params.password_printing_mode)
+#ifndef __EMSCRIPTEN__
     , enable_session_probe(mod_rdp_params.session_probe_params.enable_session_probe)
+#else
+    , enable_session_probe(false)
+#endif
     , enable_remotefx(mod_rdp_params.enable_remotefx && info.bitmap_codec_caps.haveRemoteFxCodec)
     , rdp_compression(mod_rdp_params.rdp_compression)
+#ifndef __EMSCRIPTEN__
     , session_probe_use_clipboard_based_launcher(
         mod_rdp_params.session_probe_params.used_clipboard_based_launcher
         && (!mod_rdp_params.application_params.target_application || !(*mod_rdp_params.application_params.target_application))
         && (!mod_rdp_params.application_params.use_client_provided_alternate_shell
         || !info.alternate_shell[0] || info.remote_program)
         )
+#else
+    , session_probe_use_clipboard_based_launcher(false)
+#endif
     , remote_program(mod_rdp_params.remote_app_params.enable_remote_program)
     , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
@@ -404,6 +412,7 @@ RdpNegociation::RdpNegociation(
 
     strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
 
+#ifndef __EMSCRIPTEN__
     // TODO CGR: license loading should be done before creating protocol layers
     {
         char path[256];
@@ -419,6 +428,7 @@ RdpNegociation::RdpNegociation(
             }
         }
     }
+#endif
 
     // Password is a multi-sz!
     // A multi-sz contains a sequence of null-terminated strings,
