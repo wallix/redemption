@@ -250,7 +250,7 @@ RED_AUTO_TEST_CASE(TestMultiScrBlt)
     out_rect(deltaRectangles, 0, -4, 462, 4);
     out_rect(deltaRectangles, 70, 0, 463, 4);
 
-   InStream deltaRectangles_in(deltaRectangles.get_bytes());
+    InStream deltaRectangles_in(deltaRectangles.get_bytes());
 
     gd.draw(RDP::RDPMultiScrBlt(Rect(0, 173, 1263, 534), 0xCC, 0, -105, 3, deltaRectangles_in), screen_rect);
 
