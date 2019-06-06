@@ -318,7 +318,7 @@ public:
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf( buffer + lg, sz - lg
                       , "MultiSrcBlt(nLeftRect=%d nTopRect=%d nWidth=%d nHeight=%d bRop=0x%02X "
-                        "nXSrc=%d nXSrc=%d "
+                        "nXSrc=%d nYSrc=%d "
                         "nDeltaEntries=%d "
                         "CodedDeltaList=("
                       , this->rect.x, this->rect.y, this->rect.cx, this->rect.cy
