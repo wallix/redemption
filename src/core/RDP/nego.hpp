@@ -30,7 +30,9 @@
 #include <memory>
 
 class rdpCredsspClientNTLM;
+#ifndef __EMSCRIPTEN__
 class rdpCredsspClientKerberos;
+#endif
 class ServerNotifier;
 class Random;
 class TimeObj;
@@ -72,7 +74,9 @@ private:
     char * lb_info;
 
     std::unique_ptr<rdpCredsspClientNTLM> credsspNTLM;
+    #ifndef __EMSCRIPTEN__
     std::unique_ptr<rdpCredsspClientKerberos> credsspKerberos;
+    #endif
 
     std::string& extra_message;
     Translation::language_t lang;

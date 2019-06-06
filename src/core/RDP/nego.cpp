@@ -388,13 +388,14 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
 
     LOG(LOG_INFO, "activating CREDSSP");
     if (this->krb) {
+        #ifndef __EMSCRIPTEN__
         try {
             this->credsspKerberos = std::make_unique<rdpCredsspClientKerberos>(
                 trans, this->user,
                 // this->domain, this->password,
                 this->domain, this->current_password,
                 this->hostname, this->target_host,
-                this->krb, this->restricted_admin_mode,
+                this->restricted_admin_mode,
                 this->rand, this->timeobj, this->extra_message, this->lang,
                 bool(this->verbose & Verbose::credssp)
             );
@@ -403,6 +404,10 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 LOG(LOG_INFO, "CREDSSP Kerberos Authentication Failed, fallback to NTLM");
                 this->krb = false;
         };
+        #else
+        this->krb = false;
+        LOG(LOG_ERR, "Unsupported kerberos: fallback to NTLM");
+        #endif
     }
 
     if (!this->krb) {
@@ -434,6 +439,7 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
     LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::recv_credssp");
 
     if (this->krb) {
+        #ifndef __EMSCRIPTEN__
         switch (this->credsspKerberos->credssp_client_authenticate_next(stream))
         {
             case credssp::State::Cont:
@@ -445,6 +451,10 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
                 this->credsspKerberos.reset();
                 return State::Final;
         }
+        #else
+            LOG(LOG_ERR, "Unsupported kerberos");
+            assert(!this->krb);
+        #endif
     }
     else {
         switch (this->credsspNTLM->credssp_client_authenticate_next(stream, trans))

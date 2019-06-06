@@ -21,6 +21,8 @@
 
 #pragma once
 
+#ifndef __EMSCRIPTEN__
+
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/nla/ntlm/ntlm.hpp"
@@ -29,9 +31,7 @@
 #include "utils/translation.hpp"
 #include "system/ssl_sha256.hpp"
 
-#ifndef __EMSCRIPTEN__
 #include "core/RDP/nla/kerberos/kerberos.hpp"
-#endif
 
 #include "transport/transport.hpp"
 
@@ -91,25 +91,6 @@ private:
         this->ServicePrincipalName.init(length + 1);
         this->ServicePrincipalName.copy({pszTargetName, length});
         this->ServicePrincipalName.get_data()[length] = 0;
-    }
-
-    SEC_STATUS InitSecurityInterface(const char* pszPrincipal,
-        Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::InitSecurityInterface");
-
-        this->table.reset();
-
-        LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
-        #ifndef __EMSCRIPTEN__
-        this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
-        #else
-        this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
-        LOG(LOG_ERR, "Could not Initiate Kerberos Security Interface!");
-        assert(!"Unsupported Kerberos");
-        #endif
-
-        return this->table->AcquireCredentialsHandle(pszPrincipal, pvLogonID, pAuthData);
     }
 
     static void ap_integer_increment_le(array_view_u8 number) {
@@ -438,7 +419,6 @@ public:
                uint8_t * pass,
                uint8_t * hostname,
                const char * target_host,
-               const bool krb,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
@@ -463,9 +443,12 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::client_authenticate");
         this->init_public_key();
 
-        SEC_STATUS status = this->InitSecurityInterface( this->target_host,
-                                                        &this->ServicePrincipalName,
-                                                        &this->identity);
+        this->table.reset();
+
+        LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
+        this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
+
+        SEC_STATUS status = this->table->AcquireCredentialsHandle(this->target_host, &this->ServicePrincipalName, &this->identity);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "Kerberos InitSecurityInterface status:%s0x%08X, fallback to NTLM", 
@@ -505,3 +488,4 @@ public:
     }
 };
 
+#endif
