@@ -1,3 +1,9 @@
+redemption (1.1.159%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Translate RemoteApp to Alternate Shell for WABAM.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 06 Jun 2019 13:51:55 +0200
+
 redemption (1.1.157%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
