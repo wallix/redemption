@@ -55,7 +55,6 @@ class rdpCredsspServerNTLM final
 
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
-    std::unique_ptr<SecurityFunctionTable> table = std::make_unique<UnimplementedSecurityFunctionTable>();
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
