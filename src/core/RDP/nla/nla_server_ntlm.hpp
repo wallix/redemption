@@ -151,6 +151,7 @@ public:
     }
 
     public:
+
     struct Ntlm_SecurityFunctionTable
     {
         enum class PasswordCallback
@@ -161,7 +162,6 @@ public:
         };
 
     private:
-        Random & rand;
         TimeObj & timeobj;
         std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
         std::unique_ptr<NTLMContext> context;
@@ -169,13 +169,11 @@ public:
         bool verbose;
 
     public:
-        explicit Ntlm_SecurityFunctionTable(
-            Random & rand, TimeObj & timeobj,
+        explicit Ntlm_SecurityFunctionTable(TimeObj & timeobj,
             std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb,
             bool verbose = false
         )
-            : rand(rand)
-            , timeobj(timeobj)
+            : timeobj(timeobj)
             , set_password_cb(set_password_cb)
             , verbose(verbose)
         {}
@@ -194,48 +192,19 @@ public:
         }
 
         // GSS_Init_sec_context
-        // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-        SEC_STATUS InitializeSecurityContext(array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer)
-        {
-            LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
-
-            if (!this->context) {
-                this->context = std::make_unique<NTLMContext>(
-                    false, this->rand, this->timeobj, this->verbose);
-
-                if (!this->identity) {
-                    return SEC_E_WRONG_CREDENTIAL_HANDLE;
-                }
-                this->context->ntlm_SetContextWorkstation(pszTargetName);
-                this->context->ntlm_SetContextServicePrincipalName(pszTargetName);
-
-                this->context->identity.CopyAuthIdentity(*this->identity);
-            }
-
-            if (this->context->state == NTLM_STATE_INITIAL) {
-                this->context->state = NTLM_STATE_NEGOTIATE;
-            }
-            if (this->context->state == NTLM_STATE_NEGOTIATE) {
-                return this->context->write_negotiate(output_buffer);
-            }
-
-            if (this->context->state == NTLM_STATE_CHALLENGE) {
-                this->context->read_challenge(input_buffer);
-            }
-            if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-                return this->context->write_authenticate(output_buffer);
-            }
-
-            return SEC_E_OUT_OF_SEQUENCE;
-        }
+        // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext 
+        // -> only for clients : unused for NTLM server
 
         // GSS_Accept_sec_context
         // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-        SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer)
+        SEC_STATUS AcceptSecurityContext(
+                array_view_const_u8 input_buffer
+                , Array& output_buffer
+                , Random & rand)
         {
             LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
             if (!this->context) {
-                this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
+                this->context = std::make_unique<NTLMContext>(true, rand, this->timeobj);
 
                 if (!this->identity) {
                     return SEC_E_WRONG_CREDENTIAL_HANDLE;
@@ -403,7 +372,7 @@ public:
         , lang(lang)
         , restricted_admin_mode(restricted_admin_mode)
         , verbose(verbose)
-        , sspi(rand, timeobj, set_password_cb, verbose)
+        , sspi(timeobj, set_password_cb, verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
@@ -580,7 +549,7 @@ private:
         //     | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->sspi.AcceptSecurityContext(
             this->ts_request.negoTokens.av(),
-            /*output*/this->ts_request.negoTokens);
+            /*output*/this->ts_request.negoTokens, this->rand);
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
