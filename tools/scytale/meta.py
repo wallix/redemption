@@ -61,13 +61,13 @@ class MetaReader:
         self.reader = None
 
         if not isinstance(reader, CryptoReader):
-            raise IOError("reader parameter is not CryptoReader")
+            raise IOError("MetaReader: reader parameter is not CryptoReader")
 
         self.close()
 
         self.handle = lib.scytale_meta_reader_new(reader.handle)
         if self.handle is None:
-            raise IOError("Bad allocation of MetaReader")
+            raise IOError("MetaReader: Bad allocation of MetaReader")
 
         return self
 
@@ -137,10 +137,10 @@ class MetaReader:
             ctime = int(mwrm_line.ctime))
         # copy string
         return MwrmLine(
-            filename = ''.join(mwrm_line.filename),
+            filename = mwrm_line.filename.decode('utf-8'),
             start_time = int(mwrm_line.start_time),
             stop_time = int(mwrm_line.stop_time),
             with_hash = bool(mwrm_line.with_hash),
-            fhash = ''.join(mwrm_line.fhash),
-            qhash = ''.join(mwrm_line.qhash),
+            fhash = mwrm_line.fhash.decode('utf-8'),
+            qhash = mwrm_line.qhash.decode('utf-8'),
             stat = wrm_stat)

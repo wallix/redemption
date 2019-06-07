@@ -13,14 +13,14 @@ def normalize(filename):
         (do nothing if filename is not unicode,
         in that case it is assumed to be ready for filesystem)
     """
-    return filename.encode('utf-8') if type(filename) is unicode else filename
+    return filename.encode('utf-8') if type(filename) is str else filename
 
 
 class CryptoReader:
     def __init__(self, filename, derivator=None,
                  old_scheme=False, one_shot=False, auto_scheme=False,
                  hmac_key_func=None, trace_key_func=None):
-        print("CryptoReader::__init__")
+        # print("CryptoReader::__init__")
         self.filename = normalize(filename)
         self.derivator = normalize(derivator) if derivator else self.filename
 
@@ -32,11 +32,15 @@ class CryptoReader:
         hmac_key_func = GETHMACKEY(hmac_key_func) if hmac_key_func else get_hmac_key_func
         trace_key_func = GETTRACEKEY(trace_key_func) if trace_key_func else get_trace_key_func
 
-        self.original_old_scheme = old_scheme
-        self.old_scheme = old_scheme
         self.handle = lib.scytale_reader_new(os.path.basename(master_derivator),
                                              hmac_key_func, trace_key_func,
                                              [0, 1][old_scheme], [0, 1][one_shot])
+
+        if not self.handle:
+            raise IOError("Decrypter: scytale_reader_new error")
+
+        self.original_old_scheme = old_scheme
+        self.old_scheme = old_scheme
         self.fhash = None
         self.qhash = False
         self.lines = deque()
@@ -60,10 +64,7 @@ class CryptoReader:
 
     def open(self, filename=None, auto_scheme=False):
         """ Explicit open of scytale Reader """
-        if filename is None:
-            filename = self.filename
-        else:
-            filename = normalize(filename)
+        filename = self.filename if filename is None else normalize(filename)
 
         self.old_scheme = self.original_old_scheme
         if auto_scheme or self.auto_scheme:
@@ -179,4 +180,4 @@ class CryptoReader:
     def _raise_if_error(self, res):
         if res < 0:
             err = lib.scytale_reader_error_message(self.handle)
-            raise IOError("Decrypter: " + err)
+            raise IOError("Decrypter: " + err.decode('utf-8'))

@@ -45,52 +45,191 @@ class CbPlayer extends RDPGraphics
 const ecanvas = document.getElementById('canvas');
 
 const cbPlayer = new CbPlayer(ecanvas);
-const player = newWrmPlayer(cbPlayer);
 
-const playFile = function(ifile)
-{
-    if (ifile === 3) {
-        player.delete();
-        return ;
-    }
+const ProtocolType = Object.freeze({
+    Error: 0,
+    Ok: 1,
+    Version: 2,
+    Open: 3,
+    FileInfos: 4,
+    OpenFileIndex: 5,
+    NextData: 6,
+    Eof: 7,
+});
 
-    console.log('ifile = ', ifile)
+const State = Object.freeze({
+    First: 0,
+    Next: 1,
+    Loop: 2,
+    Eof: 3,
+});
 
-    fetch('sample'+ifile+'.wrm')
-    .then(response => response.arrayBuffer())
-    .then(buffer => {
-        player.nextData(buffer);
-        if (cbPlayer.time === -1) {
-            player.nextTimestampOrder();
-        }
-        let previousTime = cbPlayer.time;
-        let currentDate = Date.now()
-        let i = 0;
-        let ibuf = 0;
-        console.log(currentDate);
-        const loop = function() {
-            console.log('loop', ++i);
-            while (player.nextOrder()) {
-                player.interpretOrder();
-                if (cbPlayer.time != previousTime) {
-                    const delay = cbPlayer.time - previousTime;
-                    const now = Date.now();
-                    const elapsedTime = now - currentDate;
-                    previousTime = cbPlayer.time
-                    currentDate = now;
-                    setTimeout(loop, Math.max(delay-elapsedTime, 0)/30);
-                    return;
-                }
-            }
-            // console.log(Date.now());
-            playFile(ifile+1)
-        };
-        loop();
-    })
-    .catch(error => console.error('Error:', error));
+const getUint64be = (dataview, offset) => {
+    offset = offset || 0
+    const left = dataview.getUint32(offset);
+    const right = dataview.getUint32(offset+4);
+    return 2**32 * right + left;
 }
 
-playFile(0);
+const socket = new WebSocket("ws://localhost:8765", "RDPPlayer");
+socket.binaryType = 'arraybuffer';
+socket.onopen = function(event) {
+    console.log('Player open');
+    const player = newWrmPlayer(cbPlayer);
+
+    const nextDataRequest = () => {
+        const buf = new ArrayBuffer(1);
+        new DataView(buf).setUint8(0, ProtocolType.NextData);
+        socket.send(buf);
+    };
+
+    let state = State.First;
+
+    let nextBuffer = undefined;
+    let currentDate = 0;
+
+    const loop = (i) => {
+        console.log('loop', ++i);
+        const previousTime = cbPlayer.time;
+        while (player.nextOrder()) {
+            player.interpretOrder();
+            if (cbPlayer.time != previousTime) {
+                const delay = cbPlayer.time - previousTime;
+                const now = Date.now();
+                const elapsedTime = now - currentDate;
+                currentDate = now;
+                setTimeout(loop, Math.max(delay-elapsedTime, 0)/30, i);
+                return;
+            }
+        }
+
+        if (nextBuffer) {
+            player.nextData(nextBuffer);
+            nextBuffer = undefined;
+            nextDataRequest();
+            loop(0);
+        }
+        else {
+            state = State.Wait;
+        }
+    };
+    const appendData = (buffer) => {
+        console.log('appendData', Boolean(buffer), Boolean(nextBuffer))
+        switch (state) {
+            case State.First: {
+                player.nextData(buffer);
+                // if (cbPlayer.time === -1) {
+                    player.nextTimestampOrder();
+                    currentDate = Date.now();
+                // }
+                nextDataRequest();
+                state = State.Loop;
+                loop(0);
+                break;
+            }
+
+            case State.Wait: {
+                player.nextData(buffer);
+                nextDataRequest();
+                state = State.Loop;
+                loop(0);
+                break;
+            }
+
+            case State.Loop: {
+                nextBuffer = buffer;
+                break;
+            }
+
+            case State.Eof:
+                break;
+        }
+    };
+
+
+    const times = [];
+    const sizes = [];
+
+    let ifile = 0;
+
+    const openNextWrm = () => {
+        if (ifile == times.length) {
+            state = State.Eof;
+            return;
+        }
+        console.log('next wrm', ifile);
+        const buf = new ArrayBuffer(5);
+        const view = new DataView(buf);
+        view.setUint8(0, ProtocolType.OpenFileIndex);
+        view.setUint32(1, ifile);
+        ++ifile;
+        socket.send(buf);
+    };
+
+    const actions = {
+        [ProtocolType.Error]: (data) => {
+            console.log('error:', data);
+        },
+        [ProtocolType.Version]: (data) => {
+            console.log(data);
+            const filename = 'sample.mwrm';
+            const buf = new ArrayBuffer(filename.length + 1);
+            const view = new DataView(buf);
+            view.setUint8(0, ProtocolType.Open);
+            for (let i = 0; i < filename.length; ++i) {
+                view.setUint8(i+1, filename.charCodeAt(i));
+            }
+            socket.send(buf);
+        },
+        [ProtocolType.FileInfos]: (data) => {
+            const len = data.byteLength-1;
+            const dataview = new DataView(data, 1)
+            for (let i = 0; i < len; i += 8) {
+                times.push(getUint64be(dataview, i));
+                i += 8
+                sizes.push(getUint64be(dataview, i));
+            }
+            console.log(times, sizes);
+
+            openNextWrm();
+        },
+        [ProtocolType.NextData]: (data) => {
+            console.log(data);
+            appendData(new Uint8Array(data,1));
+        },
+        [ProtocolType.Eof]: (data) => {
+            console.log('eof');
+            openNextWrm();
+        },
+    }
+
+    socket.onmessage = function(event) {
+        const type = new DataView(event.data).getUint8(0);
+        console.log('type:', type);
+        const action = actions[type]
+        if (!action) {
+            console.log('unknown')
+            action = console.log.bind(console);
+        }
+        action(event.data);
+    };
+
+    socket.onerror = function(event) {
+        console.log('Player error: ', event);
+        socket.close();
+    };
+
+    socket.onclose = function(event) {
+        console.log('Player close', event);
+        player.delete();
+    };
+
+    const buf = new ArrayBuffer(5);
+    const view = new DataView(buf);
+    view.setUint8(0, ProtocolType.Version);
+    view.setUint32(1, 1);
+    socket.send(buf);
+}
 
 </script>
 

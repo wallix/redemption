@@ -69,6 +69,7 @@ lib.scytale_writer_fhashhex.restype = c_char_p
 
 
 # RedCryptoReaderHandle * scytale_reader_new(
+#   const char * derivator,
 #   get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
 #   int old_scheme, int one_shot)
 lib.scytale_reader_new.argtypes = [c_char_p, GETHMACKEY, GETTRACEKEY, c_int, c_int]
@@ -204,11 +205,12 @@ scytale.meta.lib = lib
 def set_proxy(proxy):
     scytale.keys.proxy = proxy
 
+SCYTALE_VERSION = 1
+
 def print_version():
     print("library version: %s" % lib.scytale_version())
-    print("script version: %s" % version.SCYTALE_VERSION)
+    print("script version: %s" % SCYTALE_VERSION)
 
 CryptoReader = scytale.decrypter.CryptoReader
 CryptoWriter = scytale.encrypter.CryptoWriter
 MetaReader = scytale.meta.MetaReader
-Verifier = scytale.verifier.Verifier

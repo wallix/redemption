@@ -9,7 +9,7 @@ def normalize(filename):
         (do nothing if filename is not unicode,
         in that case it is assumed to be ready for filesystem)
     """
-    return filename.encode('utf-8') if type(filename) is unicode else filename
+    return filename.encode('utf-8') if type(filename) is str else filename
 
 class CryptoWriter:
     def __init__(self, do_encryption, do_checksum, filename,
@@ -18,7 +18,6 @@ class CryptoWriter:
                  hmac_key_func=None, trace_key_func=None, groupid=None):
         # print("CryptoWriter::__init__", id(self))
         self.closed = True
-        self.do_checksum = do_checksum
         if derivator is None:
             derivator = os.path.basename(filename)
 
@@ -29,6 +28,11 @@ class CryptoWriter:
             self.handle = lib.scytale_writer_new(do_encryption, do_checksum, normalize(derivator), hmac_key_func, trace_key_func, old_scheme, one_shot)
         else:
             self.handle = lib.scytale_writer_new_with_test_random(do_encryption, do_checksum, normalize(derivator), hmac_key_func, trace_key_func, old_scheme, one_shot)
+
+        if not self.handle:
+            raise IOError("Decrypter: scytale_reader_new error")
+
+        self.do_checksum = do_checksum
         self.filename = normalize(filename)
         self.checksums = checksums
         self.hashpath = hashpath
@@ -94,5 +98,5 @@ class CryptoWriter:
         res = lib.scytale_writer_write(self.handle, data, len(data))
         if res < 0:
             err = lib.scytale_writer_error_message(self.handle)
-            raise IOError(err)
+            raise IOError('Encrypter' + err.decode('utf-8'))
         return res

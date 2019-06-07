@@ -260,7 +260,7 @@ else
     }
 }
 
-rule app ( name : src + : deps_for_path )
+rule app ( name : src + : deps_for_path : deps_target * )
 {
     local app_files = ;
     for file in $(src)
@@ -270,14 +270,15 @@ rule app ( name : src + : deps_for_path )
         app_files += $(file) ;
     }
 
-    alias $(name) : $(app_files) ;
+    alias $(name) : $(app_files) $(deps_target) ;
     explicit $(app_files) $(name) ;
 }
 
+make player_server.py : src/main/player_server.py _dummy : @copy_client ;
 
 app common_js : rdp_graphics.js redemption_load_module.js : _dummy ;
 app rdpclient : to_scancode.js client.html : common_js ;
-app rdpplayer : player.html : common_js ;
+app rdpplayer : player.html : common_js : player_server.py ;
 
 constant browser : [ setvar browser : xdg-open ] ;
 constant username : [ setvar username : '' ] ;
