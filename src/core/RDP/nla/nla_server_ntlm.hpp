@@ -45,6 +45,17 @@ class rdpCredsspServerNTLM final
     array_view_u8 public_key;
     Random & rand;
     TimeObj & timeobj;
+
+    public:
+    enum class PasswordCallback
+    {
+        Error,
+        Ok,
+        Wait,
+    };
+
+    private:
+    std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
     std::string& extra_message;
     Translation::language_t lang;
     bool restricted_admin_mode;
@@ -154,25 +165,14 @@ public:
 
     struct Ntlm_SecurityFunctionTable
     {
-        enum class PasswordCallback
-        {
-            Error,
-            Ok,
-            Wait,
-        };
-
     private:
         std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
         std::unique_ptr<NTLMContext> context;
-        std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
         bool verbose;
 
     public:
-        explicit Ntlm_SecurityFunctionTable(std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb,
-            bool verbose = false
-        )
-            : set_password_cb(set_password_cb)
-            , verbose(verbose)
+        explicit Ntlm_SecurityFunctionTable(bool verbose = false)
+            : verbose(verbose)
         {}
 
         ~Ntlm_SecurityFunctionTable() = default;
@@ -198,7 +198,8 @@ public:
                 array_view_const_u8 input_buffer
                 , Array& output_buffer
                 , Random & rand
-                , TimeObj & timeobj)
+                , TimeObj & timeobj
+                , std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb)
         {
             LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
             if (!this->context) {
@@ -230,10 +231,10 @@ public:
                 SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
                 if (status == SEC_I_CONTINUE_NEEDED) {
-                    if (!this->set_password_cb) {
+                    if (!set_password_cb) {
                         return SEC_E_LOGON_DENIED;
                     }
-                    switch (this->set_password_cb(this->context->identity)) {
+                    switch (set_password_cb(this->context->identity)) {
                         case PasswordCallback::Error:
                             return SEC_E_LOGON_DENIED;
                         case PasswordCallback::Ok:
@@ -361,16 +362,17 @@ public:
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
-               std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
+               std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
         : public_key(key)
         , rand(rand)
         , timeobj(timeobj)
+        , set_password_cb(set_password_cb)
         , extra_message(extra_message)
         , lang(lang)
         , restricted_admin_mode(restricted_admin_mode)
         , verbose(verbose)
-        , sspi(set_password_cb, verbose)
+        , sspi(verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
@@ -547,7 +549,7 @@ private:
         //     | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->sspi.AcceptSecurityContext(
             this->ts_request.negoTokens.av(),
-            /*output*/this->ts_request.negoTokens, this->rand, this->timeobj);
+            /*output*/this->ts_request.negoTokens, this->rand, this->timeobj, this->set_password_cb);
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
