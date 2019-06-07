@@ -782,8 +782,8 @@ public:
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
             auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             domain.reset();
-            domain.ostream.out_copy_bytes(this->identity.Domain.get_data(),
-                                          this->identity.Domain.size());
+            auto domain_av = this->identity.get_domain_utf16_av();
+            domain.ostream.out_copy_bytes(domain_av);
             domain.mark_end();
         }
 
@@ -875,9 +875,10 @@ public:
         //     this->identity.Domain.size(),
         //     this->identity.Password.size());
 
-        if (this->identity.Password.size() > 0) {
+        auto password_av = this->identity.get_password_utf16_av();
+        if (password_av.size() > 0) {
             // password is available
-            this->hash_password(this->identity.Password.av(), hash);
+            this->hash_password(password_av, hash);
         }
     }
 
@@ -1001,10 +1002,11 @@ public:
 
     SEC_STATUS write_authenticate(Array& output_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Authenticate");
-        SEC_WINNT_AUTH_IDENTITY & id = this->identity;
-        this->ntlm_client_build_authenticate(id.Password.av(),
-                                             id.User.av(),
-                                             id.Domain.av(),
+        auto password_av = this->identity.get_password_utf16_av();
+        auto user_av = this->identity.get_user_utf16_av();
+        auto domain_av = this->identity.get_domain_utf16_av();
+
+        this->ntlm_client_build_authenticate(password_av, user_av, domain_av,
                                              this->Workstation.av());
         StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
@@ -1046,20 +1048,15 @@ public:
             offset += null_data_sz;
             this->SavedAuthenticateMessage.copy({p + offset, in_stream.get_offset() - offset}, offset);
         }
-        this->identity.User.init(this->AUTHENTICATE_MESSAGE.UserName.buffer.size());
-        this->identity.User.copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.av());
-        // LOG(LOG_INFO, "USER from authenticate size = %u", this->identity.User.size());
-        // hexdump_c(this->identity.User.get_data(), this->identity.User.size());
-        this->identity.Domain.init(this->AUTHENTICATE_MESSAGE.DomainName.buffer.size());
-        this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
-        // LOG(LOG_INFO, "DOMAIN from authenticate size = %u", this->identity.Domain.size());
-        // hexdump_c(this->identity.Domain.get_data(), this->identity.Domain.size());
+        
+        this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.av());
+        this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
 
-        if ((this->identity.User.size() == 0) &&
-            (this->identity.Domain.size() == 0)) {
+        if (this->identity.is_empty_user_domain()){
             LOG(LOG_ERR, "ANONYMOUS User not allowed");
             return SEC_E_LOGON_DENIED;
         }
+        
         return SEC_I_CONTINUE_NEEDED;
     }
 

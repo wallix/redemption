@@ -431,17 +431,12 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_ts_credentials");
         if (this->restricted_admin_mode) {
             LOG(LOG_INFO, "Restricted Admin Mode");
-            this->ts_credentials.set_credentials(nullptr, 0,
-                                                 nullptr, 0,
-                                                 nullptr, 0);
+            this->ts_credentials.set_credentials_from_av({},{},{});
         }
         else {
-            this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
-                                                 this->identity.Domain.size(),
-                                                 this->identity.User.get_data(),
-                                                 this->identity.User.size(),
-                                                 this->identity.Password.get_data(),
-                                                 this->identity.Password.size());
+            this->ts_credentials.set_credentials_from_av(this->identity.get_domain_utf16_av(),
+                                                        this->identity.get_user_utf16_av(),
+                                                        this->identity.get_password_utf16_av());
         }
 
         StaticOutStream<65536> ts_credentials_send;

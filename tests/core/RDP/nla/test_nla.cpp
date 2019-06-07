@@ -20,7 +20,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "core/RDP/nla/nla_server.hpp"
+#include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 
@@ -195,16 +195,15 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     rdpCredsspServerNTLM credssp(
         front_public_key_av, false, rand, timeobj, extra_message, lang,
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
-            auto arr2av = [&](Array& arr){ return make_array_view(arr.get_data(), arr.size()); };
             std::vector<uint8_t> vec;
             vec.resize(user.size() * 2);
             UTF8toUTF16(user, vec.data(), vec.size());
-            RED_CHECK_MEM_AA(arr2av(identity.User), vec);
+            RED_CHECK_MEM_AA(identity.get_user_utf16_av(), vec);
             vec.resize(domain.size() * 2);
             UTF8toUTF16(domain, vec.data(), vec.size());
-            RED_CHECK_MEM_AA(arr2av(identity.Domain), vec);
+            RED_CHECK_MEM_AA(identity.get_domain_utf16_av(), vec);
             identity.SetPasswordFromUtf8(byte_ptr_cast(pass.data()));
-            return rdpCredsspServerNTLM::Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
+            return rdpCredsspServerNTLM::PasswordCallback::Ok;
         }
     );
     credssp.set_credentials(

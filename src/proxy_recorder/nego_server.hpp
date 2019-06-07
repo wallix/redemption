@@ -42,10 +42,10 @@ public:
             auto [username, domain] = extract_user_domain(user.c_str());
             
             char utf8_user_buffer[1024] = {};
-            UTF16toUTF8(identity.User.get_data(), identity.User.size(), byte_ptr(utf8_user_buffer), sizeof(utf8_user_buffer));
+            identity.copy_to_utf8_user(byte_ptr(utf8_user_buffer), sizeof(utf8_user_buffer));
 
             char utf8_domain_buffer[1024] = {};
-            UTF16toUTF8(identity.Domain.get_data(), identity.Domain.size(), byte_ptr(utf8_domain_buffer), sizeof(utf8_domain_buffer));
+            identity.copy_to_utf8_domain(utf8_domain_buffer, sizeof(utf8_domain_buffer));
 
             bool check_identities = false;
             if (utf8_domain_buffer[0] == 0){

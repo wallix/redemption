@@ -105,11 +105,13 @@ struct SEC_WINNT_AUTH_IDENTITY
     //@}
     // ntlm only
     //@{
+    private:
     Array User;
     Array Domain;
     Array Password;
     //@}
 
+    public:
     SEC_WINNT_AUTH_IDENTITY()
         : User(0)
         , Domain(0)
@@ -118,6 +120,48 @@ struct SEC_WINNT_AUTH_IDENTITY
         this->princname[0] = 0;
         this->princpass[0] = 0;
     }
+
+    void user_init_copy(cbytes_view av)
+    {
+        this->User.init(av.size());
+        this->User.copy(av);
+    }
+
+    void domain_init_copy(cbytes_view av)
+    {
+        this->Domain.init(av.size());
+        this->Domain.copy(av);
+    }
+
+    bool is_empty_user_domain(){
+        return (this->User.size() == 0) && (this->Domain.size() == 0);
+    }
+
+    cbytes_view get_password_utf16_av() const
+    {
+        return {this->Password.get_data(), this->Password.size()};
+    }
+
+    cbytes_view get_user_utf16_av() const
+    {
+        return {this->User.get_data(), this->User.size()};
+    }
+
+    cbytes_view get_domain_utf16_av() const
+    {
+        return {this->Domain.get_data(), this->Domain.size()};
+    }
+
+    void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len) 
+    {
+        UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
+    }
+
+    void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
+
+        UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
+    }
+
 
     void SetUserFromUtf8(const uint8_t * user)
     {
