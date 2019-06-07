@@ -22,7 +22,7 @@
 */
 
 #include "core/RDP/nego.hpp"
-#include "core/RDP/nla/nla_server.hpp"
+#include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/nla/nla_client_kerberos.hpp"
 #include "core/RDP/tpdu_buffer.hpp"

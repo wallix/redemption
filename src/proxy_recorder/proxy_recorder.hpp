@@ -25,7 +25,7 @@
 #include "proxy_recorder/nego_server.hpp"
 
 #include "core/RDP/x224.hpp"
-#include "core/RDP/nla/nla_server.hpp"
+#include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/nla/nla_client_kerberos.hpp"
 #include "core/RDP/gcc.hpp"
