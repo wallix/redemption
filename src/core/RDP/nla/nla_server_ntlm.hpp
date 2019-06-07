@@ -151,7 +151,7 @@ public:
     }
 
     public:
-    struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
+    struct Ntlm_SecurityFunctionTable
     {
         enum class PasswordCallback
         {
@@ -187,8 +187,7 @@ public:
         SEC_STATUS AcquireCredentialsHandle(
             const char * /*pszPrincipal*/,
             Array * /*pvLogonID*/,
-            SEC_WINNT_AUTH_IDENTITY const* /*pAuthData*/
-        ) override
+            SEC_WINNT_AUTH_IDENTITY const* /*pAuthData*/)
         {
             this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
             return SEC_E_OK;
@@ -196,9 +195,7 @@ public:
 
         // GSS_Init_sec_context
         // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-        SEC_STATUS InitializeSecurityContext(
-            array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
-        ) override
+        SEC_STATUS InitializeSecurityContext(array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer)
         {
             LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
@@ -234,9 +231,8 @@ public:
 
         // GSS_Accept_sec_context
         // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-        SEC_STATUS AcceptSecurityContext(
-            array_view_const_u8 input_buffer, Array& output_buffer
-        ) override {
+        SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer)
+        {
             LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
             if (!this->context) {
                 this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
@@ -312,8 +308,7 @@ public:
             hmac_md5.final(digest);
         }
 
-        static void compute_signature(
-            uint8_t* signature, SslRC4& rc4, uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint32_t SeqNo)
+        static void compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint32_t SeqNo)
         {
             uint8_t checksum[8];
             /* RC4-encrypt first 8 bytes of digest */
@@ -329,7 +324,8 @@ public:
     public:
         // GSS_Wrap
         // ENCRYPT_MESSAGE EncryptMessage;
-        SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) override {
+        SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo)
+        {
             if (!this->context) {
                 return SEC_E_NO_CONTEXT;
             }
@@ -349,7 +345,8 @@ public:
 
         // GSS_Unwrap
         // DECRYPT_MESSAGE DecryptMessage;
-        SEC_STATUS DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) override {
+        SEC_STATUS DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo)
+        {
             if (!this->context) {
                 return SEC_E_NO_CONTEXT;
             }
