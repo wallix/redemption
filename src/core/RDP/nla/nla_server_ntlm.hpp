@@ -162,19 +162,16 @@ public:
         };
 
     private:
-        TimeObj & timeobj;
         std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
         std::unique_ptr<NTLMContext> context;
         std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
         bool verbose;
 
     public:
-        explicit Ntlm_SecurityFunctionTable(TimeObj & timeobj,
-            std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb,
+        explicit Ntlm_SecurityFunctionTable(std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb,
             bool verbose = false
         )
-            : timeobj(timeobj)
-            , set_password_cb(set_password_cb)
+            : set_password_cb(set_password_cb)
             , verbose(verbose)
         {}
 
@@ -200,11 +197,12 @@ public:
         SEC_STATUS AcceptSecurityContext(
                 array_view_const_u8 input_buffer
                 , Array& output_buffer
-                , Random & rand)
+                , Random & rand
+                , TimeObj & timeobj)
         {
             LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
             if (!this->context) {
-                this->context = std::make_unique<NTLMContext>(true, rand, this->timeobj);
+                this->context = std::make_unique<NTLMContext>(true, rand, timeobj);
 
                 if (!this->identity) {
                     return SEC_E_WRONG_CREDENTIAL_HANDLE;
@@ -372,7 +370,7 @@ public:
         , lang(lang)
         , restricted_admin_mode(restricted_admin_mode)
         , verbose(verbose)
-        , sspi(timeobj, set_password_cb, verbose)
+        , sspi(set_password_cb, verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
         this->set_credentials(nullptr, nullptr, nullptr, nullptr);
@@ -549,7 +547,7 @@ private:
         //     | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->sspi.AcceptSecurityContext(
             this->ts_request.negoTokens.av(),
-            /*output*/this->ts_request.negoTokens, this->rand);
+            /*output*/this->ts_request.negoTokens, this->rand, this->timeobj);
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
