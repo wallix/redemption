@@ -171,7 +171,12 @@ public:
         , verbose(verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization");
-        this->set_credentials(nullptr, nullptr, nullptr, nullptr);
+        this->identity.SetUserFromUtf8(nullptr);
+        this->identity.SetDomainFromUtf8(nullptr);
+        this->identity.SetPasswordFromUtf8(nullptr);
+        this->SetHostnameFromUtf8(nullptr);
+        this->identity.SetKrbAuthIdentity(nullptr, nullptr);
+        
         this->server_auth_data.state = ServerAuthenticateData::Start;
 
         // TODO: sspi_GlobalInit();
