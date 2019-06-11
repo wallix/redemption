@@ -208,8 +208,8 @@ void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPMultiScrBlt");
 
-    const signed int deltax = cmd.nXSrc - cmd.rect.x;
-    const signed int deltay = cmd.nYSrc - cmd.rect.y;
+    const int deltax = cmd.nXSrc - cmd.rect.x;
+    const int deltay = cmd.nYSrc - cmd.rect.y;
 
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
         emval_call(this->callbacks, jsnames::draw_scr_blt,

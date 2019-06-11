@@ -118,9 +118,6 @@ namespace
 
     Rect to_rect(RDP::RDPMultiPatBlt const & cmd)
     { return cmd.rect; }
-
-    Rect to_rect(RDP::RDPMultiScrBlt const & cmd)
-    { return cmd.rect; }
     //@}
 
     template<class RDPMulti, class FRect>
@@ -198,13 +195,13 @@ void RDPDrawable::draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_
 
 void RDPDrawable::draw(const RDPScrBlt & cmd, Rect clip)
 {
-    // Destination rectangle : drect
+    const int deltax = cmd.srcx - cmd.rect.x;
+    const int deltay = cmd.srcy - cmd.rect.y;
     const Rect drect = intersect(this->drawable, clip, cmd.rect);
-    if (drect.isempty()){ return; }
-    // adding delta move dest to source
-    const signed int deltax = cmd.srcx - cmd.rect.x;
-    const signed int deltay = cmd.srcy - cmd.rect.y;
-    this->drawable.scrblt(drect.x + deltax, drect.y + deltay, drect, cmd.rop);
+    const Rect src = drect.offset(deltax, deltay)
+        .intersect(this->drawable.width(), this->drawable.height());
+    const Rect trect(drect.x, drect.y, std::min(drect.cx, src.cx), std::min(drect.cy, src.cy));
+    this->drawable.scrblt(src.x, src.y, trect, cmd.rop);
     this->last_update_index++;
 }
 
@@ -263,11 +260,25 @@ void RDPDrawable::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx
 
 void RDPDrawable::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
 {
-    const signed int deltax = cmd.nXSrc - cmd.rect.x;
-    const signed int deltay = cmd.nYSrc - cmd.rect.y;
-    draw_multi(this->drawable, cmd, clip, [&](const Rect & trect) {
-        this->drawable.scrblt(trect.x + deltax, trect.y + deltay, trect, cmd.bRop);
-    });
+    const int deltax = cmd.nXSrc - cmd.rect.x;
+    const int deltay = cmd.nYSrc - cmd.rect.y;
+
+    clip = intersect(this->drawable, clip, cmd.rect);
+
+    Rect cmd_rect;
+
+    for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
+        cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
+        cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
+        cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
+        cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
+        Rect drect = clip.intersect(cmd_rect);
+        Rect src = cmd_rect.offset(deltax, deltay)
+            .intersect(this->drawable.width(), this->drawable.height());
+        Rect trect(drect.x, drect.y, std::min(drect.cx, src.cx), std::min(drect.cy, src.cy));
+        this->drawable.scrblt(src.x, src.y, trect, cmd.bRop);
+    }
+
     this->last_update_index++;
 }
 
