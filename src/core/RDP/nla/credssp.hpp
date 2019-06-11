@@ -888,10 +888,10 @@ struct TSCredentials
                                                cspName, cspName_length);
     }
 
-    void set_credentials(const uint8_t * domain, int domain_length, const uint8_t * user,
-                         int user_length, const uint8_t * pass, int pass_length) {
-        this->passCreds = TSPasswordCreds(domain, domain_length, user, user_length, pass, pass_length);
-    }
+//    void set_credentials(const uint8_t * domain, int domain_length, const uint8_t * user,
+//                         int user_length, const uint8_t * pass, int pass_length) {
+//        this->passCreds = TSPasswordCreds(domain, domain_length, user, user_length, pass, pass_length);
+//    }
 
     void set_credentials_from_av(cbytes_view domain_av, cbytes_view user_av, cbytes_view password_av) {
         this->passCreds = TSPasswordCreds(domain_av.data(), domain_av.size(),

@@ -366,9 +366,9 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     uint8_t user2[] = "someone";
     uint8_t pass2[] = "somepass";
 
-    ts_cred.set_credentials(domain2, sizeof(domain2),
-                            user2, sizeof(user2),
-                            pass2, sizeof(pass2));
+    ts_cred.set_credentials_from_av({domain2, sizeof(domain2)},
+                            {user2, sizeof(user2)},
+                            {pass2, sizeof(pass2)});
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.domainName),
                       char_ptr_cast(domain2));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.userName),
