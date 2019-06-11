@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     auto user = "Ulysse"_av;
     auto domain = "Ithaque"_av;
     auto pass = "Pénélope"_av;
-    auto host = "Télémaque"_av;
+//    auto host = "Télémaque"_av;
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
@@ -206,12 +206,6 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             return rdpCredsspServerNTLM::PasswordCallback::Ok;
         }
     );
-    credssp.set_credentials(
-        byte_ptr_cast(user.data()),
-        byte_ptr_cast(domain.data()),
-        byte_ptr_cast(pass.data()),
-        byte_ptr_cast(host.data()));
-//    RED_CHECK(credssp.credssp_server_authenticate_init());
 
     credssp::State st = credssp::State::Cont;
     TpduBuffer buf;

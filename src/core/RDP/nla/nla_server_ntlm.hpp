@@ -144,26 +144,6 @@ public:
 protected:
     SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
 
-
-
-public:
-    void set_credentials(uint8_t const* user, uint8_t const* domain,
-                         uint8_t const* pass, uint8_t const* hostname) {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::set_credentials");
-        this->identity.SetUserFromUtf8(user);
-        this->identity.SetDomainFromUtf8(domain);
-        this->identity.SetPasswordFromUtf8(pass);
-        this->SetHostnameFromUtf8(hostname);
-        // hexdump_c(user, strlen((char*)user));
-        // hexdump_c(domain, strlen((char*)domain));
-        // hexdump_c(pass, strlen((char*)pass));
-        // hexdump_c(hostname, strlen((char*)hostname));
-        this->identity.SetKrbAuthIdentity(user, pass);
-    }
-
-    public:
-
-
     private:
     std::unique_ptr<NTLMContext> context = nullptr;
 
