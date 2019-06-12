@@ -156,22 +156,9 @@ protected:
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    SEC_STATUS AcceptSecurityContext(
-            array_view_const_u8 input_buffer
-            , Array& output_buffer
-            , Random & rand
-            , TimeObj & timeobj
-            , std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb
-            , SEC_WINNT_AUTH_IDENTITY & identity)
+    SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer)
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
-        if (!this->context) {
-            this->context = std::make_unique<NTLMContext>(true, rand, timeobj);
-            this->context->identity.CopyAuthIdentity(identity);
-
-            this->context->ntlm_SetContextServicePrincipalName(nullptr);
-        }
-
         if (this->context->state == NTLM_STATE_INITIAL) {
             this->context->state = NTLM_STATE_NEGOTIATE;
             SEC_STATUS status = this->context->read_negotiate(input_buffer);
@@ -190,7 +177,7 @@ protected:
             SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
             if (status == SEC_I_CONTINUE_NEEDED) {
-                if (!set_password_cb) {
+                if (!this->set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
                 switch (set_password_cb(this->context->identity)) {
@@ -507,9 +494,15 @@ private:
         //     | ASC_REQ_REPLAY_DETECT
         //     | ASC_REQ_SEQUENCE_DETECT
         //     | ASC_REQ_EXTENDED_ERROR;
-        SEC_STATUS status = this->AcceptSecurityContext(
-            this->ts_request.negoTokens.av(),
-            /*output*/this->ts_request.negoTokens, this->rand, this->timeobj, this->set_password_cb, this->identity);
+        
+        if (!this->context) {
+            this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
+            this->context->identity.CopyAuthIdentity(this->identity);
+            this->context->ntlm_SetContextServicePrincipalName(nullptr);
+        }
+
+        
+        SEC_STATUS status = this->AcceptSecurityContext(this->ts_request.negoTokens.av(), /*output*/this->ts_request.negoTokens);
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
