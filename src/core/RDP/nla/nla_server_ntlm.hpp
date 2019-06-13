@@ -160,12 +160,7 @@ protected:
     public:
         SslRC4 SendRc4Seal {};
         SslRC4 RecvRc4Seal {};
-        array16* SendSigningKey = nullptr;
-        array16* RecvSigningKey = nullptr;
     private:
-        array16* SendSealingKey = nullptr;
-        array16* RecvSealingKey = nullptr;
-
         uint32_t NegotiateFlags = 0;
 
     public:
@@ -193,9 +188,13 @@ protected:
         uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH]{};
         uint8_t ExportedSessionKey[16]{};
         uint8_t EncryptedRandomSessionKey[16]{};
+    public:
         uint8_t ClientSigningKey[16]{};
+    private:
         uint8_t ClientSealingKey[16]{};
+    public:
         uint8_t ServerSigningKey[16]{};
+    private:
         uint8_t ServerSealingKey[16]{};
         uint8_t MessageIntegrityCheck[SslMd5::DIGEST_LENGTH];
         // uint8_t NtProofStr[16];
@@ -333,20 +332,6 @@ protected:
             hmac_md5resp.final(this->MessageIntegrityCheck);
         }
 
-
-        /**
-         * Initialize RC4 stream cipher states for sealing.
-         */
-
-        void ntlm_init_rc4_seal_states()
-        {
-            this->SendSigningKey = &this->ServerSigningKey;
-            this->RecvSigningKey = &this->ClientSigningKey;
-            this->SendSealingKey = &this->ClientSealingKey;
-            this->RecvSealingKey = &this->ServerSealingKey;
-            this->SendRc4Seal.set_key(make_array_view(*this->RecvSealingKey));
-            this->RecvRc4Seal.set_key(make_array_view(*this->SendSealingKey));
-        }
 
         private:
 
@@ -549,9 +534,15 @@ protected:
             md5seal_server.update(make_array_view(server_seal_magic));
             md5seal_server.final(this->ServerSealingKey);
 
+            /**
+             * Initialize RC4 stream cipher states for sealing.
+             */
+
+            this->SendRc4Seal.set_key(make_array_view(this->ServerSealingKey));
+            this->RecvRc4Seal.set_key(make_array_view(this->ClientSealingKey));
+
             // =======================================================
 
-            this->ntlm_init_rc4_seal_states();
             if (this->UseMIC) {
                 this->ntlm_compute_MIC();
                 if (0 != memcmp(this->MessageIntegrityCheck, this->AUTHENTICATE_MESSAGE.MIC, 16)) {
@@ -748,7 +739,7 @@ public:
         data_out.init(data_in.size() + cbMaxSignature);
         auto message_out = data_out.av().array_from_offset(cbMaxSignature);
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, *this->ntlm_context.SendSigningKey, data_in, MessageSeqNo);
+        this->compute_hmac_md5(digest, this->ntlm_context.ServerSigningKey, data_in, MessageSeqNo);
         // this->ntlm_context.confidentiality == true
         this->ntlm_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
         this->compute_signature(data_out.get_data(), this->ntlm_context.SendRc4Seal, digest, MessageSeqNo);
@@ -775,7 +766,7 @@ public:
         this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, *this->ntlm_context.RecvSigningKey, data_out.av(), MessageSeqNo);
+        this->compute_hmac_md5(digest, this->ntlm_context.ClientSigningKey, data_out.av(), MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->compute_signature(
