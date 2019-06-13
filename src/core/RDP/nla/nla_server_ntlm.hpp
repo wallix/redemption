@@ -369,136 +369,6 @@ protected:
             memcpy(buff.data(), tmp_md5, std::min(buff.size(), size_t(SslMd5::DIGEST_LENGTH)));
         }
 
-        // all strings are in unicode utf16
-        void LMOWFv2(array_view_const_u8 pass,
-                     array_view_const_u8 user,
-                     array_view_const_u8 domain,
-                     array_view_u8 buff) {
-            NTOWFv2(pass, user, domain, buff);
-        }
-
-        // client method
-        // ntlmv2_compute_response_from_challenge generates :
-        // - timestamp
-        // - client challenge
-        // - NtChallengeResponse
-        // - LmChallengeResponse
-        // all strings are in unicode utf16
-        void ntlmv2_compute_response_from_challenge(array_view_const_u8 pass,
-                                                    array_view_const_u8 user,
-                                                    array_view_const_u8 domain) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Compute response from challenge");
-
-            uint8_t ResponseKeyNT[16] = {};
-            uint8_t ResponseKeyLM[16] = {};
-            this->NTOWFv2(pass, user, domain, make_array_view(ResponseKeyNT));
-            this->LMOWFv2(pass, user, domain, make_array_view(ResponseKeyLM));
-
-            // struct NTLMv2_Client_Challenge = temp
-            // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
-            // Z(n) = { 0x00, ... , 0x00 } n times
-            // ServerName = AvPairs received in Challenge message
-            auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
-            // BStream AvPairsStream;
-            // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
-            size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
-            if (this->verbose) {
-                LOG(LOG_INFO, "NTLMContextServer Compute response: AvPairs size %zu", AvPairsStream.size());
-                LOG(LOG_INFO, "NTLMContextServer Compute response: temp size %zu", temp_size);
-            }
-
-            auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
-            uint8_t* temp = unique_temp.get();
-            memset(temp, 0, temp_size);
-            temp[0] = 0x01;
-            temp[1] = 0x01;
-            // compute ClientTimeStamp
-            this->ntlm_generate_timestamp();
-            // compute ClientChallenge (nonce(8))
-            this->ntlm_generate_client_challenge();
-            memcpy(&temp[1+1+6], this->Timestamp, 8);
-            memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
-            memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
-
-            // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
-            //                       Concat(ServerChallenge, temp))
-
-            uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Compute response: NtProofStr");
-            SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
-
-            this->ntlm_get_server_challenge();
-            hmac_md5resp.update({this->ServerChallenge, 8});
-            hmac_md5resp.update({temp, temp_size});
-            hmac_md5resp.final(NtProofStr);
-
-            // NtChallengeResponse = Concat(NtProofStr, temp)
-
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Compute response: NtChallengeResponse");
-            auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-            // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
-            NtChallengeResponse.reset();
-            NtChallengeResponse.ostream.out_copy_bytes(NtProofStr, sizeof(NtProofStr));
-            NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
-            NtChallengeResponse.mark_end();
-
-            LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
-
-            unique_temp.reset();
-
-            LOG_IF(this->verbose, LOG_INFO, "Compute response: temp buff successfully deleted");
-            // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
-            //                                         Concat(ServerChallenge, ClientChallenge))
-            // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Compute response: LmChallengeResponse");
-            auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
-            // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-            SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
-            LmChallengeResponse.reset();
-            hmac_md5lmresp.update({this->ServerChallenge, 8});
-            hmac_md5lmresp.update({this->ClientChallenge, 8});
-            uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
-            hmac_md5lmresp.final(LCResponse);
-
-            LmChallengeResponse.ostream.out_copy_bytes(LCResponse, SslMd5::DIGEST_LENGTH);
-            LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
-            LmChallengeResponse.mark_end();
-
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Compute response: SessionBaseKey");
-            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
-            //                           NtProofStr)
-            SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
-            hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
-            hmac_md5seskey.final(this->SessionBaseKey);
-        }
-
-        // static method for both client and server (encrypt and decrypt)
-        void ntlm_rc4k(uint8_t* key, int length, uint8_t* plaintext, uint8_t* ciphertext)
-        {
-            SslRC4 rc4;
-            // TODO check size
-            rc4.set_key({key, 16});
-            rc4.crypt(length, plaintext, ciphertext);
-        }
-
-        // client method for authenticate message
-        void ntlm_encrypt_random_session_key() {
-            // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
-            // ExportedSessionKey = NONCE(16) (random 16bytes number)
-            // KeyExchangeKey = SessionBaseKey
-            // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
-
-            // generate NONCE(16) exportedsessionkey
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Encrypt RandomSessionKey");
-            this->ntlm_generate_exported_session_key();
-            this->ntlm_rc4k(this->SessionBaseKey, 16,
-                            this->ExportedSessionKey, this->EncryptedRandomSessionKey);
-
-            auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-            AuthEncryptedRSK.reset();
-            AuthEncryptedRSK.ostream.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
-            AuthEncryptedRSK.mark_end();
-        }
         // server method to decrypt exported session key from authenticate message with
         // session base key computed with Responses.
         void ntlm_decrypt_exported_session_key() {
@@ -506,25 +376,12 @@ protected:
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Decrypt RandomSessionKey");
             memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.get_data(),
                    AuthEncryptedRSK.size());
-            this->ntlm_rc4k(this->SessionBaseKey, 16,
-                            this->EncryptedRandomSessionKey, this->ExportedSessionKey);
+
+            // ntlm_rc4k
+            SslRC4 rc4;
+            rc4.set_key({this->SessionBaseKey, 16});
+            rc4.crypt(16, this->EncryptedRandomSessionKey, this->ExportedSessionKey);
         }
-
-        /**
-         * Generate signing key.\n
-         * @msdn{cc236711}
-         * @param sign_magic Sign magic string
-         * @param signing_key Destination signing key
-         */
-
-        void ntlm_generate_signing_key(array_view_const_u8 sign_magic, uint8_t (&signing_key)[SslMd5::DIGEST_LENGTH])
-        {
-            SslMd5 md5sign;
-            md5sign.update({this->ExportedSessionKey, 16});
-            md5sign.update(sign_magic);
-            md5sign.final(signing_key);
-        }
-
 
         /**
          * Generate client signing key (ClientSigningKey).\n
@@ -533,8 +390,10 @@ protected:
 
         void ntlm_generate_client_signing_key()
         {
-            this->ntlm_generate_signing_key(make_array_view(client_sign_magic),
-                                            this->ClientSigningKey);
+            SslMd5 md5sign;
+            md5sign.update({this->ExportedSessionKey, 16});
+            md5sign.update(make_array_view(client_sign_magic));
+            md5sign.final(this->ClientSigningKey);
         }
 
         /**
@@ -544,24 +403,10 @@ protected:
 
         void ntlm_generate_server_signing_key()
         {
-            this->ntlm_generate_signing_key(make_array_view(server_sign_magic),
-                                            this->ServerSigningKey);
-        }
-
-
-        /**
-         * Generate sealing key.\n
-         * @msdn{cc236712}
-         * @param seal_magic Seal magic string
-         * @param sealing_key Destination sealing key
-         */
-
-        void ntlm_generate_sealing_key(array_view_const_u8 seal_magic, uint8_t (&sealing_key)[SslMd5::DIGEST_LENGTH])
-        {
-            SslMd5 md5seal;
-            md5seal.update(make_array_view(this->ExportedSessionKey));
-            md5seal.update(seal_magic);
-            md5seal.final(sealing_key);
+            SslMd5 md5sign;
+            md5sign.update({this->ExportedSessionKey, 16});
+            md5sign.update(make_array_view(server_sign_magic));
+            md5sign.final(this->ServerSigningKey);
         }
 
         /**
@@ -571,7 +416,10 @@ protected:
 
         void ntlm_generate_client_sealing_key()
         {
-            ntlm_generate_sealing_key(make_array_view(client_seal_magic), this->ClientSealingKey);
+            SslMd5 md5seal;
+            md5seal.update(make_array_view(this->ExportedSessionKey));
+            md5seal.update(make_array_view(client_seal_magic));
+            md5seal.final(this->ClientSealingKey);
         }
 
         /**
@@ -581,7 +429,10 @@ protected:
 
         void ntlm_generate_server_sealing_key()
         {
-            ntlm_generate_sealing_key(make_array_view(server_seal_magic), this->ServerSealingKey);
+            SslMd5 md5seal;
+            md5seal.update(make_array_view(this->ExportedSessionKey));
+            md5seal.update(make_array_view(server_seal_magic));
+            md5seal.final(this->ServerSealingKey);
         }
 
         void ntlm_compute_MIC() {
@@ -591,32 +442,6 @@ protected:
             hmac_md5resp.update(this->SavedAuthenticateMessage.av());
             hmac_md5resp.final(this->MessageIntegrityCheck);
         }
-
-
-        // all strings are in unicode utf16
-        //void ntlm_compute_lm_v2_response(const uint8_t * pass,   size_t pass_size,
-        //                                 const uint8_t * user,   size_t user_size,
-        //                                 const uint8_t * domain, size_t domain_size)
-        //{
-        //    uint8_t ResponseKeyLM[16] = {};
-        //    this->LMOWFv2(pass, pass_size, user, user_size, domain, domain_size,
-        //            ResponseKeyLM, sizeof(ResponseKeyLM));
-        //    // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
-        //    //                                         Concat(ServerChallenge, ClientChallenge))
-        //    // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-        //    BStream & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
-        //    // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-        //    SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
-        //    LmChallengeResponse.reset();
-        //    hmac_md5lmresp.update({this->ServerChallenge, 8});
-        //    hmac_md5lmresp.update({this->ClientChallenge, 8});
-        //    uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
-        //    hmac_md5lmresp.final(LCResponse);
-        //    LmChallengeResponse.out_copy_bytes(LCResponse, 16);
-        //    LmChallengeResponse.out_copy_bytes(this->ClientChallenge, 8);
-        //    LmChallengeResponse.mark_end();
-        //}
-
 
 
         /**
@@ -640,6 +465,8 @@ protected:
             this->SendRc4Seal.set_key(make_array_view(*this->RecvSealingKey));
             this->RecvRc4Seal.set_key(make_array_view(*this->SendSealingKey));
         }
+
+        private:
 
         // server check nt response
         bool ntlm_check_nt_response_from_authenticate(array_view_const_u8 hash) {
@@ -723,9 +550,6 @@ protected:
             hmac_md5seskey.final(this->SessionBaseKey);
         }
 
-
-        private:
-        // server method
         bool ntlm_check_nego() {
             uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
             uint32_t const mask = NTLMSSP_REQUEST_TARGET
@@ -739,92 +563,6 @@ protected:
             return true;
         }
 
-        public:
-        void ntlm_set_negotiate_flags() {
-            uint32_t & negoFlag = this->NegotiateFlags;
-            if (this->NTLMv2) {
-                negoFlag |= NTLMSSP_NEGOTIATE_56;
-                negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
-                negoFlag |= NTLMSSP_NEGOTIATE_LM_KEY;
-                negoFlag |= NTLMSSP_NEGOTIATE_OEM;
-            }
-
-            negoFlag |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-            negoFlag |= NTLMSSP_NEGOTIATE_128;
-            negoFlag |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-            negoFlag |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-            negoFlag |= NTLMSSP_NEGOTIATE_NTLM;
-            negoFlag |= NTLMSSP_NEGOTIATE_SIGN;
-            negoFlag |= NTLMSSP_REQUEST_TARGET;
-            negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
-
-            if (this->confidentiality) {
-                negoFlag |= NTLMSSP_NEGOTIATE_SEAL;
-            }
-
-            if (this->SendVersionInfo) {
-                negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
-            }
-
-            if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-                this->version.ntlm_get_version_info();
-            }
-            else {
-                this->version.ignore_version_info();
-            }
-
-            this->NegotiateFlags = negoFlag;
-            this->NEGOTIATE_MESSAGE.negoFlags.flags = negoFlag;
-        }
-
-        void ntlm_set_negotiate_flags_auth() {
-            uint32_t negoFlag = 0;
-            if (this->NTLMv2) {
-                negoFlag |= NTLMSSP_NEGOTIATE_56;
-                if (this->SendVersionInfo) {
-                    negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
-                }
-            }
-
-            if (this->UseMIC) {
-                negoFlag |= NTLMSSP_NEGOTIATE_TARGET_INFO;
-            }
-            if (this->SendWorkstationName) {
-                negoFlag |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
-            }
-            if (this->confidentiality) {
-                negoFlag |= NTLMSSP_NEGOTIATE_SEAL;
-            }
-            if (this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
-                negoFlag |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-            }
-            negoFlag |= NTLMSSP_NEGOTIATE_128;
-            negoFlag |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-            negoFlag |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-            negoFlag |= NTLMSSP_NEGOTIATE_NTLM;
-            negoFlag |= NTLMSSP_NEGOTIATE_SIGN;
-            negoFlag |= NTLMSSP_REQUEST_TARGET;
-            negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
-
-            // if (this->SendVersionInfo) {
-            //     negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
-            // }
-
-            if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-                this->version.ntlm_get_version_info();
-            }
-            else {
-                this->version.ignore_version_info();
-            }
-
-            this->NegotiateFlags = negoFlag;
-            this->AUTHENTICATE_MESSAGE.negoFlags.flags = negoFlag;
-        }
-
-
-
-        // server method
-        // TODO COMPLETE
         void ntlm_construct_challenge_target_info() {
             uint8_t win7[] =  {
                 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00
@@ -840,7 +578,6 @@ protected:
             list.add(MsvAvDnsComputerName, win7,            sizeof(win7));
         }
 
-        private:
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
         void ntlm_server_build_challenge() {
             if (!this->server) {
