@@ -164,11 +164,9 @@ protected:
         array16* SendSigningKey = nullptr;
         array16* RecvSigningKey = nullptr;
     private:
-        // TODO unused
         array16* SendSealingKey = nullptr;
         array16* RecvSealingKey = nullptr;
 
-    public:
         uint32_t NegotiateFlags = 0;
 
     private:
@@ -726,6 +724,7 @@ protected:
         }
 
 
+        private:
         // server method
         bool ntlm_check_nego() {
             uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
@@ -740,6 +739,7 @@ protected:
             return true;
         }
 
+        public:
         void ntlm_set_negotiate_flags() {
             uint32_t & negoFlag = this->NegotiateFlags;
             if (this->NTLMv2) {
@@ -840,41 +840,7 @@ protected:
             list.add(MsvAvDnsComputerName, win7,            sizeof(win7));
         }
 
-
-
-        // CLIENT BUILD NEGOTIATE
-        void ntlm_client_build_negotiate() {
-            if (this->server) {
-                return;
-            }
-            this->ntlm_set_negotiate_flags();
-            this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-            if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-                this->NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
-            }
-            else {
-                this->NEGOTIATE_MESSAGE.version.ignore_version_info();
-            }
-
-            if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-                auto & workstationbuff = this->NEGOTIATE_MESSAGE.Workstation.buffer;
-                workstationbuff.reset();
-                workstationbuff.ostream.out_copy_bytes(this->Workstation.get_data(),
-                                                       this->Workstation.size());
-                workstationbuff.mark_end();
-            }
-
-            if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
-                auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-                domain.reset();
-                auto domain_av = this->identity.get_domain_utf16_av();
-                domain.ostream.out_copy_bytes(domain_av);
-                domain.mark_end();
-            }
-
-            this->state = NTLM_STATE_CHALLENGE;
-        }
-
+        private:
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
         void ntlm_server_build_challenge() {
             if (!this->server) {
@@ -897,60 +863,6 @@ protected:
             }
 
             this->state = NTLM_STATE_AUTHENTICATE;
-        }
-
-        // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
-        // all strings are in unicode utf16
-        void ntlm_client_build_authenticate(array_view_const_u8 password,
-                                            array_view_const_u8 userName,
-                                            array_view_const_u8 userDomain,
-                                            array_view_const_u8 workstation) {
-            if (this->server) {
-                return;
-            }
-            this->ntlmv2_compute_response_from_challenge(password, userName, userDomain);
-            this->ntlm_encrypt_random_session_key();
-            this->ntlm_generate_client_signing_key();
-            this->ntlm_generate_client_sealing_key();
-            this->ntlm_generate_server_signing_key();
-            this->ntlm_generate_server_sealing_key();
-            this->ntlm_init_rc4_seal_states();
-            this->ntlm_set_negotiate_flags_auth();
-            // this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-
-            uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
-            if (flag & NTLMSSP_NEGOTIATE_VERSION) {
-                this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
-            }
-            else {
-                this->AUTHENTICATE_MESSAGE.version.ignore_version_info();
-            }
-
-            if (!(flag & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
-                // If flag is not set, encryted session key buffer is not send
-                this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.reset();
-            }
-            if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-                auto & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.buffer;
-                workstationbuff.reset();
-                workstationbuff.ostream.out_copy_bytes(workstation);
-                workstationbuff.mark_end();
-            }
-
-            //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-            auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            domain.reset();
-            domain.ostream.out_copy_bytes(userDomain);
-            domain.mark_end();
-
-            auto & user = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-            user.reset();
-            user.ostream.out_copy_bytes(userName);
-            user.mark_end();
-
-            // this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
-
-            this->state = NTLM_STATE_FINAL;
         }
 
         void ntlm_server_fetch_hash(uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
@@ -1002,20 +914,7 @@ protected:
             return SEC_I_COMPLETE_NEEDED;
         }
 
-        void ntlm_SetContextWorkstation(array_view_const_char workstation) {
-            // CHECK UTF8 or UTF16 (should store in UTF16)
-            if (!workstation.empty()) {
-                size_t host_len = UTF8Len(workstation.data());
-                this->Workstation.init(host_len * 2);
-                UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
-                this->SendWorkstationName = true;
-            }
-            else {
-                this->Workstation.init(0);
-                this->SendWorkstationName = false;
-            }
-        }
-
+        public:
         void ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
             // CHECK UTF8 or UTF16 (should store in UTF16)
             if (!pszTargetName.empty()) {
@@ -1026,22 +925,6 @@ protected:
             else {
                 this->ServicePrincipalName.init(0);
             }
-        }
-
-
-        // READ WRITE FUNCTIONS
-        SEC_STATUS write_negotiate(Array& output_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Negotiate");
-            this->ntlm_client_build_negotiate();
-            StaticOutStream<65535> out_stream;
-            this->NEGOTIATE_MESSAGE.emit(out_stream);
-            output_buffer.init(out_stream.get_offset());
-            output_buffer.copy(out_stream.get_bytes());
-
-            this->SavedNegotiateMessage.init(out_stream.get_offset());
-            this->SavedNegotiateMessage.copy(out_stream.get_bytes());
-            this->state = NTLM_STATE_CHALLENGE;
-            return SEC_I_CONTINUE_NEEDED;
         }
 
         SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
@@ -1072,48 +955,6 @@ protected:
 
             this->state = NTLM_STATE_AUTHENTICATE;
             return SEC_I_CONTINUE_NEEDED;
-        }
-
-        SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Challenge");
-            InStream in_stream(input_buffer);
-            this->CHALLENGE_MESSAGE.recv(in_stream);
-            this->SavedChallengeMessage.init(in_stream.get_offset());
-            this->SavedChallengeMessage.copy(in_stream.get_bytes());
-
-            this->state = NTLM_STATE_AUTHENTICATE;
-            return SEC_I_CONTINUE_NEEDED;
-        }
-
-        SEC_STATUS write_authenticate(Array& output_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Authenticate");
-            auto password_av = this->identity.get_password_utf16_av();
-            auto user_av = this->identity.get_user_utf16_av();
-            auto domain_av = this->identity.get_domain_utf16_av();
-
-            this->ntlm_client_build_authenticate(password_av, user_av, domain_av,
-                                                 this->Workstation.av());
-            StaticOutStream<65535> out_stream;
-            if (this->UseMIC) {
-                this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-                this->AUTHENTICATE_MESSAGE.emit(out_stream);
-                this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-
-                this->SavedAuthenticateMessage.init(out_stream.get_offset());
-                this->SavedAuthenticateMessage.copy(out_stream.get_bytes());
-                this->ntlm_compute_MIC();
-                memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
-                // this->AUTHENTICATE_MESSAGE.has_mic = true;
-            }
-            out_stream.rewind();
-            this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-            this->AUTHENTICATE_MESSAGE.emit(out_stream);
-            output_buffer.init(out_stream.get_offset());
-            output_buffer.copy(out_stream.get_bytes());
-            if (this->verbose) {
-                this->AUTHENTICATE_MESSAGE.log();
-            }
-            return SEC_I_COMPLETE_NEEDED;
         }
 
         SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
