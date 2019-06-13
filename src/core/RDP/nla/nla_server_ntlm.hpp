@@ -57,69 +57,6 @@ class rdpCredsspServerNTLM final
     Array ServerClientHash;
 
     Array ServicePrincipalName;
-    struct SEC_WINNT_AUTH_IDENTITY
-    {
-        private:
-        //@}
-        // ntlm only
-        //@{
-        Array User;
-        Array Domain;
-        Array Password;
-        //@}
-
-        public:
-        SEC_WINNT_AUTH_IDENTITY()
-            : User(0)
-            , Domain(0)
-            , Password(0)
-        {
-        }
-
-        private:
-        void user_init_copy(cbytes_view av)
-        {
-            this->User.init(av.size());
-            this->User.copy(av);
-        }
-
-        void domain_init_copy(cbytes_view av)
-        {
-            this->Domain.init(av.size());
-            this->Domain.copy(av);
-        }
-
-        bool is_empty_user_domain(){
-            return (this->User.size() == 0) && (this->Domain.size() == 0);
-        }
-
-        public:
-        cbytes_view get_password_utf16_av() const
-        {
-            return {this->Password.get_data(), this->Password.size()};
-        }
-
-        cbytes_view get_user_utf16_av() const
-        {
-            return {this->User.get_data(), this->User.size()};
-        }
-
-        cbytes_view get_domain_utf16_av() const
-        {
-            return {this->Domain.get_data(), this->Domain.size()};
-        }
-
-        private:
-        void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len) 
-        {
-            UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
-        }
-
-        void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
-
-            UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
-        }
-    } identity;
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         LOG(LOG_INFO, "set hostname from UTF8");
@@ -203,7 +140,7 @@ protected:
     SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
 
     private:
-    std::unique_ptr<NTLMContext> context = nullptr;
+    NTLMContext ntlm_context;
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
@@ -218,45 +155,45 @@ protected:
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
         
-        if (this->context->state == NTLM_STATE_INITIAL) {
+        if (this->ntlm_context.state == NTLM_STATE_INITIAL) {
             
-            this->context->state = NTLM_STATE_NEGOTIATE;
-            SEC_STATUS status = this->context->read_negotiate(input_buffer);
+            this->ntlm_context.state = NTLM_STATE_NEGOTIATE;
+            SEC_STATUS status = this->ntlm_context.read_negotiate(input_buffer);
             if (status != SEC_I_CONTINUE_NEEDED) {
                 return SEC_E_INVALID_TOKEN;
             }
 
-            if (this->context->state == NTLM_STATE_CHALLENGE) {
-                return this->context->write_challenge(output_buffer);
+            if (this->ntlm_context.state == NTLM_STATE_CHALLENGE) {
+                return this->ntlm_context.write_challenge(output_buffer);
             }
 
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-        if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-            SEC_STATUS status = this->context->read_authenticate(input_buffer);
+        if (this->ntlm_context.state == NTLM_STATE_AUTHENTICATE) {
+            SEC_STATUS status = this->ntlm_context.read_authenticate(input_buffer);
 
             if (status == SEC_I_CONTINUE_NEEDED) {
                 if (!this->set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
-                switch (set_password_cb(this->context->identity.get_user_utf16_av()
-                                       ,this->context->identity.get_domain_utf16_av()
-                                       ,this->context->identity.Password)) {
+                switch (set_password_cb(this->ntlm_context.identity.get_user_utf16_av()
+                                       ,this->ntlm_context.identity.get_domain_utf16_av()
+                                       ,this->ntlm_context.identity.Password)) {
                     case PasswordCallback::Error:
                         return SEC_E_LOGON_DENIED;
                     case PasswordCallback::Ok:
-                        this->context->state = NTLM_STATE_WAIT_PASSWORD;
+                        this->ntlm_context.state = NTLM_STATE_WAIT_PASSWORD;
                         break;
                     case PasswordCallback::Wait:
-                        this->context->state = NTLM_STATE_WAIT_PASSWORD;
+                        this->ntlm_context.state = NTLM_STATE_WAIT_PASSWORD;
                         return SEC_I_LOCAL_LOGON;
                 }
             }
         }
 
-        if (this->context->state == NTLM_STATE_WAIT_PASSWORD) {
-            SEC_STATUS status = this->context->check_authenticate();
+        if (this->ntlm_context.state == NTLM_STATE_WAIT_PASSWORD) {
+            SEC_STATUS status = this->ntlm_context.check_authenticate();
             if (status != SEC_I_CONTINUE_NEEDED && status != SEC_I_COMPLETE_NEEDED) {
                 return status;
             }
@@ -302,20 +239,17 @@ public:
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo)
     {
-        if (!this->context) {
-            return SEC_E_NO_CONTEXT;
-        }
-        LOG_IF(this->context->verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
+        LOG_IF(this->ntlm_context.verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
 
         // data_out [signature][data_buffer]
 
         data_out.init(data_in.size() + cbMaxSignature);
         auto message_out = data_out.av().array_from_offset(cbMaxSignature);
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, *context->SendSigningKey, data_in, MessageSeqNo);
-        // this->context->confidentiality == true
-        this->context->SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
-        this->compute_signature(data_out.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
+        this->compute_hmac_md5(digest, *this->ntlm_context.SendSigningKey, data_in, MessageSeqNo);
+        // this->ntlm_context.confidentiality == true
+        this->ntlm_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
+        this->compute_signature(data_out.get_data(), this->ntlm_context.SendRc4Seal, digest, MessageSeqNo);
         return SEC_E_OK;
     }
 
@@ -323,10 +257,7 @@ public:
     // DECRYPT_MESSAGE DecryptMessage;
     SEC_STATUS DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo)
     {
-        if (!this->context) {
-            return SEC_E_NO_CONTEXT;
-        }
-        LOG_IF(this->context->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
+        LOG_IF(this->ntlm_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
         if (data_in.size() < cbMaxSignature) {
             return SEC_E_INVALID_TOKEN;
@@ -339,14 +270,14 @@ public:
 
         /* Decrypt message using with RC4, result overwrites original buffer */
         // context->confidentiality == true
-        this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
+        this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, *this->context->RecvSigningKey, data_out.av(), MessageSeqNo);
+        this->compute_hmac_md5(digest, *this->ntlm_context.RecvSigningKey, data_out.av(), MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->compute_signature(
-            expected_signature, this->context->RecvRc4Seal, digest, MessageSeqNo);
+            expected_signature, this->ntlm_context.RecvRc4Seal, digest, MessageSeqNo);
 
         if (memcmp(data_in.data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
@@ -379,6 +310,7 @@ public:
         , lang(lang)
         , restricted_admin_mode(restricted_admin_mode)
         , verbose(verbose)
+        , ntlm_context(true, rand, timeobj)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
         LOG_IF(this->verbose, LOG_INFO, "this->identity.SetUserFromUtf8(nullptr)");
@@ -397,6 +329,8 @@ public:
         * ASC_REQ_ALLOCATE_MEMORY
         */
         this->server_auth_data.state = ServerAuthenticateData::Loop;
+        this->ntlm_context.identity.CopyAuthIdentity({},{},{});
+        this->ntlm_context.ntlm_SetContextServicePrincipalName(nullptr);
     }
 
 public:
@@ -555,14 +489,6 @@ private:
         //     | ASC_REQ_SEQUENCE_DETECT
         //     | ASC_REQ_EXTENDED_ERROR;
         
-        if (!this->context) {
-            this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
-            this->context->identity.CopyAuthIdentity(this->identity.get_user_utf16_av()
-                                                    ,this->identity.get_domain_utf16_av()
-                                                    ,this->identity.get_password_utf16_av());
-            this->context->ntlm_SetContextServicePrincipalName(nullptr);
-        }
-
         
         SEC_STATUS status = this->AcceptSecurityContext(this->ts_request.negoTokens.av(), /*output*/this->ts_request.negoTokens);
         this->state_accept_security_context = status;
