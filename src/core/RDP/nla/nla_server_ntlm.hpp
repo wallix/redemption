@@ -59,14 +59,10 @@ class rdpCredsspServerNTLM final
     Array ServicePrincipalName;
     struct SEC_WINNT_AUTH_IDENTITY
     {
-        // kerberos only
-        //@{
-        char princname[256];
-        char princpass[256];
+        private:
         //@}
         // ntlm only
         //@{
-        private:
         Array User;
         Array Domain;
         Array Password;
@@ -78,10 +74,12 @@ class rdpCredsspServerNTLM final
             , Domain(0)
             , Password(0)
         {
-            this->princname[0] = 0;
-            this->princpass[0] = 0;
+            this->copyFromUtf8(this->User, nullptr);
+            this->copyFromUtf8(this->Domain, nullptr);
+            this->copyFromUtf8(this->Password, nullptr);
         }
 
+        private:
         void user_init_copy(cbytes_view av)
         {
             this->User.init(av.size());
@@ -98,6 +96,7 @@ class rdpCredsspServerNTLM final
             return (this->User.size() == 0) && (this->Domain.size() == 0);
         }
 
+        public:
         cbytes_view get_password_utf16_av() const
         {
             return {this->Password.get_data(), this->Password.size()};
@@ -113,6 +112,7 @@ class rdpCredsspServerNTLM final
             return {this->Domain.get_data(), this->Domain.size()};
         }
 
+        private:
         void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len) 
         {
             UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
@@ -123,37 +123,7 @@ class rdpCredsspServerNTLM final
             UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
         }
 
-
-        void SetUserFromUtf8(const uint8_t * user)
-        {
-            this->copyFromUtf8(this->User, user);
-        }
-
-        void SetDomainFromUtf8(const uint8_t * domain)
-        {
-            this->copyFromUtf8(this->Domain, domain);
-        }
-
-        void SetPasswordFromUtf8(const uint8_t * password)
-        {
-            this->copyFromUtf8(this->Password, password);
-        }
-
-        void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
-        {
-            auto copy = [](char (&arr)[256], uint8_t const* data){
-                if (data) {
-                    const char * p = char_ptr_cast(data);
-                    const size_t length = p ? strnlen(p, 255) : 0;
-                    memcpy(arr, data, length);
-                    arr[length] = 0;
-                }
-            };
-
-            copy(this->princname, user);
-            copy(this->princpass, pass);
-        }
-
+        private:
         void clear()
         {
             this->User.init(0);
@@ -168,7 +138,6 @@ class rdpCredsspServerNTLM final
             this->Password.copy(src.Password);
         }
 
-    private:
         static void copyFromUtf8(Array& arr, uint8_t const* data)
         {
             if (data) {
@@ -443,15 +412,8 @@ public:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
         LOG_IF(this->verbose, LOG_INFO, "this->identity.SetUserFromUtf8(nullptr)");
-        this->identity.SetUserFromUtf8(nullptr);
-        LOG_IF(this->verbose, LOG_INFO, "this->identity.SetDomainFromUtf8(nullptr)");
-        this->identity.SetDomainFromUtf8(nullptr);
-        LOG_IF(this->verbose, LOG_INFO, "this->identity.SetPasswordFromUtf8(nullptr)");
-        this->identity.SetPasswordFromUtf8(nullptr);
         LOG_IF(this->verbose, LOG_INFO, "this->SetHostnameFromUtf8(nullptr)");
         this->SetHostnameFromUtf8(nullptr);
-        LOG_IF(this->verbose, LOG_INFO, "this->identity.SetKrbAuthIdentity(nullptr, nullptr)");
-        this->identity.SetKrbAuthIdentity(nullptr, nullptr);
         LOG_IF(this->verbose, LOG_INFO, "this->server_auth_data.state = ServerAuthenticateData::Start");
         this->server_auth_data.state = ServerAuthenticateData::Start;
         // TODO: sspi_GlobalInit();
