@@ -74,9 +74,6 @@ class rdpCredsspServerNTLM final
             , Domain(0)
             , Password(0)
         {
-            this->copyFromUtf8(this->User, nullptr);
-            this->copyFromUtf8(this->Domain, nullptr);
-            this->copyFromUtf8(this->Password, nullptr);
         }
 
         private:
@@ -121,33 +118,6 @@ class rdpCredsspServerNTLM final
         void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
 
             UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
-        }
-
-        private:
-        void clear()
-        {
-            this->User.init(0);
-            this->Domain.init(0);
-            this->Password.init(0);
-        }
-
-        void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY const& src)
-        {
-            this->User.copy(src.User);
-            this->Domain.copy(src.Domain);
-            this->Password.copy(src.Password);
-        }
-
-        static void copyFromUtf8(Array& arr, uint8_t const* data)
-        {
-            if (data) {
-                size_t user_len = UTF8Len(data);
-                arr.init(user_len * 2);
-                UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
-            }
-            else {
-                arr.init(0);
-            }
         }
     } identity;
 
