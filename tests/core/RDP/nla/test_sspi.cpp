@@ -85,7 +85,10 @@ RED_AUTO_TEST_CASE(TestSecIdentity)
 
     SEC_WINNT_AUTH_IDENTITY id2;
 
-    id2.CopyAuthIdentity(id);
+    id2.CopyAuthIdentity(id.get_user_utf16_av()
+                        ,id.get_domain_utf16_av()
+                        ,id.get_password_utf16_av());
+
     RED_CHECK_MEM_C(id.get_user_utf16_av(), "M\0\xe9\0n\0\xe9\0l\0a\0s\0");
     RED_CHECK_MEM_C(id.get_domain_utf16_av(), "S\0p\0a\0r\0t\0e\0");
     RED_CHECK_MEM_C(id.get_password_utf16_av(), "H\0\xe9\0l\0\xe8\0n\0e\0");

@@ -52,25 +52,18 @@ constexpr uint32_t cbMaxSignature = 16;
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 {
-    enum class PasswordCallback
-    {
-        Error,
-        Ok,
-        Wait,
-    };
-
 private:
     Random & rand;
     TimeObj & timeobj;
     std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
     std::unique_ptr<NTLMContext> context;
-    std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
+    std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)>& set_password_cb;
     bool verbose;
 
 public:
     explicit Ntlm_SecurityFunctionTable(
         Random & rand, TimeObj & timeobj,
-        std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb,
+        std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> & set_password_cb,
         bool verbose = false
     )
         : rand(rand)
@@ -94,7 +87,9 @@ public:
         this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
         if (pAuthData) {
-            this->identity->CopyAuthIdentity(*pAuthData);
+            this->identity->CopyAuthIdentity(pAuthData->get_user_utf16_av()
+                                            ,pAuthData->get_domain_utf16_av()
+                                            ,pAuthData->get_password_utf16_av());
         }
 
         return SEC_E_OK;
@@ -118,7 +113,10 @@ public:
             this->context->ntlm_SetContextWorkstation(pszTargetName);
             this->context->ntlm_SetContextServicePrincipalName(pszTargetName);
 
-            this->context->identity.CopyAuthIdentity(*this->identity);
+            this->context->identity.CopyAuthIdentity(this->identity->get_user_utf16_av()
+                                            ,this->identity->get_domain_utf16_av()
+                                            ,this->identity->get_password_utf16_av());
+
         }
 
         if (this->context->state == NTLM_STATE_INITIAL) {
@@ -150,7 +148,10 @@ public:
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
-            this->context->identity.CopyAuthIdentity(*this->identity);
+
+            this->context->identity.CopyAuthIdentity(this->identity->get_user_utf16_av()
+                                            ,this->identity->get_domain_utf16_av()
+                                            ,this->identity->get_password_utf16_av());
 
             this->context->ntlm_SetContextServicePrincipalName(nullptr);
         }
@@ -176,7 +177,9 @@ public:
                 if (!this->set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
-                switch (this->set_password_cb(this->context->identity)) {
+                switch (this->set_password_cb(this->context->identity.get_user_utf16_av()
+                                             ,this->context->identity.get_domain_utf16_av()
+                                             ,this->context->identity.Password)) {
                     case PasswordCallback::Error:
                         return SEC_E_LOGON_DENIED;
                     case PasswordCallback::Ok:

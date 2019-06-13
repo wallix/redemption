@@ -46,16 +46,8 @@ class rdpCredsspServerNTLM final
     Random & rand;
     TimeObj & timeobj;
 
-    public:
-    enum class PasswordCallback
-    {
-        Error,
-        Ok,
-        Wait,
-    };
-
     private:
-    std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
+    std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb;
     std::string& extra_message;
     Translation::language_t lang;
     bool restricted_admin_mode;
@@ -65,12 +57,139 @@ class rdpCredsspServerNTLM final
     Array ServerClientHash;
 
     Array ServicePrincipalName;
-    SEC_WINNT_AUTH_IDENTITY identity;
+    struct SEC_WINNT_AUTH_IDENTITY
+    {
+        // kerberos only
+        //@{
+        char princname[256];
+        char princpass[256];
+        //@}
+        // ntlm only
+        //@{
+        private:
+        Array User;
+        Array Domain;
+        Array Password;
+        //@}
+
+        public:
+        SEC_WINNT_AUTH_IDENTITY()
+            : User(0)
+            , Domain(0)
+            , Password(0)
+        {
+            this->princname[0] = 0;
+            this->princpass[0] = 0;
+        }
+
+        void user_init_copy(cbytes_view av)
+        {
+            this->User.init(av.size());
+            this->User.copy(av);
+        }
+
+        void domain_init_copy(cbytes_view av)
+        {
+            this->Domain.init(av.size());
+            this->Domain.copy(av);
+        }
+
+        bool is_empty_user_domain(){
+            return (this->User.size() == 0) && (this->Domain.size() == 0);
+        }
+
+        cbytes_view get_password_utf16_av() const
+        {
+            return {this->Password.get_data(), this->Password.size()};
+        }
+
+        cbytes_view get_user_utf16_av() const
+        {
+            return {this->User.get_data(), this->User.size()};
+        }
+
+        cbytes_view get_domain_utf16_av() const
+        {
+            return {this->Domain.get_data(), this->Domain.size()};
+        }
+
+        void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len) 
+        {
+            UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
+        }
+
+        void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
+
+            UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
+        }
+
+
+        void SetUserFromUtf8(const uint8_t * user)
+        {
+            this->copyFromUtf8(this->User, user);
+        }
+
+        void SetDomainFromUtf8(const uint8_t * domain)
+        {
+            this->copyFromUtf8(this->Domain, domain);
+        }
+
+        void SetPasswordFromUtf8(const uint8_t * password)
+        {
+            this->copyFromUtf8(this->Password, password);
+        }
+
+        void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
+        {
+            auto copy = [](char (&arr)[256], uint8_t const* data){
+                if (data) {
+                    const char * p = char_ptr_cast(data);
+                    const size_t length = p ? strnlen(p, 255) : 0;
+                    memcpy(arr, data, length);
+                    arr[length] = 0;
+                }
+            };
+
+            copy(this->princname, user);
+            copy(this->princpass, pass);
+        }
+
+        void clear()
+        {
+            this->User.init(0);
+            this->Domain.init(0);
+            this->Password.init(0);
+        }
+
+        void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY const& src)
+        {
+            this->User.copy(src.User);
+            this->Domain.copy(src.Domain);
+            this->Password.copy(src.Password);
+        }
+
+    private:
+        static void copyFromUtf8(Array& arr, uint8_t const* data)
+        {
+            if (data) {
+                size_t user_len = UTF8Len(data);
+                arr.init(user_len * 2);
+                UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
+            }
+            else {
+                arr.init(0);
+            }
+        }
+    } identity;
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
+        LOG(LOG_INFO, "set hostname from UTF8");
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
+        LOG(LOG_INFO, "length=%lu", length);
         this->ServicePrincipalName.init(length + 1);
-        this->ServicePrincipalName.copy({pszTargetName, length});
+        if (length){
+            this->ServicePrincipalName.copy({pszTargetName, length});
+        }
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
@@ -159,7 +278,9 @@ protected:
     SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer)
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
+        
         if (this->context->state == NTLM_STATE_INITIAL) {
+            
             this->context->state = NTLM_STATE_NEGOTIATE;
             SEC_STATUS status = this->context->read_negotiate(input_buffer);
             if (status != SEC_I_CONTINUE_NEEDED) {
@@ -180,7 +301,9 @@ protected:
                 if (!this->set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
-                switch (set_password_cb(this->context->identity)) {
+                switch (set_password_cb(this->context->identity.get_user_utf16_av()
+                                       ,this->context->identity.get_domain_utf16_av()
+                                       ,this->context->identity.Password)) {
                     case PasswordCallback::Error:
                         return SEC_E_LOGON_DENIED;
                     case PasswordCallback::Ok:
@@ -307,7 +430,7 @@ public:
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
-               std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
+               std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb,
                const bool verbose = false)
         : public_key(key)
         , rand(rand)
@@ -319,12 +442,17 @@ public:
         , verbose(verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
+        LOG_IF(this->verbose, LOG_INFO, "this->identity.SetUserFromUtf8(nullptr)");
         this->identity.SetUserFromUtf8(nullptr);
+        LOG_IF(this->verbose, LOG_INFO, "this->identity.SetDomainFromUtf8(nullptr)");
         this->identity.SetDomainFromUtf8(nullptr);
+        LOG_IF(this->verbose, LOG_INFO, "this->identity.SetPasswordFromUtf8(nullptr)");
         this->identity.SetPasswordFromUtf8(nullptr);
+        LOG_IF(this->verbose, LOG_INFO, "this->SetHostnameFromUtf8(nullptr)");
         this->SetHostnameFromUtf8(nullptr);
+        LOG_IF(this->verbose, LOG_INFO, "this->identity.SetKrbAuthIdentity(nullptr, nullptr)");
         this->identity.SetKrbAuthIdentity(nullptr, nullptr);
-
+        LOG_IF(this->verbose, LOG_INFO, "this->server_auth_data.state = ServerAuthenticateData::Start");
         this->server_auth_data.state = ServerAuthenticateData::Start;
         // TODO: sspi_GlobalInit();
 
@@ -497,7 +625,9 @@ private:
         
         if (!this->context) {
             this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
-            this->context->identity.CopyAuthIdentity(this->identity);
+            this->context->identity.CopyAuthIdentity(this->identity.get_user_utf16_av()
+                                                    ,this->identity.get_domain_utf16_av()
+                                                    ,this->identity.get_password_utf16_av());
             this->context->ntlm_SetContextServicePrincipalName(nullptr);
         }
 

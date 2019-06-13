@@ -54,13 +54,6 @@ private:
     SEC_WINNT_AUTH_IDENTITY identity;
     struct Ntlm_SecurityFunctionTable
     {
-        enum class PasswordCallback
-        {
-            Error,
-            Ok,
-            Wait,
-        };
-
     private:
         Random & rand;
         TimeObj & timeobj;
@@ -93,7 +86,7 @@ private:
             this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
             if (pAuthData) {
-                this->identity->CopyAuthIdentity(*pAuthData);
+                this->identity->CopyAuthIdentity(pAuthData->get_user_utf16_av(), pAuthData->get_domain_utf16_av(), pAuthData->get_password_utf16_av());
             }
 
             return SEC_E_OK;
@@ -115,7 +108,9 @@ private:
                 this->context.ntlm_SetContextWorkstation(pszTargetName);
                 this->context.ntlm_SetContextServicePrincipalName(pszTargetName);
 
-                this->context.identity.CopyAuthIdentity(*this->identity);
+                this->context.identity.CopyAuthIdentity(this->identity->get_user_utf16_av(),
+                                                        this->identity->get_domain_utf16_av(),
+                                                        this->identity->get_password_utf16_av());
                 this->context_initialized = true;
             }
 

@@ -23,6 +23,7 @@
 
 #include "utils/difftimeval.hpp"
 #include "utils/fixed_random.hpp"
+#include "utils/utf.hpp"
 #include "core/RDP/nego.hpp"
 #include "proxy_recorder/extract_user_domain.hpp"
 
@@ -36,16 +37,18 @@ class NegoServer
 public:
     NegoServer(array_view_u8 key, std::string const& user, std::string const& password, uint64_t verbosity)
     : credssp(key, false, rand, timeobj, extra_message, Translation::EN,
-        [&](SEC_WINNT_AUTH_IDENTITY& identity){
+        [&](cbytes_view user_av, cbytes_view domain_av, Array & password_array){
             LOG(LOG_INFO, "NTLM Check identity");
 
             auto [username, domain] = extract_user_domain(user.c_str());
             
             char utf8_user_buffer[1024] = {};
-            identity.copy_to_utf8_user(byte_ptr(utf8_user_buffer), sizeof(utf8_user_buffer));
+            UTF16toUTF8(user_av.data(), user_av.size(), 
+                reinterpret_cast<uint8_t *>(utf8_user_buffer), sizeof(utf8_user_buffer));
 
             char utf8_domain_buffer[1024] = {};
-            identity.copy_to_utf8_domain(utf8_domain_buffer, sizeof(utf8_domain_buffer));
+            UTF16toUTF8(domain_av.data(), domain_av.size(), 
+                reinterpret_cast<uint8_t *>(utf8_domain_buffer), sizeof(utf8_domain_buffer));
 
             bool check_identities = false;
             if (utf8_domain_buffer[0] == 0){
@@ -66,12 +69,14 @@ public:
                 utf8_user_buffer, utf8_domain_buffer, username, domain); 
 
             if (check_identities){
-                identity.SetPasswordFromUtf8(byte_ptr_cast(password.c_str()));
-                return rdpCredsspServerNTLM::PasswordCallback::Ok;
+                size_t user_len = UTF8Len(byte_ptr_cast(password.c_str()));
+                password_array.init(user_len * 2);
+                UTF8toUTF16({password.c_str(), strlen(char_ptr_cast(byte_ptr_cast(password.c_str())))}, password_array.get_data(), user_len * 2);
+                return PasswordCallback::Ok;
             }
 
             LOG(LOG_ERR, "Ntlm: bad identity");
-            return rdpCredsspServerNTLM::PasswordCallback::Error;
+            return PasswordCallback::Error;
         }, verbosity)
     {
     }

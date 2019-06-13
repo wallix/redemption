@@ -194,16 +194,19 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
     rdpCredsspServerNTLM credssp(
         front_public_key_av, false, rand, timeobj, extra_message, lang,
-        [&](SEC_WINNT_AUTH_IDENTITY& identity){
+        [&](cbytes_view user_av, cbytes_view domain_av, Array & password_array){
             std::vector<uint8_t> vec;
             vec.resize(user.size() * 2);
             UTF8toUTF16(user, vec.data(), vec.size());
-            RED_CHECK_MEM_AA(identity.get_user_utf16_av(), vec);
+            RED_CHECK_MEM_AA(user_av, vec);
             vec.resize(domain.size() * 2);
             UTF8toUTF16(domain, vec.data(), vec.size());
-            RED_CHECK_MEM_AA(identity.get_domain_utf16_av(), vec);
-            identity.SetPasswordFromUtf8(byte_ptr_cast(pass.data()));
-            return rdpCredsspServerNTLM::PasswordCallback::Ok;
+            RED_CHECK_MEM_AA(domain_av, vec);
+            size_t user_len = UTF8Len(byte_ptr_cast(pass.data()));
+            LOG(LOG_INFO, "callback lambda: user_len=%u", user_len);
+            password_array.init(user_len * 2);
+            UTF8toUTF16({pass.data(), strlen(char_ptr_cast(byte_ptr_cast(pass.data())))}, password_array.get_data(), user_len * 2);
+            return PasswordCallback::Ok;
         }
     );
 
