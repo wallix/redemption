@@ -85,7 +85,7 @@ public:
 
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
     void init(size_t v) {
-        LOG(LOG_INFO, "init buffer to %u", v);
+        LOG(LOG_INFO, "init buffer to %lu", v);
         this->avbuf = this->buf_maker.dyn_array(v);
     }
 
@@ -100,7 +100,7 @@ public:
     }
 
     void copy(const_bytes_view source, uint32_t offset) {
-        LOG(LOG_INFO, "copy to buffer to {%s %u} %u avbufsize = %s", source.data(), source.size(), offset, this->avbuf.data());
+        LOG(LOG_INFO, "copy to buffer to {%s %lu} %u avbufsize = %s", source.data(), source.size(), offset, this->avbuf.data());
         assert(this->size() >= source.size() + offset);
         if (!source.empty()) {
             memcpy(this->avbuf.data() + offset, source.data(), source.size());
