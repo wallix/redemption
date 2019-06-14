@@ -21,12 +21,6 @@
 
 #pragma once
 
-#include "core/RDP/nla/sspi.hpp"
-#include "core/RDP/nla/ntlm/ntlm_context.hpp"
-#include "utils/sugar/byte_ptr.hpp"
-
-#include <memory>
-#include <functional>
 
 
 // TODO: constants below are still globals,
@@ -42,7 +36,7 @@
 //     Ntlm_Name,              // Name
 //     Ntlm_Comment            // Comment
 // };
-constexpr uint32_t cbMaxSignature = 16;
+
 // SecPkgContext_Sizes ContextSizes;
 // ContextSizes.cbMaxToken = 2010;
 // ContextSizes.cbMaxSignature = 16;

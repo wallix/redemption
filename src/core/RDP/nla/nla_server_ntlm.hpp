@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/nla/ntlm/ntlm.hpp"
@@ -29,10 +31,15 @@
 #include "utils/translation.hpp"
 #include "system/ssl_sha256.hpp"
 
+#include "core/RDP/nla/ntlm/ntlm_context.hpp"
+
 #include "transport/transport.hpp"
+
 
 class rdpCredsspServerNTLM final
 {
+    static constexpr uint32_t cbMaxSignature = 16;
+
     int send_seq_num = 0;
     int recv_seq_num = 0;
 

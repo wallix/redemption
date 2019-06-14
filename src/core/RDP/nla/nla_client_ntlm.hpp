@@ -37,7 +37,8 @@
 
 class rdpCredsspClientNTLM
 {
-private:
+    static constexpr uint32_t cbMaxSignature = 16;
+    
     int send_seq_num = 0;
     int recv_seq_num = 0;
 

@@ -19,13 +19,20 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
 #include "core/RDP/nla/ntlm/ntlm.hpp"
-
 #include "test_only/lcg_random.hpp"
+
+#include "core/RDP/nla/sspi.hpp"
+#include "core/RDP/nla/ntlm/ntlm_context.hpp"
+#include "utils/sugar/byte_ptr.hpp"
+
+#include <memory>
+#include <functional>
+
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 {
+    static constexpr uint32_t cbMaxSignature = 16;
 private:
     Random & rand;
     TimeObj & timeobj;
