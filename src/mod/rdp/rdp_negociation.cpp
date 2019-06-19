@@ -533,6 +533,67 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
                 break;
             case State::CHANNEL_JOIN_CONFIRM:
                 if (this->channel_join_confirm(x224_data)){
+                    // RDP Security Commencement
+                    // -------------------------
+
+                    // RDP Security Commencement: If standard RDP security methods are being
+                    // employed and encryption is in force (this is determined by examining the data
+                    // embedded in the GCC Conference Create Response packet) then the client sends
+                    // a Security Exchange PDU containing an encrypted 32-byte random number to the
+                    // server. This random number is encrypted with the public key of the server
+                    // (the server's public key, as well as a 32-byte server-generated random
+                    // number, are both obtained from the data embedded in the GCC Conference Create
+                    //  Response packet).
+
+                    // The client and server then utilize the two 32-byte random numbers to generate
+                    // session keys which are used to encrypt and validate the integrity of
+                    // subsequent RDP traffic.
+
+                    // From this point, all subsequent RDP traffic can be encrypted and a security
+                    // header is include " with the data if encryption is in force (the Client Info
+                    // and licensing PDUs are an exception in that they always have a security
+                    // header). The Security Header follows the X.224 and MCS Headers and indicates
+                    // whether the attached data is encrypted.
+
+                    // Even if encryption is in force server-to-client traffic may not always be
+                    // encrypted, while client-to-server traffic will always be encrypted by
+                    // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+                    // however).
+
+                    // Client                                                     Server
+                    //    |------Security Exchange PDU ---------------------------> |
+                    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
+                        "mod_rdp::RDP Security Commencement");
+
+                    if (this->negociation_result.encryptionLevel){
+                        LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
+                            "mod_rdp::SecExchangePacket keylen=%u", this->server_public_key_len);
+
+                        this->send_data_request(
+                            GCC::MCS_GLOBAL_CHANNEL,
+                            dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
+                                SEC::SecExchangePacket_Send mcs(
+                                    stream, this->client_crypt_random, this->server_public_key_len
+                                );
+                                (void)mcs;
+                            })
+                        );
+                    }
+
+                    // Secure Settings Exchange
+                    // ------------------------
+
+                    // Secure Settings Exchange: Secure client data (such as the username,
+                    // password and auto-reconnect cookie) is sent to the server using the Client
+                    // Info PDU.
+
+                    // Client                                                     Server
+                    //    |------ Client Info PDU      ---------------------------> |
+
+                    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
+                        "mod_rdp::Secure Settings Exchange");
+
+                    this->send_client_info_pdu();
                     this->state = State::GET_LICENSE;
                 }
                 break;
@@ -1217,71 +1278,8 @@ bool RdpNegociation::channel_join_confirm(InStream & x224_data)
     if (this->send_channel_index < this->mod_channel_list.size()+2) {
         return false;
     }
-
     LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO,
         "mod_rdp::Channel Join Confirme end");
-
-    // RDP Security Commencement
-    // -------------------------
-
-    // RDP Security Commencement: If standard RDP security methods are being
-    // employed and encryption is in force (this is determined by examining the data
-    // embedded in the GCC Conference Create Response packet) then the client sends
-    // a Security Exchange PDU containing an encrypted 32-byte random number to the
-    // server. This random number is encrypted with the public key of the server
-    // (the server's public key, as well as a 32-byte server-generated random
-    // number, are both obtained from the data embedded in the GCC Conference Create
-    //  Response packet).
-
-    // The client and server then utilize the two 32-byte random numbers to generate
-    // session keys which are used to encrypt and validate the integrity of
-    // subsequent RDP traffic.
-
-    // From this point, all subsequent RDP traffic can be encrypted and a security
-    // header is include " with the data if encryption is in force (the Client Info
-    // and licensing PDUs are an exception in that they always have a security
-    // header). The Security Header follows the X.224 and MCS Headers and indicates
-    // whether the attached data is encrypted.
-
-    // Even if encryption is in force server-to-client traffic may not always be
-    // encrypted, while client-to-server traffic will always be encrypted by
-    // Microsoft RDP implementations (encryption of licensing PDUs is optional,
-    // however).
-
-    // Client                                                     Server
-    //    |------Security Exchange PDU ---------------------------> |
-    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
-        "mod_rdp::RDP Security Commencement");
-
-    if (this->negociation_result.encryptionLevel){
-        LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
-            "mod_rdp::SecExchangePacket keylen=%u", this->server_public_key_len);
-
-        this->send_data_request(
-            GCC::MCS_GLOBAL_CHANNEL,
-            dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
-                SEC::SecExchangePacket_Send mcs(
-                    stream, this->client_crypt_random, this->server_public_key_len
-                );
-                (void)mcs;
-            })
-        );
-    }
-
-    // Secure Settings Exchange
-    // ------------------------
-
-    // Secure Settings Exchange: Secure client data (such as the username,
-    // password and auto-reconnect cookie) is sent to the server using the Client
-    // Info PDU.
-
-    // Client                                                     Server
-    //    |------ Client Info PDU      ---------------------------> |
-
-    LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO,
-        "mod_rdp::Secure Settings Exchange");
-
-    this->send_client_info_pdu();
     return true;
 }
 

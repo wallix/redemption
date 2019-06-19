@@ -71,10 +71,10 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
             LOG(LOG_INFO, "start NegoServer");
         }
         this->nego_server = std::make_unique<NegoServer>(key, nla_username, nla_password, this->verbosity > 8);
-        this->pstate = NEGOCIATING_FRONT_NLA;
+        this->pstate = PState::NEGOCIATING_FRONT_NLA;
     }
     else {
-        this->pstate = NEGOCIATING_BACK_NLA;
+        this->pstate = PState::NEGOCIATING_BACK_NLA;
     }
 
     this->nego_client = std::make_unique<NegoClient>(
@@ -114,7 +114,7 @@ void ProxyRecorder::front_nla(Transport & frontConn)
             LOG(LOG_INFO, "start NegoClient");
         }
         this->nego_server.reset();
-        this->pstate = NEGOCIATING_BACK_NLA;
+        this->pstate = PState::NEGOCIATING_BACK_NLA;
         break;
     }
 }
@@ -150,7 +150,7 @@ void ProxyRecorder::front_initial_pdu_negociation(Transport & backConn)
         outFile.write_packet(PacketType::DataOut, this->frontBuffer.remaining_data());
         backConn.send(this->frontBuffer.remaining_data());
 
-        this->pstate = NEGOCIATING_BACK_INITIAL_PDU;
+        this->pstate = PState::NEGOCIATING_BACK_INITIAL_PDU;
     }
 }
 
@@ -164,7 +164,7 @@ void ProxyRecorder::back_nla_negociation(Transport & backConn)
             LOG(LOG_INFO, "stop NegoClient");
         }
         this->nego_client.reset();
-        this->pstate = NEGOCIATING_FRONT_INITIAL_PDU;
+        this->pstate = PState::NEGOCIATING_FRONT_INITIAL_PDU;
         outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
     }
 }
@@ -203,7 +203,7 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
         outFile.write_packet(PacketType::DataIn, backBuffer.remaining_data());
        frontConn.send(backBuffer.remaining_data());
 
-        this->pstate = FORWARD;
+        this->pstate = PState::FORWARD;
     }
 }
 

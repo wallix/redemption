@@ -103,19 +103,19 @@ public:
                 for (;;) {
                     FD_ZERO(&rset);
                     switch(conn.pstate) {
-                    case ProxyRecorder::NEGOCIATING_FRONT_NLA:
-                    case ProxyRecorder::NEGOCIATING_FRONT_STEP1:
-                    case ProxyRecorder::NEGOCIATING_FRONT_INITIAL_PDU:
+                    case ProxyRecorder::PState::NEGOCIATING_FRONT_NLA:
+                    case ProxyRecorder::PState::NEGOCIATING_FRONT_STEP1:
+                    case ProxyRecorder::PState::NEGOCIATING_FRONT_INITIAL_PDU:
                         // Negotiation with back delayed until front finished
                         FD_SET(front_fd, &rset);
                         break;
-                    case ProxyRecorder::NEGOCIATING_BACK_NLA:
-                    case ProxyRecorder::NEGOCIATING_BACK_INITIAL_PDU:
+                    case ProxyRecorder::PState::NEGOCIATING_BACK_NLA:
+                    case ProxyRecorder::PState::NEGOCIATING_BACK_INITIAL_PDU:
                         // Now start negociation with back
                         // FIXME: use front NLA parameters!
                         FD_SET(back_fd, &rset);
                         break;
-                    case ProxyRecorder::FORWARD:
+                    case ProxyRecorder::PState::FORWARD:
                         FD_SET(front_fd, &rset);
                         FD_SET(back_fd, &rset);
                         break;
@@ -127,7 +127,7 @@ public:
                     }
 
                     switch(conn.pstate) {
-                    case ProxyRecorder::NEGOCIATING_FRONT_STEP1:
+                    case ProxyRecorder::PState::NEGOCIATING_FRONT_STEP1:
                         if (FD_ISSET(front_fd, &rset)) {
                             conn.frontBuffer.load_data(frontConn);
                             if (conn.frontBuffer.next(TpduBuffer::PDU)) {
@@ -140,27 +140,27 @@ public:
                         }
                         break;
 
-                    case ProxyRecorder::NEGOCIATING_FRONT_NLA:
+                    case ProxyRecorder::PState::NEGOCIATING_FRONT_NLA:
                         if (FD_ISSET(front_fd, &rset)) {
                             conn.frontBuffer.load_data(frontConn);
                             conn.front_nla(frontConn);
                         }
                         break;
 
-                    case ProxyRecorder::NEGOCIATING_FRONT_INITIAL_PDU:
+                    case ProxyRecorder::PState::NEGOCIATING_FRONT_INITIAL_PDU:
                         if (FD_ISSET(front_fd, &rset)) {
                             conn.frontBuffer.load_data(frontConn);
                             conn.front_initial_pdu_negociation(backConn);
                         }
                         break;
 
-                    case ProxyRecorder::NEGOCIATING_BACK_NLA:
+                    case ProxyRecorder::PState::NEGOCIATING_BACK_NLA:
                         if (FD_ISSET(back_fd, &rset)) {
                             conn.back_nla_negociation(backConn);
                         }
                         break;
 
-                    case ProxyRecorder::NEGOCIATING_BACK_INITIAL_PDU:
+                    case ProxyRecorder::PState::NEGOCIATING_BACK_INITIAL_PDU:
                         // Now start negociation with back
                         // FIXME: use front NLA parameters!
                         if (FD_ISSET(back_fd, &rset)) {
@@ -169,7 +169,7 @@ public:
                         }
                         break;
 
-                    case ProxyRecorder::FORWARD:
+                    case ProxyRecorder::PState::FORWARD:
                         if (FD_ISSET(front_fd, &rset)) {
                             frontConn.set_trace_receive(conn.verbosity > 1024);
                             backConn.set_trace_send(conn.verbosity > 1024);

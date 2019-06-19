@@ -95,14 +95,14 @@ public:
     void back_initial_pdu_negociation(Transport & frontConn);
 
 public:
-    enum {
+    enum class PState : unsigned {
         NEGOCIATING_FRONT_STEP1,
         NEGOCIATING_FRONT_NLA,
         NEGOCIATING_BACK_NLA,
         NEGOCIATING_FRONT_INITIAL_PDU,
         NEGOCIATING_BACK_INITIAL_PDU,
         FORWARD
-    } pstate = NEGOCIATING_FRONT_STEP1;
+    } pstate = PState::NEGOCIATING_FRONT_STEP1;
 
 
     NlaTeeTransport & back_nla_tee_trans;

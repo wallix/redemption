@@ -1830,9 +1830,9 @@ class mod_rdp : public mod_api, public rdp_api
     const bool enable_remotefx;
     bool haveRemoteFx{false};
     bool haveSurfaceFrameAck{false};
-	uint8_t remoteFx_codec_id;
+    uint8_t remoteFx_codec_id;
 
-	const PrimaryDrawingOrdersSupport primary_drawing_orders_support;
+    const PrimaryDrawingOrdersSupport primary_drawing_orders_support;
 
     uint32_t frameInProgress = false;
     uint32_t currentFrameId = 0;
@@ -1941,7 +1941,7 @@ class mod_rdp : public mod_api, public rdp_api
             // TS_NEG_FAST_GLYPH_INDEX,
             TS_NEG_ELLIPSE_SC_INDEX,
             TS_NEG_ELLIPSE_CB_INDEX,
-			TS_NEG_GLYPH_INDEX
+            TS_NEG_GLYPH_INDEX
         );
     }
 
@@ -2498,112 +2498,112 @@ public:
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
 
 
-    	while (stream.in_check_rem(2)) {
+        while (stream.in_check_rem(2)) {
             ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
-			unsigned expected = 2;
+            unsigned expected = 2;
 
-			uint16_t cmdType = stream.in_uint16_le();
+            uint16_t cmdType = stream.in_uint16_le();
 
-			switch(cmdType) {
-			case CMDTYPE_SET_SURFACE_BITS:
-			case CMDTYPE_STREAM_SURFACE_BITS: {
-				RDPSetSurfaceCommand setSurface;
+            switch(cmdType) {
+            case CMDTYPE_SET_SURFACE_BITS:
+            case CMDTYPE_STREAM_SURFACE_BITS: {
+                RDPSetSurfaceCommand setSurface;
 
-				setSurface.recv(stream);
+                setSurface.recv(stream);
 
-				if (setSurface.codecId == this->remoteFx_codec_id) {
-					InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
-					this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
-				}
-				else {
-					LOG(LOG_INFO, "unknown codecId=%u", setSurface.codecId);
-				}
-				stream.in_skip_bytes(setSurface.bitmapDataLength);
-				break;
-			}
-			case CMDTYPE_FRAME_MARKER: {
-				// 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
-				// The Frame Marker Command is used to group multiple surface commands so that these commands
-				// can be processed and presented to the user as a single entity, a frame.
-				//
-				// cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
-				//         CMDTYPE_FRAME_MARKER (0x0004).
-				// frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
-				// +------------------------------+-------------------------------------+
-				// |             Value            |         Meaning                     |
-				// +------------------------------+-------------------------------------+
-				// | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
-				// |            0x0000            |                                     |
-				// +------------------------------+-------------------------------------+
-				// | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
-				// |             0x0001           | frame.                              |
-				// +------------------------------+-------------------------------------+
-				//
-				// frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
-				//
-				enum {
-					SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
-					SURFACECMD_FRAMEACTION_END = 0x0001
-				};
+                if (setSurface.codecId == this->remoteFx_codec_id) {
+                    InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
+                    this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
+                }
+                else {
+                    LOG(LOG_INFO, "unknown codecId=%u", setSurface.codecId);
+                }
+                stream.in_skip_bytes(setSurface.bitmapDataLength);
+                break;
+            }
+            case CMDTYPE_FRAME_MARKER: {
+                // 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
+                // The Frame Marker Command is used to group multiple surface commands so that these commands
+                // can be processed and presented to the user as a single entity, a frame.
+                //
+                // cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
+                //         CMDTYPE_FRAME_MARKER (0x0004).
+                // frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
+                // +------------------------------+-------------------------------------+
+                // |             Value            |         Meaning                     |
+                // +------------------------------+-------------------------------------+
+                // | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
+                // |            0x0000            |                                     |
+                // +------------------------------+-------------------------------------+
+                // | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
+                // |             0x0001           | frame.                              |
+                // +------------------------------+-------------------------------------+
+                //
+                // frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
+                //
+                enum {
+                    SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
+                    SURFACECMD_FRAMEACTION_END = 0x0001
+                };
 
-				expected = 6;
-				if (!stream.in_check_rem(expected)) {
-					LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
-					throw Error(ERR_RDP_DATA_TRUNCATED);
-				}
+                expected = 6;
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
 
-				uint16_t frameAction = stream.in_uint16_le();
-				uint32_t frameId = stream.in_uint32_le();
-				switch(frameAction) {
-				case SURFACECMD_FRAMEACTION_BEGIN:
-					LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
-					if (this->frameInProgress) {
-						// some servers don't send frame end markers, so send acks when we receive
-						// a new frame and the previous one was not acked
-						drawable.end_update();
+                uint16_t frameAction = stream.in_uint16_le();
+                uint32_t frameId = stream.in_uint32_le();
+                switch(frameAction) {
+                case SURFACECMD_FRAMEACTION_BEGIN:
+                    LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
+                    if (this->frameInProgress) {
+                        // some servers don't send frame end markers, so send acks when we receive
+                        // a new frame and the previous one was not acked
+                        drawable.end_update();
 
-						if (this->haveSurfaceFrameAck) {
-							LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
-							uint32_t localLastFrame = this->currentFrameId;
-							this->send_pdu_type2(
-								PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-								[localLastFrame](StreamSize<32>, OutStream & ostream) {
-									ostream.out_uint32_le(localLastFrame);
-								}
-							);
-						}
-					}
+                        if (this->haveSurfaceFrameAck) {
+                            LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
+                            uint32_t localLastFrame = this->currentFrameId;
+                            this->send_pdu_type2(
+                                PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
+                                [localLastFrame](StreamSize<32>, OutStream & ostream) {
+                                    ostream.out_uint32_le(localLastFrame);
+                                }
+                            );
+                        }
+                    }
 
-					this->frameInProgress = true;
-					this->currentFrameId = frameId;
-					drawable.begin_update();
-					break;
-				case SURFACECMD_FRAMEACTION_END:
-					LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
-					this->frameInProgress = false;
-					drawable.end_update();
+                    this->frameInProgress = true;
+                    this->currentFrameId = frameId;
+                    drawable.begin_update();
+                    break;
+                case SURFACECMD_FRAMEACTION_END:
+                    LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
+                    this->frameInProgress = false;
+                    drawable.end_update();
 
-					if (this->haveSurfaceFrameAck) {
-						this->send_pdu_type2(
-							PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-							[frameId](StreamSize<32>, OutStream & ostream) {
-								ostream.out_uint32_le(frameId);
-							}
-						);
-					}
-					break;
-				default:
-					LOG(LOG_ERR, "unknown frame marker action %u", frameAction);
-					break;
-				}
+                    if (this->haveSurfaceFrameAck) {
+                        this->send_pdu_type2(
+                            PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
+                            [frameId](StreamSize<32>, OutStream & ostream) {
+                                ostream.out_uint32_le(frameId);
+                            }
+                        );
+                    }
+                    break;
+                default:
+                    LOG(LOG_ERR, "unknown frame marker action %u", frameAction);
+                    break;
+                }
 
-				break;
-			}
-			default:
-				LOG(LOG_ERR, "unknown surface command 0x%x", cmdType);
-				break;
-			}
-    	}
+                break;
+            }
+            default:
+                LOG(LOG_ERR, "unknown surface command 0x%x", cmdType);
+                break;
+            }
+        }
     }
 
     void connected_slow_path(gdi::GraphicApi & drawable, InStream & stream)
@@ -3464,7 +3464,7 @@ public:
                 BrushCacheCaps brush_caps;
                 // brush_caps.brushSupportLevel = BRUSH_COLOR_FULL;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
-                	brush_caps.log("Sending to server");
+                    brush_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(brush_caps);
 
@@ -3486,7 +3486,7 @@ public:
                 VirtualChannelCaps virtual_channel_caps;
                 virtual_channel_caps.VCChunkSize = CHANNELS::CHANNEL_CHUNK_LENGTH;
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
-                	virtual_channel_caps.log("Sending to server");
+                    virtual_channel_caps.log("Sending to server");
                 }
                 confirm_active_pdu.emit_capability_set(virtual_channel_caps);
 
@@ -3549,18 +3549,18 @@ public:
                 bool sendLargePointer = false;
 
                 if (this->large_pointer_support && this->client_large_pointer_caps.largePointerSupportFlags) {
-                	sendLargePointer = true;
+                    sendLargePointer = true;
 
                     /* 2.2.7.2.7 Large Pointer Capability Set (TS_LARGE_POINTER_CAPABILITYSET)
                      * To support large pointer shapes, the client and server MUST support multifragment updates and
-					 * indicate this support by exchanging the Multifragment Update Capability Set (section 2.2.7.2.6). The
-					 * MaxRequestSize field of the Multifragment Update Capability Set MUST be set to at least 38,055
-					 * bytes (so that a 96 x 96 pixel 32bpp pointer can be transported).
+                     * indicate this support by exchanging the Multifragment Update Capability Set (section 2.2.7.2.6). The
+                     * MaxRequestSize field of the Multifragment Update Capability Set MUST be set to at least 38,055
+                     * bytes (so that a 96 x 96 pixel 32bpp pointer can be transported).
                      */
-					sendMultiFragmentUpdate = true;
-					if (multi_fragment_update_caps.MaxRequestSize < 38055) {
-						multi_fragment_update_caps.MaxRequestSize = 38055;
-					}
+                    sendMultiFragmentUpdate = true;
+                    if (multi_fragment_update_caps.MaxRequestSize < 38055) {
+                        multi_fragment_update_caps.MaxRequestSize = 38055;
+                    }
                 }
 
                 if (this->primary_drawing_orders_support.test(TS_NEG_DRAWNINEGRID_INDEX)) {
@@ -3574,15 +3574,15 @@ public:
                 BitmapCodecCaps bitmap_codec_caps(true);
 
                 if (this->enable_remotefx && this->haveRemoteFx) {
-                	/**
-                	 * for remoteFx we need:
-                	 * 	* frameAck
-                	 * 	* announced remoteFx codec
-                	 * 	* appropriate surfaceCommands
-                	 * 	* largePointer
-                	 * 	* a multi_fragment_update that is big enough (at least the value returned by the server)
-                	 */
-                	this->remoteFx_codec_id = bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
+                    /**
+                     * for remoteFx we need:
+                     *     * frameAck
+                     *     * announced remoteFx codec
+                     *     * appropriate surfaceCommands
+                     *     * largePointer
+                     *     * a multi_fragment_update that is big enough (at least the value returned by the server)
+                     */
+                    this->remoteFx_codec_id = bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
 
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         bitmap_codec_caps.log("Sending to server");
@@ -3590,23 +3590,23 @@ public:
                     confirm_active_pdu.emit_capability_set(bitmap_codec_caps);
 
                     if (this->haveSurfaceFrameAck) {
-						FrameAcknowledgeCaps frameAck;
-						frameAck.maxUnacknowledgedFrameCount = 2;
-						if (bool(this->verbose & RDPVerbose::capabilities)) {
-							frameAck.log("Sending to server");
-						}
-						confirm_active_pdu.emit_capability_set(frameAck);
+                        FrameAcknowledgeCaps frameAck;
+                        frameAck.maxUnacknowledgedFrameCount = 2;
+                        if (bool(this->verbose & RDPVerbose::capabilities)) {
+                            frameAck.log("Sending to server");
+                        }
+                        confirm_active_pdu.emit_capability_set(frameAck);
                     }
 
                     SurfaceCommandsCaps surface_commands_caps;
                     surface_commands_caps.cmdFlags = SURFCMDS_SETSURFACEBITS | SURFCMDS_FRAMEMARKER | SURFCMDS_STREAMSURFACEBITS;
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    	surface_commands_caps.log("Sending to server");
+                        surface_commands_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(surface_commands_caps);
 
                     multi_fragment_update_caps.MaxRequestSize = std::max(
-                    		this->front_multifragment_maxsize,
+                            this->front_multifragment_maxsize,
                             static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
                     );
                     sendMultiFragmentUpdate = true;
@@ -3619,9 +3619,9 @@ public:
                 }
 
                 if (sendMultiFragmentUpdate && multi_fragment_update_caps.MaxRequestSize) {
-					if (bool(this->verbose & RDPVerbose::capabilities)) {
-						multi_fragment_update_caps.log("Sending to server");
-					}
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        multi_fragment_update_caps.log("Sending to server");
+                    }
 
                     confirm_active_pdu.emit_capability_set(multi_fragment_update_caps);
                 }
@@ -3629,13 +3629,13 @@ public:
                 if (sendLargePointer) {
                     confirm_active_pdu.emit_capability_set(large_pointer_caps);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    	large_pointer_caps.log("Sending to server");
+                        large_pointer_caps.log("Sending to server");
                     }
                 }
-				if (this->multifragment_update_data.get_capacity() < multi_fragment_update_caps.MaxRequestSize) {
-					this->multifragment_update_buffer = std::make_unique<uint8_t[]>(multi_fragment_update_caps.MaxRequestSize);
-					this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), multi_fragment_update_caps.MaxRequestSize);
-				}
+                if (this->multifragment_update_data.get_capacity() < multi_fragment_update_caps.MaxRequestSize) {
+                    this->multifragment_update_buffer = std::make_unique<uint8_t[]>(multi_fragment_update_caps.MaxRequestSize);
+                    this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), multi_fragment_update_caps.MaxRequestSize);
+                }
 
                 /** OffscreenBitmapCacheCapabilitySet */
                 OffScreenCacheCaps offscreen_cache_caps;
@@ -5641,9 +5641,13 @@ private:
 
         if (!this->mcs_disconnect_provider_ultimatum_pdu_received) {
             this->connection_finalization_state = DISCONNECTED;
-            this->send_data_request([](StreamSize<256>, OutStream & mcs_data) {
-                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-            });
+            write_packets(
+                this->trans,
+                [](StreamSize<256>, OutStream & mcs_data) {
+                    MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+                },
+                X224::write_x224_dt_tpdu_fn{}
+            );
         }
     }
 
@@ -5776,17 +5780,6 @@ public:
     }
 
 private:
-    template<class... WriterData>
-    void send_data_request(WriterData... writer_data)
-    {
-        write_packets(
-            this->trans,
-            writer_data...,
-            X224::write_x224_dt_tpdu_fn{}
-        );
-    }
-
-
     template<class... WriterData>
     void send_data_request_ex(uint16_t channelId, WriterData... writer_data)
     {
