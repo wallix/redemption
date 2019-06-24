@@ -499,7 +499,7 @@
 "#   128: Monitor Internet Explorer event\n"
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_hidden\n"
-"#session_probe_disabled_features = 0\n\n"
+"#session_probe_disabled_features = 96\n\n"
 
 "# If enabled, disconnected session can be recovered by a different primary user.\n"
 "#_hidden\n"

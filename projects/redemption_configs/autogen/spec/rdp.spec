@@ -242,7 +242,7 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 # (note: values can be added (everyone: 1+2+4=7, mute: 0))
 #_advanced
 #_hex
-disabled_features = integer(min=0, max=255, default=0)
+disabled_features = integer(min=0, max=255, default=96)
 
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)

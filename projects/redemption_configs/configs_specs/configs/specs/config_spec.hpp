@@ -400,7 +400,7 @@ void config_spec_definition(Writer && W)
         W.sep();
 
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy | hex_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::none));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy | hex_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection));
 
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
