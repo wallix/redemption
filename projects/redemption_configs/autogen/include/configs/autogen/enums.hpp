@@ -503,11 +503,21 @@ enum class SessionProbeDisabledFeature {
     msaa = 2,
     // MS UI Automation
     msuia = 4,
+    // Reserved (do not use)
+    r1 = 8,
+    // Inspect Edge location URL
+    edge_inspection = 16,
+    // Inspect Chrome Address/Search bar
+    chrome_inspection = 32,
+    // Inspect Firefox Address/Search bar
+    firefox_inspection = 64,
+    // Monitor Internet Explorer event
+    ie_monitoring = 128,
 };
 
 inline bool is_valid_enum_value(SessionProbeDisabledFeature e)
 {
-    return static_cast<unsigned long>(e) <= 7;
+    return static_cast<unsigned long>(e) <= 255;
 }
 
 inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
@@ -515,7 +525,7 @@ inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, Se
 inline SessionProbeDisabledFeature operator & (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
 { return static_cast<SessionProbeDisabledFeature>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline SessionProbeDisabledFeature operator ~ (SessionProbeDisabledFeature x)
-{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(7)); }
+{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(255)); }
 inline SessionProbeDisabledFeature operator + (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x | y; }
 inline SessionProbeDisabledFeature operator - (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x & ~y; }
 inline SessionProbeDisabledFeature & operator |= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x | y; }

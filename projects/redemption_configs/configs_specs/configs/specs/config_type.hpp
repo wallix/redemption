@@ -193,6 +193,11 @@ inline void config_type_definition(type_enumerations & e)
       .value("jab", "Java Access Bridge")
       .value("msaa", "MS Active Accessbility")
       .value("msuia", "MS UI Automation")
+      .value("r1", "Reserved (do not use)")
+      .value("edge_inspection", "Inspect Edge location URL")
+      .value("chrome_inspection", "Inspect Chrome Address/Search bar")
+      .value("firefox_inspection", "Inspect Firefox Address/Search bar")
+      .value("ie_monitoring", "Monitor Internet Explorer event")
     ;
 }
 

@@ -436,7 +436,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, array_view_const_char value)
 {
-    return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 255>());
 }
 
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
