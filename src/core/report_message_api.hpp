@@ -25,71 +25,7 @@
 
 #include <sys/time.h> // timeval
 
-
-struct ArcsightLogInfo {
-
-    enum : uint32_t {
-            EVENT_SIGNATURE_ID_NONE,
-            SESSION_CREATION,
-            CONNECTION,
-            CERTIFICATE_CHECK,
-            SERVER_CERTIFICATE_NEW,
-            SERVER_CERTIFICATE_MATCH,
-            SERVER_CERTIFICATE,
-            SESSION_ESTABLISHED,
-            SESSION_DISCONNECTION,
-            DRIVE_REDIRECTION_USE,
-            DRIVE_REDIRECTION_READ_EX,
-            DRIVE_REDIRECTION_READ,
-            DRIVE_REDIRECTION_WRITE_EX,
-            DRIVE_REDIRECTION_WRITE,
-            DRIVE_REDIRECTION_DELETE,
-            DRIVE_REDIRECTION_RENAME,
-            CB_COPYING_PASTING_DATA,
-            CB_COPYING_PASTING_DATA_EX,
-            CLIENT_EXECUTE_REMOTEAPP,
-            SESSION_ENDING_IN_PROGRESS,
-            KERBEROS_TICKET,
-            PASSWORD_TEXT_BOX_GET_FOCUS,
-            UAC_PROMPT_BECOME_VISIBLE,
-            INPUT_LANGUAGE,
-            PROCESS,
-            STARTUP_APPLICATION,
-            OUTBOUND_CONNECTION,
-            FOREGROUND_WINDOW_CHANGED,
-            BUTTON_CLICKED,
-            CHECKBOX_CLICKED,
-            EDIT_CHANGED,
-            KBD_INPUT,
-            TITLE_BAR,
-            MATCH_FINDER,
-            UNIDENTIFIED_INPUT_FIELD_GET_FOCUS,
-            FILE_SCAN_RESULT
-    };
-
-    enum :  uint8_t {
-        SERVER_SRC,
-        SERVER_DST,
-        NONE
-    };
-
-    ArcsightLogInfo() = default;
-
-    std::string name;
-    int signatureID = 0;
-    int severity = 5;
-    std::string ApplicationProtocol;
-    std::string WallixBastionStatus;
-    std::string message;
-    std::string filePath;
-    std::string fileName;
-    long fileSize = 0;
-    std::string oldFilePath;
-    uint64_t endTime = 0;
-    std::string WallixBastionSHA256Digest;
-
-    uint8_t direction_flag = NONE;
-};
+class ArcsightLogInfo;
 
 
 struct ReportMessageApi : noncopyable

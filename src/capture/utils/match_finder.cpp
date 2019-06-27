@@ -22,6 +22,7 @@
 #include "capture/utils/match_finder.hpp"
 #include "core/report_message_api.hpp"
 #include "regex/regex.hpp"
+#include "utils/arcsight.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/splitter.hpp"
@@ -209,7 +210,7 @@ void MatchFinder::report(
 
     ArcsightLogInfo arc_info;
     arc_info.name = pattern_detection_type;
-    arc_info.signatureID = ArcsightLogInfo::MATCH_FINDER;
+    arc_info.signatureID = ArcsightLogInfo::ID::MATCH_FINDER;
     arc_info.message = info;
 
     report_message.log6(info, arc_info, tvtime());

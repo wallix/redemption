@@ -27,15 +27,15 @@
 #include "configs/config.hpp"
 #include "core/date_dir_from_filename.hpp"
 #include "core/set_server_redirection_target.hpp"
-#include "main/version.hpp"
 #include "mod/rdp/rdp_api.hpp"
+#include "utils/arcsight.hpp"
+#include "utils/arcsight_format.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/get_printable_password.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/stream.hpp"
-#include "utils/texttime.hpp"
 
 #include <cstdio>
 
@@ -289,9 +289,10 @@ void AclSerializer::log6(
     time_t const time_now = time.tv_sec;
     this->log_file.write_line(time_now, info);
 
+    auto isdigit = [](char c) { return '0' <= c && '9' <= c; };
+
     /* Log to SIEM (redirected syslog) */
     if (this->ini.get<cfg::session_log::enable_session_log>()) {
-
         auto const& target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
             ? this->ini.get<cfg::context::target_host>()
             : this->ini.get<cfg::context::ip_target>());
@@ -314,123 +315,19 @@ void AclSerializer::log6(
     }
 
     if (this->ini.get<cfg::session_log::enable_arcsight_log>()) {
-
-        auto const& target_ip    = (isdigit(this->ini.get<cfg::context::target_host>()[0])
+        auto const& target_ip     = (isdigit(this->ini.get<cfg::context::target_host>()[0])
             ? this->ini.get<cfg::context::target_host>()
             : this->ini.get<cfg::context::ip_target>());
-        auto const& formted_date = arcsight_gmdatetime(time);
-        auto const& user         = this->ini.get<cfg::globals::auth_user>();
-        auto const& account      = this->ini.get<cfg::globals::target_user>();
-        auto const& session_id   = this->ini.get<cfg::context::session_id>();
-        auto const& host         = this->ini.get<cfg::globals::host>();
-        // auto const& device = this->ini.get<cfg::globals::target_device>();
+        auto const& user          = this->ini.get<cfg::globals::auth_user>();
+        auto const& account       = this->ini.get<cfg::globals::target_user>();
+        auto const& session_id    = this->ini.get<cfg::context::session_id>();
+        auto const& host          = this->ini.get<cfg::globals::host>();
 
-        std::string extension;
-        extension.reserve(256);
-//             std::string extension;
+        std::string arcsight_message;
+        arcsight_format(arcsight_message, asl_info,
+            time.tv_sec, user, account, host, target_ip, session_id, this->session_type);
 
-        switch (asl_info.direction_flag) {
-
-            case ArcsightLogInfo::NONE: break;
-
-            case ArcsightLogInfo::SERVER_DST:
-                str_append(extension,
-                    " suser=", user, " duser=", account,
-                    " src=", host, " dst=", target_ip);
-                break;
-
-            case ArcsightLogInfo::SERVER_SRC:
-                str_append(extension,
-                    " suser=", account, " duser=", user,
-                    " src=", target_ip, " dst=", host);
-                break;
-        }
-
-
-        auto arcsight_text_formating = [](std::string& buff, std::string const& text)
-        {
-            auto* p = text.data();
-            auto* curr = p;
-            while (*p) {
-                while (!(*curr == '\0'
-                      || *curr == '\\'
-                      || *curr == '='
-                      || *curr == '|'
-                      || *curr == ' ')
-                ) {
-                    ++curr;
-                }
-
-                buff.append(p, curr);
-
-                if (*curr == '\\' || *curr == '=' || *curr == '|') {
-                    buff += '\\';
-                    buff += *curr;
-                    ++curr;
-                }
-                else if (*curr == ' ') {
-                    buff += "<space>";
-                    ++curr;
-                }
-                // else '\0'
-
-                p = curr;
-            }
-        };
-
-        if (!asl_info.ApplicationProtocol.empty()) {
-            extension += " app=";
-            arcsight_text_formating(extension, asl_info.ApplicationProtocol);
-        }
-        if (!asl_info.WallixBastionStatus.empty()) {
-            extension += " WallixBastionStatus=";
-            arcsight_text_formating(extension, asl_info.WallixBastionStatus);
-        }
-        if (!asl_info.message.empty()) {
-            extension += " msg=\"";
-            arcsight_text_formating(extension, asl_info.message);
-            extension +="\"";
-        }
-        if (!asl_info.oldFilePath.empty()) {
-            extension += " oldFilePath=";
-            arcsight_text_formating(extension, asl_info.oldFilePath);
-        }
-        if (!asl_info.filePath.empty()) {
-            extension += " filePath=";
-            arcsight_text_formating(extension, asl_info.filePath);
-        }
-        if (asl_info.fileSize) {
-            extension += " fsize=";
-            arcsight_text_formating(extension, std::to_string(asl_info.fileSize));
-        }
-        if (asl_info.endTime) {
-            timeval time = {time_t(asl_info.endTime), 0};
-            extension += " end=";
-            arcsight_text_formating(extension, arcsight_gmdatetime(time));
-        }
-        if (!asl_info.fileName.empty()) {
-            extension += " fname=";
-            arcsight_text_formating(extension, asl_info.fileName);
-        }
-
-        LOG_SIEM("%s host message CEF:%s|%s|%s|%s|%d|%s|%d|WallixBastionUser=%s WallixBastionAccount=%s WallixBastionHost=%s WallixBastionTargetIP=%s WallixBastionSession_id=%s WallixBastionSessionType=%s%s",
-            formted_date.c_str(),
-            "1",
-            "Wallix",
-            "Bastion",
-            VERSION,
-            asl_info.signatureID,
-            asl_info.name.c_str(),
-            asl_info.severity,
-            user.c_str(),
-            account.c_str(),
-            host.c_str(),
-            target_ip.c_str(),
-            session_id.c_str(),
-            (this->session_type.empty() ? "Neutral" : this->session_type.c_str()),
-            /*device.c_str(),*/
-            extension.c_str()
-        );
+        LOG_SIEM("%s", arcsight_message.c_str());
     }
 }
 

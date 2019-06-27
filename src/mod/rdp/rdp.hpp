@@ -2842,10 +2842,10 @@ public:
 
                                 ArcsightLogInfo arc_info;
                                 arc_info.name = "SESSION_ESTABLISHED";
-                                arc_info.signatureID = ArcsightLogInfo::SESSION_ESTABLISHED;
+                                arc_info.signatureID = ArcsightLogInfo::ID::SESSION_ESTABLISHED;
                                 arc_info.ApplicationProtocol = "rdp";
                                 arc_info.WallixBastionStatus = "SUCCESS";
-                                arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+                                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
 
                                 this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, this->session_reactor.get_current_time());
                             }
@@ -5625,7 +5625,7 @@ private:
 
             ArcsightLogInfo arc_info;
             arc_info.name = "SESSION_DISCONNECTION";
-            arc_info.signatureID = ArcsightLogInfo::SESSION_DISCONNECTION;
+            arc_info.signatureID = ArcsightLogInfo::ID::SESSION_DISCONNECTION;
             arc_info.ApplicationProtocol = "rdp";
             arc_info.endTime = seconds;
 

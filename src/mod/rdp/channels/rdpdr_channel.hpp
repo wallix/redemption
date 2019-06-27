@@ -28,6 +28,7 @@
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "system/ssl_sha256.hpp"
+#include "utils/arcsight.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
@@ -1499,10 +1500,10 @@ public:
 
                             ArcsightLogInfo arc_info;
                             arc_info.name = "DRIVE_REDIRECTION_USE";
-                            arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_USE;
+                            arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_USE;
                             arc_info.ApplicationProtocol = "rdp";
                             arc_info.message = info;
-                            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+                            arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
 
                             this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
@@ -1607,12 +1608,11 @@ public:
 
                                     ArcsightLogInfo arc_info;
                                     arc_info.name = "DRIVE_REDIRECTION_READ_EX";
-                                    arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_READ_EX;
+                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_READ_EX;
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
                                     arc_info.fileSize = target_iter->end_of_file;
-                                    arc_info.WallixBastionSHA256Digest = digest_s;
-                                    arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
 
                                     this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
@@ -1639,10 +1639,10 @@ public:
 
                                     ArcsightLogInfo arc_info;
                                     arc_info.name = "DRIVE_REDIRECTION_READ";
-                                    arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_READ;
+                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_READ;
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
-                                    arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
 
                                     this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
@@ -1683,12 +1683,11 @@ public:
 
                                     ArcsightLogInfo arc_info;
                                     arc_info.name = "DRIVE_REDIRECTION_WRITE_EX";
-                                    arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_WRITE_EX;
+                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_WRITE_EX;
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
                                     arc_info.fileSize = target_iter->end_of_file;
-                                    arc_info.WallixBastionSHA256Digest = digest_s;
-                                    arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
 
                                     this->report_message.log6(info, arc_info, tvtime());
 
@@ -1715,10 +1714,10 @@ public:
 
                                     ArcsightLogInfo arc_info;
                                     arc_info.name = "DRIVE_REDIRECTION_WRITE";
-                                    arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_WRITE;
+                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_WRITE;
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
-                                    arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
 
                                     this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
@@ -1846,10 +1845,10 @@ public:
 
                                 ArcsightLogInfo arc_info;
                                 arc_info.name = "DRIVE_REDIRECTION_DELETE";
-                                arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_DELETE;
+                                arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_DELETE;
                                 arc_info.ApplicationProtocol = "rdp";
                                 arc_info.filePath = file_path;
-                                arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+                                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
 
                                 this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
@@ -1884,11 +1883,11 @@ public:
 
                                 ArcsightLogInfo arc_info;
                                 arc_info.name = "DRIVE_REDIRECTION_RENAME";
-                                arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_RENAME;
+                                arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_RENAME;
                                 arc_info.ApplicationProtocol = "rdp";
                                 arc_info.filePath = file_path;
                                 arc_info.oldFilePath = target_iter->file_path;
-                                arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+                                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
 
                                 this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 

@@ -34,6 +34,7 @@
 #include "core/report_message_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "core/channels_authorizations.hpp"
+#include "utils/arcsight.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -170,11 +171,11 @@ void RdpNegociation::RDPServerNotifier::server_access_allowed()
     if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "CERTIFICATE_CHECK";
-        arc_info.signatureID = ArcsightLogInfo::CERTIFICATE_CHECK;
+        arc_info.signatureID = ArcsightLogInfo::ID::CERTIFICATE_CHECK;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "SUCCESS";
         arc_info.message = "Connexion to server allowed";
-        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
 
         this->log6_server_cert(
             "CERTIFICATE_CHECK_SUCCESS",
@@ -189,11 +190,11 @@ void RdpNegociation::RDPServerNotifier::server_cert_create()
     if (is_syslog_notification_enabled(this->server_cert_create_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE_NEW";
-        arc_info.signatureID = ArcsightLogInfo::SERVER_CERTIFICATE_NEW;
+        arc_info.signatureID = ArcsightLogInfo::ID::SERVER_CERTIFICATE_NEW;
         arc_info.ApplicationProtocol = "rdp";
         //arc_info.WallixBastionStatus = "";
         arc_info.message = "New X.509 certificate created";
-        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
 
         this->log6_server_cert(
             "SERVER_CERTIFICATE_NEW",
@@ -208,11 +209,11 @@ void RdpNegociation::RDPServerNotifier::server_cert_success()
     if (is_syslog_notification_enabled(this->server_cert_success_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE_MATCH";
-        arc_info.signatureID = ArcsightLogInfo::SERVER_CERTIFICATE_MATCH;
+        arc_info.signatureID = ArcsightLogInfo::ID::SERVER_CERTIFICATE_MATCH;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "SUCCESS";
         arc_info.message = "X.509 server certificate match";
-        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
 
         this->log6_server_cert(
             "SERVER_CERTIFICATE_MATCH_SUCCESS",
@@ -227,11 +228,11 @@ void RdpNegociation::RDPServerNotifier::server_cert_failure()
     if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE_MATCH";
-        arc_info.signatureID = ArcsightLogInfo::SERVER_CERTIFICATE_MATCH;
+        arc_info.signatureID = ArcsightLogInfo::ID::SERVER_CERTIFICATE_MATCH;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "FAILURE";
         arc_info.message = "X.509 server certificate match failure";
-        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
 
         this->log6_server_cert(
             "SERVER_CERTIFICATE_MATCH_FAILURE",
@@ -246,11 +247,11 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
     if (is_syslog_notification_enabled(this->server_cert_error_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE";
-        arc_info.signatureID = ArcsightLogInfo::SERVER_CERTIFICATE;
+        arc_info.signatureID = ArcsightLogInfo::ID::SERVER_CERTIFICATE;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "ERROR";
         arc_info.message = str_concat("X.509 server certificate internal error: ", str_error);
-        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
 
         this->log6_server_cert("SERVER_CERTIFICATE_ERROR", arc_info.message, arc_info);
     }
