@@ -117,6 +117,7 @@ struct ICAPService;
 #include "mod/rdp/server_transport_context.hpp"
 
 #include "core/channels_authorizations.hpp"
+#include "utils/arcsight.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/stream.hpp"

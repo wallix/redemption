@@ -9,8 +9,8 @@ https://kc.mcafee.com/resources/sites/MCAFEE/content/live/CORP_KNOWLEDGEBASE/780
 
 ## Introduction
 
-Le Common Event Format d'arcsight est un format de log standard visant à être intéroperable.
-Ce format est celui intégré par ArcSight ESM, un outil de collect de donnée de log de sécurité.
+Le Common Event Format d'arcsight est un format de log standard visant à être interopérable.
+Ce format est celui intégré par ArcSight ESM, un outil de collecte de donnée de log de sécurité.
 Il est structuré par une suite de champs prédéfinis (ou custom) contenant des integers ou des strings.
 
 
@@ -23,9 +23,9 @@ Les logs au format Arcsight commencent tous par un entête de même structure:
 
 - `Date`: Différent format de date sont autorisées.
 - `Version`: Version du format arcsight utilisée.
-- `SignatureID`: n'a pas d'équivalent dans les logs actuel du WAB, il suffira d'ajouter un ID en parallèle du EventName.
-- `Name`: En format arcsight le nom de l'event est simplement le nom de l'action, ceux du WAB actuel contienne trop d'information. Par exemple au lieu de `Connection success`, au format arcsight on ne gardera que `Connection`, on utilisera un autre champs pour `success`.
-- `Severity`: n'existe pas dans les logs actuels, désigne la sévérité de l'event sur une échelle de 1 à 10.
+- `SignatureID`: n'a pas d'équivalent dans les logs actuels du WAB, il suffira d'ajouter un ID en parallèle du EventName.
+- `Name`: En format arcsight le nom de l'événement est simplement le nom de l'action, ceux du WAB actuel contienne trop d'information. Par exemple au lieu de `Connection success`, au format arcsight on ne gardera que `Connection`, on utilisera un autre champs pour `success`.
+- `Severity`: n'existe pas dans les logs actuels, désigne la sévérité de l'événement sur une échelle de 1 à 10.
 - `Extension`: contient les autres champs. Ils peuvent être définis dans le dictionnaire Arcsight ou non. On les écrit en commençant `key name` du champ (ex: `duser=adm!in`), séparés par un espace.
 
 
@@ -67,7 +67,7 @@ objet           | custom            |                       | Nom de l'objet de 
 type (WABAUDIT) |  custom           |                       | Type de l'objet de config modifié
 user            |  suser**          | sourceUserName**      | Nom du compte primaire
 info            |  msg*             | message*              | Info diverses...
-type (SSH, RDP) |  Name             | Name                  | Nom de l'event ou de l'action (contenu dans le CEF)
+type (SSH, RDP) |  Name             | Name                  | Nom de l'événement ou de l'action (contenu dans le CEF)
 session_id      |  custom           |                       | ID de la session du compte primaire
 client_ip       |  src**            | sourceAdress**        | Adresse du client
 target_ip       |  dst              | destinationAdress     | Adresse de la cible
@@ -86,19 +86,19 @@ window          |  custom           |                       | Titre d'une fenêt
 
 `*` `sourceUserName` désigne le nom du compte primaire sur le WAB tandis que `sourceAdress` désigne l'IP du client. Ceci est plutôt ambigu sur ce que désigne la source. Par opposition `stinationHostName`, `destinationAdress` et `destinationuser` où le mot `destination` implique toujours la cible.
 
-`**` `desciption`, `data` et `info` sont des strings contenant des données peu non structurées, ce qui correspond bien au concept du champs `message` avec Arcsight. Néanmoins, il sera peut être nécessaire de répartir le contenu de ces 3 champs autrement.
+`**` `desciption`, `data` et `info` sont des strings contenant des données peu non structurées, ce qui correspond bien au concept du champ `message` avec Arcsight. Néanmoins, il sera peut-être nécessaire de répartir le contenu de ces 3 champs autrement.
 
 Pour les LOG RDP et LOG SSH, les entêtes `[RDP Session]` et `[SSH Session]` sont redondantes avec le champ service (`applicationProtol` pour Arcsight).
-  
+
 
 Exemple:
 
 LOG WAB AUDIT actuel:
 
     [wabaudit] action="view" type="session"
-    object="150fc97a1a07e596000c29812e63" user="admin" 
-    client_ip="192.168.140.1" infos="Username ['admin'], Secondary 
-    ['administrator@acme.net@win2k16.acme.net'], Protocol ['RDP'], 
+    object="150fc97a1a07e596000c29812e63" user="admin"
+    client_ip="192.168.140.1" infos="Username ['admin'], Secondary
+    ['administrator@acme.net@win2k16.acme.net'], Protocol ['RDP'],
     ClientIP ['192.168.140.1']"
 
 Devient en format Arcsight:
@@ -111,7 +111,7 @@ Devient en format Arcsight:
 LOG SSH actuel:
 
     [SSH Session] type='CHANNEL_EVENT' session_id='002ac1d68450742e1928b88df3ca15385d710b33'
-    client_ip='192.168.1.10' target_ip='192.168.1.200' user='maint' device='debian' service='ssh' 
+    client_ip='192.168.1.10' target_ip='192.168.1.200' user='maint' device='debian' service='ssh'
     account='admin' data='AuthAgent Open Success'
 
 Devient en format Arcsight:
@@ -124,14 +124,14 @@ LOG RDP actuel:
     [RDP Session] type="DRIVE_REDIRECTION_READ" session_id="SESSIONID­0000" client_ip="192.168.1.10"
     target_ip="192.168.1.200" user="maint" device="win2k8" service="rdp" account="Maintenance"
     file_name="home/out.txt"
-	
+
 Devient en format Arcsight:
 
-    Sep 19 2018 08:26:10 host CEF:1|Wallix|WAB|6.0.1|0x0000782f|DRIVE_REDIRECTION_READ|5|suser=maint duser=Maintenance WallixWABsession_id=SESSIONID­0000 
+    Sep 19 2018 08:26:10 host CEF:1|Wallix|WAB|6.0.1|0x0000782f|DRIVE_REDIRECTION_READ|5|suser=maint duser=Maintenance WallixWABsession_id=SESSIONID­0000
     src=192.168.1.10 dst=192.168.1.200 dhost=win2k8 app=rdp fname=home/out.txt
 
 
 ## CONCLUSION
 
 Beaucoup de champs des logs de SIEM du WAB ne sont pas ou difficilement interprétable par le dictionnaire de champs Arcsight. Ce problème requiert l'utilisation de nombreux champs customisés et donc des possibilités d'exploitation par l'outil ArcSight ESM limitées. C'est particulièrement bloquant pour les logs WAB AUDIT, où `objet` et `type` sont des champs primordiaux pour en comprendre le sens. Les utilisateurs d'outils acceptant ce format devront donc s'adapter aux champs
-spécifiques au WAB, sinon l'intéroperabilité de logs restera toute relative.
+spécifiques au WAB, sinon l'interopérabilité de logs restera toute relative.
