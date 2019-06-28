@@ -114,7 +114,7 @@ namespace
 
             p = curr;
         }
-    };
+    }
 }
 
 void arcsight_format(
