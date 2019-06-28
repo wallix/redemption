@@ -151,9 +151,10 @@ $ `bjam [variant=]{release|debug|san} [-s cxx_option=value] [target...]`
 - `san`: debug + enable sanitizers: asan, lsan, usan
 
 - `-s cxx_color`: default auto never always
-- `-s cxx_lto`: off on fat
+- `-s cxx_lto`: off on fat linker-plugin
 - `-s cxx_relro`: default off on full
 - `-s cxx_stack_protector`: off on strong all
+- ...
 
 (`cxx_*` options list with `sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/\1 = \2/;t;d' jam/cxxflags.jam`)
 
