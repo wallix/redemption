@@ -60,7 +60,7 @@ public:
                 }
             }
             else {
-                if ((username == std::string(utf8_user_buffer)) && (domain == std::string(utf8_domain_buffer))) {
+                if ((username == utf8_user_buffer) && (domain == utf8_domain_buffer)) {
                     check_identities = true;
                 }
             }

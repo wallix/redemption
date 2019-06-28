@@ -21,9 +21,7 @@
 #pragma once
 
 #include <string>
-#include <chrono>
 #include <ctime>
-#include <sstream>
 
 // TODO std::string -> static_string
 
@@ -60,11 +58,9 @@ inline std::string filename_gmdatetime(const timeval tv)
 }
 
 inline std::string get_full_text_sec_and_usec(const timeval tv) { // s_us
-    time_t time_sec = tv.tv_sec;
-    time_t time_usec = tv.tv_usec;
-
-    std::stringstream s_us;
-    s_us << time_sec << "_" << time_usec;
-
-    return s_us.str();
+    long long time_sec = tv.tv_sec;
+    long long time_usec = tv.tv_usec;
+    char buf[35];
+    int len = snprintf(buf, sizeof(buf), "%lld_%lld", time_sec, time_usec);
+    return std::string(buf, len);
 }
