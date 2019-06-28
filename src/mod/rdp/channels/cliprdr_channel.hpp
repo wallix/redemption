@@ -27,6 +27,7 @@
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "system/ssl_sha256.hpp"
+#include "utils/arcsight.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/stream.hpp"
@@ -693,11 +694,11 @@ public:
 
             ArcsightLogInfo arc_info;
             arc_info.name = "FILE_SCAN_RESULT";
-            arc_info.signatureID = ArcsightLogInfo::FILE_SCAN_RESULT;
+            arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
             arc_info.ApplicationProtocol = "rdp";
             arc_info.fileName = this->channel_file.get_file_name();
             arc_info.fileSize = this->channel_file.get_file_size();
-            arc_info.direction_flag = this->channel_file.get_direction() == ChannelFile::FILE_FROM_SERVER ? ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
+            arc_info.direction_flag = this->channel_file.get_direction() == ChannelFile::FILE_FROM_SERVER ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
             arc_info.message = this->channel_file.get_result_content();
 
             this->report_message.log6(info, arc_info, tvtime());
@@ -926,8 +927,7 @@ private:
         arc_info.ApplicationProtocol = "rdp";
         arc_info.fileName = file_info.file_name;
         arc_info.fileSize = file_info.size;
-        arc_info.WallixBastionSHA256Digest = std::string(digest_s);
-        arc_info.direction_flag = from_remote_session ? ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
+        arc_info.direction_flag = from_remote_session ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
 
         this->report_message.log6(info, arc_info, tvtime());
 
@@ -993,10 +993,10 @@ private:
 
                 ArcsightLogInfo arc_info;
                 arc_info.name = data_to_dump.empty() ? "CB_COPYING_PASTING_DATA" : "CB_COPYING_PASTING_DATA_EX";
-                arc_info.signatureID = data_to_dump.empty() ? ArcsightLogInfo::CB_COPYING_PASTING_DATA : ArcsightLogInfo::CB_COPYING_PASTING_DATA_EX;
+                arc_info.signatureID = data_to_dump.empty() ? ArcsightLogInfo::ID::CB_COPYING_PASTING_DATA : ArcsightLogInfo::ID::CB_COPYING_PASTING_DATA_EX;
                 arc_info.ApplicationProtocol = "rdp";
                 arc_info.message = info;
-                arc_info.direction_flag = is_from_remote_session ? ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
+                arc_info.direction_flag = is_from_remote_session ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
 
                 if (log_current_activity) {
                     this->report_message.log6(info, arc_info, tvtime());

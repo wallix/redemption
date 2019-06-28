@@ -912,7 +912,7 @@ static void raise_error(
     std::string const& output_filename,
     int code, const char * message)
 {
-    if (!output_filename.length()) {
+    if (output_filename.empty()) {
         return;
     }
 
@@ -2235,9 +2235,10 @@ extern "C" {
             }
 
             if (!rp.show_file_metadata
-            && !rp.show_statistics
-            && !rp.auto_output_file
-            && rp.output_filename.empty()) {
+             && !rp.show_statistics
+             && !rp.auto_output_file
+             && rp.output_filename.empty()
+            ) {
                 std::cerr << "Missing output filename : use -o filename\n\n";
                 return -1;
             }
@@ -2247,10 +2248,13 @@ extern "C" {
                 rp.png_params.png_interval = std::chrono::seconds{1};
             }
 
-            if (rp.output_filename.length()
-            && !rp.full_video
-            && !bool(rp.capture_flags)) {
-                std::cerr << "Missing target format : need --png, --ocr, --video, --full, --wrm or --chunk" << std::endl;
+            if (!rp.output_filename.empty()
+             && !rp.full_video
+             && !bool(rp.capture_flags)
+             && !rp.show_file_metadata
+             && !rp.show_statistics
+            ) {
+                std::cerr << "Missing target format : need --png, --ocr, --video, --full, --wrm, --meta, --statistics or --chunk" << std::endl;
                 return 1;
             }
 

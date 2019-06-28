@@ -28,6 +28,7 @@
 #include "acl/auth_api.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "configs/config.hpp"
+#include "utils/arcsight.hpp"
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
 
@@ -140,9 +141,7 @@ public:
             this->session_log_is_open = true;
 
             for (LogParam const & log_param : this->buffered_log_params) {
-
                 ArcsightLogInfo asl_info;
-
                 this->acl_serial->log6(log_param.info, asl_info, tvtime());
             }
             this->buffered_log_params.clear();

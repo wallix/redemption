@@ -35,7 +35,9 @@
 #include "core/window_constants.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
+#include "utils/arcsight.hpp"
 #include "utils/log.hpp"
+#include "utils/recording_progress.hpp"
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -87,8 +89,6 @@
 class FullVideoCaptureImpl {};
 class SequencedVideoCaptureImpl {};
 #endif
-
-#include "utils/recording_progress.hpp"
 
 using std::begin;
 using std::end;
@@ -573,7 +573,7 @@ public:
 
             ArcsightLogInfo arc_info;
             arc_info.name = "KBD_INPUT";
-            arc_info.signatureID = ArcsightLogInfo::KBD_INPUT;
+            arc_info.signatureID = ArcsightLogInfo::ID::KBD_INPUT;
             arc_info.message = this->formatted_message.str();
 
             this->report_message.log6(this->formatted_message.str(), arc_info, tvtime());
@@ -1519,7 +1519,7 @@ public:
 
                     ArcsightLogInfo arc_info;
                     arc_info.name = "TITLE_BAR";
-                    arc_info.signatureID = ArcsightLogInfo::TITLE_BAR;
+                    arc_info.signatureID = ArcsightLogInfo::ID::TITLE_BAR;
                     arc_info.message = this->formatted_message.str();
 
                     this->report_message->log6(this->formatted_message.str(), arc_info, tvtime());

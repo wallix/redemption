@@ -46,6 +46,7 @@
 #include "main/version.hpp"
 #include "RAIL/client_execute.hpp"
 #include "mod/mod_api.hpp"
+#include "utils/arcsight.hpp"
 #include "utils/diffiehellman.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/d3des.hpp"
@@ -794,7 +795,7 @@ public:
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_ESTABLISHED";
-        arc_info.signatureID = ArcsightLogInfo::SESSION_ESTABLISHED;
+        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_ESTABLISHED;
         arc_info.ApplicationProtocol = "vnc";
         arc_info.WallixBastionStatus = "SUCCESS";
 
@@ -3109,7 +3110,7 @@ public:
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_DISCONNECTION";
-        arc_info.signatureID = ArcsightLogInfo::SESSION_DISCONNECTION;
+        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_DISCONNECTION;
         arc_info.ApplicationProtocol = "vnc";
         arc_info.endTime = seconds;
 
