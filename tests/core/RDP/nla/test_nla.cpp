@@ -184,7 +184,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     LCGTime timeobj;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    
+
     auto key = logtrans.get_public_key();
 
     uint8_t front_public_key[1024] = {};
@@ -193,7 +193,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     front_public_key_av = array_view(front_public_key, key.size());
 
     rdpCredsspServerNTLM credssp(
-        front_public_key_av, false, rand, timeobj, extra_message, lang,
+        front_public_key_av, rand, timeobj, extra_message, lang,
         [&](cbytes_view user_av, cbytes_view domain_av, Array & password_array){
             std::vector<uint8_t> vec;
             vec.resize(user.size() * 2);

@@ -1901,9 +1901,9 @@ class mod_rdp : public mod_api, public rdp_api
 
     ModRdpVariables vars;
 
+#ifndef __EMSCRIPTEN__
     bool enable_validator;
 
-#ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
     ICAPService * icap_service;
 #endif
@@ -2027,8 +2027,8 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
-        , enable_validator(mod_rdp_params.enable_validator)
         #ifndef __EMSCRIPTEN__
+        , enable_validator(mod_rdp_params.enable_validator)
         , metrics(metrics)
         , icap_service(icap_service)
         #endif

@@ -50,14 +50,11 @@ class rdpCredsspServerNTLM final
     ClientNonce SavedClientNonce;
 
     array_view_u8 public_key;
-    Random & rand;
-    TimeObj & timeobj;
 
     private:
     std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb;
     std::string& extra_message;
     Translation::language_t lang;
-    bool restricted_admin_mode;
     const bool verbose;
 
     Array ClientServerHash;
@@ -132,7 +129,7 @@ class rdpCredsspServerNTLM final
         this->ts_request.error_code = 0;
     }
 
-public:    
+public:
 
     struct ServerAuthenticateData
     {
@@ -140,7 +137,7 @@ public:
     };
 
     ServerAuthenticateData server_auth_data;
-    
+
     enum class Res : bool { Err, Ok };
 
 protected:
@@ -159,10 +156,6 @@ protected:
 
     private:
         uint8_t MachineID[32];
-        const bool SendVersionInfo = true;
-        const bool confidentiality = true;
-
-        using array16 = uint8_t[16];
 
     public:
         SslRC4 SendRc4Seal {};
@@ -623,7 +616,7 @@ protected:
                 offset += null_data_sz;
                 this->SavedAuthenticateMessage.copy({p + offset, in_stream.get_offset() - offset}, offset);
             }
-            
+
             this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.av());
             this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
 
@@ -631,7 +624,7 @@ protected:
                 LOG(LOG_ERR, "ANONYMOUS User not allowed");
                 return SEC_E_LOGON_DENIED;
             }
-            
+
             return SEC_I_CONTINUE_NEEDED;
         }
 
@@ -644,9 +637,9 @@ protected:
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    
+
     // GSS_Init_sec_context
-    // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext 
+    // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext
     // -> only for clients : unused for NTLM server
 
     // GSS_Accept_sec_context
@@ -654,9 +647,9 @@ protected:
     SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer)
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
-        
+
         if (this->ntlm_context.state == NTLM_STATE_INITIAL) {
-            
+
             this->ntlm_context.state = NTLM_STATE_NEGOTIATE;
             SEC_STATUS status = this->ntlm_context.read_negotiate(input_buffer);
             if (status != SEC_I_CONTINUE_NEEDED) {
@@ -795,7 +788,6 @@ public:
 
 public:
     rdpCredsspServerNTLM(array_view_u8 key,
-               const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
                std::string& extra_message,
@@ -803,12 +795,9 @@ public:
                std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb,
                const bool verbose = false)
         : public_key(key)
-        , rand(rand)
-        , timeobj(timeobj)
         , set_password_cb(set_password_cb)
         , extra_message(extra_message)
         , lang(lang)
-        , restricted_admin_mode(restricted_admin_mode)
         , verbose(verbose)
         , ntlm_context(rand, timeobj)
     {
@@ -837,7 +826,7 @@ public:
     credssp::State credssp_server_authenticate_next(InStream & in_stream, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
-    
+
         switch (this->server_auth_data.state)
         {
             case ServerAuthenticateData::Start:
@@ -861,7 +850,7 @@ public:
         }
 
         return credssp::State::Err;
-    }    
+    }
 private:
 
     SEC_STATUS credssp_encrypt_public_key_echo() {
@@ -988,8 +977,8 @@ private:
         //     | ASC_REQ_REPLAY_DETECT
         //     | ASC_REQ_SEQUENCE_DETECT
         //     | ASC_REQ_EXTENDED_ERROR;
-        
-        
+
+
         SEC_STATUS status = this->AcceptSecurityContext(this->ts_request.negoTokens.av(), /*output*/this->ts_request.negoTokens);
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {

@@ -43,7 +43,7 @@ private:
 
     TSCredentials ts_credentials;
     TSRequest ts_request;
-    
+
     ClientNonce SavedClientNonce;
 
     Array PublicKey;
@@ -58,7 +58,6 @@ private:
 
     const char * target_host;
     Random & rand;
-    TimeObj & timeobj;
     std::string& extra_message;
     Translation::language_t lang;
     const bool verbose;
@@ -416,7 +415,6 @@ public:
                const char * target_host,
                const bool restricted_admin_mode,
                Random & rand,
-               TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
                const bool verbose = false)
@@ -425,7 +423,6 @@ public:
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
         , rand(rand)
-        , timeobj(timeobj)
         , extra_message(extra_message)
         , lang(lang)
         , verbose(verbose)
@@ -434,7 +431,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::Initialization");
         this->set_credentials(user, domain, pass, hostname);
         this->client_auth_data.state = ClientAuthenticateData::Start;
-        
+
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::client_authenticate");
         this->init_public_key();
 
@@ -446,7 +443,7 @@ public:
         SEC_STATUS status = this->table->AcquireCredentialsHandle(this->target_host, &this->ServicePrincipalName, &this->identity);
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "Kerberos InitSecurityInterface status:%s0x%08X, fallback to NTLM", 
+            LOG(LOG_ERR, "Kerberos InitSecurityInterface status:%s0x%08X, fallback to NTLM",
                 (status == SEC_E_NO_CREDENTIALS)?" No Credentials ":" ", status);
             throw ERR_CREDSSP_KERBEROS_INIT_FAILED;
         }

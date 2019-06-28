@@ -63,8 +63,6 @@ private:
 
     const bool proxy_managed;   // Has not client.
 
-    uint32_t last_file_to_scan_id;
-
     SessionReactor& session_reactor;
 
     ChannelFile channel_file;
@@ -86,7 +84,6 @@ public:
     , params(params)
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
-    , last_file_to_scan_id(0)
     , session_reactor(session_reactor)
     , channel_file(params.channel_files_directory,
                    params.enable_interupting_validator,

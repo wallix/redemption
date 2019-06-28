@@ -392,17 +392,16 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
         try {
             this->credsspKerberos = std::make_unique<rdpCredsspClientKerberos>(
                 trans, this->user,
-                // this->domain, this->password,
                 this->domain, this->current_password,
                 this->hostname, this->target_host,
                 this->restricted_admin_mode,
-                this->rand, this->timeobj, this->extra_message, this->lang,
+                this->rand, this->extra_message, this->lang,
                 bool(this->verbose & Verbose::credssp)
             );
         }
-        catch (const Error & e){
-                LOG(LOG_INFO, "CREDSSP Kerberos Authentication Failed, fallback to NTLM");
-                this->krb = false;
+        catch (const Error &) {
+            LOG(LOG_INFO, "CREDSSP Kerberos Authentication Failed, fallback to NTLM");
+            this->krb = false;
         };
         #else
         this->krb = false;
@@ -414,7 +413,6 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
         try {
             this->credsspNTLM = std::make_unique<rdpCredsspClientNTLM>(
                 trans, this->user,
-                // this->domain, this->password,
                 this->domain, this->current_password,
                 this->hostname, this->target_host,
                 this->restricted_admin_mode,
@@ -422,12 +420,10 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 bool(this->verbose & Verbose::credssp)
             );
         }
-        catch (const Error & e){
-//            if (e.id == ERR_CREDSSP_NTLM_INIT_FAILED){
-                LOG(LOG_INFO, "NLA/CREDSSP NTLM Authentication Failed (1)");
-                this->fallback_to_tls(trans);
-                return State::Negociate;
-//            }
+        catch (const Error &){
+            LOG(LOG_INFO, "NLA/CREDSSP NTLM Authentication Failed (1)");
+            this->fallback_to_tls(trans);
+            return State::Negociate;
         };
     }
     // TODO: success should not be default result

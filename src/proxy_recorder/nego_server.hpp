@@ -36,25 +36,25 @@ class NegoServer
 
 public:
     NegoServer(array_view_u8 key, std::string const& user, std::string const& password, uint64_t verbosity)
-    : credssp(key, false, rand, timeobj, extra_message, Translation::EN,
+    : credssp(key, rand, timeobj, extra_message, Translation::EN,
         [&](cbytes_view user_av, cbytes_view domain_av, Array & password_array){
             LOG(LOG_INFO, "NTLM Check identity");
 
             auto [username, domain] = extract_user_domain(user.c_str());
-            
+
             char utf8_user_buffer[1024] = {};
-            UTF16toUTF8(user_av.data(), user_av.size(), 
+            UTF16toUTF8(user_av.data(), user_av.size(),
                 reinterpret_cast<uint8_t *>(utf8_user_buffer), sizeof(utf8_user_buffer));
 
             char utf8_domain_buffer[1024] = {};
-            UTF16toUTF8(domain_av.data(), domain_av.size(), 
+            UTF16toUTF8(domain_av.data(), domain_av.size(),
                 reinterpret_cast<uint8_t *>(utf8_domain_buffer), sizeof(utf8_domain_buffer));
 
             bool check_identities = false;
             if (utf8_domain_buffer[0] == 0){
                 auto [identity_username, identity_domain] = extract_user_domain(utf8_user_buffer);
                 LOG(LOG_INFO, "NTML IDENTITY: identity.User=%s identity.Domain=%s username=%s, domain=%s",
-                    identity_username, identity_domain, username, domain); 
+                    identity_username, identity_domain, username, domain);
                 if ((username == identity_username) && (domain == identity_domain)) {
                     check_identities = true;
                 }
@@ -66,7 +66,7 @@ public:
             }
 
             LOG(LOG_INFO, "NTML IDENTITY: identity.User=%s identity.Domain=%s username=%s, domain=%s",
-                utf8_user_buffer, utf8_domain_buffer, username, domain); 
+                utf8_user_buffer, utf8_domain_buffer, username, domain);
 
             if (check_identities){
                 size_t user_len = UTF8Len(byte_ptr_cast(password.c_str()));

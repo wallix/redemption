@@ -35,16 +35,19 @@
 
 #include "transport/transport.hpp"
 
+#include <vector>
+
+
 class rdpCredsspClientNTLM
 {
     static constexpr uint32_t cbMaxSignature = 16;
-    
+
     int send_seq_num = 0;
     int recv_seq_num = 0;
 
     TSCredentials ts_credentials;
     TSRequest ts_request;
-    
+
     ClientNonce SavedClientNonce;
 
     std::vector<uint8_t> PublicKey;
@@ -56,8 +59,6 @@ class rdpCredsspClientNTLM
     struct Ntlm_SecurityFunctionTable
     {
     private:
-        Random & rand;
-        TimeObj & timeobj;
         std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
         bool context_initialized = false;
         NTLMContext context;
@@ -66,9 +67,7 @@ class rdpCredsspClientNTLM
     public:
         explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj, bool verbose = false
         )
-            : rand(rand)
-            , timeobj(timeobj)
-            , context(false, rand, timeobj, verbose)
+            : context(false, rand, timeobj, verbose)
             , verbose(verbose)
         {}
 
@@ -230,12 +229,11 @@ class rdpCredsspClientNTLM
             return SEC_E_OK;
         }
     } table;
-    
+
     bool restricted_admin_mode;
 
     const char * target_host;
     Random & rand;
-    TimeObj & timeobj;
     std::string& extra_message;
     Translation::language_t lang;
     const bool verbose;
@@ -295,7 +293,7 @@ class rdpCredsspClientNTLM
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-        
+
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
@@ -475,7 +473,6 @@ public:
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
         , rand(rand)
-        , timeobj(timeobj)
         , extra_message(extra_message)
         , lang(lang)
         , verbose(verbose)
@@ -489,7 +486,7 @@ public:
         this->identity.SetKrbAuthIdentity(user, pass);
 
         this->client_auth_data.state = ClientAuthenticateData::Start;
-        
+
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::client_authenticate");
 
         // ============================================
@@ -508,7 +505,7 @@ public:
         }
 
         this->client_auth_data.input_buffer.init(0);
-        
+
         this->client_auth_data.state = ClientAuthenticateData::Loop;
 
         /*
@@ -527,7 +524,7 @@ public:
             this->client_auth_data.input_buffer.av(),
             /*output*/this->ts_request.negoTokens);
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
-            
+
         if ((status1 != SEC_I_COMPLETE_AND_CONTINUE) &&
             (status1 != SEC_I_COMPLETE_NEEDED) &&
             (status1 != SEC_E_OK) &&
@@ -537,7 +534,7 @@ public:
         }
 
         this->client_auth_data.input_buffer.init(0);
-       
+
         if ((status1 == SEC_I_COMPLETE_AND_CONTINUE) ||
             (status1 == SEC_I_COMPLETE_NEEDED) ||
             (status1 == SEC_E_OK)) {
@@ -608,7 +605,7 @@ public:
                     bytes_view(this->ServicePrincipalName.av()).as_chars(),
                     this->client_auth_data.input_buffer.av(),
                     /*output*/this->ts_request.negoTokens);
-                    
+
                 if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
                     (status != SEC_I_COMPLETE_NEEDED) &&
                     (status != SEC_E_OK) &&
@@ -620,7 +617,7 @@ public:
                 this->client_auth_data.input_buffer.init(0);
 
                 SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
-                
+
                 if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
                     (status == SEC_I_COMPLETE_NEEDED) ||
                     (status == SEC_E_OK)) {
