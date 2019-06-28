@@ -553,7 +553,7 @@ private:
         this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
-        BaseVirtualChannel::Params base_params(this->report_message, RDPVerbose::cliprdr);
+        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
 
         ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->clipboard.disable_log_syslog, this->clipboard.disable_log_wrm, this->clipboard.log_only_relevant_activities);
         cvc_params.enable_validator = this->enable_validator;
