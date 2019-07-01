@@ -1437,8 +1437,6 @@ public:
     }
 
     void receive(InStream& stream) {
-        LOG(LOG_INFO, "====================== Receive File Contents Request PDU ========================");
-
         ::check_throw(stream, this->minimum_size(), "FileContentsRequestPDUEx::recv: File Contents Request PDU", ERR_RDP_DATA_TRUNCATED);
 
         this->streamId_      = stream.in_uint32_le();
