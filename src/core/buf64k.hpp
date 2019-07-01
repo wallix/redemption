@@ -25,15 +25,18 @@
 #include <cstring>
 
 
-struct Buf64k
+template<std::size_t Capacity, class SizeType>
+struct BasicStaticBuffer
 {
-    REDEMPTION_NON_COPYABLE(Buf64k);
+    REDEMPTION_NON_COPYABLE(BasicStaticBuffer);
 
-    Buf64k() = default;
+    using size_type = SizeType;
 
-    uint16_t remaining() const noexcept
+    BasicStaticBuffer() = default;
+
+    size_type remaining() const noexcept
     {
-        return uint16_t(this->len - this->idx);
+        return size_type(this->len - this->idx);
     }
 
     array_view_u8 av() noexcept
@@ -108,8 +111,11 @@ struct Buf64k
 
 
 private:
-    static constexpr std::size_t max_len = uint16_t(~uint16_t{});
+    static constexpr std::size_t max_len = Capacity;
     uint8_t buf[max_len];
-    uint16_t len = 0;
-    uint16_t idx = 0;
+    size_type len = 0;
+    size_type idx = 0;
 };
+
+template struct BasicStaticBuffer<uint16_t(~uint16_t{}), uint16_t>;
+using Buf64k = BasicStaticBuffer<uint16_t(~uint16_t{}), uint16_t>;

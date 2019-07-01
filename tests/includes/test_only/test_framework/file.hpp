@@ -47,6 +47,7 @@ namespace tu
     inline std::string get_file_contents(const char * filename)
     {
         std::string s;
+        auto append_file_contents = RED_TEST_FUNC_CTX(::append_file_contents);
         RED_TEST(append_file_contents(filename, s) == FileContentsError::None);
         return s;
     }

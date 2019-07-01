@@ -67,6 +67,9 @@ struct BufTransport : Transport
 
 private:
     void do_send(const uint8_t * const data, size_t len) override;
+
+    Read do_atomic_read(uint8_t * buffer, size_t len) override;
+    size_t do_partial_read(uint8_t* buffer, size_t len) override;
 };
 
 

@@ -169,7 +169,7 @@ bool GeneratorTransport::disconnect()
     return true;
 }
 
-CheckTransport::Read GeneratorTransport::do_atomic_read(uint8_t * buffer, size_t len)
+Transport::Read GeneratorTransport::do_atomic_read(uint8_t * buffer, size_t len)
 {
     size_t const remaining = this->len - this->current;
     if (!remaining) {
@@ -199,6 +199,29 @@ size_t GeneratorTransport::do_partial_read(uint8_t* buffer, size_t len)
 void BufTransport::do_send(const uint8_t * const data, size_t len)
 {
     this->buf.append(char_ptr_cast(data), len);
+}
+
+Transport::Read BufTransport::do_atomic_read(uint8_t * buffer, size_t len)
+{
+    if (this->buf.empty()) {
+        return Read::Eof;
+    }
+
+    if (this->buf.size() < len) {
+        throw Error(ERR_TRANSPORT_READ_FAILED);
+    }
+
+    memcpy(buffer, this->buf.data(), len);
+    this->buf.erase(0, len);
+    return Read::Ok;
+}
+
+size_t BufTransport::do_partial_read(uint8_t* buffer, size_t len)
+{
+    len = std::min(len, this->buf.size());
+    memcpy(buffer, this->buf.data(), len);
+    this->buf.erase(0, len);
+    return len;
 }
 
 

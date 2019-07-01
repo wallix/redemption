@@ -4353,6 +4353,7 @@ test-run tests/mod/test_icap_files_service :
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/test_framework/working_directory.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/icap_files_service.hpp
 ;
