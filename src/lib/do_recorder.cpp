@@ -37,7 +37,7 @@
 
 #include "transport/crypto_transport.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-#include "transport/out_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 
 #include "utils/compression_transport_builder.hpp"

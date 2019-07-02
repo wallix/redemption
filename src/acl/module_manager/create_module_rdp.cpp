@@ -333,7 +333,7 @@ void ModuleManager::create_mod_rdp(
 
             struct ICAP
             {
-                InFileTransport trans;
+                FileTransport trans;
                 ICAPService service;
                 SessionReactor::TopFdPtr validator_event;
 

@@ -29,7 +29,7 @@
 #include "main/version.hpp"
 #include "utils/arcsight.hpp"
 #include "utils/genfstat.hpp"
-#include "transport/in_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"

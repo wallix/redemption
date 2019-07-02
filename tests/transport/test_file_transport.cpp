@@ -20,23 +20,29 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/working_directory.hpp"
 
-#include "transport/in_file_transport.hpp"
+#include "transport/file_transport.hpp"
 
 #include <cstdlib>
 
 
-RED_AUTO_TEST_CASE(TestInFileTransport)
+RED_AUTO_TEST_CASE_WF(TestFileTransport, wf)
 {
+    FileTransport out(unique_fd{open(wf.c_str(), O_RDWR|O_CREAT, 0777)});
+    out.send("We write, ", 10);
+    out.send("and again, ", 11);
+    out.send("and so on.", 10);
+
     char buf[128];
     char * pbuf = buf;
-    InFileTransport ft(unique_fd{::open(FIXTURES_PATH "/test_infile.txt", O_RDONLY)});
-    ft.recv_boom(pbuf, 10);
+    FileTransport in(unique_fd{::open(FIXTURES_PATH "/test_infile.txt", O_RDONLY)});
+    in.recv_boom(pbuf, 10);
     pbuf += 10;
-    ft.recv_boom(pbuf, 11);
+    in.recv_boom(pbuf, 11);
     pbuf += 11;
-    ft.recv_boom(pbuf, 3);
+    in.recv_boom(pbuf, 3);
     pbuf += 3;
     RED_CHECK_SMEM(array_view(buf, pbuf), "We read what we provide!"_av);
-    RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_boom(buf, 1), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(in.recv_boom(buf, 1), ERR_TRANSPORT_NO_MORE_DATA);
 }

@@ -27,7 +27,7 @@
 #include "capture/file_to_graphic.hpp"
 #include "capture/wrm_capture.hpp"
 #include "core/app_path.hpp"
-#include "transport/in_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "transport/transport.hpp"
 #include "transport/mwrm_reader.hpp"
 

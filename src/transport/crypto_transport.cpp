@@ -21,7 +21,7 @@
 #include "transport/crypto_transport.hpp"
 #include "capture/cryptofile.hpp"
 #include "transport/mwrm_reader.hpp"
-#include "transport/out_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "transport/transport.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/genrandom.hpp"

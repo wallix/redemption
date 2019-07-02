@@ -34,8 +34,8 @@
 #include "main/version.hpp"
 #include "program_options/program_options.hpp"
 #include "system/scoped_crypto_init.hpp"
-#include "transport/in_file_transport.hpp"
-#include "transport/out_file_transport.hpp"
+#include "transport/file_transport.hpp"
+#include "transport/file_transport.hpp"
 
 #include "utils/fileutils.hpp"
 #include "utils/genfstat.hpp"

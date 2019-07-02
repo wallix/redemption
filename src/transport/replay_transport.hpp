@@ -26,7 +26,7 @@
 #include <string>
 
 #include "transport/recorder_transport.hpp"
-#include "transport/in_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
 

@@ -18,20 +18,34 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#include "core/error.hpp"
-#include "transport/in_file_transport.hpp"
+#include "transport/file_transport.hpp"
 
 #include <cerrno>
 
 
-void InFileTransport::seek(int64_t offset, int whence)
+void FileTransport::seek(int64_t offset, int whence)
 {
     if (lseek64(this->file.fd(), offset, whence) == static_cast<off_t>(-1)) {
-        throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+        throw this->report_error(Error(ERR_TRANSPORT_SEEK_FAILED, errno));
     }
 }
 
-Transport::Read InFileTransport::do_atomic_read(uint8_t * buffer, size_t len)
+void FileTransport::do_send(const uint8_t * data, size_t len)
+{
+    size_t total_sent = 0;
+    while (len > total_sent) {
+        ssize_t const ret = ::write(this->file.fd(), data + total_sent, len - total_sent);
+        if (ret <= 0){
+            if (errno == EINTR) {
+                continue;
+            }
+            throw this->report_error(Error(ERR_TRANSPORT_WRITE_FAILED, errno));
+        }
+        total_sent += ret;
+    }
+}
+
+Transport::Read FileTransport::do_atomic_read(uint8_t * buffer, size_t len)
 {
     size_t remaining_len = len;
     while (remaining_len) {
@@ -43,17 +57,17 @@ Transport::Read InFileTransport::do_atomic_read(uint8_t * buffer, size_t len)
             if (res != 0 && errno == EINTR){
                 continue;
             }
-            throw Error(ERR_TRANSPORT_READ_FAILED, res);
+            throw this->report_error(Error(ERR_TRANSPORT_READ_FAILED, res));
         }
         remaining_len -= res;
     }
     if (remaining_len != 0){
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+        throw this->report_error(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
     }
     return Read::Ok;
 }
 
-size_t InFileTransport::do_partial_read(uint8_t * buffer, size_t len)
+size_t FileTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
     if (!len) {
         return 0;
@@ -65,7 +79,7 @@ size_t InFileTransport::do_partial_read(uint8_t * buffer, size_t len)
     } while (res == 0 && errno == EINTR);
 
     if (res < 0) {
-        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        throw this->report_error(Error(ERR_TRANSPORT_READ_FAILED, errno));
     }
 
     return static_cast<size_t>(res);

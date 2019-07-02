@@ -55,11 +55,10 @@ exe headlessclient :
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/replay_transport.o
@@ -187,11 +186,10 @@ exe rdpproxy :
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -244,7 +242,7 @@ exe proxy_recorder :
   <library>src/core/error.o
   <library>src/core/report_error.o
   <library>src/proxy_recorder/proxy_recorder.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/hexdump.o
@@ -299,8 +297,7 @@ exe rdpclient :
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/in_file_transport.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
@@ -378,10 +375,10 @@ lib libredrec :
   <library>src/core/report_error.o
   <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -429,8 +426,8 @@ lib libscytale :
   <library>src/core/error.o
   <library>src/core/report_error.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -475,9 +472,8 @@ test-run tests/acl/test_acl_serializer :
   <library>src/core/report_error.o
   <library>src/core/set_server_redirection_target.o
   <library>src/transport/crypto_transport.o
-  <library>src/transport/in_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/arcsight_format.o
   <library>src/utils/cfgloader.o
@@ -514,8 +510,8 @@ test-run tests/acl/test_authentifier :
   <library>src/core/report_error.o
   <library>src/core/set_server_redirection_target.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/arcsight_format.o
   <library>src/utils/cfgloader.o
@@ -630,11 +626,10 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -729,11 +724,10 @@ test-run tests/capture/test_capture :
   <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -812,7 +806,7 @@ test-run tests/capture/test_video_capture :
   <library>src/core/font.o
   <library>src/core/report_error.o
   <library>src/gdi/graphic_api.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -841,10 +835,9 @@ test-run tests/capture/test_wrm_capture :
   <library>src/core/report_error.o
   <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
@@ -905,8 +898,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/in_file_transport.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -984,8 +976,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/in_file_transport.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -1040,8 +1031,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/in_file_transport.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -1082,10 +1072,10 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
@@ -1121,10 +1111,10 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
@@ -1160,10 +1150,10 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
@@ -1199,10 +1189,10 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
@@ -1237,10 +1227,10 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
@@ -1287,7 +1277,7 @@ test-run tests/core/RDP/caches/test_bmpcachepersister :
   <library>crypto
   <library>src/core/error.o
   <library>src/core/report_error.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/rle.o
@@ -2533,11 +2523,10 @@ test-run tests/core/test_mainloop :
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -2673,11 +2662,10 @@ test-run tests/core/test_session :
   <library>src/mod/xup/xup.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -2769,10 +2757,9 @@ test-run tests/front/test_front :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -2879,10 +2866,10 @@ test-run tests/lib/test_do_recorder :
   <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -2934,8 +2921,8 @@ test-run tests/lib/test_scytale :
   <library>src/core/report_error.o
   <library>src/lib/scytale.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -3222,10 +3209,10 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
@@ -4083,8 +4070,9 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/core/report_error.o
   <library>src/gdi/graphic_api.o
-  <library>src/transport/in_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -4107,7 +4095,8 @@ test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
-  <library>src/transport/in_file_transport.o
+  <library>src/core/report_error.o
+  <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4127,6 +4116,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/core/report_error.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -4135,7 +4125,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/transport/in_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4156,10 +4146,11 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/core/report_error.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/transport/in_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4176,11 +4167,12 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/core/report_error.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/lib/files_validator_api.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/transport/in_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
@@ -4238,8 +4230,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/system/linux/system/tls_check_certificate.o
-  <library>src/transport/in_file_transport.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4314,8 +4305,7 @@ test-run tests/mod/rdp/test_rdp_orders :
   <library>src/core/font.o
   <library>src/core/report_error.o
   <library>src/gdi/graphic_api.o
-  <library>src/transport/in_file_transport.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4481,7 +4471,7 @@ test-run tests/proxy_recorder/test_proxy_recorder :
   <library>src/core/error.o
   <library>src/core/report_error.o
   <library>src/proxy_recorder/proxy_recorder.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/fileutils.o
@@ -4569,10 +4559,9 @@ test-run tests/server/test_mstsc_client :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -4629,10 +4618,9 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -4689,10 +4677,9 @@ test-run tests/server/test_rdesktop_client :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
@@ -4799,8 +4786,8 @@ test-run tests/transport/test_crypto_transport :
   <library>src/core/error.o
   <library>src/core/report_error.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4808,6 +4795,20 @@ test-run tests/transport/test_crypto_transport :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/transport/crypto_transport.cpp
   <covfile>src/transport/crypto_transport.hpp
+;
+test-run tests/transport/test_file_transport :
+  $(REDEMPTION_TEST_PATH)/transport/test_file_transport.cpp
+:
+  <library>src/core/error.o
+  <library>src/core/report_error.o
+  <library>src/transport/file_transport.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/file_transport.cpp
+  <covfile>src/transport/file_transport.hpp
 ;
 test-run tests/transport/test_gzip_compression_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_gzip_compression_transport.cpp
@@ -4823,16 +4824,6 @@ test-run tests/transport/test_gzip_compression_transport :
   <covfile>src/transport/gzip_compression_transport.hpp
   <define>ZLIB_CONST
 ;
-test-run tests/transport/test_in_file_transport :
-  $(REDEMPTION_TEST_PATH)/transport/test_in_file_transport.cpp
-:
-  <library>src/core/error.o
-  <library>src/transport/in_file_transport.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/transport/in_file_transport.cpp
-  <covfile>src/transport/in_file_transport.hpp
-;
 test-run tests/transport/test_in_meta_sequence_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_in_meta_sequence_transport.cpp
 :
@@ -4841,9 +4832,9 @@ test-run tests/transport/test_in_meta_sequence_transport :
   <library>src/core/error.o
   <library>src/core/report_error.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
@@ -4861,8 +4852,8 @@ test-run tests/transport/test_mwrm_reader :
   <library>src/core/error.o
   <library>src/core/report_error.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4872,26 +4863,12 @@ test-run tests/transport/test_mwrm_reader :
   <covfile>src/transport/mwrm_reader.cpp
   <covfile>src/transport/mwrm_reader.hpp
 ;
-test-run tests/transport/test_out_file_transport :
-  $(REDEMPTION_TEST_PATH)/transport/test_out_file_transport.cpp
-:
-  <library>src/core/error.o
-  <library>src/core/report_error.o
-  <library>src/transport/out_file_transport.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/transport/out_file_transport.cpp
-  <covfile>src/transport/out_file_transport.hpp
-;
 test-run tests/transport/test_out_filename_sequence_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_out_filename_sequence_transport.cpp
 :
   <library>src/core/error.o
   <library>src/core/report_error.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
@@ -4909,8 +4886,8 @@ test-run tests/transport/test_out_meta_sequence_transport :
   <library>src/core/error.o
   <library>src/core/report_error.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_file_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
@@ -4925,8 +4902,7 @@ test-run tests/transport/test_recorder_transport :
 :
   <library>src/core/error.o
   <library>src/core/report_error.o
-  <library>src/transport/in_file_transport.o
-  <library>src/transport/out_file_transport.o
+  <library>src/transport/file_transport.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/replay_transport.o
   <library>src/utils/fileutils.o
@@ -5639,11 +5615,10 @@ obj src/mod/xup/xup.o : $(REDEMPTION_SRC_PATH)/mod/xup/xup.cpp ;
 obj src/proxy_recorder/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/proxy_recorder/proxy_recorder.cpp ;
 obj src/system/linux/system/tls_check_certificate.o : $(REDEMPTION_SRC_PATH)/system/linux/system/tls_check_certificate.cpp ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
+obj src/transport/file_transport.o : $(REDEMPTION_SRC_PATH)/transport/file_transport.cpp ;
 obj src/transport/gzip_compression_transport.o : $(REDEMPTION_SRC_PATH)/transport/gzip_compression_transport.cpp : <define>ZLIB_CONST ;
-obj src/transport/in_file_transport.o : $(REDEMPTION_SRC_PATH)/transport/in_file_transport.cpp ;
 obj src/transport/in_meta_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/in_meta_sequence_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
-obj src/transport/out_file_transport.o : $(REDEMPTION_SRC_PATH)/transport/out_file_transport.cpp ;
 obj src/transport/out_filename_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/out_filename_sequence_transport.cpp ;
 obj src/transport/out_meta_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/out_meta_sequence_transport.cpp ;
 obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
@@ -5939,11 +5914,10 @@ alias test_ssl_sha256 : tests/system/linux/system/test_ssl_sha256 ;
 alias test_ssl_sha512 : tests/system/linux/system/test_ssl_sha512 ;
 alias test_tls_context : tests/system/linux/system/test_tls_context ;
 alias test_crypto_transport : tests/transport/test_crypto_transport ;
+alias test_file_transport : tests/transport/test_file_transport ;
 alias test_gzip_compression_transport : tests/transport/test_gzip_compression_transport ;
-alias test_in_file_transport : tests/transport/test_in_file_transport ;
 alias test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport ;
 alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
-alias test_out_file_transport : tests/transport/test_out_file_transport ;
 alias test_out_filename_sequence_transport : tests/transport/test_out_filename_sequence_transport ;
 alias test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport ;
 alias test_recorder_transport : tests/transport/test_recorder_transport ;
@@ -6272,11 +6246,10 @@ alias test_ssl_sha256.coverage : tests/system/linux/system/test_ssl_sha256.cover
 alias test_ssl_sha512.coverage : tests/system/linux/system/test_ssl_sha512.coverage ;
 alias test_tls_context.coverage : tests/system/linux/system/test_tls_context.coverage ;
 alias test_crypto_transport.coverage : tests/transport/test_crypto_transport.coverage ;
+alias test_file_transport.coverage : tests/transport/test_file_transport.coverage ;
 alias test_gzip_compression_transport.coverage : tests/transport/test_gzip_compression_transport.coverage ;
-alias test_in_file_transport.coverage : tests/transport/test_in_file_transport.coverage ;
 alias test_in_meta_sequence_transport.coverage : tests/transport/test_in_meta_sequence_transport.coverage ;
 alias test_mwrm_reader.coverage : tests/transport/test_mwrm_reader.coverage ;
-alias test_out_file_transport.coverage : tests/transport/test_out_file_transport.coverage ;
 alias test_out_filename_sequence_transport.coverage : tests/transport/test_out_filename_sequence_transport.coverage ;
 alias test_out_meta_sequence_transport.coverage : tests/transport/test_out_meta_sequence_transport.coverage ;
 alias test_recorder_transport.coverage : tests/transport/test_recorder_transport.coverage ;
@@ -6700,11 +6673,10 @@ alias tests/system/linux/system.norec :
 ;
 alias tests/transport.norec :
   tests/transport/test_crypto_transport
+  tests/transport/test_file_transport
   tests/transport/test_gzip_compression_transport
-  tests/transport/test_in_file_transport
   tests/transport/test_in_meta_sequence_transport
   tests/transport/test_mwrm_reader
-  tests/transport/test_out_file_transport
   tests/transport/test_out_filename_sequence_transport
   tests/transport/test_out_meta_sequence_transport
   tests/transport/test_recorder_transport

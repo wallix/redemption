@@ -22,7 +22,7 @@
 #pragma once
 
 #include "core/RDP/caches/bmpcache.hpp"
-#include "transport/out_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/unique_fd.hpp"

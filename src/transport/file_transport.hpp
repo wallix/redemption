@@ -25,9 +25,9 @@
 #include "utils/sugar/unique_fd.hpp"
 
 
-struct OutFileTransport : Transport
+struct FileTransport : Transport
 {
-    explicit OutFileTransport(unique_fd fd, ReportError report_error = ReportError()) noexcept /*NOLINT*/
+    explicit FileTransport(unique_fd fd, ReportError report_error = ReportError()) noexcept /*NOLINT*/
     : file(std::move(fd))
     , report_error(std::move(report_error))
     {}
@@ -68,7 +68,45 @@ struct OutFileTransport : Transport
 protected:
     void do_send(const uint8_t * data, size_t len) override;
 
+    Read do_atomic_read(uint8_t * buffer, size_t len) override;
+    size_t do_partial_read(uint8_t * buffer, size_t len) override;
+
 private:
     unique_fd file;
     ReportError report_error;
+};
+
+
+struct InFileTransport : FileTransport
+{
+    using FileTransport::FileTransport;
+
+private:
+    void do_send(const uint8_t * buffer, size_t len) override
+    {
+        (void)buffer;
+        (void)len;
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
+    }
+};
+
+
+struct OutFileTransport : FileTransport
+{
+    using FileTransport::FileTransport;
+
+private:
+    virtual Read do_atomic_read(uint8_t * buffer, size_t len)
+    {
+        (void)buffer;
+        (void)len;
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
+    }
+
+    virtual size_t do_partial_read(uint8_t * buffer, size_t len)
+    {
+        (void)buffer;
+        (void)len;
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
+    }
 };

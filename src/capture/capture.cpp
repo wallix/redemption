@@ -55,7 +55,7 @@
 #include "utils/stream.hpp"
 #include "utils/timestamp_tracer.hpp"
 
-#include "transport/out_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
 
 #include "gdi/capture_probe_api.hpp"

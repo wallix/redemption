@@ -92,7 +92,7 @@
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
-#include "transport/in_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/bitmap_private_data.hpp"
 #include "utils/colors.hpp"

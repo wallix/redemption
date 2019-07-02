@@ -62,7 +62,7 @@
 #ifndef __EMSCRIPTEN__
 # include "core/app_path.hpp"
 # include "core/RDP/caches/bmpcachepersister.hpp"
-# include "transport/in_file_transport.hpp"
+# include "transport/file_transport.hpp"
 # include "utils/fileutils.hpp"
 #endif
 

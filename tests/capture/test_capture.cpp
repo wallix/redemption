@@ -31,7 +31,7 @@
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "transport/in_file_transport.hpp"
+#include "transport/file_transport.hpp"
 #include "utils/drawable.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/png.hpp"
