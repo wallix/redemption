@@ -51,9 +51,6 @@ namespace detail
     template<class T>
     using is_numeric_convertible = std::integral_constant<bool,
         std::is_integral<T>::value || std::is_enum<T>::value>;
-
-    template<class T>
-    inline constexpr bool is_numeric_convertible_v = is_numeric_convertible<T>::value;
 }
 
 
@@ -72,7 +69,7 @@ struct checked_int
     : i(i)
     {}
 
-    template<class U, class = std::enable_if_t<detail::is_numeric_convertible_v<U>>>
+    template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
     operator U () const noexcept { return checked_cast<U>(i); }
 
     operator T () const noexcept { return this->i; }
@@ -99,7 +96,7 @@ struct saturated_int
     : i(i)
     {}
 
-    template<class U, class = std::enable_if_t<detail::is_numeric_convertible_v<U>>>
+    template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
     operator U () const noexcept { return saturated_cast<U>(i); }
 
     operator T () const noexcept { return this->i; }
@@ -126,7 +123,7 @@ struct safe_int
     : i(i)
     {}
 
-    template<class U, class = std::enable_if_t<detail::is_numeric_convertible_v<U>>>
+    template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
     operator U () const noexcept { return safe_cast<U>(i); }
 
     constexpr operator T () const noexcept { return this->i; }
