@@ -25,8 +25,10 @@
 
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/texttime.hpp"
+#include "utils/log.hpp"
 
 #include "mod/icap_files_service.hpp"
 
@@ -42,7 +44,7 @@ private:
     size_t total_file_size = 0;
     size_t current_file_size = 0;
 
-    uint32_t streamID = 0;
+    ICAPFileId streamID {};
 
     uint8_t direction = NONE;
 
@@ -52,7 +54,7 @@ private:
 
     ICAPService * icap_service;
 
-    bool current_analysis_done;
+    bool current_analysis_done = false;
 
     const std::string target_name;
 
@@ -72,12 +74,10 @@ public:
     , const std::string target_name
     ) noexcept
         : dir_path(dir_path)
-        , streamID(0)
         , is_interupting_channel(is_interupting_channel)
         , is_saving_files(is_saving_files)
         , enable_validator(enable_validator)
         , icap_service(icap_service)
-        , current_analysis_done(false)
         , target_name(target_name)
     {}
 
@@ -94,32 +94,32 @@ public:
 
         if (this->is_saving_files) {
 
-            this->file_path = this->dir_path + get_full_text_sec_and_usec(tv) + "_" + this->filename;
+            this->file_path = str_concat(this->dir_path, get_full_text_sec_and_usec(tv), '_', this->filename);
 
             LOG(LOG_INFO, "this->file_path = %s", this->file_path);
 
-            this->fd = unique_fd(this->file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+            this->fd = unique_fd(this->file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
             if (!this->fd.is_open()) {
                 LOG(LOG_WARNING,"File error, can't open %s", file_path);
             }
         }
 
         if (this->enable_validator) {
-            if (this->streamID && !this->current_analysis_done) {
-                icap_abort_file(this->icap_service, this->streamID);
+            if (bool(this->streamID) && !this->current_analysis_done) {
+                this->icap_service->send_abort(this->streamID);
             }
             this->current_analysis_done = false;
-            this->streamID = icap_open_file(this->icap_service, filename.c_str(), this->target_name.c_str());
+            this->streamID = this->icap_service->open_file(filename, this->target_name);
         }
     }
 
-    void set_data(const uint8_t * data, const size_t data_size) {
+    void set_data(const_bytes_view data) {
 
-        size_t new_size = this->current_file_size + data_size;
+        size_t new_size = this->current_file_size + data.size();
         size_t over_data_len = 0;
         if (new_size > this->total_file_size) {
             over_data_len = new_size - this->total_file_size;
-            LOG(LOG_INFO, "ChanneFile::set_data over_data_len=%zu data_size=%zu ", over_data_len, data_size);
+            LOG(LOG_INFO, "ChanneFile::set_data over_data_len=%zu data_size=%zu ", over_data_len, data.size());
         } else {
             this->current_file_size = new_size;
         }
@@ -127,10 +127,10 @@ public:
         if (this->is_saving_files) {
             if (this->fd.is_open()) {
 
-                int written_data_size = ::write(this->fd.fd(), data, (data_size - over_data_len));
+                int written_data_size = ::write(this->fd.fd(), data.data(), (data.size() - over_data_len));
 
-                if (written_data_size == -1 && (int(data_size - over_data_len) == written_data_size)) {
-                    LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data_size, written_data_size);
+                if (written_data_size == -1 && (int(data.size() - over_data_len) == written_data_size)) {
+                    LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data.size(), written_data_size);
                 } else {
                     //this->current_file_size += data_size;
                     if ( this->current_file_size == this->total_file_size) {
@@ -142,13 +142,13 @@ public:
         }
 
         if (this->enable_validator) {
-            icap_send_data(this->icap_service, this->streamID, char_ptr_cast(data), data_size - over_data_len);
+            this->icap_service->send_data(this->streamID, data.first(data.size() - over_data_len));
         }
     }
 
     void set_end_of_file() {
         if (this->enable_validator) {
-            icap_end_of_file(this->icap_service, this->streamID);
+            this->icap_service->send_eof(this->streamID);
         }
     }
 
@@ -170,67 +170,72 @@ public:
         }
     }
 
-    std::string get_result_content() {
+    // TODO string const&
+    std::string get_result_content() const noexcept
+    {
         if (this->enable_validator) {
-            return this->icap_service->content;
+            return this->icap_service->get_content();
         }
-        return "";
+        return std::string();
     }
 
-    void receive_response() {
+    bool receive_response()
+    {
         if (this->enable_validator) {
-            icap_receive_response(this->icap_service);
-
+            // TODO loop ?
+            auto r = this->icap_service->receive_response();
             this->current_analysis_done = true;
-    //       LOG(LOG_INFO, "%d %s", this->icap_service->result, this->icap_service->content);
+            // LOG(LOG_INFO, "%d %s", this->icap_service->result, this->icap_service->content);
+            return r == ICAPService::ResponseType::Content;
         }
+        return true;
     }
 
-    uint8_t get_direction() {
+    uint8_t get_direction() const noexcept
+    {
         return this->direction;
     }
 
-    size_t get_file_size() {
+    size_t get_file_size() const noexcept
+    {
         return this->total_file_size;
     }
 
-    uint32_t get_streamID() {
+    ICAPFileId get_streamID() const noexcept
+    {
         return this->streamID;
     }
 
-    bool is_complete() {
+    bool is_complete() const noexcept
+    {
         return this->total_file_size == this->current_file_size;
     }
 
-    bool is_valid() {
+    bool is_valid() const noexcept
+    {
         if (this->icap_service == nullptr) {
             return !this->enable_validator;
         }
-        return (this->icap_service->result_flag == LocalICAPServiceProtocol::ACCEPTED_FLAG);
+        return (this->icap_service->last_result_flag() == LocalICAPProtocol::ValidationType::IsAccepted);
     }
 
-    ~ChannelFile() {
-        this->fd.close();
-    }
-
-    bool is_enable_interuption() {
+    bool is_enable_interuption() const noexcept
+    {
         return this->is_interupting_channel;
     }
 
-    std::string get_file_name() {
+    std::string const& get_file_name() const noexcept
+    {
         return this->filename;
     }
 
-    bool is_save_files() {
+    bool is_save_files() const noexcept
+    {
         return this->is_saving_files;
     }
 
-    bool is_enable_validation() {
+    bool is_enable_validation() const noexcept
+    {
         return this->enable_validator;
     }
-
-    bool is_waitting_for_response_completion() {
-        return icap_is_waitting_for_response_completion(this->icap_service);
-    }
-
 };

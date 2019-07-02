@@ -31,8 +31,10 @@
 #include "mod/rdp/parse_extra_orders.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/icap_files_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/netutils.hpp"
 
 
 #ifndef __EMSCRIPTEN__
@@ -317,8 +319,6 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-        ICAPService * icap_service = nullptr;
-
 #ifndef __EMSCRIPTEN__
 
         struct ModRDPWithMetrics : public mod_rdp
@@ -331,9 +331,20 @@ void ModuleManager::create_mod_rdp(
                 SessionReactor::TimerPtr metrics_timer;
             };
 
-            std::unique_ptr<ModMetrics> metrics;
+            struct ICAP
+            {
+                InFileTransport trans;
+                ICAPService service;
+                SessionReactor::TopFdPtr validator_event;
 
-            SessionReactor::TopFdPtr validator_event;
+                ICAP(unique_fd&& fd)
+                : trans(std::move(fd))
+                , service(this->trans)
+                {}
+            };
+
+            std::unique_ptr<ModMetrics> metrics;
+            std::unique_ptr<ICAP> icap;
 
             using mod_rdp::mod_rdp;
         };
@@ -342,15 +353,19 @@ void ModuleManager::create_mod_rdp(
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
         std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
+        std::unique_ptr<ModRDPWithMetrics::ICAP> icap;
+        int validator_fd = -1;
 
         if (mod_rdp_params.enable_validator) {
-            icap_service = icap_open_session(mod_rdp_params.validator_socket_path);
-            LOG(LOG_INFO, "icap_service->fd.fd() = %d", icap_service->fd.fd());
-            if (icap_service->fd.fd() <= 0) {
+            unique_fd ufd = addr_connect(mod_rdp_params.validator_socket_path);
+            if (ufd) {
+                validator_fd = ufd.fd();
+                icap = std::make_unique<ModRDPWithMetrics::ICAP>(std::move(ufd));
+            }
+            else {
                 mod_rdp_params.enable_validator = false;
                 LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
             }
-            this->validator_fd = icap_service->fd.fd();
         }
 
         if (enable_metrics) {
@@ -403,15 +418,13 @@ void ModuleManager::create_mod_rdp(
             report_message,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,
-            icap_service
+            mod_rdp_params.enable_validator ? &icap->service : nullptr
         );
 
 #ifndef __EMSCRIPTEN__
-
         if (mod_rdp_params.enable_validator) {
-            new_mod->validator_event = this->session_reactor.create_fd_event(this->validator_fd)
-            .on_timeout(jln::always_ready([]() {}))
-            .set_timeout(std::chrono::milliseconds::max() / 1000000 )
+            new_mod->icap->validator_event = this->session_reactor.create_fd_event(validator_fd)
+            .disable_timeout()
             .on_exit(jln::propagate_exit())
             .on_action(jln::always_ready([rdp=new_mod.get()]() {
                 rdp->DLP_antivirus_check_channels_files();

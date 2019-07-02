@@ -46,6 +46,17 @@ template <class Dst, class Src>
 constexpr Dst safe_cast(Src value) noexcept;
 
 
+namespace detail
+{
+    template<class T>
+    using is_numeric_convertible = std::integral_constant<bool,
+        std::is_integral<T>::value || std::is_enum<T>::value>;
+
+    template<class T>
+    inline constexpr bool is_numeric_convertible_v = is_numeric_convertible<T>::value;
+}
+
+
 // integer type with checked_cast
 template<class T>
 struct checked_int
@@ -61,7 +72,7 @@ struct checked_int
     : i(i)
     {}
 
-    template<class U>
+    template<class U, class = std::enable_if_t<detail::is_numeric_convertible_v<U>>>
     operator U () const noexcept { return checked_cast<U>(i); }
 
     operator T () const noexcept { return this->i; }
@@ -88,7 +99,7 @@ struct saturated_int
     : i(i)
     {}
 
-    template<class U>
+    template<class U, class = std::enable_if_t<detail::is_numeric_convertible_v<U>>>
     operator U () const noexcept { return saturated_cast<U>(i); }
 
     operator T () const noexcept { return this->i; }
@@ -115,7 +126,7 @@ struct safe_int
     : i(i)
     {}
 
-    template<class U>
+    template<class U, class = std::enable_if_t<detail::is_numeric_convertible_v<U>>>
     operator U () const noexcept { return safe_cast<U>(i); }
 
     constexpr operator T () const noexcept { return this->i; }
@@ -164,8 +175,8 @@ namespace detail
     template <class Dst, class Src>
     constexpr int check_int(Src const & /*unused*/) noexcept
     {
-        static_assert(std::is_integral<Src>::value || std::is_enum<Src>::value, "Argument must be an integral.");
-        static_assert(std::is_integral<Dst>::value || std::is_enum<Dst>::value, "Dst must be an integral.");
+        static_assert(is_numeric_convertible<Src>::value, "Argument must be an integral.");
+        static_assert(is_numeric_convertible<Dst>::value, "Dst must be an integral.");
         return 1;
     }
 

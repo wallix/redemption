@@ -67,7 +67,7 @@ enum class MsgType : uint8_t
 
 enum class ValidationType
 {
-    IsValid,
+    IsAccepted,
     IsRejected,
     Error,
 };
@@ -363,7 +363,7 @@ private:
                     case LocalICAPProtocol::ValidationType::Error:
                         return ResponseType::Error;
                     case LocalICAPProtocol::ValidationType::IsRejected:
-                    case LocalICAPProtocol::ValidationType::IsValid:
+                    case LocalICAPProtocol::ValidationType::IsAccepted:
                         this->state = State::FragmentMessage;
                         break;
                 }

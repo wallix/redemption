@@ -2088,7 +2088,7 @@ public:
         this->channels.remote_programs_session_manager.reset();
 
         if (this->enable_validator) {
-            icap_close_session(this->icap_service);
+            this->icap_service->send_close_session();
         }
 #endif
 

@@ -130,7 +130,7 @@ namespace
     constexpr auto validation_type_map() noexcept
     {
         EnumMap<LocalICAPProtocol::ValidationType, 3> m{};
-        m.a[int(LocalICAPProtocol::ValidationType::IsValid)] = 0;
+        m.a[int(LocalICAPProtocol::ValidationType::IsAccepted)] = 0;
         m.a[int(LocalICAPProtocol::ValidationType::IsRejected)] = 1;
         m.a[int(LocalICAPProtocol::ValidationType::Error)] = 2;
         return m;

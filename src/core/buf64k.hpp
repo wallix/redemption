@@ -117,5 +117,5 @@ private:
     size_type idx = 0;
 };
 
-template struct BasicStaticBuffer<uint16_t(~uint16_t{}), uint16_t>;
-using Buf64k = BasicStaticBuffer<uint16_t(~uint16_t{}), uint16_t>;
+struct Buf64k : BasicStaticBuffer<uint16_t(~uint16_t{}), uint16_t>
+{};

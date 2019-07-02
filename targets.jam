@@ -4004,7 +4004,6 @@ test-run tests/mod/rdp/channels/test_channel_file :
 :
   <library>src/core/error.o
   <library>src/utils/fileutils.o
-  <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -4090,7 +4089,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4143,7 +4141,6 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4165,7 +4162,6 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/transport/in_file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -4348,7 +4344,6 @@ test-run tests/mod/test_icap_files_service :
 :
   <library>src/core/error.o
   <library>src/utils/fileutils.o
-  <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o

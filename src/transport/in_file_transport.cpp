@@ -65,7 +65,7 @@ size_t InFileTransport::do_partial_read(uint8_t * buffer, size_t len)
     } while (res == 0 && errno == EINTR);
 
     if (res < 0) {
-        throw Error(ERR_TRANSPORT_READ_FAILED);
+        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
 
     return static_cast<size_t>(res);

@@ -32,8 +32,58 @@
 #include "./test_channel.hpp"
 #include "test_only/front/fake_front.hpp"
 
+namespace
+{
+    namespace data_full_auth
+    {
+        #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
+        const auto cb_params = []{
+            ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+            clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+            clipboard_virtual_channel_params.clipboard_down_authorized = true;
+            clipboard_virtual_channel_params.clipboard_file_authorized = true;
+            return clipboard_virtual_channel_params;
+        }();
+    }
 
-RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
+    namespace data_down_denied
+    {
+        #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
+        const auto cb_params = []{
+            ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+            clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+            clipboard_virtual_channel_params.clipboard_down_authorized = false;
+            clipboard_virtual_channel_params.clipboard_file_authorized = true;
+            return clipboard_virtual_channel_params;
+        }();
+    }
+
+    namespace data_up_denied
+    {
+        #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
+        const auto cb_params = []{
+            ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+            clipboard_virtual_channel_params.clipboard_up_authorized   = false;
+            clipboard_virtual_channel_params.clipboard_down_authorized = true;
+            clipboard_virtual_channel_params.clipboard_file_authorized = true;
+            return clipboard_virtual_channel_params;
+        }();
+    }
+
+    namespace data_full_denied
+    {
+        #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
+        const auto cb_params = []{
+            ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+            clipboard_virtual_channel_params.clipboard_up_authorized   = false;
+            clipboard_virtual_channel_params.clipboard_down_authorized = false;
+            clipboard_virtual_channel_params.clipboard_file_authorized = true;
+            return clipboard_virtual_channel_params;
+        }();
+    }
+}
+
+RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthrisation)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
@@ -42,118 +92,44 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
-    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
+    struct D
+    {
+        char const* name;
+        ClipboardVirtualChannelParams cb_params;
+        const_bytes_view indata;
+        const_bytes_view outdata;
+    };
 
-    #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    #define F(name) D{#name,           \
+        name::cb_params,               \
+        cstr_array_view(name::indata), \
+        cstr_array_view(name::outdata) \
+    }
 
-    TestToClientSender to_client_sender(t);
-    TestToServerSender to_server_sender(t);
+    RED_TEST_CONTEXT_DATA(D const& d, d.name, {
+        F(data_full_auth),
+        F(data_down_denied),
+        F(data_up_denied),
+        F(data_full_denied)
+    })
+    {
+        TestTransport t(d.indata, d.outdata);
 
-    SessionReactor session_reactor;
+        TestToClientSender to_client_sender(t);
+        TestToServerSender to_server_sender(t);
 
-    ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front,session_reactor,
-                base_params,
-                clipboard_virtual_channel_params, ipca_service);
+        SessionReactor session_reactor;
 
-    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
+        ClipboardVirtualChannel clipboard_virtual_channel(
+            &to_client_sender, &to_server_sender, front,session_reactor,
+            base_params, d.cb_params, ipca_service);
+
+        RED_CHECK_EXCEPTION_ERROR_ID(
+            CHECK_CHANNEL(t, clipboard_virtual_channel),
+            ERR_TRANSPORT_NO_MORE_DATA);
+    }
 }
 
-RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
-{
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-    NullReportMessage report_message;
-    ICAPService * ipca_service = nullptr;
-
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
-
-    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.clipboard_down_authorized = false;
-
-    #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-
-    TestToClientSender to_client_sender(t);
-    TestToServerSender to_server_sender(t);
-
-    SessionReactor session_reactor;
-
-    ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, session_reactor,
-        base_params,
-        clipboard_virtual_channel_params, ipca_service);
-
-    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
-{
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-
-    NullReportMessage report_message;
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
-    ICAPService * ipca_service = nullptr;
-
-    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = false;
-
-    #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-
-    TestToClientSender to_client_sender(t);
-    TestToServerSender to_server_sender(t);
-
-    SessionReactor session_reactor;
-
-    ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, session_reactor,
-        base_params,
-        clipboard_virtual_channel_params, ipca_service);
-
-    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
-{
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
-
-    SessionReactor session_reactor;
-
-    ICAPService * ipca_service = nullptr;
-
-    NullReportMessage report_message;
-
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
-
-    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.clipboard_down_authorized = false;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = false;
-
-    #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-
-    TestToClientSender to_client_sender(t);
-    TestToServerSender to_server_sender(t);
-
-    ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, session_reactor,
-        base_params,
-        clipboard_virtual_channel_params, ipca_service);
-
-    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
-}
 
 class NullSender : public VirtualChannelDataSender {
 public:

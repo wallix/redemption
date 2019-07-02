@@ -21,48 +21,21 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/file.hpp"
 
-#include "utils/fileutils.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "mod/rdp/channels/channel_file.hpp"
 
 
-
-RED_AUTO_TEST_CASE(TestChannelFileCtr)
+RED_AUTO_TEST_CASE_WD(TestChannelFileWrite, wd)
 {
-    WorkingDirectory wd("channel_file");
-
-    ChannelFile file(wd.dirname(), false, true, false, nullptr, "avscan");
-
-    uint8_t direction = ChannelFile::NONE;
-
-    timeval sec_and_usec_time;
-    sec_and_usec_time.tv_sec = 12345;
-    sec_and_usec_time.tv_usec = 54321;
-
-    auto const file1 = wd.add_file("12345_54321_new_file1.txt");
-    file.new_file("new_file1.txt", 0, direction, sec_and_usec_time);
-
-    auto const file2 = wd.add_file("12345_54321_new_file2.txt");
-    file.new_file("new_file2.txt", 0, direction, sec_and_usec_time);
-
-    RED_CHECK_WORKSPACE(wd);
-}
-
-
-
-RED_AUTO_TEST_CASE(TestChannelFileWrite)
-{
-    WorkingDirectory wd("channel_file");
-
     ChannelFile file(wd.dirname(), false, true, false, nullptr, "avscan");
 
     auto const file1 = wd.add_file("12345_54321_new_file1.txt");
 
-    const char * word1 = "hello ";
-    const char * word2 = "world!";
-    const char * word3 = "again";
-    const char * word4 = "goodbye ";
+    auto word1 = "hello "_av;
+    auto word2 = "world!"_av;
+    auto word3 = "again"_av;
+    auto word4 = "goodbye "_av;
 
     uint8_t direction = ChannelFile::NONE;
 
@@ -72,42 +45,36 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
 
     file.new_file("new_file1.txt", 12, direction, sec_and_usec_time);
     RED_CHECK_WORKSPACE(wd);
-    RED_CHECK_EQUAL(file.is_complete(), false);
+    RED_CHECK(!file.is_complete());
 
-
-    file.set_data(byte_ptr_cast(word1), 6);
-    RED_CHECK_EQUAL(file.is_complete(), false);
-    file.set_data(byte_ptr_cast(word2), 6);
-    RED_CHECK_EQUAL(file.is_complete(), true);
-    file.set_data(byte_ptr_cast(word3), 5);
-    RED_CHECK_EQUAL(file.is_complete(), true);
+    file.set_data(word1);
+    RED_CHECK(!file.is_complete());
+    file.set_data(word2);
+    RED_CHECK(file.is_complete());
+    file.set_data(word3);
+    RED_CHECK(file.is_complete());
 
     RED_CHECK_FILE_CONTENTS(file1, "hello world!"_av);
 
     auto const file2 = wd.add_file("12345_54321_new_file2.txt");
     file.new_file("new_file2.txt", 14, direction, sec_and_usec_time);
     RED_CHECK_WORKSPACE(wd);
-    RED_CHECK_EQUAL(file.is_complete(), false);
 
-    file.set_data(byte_ptr_cast(word4), 8);
-    RED_CHECK_EQUAL(file.is_complete(), false);
-    file.set_data(byte_ptr_cast(word2), 6);
-    RED_CHECK_EQUAL(file.is_complete(), true);
-    file.set_data(byte_ptr_cast(word3), 5);
-    RED_CHECK_EQUAL(file.is_complete(), true);
+    RED_CHECK(!file.is_complete());
+
+    file.set_data(word4);
+    RED_CHECK(!file.is_complete());
+    file.set_data(word2);
+    RED_CHECK(file.is_complete());
+    file.set_data(word3);
+    RED_CHECK(file.is_complete());
 
     RED_CHECK_FILE_CONTENTS(file1, "hello world!"_av);
 
     RED_CHECK_FILE_CONTENTS(file2, "goodbye world!"_av);
 
-    uint8_t buffer[15];
+    uint8_t buffer[14];
     file.read_data(buffer, 14);
-    buffer[14] = 0;
 
-    std::string file_read_data(char_ptr_cast(buffer));
-
-    RED_CHECK_EQUAL(file_read_data, "goodbye world!");
-
-    RED_CHECK_WORKSPACE(wd);
-
+    RED_CHECK_SMEM(array_view(buffer, 14), "goodbye world!"_av);
 }

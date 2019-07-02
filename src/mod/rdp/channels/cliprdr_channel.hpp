@@ -285,7 +285,7 @@ public:
 
                 if (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
 
-                    this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
+                    this->channel_file.set_data(chunk.remaining_bytes());
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                         this->channel_file.set_end_of_file();
                     }
@@ -508,7 +508,7 @@ public:
 
                 if (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
 
-                    this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
+                    this->channel_file.set_data(chunk.remaining_bytes());
 
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                         this->channel_file.set_end_of_file();
@@ -673,20 +673,18 @@ public:
             flags&CHANNELS::CHANNEL_FLAG_LAST?"LAST":"");
     }
 
-    void DLP_antivirus_check_channels_files() {
-
-        this->channel_file.receive_response();
-
-        if (this->channel_file.is_waitting_for_response_completion()) {
+    void DLP_antivirus_check_channels_files()
+    {
+        if (!this->channel_file.receive_response()) {
             return;
         }
 
         if (!this->channel_file.is_valid() && this->channel_file.is_enable_validation()) {
             auto const info = key_qvalue_pairs({
-                { "type", "FILE_SCAN_RESULT" },
-                { "file_name", this->channel_file.get_file_name()},
-                { "size", std::to_string(this->channel_file.get_file_size()) },
-                { "result", this->channel_file.get_result_content() }
+                {"type", "FILE_SCAN_RESULT" },
+                {"file_name", this->channel_file.get_file_name()},
+                {"size", std::to_string(this->channel_file.get_file_size())},
+                {"result", this->channel_file.get_result_content()}
             });
 
             ArcsightLogInfo arc_info;
@@ -721,7 +719,7 @@ public:
     //
                 RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 4);
                 StaticOutStream<16> out_stream;
-                RDPECLIP::FileContentsResponseRange fileRange(this->channel_file.get_streamID());
+                RDPECLIP::FileContentsResponseRange fileRange{safe_int(this->channel_file.get_streamID())};
 
                 fileRangeHeader.emit(out_stream);
                 fileRange.emit(out_stream);
@@ -752,7 +750,7 @@ public:
 
         RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->channel_file.get_file_size()+4);
         StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
-        RDPECLIP::FileContentsResponseRange fileRange(this->channel_file.get_streamID());
+        RDPECLIP::FileContentsResponseRange fileRange{safe_int(this->channel_file.get_streamID())};
 
         uint32_t first_part_data_size(this->channel_file.get_file_size());
         int total_length(first_part_data_size + 12);
@@ -822,7 +820,7 @@ public:
 
         RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->channel_file.get_file_size()+4);
         StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
-        RDPECLIP::FileContentsResponseRange fileRange(this->channel_file.get_streamID());
+        RDPECLIP::FileContentsResponseRange fileRange{safe_int(this->channel_file.get_streamID())};
 
         uint32_t first_part_data_size(this->channel_file.get_file_size());
         int total_length(first_part_data_size + 12);
