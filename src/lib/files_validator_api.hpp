@@ -22,51 +22,56 @@
 
 #include "cxx/cxx.hpp"
 
+#include <cstdint>
 
 
 extern "C"
 {
-    class ICAPService;
+    class ValidatorApi;
+    using ValidatorFileId = uint32_t;
 
     REDEMPTION_LIB_EXPORT
-    ICAPService * validator_open_session(const char * socket_path) noexcept;
+    ValidatorApi* validator_open_session(char const* socket_path) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_open_file(ICAPService * service, const char * file_name, const char * target_name) noexcept;
+    ValidatorApi* validator_open_fd_session(int fd) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_send_data(const ICAPService * service, const int file_id, const char * data, const int size) noexcept;
+    int validator_close_session(ValidatorApi* validator) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void validator_receive_response(ICAPService * service) noexcept;
+    int validator_get_fd(ValidatorApi* validator) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_end_of_file(ICAPService * service, const int file_id) noexcept;
+    int validator_get_errno(ValidatorApi* validator) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_close_session(ICAPService * service) noexcept;
+    int validator_service_is_up(ValidatorApi* validator) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_abort_file(ICAPService * service, const int file_id) noexcept;
+    ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_name, char const* target_name) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_get_result_flag(ICAPService * service) noexcept;
+    int validator_send_data(const ValidatorApi* validator, ValidatorFileId id, char const* data, unsigned size) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    const char * validator_get_content(ICAPService * service) noexcept;
+    int validator_end_of_file(ValidatorApi* validator, ValidatorFileId id) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    bool validator_session_is_open(ICAPService * service) noexcept;
+    int validator_abort_file(ValidatorApi* validator, ValidatorFileId id) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_get_fd(ICAPService * service) noexcept;
+    int validator_receive_response(ValidatorApi* validator) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_get_result_file_id(ICAPService * service) noexcept;
+    int validator_get_response_type(ValidatorApi* validator) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    bool validator_service_is_up(ICAPService * service) noexcept;
+    int validator_get_result_flag(ValidatorApi* validator) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    bool validator_is_waitting_for_response_completion(ICAPService * service) noexcept;
+    char const* validator_get_content(ValidatorApi* validator) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    ValidatorFileId validator_get_result_file_id(ValidatorApi* validator) noexcept;
 }

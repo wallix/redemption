@@ -18,68 +18,242 @@
    Author(s): Clément Moroldo
 */
 
-
 #include "lib/files_validator_api.hpp"
 #include "mod/icap_files_service.hpp"
+#include "utils/c_interface.hpp"
+#include "utils/netutils.hpp"
+
+#include <array>
 
 
+namespace
+{
+    struct ValidatorTransport : Transport
+    {
+        unique_fd file;
+        int errnum = 0;
+
+        ValidatorTransport(unique_fd&& ufd) noexcept
+        : file(std::move(ufd))
+        {}
+
+        std::size_t do_partial_read(uint8_t * buffer, std::size_t len) override
+        {
+            ssize_t res;
+            do
+            {
+                res = ::read(this->file.fd(), buffer, len);
+            } while (res == 0 && errno == EINTR);
+
+            if (res < 0)
+            {
+                this->errnum = errno;
+            }
+
+            return static_cast<size_t>(res);
+        }
+
+        void do_send(const uint8_t * data, std::size_t len) override
+        {
+            size_t total_sent = 0;
+            while (len > total_sent)
+            {
+                ssize_t const ret = ::write(this->file.fd(), data + total_sent, len - total_sent);
+                if (ret <= 0)
+                {
+                    if (errno == EINTR)
+                    {
+                        continue;
+                    }
+                    this->errnum = errno;
+                    return;
+                }
+                total_sent += ret;
+            }
+        }
+    };
+}
+
+
+struct ValidatorApi
+{
+    ValidatorApi(unique_fd ufd) noexcept
+    : transport(std::move(ufd))
+    , icap(transport)
+    {}
+
+    ValidatorApi(char const* path)
+    : ValidatorApi(addr_connect(path))
+    {}
+
+    int errcode() const noexcept
+    {
+        return this->transport.errnum ? this->transport.errnum : -1;
+    }
+
+    ValidatorTransport transport;
+    ICAPService icap;
+    bool wating_data = false;
+};
+
+
+#define CHECK_ERRNUM(validator)              \
+    if (validator->transport.errnum)         \
+    {                                        \
+        return -validator->transport.errnum; \
+    }
+
+
+
+namespace
+{
+    template<class E, std::size_t N>
+    struct EnumMap
+    {
+        int operator[](E e) const noexcept
+        {
+            return this->a[int(e)];
+        }
+        std::array<int, N> a;
+    };
+
+    constexpr auto response_type_map() noexcept
+    {
+        EnumMap<ICAPService::ResponseType, 4> m{};
+        m.a[int(ICAPService::ResponseType::Content)] = 0;
+        m.a[int(ICAPService::ResponseType::WaitingData)] = 1;
+        m.a[int(ICAPService::ResponseType::Initialized)] = 2;
+        m.a[int(ICAPService::ResponseType::Error)] = 4;
+        return m;
+    }
+
+    constexpr auto validation_type_map() noexcept
+    {
+        EnumMap<LocalICAPProtocol::ValidationType, 3> m{};
+        m.a[int(LocalICAPProtocol::ValidationType::IsValid)] = 0;
+        m.a[int(LocalICAPProtocol::ValidationType::IsRejected)] = 1;
+        m.a[int(LocalICAPProtocol::ValidationType::Error)] = 2;
+        return m;
+    }
+}
 
 
 extern "C"
 {
-    ICAPService * validator_open_session(const char * socket_path) noexcept {
-        return icap_open_session(socket_path);
-    }
 
-    int validator_open_file(ICAPService * service, const char * file_name, const char * target_name) noexcept {
-        return icap_open_file(service, file_name, target_name);
-    }
+ValidatorApi* validator_open_session(char const* socket_path) noexcept
+{
+    SCOPED_TRACE;
+    return new (std::nothrow) ValidatorApi(socket_path);
+}
 
-    int validator_send_data(const ICAPService * service, const int file_id, const char * data, const int size) noexcept {
-        return icap_send_data(service, file_id, data, size);
-    }
+ValidatorApi* validator_open_fd_session(int fd) noexcept
+{
+    SCOPED_TRACE;
+    return new (std::nothrow) ValidatorApi(unique_fd(fd));
+}
 
-    void validator_receive_response(ICAPService * service) noexcept {
-        return icap_receive_response(service);
-    }
+int validator_close_session(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    validator->icap.send_close_session();
+    CHECK_ERRNUM(validator);
+    delete validator;
+    return 0;
+}
 
-    int validator_end_of_file(ICAPService * service, const int file_id) noexcept {
-        return icap_end_of_file(service, file_id);
-    }
+int validator_get_fd(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    return validator->transport.file.fd();
+}
 
-    int validator_close_session(ICAPService * service) noexcept {
-        return icap_close_session(service);
-    }
+int validator_get_errno(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    return validator->transport.errnum;
+}
 
-    int validator_abort_file(ICAPService * service, const int file_id) noexcept {
-        return icap_abort_file(service, file_id);
-    }
+int validator_service_is_up(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    return validator->icap.service_is_up();
+}
 
-    int validator_get_result_flag(ICAPService * service) noexcept {
-        return service->result_flag;
-    }
+ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_name, char const* target_name) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    auto file_id = validator->icap.open_file(file_name, target_name);
+    CHECK_ERRNUM(validator);
+    return safe_int(file_id);
+}
 
-    const char * validator_get_content(ICAPService * service) noexcept {
-        return service->content.c_str();
-    }
+int validator_send_data(const ValidatorApi* validator, ValidatorFileId id, char const* data, const unsigned size) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    validator->icap.send_data(ICAPFileId(id), {data, size});
+    CHECK_ERRNUM(validator);
+    return 0;
+}
 
-    int validator_get_fd(ICAPService * service) noexcept {
-        return service->fd.fd();
-    }
+int validator_end_of_file(ValidatorApi* validator, ValidatorFileId id) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    validator->icap.send_eof(ICAPFileId(id));
+    CHECK_ERRNUM(validator);
+    return 0;
+}
 
-    bool validator_session_is_open(ICAPService * service) noexcept {
-        return service->fd.is_open();
-    }
+int validator_abort_file(ValidatorApi* validator, ValidatorFileId id) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    validator->icap.send_abort(ICAPFileId(id));
+    CHECK_ERRNUM(validator);
+    return 0;
+}
 
-    int validator_get_result_file_id(ICAPService * service) noexcept {
-        return service->last_result_file_id_received;
-    }
+int validator_receive_response(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    auto r = validator->icap.receive_response();
+    CHECK_ERRNUM(validator);
+    return response_type_map()[r];
+}
 
-    bool validator_service_is_up(ICAPService * service) noexcept {
-        return service->service_is_up;
-    }
+int validator_get_response_type(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    return response_type_map()[validator->icap.last_response_type()];
+}
 
-    bool validator_is_waitting_for_response_completion(ICAPService * service) noexcept {
-        return icap_is_waitting_for_response_completion(service);
-    }
+int validator_get_result_flag(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    return validation_type_map()[validator->icap.last_result_flag()];
+}
+
+char const* validator_get_content(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    return validator ? validator->icap.get_content().c_str() : nullptr;
+}
+
+ValidatorFileId validator_get_result_file_id(ValidatorApi* validator) noexcept
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(validator);
+    return safe_int(validator->icap.last_file_id());
+}
+
 }

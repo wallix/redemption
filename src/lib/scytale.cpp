@@ -28,57 +28,9 @@
 #include "test_only/lcg_random.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/genfstat.hpp"
+#include "utils/c_interface.hpp"
 
 #include "main/version.hpp"
-
-
-#ifdef SHOW_DEBUG_TRACES
-
-namespace
-{
-    struct Trace
-    {
-        Trace(char const * func_name) noexcept
-        : func_name(func_name)
-        {
-            LOG(LOG_INFO, "%s()", func_name);
-        }
-
-        ~Trace()
-        {
-            LOG(LOG_INFO, "%s() done", func_name);
-        }
-
-        void exit_on_exception() noexcept
-        {
-            LOG(LOG_ERR, "%s() exit with exception", func_name);
-        }
-
-        void exit_on_error(Error const & e) noexcept
-        {
-            LOG(LOG_ERR, "%s() exit with exception Error: %s", func_name, e.errmsg());
-        }
-
-    private:
-        char const * func_name;
-    };
-} // namespace
-
-
-#define SCOPED_TRACE Trace trace_l_ {__FUNCTION__}
-#define EXIT_ON_EXCEPTION() trace_l_.exit_on_exception()
-#define EXIT_ON_ERROR(e) trace_l_.exit_on_error(e)
-
-#else
-
-#define SCOPED_TRACE
-#define EXIT_ON_EXCEPTION()
-#define EXIT_ON_ERROR(e)
-
-#endif
-
-#define CHECK_HANDLE(handle) if (!handle) return -1
-#define CHECK_HANDLE_R(handle, return_err) if (!handle) return return_err
 
 #define CHECK_NOTHROW_R(expr, return_err, error_ctx, errid) \
     do {                                                    \

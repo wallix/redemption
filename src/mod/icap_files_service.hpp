@@ -20,136 +20,60 @@
 
 #pragma once
 
-#include <string>
-#include <cstdio>
-#include <cstdlib>
-#include <unistd.h>
-
+#include "core/buf64k.hpp"
 #include "core/error.hpp"
-#include "utils/netutils.hpp"
+
+#include "transport/transport.hpp"
+
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
-#include "utils/log.hpp"
+#include <string>
+#include <string_view>
 
 
+enum class ICAPFileId : uint32_t;
 
-struct ICAPService
+constexpr ICAPFileId invalid_icap_file_id = ICAPFileId(-1);
+
+namespace LocalICAPProtocol
 {
-public:
-    unique_fd fd ;
 
-    int result_flag;
-    std::string content;
+inline void emit_file_id(OutStream& stream, ICAPFileId file_id) noexcept
+{
+    stream.out_uint32_be(safe_int(file_id));
+}
 
-    int last_result_file_id_received;
-    int file_id_int;
+enum class MsgType : uint8_t
+{
+    // Create a new file to analyse
+    NewFile,
+    // Send data from a file
+    DataFile,
+    // Close the session
+    CloseSession,
+    // Indicates data file end
+    Eof,
+    // Abort file.
+    AbortFile,
+    // Result received from Validator
+    Result,
+    // File validator check server icap result
+    Check,
 
-    bool service_is_up;
-
-    size_t last_data_response_total_size;
-
-
-    ICAPService(std::string const& socket_path)
-
-    : fd(invalid_fd())
-    , result_flag(-1)
-    , last_result_file_id_received(0)
-    , file_id_int(0)
-    , last_data_response_total_size(0)
-    {
-        if (!socket_path.empty()) {
-            this->fd = ::addr_connect(socket_path.c_str());
-        }
-        if (fd.fd() == -1) {
-            perror("Validator socket error");
-        }
-    }
-
-    int generate_id() {
-        this->file_id_int++;
-        return this->file_id_int;
-    }
+    Error = 42
 };
 
-
-namespace LocalICAPServiceProtocol
+enum class ValidationType
 {
+    IsValid,
+    IsRejected,
+    Error,
+};
 
-    enum {
-    // +--------------------+-----------------------------------------+
-    // | Value              | Meaning                                 |
-    // +--------------------+-----------------------------------------+
-    // | NEW_FILE_FLAG      | Create a new file to analyse.           |
-    // | 0x00               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | DATA_FILE_FLAG     | Send data from a file.                  |
-    // | 0x01               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | CLOSE_SESSION_FLAG | Close the session.                      |
-    // | 0x02               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | END_OF_FILE_FLAG   | Indicates data file end                 |
-    // | 0x03               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | ABORT_FILE_FLAG    | Abort file.                             |
-    // | 0x04               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | RESULT_FLAG        | Result received from Validator          |
-    // | 0x05               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | CHECK_FLAG         | File validator check server icap result |
-    // | 0x06               |                                         |
-    // +--------------------+-----------------------------------------+
-        NEW_FILE_FLAG      = 0x00,
-        DATA_FILE_FLAG     = 0x01,
-        CLOSE_SESSION_FLAG = 0x02,
-        END_OF_FILE_FLAG   = 0x03,
-        ABORT_FILE_FLAG    = 0x04,
-        RESULT_FLAG        = 0x05,
-        CHECK_FLAG         = 0x06
-    };
-
-    enum {
-    // +--------------------+-----------------------------------------+
-    // | Value              | Meaning                                 |
-    // +--------------------+-----------------------------------------+
-    // | ACCEPTED_FLAG      | File is valid                           |
-    // | 0x00               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | REJECTED_FLAG      | File is NOT valid                       |
-    // | 0x01               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | ERROR_FLAG         | File analysis error                     |
-    // | 0x02               |                                         |
-    // +--------------------+-----------------------------------------+
-        ACCEPTED_FLAG = 0x00,
-        REJECTED_FLAG = 0x01,
-        ERROR_FLAG    = 0x02
-    };
-
-    enum {
-    // +--------------------+-----------------------------------------+
-    // | Value              | Meaning                                 |
-    // +--------------------+-----------------------------------------+
-    // | ACCEPTED_FLAG      | File is valid                           |
-    // | 0x00               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | REJECTED_FLAG      | File is NOT valid                       |
-    // | 0x01               |                                         |
-    // +--------------------+-----------------------------------------+
-        SERVICE_UP_FLAG   = 0x00,
-        SERVICE_DOWN_FLAG = 0x01
-    };
-
-
-
-struct ICAPHeader {
-    uint8_t msg_type;
-    uint32_t msg_len;
-
-    // HeaderMessage
-
+struct ICAPHeader
+{
     // This header starts every message receive from or emit to the local service.
 
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -161,264 +85,34 @@ struct ICAPHeader {
     // |               |
     // +---------------+
 
-    // msg_type: An unsigned, 8-bit integer that indicate message type. Value must be
-    //           NEW_FILE_FLAG, DATA_FILE_FLAG or CLOSE_SESSION_FLAG.
-
-    // +--------------------+-----------------------------------------+
-    // | Value              | Meaning                                 |
-    // +--------------------+-----------------------------------------+
-    // | NEW_FILE_FLAG      | Create a new file to analyse.           |
-    // | 0x00               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | DATA_FILE_FLAG     | Send data from a file.                  |
-    // | 0x01               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | CLOSE_SESSION_FLAG | Close the session.                      |
-    // | 0x02               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | END_OF_FILE_FLAG   | Indicates data file end                 |
-    // | 0x03               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | ABORT_FILE_FLAG    | Abort file.                             |
-    // | 0x04               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | RESULT_FLAG        | Result received from Validator          |
-    // | 0x05               |                                         |
-    // +--------------------+-----------------------------------------+
-    // | CHECK_FLAG         | File validator check server icap result |
-    // | 0x06               |                                         |
-    // +--------------------+-----------------------------------------+
-
-    // msg_size: An unsigned, 32-bit integer that indicate length of following message
-    //           data.
+    MsgType msg_type = MsgType::Error;
+    uint32_t msg_len = 0;
 
 
-    ICAPHeader(const uint8_t msg_type, const uint32_t msg_len)
+    ICAPHeader() = default;
+
+    ICAPHeader(MsgType msg_type, uint32_t msg_len) noexcept
     : msg_type(msg_type)
-    , msg_len(msg_len) {}
+    , msg_len(msg_len)
+    {}
 
-    ICAPHeader()
-    : msg_type(42)
-    , msg_len(-1) {}
-
-    void emit(OutStream & stream) {
-        stream.out_uint8(msg_type);
-        stream.out_uint32_be(msg_len);
-    }
-
-    void receive(InStream & stream) {
-        const unsigned expected = 5;    /* msg_type(1) + msg_len(4) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "ICAPHeader truncated, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-        this->msg_type = stream.in_uint8();
-
-        this->msg_len = stream.in_uint32_be();
-    }
-};
-
-
-struct ICAPNewFile {
-
-    const int file_id;
-    const std::string file_name;
-    const std::string target_name;
-
-    // NewFileMessage
-
-    // This message is sent to create a new file to request icap analyse
-    // for. It begins with an ICAPHeader, its msg_type must be NEW_FILE_FLAG.
-
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |                            File_id                            |
-    // +---------------------------------------------------------------+
-    // |                        File_name_size                         |
-    // +---------------------------------------------------------------+
-    // |                           File_Name                           |
-    // +---------------------------------------------------------------+
-    // |                              ...                              |
-    // +---------------------------------------------------------------+
-    // |                       Target_name_size                        |
-    // +---------------------------------------------------------------+
-    // |                          Target_Name                          |
-    // +---------------------------------------------------------------+
-    // |                              ...                              |
-    // +---------------------------------------------------------------+
-
-    // File_id:  An unsigned, 32-bit integer that contains new file id.
-
-    // File_name_size: An unsigned, 32-bit integer that indicate file name
-    //                 length.
-
-    // File_Name: A variable length, ascii string that contains new file
-    //            name.
-
-    // File_size: An unsigned, 32-bit integer that indicate file length
-    //            in bytes.
-
-    // Target_name_size: An unsigned, 32-bit integer that indicate target name
-    //                   length.
-
-    // Target_Name: A variable length, ascii string that contains target name
-    //              to request.
-
-    ICAPNewFile(const int file_id, const std::string & file_name, const std::string & target_name)
-    : file_id(file_id)
-    , file_name(file_name)
-    , target_name(target_name) {}
-
-    void emit(OutStream & stream) const
+    void emit(OutStream& stream) noexcept
     {
-        stream.out_uint32_be(this->file_id);
-
-        stream.out_uint32_be(this->file_name.length());
-        stream.out_string(this->file_name.c_str());
-
-        stream.out_uint32_be(this->target_name.length());
-        stream.out_string(this->target_name.c_str());
+        stream.out_uint8(safe_int(this->msg_type));
+        stream.out_uint32_be(this->msg_len);
     }
 };
 
-
-struct ICAPEndOfFile {
-
-    const int file_id;
-
-    // EndOfFile
-
-    // This message is sent when data file sent to the validator are
-    // complete.
-
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |                            File_id                            |
-    // +---------------------------------------------------------------+
-
-    // File_id: An unsigned, 32-bit integer that contains the complete file id.
-
-
-    ICAPEndOfFile(const int file_id)
-    : file_id(file_id) {}
-
-    void emit(OutStream & stream) {
-
-        stream.out_uint32_be(this->file_id);
-    }
-};
-
-
-struct ICAPAbortFile {
-
-    const int file_id;
-
-    // AbortFile
-
-    // This message is sent when file request must be aborted.
-
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |                            File_id                            |
-    // +---------------------------------------------------------------+
-
-    // File_id: An unsigned, 32-bit integer that contains the complete file id.
-
-
-    ICAPAbortFile(const int file_id)
-    : file_id(file_id) {}
-
-    void emit(OutStream & stream) {
-
-        stream.out_uint32_be(this->file_id);
-    }
-};
-
-
-struct ICAPFileDataHeader
+enum class [[nodiscard]] ReceiveStatus : bool
 {
-    const int file_id;
-
-    // FileDataMessage
-
-    // This message contains data from a file. It begins with an ICAPHeader
-    // its msg_type must be DATA_FILE_FLAG.
-
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |                            File_id                            |
-    // +---------------------------------------------------------------+
-    // |                             DATA                              |
-    // +---------------------------------------------------------------+
-    // |                              ...                              |
-    // +---------------------------------------------------------------+
-
-    // File_id: A variable length, ascii string that contains file id data
-    // are coming from.
-
-    // DATA: A binary, variable length, pay load data from a file .
-
-    ICAPFileDataHeader(const int file_id)
-    : file_id(file_id) {}
-
-    void emit(OutStream & stream) {
-
-        stream.out_uint32_be(this->file_id);
-    }
+    WaitingData,
+    Ok,
 };
 
-struct ICAPCheck {
-    uint8_t up_flag;
-    int max_connections_number;
-
-//     Check message
-
-//     This message is send from the local service to sessions. It begins with an
-//     ICAPHeader, its msg_type must be RESULT_FLAG.
-
-//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//     | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-//     |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//     |    up_flag    |            max_connections_number             |
-//     +---------------+-----------------------------------------------+
-//     |               |
-//     +---------------+
-
-//     up_flag: An unsigned, 8-bit integer that contains flag SERVICE_UP_FLAG
-//              or SERVICE_DOWN_FLAG
-
-//     max_connections_number: An unsigned, 32-bit integer that contains the
-//                             maximum number of connection icap service support
-
-    void receive(InStream & stream) {
-        const unsigned expected = 5;    /* up_flag(1) + max_connections_number(4) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "ICAPCheck truncated, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-        this->up_flag = stream.in_uint8();
-
-        this->max_connections_number = stream.in_uint32_be();
-    }
-
-};
-
-struct ICAPResult {
-
-    uint8_t result = LocalICAPServiceProtocol::ERROR_FLAG;
-    int id;
-    std::string content;
+struct ICAPResultHeader
+{
+    ValidationType result = ValidationType::Error;
+    ICAPFileId file_id;
     size_t content_size;
 
     // ResultMessage
@@ -432,7 +126,7 @@ struct ICAPResult {
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     // |    Result     |                local_File_id                  |
     // +---------------+-----------------------------------------------+
-    // |               |               content_lend gth                |
+    // |               |               content_length                  |
     // +---------------+-----------------------------------------------+
     // |               |                  content                      |
     // +---------------+-----------------------------------------------+
@@ -440,7 +134,7 @@ struct ICAPResult {
     // +---------------------------------------------------------------+
 
     // Result: An unsigned, 8-bit integer that indicate result analysis. Value
-    //         must be ACCEPTED_FLAG, REJECTED_FLAG or ERROR_FLAG.
+    //         must be ACCEPTED_FLAG, REJECTED_FLAG or Error_FLAG.
 
     //   +--------------------+----------------------------------------------+
     //   | Value              | Meaning                                      |
@@ -451,7 +145,7 @@ struct ICAPResult {
     //   | REJECTED_FLAG      | File is NOT valid                            |
     //   | 0x01               |                                              |
     //   +--------------------+----------------------------------------------+
-    //   | ERROR_FLAG         | File analysis error                          |
+    //   | Error_FLAG         | File analysis error                          |
     //   | 0x02               |                                              |
     //   +--------------------+----------------------------------------------+
 
@@ -463,263 +157,281 @@ struct ICAPResult {
 
     // content: A variable length, ascii string that contains analysis result.
 
-
-    ICAPResult() = default;
-
-    void receive(InStream & stream) {
-        const unsigned expected = 9;    /* Result(1) + File_id_size(4) + content_size(4)  */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "ICAPResult truncated, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
+    ReceiveStatus receive(InStream& stream) noexcept
+    {
+        /* Result(1) + File_id_size(4) + content_size(4)  */
+        if (stream.in_remain() < 9) {
+            return ReceiveStatus::WaitingData;
         }
-        this->result = stream.in_uint8();
 
-        this->id = stream.in_uint32_be();
-
+        this->result = safe_int(stream.in_uint8());
+        this->file_id = safe_int(stream.in_uint32_be());
         this->content_size = stream.in_uint32_be();
 
-//         if (!stream.in_check_rem(content_size)) {
-//             LOG( LOG_INFO, "ICAPResult truncated, need=%u remains=%zu"
-//                , content_size, stream.in_remain());
-//             throw Error(ERR_RDP_DATA_TRUNCATED);
-//         }
-
-        this->content = std::string(char_ptr_cast(stream.get_current()), stream.in_remain());
+        return ReceiveStatus::Ok;
     }
-
 };
 
-} // namespace LocalICAPServiceProtocol
+struct ICAPCheck
+{
+    enum class IsUp : bool { Down, Up };
 
+    IsUp service_is_up;
+    int max_connections_number;
 
+    //     Check message
 
-ICAPService * icap_open_session(const std::string & socket_path);
-int icap_open_file(ICAPService * service, const std::string & file_name, const std::string & target_name);
-int icap_send_data(const ICAPService * service, const int file_id, const char * data, const int size);
-void icap_receive_result(ICAPService * service);
-int icap_end_of_file(ICAPService * service, const int file_id);
-int icap_close_session(ICAPService * service);
-int icap_abort_file(ICAPService * service, const int file_id);
-bool icap_is_waitting_for_response_completion(ICAPService * service);
+    //     This message is send from the local service to sessions. It begins with an
+    //     ICAPHeader, its msg_type must be Result_FLAG.
 
+    //     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    //     | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    //     |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    //     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    //     |    up_flag    |            max_connections_number             |
+    //     +---------------+-----------------------------------------------+
+    //     |               |
+    //     +---------------+
 
+    //     up_flag: An unsigned, 8-bit integer that contains flag SERVICE_UP_FLAG
+    //              or SERVICE_DOWN_FLAG
 
-inline ICAPService * icap_open_session(const std::string & socket_path) {
+    //     max_connections_number: An unsigned, 32-bit integer that contains the
+    //                             maximum number of connection icap service support
 
-    return new ICAPService(socket_path);
-}
-
-inline int icap_open_file(ICAPService * service, const std::string & file_name, const std::string & target_name) {
-
-    int file_id = -1;
-    service->result_flag = -1;
-    service->last_data_response_total_size = 0;
-    service->content = "";
-
-    if (service->fd.is_open()) {
-        file_id = service->generate_id();
-
-        std::string file_name_tmp = file_name;
-        if (file_name.length() > 512) {
-            file_name_tmp = file_name.substr(0, 512);
+    ReceiveStatus receive(InStream& stream) noexcept
+    {
+        /* up_flag(1) + max_connections_number(4) */
+        if (stream.in_remain() < 5) {
+            return ReceiveStatus::WaitingData;
         }
 
-        StaticOutStream<1024> message;
+        this->service_is_up = IsUp(bool(stream.in_uint8()));
+        this->max_connections_number = stream.in_uint32_be();
 
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::NEW_FILE_FLAG, 12+file_name_tmp.length()+target_name.length());
-        header.emit(message);
-
-        LocalICAPServiceProtocol::ICAPNewFile icap_new_file(file_id, file_name_tmp, target_name);
-        icap_new_file.emit(message);
-
-        int n = write(service->fd.fd(), message.get_data(), message.get_offset());
-
-        if (size_t(n) != message.get_offset()) {
-            return -1;
-        }
+        return ReceiveStatus::Ok;
     }
+};
+
+inline ICAPFileId send_open_file(
+    OutTransport trans, ICAPFileId file_id, std::string_view file_name, std::string_view target_name)
+{
+    file_name = std::string_view(file_name.data(), std::min(std::size_t(512), file_name.size()));
+
+    StaticOutStream<1024> message;
+
+    ICAPHeader(MsgType::NewFile, 4u + 8u + file_name.size() + target_name.size())
+    .emit(message);
+
+    emit_file_id(message, file_id);
+
+    message.out_uint32_be(file_name.size());
+    message.out_copy_bytes(file_name);
+
+    message.out_uint32_be(target_name.size());
+    message.out_copy_bytes(target_name);
+
+    trans.send(message.get_bytes());
 
     return file_id;
 }
 
-inline int icap_send_data(const ICAPService * service, const int file_id, const char * data, const int size) {
+inline void send_header(
+    OutTransport trans, ICAPFileId file_id, MsgType msg_type, uint32_t pkt_len = 0)
+{
+    StaticOutStream<16> message;
 
-    int total_n = -1;
+    ICAPHeader(msg_type, 4u + pkt_len)
+    .emit(message);
 
-    if (service->fd.is_open()) {
+    emit_file_id(message, file_id);
 
-        size_t data_len_to_send = size;
-        InStream stream_data(data, size);
+    trans.send(message.get_bytes());
+}
 
-        while (data_len_to_send > 0) {
+inline void send_data_file(OutTransport trans, ICAPFileId file_id, const_bytes_view data)
+{
+    // TODO 1024 ????
+    constexpr std::ptrdiff_t max_pkt_len = 1024;
 
-            size_t partial_data_size = data_len_to_send;
+    auto p = data.begin();
+    const auto pend = data.end();
 
-            if (data_len_to_send > 1024) {
-                data_len_to_send -= 1024;
-                partial_data_size = 1024;
-            } else {
-                data_len_to_send = 0;
+    while (p != pend)
+    {
+        const auto pkt_len = std::min(pend-p, max_pkt_len);
+        send_header(trans, file_id, MsgType::DataFile, pkt_len);
+        trans.send(p, pkt_len);
+        p += pkt_len;
+    }
+}
+
+}
+
+struct ICAPService
+{
+    ICAPService(Transport& trans) noexcept
+    : trans(trans)
+    {}
+
+    bool service_is_up() const noexcept
+    {
+        return this->check.service_is_up == LocalICAPProtocol::ICAPCheck::IsUp::Up;
+    }
+
+    ICAPFileId open_file(std::string_view file_name, std::string_view target_name)
+    {
+        return LocalICAPProtocol::send_open_file(this->trans, this->generate_id(), file_name, target_name);
+    }
+
+    void send_data(ICAPFileId file_id, const_bytes_view data) const
+    {
+        LocalICAPProtocol::send_data_file(this->trans, file_id, data);
+    }
+
+    void send_eof(ICAPFileId file_id) const
+    {
+        using namespace LocalICAPProtocol;
+        send_header(this->trans, file_id, MsgType::Eof);
+    }
+
+    void send_abort(ICAPFileId file_id) const
+    {
+        using namespace LocalICAPProtocol;
+        send_header(this->trans, file_id, MsgType::AbortFile);
+    }
+
+    void send_close_session() const
+    {
+        using namespace LocalICAPProtocol;
+        send_header(this->trans, ICAPFileId(), MsgType::CloseSession);
+    }
+
+    enum class [[nodiscard]] ResponseType : uint8_t
+    {
+        Error,
+        WaitingData,
+        Initialized,
+        Content,
+    };
+
+    ResponseType receive_response()
+    {
+        if (this->response_type == ResponseType::WaitingData)
+        {
+            this->buf.read_from(this->trans);
+        }
+        this->response_type = this->_receive_response();
+        return this->response_type;
+    }
+
+private:
+    ResponseType _receive_response()
+    {
+        InStream in_stream(this->buf.av());
+
+        auto shift_data = [&](ResponseType r){
+            this->buf.advance(in_stream.get_offset());
+            return r;
+        };
+
+        switch (this->state)
+        {
+            case State::InitHeader: {
+                switch (check.receive(in_stream))
+                {
+                    case LocalICAPProtocol::ReceiveStatus::WaitingData:
+                        return ResponseType::WaitingData;
+                    case LocalICAPProtocol::ReceiveStatus::Ok:
+                        this->state = State::StartMessage;
+                        return shift_data(ResponseType::Initialized);
+                }
             }
 
-            StaticOutStream<1600> message;
+            case State::StartMessage: {
+                this->content.clear();
+                switch (this->result_header.receive(in_stream))
+                {
+                    case LocalICAPProtocol::ReceiveStatus::WaitingData:
+                        return ResponseType::WaitingData;
+                    case LocalICAPProtocol::ReceiveStatus::Ok:
+                        break;
+                }
 
-            LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::DATA_FILE_FLAG, 4+partial_data_size);
-            header.emit(message);
-
-            LocalICAPServiceProtocol::ICAPFileDataHeader file_data(file_id);
-            file_data.emit(message);
-
-            message.out_copy_bytes(cbytes_view(stream_data.get_current(), partial_data_size));
-            stream_data.in_skip_bytes(partial_data_size);
-
-            if (service->fd.is_open()) {
-                int sent_data = write(service->fd.fd(), message.get_data(), message.get_offset());
-                total_n += sent_data;
-
-                usleep(1);
+                switch (this->result_header.result)
+                {
+                    case LocalICAPProtocol::ValidationType::Error:
+                        return ResponseType::Error;
+                    case LocalICAPProtocol::ValidationType::IsRejected:
+                    case LocalICAPProtocol::ValidationType::IsValid:
+                        this->state = State::FragmentMessage;
+                        break;
+                }
+                [[fallthrough]];
             }
+
+            case State::FragmentMessage: {
+                std::size_t remaining_buf = this->result_header.content_size - this->content.size();
+                std::size_t remaining_message = std::min(in_stream.in_remain(), remaining_buf);
+                auto message = in_stream.in_skip_bytes(remaining_message);
+                this->content.append(char_ptr_cast(message.data()), message.size());
+
+                if (this->content.size() == this->result_header.content_size)
+                {
+                    this->state = State::StartMessage;
+                    return shift_data(ResponseType::Content);
+                }
+
+                return shift_data(ResponseType::WaitingData);
+            }
+
+            default: REDEMPTION_UNREACHABLE();
         }
     }
 
-    return total_n;
-}
-
-inline void icap_receive_response(ICAPService * service) {
-
-    int read_data_len = -1;
-
-    if (service->fd.is_open()) {
-
-        char buff[512] = {0};
-
-//         while (read_data_len < 0) {
-            read_data_len = read(service->fd.fd(), buff, 512);
-//        }
-
-        if (read_data_len > 0) {
-
-            InStream stream_data(buff, read_data_len);
-
-            if (service->content.length() < service->last_data_response_total_size) {
-
-                int end = 0;
-                for (end = 511; end >= 0; end--) {
-                    if (buff[end] != 0) {
-                        break;
-                    }
-                }
-
-                int start = 0;
-                for (start = 0; start < read_data_len; start++) {
-                    if (buff[start] != 0) {
-                        break;
-                    }
-                }
-
-                if (end < (start+1)) {
-                    return;
-                }
-
-                size_t len_text = end - start + 1;
-                char * info = buff + start;
-                std::string tmp_content = std::string(info, len_text);
-                service->content += tmp_content;
-
-            } else {
-                LocalICAPServiceProtocol::ICAPHeader header;
-                header.receive(stream_data);
-
-                switch(header.msg_type) {
-
-                    case LocalICAPServiceProtocol::RESULT_FLAG:
-                    {
-                        LocalICAPServiceProtocol::ICAPResult result;
-                        result.receive(stream_data);
-                        service->result_flag = result.result;
-                        service->content = result.content;
-                        service->last_result_file_id_received = result.id;
-                        service->last_data_response_total_size = result.content_size;
-                    }
-                        break;
-
-                    case LocalICAPServiceProtocol::CHECK_FLAG:
-                    {
-                        LocalICAPServiceProtocol::ICAPCheck check;
-                        check.receive(stream_data);
-                        service->service_is_up = (check.up_flag == LocalICAPServiceProtocol::SERVICE_UP_FLAG);
-                    }
-                        break;
-                }
-            }
-        } else {
-            service->fd.close();
-            service->result_flag = LocalICAPServiceProtocol::ERROR_FLAG;
-            service->content =  "Error, Validator local service is closed.";
-        }
-    }
-}
-
-inline int icap_end_of_file(ICAPService * service, const int file_id) {
-
-    int n = -1;
-
-    if (service->fd.is_open()) {
-        StaticOutStream<16> message;
-
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::END_OF_FILE_FLAG, 4);
-        header.emit(message);
-
-        LocalICAPServiceProtocol::ICAPEndOfFile end_of_file(file_id);
-        end_of_file.emit(message);
-
-        n = write(service->fd.fd(), message.get_data(), message.get_offset());
+public:
+    std::string const& get_content() const noexcept
+    {
+        return this->content;
     }
 
-    return n;
-}
-
-inline int icap_abort_file(ICAPService * service, const int file_id) {
-
-    int n = -1;
-
-    if (service->fd.is_open()) {
-        StaticOutStream<16> message;
-
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::ABORT_FILE_FLAG, 4);
-        header.emit(message);
-
-        LocalICAPServiceProtocol::ICAPAbortFile abort_file(file_id);
-        abort_file.emit(message);
-
-        n = write(service->fd.fd(), message.get_data(), message.get_offset());
+    ICAPFileId last_file_id() const noexcept
+    {
+        return this->result_header.file_id;
     }
 
-    return n;
-}
-
-inline int icap_close_session(ICAPService * service) {
-
-    int n = -1;
-
-    if (service->fd.is_open()) {
-        StaticOutStream<8> message;
-
-        LocalICAPServiceProtocol::ICAPHeader header(LocalICAPServiceProtocol::CLOSE_SESSION_FLAG, 0);
-        header.emit(message);
-
-        n = write(service->fd.fd(), message.get_data(), message.get_offset());
+    LocalICAPProtocol::ValidationType last_result_flag() const noexcept
+    {
+        return this->result_header.result;
     }
-    delete service;
 
-    return n;
-}
-
-inline bool icap_is_waitting_for_response_completion(ICAPService * service) {
-    if (service == nullptr) {
-        return false;
+    ResponseType last_response_type() const noexcept
+    {
+        return this->response_type;
     }
-    return service->content.length() < service->last_data_response_total_size;
-}
 
+private:
+    ICAPFileId generate_id() noexcept
+    {
+        ++this->current_id;
+        return ICAPFileId(this->current_id);
+    }
+
+
+    enum class State : uint8_t
+    {
+        InitHeader,
+        StartMessage,
+        FragmentMessage,
+    };
+
+    Transport& trans;
+    LocalICAPProtocol::ICAPResultHeader result_header;
+    LocalICAPProtocol::ICAPCheck check {};
+    std::string content;
+    int32_t current_id = 0;
+    State state = State::InitHeader;
+    ResponseType response_type = ResponseType::WaitingData;
+
+    BasicStaticBuffer<512, uint16_t> buf;
+};
