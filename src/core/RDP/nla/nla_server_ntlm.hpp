@@ -73,26 +73,6 @@ class rdpCredsspServerNTLM final
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
-    static void ap_integer_increment_le(array_view_u8 number) {
-        for (uint8_t& i : number) {
-            if (i < 0xFF) {
-                i++;
-                break;
-            }
-            i = 0;
-        }
-    }
-
-    static void ap_integer_decrement_le(array_view_u8 number) {
-        for (uint8_t& i : number) {
-            if (i > 0) {
-                i--;
-                break;
-            }
-            i = 0xFF;
-        }
-    }
-
     void credssp_generate_public_key_hash_client_to_server() {
         LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (client->server)");
         Array & SavedHash = this->ClientServerHash;
@@ -867,7 +847,7 @@ private:
         else {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
-            this->ap_integer_increment_le(this->public_key);
+            ::ap_integer_increment_le(this->public_key);
         }
 
         return this->EncryptMessage(

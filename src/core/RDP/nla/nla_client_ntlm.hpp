@@ -230,25 +230,6 @@ class rdpCredsspClientNTLM
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
-    static void ap_integer_increment_le(array_view_u8 number) {
-        for (uint8_t& i : number) {
-            if (i < 0xFF) {
-                i++;
-                break;
-            }
-            i = 0;
-        }
-    }
-
-    static void ap_integer_decrement_le(array_view_u8 number) {
-        for (uint8_t& i : number) {
-            if (i > 0) {
-                i--;
-                break;
-            }
-            i = 0xFF;
-        }
-    }
 
     void credssp_generate_client_nonce() {
         LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
@@ -351,7 +332,7 @@ class rdpCredsspClientNTLM
         if (version < 5) {
             // if we are client and protocol is 2,3,4
             // then get the public key minus one
-            ap_integer_decrement_le(public_key2);
+            ::ap_integer_decrement_le(public_key2);
         }
 
         if (memcmp(public_key.data(), public_key2.data(), public_key.size()) != 0) {

@@ -247,3 +247,24 @@ constexpr array_view_const_char operator "" _av(char const * s, size_t len) noex
     return {s, len};
 }
 
+static inline void ap_integer_increment_le(array_view_u8 number) {
+    for (uint8_t& i : number) {
+        if (i < 0xFF) {
+            i++;
+            break;
+        }
+        i = 0;
+    }
+}
+
+static inline void ap_integer_decrement_le(array_view_u8 number) {
+    for (uint8_t& i : number) {
+        if (i > 0) {
+            i--;
+            break;
+        }
+        i = 0xFF;
+    }
+}
+
+
