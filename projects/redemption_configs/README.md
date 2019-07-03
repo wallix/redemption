@@ -105,7 +105,6 @@ Note: `W.member(type_<int>(), sesman::type_<bool>(), ...)` is ok.
 - `types::ip_string`
 - `types::dirpath`: always `/` terminated. Note: use `std::string` for file path type.
 - `types::range<cpp_type, min, max>`
-- `types::static_string`
 - `types::fixed_string<n>`: size without zero-terminal.
 - `types::fixed_binary<n>`: size without zero-terminal.
 

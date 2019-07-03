@@ -1913,10 +1913,26 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "enable_interupting_validator")) {
+        else if (0 == strcmp(key, "socket_path")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::enable_interupting_validator&>(this->variables).value,
+                static_cast<cfg::validator::socket_path&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "target_name")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::validator::target_name&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_interupting")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::validator::enable_interupting&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -1929,27 +1945,11 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "channel_files_directory")) {
+        else if (0 == strcmp(key, "save_files_directory")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::channel_files_directory&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "validator_socket_path")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::validator::validator_socket_path&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "validator_target_name")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::validator::validator_target_name&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                static_cast<cfg::validator::save_files_directory&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
             );
         }

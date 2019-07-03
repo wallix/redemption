@@ -72,7 +72,7 @@ namespace
             }
         }
     };
-}
+} // anonymous namespace
 
 
 struct ValidatorApi
@@ -135,7 +135,7 @@ namespace
         m.a[int(LocalICAPProtocol::ValidationType::Error)] = 2;
         return m;
     }
-}
+} // anonymous namespace
 
 
 extern "C"
@@ -144,13 +144,13 @@ extern "C"
 ValidatorApi* validator_open_session(char const* socket_path) noexcept
 {
     SCOPED_TRACE;
-    return new (std::nothrow) ValidatorApi(socket_path);
+    return new (std::nothrow) ValidatorApi(socket_path); /*NOLINT*/
 }
 
 ValidatorApi* validator_open_fd_session(int fd) noexcept
 {
     SCOPED_TRACE;
-    return new (std::nothrow) ValidatorApi(unique_fd(fd));
+    return new (std::nothrow) ValidatorApi(unique_fd(fd)); /*NOLINT*/
 }
 
 int validator_close_session(ValidatorApi* validator) noexcept
@@ -159,7 +159,7 @@ int validator_close_session(ValidatorApi* validator) noexcept
     CHECK_HANDLE(validator);
     validator->icap.send_close_session();
     CHECK_ERRNUM(validator);
-    delete validator;
+    delete validator; /*NOLINT*/
     return 0;
 }
 

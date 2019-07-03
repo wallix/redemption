@@ -26,53 +26,52 @@
 RED_AUTO_TEST_CASE(TestChannelsAuthorizations)
 {
     ChannelsAuthorizations channels_authorizations("a,b,c", "b,d");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("e")), false);
+    RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")));
+    RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("e")));
 }
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizations2)
 {
     ChannelsAuthorizations channels_authorizations("a, b   , c", "   b,d  ");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("e")), false);
+    RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")));
+    RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("e")));
 }
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllDeny)
 {
     ChannelsAuthorizations channels_authorizations("a,b,c", "*");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")), false);
+    RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")));
+    RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")));
+    RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")));
 
-    ClipboardVirtualChannelParams cvcp;
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(!channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
 }
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllAllow)
 {
     ChannelsAuthorizations channels_authorizations("*", "a,b,c");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")), !true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")), !true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")), !true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")), !false);
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("a")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("b")));
+    RED_CHECK(!channels_authorizations.is_authorized(CHANNELS::ChannelNameId("c")));
+    RED_CHECK( channels_authorizations.is_authorized(CHANNELS::ChannelNameId("d")));
 
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_down_authorized = true;
-    cvcp.clipboard_up_authorized   = true;
-    cvcp.clipboard_file_authorized = true;
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK( channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK( channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK( channels_authorizations.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), !false);
+    RED_CHECK(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
 }
 
 CHANNELS::ChannelNameId const rdpdrid("rdpdr");
@@ -85,123 +84,120 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsCliprdr)
     CHANNELS::ChannelNameId const d("d");
 
     ChannelsAuthorizations channels_authorizations("cliprdr", "*");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), false);
+    RED_CHECK( channels_authorizations.is_authorized(cliprdr));
+    RED_CHECK(!channels_authorizations.is_authorized(d));
 
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_down_authorized = true;
-    cvcp.clipboard_up_authorized   = true;
-    cvcp.clipboard_file_authorized = true;
-
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK(channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK(channels_authorizations.cliprdr_file_is_authorized());
 
     channels_authorizations = ChannelsAuthorizations("cliprdr_up,cliprdr_down", "*");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), false);
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK( channels_authorizations.is_authorized(cliprdr));
+    RED_CHECK(!channels_authorizations.is_authorized(d));
+
+    RED_CHECK( channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK( channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
     channels_authorizations = ChannelsAuthorizations("cliprdr_down", "*");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), false);
-    cvcp.clipboard_up_authorized = false;
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK( channels_authorizations.is_authorized(cliprdr));
+    RED_CHECK(!channels_authorizations.is_authorized(d));
+
+    RED_CHECK(!channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK( channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
     channels_authorizations = ChannelsAuthorizations("cliprdr_down", "cliprdr_up");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), false);
-    cvcp.clipboard_up_authorized = false;
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK( channels_authorizations.is_authorized(cliprdr));
+    RED_CHECK(!channels_authorizations.is_authorized(d));
+
+    RED_CHECK(!channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK( channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
     channels_authorizations = ChannelsAuthorizations("*", "cliprdr_up");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), true);
-    cvcp.clipboard_up_authorized = false;
-    cvcp.clipboard_file_authorized = true;
+    RED_CHECK( channels_authorizations.is_authorized(cliprdr));
+    RED_CHECK( channels_authorizations.is_authorized(d));
+
+    RED_CHECK(!channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK( channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK( channels_authorizations.cliprdr_file_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsRdpdr)
 {
     ChannelsAuthorizations channels_authorizations("*", "rdpdr_printer");
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_read_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_write_is_authorized(), true);
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
+    RED_CHECK( channels_authorizations.is_authorized(rdpdrid));
+    RED_CHECK( channels_authorizations.rdpdr_drive_read_is_authorized());
+    RED_CHECK( channels_authorizations.rdpdr_drive_write_is_authorized());
 
     channels_authorizations = ChannelsAuthorizations("rdpdr_port", "rdpdr_printer");
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_read_is_authorized(), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_write_is_authorized(), false);
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
+    RED_CHECK( channels_authorizations.is_authorized(rdpdrid));
+    RED_CHECK(!channels_authorizations.rdpdr_drive_read_is_authorized());
+    RED_CHECK(!channels_authorizations.rdpdr_drive_write_is_authorized());
 
     channels_authorizations = ChannelsAuthorizations("*", "");
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), true);
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK( channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_down_authorized = true;
-    cvcp.clipboard_up_authorized   = true;
-    cvcp.clipboard_file_authorized = true;
+    RED_CHECK(channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK(channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK(channels_authorizations.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
-
-//    RED_CHECK_EQUAL(channels_authorizations.cliprdr_up_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_read_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_write_is_authorized(), true);
+    RED_CHECK( channels_authorizations.is_authorized(rdpdrid));
+    RED_CHECK( channels_authorizations.is_authorized(cliprdr));
+    RED_CHECK( channels_authorizations.rdpdr_drive_read_is_authorized());
+    RED_CHECK( channels_authorizations.rdpdr_drive_write_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsAllAll)
 {
     ChannelsAuthorizations channels_authorizations("*", "*");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(rdpdrid), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(rdpsnd), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(drdynvc), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
+    RED_CHECK(!channels_authorizations.is_authorized(rdpdrid));
+    RED_CHECK(!channels_authorizations.is_authorized(cliprdr));
+    RED_CHECK(!channels_authorizations.is_authorized(rdpsnd));
+    RED_CHECK(!channels_authorizations.is_authorized(drdynvc));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-    // TODO: check that, this should not be the behavior for cliprdr, should be deny/allow
-    // here deny seems to have priority.
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_up_authorized = false;
-    cvcp.clipboard_down_authorized = false;
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(!channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_read_is_authorized(), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_write_is_authorized(), false);
+    RED_CHECK(!channels_authorizations.rdpdr_drive_read_is_authorized());
+    RED_CHECK(!channels_authorizations.rdpdr_drive_write_is_authorized());
 
     channels_authorizations = ChannelsAuthorizations("*,drdynvc", "*");
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(rdpdrid), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(rdpsnd), false);
-    RED_CHECK_EQUAL(channels_authorizations.is_authorized(drdynvc), true);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
+    RED_CHECK(!channels_authorizations.is_authorized(rdpdrid));
+    RED_CHECK(!channels_authorizations.is_authorized(cliprdr));
+    RED_CHECK(!channels_authorizations.is_authorized(rdpsnd));
+    RED_CHECK( channels_authorizations.is_authorized(drdynvc));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-    RED_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(!channels_authorizations.cliprdr_up_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_down_is_authorized());
+    RED_CHECK(!channels_authorizations.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_read_is_authorized(), false);
-    RED_CHECK_EQUAL(channels_authorizations.rdpdr_drive_write_is_authorized(), false);
+    RED_CHECK(!channels_authorizations.rdpdr_drive_read_is_authorized());
+    RED_CHECK(!channels_authorizations.rdpdr_drive_write_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
@@ -310,24 +306,22 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
     ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_CLIPBOARD_UP,RDP_CLIPBOARD_DOWN,RDP_DRIVE");
     ChannelsAuthorizations authorization(allow, deny);
 
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_down_authorized = true;
-    cvcp.clipboard_up_authorized   = true;
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, authorization.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK( authorization.cliprdr_up_is_authorized());
+    RED_CHECK( authorization.cliprdr_down_is_authorized());
+    RED_CHECK(!authorization.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(drdynvc), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpsnd), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
-    RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), false);
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK( authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
+    RED_CHECK( authorization.is_authorized(cliprdr));
+    RED_CHECK( authorization.is_authorized(drdynvc));
+    RED_CHECK( authorization.is_authorized(rdpdrid));
+    RED_CHECK( authorization.is_authorized(rdpsnd));
+    RED_CHECK( authorization.rdpdr_drive_read_is_authorized());
+    RED_CHECK( authorization.rdpdr_drive_write_is_authorized());
+    RED_CHECK(!authorization.rdpsnd_audio_output_is_authorized());
 
 
     allow = "*";
@@ -335,63 +329,52 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels)
     ChannelsAuthorizations::update_authorized_channels(allow, deny, "");
     ChannelsAuthorizations authorization1(allow, deny);
 
-    cvcp.clipboard_up_authorized = false;
-    cvcp.clipboard_down_authorized = false;
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, authorization1.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(!authorization1.cliprdr_up_is_authorized());
+    RED_CHECK(!authorization1.cliprdr_down_is_authorized());
+    RED_CHECK(!authorization1.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), false);
-    RED_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
-    RED_CHECK_EQUAL(authorization1.is_authorized(cliprdr), false);
-    RED_CHECK_EQUAL(authorization1.is_authorized(drdynvc), true);
-    RED_CHECK_EQUAL(authorization1.is_authorized(rdpdrid), false);
-    RED_CHECK_EQUAL(authorization1.is_authorized(rdpsnd), false);
-    RED_CHECK_EQUAL(authorization1.rdpdr_drive_read_is_authorized(), false);
-    RED_CHECK_EQUAL(authorization1.rdpdr_drive_write_is_authorized(), false);
-    RED_CHECK_EQUAL(authorization1.rdpsnd_audio_output_is_authorized(), false);
+    RED_CHECK(!authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK(!authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!authorization1.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
+    RED_CHECK(!authorization1.is_authorized(cliprdr));
+    RED_CHECK( authorization1.is_authorized(drdynvc));
+    RED_CHECK(!authorization1.is_authorized(rdpdrid));
+    RED_CHECK(!authorization1.is_authorized(rdpsnd));
+    RED_CHECK(!authorization1.rdpdr_drive_read_is_authorized());
+    RED_CHECK(!authorization1.rdpdr_drive_write_is_authorized());
+    RED_CHECK(!authorization1.rdpsnd_audio_output_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels2)
 {
-    std::string allow;
-    std::string deny;
-
-    allow = "*";
-    deny = "";
+    std::string allow = "*";
+    std::string deny = "";
     ChannelsAuthorizations::update_authorized_channels(allow, deny, "RDP_SMARTCARD,RDP_CLIPBOARD_UP");
     RED_CHECK_EQUAL(allow, "*,cliprdr_up,rdpdr_smartcard");
     RED_CHECK_EQUAL(deny, "cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
 
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_down_authorized = false;
-    cvcp.clipboard_up_authorized = true;
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, authorization.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK( authorization.cliprdr_up_is_authorized());
+    RED_CHECK(!authorization.cliprdr_down_is_authorized());
+    RED_CHECK(!authorization.cliprdr_file_is_authorized());
 
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK( authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-//    RED_CHECK_EQUAL(authorization.cliprdr_down_is_authorized(), false);
-//    RED_CHECK_EQUAL(authorization.cliprdr_up_is_authorized(), true);
-//    RED_CHECK_EQUAL(authorization.cliprdr_file_is_authorized(), false);
+    RED_CHECK( authorization.is_authorized(cliprdr));
+    RED_CHECK( authorization.is_authorized(drdynvc));
+    RED_CHECK( authorization.is_authorized(rdpdrid));
+    RED_CHECK( authorization.is_authorized(rdpsnd));
 
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), true);
+    RED_CHECK(!authorization.rdpdr_drive_read_is_authorized());
+    RED_CHECK(!authorization.rdpdr_drive_write_is_authorized());
 
-    RED_CHECK_EQUAL(authorization.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(drdynvc), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpsnd), true);
-
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), false);
-
-    RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), false);
+    RED_CHECK(!authorization.rdpsnd_audio_output_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels3)
@@ -405,32 +388,26 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels3)
     RED_CHECK_EQUAL(allow, "*,cliprdr_up");
     RED_CHECK_EQUAL(deny, "cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_drive_read,rdpdr_drive_write,rdpdr_smartcard,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_down_authorized = false;
-    cvcp.clipboard_up_authorized = true;
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, authorization.get_clipboard_virtual_channel_params(false, false, false));
 
+    RED_CHECK( authorization.cliprdr_up_is_authorized());
+    RED_CHECK(!authorization.cliprdr_down_is_authorized());
+    RED_CHECK(!authorization.cliprdr_file_is_authorized());
 
-//    RED_CHECK_EQUAL(authorization.cliprdr_down_is_authorized(), false);
-//    RED_CHECK_EQUAL(authorization.cliprdr_up_is_authorized(), true);
-//    RED_CHECK_EQUAL(authorization.cliprdr_file_is_authorized(), false);
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
+    RED_CHECK( authorization.is_authorized(cliprdr));
+    RED_CHECK( authorization.is_authorized(drdynvc));
+    RED_CHECK(!authorization.is_authorized(rdpdrid));
+    RED_CHECK(!authorization.is_authorized(rdpsnd));
 
-    RED_CHECK_EQUAL(authorization.is_authorized(cliprdr), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(drdynvc), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpdrid), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpsnd), false);
+    RED_CHECK(!authorization.rdpdr_drive_read_is_authorized());
+    RED_CHECK(!authorization.rdpdr_drive_write_is_authorized());
 
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), false);
-
-    RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), false);
+    RED_CHECK(!authorization.rdpsnd_audio_output_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels4)
@@ -445,31 +422,25 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels4)
     RED_CHECK_EQUAL(deny, "cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
 
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_down_authorized = false;
-    cvcp.clipboard_up_authorized = false;
-    cvcp.clipboard_file_authorized = false;
-    RED_CHECK_EQUAL(cvcp, authorization.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(!authorization.cliprdr_up_is_authorized());
+    RED_CHECK(!authorization.cliprdr_down_is_authorized());
+    RED_CHECK(!authorization.cliprdr_file_is_authorized());
 
-//    RED_CHECK_EQUAL(authorization.cliprdr_down_is_authorized(), false);
-//    RED_CHECK_EQUAL(authorization.cliprdr_up_is_authorized(), false);
-//    RED_CHECK_EQUAL(authorization.cliprdr_file_is_authorized(), false);
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK( authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
+    RED_CHECK(!authorization.is_authorized(cliprdr));
+    RED_CHECK( authorization.is_authorized(drdynvc));
+    RED_CHECK( authorization.is_authorized(rdpdrid));
+    RED_CHECK( authorization.is_authorized(rdpsnd));
 
-    RED_CHECK_EQUAL(authorization.is_authorized(cliprdr), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(drdynvc), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpsnd), true);
+    RED_CHECK( authorization.rdpdr_drive_read_is_authorized());
+    RED_CHECK( authorization.rdpdr_drive_write_is_authorized());
 
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
-
-    RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), false);
+    RED_CHECK(!authorization.rdpsnd_audio_output_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels5)
@@ -484,24 +455,25 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels5)
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,cliprdr_file,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
 
-    ClipboardVirtualChannelParams cvcp;
-    RED_CHECK_EQUAL(cvcp, authorization.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(!authorization.cliprdr_up_is_authorized());
+    RED_CHECK(!authorization.cliprdr_down_is_authorized());
+    RED_CHECK(!authorization.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK( authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-    RED_CHECK_EQUAL(authorization.is_authorized(cliprdr), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(drdynvc), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpsnd), true);
+    RED_CHECK(!authorization.is_authorized(cliprdr));
+    RED_CHECK(!authorization.is_authorized(drdynvc));
+    RED_CHECK( authorization.is_authorized(rdpdrid));
+    RED_CHECK( authorization.is_authorized(rdpsnd));
 
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
+    RED_CHECK( authorization.rdpdr_drive_read_is_authorized());
+    RED_CHECK( authorization.rdpdr_drive_write_is_authorized());
 
-    RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), false);
+    RED_CHECK(!authorization.rdpsnd_audio_output_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels6)
@@ -516,26 +488,25 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels6)
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,rdpdr_printer,rdpdr_port,rdpdr_smartcard,rdpsnd_audio_output");
     ChannelsAuthorizations authorization(allow, deny);
 
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_file_authorized = true;
+    RED_CHECK(!authorization.cliprdr_up_is_authorized());
+    RED_CHECK(!authorization.cliprdr_down_is_authorized());
+    RED_CHECK( authorization.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(cvcp, authorization.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK( authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
+    RED_CHECK(!authorization.is_authorized(cliprdr));
+    RED_CHECK(!authorization.is_authorized(drdynvc));
+    RED_CHECK( authorization.is_authorized(rdpdrid));
+    RED_CHECK( authorization.is_authorized(rdpsnd));
 
-    RED_CHECK_EQUAL(authorization.is_authorized(cliprdr), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(drdynvc), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpsnd), true);
+    RED_CHECK( authorization.rdpdr_drive_read_is_authorized());
+    RED_CHECK( authorization.rdpdr_drive_write_is_authorized());
 
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
-
-    RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), false);
+    RED_CHECK(!authorization.rdpsnd_audio_output_is_authorized());
 }
 
 RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels7)
@@ -550,24 +521,23 @@ RED_AUTO_TEST_CASE(TestUpdateAuthorizedChannels7)
     RED_CHECK_EQUAL(deny, "*,cliprdr_up,cliprdr_down,rdpdr_printer,rdpdr_port,rdpdr_smartcard");
     ChannelsAuthorizations authorization(allow, deny);
 
-    ClipboardVirtualChannelParams cvcp;
-    cvcp.clipboard_file_authorized = true;
+    RED_CHECK(!authorization.cliprdr_up_is_authorized());
+    RED_CHECK(!authorization.cliprdr_down_is_authorized());
+    RED_CHECK( authorization.cliprdr_file_is_authorized());
 
-    RED_CHECK_EQUAL(cvcp, authorization.get_clipboard_virtual_channel_params(false, false, false));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT));
+    RED_CHECK( authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL));
+    RED_CHECK(!authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD));
 
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_FILESYSTEM), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL), false);
-    RED_CHECK_EQUAL(authorization.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD), false);
+    RED_CHECK(!authorization.is_authorized(cliprdr));
+    RED_CHECK(!authorization.is_authorized(drdynvc));
+    RED_CHECK( authorization.is_authorized(rdpdrid));
+    RED_CHECK( authorization.is_authorized(rdpsnd));
 
-    RED_CHECK_EQUAL(authorization.is_authorized(cliprdr), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(drdynvc), false);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpdrid), true);
-    RED_CHECK_EQUAL(authorization.is_authorized(rdpsnd), true);
+    RED_CHECK( authorization.rdpdr_drive_read_is_authorized());
+    RED_CHECK( authorization.rdpdr_drive_write_is_authorized());
 
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_read_is_authorized(), true);
-    RED_CHECK_EQUAL(authorization.rdpdr_drive_write_is_authorized(), true);
-
-    RED_CHECK_EQUAL(authorization.rdpsnd_audio_output_is_authorized(), true);
+    RED_CHECK( authorization.rdpsnd_audio_output_is_authorized());
 }

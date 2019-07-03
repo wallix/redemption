@@ -266,7 +266,7 @@ inline void send_data_file(OutTransport trans, ICAPFileId file_id, const_bytes_v
     }
 }
 
-}
+} // namespace LocalICAPProtocol
 
 struct ICAPService
 {

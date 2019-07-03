@@ -3478,13 +3478,37 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// type: bool <br/>
-    /// value{false} <br/>
-    struct validator::enable_interupting_validator {
+    /// type: std::string <br/>
+    /// value = REDEMPTION_CONFIG_VALIDATOR_PATH <br/>
+    struct validator::socket_path {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "validator";
-        static constexpr char const * name = "enable_interupting_validator";
+        static constexpr char const * name = "socket_path";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = REDEMPTION_CONFIG_VALIDATOR_PATH;
+    };
+    /// type: std::string <br/>
+    /// value = "avscan" <br/>
+    struct validator::target_name {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "target_name";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "avscan";
+    };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct validator::enable_interupting {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "enable_interupting";
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3502,41 +3526,17 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// type: std::string <br/>
-    /// value = "" <br/>
-    struct validator::channel_files_directory {
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// value{} <br/>
+    struct validator::save_files_directory {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "validator";
-        static constexpr char const * name = "channel_files_directory";
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        static constexpr char const * name = "save_files_directory";
+        using type = ::configs::spec_types::directory_path;
+        using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = "";
-    };
-    /// type: std::string <br/>
-    /// value = "tools/ICAP_socket/redemption-icap-service-sock" <br/>
-    struct validator::validator_socket_path {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "validator";
-        static constexpr char const * name = "validator_socket_path";
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value = "tools/ICAP_socket/redemption-icap-service-sock";
-    };
-    /// type: std::string <br/>
-    /// value = "avscan" <br/>
-    struct validator::validator_target_name {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "validator";
-        static constexpr char const * name = "validator_target_name";
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value = "avscan";
+        type value{};
     };
 
     /// Proxy session log id <br/>
@@ -5098,12 +5098,12 @@ struct internal_mod
 { static constexpr bool is_section = true; };
 
 struct validator
-: cfg::validator::channel_files_directory
-, cfg::validator::validator_socket_path
-, cfg::validator::validator_target_name
+: cfg::validator::socket_path
+, cfg::validator::target_name
 , cfg::validator::enable_validator
-, cfg::validator::enable_interupting_validator
+, cfg::validator::enable_interupting
 , cfg::validator::enable_save_files
+, cfg::validator::save_files_directory
 { static constexpr bool is_section = true; };
 
 struct context

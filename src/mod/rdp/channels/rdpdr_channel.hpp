@@ -869,11 +869,6 @@ public:
     bool channel_filter_on;
     const std::string channel_files_directory;
 
-    std::map<uint32_t /*FileId*/, std::string /*Path*/> filename_list;
-    std::map<uint32_t /*FileId*/, ChannelFile> file_list;
-
-
-
     FileSystemVirtualChannel(
         SessionReactor& session_reactor,
         VirtualChannelDataSender* to_client_sender_,

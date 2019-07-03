@@ -20,9 +20,6 @@
 
 #pragma once
 
-#include <fstream>
-#include <unistd.h>
-
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -31,10 +28,20 @@
 #include "utils/log.hpp"
 
 #include "mod/icap_files_service.hpp"
+#include "mod/rdp/channels/validator_params.hpp"
+
+#include <unistd.h>
 
 
-
-class ChannelFile {
+class ChannelFile
+{
+public:
+    enum class Direction : uint8_t
+    {
+        None,
+        FromServer,
+        FromClient,
+    };
 
 private:
     std::string dir_path;
@@ -66,19 +73,13 @@ public:
         FILE_FROM_CLIENT
     };
 
-    ChannelFile(const std::string & dir_path
-    , bool is_interupting_channel
-    , bool is_saving_files
-    , bool enable_validator
-    , ICAPService * icap_service
-    , const std::string target_name
-    ) noexcept
-        : dir_path(dir_path)
-        , is_interupting_channel(is_interupting_channel)
-        , is_saving_files(is_saving_files)
-        , enable_validator(enable_validator)
-        , icap_service(icap_service)
-        , target_name(target_name)
+    ChannelFile(ICAPService * icap_service, ValidatorParams const& validator_params) noexcept
+    : dir_path(validator_params.save_files_directory)
+    , is_interupting_channel(validator_params.enable_interupting)
+    , is_saving_files(validator_params.enable_save_files)
+    , enable_validator(icap_service)
+    , icap_service(icap_service)
+    , target_name(validator_params.target_name)
     {}
 
     void set_total_file_size(const size_t total_file_size) {

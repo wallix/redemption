@@ -29,7 +29,7 @@
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_api.hpp"
-#include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 class FrontAPI;

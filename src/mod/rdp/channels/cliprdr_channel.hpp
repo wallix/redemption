@@ -37,7 +37,7 @@
 #include "mod/icap_files_service.hpp"
 #include "core/session_reactor.hpp"
 #include "lib/files_validator_api.hpp"
-#include "core/clipboard_virtual_channels_params.hpp"
+#include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 #include <memory>
@@ -85,13 +85,7 @@ public:
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , session_reactor(session_reactor)
-    , channel_file(params.channel_files_directory,
-                   params.enable_interupting_validator,
-                   params.enable_save_files,
-                   params.enable_validator,
-                   icap_service,
-                   params.validator_target_name
-                   )
+    , channel_file(icap_service, params.validator_params)
     {}
 
 
@@ -716,7 +710,6 @@ public:
                 }
 
             } else {
-    //
                 RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 4);
                 StaticOutStream<16> out_stream;
                 RDPECLIP::FileContentsResponseRange fileRange{safe_int(this->channel_file.get_streamID())};
@@ -766,7 +759,7 @@ public:
 
         this->channel_file.read_data(data_file.get(), this->channel_file.get_file_size());
 
-        const_bytes_view data = {data_file.get(), this->channel_file.get_file_size()};
+        const_bytes_view data {data_file.get(), this->channel_file.get_file_size()};
 
         if (this->channel_file.get_file_size() > first_part_data_size ) {
 
@@ -836,7 +829,7 @@ public:
 
         this->channel_file.read_data(data_file.get(), this->channel_file.get_file_size());
 
-        /*array_view_uint8_t*/const_bytes_view data {data_file.get(), this->channel_file.get_file_size()};
+        const_bytes_view data {data_file.get(), this->channel_file.get_file_size()};
 
         if (data.size() > first_part_data_size ) {
 

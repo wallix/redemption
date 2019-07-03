@@ -28,7 +28,12 @@
 
 RED_AUTO_TEST_CASE_WD(TestChannelFileWrite, wd)
 {
-    ChannelFile file(wd.dirname(), false, true, false, nullptr, "avscan");
+    ValidatorParams params;
+    params.save_files_directory = wd.dirname().string();
+    params.enable_interupting = false;
+    params.enable_save_files = true;
+    params.target_name = "avscan";
+    ChannelFile file(nullptr, params);
 
     auto const file1 = wd.add_file("12345_54321_new_file1.txt");
 

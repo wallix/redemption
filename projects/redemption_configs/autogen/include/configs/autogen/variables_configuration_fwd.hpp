@@ -294,11 +294,11 @@ namespace cfg {
 
     struct validator {
         struct enable_validator;
-        struct enable_interupting_validator;
+        struct socket_path;
+        struct target_name;
+        struct enable_interupting;
         struct enable_save_files;
-        struct channel_files_directory;
-        struct validator_socket_path;
-        struct validator_target_name;
+        struct save_files_directory;
     };
 
     struct context {

@@ -284,12 +284,10 @@ void ModuleManager::create_mod_rdp(
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
 
-    mod_rdp_params.enable_validator = ini.get<cfg::validator::enable_validator>();
-    mod_rdp_params.enable_interupting_validator = ini.get<cfg::validator::enable_interupting_validator>();
-    mod_rdp_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
-    mod_rdp_params.validator_socket_path = ini.get<cfg::validator::validator_socket_path>().c_str();
-    mod_rdp_params.channel_files_directory = ini.get<cfg::validator::channel_files_directory>().c_str();
-    mod_rdp_params.validator_target_name = ini.get<cfg::validator::validator_target_name>().c_str();
+    mod_rdp_params.validator_params.enable_interupting = ini.get<cfg::validator::enable_interupting>();
+    mod_rdp_params.validator_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
+    mod_rdp_params.validator_params.save_files_directory = ini.get<cfg::validator::save_files_directory>().c_str();
+    mod_rdp_params.validator_params.target_name = ini.get<cfg::validator::target_name>().c_str();
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
 
@@ -349,6 +347,7 @@ void ModuleManager::create_mod_rdp(
             using mod_rdp::mod_rdp;
         };
 
+        bool enable_validator = ini.get<cfg::validator::enable_validator>();
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
@@ -356,14 +355,14 @@ void ModuleManager::create_mod_rdp(
         std::unique_ptr<ModRDPWithMetrics::ICAP> icap;
         int validator_fd = -1;
 
-        if (mod_rdp_params.enable_validator) {
-            unique_fd ufd = addr_connect(mod_rdp_params.validator_socket_path);
+        if (enable_validator) {
+            unique_fd ufd = addr_connect(ini.get<cfg::validator::socket_path>().c_str());
             if (ufd) {
                 validator_fd = ufd.fd();
                 icap = std::make_unique<ModRDPWithMetrics::ICAP>(std::move(ufd));
             }
             else {
-                mod_rdp_params.enable_validator = false;
+                enable_validator = false;
                 LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
             }
         }
@@ -418,11 +417,11 @@ void ModuleManager::create_mod_rdp(
             report_message,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,
-            mod_rdp_params.enable_validator ? &icap->service : nullptr
+            enable_validator ? &icap->service : nullptr
         );
 
 #ifndef __EMSCRIPTEN__
-        if (mod_rdp_params.enable_validator) {
+        if (enable_validator) {
             new_mod->icap->validator_event = this->session_reactor.create_fd_event(validator_fd)
             .disable_timeout()
             .on_exit(jln::propagate_exit())
