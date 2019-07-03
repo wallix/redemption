@@ -44,7 +44,6 @@ rule create_generator ( name : file : requirements * )
     exe make_$(name) : src/configs/write_$(name).cpp : <library>keymap <library>log_test.o ;
 }
 
-obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
 obj error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : <define>NDEBUG ;
 obj keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
 
