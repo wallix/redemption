@@ -240,14 +240,13 @@ public:
         return this->p.in_bytes_be(nb);
     }
 
-    void in_copy_bytes(uint8_t * v, size_t n) noexcept {
-        assert(this->in_check_rem(n));
-        return this->p.in_copy_bytes(v, n);
+    void in_copy_bytes(bytes_view v) noexcept {
+        assert(this->in_check_rem(v.size()));
+        return this->p.in_copy_bytes(v);
     }
 
-    void in_copy_bytes(char * v, size_t n) noexcept {
-        assert(this->in_check_rem(n));
-        return this->p.in_copy_bytes(v, n);
+    void in_copy_bytes(byte_ptr v, size_t n) noexcept {
+        return this->in_copy_bytes({v, n});
     }
 
     const uint8_t *in_uint8p(unsigned int n) noexcept {

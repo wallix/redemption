@@ -285,7 +285,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
 
-    std::map<uint32_t, std::string> format_name_inventory;
+    std::unordered_map<uint32_t, std::string> format_name_inventory;
 
     const bool use_long_format_name = true;
 

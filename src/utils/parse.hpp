@@ -24,6 +24,7 @@
 #pragma once
 
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint> // for sized types
 #include <cstring> // for memcpy
@@ -135,13 +136,9 @@ public:
         return res;
     }
 
-    void in_copy_bytes(uint8_t * v, size_t n) noexcept {
-        memcpy(v, this->p, n);
-        this->p += n;
-    }
-
-    void in_copy_bytes(char * v, size_t n) noexcept {
-        this->in_copy_bytes(byte_ptr_cast(v), n);
+    void in_copy_bytes(bytes_view v) noexcept {
+        memcpy(v.data(), this->p, v.size());
+        this->p += v.size();
     }
 
     const uint8_t *in_uint8p(unsigned int n) noexcept {

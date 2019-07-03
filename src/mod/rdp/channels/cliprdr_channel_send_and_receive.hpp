@@ -28,7 +28,7 @@
 #include "utils/stream.hpp"
 #include "system/ssl_sha256.hpp"
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
@@ -37,7 +37,7 @@
 
 struct ClipboardSideData
 {
-     struct file_contents_request_info
+    struct file_contents_request_info
     {
         uint32_t lindex;
         uint64_t position;
@@ -45,7 +45,7 @@ struct ClipboardSideData
         uint32_t clipDataId;
         uint32_t offset;
     };
-    using file_contents_request_info_inventory_type = std::map<uint32_t /*streamId*/, file_contents_request_info>;
+    using file_contents_request_info_inventory_type = std::unordered_map<uint32_t /*streamId*/, file_contents_request_info>;
 
     struct file_info_type
     {
@@ -56,7 +56,7 @@ struct ClipboardSideData
     };
     using file_info_inventory_type = std::vector<file_info_type>;
 
-    using file_stream_data_inventory_type = std::map<uint32_t /*clipDataId*/, file_info_inventory_type>;
+    using file_stream_data_inventory_type = std::unordered_map<uint32_t /*clipDataId*/, file_info_inventory_type>;
 
     uint16_t message_type = 0;
     bool use_long_format_names = false;
@@ -95,23 +95,12 @@ struct ClipboardSideData
     }
 };
 
-struct ClipboardData {
-    using format_name_inventory_type = std::map<uint32_t, std::string>;
-
-    std::vector<RDPECLIP::FileDescriptor> file_descr_list;
-
-    ClipboardSideData server_data;
-    ClipboardSideData client_data;
+struct ClipboardData
+{
+    ClipboardSideData server_data {"server"};
+    ClipboardSideData client_data {"client"};
 
     uint32_t requestedFormatId = 0;
-
-
-
-    format_name_inventory_type format_name_inventory;
-
-    ClipboardData()
-      : server_data("server")
-      , client_data("client") {}
 };
 
 struct ClipboardCapabilitiesReceive {
@@ -227,8 +216,6 @@ struct ClientFilecontentsRequestSendBack {
                 }
                 break;
         }
-
-        LOG(LOG_INFO, "will call send_message_to_client");
 
         base_channel->send_message_to_client(
             out_stream.get_offset(),
@@ -676,7 +663,7 @@ struct ServerFormatListReceive {
 
     uint32_t server_file_list_format_id = 0;
 
-    ServerFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
+    ServerFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::unordered_map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
         if (!client_use_long_format_names ||
             !server_use_long_format_names) {
             LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
@@ -786,7 +773,7 @@ struct ClientFormatListReceive {
 
     uint32_t client_file_list_format_id = 0;
 
-    ClientFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
+    ClientFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::unordered_map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
 
         if (!client_use_long_format_names ||
             !server_use_long_format_names) {

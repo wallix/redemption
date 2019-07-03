@@ -41,15 +41,19 @@
 #include "core/stream_throw_helpers.hpp"
 
 #include <memory>
+#include <unordered_map>
 
-
-
-#define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
 private:
     ClipboardData clip_data;
+    using format_name_inventory_type = std::unordered_map<uint32_t, std::string>;
+
+    std::vector<RDPECLIP::FileDescriptor> file_descr_list;
+
+    format_name_inventory_type format_name_inventory;
+
 
     const ClipboardVirtualChannelParams params;
 
@@ -129,13 +133,13 @@ public:
     {
         (void)total_length;
 
-        this->clip_data.file_descr_list.clear();
+        this->file_descr_list.clear();
 
         ClientFormatListReceive receiver(this->clip_data.client_data.use_long_format_names,
                                          this->clip_data.server_data.use_long_format_names,
                                          in_header,
                                          chunk,
-                                         this->clip_data.format_name_inventory,
+                                         this->format_name_inventory,
                                          verbose);
 
         if (!this->params.clipboard_down_authorized
@@ -156,7 +160,7 @@ public:
             return false;
         }
 
-        this->clip_data.format_name_inventory.clear();
+        this->format_name_inventory.clear();
         if (receiver.client_file_list_format_id) {
             this->clip_data.client_data.file_list_format_id = receiver.client_file_list_format_id;
         }
@@ -231,7 +235,7 @@ public:
                 if (!this->params.clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 } else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
-                    const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
+                    const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
                     this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_SERVER, this->session_reactor.get_current_time());
                 }
@@ -255,8 +259,8 @@ public:
                         const bool is_from_remote_session = false;
                         this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
 
-                        this->clip_data.file_descr_list.insert(
-                            this->clip_data.file_descr_list.end(),
+                        this->file_descr_list.insert(
+                            this->file_descr_list.end(),
                             receiver.files_descriptors.begin(),
                             receiver.files_descriptors.end());
                     }
@@ -377,8 +381,8 @@ public:
             this->verbose
         );
 
-        this->clip_data.file_descr_list.insert(
-            this->clip_data.file_descr_list.end(),
+        this->file_descr_list.insert(
+            this->file_descr_list.end(),
             receiver.files_descriptors.begin(),
             receiver.files_descriptors.end());
 
@@ -394,7 +398,7 @@ public:
         (void)total_length;
         (void)flags;
 
-        this->clip_data.file_descr_list.clear();
+        this->file_descr_list.clear();
 
         if (!this->params.clipboard_down_authorized
         &&  !this->params.clipboard_up_authorized) {
@@ -407,13 +411,13 @@ public:
             return false;
         }
 
-        this->clip_data.format_name_inventory.clear();
+        this->format_name_inventory.clear();
 
         ServerFormatListReceive receiver(this->clip_data.client_data.use_long_format_names,
                                     this->clip_data.server_data.use_long_format_names,
                                     in_header,
                                     chunk,
-                                    this->clip_data.format_name_inventory,
+                                    this->format_name_inventory,
                                     verbose);
 
         if (receiver.server_file_list_format_id) {
@@ -477,7 +481,7 @@ public:
                 FilecontentsRequestReceive receiver(this->clip_data.server_data, chunk, this->verbose, header.dataLen());
 
                 if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
-                    const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
+                    const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
                     this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_CLIENT, this->session_reactor.get_current_time());
                 }
@@ -946,7 +950,7 @@ private:
                         "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX");
                 }
 
-                std::string format_name = this->clip_data.format_name_inventory[requestedFormatId];
+                std::string format_name = this->format_name_inventory[requestedFormatId];
                 if (format_name.empty()) {
                     format_name = RDPECLIP::get_FormatId_name(requestedFormatId );
                 }
