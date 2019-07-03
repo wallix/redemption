@@ -96,14 +96,14 @@ struct OutFileTransport : FileTransport
     using FileTransport::FileTransport;
 
 private:
-    virtual Read do_atomic_read(uint8_t * buffer, size_t len)
+    Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
-    virtual size_t do_partial_read(uint8_t * buffer, size_t len)
+    size_t do_partial_read(uint8_t * buffer, size_t len) override
     {
         (void)buffer;
         (void)len;

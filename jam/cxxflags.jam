@@ -12,8 +12,8 @@ REDEMPTION_CXXFLAGS +=
     <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
     <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
 
-    <cxxflags>-Werror=return-type
-    <toolset>gcc:<cxxflags>-Werror=suggest-override
+    # <cxxflags>-Werror=return-type
+    # <toolset>gcc:<cxxflags>-Werror=suggest-override
 
     <define>_FILE_OFFSET_BITS=64
     <define>_LARGEFILE64_SOURCE
