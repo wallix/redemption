@@ -56,179 +56,164 @@ class rdpCredsspClientNTLM
 
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
-    struct Ntlm_SecurityFunctionTable
+    
+    std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> sspi_identity;
+    bool sspi_context_initialized = false;
+    NTLMContext sspi_context;
+    bool sspi_verbose;
+    
+    // GSS_Acquire_cred
+    // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
+    SEC_STATUS sspi_AcquireCredentialsHandle(
+        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+    )
     {
-    private:
-        std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
-        bool context_initialized = false;
-        NTLMContext context;
-        bool verbose;
+        LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
+        (void)pszPrincipal;
+        (void)pvLogonID;
 
-    public:
-        explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj, bool verbose = false
-        )
-            : context(false, rand, timeobj, verbose)
-            , verbose(verbose)
-        {}
+        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
-        ~Ntlm_SecurityFunctionTable() = default;
-
-        // GSS_Acquire_cred
-        // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-        SEC_STATUS AcquireCredentialsHandle(
-            const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
-        )
-        {
-            LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-            (void)pszPrincipal;
-            (void)pvLogonID;
-
-            this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
-
-            if (pAuthData) {
-                this->identity->CopyAuthIdentity(pAuthData->get_user_utf16_av(), pAuthData->get_domain_utf16_av(), pAuthData->get_password_utf16_av());
-            }
-
-            return SEC_E_OK;
+        if (pAuthData) {
+            this->sspi_identity->CopyAuthIdentity(pAuthData->get_user_utf16_av(), pAuthData->get_domain_utf16_av(), pAuthData->get_password_utf16_av());
         }
 
-        // GSS_Init_sec_context
-        // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-        SEC_STATUS InitializeSecurityContext(
-            array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
-        )
-        {
-            LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
+        return SEC_E_OK;
+    }
 
-            if (!this->context_initialized) {
+    // GSS_Init_sec_context
+    // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
+    SEC_STATUS sspi_InitializeSecurityContext(
+        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
+    )
+    {
+        LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
-                if (!this->identity) {
-                    return SEC_E_WRONG_CREDENTIAL_HANDLE;
-                }
-                this->context.ntlm_SetContextWorkstation(pszTargetName);
-                this->context.ntlm_SetContextServicePrincipalName(pszTargetName);
+        if (!this->sspi_context_initialized) {
 
-                this->context.identity.CopyAuthIdentity(this->identity->get_user_utf16_av(),
-                                                        this->identity->get_domain_utf16_av(),
-                                                        this->identity->get_password_utf16_av());
-                this->context_initialized = true;
+            if (!this->sspi_identity) {
+                return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
+            this->sspi_context.ntlm_SetContextWorkstation(pszTargetName);
+            this->sspi_context.ntlm_SetContextServicePrincipalName(pszTargetName);
 
-            if (this->context.state == NTLM_STATE_INITIAL) {
-                this->context.state = NTLM_STATE_NEGOTIATE;
-            }
-            if (this->context.state == NTLM_STATE_NEGOTIATE) {
-                return this->context.write_negotiate(output_buffer);
-            }
-
-            if (this->context.state == NTLM_STATE_CHALLENGE) {
-                this->context.read_challenge(input_buffer);
-            }
-            if (this->context.state == NTLM_STATE_AUTHENTICATE) {
-                return this->context.write_authenticate(output_buffer);
-            }
-
-            return SEC_E_OUT_OF_SEQUENCE;
+            this->sspi_context.identity.CopyAuthIdentity(this->sspi_identity->get_user_utf16_av(),
+                                                    this->sspi_identity->get_domain_utf16_av(),
+                                                    this->sspi_identity->get_password_utf16_av());
+            this->sspi_context_initialized = true;
         }
 
-    private:
-        /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
-        static void compute_hmac_md5(
-            uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-            const_bytes_view data_buffer, uint32_t SeqNo)
-        {
-            // TODO signing_key by array reference
-            SslHMAC_Md5 hmac_md5({signing_key, 16});
-            StaticOutStream<4> out_stream;
-            out_stream.out_uint32_le(SeqNo);
-            hmac_md5.update(out_stream.get_bytes());
-            hmac_md5.update(data_buffer);
-            hmac_md5.final(digest);
+        if (this->sspi_context.state == NTLM_STATE_INITIAL) {
+            this->sspi_context.state = NTLM_STATE_NEGOTIATE;
+        }
+        if (this->sspi_context.state == NTLM_STATE_NEGOTIATE) {
+            return this->sspi_context.write_negotiate(output_buffer);
         }
 
-        static void compute_signature(
-            uint8_t* signature, SslRC4& rc4, uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint32_t SeqNo)
-        {
-            uint8_t checksum[8];
-            /* RC4-encrypt first 8 bytes of digest */
-            rc4.crypt(8, digest, checksum);
-
-            uint32_t version = 1;
-            /* Concatenate version, ciphertext and sequence number to build signature */
-            memcpy(signature, &version, 4);
-            memcpy(&signature[4], checksum, 8);
-            memcpy(&signature[12], &SeqNo, 4);
+        if (this->sspi_context.state == NTLM_STATE_CHALLENGE) {
+            this->sspi_context.read_challenge(input_buffer);
+        }
+        if (this->sspi_context.state == NTLM_STATE_AUTHENTICATE) {
+            return this->sspi_context.write_authenticate(output_buffer);
         }
 
-    public:
-        // GSS_Wrap
-        // ENCRYPT_MESSAGE EncryptMessage;
-        SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) {
-            if (!this->context_initialized) {
-                return SEC_E_NO_CONTEXT;
-            }
-            LOG_IF(this->context.verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
+        return SEC_E_OUT_OF_SEQUENCE;
+    }
 
-            // data_out [signature][data_buffer]
+    /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
+    static void sspi_compute_hmac_md5(
+        uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
+        const_bytes_view data_buffer, uint32_t SeqNo)
+    {
+        // TODO signing_key by array reference
+        SslHMAC_Md5 hmac_md5({signing_key, 16});
+        StaticOutStream<4> out_stream;
+        out_stream.out_uint32_le(SeqNo);
+        hmac_md5.update(out_stream.get_bytes());
+        hmac_md5.update(data_buffer);
+        hmac_md5.final(digest);
+    }
 
-            data_out.init(data_in.size() + cbMaxSignature);
-            auto message_out = data_out.av().array_from_offset(cbMaxSignature);
+    static void sspi_compute_signature(
+        uint8_t* signature, SslRC4& rc4, uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint32_t SeqNo)
+    {
+        uint8_t checksum[8];
+        /* RC4-encrypt first 8 bytes of digest */
+        rc4.crypt(8, digest, checksum);
 
-            uint8_t digest[SslMd5::DIGEST_LENGTH];
-            this->compute_hmac_md5(digest, *this->context.SendSigningKey, data_in, MessageSeqNo);
+        uint32_t version = 1;
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        memcpy(signature, &version, 4);
+        memcpy(&signature[4], checksum, 8);
+        memcpy(&signature[12], &SeqNo, 4);
+    }
 
-            /* Encrypt message using with RC4, result overwrites original buffer */
-            // this->context.confidentiality == true
-            this->context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
+    // GSS_Wrap
+    // ENCRYPT_MESSAGE EncryptMessage;
+    SEC_STATUS sspi_EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) {
+        if (!this->sspi_context_initialized) {
+            return SEC_E_NO_CONTEXT;
+        }
+        LOG_IF(this->sspi_context.verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
 
-            this->compute_signature(
-                data_out.get_data(), this->context.SendRc4Seal, digest, MessageSeqNo);
+        // data_out [signature][data_buffer]
 
-            return SEC_E_OK;
+        data_out.init(data_in.size() + cbMaxSignature);
+        auto message_out = data_out.av().array_from_offset(cbMaxSignature);
+
+        uint8_t digest[SslMd5::DIGEST_LENGTH];
+        this->sspi_compute_hmac_md5(digest, *this->sspi_context.SendSigningKey, data_in, MessageSeqNo);
+
+        /* Encrypt message using with RC4, result overwrites original buffer */
+        // this->sspi_context.confidentiality == true
+        this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
+
+        this->sspi_compute_signature(
+            data_out.get_data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
+
+        return SEC_E_OK;
+    }
+
+    // GSS_Unwrap
+    // DECRYPT_MESSAGE DecryptMessage;
+    SEC_STATUS sspi_DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) {
+        if (!this->sspi_context_initialized) {
+            return SEC_E_NO_CONTEXT;
+        }
+        LOG_IF(this->sspi_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
+
+        if (data_in.size() < cbMaxSignature) {
+            return SEC_E_INVALID_TOKEN;
         }
 
-        // GSS_Unwrap
-        // DECRYPT_MESSAGE DecryptMessage;
-        SEC_STATUS DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) {
-            if (!this->context_initialized) {
-                return SEC_E_NO_CONTEXT;
-            }
-            LOG_IF(this->context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
+        // data_in [signature][data_buffer]
 
-            if (data_in.size() < cbMaxSignature) {
-                return SEC_E_INVALID_TOKEN;
-            }
+        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
+        data_out.init(data_buffer.size());
 
-            // data_in [signature][data_buffer]
+        /* Decrypt message using with RC4, result overwrites original buffer */
+        // this->sspi_context.confidentiality == true
+        this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
-            auto data_buffer = data_in.array_from_offset(cbMaxSignature);
-            data_out.init(data_buffer.size());
+        uint8_t digest[SslMd5::DIGEST_LENGTH];
+        this->sspi_compute_hmac_md5(digest, *this->sspi_context.RecvSigningKey, data_out.av(), MessageSeqNo);
 
-            /* Decrypt message using with RC4, result overwrites original buffer */
-            // this->context.confidentiality == true
-            this->context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
+        uint8_t expected_signature[16] = {};
+        this->sspi_compute_signature(
+            expected_signature, this->sspi_context.RecvRc4Seal, digest, MessageSeqNo);
 
-            uint8_t digest[SslMd5::DIGEST_LENGTH];
-            this->compute_hmac_md5(digest, *this->context.RecvSigningKey, data_out.av(), MessageSeqNo);
+        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+            /* signature verification failed! */
+            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+            LOG(LOG_ERR, "Expected Signature:");
+            hexdump_c(expected_signature, 16);
+            LOG(LOG_ERR, "Actual Signature:");
+            hexdump_c(data_in.data(), 16);
 
-            uint8_t expected_signature[16] = {};
-            this->compute_signature(
-                expected_signature, this->context.RecvRc4Seal, digest, MessageSeqNo);
-
-            if (memcmp(data_in.data(), expected_signature, 16) != 0) {
-                /* signature verification failed! */
-                LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-                LOG(LOG_ERR, "Expected Signature:");
-                hexdump_c(expected_signature, 16);
-                LOG(LOG_ERR, "Actual Signature:");
-                hexdump_c(data_in.data(), 16);
-
-                return SEC_E_MESSAGE_ALTERED;
-            }
-
-            return SEC_E_OK;
+            return SEC_E_MESSAGE_ALTERED;
         }
-    } table;
+        return SEC_E_OK;
+    }
 
     bool restricted_admin_mode;
 
@@ -324,7 +309,7 @@ class rdpCredsspClientNTLM
             public_key = this->ClientServerHash.av();
         }
 
-        return this->table.EncryptMessage(
+        return this->sspi_EncryptMessage(
             public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
     }
 
@@ -333,7 +318,7 @@ class rdpCredsspClientNTLM
 
         Array Buffer;
 
-        SEC_STATUS const status = this->table.DecryptMessage(
+        SEC_STATUS const status = this->sspi_DecryptMessage(
             this->ts_request.pubKeyAuth.av(), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
@@ -436,7 +421,7 @@ class rdpCredsspClientNTLM
         StaticOutStream<65536> ts_credentials_send;
         this->ts_credentials.emit(ts_credentials_send);
 
-        if (SEC_E_OK != this->table.EncryptMessage(
+        if (SEC_E_OK != this->sspi_EncryptMessage(
             {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
             this->ts_request.authInfo, this->send_seq_num++)){
             LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
@@ -469,7 +454,8 @@ public:
                const bool verbose = false)
         : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
-        , table(rand, timeobj)
+        , sspi_context(false, rand, timeobj, verbose)
+        , sspi_verbose(verbose)
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
         , rand(rand)
@@ -497,7 +483,7 @@ public:
         this->PublicKey.assign(key.data(), key.data()+key.size());
 
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
-        SEC_STATUS status0 = this->table.AcquireCredentialsHandle(this->target_host, &this->ServicePrincipalName, &this->identity);
+        SEC_STATUS status0 = this->sspi_AcquireCredentialsHandle(this->target_host, &this->ServicePrincipalName, &this->identity);
 
         if (status0 != SEC_E_OK) {
             LOG(LOG_ERR, "InitSecurityInterface NTLM status: 0x%08X", status0);
@@ -519,7 +505,7 @@ public:
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
         /* receive server response and place in input buffer */
-        SEC_STATUS status1 = this->table.InitializeSecurityContext(
+        SEC_STATUS status1 = this->sspi_InitializeSecurityContext(
             bytes_view(this->ServicePrincipalName.av()).as_chars(),
             this->client_auth_data.input_buffer.av(),
             /*output*/this->ts_request.negoTokens);
@@ -601,7 +587,7 @@ public:
                 //unsigned long const fContextReq
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-                SEC_STATUS status = this->table.InitializeSecurityContext(
+                SEC_STATUS status = this->sspi_InitializeSecurityContext(
                     bytes_view(this->ServicePrincipalName.av()).as_chars(),
                     this->client_auth_data.input_buffer.av(),
                     /*output*/this->ts_request.negoTokens);
