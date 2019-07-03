@@ -195,7 +195,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 
 namespace detail
 {
-    inline void LOGCHECK__REDEMPTION__INTERNAL(int /*unused*/)
+    inline void LOGCHECK__REDEMPTION__INTERNAL(int /*unused*/) noexcept
     {}
 }
 #endif
@@ -206,34 +206,12 @@ namespace detail
 namespace compiler_aux_
 {
     template<class... Ts>
-    void unused_variables(Ts const & ...)
+    void unused_variables(Ts const & ...) noexcept
     {}
 }
 #endif
 
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noexcept;
-
-#ifdef REDEMPTION_DECL_LOG_TEST
-# include <string>
-struct LOG__REDEMPTION__OSTREAM__BUFFERED
-{
-    LOG__REDEMPTION__OSTREAM__BUFFERED();
-    ~LOG__REDEMPTION__OSTREAM__BUFFERED();
-    std::string str() const;
-
-private:
-    class D;
-    D * d;
-};
-
-struct LOG__REDEMPTION__BUFFERED
-{
-    LOG__REDEMPTION__BUFFERED();
-    ~LOG__REDEMPTION__BUFFERED();
-    std::string const& buf() const;
-    void clear();
-};
-#endif
 
 namespace detail
 {

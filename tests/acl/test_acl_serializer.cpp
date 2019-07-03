@@ -33,6 +33,7 @@
 #include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
+#include "test_only/log_buffered.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
@@ -330,7 +331,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     ini.set_acl<cfg::context::reporting>("didier");
 
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
         acl.incoming();
         RED_CHECK_EQ(logbuf.buf(),
             "WARNING -- Unexpected receving 'abcd' - 'something'\n"
@@ -374,7 +375,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // MOD SESSION_CREATION FAIL
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_CREATION";
@@ -389,7 +390,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // CONNECTION FAIL
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "CONNECTION";
@@ -406,7 +407,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // NEW_REMOTE_MOD
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "NEW_REMOTE_MOD";
@@ -420,7 +421,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // CERTIFICATE
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "CERTIFICATE_CHECK";
@@ -439,7 +440,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // SESSION_DISCONNECTION
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_DISCONNECTION";
@@ -455,7 +456,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // SESSION_ESTABLISHED
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_ESTABLISHED";
@@ -471,7 +472,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // DRIVE_REDIRECTION_USE
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "DRIVE_REDIRECTION_USE";
@@ -488,7 +489,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // DRIVE_REDIRECTION_USE
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "DRIVE_REDIRECTION_READ";
@@ -504,7 +505,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // DRIVE_REDIRECTION _READ/_WRITE/_DELETE
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
 
         ArcsightLogInfo arc_info;
@@ -521,7 +522,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // DRIVE_REDIRECTION_RENAME
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "DRIVE_REDIRECTION_RENAME";
@@ -538,7 +539,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // CB_COPYING_PASTING_FILE _TO_REMOTE_SESSION/_FROM_REMOTE_SESSION
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION";
@@ -555,7 +556,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // arcsight format: \ = |
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "CLIENT_EXECUTE_REMOTEAPP";
@@ -571,7 +572,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // SESSION_ENDING_IN_PROGRESS
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_ENDING_IN_PROGRESS";
@@ -586,7 +587,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // PASSWORD_TEXT_BOX_GET_FOCUS
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "PASSWORD_TEXT_BOX_GET_FOCUS";
@@ -602,7 +603,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // INPUT_LANGUAGE
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "INPUT_LANGUAGE";
@@ -618,7 +619,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // STARTUP_APPLICATION
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "STARTUP_APPLICATION";
@@ -635,7 +636,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // KBD_INPUT
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "KBD_INPUT";
@@ -649,7 +650,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // CHANGE_TITLE_BAR
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "CHANGE_TITLE_BAR";
@@ -664,7 +665,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     // KILL_PATTERN_DETECTED / NOTIFY_PATTERN_DETECTED
     {
-        LOG__REDEMPTION__BUFFERED logbuf;
+        tu::log_buffered logbuf;
 
         ArcsightLogInfo arc_info;
         arc_info.name = "KILL_PATTERN_DETECTED";

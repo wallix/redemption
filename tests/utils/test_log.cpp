@@ -22,10 +22,11 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/log.hpp"
+#include "test_only/log_buffered.hpp"
 
 RED_AUTO_TEST_CASE(TestLog)
 {
-    LOG__REDEMPTION__BUFFERED log_buf;
+    tu::log_buffered log_buf;
     LOG(LOG_INFO, "test %s", "1");
     RED_CHECK(log_buf.buf() == "INFO -- test 1\n");
 }

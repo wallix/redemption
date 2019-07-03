@@ -1,5 +1,4 @@
 obj log.o : $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp ;
-obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
 obj log_print.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
 
 obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :

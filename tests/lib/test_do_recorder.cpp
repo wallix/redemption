@@ -27,6 +27,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "transport/crypto_transport.hpp"
+#include "test_only/ostream_buffered.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -63,13 +64,15 @@ inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned ol
     return 0;
 }
 
-#define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output) { \
-    int argc = sizeof(argv)/sizeof(char*);                          \
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;                    \
-    int res = do_main(argc, argv, hmac_fn, trace_fn);               \
-    EVP_cleanup();                                                  \
-    RED_CHECK_SMEM(cout_buf.str(), output);                         \
-    RED_TEST(res_result == res);                                    \
+#define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output, output_error) { \
+    int argc = sizeof(argv)/sizeof(char*);                                        \
+    tu::ostream_buffered cout_buf;                                                \
+    tu::ostream_buffered cerr_buf(std::cerr);                                     \
+    int res = do_main(argc, argv, hmac_fn, trace_fn);                             \
+    EVP_cleanup();                                                                \
+    RED_CHECK_SMEM(cout_buf.str(), output);                                       \
+    RED_CHECK_SMEM(cerr_buf.str(), output_error);                                 \
+    RED_TEST(res_result == res);                                                  \
 }
 
 // tests/fixtures/verifier/recorded/toto@10.10.43.13\,Administrateur@QA@cible\,20160218-181658\,wab-5-0-0.yourdomain\,7681.mwrm
@@ -95,7 +98,8 @@ RED_AUTO_TEST_CASE_WD(TestDecrypterEncryptedData, wd)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
-        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"),
+        ""_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestDecrypterClearData, wd)
@@ -115,7 +119,8 @@ RED_AUTO_TEST_CASE_WD(TestDecrypterClearData, wd)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
-        str_concat("Output file is \"", output, "\".\nInput file is not encrypted.\n"));
+        str_concat("Output file is \"", output, "\".\nInput file is not encrypted.\n"),
+        ""_av);
 }
 
 // python tools/verifier.py -i toto@10.10.43.13\,Administrateur@QA@cible\,20160218-183009\,wab-5-0-0.yourdomain\,7335.mwrm --hash-path tests/fixtures/verifier/hash/ --mwrm-path tests/fixtures/verifier/recorded/ --verbose 10
@@ -135,7 +140,8 @@ RED_AUTO_TEST_CASE(TestVerifierFileNotFound)
         "--verbose", "10",
     };
 
-    TEST_DO_MAIN(argv, -1, hmac_fn, trace_fn, ""_av);
+    TEST_DO_MAIN(argv, -1, hmac_fn, trace_fn,
+        ""_av, "Input file error: No such file or directory\n"_av);
 }
 
 RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
@@ -154,7 +160,12 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
             "10",
     };
 
-    TEST_DO_MAIN(argv, 1, hmac_fn, trace_fn, "Input file is encrypted.\nverify failed\n"_av);
+    TEST_DO_MAIN(argv, 1, hmac_fn, trace_fn,
+        "Input file is encrypted.\nverify failed\n"_av,
+        "Error checking file \"" FIXTURES_PATH "/verifier/recorded/bad/"
+            "toto@10.10.43.13,Administrateur@QA@cible,"
+            "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm"
+            "\" (invalid checksum)\n\n"_av);
 }
 
 RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
@@ -174,7 +185,8 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
-        "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n"_av);
+        "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n"_av,
+        ""_av);
 }
 
 RED_AUTO_TEST_CASE(TestVerifierClearData)
@@ -195,7 +207,7 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
-        "No error detected during the data verification.\n\nverify ok\n"_av);
+        "No error detected during the data verification.\n\nverify ok\n"_av, ""_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
@@ -259,7 +271,7 @@ RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
-        "No error detected during the data verification.\n\nverify ok\n"_av);
+        "No error detected during the data verification.\n\nverify ok\n"_av, ""_av);
 
     std::string mwrm_hash_contents_after
       = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
@@ -287,14 +299,12 @@ RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
         "--verbose",
             "10",
     };
-    int argc = sizeof(argv)/sizeof(char*);
 
-    int res = -1;
-    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-    RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "verify failed\n");
-    RED_CHECK_EQUAL(1, res);
+    TEST_DO_MAIN(argv, 1, hmac_fn, trace_fn, "verify failed\n"_av,
+        "File \"" FIXTURES_PATH "/verifier/recorded/"
+            "toto@10.10.43.13,Administrateur@QA@cible"
+            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
+            "\" is invalid! (metafile changed)\n\n"_av);
 }
 
 inline int hmac_2016_fn(uint8_t * buffer)
@@ -401,7 +411,8 @@ RED_AUTO_TEST_CASE_WD(TestDecrypterEncrypted, wd)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
-        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"),
+        ""_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestDecrypterEncrypted1, wd)
@@ -419,7 +430,8 @@ RED_AUTO_TEST_CASE_WD(TestDecrypterEncrypted1, wd)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
-        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"),
+        ""_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestDecrypterMigratedEncrypted, wd)
@@ -441,7 +453,8 @@ RED_AUTO_TEST_CASE_WD(TestDecrypterMigratedEncrypted, wd)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
-        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"),
+        ""_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestDecrypterMigratedEncrypted2, wd)
@@ -461,7 +474,8 @@ RED_AUTO_TEST_CASE_WD(TestDecrypterMigratedEncrypted2, wd)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
-        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"));
+        str_concat("Input file is encrypted.\nOutput file is \"", output, "\".\ndecrypt ok\n"),
+        ""_av);
 }
 
 RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
@@ -478,7 +492,8 @@ RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
     };
 
     TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
-        "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n"_av);
+        "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n"_av,
+        ""_av);
 }
 
 // "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-134039,wab-4-2-4.yourdomain,4714.mwrm".
@@ -494,7 +509,8 @@ RED_AUTO_TEST_CASE(TestVerifier4714)
         "--verbose", "10",
     };
 
-    TEST_DO_MAIN(argv, -1, hmac_2016_fn, trace_20161025_fn, ""_av);
+    TEST_DO_MAIN(argv, -1, hmac_2016_fn, trace_20161025_fn,
+        ""_av, "Input file error: No such file or directory\n"_av);
 }
 
 
@@ -507,13 +523,19 @@ RED_AUTO_TEST_CASE(TestVerifier7192)
 {
     char const * argv[] {
         "verifier.py", "redver",
-        "-i", "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-164758,wab-4-2-4.yourdomain,7192.mwrm",
+        "-i", "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025"
+            "-164758,wab-4-2-4.yourdomain,7192.mwrm",
         "--hash-path", FIXTURES_PATH "/verifier/hash/",
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn, "No error detected during the data verification.\n\nverify ok\n"_av);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
+        "No error detected during the data verification.\n\nverify ok\n"_av,
+            "Cannot read hash file: \"" FIXTURES_PATH "/verifier/hash//"
+            "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025"
+            "-164758,wab-4-2-4.yourdomain,7192.mwrm"
+            "\"\n\n"_av);
 }
 
 
@@ -526,13 +548,19 @@ RED_AUTO_TEST_CASE(TestVerifier2510)
 {
     char const * argv[] {
         "verifier.py", "redver",
-        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm",
+        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-165619,wab-4-2-4.yourdomain,2510.mwrm",
         "--hash-path", FIXTURES_PATH "/verifier/hash/",
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn, "No error detected during the data verification.\n\nverify ok\n"_av);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
+        "No error detected during the data verification.\n\nverify ok\n"_av,
+            "Cannot read hash file: \"" FIXTURES_PATH "/verifier/hash//"
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-165619,wab-4-2-4.yourdomain,2510.mwrm"
+            "\"\n\n"_av);
 }
 
 
@@ -788,7 +816,8 @@ RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
         "--verbose", "10",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn, "No error detected during the data verification.\n\nverify ok\n"_av);
+    TEST_DO_MAIN(argv, 0, hmac_2016_fn, trace_20161025_fn,
+        "No error detected during the data verification.\n\nverify ok\n"_av, ""_av);
 }
 
 // cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm
@@ -808,13 +837,18 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
 {
     char const * argv[] {
         "verifier.py", "redver",
-        "-i", "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm",
+        "-i", "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026"
+            "-132156,wab-4-2-4.yourdomain,9904.mwrm",
         "--hash-path", FIXTURES_PATH "/verifier/hash/",
         "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
         "--verbose", "10",
     };
 
-    TEST_DO_MAIN(argv, 1, hmac_2016_fn, trace_20161025_fn, "verify failed\n"_av);
+    TEST_DO_MAIN(argv, 1, hmac_2016_fn, trace_20161025_fn, "verify failed\n"_av,
+        "File \"" FIXTURES_PATH "/verifier/recorded/"
+            "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026"
+            "-132156,wab-4-2-4.yourdomain,9904.mwrm\""
+            " is invalid! (metafile changed)\n\n"_av);
 }
 
 #ifndef REDEMPTION_NO_FFMPEG
@@ -838,7 +872,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorder, wd)
         "--disable-bogus-vlc",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, "\".\n\n"));
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        str_concat("Output file is \"", output, "\".\n\n"), ""_av);
 
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 13450874);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 1641583);
@@ -870,7 +905,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderVlc, wd)
         "--bogus-vlc",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, "\".\n\n"));
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        str_concat("Output file is \"", output, "\".\n\n"), ""_av);
 
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 62513357 +- 100_v);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 7555247);
@@ -900,7 +936,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
         "--json-pgs",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,  str_concat("Output file is \"", output, ".mwrm\".\n\n"));
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        str_concat("Output file is \"", output, ".mwrm\".\n\n"), ""_av);
 
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000000.png"), 26981);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-000001.png"), 27536);
@@ -991,7 +1028,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
         "--json-pgs",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        str_concat("Output file is \"", output, ".mwrm\".\n\n"), ""_av);
 
     RED_CHECK_FILE_CONTENTS(wd.add_file("recorder-chunk-meta.meta"), "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n"_av);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.mp4"), 411572 +- 100_v);
@@ -1017,7 +1055,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
         "--json-pgs",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        str_concat("Output file is \"", output, ".mwrm\".\n\n"), ""_av);
 
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.mp4"), 17275);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.png"), 3972);
@@ -1041,7 +1080,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
         "--json-pgs",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn, str_concat("Output file is \"", output, ".mwrm\".\n\n"));
+    TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+        str_concat("Output file is \"", output, ".mwrm\".\n\n"), ""_av);
 
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.mp4"), 16476);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.png"), 3080);
