@@ -45,9 +45,11 @@ namespace
                 res = ::read(this->file.fd(), buffer, len);
             } while (res == 0 && errno == EINTR);
 
-            if (res < 0)
+            if (res <= 0)
             {
-                this->errnum = errno;
+                if (res < 0 || len != 0) {
+                    this->errnum = errno;
+                }
             }
 
             return static_cast<size_t>(res);

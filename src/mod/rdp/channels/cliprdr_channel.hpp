@@ -36,7 +36,6 @@
 #include "mod/rdp/channels/channel_file.hpp"
 #include "mod/icap_files_service.hpp"
 #include "core/session_reactor.hpp"
-#include "lib/files_validator_api.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 #include "core/stream_throw_helpers.hpp"
 

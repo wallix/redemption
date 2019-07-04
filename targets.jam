@@ -38,7 +38,6 @@ exe headlessclient :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
@@ -133,7 +132,6 @@ exe rdpproxy :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
@@ -282,7 +280,6 @@ exe rdpclient :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -573,7 +570,6 @@ test-run tests/acl/test_module_manager :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
@@ -890,7 +886,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -905,7 +900,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -968,7 +962,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -983,7 +976,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -1023,7 +1015,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -1038,7 +1029,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -2470,7 +2460,6 @@ test-run tests/core/test_mainloop :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
@@ -2609,7 +2598,6 @@ test-run tests/core/test_session :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
@@ -2748,7 +2736,6 @@ test-run tests/front/test_front :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -2770,7 +2757,6 @@ test-run tests/front/test_front :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/primitives/primitives.o
@@ -4007,7 +3993,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/lib/files_validator_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -4170,12 +4155,10 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/core/report_error.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -4222,7 +4205,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/lib/files_validator_api.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -4237,7 +4219,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
