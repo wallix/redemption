@@ -46,7 +46,7 @@ private:
 
     ClientNonce SavedClientNonce;
 
-    Array PublicKey;
+    std::vector<uint8_t> PublicKey;
     Array ClientServerHash;
     Array ServerClientHash;
 
@@ -63,19 +63,6 @@ private:
     const bool verbose;
 
     Transport & trans;
-
-    void init_public_key()
-    {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::ntlm_init");
-
-        // ============================================
-        /* Get Public Key From TLS Layer and hostname */
-        // ============================================
-
-        auto const key = this->trans.get_public_key();
-        this->PublicKey.init(key.size());
-        this->PublicKey.copy(key);
-    }
 
     void credssp_send()
     {
@@ -120,7 +107,7 @@ private:
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-        sha256.update(this->PublicKey.av());
+        sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
         memcpy(SavedHash.get_data(), hash, sizeof(hash));
@@ -133,7 +120,7 @@ private:
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-        sha256.update(this->PublicKey.av());
+        sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
         memcpy(SavedHash.get_data(), hash, sizeof(hash));
@@ -143,7 +130,7 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
 
-        array_view_u8 public_key = this->PublicKey.av();
+        array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};;
         if (version >= 5) {
             this->credssp_generate_client_nonce();
             this->credssp_generate_public_key_hash_client_to_server();
@@ -175,7 +162,7 @@ private:
 
         const uint32_t version = this->ts_request.use_version;
 
-        array_view_const_u8 public_key = this->PublicKey.av();
+        array_view_const_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
             this->credssp_get_client_nonce();
             this->credssp_generate_public_key_hash_server_to_client();
@@ -413,7 +400,14 @@ public:
         this->client_auth_data.state = ClientAuthenticateData::Start;
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::client_authenticate");
-        this->init_public_key();
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::ntlm_init");
+
+        // ============================================
+        /* Get Public Key From TLS Layer and hostname */
+        // ============================================
+
+        auto const key = this->trans.get_public_key();
+        this->PublicKey.assign(key.data(), key.data()+key.size());
 
         this->table.reset();
 

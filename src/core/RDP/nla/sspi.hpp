@@ -90,7 +90,7 @@ public:
     }
 
     void copy(const_bytes_view source) {
-        LOG(LOG_INFO, "copy to buffer to {%s %lu} avbufsize = %s", source.data(), source.size(), this->avbuf.data());
+        LOG(LOG_INFO, "copy to buffer to {%p %lu} avbufsize = %lu", source.data(), source.size(), this->avbuf.size());
         if (source.size() > this->size()){
             this->avbuf = this->buf_maker.dyn_array(source.size());
         }
@@ -100,7 +100,7 @@ public:
     }
 
     void copy(const_bytes_view source, uint32_t offset) {
-        LOG(LOG_INFO, "copy to buffer to {%s %lu} %u avbufsize = %s", source.data(), source.size(), offset, this->avbuf.data());
+        LOG(LOG_INFO, "copy to buffer to {%p %lu} offset=%u avbufsize = %lu (2)", source.data(), source.size(), offset, this->avbuf.size());
         assert(this->size() >= source.size() + offset);
         if (!source.empty()) {
             memcpy(this->avbuf.data() + offset, source.data(), source.size());
