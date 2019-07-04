@@ -483,6 +483,8 @@ public:
                 if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
+                    LOG(LOG_DEBUG, "flags: %u", flags);
+
                     this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_CLIENT, this->session_reactor.get_current_time());
                 }
 
@@ -673,9 +675,14 @@ public:
 
     void DLP_antivirus_check_channels_files()
     {
+        // TODO loop
         if (!this->channel_file.receive_response()) {
+            LOG(LOG_DEBUG, "DLP_antivirus_check_channels_files: wait");
             return;
         }
+
+        LOG(LOG_DEBUG, "DLP_antivirus_check_channels_files: %s",
+            this->channel_file.get_result_content());
 
         if (!this->channel_file.is_valid() && this->channel_file.is_enable_validation()) {
             auto const info = key_qvalue_pairs({

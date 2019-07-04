@@ -60,12 +60,15 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     int validator_abort_file(ValidatorApi* validator, ValidatorFileId id) noexcept;
 
+    /// \return ICAPService::ResponseType
     REDEMPTION_LIB_EXPORT
     int validator_receive_response(ValidatorApi* validator) noexcept;
 
+    /// \return ICAPService::ResponseType
     REDEMPTION_LIB_EXPORT
     int validator_get_response_type(ValidatorApi* validator) noexcept;
 
+    /// \return LocalICAPProtocol::ValidationType
     REDEMPTION_LIB_EXPORT
     int validator_get_result_flag(ValidatorApi* validator) noexcept;
 

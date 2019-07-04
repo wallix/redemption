@@ -32,6 +32,8 @@
 #include <string>
 #include <string_view>
 
+#include "utils/log.hpp"
+
 
 enum class ICAPFileId : uint32_t;
 
@@ -45,48 +47,58 @@ inline void emit_file_id(OutStream& stream, ICAPFileId file_id) noexcept
     stream.out_uint32_be(safe_int(file_id));
 }
 
+inline ICAPFileId recv_file_id(InStream& stream) noexcept
+{
+    return safe_int(stream.in_uint32_be());
+}
+
 enum class MsgType : uint8_t
 {
     // Create a new file to analyse
-    NewFile,
+    NewFile = 0x00,
     // Send data from a file
-    DataFile,
+    DataFile = 0x01,
     // Close the session
-    CloseSession,
+    CloseSession = 0x02,
     // Indicates data file end
-    Eof,
+    Eof = 0x03,
     // Abort file.
-    AbortFile,
+    AbortFile = 0x04,
     // Result received from Validator
-    Result,
+    Result = 0x05,
     // File validator check server icap result
-    Check,
+    Check = 0x07,
 
-    Error = 42
+    Unknown,
 };
 
-enum class ValidationType
+enum class ValidationType : uint8_t
 {
     IsAccepted,
     IsRejected,
     Error,
+    Wait,
+};
+
+enum class [[nodiscard]] ReceiveStatus : bool
+{
+    WaitingData,
+    Ok,
 };
 
 struct ICAPHeader
 {
     // This header starts every message receive from or emit to the local service.
 
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |   msg_type    |                  msg_size                     |
-    // +---------------+-----------------------------------------------+
-    // |               |
-    // +---------------+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |   msg_type    |          msg_size         |
+    // +---------------+----------------------------
 
-    MsgType msg_type = MsgType::Error;
-    uint32_t msg_len = 0;
+    MsgType msg_type;
+    uint32_t msg_len;
 
 
     ICAPHeader() = default;
@@ -96,24 +108,30 @@ struct ICAPHeader
     , msg_len(msg_len)
     {}
 
-    void emit(OutStream& stream) noexcept
+    void emit(OutStream& stream) const noexcept
     {
         stream.out_uint8(safe_int(this->msg_type));
         stream.out_uint32_be(this->msg_len);
     }
-};
 
-enum class [[nodiscard]] ReceiveStatus : bool
-{
-    WaitingData,
-    Ok,
+    ReceiveStatus recv(InStream& stream) noexcept
+    {
+        if (stream.in_remain() < 5) {
+            return ReceiveStatus::WaitingData;
+        }
+
+        this->msg_type = safe_int(stream.in_uint8());
+        this->msg_len = stream.in_uint32_be();
+
+        return ReceiveStatus::Ok;
+    }
 };
 
 struct ICAPResultHeader
 {
-    ValidationType result = ValidationType::Error;
+    ValidationType result = ValidationType::Wait;
     ICAPFileId file_id;
-    size_t content_size;
+    uint32_t content_size;
 
     // ResultMessage
 
@@ -157,7 +175,7 @@ struct ICAPResultHeader
 
     // content: A variable length, ascii string that contains analysis result.
 
-    ReceiveStatus receive(InStream& stream) noexcept
+    ReceiveStatus recv(InStream& stream) noexcept
     {
         /* Result(1) + File_id_size(4) + content_size(4)  */
         if (stream.in_remain() < 9) {
@@ -177,7 +195,7 @@ struct ICAPCheck
     enum class IsUp : bool { Down, Up };
 
     IsUp service_is_up;
-    int max_connections_number;
+    uint32_t max_connections_number;
 
     //     Check message
 
@@ -199,7 +217,7 @@ struct ICAPCheck
     //     max_connections_number: An unsigned, 32-bit integer that contains the
     //                             maximum number of connection icap service support
 
-    ReceiveStatus receive(InStream& stream) noexcept
+    ReceiveStatus recv(InStream& stream) noexcept
     {
         /* up_flag(1) + max_connections_number(4) */
         if (stream.in_remain() < 5) {
@@ -251,17 +269,15 @@ inline void send_header(
 
 inline void send_data_file(OutTransport trans, ICAPFileId file_id, const_bytes_view data)
 {
-    // TODO 1024 ????
-    constexpr std::ptrdiff_t max_pkt_len = 1024;
+    constexpr std::ptrdiff_t max_pkt_len = 1024*64;
 
     auto p = data.begin();
     const auto pend = data.end();
 
-    while (p != pend)
-    {
+    while (p != pend) {
         const auto pkt_len = std::min(pend-p, max_pkt_len);
         send_header(trans, file_id, MsgType::DataFile, pkt_len);
-        trans.send(p, pkt_len);
+        trans.send({p, std::size_t(pkt_len)});
         p += pkt_len;
     }
 }
@@ -307,89 +323,6 @@ struct ICAPService
         send_header(this->trans, ICAPFileId(), MsgType::CloseSession);
     }
 
-    enum class [[nodiscard]] ResponseType : uint8_t
-    {
-        Error,
-        WaitingData,
-        Initialized,
-        Content,
-    };
-
-    ResponseType receive_response()
-    {
-        if (this->response_type == ResponseType::WaitingData)
-        {
-            this->buf.read_from(this->trans);
-        }
-        this->response_type = this->_receive_response();
-        return this->response_type;
-    }
-
-private:
-    ResponseType _receive_response()
-    {
-        InStream in_stream(this->buf.av());
-
-        auto shift_data = [&](ResponseType r){
-            this->buf.advance(in_stream.get_offset());
-            return r;
-        };
-
-        switch (this->state)
-        {
-            case State::InitHeader: {
-                switch (check.receive(in_stream))
-                {
-                    case LocalICAPProtocol::ReceiveStatus::WaitingData:
-                        return ResponseType::WaitingData;
-                    case LocalICAPProtocol::ReceiveStatus::Ok:
-                        this->state = State::StartMessage;
-                        return shift_data(ResponseType::Initialized);
-                }
-            }
-
-            case State::StartMessage: {
-                this->content.clear();
-                switch (this->result_header.receive(in_stream))
-                {
-                    case LocalICAPProtocol::ReceiveStatus::WaitingData:
-                        return ResponseType::WaitingData;
-                    case LocalICAPProtocol::ReceiveStatus::Ok:
-                        break;
-                }
-
-                switch (this->result_header.result)
-                {
-                    case LocalICAPProtocol::ValidationType::Error:
-                        return ResponseType::Error;
-                    case LocalICAPProtocol::ValidationType::IsRejected:
-                    case LocalICAPProtocol::ValidationType::IsAccepted:
-                        this->state = State::FragmentMessage;
-                        break;
-                }
-                [[fallthrough]];
-            }
-
-            case State::FragmentMessage: {
-                std::size_t remaining_buf = this->result_header.content_size - this->content.size();
-                std::size_t remaining_message = std::min(in_stream.in_remain(), remaining_buf);
-                auto message = in_stream.in_skip_bytes(remaining_message);
-                this->content.append(char_ptr_cast(message.data()), message.size());
-
-                if (this->content.size() == this->result_header.content_size)
-                {
-                    this->state = State::StartMessage;
-                    return shift_data(ResponseType::Content);
-                }
-
-                return shift_data(ResponseType::WaitingData);
-            }
-
-            default: REDEMPTION_UNREACHABLE();
-        }
-    }
-
-public:
     std::string const& get_content() const noexcept
     {
         return this->content;
@@ -405,33 +338,115 @@ public:
         return this->result_header.result;
     }
 
-    ResponseType last_response_type() const noexcept
+    enum class [[nodiscard]] ResponseType : uint8_t
     {
-        return this->response_type;
+        WaitingData,
+        Error,
+        HasPacket,
+        HasContent,
+    };
+
+    ResponseType receive_response()
+    {
+        if (this->state <= State::WaitingData) {
+            this->buf.read_from(this->trans);
+            // hexdump_av(this->buf.av());
+        }
+
+        this->state = this->_receive_response();
+        return this->state == State::ContinuationData
+            ? ResponseType::WaitingData
+            : ResponseType(underlying_cast(this->state)-1);
+        // switch (this->state) {
+        //     case State::Error:      return ResponseType::Error;
+        //     case State::HasContent: return ResponseType::HasContent;
+        //     case State::HasPacket:  return ResponseType::HasPacket;
+        //     default:                return ResponseType::WaitingData;
+        // }
     }
 
 private:
+    enum class [[nodiscard]] State : uint8_t
+    {
+        ContinuationData,
+        WaitingData,
+
+        Error,
+        HasPacket,
+        HasContent,
+    };
+
+    State _receive_response()
+    {
+        InStream in_stream(this->buf.av());
+
+        auto shift_data = [&](State r){
+            this->buf.advance(in_stream.get_offset());
+            return r;
+        };
+
+        auto read_content = [&]{
+            std::size_t remaining_buf = this->result_header.content_size - this->content.size();
+            std::size_t remaining_message = std::min(in_stream.in_remain(), remaining_buf);
+            auto message = in_stream.in_skip_bytes(remaining_message);
+            this->content.append(char_ptr_cast(message.data()), message.size());
+
+            if (this->content.size() < this->result_header.content_size) {
+                return shift_data(State::ContinuationData);
+            }
+
+            return shift_data(State::HasContent);
+        };
+
+        using namespace LocalICAPProtocol;
+
+        if (this->state == State::ContinuationData) {
+            return read_content();
+        }
+
+        ICAPHeader header;
+        if (header.recv(in_stream) != ReceiveStatus::Ok) {
+            return State::WaitingData;
+        }
+
+        switch (header.msg_type)
+        {
+            case MsgType::Check:
+                if (this->check.recv(in_stream) != ReceiveStatus::Ok) {
+                    return State::WaitingData;
+                }
+
+                return shift_data(State::HasPacket);
+
+            case MsgType::Result:
+                if (this->result_header.recv(in_stream) != ReceiveStatus::Ok) {
+                    return State::WaitingData;
+                }
+
+                this->content.clear();
+                return read_content();
+
+            default:
+                LOG(LOG_DEBUG, "ICAPService::receive_response: Unknown packet: msg_type=%d",
+                    int(header.msg_type));
+                in_stream.in_skip_bytes(std::min<std::size_t>(
+                    header.msg_len, in_stream.in_remain()));
+                return shift_data(State::Error);
+        }
+    }
+
     ICAPFileId generate_id() noexcept
     {
         ++this->current_id;
         return ICAPFileId(this->current_id);
     }
 
-
-    enum class State : uint8_t
-    {
-        InitHeader,
-        StartMessage,
-        FragmentMessage,
-    };
-
     Transport& trans;
     LocalICAPProtocol::ICAPResultHeader result_header;
     LocalICAPProtocol::ICAPCheck check {};
     std::string content;
     int32_t current_id = 0;
-    State state = State::InitHeader;
-    ResponseType response_type = ResponseType::WaitingData;
+    State state = State::WaitingData;
 
-    BasicStaticBuffer<512, uint16_t> buf;
+    BasicStaticBuffer<1024*16, uint16_t> buf;
 };

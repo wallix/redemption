@@ -2080,10 +2080,6 @@ public:
 
 #ifndef __EMSCRIPTEN__
         this->channels.remote_programs_session_manager.reset();
-
-        if (this->icap_service) {
-            this->icap_service->send_close_session();
-        }
 #endif
 
         if (!this->server_redirection_packet_received) {
