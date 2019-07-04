@@ -25,7 +25,6 @@
 #pragma once
 
 #include "acl/auth_api.hpp"
-#include "core/RDP/windows_execute_shell_params.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -100,6 +99,8 @@ struct ICAPService;
 # include "mod/rdp/channels/sespro_channel.hpp"
 # include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 # include "mod/rdp/channels/cliprdr_channel.hpp"
+# include "mod/rdp/channels/validator_params.hpp"
+# include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 # include "mod/rdp/channels/drdynvc_channel.hpp"
 # include "mod/rdp/channels/rdpdr_channel.hpp"
 # include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
@@ -110,6 +111,7 @@ struct ICAPService;
 
 #include "mod/mod_api.hpp"
 
+#include "mod/rdp/mod_rdp_variables.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "mod/rdp/rdp_orders.hpp"
@@ -127,6 +129,7 @@ struct ICAPService;
 
 #include <cstdlib>
 #include <deque>
+
 
 #ifndef __EMSCRIPTEN__
 // TODO: AsynchronousTaskContainer ne serait pas une classe d'usage général qui mériterait son propre fichier ?
@@ -375,11 +378,7 @@ private:
     SessionReactor & session_reactor;
 
     ICAPService * icap_service;
-    bool enable_validator;
-    bool enable_interupting_validator;
-    bool enable_save_files;
-    std::string channel_files_directory;
-    std::string validator_target_name;
+    ValidatorParams validator_params;
 
 public:
     mod_rdp_channels(
@@ -411,11 +410,7 @@ public:
     , verbose(verbose)
     , session_reactor(session_reactor)
     , icap_service(icap_service)
-    , enable_validator(mod_rdp_params.enable_validator)
-    , enable_interupting_validator(mod_rdp_params.enable_interupting_validator)
-    , enable_save_files(mod_rdp_params.enable_save_files)
-    , channel_files_directory(mod_rdp_params.channel_files_directory)
-    , validator_target_name(mod_rdp_params.validator_target_name)
+    , validator_params(mod_rdp_params.validator_params)
     {}
 
     void DLP_antivirus_check_channels_files() {
@@ -555,12 +550,14 @@ private:
 
         BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
 
-        ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->clipboard.disable_log_syslog, this->clipboard.disable_log_wrm, this->clipboard.log_only_relevant_activities);
-        cvc_params.enable_validator = this->enable_validator;
-        cvc_params.enable_save_files = this->enable_save_files;
-        cvc_params.enable_interupting_validator = this->enable_interupting_validator;
-        cvc_params.channel_files_directory = this->channel_files_directory;
-        cvc_params.validator_target_name = this->validator_target_name;
+        ClipboardVirtualChannelParams cvc_params;
+        cvc_params.clipboard_down_authorized = this->channels_authorizations.cliprdr_down_is_authorized();
+        cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
+        cvc_params.clipboard_file_authorized = this->channels_authorizations.cliprdr_file_is_authorized();
+        cvc_params.dont_log_data_into_syslog = this->clipboard.disable_log_syslog;
+        cvc_params.dont_log_data_into_wrm    = this->clipboard.disable_log_wrm;
+        cvc_params.log_only_relevant_clipboard_activities = this->clipboard.log_only_relevant_activities;
+        cvc_params.validator_params = this->validator_params;
 
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
@@ -568,7 +565,7 @@ private:
             front,
             this->session_reactor,
             base_params,
-            cvc_params,
+            std::move(cvc_params),
             icap_service
             );
     }
@@ -1902,8 +1899,6 @@ class mod_rdp : public mod_api, public rdp_api
     ModRdpVariables vars;
 
 #ifndef __EMSCRIPTEN__
-    bool enable_validator;
-
     RDPMetrics * metrics;
     ICAPService * icap_service;
 #endif
@@ -2028,7 +2023,6 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
         #ifndef __EMSCRIPTEN__
-        , enable_validator(mod_rdp_params.enable_validator)
         , metrics(metrics)
         , icap_service(icap_service)
         #endif
@@ -2087,7 +2081,7 @@ public:
 #ifndef __EMSCRIPTEN__
         this->channels.remote_programs_session_manager.reset();
 
-        if (this->enable_validator) {
+        if (this->icap_service) {
             this->icap_service->send_close_session();
         }
 #endif

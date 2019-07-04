@@ -27,15 +27,16 @@
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
 #include "capture/file_to_graphic.hpp"
-#include "test_only/check_sig.hpp"
-#include "test_only/fake_stat.hpp"
-#include "test_only/lcg_random.hpp"
-#include "test_only/transport/test_transport.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/drawable.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
+#include "test_only/check_sig.hpp"
+#include "test_only/fake_stat.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/ostream_buffered.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 namespace
 {
@@ -2181,6 +2182,17 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
 
+#define TEST_DO_MAIN(argv, res_result, hmac_fn, trace_fn, output, output_error) { \
+    int argc = sizeof(argv)/sizeof(char*);                                        \
+    tu::ostream_buffered cout_buf;                                                \
+    tu::ostream_buffered cerr_buf(std::cerr);                                     \
+    int res = do_main(argc, argv, hmac_fn, trace_fn);                             \
+    EVP_cleanup();                                                                \
+    RED_CHECK_SMEM(cout_buf.str(), output);                                       \
+    RED_CHECK_SMEM(cerr_buf.str(), output_error);                                 \
+    RED_TEST(res_result == res);                                                  \
+}
+
     {
         WorkingDirectory output_wd("output1");
         auto output_prefix1 = output_wd.dirname().string() + "test_capture.mwrm";
@@ -2195,13 +2207,9 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "--video-codec", "mp4",
             "--json-pgs",
         };
-        int argc = sizeof(argv)/sizeof(char*);
 
-        LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-        int res = do_main(argc, argv, hmac_fn, trace_fn);
-        RED_CHECK_EQUAL(0, res);
-        EVP_cleanup();
-        RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix1, "\".\n\n"));
+        TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+            str_concat("Output file is \"", output_prefix1, "\".\n\n"), ""_av);
 
         RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
@@ -2232,13 +2240,9 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "--video-codec", "mp4",
             "--json-pgs",
         };
-        int argc = sizeof(argv)/sizeof(char*);
 
-        LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
-        int res = do_main(argc, argv, hmac_fn, trace_fn);
-        RED_CHECK_EQUAL(0, res);
-        EVP_cleanup();
-        RED_CHECK_EQUAL(cout_buf.str(), str_concat("Output file is \"", output_prefix2, "\".\n\n"));
+        TEST_DO_MAIN(argv, 0, hmac_fn, trace_fn,
+            str_concat("Output file is \"", output_prefix2, "\".\n\n"), ""_av);
 
         RED_CHECK_FILE_CONTENTS(output_wd.add_file("test_capture.meta"),
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"

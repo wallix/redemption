@@ -37,50 +37,50 @@ namespace
     namespace data_full_auth
     {
         #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
-        const auto cb_params = []{
+        const auto cb_params = []{ /*NOLINT*/
             ClipboardVirtualChannelParams clipboard_virtual_channel_params;
             clipboard_virtual_channel_params.clipboard_up_authorized   = true;
             clipboard_virtual_channel_params.clipboard_down_authorized = true;
             clipboard_virtual_channel_params.clipboard_file_authorized = true;
             return clipboard_virtual_channel_params;
         }();
-    }
+    } // namespace data_full_auth
 
     namespace data_down_denied
     {
         #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
-        const auto cb_params = []{
+        const auto cb_params = []{ /*NOLINT*/
             ClipboardVirtualChannelParams clipboard_virtual_channel_params;
             clipboard_virtual_channel_params.clipboard_up_authorized   = true;
             clipboard_virtual_channel_params.clipboard_down_authorized = false;
             clipboard_virtual_channel_params.clipboard_file_authorized = true;
             return clipboard_virtual_channel_params;
         }();
-    }
+    } // namespace data_down_denied
 
     namespace data_up_denied
     {
         #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
-        const auto cb_params = []{
+        const auto cb_params = []{ /*NOLINT*/
             ClipboardVirtualChannelParams clipboard_virtual_channel_params;
             clipboard_virtual_channel_params.clipboard_up_authorized   = false;
             clipboard_virtual_channel_params.clipboard_down_authorized = true;
             clipboard_virtual_channel_params.clipboard_file_authorized = true;
             return clipboard_virtual_channel_params;
         }();
-    }
+    } // namespace data_up_denied
 
     namespace data_full_denied
     {
         #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
-        const auto cb_params = []{
+        const auto cb_params = []{ /*NOLINT*/
             ClipboardVirtualChannelParams clipboard_virtual_channel_params;
             clipboard_virtual_channel_params.clipboard_up_authorized   = false;
             clipboard_virtual_channel_params.clipboard_down_authorized = false;
             clipboard_virtual_channel_params.clipboard_file_authorized = true;
             return clipboard_virtual_channel_params;
         }();
-    }
+    } // namespace data_full_denied
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthrisation)
@@ -392,10 +392,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.enable_interupting_validator = true;
-    clipboard_virtual_channel_params.enable_save_files = true;
-    clipboard_virtual_channel_params.enable_validator = false;
-    clipboard_virtual_channel_params.channel_files_directory = wd.dirname().string();
+    clipboard_virtual_channel_params.validator_params.enable_interupting = true;
+    clipboard_virtual_channel_params.validator_params.enable_save_files = true;
+    clipboard_virtual_channel_params.validator_params.save_files_directory = wd.dirname().string();
 
     TestResponseSender to_client_sender;
     NullSender to_server_sender;
@@ -895,10 +894,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.enable_interupting_validator = true;
-    clipboard_virtual_channel_params.enable_save_files = true;
-    clipboard_virtual_channel_params.enable_validator = false;
-    clipboard_virtual_channel_params.channel_files_directory = wd.dirname().string();
+    clipboard_virtual_channel_params.validator_params.enable_interupting = true;
+    clipboard_virtual_channel_params.validator_params.enable_save_files = true;
+    clipboard_virtual_channel_params.validator_params.save_files_directory = wd.dirname().string();
 
     NullSender to_client_sender;
     TestResponseSender to_server_sender;

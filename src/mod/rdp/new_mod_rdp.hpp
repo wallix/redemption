@@ -21,6 +21,7 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "mod/mod_api.hpp"
+#include "mod/rdp/mod_rdp_variables.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "core/channels_authorizations.hpp"
 

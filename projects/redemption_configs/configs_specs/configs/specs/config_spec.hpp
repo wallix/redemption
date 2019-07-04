@@ -602,11 +602,13 @@ void config_spec_definition(Writer && W)
     W.section("validator", [&]
     {
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_validator", set(false));
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interupting_validator", set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "target_name", set("avscan"));
+
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interupting", set(false));
+
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_save_files", set(false));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "channel_files_directory", set(""));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "validator_socket_path", set("tools/ICAP_socket/redemption-icap-service-sock"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "validator_target_name", set("avscan"));
+        W.member(ini_and_gui, no_sesman, L, type_<types::dirpath>(), "save_files_directory");
     });
 
     W.section("context", [&]

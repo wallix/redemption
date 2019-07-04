@@ -27,7 +27,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
-#include <map>
+#include <unordered_map>
 
 
 namespace RDP {
@@ -40,51 +40,46 @@ private:
     static const uint8_t CURRENT_VERSION = 1;
 
     using map_value = Bitmap;
+    using map_key = uint64_t;
 
-    class map_key
+    static map_key tokey(uint8_t const (&sig)[8]) noexcept
     {
-        uint8_t key[8];
+        return (map_key(sig[0]) << 56)
+                | (map_key(sig[1]) << 48)
+                | (map_key(sig[2]) << 40)
+                | (map_key(sig[3]) << 32)
+                | (map_key(sig[4]) << 24)
+                | (map_key(sig[5]) << 16)
+                | (map_key(sig[6]) << 8)
+                | (map_key(sig[7]) << 0)
+        ;
+    }
 
-    public:
-        explicit map_key(const uint8_t (& sig)[8]) {
-            memcpy(this->key, sig, sizeof(this->key));
-        }
-
-        bool operator<(const map_key & other) const /*noexcept*/ {
-            auto p = std::mismatch(this->begin(), this->end(), other.begin());
-            return p.first == this->end() ? false : *p.first < *p.second;
-        }
-
-        struct CString
+    struct KeyString
+    {
+        explicit KeyString(map_key sig) noexcept
         {
-            explicit CString(const uint8_t (& sig)[8]) {
-                std::snprintf(
-                    this->s, sizeof(this->s), "%02X%02X%02X%02X%02X%02X%02X%02X",
-                    unsigned(sig[0]), unsigned(sig[1]), unsigned(sig[2]), unsigned(sig[3]),
-                    unsigned(sig[4]), unsigned(sig[5]), unsigned(sig[6]), unsigned(sig[7])
-                );
-            }
-
-            const char * c_str() const
-            { return this->s; }
-
-        private:
-            char s[17];
-        };
-
-        CString str() const {
-            return CString(this->key);
+            std::snprintf(
+                this->s, sizeof(this->s), "%02X%02X%02X%02X%02X%02X%02X%02X",
+                unsigned((sig >> 56) & 0xff),
+                unsigned((sig >> 48) & 0xff),
+                unsigned((sig >> 40) & 0xff),
+                unsigned((sig >> 32) & 0xff),
+                unsigned((sig >> 24) & 0xff),
+                unsigned((sig >> 16) & 0xff),
+                unsigned((sig >> 8 ) & 0xff),
+                unsigned((sig >> 0 ) & 0xff)
+            );
         }
+
+        const char * c_str() const noexcept
+        { return this->s; }
 
     private:
-        uint8_t const * begin() const
-        { return this->key; }
-
-        uint8_t const * end() const
-        { return this->key + sizeof(this->key); }
+        char s[17];
     };
 
-    using container_type = std::map<map_key, map_value>;
+    using container_type = std::unordered_map<map_key, map_value>;
 
     container_type bmp_map[BmpCache::MAXIMUM_NUMBER_OF_CACHES];
 
@@ -170,8 +165,7 @@ private:
             end += 13;
 
             uint8_t sig[8];
-
-            stream.in_copy_bytes(sig, 8); // sig(8);
+            stream.in_copy_bytes(sig, 8);
 
             auto original_info = extract_screen_info(stream);
 
@@ -193,11 +187,11 @@ private:
             t.recv_boom(end, bmp_size);
 
             if (bmp_cache.get_cache(cache_id).persistent()) {
-                map_key key(sig);
+                map_key key{tokey(sig)};
 
                 LOG_IF(bool(this->verbose & Verbose::bmp_info), LOG_INFO,
                     "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u",
-                    key.str(), original_info.bpp,
+                    KeyString(key).c_str(), original_info.bpp,
                     original_info.width, original_info.height, bmp_size);
 
                 assert(this->bmp_map[cache_id][key].is_valid() == false);
@@ -239,12 +233,12 @@ public:
              entry_index++, cache_index++, sig++) {
             assert(!this->bmp_cache.get_cache(cache_id)[cache_index]);
 
-            map_key key(sig->sig_8);
+            map_key key{tokey(sig->sig_8)};
 
             container_type::iterator it = this->bmp_map[cache_id].find(key);
             if (it != this->bmp_map[cache_id].end()) {
                 LOG_IF(bool(this->verbose & Verbose::bmp_info), LOG_INFO,
-                    "BmpCachePersister: bitmap found. key=\"%s\"", key.str());
+                    "BmpCachePersister: bitmap found. key=\"%s\"", KeyString(key).c_str());
 
                 if (this->bmp_cache.get_cache(cache_id).size() > cache_index) {
                     this->bmp_cache.put(cache_id, cache_index, it->second, sig->sig_32[0], sig->sig_32[1]);
@@ -254,7 +248,7 @@ public:
             }
             else {
                 LOG_IF(bool(this->verbose & Verbose::bmp_info),
-                    LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", key.str());
+                    LOG_WARNING, "BmpCachePersister: bitmap not found!!! key=\"%s\"", KeyString(key).c_str());
             }
         }
     }
@@ -342,13 +336,10 @@ private:
             end += bmp_size;
 
             if (bmp_cache.get_cache(cache_id).persistent() && (i < bmp_cache.get_cache(cache_id).size())) {
-                if (bool(verbose & Verbose::bmp_info)) {
-                    map_key key(sig.sig_8);
-                    LOG( LOG_INFO
-                        , "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                        , key.str(), original_info.bpp
-                        , original_info.width, original_info.height, bmp_size);
-                }
+                LOG_IF(bool(verbose & Verbose::bmp_info), LOG_INFO
+                    , "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
+                    , KeyString(tokey(sig.sig_8)).c_str(), original_info.bpp
+                    , original_info.width, original_info.height, bmp_size);
 
 
                 Bitmap bmp( bmp_cache.bpp, original_info.bpp
@@ -433,11 +424,9 @@ private:
                 //     assert(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
                 // }
 
-                map_key key(sig);
-
                 LOG_IF(bool(verbose & Verbose::bmp_info), LOG_INFO
                   , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                  , key.str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
+                  , KeyString(tokey(sig)).c_str(), bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
 
                 stream.out_copy_bytes(sig, 8);
                 stream.out_uint8(safe_int(bmp.bpp()));

@@ -1157,16 +1157,17 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #enable_validator = 0
 
+#socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
+
+#target_name = avscan
+
 # value: 0 or 1
-#enable_interupting_validator = 0
+#enable_interupting = 0
 
 # value: 0 or 1
 #enable_save_files = 0
 
-#channel_files_directory = 
-
-#validator_socket_path = tools/ICAP_socket/redemption-icap-service-sock
-
-#validator_target_name = avscan
+# maxlen = 4096
+#save_files_directory = 
 
 )gen_config_ini"

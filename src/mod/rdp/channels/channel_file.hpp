@@ -20,9 +20,6 @@
 
 #pragma once
 
-#include <fstream>
-#include <unistd.h>
-
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -31,10 +28,20 @@
 #include "utils/log.hpp"
 
 #include "mod/icap_files_service.hpp"
+#include "mod/rdp/channels/validator_params.hpp"
+
+#include <unistd.h>
 
 
-
-class ChannelFile {
+class ChannelFile
+{
+public:
+    enum class Direction : uint8_t
+    {
+        None,
+        FromServer,
+        FromClient,
+    };
 
 private:
     std::string dir_path;
@@ -50,7 +57,6 @@ private:
 
     bool is_interupting_channel;
     bool is_saving_files;
-    bool enable_validator;
 
     ICAPService * icap_service;
 
@@ -66,19 +72,12 @@ public:
         FILE_FROM_CLIENT
     };
 
-    ChannelFile(const std::string & dir_path
-    , bool is_interupting_channel
-    , bool is_saving_files
-    , bool enable_validator
-    , ICAPService * icap_service
-    , const std::string target_name
-    ) noexcept
-        : dir_path(dir_path)
-        , is_interupting_channel(is_interupting_channel)
-        , is_saving_files(is_saving_files)
-        , enable_validator(enable_validator)
-        , icap_service(icap_service)
-        , target_name(target_name)
+    ChannelFile(ICAPService * icap_service, ValidatorParams const& validator_params) noexcept
+    : dir_path(validator_params.save_files_directory)
+    , is_interupting_channel(validator_params.enable_interupting)
+    , is_saving_files(validator_params.enable_save_files)
+    , icap_service(icap_service)
+    , target_name(validator_params.target_name)
     {}
 
     void set_total_file_size(const size_t total_file_size) {
@@ -104,7 +103,7 @@ public:
             }
         }
 
-        if (this->enable_validator) {
+        if (this->icap_service) {
             if (bool(this->streamID) && !this->current_analysis_done) {
                 this->icap_service->send_abort(this->streamID);
             }
@@ -141,13 +140,13 @@ public:
             }
         }
 
-        if (this->enable_validator) {
+        if (this->icap_service) {
             this->icap_service->send_data(this->streamID, data.first(data.size() - over_data_len));
         }
     }
 
     void set_end_of_file() {
-        if (this->enable_validator) {
+        if (this->icap_service) {
             this->icap_service->send_eof(this->streamID);
         }
     }
@@ -173,7 +172,7 @@ public:
     // TODO string const&
     std::string get_result_content() const noexcept
     {
-        if (this->enable_validator) {
+        if (this->icap_service) {
             return this->icap_service->get_content();
         }
         return std::string();
@@ -181,7 +180,7 @@ public:
 
     bool receive_response()
     {
-        if (this->enable_validator) {
+        if (this->icap_service) {
             // TODO loop ?
             auto r = this->icap_service->receive_response();
             this->current_analysis_done = true;
@@ -214,7 +213,7 @@ public:
     bool is_valid() const noexcept
     {
         if (this->icap_service == nullptr) {
-            return !this->enable_validator;
+            return !this->icap_service;
         }
         return (this->icap_service->last_result_flag() == LocalICAPProtocol::ValidationType::IsAccepted);
     }
@@ -236,6 +235,6 @@ public:
 
     bool is_enable_validation() const noexcept
     {
-        return this->enable_validator;
+        return this->icap_service;
     }
 };

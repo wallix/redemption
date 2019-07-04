@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "configs/config_access.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/channel_names.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
+#include "mod/rdp/channels/validator_params.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
@@ -44,24 +44,6 @@ class Transport;
 class Theme;
 class Font;
 
-using ModRdpVariables = vcfg::variables<
-    vcfg::var<cfg::context::auth_notify,                       vcfg::accessmode::set>,
-    vcfg::var<cfg::context::auth_notify_rail_exec_flags,       vcfg::accessmode::set>,
-    vcfg::var<cfg::context::auth_notify_rail_exec_exe_or_file, vcfg::accessmode::set>,
-    vcfg::var<cfg::context::target_service,                    vcfg::accessmode::get>,
-    vcfg::var<cfg::context::session_id,                        vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::auth_user,                         vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::host,                              vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::target_device,                     vcfg::accessmode::get>,
-    vcfg::var<cfg::metrics::log_dir_path,                  vcfg::accessmode::get>,
-    vcfg::var<cfg::metrics::log_file_turnover_interval,    vcfg::accessmode::get>,
-    vcfg::var<cfg::metrics::sign_key,                      vcfg::accessmode::get>,
-    vcfg::var<cfg::metrics::enable_rdp_metrics,            vcfg::accessmode::get>,
-    vcfg::var<cfg::metrics::log_interval,                  vcfg::accessmode::get>,
-    vcfg::var<cfg::mod_rdp::server_cert,                   vcfg::accessmode::set>,
-    vcfg::var<cfg::mod_rdp::server_cert_response,          vcfg::accessmode::ask | vcfg::accessmode::get | vcfg::accessmode::get_ref>
->;
-
 struct ModRDPParams
 {
 #ifndef __EMSCRIPTEN__
@@ -80,12 +62,8 @@ struct ModRDPParams
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
-    bool enable_validator = false;
-    bool enable_interupting_validator = false;
-    bool enable_save_files = false;
-    const char * validator_socket_path =  "";
-    const char * channel_files_directory = "";
-    const char * validator_target_name = "";
+
+    ValidatorParams validator_params;
 
     struct ClipboardParams
     {

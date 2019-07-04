@@ -23,7 +23,7 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 
-#include <map>
+#include <unordered_map>
 #include <utility>
 
 template <typename T, unsigned int next_usable,
@@ -32,8 +32,8 @@ class IDManager
 {
 private:
     // PERF very slow
-    std::map<T, T>                  src_to_dest;
-    std::map<T, std::pair<T, bool>> dest_to_src;
+    std::unordered_map<T, T>                  src_to_dest;
+    std::unordered_map<T, std::pair<T, bool>> dest_to_src;
 
     T next_usable_dest_id = static_cast<T>(next_usable);
 

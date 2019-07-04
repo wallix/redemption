@@ -78,7 +78,11 @@ actions cover
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
-    <define>REDEMPTION_DECL_LOG_TEST
+;
+
+obj log_test.o : $(REDEMPTION_TEST_PATH)/includes/test_only/log_as_logtest.cpp :
+    $(CXXFLAGS_TEST)
+    <cxxflags>-O3
 ;
 
 obj register_exception.o :

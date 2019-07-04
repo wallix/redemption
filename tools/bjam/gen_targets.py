@@ -17,7 +17,7 @@ includes = set((
 
 disable_tests = set((
     # 'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
-    'tests/test_meta_protocol2.cpp',
+    # 'tests/test_meta_protocol2.cpp',
     'tests/utils/test_divers.cpp',
 ))
 
@@ -26,10 +26,9 @@ disable_srcs = set((
     'tests/includes/test_only/test_framework/impl/register_exception.cpp',
     'tests/includes/test_only/test_framework/impl/test_framework.cpp',
     'tests/includes/test_only/test_framework/redemption_unit_tests.cpp',
+    'tests/includes/test_only/log_as_logtest.cpp',
     'src/utils/log_as_syslog.cpp',
-    'src/utils/log_as_logemasm.cpp',
     'src/utils/log_as_logprint.cpp',
-    'src/utils/log_as_logtest.cpp',
 ))
 
 src_deps = dict((

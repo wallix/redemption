@@ -21,5 +21,6 @@
 #pragma once
 
 #define REDEMPTION_CONFIG_AUTHFILE "/tmp/redemption-sesman-sock"
+#define REDEMPTION_CONFIG_VALIDATOR_PATH "/tmp/redemption-validator-sock"
 #define REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION 0
 #define REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS "/K"

@@ -973,14 +973,14 @@ load_theme = string(default='')
 
 enable_validator = boolean(default=False)
 
-enable_interupting_validator = boolean(default=False)
+socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
+
+target_name = string(default='avscan')
+
+enable_interupting = boolean(default=False)
 
 enable_save_files = boolean(default=False)
 
-channel_files_directory = string(default='')
-
-validator_socket_path = string(default='tools/ICAP_socket/redemption-icap-service-sock')
-
-validator_target_name = string(default='avscan')
+save_files_directory = string(max=4096, default='')
 
 )gen_config_ini"

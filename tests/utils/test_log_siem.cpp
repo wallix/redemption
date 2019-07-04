@@ -22,17 +22,19 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/log_siem.hpp"
+#include "test_only/log_buffered.hpp"
+
 
 RED_AUTO_TEST_CASE(TestLogSiem)
 {
-    LOG__REDEMPTION__BUFFERED log_buf;
+    tu::log_buffered log_buf;
     LOG_SIEM("test %s", "1");
     RED_CHECK(log_buf.buf() == "test 1\n");
 }
 
 RED_AUTO_TEST_CASE(TestLogProxySiem)
 {
-    LOG__REDEMPTION__BUFFERED log_buf;
+    tu::log_buffered log_buf;
     LOG_PROXY_SIEM("CAT", "test %s", "1");
     log_proxy::init("L33t", "universe", 1234);
     LOG_PROXY_SIEM("TAC", "test 2");

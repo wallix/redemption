@@ -111,7 +111,6 @@ using emscripten ;
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
-    <define>REDEMPTION_DECL_LOG_TEST
     <cxxflags>"-s NODERAWFS"
 ;
 
@@ -149,7 +148,8 @@ constant TEST_DEPENDENCIES :
     <cxxflags>-Wno-missing-prototypes
 ;
 
-objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
+objjs log_test.bc : $(REDEMPTION_TEST_PATH)/includes/test_only/log_as_logtest.cpp
+    : <include>$(REDEMPTION_TEST_PATH)/includes ;
 alias log_print.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
 
 objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :

@@ -18,10 +18,6 @@
 *   Author(s): Jonathan Poelen
 */
 
-#ifndef REDEMPTION_DECL_LOG_TEST
-# define REDEMPTION_DECL_LOG_TEST
-#endif
-
 #include "cxx/diagnostic.hpp"
 #include "cxx/compiler_version.hpp"
 REDEMPTION_DIAGNOSTIC_PUSH
@@ -30,6 +26,8 @@ REDEMPTION_DIAGNOSTIC_PUSH
 #endif
 #include "utils/log.hpp"
 REDEMPTION_DIAGNOSTIC_POP
+
+#include "test_only/log_buffered.hpp"
 
 #ifdef __EMSCRIPTEN__
 # include "red_emscripten/em_js.hpp"
@@ -90,67 +88,23 @@ namespace
 } // namespace
 
 
-struct LOG__REDEMPTION__OSTREAM__BUFFERED::D
-{
-    D()
-    : oldbuf(std::cout.rdbuf(&sbuf))
-    , oldbuf_cerr(is_loggable() ? std::cerr.rdbuf(nullptr) : nullptr)
-    {
-    }
-
-    ~D()
-    {
-        std::cout.rdbuf(oldbuf);
-        if (oldbuf_cerr) {
-            std::cerr.rdbuf(oldbuf_cerr);
-        }
-    }
-
-    std::string str() const
-    {
-        std::cout.rdbuf(oldbuf);
-        return sbuf.str();
-    }
-
-private:
-    std::stringbuf sbuf;
-    std::streambuf * oldbuf;
-    std::streambuf * oldbuf_cerr;
-};
-
-
-LOG__REDEMPTION__OSTREAM__BUFFERED::LOG__REDEMPTION__OSTREAM__BUFFERED()
-  : d(new D)
-{}
-
-LOG__REDEMPTION__OSTREAM__BUFFERED::~LOG__REDEMPTION__OSTREAM__BUFFERED()
-{
-    delete d;
-}
-
-std::string LOG__REDEMPTION__OSTREAM__BUFFERED::str() const
-{
-    return d->str();
-}
-
-
-LOG__REDEMPTION__BUFFERED::LOG__REDEMPTION__BUFFERED()
+tu::log_buffered::log_buffered()
 {
     log_buf.clear();
     enable_buf_log = true;
 }
 
-LOG__REDEMPTION__BUFFERED::~LOG__REDEMPTION__BUFFERED()
+tu::log_buffered::~log_buffered()
 {
     enable_buf_log = false;
 }
 
-std::string const& LOG__REDEMPTION__BUFFERED::buf() const
+std::string const& tu::log_buffered::buf() const noexcept
 {
     return log_buf;
 }
 
-void LOG__REDEMPTION__BUFFERED::clear()
+void tu::log_buffered::clear()
 {
     log_buf.clear();
 }

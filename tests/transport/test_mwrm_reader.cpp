@@ -27,8 +27,6 @@
 #include "transport/crypto_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
 
-#include <fstream>
-
 
 extern "C" {
     inline int hmac_fn(uint8_t * buffer)

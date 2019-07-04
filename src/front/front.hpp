@@ -4159,7 +4159,7 @@ protected:
         }
     }
 
-    void draw_impl(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) {
+    void draw_impl(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & content) {
     	for (const Rect & rect1 : content.region.rects) {
     		Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
 
