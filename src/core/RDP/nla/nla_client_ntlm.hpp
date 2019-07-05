@@ -61,6 +61,7 @@ private:
     
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
+    // Inlined
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
@@ -128,28 +129,22 @@ private:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS sspi_EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) {
+    std::pair<SEC_STATUS,std::vector<uint8_t>> sspi_EncryptMessage(array_view_const_u8 data_in, unsigned long MessageSeqNo) {
+        // data_out [signature][data_buffer]
+        std::vector<uint8_t> data_out;
+
         if (!this->sspi_context_initialized) {
-            return SEC_E_NO_CONTEXT;
+            return {SEC_E_NO_CONTEXT, data_out};
         }
         LOG_IF(this->sspi_context.verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
 
-        // data_out [signature][data_buffer]
-
-        data_out.init(data_in.size() + cbMaxSignature);
-        auto message_out = data_out.av().array_from_offset(cbMaxSignature);
-
+        data_out.resize(data_in.size() + cbMaxSignature, 0);
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         this->sspi_compute_hmac_md5(digest, *this->sspi_context.SendSigningKey, data_in, MessageSeqNo);
+        this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
+        this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
 
-        /* Encrypt message using with RC4, result overwrites original buffer */
-        // this->sspi_context.confidentiality == true
-        this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
-
-        this->sspi_compute_signature(
-            data_out.get_data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
-
-        return SEC_E_OK;
+        return {SEC_E_OK, data_out};
     }
 
 
@@ -160,12 +155,12 @@ private:
         std::vector<uint8_t> data_out;
     
         if (!this->sspi_context_initialized) {
-            return std::make_pair(SEC_E_NO_CONTEXT, data_out);
+            return {SEC_E_NO_CONTEXT, data_out};
         }
         LOG_IF(this->sspi_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
         if (data_in.size() < cbMaxSignature) {
-            return std::make_pair(SEC_E_INVALID_TOKEN, data_out);
+            return {SEC_E_INVALID_TOKEN, data_out};
         }
 
         // data_in [signature][data_buffer]
@@ -192,9 +187,9 @@ private:
             LOG(LOG_ERR, "Actual Signature:");
             hexdump_c(data_in.data(), 16);
 
-            return std::make_pair(SEC_E_MESSAGE_ALTERED, data_out);
+            return {SEC_E_MESSAGE_ALTERED, data_out};
         }
-        return std::make_pair(SEC_E_OK, data_out);
+        return {SEC_E_OK, data_out};
     }
 
     bool restricted_admin_mode;
@@ -266,8 +261,11 @@ private:
             public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
         }
 
-        return this->sspi_EncryptMessage(
-            public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
+        auto [status, data_out] = this->sspi_EncryptMessage(public_key, this->send_seq_num++);
+        
+        this->ts_request.pubKeyAuth.init(data_out.size());
+        this->ts_request.pubKeyAuth.copy(const_bytes_view{data_out.data(),data_out.size()});
+        return status;
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -375,12 +373,16 @@ private:
         StaticOutStream<65536> ts_credentials_send;
         this->ts_credentials.emit(ts_credentials_send);
 
-        if (SEC_E_OK != this->sspi_EncryptMessage(
-            {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
-            this->ts_request.authInfo, this->send_seq_num++)){
+        auto [status1, data_out] = this->sspi_EncryptMessage(
+            {ts_credentials_send.get_data(), ts_credentials_send.get_offset()}, this->send_seq_num++);
+        
+        if (SEC_E_OK != status1){
             LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
             return Res::Err;
         }
+
+        this->ts_request.authInfo.init(data_out.size());
+        this->ts_request.authInfo.copy(const_bytes_view{data_out.data(),data_out.size()});
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
 
