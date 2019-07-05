@@ -60,21 +60,9 @@ private:
     
     bool sspi_context_initialized = false;
     NTLMContext sspi_context;
-    bool sspi_verbose;
     
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-//    SEC_STATUS sspi_AcquireCredentialsHandle(SEC_WINNT_AUTH_IDENTITY const* pAuthData)
-//    {
-//        LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-//        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
-
-//        if (pAuthData) {
-//            this->sspi_identity->CopyAuthIdentity(pAuthData->get_user_utf16_av(), pAuthData->get_domain_utf16_av(), pAuthData->get_password_utf16_av());
-//        }
-
-//        return SEC_E_OK;
-//    }
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
@@ -82,7 +70,7 @@ private:
         array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
     )
     {
-        LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
+        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
         if (!this->sspi_context_initialized) {
 
@@ -214,50 +202,6 @@ private:
         return std::make_pair(SEC_E_OK, data_out);
     }
 
-
-//    // GSS_Unwrap
-//    // DECRYPT_MESSAGE DecryptMessage;
-//    SEC_STATUS sspi_DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) 
-//    {
-//    
-//        if (!this->sspi_context_initialized) {
-//            return SEC_E_NO_CONTEXT;
-//        }
-//        LOG_IF(this->sspi_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-
-//        if (data_in.size() < cbMaxSignature) {
-//            return SEC_E_INVALID_TOKEN;
-//        }
-
-//        // data_in [signature][data_buffer]
-
-//        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
-//        data_out.init(data_buffer.size());
-
-//        /* Decrypt message using with RC4, result overwrites original buffer */
-//        // this->sspi_context.confidentiality == true
-//        this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
-
-//        uint8_t digest[SslMd5::DIGEST_LENGTH];
-//        this->sspi_compute_hmac_md5(digest, *this->sspi_context.RecvSigningKey, data_out.av(), MessageSeqNo);
-
-//        uint8_t expected_signature[16] = {};
-//        this->sspi_compute_signature(
-//            expected_signature, this->sspi_context.RecvRc4Seal, digest, MessageSeqNo);
-
-//        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
-//            /* signature verification failed! */
-//            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-//            LOG(LOG_ERR, "Expected Signature:");
-//            hexdump_c(expected_signature, 16);
-//            LOG(LOG_ERR, "Actual Signature:");
-//            hexdump_c(data_in.data(), 16);
-
-//            return SEC_E_MESSAGE_ALTERED;
-//        }
-//        return SEC_E_OK;
-//    }
-
     bool restricted_admin_mode;
 
     const char * target_host;
@@ -272,7 +216,6 @@ private:
         this->ServicePrincipalName.copy({pszTargetName, length});
         this->ServicePrincipalName.get_data()[length] = 0;
     }
-
 
     void credssp_generate_client_nonce() {
         LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
@@ -474,7 +417,6 @@ public:
         : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
         , sspi_context(false, rand, timeobj, verbose)
-        , sspi_verbose(verbose)
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
         , rand(rand)
@@ -505,7 +447,7 @@ public:
         
 //        SEC_STATUS status0 = this->sspi_AcquireCredentialsHandle(&this->identity);
 
-        LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
+        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
         this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
         if (&this->identity) {
