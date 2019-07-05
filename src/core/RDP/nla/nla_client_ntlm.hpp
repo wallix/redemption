@@ -449,7 +449,7 @@ public:
         /* receive server response and place in input buffer */
         SEC_STATUS status1 = this->sspi_InitializeSecurityContext(
             bytes_view(this->ServicePrincipalName.av()).as_chars(),
-            {this->client_auth_data_input_buffer.data(),this->client_auth_data_input_buffer.size()},
+            this->client_auth_data_input_buffer,
             /*output*/this->ts_request.negoTokens);
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
@@ -532,7 +532,7 @@ public:
 
                 SEC_STATUS status = this->sspi_InitializeSecurityContext(
                     bytes_view(this->ServicePrincipalName.av()).as_chars(),
-                    {this->client_auth_data_input_buffer.data(),this->client_auth_data_input_buffer.size()},
+                    this->client_auth_data_input_buffer,
                     /*output*/this->ts_request.negoTokens);
 
                 if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
