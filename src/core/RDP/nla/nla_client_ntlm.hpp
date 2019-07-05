@@ -56,7 +56,7 @@ private:
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     
-    std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> sspi_identity;
+    SEC_WINNT_AUTH_IDENTITY * sspi_identity = &identity;
     
     bool sspi_context_initialized = false;
     NTLMContext sspi_context;
@@ -445,9 +445,9 @@ public:
 //        SEC_STATUS status0 = this->sspi_AcquireCredentialsHandle(&this->identity);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
+//        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
-        this->sspi_identity->CopyAuthIdentity(this->identity.get_user_utf16_av(), this->identity.get_domain_utf16_av(), this->identity.get_password_utf16_av());
+//        this->sspi_identity->CopyAuthIdentity(this->identity.get_user_utf16_av(), this->identity.get_domain_utf16_av(), this->identity.get_password_utf16_av());
 
         this->client_auth_data.input_buffer.init(0);
         this->client_auth_data.state = ClientAuthenticateData::Loop;
