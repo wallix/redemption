@@ -129,23 +129,6 @@ private:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    std::pair<SEC_STATUS,std::vector<uint8_t>> sspi_EncryptMessage(array_view_const_u8 data_in, unsigned long MessageSeqNo) {
-        // data_out [signature][data_buffer]
-        std::vector<uint8_t> data_out;
-
-        if (!this->sspi_context_initialized) {
-            return {SEC_E_NO_CONTEXT, data_out};
-        }
-        LOG_IF(this->sspi_context.verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
-
-        data_out.resize(data_in.size() + cbMaxSignature, 0);
-        uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, *this->sspi_context.SendSigningKey, data_in, MessageSeqNo);
-        this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
-        this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
-
-        return {SEC_E_OK, data_out};
-    }
 
 
     // GSS_Unwrap
@@ -261,11 +244,20 @@ private:
             public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
         }
 
-        auto [status, data_out] = this->sspi_EncryptMessage(public_key, this->send_seq_num++);
-        
+        if (!this->sspi_context_initialized) {
+            return SEC_E_NO_CONTEXT;
+        }
+
+        unsigned long MessageSeqNo = this->send_seq_num++;
+        // data_out [signature][data_buffer]
+        std::vector<uint8_t> data_out(public_key.size() + cbMaxSignature);
+        uint8_t digest[SslMd5::DIGEST_LENGTH];
+        this->sspi_compute_hmac_md5(digest, *this->sspi_context.SendSigningKey, public_key, MessageSeqNo);
+        this->sspi_context.SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
+        this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
         this->ts_request.pubKeyAuth.init(data_out.size());
         this->ts_request.pubKeyAuth.copy(const_bytes_view{data_out.data(),data_out.size()});
-        return status;
+        return SEC_E_OK;
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -373,20 +365,25 @@ private:
         StaticOutStream<65536> ts_credentials_send;
         this->ts_credentials.emit(ts_credentials_send);
 
-        auto [status1, data_out] = this->sspi_EncryptMessage(
-            {ts_credentials_send.get_data(), ts_credentials_send.get_offset()}, this->send_seq_num++);
-        
-        if (SEC_E_OK != status1){
-            LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X", status);
+        if (!this->sspi_context_initialized) {
+            LOG(LOG_ERR, "credssp_encrypt_ts_credentials error status:SEC_E_NO_CONTEXT");
             return Res::Err;
         }
+
+        array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
+        unsigned long MessageSeqNo = this->send_seq_num++;
+        // data_out [signature][data_buffer]
+        std::vector<uint8_t> data_out;
+        data_out.resize(data_in.size() + cbMaxSignature, 0);
+        uint8_t digest[SslMd5::DIGEST_LENGTH];
+        this->sspi_compute_hmac_md5(digest, *this->sspi_context.SendSigningKey, data_in, MessageSeqNo);
+        this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
+        this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
 
         this->ts_request.authInfo.init(data_out.size());
         this->ts_request.authInfo.copy(const_bytes_view{data_out.data(),data_out.size()});
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
-
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::send");
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         transport.get_transport().send(ts_request_emit.get_bytes());
