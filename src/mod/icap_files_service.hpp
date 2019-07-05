@@ -127,6 +127,7 @@ struct ICAPHeader
     }
 };
 
+
 struct ICAPResultHeader
 {
     ValidationType result = ValidationType::Wait;
@@ -427,7 +428,7 @@ private:
                 return read_content();
 
             default:
-                LOG(LOG_DEBUG, "ICAPService::receive_response: Unknown packet: msg_type=%d",
+                LOG(LOG_ERR, "ICAPService::receive_response: Unknown packet: msg_type=%d",
                     int(header.msg_type));
                 in_stream.in_skip_bytes(std::min<std::size_t>(
                     header.msg_len, in_stream.in_remain()));

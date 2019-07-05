@@ -155,6 +155,7 @@ struct FilecontentsRequestReceive {
     uint32_t dwFlags = 0;
     uint32_t streamID = 0;
     uint32_t lindex = 0;
+    uint32_t requested = 0;
 
     FilecontentsRequestReceive(ClipboardSideData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen) {
         LOG(LOG_INFO, "dataLen=%u FileContentsRequestPDU::minimum_size()=%zu", dataLen, RDPECLIP::FileContentsRequestPDU::minimum_size());
@@ -170,6 +171,7 @@ struct FilecontentsRequestReceive {
             clip_state.last_dwFlags = this->dwFlags;
             this->streamID = file_contents_request_pdu.streamId();
             this->lindex   = file_contents_request_pdu.lindex();
+            this->requested = file_contents_request_pdu.cbRequested();
 
             if ((RDPECLIP::FILECONTENTS_RANGE == this->dwFlags) && file_contents_request_pdu.clipDataId()) {
 
