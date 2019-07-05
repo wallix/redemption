@@ -324,12 +324,8 @@ private:
 
     enum class Res : bool { Err, Ok };
 
-    struct ClientAuthenticateData
-    {
-        enum : uint8_t { Start, Loop, Final } state = Start;
-        Array input_buffer;
-    };
-    ClientAuthenticateData client_auth_data;
+    enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
+    Array client_auth_data_input_buffer;
 
     Res sm_credssp_client_authenticate_stop(InStream & in_stream, OutTransport transport)
     {
@@ -423,7 +419,7 @@ public:
         this->SetHostnameFromUtf8(hostname);
         this->identity.SetKrbAuthIdentity(user, pass);
 
-        this->client_auth_data.state = ClientAuthenticateData::Start;
+        this->client_auth_data_state = Start;
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::client_authenticate");
 
@@ -438,8 +434,8 @@ public:
         
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
 
-        this->client_auth_data.input_buffer.init(0);
-        this->client_auth_data.state = ClientAuthenticateData::Loop;
+        this->client_auth_data_input_buffer.init(0);
+        this->client_auth_data_state = Loop;
 
         /*
          * from tspkg.dll: 0x00000132
@@ -454,7 +450,7 @@ public:
         /* receive server response and place in input buffer */
         SEC_STATUS status1 = this->sspi_InitializeSecurityContext(
             bytes_view(this->ServicePrincipalName.av()).as_chars(),
-            this->client_auth_data.input_buffer.av(),
+            this->client_auth_data_input_buffer.av(),
             /*output*/this->ts_request.negoTokens);
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
@@ -466,7 +462,7 @@ public:
             throw ERR_CREDSSP_NTLM_INIT_FAILED;
         }
 
-        this->client_auth_data.input_buffer.init(0);
+        this->client_auth_data_input_buffer.init(0);
 
         if ((status1 == SEC_I_COMPLETE_AND_CONTINUE) ||
             (status1 == SEC_I_COMPLETE_NEEDED) ||
@@ -502,18 +498,18 @@ public:
         if (status1 != SEC_I_CONTINUE_NEEDED) {
             LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
 
-            this->client_auth_data.state = ClientAuthenticateData::Final;
+            this->client_auth_data_state = Final;
         }
     }
 
     credssp::State credssp_client_authenticate_next(InStream & in_stream, OutTransport transport)
     {
-        switch (this->client_auth_data.state)
+        switch (this->client_auth_data_state)
         {
-            case ClientAuthenticateData::Start:
+            case Start:
                 return credssp::State::Err;
 
-            case ClientAuthenticateData::Loop:
+            case Loop:
             {
                 this->ts_request.recv(in_stream);
 
@@ -522,7 +518,7 @@ public:
                 // hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
                 // #endif
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
-                this->client_auth_data.input_buffer.copy(this->ts_request.negoTokens);
+                this->client_auth_data_input_buffer.copy(this->ts_request.negoTokens);
 
                 /*
                  * from tspkg.dll: 0x00000132
@@ -536,7 +532,7 @@ public:
 
                 SEC_STATUS status = this->sspi_InitializeSecurityContext(
                     bytes_view(this->ServicePrincipalName.av()).as_chars(),
-                    this->client_auth_data.input_buffer.av(),
+                    this->client_auth_data_input_buffer.av(),
                     /*output*/this->ts_request.negoTokens);
 
                 if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
@@ -547,7 +543,7 @@ public:
                     return credssp::State::Err;
                 }
 
-                this->client_auth_data.input_buffer.init(0);
+                this->client_auth_data_input_buffer.init(0);
 
                 SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
@@ -585,15 +581,15 @@ public:
                 if (status != SEC_I_CONTINUE_NEEDED) {
                     LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
 
-                    this->client_auth_data.state = ClientAuthenticateData::Final;
+                    this->client_auth_data_state = Final;
                 }
                 return credssp::State::Cont;
             }
-            case ClientAuthenticateData::Final:
+            case Final:
                 if (Res::Err == this->sm_credssp_client_authenticate_stop(in_stream, transport)) {
                     return credssp::State::Err;
                 }
-                this->client_auth_data.state = ClientAuthenticateData::Start;
+                this->client_auth_data_state = Start;
                 return credssp::State::Finish;
         }
 
