@@ -48,7 +48,7 @@ private:
 
     std::vector<uint8_t> PublicKey;
     std::vector<uint8_t> ClientServerHash;
-    Array ServerClientHash;
+    std::vector<uint8_t> ServerClientHash;
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     
@@ -418,15 +418,13 @@ private:
 
     void credssp_generate_public_key_hash_server_to_client() {
         LOG(LOG_INFO, "rdpCredsspClientKerberos::generate credssp public key hash (server->client)");
-        Array & SavedHash = this->ServerClientHash;
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
         sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
-        SavedHash.init(sizeof(hash));
-        memcpy(SavedHash.get_data(), hash, sizeof(hash));
+        this->ServerClientHash.assign(hash, hash + sizeof(hash));
     }
 
     SEC_STATUS credssp_encrypt_public_key_echo() {
@@ -469,7 +467,7 @@ private:
         if (version >= 5) {
             this->credssp_get_client_nonce();
             this->credssp_generate_public_key_hash_server_to_client();
-            public_key = this->ServerClientHash.av();
+            public_key = {this->ServerClientHash.data(), this->ServerClientHash.size()};
         }
 
         array_view_u8 public_key2 = Buffer.av();
