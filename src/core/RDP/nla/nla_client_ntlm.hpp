@@ -51,13 +51,13 @@ private:
     ClientNonce SavedClientNonce;
 
     std::vector<uint8_t> PublicKey;
-    Array ClientServerHash;
+    std::vector<uint8_t> ClientServerHash;
     Array ServerClientHash;
-
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     
     std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> sspi_identity;
+    
     bool sspi_context_initialized = false;
     NTLMContext sspi_context;
     bool sspi_verbose;
@@ -253,8 +253,6 @@ private:
 
     void credssp_generate_public_key_hash_client_to_server() {
         LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
-        Array & SavedHash = this->ClientServerHash;
-//        auto magic_hash = make_array_view("CredSSP Client-To-Server Binding Hash");
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
@@ -262,8 +260,7 @@ private:
 
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
-        SavedHash.init(sizeof(hash));
-        memcpy(SavedHash.get_data(), hash, sizeof(hash));
+        this->ClientServerHash.assign(hash, hash+sizeof(hash));
     }
 
     void credssp_generate_public_key_hash_server_to_client() {
@@ -287,7 +284,7 @@ private:
         if (version >= 5) {
             this->credssp_generate_client_nonce();
             this->credssp_generate_public_key_hash_client_to_server();
-            public_key = this->ClientServerHash.av();
+            public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
         }
 
         return this->sspi_EncryptMessage(
