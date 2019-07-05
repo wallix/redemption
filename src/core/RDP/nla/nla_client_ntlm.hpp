@@ -64,14 +64,9 @@ private:
     
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    SEC_STATUS sspi_AcquireCredentialsHandle(
-        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
-    )
+    SEC_STATUS sspi_AcquireCredentialsHandle(SEC_WINNT_AUTH_IDENTITY const* pAuthData)
     {
         LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-        (void)pszPrincipal;
-        (void)pvLogonID;
-
         this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
         if (pAuthData) {
@@ -174,29 +169,33 @@ private:
         return SEC_E_OK;
     }
 
+
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS sspi_DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) {
+    std::pair<SEC_STATUS,std::vector<uint8_t>> sspi_DecryptMessage(array_view_const_u8 data_in, unsigned long MessageSeqNo) 
+    {
+        std::vector<uint8_t> data_out;
+    
         if (!this->sspi_context_initialized) {
-            return SEC_E_NO_CONTEXT;
+            return std::make_pair(SEC_E_NO_CONTEXT, data_out);
         }
         LOG_IF(this->sspi_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
         if (data_in.size() < cbMaxSignature) {
-            return SEC_E_INVALID_TOKEN;
+            return std::make_pair(SEC_E_INVALID_TOKEN, data_out);
         }
 
         // data_in [signature][data_buffer]
 
         auto data_buffer = data_in.array_from_offset(cbMaxSignature);
-        data_out.init(data_buffer.size());
+        data_out.resize(data_buffer.size(), 0);
 
         /* Decrypt message using with RC4, result overwrites original buffer */
         // this->sspi_context.confidentiality == true
-        this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
+        this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, *this->sspi_context.RecvSigningKey, data_out.av(), MessageSeqNo);
+        this->sspi_compute_hmac_md5(digest, *this->sspi_context.RecvSigningKey, {data_out.data(), data_out.size()}, MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->sspi_compute_signature(
@@ -210,10 +209,54 @@ private:
             LOG(LOG_ERR, "Actual Signature:");
             hexdump_c(data_in.data(), 16);
 
-            return SEC_E_MESSAGE_ALTERED;
+            return std::make_pair(SEC_E_MESSAGE_ALTERED, data_out);
         }
-        return SEC_E_OK;
+        return std::make_pair(SEC_E_OK, data_out);
     }
+
+
+//    // GSS_Unwrap
+//    // DECRYPT_MESSAGE DecryptMessage;
+//    SEC_STATUS sspi_DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) 
+//    {
+//    
+//        if (!this->sspi_context_initialized) {
+//            return SEC_E_NO_CONTEXT;
+//        }
+//        LOG_IF(this->sspi_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
+
+//        if (data_in.size() < cbMaxSignature) {
+//            return SEC_E_INVALID_TOKEN;
+//        }
+
+//        // data_in [signature][data_buffer]
+
+//        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
+//        data_out.init(data_buffer.size());
+
+//        /* Decrypt message using with RC4, result overwrites original buffer */
+//        // this->sspi_context.confidentiality == true
+//        this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
+
+//        uint8_t digest[SslMd5::DIGEST_LENGTH];
+//        this->sspi_compute_hmac_md5(digest, *this->sspi_context.RecvSigningKey, data_out.av(), MessageSeqNo);
+
+//        uint8_t expected_signature[16] = {};
+//        this->sspi_compute_signature(
+//            expected_signature, this->sspi_context.RecvRc4Seal, digest, MessageSeqNo);
+
+//        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+//            /* signature verification failed! */
+//            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+//            LOG(LOG_ERR, "Expected Signature:");
+//            hexdump_c(expected_signature, 16);
+//            LOG(LOG_ERR, "Actual Signature:");
+//            hexdump_c(data_in.data(), 16);
+
+//            return SEC_E_MESSAGE_ALTERED;
+//        }
+//        return SEC_E_OK;
+//    }
 
     bool restricted_admin_mode;
 
@@ -292,10 +335,10 @@ private:
     SEC_STATUS credssp_decrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::decrypt_public_key_echo");
 
-        Array Buffer;
-
-        SEC_STATUS const status = this->sspi_DecryptMessage(
-            this->ts_request.pubKeyAuth.av(), Buffer, this->recv_seq_num++);
+        std::vector<uint8_t> Buffer;
+        SEC_STATUS status = SEC_E_INVALID_TOKEN;
+        
+        tie(status, Buffer) = this->sspi_DecryptMessage(this->ts_request.pubKeyAuth.av(), this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             if (this->ts_request.pubKeyAuth.size() == 0) {
@@ -317,7 +360,7 @@ private:
             public_key = {this->ServerClientHash.data(), this->ServerClientHash.size()};
         }
 
-        array_view_u8 public_key2 = Buffer.av();
+        array_view_u8 public_key2 = {Buffer.data(), Buffer.size()};
 
         if (public_key2.size() != public_key.size()) {
             LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
@@ -459,15 +502,20 @@ public:
         this->PublicKey.assign(key.data(), key.data()+key.size());
 
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
-        SEC_STATUS status0 = this->sspi_AcquireCredentialsHandle(this->target_host, &this->ServicePrincipalName, &this->identity);
+        
+        SEC_STATUS status0 = this->sspi_AcquireCredentialsHandle(&this->identity);
+        
+        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
+//        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
-        if (status0 != SEC_E_OK) {
-            LOG(LOG_ERR, "InitSecurityInterface NTLM status: 0x%08X", status0);
-            throw ERR_CREDSSP_NTLM_INIT_FAILED;
-        }
+//        if (&this->identity) {
+//            this->sspi_identity->CopyAuthIdentity(
+//                    this->identity.get_user_utf16_av(),
+//                    this->identity.get_domain_utf16_av(),
+//                    this->identity.get_password_utf16_av());
+//        }
 
         this->client_auth_data.input_buffer.init(0);
-
         this->client_auth_data.state = ClientAuthenticateData::Loop;
 
         /*
