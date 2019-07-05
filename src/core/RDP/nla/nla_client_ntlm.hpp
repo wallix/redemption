@@ -56,8 +56,6 @@ private:
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     
-    SEC_WINNT_AUTH_IDENTITY * sspi_identity = &identity;
-    
     bool sspi_context_initialized = false;
     NTLMContext sspi_context;
     
@@ -74,15 +72,12 @@ private:
 
         if (!this->sspi_context_initialized) {
 
-            if (!this->sspi_identity) {
-                return SEC_E_WRONG_CREDENTIAL_HANDLE;
-            }
             this->sspi_context.ntlm_SetContextWorkstation(pszTargetName);
             this->sspi_context.ntlm_SetContextServicePrincipalName(pszTargetName);
 
-            this->sspi_context.identity.CopyAuthIdentity(this->sspi_identity->get_user_utf16_av(),
-                                                    this->sspi_identity->get_domain_utf16_av(),
-                                                    this->sspi_identity->get_password_utf16_av());
+            this->sspi_context.identity.CopyAuthIdentity(this->identity.get_user_utf16_av(),
+                                                    this->identity.get_domain_utf16_av(),
+                                                    this->identity.get_password_utf16_av());
             this->sspi_context_initialized = true;
         }
 
@@ -442,12 +437,7 @@ public:
 
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
         
-//        SEC_STATUS status0 = this->sspi_AcquireCredentialsHandle(&this->identity);
-
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-//        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
-
-//        this->sspi_identity->CopyAuthIdentity(this->identity.get_user_utf16_av(), this->identity.get_domain_utf16_av(), this->identity.get_password_utf16_av());
 
         this->client_auth_data.input_buffer.init(0);
         this->client_auth_data.state = ClientAuthenticateData::Loop;
