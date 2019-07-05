@@ -81,20 +81,14 @@ struct ValidatorApi
 {
     ValidatorApi(unique_fd ufd) noexcept
     : transport(std::move(ufd))
-    , icap(transport)
     {}
 
     ValidatorApi(char const* path)
     : ValidatorApi(addr_connect(path))
     {}
 
-    int errcode() const noexcept
-    {
-        return this->transport.errnum ? this->transport.errnum : -1;
-    }
-
     ValidatorTransport transport;
-    ICAPService icap;
+    ICAPService icap{transport};
     bool wating_data = false;
     ICAPService::ResponseType response_type = ICAPService::ResponseType::WaitingData;
 };
@@ -105,21 +99,6 @@ struct ValidatorApi
     {                                        \
         return -validator->transport.errnum; \
     }
-
-
-
-namespace
-{
-    template<class E, std::size_t N>
-    struct EnumMap
-    {
-        int operator[](E e) const noexcept
-        {
-            return this->a[int(e)];
-        }
-        std::array<int, N> a;
-    };
-} // anonymous namespace
 
 
 extern "C"
