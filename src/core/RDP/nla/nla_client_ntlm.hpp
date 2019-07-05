@@ -278,10 +278,7 @@ private:
     SEC_STATUS credssp_decrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::decrypt_public_key_echo");
 
-        std::vector<uint8_t> Buffer;
-        SEC_STATUS status = SEC_E_INVALID_TOKEN;
-        
-        tie(status, Buffer) = this->sspi_DecryptMessage(this->ts_request.pubKeyAuth.av(), this->recv_seq_num++);
+        auto [status, Buffer] = this->sspi_DecryptMessage(this->ts_request.pubKeyAuth.av(), this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             if (this->ts_request.pubKeyAuth.size() == 0) {
