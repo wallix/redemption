@@ -325,7 +325,7 @@ private:
     enum class Res : bool { Err, Ok };
 
     enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
-    Array client_auth_data_input_buffer;
+    std::vector<uint8_t> client_auth_data_input_buffer;
 
     Res sm_credssp_client_authenticate_stop(InStream & in_stream, OutTransport transport)
     {
@@ -434,7 +434,6 @@ public:
         
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
 
-        this->client_auth_data_input_buffer.init(0);
         this->client_auth_data_state = Loop;
 
         /*
@@ -450,7 +449,7 @@ public:
         /* receive server response and place in input buffer */
         SEC_STATUS status1 = this->sspi_InitializeSecurityContext(
             bytes_view(this->ServicePrincipalName.av()).as_chars(),
-            this->client_auth_data_input_buffer.av(),
+            {this->client_auth_data_input_buffer.data(),this->client_auth_data_input_buffer.size()},
             /*output*/this->ts_request.negoTokens);
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
@@ -462,7 +461,7 @@ public:
             throw ERR_CREDSSP_NTLM_INIT_FAILED;
         }
 
-        this->client_auth_data_input_buffer.init(0);
+        this->client_auth_data_input_buffer.resize(0);
 
         if ((status1 == SEC_I_COMPLETE_AND_CONTINUE) ||
             (status1 == SEC_I_COMPLETE_NEEDED) ||
@@ -518,7 +517,8 @@ public:
                 // hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
                 // #endif
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
-                this->client_auth_data_input_buffer.copy(this->ts_request.negoTokens);
+                this->client_auth_data_input_buffer.assign(this->ts_request.negoTokens.data(),
+                                                           this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
 
                 /*
                  * from tspkg.dll: 0x00000132
@@ -532,7 +532,7 @@ public:
 
                 SEC_STATUS status = this->sspi_InitializeSecurityContext(
                     bytes_view(this->ServicePrincipalName.av()).as_chars(),
-                    this->client_auth_data_input_buffer.av(),
+                    {this->client_auth_data_input_buffer.data(),this->client_auth_data_input_buffer.size()},
                     /*output*/this->ts_request.negoTokens);
 
                 if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
@@ -543,7 +543,7 @@ public:
                     return credssp::State::Err;
                 }
 
-                this->client_auth_data_input_buffer.init(0);
+                this->client_auth_data_input_buffer.resize(0);
 
                 SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 

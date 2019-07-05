@@ -66,6 +66,10 @@ public:
         return this->avbuf.data();
     }
 
+    uint8_t * data() {
+        return this->avbuf.data();
+    }
+
     uint8_t const * get_data() const {
         return this->avbuf.data();
     }
