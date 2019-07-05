@@ -263,17 +263,65 @@ private:
     SEC_STATUS credssp_decrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::decrypt_public_key_echo");
 
-        auto [status, Buffer] = this->sspi_DecryptMessage(this->ts_request.pubKeyAuth.av(), this->recv_seq_num++);
-
-        if (status != SEC_E_OK) {
+        array_view_const_u8 data_in = this->ts_request.pubKeyAuth.av();
+        unsigned long MessageSeqNo = this->recv_seq_num++;
+        std::vector<uint8_t> data_out;
+    
+        if (!this->sspi_context_initialized) {
             if (this->ts_request.pubKeyAuth.size() == 0) {
                 // report_error
                 this->extra_message = " ";
                 this->extra_message.append(TR(trkeys::err_login_password, this->lang));
                 LOG(LOG_INFO, "Provided login/password is probably incorrect.");
             }
-            LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
-            return status;
+            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_NO_CONTEXT");
+            return SEC_E_NO_CONTEXT;
+        }
+        LOG_IF(this->sspi_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
+
+        if (data_in.size() < cbMaxSignature) {
+            if (this->ts_request.pubKeyAuth.size() == 0) {
+                // report_error
+                this->extra_message = " ";
+                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
+                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+            }
+            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN");
+            return SEC_E_INVALID_TOKEN;
+        }
+
+        // data_in [signature][data_buffer]
+
+        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
+        data_out.resize(data_buffer.size(), 0);
+
+        /* Decrypt message using with RC4, result overwrites original buffer */
+        // this->sspi_context.confidentiality == true
+        this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
+
+        uint8_t digest[SslMd5::DIGEST_LENGTH];
+        this->sspi_compute_hmac_md5(digest, *this->sspi_context.RecvSigningKey, {data_out.data(), data_out.size()}, MessageSeqNo);
+
+        uint8_t expected_signature[16] = {};
+        this->sspi_compute_signature(
+            expected_signature, this->sspi_context.RecvRc4Seal, digest, MessageSeqNo);
+
+        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+            /* signature verification failed! */
+            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+            LOG(LOG_ERR, "Expected Signature:");
+            hexdump_c(expected_signature, 16);
+            LOG(LOG_ERR, "Actual Signature:");
+            hexdump_c(data_in.data(), 16);
+
+            if (this->ts_request.pubKeyAuth.size() == 0) {
+                // report_error
+                this->extra_message = " ";
+                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
+                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+            }
+            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED");
+            return SEC_E_MESSAGE_ALTERED;
         }
 
         const uint32_t version = this->ts_request.use_version;
@@ -285,7 +333,7 @@ private:
             public_key = {this->ServerClientHash.data(), this->ServerClientHash.size()};
         }
 
-        array_view_u8 public_key2 = {Buffer.data(), Buffer.size()};
+        array_view_u8 public_key2 = {data_out.data(), data_out.size()};
 
         if (public_key2.size() != public_key.size()) {
             LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
