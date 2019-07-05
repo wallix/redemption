@@ -450,9 +450,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
         this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
-        if (&this->identity) {
-            this->sspi_identity->CopyAuthIdentity(this->identity.get_user_utf16_av(), this->identity.get_domain_utf16_av(), this->identity.get_password_utf16_av());
-        }
+        this->sspi_identity->CopyAuthIdentity(this->identity.get_user_utf16_av(), this->identity.get_domain_utf16_av(), this->identity.get_password_utf16_av());
 
         this->client_auth_data.input_buffer.init(0);
         this->client_auth_data.state = ClientAuthenticateData::Loop;
