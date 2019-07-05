@@ -64,17 +64,17 @@ private:
     
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    SEC_STATUS sspi_AcquireCredentialsHandle(SEC_WINNT_AUTH_IDENTITY const* pAuthData)
-    {
-        LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
+//    SEC_STATUS sspi_AcquireCredentialsHandle(SEC_WINNT_AUTH_IDENTITY const* pAuthData)
+//    {
+//        LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
+//        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
-        if (pAuthData) {
-            this->sspi_identity->CopyAuthIdentity(pAuthData->get_user_utf16_av(), pAuthData->get_domain_utf16_av(), pAuthData->get_password_utf16_av());
-        }
+//        if (pAuthData) {
+//            this->sspi_identity->CopyAuthIdentity(pAuthData->get_user_utf16_av(), pAuthData->get_domain_utf16_av(), pAuthData->get_password_utf16_av());
+//        }
 
-        return SEC_E_OK;
-    }
+//        return SEC_E_OK;
+//    }
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
@@ -503,17 +503,14 @@ public:
 
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
         
-        SEC_STATUS status0 = this->sspi_AcquireCredentialsHandle(&this->identity);
-        
-        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-//        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
+//        SEC_STATUS status0 = this->sspi_AcquireCredentialsHandle(&this->identity);
 
-//        if (&this->identity) {
-//            this->sspi_identity->CopyAuthIdentity(
-//                    this->identity.get_user_utf16_av(),
-//                    this->identity.get_domain_utf16_av(),
-//                    this->identity.get_password_utf16_av());
-//        }
+        LOG_IF(this->sspi_verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
+        this->sspi_identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
+
+        if (&this->identity) {
+            this->sspi_identity->CopyAuthIdentity(this->identity.get_user_utf16_av(), this->identity.get_domain_utf16_av(), this->identity.get_password_utf16_av());
+        }
 
         this->client_auth_data.input_buffer.init(0);
         this->client_auth_data.state = ClientAuthenticateData::Loop;
