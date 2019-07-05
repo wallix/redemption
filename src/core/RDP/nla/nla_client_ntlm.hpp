@@ -461,8 +461,6 @@ public:
             throw ERR_CREDSSP_NTLM_INIT_FAILED;
         }
 
-        this->client_auth_data_input_buffer.resize(0);
-
         if ((status1 == SEC_I_COMPLETE_AND_CONTINUE) ||
             (status1 == SEC_I_COMPLETE_NEEDED) ||
             (status1 == SEC_E_OK)) {
@@ -542,8 +540,6 @@ public:
                     LOG(LOG_ERR, "Initialize Security Context Error !");
                     return credssp::State::Err;
                 }
-
-                this->client_auth_data_input_buffer.resize(0);
 
                 SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
