@@ -77,11 +77,8 @@ private:
     public:
         SslRC4 SendRc4Seal {};
         SslRC4 RecvRc4Seal {};
-        array16* SendSigningKey = nullptr;
-        array16* RecvSigningKey = nullptr;
     private:
         // TODO unused
-        array16* SendSealingKey = nullptr;
         array16* RecvSealingKey = nullptr;
 
     public:
@@ -155,38 +152,20 @@ private:
         NTLMContextClient(NTLMContextClient const &) = delete;
         NTLMContextClient& operator = (NTLMContextClient const &) = delete;
 
+        // client method
+        // ntlmv2_compute_response_from_challenge generates :
+        // - timestamp
+        // - client challenge
+        // - NtChallengeResponse
+        // - LmChallengeResponse
         // all strings are in unicode utf16
-        void NTOWFv2_FromHash(array_view_const_u8 hash,
-                              array_view_const_u8 user,
-                              array_view_const_u8 domain,
-                              uint8_t (&buff)[SslMd5::DIGEST_LENGTH]) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
-            SslHMAC_Md5 hmac_md5(hash);
+        void ntlmv2_compute_response_from_challenge(array_view_const_u8 pass,
+                                                    array_view_const_u8 user,
+                                                    array_view_const_u8 domain,
+                                                    Random & rand,
+                                                    TimeObj & timeobj) {
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
 
-            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
-            uint8_t * userup = unique_userup.get();
-            memcpy(userup, user.data(), user.size());
-            UTF16Upper(userup, user.size());
-            hmac_md5.update({userup, user.size()});
-            unique_userup.reset();
-
-            // hmac_md5.update({user, user_size});
-            hmac_md5.update(domain);
-            hmac_md5.final(buff);
-        }
-
-        // all strings are in unicode utf16
-        void hash_password(array_view_const_u8 pass, uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
-            SslMd4 md4;
-            md4.update(pass);
-            md4.final(hash);
-        }
-
-        // all strings are in unicode utf16
-        void NTOWFv2(array_view_const_u8 pass,
-                     array_view_const_u8 user,
-                     array_view_const_u8 domain,
-                     array_view_u8 buff) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
             SslMd4 md4;
             uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
@@ -203,45 +182,35 @@ private:
             hmac_md5.update({userup, user.size()});
             unique_userup.reset();
 
-            uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
+            uint8_t ResponseKeyNT[SslMd5::DIGEST_LENGTH] = {};
 
             userup = nullptr;
             hmac_md5.update(domain);
-            hmac_md5.final(tmp_md5);
-            // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
-            // if it is so no need to use a temporary variable
-            // and copy digest afterward.
-            memset(buff.data(), 0, buff.size());
-            memcpy(buff.data(), tmp_md5, std::min(buff.size(), size_t(SslMd5::DIGEST_LENGTH)));
-        }
+            hmac_md5.final(ResponseKeyNT);
 
-        // all strings are in unicode utf16
-        void LMOWFv2(array_view_const_u8 pass,
-                     array_view_const_u8 user,
-                     array_view_const_u8 domain,
-                     array_view_u8 buff) {
-            NTOWFv2(pass, user, domain, buff);
-        }
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
 
-        // client method
-        // ntlmv2_compute_response_from_challenge generates :
-        // - timestamp
-        // - client challenge
-        // - NtChallengeResponse
-        // - LmChallengeResponse
-        // all strings are in unicode utf16
-        void ntlmv2_compute_response_from_challenge(array_view_const_u8 pass,
-                                                    array_view_const_u8 user,
-                                                    array_view_const_u8 domain,
-                                                    Random & rand,
-                                                    TimeObj & timeobj) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
+            SslMd4 md4_b;
+            uint8_t md4password_b[SslMd4::DIGEST_LENGTH] = {};
 
-            uint8_t ResponseKeyNT[16] = {};
-            uint8_t ResponseKeyLM[16] = {};
-            this->NTOWFv2(pass, user, domain, make_array_view(ResponseKeyNT));
-            this->LMOWFv2(pass, user, domain, make_array_view(ResponseKeyLM));
+            md4_b.update(pass);
+            md4_b.final(md4password_b);
 
+            SslHMAC_Md5 hmac_md5_b(make_array_view(md4password_b));
+
+            auto unique_userup_b = std::make_unique<uint8_t[]>(user.size());
+            uint8_t * userup_b = unique_userup_b.get();
+            memcpy(userup_b, user.data(), user.size());
+            UTF16Upper(userup_b, user.size());
+            hmac_md5_b.update({userup_b, user.size()});
+            unique_userup_b.reset();
+
+            uint8_t ResponseKeyLM[SslMd5::DIGEST_LENGTH] = {};
+
+            userup = nullptr;
+            hmac_md5_b.update(domain);
+            hmac_md5_b.final(ResponseKeyLM);
+            
             // struct NTLMv2_Client_Challenge = temp
             // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
             // Z(n) = { 0x00, ... , 0x00 } n times
@@ -353,12 +322,8 @@ private:
 
         void ntlm_init_rc4_seal_states()
         {
-            this->SendSigningKey = &this->ClientSigningKey;
-            this->RecvSigningKey = &this->ServerSigningKey;
-            this->SendSealingKey = &this->ServerSealingKey;
-            this->RecvSealingKey = &this->ClientSealingKey;
-            this->SendRc4Seal.set_key(make_array_view(*this->RecvSealingKey));
-            this->RecvRc4Seal.set_key(make_array_view(*this->SendSealingKey));
+            this->SendRc4Seal.set_key(make_array_view(this->ClientSealingKey));
+            this->RecvRc4Seal.set_key(make_array_view(this->ServerSealingKey));
         }
 
         // server check nt response
@@ -385,7 +350,23 @@ private:
             // LOG(LOG_INFO, "DomainName size = %u", DomainName.size());
             // LOG(LOG_INFO, "hash size = %u", hash_size);
 
-            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
+            array_view_const_u8 user = UserName.av();
+            array_view_const_u8 domain = DomainName.av();
+            
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
+
+            SslHMAC_Md5 hmac_md5(hash);
+            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
+            uint8_t * userup = unique_userup.get();
+            memcpy(userup, user.data(), user.size());
+            UTF16Upper(userup, user.size());
+            hmac_md5.update({userup, user.size()});
+            unique_userup.reset();
+
+            // hmac_md5.update({user, user_size});
+            hmac_md5.update(domain);
+            hmac_md5.final(ResponseKeyNT);
+            
             // LOG(LOG_INFO, "ResponseKeyNT");
             // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
             SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
@@ -413,8 +394,24 @@ private:
             AuthLmResponse.ostream.rewind();
 
             uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
+
             uint8_t ResponseKeyLM[16] = {};
-            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyLM);
+            array_view_const_u8 user = UserName.av();
+            array_view_const_u8 domain = DomainName.av();
+
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
+
+            SslHMAC_Md5 hmac_md5(hash);
+            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
+            uint8_t * userup = unique_userup.get();
+            memcpy(userup, user.data(), user.size());
+            UTF16Upper(userup, user.size());
+            hmac_md5.update({userup, user.size()});
+            unique_userup.reset();
+
+            // hmac_md5.update({user, user_size});
+            hmac_md5.update(domain);
+            hmac_md5.final(ResponseKeyLM);
 
             SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
             hmac_md5resp.update({this->ServerChallenge, 8});
@@ -431,13 +428,30 @@ private:
             auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
             uint8_t NtProofStr[16] = {};
+
             InStream(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom())
                 .in_copy_bytes(NtProofStr, 16);
             AuthNtResponse.ostream.rewind();
+
             uint8_t ResponseKeyNT[16] = {};
-            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
-            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
-            //                           NtProofStr)
+            array_view_const_u8 user = UserName.av();
+            array_view_const_u8 domain = DomainName.av();
+            
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
+
+            SslHMAC_Md5 hmac_md5(hash);
+            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
+            uint8_t * userup = unique_userup.get();
+            memcpy(userup, user.data(), user.size());
+            UTF16Upper(userup, user.size());
+            hmac_md5.update({userup, user.size()});
+            unique_userup.reset();
+
+            // hmac_md5.update({user, user_size});
+            hmac_md5.update(domain);
+            hmac_md5.final(ResponseKeyNT);
+            
+            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
             SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
             hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
             hmac_md5seskey.final(this->SessionBaseKey);
@@ -643,7 +657,10 @@ private:
             md5seal_server.update("session key to server-to-client sealing key magic constant\0"_av);
             md5seal_server.final(this->ServerSealingKey);
             
-            this->ntlm_init_rc4_seal_states();
+            this->SendRc4Seal.set_key(make_array_view(this->ClientSealingKey));
+            this->RecvRc4Seal.set_key(make_array_view(this->ServerSealingKey));
+
+            
             this->ntlm_set_negotiate_flags_auth();
             // this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
@@ -887,7 +904,7 @@ private:
         this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, *this->sspi_context.RecvSigningKey, {data_out.data(), data_out.size()}, MessageSeqNo);
+        this->sspi_compute_hmac_md5(digest, this->sspi_context.ServerSigningKey, {data_out.data(), data_out.size()}, MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->sspi_compute_signature(
@@ -982,7 +999,7 @@ private:
         // data_out [signature][data_buffer]
         std::vector<uint8_t> data_out(public_key.size() + cbMaxSignature);
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, *this->sspi_context.SendSigningKey, public_key, MessageSeqNo);
+        this->sspi_compute_hmac_md5(digest, this->sspi_context.ClientSigningKey, public_key, MessageSeqNo);
         this->sspi_context.SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
         this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
         this->ts_request.pubKeyAuth.init(data_out.size());
@@ -1030,7 +1047,7 @@ private:
         this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, *this->sspi_context.RecvSigningKey, {data_out.data(), data_out.size()}, MessageSeqNo);
+        this->sspi_compute_hmac_md5(digest, this->sspi_context.ServerSigningKey, {data_out.data(), data_out.size()}, MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->sspi_compute_signature(
@@ -1150,7 +1167,7 @@ private:
         std::vector<uint8_t> data_out;
         data_out.resize(data_in.size() + cbMaxSignature, 0);
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, *this->sspi_context.SendSigningKey, data_in, MessageSeqNo);
+        this->sspi_compute_hmac_md5(digest, this->sspi_context.ClientSigningKey, data_in, MessageSeqNo);
         this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
         this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
 
