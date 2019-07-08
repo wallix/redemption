@@ -181,11 +181,19 @@ public:
     bool receive_response()
     {
         if (this->icap_service) {
-            // TODO loop ?
-            auto r = this->icap_service->receive_response();
-            this->current_analysis_done = true;
+            for (;;){
+                switch (this->icap_service->receive_response()) {
+                    case ICAPService::ResponseType::WaitingData:
+                        return false;
+                    case ICAPService::ResponseType::HasContent:
+                        this->current_analysis_done = true;
+                        return true;
+                    case ICAPService::ResponseType::HasPacket:
+                    case ICAPService::ResponseType::Error:
+                        ;
+                }
+            }
             // LOG(LOG_INFO, "%d %s", this->icap_service->result, this->icap_service->content);
-            return r == ICAPService::ResponseType::Content;
         }
         return true;
     }

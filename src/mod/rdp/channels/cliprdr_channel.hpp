@@ -36,7 +36,6 @@
 #include "mod/rdp/channels/channel_file.hpp"
 #include "mod/icap_files_service.hpp"
 #include "core/session_reactor.hpp"
-#include "lib/files_validator_api.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 #include "core/stream_throw_helpers.hpp"
 
@@ -70,6 +69,11 @@ private:
     SessionReactor& session_reactor;
 
     ChannelFile channel_file;
+
+    static constexpr uint32_t last_lindex_unknown = ~uint32_t{};
+    uint32_t last_lindex = last_lindex_unknown;
+    uint64_t last_lindex_total_send = 0;
+    uint64_t last_lindex_packet_remaining = 0;
 
 
 public:
@@ -134,6 +138,9 @@ public:
         (void)total_length;
 
         this->file_descr_list.clear();
+        this->last_lindex = last_lindex_unknown;
+        this->last_lindex_total_send = 0;
+        this->last_lindex_packet_remaining = 0;
 
         ClientFormatListReceive receiver(this->clip_data.client_data.use_long_format_names,
                                          this->clip_data.server_data.use_long_format_names,
@@ -237,7 +244,12 @@ public:
                 } else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
-                    this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_SERVER, this->session_reactor.get_current_time());
+                    this->last_lindex_packet_remaining = receiver.requested;
+
+                    if (this->last_lindex != receiver.lindex) {
+                        this->last_lindex = receiver.lindex;
+                        this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_SERVER, this->session_reactor.get_current_time());
+                    }
                 }
                 send_message_to_server = this->params.clipboard_file_authorized;
             }
@@ -282,10 +294,22 @@ public:
                 FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
 
                 if (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
-
-                    this->channel_file.set_data(chunk.remaining_bytes());
+                    auto data = chunk.remaining_bytes();
+                    auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        this->channel_file.set_end_of_file();
+                        auto file_size = this->file_descr_list[this->last_lindex].file_size();
+                        data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
+                    }
+                    data = data.first(data_len);
+                    this->channel_file.set_data(data);
+                    this->last_lindex_packet_remaining -= data_len;
+                    this->last_lindex_total_send += data_len;
+
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                        auto file_size = this->file_descr_list[this->last_lindex].file_size();
+                        if (this->last_lindex_total_send == file_size) {
+                            this->channel_file.set_end_of_file();
+                        }
                     }
                     send_message_to_server = !this->channel_file.is_enable_interuption();
                 }
@@ -399,6 +423,9 @@ public:
         (void)flags;
 
         this->file_descr_list.clear();
+        this->last_lindex = last_lindex_unknown;
+        this->last_lindex_total_send = 0;
+        this->last_lindex_packet_remaining = 0;
 
         if (!this->params.clipboard_down_authorized
         &&  !this->params.clipboard_up_authorized) {
@@ -483,7 +510,12 @@ public:
                 if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
-                    this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_CLIENT, this->session_reactor.get_current_time());
+                    this->last_lindex_packet_remaining = receiver.requested;
+
+                    if (this->last_lindex != receiver.lindex) {
+                        this->last_lindex = receiver.lindex;
+                        this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_CLIENT, this->session_reactor.get_current_time());
+                    }
                 }
 
                 if (!this->params.clipboard_file_authorized) {
@@ -505,11 +537,22 @@ public:
                 FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
 
                 if (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
-
-                    this->channel_file.set_data(chunk.remaining_bytes());
+                    auto data = chunk.remaining_bytes();
+                    auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                        auto file_size = this->file_descr_list[this->last_lindex].file_size();
+                        data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
+                    }
+                    data = data.first(data_len);
+                    this->channel_file.set_data(data);
+                    this->last_lindex_packet_remaining -= data_len;
+                    this->last_lindex_total_send += data_len;
 
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        this->channel_file.set_end_of_file();
+                        auto file_size = this->file_descr_list[this->last_lindex].file_size();
+                        if (this->last_lindex_total_send == file_size) {
+                            this->channel_file.set_end_of_file();
+                        }
                     }
 
                     send_message_to_client = !this->channel_file.is_enable_interuption();
@@ -673,9 +716,14 @@ public:
 
     void DLP_antivirus_check_channels_files()
     {
+        // TODO loop
         if (!this->channel_file.receive_response()) {
+            LOG(LOG_DEBUG, "DLP_antivirus_check_channels_files: wait");
             return;
         }
+
+        LOG(LOG_DEBUG, "DLP_antivirus_check_channels_files: %s",
+            this->channel_file.get_result_content());
 
         if (!this->channel_file.is_valid() && this->channel_file.is_enable_validation()) {
             auto const info = key_qvalue_pairs({

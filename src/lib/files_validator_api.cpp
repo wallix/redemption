@@ -45,9 +45,11 @@ namespace
                 res = ::read(this->file.fd(), buffer, len);
             } while (res == 0 && errno == EINTR);
 
-            if (res < 0)
+            if (res <= 0)
             {
-                this->errnum = errno;
+                if (res < 0 || len != 0) {
+                    this->errnum = errno;
+                }
             }
 
             return static_cast<size_t>(res);
@@ -79,21 +81,16 @@ struct ValidatorApi
 {
     ValidatorApi(unique_fd ufd) noexcept
     : transport(std::move(ufd))
-    , icap(transport)
     {}
 
     ValidatorApi(char const* path)
     : ValidatorApi(addr_connect(path))
     {}
 
-    int errcode() const noexcept
-    {
-        return this->transport.errnum ? this->transport.errnum : -1;
-    }
-
     ValidatorTransport transport;
-    ICAPService icap;
+    ICAPService icap{transport};
     bool wating_data = false;
+    ICAPService::ResponseType response_type = ICAPService::ResponseType::WaitingData;
 };
 
 
@@ -102,40 +99,6 @@ struct ValidatorApi
     {                                        \
         return -validator->transport.errnum; \
     }
-
-
-
-namespace
-{
-    template<class E, std::size_t N>
-    struct EnumMap
-    {
-        int operator[](E e) const noexcept
-        {
-            return this->a[int(e)];
-        }
-        std::array<int, N> a;
-    };
-
-    constexpr auto response_type_map() noexcept
-    {
-        EnumMap<ICAPService::ResponseType, 4> m{};
-        m.a[int(ICAPService::ResponseType::Content)] = 0;
-        m.a[int(ICAPService::ResponseType::WaitingData)] = 1;
-        m.a[int(ICAPService::ResponseType::Initialized)] = 2;
-        m.a[int(ICAPService::ResponseType::Error)] = 4;
-        return m;
-    }
-
-    constexpr auto validation_type_map() noexcept
-    {
-        EnumMap<LocalICAPProtocol::ValidationType, 3> m{};
-        m.a[int(LocalICAPProtocol::ValidationType::IsAccepted)] = 0;
-        m.a[int(LocalICAPProtocol::ValidationType::IsRejected)] = 1;
-        m.a[int(LocalICAPProtocol::ValidationType::Error)] = 2;
-        return m;
-    }
-} // anonymous namespace
 
 
 extern "C"
@@ -224,23 +187,23 @@ int validator_receive_response(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    auto r = validator->icap.receive_response();
+    validator->response_type = validator->icap.receive_response();
     CHECK_ERRNUM(validator);
-    return response_type_map()[r];
+    return safe_int(validator->response_type);
 }
 
 int validator_get_response_type(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    return response_type_map()[validator->icap.last_response_type()];
+    return safe_int(validator->response_type);
 }
 
 int validator_get_result_flag(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    return validation_type_map()[validator->icap.last_result_flag()];
+    return safe_int(validator->icap.last_result_flag());
 }
 
 char const* validator_get_content(ValidatorApi* validator) noexcept

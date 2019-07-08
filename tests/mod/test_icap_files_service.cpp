@@ -66,19 +66,22 @@ RED_AUTO_TEST_CASE(icapReceive)
     // init header
     RED_CHECK(!icap.service_is_up());
     RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
-    setbuf("\x01\x00\x00\x00"_av);
+    setbuf("\x07\x00\x00\x00"_av); // msg_type, len(3)
     RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
-    setbuf("\x01"_av);
-    RED_CHECK(icap.receive_response() == ICAPService::ResponseType::Initialized);
+    setbuf("\x05\x01"_av);         // len(1), flag
+    RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
+    setbuf("\x00\x00\x00\x01"_av); // max_connection_number
+    RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasPacket);
     RED_REQUIRE(icap.service_is_up());
     RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
 
     // message 1
     {
         auto response =
-            "\x00"                                              // result
-            "\x00\x00\x00\x01"                                  // file id
-            "\x00\x00\x00\x02"                                  // size
+            "\x05\x00\x00\x00\x00"  // msg_type, len(ignored)
+            "\x00"                  // result
+            "\x00\x00\x00\x01"      // file id
+            "\x00\x00\x00\x02"      // size
             ""_av;
         auto pos = response.size() / 2;
         setbuf(response.first(pos));
@@ -88,7 +91,7 @@ RED_AUTO_TEST_CASE(icapReceive)
         setbuf("o"_av);
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
         setbuf("k"_av);
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::Content);
+        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasContent);
         RED_CHECK(icap.last_file_id() == ICAPFileId(1));
         RED_CHECK(icap.get_content() == "ok");
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
@@ -97,12 +100,13 @@ RED_AUTO_TEST_CASE(icapReceive)
     // message 2
     {
         auto response =
-            "\x01"                                              // result
-            "\x00\x00\x00\x04"                                  // file id
-            "\x00\x00\x00\x02"                                  // size
+            "\x05\x00\x00\x00\x00"  // msg_type, len(ignored)
+            "\x01"                  // result
+            "\x00\x00\x00\x04"      // file id
+            "\x00\x00\x00\x02"      // size
             "ko"_av;
         setbuf(response);
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::Content);
+        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasContent);
         RED_CHECK(icap.last_file_id() == ICAPFileId(4));
         RED_CHECK(icap.get_content() == "ko");
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
@@ -111,19 +115,21 @@ RED_AUTO_TEST_CASE(icapReceive)
     // message 3
     {
         auto response =
-            "\x01"                                              // result
-            "\x00\x00\x00\x03"                                  // file id
-            "\x00\x00\x00\x02"                                  // size
+            "\x05\x00\x00\x00\x00"  // msg_type, len(ignored)
+            "\x01"                  // result
+            "\x00\x00\x00\x03"      // file id
+            "\x00\x00\x00\x02"      // size
             "ok"
-            "\x01"                                              // result
-            "\x00\x00\x00\x05"                                  // file id
-            "\x00\x00\x00\x02"                                  // size
+            "\x05\x00\x00\x00\x00"  // msg_type, len(ignored)
+            "\x01"                  // result
+            "\x00\x00\x00\x05"      // file id
+            "\x00\x00\x00\x02"      // size
             "ko"_av;
         setbuf(response);
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::Content);
+        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasContent);
         RED_CHECK(icap.last_file_id() == ICAPFileId(3));
         RED_CHECK(icap.get_content() == "ok");
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::Content);
+        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasContent);
         RED_CHECK(icap.last_file_id() == ICAPFileId(5));
         RED_CHECK(icap.get_content() == "ko");
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);

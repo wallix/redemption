@@ -34,10 +34,15 @@
 
 RED_AUTO_TEST_CASE_WF(testFileValid, wf)
 {
-    auto data = "\x01\x00\x00\x00\01"                   // init
-        "\x00"                                          // result
-        "\x00\x00\x00\x01"                              // file id
-        "\x00\x00\x00\x02"                              // size
+    auto data =
+        "\x07"                  // msg_type
+        "\x00\x00\x00\x05"      // len
+        "\x01"                  // flag
+        "\x00\x00\x00\x01"      // max_connection_number
+        "\x05\x00\x00\x00\x00"  // msg_type, len(ignored)
+        "\x01"                  // result
+        "\x00\x00\x00\x08"      // file id
+        "\x00\x00\x00\x02"      // size
         "ok"_av;
     std::ofstream(wf.c_str()).write(data.data(), data.size());
 
@@ -47,13 +52,13 @@ RED_AUTO_TEST_CASE_WF(testFileValid, wf)
 
     RED_CHECK(validator_receive_response(validator) == 2);
 
-    RED_CHECK(validator_receive_response(validator) == 0);
+    RED_CHECK(validator_receive_response(validator) == 3);
     RED_CHECK(validator_get_content(validator) == "ok");
-    RED_CHECK(validator_get_response_type(validator) == 0);
-    RED_CHECK(validator_get_result_file_id(validator) == 1);
-    RED_CHECK(validator_get_result_flag(validator) == 0);
+    RED_CHECK(validator_get_response_type(validator) == 3);
+    RED_CHECK(validator_get_result_file_id(validator) == 8);
+    RED_CHECK(validator_get_result_flag(validator) == 1);
 
-    RED_CHECK(validator_receive_response(validator) == 1);
+    RED_CHECK(validator_receive_response(validator) == 0);
 
     RED_CHECK(validator_close_session(validator) == 0);
 

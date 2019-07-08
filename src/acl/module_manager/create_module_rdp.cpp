@@ -331,14 +331,39 @@ void ModuleManager::create_mod_rdp(
 
             struct ICAP
             {
-                FileTransport trans;
+                struct ICAPTransport : FileTransport
+                {
+                    using FileTransport::FileTransport;
+
+                    size_t do_partial_read(uint8_t * buffer, size_t len) override
+                    {
+                        size_t r = FileTransport::do_partial_read(buffer, len);
+                        if (r == 0) {
+                            throw this->get_report_error()(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
+                        }
+                        return r;
+                    }
+                };
+                ICAPTransport trans;
                 ICAPService service;
                 SessionReactor::TopFdPtr validator_event;
 
                 ICAP(unique_fd&& fd)
-                : trans(std::move(fd))
+                : trans(std::move(fd), ReportError([](Error err){
+                    LOG(LOG_INFO, "ICAPTransport: %s", err.errmsg());
+                    return err;
+                }))
                 , service(this->trans)
                 {}
+
+                ~ICAP()
+                {
+                    try {
+                        this->service.send_close_session();
+                    }
+                    catch (...) {
+                    }
+                }
             };
 
             std::unique_ptr<ModMetrics> metrics;
@@ -359,6 +384,7 @@ void ModuleManager::create_mod_rdp(
             unique_fd ufd = addr_connect(ini.get<cfg::validator::socket_path>().c_str());
             if (ufd) {
                 validator_fd = ufd.fd();
+                fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
                 icap = std::make_unique<ModRDPWithMetrics::ICAP>(std::move(ufd));
             }
             else {
@@ -422,8 +448,10 @@ void ModuleManager::create_mod_rdp(
 
 #ifndef __EMSCRIPTEN__
         if (enable_validator) {
+            new_mod->icap = std::move(icap);
             new_mod->icap->validator_event = this->session_reactor.create_fd_event(validator_fd)
-            .disable_timeout()
+            .set_timeout(std::chrono::milliseconds::max())
+            .on_timeout(jln::always_ready([]{}))
             .on_exit(jln::propagate_exit())
             .on_action(jln::always_ready([rdp=new_mod.get()]() {
                 rdp->DLP_antivirus_check_channels_files();

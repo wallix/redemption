@@ -392,10 +392,10 @@ void ClipboardChannel::process_filecontents_request(InStream& chunk)
     auto stream_id = chunk.in_uint32_le();
     auto lindex = chunk.in_sint32_le();
     auto type = chunk.in_uint32_le();
-    auto npos_low= chunk.in_uint32_le();
+    auto npos_low = chunk.in_uint32_le();
     auto npos_high = chunk.in_uint32_le();
     auto cb_requested = chunk.in_uint32_le();
-    // auto clip_data_id = chunk.in_uint32_le();
+    // auto clip_data_id = chunk.in_uint32_le(); // optional
     emval_call(this->callbacks, "receiveFileContentsRequest",
         stream_id, type, lindex, npos_low, npos_high, cb_requested);
 }
