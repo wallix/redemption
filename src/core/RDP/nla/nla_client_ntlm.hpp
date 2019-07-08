@@ -972,21 +972,6 @@ private:
             return SEC_I_CONTINUE_NEEDED;
         }
 
-        SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Negotiate");
-            InStream in_stream(input_buffer);
-            this->NEGOTIATE_MESSAGE.recv(in_stream);
-            if (!this->ntlm_check_nego()) {
-                return SEC_E_INVALID_TOKEN;
-            }
-
-            this->SavedNegotiateMessage.init(in_stream.get_offset());
-            this->SavedNegotiateMessage.copy(in_stream.get_bytes());
-
-            this->state = NTLM_STATE_CHALLENGE;
-            return SEC_I_CONTINUE_NEEDED;
-        }
-
         SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
             InStream in_stream(input_buffer);
@@ -1029,40 +1014,6 @@ private:
             return SEC_I_COMPLETE_NEEDED;
         }
 
-        SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Authenticate");
-            InStream in_stream(input_buffer);
-            this->AUTHENTICATE_MESSAGE.recv(in_stream);
-            if (this->AUTHENTICATE_MESSAGE.has_mic) {
-                this->UseMIC = true;
-                this->SavedAuthenticateMessage.init(in_stream.get_offset());
-                constexpr std::size_t null_data_sz = 16;
-                uint8_t const null_data[null_data_sz]{0u};
-                auto const p = in_stream.get_data();
-                std::size_t offset = 0u;
-                this->SavedAuthenticateMessage.copy({p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset}, offset);
-                offset += this->AUTHENTICATE_MESSAGE.PayloadOffset;
-                this->SavedAuthenticateMessage.copy({null_data, null_data_sz}, offset);
-                offset += null_data_sz;
-                this->SavedAuthenticateMessage.copy({p + offset, in_stream.get_offset() - offset}, offset);
-            }
-            
-            this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.av());
-            this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
-
-            if (this->identity.is_empty_user_domain()){
-                LOG(LOG_ERR, "ANONYMOUS User not allowed");
-                return SEC_E_LOGON_DENIED;
-            }
-            
-            return SEC_I_CONTINUE_NEEDED;
-        }
-
-        SEC_STATUS check_authenticate() {
-            uint8_t hash[16];
-            this->ntlm_server_fetch_hash(hash);
-            return this->ntlm_server_proceed_authenticate(hash);
-        }
     } sspi_context;
         
     // GSS_Acquire_cred
