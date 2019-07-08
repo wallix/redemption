@@ -57,12 +57,11 @@ private:
     SEC_WINNT_AUTH_IDENTITY identity;
     
     bool sspi_context_initialized = false;
+    TimeObj & timeobj;
+    Random & rand;
 
     class NTLMContextClient
     {
-        TimeObj & timeobj;
-        Random & rand;
-
         const bool server = false;
         const bool NTLMv2 = true;
         bool UseMIC;
@@ -135,10 +134,8 @@ private:
         const bool verbose;
 
     public:
-        explicit NTLMContextClient(bool is_server, Random & rand, TimeObj & timeobj, bool verbose = false)
-            : timeobj(timeobj)
-            , rand(rand)
-            , server(is_server)
+        explicit NTLMContextClient(bool is_server, bool verbose = false)
+            : server(is_server)
             , UseMIC(this->NTLMv2/* == true*/)
             //, LmCompatibilityLevel(3)
             , Workstation(0)
@@ -163,7 +160,7 @@ private:
         /**
          * Generate timestamp for AUTHENTICATE_MESSAGE.
          */
-        void ntlm_generate_timestamp()
+        void ntlm_generate_timestamp(TimeObj & timeobj)
         {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
             uint8_t ZeroTimestamp[8] = {};
@@ -172,7 +169,7 @@ private:
                 memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
             }
             else {
-                const timeval tv = this->timeobj.get_time();
+                const timeval tv = timeobj.get_time();
                 OutStream out_stream(this->Timestamp);
                 out_stream.out_uint32_le(tv.tv_usec);
                 out_stream.out_uint32_le(tv.tv_sec);
@@ -183,22 +180,14 @@ private:
          * Generate client challenge (8-byte nonce).
          */
         // client method
-        void ntlm_generate_client_challenge()
+        void ntlm_generate_client_challenge(Random & rand)
         {
             // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
-            this->rand.random(this->ClientChallenge, 8);
+            rand.random(this->ClientChallenge, 8);
 
         }
-        /**
-         * Generate server challenge (8-byte nonce).
-         */
-        // server method
-        void ntlm_generate_server_challenge()
-        {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Server Challenge");
-            this->rand.random(this->ServerChallenge, 8);
-        }
+
         // client method
         void ntlm_get_server_challenge() {
             memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
@@ -215,12 +204,6 @@ private:
         //    }
         //    this->rand.random(this->RandomSessionKey, 16);
         //}
-
-        // client method ??
-        void ntlm_generate_exported_session_key() {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
-            this->rand.random(this->ExportedSessionKey, 16);
-        }
 
         // client method
         //void ntlm_generate_key_exchange_key()
@@ -306,7 +289,9 @@ private:
         // all strings are in unicode utf16
         void ntlmv2_compute_response_from_challenge(array_view_const_u8 pass,
                                                     array_view_const_u8 user,
-                                                    array_view_const_u8 domain) {
+                                                    array_view_const_u8 domain,
+                                                    Random & rand,
+                                                    TimeObj & timeobj) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
 
             uint8_t ResponseKeyNT[16] = {};
@@ -333,9 +318,9 @@ private:
             temp[0] = 0x01;
             temp[1] = 0x01;
             // compute ClientTimeStamp
-            this->ntlm_generate_timestamp();
+            this->ntlm_generate_timestamp(timeobj);
             // compute ClientChallenge (nonce(8))
-            this->ntlm_generate_client_challenge();
+            this->ntlm_generate_client_challenge(rand);
             memcpy(&temp[1+1+6], this->Timestamp, 8);
             memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
             memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
@@ -402,7 +387,7 @@ private:
         }
 
         // client method for authenticate message
-        void ntlm_encrypt_random_session_key() {
+        void ntlm_encrypt_random_session_key(Random & rand) {
             // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
             // ExportedSessionKey = NONCE(16) (random 16bytes number)
             // KeyExchangeKey = SessionBaseKey
@@ -410,7 +395,8 @@ private:
 
             // generate NONCE(16) exportedsessionkey
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Encrypt RandomSessionKey");
-            this->ntlm_generate_exported_session_key();
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
+            rand.random(this->ExportedSessionKey, 16);
             this->ntlm_rc4k(this->SessionBaseKey, 16,
                             this->ExportedSessionKey, this->EncryptedRandomSessionKey);
 
@@ -803,41 +789,19 @@ private:
             this->state = NTLM_STATE_CHALLENGE;
         }
 
-        // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
-        void ntlm_server_build_challenge() {
-            if (!this->server) {
-                return;
-            }
-            if (!this->ntlm_check_nego()) {
-                LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
-            }
-            this->ntlm_generate_server_challenge();
-            memcpy(this->CHALLENGE_MESSAGE.serverChallenge, this->ServerChallenge, 8);
-            this->ntlm_generate_timestamp();
-            this->ntlm_construct_challenge_target_info();
-
-            this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-            if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-                this->CHALLENGE_MESSAGE.version.ntlm_get_version_info();
-            }
-            else {
-                this->CHALLENGE_MESSAGE.version.ignore_version_info();
-            }
-
-            this->state = NTLM_STATE_AUTHENTICATE;
-        }
-
         // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
         // all strings are in unicode utf16
         void ntlm_client_build_authenticate(array_view_const_u8 password,
                                             array_view_const_u8 userName,
                                             array_view_const_u8 userDomain,
-                                            array_view_const_u8 workstation) {
+                                            array_view_const_u8 workstation,
+                                            Random & rand,
+                                            TimeObj & timeobj) {
             if (this->server) {
                 return;
             }
-            this->ntlmv2_compute_response_from_challenge(password, userName, userDomain);
-            this->ntlm_encrypt_random_session_key();
+            this->ntlmv2_compute_response_from_challenge(password, userName, userDomain, rand, timeobj);
+            this->ntlm_encrypt_random_session_key(rand);
             this->ntlm_generate_client_signing_key();
             this->ntlm_generate_client_sealing_key();
             this->ntlm_generate_server_signing_key();
@@ -983,14 +947,14 @@ private:
             return SEC_I_CONTINUE_NEEDED;
         }
 
-        SEC_STATUS write_authenticate(Array& output_buffer) {
+        SEC_STATUS write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
             auto password_av = this->identity.get_password_utf16_av();
             auto user_av = this->identity.get_user_utf16_av();
             auto domain_av = this->identity.get_domain_utf16_av();
 
             this->ntlm_client_build_authenticate(password_av, user_av, domain_av,
-                                                 this->Workstation.av());
+                                                 this->Workstation.av(), rand, timeobj);
             StaticOutStream<65535> out_stream;
             if (this->UseMIC) {
                 this->AUTHENTICATE_MESSAGE.ignore_mic = true;
@@ -1050,7 +1014,7 @@ private:
             this->sspi_context.read_challenge(input_buffer);
         }
         if (this->sspi_context.state == NTLM_STATE_AUTHENTICATE) {
-            return this->sspi_context.write_authenticate(output_buffer);
+            return this->sspi_context.write_authenticate(output_buffer, this->rand, this->timeobj);
         }
 
         return SEC_E_OUT_OF_SEQUENCE;
@@ -1135,7 +1099,6 @@ private:
     bool restricted_admin_mode;
 
     const char * target_host;
-    Random & rand;
     std::string& extra_message;
     Translation::language_t lang;
     const bool verbose;
@@ -1147,9 +1110,9 @@ private:
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
-    void credssp_generate_client_nonce() {
+    void credssp_generate_client_nonce(Random & rand) {
         LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
+        rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
         this->SavedClientNonce.initialized = true;
         this->credssp_set_client_nonce();
     }
@@ -1196,7 +1159,7 @@ private:
 
         array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
-            this->credssp_generate_client_nonce();
+            this->credssp_generate_client_nonce(this->rand);
             this->credssp_generate_public_key_hash_client_to_server();
             public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
         }
@@ -1408,10 +1371,11 @@ public:
                const bool verbose = false)
         : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
-        , sspi_context(false, rand, timeobj, verbose)
+        , timeobj(timeobj)
+        , rand(rand)
+        , sspi_context(false, verbose)
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
-        , rand(rand)
         , extra_message(extra_message)
         , lang(lang)
         , verbose(verbose)
