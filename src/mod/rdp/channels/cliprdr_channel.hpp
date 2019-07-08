@@ -716,14 +716,9 @@ public:
 
     void DLP_antivirus_check_channels_files()
     {
-        // TODO loop
         if (!this->channel_file.receive_response()) {
-            LOG(LOG_DEBUG, "DLP_antivirus_check_channels_files: wait");
             return;
         }
-
-        LOG(LOG_DEBUG, "DLP_antivirus_check_channels_files: %s",
-            this->channel_file.get_result_content());
 
         if (!this->channel_file.is_valid() && this->channel_file.is_enable_validation()) {
             auto const info = key_qvalue_pairs({
