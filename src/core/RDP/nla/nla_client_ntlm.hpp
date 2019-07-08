@@ -473,40 +473,7 @@ private:
         }
 
         void ntlm_set_negotiate_flags() {
-            uint32_t & negoFlag = this->NegotiateFlags;
-            if (this->NTLMv2) {
-                negoFlag |= NTLMSSP_NEGOTIATE_56;
-                negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
-                negoFlag |= NTLMSSP_NEGOTIATE_LM_KEY;
-                negoFlag |= NTLMSSP_NEGOTIATE_OEM;
-            }
 
-            negoFlag |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-            negoFlag |= NTLMSSP_NEGOTIATE_128;
-            negoFlag |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
-            negoFlag |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
-            negoFlag |= NTLMSSP_NEGOTIATE_NTLM;
-            negoFlag |= NTLMSSP_NEGOTIATE_SIGN;
-            negoFlag |= NTLMSSP_REQUEST_TARGET;
-            negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
-
-            if (this->confidentiality) {
-                negoFlag |= NTLMSSP_NEGOTIATE_SEAL;
-            }
-
-            if (this->SendVersionInfo) {
-                negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
-            }
-
-            if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-                this->version.ntlm_get_version_info();
-            }
-            else {
-                this->version.ignore_version_info();
-            }
-
-            this->NegotiateFlags = negoFlag;
-            this->NEGOTIATE_MESSAGE.negoFlags.flags = negoFlag;
         }
 
         void ntlm_set_negotiate_flags_auth() {
@@ -572,18 +539,41 @@ private:
             list.add(MsvAvDnsComputerName, win7,            sizeof(win7));
         }
 
-
-
         // CLIENT BUILD NEGOTIATE
         void ntlm_client_build_negotiate() {
-            this->ntlm_set_negotiate_flags();
-            this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+            this->NegotiateFlags |= (this->NTLMv2)
+                                   * (NTLMSSP_NEGOTIATE_56
+                                   |  NTLMSSP_NEGOTIATE_VERSION
+                                   |  NTLMSSP_NEGOTIATE_LM_KEY
+                                   |  NTLMSSP_NEGOTIATE_OEM)
+               | (
+                 NTLMSSP_NEGOTIATE_KEY_EXCH
+               | NTLMSSP_NEGOTIATE_128
+               | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
+               | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+               | NTLMSSP_NEGOTIATE_NTLM
+               | NTLMSSP_NEGOTIATE_SIGN
+               | NTLMSSP_REQUEST_TARGET
+               | NTLMSSP_NEGOTIATE_UNICODE);
+
+            if (this->confidentiality) {
+                this->NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+            }
+
+            if (this->SendVersionInfo) {
+                this->NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
+            }
+
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
+                this->version.ntlm_get_version_info();
                 this->NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
             }
             else {
+                this->version.ignore_version_info();
                 this->NEGOTIATE_MESSAGE.version.ignore_version_info();
             }
+
+            this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
                 auto & workstationbuff = this->NEGOTIATE_MESSAGE.Workstation.buffer;
@@ -699,22 +689,6 @@ private:
             this->state = NTLM_STATE_FINAL;
         }
 
-        void ntlm_server_fetch_hash(uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
-            // TODO get password hash from DC or find ourself
-            // LOG(LOG_INFO, "MARK %u, %u, %u",
-            //     this->identity.User.size(),
-            //     this->identity.Domain.size(),
-            //     this->identity.Password.size());
-
-            auto password_av = this->identity.get_password_utf16_av();
-            if (password_av.size() > 0) {
-                // password is available
-                SslMd4 md4;
-                md4.update(password_av);
-                md4.final(hash);
-            }
-        }
-
         void ntlm_SetContextWorkstation(array_view_const_char workstation) {
             // CHECK UTF8 or UTF16 (should store in UTF16)
             if (!workstation.empty()) {
@@ -740,7 +714,6 @@ private:
                 this->ServicePrincipalName.init(0);
             }
         }
-
 
         // READ WRITE FUNCTIONS
         SEC_STATUS write_negotiate(Array& output_buffer) {
