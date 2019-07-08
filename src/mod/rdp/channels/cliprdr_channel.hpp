@@ -211,13 +211,6 @@ public:
 
         switch (this->clip_data.client_data.message_type)
         {
-            case RDPECLIP::CB_CLIP_CAPS:
-            {
-                ClipboardCapabilitiesReceive receiver(this->clip_data.client_data, chunk, this->verbose);
-                send_message_to_server = true;
-            }
-            break;
-
             case RDPECLIP::CB_FORMAT_LIST:
                 send_message_to_server =
                     this->process_client_format_list_pdu(
@@ -231,24 +224,6 @@ public:
                     ClientFormatDataRequestSendBack sender(this->verbose, this);
                 }
                 send_message_to_server = this->params.clipboard_down_authorized;
-            }
-            break;
-
-            case RDPECLIP::CB_FILECONTENTS_REQUEST: {
-                FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
-                if (!this->params.clipboard_file_authorized) {
-                    ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
-                } else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
-                    const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
-
-                    this->last_lindex_packet_remaining = receiver.requested;
-
-                    if (this->last_lindex != receiver.lindex) {
-                        this->last_lindex = receiver.lindex;
-                        this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_SERVER, this->session_reactor.get_current_time());
-                    }
-                }
-                send_message_to_server = this->params.clipboard_file_authorized;
             }
             break;
 
@@ -281,6 +256,31 @@ public:
                     bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
                     this->update_exchanged_data(total_length);
                 }
+            break;
+
+            case RDPECLIP::CB_CLIP_CAPS:
+            {
+                ClipboardCapabilitiesReceive receiver(this->clip_data.client_data, chunk, this->verbose);
+                send_message_to_server = true;
+            }
+            break;
+
+            case RDPECLIP::CB_FILECONTENTS_REQUEST: {
+                FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
+                if (!this->params.clipboard_file_authorized) {
+                    ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
+                } else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+                    const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
+
+                    this->last_lindex_packet_remaining = receiver.requested;
+
+                    if (this->last_lindex != receiver.lindex) {
+                        this->last_lindex = receiver.lindex;
+                        this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_SERVER, this->session_reactor.get_current_time());
+                    }
+                }
+                send_message_to_server = this->params.clipboard_file_authorized;
+            }
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
@@ -476,6 +476,64 @@ public:
 
         switch (this->clip_data.server_data.message_type)
         {
+            case RDPECLIP::CB_MONITOR_READY: {
+                if (this->proxy_managed) {
+                    this->clip_data.client_data.use_long_format_names = true;
+                    ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this);
+                }
+
+                if (this->clipboard_monitor_ready_notifier) {
+                    if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
+                        this->clipboard_monitor_ready_notifier = nullptr;
+                    }
+                }
+
+                send_message_to_client = !this->proxy_managed;
+            }
+            break;
+
+            case RDPECLIP::CB_FORMAT_LIST:
+                send_message_to_client =
+                    this->process_server_format_list_pdu(
+                        total_length, flags, chunk, header);
+
+                if (this->format_list_notifier) {
+                    if (!this->format_list_notifier->on_server_format_list()) {
+                        this->format_list_notifier = nullptr;
+                    }
+                }
+            break;
+
+            case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
+                if (this->clipboard_initialize_notifier) {
+                    if (!this->clipboard_initialize_notifier->on_clipboard_initialize()) {
+                        this->clipboard_initialize_notifier = nullptr;
+                    }
+                }
+                else if (this->format_list_response_notifier) {
+                    if (!this->format_list_response_notifier->on_server_format_list_response()) {
+                        this->format_list_response_notifier = nullptr;
+                    }
+                }
+            break;
+
+            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+                send_message_to_client =
+                    this->process_server_format_data_request_pdu(
+                        total_length, flags, chunk, header);
+            break;
+
+            case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
+                send_message_to_client =
+                    this->process_server_format_data_response_pdu(
+                        total_length, flags, chunk, header);
+
+                if (send_message_to_client &&
+                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    this->update_exchanged_data(total_length);
+                }
+            break;
+
             case RDPECLIP::CB_CLIP_CAPS:
             {
                 ClipboardCapabilitiesReceive receiver(this->clip_data.server_data, chunk, this->verbose);
@@ -540,66 +598,8 @@ public:
             }
             break;
 
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                send_message_to_client =
-                    this->process_server_format_data_request_pdu(
-                        total_length, flags, chunk, header);
-            break;
-
-            case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                send_message_to_client =
-                    this->process_server_format_data_response_pdu(
-                        total_length, flags, chunk, header);
-
-                if (send_message_to_client &&
-                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-                    this->update_exchanged_data(total_length);
-                }
-            break;
-
-            case RDPECLIP::CB_FORMAT_LIST:
-                send_message_to_client =
-                    this->process_server_format_list_pdu(
-                        total_length, flags, chunk, header);
-
-                if (this->format_list_notifier) {
-                    if (!this->format_list_notifier->on_server_format_list()) {
-                        this->format_list_notifier = nullptr;
-                    }
-                }
-            break;
-
-            case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-                if (this->clipboard_initialize_notifier) {
-                    if (!this->clipboard_initialize_notifier->on_clipboard_initialize()) {
-                        this->clipboard_initialize_notifier = nullptr;
-                    }
-                }
-                else if (this->format_list_response_notifier) {
-                    if (!this->format_list_response_notifier->on_server_format_list_response()) {
-                        this->format_list_response_notifier = nullptr;
-                    }
-                }
-            break;
-
             case RDPECLIP::CB_LOCK_CLIPDATA: {
                 LockClipDataReceive receiver(this->clip_data.client_data, this->clip_data.server_data, chunk, this->verbose, header);
-            }
-            break;
-
-            case RDPECLIP::CB_MONITOR_READY: {
-                if (this->proxy_managed) {
-                    this->clip_data.client_data.use_long_format_names = true;
-                    ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this);
-                }
-
-                if (this->clipboard_monitor_ready_notifier) {
-                    if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
-                        this->clipboard_monitor_ready_notifier = nullptr;
-                    }
-                }
-
-                send_message_to_client = !this->proxy_managed;
             }
             break;
 
