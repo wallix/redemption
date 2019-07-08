@@ -1929,10 +1929,10 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "enable_interupting")) {
+        else if (0 == strcmp(key, "enable_interrupting")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::enable_interupting&>(this->variables).value,
+                static_cast<cfg::validator::enable_interrupting&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

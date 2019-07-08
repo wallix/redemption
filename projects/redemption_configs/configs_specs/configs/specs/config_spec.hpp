@@ -605,7 +605,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
         W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "target_name", set("avscan"));
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interupting", set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interrupting", set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_save_files", set(false));
         W.member(ini_and_gui, no_sesman, L, type_<types::dirpath>(), "save_files_directory");

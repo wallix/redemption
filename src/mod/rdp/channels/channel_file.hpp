@@ -55,7 +55,7 @@ private:
 
     uint8_t direction = NONE;
 
-    bool is_interupting_channel;
+    bool is_interrupting_channel;
     bool is_saving_files;
 
     ICAPService * icap_service;
@@ -74,7 +74,7 @@ public:
 
     ChannelFile(ICAPService * icap_service, ValidatorParams const& validator_params) noexcept
     : dir_path(validator_params.save_files_directory)
-    , is_interupting_channel(validator_params.enable_interupting)
+    , is_interrupting_channel(validator_params.enable_interrupting)
     , is_saving_files(validator_params.enable_save_files)
     , icap_service(icap_service)
     , target_name(validator_params.target_name)
@@ -228,7 +228,7 @@ public:
 
     bool is_enable_interuption() const noexcept
     {
-        return this->is_interupting_channel;
+        return this->is_interrupting_channel;
     }
 
     std::string const& get_file_name() const noexcept

@@ -284,7 +284,7 @@ void ModuleManager::create_mod_rdp(
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
 
-    mod_rdp_params.validator_params.enable_interupting = ini.get<cfg::validator::enable_interupting>();
+    mod_rdp_params.validator_params.enable_interrupting = ini.get<cfg::validator::enable_interrupting>();
     mod_rdp_params.validator_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
     mod_rdp_params.validator_params.save_files_directory = ini.get<cfg::validator::save_files_directory>().c_str();
     mod_rdp_params.validator_params.target_name = ini.get<cfg::validator::target_name>().c_str();

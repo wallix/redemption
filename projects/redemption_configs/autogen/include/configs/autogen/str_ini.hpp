@@ -1162,7 +1162,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #target_name = avscan
 
 # value: 0 or 1
-#enable_interupting = 0
+#enable_interrupting = 0
 
 # value: 0 or 1
 #enable_save_files = 0
