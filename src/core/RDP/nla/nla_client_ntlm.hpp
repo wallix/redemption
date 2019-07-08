@@ -152,160 +152,6 @@ private:
         NTLMContextClient(NTLMContextClient const &) = delete;
         NTLMContextClient& operator = (NTLMContextClient const &) = delete;
 
-        // client method
-        // ntlmv2_compute_response_from_challenge generates :
-        // - timestamp
-        // - client challenge
-        // - NtChallengeResponse
-        // - LmChallengeResponse
-        // all strings are in unicode utf16
-        void ntlmv2_compute_response_from_challenge(array_view_const_u8 pass,
-                                                    array_view_const_u8 user,
-                                                    array_view_const_u8 domain,
-                                                    Random & rand,
-                                                    TimeObj & timeobj) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
-
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
-            SslMd4 md4;
-            uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
-
-            md4.update(pass);
-            md4.final(md4password);
-
-            SslHMAC_Md5 hmac_md5(make_array_view(md4password));
-
-            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
-            uint8_t * userup = unique_userup.get();
-            memcpy(userup, user.data(), user.size());
-            UTF16Upper(userup, user.size());
-            hmac_md5.update({userup, user.size()});
-            unique_userup.reset();
-
-            uint8_t ResponseKeyNT[SslMd5::DIGEST_LENGTH] = {};
-
-            userup = nullptr;
-            hmac_md5.update(domain);
-            hmac_md5.final(ResponseKeyNT);
-
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
-
-            SslMd4 md4_b;
-            uint8_t md4password_b[SslMd4::DIGEST_LENGTH] = {};
-
-            md4_b.update(pass);
-            md4_b.final(md4password_b);
-
-            SslHMAC_Md5 hmac_md5_b(make_array_view(md4password_b));
-
-            auto unique_userup_b = std::make_unique<uint8_t[]>(user.size());
-            uint8_t * userup_b = unique_userup_b.get();
-            memcpy(userup_b, user.data(), user.size());
-            UTF16Upper(userup_b, user.size());
-            hmac_md5_b.update({userup_b, user.size()});
-            unique_userup_b.reset();
-
-            uint8_t ResponseKeyLM[SslMd5::DIGEST_LENGTH] = {};
-
-            userup = nullptr;
-            hmac_md5_b.update(domain);
-            hmac_md5_b.final(ResponseKeyLM);
-            
-            // struct NTLMv2_Client_Challenge = temp
-            // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
-            // Z(n) = { 0x00, ... , 0x00 } n times
-            // ServerName = AvPairs received in Challenge message
-            auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
-            // BStream AvPairsStream;
-            // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
-            size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
-            if (this->verbose) {
-                LOG(LOG_INFO, "NTLMContextClient Compute response: AvPairs size %zu", AvPairsStream.size());
-                LOG(LOG_INFO, "NTLMContextClient Compute response: temp size %zu", temp_size);
-            }
-
-            auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
-            uint8_t* temp = unique_temp.get();
-            memset(temp, 0, temp_size);
-            temp[0] = 0x01;
-            temp[1] = 0x01;
-
-
-            // compute ClientChallenge (nonce(8))
-            // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-
-            // compute ClientTimeStamp
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
-            uint8_t ZeroTimestamp[8] = {};
-
-            if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
-                memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-            }
-            else {
-                const timeval tv = timeobj.get_time();
-                OutStream out_stream(this->Timestamp);
-                out_stream.out_uint32_le(tv.tv_usec);
-                out_stream.out_uint32_le(tv.tv_sec);
-            }
-            memcpy(&temp[1+1+6], this->Timestamp, 8);
-
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
-            rand.random(this->ClientChallenge, 8);
-            memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
-
-            memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
-
-            // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
-            //                       Concat(ServerChallenge, temp))
-
-            uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
-            SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
-
-            memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
-            hmac_md5resp.update({this->ServerChallenge, 8});
-            hmac_md5resp.update({temp, temp_size});
-            hmac_md5resp.final(NtProofStr);
-
-            // NtChallengeResponse = Concat(NtProofStr, temp)
-
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtChallengeResponse");
-            auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-            // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
-            NtChallengeResponse.reset();
-            NtChallengeResponse.ostream.out_copy_bytes(NtProofStr, sizeof(NtProofStr));
-            NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
-            NtChallengeResponse.mark_end();
-
-            LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
-
-            unique_temp.reset();
-
-            LOG_IF(this->verbose, LOG_INFO, "Compute response: temp buff successfully deleted");
-            // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
-            //                                         Concat(ServerChallenge, ClientChallenge))
-            // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
-            auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
-            // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-            SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
-            LmChallengeResponse.reset();
-            hmac_md5lmresp.update({this->ServerChallenge, 8});
-            hmac_md5lmresp.update({this->ClientChallenge, 8});
-            uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
-            hmac_md5lmresp.final(LCResponse);
-
-            LmChallengeResponse.ostream.out_copy_bytes(LCResponse, SslMd5::DIGEST_LENGTH);
-            LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
-            LmChallengeResponse.mark_end();
-
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
-            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
-            //                           NtProofStr)
-            SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
-            hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
-            hmac_md5seskey.final(this->SessionBaseKey);
-        }
 
         // static method for both client and server (encrypt and decrypt)
         void ntlm_rc4k(uint8_t* key, int length, uint8_t* plaintext, uint8_t* ciphertext)
@@ -596,13 +442,212 @@ private:
 
         // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
         // all strings are in unicode utf16
-        void ntlm_client_build_authenticate(array_view_const_u8 password,
-                                            array_view_const_u8 userName,
-                                            array_view_const_u8 userDomain,
-                                            array_view_const_u8 workstation,
-                                            Random & rand,
-                                            TimeObj & timeobj) {
-            this->ntlmv2_compute_response_from_challenge(password, userName, userDomain, rand, timeobj);
+
+        void ntlm_SetContextWorkstation(array_view_const_char workstation) {
+            // CHECK UTF8 or UTF16 (should store in UTF16)
+            if (!workstation.empty()) {
+                size_t host_len = UTF8Len(workstation.data());
+                this->Workstation.init(host_len * 2);
+                UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
+                this->SendWorkstationName = true;
+            }
+            else {
+                this->Workstation.init(0);
+                this->SendWorkstationName = false;
+            }
+        }
+
+        void ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
+            // CHECK UTF8 or UTF16 (should store in UTF16)
+            if (!pszTargetName.empty()) {
+                size_t host_len = UTF8Len(pszTargetName.data());
+                this->ServicePrincipalName.init(host_len * 2);
+                UTF8toUTF16(pszTargetName, this->ServicePrincipalName.get_data(), host_len * 2);
+            }
+            else {
+                this->ServicePrincipalName.init(0);
+            }
+        }
+
+        // READ WRITE FUNCTIONS
+        SEC_STATUS write_negotiate(Array& output_buffer) {
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
+            this->ntlm_client_build_negotiate();
+            StaticOutStream<65535> out_stream;
+            this->NEGOTIATE_MESSAGE.emit(out_stream);
+            output_buffer.init(out_stream.get_offset());
+            output_buffer.copy(out_stream.get_bytes());
+
+            this->SavedNegotiateMessage.init(out_stream.get_offset());
+            this->SavedNegotiateMessage.copy(out_stream.get_bytes());
+            this->state = NTLM_STATE_CHALLENGE;
+            return SEC_I_CONTINUE_NEEDED;
+        }
+
+        SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
+            InStream in_stream(input_buffer);
+            this->CHALLENGE_MESSAGE.recv(in_stream);
+            this->SavedChallengeMessage.init(in_stream.get_offset());
+            this->SavedChallengeMessage.copy(in_stream.get_bytes());
+
+            this->state = NTLM_STATE_AUTHENTICATE;
+            return SEC_I_CONTINUE_NEEDED;
+        }
+
+        SEC_STATUS write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
+            auto password = this->identity.get_password_utf16_av();
+            auto userName = this->identity.get_user_utf16_av();
+            auto userDomain = this->identity.get_domain_utf16_av();
+            auto workstation = this->Workstation.av();
+ 
+            // client method
+            // ntlmv2_compute_response_from_challenge generates :
+            // - timestamp
+            // - client challenge
+            // - NtChallengeResponse
+            // - LmChallengeResponse
+            // all strings are in unicode utf16
+
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
+            SslMd4 md4;
+            uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
+
+            md4.update(password);
+            md4.final(md4password);
+
+            SslHMAC_Md5 hmac_md5(make_array_view(md4password));
+
+            auto unique_userup = std::make_unique<uint8_t[]>(userName.size());
+            uint8_t * userup = unique_userup.get();
+            memcpy(userup, userName.data(), userName.size());
+            UTF16Upper(userup, userName.size());
+            hmac_md5.update({userup, userName.size()});
+            unique_userup.reset();
+
+            uint8_t ResponseKeyNT[SslMd5::DIGEST_LENGTH] = {};
+
+            userup = nullptr;
+            hmac_md5.update(userDomain);
+            hmac_md5.final(ResponseKeyNT);
+
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
+
+            SslMd4 md4_b;
+            uint8_t md4password_b[SslMd4::DIGEST_LENGTH] = {};
+            md4_b.update(password);
+            md4_b.final(md4password_b);
+
+            SslHMAC_Md5 hmac_md5_b(make_array_view(md4password_b));
+
+            auto unique_userup_b = std::make_unique<uint8_t[]>(userName.size());
+            uint8_t * userup_b = unique_userup_b.get();
+            memcpy(userup_b, userName.data(), userName.size());
+            UTF16Upper(userup_b, userName.size());
+            hmac_md5_b.update({userup_b, userName.size()});
+            unique_userup_b.reset();
+
+            uint8_t ResponseKeyLM[SslMd5::DIGEST_LENGTH] = {};
+
+            userup = nullptr;
+            hmac_md5_b.update(userDomain);
+            hmac_md5_b.final(ResponseKeyLM);
+            
+            // struct NTLMv2_Client_Challenge = temp
+            // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
+            // Z(n) = { 0x00, ... , 0x00 } n times
+            // ServerName = AvPairs received in Challenge message
+            auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
+            // BStream AvPairsStream;
+            // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
+            size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
+            if (this->verbose) {
+                LOG(LOG_INFO, "NTLMContextClient Compute response: AvPairs size %zu", AvPairsStream.size());
+                LOG(LOG_INFO, "NTLMContextClient Compute response: temp size %zu", temp_size);
+            }
+
+            auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
+            uint8_t* temp = unique_temp.get();
+            memset(temp, 0, temp_size);
+            temp[0] = 0x01;
+            temp[1] = 0x01;
+
+            // compute ClientChallenge (nonce(8))
+            // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
+
+            // compute ClientTimeStamp
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
+            uint8_t ZeroTimestamp[8] = {};
+
+            if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
+                memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+            }
+            else {
+                const timeval tv = timeobj.get_time();
+                OutStream out_stream(this->Timestamp);
+                out_stream.out_uint32_le(tv.tv_usec);
+                out_stream.out_uint32_le(tv.tv_sec);
+            }
+            memcpy(&temp[1+1+6], this->Timestamp, 8);
+
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
+            rand.random(this->ClientChallenge, 8);
+            memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
+
+            memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
+
+            // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
+            //                       Concat(ServerChallenge, temp))
+
+            uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
+            SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
+
+            memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
+            hmac_md5resp.update({this->ServerChallenge, 8});
+            hmac_md5resp.update({temp, temp_size});
+            hmac_md5resp.final(NtProofStr);
+
+            // NtChallengeResponse = Concat(NtProofStr, temp)
+
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtChallengeResponse");
+            auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
+            // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
+            NtChallengeResponse.reset();
+            NtChallengeResponse.ostream.out_copy_bytes(NtProofStr, sizeof(NtProofStr));
+            NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
+            NtChallengeResponse.mark_end();
+
+            LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
+
+            unique_temp.reset();
+
+            LOG_IF(this->verbose, LOG_INFO, "Compute response: temp buff successfully deleted");
+            // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
+            //                                         Concat(ServerChallenge, ClientChallenge))
+            // LmChallengeResponse.ChallengeFromClient = ClientChallenge
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
+            auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
+            // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
+            SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
+            LmChallengeResponse.reset();
+            hmac_md5lmresp.update({this->ServerChallenge, 8});
+            hmac_md5lmresp.update({this->ClientChallenge, 8});
+            uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
+            hmac_md5lmresp.final(LCResponse);
+
+            LmChallengeResponse.ostream.out_copy_bytes(LCResponse, SslMd5::DIGEST_LENGTH);
+            LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
+            LmChallengeResponse.mark_end();
+
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
+            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
+            //                           NtProofStr)
+            SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
+            hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
+            hmac_md5seskey.final(this->SessionBaseKey);
 
             // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
             // ExportedSessionKey = NONCE(16) (random 16bytes number)
@@ -687,68 +732,7 @@ private:
             // this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
             this->state = NTLM_STATE_FINAL;
-        }
-
-        void ntlm_SetContextWorkstation(array_view_const_char workstation) {
-            // CHECK UTF8 or UTF16 (should store in UTF16)
-            if (!workstation.empty()) {
-                size_t host_len = UTF8Len(workstation.data());
-                this->Workstation.init(host_len * 2);
-                UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
-                this->SendWorkstationName = true;
-            }
-            else {
-                this->Workstation.init(0);
-                this->SendWorkstationName = false;
-            }
-        }
-
-        void ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
-            // CHECK UTF8 or UTF16 (should store in UTF16)
-            if (!pszTargetName.empty()) {
-                size_t host_len = UTF8Len(pszTargetName.data());
-                this->ServicePrincipalName.init(host_len * 2);
-                UTF8toUTF16(pszTargetName, this->ServicePrincipalName.get_data(), host_len * 2);
-            }
-            else {
-                this->ServicePrincipalName.init(0);
-            }
-        }
-
-        // READ WRITE FUNCTIONS
-        SEC_STATUS write_negotiate(Array& output_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
-            this->ntlm_client_build_negotiate();
-            StaticOutStream<65535> out_stream;
-            this->NEGOTIATE_MESSAGE.emit(out_stream);
-            output_buffer.init(out_stream.get_offset());
-            output_buffer.copy(out_stream.get_bytes());
-
-            this->SavedNegotiateMessage.init(out_stream.get_offset());
-            this->SavedNegotiateMessage.copy(out_stream.get_bytes());
-            this->state = NTLM_STATE_CHALLENGE;
-            return SEC_I_CONTINUE_NEEDED;
-        }
-
-        SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
-            InStream in_stream(input_buffer);
-            this->CHALLENGE_MESSAGE.recv(in_stream);
-            this->SavedChallengeMessage.init(in_stream.get_offset());
-            this->SavedChallengeMessage.copy(in_stream.get_bytes());
-
-            this->state = NTLM_STATE_AUTHENTICATE;
-            return SEC_I_CONTINUE_NEEDED;
-        }
-
-        SEC_STATUS write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
-            auto password_av = this->identity.get_password_utf16_av();
-            auto user_av = this->identity.get_user_utf16_av();
-            auto domain_av = this->identity.get_domain_utf16_av();
-
-            this->ntlm_client_build_authenticate(password_av, user_av, domain_av,
-                                                 this->Workstation.av(), rand, timeobj);
+                                                 
             StaticOutStream<65535> out_stream;
             if (this->UseMIC) {
                 this->AUTHENTICATE_MESSAGE.ignore_mic = true;
