@@ -113,7 +113,7 @@ private:
     private:
         uint8_t ClientChallenge[8]{};
     public:
-        uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH]{};
+        std::array<uint8_t, SslMd5::DIGEST_LENGTH> SessionBaseKey; 
     private:
         //uint8_t KeyExchangeKey[16];
         //uint8_t RandomSessionKey[16];
@@ -298,10 +298,18 @@ private:
             hmac_md5.final(ResponseKeyNT);
             
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-            SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
-            hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
-            hmac_md5seskey.final(this->SessionBaseKey);
+            this->SessionBaseKey = this->HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
         }
+
+         std::array<uint8_t, SslMd5::DIGEST_LENGTH> HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
+         {
+            std::array<uint8_t, SslMd5::DIGEST_LENGTH> result;
+            SslHMAC_Md5 hmac_md5(key);
+            hmac_md5.update(data);
+            hmac_md5.unchecked_final(result.data());
+            return result;
+        }
+
 
 
         // server method
@@ -643,11 +651,8 @@ private:
             LmChallengeResponse.mark_end();
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
-            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
-            //                           NtProofStr)
-            SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
-            hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
-            hmac_md5seskey.final(this->SessionBaseKey);
+            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
+            this->SessionBaseKey = this->HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
 
             // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
             // ExportedSessionKey = NONCE(16) (random 16bytes number)
@@ -657,8 +662,8 @@ private:
             // generate NONCE(16) exportedsessionkey
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Encrypt RandomSessionKey");
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
-            rand.random(this->ExportedSessionKey, 16);
-            this->ntlm_rc4k(this->SessionBaseKey, 16,
+            rand.random(this->ExportedSessionKey, SslMd5::DIGEST_LENGTH);
+            this->ntlm_rc4k(this->SessionBaseKey.data(), SslMd5::DIGEST_LENGTH,
                             this->ExportedSessionKey, this->EncryptedRandomSessionKey);
 
             auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;

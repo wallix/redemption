@@ -81,6 +81,16 @@ public:
         ssl.update(make_array_view(out_data));
         ssl.final(out_data);
     }
+    
+    void unchecked_final(uint8_t * out_data)
+    {
+        context.final(out_data);
+
+        Ssl ssl;
+        ssl.update(make_array_view(this->k_opad));
+        ssl.update(make_array_view(out_data, Ssl::DIGEST_LENGTH));
+        ssl.final(out_data);
+    }
 };
 
 template<class Ssl, std::size_t pad_length>
@@ -133,6 +143,16 @@ public:
         Ssl ssl;
         ssl.update(make_array_view(this->k_opad));
         ssl.update(make_array_view(out_data));
+        ssl.final(out_data);
+    }
+    
+    void unchecked_final(uint8_t * out_data)
+    {
+        context.final(out_data);
+
+        Ssl ssl;
+        ssl.update(make_array_view(this->k_opad));
+        ssl.update(make_array_view(out_data, Ssl::DIGEST_LENGTH));
         ssl.final(out_data);
     }
 };

@@ -90,6 +90,16 @@ public:
         }
         assert(len == DigestLength);
     }
+    
+    void unchecked_final(uint8_t * out_data)
+    {
+        unsigned int len = 0;
+        int res = HMAC_Final(this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
+        assert(len == DigestLength);
+    }
 };
 
 template<const EVP_MD * (* evp)(), std::size_t DigestLength>
@@ -146,6 +156,21 @@ public:
         this->hmac.deinit();
         this->initialized = false;
     }
+    
+    void unchecked_final(uint8_t * out_data)
+    {
+        if (!this->initialized){
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
+        unsigned int len = 0;
+        int res = HMAC_Final(this->hmac, out_data, &len);
+        if (res == 0) {
+            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
+        }
+        assert(len == DigestLength);
+        this->hmac.deinit();
+        this->initialized = false;
+    }    
 };
 
 }  // namespace detail_
