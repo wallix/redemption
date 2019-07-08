@@ -157,61 +157,6 @@ private:
         NTLMContextClient(NTLMContextClient const &) = delete;
         NTLMContextClient& operator = (NTLMContextClient const &) = delete;
 
-        /**
-         * Generate timestamp for AUTHENTICATE_MESSAGE.
-         */
-        void ntlm_generate_timestamp(TimeObj & timeobj)
-        {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
-            uint8_t ZeroTimestamp[8] = {};
-
-            if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
-                memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-            }
-            else {
-                const timeval tv = timeobj.get_time();
-                OutStream out_stream(this->Timestamp);
-                out_stream.out_uint32_le(tv.tv_usec);
-                out_stream.out_uint32_le(tv.tv_sec);
-            }
-        }
-
-        /**
-         * Generate client challenge (8-byte nonce).
-         */
-        // client method
-        void ntlm_generate_client_challenge(Random & rand)
-        {
-            // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
-            rand.random(this->ClientChallenge, 8);
-
-        }
-
-        // client method
-        void ntlm_get_server_challenge() {
-            memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
-        }
-
-        /**
-         * Generate RandomSessionKey (16-byte nonce).
-         */
-        // client method
-        //void ntlm_generate_random_session_key()
-        //{
-        //    if (this->verbose) {
-        //        LOG(LOG_INFO, "NTLMContextClient Generate Random Session Key");
-        //    }
-        //    this->rand.random(this->RandomSessionKey, 16);
-        //}
-
-        // client method
-        //void ntlm_generate_key_exchange_key()
-        //{
-        //    // /* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
-        //    memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
-        //}
-
         // all strings are in unicode utf16
         void NTOWFv2_FromHash(array_view_const_u8 hash,
                               array_view_const_u8 user,
@@ -317,12 +262,30 @@ private:
             memset(temp, 0, temp_size);
             temp[0] = 0x01;
             temp[1] = 0x01;
-            // compute ClientTimeStamp
-            this->ntlm_generate_timestamp(timeobj);
+
+
             // compute ClientChallenge (nonce(8))
-            this->ntlm_generate_client_challenge(rand);
+            // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
+
+            // compute ClientTimeStamp
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
+            uint8_t ZeroTimestamp[8] = {};
+
+            if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
+                memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+            }
+            else {
+                const timeval tv = timeobj.get_time();
+                OutStream out_stream(this->Timestamp);
+                out_stream.out_uint32_le(tv.tv_usec);
+                out_stream.out_uint32_le(tv.tv_sec);
+            }
             memcpy(&temp[1+1+6], this->Timestamp, 8);
+
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
+            rand.random(this->ClientChallenge, 8);
             memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
+
             memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
 
             // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
@@ -332,7 +295,7 @@ private:
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
             SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
 
-            this->ntlm_get_server_challenge();
+            memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
             hmac_md5resp.update({this->ServerChallenge, 8});
             hmac_md5resp.update({temp, temp_size});
             hmac_md5resp.final(NtProofStr);
@@ -414,90 +377,6 @@ private:
                    AuthEncryptedRSK.size());
             this->ntlm_rc4k(this->SessionBaseKey, 16,
                             this->EncryptedRandomSessionKey, this->ExportedSessionKey);
-        }
-
-        /**
-         * Generate signing key.\n
-         * @msdn{cc236711}
-         * @param sign_magic Sign magic string
-         * @param signing_key Destination signing key
-         */
-
-        void ntlm_generate_signing_key(array_view_const_u8 sign_magic, uint8_t (&signing_key)[SslMd5::DIGEST_LENGTH])
-        {
-            SslMd5 md5sign;
-            md5sign.update({this->ExportedSessionKey, 16});
-            md5sign.update(sign_magic);
-            md5sign.final(signing_key);
-        }
-
-
-        /**
-         * Generate client signing key (ClientSigningKey).\n
-         * @msdn{cc236711}
-         */
-
-        void ntlm_generate_client_signing_key()
-        {
-            SslMd5 md5sign;
-            md5sign.update({this->ExportedSessionKey, 16});
-            md5sign.update("session key to client-to-server signing key magic constant\0"_av);
-            md5sign.final(this->ClientSigningKey);
-        }
-
-        /**
-         * Generate server signing key (ServerSigningKey).\n
-         * @msdn{cc236711}
-         */
-
-        void ntlm_generate_server_signing_key()
-        {
-            SslMd5 md5sign;
-            md5sign.update({this->ExportedSessionKey, 16});
-            md5sign.update("session key to server-to-client signing key magic constant\0"_av);
-            md5sign.final(this->ServerSigningKey);
-        }
-
-
-        /**
-         * Generate sealing key.\n
-         * @msdn{cc236712}
-         * @param seal_magic Seal magic string
-         * @param sealing_key Destination sealing key
-         */
-
-        void ntlm_generate_sealing_key(array_view_const_u8 seal_magic, uint8_t (&sealing_key)[SslMd5::DIGEST_LENGTH])
-        {
-            SslMd5 md5seal;
-            md5seal.update(make_array_view(this->ExportedSessionKey));
-            md5seal.update(seal_magic);
-            md5seal.final(sealing_key);
-        }
-
-        /**
-         * Generate client sealing key (ClientSealingKey).\n
-         * @msdn{cc236712}
-         */
-
-        void ntlm_generate_client_sealing_key()
-        {
-            SslMd5 md5seal;
-            md5seal.update(make_array_view(this->ExportedSessionKey));
-            md5seal.update("session key to client-to-server sealing key magic constant\0"_av);
-            md5seal.final(this->ClientSealingKey);
-        }
-
-        /**
-         * Generate server sealing key (ServerSealingKey).\n
-         * @msdn{cc236712}
-         */
-
-        void ntlm_generate_server_sealing_key()
-        {
-            SslMd5 md5seal;
-            md5seal.update(make_array_view(this->ExportedSessionKey));
-            md5seal.update("session key to server-to-client sealing key magic constant\0"_av);
-            md5seal.final(this->ServerSealingKey);
         }
 
         void ntlm_compute_MIC() {
@@ -802,10 +681,33 @@ private:
             }
             this->ntlmv2_compute_response_from_challenge(password, userName, userDomain, rand, timeobj);
             this->ntlm_encrypt_random_session_key(rand);
-            this->ntlm_generate_client_signing_key();
-            this->ntlm_generate_client_sealing_key();
-            this->ntlm_generate_server_signing_key();
-            this->ntlm_generate_server_sealing_key();
+
+            // NTLM Client Signing Key @msdn{cc236711}
+            SslMd5 md5sign_client;
+            md5sign_client.update({this->ExportedSessionKey, 16});
+            md5sign_client.update("session key to client-to-server signing key magic constant\0"_av);
+            md5sign_client.final(this->ClientSigningKey);
+
+            // NTLM Client Sealing Key @msdn{cc236712}
+            SslMd5 md5seal_client;
+            md5seal_client.update(make_array_view(this->ExportedSessionKey));
+            md5seal_client.update("session key to client-to-server sealing key magic constant\0"_av);
+            md5seal_client.final(this->ClientSealingKey);
+
+            // NTLM Server signing key @msdn{cc236711}
+
+            SslMd5 md5sign_server;
+            md5sign_server.update({this->ExportedSessionKey, 16});
+            md5sign_server.update("session key to server-to-client signing key magic constant\0"_av);
+            md5sign_server.final(this->ServerSigningKey);
+
+            // NTLM Server Sealing Key @msdn{cc236712}
+            
+            SslMd5 md5seal_server;
+            md5seal_server.update(make_array_view(this->ExportedSessionKey));
+            md5seal_server.update("session key to server-to-client sealing key magic constant\0"_av);
+            md5seal_server.final(this->ServerSealingKey);
+            
             this->ntlm_init_rc4_seal_states();
             this->ntlm_set_negotiate_flags_auth();
             // this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
@@ -855,43 +757,10 @@ private:
             auto password_av = this->identity.get_password_utf16_av();
             if (password_av.size() > 0) {
                 // password is available
-                this->hash_password(password_av, hash);
+                SslMd4 md4;
+                md4.update(password_av);
+                md4.final(hash);
             }
-        }
-
-        // SERVER PROCEED RESPONSE CHECKING
-        SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t (&hash)[16]) {
-            if (!this->server) {
-                return SEC_E_INTERNAL_ERROR;
-            }
-            if (!this->ntlm_check_nt_response_from_authenticate(make_array_view(hash))) {
-                LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
-                return SEC_E_LOGON_DENIED;
-            }
-            if (!this->ntlm_check_lm_response_from_authenticate(make_array_view(hash))) {
-                LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
-                return SEC_E_LOGON_DENIED;
-            }
-            // SERVER COMPUTE SHARED KEY WITH CLIENT
-            this->ntlm_compute_session_base_key(make_array_view(hash));
-            this->ntlm_decrypt_exported_session_key();
-
-            this->ntlm_generate_client_signing_key();
-            this->ntlm_generate_client_sealing_key();
-            this->ntlm_generate_server_signing_key();
-            this->ntlm_generate_server_sealing_key();
-            this->ntlm_init_rc4_seal_states();
-            if (this->UseMIC) {
-                this->ntlm_compute_MIC();
-                if (0 != memcmp(this->MessageIntegrityCheck, this->AUTHENTICATE_MESSAGE.MIC, 16)) {
-                    LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
-                    hexdump_c(this->MessageIntegrityCheck, 16);
-                    hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
-                    return SEC_E_MESSAGE_ALTERED;
-                }
-            }
-            this->state = NTLM_STATE_FINAL;
-            return SEC_I_COMPLETE_NEEDED;
         }
 
         void ntlm_SetContextWorkstation(array_view_const_char workstation) {
