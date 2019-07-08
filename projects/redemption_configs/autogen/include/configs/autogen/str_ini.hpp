@@ -1165,6 +1165,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_interrupting = 0
 
 # value: 0 or 1
+#log_if_accepted = 0
+
+# value: 0 or 1
 #enable_save_files = 0
 
 # maxlen = 4096

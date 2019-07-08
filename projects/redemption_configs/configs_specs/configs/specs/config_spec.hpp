@@ -607,6 +607,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interrupting", set(false));
 
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "log_if_accepted", set(false));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_save_files", set(false));
         W.member(ini_and_gui, no_sesman, L, type_<types::dirpath>(), "save_files_directory");
     });

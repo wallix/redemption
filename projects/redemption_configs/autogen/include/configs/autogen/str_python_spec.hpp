@@ -979,6 +979,8 @@ target_name = string(default='avscan')
 
 enable_interrupting = boolean(default=False)
 
+log_if_accepted = boolean(default=False)
+
 enable_save_files = boolean(default=False)
 
 save_files_directory = string(max=4096, default='')

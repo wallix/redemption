@@ -28,5 +28,6 @@ struct ValidatorParams
     std::string target_name;
     std::string save_files_directory;
     bool enable_interrupting = false;
+    bool log_if_accepted = false;
     bool enable_save_files = false;
 };

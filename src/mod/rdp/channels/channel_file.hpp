@@ -35,14 +35,6 @@
 
 class ChannelFile
 {
-public:
-    enum class Direction : uint8_t
-    {
-        None,
-        FromServer,
-        FromClient,
-    };
-
 private:
     std::string dir_path;
     std::string filename;
@@ -53,6 +45,13 @@ private:
 
     ICAPFileId streamID {};
 
+    // enum class Direction : uint8_t
+    // {
+    //     None,
+    //     FromServer,
+    //     FromClient,
+    // };
+    // TODO Direction
     uint8_t direction = NONE;
 
     bool is_interrupting_channel;
@@ -221,7 +220,7 @@ public:
     bool is_valid() const noexcept
     {
         if (this->icap_service == nullptr) {
-            return !this->icap_service;
+            return true;
         }
         return (this->icap_service->last_result_flag() == LocalICAPProtocol::ValidationType::IsAccepted);
     }

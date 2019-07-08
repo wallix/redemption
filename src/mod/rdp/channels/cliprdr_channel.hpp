@@ -640,12 +640,19 @@ public:
             return;
         }
 
-        if (!this->channel_file.is_valid() && this->channel_file.is_enable_validation()) {
+        if ((!this->channel_file.is_valid() || this->params.validator_params.log_if_accepted)
+         && this->channel_file.is_enable_validation()
+        ) {
             auto const info = key_qvalue_pairs({
-                {"type", "FILE_SCAN_RESULT" },
-                {"file_name", this->channel_file.get_file_name()},
-                {"size", std::to_string(this->channel_file.get_file_size())},
-                {"result", this->channel_file.get_result_content()}
+                {"type", "FILE_VERIFICATION" },
+                {"direction",
+                    this->channel_file.get_direction() == ChannelFile::FILE_FROM_CLIENT
+                    ? "UP" :
+                    this->channel_file.get_direction() == ChannelFile::FILE_FROM_SERVER
+                    ? "DOWN" : "unknown"
+                },
+                {"filename", this->channel_file.get_file_name()},
+                {"status", this->channel_file.get_result_content()}
             });
 
             ArcsightLogInfo arc_info;
@@ -657,7 +664,7 @@ public:
             arc_info.direction_flag = this->channel_file.get_direction() == ChannelFile::FILE_FROM_SERVER ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
             arc_info.message = this->channel_file.get_result_content();
 
-            this->report_message.log6(info, arc_info, tvtime());
+            this->report_message.log6(info, arc_info, session_reactor.get_current_time());
         }
 
         if (this->channel_file.is_enable_interuption() && this->channel_file.is_save_files()) {

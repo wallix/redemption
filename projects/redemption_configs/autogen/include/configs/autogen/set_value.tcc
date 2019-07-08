@@ -1937,6 +1937,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "log_if_accepted")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::validator::log_if_accepted&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "enable_save_files")) {
             ::configs::parse_and_log(
                 context, key,
