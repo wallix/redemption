@@ -62,7 +62,6 @@ private:
 
     class NTLMContextClient
     {
-        const bool server = false;
         const bool NTLMv2 = true;
         bool UseMIC;
     public:
@@ -134,9 +133,8 @@ private:
         const bool verbose;
 
     public:
-        explicit NTLMContextClient(bool is_server, bool verbose = false)
-            : server(is_server)
-            , UseMIC(this->NTLMv2/* == true*/)
+        explicit NTLMContextClient( bool verbose = false)
+            : UseMIC(this->NTLMv2/* == true*/)
             //, LmCompatibilityLevel(3)
             , Workstation(0)
             , ServicePrincipalName(0)
@@ -349,89 +347,16 @@ private:
             rc4.crypt(length, plaintext, ciphertext);
         }
 
-        // client method for authenticate message
-        void ntlm_encrypt_random_session_key(Random & rand) {
-            // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
-            // ExportedSessionKey = NONCE(16) (random 16bytes number)
-            // KeyExchangeKey = SessionBaseKey
-            // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
-
-            // generate NONCE(16) exportedsessionkey
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Encrypt RandomSessionKey");
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
-            rand.random(this->ExportedSessionKey, 16);
-            this->ntlm_rc4k(this->SessionBaseKey, 16,
-                            this->ExportedSessionKey, this->EncryptedRandomSessionKey);
-
-            auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-            AuthEncryptedRSK.reset();
-            AuthEncryptedRSK.ostream.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
-            AuthEncryptedRSK.mark_end();
-        }
-        // server method to decrypt exported session key from authenticate message with
-        // session base key computed with Responses.
-        void ntlm_decrypt_exported_session_key() {
-            auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Decrypt RandomSessionKey");
-            memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.get_data(),
-                   AuthEncryptedRSK.size());
-            this->ntlm_rc4k(this->SessionBaseKey, 16,
-                            this->EncryptedRandomSessionKey, this->ExportedSessionKey);
-        }
-
-        void ntlm_compute_MIC() {
-            SslHMAC_Md5 hmac_md5resp(make_array_view(this->ExportedSessionKey));
-            hmac_md5resp.update(this->SavedNegotiateMessage.av());
-            hmac_md5resp.update(this->SavedChallengeMessage.av());
-            hmac_md5resp.update(this->SavedAuthenticateMessage.av());
-            hmac_md5resp.final(this->MessageIntegrityCheck);
-        }
-
-
-        // all strings are in unicode utf16
-        //void ntlm_compute_lm_v2_response(const uint8_t * pass,   size_t pass_size,
-        //                                 const uint8_t * user,   size_t user_size,
-        //                                 const uint8_t * domain, size_t domain_size)
-        //{
-        //    uint8_t ResponseKeyLM[16] = {};
-        //    this->LMOWFv2(pass, pass_size, user, user_size, domain, domain_size,
-        //            ResponseKeyLM, sizeof(ResponseKeyLM));
-        //    // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
-        //    //                                         Concat(ServerChallenge, ClientChallenge))
-        //    // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-        //    BStream & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
-        //    // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-        //    SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
-        //    LmChallengeResponse.reset();
-        //    hmac_md5lmresp.update({this->ServerChallenge, 8});
-        //    hmac_md5lmresp.update({this->ClientChallenge, 8});
-        //    uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
-        //    hmac_md5lmresp.final(LCResponse);
-        //    LmChallengeResponse.out_copy_bytes(LCResponse, 16);
-        //    LmChallengeResponse.out_copy_bytes(this->ClientChallenge, 8);
-        //    LmChallengeResponse.mark_end();
-        //}
-
-
-
         /**
          * Initialize RC4 stream cipher states for sealing.
          */
 
         void ntlm_init_rc4_seal_states()
         {
-            if (this->server) {
-                this->SendSigningKey = &this->ServerSigningKey;
-                this->RecvSigningKey = &this->ClientSigningKey;
-                this->SendSealingKey = &this->ClientSealingKey;
-                this->RecvSealingKey = &this->ServerSealingKey;
-            }
-            else {
-                this->SendSigningKey = &this->ClientSigningKey;
-                this->RecvSigningKey = &this->ServerSigningKey;
-                this->SendSealingKey = &this->ServerSealingKey;
-                this->RecvSealingKey = &this->ClientSealingKey;
-            }
+            this->SendSigningKey = &this->ClientSigningKey;
+            this->RecvSigningKey = &this->ServerSigningKey;
+            this->SendSealingKey = &this->ServerSealingKey;
+            this->RecvSealingKey = &this->ClientSealingKey;
             this->SendRc4Seal.set_key(make_array_view(*this->RecvSealingKey));
             this->RecvRc4Seal.set_key(make_array_view(*this->SendSealingKey));
         }
@@ -637,9 +562,6 @@ private:
 
         // CLIENT BUILD NEGOTIATE
         void ntlm_client_build_negotiate() {
-            if (this->server) {
-                return;
-            }
             this->ntlm_set_negotiate_flags();
             this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
@@ -676,11 +598,24 @@ private:
                                             array_view_const_u8 workstation,
                                             Random & rand,
                                             TimeObj & timeobj) {
-            if (this->server) {
-                return;
-            }
             this->ntlmv2_compute_response_from_challenge(password, userName, userDomain, rand, timeobj);
-            this->ntlm_encrypt_random_session_key(rand);
+
+            // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
+            // ExportedSessionKey = NONCE(16) (random 16bytes number)
+            // KeyExchangeKey = SessionBaseKey
+            // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
+
+            // generate NONCE(16) exportedsessionkey
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Encrypt RandomSessionKey");
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
+            rand.random(this->ExportedSessionKey, 16);
+            this->ntlm_rc4k(this->SessionBaseKey, 16,
+                            this->ExportedSessionKey, this->EncryptedRandomSessionKey);
+
+            auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
+            AuthEncryptedRSK.reset();
+            AuthEncryptedRSK.ostream.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
+            AuthEncryptedRSK.mark_end();
 
             // NTLM Client Signing Key @msdn{cc236711}
             SslMd5 md5sign_client;
@@ -832,7 +767,13 @@ private:
 
                 this->SavedAuthenticateMessage.init(out_stream.get_offset());
                 this->SavedAuthenticateMessage.copy(out_stream.get_bytes());
-                this->ntlm_compute_MIC();
+
+                SslHMAC_Md5 hmac_md5resp(make_array_view(this->ExportedSessionKey));
+                hmac_md5resp.update(this->SavedNegotiateMessage.av());
+                hmac_md5resp.update(this->SavedChallengeMessage.av());
+                hmac_md5resp.update(this->SavedAuthenticateMessage.av());
+                hmac_md5resp.final(this->MessageIntegrityCheck);
+
                 memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
                 // this->AUTHENTICATE_MESSAGE.has_mic = true;
             }
@@ -1242,7 +1183,7 @@ public:
         , SavedClientNonce()
         , timeobj(timeobj)
         , rand(rand)
-        , sspi_context(false, verbose)
+        , sspi_context(verbose)
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
         , extra_message(extra_message)
