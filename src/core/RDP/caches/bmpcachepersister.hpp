@@ -364,7 +364,7 @@ public:
 
         StaticOutStream<128> stream;
 
-        stream.out_copy_bytes("PDBC", 4);  // Magic(4)
+        stream.out_copy_bytes("PDBC"_av);  // Magic(4)
         stream.out_uint8(CURRENT_VERSION);
 
         t.send(stream.get_bytes());

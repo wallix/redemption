@@ -390,7 +390,7 @@ namespace GCC
             // 00 05 -> Key::object length = 5 bytes
             // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
             stream.out_uint16_be(5);
-            stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
+            stream.out_copy_bytes("\x00\x14\x7c\x00\x01"_av);
 
             // 2a -> ConnectData::connectPDU length = 42 bytes
             // This length MUST be ignored by the client.
@@ -453,7 +453,7 @@ namespace GCC
             stream.out_uint8(0);
 
             // h221NonStandard (server-to-client H.221 key) = "McDn"
-            stream.out_copy_bytes("McDn", 4);
+            stream.out_copy_bytes("McDn"_av);
 
             // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
             stream.out_uint16_be(0x8000 | payload_size);

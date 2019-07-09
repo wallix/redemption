@@ -512,7 +512,7 @@ RED_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
 RED_AUTO_TEST_CASE(TestSend_DT_TPDU)
 {
     StaticOutStream<256> payload;
-    payload.out_copy_bytes("\x12\x34\x56\x78\x9A", 5);
+    payload.out_copy_bytes("\x12\x34\x56\x78\x9A"_av);
 
     size_t payload_len = payload.get_offset();
     StaticOutStream<256> stream;

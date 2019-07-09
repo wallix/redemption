@@ -37,7 +37,6 @@
 
 #include <chrono>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -245,12 +244,7 @@ private:
 
             const size_t message_length_offset = out_s.get_offset();
             out_s.out_skip_bytes(sizeof(uint16_t));
-
-            {
-                const char string[] = "Request=Keep-Alive";
-                out_s.out_copy_bytes(string, sizeof(string) - 1u);
-            }
-
+            out_s.out_copy_bytes("Request=Keep-Alive"_av);
             out_s.out_clear_bytes(1);   // Null-terminator.
 
             out_s.stream_at(message_length_offset).out_uint16_le(
@@ -519,9 +513,8 @@ public:
 
                 if (this->sespro_params.keepalive_timeout.count() > 0) {
                     send_client_message([](OutStream & out_s) {
-                            const char cstr[] = "Request=Keep-Alive";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        });
+                        out_s.out_copy_bytes("Request=Keep-Alive"_av);
+                    });
 
                     LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
                         "SessionProbeVirtualChannel::process_event: "
@@ -536,9 +529,8 @@ public:
                 }
 
                 send_client_message([](OutStream & out_s) {
-                        const char cstr[] = "Version=" "1" "\x01" "5";
-                        out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                    });
+                    out_s.out_copy_bytes("Version=" "1" "\x01" "5"_av);
+                });
 
                 {
                     uint32_t options = 0;
@@ -550,64 +542,48 @@ public:
                     if (options)
                     {
                         send_client_message([options](OutStream & out_s) {
-                                {
-                                    const char cstr[] = "Options=";
-                                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                                }
+                            out_s.out_copy_bytes("Options="_av);
 
-                                {
-                                    char cstr[128];
-                                    int len = std::snprintf(cstr, sizeof(cstr), "%u", options);
-                                    out_s.out_copy_bytes(cstr, size_t(len));
-                                }
-                            });
+                            {
+                                char cstr[128];
+                                int len = std::snprintf(cstr, sizeof(cstr), "%u", options);
+                                out_s.out_copy_bytes(cstr, size_t(len));
+                            }
+                        });
                     }
                 }
 
                 send_client_message([this](OutStream & out_s) {
-                        {
-                            const char cstr[] = "ChildlessWindowAsUnidentifiedInputField=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("ChildlessWindowAsUnidentifiedInputField="_av);
 
-                        if (this->sespro_params.childless_window_as_unidentified_input_field) {
-                            const char cstr[] = "Yes";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
-                        else {
-                            const char cstr[] = "No";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
-                    });
+                    if (this->sespro_params.childless_window_as_unidentified_input_field) {
+                        out_s.out_copy_bytes("Yes"_av);
+                    }
+                    else {
+                        out_s.out_copy_bytes("No"_av);
+                    }
+                });
 
                 send_client_message([](OutStream & out_s) {
-                        {
-                            const char cstr[] = "ExtraInfo=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("ExtraInfo="_av);
 
-                        {
-                            char cstr[128];
-                            std::snprintf(cstr, sizeof(cstr), "%d", ::getpid());
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
-                    });
+                    {
+                        char cstr[128];
+                        std::snprintf(cstr, sizeof(cstr), "%d", ::getpid());
+                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                    }
+                });
 
                 send_client_message([this](OutStream & out_s) {
-                        {
-                            const char cstr[] = "AutomaticallyEndDisconnectedSession=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("AutomaticallyEndDisconnectedSession="_av);
 
-                        if (this->sespro_params.end_disconnected_session) {
-                            const char cstr[] = "Yes";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
-                        else {
-                            const char cstr[] = "No";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
-                    });
+                    if (this->sespro_params.end_disconnected_session) {
+                        out_s.out_copy_bytes("Yes"_av);
+                    }
+                    else {
+                        out_s.out_copy_bytes("No"_av);
+                    }
+                });
 
                 {
                     unsigned int const disconnect_session_limit =
@@ -619,35 +595,29 @@ public:
 
                     if (disconnect_session_limit) {
                         send_client_message([disconnect_session_limit](OutStream & out_s) {
-                                {
-                                    const char cstr[] = "DisconnectedSessionLimit=";
-                                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                                }
+                            out_s.out_copy_bytes("DisconnectedSessionLimit="_av);
 
-                                {
-                                    char cstr[128];
-                                    std::snprintf(cstr, sizeof(cstr), "%u",
-                                        disconnect_session_limit);
-                                    out_s.out_copy_bytes(cstr, strlen(cstr));
-                                }
-                            });
+                            {
+                                char cstr[128];
+                                std::snprintf(cstr, sizeof(cstr), "%u",
+                                    disconnect_session_limit);
+                                out_s.out_copy_bytes(cstr, strlen(cstr));
+                            }
+                        });
                     }
                 }
 
                 if (this->sespro_params.idle_session_limit.count()) {
                     send_client_message([this](OutStream & out_s) {
-                            {
-                                const char cstr[] = "IdleSessionLimit=";
-                                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                            }
+                        out_s.out_copy_bytes("IdleSessionLimit="_av);
 
-                            {
-                                char cstr[128];
-                                int len = std::snprintf(cstr, sizeof(cstr), "%lld",
-                                    ms2ll(this->sespro_params.idle_session_limit));
-                                out_s.out_copy_bytes(cstr, size_t(len));
-                            }
-                        });
+                        {
+                            char cstr[128];
+                            int len = std::snprintf(cstr, sizeof(cstr), "%lld",
+                                ms2ll(this->sespro_params.idle_session_limit));
+                            out_s.out_copy_bytes(cstr, size_t(len));
+                        }
+                    });
                 }
 
                 {
@@ -657,63 +627,49 @@ public:
                     }
 
                     send_client_message([this](OutStream & out_s) {
-                            {
-                                const char cstr[] = "ReconnectionCookie=";
-                                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                            }
+                        out_s.out_copy_bytes("ReconnectionCookie="_av);
 
-                            {
-                                char cstr[128];
-                                std::snprintf(cstr, sizeof(cstr), "%u",
-                                    this->reconnection_cookie);
-                                out_s.out_copy_bytes(cstr, strlen(cstr));
-                            }
-                        });
+                        {
+                            char cstr[128];
+                            std::snprintf(cstr, sizeof(cstr), "%u",
+                                this->reconnection_cookie);
+                            out_s.out_copy_bytes(cstr, strlen(cstr));
+                        }
+                    });
                 }
 
                 send_client_message([this](OutStream & out_s) {
-                        {
-                            const char cstr[] = "EnableCrashDump=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("EnableCrashDump="_av);
 
-                        if (this->sespro_params.enable_crash_dump) {
-                            const char cstr[] = "Yes";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
-                        else {
-                            const char cstr[] = "No";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
-                    });
-
-                send_client_message([this](OutStream & out_s) {
-                        {
-                            const char cstr[] = "Bushido=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
-
-                        {
-                            char cstr[128];
-                            std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%u",
-                                this->sespro_params.handle_usage_limit,
-                                this->sespro_params.memory_usage_limit);
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
+                    if (this->sespro_params.enable_crash_dump) {
+                        out_s.out_copy_bytes("Yes"_av);
+                    }
+                    else {
+                        out_s.out_copy_bytes("No"_av);
+                    }
                 });
 
                 send_client_message([this](OutStream & out_s) {
-                        {
-                            const char cstr[] = "DisabledFeatures=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("Bushido="_av);
 
-                        {
-                            char cstr[128];
-                            std::snprintf(cstr, sizeof(cstr), "0x%08X",
-                                static_cast<unsigned>(this->sespro_params.disabled_features));
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
+                    {
+                        char cstr[128];
+                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%u",
+                            this->sespro_params.handle_usage_limit,
+                            this->sespro_params.memory_usage_limit);
+                        out_s.out_copy_bytes(cstr, size_t(len));
+                    }
+                });
+
+                send_client_message([this](OutStream & out_s) {
+                    out_s.out_copy_bytes("DisabledFeatures="_av);
+
+                    {
+                        char cstr[128];
+                        int len = std::snprintf(cstr, sizeof(cstr), "0x%08X",
+                            static_cast<unsigned>(this->sespro_params.disabled_features));
+                        out_s.out_copy_bytes(cstr, size_t(len));
+                    }
                 });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableLaunchMask")) {
@@ -736,54 +692,38 @@ public:
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get target informations")) {
                 send_client_message([this](OutStream & out_s) {
-                        {
-                            const char cstr[] = "TargetInformations=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
-
-                        out_s.out_copy_bytes(this->param_target_informations.data(),
-                            this->param_target_informations.size());
-                    });
+                    out_s.out_copy_bytes("TargetInformations="_av);
+                    out_s.out_copy_bytes(this->param_target_informations);
+                });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get startup application")) {
                 if (this->param_real_alternate_shell != "[None]" ||
                     this->start_application_started) {
                     send_client_message([this](OutStream & out_s) {
-                            {
-                                const char cstr[] = "StartupApplication=";
-                                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                        out_s.out_copy_bytes("StartupApplication="_av);
+
+                        if (this->param_real_alternate_shell.empty()) {
+                            out_s.out_copy_bytes("[Windows Explorer]"_av);
+                        }
+                        else if (this->param_real_alternate_shell == "[None]") {
+                            out_s.out_copy_bytes("[None]"_av);
+                        }
+                        else {
+                            if (!this->param_real_working_dir.empty()) {
+                                out_s.out_copy_bytes(this->param_real_working_dir);
                             }
+                            out_s.out_uint8('\x01');
 
-                            if (this->param_real_alternate_shell.empty()) {
-                                const char cstr[] = "[Windows Explorer]";
-                                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                            }
-                            else if (this->param_real_alternate_shell == "[None]") {
-                                const char cstr[] = "[None]";
-                                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                            }
-                            else {
-                                if (!this->param_real_working_dir.empty()) {
-                                    out_s.out_copy_bytes(
-                                        this->param_real_working_dir.data(),
-                                        this->param_real_working_dir.size());
-                                }
-                                out_s.out_uint8('\x01');
+                            out_s.out_copy_bytes(this->param_real_alternate_shell);
 
-                                out_s.out_copy_bytes(
-                                    this->param_real_alternate_shell.data(),
-                                    this->param_real_alternate_shell.size());
-
-                                if (0x0102 <= this->other_version) {
-                                    if (!this->param_show_maximized) {
-                                        out_s.out_uint8('\x01');
-
-                                        const char cstr[] = "Normal";
-                                        out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                                    }
+                            if (0x0102 <= this->other_version) {
+                                if (!this->param_show_maximized) {
+                                    out_s.out_uint8('\x01');
+                                    out_s.out_copy_bytes("Normal"_av);
                                 }
                             }
-                        });
+                        }
+                    });
                 }
 
                 this->start_application_query_processed = true;
@@ -796,9 +736,8 @@ public:
                 this->disconnection_reconnection_required = true;
 
                 send_client_message([](OutStream & out_s) {
-                        const char cstr[] = "Confirm=Disconnection-Reconnection";
-                        out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                    });
+                    out_s.out_copy_bytes("Confirm=Disconnection-Reconnection"_av);
+                });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get extra system process") &&
                      (2 <= parameters_.size())) {
@@ -809,31 +748,28 @@ public:
                 // ErrorCode : 0 on success. -1 if an error occurred.
 
                 send_client_message([this, proc_index](OutStream & out_s) {
-                        {
-                            const char cstr[] = "ExtraSystemProcess=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("ExtraSystemProcess="_av);
 
-                        std::string name;
+                    std::string name;
 
-                        const bool result =
-                            this->sespro_params.extra_system_processes.get(proc_index, name);
+                    const bool result =
+                        this->sespro_params.extra_system_processes.get(proc_index, name);
 
-                        {
-                            const int error_code = (result ? 0 : -1);
-                            char cstr[128];
-                            std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
-                                proc_index, error_code);
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
+                    {
+                        const int error_code = (result ? 0 : -1);
+                        char cstr[128];
+                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                            proc_index, error_code);
+                        out_s.out_copy_bytes(cstr, size_t(len));
+                    }
 
-                        if (result) {
-                            char cstr[1024];
-                            std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
-                                name.c_str());
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
-                    });
+                    if (result) {
+                        char cstr[1024];
+                        int len = std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
+                            name.c_str());
+                        out_s.out_copy_bytes(cstr, size_t(len));
+                    }
+                });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get outbound connection monitoring rule") &&
                      (2 <= parameters_.size())) {
@@ -845,36 +781,33 @@ public:
                 // ErrorCode : 0 on success. -1 if an error occurred.
 
                 send_client_message([this, rule_index](OutStream & out_s) {
-                        {
-                            const char cstr[] = "OutboundConnectionMonitoringRule=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("OutboundConnectionMonitoringRule="_av);
 
-                        unsigned int type = 0;
-                        std::string  host_address_or_subnet;
-                        std::string  port_range;
-                        std::string  description;
+                    unsigned int type = 0;
+                    std::string  host_address_or_subnet;
+                    std::string  port_range;
+                    std::string  description;
 
-                        const bool result =
-                            this->sespro_params.outbound_connection_monitor_rules.get(
-                                rule_index, type, host_address_or_subnet, port_range,
-                                description);
+                    const bool result =
+                        this->sespro_params.outbound_connection_monitor_rules.get(
+                            rule_index, type, host_address_or_subnet, port_range,
+                            description);
 
-                        {
-                            const int error_code = (result ? 0 : -1);
-                            char cstr[128];
-                            std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
-                                rule_index, error_code);
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
+                    {
+                        const int error_code = (result ? 0 : -1);
+                        char cstr[128];
+                        std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                            rule_index, error_code);
+                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                    }
 
-                        if (result) {
-                            char cstr[1024];
-                            std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s" "\x01" "%s",
-                                type, host_address_or_subnet.c_str(), port_range.c_str());
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
-                    });
+                    if (result) {
+                        char cstr[1024];
+                        std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s" "\x01" "%s",
+                            type, host_address_or_subnet.c_str(), port_range.c_str());
+                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                    }
+                });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get process monitoring rule") &&
                      (2 <= parameters_.size())) {
@@ -886,34 +819,31 @@ public:
                 // ErrorCode : 0 on success. -1 if an error occurred.
 
                 send_client_message([this, rule_index](OutStream & out_s) {
-                        {
-                            const char cstr[] = "ProcessMonitoringRule=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("ProcessMonitoringRule="_av);
 
-                        unsigned int type = 0;
-                        std::string  pattern;
-                        std::string  description;
+                    unsigned int type = 0;
+                    std::string  pattern;
+                    std::string  description;
 
-                        const bool result =
-                            this->sespro_params.process_monitor_rules.get(
-                                rule_index, type, pattern, description);
+                    const bool result =
+                        this->sespro_params.process_monitor_rules.get(
+                            rule_index, type, pattern, description);
 
-                        {
-                            const int error_code = (result ? 0 : -1);
-                            char cstr[128];
-                            std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
-                                rule_index, error_code);
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
+                    {
+                        const int error_code = (result ? 0 : -1);
+                        char cstr[128];
+                        std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                            rule_index, error_code);
+                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                    }
 
-                        if (result) {
-                            char cstr[1024];
-                            std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s",
-                                type, pattern.c_str());
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
-                    });
+                    if (result) {
+                        char cstr[1024];
+                        std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s",
+                            type, pattern.c_str());
+                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                    }
+                });
             }
 
             else if (!::strcasecmp(parameters_[0].c_str(), "Get windows of application as unidentified input field") &&
@@ -926,31 +856,28 @@ public:
 
 
                 send_client_message([this, app_index](OutStream & out_s) {
-                        {
-                            const char cstr[] = "WindowsOfApplicationAsUnidentifiedInputField=";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("WindowsOfApplicationAsUnidentifiedInputField="_av);
 
-                        std::string name;
+                    std::string name;
 
-                        const bool result =
-                            this->sespro_params.windows_of_these_applications_as_unidentified_input_field.get(app_index, name);
+                    const bool result =
+                        this->sespro_params.windows_of_these_applications_as_unidentified_input_field.get(app_index, name);
 
-                        {
-                            const int error_code = (result ? 0 : -1);
-                            char cstr[128];
-                            std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
-                                app_index, error_code);
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
+                    {
+                        const int error_code = (result ? 0 : -1);
+                        char cstr[128];
+                        std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                            app_index, error_code);
+                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                    }
 
-                        if (result) {
-                            char cstr[1024];
-                            std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
-                                name.c_str());
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
-                        }
-                    });
+                    if (result) {
+                        char cstr[1024];
+                        std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
+                            name.c_str());
+                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                    }
+                });
             }
 
             else {
@@ -987,26 +914,21 @@ public:
 
             if (this->sespro_params.enable_log) {
                 send_client_message([this](OutStream & out_s) {
-                        {
-                            const char cstr[] = "EnableLog=Yes";
-                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                        }
+                    out_s.out_copy_bytes("EnableLog=Yes"_av);
 
-                        if (this->sespro_params.enable_log_rotation) {
-                            if (0x0103 <= this->other_version) {
-                                out_s.out_uint8('\x01');
-
-                                const char cstr[] = "Yes";
-                                out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-                            }
-                            else {
-                                LOG(LOG_INFO,
-                                    "SessionProbeVirtualChannel::process_event: "
-                                        "Log file rotation is not supported by Session Probe! OtherVersion=0x%X",
-                                    this->other_version);
-                            }
+                    if (this->sespro_params.enable_log_rotation) {
+                        if (0x0103 <= this->other_version) {
+                            out_s.out_uint8('\x01');
+                            out_s.out_copy_bytes("Yes"_av);
                         }
-                    });
+                        else {
+                            LOG(LOG_INFO,
+                                "SessionProbeVirtualChannel::process_event: "
+                                    "Log file rotation is not supported by Session Probe! OtherVersion=0x%X",
+                                this->other_version);
+                        }
+                    }
+                });
             }
         }
         else if (!::strcasecmp(order_.c_str(), "Log") && !parameters_.empty()) {
@@ -1603,17 +1525,8 @@ public:
 
         const size_t message_length_offset = out_s.get_offset();
         out_s.out_skip_bytes(sizeof(uint16_t));
-
-        {
-            const char cstr[] = "StartupApplication=";
-            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-        }
-
-        {
-            const char cstr[] = "[None]";
-            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-        }
-
+        out_s.out_copy_bytes("StartupApplication="_av);
+        out_s.out_copy_bytes("[None]"_av);
         out_s.out_clear_bytes(1);   // Null-terminator.
 
         out_s.stream_at(message_length_offset).out_uint16_le(
@@ -1630,11 +1543,7 @@ public:
 
         const size_t message_length_offset = out_s.get_offset();
         out_s.out_skip_bytes(sizeof(uint16_t));
-
-        {
-            const char cstr[] = "Execute=";
-            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
-        }
+        out_s.out_copy_bytes("Execute="_av);
 
         if (application_name && *application_name) {
             out_s.out_copy_bytes(application_name, ::strlen(application_name));
@@ -1652,22 +1561,17 @@ public:
 
         out_s.out_uint8('\x01');
         if (show_maximized) {
-            const char cstr[] = "Minimized";
-            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+            out_s.out_copy_bytes("Minimized"_av);
         }
         else {
-            const char cstr[] = "Normal";
-            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+            out_s.out_copy_bytes("Normal"_av);
         }
 
         out_s.out_uint8('\x01');
         {
-            std::ostringstream oss;
-            oss << flags;
-
-            std::string s = oss.str();
-
-            out_s.out_copy_bytes(s.c_str(), s.length());
+            char cstr[128];
+            int len = std::snprintf(cstr, sizeof(cstr), "%u", flags);
+            out_s.out_copy_bytes(cstr, size_t(len));
         }
 
         out_s.out_clear_bytes(1);   // Null-terminator.
