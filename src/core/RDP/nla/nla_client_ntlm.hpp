@@ -776,20 +776,6 @@ private:
         return SEC_E_OUT_OF_SEQUENCE;
     }
 
-    static void sspi_compute_signature(
-        uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
-    {
-        uint8_t checksum[8];
-        /* RC4-encrypt first 8 bytes of digest */
-        rc4.crypt(8, digest, checksum);
-
-        uint32_t version = 1;
-        /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(signature, &version, 4);
-        memcpy(&signature[4], checksum, 8);
-        memcpy(&signature[12], &SeqNo, 4);
-    }
-
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
 
@@ -821,15 +807,19 @@ private:
         std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
         array_hmac_md5 digest = ::HmacMd5(this->sspi_context.ServerSigningKey, seqno, data_out);
 
-        uint8_t expected_signature[16] = {};
-        this->sspi_compute_signature(
-            expected_signature, this->sspi_context.RecvRc4Seal, digest.data(), MessageSeqNo);
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        std::array<uint8_t,16> expected_signature{
+            1, 0, 0, 0, // Version
+            0, 0, 0, 0, 0, 0, 0, 0,
+            uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+        this->sspi_context.RecvRc4Seal.crypt(8, digest.data(), &expected_signature[4]);
 
-        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+
+        if (memcmp(data_in.data(), expected_signature.data(), 16) != 0) {
             /* signature verification failed! */
             LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
             LOG(LOG_ERR, "Expected Signature:");
-            hexdump_c(expected_signature, 16);
+            hexdump_c(expected_signature.data(), 16);
             LOG(LOG_ERR, "Actual Signature:");
             hexdump_c(data_in.data(), 16);
 
@@ -895,6 +885,20 @@ private:
         this->ServerClientHash.assign(hash, hash + sizeof(hash));
     }
 
+    static void sspi_compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
+    {
+        uint8_t checksum[8];
+        /* RC4-encrypt first 8 bytes of digest */
+        rc4.crypt(8, digest, checksum);
+
+        uint32_t version = 1;
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        memcpy(signature, &version, 4);
+        memcpy(&signature[4], checksum, 8);
+        memcpy(&signature[12], &SeqNo, 4);
+    }
+
+
     SEC_STATUS credssp_encrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_public_key_echo");
         uint32_t version = this->ts_request.use_version;
@@ -918,6 +922,14 @@ private:
         
         this->sspi_context.SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
         this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest.data(), MessageSeqNo);
+        
+//        /* Concatenate version, ciphertext and sequence number to build signature */
+//        std::array<uint8_t,16> expected_signature{
+//            1, 0, 0, 0, // Version
+//            0, 0, 0, 0, 0, 0, 0, 0,
+//            uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+//        this->sspi_context.RecvRc4Seal.crypt(8, digest, signature.data()+4);
+
         this->ts_request.pubKeyAuth.init(data_out.size());
         this->ts_request.pubKeyAuth.copy(const_bytes_view{data_out.data(),data_out.size()});
         return SEC_E_OK;
@@ -968,7 +980,7 @@ private:
         uint8_t expected_signature[16] = {};
         this->sspi_compute_signature(
             expected_signature, this->sspi_context.RecvRc4Seal, digest.data(), MessageSeqNo);
-
+            
         if (memcmp(data_in.data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
             LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
@@ -1088,7 +1100,7 @@ private:
 
         this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
         this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest.data(), MessageSeqNo);
-
+        
         this->ts_request.authInfo.init(data_out.size());
         this->ts_request.authInfo.copy(const_bytes_view{data_out.data(),data_out.size()});
 
