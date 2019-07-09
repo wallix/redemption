@@ -141,10 +141,11 @@ void mod_rdp::init_negociate_event_(
         gen, timeobj, mod_rdp_params, this->report_message,
 #ifndef __EMSCRIPTEN__
         this->channels.drive.file_system_drive_manager.has_managed_drive()
-        || this->channels.session_probe.enable_session_probe
+        || this->channels.session_probe.enable_session_probe,
 #else
-        false
+        false,
 #endif
+        this->channels.remote_app.convert_remoteapp_to_desktop
     ))
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)

@@ -224,6 +224,11 @@ public:
 
     private:
         const bool remote_program_enhanced;
+
+    public:
+        const bool convert_remoteapp_to_desktop;
+
+    private:
         const bool should_ignore_first_client_execute;
 
     public:
@@ -238,6 +243,7 @@ public:
         RemoteApp(ModRDPParams::RemoteAppParams const& remote_app_params)
         : enable_remote_program(remote_app_params.enable_remote_program)
         , remote_program_enhanced(remote_app_params.remote_program_enhanced)
+        , convert_remoteapp_to_desktop(remote_app_params.convert_remoteapp_to_desktop)
         , should_ignore_first_client_execute(
             remote_app_params.should_ignore_first_client_execute)
         , bypass_legal_notice_delay(remote_app_params.bypass_legal_notice_delay)
@@ -768,8 +774,10 @@ private:
         assert(!this->remote_programs_to_client_sender &&
             !this->remote_programs_to_server_sender);
 
-        this->remote_programs_to_client_sender =
-            this->create_to_client_sender(channel_names::rail, front);
+        if (!this->remote_app.convert_remoteapp_to_desktop) {
+            this->remote_programs_to_client_sender =
+                this->create_to_client_sender(channel_names::rail, front);
+        }
         this->remote_programs_to_server_sender =
             this->create_to_server_synchronous_sender(channel_names::rail, stc);
 
@@ -800,6 +808,9 @@ private:
                 this->remote_programs_to_client_sender.get(),
                 this->remote_programs_to_server_sender.get(),
                 front,
+                this->remote_app.convert_remoteapp_to_desktop,
+                stc.negociation_result.front_width,
+                stc.negociation_result.front_height,
                 vars,
                 base_params,
                 remote_programs_virtual_channel_params);
@@ -1936,7 +1947,8 @@ public:
         , trans(trans)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
-                , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose
+                , mod_rdp_params.persist_bitmap_cache_on_disk
+                , mod_rdp_params.remote_app_params.convert_remoteapp_to_desktop, mod_rdp_params.verbose
                 , report_error_from_reporter(report_message))
         , key_flags(mod_rdp_params.key_flags)
         , last_key_flags_sent(key_flags)
@@ -3487,16 +3499,25 @@ public:
 
                 if (this->channels.remote_app.enable_remote_program) {
                     RailCaps rail_caps = this->client_rail_caps;
+                    if (this->channels.remote_app.convert_remoteapp_to_desktop) {
+                        rail_caps.RailSupportLevel = 0x83;
+                    }
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         rail_caps.log("Sending to server");
                     }
                     confirm_active_pdu.emit_capability_set(rail_caps);
 
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        this->client_window_list_caps.log("Sending to server");
+                    WindowListCaps window_list_caps = this->client_window_list_caps;
+                    if (this->channels.remote_app.convert_remoteapp_to_desktop) {
+                        window_list_caps.WndSupportLevel = 0x2;
+                        window_list_caps.NumIconCaches = 3;
+                        window_list_caps.NumIconCacheEntries = 12;
                     }
-                    confirm_active_pdu.emit_capability_set(this->client_window_list_caps);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        window_list_caps.log("Sending to server");
+                    }
+                    confirm_active_pdu.emit_capability_set(window_list_caps);
                 }
 #endif
 
@@ -5642,7 +5663,7 @@ public:
 
     windowing_api* get_windowing_api() const {
 #ifndef __EMSCRIPTEN__
-        if (this->channels.remote_programs_session_manager) {
+        if (this->channels.remote_programs_session_manager && !this->channels.remote_app.convert_remoteapp_to_desktop) {
             return this->channels.remote_programs_session_manager.get();
         }
 #endif

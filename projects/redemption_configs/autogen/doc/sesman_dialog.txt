@@ -154,6 +154,7 @@ cfg::mod_rdp::server_cert_failure_message <- server_cert_failure_message   [Serv
       4: admin notified (wab notification)
     (note: values can be added (everyone: 1+2+4=7, mute: 0))
 cfg::mod_rdp::enable_rdpdr_data_analysis <- enable_rdpdr_data_analysis   [bool]
+cfg::mod_rdp::wabam_uses_translated_remoteapp <- wabam_uses_translated_remoteapp   [bool]
 cfg::mod_rdp::enable_server_cert_external_validation <- enable_server_cert_external_validation   [bool]
 cfg::mod_rdp::server_cert -> server_cert   [std::string]
 cfg::mod_rdp::server_cert_response <- server_cert_response   [std::string]
@@ -287,6 +288,7 @@ cfg::context::rail_disconnect_message_delay <- rail_disconnect_message_delay   [
 cfg::context::use_session_probe_to_launch_remote_program <- use_session_probe_to_launch_remote_program   [bool]
     Use Session Probe to launch Remote Program as much as possible.
 cfg::context::session_probe_launch_error_message -> session_probe_launch_error_message   [std::string]
+cfg::context::is_wabam <- is_wabam   [bool]
 cfg::context::pm_response <- pm_response   [std::string]
 cfg::context::pm_request -> pm_request   [std::string]
 cfg::context::native_session_id -> native_session_id   [unsigned int]
