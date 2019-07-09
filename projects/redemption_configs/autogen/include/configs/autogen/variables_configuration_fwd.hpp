@@ -296,7 +296,8 @@ namespace cfg {
         struct enable_validator;
         struct socket_path;
         struct target_name;
-        struct enable_interupting;
+        struct enable_interrupting;
+        struct log_if_accepted;
         struct enable_save_files;
         struct save_files_directory;
     };

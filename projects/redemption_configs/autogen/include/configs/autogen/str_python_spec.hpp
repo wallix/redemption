@@ -977,7 +977,9 @@ socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_P
 
 target_name = string(default='avscan')
 
-enable_interupting = boolean(default=False)
+enable_interrupting = boolean(default=False)
+
+log_if_accepted = boolean(default=False)
 
 enable_save_files = boolean(default=False)
 

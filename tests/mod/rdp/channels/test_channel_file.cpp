@@ -30,7 +30,7 @@ RED_AUTO_TEST_CASE_WD(TestChannelFileWrite, wd)
 {
     ValidatorParams params;
     params.save_files_directory = wd.dirname().string();
-    params.enable_interupting = false;
+    params.enable_interrupting = false;
     params.enable_save_files = true;
     params.target_name = "avscan";
     ChannelFile file(nullptr, params);

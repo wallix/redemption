@@ -86,7 +86,7 @@ struct ClientNonce {
     bool isset() {
         return this->initialized;
     }
-    
+
     void reset()
     {
         this->initialized = false;
@@ -102,15 +102,15 @@ struct ClientNonce {
     void ber_write(int version, OutStream & stream)
     {
         if (version >= 5 && this->initialized) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() clientNonce");
+            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() clientNonce");
             BER::write_sequence_octet_string(stream, 5, this->data, CLIENT_NONCE_LENGTH);
         }
     }
-    
+
     int ber_read(int version, int & length, InStream & stream)
     {
         if (version >= 5 && BER::read_contextual_tag(stream, 5, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
+            // LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
             if(!BER::read_octet_string_tag(stream, length)){
                 return -1;
             }
@@ -241,12 +241,11 @@ struct TSRequest final {
         /* [0] version */
         BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->version), true);
         BER::write_integer(stream, this->version);
-        LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u",
-            this->version);
+        LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u", this->version);
 
         /* [1] negoTokens (NegoData) */
         if (nego_tokens_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() NegoToken");
+            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() NegoToken");
             length = nego_tokens_length;
 
             int sequence_length   = BER::sizeof_sequence_octet_string(this->negoTokens.size());
@@ -266,7 +265,7 @@ struct TSRequest final {
 
         /* [2] authInfo (OCTET STRING) */
         if (auth_info_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
+            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
             length = auth_info_length;
             length -= BER::write_sequence_octet_string(stream, 2,
                                                        this->authInfo.get_data(),
@@ -277,7 +276,7 @@ struct TSRequest final {
 
         /* [3] pubKeyAuth (OCTET STRING) */
         if (pub_key_auth_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
+            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
             length = pub_key_auth_length;
             length -= BER::write_sequence_octet_string(stream, 3,
                                                        this->pubKeyAuth.get_data(),
@@ -293,7 +292,7 @@ struct TSRequest final {
             BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->error_code), true);
             BER::write_integer(stream, this->error_code);
         }
-        
+
         /* [5] clientNonce (OCTET STRING) */
         this->clientNonce.ber_write(this->version, stream);
     }
@@ -308,8 +307,7 @@ struct TSRequest final {
            !BER::read_integer(stream, remote_version)) {
             return -1;
         }
-        LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u",
-            remote_version);
+        LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u", remote_version);
 
         if (remote_version < this->use_version) {
             this->use_version = remote_version;
@@ -318,7 +316,7 @@ struct TSRequest final {
 
         /* [1] negoTokens (NegoData) */
         if (BER::read_contextual_tag(stream, 1, length, true))        {
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS");
+            // LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS");
 
             if (!BER::read_sequence_tag(stream, length) || /* SEQUENCE OF NegoDataItem */ /*NOLINT(misc-redundant-expression)*/
                 !BER::read_sequence_tag(stream, length) || /* NegoDataItem */
@@ -334,7 +332,7 @@ struct TSRequest final {
 
         /* [2] authInfo (OCTET STRING) */
         if (BER::read_contextual_tag(stream, 2, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
+            // LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -346,7 +344,7 @@ struct TSRequest final {
 
         /* [3] pubKeyAuth (OCTET STRING) */
         if (BER::read_contextual_tag(stream, 3, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
+            // LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -362,12 +360,12 @@ struct TSRequest final {
             if (!BER::read_integer(stream, this->error_code)) {
                 return -1;
             }
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode = %x",
-                this->error_code);
-            LOG(LOG_INFO, "Facility = %x, Code = %x",
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() "
+                "ErrorCode = %x, Facility = %x, Code = %x",
+                this->error_code,
                 (this->error_code >> 16) & 0x7FF,
                 (this->error_code & 0xFFFF)
-                );
+            );
         }
         /* [5] clientNonce (OCTET STRING) */
         if (this->clientNonce.ber_read(remote_version, length, stream) == -1){
@@ -569,7 +567,7 @@ struct TSCspDataDetail {
 
         /* [1] cardName (OCTET STRING OPTIONAL) */
         if (this->cardName_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
+            // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
             length = CredSSP::sizeof_octet_string_seq(this->cardName_length);
             size += length;
             length -= BER::write_sequence_octet_string(stream, 1,
@@ -580,7 +578,7 @@ struct TSCspDataDetail {
         }
         /* [2] readerName (OCTET STRING OPTIONAL) */
         if (this->readerName_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
+            // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
             length = CredSSP::sizeof_octet_string_seq(this->readerName_length);
             size += length;
             length -= BER::write_sequence_octet_string(stream, 2,
@@ -591,7 +589,7 @@ struct TSCspDataDetail {
         }
         /* [3] containerName (OCTET STRING OPTIONAL) */
         if (this->containerName_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() containerName");
+            // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() containerName");
             length = CredSSP::sizeof_octet_string_seq(this->containerName_length);
             size += length;
             length -= BER::write_sequence_octet_string(stream, 3,
@@ -602,7 +600,7 @@ struct TSCspDataDetail {
         }
         /* [4] cspName (OCTET STRING OPTIONAL) */
         if (this->cspName_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
+            // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
             length = CredSSP::sizeof_octet_string_seq(this->cspName_length);
             size += length;
             length -= BER::write_sequence_octet_string(stream, 4,
@@ -627,7 +625,7 @@ struct TSCspDataDetail {
 
         /* [1] cardName (OCTET STRING OPTIONAL) */
         if (BER::read_contextual_tag(stream, 1, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cardName");
+            // LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cardName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -638,7 +636,7 @@ struct TSCspDataDetail {
         }
         /* [2] readerName (OCTET STRING OPTIONAL) */
         if (BER::read_contextual_tag(stream, 2, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : readerName");
+            // LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : readerName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -649,7 +647,7 @@ struct TSCspDataDetail {
         }
         /* [3] containerName (OCTET STRING OPTIONAL) */
         if (BER::read_contextual_tag(stream, 3, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : containerName");
+            // LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : containerName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -660,7 +658,7 @@ struct TSCspDataDetail {
         }
         /* [4] cspName (OCTET STRING OPTIONAL) */
         if (BER::read_contextual_tag(stream, 4, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cspName");
+            // LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cspName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -756,7 +754,7 @@ struct TSSmartCardCreds {
 
         /* [2] userHint (OCTET STRING OPTIONAL) */
         if (this->userHint_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSSmartCard::emit() userHint");
+            // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() userHint");
             length = CredSSP::sizeof_octet_string_seq(this->userHint_length);
             size += length;
             length -= BER::write_sequence_octet_string(stream, 2,
@@ -768,7 +766,7 @@ struct TSSmartCardCreds {
 
         /* [3] domainHint (OCTET STRING OPTIONAL) */
         if (this->domainHint_length > 0) {
-            LOG(LOG_INFO, "Credssp: TSSmartCard::emit() domainHint");
+            // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() domainHint");
             length = CredSSP::sizeof_octet_string_seq(this->domainHint_length);
             size += length;
             length -= BER::write_sequence_octet_string(stream, 3,
@@ -799,7 +797,7 @@ struct TSSmartCardCreds {
 
         /* [2] userHint (OCTET STRING) */
         if (BER::read_contextual_tag(stream, 2, length, true)) {
-            LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : userHint");
+            // LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : userHint");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -811,7 +809,7 @@ struct TSSmartCardCreds {
 
         /* [3] domainHint (OCTET STRING) */
         if (BER::read_contextual_tag(stream, 3, length, true)) {
-            LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : domainHint");
+            // LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : domainHint");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;

@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/utf.hpp"
 #include "utils/sugar/buf_maker.hpp"
@@ -89,12 +88,10 @@ public:
 
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
     void init(size_t v) {
-        LOG(LOG_INFO, "init buffer to %lu", v);
         this->avbuf = this->buf_maker.dyn_array(v);
     }
 
     void copy(const_bytes_view source) {
-        LOG(LOG_INFO, "copy to buffer to {%p %lu} avbufsize = %lu", source.data(), source.size(), this->avbuf.size());
         if (source.size() > this->size()){
             this->avbuf = this->buf_maker.dyn_array(source.size());
         }
@@ -104,7 +101,6 @@ public:
     }
 
     void copy(const_bytes_view source, uint32_t offset) {
-        LOG(LOG_INFO, "copy to buffer to {%p %lu} offset=%u avbufsize = %lu (2)", source.data(), source.size(), offset, this->avbuf.size());
         assert(this->size() >= source.size() + offset);
         if (!source.empty()) {
             memcpy(this->avbuf.data() + offset, source.data(), source.size());
@@ -146,14 +142,12 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void user_init_copy(cbytes_view av)
     {
-        LOG(LOG_INFO, "user_init_copy(%s %lu)",av.data(), av.size());
         this->User.init(av.size());
         this->User.copy(av);
     }
 
     void domain_init_copy(cbytes_view av)
     {
-        LOG(LOG_INFO, "domain_init_copy(%s %lu)",av.data(), av.size());
         this->Domain.init(av.size());
         this->Domain.copy(av);
     }
@@ -165,57 +159,48 @@ struct SEC_WINNT_AUTH_IDENTITY
     cbytes_view get_password_utf16_av() const
     {
         cbytes_view av{this->Password.get_data(), this->Password.size()};
-        LOG(LOG_INFO, "get_password_utf16_av (%s %lu)",av.data(), av.size());
         return av;
     }
 
     cbytes_view get_user_utf16_av() const
     {
         cbytes_view av{this->User.get_data(), this->User.size()};
-        LOG(LOG_INFO, "get_user_utf16_av (%s %lu)",av.data(), av.size());
         return av;
     }
 
     cbytes_view get_domain_utf16_av() const
     {
         cbytes_view av{this->Domain.get_data(), this->Domain.size()};
-        LOG(LOG_INFO, "get_user_utf16_av (%s %lu)",av.data(), av.size());
         return av;
     }
 
-    void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len) 
+    void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
     {
-        LOG(LOG_INFO, "copy_to_utf8_domain");
         UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
     }
 
     void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
-        LOG(LOG_INFO, "copy_to_utf8_user");
         UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
     }
 
 
     void SetUserFromUtf8(const uint8_t * user)
     {
-        LOG(LOG_INFO, "SetUserFromUtf8");
         this->copyFromUtf8(this->User, user);
     }
 
     void SetDomainFromUtf8(const uint8_t * domain)
     {
-        LOG(LOG_INFO, "SetDomainFromUtf8");
         this->copyFromUtf8(this->Domain, domain);
     }
 
     void SetPasswordFromUtf8(const uint8_t * password)
     {
-        LOG(LOG_INFO, "SetPasswordFromUtf8");
         this->copyFromUtf8(this->Password, password);
     }
 
     void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
     {
-        LOG(LOG_INFO, "SetKrbAuthIdentity %s %s", user, pass);
         auto copy = [](char (&arr)[256], uint8_t const* data){
             if (data) {
                 const char * p = char_ptr_cast(data);
@@ -231,7 +216,6 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void clear()
     {
-        LOG(LOG_INFO, "Identity Clear");
         this->User.init(0);
         this->Domain.init(0);
         this->Password.init(0);
@@ -239,7 +223,6 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
     {
-        LOG(LOG_INFO, "CopyAuthIdentity");
         this->User.copy(user_utf16_av);
         this->Domain.copy(domain_utf16_av);
         this->Password.copy(password_utf16_av);
@@ -248,7 +231,6 @@ struct SEC_WINNT_AUTH_IDENTITY
 private:
     static void copyFromUtf8(Array& arr, uint8_t const* data)
     {
-        LOG(LOG_INFO, "copyFromUtf8");
         if (data) {
             size_t user_len = UTF8Len(data);
             arr.init(user_len * 2);
