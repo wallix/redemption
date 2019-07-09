@@ -203,13 +203,16 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     ClipboardData clip_data;
     clip_data.requestedFormatId = RDPECLIP::CF_UNICODETEXT;
 
-    ClientFormatDataResponseReceive receiver(clip_data.client_data,
-                                             clip_data,
-                                             stream,
-                                             header,
-                                             param_dont_log_data_into_syslog,
-                                             flags,
-                                             verbose);
+    FormatDataResponseReceive receiver(
+            clip_data.requestedFormatId,
+            stream,
+            header,
+            param_dont_log_data_into_syslog,
+            clip_data.client_data.file_list_format_id,
+            flags,
+            clip_data.client_data.file_descriptor_stream,
+            verbose,
+            "server");
     clip_data.requestedFormatId = 0;
     for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
         clip_data.client_data.update_file_contents_request_inventory(fd);
@@ -252,13 +255,16 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     std::vector<ClipboardSideData::file_info_type> file_info_type_init;
     clip_data.client_data.file_stream_data_inventory[clipDataId] = file_info_type_init;
 
-    ClientFormatDataResponseReceive receiver(clip_data.client_data,
-                                             clip_data,
-                                             stream,
-                                             header,
-                                             param_dont_log_data_into_syslog,
-                                             flags,
-                                             verbose);
+    FormatDataResponseReceive receiver(
+        clip_data.requestedFormatId,
+        stream,
+        header,
+        param_dont_log_data_into_syslog,
+        clip_data.client_data.file_list_format_id,
+        flags,
+        clip_data.client_data.file_descriptor_stream,
+        verbose,
+        "server");
     clip_data.requestedFormatId = 0;
     for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
         clip_data.client_data.update_file_contents_request_inventory(fd);
@@ -313,15 +319,16 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     clip_data.client_data.file_descriptor_stream.out_copy_bytes(pre_stream.get_data(), size_part_1);
     stream.in_skip_bytes(size_part_1);
 
-    ClientFormatDataResponseReceive receiver(clip_data.client_data,
-                                             clip_data,
-                                             stream,
-                                             header,
-                                             param_dont_log_data_into_syslog,
-//                                              client_file_list_format_id,
-                                             flags,
-//                                              file_descriptor_stream,
-                                             verbose);
+    FormatDataResponseReceive receiver(
+        clip_data.requestedFormatId,
+        stream,
+        header,
+        param_dont_log_data_into_syslog,
+        clip_data.client_data.file_list_format_id,
+        flags,
+        clip_data.client_data.file_descriptor_stream,
+        verbose,
+        "server");
     clip_data.requestedFormatId = 0;
     for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
         clip_data.client_data.update_file_contents_request_inventory(fd);

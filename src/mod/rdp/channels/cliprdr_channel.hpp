@@ -229,14 +229,16 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                ClientFormatDataResponseReceive receiver(
-                    this->clip_data.client_data,
-                    this->clip_data,
+                FormatDataResponseReceive receiver(
+                    this->clip_data.requestedFormatId,
                     chunk,
                     header,
                     this->params.dont_log_data_into_syslog,
+                    this->clip_data.client_data.file_list_format_id,
                     flags,
-                    this->verbose);
+                    this->clip_data.client_data.file_descriptor_stream,
+                    this->verbose,
+                    "server");
 
                 auto file_list_format_id = this->clip_data.client_data.file_list_format_id;
 
@@ -383,7 +385,7 @@ public:
     {
         (void)total_length;
 
-        ServerFormatDataResponseReceive receiver(
+        FormatDataResponseReceive receiver(
             this->clip_data.requestedFormatId ,
             chunk,
             in_header,
@@ -391,7 +393,8 @@ public:
             this->clip_data.server_data.file_list_format_id,
             flags,
             this->clip_data.server_data.file_descriptor_stream,
-            this->verbose
+            this->verbose,
+            "client"
         );
 
         this->file_descr_list.insert(

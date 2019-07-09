@@ -272,13 +272,13 @@ struct FormatDataRequestSendBack
     }
 };
 
-struct ServerFormatDataResponseReceive
+struct FormatDataResponseReceive
 {
     std::string data_to_dump;
 
     std::vector<RDPECLIP::FileDescriptor> files_descriptors;
 
-    ServerFormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* to_name = "client") {
+    FormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* direction) {
 
         if (file_list_format_id && (requestedFormatId == file_list_format_id)) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -289,9 +289,8 @@ struct ServerFormatDataResponseReceive
                         LOG(LOG_INFO,
                             "Sending %sFileGroupDescriptorW(%u) clipboard data to %s. "
                                 "cItems=%u",
-                            ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
-                                "" : "(chunked) "),
-                            file_list_format_id, to_name, cItems);
+                            ((flags & CHANNELS::CHANNEL_FLAG_LAST) ? "" : "(chunked) "),
+                            file_list_format_id, direction, cItems);
                     }
                 }
             } else {
@@ -399,13 +398,6 @@ struct ServerFormatDataResponseReceive
             }
         }
     }
-};
-
-struct ClientFormatDataResponseReceive : ServerFormatDataResponseReceive
-{
-    ClientFormatDataResponseReceive(ClipboardSideData & clip_side_data, ClipboardData & clip_data, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t flags, const RDPVerbose verbose)
-      : ServerFormatDataResponseReceive(clip_data.requestedFormatId, chunk, in_header, param_dont_log_data_into_syslog, clip_side_data.file_list_format_id, flags, clip_side_data.file_descriptor_stream, verbose, "server")
-    {}
 };
 
 
