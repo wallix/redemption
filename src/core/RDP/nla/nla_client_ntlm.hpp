@@ -598,14 +598,11 @@ private:
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
             auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
             // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-            SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
             LmChallengeResponse.reset();
-            hmac_md5lmresp.update({this->ServerChallenge, 8});
-            hmac_md5lmresp.update({this->ClientChallenge, 8});
-            uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
-            hmac_md5lmresp.final(LCResponse);
 
-            LmChallengeResponse.ostream.out_copy_bytes(LCResponse, SslMd5::DIGEST_LENGTH);
+            array_hmac_md5 LCResponse = this->HmacMd5(ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
+
+            LmChallengeResponse.ostream.out_copy_bytes(LCResponse);
             LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
             LmChallengeResponse.mark_end();
 
