@@ -239,30 +239,23 @@ private:
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute Session Base Key");
             auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
             auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
             uint8_t NtProofStr[16] = {};
 
             InStream(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom())
                 .in_copy_bytes(NtProofStr, 16);
             AuthNtResponse.ostream.rewind();
 
-            uint8_t ResponseKeyNT[16] = {};
-            array_view_const_u8 user = UserName.av();
-            array_view_const_u8 domain = DomainName.av();
+            array_view_const_u8 user = this->AUTHENTICATE_MESSAGE.UserName.buffer.av();
             
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
 
-            SslHMAC_Md5 hmac_md5(hash);
             auto unique_userup = std::make_unique<uint8_t[]>(user.size());
             uint8_t * userup = unique_userup.get();
             memcpy(userup, user.data(), user.size());
             UTF16Upper(userup, user.size());
-            hmac_md5.update({userup, user.size()});
-            unique_userup.reset();
 
-            // hmac_md5.update({user, user_size});
-            hmac_md5.update(domain);
-            hmac_md5.final(ResponseKeyNT);
+            array_hmac_md5 ResponseKeyNT = this->HmacMd5(hash, {userup, user.size()}, DomainName.av());
+            unique_userup.reset();
             
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
             this->SessionBaseKey = this->HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
