@@ -569,8 +569,8 @@ public:
 
                     {
                         char cstr[128];
-                        std::snprintf(cstr, sizeof(cstr), "%d", ::getpid());
-                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                        int len = std::snprintf(cstr, sizeof(cstr), "%d", ::getpid());
+                        out_s.out_copy_bytes(cstr, size_t(len));
                     }
                 });
 
@@ -599,9 +599,9 @@ public:
 
                             {
                                 char cstr[128];
-                                std::snprintf(cstr, sizeof(cstr), "%u",
+                                int len = std::snprintf(cstr, sizeof(cstr), "%u",
                                     disconnect_session_limit);
-                                out_s.out_copy_bytes(cstr, strlen(cstr));
+                                out_s.out_copy_bytes(cstr, size_t(len));
                             }
                         });
                     }
@@ -631,9 +631,9 @@ public:
 
                         {
                             char cstr[128];
-                            std::snprintf(cstr, sizeof(cstr), "%u",
+                            int len = std::snprintf(cstr, sizeof(cstr), "%u",
                                 this->reconnection_cookie);
-                            out_s.out_copy_bytes(cstr, strlen(cstr));
+                            out_s.out_copy_bytes(cstr, size_t(len));
                         }
                     });
                 }
@@ -764,10 +764,8 @@ public:
                     }
 
                     if (result) {
-                        char cstr[1024];
-                        int len = std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
-                            name.c_str());
-                        out_s.out_copy_bytes(cstr, size_t(len));
+                        out_s.out_uint8('\x01');
+                        out_s.out_copy_bytes(name);
                     }
                 });
             }
@@ -796,16 +794,18 @@ public:
                     {
                         const int error_code = (result ? 0 : -1);
                         char cstr[128];
-                        std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
                             rule_index, error_code);
-                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                        out_s.out_copy_bytes(cstr, size_t(len));
                     }
 
                     if (result) {
-                        char cstr[1024];
-                        std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s" "\x01" "%s",
-                            type, host_address_or_subnet.c_str(), port_range.c_str());
-                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                        char cstr[128];
+                        int len = std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01", type);
+                        out_s.out_copy_bytes(cstr, size_t(len));
+                        out_s.out_copy_bytes(host_address_or_subnet);
+                        out_s.out_uint8('\x01');
+                        out_s.out_copy_bytes(port_range);
                     }
                 });
             }
@@ -832,16 +832,16 @@ public:
                     {
                         const int error_code = (result ? 0 : -1);
                         char cstr[128];
-                        std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
                             rule_index, error_code);
-                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                        out_s.out_copy_bytes(cstr, size_t(len));
                     }
 
                     if (result) {
-                        char cstr[1024];
-                        std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01" "%s",
-                            type, pattern.c_str());
-                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                        char cstr[128];
+                        int len = std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01", type);
+                        out_s.out_copy_bytes(cstr, size_t(len));
+                        out_s.out_copy_bytes(pattern);
                     }
                 });
             }
@@ -866,16 +866,14 @@ public:
                     {
                         const int error_code = (result ? 0 : -1);
                         char cstr[128];
-                        std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
                             app_index, error_code);
-                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                        out_s.out_copy_bytes(cstr, size_t(len));
                     }
 
                     if (result) {
-                        char cstr[1024];
-                        std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
-                            name.c_str());
-                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                        out_s.out_uint8('\x01');
+                        out_s.out_copy_bytes(name);
                     }
                 });
             }
