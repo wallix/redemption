@@ -40,6 +40,8 @@
 
 class rdpCredsspClientNTLM
 {
+    using array_hmac_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
+    
     static constexpr uint32_t cbMaxSignature = 16;
 private:
     int send_seq_num = 0;
@@ -113,7 +115,7 @@ private:
     private:
         uint8_t ClientChallenge[8]{};
     public:
-        std::array<uint8_t, SslMd5::DIGEST_LENGTH> SessionBaseKey; 
+        array_hmac_md5 SessionBaseKey; 
     private:
         //uint8_t KeyExchangeKey[16];
         //uint8_t RandomSessionKey[16];
@@ -176,10 +178,8 @@ private:
         bool ntlm_check_nt_response_from_authenticate(array_view_const_u8 hash) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Check NtResponse");
             auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-            auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
             size_t temp_size = AuthNtResponse.size() - 16;
-            // LOG(LOG_INFO, "tmp size = %u", temp_size);
+
             uint8_t NtProofStr_from_msg[16] = {};
             InStream in_AuthNtResponse(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom());
             in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
@@ -189,38 +189,19 @@ private:
             in_AuthNtResponse.in_copy_bytes(temp, temp_size);
             AuthNtResponse.ostream.rewind();
 
-            uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
-            uint8_t ResponseKeyNT[16] = {};
-            // LOG(LOG_INFO, "NTLM CHECK NT RESPONSE FROM AUTHENTICATE");
-            // LOG(LOG_INFO, "UserName size = %u", UserName.size());
-            // LOG(LOG_INFO, "DomainName size = %u", DomainName.size());
-            // LOG(LOG_INFO, "hash size = %u", hash_size);
-
-            array_view_const_u8 user = UserName.av();
-            array_view_const_u8 domain = DomainName.av();
+            array_view_const_u8 user = this->AUTHENTICATE_MESSAGE.UserName.buffer.av();
             
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
 
-            SslHMAC_Md5 hmac_md5(hash);
             auto unique_userup = std::make_unique<uint8_t[]>(user.size());
             uint8_t * userup = unique_userup.get();
             memcpy(userup, user.data(), user.size());
             UTF16Upper(userup, user.size());
-            hmac_md5.update({userup, user.size()});
-            unique_userup.reset();
 
-            // hmac_md5.update({user, user_size});
-            hmac_md5.update(domain);
-            hmac_md5.final(ResponseKeyNT);
-            
-            // LOG(LOG_INFO, "ResponseKeyNT");
-            // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
-            SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
-            hmac_md5resp.update(make_array_view(this->ServerChallenge));
-            hmac_md5resp.update({temp, temp_size});
-            hmac_md5resp.final(NtProofStr);
+            array_hmac_md5 ResponseKeyNT = this->HmacMd5(hash, {userup, user.size()}, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
+            array_hmac_md5 NtProofStr = this->HmacMd5(ResponseKeyNT, make_array_view(this->ServerChallenge), {temp, temp_size});
 
-            return !memcmp(NtProofStr, NtProofStr_from_msg, 16);
+            return 0 == memcmp(NtProofStr.data(), NtProofStr_from_msg, 16);
         }
 
         // Server check lm response
@@ -301,15 +282,24 @@ private:
             this->SessionBaseKey = this->HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
         }
 
-         std::array<uint8_t, SslMd5::DIGEST_LENGTH> HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
+         array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
          {
-            std::array<uint8_t, SslMd5::DIGEST_LENGTH> result;
+            array_hmac_md5 result;
             SslHMAC_Md5 hmac_md5(key);
             hmac_md5.update(data);
             hmac_md5.unchecked_final(result.data());
             return result;
         }
 
+         array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2)
+         {
+            array_hmac_md5 result;
+            SslHMAC_Md5 hmac_md5(key);
+            hmac_md5.update(data1);
+            hmac_md5.update(data2);
+            hmac_md5.unchecked_final(result.data());
+            return result;
+        }
 
 
         // server method
