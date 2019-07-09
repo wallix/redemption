@@ -126,7 +126,7 @@ private:
         uint8_t ClientSealingKey[16]{};
         uint8_t ServerSigningKey[16]{};
         uint8_t ServerSealingKey[16]{};
-        uint8_t MessageIntegrityCheck[SslMd5::DIGEST_LENGTH];
+        array_hmac_md5 MessageIntegrityCheck;
         // uint8_t NtProofStr[16];
 
         const bool verbose;
@@ -146,7 +146,7 @@ private:
             , verbose(verbose)
         {
             memset(this->MachineID, 0xAA, sizeof(this->MachineID));
-            memset(this->MessageIntegrityCheck, 0x00, sizeof(this->MessageIntegrityCheck));
+            memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Init");
         }
@@ -280,6 +280,16 @@ private:
             return result;
         }
 
+         array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2, array_view_const_u8 data3)
+         {
+            array_hmac_md5 result;
+            SslHMAC_Md5 hmac_md5(key);
+            hmac_md5.update(data1);
+            hmac_md5.update(data2);
+            hmac_md5.update(data3);
+            hmac_md5.unchecked_final(result.data());
+            return result;
+        }
 
         // server method
         bool ntlm_check_nego() {
@@ -703,13 +713,12 @@ private:
                 this->SavedAuthenticateMessage.init(out_stream.get_offset());
                 this->SavedAuthenticateMessage.copy(out_stream.get_bytes());
 
-                SslHMAC_Md5 hmac_md5resp(make_array_view(this->ExportedSessionKey));
-                hmac_md5resp.update(this->SavedNegotiateMessage.av());
-                hmac_md5resp.update(this->SavedChallengeMessage.av());
-                hmac_md5resp.update(this->SavedAuthenticateMessage.av());
-                hmac_md5resp.final(this->MessageIntegrityCheck);
+                this->MessageIntegrityCheck = this->HmacMd5(make_array_view(this->ExportedSessionKey), 
+                                                             this->SavedNegotiateMessage.av(),
+                                                             this->SavedChallengeMessage.av(),
+                                                             this->SavedAuthenticateMessage.av());
 
-                memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
+                memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck.data(), this->MessageIntegrityCheck.size());
                 // this->AUTHENTICATE_MESSAGE.has_mic = true;
             }
             out_stream.rewind();
