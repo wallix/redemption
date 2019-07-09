@@ -570,14 +570,12 @@ private:
             // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
             //                       Concat(ServerChallenge, temp))
 
-            uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
-            SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
 
             memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
-            hmac_md5resp.update({this->ServerChallenge, 8});
-            hmac_md5resp.update({temp, temp_size});
-            hmac_md5resp.final(NtProofStr);
+
+            array_hmac_md5 NtProofStr = this->HmacMd5(make_array_view(ResponseKeyNT),{this->ServerChallenge, 8},{temp, temp_size});
+
 
             // NtChallengeResponse = Concat(NtProofStr, temp)
 
@@ -585,7 +583,7 @@ private:
             auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
             // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
             NtChallengeResponse.reset();
-            NtChallengeResponse.ostream.out_copy_bytes(NtProofStr, sizeof(NtProofStr));
+            NtChallengeResponse.ostream.out_copy_bytes(NtProofStr.data(), NtProofStr.size());
             NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
             NtChallengeResponse.mark_end();
 
@@ -613,7 +611,7 @@ private:
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-            this->SessionBaseKey = this->HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
+            this->SessionBaseKey = this->HmacMd5(make_array_view(ResponseKeyNT), NtProofStr);
 
             // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
             // ExportedSessionKey = NONCE(16) (random 16bytes number)
