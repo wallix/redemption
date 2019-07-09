@@ -788,11 +788,6 @@ public:
         this->out_copy_bytes({v, n});
     }
 
-    // Output zero terminated string, non including trailing 0
-    void out_string(const char * v) noexcept {
-        this->out_copy_bytes(v, strlen(v));
-    }
-
     void out_clear_bytes(size_t n) noexcept {
         assert(this->has_room(n));
         memset(this->p, 0, n);

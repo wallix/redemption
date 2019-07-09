@@ -98,10 +98,13 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     StaticOutStream<1024> stream;
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index)); stream.out_string("\nASK\n");
-    stream.out_copy_bytes(string_from_authid(cfg::context::password::index)); stream.out_string("\nASK\n");
+    stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index));
+    stream.out_copy_bytes("\nASK\n"_av);
+    stream.out_copy_bytes(string_from_authid(cfg::context::password::index));
+    stream.out_copy_bytes("\nASK\n"_av);
 
-    stream.out_copy_bytes(string_from_authid(cfg::context::session_id::index)); stream.out_string("\n!6455\n");
+    stream.out_copy_bytes(string_from_authid(cfg::context::session_id::index));
+    stream.out_copy_bytes("\n!6455\n"_av);
     stream.stream_at(0).out_uint32_be(stream.get_offset() - 4);
 
     LCGRandom rnd(0);
@@ -129,7 +132,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xFFFF);
     big_stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index));
-    big_stream.out_string("\n!");
+    big_stream.out_copy_bytes("\n!"_av);
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     big_stream.out_skip_bytes(k64 - big_stream.get_offset());
 
@@ -143,7 +146,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     }
     big_stream.out_uint16_be(0);
     big_stream.out_uint16_be(0x2);
-    big_stream.out_string("a\n");
+    big_stream.out_copy_bytes("a\n"_av);
 
     GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
     transexcpt.disable_remaining_error();
@@ -199,7 +202,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xffff - 4);
     big_stream.out_copy_bytes(key);
-    big_stream.out_string("\n!");
+    big_stream.out_copy_bytes("\n!"_av);
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     auto subsz = k64 - big_stream.get_offset();
     big_stream.out_skip_bytes(subsz);
@@ -207,7 +210,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     big_stream.out_uint16_be(sz_string - subsz + 1);
     memset(big_stream.get_current(), 'a', sz_string - subsz);
     big_stream.out_skip_bytes(sz_string - subsz);
-    big_stream.out_string("\n");
+    big_stream.out_copy_bytes("\n"_av);
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
@@ -242,7 +245,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xffff - 4);
     big_stream.out_copy_bytes(key);
-    big_stream.out_string("\n!");
+    big_stream.out_copy_bytes("\n!"_av);
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     auto subsz = k64 - big_stream.get_offset();
     big_stream.out_skip_bytes(subsz);
@@ -250,7 +253,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     big_stream.out_uint16_be(sz_string - subsz + 1);
     memset(big_stream.get_current(), 'a', sz_string - subsz);
     big_stream.out_skip_bytes(sz_string - subsz);
-    big_stream.out_string("\n");
+    big_stream.out_copy_bytes("\n"_av);
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
