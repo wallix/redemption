@@ -208,8 +208,6 @@ private:
         bool ntlm_check_lm_response_from_authenticate(array_view_const_u8 hash) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Check LmResponse");
             auto & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
-            auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
             size_t lm_response_size = AuthLmResponse.size(); // should be 24
             if (lm_response_size != 24) {
                 return false;
@@ -220,32 +218,20 @@ private:
             in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
             AuthLmResponse.ostream.rewind();
 
-            uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
-
-            uint8_t ResponseKeyLM[16] = {};
-            array_view_const_u8 user = UserName.av();
-            array_view_const_u8 domain = DomainName.av();
+            array_view_const_u8 user = this->AUTHENTICATE_MESSAGE.UserName.buffer.av();
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
 
-            SslHMAC_Md5 hmac_md5(hash);
             auto unique_userup = std::make_unique<uint8_t[]>(user.size());
             uint8_t * userup = unique_userup.get();
             memcpy(userup, user.data(), user.size());
             UTF16Upper(userup, user.size());
-            hmac_md5.update({userup, user.size()});
             unique_userup.reset();
 
-            // hmac_md5.update({user, user_size});
-            hmac_md5.update(domain);
-            hmac_md5.final(ResponseKeyLM);
+            array_hmac_md5 ResponseKeyLM = this->HmacMd5(hash, {userup, user.size()}, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
+            array_hmac_md5 compute_response = this->HmacMd5(make_array_view(ResponseKeyLM),{this->ServerChallenge, 8},{this->ClientChallenge, 8});
 
-            SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
-            hmac_md5resp.update({this->ServerChallenge, 8});
-            hmac_md5resp.update({this->ClientChallenge, 8});
-            hmac_md5resp.final(compute_response);
-
-            return !memcmp(response, compute_response, 16);
+            return !memcmp(response, compute_response.data(), 16);
         }
 
         // server compute Session Base Key
