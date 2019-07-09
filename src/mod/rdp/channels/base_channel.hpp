@@ -128,9 +128,5 @@ public:
                 chunk_data_length);
         }
     }
-
-protected:
-    inline void update_exchanged_data(uint32_t /*data_length*/)
-    {}
 };  // class BaseVirtualChannel
 

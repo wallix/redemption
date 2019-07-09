@@ -1759,8 +1759,6 @@ public:
                     Length);
 
                 if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
-                    this->update_exchanged_data(Length);
-
                     if (this->device_io_target_info_inventory.end() != target_iter) {
                         if (target_iter->for_sequential_access) {
                             if (!target_iter->for_writing &&
@@ -2634,8 +2632,6 @@ public:
                             "Target not found! (2)");
                     assert(false);
                 }
-
-                this->update_exchanged_data(length);
             }
             break;
 

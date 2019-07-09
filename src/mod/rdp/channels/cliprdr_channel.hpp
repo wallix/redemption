@@ -251,11 +251,6 @@ public:
 
                     send_message_to_server = true;
                 }
-
-                if (send_message_to_server &&
-                    bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-                    this->update_exchanged_data(total_length);
-                }
             break;
 
             case RDPECLIP::CB_CLIP_CAPS:
@@ -284,10 +279,6 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                    this->update_exchanged_data(total_length);
-                }
-
                 FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
 
                 if (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
@@ -527,11 +518,6 @@ public:
                 send_message_to_client =
                     this->process_server_format_data_response_pdu(
                         total_length, flags, chunk, header);
-
-                if (send_message_to_client &&
-                    (flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-                    this->update_exchanged_data(total_length);
-                }
             break;
 
             case RDPECLIP::CB_CLIP_CAPS:
@@ -563,10 +549,6 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                    this->update_exchanged_data(total_length);
-                }
-
                 FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
 
                 if (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
