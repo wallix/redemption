@@ -714,6 +714,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #split_domain = 0
 
+# value: 0 or 1
+#_hidden
+#wabam_uses_translated_remoteapp = 0
+
 [metrics]
 
 # value: 0 or 1

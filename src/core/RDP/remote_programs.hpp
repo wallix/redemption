@@ -1113,6 +1113,8 @@ public:
 
     uint32_t Flags() const { return this->Flags_; }
 
+    void Flags(uint32_t Flags_) { this->Flags_ = Flags_; }
+
     const char * ColorScheme() const { return this->color_scheme.c_str(); }
 
     size_t size() const {
@@ -1345,7 +1347,7 @@ class ClientSystemParametersUpdatePDU {
     uint8_t                                 body_b_ = 0;
 
     RDP::RAIL::Rectangle                    body_r_;
-    HighContrastSystemInformationStructure  body_hcsis;
+    HighContrastSystemInformationStructure  body_hcsis_;
 
 public:
     void emit(OutStream & stream) const {
@@ -1366,7 +1368,7 @@ public:
                 break;
 
             case SPI_SETHIGHCONTRAST:
-                this->body_hcsis.emit(stream);
+                this->body_hcsis_.emit(stream);
                 break;
         }
     }
@@ -1395,18 +1397,30 @@ public:
                 break;
 
             case SPI_SETHIGHCONTRAST:
-                this->body_hcsis.receive(stream);
+                this->body_hcsis_.receive(stream);
                 break;
         }
     }
 
     uint32_t SystemParam() const { return this->SystemParam_; }
 
+    void SystemParam(uint32_t SystemParam_) { this->SystemParam_ = SystemParam_; }
+
+    uint8_t body_b() const { return this->body_b_; }
+
+    void body_b(uint8_t body_b_) { this->body_b_ = body_b_; }
+
     RDP::RAIL::Rectangle const & body_r() const {
         return this->body_r_;
     }
 
-    uint8_t body_b() const { return this->body_b_; }
+    void body_r(RDP::RAIL::Rectangle const& body_r_) {
+        this->body_r_ = body_r_;
+    }
+
+    void body_hcsis(HighContrastSystemInformationStructure&& body_hcsis_) {
+        this->body_hcsis_ = std::move(body_hcsis_);
+    }
 
     size_t size() const {
         size_t count = 4;   // SystemParam(4)
@@ -1426,7 +1440,7 @@ public:
                 break;
 
             case SPI_SETHIGHCONTRAST:
-                count += this->body_hcsis.size();   // Body(variable)
+                count += this->body_hcsis_.size();   // Body(variable)
                 break;
         }
 
@@ -1465,7 +1479,7 @@ private:
                 break;
 
             case SPI_SETHIGHCONTRAST:
-                result = this->body_hcsis.str(buffer + length, size - length);
+                result = this->body_hcsis_.str(buffer + length, size - length);
                 length += ((result < size - length) ? result : (size - length - 1));
                 break;
         }
@@ -3175,19 +3189,23 @@ enum {
 };
 
 class LanguageBarInformationPDU {
-    uint32_t LanguageBarStatus = 0;
+    uint32_t LanguageBarStatus_ = 0;
 
 public:
     void emit(OutStream & stream) const {
-        stream.out_uint32_le(this->LanguageBarStatus);
+        stream.out_uint32_le(this->LanguageBarStatus_);
     }
 
     void receive(InStream & stream) {
         // LanguageBarStatus(4)
         ::check_throw(stream, 4, "Language Bar Information PDU", ERR_RAIL_PDU_TRUNCATED);
 
-        this->LanguageBarStatus = stream.in_uint32_le();
+        this->LanguageBarStatus_ = stream.in_uint32_le();
     }
+
+    uint32_t LanguageBarStatus() const { return this->LanguageBarStatus_; }
+
+    void LanguageBarStatus(uint32_t LanguageBarStatus_) { this->LanguageBarStatus_ = LanguageBarStatus_; }
 
     static size_t size() {
         return 4;   // LanguageBarStatus(4)
@@ -3200,7 +3218,7 @@ public:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "LanguageBarStatus=0x%X", this->LanguageBarStatus);
+            "LanguageBarStatus=0x%X", this->LanguageBarStatus_);
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;

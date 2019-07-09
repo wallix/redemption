@@ -601,6 +601,9 @@ experimental_fix_too_long_cookie = boolean(default=True)
 #_advanced
 split_domain = boolean(default=False)
 
+#_hidden
+wabam_uses_translated_remoteapp = boolean(default=False)
+
 [metrics]
 
 #_advanced
