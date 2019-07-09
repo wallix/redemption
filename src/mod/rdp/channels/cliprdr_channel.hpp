@@ -156,7 +156,7 @@ public:
 
             LOG(LOG_WARNING,"ClipboardVirtualChannel::process_client_format_list_pdu: Clipboard is fully disabled.");
 
-            ClientFormatListSendBack sender(this);
+            FormatListSendBack sender(this->to_client_sender_ptr());
             return false;
         }
 
@@ -164,7 +164,7 @@ public:
             LOG(LOG_ERR,
                 "ClipboardVirtualChannel::process_client_format_list_pdu: "
                     "!!!CHUNKED!!! Format List PDU is not yet supported!");
-            ClientFormatListSendBack sender(this);
+            FormatListSendBack sender(this->to_client_sender_ptr());
             return false;
         }
 
@@ -422,7 +422,7 @@ public:
                 "ClipboardVirtualChannel::process_server_format_list_pdu: "
                     "Clipboard is fully disabled.");
 
-            ServerFormatListSendBack sender(this);
+            FormatListSendBack sender(this->to_server_sender_ptr());
 
             return false;
         }

@@ -585,9 +585,13 @@ struct FormatListReceive
     }
 };
 
-struct ClientFormatListSendBack {
-
-    ClientFormatListSendBack(BaseVirtualChannel * base_channel) {
+struct FormatListSendBack
+{
+    FormatListSendBack(VirtualChannelDataSender* sender)
+    {
+        if (!sender) {
+            return ;
+        }
 
         RDPECLIP::FormatListResponsePDU pdu;
 
@@ -598,29 +602,11 @@ struct ClientFormatListSendBack {
         header.emit(out_stream);
         pdu.emit(out_stream);
 
-        base_channel->send_message_to_client(
+        sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             out_stream.get_data(),
             out_stream.get_offset());
-    }
-};
-
-struct ServerFormatListSendBack {
-
-    ServerFormatListSendBack(BaseVirtualChannel * base_channel) {
-
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
-
-        StaticOutStream<256> out_stream;
-
-        header.emit(out_stream);
-
-        base_channel->send_message_to_server(
-                out_stream.get_offset(),
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_data(),
-                out_stream.get_offset());
     }
 };
 

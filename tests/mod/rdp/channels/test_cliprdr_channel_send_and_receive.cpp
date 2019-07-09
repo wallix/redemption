@@ -370,15 +370,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
+    FakeBaseVirtualChannel::DataSender data_sender;
 
-    ClientFormatListSendBack sender(&channel);
+    FormatListSendBack sender(&data_sender);
 
-    RED_REQUIRE_EQUAL(channel.client_sender.index, 1);
+    RED_REQUIRE_EQUAL(data_sender.index, 1);
 
-    InStream stream(channel.client_sender.streams[0].av());
+    InStream stream(data_sender.streams[0].av());
 
     RDPECLIP::CliprdrHeader header;
     header.recv(stream);
@@ -439,26 +437,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
         RED_CHECK_EQUAL(format_list_pdu.will_be_sent_in_ASCII_8(true), false);
     }
 
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelServerFormatListSendBack) {
-
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
-
-    ServerFormatListSendBack sender(&channel);
-
-    RED_REQUIRE_EQUAL(channel.server_sender.index, 1);
-
-    InStream stream(channel.server_sender.streams[0].av());
-
-    RDPECLIP::CliprdrHeader header;
-    header.recv(stream);
-
-    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
-    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_OK);
-    RED_CHECK_EQUAL(header.dataLen(), 0);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelLockClipDataReceive)
