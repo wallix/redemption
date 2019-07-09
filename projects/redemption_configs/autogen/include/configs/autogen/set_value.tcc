@@ -1148,6 +1148,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "wabam_uses_translated_remoteapp")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::wabam_uses_translated_remoteapp&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

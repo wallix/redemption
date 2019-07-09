@@ -160,6 +160,7 @@ private:
 
     char clientAddr[512] = {};
     const bool has_managed_drive;
+    const bool convert_remoteapp_to_desktop;
     char directory[512] = {};
     char program[512] = {};
 
@@ -192,7 +193,8 @@ public:
         TimeObj& timeobj,
         const ModRDPParams& mod_rdp_params,
         ReportMessageApi& report_message,
-        bool has_managed_drive
+        bool has_managed_drive,
+        bool convert_remoteapp_to_desktop
     );
 
     void set_program(char const* program, char const* directory) noexcept;

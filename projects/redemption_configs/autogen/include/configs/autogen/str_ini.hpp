@@ -599,6 +599,9 @@
 "#_advanced\n"
 "#split_domain = 0\n\n"
 
+"#_hidden\n"
+"#wabam_uses_translated_remoteapp = 0\n\n"
+
 "[metrics]\n\n"
 
 "#_advanced\n"

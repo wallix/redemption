@@ -454,6 +454,9 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "split_domain", desc{
             "Force to split target domain and username with '@' separator."
         }, set(false));
+        W.sep();
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "wabam_uses_translated_remoteapp", set(false));
     });
 
     W.section("metrics", [&]
@@ -763,6 +766,10 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "close_box_extra_message");
+        W.sep();
+
+        W.member(no_ini_no_gui, sesman_to_proxy, L, type_<bool>(), "is_wabam", set(false));
+        W.sep();
     });
 }
 

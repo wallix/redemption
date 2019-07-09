@@ -27,5 +27,5 @@
 
 RED_AUTO_TEST_CASE(TestXXX)
 {
-    rdp_orders("", 0, false, RDPVerbose::none, ReportError{});
+    rdp_orders("", 0, false, false, RDPVerbose::none, ReportError{});
 }
