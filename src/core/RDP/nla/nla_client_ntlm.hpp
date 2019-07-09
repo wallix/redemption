@@ -495,20 +495,16 @@ private:
             md4.update(password);
             md4.final(md4password);
 
-            SslHMAC_Md5 hmac_md5(make_array_view(md4password));
 
             auto unique_userup = std::make_unique<uint8_t[]>(userName.size());
             uint8_t * userup = unique_userup.get();
             memcpy(userup, userName.data(), userName.size());
             UTF16Upper(userup, userName.size());
-            hmac_md5.update({userup, userName.size()});
+
+            array_hmac_md5 ResponseKeyNT = this->HmacMd5(make_array_view(md4password),{userup, userName.size()},userDomain);
+
             unique_userup.reset();
-
-            uint8_t ResponseKeyNT[SslMd5::DIGEST_LENGTH] = {};
-
             userup = nullptr;
-            hmac_md5.update(userDomain);
-            hmac_md5.final(ResponseKeyNT);
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
 
@@ -517,20 +513,21 @@ private:
             md4_b.update(password);
             md4_b.final(md4password_b);
 
-            SslHMAC_Md5 hmac_md5_b(make_array_view(md4password_b));
 
             auto unique_userup_b = std::make_unique<uint8_t[]>(userName.size());
             uint8_t * userup_b = unique_userup_b.get();
             memcpy(userup_b, userName.data(), userName.size());
             UTF16Upper(userup_b, userName.size());
-            hmac_md5_b.update({userup_b, userName.size()});
-            unique_userup_b.reset();
 
             uint8_t ResponseKeyLM[SslMd5::DIGEST_LENGTH] = {};
 
-            userup = nullptr;
+            SslHMAC_Md5 hmac_md5_b(make_array_view(md4password_b));
+            hmac_md5_b.update({userup_b, userName.size()});
             hmac_md5_b.update(userDomain);
             hmac_md5_b.final(ResponseKeyLM);
+
+            unique_userup_b.reset();
+            userup = nullptr;
             
             // struct NTLMv2_Client_Challenge = temp
             // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
