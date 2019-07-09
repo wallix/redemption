@@ -38,10 +38,41 @@
 #include <vector>
 
 
+using array_hmac_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
+static inline array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
+{
+    array_hmac_md5 result;
+    SslHMAC_Md5 hmac_md5(key);
+    hmac_md5.update(data);
+    hmac_md5.unchecked_final(result.data());
+    return result;
+}
+
+static inline array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2)
+{
+    array_hmac_md5 result;
+    SslHMAC_Md5 hmac_md5(key);
+    hmac_md5.update(data1);
+    hmac_md5.update(data2);
+    hmac_md5.unchecked_final(result.data());
+    return result;
+}
+
+static inline array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2, array_view_const_u8 data3)
+{
+    array_hmac_md5 result;
+    SslHMAC_Md5 hmac_md5(key);
+    hmac_md5.update(data1);
+    hmac_md5.update(data2);
+    hmac_md5.update(data3);
+    hmac_md5.unchecked_final(result.data());
+    return result;
+}
+
+
 class rdpCredsspClientNTLM
 {
-    using array_hmac_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
-    
+
     static constexpr uint32_t cbMaxSignature = 16;
 private:
     int send_seq_num = 0;
@@ -198,8 +229,8 @@ private:
             memcpy(userup, user.data(), user.size());
             UTF16Upper(userup, user.size());
 
-            array_hmac_md5 ResponseKeyNT = this->HmacMd5(hash, {userup, user.size()}, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
-            array_hmac_md5 NtProofStr = this->HmacMd5(ResponseKeyNT, make_array_view(this->ServerChallenge), {temp, temp_size});
+            array_hmac_md5 ResponseKeyNT = ::HmacMd5(hash, {userup, user.size()}, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
+            array_hmac_md5 NtProofStr = ::HmacMd5(ResponseKeyNT, make_array_view(this->ServerChallenge), {temp, temp_size});
 
             return 0 == memcmp(NtProofStr.data(), NtProofStr_from_msg, 16);
         }
@@ -228,8 +259,8 @@ private:
             UTF16Upper(userup, user.size());
             unique_userup.reset();
 
-            array_hmac_md5 ResponseKeyLM = this->HmacMd5(hash, {userup, user.size()}, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
-            array_hmac_md5 compute_response = this->HmacMd5(make_array_view(ResponseKeyLM),{this->ServerChallenge, 8},{this->ClientChallenge, 8});
+            array_hmac_md5 ResponseKeyLM = ::HmacMd5(hash, {userup, user.size()}, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
+            array_hmac_md5 compute_response = ::HmacMd5(make_array_view(ResponseKeyLM),{this->ServerChallenge, 8},{this->ClientChallenge, 8});
 
             return !memcmp(response, compute_response.data(), 16);
         }
@@ -254,42 +285,13 @@ private:
             memcpy(userup, user.data(), user.size());
             UTF16Upper(userup, user.size());
 
-            array_hmac_md5 ResponseKeyNT = this->HmacMd5(hash, {userup, user.size()}, DomainName.av());
+            array_hmac_md5 ResponseKeyNT = ::HmacMd5(hash, {userup, user.size()}, DomainName.av());
             unique_userup.reset();
             
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-            this->SessionBaseKey = this->HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
+            this->SessionBaseKey = ::HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
         }
 
-         array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
-         {
-            array_hmac_md5 result;
-            SslHMAC_Md5 hmac_md5(key);
-            hmac_md5.update(data);
-            hmac_md5.unchecked_final(result.data());
-            return result;
-        }
-
-         array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2)
-         {
-            array_hmac_md5 result;
-            SslHMAC_Md5 hmac_md5(key);
-            hmac_md5.update(data1);
-            hmac_md5.update(data2);
-            hmac_md5.unchecked_final(result.data());
-            return result;
-        }
-
-         array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2, array_view_const_u8 data3)
-         {
-            array_hmac_md5 result;
-            SslHMAC_Md5 hmac_md5(key);
-            hmac_md5.update(data1);
-            hmac_md5.update(data2);
-            hmac_md5.update(data3);
-            hmac_md5.unchecked_final(result.data());
-            return result;
-        }
 
         // server method
         bool ntlm_check_nego() {
@@ -511,7 +513,7 @@ private:
             memcpy(userup, userName.data(), userName.size());
             UTF16Upper(userup, userName.size());
 
-            array_hmac_md5 ResponseKeyNT = this->HmacMd5(make_array_view(md4password),{userup, userName.size()},userDomain);
+            array_hmac_md5 ResponseKeyNT = ::HmacMd5(make_array_view(md4password),{userup, userName.size()},userDomain);
 
             unique_userup.reset();
             userup = nullptr;
@@ -529,7 +531,7 @@ private:
             memcpy(userup_b, userName.data(), userName.size());
             UTF16Upper(userup_b, userName.size());
 
-            array_hmac_md5 ResponseKeyLM = this->HmacMd5(make_array_view(md4password_b),{userup_b, userName.size()},userDomain);
+            array_hmac_md5 ResponseKeyLM = ::HmacMd5(make_array_view(md4password_b),{userup_b, userName.size()},userDomain);
 
             unique_userup_b.reset();
             userup = nullptr;
@@ -584,7 +586,7 @@ private:
 
             memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
 
-            array_hmac_md5 NtProofStr = this->HmacMd5(make_array_view(ResponseKeyNT),{this->ServerChallenge, 8},{temp, temp_size});
+            array_hmac_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),{this->ServerChallenge, 8},{temp, temp_size});
 
 
             // NtChallengeResponse = Concat(NtProofStr, temp)
@@ -610,7 +612,7 @@ private:
             // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
             LmChallengeResponse.reset();
 
-            array_hmac_md5 LCResponse = this->HmacMd5(ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
+            array_hmac_md5 LCResponse = ::HmacMd5(ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
 
             LmChallengeResponse.ostream.out_copy_bytes(LCResponse);
             LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
@@ -618,7 +620,7 @@ private:
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-            this->SessionBaseKey = this->HmacMd5(make_array_view(ResponseKeyNT), NtProofStr);
+            this->SessionBaseKey = ::HmacMd5(make_array_view(ResponseKeyNT), NtProofStr);
 
             // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
             // ExportedSessionKey = NONCE(16) (random 16bytes number)
@@ -713,10 +715,10 @@ private:
                 this->SavedAuthenticateMessage.init(out_stream.get_offset());
                 this->SavedAuthenticateMessage.copy(out_stream.get_bytes());
 
-                this->MessageIntegrityCheck = this->HmacMd5(make_array_view(this->ExportedSessionKey), 
-                                                             this->SavedNegotiateMessage.av(),
-                                                             this->SavedChallengeMessage.av(),
-                                                             this->SavedAuthenticateMessage.av());
+                this->MessageIntegrityCheck = ::HmacMd5(make_array_view(this->ExportedSessionKey), 
+                                                        this->SavedNegotiateMessage.av(),
+                                                        this->SavedChallengeMessage.av(),
+                                                        this->SavedAuthenticateMessage.av());
 
                 memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck.data(), this->MessageIntegrityCheck.size());
                 // this->AUTHENTICATE_MESSAGE.has_mic = true;
@@ -774,22 +776,8 @@ private:
         return SEC_E_OUT_OF_SEQUENCE;
     }
 
-    /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
-    static void sspi_compute_hmac_md5(
-        uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-        const_bytes_view data_buffer, uint32_t SeqNo)
-    {
-        // TODO signing_key by array reference
-        SslHMAC_Md5 hmac_md5({signing_key, 16});
-        StaticOutStream<4> out_stream;
-        out_stream.out_uint32_le(SeqNo);
-        hmac_md5.update(out_stream.get_bytes());
-        hmac_md5.update(data_buffer);
-        hmac_md5.final(digest);
-    }
-
     static void sspi_compute_signature(
-        uint8_t* signature, SslRC4& rc4, uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint32_t SeqNo)
+        uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
     {
         uint8_t checksum[8];
         /* RC4-encrypt first 8 bytes of digest */
@@ -830,12 +818,12 @@ private:
         // this->sspi_context.confidentiality == true
         this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
-        uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, this->sspi_context.ServerSigningKey, {data_out.data(), data_out.size()}, MessageSeqNo);
+        std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+        array_hmac_md5 digest = ::HmacMd5(this->sspi_context.ServerSigningKey, seqno, data_out);
 
         uint8_t expected_signature[16] = {};
         this->sspi_compute_signature(
-            expected_signature, this->sspi_context.RecvRc4Seal, digest, MessageSeqNo);
+            expected_signature, this->sspi_context.RecvRc4Seal, digest.data(), MessageSeqNo);
 
         if (memcmp(data_in.data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
@@ -925,10 +913,11 @@ private:
         unsigned long MessageSeqNo = this->send_seq_num++;
         // data_out [signature][data_buffer]
         std::vector<uint8_t> data_out(public_key.size() + cbMaxSignature);
-        uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, this->sspi_context.ClientSigningKey, public_key, MessageSeqNo);
+        std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+        array_hmac_md5 digest = ::HmacMd5(this->sspi_context.ClientSigningKey, seqno, public_key);
+        
         this->sspi_context.SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
-        this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
+        this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest.data(), MessageSeqNo);
         this->ts_request.pubKeyAuth.init(data_out.size());
         this->ts_request.pubKeyAuth.copy(const_bytes_view{data_out.data(),data_out.size()});
         return SEC_E_OK;
@@ -973,12 +962,12 @@ private:
         // this->sspi_context.confidentiality == true
         this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
-        uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, this->sspi_context.ServerSigningKey, {data_out.data(), data_out.size()}, MessageSeqNo);
+        std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+        array_hmac_md5 digest = ::HmacMd5(this->sspi_context.ServerSigningKey, seqno, data_out);
 
         uint8_t expected_signature[16] = {};
         this->sspi_compute_signature(
-            expected_signature, this->sspi_context.RecvRc4Seal, digest, MessageSeqNo);
+            expected_signature, this->sspi_context.RecvRc4Seal, digest.data(), MessageSeqNo);
 
         if (memcmp(data_in.data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
@@ -1093,10 +1082,12 @@ private:
         // data_out [signature][data_buffer]
         std::vector<uint8_t> data_out;
         data_out.resize(data_in.size() + cbMaxSignature, 0);
-        uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->sspi_compute_hmac_md5(digest, this->sspi_context.ClientSigningKey, data_in, MessageSeqNo);
+        
+        std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+        array_hmac_md5 digest = ::HmacMd5(this->sspi_context.ClientSigningKey, seqno, data_in);
+
         this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
-        this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest, MessageSeqNo);
+        this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest.data(), MessageSeqNo);
 
         this->ts_request.authInfo.init(data_out.size());
         this->ts_request.authInfo.copy(const_bytes_view{data_out.data(),data_out.size()});
