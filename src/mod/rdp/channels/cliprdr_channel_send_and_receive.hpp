@@ -335,165 +335,26 @@ struct ClientFormatDataRequestSendBack {
     }
 };
 
-struct ClientFormatDataResponseReceive {
-
-    std::string  data_to_dump;
+struct ServerFormatDataResponseReceive
+{
+    std::string data_to_dump;
 
     std::vector<RDPECLIP::FileDescriptor> files_descriptors;
 
-    ClientFormatDataResponseReceive(ClipboardSideData & clip_side_data, ClipboardData & clip_data, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t flags, const RDPVerbose verbose) {
+    ServerFormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* to_name = "client") {
 
-        if (clip_side_data.file_list_format_id && (clip_data.requestedFormatId == clip_side_data.file_list_format_id)) {
+        if (file_list_format_id && (requestedFormatId == file_list_format_id)) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
                     const uint32_t cItems = chunk.in_uint32_le();
 
                     if (!param_dont_log_data_into_syslog) {
                         LOG(LOG_INFO,
-                            "Sending %sFileGroupDescriptorW(%u) clipboard data to server. "
+                            "Sending %sFileGroupDescriptorW(%u) clipboard data to %s. "
                                 "cItems=%u",
                             ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
                                 "" : "(chunked) "),
-                            clip_side_data.file_list_format_id, cItems);
-                    }
-                }
-            } else {
-
-                if (clip_side_data.file_descriptor_stream.get_offset()) {
-                    const uint32_t complementary_data_length =
-                        RDPECLIP::FileDescriptor::size() -
-                            clip_side_data.file_descriptor_stream.get_offset();
-
-                    assert(chunk.in_remain() >= complementary_data_length);
-
-                    clip_side_data.file_descriptor_stream.out_copy_bytes(chunk.get_current(),
-                        complementary_data_length);
-
-                    chunk.in_skip_bytes(complementary_data_length);
-
-                    RDPECLIP::FileDescriptor fd;
-
-                    InStream in_stream(
-                        clip_side_data.file_descriptor_stream.get_data(),
-                        clip_side_data.file_descriptor_stream.get_offset()
-                    );
-                    fd.receive(in_stream);
-                    if (bool(verbose & RDPVerbose::cliprdr)) {
-                        fd.log(LOG_INFO);
-                    }
-
-                    this->files_descriptors.push_back(fd);
-
-                    clip_side_data.file_descriptor_stream.rewind();
-                }
-            }
-
-             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
-                RDPECLIP::FileDescriptor fd;
-
-                fd.receive(chunk);
-
-                if (bool(verbose & RDPVerbose::cliprdr)) {
-                    fd.log(LOG_INFO);
-                }
-
-                this->files_descriptors.push_back(fd);
-            }
-
-            if (chunk.in_remain()) {
-                clip_side_data.file_descriptor_stream.rewind();
-
-                clip_side_data.file_descriptor_stream.out_copy_bytes(
-                    chunk.get_current(), chunk.in_remain());
-
-                chunk.in_skip_bytes(chunk.in_remain());
-            }
-
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                clip_data.requestedFormatId  = 0;
-            }
-
-            for (RDPECLIP::FileDescriptor const& fd : this->files_descriptors) {
-//                 const bool from_remote_session = false;
-                clip_side_data.update_file_contents_request_inventory(fd);
-            }
-
-        } else {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-//                 InStream chunk_serie = chunk.clone();
-
-                constexpr size_t const max_length_of_data_to_dump = 256;
-
-                switch (clip_data.requestedFormatId) {
-        /*
-                    case RDPECLIP::CF_TEXT:
-                    {
-                        const size_t length_of_data_to_dump = std::min(
-                            chunk.in_remain(), max_length_of_data_to_dump);
-                        const std::string data_to_dump(
-                            ::char_ptr_cast(chunk.get_current()),
-                            length_of_data_to_dump);
-                        LOG(LOG_INFO, "%s", data_to_dump);
-                    }
-                    break;
-        */
-                    case RDPECLIP::CF_UNICODETEXT:
-                    {
-                        assert(!(chunk.in_remain() & 1));
-
-                        const size_t length_of_data_to_dump = std::min(
-                            chunk.in_remain(), max_length_of_data_to_dump * 2);
-
-                        constexpr size_t size_of_utf8_string =
-                            max_length_of_data_to_dump *
-                                maximum_length_of_utf8_character_in_bytes;
-
-                        uint8_t utf8_string[size_of_utf8_string + 1] {};
-                        const size_t length_of_utf8_string = ::UTF16toUTF8(
-                            chunk.get_current(), length_of_data_to_dump / 2,
-                            utf8_string, size_of_utf8_string);
-                        data_to_dump.assign(
-                            ::char_ptr_cast(utf8_string),
-                            ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
-                                length_of_utf8_string - 1 :
-                                length_of_utf8_string));
-                    }
-                    break;
-
-                    case RDPECLIP::CF_LOCALE:
-                    {
-                        const uint32_t locale_identifier = chunk.in_uint32_le();
-                        data_to_dump = std::to_string(locale_identifier);
-                    }
-                    break;
-                }
-            }
-        }
-    }
-};
-
-struct ServerFormatDataResponseReceive {
-
-    std::string  data_to_dump;
-
-    std::vector<RDPECLIP::FileDescriptor> files_descriptors;
-
-    ServerFormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t server_file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose) {
-
-        if (server_file_list_format_id && (requestedFormatId == server_file_list_format_id)) {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
-                    const uint32_t cItems = chunk.in_uint32_le();
-
-                    if (!param_dont_log_data_into_syslog) {
-                        LOG(LOG_INFO,
-                            "Sending %sFileGroupDescriptorW(%u) clipboard data to client. "
-                                "cItems=%u",
-                            ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
-                                "" : "(chunked) "),
-                            server_file_list_format_id, cItems);
+                            file_list_format_id, to_name, cItems);
                     }
                 }
             } else {
@@ -527,10 +388,10 @@ struct ServerFormatDataResponseReceive {
                 }
             }
 
-             while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
+            while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
                 RDPECLIP::FileDescriptor fd;
 
-                    fd.receive(chunk);
+                fd.receive(chunk);
 
                 if (bool(verbose & RDPVerbose::cliprdr)) {
                     fd.log(LOG_INFO);
@@ -594,7 +455,6 @@ struct ServerFormatDataResponseReceive {
                     case RDPECLIP::CF_LOCALE:
                     {
                         const uint32_t locale_identifier = chunk.in_uint32_le();
-
                         data_to_dump = std::to_string(locale_identifier);
                     }
                     break;
@@ -602,6 +462,13 @@ struct ServerFormatDataResponseReceive {
             }
         }
     }
+};
+
+struct ClientFormatDataResponseReceive : ServerFormatDataResponseReceive
+{
+    ClientFormatDataResponseReceive(ClipboardSideData & clip_side_data, ClipboardData & clip_data, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t flags, const RDPVerbose verbose)
+      : ServerFormatDataResponseReceive(clip_data.requestedFormatId, chunk, in_header, param_dont_log_data_into_syslog, clip_side_data.file_list_format_id, flags, clip_side_data.file_descriptor_stream, verbose, "server")
+    {}
 };
 
 

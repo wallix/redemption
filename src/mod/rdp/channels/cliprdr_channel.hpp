@@ -228,29 +228,42 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                    ClientFormatDataResponseReceive receiver(
-                        this->clip_data.client_data,
-                        this->clip_data,
-                        chunk,
-                        header,
-                        this->params.dont_log_data_into_syslog,
-                        flags,
-                        this->verbose);
+                ClientFormatDataResponseReceive receiver(
+                    this->clip_data.client_data,
+                    this->clip_data,
+                    chunk,
+                    header,
+                    this->params.dont_log_data_into_syslog,
+                    flags,
+                    this->verbose);
 
-                    if (!this->clip_data.client_data.file_list_format_id
-                        || !(this->clip_data.requestedFormatId  == this->clip_data.client_data.file_list_format_id)) {
+                auto file_list_format_id = this->clip_data.client_data.file_list_format_id;
 
-                        const bool is_from_remote_session = false;
-                        this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+                if (file_list_format_id && this->clip_data.requestedFormatId == file_list_format_id) {
 
-                        this->file_descr_list.insert(
-                            this->file_descr_list.end(),
-                            receiver.files_descriptors.begin(),
-                            receiver.files_descriptors.end());
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                        this->clip_data.requestedFormatId = 0;
                     }
 
-                    send_message_to_server = true;
+                    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
+                        this->clip_data.client_data.update_file_contents_request_inventory(fd);
+                    }
                 }
+
+                if (!file_list_format_id
+                    || !(this->clip_data.requestedFormatId == file_list_format_id)) {
+
+                    const bool is_from_remote_session = false;
+                    this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+
+                    this->file_descr_list.insert(
+                        this->file_descr_list.end(),
+                        receiver.files_descriptors.begin(),
+                        receiver.files_descriptors.end());
+                }
+
+                send_message_to_server = true;
+            }
             break;
 
             case RDPECLIP::CB_CLIP_CAPS:
@@ -264,7 +277,8 @@ public:
                 FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
                 if (!this->params.clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
-                } else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+                }
+                else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
                     this->last_lindex_packet_remaining = receiver.requested;
@@ -530,7 +544,10 @@ public:
             case RDPECLIP::CB_FILECONTENTS_REQUEST: {
                 FilecontentsRequestReceive receiver(this->clip_data.server_data, chunk, this->verbose, header.dataLen());
 
-                if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+                if (!this->params.clipboard_file_authorized) {
+                    ServerFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
+                }
+                else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
                     this->last_lindex_packet_remaining = receiver.requested;
@@ -539,10 +556,6 @@ public:
                         this->last_lindex = receiver.lindex;
                         this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_CLIENT, this->session_reactor.get_current_time());
                     }
-                }
-
-                if (!this->params.clipboard_file_authorized) {
-                    ServerFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 }
                 send_message_to_client = this->params.clipboard_file_authorized;
             }

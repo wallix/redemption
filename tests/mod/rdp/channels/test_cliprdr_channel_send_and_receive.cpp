@@ -162,6 +162,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
                                              param_dont_log_data_into_syslog,
                                              flags,
                                              verbose);
+    clip_data.requestedFormatId = 0;
+    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
+        clip_data.client_data.update_file_contents_request_inventory(fd);
+    }
 
     RED_CHECK_EQUAL(receiver.data_to_dump, "text de test");
     RED_CHECK_EQUAL(clip_data.client_data.file_stream_data_inventory.size(), cItems);
@@ -207,6 +211,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
                                              param_dont_log_data_into_syslog,
                                              flags,
                                              verbose);
+    clip_data.requestedFormatId = 0;
+    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
+        clip_data.client_data.update_file_contents_request_inventory(fd);
+    }
 
     RED_CHECK_EQUAL(receiver.data_to_dump, "");
     std::vector<ClipboardSideData::file_info_type> & file_info_type_vec = clip_data.client_data.file_stream_data_inventory[clip_data.client_data.clipDataId];
@@ -266,6 +274,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
                                              flags,
 //                                              file_descriptor_stream,
                                              verbose);
+    clip_data.requestedFormatId = 0;
+    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
+        clip_data.client_data.update_file_contents_request_inventory(fd);
+    }
 
     RED_CHECK_EQUAL(receiver.data_to_dump, "");
     std::vector<ClipboardSideData::file_info_type> & file_info_type_vec = clip_data.client_data.file_stream_data_inventory[clip_data.client_data.clipDataId];

@@ -346,6 +346,7 @@ void ModuleManager::create_mod_rdp(
                     }
                 };
                 ICAPTransport trans;
+                // TODO wait result (add delay)
                 ICAPService service;
                 SessionReactor::TopFdPtr validator_event;
 
