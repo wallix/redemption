@@ -795,6 +795,8 @@ class Sesman():
                 method = "OTP"
                 real_wab_login = self.engine.get_username()
                 self.rdplog.update_context(self.shared.get(u'psid'), real_wab_login)
+                if re.search('WALLIX Access Manager', self.engine.get_otp_client(), re.IGNORECASE):
+                    self.send_data({u'is_wabam': u'True'})
                 self.shared[u'login'] = self.shared.get(u'login').replace(wab_login,
                                                                           real_wab_login)
 
