@@ -262,10 +262,10 @@ struct ServerFilecontentsRequestSendBack {
         }
 
         base_channel->send_message_to_server(
-                        out_stream.get_offset(),
-                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                        out_stream.get_data(),
-                        out_stream.get_offset());
+            out_stream.get_offset(),
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+            out_stream.get_data(),
+            out_stream.get_offset());
     }
 };
 
