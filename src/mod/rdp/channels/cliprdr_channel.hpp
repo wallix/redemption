@@ -276,7 +276,7 @@ public:
             case RDPECLIP::CB_FILECONTENTS_REQUEST: {
                 FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
                 if (!this->params.clipboard_file_authorized) {
-                    ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
+                    FilecontentsRequestSendBack sender(receiver.dwFlags, receiver.streamID, this->to_client_sender_ptr());
                 }
                 else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
@@ -545,7 +545,7 @@ public:
                 FilecontentsRequestReceive receiver(this->clip_data.server_data, chunk, this->verbose, header.dataLen());
 
                 if (!this->params.clipboard_file_authorized) {
-                    ServerFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
+                    FilecontentsRequestSendBack sender(receiver.dwFlags, receiver.streamID, this->to_server_sender_ptr());
                 }
                 else if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
                     const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];

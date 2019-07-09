@@ -185,83 +185,42 @@ struct FilecontentsRequestReceive {
     }
 };
 
-struct ClientFilecontentsRequestSendBack {
+struct FilecontentsRequestSendBack {
 
-    ClientFilecontentsRequestSendBack(const RDPVerbose verbose, uint32_t dwFlags, uint32_t streamID, BaseVirtualChannel * base_channel) {
-        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_client_filecontents_request: "
-                "Requesting the contents of server file is denied.");
+    FilecontentsRequestSendBack(uint32_t dwFlags, uint32_t streamID, VirtualChannelDataSender* base_channel)
+    {
+        if (!base_channel) {
+            return ;
+        }
 
         StaticOutStream<256> out_stream;
 
-        switch (dwFlags) {
-
+        switch (dwFlags)
+        {
             case RDPECLIP::FILECONTENTS_RANGE:
-                {
-                    RDPECLIP::FileContentsResponseRange pdu(streamID);
-                    RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                                                    RDPECLIP::CB_RESPONSE_FAIL,
-                                                    pdu.size());
-                    header.emit(out_stream);
-                    pdu.emit(out_stream);
-                }
-                break;
+            {
+                RDPECLIP::FileContentsResponseRange pdu(streamID);
+                RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
+                                                RDPECLIP::CB_RESPONSE_FAIL,
+                                                pdu.size());
+                header.emit(out_stream);
+                pdu.emit(out_stream);
+            }
+            break;
 
             case RDPECLIP::FILECONTENTS_SIZE:
-                {
-                    RDPECLIP::FileContentsResponseSize pdu(streamID, 0);
-                    RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                                                    RDPECLIP::CB_RESPONSE_FAIL,
-                                                    pdu.size());
-                    header.emit(out_stream);
-                    pdu.emit(out_stream);
-                }
-                break;
+            {
+                RDPECLIP::FileContentsResponseSize pdu(streamID, 0);
+                RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
+                                                RDPECLIP::CB_RESPONSE_FAIL,
+                                                pdu.size());
+                header.emit(out_stream);
+                pdu.emit(out_stream);
+            }
+            break;
         }
 
-        base_channel->send_message_to_client(
-            out_stream.get_offset(),
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_data(),
-            out_stream.get_offset());
-    }
-};
-
-struct ServerFilecontentsRequestSendBack {
-
-    ServerFilecontentsRequestSendBack(const RDPVerbose verbose, uint32_t dwFlags, uint32_t streamID, BaseVirtualChannel * base_channel) {
-        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_server_filecontents_request: "
-                "Requesting the contents of server file is denied.");
-
-        StaticOutStream<256> out_stream;
-
-        switch (dwFlags) {
-
-            case RDPECLIP::FILECONTENTS_RANGE:
-                {
-                    RDPECLIP::FileContentsResponseRange pdu(streamID);
-                    RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                                                    RDPECLIP::CB_RESPONSE_FAIL,
-                                                    pdu.size());
-                    header.emit(out_stream);
-                    pdu.emit(out_stream);
-                }
-                break;
-
-            case RDPECLIP::FILECONTENTS_SIZE:
-                {
-                    RDPECLIP::FileContentsResponseSize pdu(streamID, 0);
-                    RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                                                    RDPECLIP::CB_RESPONSE_FAIL,
-                                                    pdu.size());
-                    header.emit(out_stream);
-                    pdu.emit(out_stream);
-                }
-                break;
-        }
-
-        base_channel->send_message_to_server(
+        base_channel->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             out_stream.get_data(),

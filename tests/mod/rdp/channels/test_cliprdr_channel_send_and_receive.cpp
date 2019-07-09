@@ -37,7 +37,7 @@ struct FakeBaseVirtualChannel final : public BaseVirtualChannel
         }
     };
 
-    struct Sender : VirtualChannelDataSender
+    struct DataSender : VirtualChannelDataSender
     {
         PDUData streams[2];
         int index = 0;
@@ -54,8 +54,8 @@ struct FakeBaseVirtualChannel final : public BaseVirtualChannel
     };
 
 public:
-    Sender client_sender;
-    Sender server_sender;
+    DataSender client_sender;
+    DataSender server_sender;
 
     FakeBaseVirtualChannel(const Params & params)
     :  BaseVirtualChannel(&client_sender, &server_sender, params)
@@ -123,16 +123,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
 {
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
+    FakeBaseVirtualChannel::DataSender data_sender;
     const uint32_t streamID = 1;
 
-    ClientFilecontentsRequestSendBack sender(RDPVerbose::none, RDPECLIP::FILECONTENTS_SIZE, streamID, &channel);
+    FilecontentsRequestSendBack sender(RDPECLIP::FILECONTENTS_SIZE, streamID, &data_sender);
 
-    RED_REQUIRE_EQUAL(channel.client_sender.index, 1);
+    RED_REQUIRE_EQUAL(data_sender.index, 1);
 
-    InStream stream(channel.client_sender.streams[0].av());
+    InStream stream(data_sender.streams[0].av());
 
     RDPECLIP::CliprdrHeader header;
     header.recv(stream);
