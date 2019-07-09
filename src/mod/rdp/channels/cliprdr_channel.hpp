@@ -142,12 +142,13 @@ public:
         this->last_lindex_total_send = 0;
         this->last_lindex_packet_remaining = 0;
 
-        ClientFormatListReceive receiver(this->clip_data.client_data.use_long_format_names,
-                                         this->clip_data.server_data.use_long_format_names,
-                                         in_header,
-                                         chunk,
-                                         this->format_name_inventory,
-                                         verbose);
+        FormatListReceive receiver(
+            this->clip_data.client_data.use_long_format_names,
+            this->clip_data.server_data.use_long_format_names,
+            in_header,
+            chunk,
+            this->format_name_inventory,
+            verbose);
 
         if (!this->params.clipboard_down_authorized
         &&  !this->params.clipboard_up_authorized
@@ -168,8 +169,8 @@ public:
         }
 
         this->format_name_inventory.clear();
-        if (receiver.client_file_list_format_id) {
-            this->clip_data.client_data.file_list_format_id = receiver.client_file_list_format_id;
+        if (receiver.file_list_format_id) {
+            this->clip_data.client_data.file_list_format_id = receiver.file_list_format_id;
         }
         return true;
     }
@@ -428,15 +429,16 @@ public:
 
         this->format_name_inventory.clear();
 
-        ServerFormatListReceive receiver(this->clip_data.client_data.use_long_format_names,
-                                    this->clip_data.server_data.use_long_format_names,
-                                    in_header,
-                                    chunk,
-                                    this->format_name_inventory,
-                                    verbose);
+        FormatListReceive receiver(
+            this->clip_data.client_data.use_long_format_names,
+            this->clip_data.server_data.use_long_format_names,
+            in_header,
+            chunk,
+            this->format_name_inventory,
+            verbose);
 
-        if (receiver.server_file_list_format_id) {
-            this->clip_data.server_data.file_list_format_id = receiver.server_file_list_format_id;
+        if (receiver.file_list_format_id) {
+            this->clip_data.server_data.file_list_format_id = receiver.file_list_format_id;
         }
 
         return true;

@@ -464,134 +464,20 @@ struct ServerMonitorReadySendBack {
 };
 
 
+struct FormatListReceive
+{
+    uint32_t file_list_format_id = 0;
 
-struct ServerFormatListReceive {
+    FormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::unordered_map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
 
-    uint32_t server_file_list_format_id = 0;
-
-    ServerFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::unordered_map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
-        if (!client_use_long_format_names ||
-            !server_use_long_format_names) {
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                    "Short Format Name%s variant of Format List PDU is used "
-                    "for exchanging updated format names.",
-                ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)"
-                                                           : ""));
-
-            for (uint32_t remaining_data_length = in_header.dataLen();
-                 remaining_data_length; ) {
-
-                LOG(LOG_INFO, "remaining_data_length=%u chunk.in_remain=%zu", remaining_data_length, chunk.in_remain());
-
-
-                const     uint32_t formatId           = chunk.in_uint32_le();
-                constexpr size_t   format_name_length =
-                        32      // formatName(32)
-                           / 2  // size_of(Unicode characters)(2)
-                    ;
-
-                constexpr size_t size_of_utf8_string =
-                    format_name_length *
-                        maximum_length_of_utf8_character_in_bytes;
-                uint8_t utf8_string[size_of_utf8_string + 1];
-                ::memset(utf8_string, 0, sizeof(utf8_string));
-                const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.get_current(), format_name_length, utf8_string,
-                    size_of_utf8_string);
-
-                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                        "formatId=%s(%u) wszFormatName=\"%s\"",
-                    RDPECLIP::get_FormatId_name(formatId), formatId,
-                    utf8_string);
-
-                format_name_inventory[formatId] = ::char_ptr_cast(utf8_string);
-
-                remaining_data_length -=
-                          4     // formatId(4)
-                        + 32    // formatName(32)
-                    ;
-
-                if (((sizeof(FILE_LIST_FORMAT_NAME) - 1) == length_of_utf8_string) &&
-                    !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
-                    this->server_file_list_format_id = formatId;
-                }
-
-                chunk.in_skip_bytes(
-                        32  // formatName(32)
-                    );
-            }
-        }
-        else {
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                    "Long Format Name variant of Format List PDU is used "
-                    "for exchanging updated format names.");
-
-            const size_t max_length_of_format_name = 256;
-
-            for (uint32_t remaining_data_length = in_header.dataLen();
-                 remaining_data_length; ) {
-                const uint32_t formatId                     =
-                    chunk.in_uint32_le();
-                const size_t   format_name_length           =
-                    ::UTF16StrLen(chunk.get_current()) + 1;
-                const size_t   adjusted_format_name_length =
-                    std::min(format_name_length - 1,
-                        max_length_of_format_name);
-
-                constexpr size_t size_of_utf8_string =
-                    max_length_of_format_name *
-                    maximum_length_of_utf8_character_in_bytes;
-                uint8_t utf8_string[size_of_utf8_string + 1];
-                ::memset(utf8_string, 0, sizeof(utf8_string));
-                const size_t length_of_utf8_string = ::UTF16toUTF8(
-                    chunk.get_current(), adjusted_format_name_length,
-                    utf8_string, size_of_utf8_string);
-
-                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                        "formatId=%s(%u) wszFormatName=\"%s\"",
-                    RDPECLIP::get_FormatId_name(formatId), formatId, utf8_string);
-
-                format_name_inventory[formatId] = ::char_ptr_cast(utf8_string);
-
-                remaining_data_length -=
-                          4                      /* formatId(4) */
-                        + format_name_length * 2 /* wszFormatName(variable) */
-                    ;
-
-                if (((sizeof(FILE_LIST_FORMAT_NAME) - 1) == length_of_utf8_string) &&
-                    !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
-                    this->server_file_list_format_id = formatId;
-                }
-
-                chunk.in_skip_bytes(format_name_length * 2);
-            }
-        }
-    }
-};
-
-
-
-struct ClientFormatListReceive {
-
-    uint32_t client_file_list_format_id = 0;
-
-    ClientFormatListReceive(const bool client_use_long_format_names,const bool server_use_long_format_names, const RDPECLIP::CliprdrHeader & in_header, InStream & chunk,  std::unordered_map<uint32_t, std::string> & format_name_inventory, const RDPVerbose verbose) {
-
-        if (!client_use_long_format_names ||
-            !server_use_long_format_names) {
-
+        if (!client_use_long_format_names || !server_use_long_format_names) {
             LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
                 "ClipboardVirtualChannel::process_client_format_list_pdu: "
                     "Short Format Name%s variant of Format List PDU is used "
                     "for exchanging updated format names.",
                 ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)" : ""));
 
-            for (uint32_t remaining_data_length = in_header.dataLen();
-                 remaining_data_length; ) {
+            for (uint32_t remaining_data_length = in_header.dataLen(); remaining_data_length; ) {
                 {
                     const unsigned int expected = 36;   // formatId(4) + formatName(32)
                     if (!chunk.in_check_rem(expected)) {
@@ -611,8 +497,7 @@ struct ClientFormatListReceive {
                     ;
 
                 constexpr size_t size_of_utf8_string =
-                    format_name_length *
-                    maximum_length_of_utf8_character_in_bytes;
+                    format_name_length * maximum_length_of_utf8_character_in_bytes;
                 uint8_t utf8_string[size_of_utf8_string + 1];
                 ::memset(utf8_string, 0, sizeof(utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
@@ -633,7 +518,7 @@ struct ClientFormatListReceive {
 
                 if (((sizeof(FILE_LIST_FORMAT_NAME) - 1) == length_of_utf8_string) &&
                     !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
-                    this->client_file_list_format_id = formatId;
+                    this->file_list_format_id = formatId;
                 }
 
                 chunk.in_skip_bytes(
@@ -647,8 +532,7 @@ struct ClientFormatListReceive {
                     "Long Format Name variant of Format List PDU is used "
                     "for exchanging updated format names.");
 
-            for (uint32_t remaining_data_length = in_header.dataLen();
-                 remaining_data_length; ) {
+            for (uint32_t remaining_data_length = in_header.dataLen(); remaining_data_length; ) {
                 {
                     const unsigned int expected = 6;    // formatId(4) + min_len(formatName)(2)
                     if (!chunk.in_check_rem(expected)) {
@@ -668,12 +552,10 @@ struct ClientFormatListReceive {
                 const size_t   format_name_length          =
                     ::UTF16StrLen(chunk.get_current()) + 1;
                 const size_t   adjusted_format_name_length =
-                    std::min(format_name_length - 1,
-                             max_length_of_format_name);
+                    std::min(format_name_length - 1, max_length_of_format_name);
 
                 constexpr size_t size_of_utf8_string =
-                    max_length_of_format_name *
-                        maximum_length_of_utf8_character_in_bytes;
+                    max_length_of_format_name * maximum_length_of_utf8_character_in_bytes;
                 uint8_t utf8_string[size_of_utf8_string + 1];
                 ::memset(utf8_string, 0, sizeof(utf8_string));
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
@@ -694,7 +576,7 @@ struct ClientFormatListReceive {
 
                 if (((sizeof(FILE_LIST_FORMAT_NAME) - 1) == length_of_utf8_string) &&
                     !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
-                    this->client_file_list_format_id = formatId;
+                    this->file_list_format_id = formatId;
                 }
 
                 chunk.in_skip_bytes(format_name_length * 2);
