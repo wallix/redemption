@@ -519,12 +519,7 @@ private:
             memcpy(userup_b, userName.data(), userName.size());
             UTF16Upper(userup_b, userName.size());
 
-            uint8_t ResponseKeyLM[SslMd5::DIGEST_LENGTH] = {};
-
-            SslHMAC_Md5 hmac_md5_b(make_array_view(md4password_b));
-            hmac_md5_b.update({userup_b, userName.size()});
-            hmac_md5_b.update(userDomain);
-            hmac_md5_b.final(ResponseKeyLM);
+            array_hmac_md5 ResponseKeyLM = this->HmacMd5(make_array_view(md4password_b),{userup_b, userName.size()},userDomain);
 
             unique_userup_b.reset();
             userup = nullptr;
