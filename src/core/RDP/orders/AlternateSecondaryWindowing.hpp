@@ -3194,7 +3194,7 @@ public:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) {
             // NumWindowIds(1)
-            ::check_throw(stream, 4, "ActivelyMonitoredDesktop (1)", ERR_RAIL_PDU_TRUNCATED);
+            ::check_throw(stream, 1, "ActivelyMonitoredDesktop (1)", ERR_RAIL_PDU_TRUNCATED);
             this->NumWindowIds_ = stream.in_uint8();
 
             // WindowIds(variable)
