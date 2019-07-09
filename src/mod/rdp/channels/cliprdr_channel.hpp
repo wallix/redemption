@@ -221,7 +221,7 @@ public:
                 FormatDataRequestReceive receiver(this->clip_data, this->clip_data.client_data, this->verbose, chunk);
                 if (!this->params.clipboard_down_authorized) {
 
-                    ClientFormatDataRequestSendBack sender(this->verbose, this);
+                    FormatDataRequestSendBack sender(this->to_client_sender_ptr());
                 }
                 send_message_to_server = this->params.clipboard_down_authorized;
             }
@@ -361,7 +361,7 @@ public:
                 "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
                     "Client to server Clipboard operation is not allowed.");
 
-            ServerFormatDataRequestSendBack sender(this->verbose, this);
+            FormatDataRequestSendBack sender(this->to_server_sender_ptr());
 
             return false;
         }

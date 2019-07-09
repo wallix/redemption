@@ -187,9 +187,9 @@ struct FilecontentsRequestReceive {
 
 struct FilecontentsRequestSendBack {
 
-    FilecontentsRequestSendBack(uint32_t dwFlags, uint32_t streamID, VirtualChannelDataSender* base_channel)
+    FilecontentsRequestSendBack(uint32_t dwFlags, uint32_t streamID, VirtualChannelDataSender* sender)
     {
-        if (!base_channel) {
+        if (!sender) {
             return ;
         }
 
@@ -220,7 +220,7 @@ struct FilecontentsRequestSendBack {
             break;
         }
 
-        base_channel->operator()(
+        sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             out_stream.get_data(),
@@ -228,8 +228,8 @@ struct FilecontentsRequestSendBack {
     }
 };
 
-struct FormatDataRequestReceive {
-
+struct FormatDataRequestReceive
+{
     FormatDataRequestReceive(ClipboardData & clip_data, ClipboardSideData & clip_side_data, const RDPVerbose verbose, InStream& chunk) {
         {
             const unsigned int expected = 4;   //     requestedFormatId(4)
@@ -252,45 +252,23 @@ struct FormatDataRequestReceive {
     }
 };
 
-struct ServerFormatDataRequestSendBack {
-
-    ServerFormatDataRequestSendBack(const RDPVerbose verbose, BaseVirtualChannel * base_channel) {
-        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
-                "Client to server Clipboard operation is not allowed.");
+struct FormatDataRequestSendBack
+{
+    FormatDataRequestSendBack(VirtualChannelDataSender* sender)
+    {
+        if (!sender) {
+            return ;
+        }
 
         StaticOutStream<256> out_stream;
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
         header.emit(out_stream);
 
-        base_channel->send_message_to_server(
+        sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             out_stream.get_data(),
             out_stream.get_offset());
-
-    }
-};
-
-struct ClientFormatDataRequestSendBack {
-
-    uint32_t total_length = 0;
-    const uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-    ClientFormatDataRequestSendBack(const RDPVerbose verbose, BaseVirtualChannel * base_channel) {
-        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                "Serveur to client Clipboard operation is not allowed.");
-
-        StaticOutStream<256> out_stream;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
-        header.emit(out_stream);
-
-        base_channel->send_message_to_client(
-                out_stream.get_offset(),
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_data(),
-                out_stream.get_offset());
     }
 };
 
