@@ -158,9 +158,6 @@ private:
     public:
         SslRC4 SendRc4Seal {};
         SslRC4 RecvRc4Seal {};
-    private:
-        // TODO unused
-        array16* RecvSealingKey = nullptr;
 
     public:
         uint32_t NegotiateFlags = 0;
@@ -212,7 +209,7 @@ private:
 
     public:
         explicit NTLMContextClient( bool verbose = false)
-            : UseMIC(this->NTLMv2/* == true*/)
+            : UseMIC(this->NTLMv2)
             //, LmCompatibilityLevel(3)
             , Workstation(0)
             , ServicePrincipalName(0)
@@ -234,106 +231,8 @@ private:
         NTLMContextClient& operator = (NTLMContextClient const &) = delete;
 
 
-        /**
-         * Initialize RC4 stream cipher states for sealing.
-         */
-
-        void ntlm_init_rc4_seal_states()
-        {
-            this->SendRc4Seal.set_key(this->ClientSealingKey);
-            this->RecvRc4Seal.set_key(this->ServerSealingKey);
-        }
-
-        // server check nt response
-        bool ntlm_check_nt_response_from_authenticate(array_view_const_u8 hash) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Check NtResponse");
-            size_t temp_size = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer.size() - 16;
-
-            uint8_t NtProofStr_from_msg[16] = {};
-            InStream in_AuthNtResponse(this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer.ostream.get_current(),
-                                       this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer.ostream.tailroom());
-            in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
-
-            auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
-            uint8_t* temp = unique_temp.get();
-            in_AuthNtResponse.in_copy_bytes(temp, temp_size);
-            this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer.ostream.rewind();
-
-            array_view_const_u8 user = this->AUTHENTICATE_MESSAGE.UserName.buffer.av();
-            
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
-
-            auto userNameUppercase = ::UTF16_to_upper(user);
-            array_md5 ResponseKeyNT = ::HmacMd5(hash, userNameUppercase, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
-            array_md5 NtProofStr = ::HmacMd5(ResponseKeyNT, make_array_view(this->ServerChallenge), {temp, temp_size});
-
-            return 0 == memcmp(NtProofStr.data(), NtProofStr_from_msg, 16);
-        }
-
-        // Server check lm response
-        bool ntlm_check_lm_response_from_authenticate(array_view_const_u8 hash) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Check LmResponse");
-            size_t lm_response_size = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.size(); // should be 24
-            if (lm_response_size != 24) {
-                return false;
-            }
-            uint8_t response[16] = {};
-            InStream in_AuthLmResponse(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.ostream.get_current(),
-                                       this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.ostream.tailroom());
-            in_AuthLmResponse.in_copy_bytes(response, 16);
-            in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
-            this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.ostream.rewind();
-
-            array_view_const_u8 user = this->AUTHENTICATE_MESSAGE.UserName.buffer.av();
-
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
-
-            auto userNameUppercase = ::UTF16_to_upper(user);
-            array_md5 ResponseKeyLM = ::HmacMd5(hash, userNameUppercase, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
-            array_md5 compute_response = ::HmacMd5(make_array_view(ResponseKeyLM),{this->ServerChallenge, 8},{this->ClientChallenge, 8});
-
-            return !memcmp(response, compute_response.data(), 16);
-        }
-
-        // server compute Session Base Key
-        void ntlm_compute_session_base_key(array_view_const_u8 hash) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute Session Base Key");
-            auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-            auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            uint8_t NtProofStr[16] = {};
-
-            InStream(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom())
-                .in_copy_bytes(NtProofStr, 16);
-            AuthNtResponse.ostream.rewind();
-
-            array_view_const_u8 user = this->AUTHENTICATE_MESSAGE.UserName.buffer.av();
-            
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
-
-            auto userNameUppercase = ::UTF16_to_upper(user);
-            array_md5 ResponseKeyNT = ::HmacMd5(hash, userNameUppercase, DomainName.av());
-            
-            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-            this->SessionBaseKey = ::HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
-        }
-
-
-        // server method
-        bool ntlm_check_nego() {
-            uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
-            uint32_t const mask = NTLMSSP_REQUEST_TARGET
-                                | NTLMSSP_NEGOTIATE_NTLM
-                                | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                                | NTLMSSP_NEGOTIATE_UNICODE;
-            if ((negoFlag & mask) != mask) {
-                return false;
-            }
-            this->NegotiateFlags = negoFlag;
-            return true;
-        }
-
         // CLIENT BUILD NEGOTIATE
-        void ntlm_client_build_negotiate() {
+        void sspi_context_ntlm_client_build_negotiate() {
             this->NegotiateFlags |= (this->NTLMv2)
                                    * (NTLMSSP_NEGOTIATE_56
                                    |  NTLMSSP_NEGOTIATE_VERSION
@@ -369,11 +268,10 @@ private:
             this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-                auto & workstationbuff = this->NEGOTIATE_MESSAGE.Workstation.buffer;
-                workstationbuff.reset();
-                workstationbuff.ostream.out_copy_bytes(this->Workstation.get_data(),
+                this->NEGOTIATE_MESSAGE.Workstation.buffer.reset();
+                this->NEGOTIATE_MESSAGE.Workstation.buffer.ostream.out_copy_bytes(this->Workstation.get_data(),
                                                        this->Workstation.size());
-                workstationbuff.mark_end();
+                this->NEGOTIATE_MESSAGE.Workstation.buffer.mark_end();
             }
 
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
@@ -390,7 +288,7 @@ private:
         // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
         // all strings are in unicode utf16
 
-        void ntlm_SetContextWorkstation(array_view_const_char workstation) {
+        void sspi_context_ntlm_SetContextWorkstation(array_view_const_char workstation) {
             // CHECK UTF8 or UTF16 (should store in UTF16)
             if (!workstation.empty()) {
                 size_t host_len = UTF8Len(workstation.data());
@@ -404,7 +302,7 @@ private:
             }
         }
 
-        void ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
+        void sspi_context_ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
             // CHECK UTF8 or UTF16 (should store in UTF16)
             if (!pszTargetName.empty()) {
                 size_t host_len = UTF8Len(pszTargetName.data());
@@ -417,9 +315,9 @@ private:
         }
 
         // READ WRITE FUNCTIONS
-        SEC_STATUS write_negotiate(Array& output_buffer) {
+        SEC_STATUS sspi_context_write_negotiate(Array& output_buffer) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
-            this->ntlm_client_build_negotiate();
+            this->sspi_context_ntlm_client_build_negotiate();
             StaticOutStream<65535> out_stream;
             this->NEGOTIATE_MESSAGE.emit(out_stream);
             output_buffer.init(out_stream.get_offset());
@@ -431,7 +329,7 @@ private:
             return SEC_I_CONTINUE_NEEDED;
         }
 
-        SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
+        SEC_STATUS sspi_context_read_challenge(array_view_const_u8 input_buffer) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
             InStream in_stream(input_buffer);
             this->CHALLENGE_MESSAGE.recv(in_stream);
@@ -442,7 +340,7 @@ private:
             return SEC_I_CONTINUE_NEEDED;
         }
 
-        SEC_STATUS write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
+        SEC_STATUS sspi_context_write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
             auto password = this->identity.get_password_utf16_av();
             auto userName = this->identity.get_user_utf16_av();
@@ -682,16 +580,15 @@ private:
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    SEC_STATUS sspi_InitializeSecurityContext(
-        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
+    SEC_STATUS sspi_InitializeSecurityContext(array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
     )
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
         if (!this->sspi_context_initialized) {
 
-            this->sspi_context.ntlm_SetContextWorkstation(pszTargetName);
-            this->sspi_context.ntlm_SetContextServicePrincipalName(pszTargetName);
+            this->sspi_context.sspi_context_ntlm_SetContextWorkstation(pszTargetName);
+            this->sspi_context.sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
 
             this->sspi_context.identity.CopyAuthIdentity(this->identity.get_user_utf16_av(),
                                                     this->identity.get_domain_utf16_av(),
@@ -703,14 +600,14 @@ private:
             this->sspi_context.state = NTLM_STATE_NEGOTIATE;
         }
         if (this->sspi_context.state == NTLM_STATE_NEGOTIATE) {
-            return this->sspi_context.write_negotiate(output_buffer);
+            return this->sspi_context.sspi_context_write_negotiate(output_buffer);
         }
 
         if (this->sspi_context.state == NTLM_STATE_CHALLENGE) {
-            this->sspi_context.read_challenge(input_buffer);
+            this->sspi_context.sspi_context_read_challenge(input_buffer);
         }
         if (this->sspi_context.state == NTLM_STATE_AUTHENTICATE) {
-            return this->sspi_context.write_authenticate(output_buffer, this->rand, this->timeobj);
+            return this->sspi_context.sspi_context_write_authenticate(output_buffer, this->rand, this->timeobj);
         }
 
         return SEC_E_OUT_OF_SEQUENCE;
