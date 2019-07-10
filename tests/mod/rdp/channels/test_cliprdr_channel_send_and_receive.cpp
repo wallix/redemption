@@ -22,7 +22,58 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
-#include "mod/rdp/channels/fake_base_virtual_channel.hpp"
+
+
+struct FakeBaseVirtualChannel final : public BaseVirtualChannel
+{
+    struct PDUData
+    {
+        uint8_t data[1600] = {0};
+        size_t size = 0;
+
+        const_bytes_view av() const noexcept
+        {
+            return {data, size};
+        }
+    };
+
+    struct DataSender : VirtualChannelDataSender
+    {
+        PDUData streams[2];
+        int index = 0;
+
+        void operator()(
+            uint32_t /*total_length*/, uint32_t /*flags*/,
+            const uint8_t * chunk_data, uint32_t chunk_data_length) override
+        {
+            RED_CHECK(this->index < 2);
+            this->streams[this->index].size = chunk_data_length;
+            std::memcpy(streams[this->index].data, chunk_data, chunk_data_length);
+            ++this->index;
+        }
+    };
+
+public:
+    DataSender client_sender;
+    DataSender server_sender;
+
+    FakeBaseVirtualChannel(const Params & params)
+    :  BaseVirtualChannel(&client_sender, &server_sender, params)
+    {}
+
+    void process_server_message(
+        uint32_t /*total_length*/,
+        uint32_t /*flags*/, const uint8_t* /*chunk_data*/,
+        uint32_t /*chunk_data_length*/,
+        std::unique_ptr<AsynchronousTask> & /*out_asynchronous_task*/) override
+    {}
+
+protected:
+    const char* get_reporting_reason_exchanged_data_limit_reached() const override
+    {
+        return "CLIPBOARD_LIMIT";
+    }
+};  // class ClipboardVirtualChannel
 
 
 
@@ -72,16 +123,15 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
 {
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
+    FakeBaseVirtualChannel::DataSender data_sender;
     const uint32_t streamID = 1;
 
-    ClientFilecontentsRequestSendBack sender(RDPVerbose::none, RDPECLIP::FILECONTENTS_SIZE, streamID, &channel);
+    FilecontentsRequestSendBack sender(RDPECLIP::FILECONTENTS_SIZE, streamID, &data_sender);
 
-    RED_REQUIRE_EQUAL(channel.index_client, 1);
+    RED_REQUIRE_EQUAL(data_sender.index, 1);
 
-    InStream stream(channel.to_client_stream[0].data, channel.to_client_stream[0].size);
+    InStream stream(data_sender.streams[0].av());
+
     RDPECLIP::CliprdrHeader header;
     header.recv(stream);
     RDPECLIP::FileContentsResponseSize pdu;
@@ -114,15 +164,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestReceive)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
 {
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
+    FakeBaseVirtualChannel::DataSender data_sender;
 
-    ClientFormatDataRequestSendBack sender(RDPVerbose::none, &channel);
+    FormatDataRequestSendBack sender(&data_sender);
 
-    RED_REQUIRE_EQUAL(channel.index_client, 1);
+    RED_REQUIRE_EQUAL(data_sender.index, 1);
 
-    InStream stream(channel.to_client_stream[0].data, channel.to_client_stream[0].size);
+    InStream stream(data_sender.streams[0].av());
 
     RDPECLIP::CliprdrHeader header;
     header.recv(stream);
@@ -155,13 +203,20 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     ClipboardData clip_data;
     clip_data.requestedFormatId = RDPECLIP::CF_UNICODETEXT;
 
-    ClientFormatDataResponseReceive receiver(clip_data.client_data,
-                                             clip_data,
-                                             stream,
-                                             header,
-                                             param_dont_log_data_into_syslog,
-                                             flags,
-                                             verbose);
+    FormatDataResponseReceive receiver(
+            clip_data.requestedFormatId,
+            stream,
+            header,
+            param_dont_log_data_into_syslog,
+            clip_data.client_data.file_list_format_id,
+            flags,
+            clip_data.client_data.file_descriptor_stream,
+            verbose,
+            "server");
+    clip_data.requestedFormatId = 0;
+    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
+        clip_data.client_data.update_file_contents_request_inventory(fd);
+    }
 
     RED_CHECK_EQUAL(receiver.data_to_dump, "text de test");
     RED_CHECK_EQUAL(clip_data.client_data.file_stream_data_inventory.size(), cItems);
@@ -200,13 +255,20 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     std::vector<ClipboardSideData::file_info_type> file_info_type_init;
     clip_data.client_data.file_stream_data_inventory[clipDataId] = file_info_type_init;
 
-    ClientFormatDataResponseReceive receiver(clip_data.client_data,
-                                             clip_data,
-                                             stream,
-                                             header,
-                                             param_dont_log_data_into_syslog,
-                                             flags,
-                                             verbose);
+    FormatDataResponseReceive receiver(
+        clip_data.requestedFormatId,
+        stream,
+        header,
+        param_dont_log_data_into_syslog,
+        clip_data.client_data.file_list_format_id,
+        flags,
+        clip_data.client_data.file_descriptor_stream,
+        verbose,
+        "server");
+    clip_data.requestedFormatId = 0;
+    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
+        clip_data.client_data.update_file_contents_request_inventory(fd);
+    }
 
     RED_CHECK_EQUAL(receiver.data_to_dump, "");
     std::vector<ClipboardSideData::file_info_type> & file_info_type_vec = clip_data.client_data.file_stream_data_inventory[clip_data.client_data.clipDataId];
@@ -257,15 +319,20 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     clip_data.client_data.file_descriptor_stream.out_copy_bytes(pre_stream.get_data(), size_part_1);
     stream.in_skip_bytes(size_part_1);
 
-    ClientFormatDataResponseReceive receiver(clip_data.client_data,
-                                             clip_data,
-                                             stream,
-                                             header,
-                                             param_dont_log_data_into_syslog,
-//                                              client_file_list_format_id,
-                                             flags,
-//                                              file_descriptor_stream,
-                                             verbose);
+    FormatDataResponseReceive receiver(
+        clip_data.requestedFormatId,
+        stream,
+        header,
+        param_dont_log_data_into_syslog,
+        clip_data.client_data.file_list_format_id,
+        flags,
+        clip_data.client_data.file_descriptor_stream,
+        verbose,
+        "server");
+    clip_data.requestedFormatId = 0;
+    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
+        clip_data.client_data.update_file_contents_request_inventory(fd);
+    }
 
     RED_CHECK_EQUAL(receiver.data_to_dump, "");
     std::vector<ClipboardSideData::file_info_type> & file_info_type_vec = clip_data.client_data.file_stream_data_inventory[clip_data.client_data.clipDataId];
@@ -301,50 +368,28 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
 
     InStream chunk(stream.get_bytes());
 
-    ClientFormatListReceive received(use_long_format_name, use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::none);
+    FormatListReceive received(use_long_format_name, use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::none);
 
-    RED_CHECK_EQUAL(received.client_file_list_format_id, client_file_list_format_id);
+    RED_CHECK_EQUAL(received.file_list_format_id, client_file_list_format_id);
     RED_CHECK_EQUAL(format_name_inventory[RDPECLIP::CF_TEXT], "");
     RED_CHECK_EQUAL(format_name_inventory[client_file_list_format_id], RDPECLIP::FILEGROUPDESCRIPTORW.data());
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
+    FakeBaseVirtualChannel::DataSender data_sender;
 
-    ClientFormatListSendBack sender(&channel);
+    FormatListSendBack sender(&data_sender);
 
-    RED_REQUIRE_EQUAL(channel.index_client, 1);
+    RED_REQUIRE_EQUAL(data_sender.index, 1);
 
-    InStream stream(channel.to_client_stream[0].data, channel.to_client_stream[0].size);
+    InStream stream(data_sender.streams[0].av());
 
     RDPECLIP::CliprdrHeader header;
     header.recv(stream);
 
     RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
     RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_OK);
-    RED_CHECK_EQUAL(header.dataLen(), 0);
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelServerFormatDataRequestSendBack) {
-
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
-
-    ServerFormatDataRequestSendBack sender(RDPVerbose::none, &channel);
-
-    RED_REQUIRE_EQUAL(channel.index_server, 1);
-
-    InStream stream(channel.to_server_stream[0].data, channel.to_server_stream[0].size);
-
-    RDPECLIP::CliprdrHeader header;
-    header.recv(stream);
-
-    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_DATA_RESPONSE);
-    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_FAIL);
     RED_CHECK_EQUAL(header.dataLen(), 0);
 }
 
@@ -358,10 +403,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
 
     ServerMonitorReadySendBack sender(RDPVerbose::none, use_long_format_name, &channel);
 
-    RED_REQUIRE_EQUAL(channel.index_server, 2);
+    RED_REQUIRE_EQUAL(channel.server_sender.index, 2);
 
     {
-        InStream stream(channel.to_server_stream[0].data, channel.to_server_stream[0].size);
+        InStream stream(channel.server_sender.streams[0].av());
 
         RDPECLIP::CliprdrHeader header;
         header.recv(stream);
@@ -382,7 +427,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
     }
 
     {
-        InStream stream(channel.to_server_stream[1].data, channel.to_server_stream[1].size);
+        InStream stream(channel.server_sender.streams[1].av());
 
         RDPECLIP::CliprdrHeader header;
         header.recv(stream);
@@ -399,26 +444,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
         RED_CHECK_EQUAL(format_list_pdu.will_be_sent_in_ASCII_8(true), false);
     }
 
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelServerFormatListSendBack) {
-
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
-
-    ServerFormatListSendBack sender(&channel);
-
-    RED_REQUIRE_EQUAL(channel.index_server, 1);
-
-    InStream stream(channel.to_server_stream[0].data, channel.to_server_stream[0].size);
-
-    RDPECLIP::CliprdrHeader header;
-    header.recv(stream);
-
-    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
-    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_OK);
-    RED_CHECK_EQUAL(header.dataLen(), 0);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelLockClipDataReceive)

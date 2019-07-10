@@ -55,6 +55,7 @@ ExtraSystemProcesses::ExtraSystemProcesses(const char * comme_separated_processe
     }
 }
 
+// TODO {std:string const&, bool} ?
 bool ExtraSystemProcesses::get(
     size_t index,
     std::string & out__name
@@ -146,6 +147,7 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
     }
 }
 
+// TODO {std:string const&, bool} ?
 bool OutboundConnectionMonitorRules::get(
     size_t index,
     unsigned int & out__type,
@@ -238,6 +240,7 @@ ProcessMonitorRules::ProcessMonitorRules(const char * comme_separated_rules)
     }
 }
 
+// TODO {std:string const&, bool} ?
 bool ProcessMonitorRules::get(
     size_t index,
     unsigned int & out__type,

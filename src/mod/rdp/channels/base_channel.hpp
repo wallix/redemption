@@ -83,6 +83,7 @@ public:
         this->to_client_sender = nullptr;
     }
 
+    // TODO unused
     virtual const char * get_reporting_reason_exchanged_data_limit_reached()
         const = 0;
 
@@ -109,7 +110,7 @@ public:
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
 
 public:
-    virtual inline void send_message_to_client(uint32_t total_length,
+    void send_message_to_client(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         if (this->to_client_sender)
@@ -119,7 +120,7 @@ public:
         }
     }
 
-    virtual inline void send_message_to_server(uint32_t total_length,
+    void send_message_to_server(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         if (this->to_server_sender)
@@ -128,9 +129,5 @@ public:
                 chunk_data_length);
         }
     }
-
-protected:
-    inline void update_exchanged_data(uint32_t /*data_length*/)
-    {}
 };  // class BaseVirtualChannel
 

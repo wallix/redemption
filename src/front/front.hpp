@@ -2712,7 +2712,7 @@ private:
                 uint32_t caps_size_offset = stream.get_offset();
                 stream.out_clear_bytes(2);
 
-                stream.out_copy_bytes("RDP", 4);
+                stream.out_copy_bytes("RDP\0"_av);
 
                 /* 4 byte num caps, set later */
                 uint32_t caps_count_offset = stream.get_offset();

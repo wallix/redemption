@@ -446,7 +446,7 @@ public:
     void flush() {
         if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
             if (this->hidden_masked_char_count){
-                this->kbd_stream.out_copy_bytes( ("********"), 8);
+                this->kbd_stream.out_copy_bytes("********"_av);
             }
             this->hidden_masked_char_count = 0;
             LOG(LOG_INFO, R"x(type="KBD input" data="%.*s")x",
@@ -563,7 +563,7 @@ public:
     void flush() {
         if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
             if (this->hidden_masked_char_count) {
-                this->kbd_stream.out_copy_bytes(byte_ptr_cast("********"), 8);
+                this->kbd_stream.out_copy_bytes("********"_av);
             }
             this->hidden_masked_char_count = 0;
 
@@ -1375,7 +1375,7 @@ private:
     void send_kbd() {
           if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
             if (this->hidden_masked_char_count) {
-                this->kbd_stream.out_copy_bytes(byte_ptr_cast("********"), 8);
+                this->kbd_stream.out_copy_bytes("********"_av);
             }
             this->hidden_masked_char_count = 0;
             this->formatted_message.assign("KBD_INPUT", {
