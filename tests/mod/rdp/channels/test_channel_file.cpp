@@ -32,7 +32,8 @@ RED_AUTO_TEST_CASE_WD(TestChannelFileWrite, wd)
     params.save_files_directory = wd.dirname().string();
     params.enable_interrupting = false;
     params.enable_save_files = true;
-    params.target_name = "avscan";
+    params.up_target_name = "avscan";
+    params.down_target_name = "avscan";
     ChannelFile file(nullptr, params);
 
     auto const file1 = wd.add_file("12345_54321_new_file1.txt");
@@ -42,7 +43,7 @@ RED_AUTO_TEST_CASE_WD(TestChannelFileWrite, wd)
     auto word3 = "again"_av;
     auto word4 = "goodbye "_av;
 
-    uint8_t direction = ChannelFile::NONE;
+    auto direction = ChannelFile::Direction{};
 
     timeval sec_and_usec_time;
     sec_and_usec_time.tv_sec = 12345;

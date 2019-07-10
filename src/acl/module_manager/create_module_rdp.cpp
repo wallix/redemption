@@ -296,7 +296,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.validator_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
     mod_rdp_params.validator_params.log_if_accepted = ini.get<cfg::validator::log_if_accepted>();
     mod_rdp_params.validator_params.save_files_directory = ini.get<cfg::validator::save_files_directory>().to_string();
-    mod_rdp_params.validator_params.target_name = ini.get<cfg::validator::target_name>();
+    mod_rdp_params.validator_params.up_target_name = ini.get<cfg::validator::up_target_name>();
+    mod_rdp_params.validator_params.down_target_name = ini.get<cfg::validator::down_target_name>();
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
 

@@ -978,7 +978,9 @@ enable_validator = boolean(default=False)
 
 socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
 
-target_name = string(default='avscan')
+up_target_name = string(default='')
+
+down_target_name = string(default='')
 
 enable_interrupting = boolean(default=False)
 

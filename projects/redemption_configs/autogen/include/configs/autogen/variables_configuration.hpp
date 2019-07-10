@@ -3508,16 +3508,28 @@ namespace cfg {
         type value = REDEMPTION_CONFIG_VALIDATOR_PATH;
     };
     /// type: std::string <br/>
-    /// value = "avscan" <br/>
-    struct validator::target_name {
+    /// value{} <br/>
+    struct validator::up_target_name {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "validator";
-        static constexpr char const * name = "target_name";
+        static constexpr char const * name = "up_target_name";
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value = "avscan";
+        type value{};
+    };
+    /// type: std::string <br/>
+    /// value{} <br/>
+    struct validator::down_target_name {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "validator";
+        static constexpr char const * name = "down_target_name";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
     };
     /// type: bool <br/>
     /// value{false} <br/>
@@ -5145,7 +5157,8 @@ struct internal_mod
 
 struct validator
 : cfg::validator::socket_path
-, cfg::validator::target_name
+, cfg::validator::up_target_name
+, cfg::validator::down_target_name
 , cfg::validator::enable_validator
 , cfg::validator::enable_interrupting
 , cfg::validator::log_if_accepted
