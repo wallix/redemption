@@ -26,6 +26,7 @@
 #include <cassert>
 
 #include "utils/sugar/array.hpp"
+#include "utils/sugar/byte_ptr.hpp"
 
 #include "cxx/cxx.hpp"
 
@@ -246,6 +247,11 @@ constexpr array_view_const_char operator "" _av(char const * s, size_t len) noex
 {
     return {s, len};
 }
+
+//constexpr array_view_const_u8 operator "" _av(unsigned char const * s, size_t len) noexcept
+//{
+//    return {s, len};
+//}
 
 static inline void ap_integer_increment_le(array_view_u8 number) {
     for (uint8_t& i : number) {
