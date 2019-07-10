@@ -117,6 +117,17 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
     return result;
 }
 
+static inline void copyFromUtf8(Array& arr, uint8_t const* data)
+{
+    if (data) {
+        size_t user_len = UTF8Len(data);
+        arr.init(user_len * 2);
+        UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
+    }
+    else {
+        arr.init(0);
+    }
+}
 
 class rdpCredsspClientNTLM
 {
@@ -135,78 +146,9 @@ private:
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
     Array ServicePrincipalName;
-    struct SEC_WINNT_AUTH_IDENTITY
-    {
-        // ntlm only
-        //@{
-        private:
-        Array User;
-        Array Domain;
-        public:
-        Array Password;
-        //@}
-
-        public:
-        SEC_WINNT_AUTH_IDENTITY()
-            : User(0)
-            , Domain(0)
-            , Password(0)
-        {
-        }
-
-        cbytes_view get_password_utf16_av() const
-        {
-            cbytes_view av{this->Password.get_data(), this->Password.size()};
-            return av;
-        }
-
-        cbytes_view get_user_utf16_av() const
-        {
-            cbytes_view av{this->User.get_data(), this->User.size()};
-            return av;
-        }
-
-        cbytes_view get_domain_utf16_av() const
-        {
-            cbytes_view av{this->Domain.get_data(), this->Domain.size()};
-            return av;
-        }
-
-        void SetUserFromUtf8(const uint8_t * user)
-        {
-            this->copyFromUtf8(this->User, user);
-        }
-
-        void SetDomainFromUtf8(const uint8_t * domain)
-        {
-            this->copyFromUtf8(this->Domain, domain);
-        }
-
-        void SetPasswordFromUtf8(const uint8_t * password)
-        {
-            this->copyFromUtf8(this->Password, password);
-        }
-
-        void clear()
-        {
-            this->User.init(0);
-            this->Domain.init(0);
-            this->Password.init(0);
-        }
-
-    private:
-        static void copyFromUtf8(Array& arr, uint8_t const* data)
-        {
-            if (data) {
-                size_t user_len = UTF8Len(data);
-                arr.init(user_len * 2);
-                UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
-            }
-            else {
-                arr.init(0);
-            }
-        }
-    } identity;
+    Array identity_User;
+    Array identity_Domain;
+    Array identity_Password;
 
     bool sspi_context_initialized = false;
     TimeObj & timeobj;
@@ -266,13 +208,6 @@ private:
             return av;
         }
 
-
-        void clear()
-        {
-            this->User.init(0);
-            this->Domain.init(0);
-            this->Password.init(0);
-        }
 
         void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
         {
@@ -665,9 +600,11 @@ private:
             this->sspi_context_ntlm_SetContextWorkstation(pszTargetName);
             this->sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
 
-            this->sspi_context_identity.CopyAuthIdentity(this->identity.get_user_utf16_av(),
-                                                    this->identity.get_domain_utf16_av(),
-                                                    this->identity.get_password_utf16_av());
+
+            cbytes_view av_user{this->identity_User.get_data(), this->identity_User.size()};
+            cbytes_view av_domain{this->identity_Domain.get_data(), this->identity_Domain.size()};
+            cbytes_view av_password{this->identity_Password.get_data(), this->identity_Password.size()};
+            this->sspi_context_identity.CopyAuthIdentity(av_user, av_domain, av_password);
             this->sspi_context_initialized = true;
         }
 
@@ -988,9 +925,10 @@ private:
             this->ts_credentials.set_credentials_from_av({},{},{});
         }
         else {
-            this->ts_credentials.set_credentials_from_av(this->identity.get_domain_utf16_av(),
-                                                        this->identity.get_user_utf16_av(),
-                                                        this->identity.get_password_utf16_av());
+            cbytes_view av_domain{this->identity_Domain.get_data(), this->identity_Domain.size()};
+            cbytes_view av_password{this->identity_Password.get_data(), this->identity_Password.size()};
+            cbytes_view av_user{this->identity_User.get_data(), this->identity_User.size()};
+            this->ts_credentials.set_credentials_from_av(av_domain, av_user, av_password);
         }
 
         StaticOutStream<65536> ts_credentials_send;
@@ -1058,9 +996,9 @@ public:
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::Initialization");
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::set_credentials");
-        this->identity.SetUserFromUtf8(user);
-        this->identity.SetDomainFromUtf8(domain);
-        this->identity.SetPasswordFromUtf8(pass);
+        copyFromUtf8(this->identity_User, user);
+        copyFromUtf8(this->identity_Domain, domain);
+        copyFromUtf8(this->identity_Password, pass);
         this->SetHostnameFromUtf8(hostname);
 
         this->client_auth_data_state = Start;
