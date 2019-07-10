@@ -168,7 +168,7 @@ private:
     public:
         Array Workstation;
         Array ServicePrincipalName;
-        SEC_WINNT_AUTH_IDENTITY identity;
+        SEC_WINNT_AUTH_IDENTITY sspi_context_identity;
 
         // bool SendSingleHostData;
         // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -192,15 +192,12 @@ private:
         uint8_t ClientChallenge[8]{};
     public:
         array_md5 SessionBaseKey; 
-    private:
-        //uint8_t KeyExchangeKey[16];
-        //uint8_t RandomSessionKey[16];
     public:
         array_md5 ExportedSessionKey;
         array_md5 EncryptedRandomSessionKey;
-        array_md5 ClientSigningKey;
+        array_md5 sspi_context_ClientSigningKey;
         array_md5 ClientSealingKey;
-        array_md5 ServerSigningKey;
+        array_md5 sspi_context_ServerSigningKey;
         array_md5 ServerSealingKey;
         array_md5 MessageIntegrityCheck;
         // uint8_t NtProofStr[16];
@@ -277,7 +274,7 @@ private:
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
                 auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
                 domain.reset();
-                auto domain_av = this->identity.get_domain_utf16_av();
+                auto domain_av = this->sspi_context_identity.get_domain_utf16_av();
                 domain.ostream.out_copy_bytes(domain_av);
                 domain.mark_end();
             }
@@ -342,9 +339,9 @@ private:
 
         SEC_STATUS sspi_context_write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
-            auto password = this->identity.get_password_utf16_av();
-            auto userName = this->identity.get_user_utf16_av();
-            auto userDomain = this->identity.get_domain_utf16_av();
+            auto password = this->sspi_context_identity.get_password_utf16_av();
+            auto userName = this->sspi_context_identity.get_user_utf16_av();
+            auto userDomain = this->sspi_context_identity.get_domain_utf16_av();
             auto workstation = this->Workstation.av();
  
             // client method
@@ -470,11 +467,11 @@ private:
             AuthEncryptedRSK.mark_end();
 
             // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
-            this->ClientSigningKey = ::Md5(this->ExportedSessionKey,
+            this->sspi_context_ClientSigningKey = ::Md5(this->ExportedSessionKey,
                     "session key to client-to-server signing key magic constant\0"_av);
             this->ClientSealingKey = ::Md5(this->ExportedSessionKey,
                     "session key to client-to-server sealing key magic constant\0"_av);
-            this->ServerSigningKey = ::Md5(this->ExportedSessionKey,
+            this->sspi_context_ServerSigningKey = ::Md5(this->ExportedSessionKey,
                     "session key to server-to-client signing key magic constant\0"_av);
             this->ServerSealingKey = ::Md5(this->ExportedSessionKey,
                     "session key to server-to-client sealing key magic constant\0"_av);
@@ -590,7 +587,7 @@ private:
             this->sspi_context.sspi_context_ntlm_SetContextWorkstation(pszTargetName);
             this->sspi_context.sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
 
-            this->sspi_context.identity.CopyAuthIdentity(this->identity.get_user_utf16_av(),
+            this->sspi_context.sspi_context_identity.CopyAuthIdentity(this->identity.get_user_utf16_av(),
                                                     this->identity.get_domain_utf16_av(),
                                                     this->identity.get_password_utf16_av());
             this->sspi_context_initialized = true;
@@ -642,7 +639,7 @@ private:
         this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
         std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-        array_md5 digest = ::HmacMd5(this->sspi_context.ServerSigningKey, seqno, data_out);
+        array_md5 digest = ::HmacMd5(this->sspi_context.sspi_context_ServerSigningKey, seqno, data_out);
 
         /* Concatenate version, ciphertext and sequence number to build signature */
         std::array<uint8_t,16> expected_signature{
@@ -755,7 +752,7 @@ private:
         // data_out [signature][data_buffer]
         std::vector<uint8_t> data_out(public_key.size() + cbMaxSignature);
         std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-        array_md5 digest = ::HmacMd5(this->sspi_context.ClientSigningKey, seqno, public_key);
+        array_md5 digest = ::HmacMd5(this->sspi_context.sspi_context_ClientSigningKey, seqno, public_key);
         
         this->sspi_context.SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
         this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest.data(), MessageSeqNo);
@@ -812,7 +809,7 @@ private:
         this->sspi_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
         std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-        array_md5 digest = ::HmacMd5(this->sspi_context.ServerSigningKey, seqno, data_out);
+        array_md5 digest = ::HmacMd5(this->sspi_context.sspi_context_ServerSigningKey, seqno, data_out);
 
         uint8_t expected_signature[16] = {};
         this->sspi_compute_signature(
@@ -933,7 +930,7 @@ private:
         data_out.resize(data_in.size() + cbMaxSignature, 0);
         
         std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-        array_md5 digest = ::HmacMd5(this->sspi_context.ClientSigningKey, seqno, data_in);
+        array_md5 digest = ::HmacMd5(this->sspi_context.sspi_context_ClientSigningKey, seqno, data_in);
 
         this->sspi_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
         this->sspi_compute_signature(data_out.data(), this->sspi_context.SendRc4Seal, digest.data(), MessageSeqNo);
