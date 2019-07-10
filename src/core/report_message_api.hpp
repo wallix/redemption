@@ -58,6 +58,7 @@ struct ArcsightLogInfo {
             OUTBOUND_CONNECTION,
             FOREGROUND_WINDOW_CHANGED,
             BUTTON_CLICKED,
+            CHECKBOX_CLICKED,
             EDIT_CHANGED,
             KBD_INPUT,
             TITLE_BAR,
