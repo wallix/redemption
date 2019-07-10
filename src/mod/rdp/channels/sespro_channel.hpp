@@ -1775,7 +1775,31 @@ public:
                     }
                 }
 
-                if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
+                if (!order.compare("KERBEROS_TICKET_CREATION") ||
+                    !order.compare("KERBEROS_TICKET_DELETION")) {
+                    if (parameters.size() == 7) {
+                        auto info = key_qvalue_pairs({
+                            { "type",            order.c_str()},
+                            { "encryption_type", parameters[0] },
+                            { "client_name",     parameters[1] },
+                            { "server_name",     parameters[2] },
+                            { "start_time",      parameters[3] },
+                            { "end_time",        parameters[4] },
+                            { "renew_time",      parameters[5] },
+                            { "flags",           parameters[6] },
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("PASSWORD_TEXT_BOX_GET_FOCUS")) {
 
                     auto info = key_qvalue_pairs({
                         {"type",   "PASSWORD_TEXT_BOX_GET_FOCUS"},

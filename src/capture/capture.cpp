@@ -932,6 +932,45 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                 }
             }
         };
+        auto line_with_7_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5, Av var6, Av var7) {
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const text = left(parameters, subitem_separator);
+                auto const remaining = right(parameters, subitem_separator);
+                if (auto const subitem_separator2 = find(remaining, '\x01')) {
+                    auto const text2 = left(remaining, subitem_separator2);
+                    auto const remaining2 = right(remaining, subitem_separator2);
+                    if (auto const subitem_separator3 = find(remaining2, '\x01')) {
+                        auto const text3 = left(remaining2, subitem_separator3);
+                        auto const remaining3 = right(remaining2, subitem_separator3);
+                        if (auto const subitem_separator4 = find(remaining3, '\x01')) {
+
+                            auto const text4 = left(remaining3, subitem_separator4);
+                            auto const remaining4 = right(remaining3, subitem_separator4);
+                            if (auto const subitem_separator5 = find(remaining4, '\x01')) {
+
+                                auto const text5 = left(remaining4, subitem_separator5);
+                                auto const remaining5 = right(remaining4, subitem_separator5);
+                                if (auto const subitem_separator6 = find(remaining5, '\x01')) {
+
+
+                                    auto const text6 = left(remaining5, subitem_separator6);
+                                    auto const text7 = right(remaining5, subitem_separator6);
+                                    message.assign(order, {
+                                        {zstr(var1), text},
+                                        {zstr(var2), text2},
+                                        {zstr(var3), text3},
+                                        {zstr(var4), text4},
+                                        {zstr(var5), text5},
+                                        {zstr(var6), text6},
+                                        {zstr(var7), text7},
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
 
         // TODO used string_id: switch (sid(order)) { case "string"_sid: ... }
         if (cstr_equal("PASSWORD_TEXT_BOX_GET_FOCUS", order)
@@ -986,6 +1025,11 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         }
         else if (cstr_equal("DRIVE_REDIRECTION_RENAME", order)) {
             line_with_2_var("old_file_name", "new_file_name");
+        }
+
+        else if (cstr_equal("KERBEROS_TICKET_CREATION", order)
+              || cstr_equal("KERBEROS_TICKET_DELETION", order)) {
+            line_with_7_var("encryption_type", "client_name", "server_name", "start_time", "end_time", "renew_time", "flags");
         }
 
         else if (cstr_equal("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION", order)
