@@ -49,6 +49,11 @@ public:
     {
         MD4_Final(out_data, &this->md4);
     }
+    
+    void unchecked_final(uint8_t * out_data)
+    {
+        MD4_Final(out_data, &this->md4);
+    }
 };
 
 using SslHMAC_Md4 = detail_::basic_HMAC<&EVP_md4, SslMd4::DIGEST_LENGTH>;

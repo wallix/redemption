@@ -46,6 +46,10 @@ public:
         this->MD4_final(out_data);
     }
 
+    void unchecked_final(uint8_t * out_data)
+    {
+        this->MD4_final(out_data);
+    }
 private:
     struct {
         uint32_t total[2] {};

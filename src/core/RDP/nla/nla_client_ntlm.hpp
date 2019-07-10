@@ -38,6 +38,24 @@
 #include <vector>
 
 
+static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
+{
+    std::vector<uint8_t> result(name.data(), name.data()+name.size());
+    ::UTF16Upper(result.data(), result.size());
+    return result;
+}
+
+
+using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;
+static inline array_md4 Md4(array_view_const_u8 data)
+{
+    array_md4 result;
+    SslMd4 md4;
+    md4.update(data);
+    md4.unchecked_final(result.data());
+    return result;
+}
+
 using array_hmac_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
 static inline array_hmac_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
 {
@@ -501,37 +519,30 @@ private:
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
-            SslMd4 md4;
-            uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
+            array_md4 md4password = ::Md4(password);
 
-            md4.update(password);
-            md4.final(md4password);
-
+//            auto userNameUppercase = ::UTF16_to_upper(userName);
 
             auto unique_userup = std::make_unique<uint8_t[]>(userName.size());
             uint8_t * userup = unique_userup.get();
             memcpy(userup, userName.data(), userName.size());
             UTF16Upper(userup, userName.size());
 
-            array_hmac_md5 ResponseKeyNT = ::HmacMd5(make_array_view(md4password),{userup, userName.size()},userDomain);
+            array_hmac_md5 ResponseKeyNT = ::HmacMd5(md4password,{userup, userName.size()},userDomain);
 
             unique_userup.reset();
             userup = nullptr;
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
 
-            SslMd4 md4_b;
-            uint8_t md4password_b[SslMd4::DIGEST_LENGTH] = {};
-            md4_b.update(password);
-            md4_b.final(md4password_b);
-
+            array_md4 md4password_b = ::Md4(password);
 
             auto unique_userup_b = std::make_unique<uint8_t[]>(userName.size());
             uint8_t * userup_b = unique_userup_b.get();
             memcpy(userup_b, userName.data(), userName.size());
             UTF16Upper(userup_b, userName.size());
 
-            array_hmac_md5 ResponseKeyLM = ::HmacMd5(make_array_view(md4password_b),{userup_b, userName.size()},userDomain);
+            array_hmac_md5 ResponseKeyLM = ::HmacMd5(md4password_b,{userup_b, userName.size()},userDomain);
 
             unique_userup_b.reset();
             userup = nullptr;
