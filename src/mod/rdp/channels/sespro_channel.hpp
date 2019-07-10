@@ -930,7 +930,7 @@ public:
             }
         }
         else if (!::strcasecmp(order_.c_str(), "Log") && !parameters_.empty()) {
-            LOG(LOG_INFO, "SessionProbe: %s", parameters_[0].c_str());
+            LOG(LOG_INFO, "SessionProbe: %s", parameters_[0]);
         }
         else if (!::strcasecmp(order_.c_str(), "KeepAlive") && !parameters_.empty() &&
                  !::strcasecmp(parameters_[0].c_str(), "OK")) {

@@ -849,7 +849,7 @@ public:
     }
 
     void log(int level = LOG_INFO) const {
-        LOG(level, "ClientTemporaryDirectoryPDU: wszTempDir=\"%s\"", temp_dir.c_str());
+        LOG(level, "ClientTemporaryDirectoryPDU: wszTempDir=\"%s\"", temp_dir);
     }
 };  // struct ClientTemporaryDirectoryPDU
 

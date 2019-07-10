@@ -914,7 +914,7 @@ public:
             mod_rdp.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
         }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
-            LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
+            LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
         }
         else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
 
