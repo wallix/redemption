@@ -176,44 +176,43 @@ private:
         // ntlm only
         //@{
         private:
-        Array User;
-        Array Domain;
-        public:
-        Array Password;
+        Array sspi_context_identity_User;
+        Array sspi_context_identity_Domain;
+        Array sspi_context_identity_Password;
         //@}
 
         public:
         SEC_WINNT_AUTH_IDENTITY_SSPI()
-            : User(0)
-            , Domain(0)
-            , Password(0)
+            : sspi_context_identity_User(0)
+            , sspi_context_identity_Domain(0)
+            , sspi_context_identity_Password(0)
         {
         }
 
         cbytes_view get_password_utf16_av() const
         {
-            cbytes_view av{this->Password.get_data(), this->Password.size()};
+            cbytes_view av{this->sspi_context_identity_Password.get_data(), this->sspi_context_identity_Password.size()};
             return av;
         }
 
         cbytes_view get_user_utf16_av() const
         {
-            cbytes_view av{this->User.get_data(), this->User.size()};
+            cbytes_view av{this->sspi_context_identity_User.get_data(), this->sspi_context_identity_User.size()};
             return av;
         }
 
         cbytes_view get_domain_utf16_av() const
         {
-            cbytes_view av{this->Domain.get_data(), this->Domain.size()};
+            cbytes_view av{this->sspi_context_identity_Domain.get_data(), this->sspi_context_identity_Domain.size()};
             return av;
         }
 
 
         void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
         {
-            this->User.copy(user_utf16_av);
-            this->Domain.copy(domain_utf16_av);
-            this->Password.copy(password_utf16_av);
+            this->sspi_context_identity_User.copy(user_utf16_av);
+            this->sspi_context_identity_Domain.copy(domain_utf16_av);
+            this->sspi_context_identity_Password.copy(password_utf16_av);
         }
 
     } sspi_context_identity;
