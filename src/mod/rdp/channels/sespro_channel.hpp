@@ -2189,6 +2189,151 @@ public:
                         message_format_invalid = true;
                     }
                 }
+
+                else if (!order.compare("WEB_ATTEMPT_TO_PRINT")) {
+                    if (parameters.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type",  "WEB_ATTEMPT_TO_PRINT"},
+                            {"url",   parameters[0]},
+                            {"title", parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("WEB_BEFORE_NAVIGATE")) {
+                    if (parameters.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type", "WEB_BEFORE_NAVIGATE"},
+                            {"url",  parameters[0]},
+                            {"post", parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("WEB_DOCUMENT_COMPLETE")) {
+                    if (parameters.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type",  "WEB_DOCUMENT_COMPLETE"},
+                            {"url",   parameters[0]},
+                            {"title", parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("WEB_NAVIGATE_ERROR")) {
+                    if (parameters.size() == 4) {
+                        auto info = key_qvalue_pairs({
+                            {"type",         "WEB_NAVIGATE_ERROR"},
+                            {"url",          parameters[0]},
+                            {"title",        parameters[1]},
+                            {"code",         parameters[2]},
+                            {"display_name", parameters[3]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("WEB_NAVIGATION")) {
+                    if (parameters.size() == 1) {
+                        auto info = key_qvalue_pairs({
+                            {"type", "WEB_NAVIGATION"},
+                            {"url",  parameters[0]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("WEB_PRIVACY_IMPACTED")) {
+                    if (parameters.size() == 1) {
+                        auto info = key_qvalue_pairs({
+                            {"type",     "WEB_PRIVACY_IMPACTED"},
+                            {"impacted", parameters[0]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("WEB_ENCRYPTION_LEVEL_CHANGED")) {
+                    if (parameters.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type",         "WEB_ENCRYPTION_LEVEL_CHANGED"},
+                            {"identifier",   parameters[0]},
+                            {"display_name", parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("WEB_THIRD_PARTY_URL_BLOCKED")) {
+                    if (parameters.size() == 1) {
+                        auto info = key_qvalue_pairs({
+                            {"type", "WEB_THIRD_PARTY_URL_BLOCKED"},
+                            {"url",  parameters[0]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+
                 else {
                     LOG(LOG_WARNING,
                         "SessionProbeVirtualChannel::process_server_message: "

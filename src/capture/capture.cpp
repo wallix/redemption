@@ -887,6 +887,26 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                 }
             }
         };
+        auto line_with_4_var = [&](Av var1, Av var2, Av var3, Av var4) {
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const text = left(parameters, subitem_separator);
+                auto const remaining = right(parameters, subitem_separator);
+                if (auto const subitem_separator2 = find(remaining, '\x01')) {
+                    auto const text2 = left(remaining, subitem_separator2);
+                    auto const remaining2 = right(remaining, subitem_separator2);
+                    if (auto const subitem_separator3 = find(remaining2, '\x01')) {
+                        auto const text3 = left(remaining2, subitem_separator3);
+                        auto const text4 = right(remaining2, subitem_separator3);
+                        message.assign(order, {
+                            {zstr(var1), text},
+                            {zstr(var2), text2},
+                            {zstr(var3), text3},
+                            {zstr(var4), text4},
+                        });
+                    }
+                }
+            }
+        };
         auto line_with_5_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
                 auto const text = left(parameters, subitem_separator);
@@ -1043,6 +1063,27 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                     });
                 }
             }
+        }
+
+        else if ((cstr_equal("WEB_ATTEMPT_TO_PRINT", order)) ||
+                 (cstr_equal("WEB_DOCUMENT_COMPLETE", order))) {
+            line_with_2_var("url", "title");
+        }
+        else if (cstr_equal("WEB_BEFORE_NAVIGATE", order)) {
+            line_with_2_var("url", "post");
+        }
+        else if (cstr_equal("WEB_NAVIGATE_ERROR", order)) {
+            line_with_4_var("url", "title", "code", "display_name");
+        }
+        else if ((cstr_equal("WEB_NAVIGATION", order)) ||
+                 (cstr_equal("WEB_THIRD_PARTY_URL_BLOCKED", order))) {
+            line_with_1_var("url");
+        }
+        else if (cstr_equal("WEB_PRIVACY_IMPACTED", order)) {
+            line_with_1_var("impacted");
+        }
+        else if (cstr_equal("WEB_ENCRYPTION_LEVEL_CHANGED", order)) {
+            line_with_2_var("identifier", "display_name");
         }
 
         else {
