@@ -153,8 +153,6 @@ private:
         const bool SendVersionInfo = true;
         const bool confidentiality = true;
 
-        using array16 = uint8_t[16];
-
     public:
         SslRC4 SendRc4Seal {};
         SslRC4 RecvRc4Seal {};
