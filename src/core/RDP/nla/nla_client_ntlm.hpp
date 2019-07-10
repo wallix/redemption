@@ -175,7 +175,7 @@ private:
     {
         // ntlm only
         //@{
-        private:
+        public:
         Array sspi_context_identity_User;
         Array sspi_context_identity_Domain;
         Array sspi_context_identity_Password;
@@ -188,25 +188,6 @@ private:
             , sspi_context_identity_Password(0)
         {
         }
-
-        cbytes_view get_password_utf16_av() const
-        {
-            cbytes_view av{this->sspi_context_identity_Password.get_data(), this->sspi_context_identity_Password.size()};
-            return av;
-        }
-
-        cbytes_view get_user_utf16_av() const
-        {
-            cbytes_view av{this->sspi_context_identity_User.get_data(), this->sspi_context_identity_User.size()};
-            return av;
-        }
-
-        cbytes_view get_domain_utf16_av() const
-        {
-            cbytes_view av{this->sspi_context_identity_Domain.get_data(), this->sspi_context_identity_Domain.size()};
-            return av;
-        }
-
 
         void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
         {
@@ -288,7 +269,8 @@ private:
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
             auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             domain.reset();
-            auto domain_av = this->sspi_context_identity.get_domain_utf16_av();
+            cbytes_view domain_utf16_av{this->sspi_context_identity.sspi_context_identity_Domain.get_data(), this->sspi_context_identity.sspi_context_identity_Domain.size()};
+            auto domain_av = domain_utf16_av;
             domain.ostream.out_copy_bytes(domain_av);
             domain.mark_end();
         }
@@ -353,9 +335,13 @@ private:
 
     SEC_STATUS sspi_context_write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
-        auto password = this->sspi_context_identity.get_password_utf16_av();
-        auto userName = this->sspi_context_identity.get_user_utf16_av();
-        auto userDomain = this->sspi_context_identity.get_domain_utf16_av();
+        
+        cbytes_view password_utf16_av{this->sspi_context_identity.sspi_context_identity_Password.get_data(), this->sspi_context_identity.sspi_context_identity_Password.size()};
+        auto password = password_utf16_av;
+        cbytes_view user_utf16_av{this->sspi_context_identity.sspi_context_identity_User.get_data(), this->sspi_context_identity.sspi_context_identity_User.size()};
+        auto userName = user_utf16_av;
+        cbytes_view domain_utf16_av{this->sspi_context_identity.sspi_context_identity_Domain.get_data(), this->sspi_context_identity.sspi_context_identity_Domain.size()};
+        auto userDomain = domain_utf16_av;
         auto workstation = this->Workstation.av();
 
         // client method
