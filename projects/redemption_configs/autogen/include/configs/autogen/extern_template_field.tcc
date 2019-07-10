@@ -19,6 +19,7 @@ template class Inifile::Field<cfg::session_log::log_path>;
 template class Inifile::Field<cfg::session_log::keyboard_input_masking_level>;
 template class Inifile::Field<cfg::client::keyboard_layout>;
 template class Inifile::Field<cfg::client::disable_tsk_switch_shortcuts>;
+template class Inifile::Field<cfg::client::remotefx>;
 template class Inifile::Field<cfg::mod_rdp::enable_nla>;
 template class Inifile::Field<cfg::mod_rdp::enable_kerberos>;
 template class Inifile::Field<cfg::mod_rdp::server_redirection_support>;

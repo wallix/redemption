@@ -103,6 +103,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/orders/RDPSurfaceCommands.hpp"
 
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
@@ -168,8 +169,9 @@ public:
         primary_orders      = 32,
         secondary_orders    = 64,
         bitmap_update       = 128,
+		surface_commands	= 256,
         bmp_cache           = 512,
-        internal_buffer     = 1024,
+        internal_buffer     = 1024
     };
 
     RDPSerializer( OutStream & stream_orders
@@ -382,8 +384,13 @@ public:
         });
     }
 
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {
-    	// TODO: implement me
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
+    	this->reserve_order(19 + cmd.bitmapDataLength);
+
+    	cmd.emit(this->stream_orders);
+    	if (bool(this->verbose & Verbose::surface_commands)) {
+    		cmd.log(LOG_INFO, content);
+    	}
     }
 
 

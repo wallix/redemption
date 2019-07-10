@@ -52,6 +52,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryCreateNinegridBitmap.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/orders/RDPSurfaceCommands.hpp"
 
 
 namespace
@@ -370,9 +371,13 @@ void RDPDrawable::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ct
     this->last_update_index++;
 }
 
-void RDPDrawable::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/)
+void RDPDrawable::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
 {
-	// TODO: implement me
+	// LOG(LOG_INFO, "RDPDrawable::draw: TODO");
+	ConstImageDataView constImg(content.data, content.width, content.rect.height(), content.stride,
+			BitsPerPixel{32}, ConstImageDataView::Storage::TopToBottom);
+
+	this->drawable.draw_bitmap(cmd.destRect, constImg);
 }
 
 /*

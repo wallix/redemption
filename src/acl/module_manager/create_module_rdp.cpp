@@ -292,7 +292,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.validator_params.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
     mod_rdp_params.validator_params.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
 
-    mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
+    mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>();
 
 
     try {

@@ -659,7 +659,7 @@ public:
     void draw(RDPNineGrid const & /*cmd*/, Rect /*rect*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
 
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {
-        // TODO
+        LOG(LOG_ERR, "WrmCaptureImpl::draw(RDPSetSurfaceCommand, RDPSurfaceContent): TODO");
     }
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {

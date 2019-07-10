@@ -453,6 +453,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "front_remotefx")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::front_remotefx&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
             ::configs::parse_and_log(
                 context, key,

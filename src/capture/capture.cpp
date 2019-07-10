@@ -2252,6 +2252,7 @@ void Capture::draw(RDPBitmapData       const & cmd, Bitmap const & bmp) { this->
 void Capture::draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) { this->draw_impl(cmd, clip, bmp);}
 void Capture::draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) { this->draw_impl(cmd, clip, color_ctx, bmp); }
 void Capture::draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+void Capture::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) { this->draw_impl(cmd, content); }
 
 void Capture::draw(const RDP::RAIL::WindowIcon                     & cmd) { this->draw_impl(cmd); }
 void Capture::draw(const RDP::RAIL::CachedIcon                     & cmd) { this->draw_impl(cmd); }
