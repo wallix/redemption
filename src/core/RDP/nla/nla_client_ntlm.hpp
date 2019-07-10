@@ -154,22 +154,6 @@ private:
         {
         }
 
-        void user_init_copy(cbytes_view av)
-        {
-            this->User.init(av.size());
-            this->User.copy(av);
-        }
-
-        void domain_init_copy(cbytes_view av)
-        {
-            this->Domain.init(av.size());
-            this->Domain.copy(av);
-        }
-
-        bool is_empty_user_domain(){
-            return (this->User.size() == 0) && (this->Domain.size() == 0);
-        }
-
         cbytes_view get_password_utf16_av() const
         {
             cbytes_view av{this->Password.get_data(), this->Password.size()};
@@ -279,22 +263,6 @@ private:
             , Domain(0)
             , Password(0)
         {
-        }
-
-        void user_init_copy(cbytes_view av)
-        {
-            this->User.init(av.size());
-            this->User.copy(av);
-        }
-
-        void domain_init_copy(cbytes_view av)
-        {
-            this->Domain.init(av.size());
-            this->Domain.copy(av);
-        }
-
-        bool is_empty_user_domain(){
-            return (this->User.size() == 0) && (this->Domain.size() == 0);
         }
 
         cbytes_view get_password_utf16_av() const
