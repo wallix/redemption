@@ -135,8 +135,112 @@ private:
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
     Array ServicePrincipalName;
-    SEC_WINNT_AUTH_IDENTITY identity;
-    
+    struct SEC_WINNT_AUTH_IDENTITY
+    {
+        // ntlm only
+        //@{
+        private:
+        Array User;
+        Array Domain;
+        public:
+        Array Password;
+        //@}
+
+        public:
+        SEC_WINNT_AUTH_IDENTITY()
+            : User(0)
+            , Domain(0)
+            , Password(0)
+        {
+        }
+
+        void user_init_copy(cbytes_view av)
+        {
+            this->User.init(av.size());
+            this->User.copy(av);
+        }
+
+        void domain_init_copy(cbytes_view av)
+        {
+            this->Domain.init(av.size());
+            this->Domain.copy(av);
+        }
+
+        bool is_empty_user_domain(){
+            return (this->User.size() == 0) && (this->Domain.size() == 0);
+        }
+
+        cbytes_view get_password_utf16_av() const
+        {
+            cbytes_view av{this->Password.get_data(), this->Password.size()};
+            return av;
+        }
+
+        cbytes_view get_user_utf16_av() const
+        {
+            cbytes_view av{this->User.get_data(), this->User.size()};
+            return av;
+        }
+
+        cbytes_view get_domain_utf16_av() const
+        {
+            cbytes_view av{this->Domain.get_data(), this->Domain.size()};
+            return av;
+        }
+
+        void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
+        {
+            UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
+        }
+
+        void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
+            UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
+        }
+
+
+        void SetUserFromUtf8(const uint8_t * user)
+        {
+            this->copyFromUtf8(this->User, user);
+        }
+
+        void SetDomainFromUtf8(const uint8_t * domain)
+        {
+            this->copyFromUtf8(this->Domain, domain);
+        }
+
+        void SetPasswordFromUtf8(const uint8_t * password)
+        {
+            this->copyFromUtf8(this->Password, password);
+        }
+
+        void clear()
+        {
+            this->User.init(0);
+            this->Domain.init(0);
+            this->Password.init(0);
+        }
+
+        void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
+        {
+            this->User.copy(user_utf16_av);
+            this->Domain.copy(domain_utf16_av);
+            this->Password.copy(password_utf16_av);
+        }
+
+    private:
+        static void copyFromUtf8(Array& arr, uint8_t const* data)
+        {
+            if (data) {
+                size_t user_len = UTF8Len(data);
+                arr.init(user_len * 2);
+                UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
+            }
+            else {
+                arr.init(0);
+            }
+        }
+    } identity;
+
     bool sspi_context_initialized = false;
     TimeObj & timeobj;
     Random & rand;
@@ -158,7 +262,111 @@ private:
     bool SendWorkstationName = true;
     Array Workstation;
     Array sspi_context_ServicePrincipalName;
-    SEC_WINNT_AUTH_IDENTITY sspi_context_identity;
+    struct SEC_WINNT_AUTH_IDENTITY_SSPI
+    {
+        // ntlm only
+        //@{
+        private:
+        Array User;
+        Array Domain;
+        public:
+        Array Password;
+        //@}
+
+        public:
+        SEC_WINNT_AUTH_IDENTITY_SSPI()
+            : User(0)
+            , Domain(0)
+            , Password(0)
+        {
+        }
+
+        void user_init_copy(cbytes_view av)
+        {
+            this->User.init(av.size());
+            this->User.copy(av);
+        }
+
+        void domain_init_copy(cbytes_view av)
+        {
+            this->Domain.init(av.size());
+            this->Domain.copy(av);
+        }
+
+        bool is_empty_user_domain(){
+            return (this->User.size() == 0) && (this->Domain.size() == 0);
+        }
+
+        cbytes_view get_password_utf16_av() const
+        {
+            cbytes_view av{this->Password.get_data(), this->Password.size()};
+            return av;
+        }
+
+        cbytes_view get_user_utf16_av() const
+        {
+            cbytes_view av{this->User.get_data(), this->User.size()};
+            return av;
+        }
+
+        cbytes_view get_domain_utf16_av() const
+        {
+            cbytes_view av{this->Domain.get_data(), this->Domain.size()};
+            return av;
+        }
+
+        void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
+        {
+            UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
+        }
+
+        void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
+            UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
+        }
+
+
+        void SetUserFromUtf8(const uint8_t * user)
+        {
+            this->copyFromUtf8(this->User, user);
+        }
+
+        void SetDomainFromUtf8(const uint8_t * domain)
+        {
+            this->copyFromUtf8(this->Domain, domain);
+        }
+
+        void SetPasswordFromUtf8(const uint8_t * password)
+        {
+            this->copyFromUtf8(this->Password, password);
+        }
+
+        void clear()
+        {
+            this->User.init(0);
+            this->Domain.init(0);
+            this->Password.init(0);
+        }
+
+        void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
+        {
+            this->User.copy(user_utf16_av);
+            this->Domain.copy(domain_utf16_av);
+            this->Password.copy(password_utf16_av);
+        }
+
+    private:
+        static void copyFromUtf8(Array& arr, uint8_t const* data)
+        {
+            if (data) {
+                size_t user_len = UTF8Len(data);
+                arr.init(user_len * 2);
+                UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
+            }
+            else {
+                arr.init(0);
+            }
+        }
+    } sspi_context_identity;
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -939,7 +1147,6 @@ public:
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
         this->SetHostnameFromUtf8(hostname);
-        this->identity.SetKrbAuthIdentity(user, pass);
 
         this->client_auth_data_state = Start;
 
