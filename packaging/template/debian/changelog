@@ -1,3 +1,10 @@
+redemption (1.1.163%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Add feature to list Kerberos tickets.
+  * Collect data of Web navigator.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 10 Jul 2019 14:43:48 +0200
+
 redemption (1.1.161%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * 21520 [Records] - Video generation is stuck
