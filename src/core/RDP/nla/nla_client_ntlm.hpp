@@ -242,12 +242,8 @@ private:
             
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
 
-            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
-            uint8_t * userup = unique_userup.get();
-            memcpy(userup, user.data(), user.size());
-            UTF16Upper(userup, user.size());
-
-            array_hmac_md5 ResponseKeyNT = ::HmacMd5(hash, {userup, user.size()}, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
+            auto userNameUppercase = ::UTF16_to_upper(user);
+            array_hmac_md5 ResponseKeyNT = ::HmacMd5(hash, userNameUppercase, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
             array_hmac_md5 NtProofStr = ::HmacMd5(ResponseKeyNT, make_array_view(this->ServerChallenge), {temp, temp_size});
 
             return 0 == memcmp(NtProofStr.data(), NtProofStr_from_msg, 16);
@@ -271,13 +267,8 @@ private:
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
 
-            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
-            uint8_t * userup = unique_userup.get();
-            memcpy(userup, user.data(), user.size());
-            UTF16Upper(userup, user.size());
-            unique_userup.reset();
-
-            array_hmac_md5 ResponseKeyLM = ::HmacMd5(hash, {userup, user.size()}, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
+            auto userNameUppercase = ::UTF16_to_upper(user);
+            array_hmac_md5 ResponseKeyLM = ::HmacMd5(hash, userNameUppercase, this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
             array_hmac_md5 compute_response = ::HmacMd5(make_array_view(ResponseKeyLM),{this->ServerChallenge, 8},{this->ClientChallenge, 8});
 
             return !memcmp(response, compute_response.data(), 16);
@@ -298,13 +289,8 @@ private:
             
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2 Hash");
 
-            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
-            uint8_t * userup = unique_userup.get();
-            memcpy(userup, user.data(), user.size());
-            UTF16Upper(userup, user.size());
-
-            array_hmac_md5 ResponseKeyNT = ::HmacMd5(hash, {userup, user.size()}, DomainName.av());
-            unique_userup.reset();
+            auto userNameUppercase = ::UTF16_to_upper(user);
+            array_hmac_md5 ResponseKeyNT = ::HmacMd5(hash, userNameUppercase, DomainName.av());
             
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
             this->SessionBaseKey = ::HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
@@ -323,10 +309,6 @@ private:
             }
             this->NegotiateFlags = negoFlag;
             return true;
-        }
-
-        void ntlm_set_negotiate_flags() {
-
         }
 
         void ntlm_set_negotiate_flags_auth() {
@@ -520,33 +502,15 @@ private:
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
             array_md4 md4password = ::Md4(password);
-
-//            auto userNameUppercase = ::UTF16_to_upper(userName);
-
-            auto unique_userup = std::make_unique<uint8_t[]>(userName.size());
-            uint8_t * userup = unique_userup.get();
-            memcpy(userup, userName.data(), userName.size());
-            UTF16Upper(userup, userName.size());
-
-            array_hmac_md5 ResponseKeyNT = ::HmacMd5(md4password,{userup, userName.size()},userDomain);
-
-            unique_userup.reset();
-            userup = nullptr;
+            auto userNameUppercase = ::UTF16_to_upper(userName);
+            array_hmac_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase,userDomain);
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
 
             array_md4 md4password_b = ::Md4(password);
+            auto userNameUppercase_b = ::UTF16_to_upper(userName);
+            array_hmac_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b,userDomain);
 
-            auto unique_userup_b = std::make_unique<uint8_t[]>(userName.size());
-            uint8_t * userup_b = unique_userup_b.get();
-            memcpy(userup_b, userName.data(), userName.size());
-            UTF16Upper(userup_b, userName.size());
-
-            array_hmac_md5 ResponseKeyLM = ::HmacMd5(md4password_b,{userup_b, userName.size()},userDomain);
-
-            unique_userup_b.reset();
-            userup = nullptr;
-            
             // struct NTLMv2_Client_Challenge = temp
             // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
             // Z(n) = { 0x00, ... , 0x00 } n times
@@ -680,16 +644,46 @@ private:
             this->RecvRc4Seal.set_key(make_array_view(this->ServerSealingKey));
 
             
-            this->ntlm_set_negotiate_flags_auth();
-            // this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+            this->NegotiateFlags = 0;
+            if (this->NTLMv2) {
+                this->NegotiateFlags |= NTLMSSP_NEGOTIATE_56;
+                if (this->SendVersionInfo) {
+                    this->NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
+                }
+            }
 
-            uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
-            if (flag & NTLMSSP_NEGOTIATE_VERSION) {
+            if (this->UseMIC) {
+                this->NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+            }
+            if (this->SendWorkstationName) {
+                this->NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+            }
+            if (this->confidentiality) {
+                this->NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
+            }
+            if (this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
+                this->NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+            }
+            this->NegotiateFlags |= (NTLMSSP_NEGOTIATE_128
+                                   | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
+                                   | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                                   | NTLMSSP_NEGOTIATE_NTLM
+                                   | NTLMSSP_NEGOTIATE_SIGN
+                                   | NTLMSSP_REQUEST_TARGET
+                                   | NTLMSSP_NEGOTIATE_UNICODE);
+
+            this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+
+            if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
+                this->version.ntlm_get_version_info();
                 this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
             }
             else {
+                this->version.ignore_version_info();
                 this->AUTHENTICATE_MESSAGE.version.ignore_version_info();
             }
+
+            uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
 
             if (!(flag & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
                 // If flag is not set, encryted session key buffer is not send
