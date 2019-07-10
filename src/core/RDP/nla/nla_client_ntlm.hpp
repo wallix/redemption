@@ -172,16 +172,6 @@ private:
             return av;
         }
 
-        void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
-        {
-            UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
-        }
-
-        void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
-            UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
-        }
-
-
         void SetUserFromUtf8(const uint8_t * user)
         {
             this->copyFromUtf8(this->User, user);
@@ -202,13 +192,6 @@ private:
             this->User.init(0);
             this->Domain.init(0);
             this->Password.init(0);
-        }
-
-        void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
-        {
-            this->User.copy(user_utf16_av);
-            this->Domain.copy(domain_utf16_av);
-            this->Password.copy(password_utf16_av);
         }
 
     private:
@@ -283,30 +266,6 @@ private:
             return av;
         }
 
-        void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
-        {
-            UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
-        }
-
-        void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
-            UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
-        }
-
-
-        void SetUserFromUtf8(const uint8_t * user)
-        {
-            this->copyFromUtf8(this->User, user);
-        }
-
-        void SetDomainFromUtf8(const uint8_t * domain)
-        {
-            this->copyFromUtf8(this->Domain, domain);
-        }
-
-        void SetPasswordFromUtf8(const uint8_t * password)
-        {
-            this->copyFromUtf8(this->Password, password);
-        }
 
         void clear()
         {
@@ -322,18 +281,6 @@ private:
             this->Password.copy(password_utf16_av);
         }
 
-    private:
-        static void copyFromUtf8(Array& arr, uint8_t const* data)
-        {
-            if (data) {
-                size_t user_len = UTF8Len(data);
-                arr.init(user_len * 2);
-                UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
-            }
-            else {
-                arr.init(0);
-            }
-        }
     } sspi_context_identity;
 
     // bool SendSingleHostData;
