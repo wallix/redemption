@@ -166,8 +166,8 @@ private:
 
     NtlmVersion version;
     std::vector<uint8_t> SavedNegotiateMessage;
-    Array SavedChallengeMessage;
-    Array SavedAuthenticateMessage;
+    std::vector<uint8_t> SavedChallengeMessage;
+    std::vector<uint8_t> SavedAuthenticateMessage;
 
     uint8_t Timestamp[8]{};
     uint8_t ChallengeTimestamp[8]{};
@@ -187,8 +187,7 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
         InStream in_stream(input_buffer);
         this->CHALLENGE_MESSAGE.recv(in_stream);
-        this->SavedChallengeMessage.init(in_stream.get_offset());
-        this->SavedChallengeMessage.copy(in_stream.get_bytes());
+        this->SavedChallengeMessage.assign(in_stream.get_bytes().data(),in_stream.get_bytes().data()+in_stream.get_offset());
 
         this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -401,13 +400,12 @@ private:
             this->AUTHENTICATE_MESSAGE.emit(out_stream);
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
-            this->SavedAuthenticateMessage.init(out_stream.get_offset());
-            this->SavedAuthenticateMessage.copy(out_stream.get_bytes());
+            this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
             this->MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey, 
                                                     this->SavedNegotiateMessage,
-                                                    this->SavedChallengeMessage.av(),
-                                                    this->SavedAuthenticateMessage.av());
+                                                    this->SavedChallengeMessage,
+                                                    this->SavedAuthenticateMessage);
 
             memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck.data(), this->MessageIntegrityCheck.size());
         }
@@ -681,15 +679,6 @@ private:
         return SEC_E_OK;
     }
 
-    void credssp_buffer_free() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::buffer_free");
-        this->ts_request.negoTokens.init(0);
-        this->ts_request.pubKeyAuth.init(0);
-        this->ts_request.authInfo.init(0);
-        this->ts_request.clientNonce.reset();
-        this->ts_request.error_code = 0;
-    }
-
     enum class Res : bool { Err, Ok };
 
     enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
@@ -703,13 +692,15 @@ private:
         this->ts_request.recv(in_stream);
 
         /* Verify Server Public Key Echo */
-
         SEC_STATUS status = this->credssp_decrypt_public_key_echo();
-        this->credssp_buffer_free();
+        this->ts_request.negoTokens.init(0);
+        this->ts_request.pubKeyAuth.init(0);
+        this->ts_request.authInfo.init(0);
+        this->ts_request.clientNonce.reset();
+        this->ts_request.error_code = 0;
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "Could not verify public key echo!");
-            this->credssp_buffer_free();
             return Res::Err;
         }
 
@@ -751,7 +742,11 @@ private:
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         transport.get_transport().send(ts_request_emit.get_bytes());
-        this->credssp_buffer_free();
+        this->ts_request.negoTokens.init(0);
+        this->ts_request.pubKeyAuth.init(0);
+        this->ts_request.authInfo.init(0);
+        this->ts_request.clientNonce.reset();
+        this->ts_request.error_code = 0;
 
         return Res::Ok;
     }
@@ -773,8 +768,6 @@ public:
         , SavedClientNonce()
         , timeobj(timeobj)
         , rand(rand)
-        , SavedChallengeMessage(0)
-        , SavedAuthenticateMessage(0)
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
         , extra_message(extra_message)
@@ -888,24 +881,21 @@ public:
         this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
 
-        SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
-
         /* send authentication token to server */
-        if ((this->ts_request.negoTokens.size() > 0)||(encrypted == SEC_E_OK)) {
-            // #ifdef WITH_DEBUG_CREDSSP
-            //             LOG(LOG_ERR, "Sending Authentication Token");
-            //             hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
-            // #endif
+        if (this->ts_request.negoTokens.size() > 0) {
             if (this->ts_request.negoTokens.size() > 0){
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
             }
 
-            LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::send");
             StaticOutStream<65536> ts_request_emit;
             this->ts_request.emit(ts_request_emit);
             transport.get_transport().send(ts_request_emit.get_bytes());
 
-            this->credssp_buffer_free();
+            this->ts_request.negoTokens.init(0);
+            this->ts_request.pubKeyAuth.init(0);
+            this->ts_request.authInfo.init(0);
+            this->ts_request.clientNonce.reset();
+            this->ts_request.error_code = 0;
         }
     }
 
@@ -1037,7 +1027,11 @@ public:
                     this->ts_request.emit(ts_request_emit);
                     transport.get_transport().send(ts_request_emit.get_bytes());
 
-                    this->credssp_buffer_free();
+                    this->ts_request.negoTokens.init(0);
+                    this->ts_request.pubKeyAuth.init(0);
+                    this->ts_request.authInfo.init(0);
+                    this->ts_request.clientNonce.reset();
+                    this->ts_request.error_code = 0;
                 }
 
                 if (status != SEC_I_CONTINUE_NEEDED) {
