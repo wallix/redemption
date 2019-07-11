@@ -501,22 +501,23 @@ private:
     SEC_STATUS sspi_InitializeSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer)
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
+        auto status = SEC_E_OUT_OF_SEQUENCE;
 
         if (this->sspi_context_state == NTLM_STATE_INITIAL) {
             this->sspi_context_state = NTLM_STATE_NEGOTIATE;
         }
         if (this->sspi_context_state == NTLM_STATE_NEGOTIATE) {
-            return this->sspi_context_write_negotiate(output_buffer);
+            status = this->sspi_context_write_negotiate(output_buffer);
         }
-
-        if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
-            this->sspi_context_read_challenge(input_buffer);
+        else {
+            if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
+                this->sspi_context_read_challenge(input_buffer);
+            }
+            if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
+                status = this->sspi_context_write_authenticate(output_buffer, this->rand, this->timeobj);
+            }
         }
-        if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
-            return this->sspi_context_write_authenticate(output_buffer, this->rand, this->timeobj);
-        }
-
-        return SEC_E_OUT_OF_SEQUENCE;
+        return status;
     }
 
     // GSS_Wrap
@@ -1017,6 +1018,7 @@ public:
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
                 SEC_STATUS status = this->sspi_InitializeSecurityContext(this->client_auth_data_input_buffer,/*output*/this->ts_request.negoTokens);
+
 
                 if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
                     (status != SEC_I_COMPLETE_NEEDED) &&
