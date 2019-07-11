@@ -159,10 +159,6 @@ private:
     Array Workstation;
     Array sspi_context_ServicePrincipalName;
 
-    std::vector<uint8_t> sspi_context_identity_User;
-    std::vector<uint8_t> sspi_context_identity_Domain;
-    std::vector<uint8_t> sspi_context_identity_Password;
-
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
     NTLMNegotiateMessage NEGOTIATE_MESSAGE;
@@ -234,7 +230,7 @@ private:
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
             auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             domain.reset();
-            domain.ostream.out_copy_bytes(this->sspi_context_identity_Domain);
+            domain.ostream.out_copy_bytes(this->identity_Domain);
             domain.mark_end();
         }
 
@@ -311,15 +307,15 @@ private:
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
-        array_md4 md4password = ::Md4(this->sspi_context_identity_Password);
-        auto userNameUppercase = ::UTF16_to_upper(this->sspi_context_identity_User);
-        array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase, this->sspi_context_identity_Domain);
+        array_md4 md4password = ::Md4(this->identity_Password);
+        auto userNameUppercase = ::UTF16_to_upper(this->identity_User);
+        array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase, this->identity_Domain);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
 
-        array_md4 md4password_b = ::Md4(this->sspi_context_identity_Password);
-        auto userNameUppercase_b = ::UTF16_to_upper(this->sspi_context_identity_User);
-        array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b, this->sspi_context_identity_Domain);
+        array_md4 md4password_b = ::Md4(this->identity_Password);
+        auto userNameUppercase_b = ::UTF16_to_upper(this->identity_User);
+        array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b, this->identity_Domain);
 
         // struct NTLMv2_Client_Challenge = temp
         // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
@@ -490,11 +486,11 @@ private:
 
         //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
         this->AUTHENTICATE_MESSAGE.DomainName.buffer.reset();
-        this->AUTHENTICATE_MESSAGE.DomainName.buffer.ostream.out_copy_bytes(this->sspi_context_identity_Domain);
+        this->AUTHENTICATE_MESSAGE.DomainName.buffer.ostream.out_copy_bytes(this->identity_Domain);
         this->AUTHENTICATE_MESSAGE.DomainName.buffer.mark_end();
 
         this->AUTHENTICATE_MESSAGE.UserName.buffer.reset();
-        this->AUTHENTICATE_MESSAGE.UserName.buffer.ostream.out_copy_bytes(this->sspi_context_identity_User);
+        this->AUTHENTICATE_MESSAGE.UserName.buffer.ostream.out_copy_bytes(this->identity_User);
         this->AUTHENTICATE_MESSAGE.UserName.buffer.mark_end();
 
         this->sspi_context_state = NTLM_STATE_FINAL;
@@ -541,9 +537,6 @@ private:
 
             this->sspi_context_ntlm_SetContextWorkstation(pszTargetName);
             this->sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
-            this->sspi_context_identity_User = this->identity_User;
-            this->sspi_context_identity_Domain = this->identity_Domain;
-            this->sspi_context_identity_Password = this->identity_Password;
             this->sspi_context_initialized = true;
         }
 
