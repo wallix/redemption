@@ -934,7 +934,11 @@ public:
 
 
         /* receive server response and place in input buffer */
-        SEC_STATUS status1 = this->sspi_InitializeSecurityContext(this->client_auth_data_input_buffer,/*output*/this->ts_request.negoTokens);
+        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
+
+        this->sspi_context_state = NTLM_STATE_NEGOTIATE;
+        SEC_STATUS status1 = this->sspi_context_write_negotiate(this->ts_request.negoTokens);
+
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
         if ((status1 != SEC_I_COMPLETE_AND_CONTINUE) &&
