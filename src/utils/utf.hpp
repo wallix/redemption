@@ -28,6 +28,7 @@
 #include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint>
+#include <vector>
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -63,7 +64,7 @@ bool UTF8InsertOneAtPos(uint8_t * source, std::size_t len, const uint32_t to_ins
 std::size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len) noexcept;
 std::size_t UTF8toUTF16(const_bytes_view source, bytes_view target) noexcept;
 //std::size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, std::size_t t_len);
-
+std::vector<uint8_t> UTF8toUTF16(const_bytes_view source) noexcept;
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 std::size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, std::size_t t_len) noexcept;
