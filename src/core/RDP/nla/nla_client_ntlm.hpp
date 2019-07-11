@@ -132,7 +132,7 @@ private:
     std::vector<uint8_t> PublicKey;
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
-    Array ServicePrincipalName;
+    std::vector<uint8_t> ServicePrincipalName;
     std::vector<uint8_t> identity_User;
     std::vector<uint8_t> identity_Domain;
     std::vector<uint8_t> identity_Password;
@@ -578,13 +578,6 @@ private:
     Translation::language_t lang;
     const bool verbose;
 
-    void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
-        this->ServicePrincipalName.init(length + 1);
-        this->ServicePrincipalName.copy({pszTargetName, length});
-        this->ServicePrincipalName.get_data()[length] = 0;
-    }
-
     void credssp_generate_client_nonce(Random & rand) {
         LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
         rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
@@ -889,10 +882,14 @@ public:
         this->identity_Domain = ::UTF8toUTF16({domain,strlen(reinterpret_cast<char*>(domain))});
         this->identity_Password = ::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))});
 
-        size_t length = (hostname && *hostname) ? strlen(char_ptr_cast(hostname)) : 0;
-        this->ServicePrincipalName.init(length + 1);
-        this->ServicePrincipalName.copy({hostname, length});
-        this->ServicePrincipalName.get_data()[length] = 0;
+        if (hostname){
+            size_t length = strlen(char_ptr_cast(hostname));
+            this->ServicePrincipalName.assign(hostname, hostname + length);
+        }
+        else {
+            this->ServicePrincipalName.clear();
+        }
+        this->ServicePrincipalName.push_back(0);
 
         this->client_auth_data_state = Start;
 
@@ -921,7 +918,7 @@ public:
         //unsigned long const fContextReq
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        array_view_const_char spn = bytes_view(this->ServicePrincipalName.av()).as_chars();
+        array_view_const_char spn = bytes_view(this->ServicePrincipalName).as_chars();
         if (!this->sspi_context_initialized) {
             if (!spn.empty()) {
                 this->Workstation = ::UTF8toUTF16(spn);
@@ -1013,7 +1010,7 @@ public:
                 //unsigned long const fContextReq
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-                array_view_const_char spn = bytes_view(this->ServicePrincipalName.av()).as_chars();
+                array_view_const_char spn = bytes_view(this->ServicePrincipalName).as_chars();
                 if (!this->sspi_context_initialized) {
                     if (!spn.empty()) {
                         this->Workstation = ::UTF8toUTF16(spn);
