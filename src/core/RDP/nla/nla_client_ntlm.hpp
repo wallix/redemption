@@ -157,7 +157,6 @@ private:
     //int LmCompatibilityLevel;
     bool SendWorkstationName = true;
     std::vector<uint8_t> Workstation;
-    Array sspi_context_ServicePrincipalName;
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -238,18 +237,6 @@ private:
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
     // all strings are in unicode utf16
-
-    void sspi_context_ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
-        // CHECK UTF8 or UTF16 (should store in UTF16)
-        if (!pszTargetName.empty()) {
-            size_t host_len = UTF8Len(pszTargetName.data());
-            this->sspi_context_ServicePrincipalName.init(host_len * 2);
-            UTF8toUTF16(pszTargetName, this->sspi_context_ServicePrincipalName.get_data(), host_len * 2);
-        }
-        else {
-            this->sspi_context_ServicePrincipalName.init(0);
-        }
-    }
 
     // READ WRITE FUNCTIONS
     SEC_STATUS sspi_context_write_negotiate(Array& output_buffer) {
@@ -525,7 +512,6 @@ private:
                 this->Workstation.clear();
                 this->SendWorkstationName = false;
             }
-            this->sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
             this->sspi_context_initialized = true;
         }
 
@@ -898,7 +884,6 @@ public:
         , SavedClientNonce()
         , timeobj(timeobj)
         , rand(rand)
-        , sspi_context_ServicePrincipalName(0)
         , SavedNegotiateMessage(0)
         , SavedChallengeMessage(0)
         , SavedAuthenticateMessage(0)
