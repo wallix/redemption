@@ -148,7 +148,7 @@ private:
     std::vector<uint8_t> ServerClientHash;
     Array ServicePrincipalName;
     std::vector<uint8_t> identity_User;
-    Array identity_Domain;
+    std::vector<uint8_t> identity_Domain;
     Array identity_Password;
 
     bool sspi_context_initialized = false;
@@ -174,7 +174,7 @@ private:
     Array sspi_context_ServicePrincipalName;
 
     std::vector<uint8_t> sspi_context_identity_User;
-    Array sspi_context_identity_Domain;
+    std::vector<uint8_t> sspi_context_identity_Domain;
     Array sspi_context_identity_Password;
 
     // bool SendSingleHostData;
@@ -248,9 +248,7 @@ private:
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
             auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             domain.reset();
-            cbytes_view domain_utf16_av{this->sspi_context_identity_Domain.get_data(), this->sspi_context_identity_Domain.size()};
-            auto domain_av = domain_utf16_av;
-            domain.ostream.out_copy_bytes(domain_av);
+            domain.ostream.out_copy_bytes(this->sspi_context_identity_Domain);
             domain.mark_end();
         }
 
@@ -317,8 +315,6 @@ private:
         
         cbytes_view password_utf16_av{this->sspi_context_identity_Password.get_data(), this->sspi_context_identity_Password.size()};
         auto password = password_utf16_av;
-        cbytes_view domain_utf16_av{this->sspi_context_identity_Domain.get_data(), this->sspi_context_identity_Domain.size()};
-        auto userDomain = domain_utf16_av;
         auto workstation = this->Workstation.av();
 
         // client method
@@ -333,13 +329,13 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
         array_md4 md4password = ::Md4(password);
         auto userNameUppercase = ::UTF16_to_upper(this->sspi_context_identity_User);
-        array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase,userDomain);
+        array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase, this->sspi_context_identity_Domain);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
 
         array_md4 md4password_b = ::Md4(password);
         auto userNameUppercase_b = ::UTF16_to_upper(this->sspi_context_identity_User);
-        array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b,userDomain);
+        array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b, this->sspi_context_identity_Domain);
 
         // struct NTLMv2_Client_Challenge = temp
         // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
@@ -510,7 +506,7 @@ private:
 
         //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
         this->AUTHENTICATE_MESSAGE.DomainName.buffer.reset();
-        this->AUTHENTICATE_MESSAGE.DomainName.buffer.ostream.out_copy_bytes(userDomain);
+        this->AUTHENTICATE_MESSAGE.DomainName.buffer.ostream.out_copy_bytes(this->sspi_context_identity_Domain);
         this->AUTHENTICATE_MESSAGE.DomainName.buffer.mark_end();
 
         this->AUTHENTICATE_MESSAGE.UserName.buffer.reset();
@@ -562,12 +558,10 @@ private:
             this->sspi_context_ntlm_SetContextWorkstation(pszTargetName);
             this->sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
 
-
-            cbytes_view domain_utf16_av{this->identity_Domain.get_data(), this->identity_Domain.size()};
             cbytes_view password_utf16_av{this->identity_Password.get_data(), this->identity_Password.size()};
 
             this->sspi_context_identity_User = this->identity_User;
-            this->sspi_context_identity_Domain.copy(domain_utf16_av);
+            this->sspi_context_identity_Domain = this->identity_Domain;
             this->sspi_context_identity_Password.copy(password_utf16_av);
             this->sspi_context_initialized = true;
         }
@@ -889,9 +883,8 @@ private:
             this->ts_credentials.set_credentials_from_av({},{},{});
         }
         else {
-            cbytes_view av_domain{this->identity_Domain.get_data(), this->identity_Domain.size()};
             cbytes_view av_password{this->identity_Password.get_data(), this->identity_Password.size()};
-            this->ts_credentials.set_credentials_from_av(av_domain, this->identity_User, av_password);
+            this->ts_credentials.set_credentials_from_av(this->identity_Domain, this->identity_User, av_password);
         }
 
         StaticOutStream<65536> ts_credentials_send;
@@ -945,8 +938,6 @@ public:
         , rand(rand)
         , Workstation(0)
         , sspi_context_ServicePrincipalName(0)
-        , sspi_context_identity_User(0)
-        , sspi_context_identity_Domain(0)
         , sspi_context_identity_Password(0)
         , SavedNegotiateMessage(0)
         , SavedChallengeMessage(0)
@@ -963,7 +954,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::Initialization");
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::set_credentials");
         this->identity_User = ::UTF8toUTF16({user,strlen(reinterpret_cast<char*>(user))});
-        copyFromUtf8(this->identity_Domain, domain);
+        this->identity_Domain = ::UTF8toUTF16({domain,strlen(reinterpret_cast<char*>(domain))});
         copyFromUtf8(this->identity_Password, pass);
         this->SetHostnameFromUtf8(hostname);
 
