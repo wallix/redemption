@@ -117,22 +117,8 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
     return result;
 }
 
-
-static inline void copyFromUtf8(Array& arr, uint8_t const* data)
-{
-    if (data) {
-        size_t user_len = UTF8Len(data);
-        arr.init(user_len * 2);
-        UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
-    }
-    else {
-        arr.init(0);
-    }
-}
-
 class rdpCredsspClientNTLM
 {
-
     static constexpr uint32_t cbMaxSignature = 16;
 private:
     int send_seq_num = 0;
@@ -149,7 +135,7 @@ private:
     Array ServicePrincipalName;
     std::vector<uint8_t> identity_User;
     std::vector<uint8_t> identity_Domain;
-    Array identity_Password;
+    std::vector<uint8_t> identity_Password;
 
     bool sspi_context_initialized = false;
     TimeObj & timeobj;
@@ -175,7 +161,7 @@ private:
 
     std::vector<uint8_t> sspi_context_identity_User;
     std::vector<uint8_t> sspi_context_identity_Domain;
-    Array sspi_context_identity_Password;
+    std::vector<uint8_t> sspi_context_identity_Password;
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -313,8 +299,6 @@ private:
     SEC_STATUS sspi_context_write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
         
-        cbytes_view password_utf16_av{this->sspi_context_identity_Password.get_data(), this->sspi_context_identity_Password.size()};
-        auto password = password_utf16_av;
         auto workstation = this->Workstation.av();
 
         // client method
@@ -327,13 +311,13 @@ private:
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
-        array_md4 md4password = ::Md4(password);
+        array_md4 md4password = ::Md4(this->sspi_context_identity_Password);
         auto userNameUppercase = ::UTF16_to_upper(this->sspi_context_identity_User);
         array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase, this->sspi_context_identity_Domain);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
 
-        array_md4 md4password_b = ::Md4(password);
+        array_md4 md4password_b = ::Md4(this->sspi_context_identity_Password);
         auto userNameUppercase_b = ::UTF16_to_upper(this->sspi_context_identity_User);
         array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b, this->sspi_context_identity_Domain);
 
@@ -557,12 +541,9 @@ private:
 
             this->sspi_context_ntlm_SetContextWorkstation(pszTargetName);
             this->sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
-
-            cbytes_view password_utf16_av{this->identity_Password.get_data(), this->identity_Password.size()};
-
             this->sspi_context_identity_User = this->identity_User;
             this->sspi_context_identity_Domain = this->identity_Domain;
-            this->sspi_context_identity_Password.copy(password_utf16_av);
+            this->sspi_context_identity_Password = this->identity_Password;
             this->sspi_context_initialized = true;
         }
 
@@ -883,8 +864,7 @@ private:
             this->ts_credentials.set_credentials_from_av({},{},{});
         }
         else {
-            cbytes_view av_password{this->identity_Password.get_data(), this->identity_Password.size()};
-            this->ts_credentials.set_credentials_from_av(this->identity_Domain, this->identity_User, av_password);
+            this->ts_credentials.set_credentials_from_av(this->identity_Domain, this->identity_User, this->identity_Password);
         }
 
         StaticOutStream<65536> ts_credentials_send;
@@ -938,7 +918,6 @@ public:
         , rand(rand)
         , Workstation(0)
         , sspi_context_ServicePrincipalName(0)
-        , sspi_context_identity_Password(0)
         , SavedNegotiateMessage(0)
         , SavedChallengeMessage(0)
         , SavedAuthenticateMessage(0)
@@ -955,7 +934,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::set_credentials");
         this->identity_User = ::UTF8toUTF16({user,strlen(reinterpret_cast<char*>(user))});
         this->identity_Domain = ::UTF8toUTF16({domain,strlen(reinterpret_cast<char*>(domain))});
-        copyFromUtf8(this->identity_Password, pass);
+        this->identity_Password = ::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))});
         this->SetHostnameFromUtf8(hostname);
 
         this->client_auth_data_state = Start;
