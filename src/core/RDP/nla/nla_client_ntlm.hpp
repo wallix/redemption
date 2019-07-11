@@ -189,13 +189,6 @@ private:
         {
         }
 
-        void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
-        {
-            this->sspi_context_identity_User.copy(user_utf16_av);
-            this->sspi_context_identity_Domain.copy(domain_utf16_av);
-            this->sspi_context_identity_Password.copy(password_utf16_av);
-        }
-
     } sspi_context_identity;
 
     // bool SendSingleHostData;
@@ -586,10 +579,13 @@ private:
             this->sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
 
 
-            cbytes_view av_user{this->identity_User.get_data(), this->identity_User.size()};
-            cbytes_view av_domain{this->identity_Domain.get_data(), this->identity_Domain.size()};
-            cbytes_view av_password{this->identity_Password.get_data(), this->identity_Password.size()};
-            this->sspi_context_identity.CopyAuthIdentity(av_user, av_domain, av_password);
+            cbytes_view user_utf16_av{this->identity_User.get_data(), this->identity_User.size()};
+            cbytes_view domain_utf16_av{this->identity_Domain.get_data(), this->identity_Domain.size()};
+            cbytes_view password_utf16_av{this->identity_Password.get_data(), this->identity_Password.size()};
+
+            this->sspi_context_identity.sspi_context_identity_User.copy(user_utf16_av);
+            this->sspi_context_identity.sspi_context_identity_Domain.copy(domain_utf16_av);
+            this->sspi_context_identity.sspi_context_identity_Password.copy(password_utf16_av);
             this->sspi_context_initialized = true;
         }
 
