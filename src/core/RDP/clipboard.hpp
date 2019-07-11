@@ -1793,23 +1793,16 @@ public:
             size_of_fileName_unicode_data);
     }
 
-    void receive(InStream & stream) {
-        {
-            const unsigned expected = 592;  // flags(4) + reserved1(32) +
-                                            //     fileAttributes(4) +
-                                            //     reserved2(16) +
-                                            //     lastWriteTime(8) +
-                                            //     fileSizeHigh(4) +
-                                            //     fileSizeLow(4) +
-                                            //     fileName(520)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileDescriptor: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+    void receive(InStream & stream)
+    {
+        // flags(4) + reserved1(32) +
+        //     fileAttributes(4) +
+        //     reserved2(16) +
+        //     lastWriteTime(8) +
+        //     fileSizeHigh(4) +
+        //     fileSizeLow(4) +
+        //     fileName(520)
+        check_throw(stream, 592, "FileDescriptor", ERR_RDPDR_PDU_TRUNCATED);
 
         this->flags = stream.in_uint32_le();
 

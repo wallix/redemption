@@ -176,8 +176,11 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
-                FormatDataRequestReceive receiver(this->clip_data, this->clip_data.client_data, this->verbose, chunk);
+                FormatDataRequestReceive receiver(this->clip_data, this->verbose, chunk);
                 if (!this->params.clipboard_down_authorized) {
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
+                            "Server to client Clipboard operation is not allowed.");
 
                     FormatDataRequestSendBack sender(this->to_client_sender_ptr());
                 }
@@ -186,43 +189,9 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                FormatDataResponseReceive receiver(
-                    this->clip_data.requestedFormatId,
-                    chunk,
-                    header,
-                    this->params.dont_log_data_into_syslog,
-                    this->clip_data.client_data.file_list_format_id,
-                    flags,
-                    this->clip_data.client_data.file_descriptor_stream,
-                    this->verbose,
-                    "server");
-
-                auto file_list_format_id = this->clip_data.client_data.file_list_format_id;
-
-                if (file_list_format_id && this->clip_data.requestedFormatId == file_list_format_id) {
-
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        this->clip_data.requestedFormatId = 0;
-                    }
-
-                    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
-                        this->clip_data.client_data.update_file_contents_request_inventory(fd);
-                    }
-                }
-
-                if (!file_list_format_id
-                    || !(this->clip_data.requestedFormatId == file_list_format_id)) {
-
-                    const bool is_from_remote_session = false;
-                    this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
-
-                    this->file_descr_list.insert(
-                        this->file_descr_list.end(),
-                        receiver.files_descriptors.begin(),
-                        receiver.files_descriptors.end());
-                }
-
-                send_message_to_server = true;
+                const bool is_from_remote_session = false;
+                send_message_to_server = this->process_format_data_response_pdu(
+                    flags, chunk, header, is_from_remote_session);
             }
             break;
 
@@ -305,7 +274,7 @@ public:
     {
         (void)total_length;
         (void)flags;
-        FormatDataRequestReceive receiver(this->clip_data, this->clip_data.server_data, this->verbose, chunk);
+        FormatDataRequestReceive receiver(this->clip_data, this->verbose, chunk);
 
         if (this->format_data_request_notifier &&
             (this->clip_data.requestedFormatId  == RDPECLIP::CF_TEXT)) {
@@ -326,44 +295,8 @@ public:
             return false;
         }
 
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
-                "requestedFormatId=%s(%u)",
-            RDPECLIP::get_FormatId_name(this->clip_data.requestedFormatId ),
-            this->clip_data.requestedFormatId );
-
         return true;
     }   // process_server_format_data_request_pdu
-
-
-
-    bool process_server_format_data_response_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
-    {
-        (void)total_length;
-
-        FormatDataResponseReceive receiver(
-            this->clip_data.requestedFormatId ,
-            chunk,
-            in_header,
-            this->params.dont_log_data_into_syslog,
-            this->clip_data.server_data.file_list_format_id,
-            flags,
-            this->clip_data.server_data.file_descriptor_stream,
-            this->verbose,
-            "client"
-        );
-
-        this->file_descr_list.insert(
-            this->file_descr_list.end(),
-            receiver.files_descriptors.begin(),
-            receiver.files_descriptors.end());
-
-        const bool is_from_remote_session = true;
-        this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
-
-        return true;
-    }   // process_server_format_data_response_pdu
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
@@ -453,10 +386,11 @@ public:
                         total_length, flags, chunk, header);
             break;
 
-            case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                send_message_to_client =
-                    this->process_server_format_data_response_pdu(
-                        total_length, flags, chunk, header);
+            case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
+                const bool is_from_remote_session = true;
+                send_message_to_client = this->process_format_data_response_pdu(
+                    flags, chunk, header, is_from_remote_session);
+            }
             break;
 
             case RDPECLIP::CB_CLIP_CAPS:
@@ -770,6 +704,50 @@ public:
     }
 
 private:
+    bool process_format_data_response_pdu(uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header, bool is_from_remote_session)
+    {
+        auto& side_data = is_from_remote_session
+            ? this->clip_data.server_data
+            : this->clip_data.client_data;
+        auto requested_format_id = this->clip_data.requestedFormatId;
+        auto file_list_format_id = side_data.file_list_format_id;
+
+        if (file_list_format_id && requested_format_id == file_list_format_id) {
+            FormatDataResponseReceiveFileList receiver(
+                chunk,
+                in_header,
+                this->params.dont_log_data_into_syslog,
+                side_data.file_list_format_id,
+                flags,
+                side_data.file_descriptor_stream,
+                this->verbose,
+                is_from_remote_session ? "client" : "server"
+            );
+
+            this->file_descr_list.insert(
+                this->file_descr_list.end(),
+                receiver.files_descriptors.begin(),
+                receiver.files_descriptors.end());
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                this->clip_data.requestedFormatId = 0;
+            }
+
+            for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
+                side_data.update_file_contents_request_inventory(fd);
+            }
+
+            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, std::string{}, is_from_remote_session);
+        }
+        else {
+            FormatDataResponseReceive receiver(requested_format_id, chunk, flags);
+
+            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+        }
+
+        return true;
+    }
+
     bool process_format_list_pdu(
         uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header,
         VirtualChannelDataSender* sender, ClipboardSideData& clip_data, bool clip_enabled)
