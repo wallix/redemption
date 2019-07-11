@@ -498,31 +498,9 @@ private:
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    SEC_STATUS sspi_InitializeSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer)
-    {
-        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
-        auto status = SEC_E_OUT_OF_SEQUENCE;
-
-        if (this->sspi_context_state == NTLM_STATE_INITIAL) {
-            this->sspi_context_state = NTLM_STATE_NEGOTIATE;
-        }
-        if (this->sspi_context_state == NTLM_STATE_NEGOTIATE) {
-            status = this->sspi_context_write_negotiate(output_buffer);
-        }
-        else {
-            if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
-                this->sspi_context_read_challenge(input_buffer);
-            }
-            if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
-                status = this->sspi_context_write_authenticate(output_buffer, this->rand, this->timeobj);
-            }
-        }
-        return status;
-    }
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
@@ -1017,8 +995,23 @@ public:
                 //unsigned long const fContextReq
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-                SEC_STATUS status = this->sspi_InitializeSecurityContext(this->client_auth_data_input_buffer,/*output*/this->ts_request.negoTokens);
+                LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
+                auto status = SEC_E_OUT_OF_SEQUENCE;
 
+                if (this->sspi_context_state == NTLM_STATE_INITIAL) {
+                    this->sspi_context_state = NTLM_STATE_NEGOTIATE;
+                }
+                if (this->sspi_context_state == NTLM_STATE_NEGOTIATE) {
+                    status = this->sspi_context_write_negotiate(this->ts_request.negoTokens);
+                }
+                else {
+                    if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
+                        this->sspi_context_read_challenge(this->client_auth_data_input_buffer);
+                    }
+                    if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
+                        status = this->sspi_context_write_authenticate(this->ts_request.negoTokens, this->rand, this->timeobj);
+                    }
+                }
 
                 if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
                     (status != SEC_I_COMPLETE_NEEDED) &&
