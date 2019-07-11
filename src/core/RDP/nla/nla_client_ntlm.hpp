@@ -839,7 +839,6 @@ public:
         //unsigned long const fContextReq
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-
         /* receive server response and place in input buffer */
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
@@ -891,27 +890,6 @@ public:
         SEC_STATUS status1 = SEC_I_CONTINUE_NEEDED;
 
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
-
-        if ((status1 != SEC_I_COMPLETE_AND_CONTINUE) &&
-            (status1 != SEC_I_COMPLETE_NEEDED) &&
-            (status1 != SEC_E_OK) &&
-            (status1 != SEC_I_CONTINUE_NEEDED)) {
-            LOG(LOG_ERR, "Initialize Security Context Error !");
-            throw ERR_CREDSSP_NTLM_INIT_FAILED;
-        }
-
-        if ((status1 == SEC_I_COMPLETE_AND_CONTINUE) ||
-            (status1 == SEC_I_COMPLETE_NEEDED) ||
-            (status1 == SEC_E_OK)) {
-            // have_pub_key_auth = true;
-            encrypted = this->credssp_encrypt_public_key_echo();
-            if (status1 == SEC_I_COMPLETE_NEEDED) {
-                status1 = SEC_E_OK;
-            }
-            else if (status1 == SEC_I_COMPLETE_AND_CONTINUE) {
-                status1 = SEC_I_CONTINUE_NEEDED;
-            }
-        }
 
         /* send authentication token to server */
         if ((this->ts_request.negoTokens.size() > 0)||(encrypted == SEC_E_OK)) {
