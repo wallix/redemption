@@ -508,13 +508,20 @@ namespace Cliprdr
         min_long_format_name_data_length
     };
 
-    inline bool format_list_extract(
+    enum class ExtractResult : int8_t
+    {
+        Ok,
+        WaitingData,
+        LongFormatNameTooLong,
+    };
+
+    inline ExtractResult format_list_extract(
         FormatListExtractorData& data, InStream& stream,
-        IsLongFormat is_long_format, IsAscii is_ascii)
+        IsLongFormat is_long_format, IsAscii is_ascii) noexcept
     {
         if (stream.in_remain() < format_name_data_length[int(is_long_format)])
         {
-            return false;
+            return ExtractResult::WaitingData;
         }
 
         data.format_id = stream.in_uint32_le();
@@ -525,7 +532,10 @@ namespace Cliprdr
             auto av = stream.remaining_bytes();
             data.av_name = av.first(UTF16ByteLen(av));
 
-            // TODO check zero terminal
+            if (data.av_name.size() == av.size())
+            {
+                return ExtractResult::LongFormatNameTooLong;
+            }
 
             stream.in_skip_bytes(data.av_name.size() + 2);
         }
@@ -546,7 +556,7 @@ namespace Cliprdr
             stream.in_skip_bytes(short_format_name_length);
         }
 
-        return true;
+        return ExtractResult::Ok;
     }
 }
 
@@ -556,55 +566,45 @@ struct FormatListReceive
     uint32_t file_list_format_id = 0;
 
     FormatListReceive(
-        const bool client_use_long_format_names,
-        const bool server_use_long_format_names,
+        const bool use_long_format,
         const RDPECLIP::CliprdrHeader & in_header,
         InStream & chunk,
         std::unordered_map<uint32_t, std::string> & format_name_inventory,
         const RDPVerbose verbose)
     {
-        bool use_long_format = !(!client_use_long_format_names || !server_use_long_format_names);
-        if (!use_long_format) {
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                    "Short Format Name%s variant of Format List PDU is used "
-                    "for exchanging updated format names.",
-                ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)" : ""));
-        }
-        else {
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                    "Long Format Name variant of Format List PDU is used "
-                    "for exchanging updated format names.");
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "%s variant of Format List PDU is used for exchanging updated format names.",
+            use_long_format
+                ? "Long Format Name"
+            : (in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES)
+                ? "Short Format Name (ASCII 8)"
+                : "Short Format Name"
+        );
 
         Cliprdr::FormatListExtractorData extracted_data;
 
         auto buf = chunk.remaining_bytes();
         InStream in_stream(buf.first(std::min<size_t>(in_header.dataLen(), buf.size())));
 
-        while (Cliprdr::format_list_extract(
+        Cliprdr::ExtractResult r;
+
+        while ((r = Cliprdr::format_list_extract(
             extracted_data, in_stream,
             Cliprdr::IsLongFormat(use_long_format),
             Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES))
-        ) {
+        ) == Cliprdr::ExtractResult::Ok)
+        {
             const size_t max_length_of_format_name   = 256;
             constexpr size_t size_of_utf8_buffer
                 = max_length_of_format_name * maximum_length_of_utf8_character_in_bytes;
             uint8_t utf8_buffer[size_of_utf8_buffer + 1];
 
-            array_view_const_u8 utf8_av_name;
-
-            if (extracted_data.charset == Cliprdr::Charset::Ascii) {
-                utf8_av_name = extracted_data.av_name;
-            }
-            else {
-                utf8_av_name = ::UTF16toUTF8_buf(extracted_data.av_name, make_array_view(utf8_buffer));
-            }
+            array_view_const_u8 utf8_av_name = (extracted_data.charset == Cliprdr::Charset::Ascii)
+                ? extracted_data.av_name
+                : ::UTF16toUTF8_buf(extracted_data.av_name, make_array_view(utf8_buffer));
 
             LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                    "formatId=%s(%u) wszFormatName=\"%.*s\"",
+                "formatId=%s(%u) wszFormatName=\"%.*s\"",
                 RDPECLIP::get_FormatId_name(extracted_data.format_id),
                 extracted_data.format_id, int(utf8_av_name.size()), utf8_av_name.data());
 
@@ -621,6 +621,15 @@ struct FormatListReceive
         }
 
         chunk.in_skip_bytes(in_stream.get_offset());
+
+        if (r == Cliprdr::ExtractResult::LongFormatNameTooLong) {
+            LOG(LOG_ERR, "Truncated CLIPRDR_FORMAT_LIST (Long) FormatName");
+            throw Error(ERR_RDP_UNSUPPORTED);
+        }
+
+        if (chunk.in_remain()) {
+            LOG(LOG_WARNING, "Truncated CLIPRDR_FORMAT_LIST remains=%zu", chunk.in_remain());
+        }
     }
 };
 

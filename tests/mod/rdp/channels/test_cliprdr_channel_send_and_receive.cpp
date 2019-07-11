@@ -368,7 +368,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
 
     InStream chunk(stream.get_bytes());
 
-    FormatListReceive received(use_long_format_name, use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::none);
+    FormatListReceive received(use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::none);
 
     RED_CHECK_EQUAL(received.file_list_format_id, client_file_list_format_id);
     RED_CHECK_EQUAL(format_name_inventory[RDPECLIP::CF_TEXT], "");

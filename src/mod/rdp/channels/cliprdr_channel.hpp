@@ -130,51 +130,6 @@ public:
             this->clip_data.server_data.use_long_format_names);
     }
 
-
-public:
-    bool process_client_format_list_pdu(uint32_t total_length, uint32_t flags,
-        InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
-    {
-        (void)total_length;
-
-        this->file_descr_list.clear();
-        this->last_lindex = last_lindex_unknown;
-        this->last_lindex_total_send = 0;
-        this->last_lindex_packet_remaining = 0;
-
-        FormatListReceive receiver(
-            this->clip_data.client_data.use_long_format_names,
-            this->clip_data.server_data.use_long_format_names,
-            in_header,
-            chunk,
-            this->format_name_inventory,
-            verbose);
-
-        if (!this->params.clipboard_down_authorized
-        &&  !this->params.clipboard_up_authorized
-        &&  !this->format_list_response_notifier) {
-
-            LOG(LOG_WARNING,"ClipboardVirtualChannel::process_client_format_list_pdu: Clipboard is fully disabled.");
-
-            FormatListSendBack sender(this->to_client_sender_ptr());
-            return false;
-        }
-
-        if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
-            LOG(LOG_ERR,
-                "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                    "!!!CHUNKED!!! Format List PDU is not yet supported!");
-            FormatListSendBack sender(this->to_client_sender_ptr());
-            return false;
-        }
-
-        this->format_name_inventory.clear();
-        if (receiver.file_list_format_id) {
-            this->clip_data.client_data.file_list_format_id = receiver.file_list_format_id;
-        }
-        return true;
-    }
-
 public:
     void process_client_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
@@ -213,9 +168,11 @@ public:
         switch (this->clip_data.client_data.message_type)
         {
             case RDPECLIP::CB_FORMAT_LIST:
-                send_message_to_server =
-                    this->process_client_format_list_pdu(
-                        total_length, flags, chunk, header);
+                send_message_to_server = this->process_format_list_pdu(
+                    flags, chunk, header,
+                    this->to_client_sender_ptr(),
+                    this->clip_data.client_data,
+                    this->params.clipboard_down_authorized || this->params.clipboard_up_authorized || this->format_list_response_notifier);
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
@@ -408,45 +365,6 @@ public:
         return true;
     }   // process_server_format_data_response_pdu
 
-    bool process_server_format_list_pdu(uint32_t total_length, uint32_t flags,
-        InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
-    {
-        (void)total_length;
-        (void)flags;
-
-        this->file_descr_list.clear();
-        this->last_lindex = last_lindex_unknown;
-        this->last_lindex_total_send = 0;
-        this->last_lindex_packet_remaining = 0;
-
-        if (!this->params.clipboard_down_authorized
-        &&  !this->params.clipboard_up_authorized) {
-            LOG(LOG_WARNING,
-                "ClipboardVirtualChannel::process_server_format_list_pdu: "
-                    "Clipboard is fully disabled.");
-
-            FormatListSendBack sender(this->to_server_sender_ptr());
-
-            return false;
-        }
-
-        this->format_name_inventory.clear();
-
-        FormatListReceive receiver(
-            this->clip_data.client_data.use_long_format_names,
-            this->clip_data.server_data.use_long_format_names,
-            in_header,
-            chunk,
-            this->format_name_inventory,
-            verbose);
-
-        if (receiver.file_list_format_id) {
-            this->clip_data.server_data.file_list_format_id = receiver.file_list_format_id;
-        }
-
-        return true;
-    }   // process_server_format_list_pdu
-
     void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length,
@@ -503,9 +421,11 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_LIST:
-                send_message_to_client =
-                    this->process_server_format_list_pdu(
-                        total_length, flags, chunk, header);
+                send_message_to_client = this->process_format_list_pdu(
+                    flags, chunk, header,
+                    this->to_server_sender_ptr(),
+                    this->clip_data.server_data,
+                    this->params.clipboard_down_authorized || this->params.clipboard_up_authorized);
 
                 if (this->format_list_notifier) {
                     if (!this->format_list_notifier->on_server_format_list()) {
@@ -850,6 +770,42 @@ public:
     }
 
 private:
+    bool process_format_list_pdu(
+        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header,
+        VirtualChannelDataSender* sender, ClipboardSideData& clip_data, bool clip_enabled)
+    {
+        if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+            LOG(LOG_ERR, "Format List PDU is not yet supported!");
+            FormatListSendBack pdu(sender);
+            return false;
+        }
+
+        this->file_descr_list.clear();
+        this->last_lindex = last_lindex_unknown;
+        this->last_lindex_total_send = 0;
+        this->last_lindex_packet_remaining = 0;
+
+        if (!clip_enabled) {
+            LOG(LOG_WARNING, "Clipboard is fully disabled.");
+            FormatListSendBack pdu(sender);
+            return false;
+        }
+
+        this->format_name_inventory.clear();
+
+        FormatListReceive receiver(
+            clip_data.use_long_format_names,
+            in_header,
+            chunk,
+            this->format_name_inventory,
+            this->verbose);
+
+        if (receiver.file_list_format_id) {
+            clip_data.file_list_format_id = receiver.file_list_format_id;
+        }
+        return true;
+    }
+
     void log_file_info(ClipboardSideData::file_info_type & file_info, bool from_remote_session)
     {
         const char* type = (
