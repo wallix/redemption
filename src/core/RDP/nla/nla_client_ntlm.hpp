@@ -165,7 +165,7 @@ private:
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
     NtlmVersion version;
-    Array SavedNegotiateMessage;
+    std::vector<uint8_t> SavedNegotiateMessage;
     Array SavedChallengeMessage;
     Array SavedAuthenticateMessage;
 
@@ -239,18 +239,12 @@ private:
     // all strings are in unicode utf16
 
     // READ WRITE FUNCTIONS
-    SEC_STATUS sspi_context_write_negotiate(Array& output_buffer) {
+    void sspi_context_write_negotiate() {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
         this->sspi_context_ntlm_client_build_negotiate();
         StaticOutStream<65535> out_stream;
         this->NEGOTIATE_MESSAGE.emit(out_stream);
-        output_buffer.init(out_stream.get_offset());
-        output_buffer.copy(out_stream.get_bytes());
-
-        this->SavedNegotiateMessage.init(out_stream.get_offset());
-        this->SavedNegotiateMessage.copy(out_stream.get_bytes());
-        this->sspi_context_state = NTLM_STATE_CHALLENGE;
-        return SEC_I_CONTINUE_NEEDED;
+        this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
     }
 
     SEC_STATUS sspi_context_read_challenge(array_view_const_u8 input_buffer) {
@@ -475,7 +469,7 @@ private:
             this->SavedAuthenticateMessage.copy(out_stream.get_bytes());
 
             this->MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey, 
-                                                    this->SavedNegotiateMessage.av(),
+                                                    this->SavedNegotiateMessage,
                                                     this->SavedChallengeMessage.av(),
                                                     this->SavedAuthenticateMessage.av());
 
@@ -843,7 +837,6 @@ public:
         , SavedClientNonce()
         , timeobj(timeobj)
         , rand(rand)
-        , SavedNegotiateMessage(0)
         , SavedChallengeMessage(0)
         , SavedAuthenticateMessage(0)
         , restricted_admin_mode(restricted_admin_mode)
@@ -900,7 +893,6 @@ public:
 
         this->client_auth_data_state = Loop;
 
-
         /*
          * from tspkg.dll: 0x00000132
          * ISC_REQ_MUTUAL_AUTH
@@ -916,7 +908,11 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
         this->sspi_context_state = NTLM_STATE_NEGOTIATE;
-        SEC_STATUS status1 = this->sspi_context_write_negotiate(this->ts_request.negoTokens);
+        this->sspi_context_write_negotiate();
+        this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
+        this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
+        this->sspi_context_state = NTLM_STATE_CHALLENGE;
+        SEC_STATUS status1 = SEC_I_CONTINUE_NEEDED;
 
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
@@ -1002,7 +998,11 @@ public:
                     this->sspi_context_state = NTLM_STATE_NEGOTIATE;
                 }
                 if (this->sspi_context_state == NTLM_STATE_NEGOTIATE) {
-                    status = this->sspi_context_write_negotiate(this->ts_request.negoTokens);
+                    this->sspi_context_write_negotiate();
+                    this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
+                    this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
+                    this->sspi_context_state = NTLM_STATE_CHALLENGE;
+                    status = SEC_I_CONTINUE_NEEDED;
                 }
                 else {
                     if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
