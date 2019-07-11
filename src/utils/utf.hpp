@@ -36,6 +36,10 @@ enum {
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
 std::size_t UTF8Len(const_byte_ptr source) noexcept;
+std::size_t UTF16ByteLen(const_bytes_view source) noexcept;
+
+// TODO deprecated
+std::size_t UTF16StrLen(const uint8_t * utf16_s) noexcept;
 
 void UTF16Upper(uint8_t * source, std::size_t max_len) noexcept;
 
@@ -93,6 +97,9 @@ private:
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
 std::size_t UTF16toUTF8(const uint8_t * utf16_source, std::size_t utf16_len, uint8_t * utf8_target, std::size_t target_len) noexcept;
+// Return number of UTF8 bytes used to encode UTF16 input
+// do not write trailing 0
+bytes_view UTF16toUTF8_buf(const_bytes_view utf16_source, bytes_view utf8_target) noexcept;
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
@@ -130,5 +137,3 @@ std::size_t Latin1toUTF16(const_bytes_view latin1_source,
 std::size_t Latin1toUTF8(
     const uint8_t * latin1_source, std::size_t latin1_len,
     uint8_t * utf8_target, std::size_t utf8_len) noexcept;
-
-std::size_t UTF16StrLen(const uint8_t * utf16_s) noexcept;

@@ -45,6 +45,16 @@ size_t UTF8Len(const_byte_ptr source) noexcept
     return len;
 }
 
+size_t UTF16ByteLen(const_bytes_view source) noexcept
+{
+    uint8_t const* p = source.data();
+    uint8_t const* end = p + (source.size() - (source.size() & 1u));
+
+    for (; p != end && (p[0] | p[1]); p += 2) {
+    }
+    return p - source.data();
+}
+
 void UTF16Upper(uint8_t * source, size_t max_len) noexcept
 {
     for (size_t i = 0 ; i < max_len ; i=i+2){
@@ -436,6 +446,43 @@ size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len, uint8_t * utf
         }
     }
     return i_t;
+}
+
+// Return number of UTF8 bytes used to encode UTF16 input
+// do not write trailing 0
+bytes_view UTF16toUTF8_buf(const_bytes_view utf16_source, bytes_view utf8_target) noexcept
+{
+    size_t i_t = 0;
+    const auto len = utf16_source.size() - (utf16_source.size() & 1u);
+    for (size_t i = 0 ; i < len; i += 2){
+        uint8_t lo = utf16_source[i];
+        uint8_t hi  = utf16_source[i+1];
+        if (lo == 0 && hi == 0){
+            break;
+        }
+
+        if (hi & 0xF8){
+            // 3 bytes
+            if ((i_t + 3) > utf8_target.size()) { break; }
+            utf8_target[i_t] = 0xE0 | ((hi >> 4) & 0x0F);
+            utf8_target[i_t + 1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
+            utf8_target[i_t + 2] = 0x80 | (lo & 0x3F);
+            i_t += 3;
+        }
+        else if (hi || (lo & 0x80)) {
+            // 2 bytes
+            if ((i_t + 2) > utf8_target.size()) { break; }
+            utf8_target[i_t] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
+            utf8_target[i_t + 1] = 0x80 | (lo & 0x3F);
+            i_t += 2;
+        }
+        else {
+            if ((i_t + 1) > utf8_target.size()) { break; }
+            utf8_target[i_t] = lo;
+            i_t++;
+        }
+    }
+    return utf8_target.first(i_t);
 }
 
 // Return number of UTF8 bytes used to encode UTF16 input

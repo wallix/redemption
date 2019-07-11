@@ -95,7 +95,6 @@ namespace
         FormatListExtractorData& data, InStream& stream,
         IsLongFormat is_long_format, IsAscii is_ascii)
     {
-
         if (stream.in_remain() < format_name_data_length[int(is_long_format)])
         {
             return false;
@@ -114,7 +113,7 @@ namespace
         {
             data.charset = Charset::Ascii;
             auto av = stream.remaining_bytes();
-            data.av_name = av.first(strnlen(av.as_charp(), 32));
+            data.av_name = av.first(strnlen(av.as_charp(), short_format_name_length));
 
             stream.in_skip_bytes(short_format_name_length);
         }
@@ -133,12 +132,14 @@ namespace
         OutStream& out_stream, cbytes_view name,
         uint32_t id, IsLongFormat is_long_format, Charset charset)
     {
+        constexpr size_t header_length = 4;
+
         if (bool(is_long_format))
         {
             switch (charset)
             {
             case Charset::Ascii: {
-                if (!out_stream.has_room(4 + name.size() * 2 + 2))
+                if (!out_stream.has_room(header_length + name.size() * 2 + 2))
                 {
                     return false;
                 }
@@ -150,7 +151,7 @@ namespace
                 break;
             }
             case Charset::Utf16: {
-                if (!out_stream.has_room(4 + name.size() + 2))
+                if (!out_stream.has_room(header_length + name.size() + 2))
                 {
                     return false;
                 }
@@ -163,7 +164,7 @@ namespace
         }
         else
         {
-            if (!out_stream.has_room(4 + 32))
+            if (!out_stream.has_room(4 + short_format_name_length))
             {
                 return false;
             }
@@ -627,22 +628,22 @@ void ClipboardChannel::process_format_data_response(cbytes_view data, uint32_t c
 
 void ClipboardChannel::process_format_list(InStream& chunk, uint32_t channel_flags)
 {
-    FormatListExtractorData data;
+    FormatListExtractorData extracted_data;
     BufArrayMaker<256> buf;
 
     emval_call(this->callbacks, "receiveFormatStart");
 
     while (format_list_extract(
-        data, chunk,
+        extracted_data, chunk,
         IsLongFormat(this->format_list.use_long_format_names),
         IsAscii(channel_flags & RDPECLIP::CB_ASCII_NAMES)))
     {
-        cbytes_view name = data.av_name;
+        cbytes_view name = extracted_data.av_name;
         bool is_utf8 = true;
 
         if (name.size())
         {
-            switch (data.charset)
+            switch (extracted_data.charset)
             {
             case Charset::Ascii: break;
             case Charset::Utf16: is_utf8 = false; break;
@@ -650,7 +651,7 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t channel_fla
         }
         else
         {
-            switch (data.format_id)
+            switch (extracted_data.format_id)
             {
             case RDPECLIP::CF_TEXT:            name = "text"_av; break;
             case RDPECLIP::CF_BITMAP:          name = "bitmap"_av; break;
@@ -681,7 +682,8 @@ void ClipboardChannel::process_format_list(InStream& chunk, uint32_t channel_fla
             }
         }
 
-        emval_call(this->callbacks, "receiveFormat", name.data(), name.size(), data.format_id, is_utf8);
+        emval_call(this->callbacks, "receiveFormat",
+            name.data(), name.size(), extracted_data.format_id, is_utf8);
     }
 
     this->send_format_list_response_ok();
