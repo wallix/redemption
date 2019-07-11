@@ -891,6 +891,19 @@ public:
         }
         this->ServicePrincipalName.push_back(0);
 
+        array_view_const_char spn = bytes_view(this->ServicePrincipalName).as_chars();
+        if (!this->sspi_context_initialized) {
+            if (!spn.empty()) {
+                this->Workstation = ::UTF8toUTF16(spn);
+                this->SendWorkstationName = true;
+            }
+            else {
+                this->Workstation.clear();
+                this->SendWorkstationName = false;
+            }
+            this->sspi_context_initialized = true;
+        }
+
         this->client_auth_data_state = Start;
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::client_authenticate");
@@ -908,6 +921,7 @@ public:
 
         this->client_auth_data_state = Loop;
 
+
         /*
          * from tspkg.dll: 0x00000132
          * ISC_REQ_MUTUAL_AUTH
@@ -918,18 +932,6 @@ public:
         //unsigned long const fContextReq
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        array_view_const_char spn = bytes_view(this->ServicePrincipalName).as_chars();
-        if (!this->sspi_context_initialized) {
-            if (!spn.empty()) {
-                this->Workstation = ::UTF8toUTF16(spn);
-                this->SendWorkstationName = true;
-            }
-            else {
-                this->Workstation.clear();
-                this->SendWorkstationName = false;
-            }
-            this->sspi_context_initialized = true;
-        }
 
         /* receive server response and place in input buffer */
         SEC_STATUS status1 = this->sspi_InitializeSecurityContext(this->client_auth_data_input_buffer,/*output*/this->ts_request.negoTokens);
@@ -1009,19 +1011,6 @@ public:
                  */
                 //unsigned long const fContextReq
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
-
-                array_view_const_char spn = bytes_view(this->ServicePrincipalName).as_chars();
-                if (!this->sspi_context_initialized) {
-                    if (!spn.empty()) {
-                        this->Workstation = ::UTF8toUTF16(spn);
-                        this->SendWorkstationName = true;
-                    }
-                    else {
-                        this->Workstation.clear();
-                        this->SendWorkstationName = false;
-                    }
-                    this->sspi_context_initialized = true;
-                }
 
                 SEC_STATUS status = this->sspi_InitializeSecurityContext(this->client_auth_data_input_buffer,/*output*/this->ts_request.negoTokens);
 
