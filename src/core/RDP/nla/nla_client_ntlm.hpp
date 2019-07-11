@@ -887,7 +887,6 @@ public:
         this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());        this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
         this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
-        SEC_STATUS status1 = SEC_I_CONTINUE_NEEDED;
 
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
@@ -907,12 +906,6 @@ public:
             transport.get_transport().send(ts_request_emit.get_bytes());
 
             this->credssp_buffer_free();
-        }
-
-        if (status1 != SEC_I_CONTINUE_NEEDED) {
-            LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
-
-            this->client_auth_data_state = Final;
         }
     }
 
