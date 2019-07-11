@@ -156,7 +156,7 @@ private:
 
     //int LmCompatibilityLevel;
     bool SendWorkstationName = true;
-    Array Workstation;
+    std::vector<uint8_t> Workstation;
     Array sspi_context_ServicePrincipalName;
 
     // bool SendSingleHostData;
@@ -222,8 +222,7 @@ private:
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
             this->NEGOTIATE_MESSAGE.Workstation.buffer.reset();
-            this->NEGOTIATE_MESSAGE.Workstation.buffer.ostream.out_copy_bytes(this->Workstation.get_data(),
-                                                   this->Workstation.size());
+            this->NEGOTIATE_MESSAGE.Workstation.buffer.ostream.out_copy_bytes(this->Workstation);
             this->NEGOTIATE_MESSAGE.Workstation.buffer.mark_end();
         }
 
@@ -239,20 +238,6 @@ private:
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
     // all strings are in unicode utf16
-
-    void sspi_context_ntlm_SetContextWorkstation(array_view_const_char workstation) {
-        // CHECK UTF8 or UTF16 (should store in UTF16)
-        if (!workstation.empty()) {
-            size_t host_len = UTF8Len(workstation.data());
-            this->Workstation.init(host_len * 2);
-            UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
-            this->SendWorkstationName = true;
-        }
-        else {
-            this->Workstation.init(0);
-            this->SendWorkstationName = false;
-        }
-    }
 
     void sspi_context_ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
@@ -295,8 +280,6 @@ private:
     SEC_STATUS sspi_context_write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
         
-        auto workstation = this->Workstation.av();
-
         // client method
         // ntlmv2_compute_response_from_challenge generates :
         // - timestamp
@@ -480,7 +463,7 @@ private:
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
             auto & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.buffer;
             workstationbuff.reset();
-            workstationbuff.ostream.out_copy_bytes(workstation);
+            workstationbuff.ostream.out_copy_bytes(this->Workstation);
             workstationbuff.mark_end();
         }
 
@@ -534,8 +517,14 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
         if (!this->sspi_context_initialized) {
-
-            this->sspi_context_ntlm_SetContextWorkstation(pszTargetName);
+            if (!pszTargetName.empty()) {
+                this->Workstation = ::UTF8toUTF16(pszTargetName);
+                this->SendWorkstationName = true;
+            }
+            else {
+                this->Workstation.clear();
+                this->SendWorkstationName = false;
+            }
             this->sspi_context_ntlm_SetContextServicePrincipalName(pszTargetName);
             this->sspi_context_initialized = true;
         }
@@ -909,7 +898,6 @@ public:
         , SavedClientNonce()
         , timeobj(timeobj)
         , rand(rand)
-        , Workstation(0)
         , sspi_context_ServicePrincipalName(0)
         , SavedNegotiateMessage(0)
         , SavedChallengeMessage(0)
