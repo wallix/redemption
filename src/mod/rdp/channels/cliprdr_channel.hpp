@@ -209,32 +209,9 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
-
-                if (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
-                    auto data = chunk.remaining_bytes();
-                    auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        auto file_size = this->file_descr_list[this->last_lindex].file_size();
-                        data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
-                    }
-                    data = data.first(data_len);
-                    this->channel_file.set_data(data);
-                    this->last_lindex_packet_remaining -= data_len;
-                    this->last_lindex_total_send += data_len;
-
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        auto file_size = this->file_descr_list[this->last_lindex].file_size();
-                        if (this->last_lindex_total_send == file_size) {
-                            this->channel_file.set_end_of_file();
-                        }
-                    }
-                    send_message_to_server = !this->channel_file.is_enable_interuption();
-                }
-                if (receive.must_log_file_info_type) {
-                    const bool from_remote_session = false;
-                    this->log_file_info(receive.file_info, from_remote_session);
-                }
+                const bool from_remote_session = false;
+                send_message_to_server = this->process_filecontents_response_pdu(
+                    flags, chunk, header, from_remote_session);
             }
             break;
 
@@ -245,7 +222,6 @@ public:
 
             case RDPECLIP::CB_UNLOCK_CLIPDATA: {
                 UnlockClipDataReceive receive(this->clip_data.server_data, this->clip_data.client_data, chunk, this->verbose, header);
-//                     this->clip_data.server_data.file_stream_data_inventory.erase(receive.clipDataId);
             }
             break;
         }   // switch (this->client_message_type)
@@ -394,34 +370,9 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
-                FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
-
-                if (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
-                    auto data = chunk.remaining_bytes();
-                    auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        auto file_size = this->file_descr_list[this->last_lindex].file_size();
-                        data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
-                    }
-                    data = data.first(data_len);
-                    this->channel_file.set_data(data);
-                    this->last_lindex_packet_remaining -= data_len;
-                    this->last_lindex_total_send += data_len;
-
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        auto file_size = this->file_descr_list[this->last_lindex].file_size();
-                        if (this->last_lindex_total_send == file_size) {
-                            this->channel_file.set_end_of_file();
-                        }
-                    }
-
-                    send_message_to_client = !this->channel_file.is_enable_interuption();
-                }
-
-                if (receive.must_log_file_info_type) {
-                    const bool from_remote_session = true;
-                    this->log_file_info(receive.file_info, from_remote_session);
-                }
+                const bool from_remote_session = true;
+                send_message_to_client = this->process_filecontents_response_pdu(
+                    flags, chunk, header, from_remote_session);
             }
             break;
 
@@ -677,6 +628,45 @@ public:
     }
 
 private:
+    bool process_filecontents_response_pdu(
+        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & header,
+        const bool from_remote_session)
+    {
+        auto& from_server = from_remote_session
+            ? this->clip_data.server_data : this->clip_data.client_data;
+        auto& to_server = from_remote_session
+            ? this->clip_data.client_data : this->clip_data.server_data;
+
+        FileContentsResponseReceive receive(from_server, header, flags, chunk);
+
+        if (receive.must_log_file_info_type) {
+            this->log_file_info(receive.file_info, from_remote_session);
+        }
+
+        if (to_server.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+            auto data = chunk.remaining_bytes();
+            auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                auto file_size = this->file_descr_list[this->last_lindex].file_size();
+                data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
+            }
+            data = data.first(data_len);
+            this->channel_file.set_data(data);
+            this->last_lindex_packet_remaining -= data_len;
+            this->last_lindex_total_send += data_len;
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                auto file_size = this->file_descr_list[this->last_lindex].file_size();
+                if (this->last_lindex_total_send == file_size) {
+                    this->channel_file.set_end_of_file();
+                }
+            }
+            return !this->channel_file.is_enable_interuption();
+        }
+
+        return true;
+    }
+
     bool process_filecontents_request_pdu(
         InStream& chunk, const RDPECLIP::CliprdrHeader & header,
         VirtualChannelDataSender* sender, ClipboardSideData& side_data,
