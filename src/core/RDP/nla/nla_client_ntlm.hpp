@@ -183,70 +183,6 @@ private:
     array_md5 MessageIntegrityCheck;
     // uint8_t NtProofStr[16];
 
-    // CLIENT BUILD NEGOTIATE
-    void sspi_context_ntlm_client_build_negotiate() {
-        this->NegotiateFlags |= (this->NTLMv2)
-                               * (NTLMSSP_NEGOTIATE_56
-                               |  NTLMSSP_NEGOTIATE_VERSION
-                               |  NTLMSSP_NEGOTIATE_LM_KEY
-                               |  NTLMSSP_NEGOTIATE_OEM)
-           | (
-             NTLMSSP_NEGOTIATE_KEY_EXCH
-           | NTLMSSP_NEGOTIATE_128
-           | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
-           | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-           | NTLMSSP_NEGOTIATE_NTLM
-           | NTLMSSP_NEGOTIATE_SIGN
-           | NTLMSSP_REQUEST_TARGET
-           | NTLMSSP_NEGOTIATE_UNICODE);
-
-        if (this->confidentiality) {
-            this->NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
-        }
-
-        if (this->SendVersionInfo) {
-            this->NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
-        }
-
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.ntlm_get_version_info();
-            this->NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
-        }
-        else {
-            this->version.ignore_version_info();
-            this->NEGOTIATE_MESSAGE.version.ignore_version_info();
-        }
-
-        this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-            this->NEGOTIATE_MESSAGE.Workstation.buffer.reset();
-            this->NEGOTIATE_MESSAGE.Workstation.buffer.ostream.out_copy_bytes(this->Workstation);
-            this->NEGOTIATE_MESSAGE.Workstation.buffer.mark_end();
-        }
-
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
-            auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            domain.reset();
-            domain.ostream.out_copy_bytes(this->identity_Domain);
-            domain.mark_end();
-        }
-
-        this->sspi_context_state = NTLM_STATE_CHALLENGE;
-    }
-
-    // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
-    // all strings are in unicode utf16
-
-    // READ WRITE FUNCTIONS
-    void sspi_context_write_negotiate() {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
-        this->sspi_context_ntlm_client_build_negotiate();
-        StaticOutStream<65535> out_stream;
-        this->NEGOTIATE_MESSAGE.emit(out_stream);
-        this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
-    }
-
     SEC_STATUS sspi_context_read_challenge(array_view_const_u8 input_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
         InStream in_stream(input_buffer);
@@ -908,8 +844,48 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
 
         this->sspi_context_state = NTLM_STATE_NEGOTIATE;
-        this->sspi_context_write_negotiate();
-        this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
+        this->NegotiateFlags |= (
+              NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
+            | NTLMSSP_NEGOTIATE_KEY_EXCH | NTLMSSP_NEGOTIATE_128 
+            | NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+            | NTLMSSP_NEGOTIATE_NTLM | NTLMSSP_REQUEST_TARGET 
+            | NTLMSSP_NEGOTIATE_UNICODE)
+        | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_56
+            |  NTLMSSP_NEGOTIATE_VERSION
+            |  NTLMSSP_NEGOTIATE_LM_KEY
+            |  NTLMSSP_NEGOTIATE_OEM)
+        | (this->confidentiality) * NTLMSSP_NEGOTIATE_SEAL
+        | (this->SendVersionInfo) * NTLMSSP_NEGOTIATE_VERSION;
+
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.ntlm_get_version_info();
+            this->NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
+        }
+        else {
+            this->version.ignore_version_info();
+            this->NEGOTIATE_MESSAGE.version.ignore_version_info();
+        }
+        this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+            this->NEGOTIATE_MESSAGE.Workstation.buffer.reset();
+            this->NEGOTIATE_MESSAGE.Workstation.buffer.ostream.out_copy_bytes(this->Workstation);
+            this->NEGOTIATE_MESSAGE.Workstation.buffer.mark_end();
+        }
+
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
+            auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+            domain.reset();
+            domain.ostream.out_copy_bytes(this->identity_Domain);
+            domain.mark_end();
+        }
+
+        this->sspi_context_state = NTLM_STATE_CHALLENGE;
+
+        StaticOutStream<65535> out_stream;
+        this->NEGOTIATE_MESSAGE.emit(out_stream);
+        this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());        this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
         this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
         SEC_STATUS status1 = SEC_I_CONTINUE_NEEDED;
@@ -980,7 +956,6 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
                 this->client_auth_data_input_buffer.assign(this->ts_request.negoTokens.data(),
                                                            this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
-
                 /*
                  * from tspkg.dll: 0x00000132
                  * ISC_REQ_MUTUAL_AUTH
@@ -998,8 +973,48 @@ public:
                     this->sspi_context_state = NTLM_STATE_NEGOTIATE;
                 }
                 if (this->sspi_context_state == NTLM_STATE_NEGOTIATE) {
-                    this->sspi_context_write_negotiate();
-                    this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
+                    this->NegotiateFlags |= (
+                          NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
+                        | NTLMSSP_NEGOTIATE_KEY_EXCH | NTLMSSP_NEGOTIATE_128 
+                        | NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                        | NTLMSSP_NEGOTIATE_NTLM | NTLMSSP_REQUEST_TARGET 
+                        | NTLMSSP_NEGOTIATE_UNICODE)
+                    | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_56
+                        |  NTLMSSP_NEGOTIATE_VERSION
+                        |  NTLMSSP_NEGOTIATE_LM_KEY
+                        |  NTLMSSP_NEGOTIATE_OEM)
+                    | (this->confidentiality) * NTLMSSP_NEGOTIATE_SEAL
+                    | (this->SendVersionInfo) * NTLMSSP_NEGOTIATE_VERSION;
+
+                    if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
+                        this->version.ntlm_get_version_info();
+                        this->NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
+                    }
+                    else {
+                        this->version.ignore_version_info();
+                        this->NEGOTIATE_MESSAGE.version.ignore_version_info();
+                    }
+                    this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+
+                    if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+                        this->NEGOTIATE_MESSAGE.Workstation.buffer.reset();
+                        this->NEGOTIATE_MESSAGE.Workstation.buffer.ostream.out_copy_bytes(this->Workstation);
+                        this->NEGOTIATE_MESSAGE.Workstation.buffer.mark_end();
+                    }
+
+                    if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
+                        auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+                        domain.reset();
+                        domain.ostream.out_copy_bytes(this->identity_Domain);
+                        domain.mark_end();
+                    }
+
+                    this->sspi_context_state = NTLM_STATE_CHALLENGE;
+
+                    StaticOutStream<65535> out_stream;
+                    this->NEGOTIATE_MESSAGE.emit(out_stream);
+                    this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());                    this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
                     this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
                     this->sspi_context_state = NTLM_STATE_CHALLENGE;
                     status = SEC_I_CONTINUE_NEEDED;
