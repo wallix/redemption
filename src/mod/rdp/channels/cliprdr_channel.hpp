@@ -293,7 +293,7 @@ public:
             case RDPECLIP::CB_MONITOR_READY: {
                 if (this->proxy_managed) {
                     this->clip_data.client_data.use_long_format_names = true;
-                    ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this);
+                    ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
                 }
 
                 if (this->clipboard_monitor_ready_notifier) {

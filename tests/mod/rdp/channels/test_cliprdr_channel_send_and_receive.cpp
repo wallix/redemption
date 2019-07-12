@@ -24,7 +24,7 @@
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 
 
-struct FakeBaseVirtualChannel final : public BaseVirtualChannel
+struct FakeDataSender : VirtualChannelDataSender
 {
     struct PDUData
     {
@@ -37,38 +37,19 @@ struct FakeBaseVirtualChannel final : public BaseVirtualChannel
         }
     };
 
-    struct DataSender : VirtualChannelDataSender
+    PDUData streams[2];
+    int index = 0;
+
+    void operator()(
+        uint32_t /*total_length*/, uint32_t /*flags*/,
+        const uint8_t * chunk_data, uint32_t chunk_data_length) override
     {
-        PDUData streams[2];
-        int index = 0;
-
-        void operator()(
-            uint32_t /*total_length*/, uint32_t /*flags*/,
-            const uint8_t * chunk_data, uint32_t chunk_data_length) override
-        {
-            RED_CHECK(this->index < 2);
-            this->streams[this->index].size = chunk_data_length;
-            std::memcpy(streams[this->index].data, chunk_data, chunk_data_length);
-            ++this->index;
-        }
-    };
-
-public:
-    DataSender client_sender;
-    DataSender server_sender;
-
-    FakeBaseVirtualChannel(const Params & params)
-    : BaseVirtualChannel(&client_sender, &server_sender, params)
-    {}
-
-    void process_server_message(
-        uint32_t /*total_length*/,
-        uint32_t /*flags*/, const uint8_t* /*chunk_data*/,
-        uint32_t /*chunk_data_length*/,
-        std::unique_ptr<AsynchronousTask> & /*out_asynchronous_task*/) override
-    {}
-};  // class ClipboardVirtualChannel
-
+        RED_CHECK(this->index < 2);
+        this->streams[this->index].size = chunk_data_length;
+        std::memcpy(streams[this->index].data, chunk_data, chunk_data_length);
+        ++this->index;
+    }
+};
 
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClipboardCapabilitiesReceive)
@@ -117,7 +98,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
 {
-    FakeBaseVirtualChannel::DataSender data_sender;
+    FakeDataSender data_sender;
     const uint32_t streamID = 1;
 
     FilecontentsRequestSendBack sender(RDPECLIP::FILECONTENTS_SIZE, streamID, &data_sender);
@@ -158,7 +139,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestReceive)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
 {
-    FakeBaseVirtualChannel::DataSender data_sender;
+    FakeDataSender data_sender;
 
     FormatDataRequestSendBack sender(&data_sender);
 
@@ -353,7 +334,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 
-    FakeBaseVirtualChannel::DataSender data_sender;
+    FakeDataSender data_sender;
 
     FormatListSendBack sender(&data_sender);
 
@@ -371,18 +352,16 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
 
-    NullReportMessage report;
-    BaseVirtualChannel::Params params(report, RDPVerbose::none);
-    FakeBaseVirtualChannel channel(params);
+    FakeDataSender sender;
     const bool use_long_format_name = true;
     const int cCapabilitiesSets = 1;
 
-    ServerMonitorReadySendBack sender(RDPVerbose::none, use_long_format_name, &channel);
+    ServerMonitorReadySendBack pdu(RDPVerbose::none, use_long_format_name, &sender);
 
-    RED_REQUIRE_EQUAL(channel.server_sender.index, 2);
+    RED_REQUIRE_EQUAL(sender.index, 2);
 
     {
-        InStream stream(channel.server_sender.streams[0].av());
+        InStream stream(sender.streams[0].av());
 
         RDPECLIP::CliprdrHeader header;
         header.recv(stream);
@@ -403,7 +382,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
     }
 
     {
-        InStream stream(channel.server_sender.streams[1].av());
+        InStream stream(sender.streams[1].av());
 
         RDPECLIP::CliprdrHeader header;
         header.recv(stream);
