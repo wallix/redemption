@@ -501,7 +501,7 @@ public:
 
         if (status0 != SEC_E_OK) {
             LOG(LOG_ERR, "InitSecurityInterface NTLM status: 0x%08X", status0);
-            throw ERR_CREDSSP_NTLM_INIT_FAILED;
+            throw Error(ERR_CREDSSP_NTLM_INIT_FAILED);
         }
 
         this->client_auth_data.input_buffer.init(0);
@@ -530,7 +530,7 @@ public:
             (status1 != SEC_E_OK) &&
             (status1 != SEC_I_CONTINUE_NEEDED)) {
             LOG(LOG_ERR, "Initialize Security Context Error !");
-            throw ERR_CREDSSP_NTLM_INIT_FAILED;
+            throw Error(ERR_CREDSSP_NTLM_INIT_FAILED);
         }
 
         this->client_auth_data.input_buffer.init(0);

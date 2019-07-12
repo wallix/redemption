@@ -445,14 +445,14 @@ public:
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "Kerberos InitSecurityInterface status:%s0x%08X, fallback to NTLM",
                 (status == SEC_E_NO_CREDENTIALS)?" No Credentials ":" ", status);
-            throw ERR_CREDSSP_KERBEROS_INIT_FAILED;
+            throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
         }
 
         this->client_auth_data.input_buffer.init(0);
 
         this->client_auth_data.state = ClientAuthenticateData::Loop;
         if (Res::Err == this->sm_credssp_client_authenticate_send()){
-            throw ERR_CREDSSP_KERBEROS_INIT_FAILED;
+            throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
         }
     }
 
