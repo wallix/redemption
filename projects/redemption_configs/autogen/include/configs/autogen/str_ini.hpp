@@ -1169,12 +1169,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_down = 0
 
 # value: 0 or 1
-#_hidden
-#enable_interrupting = 0
+#_advanced
+#log_if_accepted = 0
 
 # value: 0 or 1
 #_hidden
-#log_if_accepted = 0
+#enable_interrupting = 0
 
 # value: 0 or 1
 #_hidden

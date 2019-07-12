@@ -297,8 +297,8 @@ namespace cfg {
         struct socket_path;
         struct enable_up;
         struct enable_down;
-        struct enable_interrupting;
         struct log_if_accepted;
+        struct enable_interrupting;
         struct enable_save_files;
         struct save_files_directory;
     };

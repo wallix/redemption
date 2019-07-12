@@ -3531,11 +3531,11 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// value{false} <br/>
-    struct file_validator::enable_interrupting {
+    struct file_validator::log_if_accepted {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "file_validator";
-        static constexpr char const * name = "enable_interrupting";
+        static constexpr char const * name = "log_if_accepted";
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3543,11 +3543,11 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// value{false} <br/>
-    struct file_validator::log_if_accepted {
+    struct file_validator::enable_interrupting {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "file_validator";
-        static constexpr char const * name = "log_if_accepted";
+        static constexpr char const * name = "enable_interrupting";
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -5263,8 +5263,8 @@ struct file_validator
 : cfg::file_validator::socket_path
 , cfg::file_validator::enable_up
 , cfg::file_validator::enable_down
-, cfg::file_validator::enable_interrupting
 , cfg::file_validator::log_if_accepted
+, cfg::file_validator::enable_interrupting
 , cfg::file_validator::enable_save_files
 , cfg::file_validator::save_files_directory
 { static constexpr bool is_section = true; };

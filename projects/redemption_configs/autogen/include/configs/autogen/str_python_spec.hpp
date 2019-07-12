@@ -982,11 +982,11 @@ enable_up = boolean(default=False)
 #_hidden
 enable_down = boolean(default=False)
 
-#_hidden
-enable_interrupting = boolean(default=False)
+#_advanced
+log_if_accepted = boolean(default=False)
 
 #_hidden
-log_if_accepted = boolean(default=False)
+enable_interrupting = boolean(default=False)
 
 #_hidden
 enable_save_files = boolean(default=False)

@@ -1937,18 +1937,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "enable_interrupting")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_validator::enable_interrupting&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "log_if_accepted")) {
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::file_validator::log_if_accepted&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_interrupting")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::file_validator::enable_interrupting&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
