@@ -77,7 +77,6 @@ private:
 
 
 public:
-
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
@@ -96,15 +95,6 @@ public:
     , channel_file(icap_service, params.validator_params)
     {}
 
-
-protected:
-    const char* get_reporting_reason_exchanged_data_limit_reached() const
-        override
-    {
-        return "CLIPBOARD_LIMIT";
-    }
-
-public:
     void empty_client_clipboard() {
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::empty_client_clipboard");

@@ -58,7 +58,7 @@ public:
     DataSender server_sender;
 
     FakeBaseVirtualChannel(const Params & params)
-    :  BaseVirtualChannel(&client_sender, &server_sender, params)
+    : BaseVirtualChannel(&client_sender, &server_sender, params)
     {}
 
     void process_server_message(
@@ -67,12 +67,6 @@ public:
         uint32_t /*chunk_data_length*/,
         std::unique_ptr<AsynchronousTask> & /*out_asynchronous_task*/) override
     {}
-
-protected:
-    const char* get_reporting_reason_exchanged_data_limit_reached() const override
-    {
-        return "CLIPBOARD_LIMIT";
-    }
 };  // class ClipboardVirtualChannel
 
 

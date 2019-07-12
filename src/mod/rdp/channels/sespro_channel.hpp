@@ -214,14 +214,6 @@ public:
         }));
     }
 
-protected:
-    const char* get_reporting_reason_exchanged_data_limit_reached() const
-        override
-    {
-        return "";
-    }
-
-public:
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer && !this->launch_aborted) {
             this->session_probe_timer->set_delay(this->sespro_params.effective_launch_timeout);

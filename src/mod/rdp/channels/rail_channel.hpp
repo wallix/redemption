@@ -145,14 +145,8 @@ public:
     , vars(vars)
     , proxy_managed(proxy_managed)
     , desktop_width(desktop_width)
-    , desktop_height(desktop_height) {}
-
-protected:
-    const char* get_reporting_reason_exchanged_data_limit_reached() const
-        override
-    {
-        return "RAIL_LIMIT";
-    }
+    , desktop_height(desktop_height)
+    {}
 
 private:
     template<class PDU>

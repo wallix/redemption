@@ -42,14 +42,6 @@ public:
                          params)
     {}
 
-protected:
-    const char* get_reporting_reason_exchanged_data_limit_reached() const
-        override
-    {
-        return "DRDYNVC_LIMIT";
-    }
-
-public:
     void process_client_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length) override

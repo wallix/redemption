@@ -979,13 +979,6 @@ public:
         }
     }
 
-protected:
-    const char* get_reporting_reason_exchanged_data_limit_reached() const override
-    {
-        return "RDPDR_LIMIT";
-    }
-
-private:
     device_io_request_info_inventory_type::iterator
     find_request_info(uint32_t device_id, uint32_t completion_id)
     {
