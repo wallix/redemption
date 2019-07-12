@@ -293,15 +293,28 @@ namespace cfg {
         struct theme;
     };
 
-    struct validator {
-        struct enable_validator;
+    struct file_validator {
         struct socket_path;
-        struct up_target_name;
-        struct down_target_name;
+        struct enable_up;
+        struct enable_down;
         struct enable_interrupting;
         struct log_if_accepted;
         struct enable_save_files;
         struct save_files_directory;
+    };
+
+    struct icap_server_up {
+        struct host;
+        struct port;
+        struct service_name;
+        struct tls;
+    };
+
+    struct icap_server_down {
+        struct host;
+        struct port;
+        struct service_name;
+        struct tls;
     };
 
     struct context {

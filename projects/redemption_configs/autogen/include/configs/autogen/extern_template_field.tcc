@@ -85,6 +85,8 @@ template class Inifile::Field<cfg::remote_program::allow_resize_hosted_desktop>;
 template class Inifile::Field<cfg::translation::language>;
 template class Inifile::Field<cfg::translation::password_en>;
 template class Inifile::Field<cfg::translation::password_fr>;
+template class Inifile::Field<cfg::file_validator::enable_up>;
+template class Inifile::Field<cfg::file_validator::enable_down>;
 template class Inifile::Field<cfg::context::psid>;
 template class Inifile::Field<cfg::context::opt_bitrate>;
 template class Inifile::Field<cfg::context::opt_framerate>;

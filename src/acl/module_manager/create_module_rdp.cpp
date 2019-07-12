@@ -292,12 +292,12 @@ void ModuleManager::create_mod_rdp(
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
 
-    mod_rdp_params.validator_params.enable_interrupting = ini.get<cfg::validator::enable_interrupting>();
-    mod_rdp_params.validator_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
-    mod_rdp_params.validator_params.log_if_accepted = ini.get<cfg::validator::log_if_accepted>();
-    mod_rdp_params.validator_params.save_files_directory = ini.get<cfg::validator::save_files_directory>().to_string();
-    mod_rdp_params.validator_params.up_target_name = ini.get<cfg::validator::up_target_name>();
-    mod_rdp_params.validator_params.down_target_name = ini.get<cfg::validator::down_target_name>();
+    mod_rdp_params.validator_params.enable_interrupting = ini.get<cfg::file_validator::enable_interrupting>();
+    mod_rdp_params.validator_params.enable_save_files = ini.get<cfg::file_validator::enable_save_files>();
+    mod_rdp_params.validator_params.log_if_accepted = ini.get<cfg::file_validator::log_if_accepted>();
+    mod_rdp_params.validator_params.save_files_directory = ini.get<cfg::file_validator::save_files_directory>().to_string();
+    mod_rdp_params.validator_params.up_target_name = ini.get<cfg::file_validator::enable_up>() ? "up" : "";
+    mod_rdp_params.validator_params.down_target_name = ini.get<cfg::file_validator::enable_down>() ? "down" : "";
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
 
@@ -383,7 +383,7 @@ void ModuleManager::create_mod_rdp(
             using mod_rdp::mod_rdp;
         };
 
-        bool enable_validator = ini.get<cfg::validator::enable_validator>();
+        bool enable_validator = ini.get<cfg::file_validator::enable_up>() || ini.get<cfg::file_validator::enable_down>();
         bool const enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
@@ -392,7 +392,7 @@ void ModuleManager::create_mod_rdp(
         int validator_fd = -1;
 
         if (enable_validator) {
-            unique_fd ufd = addr_connect(ini.get<cfg::validator::socket_path>().c_str());
+            unique_fd ufd = addr_connect(ini.get<cfg::file_validator::socket_path>().c_str());
             if (ufd) {
                 validator_fd = ufd.fd();
                 fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);

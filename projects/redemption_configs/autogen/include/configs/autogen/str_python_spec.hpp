@@ -972,22 +972,54 @@ password_fr = string(default='')
 #_advanced
 load_theme = string(default='')
 
-[validator]
-
-enable_validator = boolean(default=False)
+[file_validator]
 
 socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
 
-up_target_name = string(default='')
+#_hidden
+enable_up = boolean(default=False)
 
-down_target_name = string(default='')
+#_hidden
+enable_down = boolean(default=False)
 
+#_hidden
 enable_interrupting = boolean(default=False)
 
+#_hidden
 log_if_accepted = boolean(default=False)
 
+#_hidden
 enable_save_files = boolean(default=False)
 
+#_hidden
 save_files_directory = string(max=4096, default='')
+
+[icap_server_up]
+
+# Ip or fqdn of ICAP service
+host = string(default='')
+
+# Port of ICAP service
+port = integer(min=0, default=0)
+
+# Service name of ICAP service
+service_name = string(default='up')
+
+# ICAP service use tls
+tls = boolean(default=False)
+
+[icap_server_down]
+
+# Ip or fqdn of ICAP service
+host = string(default='')
+
+# Port of ICAP service
+port = integer(min=0, default=0)
+
+# Service name of ICAP service
+service_name = string(default='down')
+
+# ICAP service use tls
+tls = boolean(default=False)
 
 )gen_config_ini"

@@ -601,18 +601,35 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "theme", spec::name{"load_theme"});
     });
 
-    W.section("validator", [&]
+    W.section("file_validator", [&]
     {
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_validator", set(false));
         W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "up_target_name");
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "down_target_name");
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interrupting", set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up");
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down");
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "log_if_accepted", set(false));
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_save_files", set(false));
-        W.member(ini_and_gui, no_sesman, L, type_<types::dirpath>(), "save_files_directory");
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_interrupting", set(false));
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "log_if_accepted", set(false));
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_save_files", set(false));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "save_files_directory");
+    });
+
+    // TODO temporary
+    W.section("icap_server_up", [&]
+    {
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP service"});
+        W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP service"});
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name of ICAP service"}, set("up"));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP service use tls"});
+    });
+
+    // TODO temporary
+    W.section("icap_server_down", [&]
+    {
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP service"});
+        W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP service"});
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name of ICAP service"}, set("down"));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP service use tls"});
     });
 
     W.section("context", [&]

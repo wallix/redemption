@@ -1156,27 +1156,64 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #load_theme = 
 
-[validator]
-
-# value: 0 or 1
-#enable_validator = 0
+[file_validator]
 
 #socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
 
-#up_target_name = 
-
-#down_target_name = 
+# value: 0 or 1
+#_hidden
+#enable_up = 0
 
 # value: 0 or 1
+#_hidden
+#enable_down = 0
+
+# value: 0 or 1
+#_hidden
 #enable_interrupting = 0
 
 # value: 0 or 1
+#_hidden
 #log_if_accepted = 0
 
 # value: 0 or 1
+#_hidden
 #enable_save_files = 0
 
 # maxlen = 4096
+#_hidden
 #save_files_directory = 
+
+[icap_server_up]
+
+# Ip or fqdn of ICAP service
+#host = 
+
+# Port of ICAP service
+# min = 0
+#port = 0
+
+# Service name of ICAP service
+#service_name = up
+
+# ICAP service use tls
+# value: 0 or 1
+#tls = 0
+
+[icap_server_down]
+
+# Ip or fqdn of ICAP service
+#host = 
+
+# Port of ICAP service
+# min = 0
+#port = 0
+
+# Service name of ICAP service
+#service_name = down
+
+# ICAP service use tls
+# value: 0 or 1
+#tls = 0
 
 )gen_config_ini"

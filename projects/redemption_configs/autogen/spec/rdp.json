@@ -631,6 +631,23 @@
           "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
         }
       ]
+    },
+    {
+      "name": "file_validator",
+      "members": [
+        {
+          "name": "enable_up",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "enable_down",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        }
+      ]
     }
   ]
 }

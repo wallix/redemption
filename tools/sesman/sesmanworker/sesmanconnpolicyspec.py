@@ -67,6 +67,10 @@ cp_spec = {
   'video': {
     u'disable_keyboard_log': ('disable_keyboard_log', 1),
   },
+  'file_validator': {
+    u'enable_up': ('enable_up', False),
+    u'enable_down': ('enable_down', False),
+  },
   'vnc': {
     u'server_is_apple': ('server_is_apple', False),
     u'server_unix_alt': ('server_unix_alt', False),

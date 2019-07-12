@@ -768,11 +768,11 @@ struct FileContentsResponseReceive
             }
         }
 
-        if (clip_side_data.file_contents_request_info_inventory.end() !=
-            clip_side_data.file_contents_request_info_inventory.find(clip_side_data.streamId))
+        auto it = clip_side_data.file_contents_request_info_inventory.find(clip_side_data.streamId);
+
+        if (clip_side_data.file_contents_request_info_inventory.end() != it)
         {
-            ClipboardSideData::file_contents_request_info& file_contents_request =
-                clip_side_data.file_contents_request_info_inventory[clip_side_data.streamId];
+            ClipboardSideData::file_contents_request_info& file_contents_request = it->second;
 
             ClipboardSideData::file_info_inventory_type& file_info_inventory =
                 clip_side_data.file_stream_data_inventory[
