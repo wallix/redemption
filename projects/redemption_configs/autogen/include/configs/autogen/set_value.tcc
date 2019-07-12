@@ -1156,6 +1156,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "wabam_uses_translated_remoteapp")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::wabam_uses_translated_remoteapp&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1921,10 +1929,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "target_name")) {
+        else if (0 == strcmp(key, "up_target_name")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::target_name&>(this->variables).value,
+                static_cast<cfg::validator::up_target_name&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "down_target_name")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::validator::down_target_name&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
             );

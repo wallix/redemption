@@ -714,6 +714,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #split_domain = 0
 
+# value: 0 or 1
+#_hidden
+#wabam_uses_translated_remoteapp = 0
+
 [metrics]
 
 # value: 0 or 1
@@ -1159,7 +1163,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 #socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
 
-#target_name = avscan
+#up_target_name = 
+
+#down_target_name = 
 
 # value: 0 or 1
 #enable_interrupting = 0

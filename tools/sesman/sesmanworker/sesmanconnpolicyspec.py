@@ -18,6 +18,7 @@ cp_spec = {
     u'use_client_provided_alternate_shell': ('use_client_provided_alternate_shell', False),
     u'use_client_provided_remoteapp': ('use_client_provided_remoteapp', False),
     u'use_native_remoteapp_capability': ('use_native_remoteapp_capability', True),
+    u'wabam_uses_translated_remoteapp': ('wabam_uses_translated_remoteapp', False),
     u'rail_disconnect_message_delay': ('remote_programs_disconnect_message_delay', 3000),
     u'use_session_probe_to_launch_remote_program': ('use_session_probe_to_launch_remote_program', True),
   },

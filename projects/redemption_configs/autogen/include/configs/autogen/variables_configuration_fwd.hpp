@@ -173,6 +173,7 @@ namespace cfg {
         struct experimental_fix_input_event_sync;
         struct experimental_fix_too_long_cookie;
         struct split_domain;
+        struct wabam_uses_translated_remoteapp;
         struct enable_server_cert_external_validation;
         struct server_cert;
         struct server_cert_response;
@@ -295,7 +296,8 @@ namespace cfg {
     struct validator {
         struct enable_validator;
         struct socket_path;
-        struct target_name;
+        struct up_target_name;
+        struct down_target_name;
         struct enable_interrupting;
         struct log_if_accepted;
         struct enable_save_files;
@@ -379,6 +381,7 @@ namespace cfg {
         struct use_session_probe_to_launch_remote_program;
         struct session_probe_launch_error_message;
         struct close_box_extra_message;
+        struct is_wabam;
         struct pm_response;
         struct pm_request;
         struct native_session_id;

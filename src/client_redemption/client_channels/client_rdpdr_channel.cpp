@@ -594,12 +594,12 @@ void ClientRDPDRChannel::process_iorequest_create(InStream & chunk, rdpdr::Devic
 //                     LOG(LOG_WARNING, "new file: \"%s\"", new_path);
 
                     if (! ( this->impl_io_disk->ofile_good(new_path.c_str())) ) {
-//                         LOG(LOG_WARNING, "  Can't open create such file: \'%s\'.", new_path.c_str());
+//                         LOG(LOG_WARNING, "  Can't open create such file: \'%s\'.", new_path);
                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                     }
                 }
             } else {
-                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
+                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path);
                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
             }
         }
@@ -643,7 +643,7 @@ void ClientRDPDRChannel::process_iorequest_query_information(InStream & chunk, r
 
             if (! (this->impl_io_disk->ifile_good(file_to_request.c_str())) ) {
                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
+                //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request);
             }
 
             deviceIOResponse.emit(out_stream);
@@ -706,7 +706,7 @@ void ClientRDPDRChannel::process_iorequest_query_information(InStream & chunk, r
                 std::string file_to_request = this->paths.at(id);
                 if (!(this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
-                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
+                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request);
                 }
                 deviceIOResponse.emit(out_stream);
 
@@ -767,7 +767,7 @@ void ClientRDPDRChannel::process_iorequest_read(InStream & chunk, rdpdr::DeviceI
     int file_size = this->impl_io_disk->get_file_size(file_to_tread.c_str());
     if (file_size < 0) {
         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
+        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread);
     } else {
 
         portion_length = std::min(static_cast<int>(drr.Length()), file_size);
@@ -836,7 +836,7 @@ void ClientRDPDRChannel::process_iorequest_directory_control(InStream & chunk, r
 
                 if (this->impl_io_disk->dir_good(str_file_path_slash.c_str())) {
                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
+                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash);
                 }
 
             } else {
@@ -874,7 +874,7 @@ void ClientRDPDRChannel::process_iorequest_directory_control(InStream & chunk, r
                     struct stat buff_child;
                     if (stat(str_file_path_slash.c_str(), &buff_child)) {
                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                        //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
+                        //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash);
                     } else {
                             child = this->impl_io_disk->get_file_stat(str_file_path_slash.c_str());
                     }
@@ -1006,13 +1006,13 @@ void ClientRDPDRChannel::process_iorequest_query_volume_information(InStream & c
         this->impl_io_disk->get_file_statvfs(str_path.c_str());
     } else {
         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buffvfs).", str_path.c_str());
+        LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buffvfs).", str_path);
     }
 
     int device = this->impl_io_disk->get_device(str_path.c_str());
     if (device < 0) {
         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-        //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path.c_str());
+        //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path);
     } else {
         VolumeSerialNumber = this->impl_io_disk->get_volume_serial_number(device);
     }
@@ -1111,7 +1111,7 @@ void ClientRDPDRChannel::provess_iorequest_write(InStream & chunk, rdpdr::Device
     std::string file_to_write = this->paths.at(id);
 
     if (this->impl_io_disk->write_file(file_to_write.c_str(), char_ptr_cast(dwr.WriteData), WriteDataLen ) ) {
-        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
+        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write);
         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
     }
 
@@ -1138,7 +1138,7 @@ void ClientRDPDRChannel::process_iorequest_set_information(InStream & chunk, rdp
     std::string file_to_request = this->paths.at(id);
 
     if (! (this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
-        LOG(LOG_WARNING, "  Can't open such file of directory : \'%s\'.", file_to_request.c_str());
+        LOG(LOG_WARNING, "  Can't open such file of directory : \'%s\'.", file_to_request);
         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
     }
 
@@ -1156,7 +1156,7 @@ void ClientRDPDRChannel::process_iorequest_set_information(InStream & chunk, rdp
             std::string fileName(this->share_dir + rdpfri.FileName());
 
             if (this->impl_io_disk->rename_file(file_to_request.c_str(), fileName.c_str())) {
-                LOG(LOG_WARNING, "  Can't rename such file of directory : \'%s\' to \'%s\'.", file_to_request.c_str(), fileName.c_str());
+                LOG(LOG_WARNING, "  Can't rename such file of directory : \'%s\' to \'%s\'.", file_to_request, fileName);
                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_OBJECT_NAME_INVALID);
             }
 
@@ -1184,7 +1184,7 @@ void ClientRDPDRChannel::process_iorequest_set_information(InStream & chunk, rdp
             if (this->impl_io_disk->remove_file(file_to_request.c_str())) {
                 DeletePending = 0;
                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
-                LOG(LOG_WARNING, "  Can't delete such file of directory : \'%s\'.", file_to_request.c_str());
+                LOG(LOG_WARNING, "  Can't delete such file of directory : \'%s\'.", file_to_request);
             }
 
             deviceIOResponse.emit(out_stream);

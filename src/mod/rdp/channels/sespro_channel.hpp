@@ -930,7 +930,7 @@ public:
             }
         }
         else if (!::strcasecmp(order_.c_str(), "Log") && !parameters_.empty()) {
-            LOG(LOG_INFO, "SessionProbe: %s", parameters_[0].c_str());
+            LOG(LOG_INFO, "SessionProbe: %s", parameters_[0]);
         }
         else if (!::strcasecmp(order_.c_str(), "KeepAlive") && !parameters_.empty() &&
                  !::strcasecmp(parameters_[0].c_str(), "OK")) {
@@ -1484,6 +1484,191 @@ public:
                         message_format_invalid = true;
                     }
                 }
+
+                else if (!::strcasecmp(order_.c_str(), "WEB_ATTEMPT_TO_PRINT")) {
+                    if (parameters_.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type",  "WEB_ATTEMPT_TO_PRINT"},
+                            {"url",   parameters_[0]},
+                            {"title", parameters_[1]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "WEB_ATTEMPT_TO_PRINT";
+                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_ATTEMPT_TO_PRINT;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "WEB_BEFORE_NAVIGATE")) {
+                    if (parameters_.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type", "WEB_BEFORE_NAVIGATE"},
+                            {"url",  parameters_[0]},
+                            {"post", parameters_[1]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "WEB_BEFORE_NAVIGATE";
+                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_BEFORE_NAVIGATE;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "WEB_DOCUMENT_COMPLETE")) {
+                    if (parameters_.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type",  "WEB_DOCUMENT_COMPLETE"},
+                            {"url",   parameters_[0]},
+                            {"title", parameters_[1]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "WEB_DOCUMENT_COMPLETE";
+                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_DOCUMENT_COMPLETE;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "WEB_NAVIGATE_ERROR")) {
+                    if (parameters_.size() == 4) {
+                        auto info = key_qvalue_pairs({
+                            {"type",         "WEB_NAVIGATE_ERROR"},
+                            {"url",          parameters_[0]},
+                            {"title",        parameters_[1]},
+                            {"code",         parameters_[2]},
+                            {"display_name", parameters_[3]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "WEB_NAVIGATE_ERROR";
+                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_NAVIGATE_ERROR;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "WEB_NAVIGATION")) {
+                    if (parameters_.size() == 1) {
+                        auto info = key_qvalue_pairs({
+                            {"type", "WEB_NAVIGATION"},
+                            {"url",  parameters_[0]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "WEB_NAVIGATION";
+                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_NAVIGATION;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "WEB_PRIVACY_IMPACTED")) {
+                    if (parameters_.size() == 1) {
+                        auto info = key_qvalue_pairs({
+                            {"type",     "WEB_PRIVACY_IMPACTED"},
+                            {"impacted", parameters_[0]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "WEB_PRIVACY_IMPACTED";
+                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_PRIVACY_IMPACTED;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "WEB_ENCRYPTION_LEVEL_CHANGED")) {
+                    if (parameters_.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type",         "WEB_ENCRYPTION_LEVEL_CHANGED"},
+                            {"identifier",   parameters_[0]},
+                            {"display_name", parameters_[1]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "WEB_ENCRYPTION_LEVEL_CHANGED";
+                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_ENCRYPTION_LEVEL_CHANGED;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "WEB_THIRD_PARTY_URL_BLOCKED")) {
+                    if (parameters_.size() == 1) {
+                        auto info = key_qvalue_pairs({
+                            {"type", "WEB_THIRD_PARTY_URL_BLOCKED"},
+                            {"url",  parameters_[0]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "WEB_THIRD_PARTY_URL_BLOCKED";
+                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_THIRD_PARTY_URL_BLOCKED;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+
                 else {
                     LOG(LOG_WARNING,
                         "SessionProbeVirtualChannel::process_server_message: "

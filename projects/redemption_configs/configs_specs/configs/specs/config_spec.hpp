@@ -424,6 +424,8 @@ void config_spec_definition(Writer && W)
             "Force to split target domain and username with '@' separator."
         }, set(false));
 
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "wabam_uses_translated_remoteapp", set(false));
+
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "enable_server_cert_external_validation");
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "server_cert");
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "server_cert_response", desc{"empty string for wait, 'Ok' or error message"});
@@ -603,7 +605,8 @@ void config_spec_definition(Writer && W)
     {
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_validator", set(false));
         W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "target_name", set("avscan"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "up_target_name");
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "down_target_name");
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interrupting", set(false));
 
@@ -738,6 +741,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "session_probe_launch_error_message");
 
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "close_box_extra_message");
+
+        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "is_wabam", set(false));
 
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "pm_response");
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "pm_request");

@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(161);
+constexpr authid_t MAX_AUTHID = authid_t(163);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -79,6 +79,7 @@ constexpr array_view_const_char const authstr[] = {
     "server_cert_success_message"_av,
     "server_cert_failure_message"_av,
     "enable_rdpdr_data_analysis"_av,
+    "wabam_uses_translated_remoteapp"_av,
     "enable_server_cert_external_validation"_av,
     "server_cert"_av,
     "server_cert_response"_av,
@@ -169,6 +170,7 @@ constexpr array_view_const_char const authstr[] = {
     "rail_disconnect_message_delay"_av,
     "use_session_probe_to_launch_remote_program"_av,
     "session_probe_launch_error_message"_av,
+    "is_wabam"_av,
     "pm_response"_av,
     "pm_request"_av,
     "native_session_id"_av,

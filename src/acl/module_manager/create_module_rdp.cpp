@@ -249,14 +249,22 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.remote_app_params.should_ignore_first_client_execute  = rail_client_execute.should_ignore_first_client_execute();
 
-    mod_rdp_params.remote_app_params.enable_remote_program
-      = (client_info.remote_program
-        && ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
+    bool const rail_is_required = (ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
         && ((mod_rdp_params.application_params.target_application
           && *mod_rdp_params.application_params.target_application)
          || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
          && not mod_rdp_params.remote_app_params.client_execute.exe_or_file.empty())));
+
+    mod_rdp_params.remote_app_params.enable_remote_program
+      = ((client_info.remote_program ||
+          (this->ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() &&
+           this->ini.get<cfg::context::is_wabam>())) &&
+         rail_is_required);
     mod_rdp_params.remote_app_params.remote_program_enhanced             = client_info.remote_program_enhanced;
+    mod_rdp_params.remote_app_params.convert_remoteapp_to_desktop        = (!client_info.remote_program &&
+                                                          this->ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>() &&
+                                                          this->ini.get<cfg::context::is_wabam>() &&
+                                                          rail_is_required);
     mod_rdp_params.remote_app_params.use_client_provided_remoteapp       = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
     mod_rdp_params.clean_up_32_bpp_cursor              = ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();
@@ -288,7 +296,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.validator_params.enable_save_files = ini.get<cfg::validator::enable_save_files>();
     mod_rdp_params.validator_params.log_if_accepted = ini.get<cfg::validator::log_if_accepted>();
     mod_rdp_params.validator_params.save_files_directory = ini.get<cfg::validator::save_files_directory>().to_string();
-    mod_rdp_params.validator_params.target_name = ini.get<cfg::validator::target_name>();
+    mod_rdp_params.validator_params.up_target_name = ini.get<cfg::validator::up_target_name>();
+    mod_rdp_params.validator_params.down_target_name = ini.get<cfg::validator::down_target_name>();
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
 

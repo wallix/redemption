@@ -817,7 +817,7 @@ public:
         this->PublicKey.assign(key.data(), key.data()+key.size());
 
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
-        
+       
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
 
         this->client_auth_data_state = Loop;

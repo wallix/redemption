@@ -107,6 +107,8 @@ namespace channel_names
     DEF_NAME(rdpsnd);
     DEF_NAME(drdynvc);
     DEF_NAME(rail);
+    DEF_NAME(rail_wi);
+    DEF_NAME(rail_ri);
     DEF_NAME(sespro);
     DEF_NAME(wabdiag);
 }

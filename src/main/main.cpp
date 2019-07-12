@@ -199,7 +199,7 @@ inline int shutdown()
                 continue;
             }
             const std::string pidpath = path + "/" + entryp->d_name;
-            LOG(LOG_INFO, "removing old pid file %s", pidpath.c_str());
+            LOG(LOG_INFO, "removing old pid file %s", pidpath);
             if (unlink(pidpath.c_str()) < 0){
                 LOG(LOG_ERR, "Failed to remove old session pid file %s [%d: %s]",
                     pidpath.c_str(), errno, strerror(errno));

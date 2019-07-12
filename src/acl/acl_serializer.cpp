@@ -327,7 +327,7 @@ void AclSerializer::log6(
         arcsight_format(arcsight_message, asl_info,
             time.tv_sec, user, account, host, target_ip, session_id, this->session_type);
 
-        LOG_SIEM("%s", arcsight_message.c_str());
+        LOG_SIEM("%s", arcsight_message);
     }
 }
 

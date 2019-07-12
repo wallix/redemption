@@ -511,7 +511,7 @@ public:
                         *this->_socket_in_recorder, this->timeSystem, this->config.full_capture_file_name.c_str());
                 }
 
-                LOG(LOG_INFO, "Connected to [%s].", this->config.target_IP.c_str());
+                LOG(LOG_INFO, "Connected to [%s].", this->config.target_IP);
 
             } catch (const Error& e) {
                 has_error = true;

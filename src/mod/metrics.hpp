@@ -45,12 +45,12 @@
 
 static inline bool create_metrics_directory(const std::string & path){
     if (0 != access(path.c_str(), F_OK)) {
-        LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
+        LOG(LOG_INFO, "Creation of %s directory to store metrics", path);
         recursive_create_directory(path.c_str(), ACCESSPERMS, -1);
     }
 
     if (0 != access(path.c_str(), F_OK)) {
-        LOG(LOG_WARNING, "Creation of %s directory to store metrics failed, metrics will be disabled", path.c_str());
+        LOG(LOG_WARNING, "Creation of %s directory to store metrics failed, metrics will be disabled", path);
         return false;
     }
     return true;

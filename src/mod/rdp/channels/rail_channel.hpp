@@ -115,12 +115,20 @@ private:
 
     std::vector<LaunchPendingApp> launch_pending_apps;
 
+    bool proxy_managed;
+
+    uint16_t desktop_width;
+    uint16_t desktop_height;
+
 public:
 
     RemoteProgramsVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& /*front*/,
+        bool proxy_managed,
+        uint16_t desktop_width,
+        uint16_t desktop_height,
         ModRdpVariables vars,
         const BaseVirtualChannel::Params & base_params,
         const RemoteProgramsVirtualChannelParams& params)
@@ -134,7 +142,10 @@ public:
     , param_use_session_probe_to_launch_remote_program(params.use_session_probe_to_launch_remote_program)
     //, param_client_supports_handshakeex_pdu(params.client_supports_handshakeex_pdu)
     //, param_client_supports_enhanced_remoteapp(params.client_supports_enhanced_remoteapp)
-    , vars(vars) {}
+    , vars(vars)
+    , proxy_managed(proxy_managed)
+    , desktop_width(desktop_width)
+    , desktop_height(desktop_height) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -931,6 +942,376 @@ public:
 
         if (bool(this->verbose & RDPVerbose::rail)) {
             sspupdu.log(LOG_INFO);
+        }
+
+        if (this->proxy_managed && !this->client_execute_pdu_sent && (SPI_SETSCREENSAVEACTIVE == sspupdu.SystemParam()))
+        {
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_CLIENTSTATUS);
+
+                ClientInformationPDU cipdu;
+                cipdu.Flags(0x1E7);
+                cipdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Client Information PDU");
+                    cipdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_HANDSHAKE);
+
+                HandshakePDU hspdu;
+                hspdu.buildNumber(17763);
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Handshake PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_LANGBARINFO);
+
+                LanguageBarInformationPDU hspdu;
+                hspdu.LanguageBarStatus(0x498);
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Language Bar Information PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
+
+                HighContrastSystemInformationStructure hcsis;
+                hcsis.Flags(0x7E);
+
+                ClientSystemParametersUpdatePDU hspdu;
+                hspdu.SystemParam(SPI_SETHIGHCONTRAST);
+                hspdu.body_hcsis(std::move(hcsis));
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Client System Parameters Update PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                if (!this->client_execute.exe_or_file.empty()) {
+                    StaticOutStream<16384> out_s;
+                    RAILPDUHeader header;
+                    header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
+
+                    ClientExecutePDU cepdu;
+
+                    cepdu.Flags(this->client_execute.flags);
+                    cepdu.ExeOrFile(this->client_execute.exe_or_file.c_str());
+                    cepdu.WorkingDir(this->client_execute.working_dir.c_str());
+                    cepdu.Arguments(this->client_execute.arguments.c_str());
+
+                    cepdu.emit(out_s);
+
+                    header.emit_end();
+
+                    const size_t   length = out_s.get_offset();
+                    const uint32_t flags  =   CHANNELS::CHANNEL_FLAG_FIRST
+                                            | CHANNELS::CHANNEL_FLAG_LAST;
+
+                    {
+                        const bool send              = true;
+                        const bool from_or_to_client = false;
+                        ::msgdump_c(send, from_or_to_client, length, flags,
+                            out_s.get_data(), length);
+                    }
+                    if (bool(this->verbose & RDPVerbose::rail)) {
+                        LOG(LOG_INFO,
+                            "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                                "Send to server - Client Execute PDU");
+                        cepdu.log(LOG_INFO);
+                    }
+
+                    this->send_message_to_server(length, flags, out_s.get_data(),
+                        length);
+                }
+
+                this->client_execute_pdu_sent = true;
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
+
+                RDP::RAIL::Rectangle rectangle(0, this->desktop_height - 40 /* Taskbar height */, this->desktop_width, this->desktop_height);
+
+                ClientSystemParametersUpdatePDU hspdu;
+                hspdu.SystemParam(RAIL_SPI_TASKBARPOS);
+                hspdu.body_r(rectangle);
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Client System Parameters Update PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
+
+                ClientSystemParametersUpdatePDU hspdu;
+                hspdu.SystemParam(SPI_SETMOUSEBUTTONSWAP);
+                hspdu.body_b(0);
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Client System Parameters Update PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
+
+                ClientSystemParametersUpdatePDU hspdu;
+                hspdu.SystemParam(SPI_SETKEYBOARDPREF);
+                hspdu.body_b(0);
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Client System Parameters Update PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
+
+                ClientSystemParametersUpdatePDU hspdu;
+                hspdu.SystemParam(SPI_SETDRAGFULLWINDOWS);
+                hspdu.body_b(0);
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Client System Parameters Update PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
+
+                ClientSystemParametersUpdatePDU hspdu;
+                hspdu.SystemParam(SPI_SETKEYBOARDCUES);
+                hspdu.body_b(0);
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Client System Parameters Update PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_SYSPARAM);
+
+                RDP::RAIL::Rectangle rectangle(0, 0, this->desktop_width - 2 /* ? */, this->desktop_height - 40 /* Taskbar height */);
+
+                ClientSystemParametersUpdatePDU hspdu;
+                hspdu.SystemParam(SPI_SETWORKAREA);
+                hspdu.body_r(rectangle);
+                hspdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length = out_s.get_offset();
+                const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+                                        | CHANNELS::CHANNEL_FLAG_LAST;
+                {
+                    const bool send              = true;
+                    const bool from_or_to_client = true;
+                    ::msgdump_c(send, from_or_to_client, length, flags_,
+                        out_s.get_data(), length);
+                }
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    LOG(LOG_INFO,
+                        "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+                            "Send to server - Client System Parameters Update PDU");
+                    hspdu.log(LOG_INFO);
+                }
+
+                this->send_message_to_server(length, flags_, out_s.get_data(),
+                    length);
+            }
+
+            return false;
         }
 
         return true;

@@ -169,6 +169,8 @@ struct ModRDPParams
         bool enable_remote_program   = false;
         bool remote_program_enhanced = false;
 
+        bool convert_remoteapp_to_desktop = false;
+
         bool use_client_provided_remoteapp = false;
 
         bool should_ignore_first_client_execute = false;
@@ -386,6 +388,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_app_params.enable_remote_program);
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_app_params.remote_program_enhanced);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             remote_app_params.convert_remoteapp_to_desktop);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clean_up_32_bpp_cursor);
 

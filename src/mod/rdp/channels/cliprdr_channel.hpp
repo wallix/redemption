@@ -288,7 +288,7 @@ public:
 
                     if (this->last_lindex != receiver.lindex) {
                         this->last_lindex = receiver.lindex;
-                        this->channel_file.new_file(desc.file_name.c_str(), desc.file_size(), ChannelFile::FILE_FROM_SERVER, this->session_reactor.get_current_time());
+                        this->channel_file.new_file(desc.file_name, desc.file_size(), ChannelFile::Direction::FileFromServer, this->session_reactor.get_current_time());
                     }
                 }
                 send_message_to_server = this->params.clipboard_file_authorized;
@@ -559,7 +559,7 @@ public:
 
                     if (this->last_lindex != receiver.lindex) {
                         this->last_lindex = receiver.lindex;
-                        this->channel_file.new_file(desc.file_name.c_str(), desc.file_size() ,ChannelFile::FILE_FROM_CLIENT, this->session_reactor.get_current_time());
+                        this->channel_file.new_file(desc.file_name, desc.file_size(), ChannelFile::Direction::FileFromClient, this->session_reactor.get_current_time());
                     }
                 }
                 send_message_to_client = this->params.clipboard_file_authorized;
@@ -646,10 +646,8 @@ public:
             auto const info = key_qvalue_pairs({
                 {"type", "FILE_VERIFICATION" },
                 {"direction",
-                    this->channel_file.get_direction() == ChannelFile::FILE_FROM_CLIENT
-                    ? "UP" :
-                    this->channel_file.get_direction() == ChannelFile::FILE_FROM_SERVER
-                    ? "DOWN" : "unknown"
+                    (this->channel_file.get_direction() == ChannelFile::Direction::FileFromClient)
+                    ? "UP" : "DOWN"
                 },
                 {"filename", this->channel_file.get_file_name()},
                 {"status", this->channel_file.get_result_content()}
@@ -661,7 +659,7 @@ public:
             arc_info.ApplicationProtocol = "rdp";
             arc_info.fileName = this->channel_file.get_file_name();
             arc_info.fileSize = this->channel_file.get_file_size();
-            arc_info.direction_flag = this->channel_file.get_direction() == ChannelFile::FILE_FROM_SERVER ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
+            arc_info.direction_flag = (this->channel_file.get_direction() == ChannelFile::Direction::FileFromServer) ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
             arc_info.message = this->channel_file.get_result_content();
 
             this->report_message.log6(info, arc_info, session_reactor.get_current_time());
@@ -672,11 +670,11 @@ public:
 
                 switch (this->channel_file.get_direction()) {
 
-                    case ChannelFile::FILE_FROM_SERVER:
+                    case ChannelFile::Direction::FileFromServer:
                         this->send_filtered_file_content_message_to_client();
                         break;
 
-                    case ChannelFile::FILE_FROM_CLIENT:
+                    case ChannelFile::Direction::FileFromClient:
                         this->send_filtered_file_content_message_to_server();
                         break;
 
@@ -693,21 +691,19 @@ public:
 
                 switch (this->channel_file.get_direction()) {
 
-                    case ChannelFile::FILE_FROM_SERVER:
+                    case ChannelFile::Direction::FileFromServer:
                         this->send_message_to_client(out_stream.get_offset(),
                                                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
                                                     out_stream.get_data(),
                                                     out_stream.get_offset());
                         break;
 
-                    case ChannelFile::FILE_FROM_CLIENT:
+                    case ChannelFile::Direction::FileFromClient:
                         this->send_message_to_server(out_stream.get_offset(),
                                                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
                                                     out_stream.get_data(),
                                                     out_stream.get_offset());
                         break;
-
-                    default: break;
                 }
             }
         }
@@ -909,27 +905,24 @@ private:
 
             if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
 
-                std::string type;
-                if (is_from_remote_session) {
-                    type = (data_to_dump.empty() ?
-                        "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION" :
-                        "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX");
-                } else {
-                    type = (data_to_dump.empty() ?
-                        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" :
-                        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX");
-                }
+                const auto type = (is_from_remote_session)
+                    ? (data_to_dump.empty()
+                        ? "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION"_av
+                        : "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX"_av)
+                    : (data_to_dump.empty()
+                        ? "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"_av
+                        : "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"_av);
 
                 std::string format_name = this->format_name_inventory[requestedFormatId];
                 if (format_name.empty()) {
-                    format_name = RDPECLIP::get_FormatId_name(requestedFormatId );
+                    format_name = RDPECLIP::get_FormatId_name(requestedFormatId);
                 }
 
                 bool const log_current_activity = (
-                        (!this->params.log_only_relevant_clipboard_activities)
-                         ||    (strcasecmp("Preferred DropEffect", format_name.c_str()) != 0
-                             && strcasecmp("FileGroupDescriptorW", format_name.c_str()) != 0)
-                    );
+                    (!this->params.log_only_relevant_clipboard_activities)
+                     ||   (strcasecmp("Preferred DropEffect", format_name.c_str()) != 0
+                        && strcasecmp("FileGroupDescriptorW", format_name.c_str()) != 0)
+                );
 
                 str_append(format_name, '(', std::to_string(requestedFormatId), ')');
 
@@ -969,12 +962,12 @@ private:
                 }
 
                 if (!this->params.dont_log_data_into_wrm) {
-                    std::string message = str_concat(type, '=', format_name, '\x01', size_str);
+                    str_assign(info, type, '=', format_name, '\x01', size_str);
                     if (!data_to_dump.empty()) {
-                        str_append(message, '\x01', data_to_dump);
+                        str_append(info, '\x01', data_to_dump);
                     }
 
-                    this->front.session_update(message);
+                    this->front.session_update(info);
                 }
             }
         }

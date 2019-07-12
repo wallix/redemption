@@ -35,6 +35,13 @@
 
 class ChannelFile
 {
+public:
+    enum class Direction : bool
+    {
+        FileFromServer,
+        FileFromClient,
+    };
+
 private:
     std::string dir_path;
     std::string filename;
@@ -44,15 +51,7 @@ private:
     size_t current_file_size = 0;
 
     ICAPFileId streamID {};
-
-    // enum class Direction : uint8_t
-    // {
-    //     None,
-    //     FromServer,
-    //     FromClient,
-    // };
-    // TODO Direction
-    uint8_t direction = NONE;
+    Direction direction;
 
     bool is_interrupting_channel;
     bool is_saving_files;
@@ -61,29 +60,25 @@ private:
 
     bool current_analysis_done = false;
 
-    const std::string target_name;
+    const std::string up_target_name;
+    const std::string down_target_name;
 
 public:
-
-    enum : uint8_t {
-        NONE,
-        FILE_FROM_SERVER,
-        FILE_FROM_CLIENT
-    };
-
     ChannelFile(ICAPService * icap_service, ValidatorParams const& validator_params) noexcept
     : dir_path(validator_params.save_files_directory)
     , is_interrupting_channel(validator_params.enable_interrupting)
     , is_saving_files(validator_params.enable_save_files)
     , icap_service(icap_service)
-    , target_name(validator_params.target_name)
+    , up_target_name(validator_params.up_target_name)
+    , down_target_name(validator_params.down_target_name)
     {}
 
     void set_total_file_size(const size_t total_file_size) {
         this->total_file_size = total_file_size;
     }
 
-    void new_file(const std::string & filename, const size_t total_file_size, const uint8_t direction, const timeval tv) {
+    void new_file(const std::string & filename, const size_t total_file_size, const Direction direction, const timeval tv)
+    {
         this->direction = direction;
         this->total_file_size = total_file_size;
         this->filename = filename;
@@ -107,7 +102,9 @@ public:
                 this->icap_service->send_abort(this->streamID);
             }
             this->current_analysis_done = false;
-            this->streamID = this->icap_service->open_file(filename, this->target_name);
+            this->streamID = this->icap_service->open_file(filename,
+                (direction == Direction::FileFromClient)
+                    ? this->up_target_name : this->down_target_name);
         }
     }
 
@@ -197,7 +194,7 @@ public:
         return true;
     }
 
-    uint8_t get_direction() const noexcept
+    Direction get_direction() const noexcept
     {
         return this->direction;
     }

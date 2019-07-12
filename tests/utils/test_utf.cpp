@@ -43,6 +43,26 @@ RED_AUTO_TEST_CASE(TestUTF8Len)
     RED_CHECK_EQUAL(2u, UTF8Len(source));
 }
 
+RED_AUTO_TEST_CASE(TestUTF16ByteLen)
+{
+    RED_CHECK_EQUAL(0u, UTF16ByteLen("\0\0"_av));
+    RED_CHECK_EQUAL(0u, UTF16ByteLen("\0"_av));
+    RED_CHECK_EQUAL(6u, UTF16ByteLen("a\0b\0c\0\0\0"_av));
+    RED_CHECK_EQUAL(6u, UTF16ByteLen("a\0b\0c\0\0\0\0"_av));
+    RED_CHECK_EQUAL(8u, UTF16ByteLen("a\0\xe9\0\xe7\0\x0e\0"_av));
+}
+
+RED_AUTO_TEST_CASE(TestUTF16ToUTF8_buf)
+{
+    uint8_t source[24];
+    auto buf = make_array_view(source);
+    RED_CHECK_SMEM(""_av, UTF16toUTF8_buf("\0\0"_av, buf));
+    RED_CHECK_SMEM(""_av, UTF16toUTF8_buf("\0"_av, buf));
+    RED_CHECK_SMEM("abc"_av, UTF16toUTF8_buf("a\0b\0c\0\0\0"_av, buf));
+    RED_CHECK_SMEM("abc"_av, UTF16toUTF8_buf("a\0b\0c\0\0\0\0"_av, buf));
+    RED_CHECK_SMEM("a\xc3\xa9\xc3\xa7\xc3\xa0"_av, UTF16toUTF8_buf("a\0\xe9\0\xe7\0\xe0\0"_av, buf));
+}
+
 RED_AUTO_TEST_CASE(TestUTF8LenChar)
 {
     uint8_t source[] = { 'a', 0xC3, 0xA9, 0};

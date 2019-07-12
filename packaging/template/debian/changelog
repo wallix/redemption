@@ -1,3 +1,9 @@
+redemption (7.2.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Translate RemoteApp to Alternate Shell for WABAM.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 10 Jul 2019 15:38:01 +0200
+
 redemption (7.1.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix fully mask keyboard input in metadata of session.
