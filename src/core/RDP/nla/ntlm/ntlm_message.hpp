@@ -27,6 +27,39 @@
 #include "utils/sugar/buf_maker.hpp"
 #include "core/RDP/nla/ntlm/ntlm_avpair.hpp"
 
+#include "system/ssl_md5.hpp"
+#include "system/ssl_rc4.hpp"
+#include "system/ssl_md4.hpp"
+
+enum NtlmState {
+    NTLM_STATE_INITIAL,
+    NTLM_STATE_NEGOTIATE,
+    NTLM_STATE_CHALLENGE,
+    NTLM_STATE_AUTHENTICATE,
+    NTLM_STATE_WAIT_PASSWORD,
+    NTLM_STATE_FINAL
+};
+
+// TODO: constants below are still globals,
+// better to move them in the scope of functions/objects using them
+//const char* NTLM_PACKAGE_NAME = "NTLM";
+// const char Ntlm_Name[] = "NTLM";
+// const char Ntlm_Comment[] = "NTLM Security Package";
+// const SecPkgInfo NTLM_SecPkgInfo = {
+//     0x00082B37,             // fCapabilities
+//     1,                      // wVersion
+//     0x000A,                 // wRPCID
+//     0x00000B48,             // cbMaxToken
+//     Ntlm_Name,              // Name
+//     Ntlm_Comment            // Comment
+// };
+
+// SecPkgContext_Sizes ContextSizes;
+// ContextSizes.cbMaxToken = 2010;
+// ContextSizes.cbMaxSignature = 16;
+// ContextSizes.cbBlockSize = 0;
+// ContextSizes.cbSecurityTrailer = 16;
+
 // [MS-NLMP]
 
 // NTLM Message
@@ -1493,10 +1526,10 @@ struct NTLMv2_Response {
 //     Note  If a TargetInfo AV_PAIR Value is textual, it MUST be encoded in Unicode
 //      irrespective of what character set was negotiated (section 2.2.2.1).
 
-
 class NTLMChallengeMessage
 {
-    NtlmMessageType msgType;   /* 4 Bytes */
+    friend void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message);
+    NtlmMessageType msgType{NtlmChallenge};   /* 4 Bytes */
 
     void message_emit(OutStream & stream) const {
         stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
@@ -1521,18 +1554,10 @@ public:
     NtlmField TargetInfo;          /* 8 Bytes */
     NtlmVersion version;           /* 8 Bytes */
 private:
-    uint32_t PayloadOffset;
+    uint32_t PayloadOffset{12+8+4+8+8+8+8};
 
 public:
     NtlmAvPairList AvPairList;
-
-public:
-    NTLMChallengeMessage()
-        : msgType(NtlmChallenge)
-        , 
-         PayloadOffset(12+8+4+8+8+8+8)
-    {
-    }
 
     void emit(OutStream & stream) /* TODO const*/ {
         this->TargetInfo.buffer.reset();
@@ -1717,7 +1742,6 @@ public:
 //     WorkstationName MUST be a byte array that contains the name of the client
 //     machine that MUST be encoded using the OEM character set. Otherwise, this data
 //     is not present.
-
 
 
 

@@ -1687,17 +1687,6 @@ test-run tests/core/RDP/nla/kerberos/test_kerberos :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/nla/kerberos/kerberos.hpp
 ;
-test-run tests/core/RDP/nla/ntlm/test_ntlm :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/nla/ntlm/ntlm.hpp
-;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_avpair :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_avpair.cpp
 :
@@ -1705,56 +1694,17 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_avpair :
   <library>src/utils/utf.o
   <covfile>src/core/RDP/nla/ntlm/ntlm_avpair.hpp
 ;
-test-run tests/core/RDP/nla/ntlm/test_ntlm_context :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_context.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/nla/ntlm/ntlm_context.hpp
-;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
 :
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/nla/ntlm/ntlm_message.hpp
-;
-test-run tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/nla/ntlm/ntlm_message_authenticate.hpp
-;
-test-run tests/core/RDP/nla/ntlm/test_ntlm_message_challenge :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/nla/ntlm/ntlm_message_challenge.hpp
-;
-test-run tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate :
-  $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp
-:
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/nla/ntlm/ntlm_message_negotiate.hpp
 ;
 test-run tests/core/RDP/nla/test_credssp :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_credssp.cpp
@@ -1771,8 +1721,6 @@ test-run tests/core/RDP/nla/test_nla :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_nla.cpp
 :
   <library>crypto
-  <library>gssapi_krb5
-  <library>krb5
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
@@ -5715,13 +5663,8 @@ alias test_mppc_61 : tests/core/RDP/mppc/test_mppc_61 ;
 alias test_ber : tests/core/RDP/nla/asn1/test_ber ;
 alias test_credentials : tests/core/RDP/nla/kerberos/test_credentials ;
 alias test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos ;
-alias test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm ;
 alias test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair ;
-alias test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context ;
 alias test_ntlm_message : tests/core/RDP/nla/ntlm/test_ntlm_message ;
-alias test_ntlm_message_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate ;
-alias test_ntlm_message_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge ;
-alias test_ntlm_message_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate ;
 alias test_credssp : tests/core/RDP/nla/test_credssp ;
 alias test_nla : tests/core/RDP/nla/test_nla ;
 alias test_sspi : tests/core/RDP/nla/test_sspi ;
@@ -6056,13 +5999,8 @@ alias test_mppc_61.coverage : tests/core/RDP/mppc/test_mppc_61.coverage ;
 alias test_ber.coverage : tests/core/RDP/nla/asn1/test_ber.coverage ;
 alias test_credentials.coverage : tests/core/RDP/nla/kerberos/test_credentials.coverage ;
 alias test_kerberos.coverage : tests/core/RDP/nla/kerberos/test_kerberos.coverage ;
-alias test_ntlm.coverage : tests/core/RDP/nla/ntlm/test_ntlm.coverage ;
 alias test_ntlm_avpair.coverage : tests/core/RDP/nla/ntlm/test_ntlm_avpair.coverage ;
-alias test_ntlm_context.coverage : tests/core/RDP/nla/ntlm/test_ntlm_context.coverage ;
 alias test_ntlm_message.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message.coverage ;
-alias test_ntlm_message_authenticate.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.coverage ;
-alias test_ntlm_message_challenge.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.coverage ;
-alias test_ntlm_message_negotiate.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.coverage ;
 alias test_credssp.coverage : tests/core/RDP/nla/test_credssp.coverage ;
 alias test_sspi.coverage : tests/core/RDP/nla/test_sspi.coverage ;
 alias test_AlternateSecondaryWindowing.coverage : tests/core/RDP/orders/test_AlternateSecondaryWindowing.coverage ;
@@ -6424,13 +6362,8 @@ alias tests/core/RDP/nla/kerberos.norec :
   tests/core/RDP/nla/kerberos/test_kerberos
 ;
 alias tests/core/RDP/nla/ntlm.norec :
-  tests/core/RDP/nla/ntlm/test_ntlm
   tests/core/RDP/nla/ntlm/test_ntlm_avpair
-  tests/core/RDP/nla/ntlm/test_ntlm_context
   tests/core/RDP/nla/ntlm/test_ntlm_message
-  tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate
-  tests/core/RDP/nla/ntlm/test_ntlm_message_challenge
-  tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate
 ;
 alias tests/core/RDP/nla.norec :
   tests/core/RDP/nla/test_credssp

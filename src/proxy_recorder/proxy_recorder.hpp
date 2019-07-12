@@ -20,6 +20,8 @@
    A proxy that will capture all the traffic to the target
 */
 
+#pragma once
+
 #include "proxy_recorder/nla_tee_transport.hpp"
 #include "proxy_recorder/nego_client.hpp"
 #include "proxy_recorder/nego_server.hpp"

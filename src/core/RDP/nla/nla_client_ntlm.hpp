@@ -23,18 +23,14 @@
 
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/credssp.hpp"
-#include "core/RDP/nla/ntlm/ntlm.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/translation.hpp"
 #include "system/ssl_sha256.hpp"
+#include "system/ssl_md4.hpp"
+#include "utils/difftimeval.hpp"
 
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
-
-
-#ifndef __EMSCRIPTEN__
-#include "core/RDP/nla/kerberos/kerberos.hpp"
-#endif
 
 #include "transport/transport.hpp"
 
@@ -120,6 +116,32 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
     return result;
 }
 
+inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message) 
+{
+    uint8_t const * pBegin = stream.get_current();
+    bool res;
+    res = message.message_recv(stream);
+    if (!res) {
+        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", message.msgType);
+    }
+    message.TargetName.recv(stream);
+    message.negoFlags.recv(stream);
+    stream.in_copy_bytes(message.serverChallenge, 8);
+    // message.serverChallenge = stream.in_uint64_le();
+    stream.in_skip_bytes(8);
+    message.TargetInfo.recv(stream);
+    if (message.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+        message.version.recv(stream);
+    }
+    // PAYLOAD
+    message.TargetName.read_payload(stream, pBegin);
+    message.TargetInfo.read_payload(stream, pBegin);
+    auto in_stream = message.TargetInfo.buffer.in_stream();
+    message.AvPairList.recv(in_stream);
+    message.TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
+}
+
+
 class rdpCredsspClientNTLM
 {
     static constexpr uint32_t cbMaxSignature = 16;
@@ -163,8 +185,8 @@ private:
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
-    NTLMNegotiateMessage NEGOTIATE_MESSAGE;
     NTLMChallengeMessage CHALLENGE_MESSAGE;
+    NTLMNegotiateMessage NEGOTIATE_MESSAGE;
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
     NtlmVersion version;
@@ -186,17 +208,18 @@ private:
     array_md5 MessageIntegrityCheck;
     // uint8_t NtProofStr[16];
 
-    SEC_STATUS sspi_context_read_challenge(array_view_const_u8 input_buffer) {
+    SEC_STATUS sspi_context_read_challenge(array_view_const_u8 input_buffer, NTLMChallengeMessage & CHALLENGE_MESSAGE) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
         InStream in_stream(input_buffer);
-        this->CHALLENGE_MESSAGE.recv(in_stream);
+        RecvNTLMChallengeMessage(in_stream, CHALLENGE_MESSAGE);
         this->SavedChallengeMessage.assign(in_stream.get_bytes().data(),in_stream.get_bytes().data()+in_stream.get_offset());
 
         this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS sspi_context_write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj) {
+    SEC_STATUS sspi_context_write_authenticate(Array& output_buffer, Random & rand, TimeObj & timeobj, const NTLMChallengeMessage & CHALLENGE_MESSAGE) 
+    {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
         
         // client method
@@ -223,7 +246,7 @@ private:
         // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
         // Z(n) = { 0x00, ... , 0x00 } n times
         // ServerName = AvPairs received in Challenge message
-        auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
+        auto & AvPairsStream = CHALLENGE_MESSAGE.TargetInfo.buffer;
         // BStream AvPairsStream;
         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
         size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
@@ -267,7 +290,7 @@ private:
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
 
-        memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
+        memcpy(this->ServerChallenge, CHALLENGE_MESSAGE.serverChallenge, 8);
 
         array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),{this->ServerChallenge, 8},{temp, temp_size});
 
@@ -351,7 +374,7 @@ private:
         if (this->confidentiality) {
             this->NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
         }
-        if (this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
+        if (CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
             this->NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
         }
         this->NegotiateFlags |= (NTLMSSP_NEGOTIATE_128
@@ -985,10 +1008,10 @@ public:
                 }
                 else {
                     if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
-                        this->sspi_context_read_challenge(this->client_auth_data_input_buffer);
+                        this->sspi_context_read_challenge(this->client_auth_data_input_buffer, this->CHALLENGE_MESSAGE);
                     }
                     if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
-                        status = this->sspi_context_write_authenticate(this->ts_request.negoTokens, this->rand, this->timeobj);
+                        status = this->sspi_context_write_authenticate(this->ts_request.negoTokens, this->rand, this->timeobj, this->CHALLENGE_MESSAGE);
                     }
                 }
 
