@@ -634,7 +634,7 @@ private:
     {
         auto& from_server = from_remote_session
             ? this->clip_data.server_data : this->clip_data.client_data;
-        auto& to_server = from_remote_session
+        auto& from_client = from_remote_session
             ? this->clip_data.client_data : this->clip_data.server_data;
 
         FileContentsResponseReceive receive(from_server, header, flags, chunk);
@@ -643,7 +643,7 @@ private:
             this->log_file_info(receive.file_info, from_remote_session);
         }
 
-        if (to_server.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+        if (from_client.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
             auto data = chunk.remaining_bytes();
             auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {

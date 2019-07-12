@@ -103,24 +103,13 @@ struct ClipboardData
     uint32_t requestedFormatId = 0;
 };
 
-struct ClipboardCapabilitiesReceive {
-
-    ClipboardCapabilitiesReceive(ClipboardSideData & clip_data, InStream& chunk, const RDPVerbose verbose) {
-        {
-            const unsigned int expected = 4;   //     cCapabilitiesSets(2) +
-                                                //     pad1(2)
-            if (!chunk.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_%s_clipboard_capabilities_pdu: "
-                        "Truncated CLIPRDR_CAPS, need=%u remains=%zu", clip_data.provider_name,
-                    expected, chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
-
-        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_%s_message: "
-                "Clipboard Capabilities PDU", clip_data.provider_name);
+struct ClipboardCapabilitiesReceive
+{
+    ClipboardCapabilitiesReceive(ClipboardSideData & clip_data, InStream& chunk, const RDPVerbose verbose)
+    {
+        // cCapabilitiesSets(2) +
+        // pad1(2)
+        check_throw(chunk, 4, "CLIPRDR_CAPS", ERR_RDP_DATA_TRUNCATED);
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
         assert(1 == cCapabilitiesSets);
@@ -136,28 +125,25 @@ struct ClipboardCapabilitiesReceive {
                 general_caps.recv(chunk, f);
 
                 if (bool(verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_%s_clipboard_capabilities_pdu: "
-                            "General Capability Set", clip_data.provider_name);
                     general_caps.log(LOG_INFO);
                 }
 
                 clip_data.use_long_format_names =
                     bool(general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-
             }
         }
     }
 };
 
-struct FilecontentsRequestReceive {
-
+struct FilecontentsRequestReceive
+{
     uint32_t dwFlags = 0;
     uint32_t streamID = 0;
     uint32_t lindex = 0;
     uint32_t requested = 0;
 
-    FilecontentsRequestReceive(ClipboardSideData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen) {
+    FilecontentsRequestReceive(ClipboardSideData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen)
+    {
         LOG(LOG_INFO, "dataLen=%u FileContentsRequestPDU::minimum_size()=%zu", dataLen, RDPECLIP::FileContentsRequestPDU::minimum_size());
         if (dataLen >= RDPECLIP::FileContentsRequestPDU::minimum_size()) {
             RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
@@ -185,8 +171,8 @@ struct FilecontentsRequestReceive {
     }
 };
 
-struct FilecontentsRequestSendBack {
-
+struct FilecontentsRequestSendBack
+{
     FilecontentsRequestSendBack(uint32_t dwFlags, uint32_t streamID, VirtualChannelDataSender* sender)
     {
         if (!sender) {
@@ -341,7 +327,6 @@ struct FormatDataResponseReceive
     FormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const uint32_t flags)
     {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-//                 InStream chunk_serie = chunk.clone();
 
             constexpr size_t const max_length_of_data_to_dump = 256;
 
@@ -351,10 +336,9 @@ struct FormatDataResponseReceive
                 {
                     const size_t length_of_data_to_dump = std::min(
                         chunk.in_remain(), max_length_of_data_to_dump);
-                    const std::string data_to_dump(
+                    data_to_dump.assign(
                         ::char_ptr_cast(chunk.get_current()),
                         length_of_data_to_dump);
-                    LOG(LOG_INFO, "%s", data_to_dump);
                 }
                 break;
     */
@@ -373,7 +357,7 @@ struct FormatDataResponseReceive
                     const size_t length_of_utf8_string = ::UTF16toUTF8(
                         chunk.get_current(), length_of_data_to_dump / 2,
                         utf8_string, size_of_utf8_string);
-                    data_to_dump.assign(
+                    this->data_to_dump.assign(
                         ::char_ptr_cast(utf8_string),
                         ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
                             length_of_utf8_string - 1 :
@@ -384,7 +368,7 @@ struct FormatDataResponseReceive
                 case RDPECLIP::CF_LOCALE:
                 {
                     const uint32_t locale_identifier = chunk.in_uint32_le();
-                    data_to_dump = std::to_string(locale_identifier);
+                    this->data_to_dump = std::to_string(locale_identifier);
                 }
                 break;
             }
@@ -650,23 +634,15 @@ struct FormatListSendBack
     }
 };
 
-struct LockClipDataReceive {
-
-    LockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header) {
+struct LockClipDataReceive
+{
+    LockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header)
+    {
         if (header.dataLen() >= 4 /* clipDataId(4) */) {
-            {
-                const unsigned int expected = 4;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "ClipboardVirtualChannel::process_%s_message: "
-                            "Truncated CLIPRDR_LOCK_CLIPDATA, "
-                            "need=%u remains=%zu", clip_sender_side_data.provider_name,
-                        expected, chunk.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
+            // clipDataId(4)
+            check_throw(chunk, 4, "CLIPRDR_LOCK_CLIPDATA", ERR_RDP_DATA_TRUNCATED);
 
-           clip_receiver_side_data.clipDataId  = chunk.in_uint32_le();
+            clip_receiver_side_data.clipDataId = chunk.in_uint32_le();
 
             LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
                 "ClipboardVirtualChannel::process_%s_message: "
@@ -677,21 +653,13 @@ struct LockClipDataReceive {
     }
 };
 
-struct UnlockClipDataReceive {
-
-    UnlockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header) {
+struct UnlockClipDataReceive
+{
+    UnlockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header)
+    {
          if (header.dataLen() >= 4 /* clipDataId(4) */) {
-            {
-                const unsigned int expected = 4;    // clipDataId(4)
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "ClipboardVirtualChannel::process_%s_message: "
-                            "Truncated CLIPRDR_UNLOCK_CLIPDATA, "
-                            "need=%u remains=%zu",clip_sender_side_data.provider_name,
-                        expected, chunk.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
+            // clipDataId(4)
+            check_throw(chunk, 4, "CLIPRDR_UNLOCK_CLIPDATA", ERR_RDP_DATA_TRUNCATED);
 
             uint32_t const clipDataId = chunk.in_uint32_le();
 
@@ -704,12 +672,13 @@ struct UnlockClipDataReceive {
     }
 };
 
-struct FileContentsResponseReceive {
-
+struct FileContentsResponseReceive
+{
     bool must_log_file_info_type = false;
     ClipboardSideData::file_info_type file_info;
 
-    FileContentsResponseReceive(ClipboardSideData & clip_side_data, const RDPECLIP::CliprdrHeader & header, const uint32_t flags, InStream & chunk) {
+    FileContentsResponseReceive(ClipboardSideData & clip_side_data, const RDPECLIP::CliprdrHeader & header, const uint32_t flags, InStream & chunk)
+    {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
             clip_side_data.dataLen = header.dataLen();
@@ -725,31 +694,29 @@ struct FileContentsResponseReceive {
             ClipboardSideData::file_contents_request_info& file_contents_request =
                 clip_side_data.file_contents_request_info_inventory[clip_side_data.streamId];
 
-            {
-                ClipboardSideData::file_info_inventory_type& file_info_inventory =
-                    clip_side_data.file_stream_data_inventory[
-                        file_contents_request.clipDataId];
+            ClipboardSideData::file_info_inventory_type& file_info_inventory =
+                clip_side_data.file_stream_data_inventory[
+                    file_contents_request.clipDataId];
 
-                this->file_info = file_info_inventory[file_contents_request.lindex];
+            this->file_info = file_info_inventory[file_contents_request.lindex];
 
-                uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
+            uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
 
-                if (chunk.in_remain()) {
-                    if (this->file_info.sequential_access_offset == file_contents_request_position_current) {
+            if (chunk.in_remain()) {
+                if (this->file_info.sequential_access_offset == file_contents_request_position_current) {
 
-                        uint32_t const length_ = std::min({
-                                static_cast<uint32_t>(chunk.in_remain()),
-                                static_cast<uint32_t>(this->file_info.size - this->file_info.sequential_access_offset),
-                                file_contents_request.cbRequested - file_contents_request.offset
-                            });
+                    uint32_t const length_ = std::min({
+                            static_cast<uint32_t>(chunk.in_remain()),
+                            static_cast<uint32_t>(this->file_info.size - this->file_info.sequential_access_offset),
+                            file_contents_request.cbRequested - file_contents_request.offset
+                        });
 
-                        this->file_info.sha256.update({ chunk.get_current(), length_ });
+                    this->file_info.sha256.update({ chunk.get_current(), length_ });
 
-                        file_contents_request.offset       += length_;
-                        this->file_info.sequential_access_offset += length_;
+                    file_contents_request.offset += length_;
+                    this->file_info.sequential_access_offset += length_;
 
-                        this->must_log_file_info_type = this->file_info.sequential_access_offset == this->file_info.size;
-                    }
+                    this->must_log_file_info_type = this->file_info.sequential_access_offset == this->file_info.size;
                 }
             }
         }
