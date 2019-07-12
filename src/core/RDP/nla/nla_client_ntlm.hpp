@@ -29,6 +29,9 @@
 #include "utils/translation.hpp"
 #include "system/ssl_sha256.hpp"
 
+#include "core/RDP/nla/ntlm/ntlm_message.hpp"
+
+
 #ifndef __EMSCRIPTEN__
 #include "core/RDP/nla/kerberos/kerberos.hpp"
 #endif

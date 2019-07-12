@@ -25,6 +25,7 @@
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/sugar/buf_maker.hpp"
+#include "core/RDP/nla/ntlm/ntlm_avpair.hpp"
 
 // [MS-NLMP]
 
@@ -96,30 +97,8 @@ enum NtlmMessageType : uint32_t {
     NtlmChallenge = 0x00000002,
     NtlmAuthenticate = 0x00000003
 };
-struct NTLMMessage final
-{
-    static constexpr uint8_t NTLM_MESSAGE_SIGNATURE[8] = "NTLMSSP";
 
-    NtlmMessageType msgType;   /* 4 Bytes */
-
-    explicit NTLMMessage(NtlmMessageType msgType)
-    : msgType(msgType)
-    {}
-
-    void emit(OutStream & stream) const {
-        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-        stream.out_uint32_le(this->msgType);
-    }
-
-    bool recv(InStream & stream) {
-        constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
-        uint8_t received_sig[sig_len];
-        stream.in_copy_bytes(received_sig, sig_len);
-        uint32_t type = stream.in_uint32_le();
-        return !memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)
-            && (static_cast<uint32_t>(this->msgType) == type);
-    }
-};
+static constexpr uint8_t NTLM_MESSAGE_SIGNATURE[8] = "NTLMSSP";
 
 // 2.2.2.10   VERSION
 // ===================================================
@@ -414,38 +393,38 @@ struct NtlmVersion {
 //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
 //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
 
-#define NTLMSSP_NEGOTIATE_56					0x80000000 /* W   (0) */
-#define NTLMSSP_NEGOTIATE_KEY_EXCH				0x40000000 /* V   (1) */
-#define NTLMSSP_NEGOTIATE_128					0x20000000 /* U   (2) */
-#define NTLMSSP_RESERVED1					0x10000000 /* r1  (3) */
-#define NTLMSSP_RESERVED2					0x08000000 /* r2  (4) */
-#define NTLMSSP_RESERVED3					0x04000000 /* r3  (5) */
-#define NTLMSSP_NEGOTIATE_VERSION				0x02000000 /* T   (6) */
-#define NTLMSSP_RESERVED4					0x01000000 /* r4  (7) */
-#define NTLMSSP_NEGOTIATE_TARGET_INFO				0x00800000 /* S   (8) */
-#define NTLMSSP_REQUEST_NON_NT_SESSION_KEY			0x00400000 /* R   (9) */
-#define NTLMSSP_RESERVED5					0x00200000 /* r5  (10) */
-#define NTLMSSP_NEGOTIATE_IDENTIFY				0x00100000 /* Q   (11) */
-#define NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY		0x00080000 /* P   (12) */
-#define NTLMSSP_RESERVED6					0x00040000 /* r6  (13) */
-#define NTLMSSP_TARGET_TYPE_SERVER				0x00020000 /* O   (14) */
-#define NTLMSSP_TARGET_TYPE_DOMAIN				0x00010000 /* N   (15) */
-#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN				0x00008000 /* M   (16) */
-#define NTLMSSP_RESERVED7					0x00004000 /* r7  (17) */
-#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED			0x00002000 /* L   (18) */
-#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED			0x00001000 /* K   (19) */
-#define NTLMSSP_NEGOTIATE_ANONYMOUS				0x00000800 /* J   (20) */
-#define NTLMSSP_RESERVED8					0x00000400 /* r8  (21) */
-#define NTLMSSP_NEGOTIATE_NTLM					0x00000200 /* H   (22) */
-#define NTLMSSP_RESERVED9					0x00000100 /* r9  (23) */
-#define NTLMSSP_NEGOTIATE_LM_KEY				0x00000080 /* G   (24) */
-#define NTLMSSP_NEGOTIATE_DATAGRAM				0x00000040 /* F   (25) */
-#define NTLMSSP_NEGOTIATE_SEAL					0x00000020 /* E   (26) */
-#define NTLMSSP_NEGOTIATE_SIGN					0x00000010 /* D   (27) */
-#define NTLMSSP_RESERVED10					0x00000008 /* r10 (28) */
-#define NTLMSSP_REQUEST_TARGET					0x00000004 /* C   (29) */
-#define NTLMSSP_NEGOTIATE_OEM					0x00000002 /* B   (30) */
-#define NTLMSSP_NEGOTIATE_UNICODE				0x00000001 /* A   (31) */
+#define NTLMSSP_NEGOTIATE_56                0x80000000 /* W   (0) */
+#define NTLMSSP_NEGOTIATE_KEY_EXCH          0x40000000 /* V   (1) */
+#define NTLMSSP_NEGOTIATE_128               0x20000000 /* U   (2) */
+#define NTLMSSP_RESERVED1                   0x10000000 /* r1  (3) */
+#define NTLMSSP_RESERVED2                   0x08000000 /* r2  (4) */
+#define NTLMSSP_RESERVED3                   0x04000000 /* r3  (5) */
+#define NTLMSSP_NEGOTIATE_VERSION           0x02000000 /* T   (6) */
+#define NTLMSSP_RESERVED4                   0x01000000 /* r4  (7) */
+#define NTLMSSP_NEGOTIATE_TARGET_INFO       0x00800000 /* S   (8) */
+#define NTLMSSP_REQUEST_NON_NT_SESSION_KEY  0x00400000 /* R   (9) */
+#define NTLMSSP_RESERVED5                   0x00200000 /* r5  (10) */
+#define NTLMSSP_NEGOTIATE_IDENTIFY          0x00100000 /* Q   (11) */
+#define NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY  0x00080000 /* P   (12) */
+#define NTLMSSP_RESERVED6                   0x00040000 /* r6  (13) */
+#define NTLMSSP_TARGET_TYPE_SERVER          0x00020000 /* O   (14) */
+#define NTLMSSP_TARGET_TYPE_DOMAIN          0x00010000 /* N   (15) */
+#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN       0x00008000 /* M   (16) */
+#define NTLMSSP_RESERVED7                   0x00004000 /* r7  (17) */
+#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED   0x00002000 /* L   (18) */
+#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED        0x00001000 /* K   (19) */
+#define NTLMSSP_NEGOTIATE_ANONYMOUS              0x00000800 /* J   (20) */
+#define NTLMSSP_RESERVED8                   0x00000400 /* r8  (21) */
+#define NTLMSSP_NEGOTIATE_NTLM              0x00000200 /* H   (22) */
+#define NTLMSSP_RESERVED9                   0x00000100 /* r9  (23) */
+#define NTLMSSP_NEGOTIATE_LM_KEY            0x00000080 /* G   (24) */
+#define NTLMSSP_NEGOTIATE_DATAGRAM          0x00000040 /* F   (25) */
+#define NTLMSSP_NEGOTIATE_SEAL              0x00000020 /* E   (26) */
+#define NTLMSSP_NEGOTIATE_SIGN              0x00000010 /* D   (27) */
+#define NTLMSSP_RESERVED10                  0x00000008 /* r10 (28) */
+#define NTLMSSP_REQUEST_TARGET              0x00000004 /* C   (29) */
+#define NTLMSSP_NEGOTIATE_OEM               0x00000002 /* B   (30) */
+#define NTLMSSP_NEGOTIATE_UNICODE           0x00000001 /* A   (31) */
 
 static const char* const NTLM_NEGOTIATE_STRINGS[] ={
     "NTLMSSP_NEGOTIATE_56",
@@ -699,3 +678,1128 @@ struct NTLMSSPMessageSignatureESS {
     uint8_t  CheckSum[8];
     uint32_t SeqNum;
 };
+
+// [MS-NLMP]
+// 2.2.1.3   AUTHENTICATE_MESSAGE
+// ===================================================
+// The AUTHENTICATE_MESSAGE defines an NTLM authenticate message that is sent from the client
+//  to the server after the CHALLENGE_MESSAGE (section 2.2.1.2) is processed by the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           Signature                           |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                          MessageType                          |
+// +---------------+---------------+---------------+---------------+
+// |                   LmChallengeResponseFields                   |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                   NtChallengeResponseFields                   |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                        DomainNameFields                       |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                         UserNameFields                        |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                        WorkstationFields                      |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                EncryptedRandomSessionKeyFields                |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                         NegotiateFlags                        |
+// +---------------+---------------+---------------+---------------+
+// |                            Version                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              MIC                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                       Payload (Variable)                      |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+
+// Signature (8 bytes):  An 8-byte character array that MUST contain the
+//  ASCII string ('N', 'T', 'L', 'M', 'S', 'S', 'P', '\0').
+
+// MessageType (4 bytes):  A 32-bit unsigned integer that indicates the message
+//  type. This field MUST be set to 0x00000003.
+
+// LmChallengeResponseFields (8 bytes):  If the client chooses not to send an
+//  LmChallengeResponse to the server:
+//  - LmChallengeResponseLen and LmChallengeResponseMaxLen MUST be set to zero on
+//     transmission.
+//  - LmChallengeResponseBufferOffset field SHOULD be set to the offset from the
+//     beginning of the AUTHENTICATE_MESSAGE to where the LmChallengeResponse would
+//     be in Payload if it was present.
+//  Otherwise, these fields are defined as:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |    LmChallengeResponseLen     |   LmChallengeResponseMaxLen   |
+// +---------------+---------------+---------------+---------------+
+// |                LmChallengeResponseBufferOffset                |
+// +---------------+---------------+---------------+---------------+
+//    LmChallengeResponseLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of LmChallengeResponse in Payload.
+//    LmChallengeResponseMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be
+//     set to the value of LmChallengeResponseLen and MUST be ignored on receipt.
+//    LmChallengeResponseBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the AUTHENTICATE_MESSAGE to
+//     LmChallengeResponse in Payload.
+
+// NtChallengeResponseFields (8 bytes):  If the client chooses not to send an
+//  NtChallengeResponse to the server:
+//  - NtChallengeResponseLen and NtChallengeResponseMaxLen MUST be set to zero on
+//     transmission.
+//  - NtChallengeResponseBufferOffset field SHOULD be set to the offset from the
+//     beginning of the AUTHENTICATE_MESSAGE to where the NtChallengeResponse would
+//     be in Payload if it was present.
+//  Otherwise, these fields are defined as:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |    NtChallengeResponseLen     |   NtChallengeResponseMaxLen   |
+// +---------------+---------------+---------------+---------------+
+// |                NtChallengeResponseBufferOffset                |
+// +---------------+---------------+---------------+---------------+
+//    NtChallengeResponseLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of NtChallengeResponse in Payload.
+//    NtChallengeResponseMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be
+//     set to the value of NtChallengeResponseLen and MUST be ignored on receipt.
+//    NtChallengeResponseBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the AUTHENTICATE_MESSAGE to
+//     NtChallengeResponse in Payload.
+
+// DomainNameFields (8 bytes):  If the client chooses not to send an
+//  DomainName to the server:
+//  - DomainNameLen and DomainNameMaxLen MUST be set to zero on transmission.
+//  - DomainNameBufferOffset field SHOULD be set to the offset from the
+//     beginning of the AUTHENTICATE_MESSAGE to where the DomainName would
+//     be in Payload if it was present.
+//  Otherwise, these fields are defined as:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |         DomainNameLen         |        DomainNameMaxLen       |
+// +---------------+---------------+---------------+---------------+
+// |                    DomainNameBufferOffset                     |
+// +---------------+---------------+---------------+---------------+
+//    DomainNameLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of DomainName in Payload, not including a nullptr terminator.
+//    DomainNameMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be
+//     set to the value of DomainNameLen and MUST be ignored on receipt.
+//    DomainNameBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the AUTHENTICATE_MESSAGE to
+//     DomainName in Payload.
+//     If DomainName is a Unicode string, the values of DomainNameBufferOffset
+//     and DomainNameLen MUST be multiples of 2.
+
+// UserNameFields (8 bytes):  If the client chooses not to send an
+//  UserName to the server:
+//  - UserNameLen and UserNameMaxLen MUST be set to zero on transmission.
+//  - UserNameBufferOffset field SHOULD be set to the offset from the
+//     beginning of the AUTHENTICATE_MESSAGE to where the UserName would
+//     be in Payload if it was present.
+//  Otherwise, these fields are defined as:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |          UserNameLen          |         UserNameMaxLen        |
+// +---------------+---------------+---------------+---------------+
+// |                     UserNameBufferOffset                      |
+// +---------------+---------------+---------------+---------------+
+//    UserNameLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of UserName in Payload, not including a nullptr terminator.
+//    UserNameMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be
+//     set to the value of UserNameLen and MUST be ignored on receipt.
+//    UserNameBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the AUTHENTICATE_MESSAGE to
+//     UserName in Payload.
+//     If UserName is a Unicode string, the values of UserNameBufferOffset
+//     and UserNameLen MUST be multiples of 2.
+
+// WorkstationFields (8 bytes):  If the client chooses not to send an
+//  Workstation to the server:
+//  - WorkstationLen and WorkstationMaxLen MUST be set to zero on transmission.
+//  - WorkstationBufferOffset field SHOULD be set to the offset from the
+//     beginning of the AUTHENTICATE_MESSAGE to where the Workstation would
+//     be in Payload if it was present.
+//  Otherwise, these fields are defined as:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |        WorkstationLen         |        WorkstationMaxLen      |
+// +---------------+---------------+---------------+---------------+
+// |                    WorkstationBufferOffset                    |
+// +---------------+---------------+---------------+---------------+
+//    WorkstationLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of Workstation in Payload, not including a nullptr terminator.
+//    WorkstationMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be
+//     set to the value of WorkstationLen and MUST be ignored on receipt.
+//    WorkstationBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the AUTHENTICATE_MESSAGE to
+//     Workstation in Payload.
+//     If Workstation is a Unicode string, the values of WorkstationBufferOffset
+//     and WorkstationLen MUST be multiples of 2.
+
+// EncryptedRandomSessionKeyFields (8 bytes):  If the NTLMSSP_NEGOTIATE_KEY_EXCH flag
+//  is not set in NegotiateFlags, indicating that no EncryptedRandomSessionKey is supplied:
+//  - EncryptedRandomSessionKeyLen and EncryptedRandomSessionKeyMaxLen
+//     SHOULD be set to zero on transmission.
+//  - EncryptedRandomSessionKeyBufferOffset field SHOULD be set to the offset from the
+//     beginning of the AUTHENTICATE_MESSAGE to where the EncryptedRandomSessionKey
+//     would be in Payload if it was present.
+//  - EncryptedRandomSessionKeyLen, EncryptedRandomSessionKeyMaxLen and
+//     EncryptedRandomSessionKeyBufferOffset MUST be ignored on receipt.
+//  Otherwise, these fields are defined as:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  EncryptedRandomSessionKeyLen |EncryptedRandomSessionKeyMaxLen|
+// +---------------+---------------+---------------+---------------+
+// |               EncryptedRandomSessionBufferOffset              |
+// +---------------+---------------+---------------+---------------+
+//    EncryptedRandomSessionKeyLen (2 bytes):  A 16-bit unsigned integer that defines
+//     the size, in bytes, of EncryptedRandomSessionKey in Payload.
+//    EncryptedRandomSessionKeyMaxLen (2 bytes):  A 16-bit unsigned integer that
+//     SHOULD be set to the value of EncryptedRandomSessionKeyLen and MUST be
+//     ignored on receipt.
+//    EncryptedRandomSessionKeyBufferOffset (4 bytes):  A 32-bit unsigned integer that
+//     defines the offset, in bytes, from the beginning of the AUTHENTICATE_MESSAGE to
+//     EncryptedRandomSessionKey in Payload.
+
+// NegotiateFlags (4 bytes):  In connectionless mode, a NEGOTIATE structure that contains
+//  a set of bit flags (section 2.2.2.5) and represents the conclusion of negotiation.
+//  the choices the client has made from the options the server offered in the
+//  CHALLENGE_MESSAGE. In connection-oriented mode, a NEGOTIATE structure that contains
+//  the set of bit flags (section 2.2.2.5) negotiated in the previous messages.
+
+// Version (8 bytes):  A VERSION structure (section 2.2.2.10) that is present only when
+//  the NTLMSSP_NEGOTIATE_VERSION flag is set in the NegotiateFlags field. This structure
+//  is used for debugging purposes only. In normal protocol messages, it is ignored and
+//  does not affect the NTLM message processing.
+
+// MIC (16 bytes):  The message integrity for the NTLM NEGOTIATE_MESSAGE,
+//  CHALLENGE_MESSAGE, and AUTHENTICATE_MESSAGE.
+
+// Payload (variable):  A byte array that contains the data referred to by the
+//  LmChallengeResponseBufferOffset, NtChallengeResponseBufferOffset,
+//  DomainNameBufferOffset, UserNameBufferOffset, WorkstationBufferOffset, and
+//  EncryptedRandomSessionKeyBufferOffset message fields. Payload data can be present
+//  in any order within the Payload field, with variable-length padding before or after
+//  the data. The data that can be present in the Payload field of this message,
+//  in no particular order, are:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                 LmChallengeResponse (Variable)                |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                 NtChallengeResponse (Variable)                |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                      DomainName (Variable)                    |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                       UserName (Variable)                     |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                     Workstation (Variable)                    |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |              EncryptedRandomSessionKey (Variable)             |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+//  LmChallengeResponse (variable):  An LM_RESPONSE or LMv2_RESPONSE structure that
+//   contains the computed LM response to the challenge. If NTLM v2 authentication is
+//   configured, LmChallengeResponse MUST be an LMv2_RESPONSE structure (section
+//   2.2.2.4). Otherwise, it MUST be an LM_RESPONSE structure (section 2.2.2.3).
+//  NtChallengeResponse (variable):  An NTLM_RESPONSE or NTLMv2_RESPONSE
+//   structure that contains the computed NT response to the challenge. If NTLM v2
+//   authentication is configured, NtChallengeResponse MUST be an NTLMv2_RESPONSE
+//   (section 2.2.2.8). Otherwise, it MUST be an NTLM_RESPONSE structure (section
+//   2.2.2.6).
+//  DomainName (variable):  The domain or computer name hosting the user account.
+//   DomainName MUST be encoded in the negotiated character set.
+//  UserName (variable):  The name of the user to be authenticated. UserName MUST be
+//   encoded in the negotiated character set.
+//  Workstation (variable):  The name of the computer to which the user is logged on.
+//   Workstation MUST be encoded in the negotiated character set.
+//  EncryptedRandomSessionKey (variable):  The client's encrypted random session key.
+//   EncryptedRandomSessionKey and its usage are defined in sections 3.1.5 and 3.2.5.
+
+
+struct NTLMAuthenticateMessage {
+    NtlmMessageType msgType;   /* 4 Bytes */
+
+    void message_emit(OutStream & stream) const {
+        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
+        stream.out_uint32_le(this->msgType);
+    }
+
+    bool message_recv(InStream & stream) {
+        constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+        uint8_t received_sig[sig_len];
+        stream.in_copy_bytes(received_sig, sig_len);
+        uint32_t type = stream.in_uint32_le();
+        return !memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)
+            && (static_cast<uint32_t>(this->msgType) == type);
+    }
+
+
+    NtlmField LmChallengeResponse;        /* 8 Bytes */
+    NtlmField NtChallengeResponse;        /* 8 Bytes */
+    NtlmField DomainName;                 /* 8 Bytes */
+    NtlmField UserName;                   /* 8 Bytes */
+    NtlmField Workstation;                /* 8 Bytes */
+    NtlmField EncryptedRandomSessionKey;  /* 8 Bytes */
+    NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
+    NtlmVersion version;                  /* 8 Bytes */
+    uint8_t MIC[16]{};                      /* 16 Bytes */
+    bool ignore_mic{false};
+    bool has_mic{true};
+    uint32_t PayloadOffset;
+
+    NTLMAuthenticateMessage()
+        : msgType(NtlmAuthenticate)
+        , PayloadOffset(12+8+8+8+8+8+8+4+8)
+    {
+        memset(this->MIC, 0x00, 16);
+    }
+
+    void log() {
+        this->LmChallengeResponse.log("LmChallengeResponse");
+        this->NtChallengeResponse.log("NtChallengeResponse");
+        this->DomainName.log("DomainName");
+        this->UserName.log("UserName");
+        this->Workstation.log("Workstation");
+        this->EncryptedRandomSessionKey.log("EncryptedRandomSessionKey");
+        this->negoFlags.log();
+        this->version.log();
+        LOG(LOG_DEBUG, "MIC");
+        hexdump_d(this->MIC, 16);
+    }
+
+    void emit(OutStream & stream) /* TODO const*/ {
+        uint32_t currentOffset = this->PayloadOffset;
+        if (this->version.ignore_version) {
+            currentOffset -= 8;
+        }
+        if (this->has_mic) {
+            currentOffset += 16;
+        }
+        this->message_emit(stream);
+        currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
+        currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
+        currentOffset += this->DomainName.emit(stream, currentOffset);
+        currentOffset += this->UserName.emit(stream, currentOffset);
+        currentOffset += this->Workstation.emit(stream, currentOffset);
+        currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
+        (void)currentOffset;
+        this->negoFlags.emit(stream);
+        this->version.emit(stream);
+
+        if (this->has_mic) {
+            if (this->ignore_mic) {
+                stream.out_clear_bytes(16);
+            }
+            else {
+                stream.out_copy_bytes(this->MIC, 16);
+            }
+        }
+
+        // PAYLOAD
+        this->LmChallengeResponse.write_payload(stream);
+        this->NtChallengeResponse.write_payload(stream);
+        this->DomainName.write_payload(stream);
+        this->UserName.write_payload(stream);
+        this->Workstation.write_payload(stream);
+        this->EncryptedRandomSessionKey.write_payload(stream);
+    }
+
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
+        bool res;
+        res = this->message_recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
+        this->LmChallengeResponse.recv(stream);
+        this->NtChallengeResponse.recv(stream);
+        this->DomainName.recv(stream);
+        this->UserName.recv(stream);
+        this->Workstation.recv(stream);
+        this->EncryptedRandomSessionKey.recv(stream);
+        this->negoFlags.recv(stream);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.recv(stream);
+        }
+        uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
+        if (this->NtChallengeResponse.bufferOffset < min_offset) {
+            min_offset = this->NtChallengeResponse.bufferOffset;
+        }
+        if (this->DomainName.bufferOffset < min_offset) {
+            min_offset = this->DomainName.bufferOffset;
+        }
+        if (this->UserName.bufferOffset < min_offset) {
+            min_offset = this->UserName.bufferOffset;
+        }
+        if (this->Workstation.bufferOffset < min_offset) {
+            min_offset = this->Workstation.bufferOffset;
+        }
+        if (this->EncryptedRandomSessionKey.bufferOffset < min_offset) {
+            min_offset = this->EncryptedRandomSessionKey.bufferOffset;
+        }
+        if (min_offset + pBegin > stream.get_current()) {
+            this->has_mic = true;
+            stream.in_copy_bytes(this->MIC, 16);
+        }
+        else {
+            this->has_mic = false;
+        }
+
+        // PAYLOAD
+        this->LmChallengeResponse.read_payload(stream, pBegin);
+        this->NtChallengeResponse.read_payload(stream, pBegin);
+        this->DomainName.read_payload(stream, pBegin);
+        this->UserName.read_payload(stream, pBegin);
+        this->Workstation.read_payload(stream, pBegin);
+        this->EncryptedRandomSessionKey.read_payload(stream, pBegin);
+    }
+};
+
+// 2.2.2.3   LM_RESPONSE
+// ====================================
+// The LM_RESPONSE structure defines the NTLM v1 authentication LmChallengeResponse in the
+// AUTHENTICATE_MESSAGE. This response is used only when NTLM v1 authentication is configured.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           Response                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+//  Response (24 bytes):  A 24-byte array of unsigned char that contains the client's
+//   LmChallengeResponse as defined in section 3.3.1.
+
+struct LM_Response {
+    uint8_t response[24];
+};
+
+
+// 2.2.2.4   LMv2_RESPONSE
+// =================================================
+// The LMv2_RESPONSE structure defines the NTLM v2 authentication LmChallengeResponse in the
+// AUTHENTICATE_MESSAGE. This response is used only when NTLM v2 authentication is configured.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           Response                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                      ChallengeFromClient                      |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+//  Response (16 bytes):  A 16-byte array of unsigned char that contains the client's LM
+//   challenge-response. This is the portion of the LmChallengeResponse field to which the
+//   HMAC_MD5 algorithm has been applied, as defined in section 3.3.2. Specifically, Response
+//   corresponds to the result of applying the HMAC_MD5 algorithm, using the key
+//   ResponseKeyLM, to a message consisting of the concatenation of the ResponseKeyLM,
+//   ServerChallenge and ClientChallenge.
+//  ChallengeFromClient (8 bytes):  An 8-byte array of unsigned char that contains the client's
+//   ClientChallenge, as defined in section 3.1.5.1.2.
+
+struct LMv2_Response {
+    uint8_t Response[16]{};
+    uint8_t ClientChallenge[8]{};
+
+    LMv2_Response()
+    = default;
+
+    void emit(OutStream & stream) const {
+        stream.out_copy_bytes(this->Response, 16);
+        stream.out_copy_bytes(this->ClientChallenge, 8);
+    }
+
+    void recv(InStream & stream) {
+        stream.in_copy_bytes(this->Response, 16);
+        stream.in_copy_bytes(this->ClientChallenge, 8);
+    }
+
+};
+
+// 2.2.2.6   NTLM v1 Response: NTLM_RESPONSE
+// ===============================================
+// The NTLM_RESPONSE structure defines the NTLM v1 authentication NtChallengeResponse in the
+// AUTHENTICATE_MESSAGE. This response is only used when NTLM v1 authentication is configured.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           Response                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+//  Response (24 bytes):  A 24-byte array of unsigned char that contains the client's
+//   NtChallengeResponse (section 3.3.1).
+struct NTLM_Response {
+    uint8_t response[32];
+};
+
+
+// 2.2.2.7   NTLM v2: NTLMv2_CLIENT_CHALLENGE
+// ===============================================
+// The NTLMv2_CLIENT_CHALLENGE structure defines the client challenge in the
+// AUTHENTICATE_MESSAGE. This structure is used only when NTLM v2 authentication is configured.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |   RespType    |   HiRespType  |          Reserved1            |
+// +---------------+---------------+---------------+---------------+
+// |                           Reserved2                           |
+// +---------------+---------------+---------------+---------------+
+// |                           TimeStamp                           |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                      ChallengeFromClient                      |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                           Reserved3                           |
+// +---------------+---------------+---------------+---------------+
+// |                       AvPairs (variable)                      |
+// +---------------+---------------+---------------+---------------+
+//  RespType (1 byte):  An 8-bit unsigned char that contains the current version of the challenge
+//   response type. This field MUST be 0x01.
+//  HiRespType (1 byte):  An 8-bit unsigned char that contains the maximum supported version of
+//   the challenge response type. This field MUST be 0x01.
+//  Reserved1 (2 bytes):  A 16-bit unsigned integer that SHOULD be 0x0000 and MUST be ignored
+//   on receipt.
+//  Reserved2 (4 bytes):  A 32-bit unsigned integer that SHOULD be 0x00000000 and MUST be
+//   ignored on receipt.
+//  TimeStamp (8 bytes):  A 64-bit unsigned integer that contains the current system time,
+//   represented as the number of 100 nanosecond ticks elapsed since midnight of January 1,
+//   1601 (UTC).
+//  ChallengeFromClient (8 bytes):  An 8-byte array of unsigned char that contains the client's
+//   ClientChallenge (section 3.1.5.1.2).
+//  Reserved3 (4 bytes):  A 32-bit unsigned integer that SHOULD be 0x00000000 and MUST be
+//   ignored on receipt.
+//  AvPairs (variable):  A byte array that contains a sequence of AV_PAIR structures (section
+//   2.2.2.1). The sequence contains the server-naming context and is terminated by an AV_PAIR
+//   structure with an AvId field of MsvAvEOL.
+
+struct NTLMv2_Client_Challenge {
+    uint8_t  RespType;              // MUST BE 0x01
+    uint8_t  HiRespType;            // MUST BE 0x01
+    uint16_t Reserved1;             // MUST BE 0x00
+    uint32_t Reserved2;             // MUST BE 0x00
+    uint8_t  Timestamp[8]{};          // Current system time
+    uint8_t  ClientChallenge[8]{};    // Client Challenge
+    uint32_t Reserved3;             // MUST BE 0x00
+    NtlmAvPairList AvPairList;
+    uint32_t Reserved4;             // MUST BE 0x00
+
+    NTLMv2_Client_Challenge()
+
+    = default;
+
+    void emit(OutStream & stream) /* TODO const*/ {
+        // ULONG length;
+
+        this->RespType = 0x01;
+        this->HiRespType = 0x01;
+        stream.out_uint8(this->RespType);
+        stream.out_uint8(this->HiRespType);
+        stream.out_clear_bytes(2);
+        stream.out_clear_bytes(4);
+        stream.out_copy_bytes(this->Timestamp, 8);
+        stream.out_copy_bytes(this->ClientChallenge, 8);
+        stream.out_clear_bytes(4);
+        this->AvPairList.emit(stream);
+        stream.out_clear_bytes(4);
+    }
+
+    void recv(InStream & stream) {
+        // size_t size;
+        this->RespType = stream.in_uint8();
+        this->HiRespType = stream.in_uint8();
+        stream.in_skip_bytes(2);
+        stream.in_skip_bytes(4);
+        stream.in_copy_bytes(this->Timestamp, 8);
+        stream.in_copy_bytes(this->ClientChallenge, 8);
+        stream.in_skip_bytes(4);
+        this->AvPairList.recv(stream);
+        stream.in_skip_bytes(4);
+    }
+};
+
+// 2.2.2.8   NTLM2 V2 Response: NTLMv2_RESPONSE
+// ==================================================
+// The NTLMv2_RESPONSE structure defines the NTLMv2 authentication NtChallengeResponse in the
+// AUTHENTICATE_MESSAGE. This response is used only when NTLMv2 authentication is configured.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           Response                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                 ChallengeFromClient (variable)                |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+//  Response (16 bytes):  A 16-byte array of unsigned char that contains the client's NT
+//  challenge-response as defined in section 3.3.2. Response corresponds to the NTProofStr
+//   variable from section 3.3.2.
+//  ChallengeFromClient (variable):  A variable-length byte array that contains the
+//   ClientChallenge as defined in section 3.3.2. ChallengeFromClient corresponds to the
+//   temp variable from section 3.3.2.
+
+struct NTLMv2_Response {
+    uint8_t Response[16]{};
+    NTLMv2_Client_Challenge Challenge;
+
+    NTLMv2_Response()
+
+    = default;
+
+    void emit(OutStream & stream) /* TODO const*/ {
+        stream.out_copy_bytes(this->Response, 16);
+        this->Challenge.emit(stream);
+    }
+
+    void recv(InStream & stream) {
+        stream.in_copy_bytes(this->Response, 16);
+        this->Challenge.recv(stream);
+    }
+
+};
+
+// [MS-NLMP]
+
+// 2.2.1.2   CHALLENGE_MESSAGE
+// ======================================================================
+// The CHALLENGE_MESSAGE defines an NTLM challenge message that is sent from
+//  the server to the client. The CHALLENGE_MESSAGE is used by the server to
+//  challenge the client to prove its identity.
+//  For connection-oriented requests, the CHALLENGE_MESSAGE generated by the
+//  server is in response to the NEGOTIATE_MESSAGE (section 2.2.1.1) from the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           Signature                           |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                          MessageType                          |
+// +---------------+---------------+---------------+---------------+
+// |                        TargetNameFields                       |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                         NegotiateFlags                        |
+// +---------------+---------------+---------------+---------------+
+// |                         ServerChallenge                       |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                           Reserved                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                        TargetInfoFields                       |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                            Version                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                       Payload (Variable)                      |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+
+// Signature (8 bytes):  An 8-byte character array that MUST contain the
+//  ASCII string ('N', 'T', 'L', 'M', 'S', 'S', 'P', '\0').
+
+// MessageType (4 bytes):  A 32-bit unsigned integer that indicates the message
+//  type. This field MUST be set to 0x00000002.
+
+// TargetNameFields (8 bytes):  If the NTLMSSP_REQUEST_TARGET flag is not set in
+//  NegotiateFlags, indicating that no TargetName is required:
+//  - TargetNameLen and TargetNameMaxLen SHOULD be set to zero on transmission.
+//  - TargetNameBufferOffset field SHOULD be set to the offset from the beginning of the
+//     CHALLENGE_MESSAGE to where the TargetName would be in Payload if it were present.
+//  - TargetNameLen, TargetNameMaxLen, and TargetNameBufferOffset MUST be ignored
+//     on receipt.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |        TargetNameLen          |       TargetNameMaxLen        |
+// +---------------+---------------+---------------+---------------+
+// |                     TargetNameBufferOffset                    |
+// +---------------+---------------+---------------+---------------+
+//    TargetNameLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of TargetName in Payload.
+//    TargetNameMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be set
+//     to the value of TargetNameLen and MUST be ignored on receipt.
+//    TargetNameBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the CHALLENGE_MESSAGE to
+//     TargetName in Payload.
+//     If TargetName is a Unicode string, the values of TargetNameBufferOffset and
+//     TargetNameLen MUST be multiples of 2.
+
+// NegotiateFlags (4 bytes):  A NEGOTIATE structure that contains a set of bit flags,
+//  as defined in section 2.2.2.5. The server sets flags to indicate options it supports or,
+//  if thre has been a NEGOTIATE_MESSAGE (section 2.2.1.1), the choices it has made from
+//   the options offered by the client.
+
+// ServerChallenge (8 bytes):  A 64-bit value that contains the NTLM challenge.
+//  The challenge is a 64-bit nonce. The processing of the ServerChallenge is specified
+//  in sections 3.1.5 and 3.2.5.
+// Reserved (8 bytes):  An 8-byte array whose elements MUST be zero when sent and MUST be
+//  ignored on receipt.
+
+// TargetInfoFields (8 bytes):  If the NTLMSSP_NEGOTIATE_TARGET_INFO flag of
+//  NegotiateFlags is clear, indicating that no TargetInfo is required:
+//  - TargetInfoLen and TargetInfoMaxLen SHOULD be set to zero on transmission.
+//  - TargetInfoBufferOffset field SHOULD be set to the offset from the beginning of the
+//    CHALLENGE_MESSAGE to where the TargetInfo would be in Payload if it were present.
+//  - TargetInfoLen, TargetInfoMaxLen, and TargetInfoBufferOffset MUST be ignored on receipt.
+//  Otherwise, these fields are defined as:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |        TargetInfoLen          |       TargetInfoMaxLen        |
+// +---------------+---------------+---------------+---------------+
+// |                     TargetInfoBufferOffset                    |
+// +---------------+---------------+---------------+---------------+
+//    TargetInfoLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of TargetInfo in Payload.
+//    TargetInfoMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be set
+//     to the value of TargetInfoLen and MUST be ignored on receipt.
+//    TargetInfoBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the CHALLENGE_MESSAGE to
+//     TargetInfo in Payload.
+
+// Version (8 bytes):  A VERSION structure (as defined in section 2.2.2.10) that
+//  is present only when the NTLMSSP_NEGOTIATE_VERSION flag is set in the
+//  NegotiateFlags field. This structure is used for debugging purposes only.
+//  In normal (non-debugging) protocol messages, it is ignored and does not affect
+//  the NTLM message processing.
+
+
+// Payload (variable):  A byte-array that contains the data referred to by the
+//   TargetNameBufferOffset and TargetInfoBufferOffset message fields. Payload data
+//   can be present in any order within the Payload field, with variable-length padding
+//   before or after the data. The data that can be present in the Payload field of
+//   this message, in no particular order, are:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      TargetName (Variable)                    |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                      TargetInfo (Variable)                    |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+//    TargetName (variable):  If TargetNameLen does not equal 0x0000, TargetName
+//     MUST be a byte-array that contains the name of the server authentication realm,
+//     and MUST be expressed in the negotiated character set. A server that is a
+//     member of a domain returns the domain of which it is a member, and a server
+//     that is not a member of a domain returns the server name.
+//    TargetInfo (variable):  If TargetInfoLen does not equal 0x0000, TargetInfo
+//     MUST be a byte array that contains a sequence of AV_PAIR structures.
+//     The AV_PAIR structure is defined in section 2.2.2.1. The length of each
+//     AV_PAIR is determined by its AvLen field (plus 4 bytes).
+
+//     Note  An AV_PAIR structure can start on any byte alignment and the sequence of
+//      AV_PAIRs has no padding between structures.
+//     The sequence MUST be terminated by an AV_PAIR structure with an AvId field of
+//      MsvAvEOL. The total length of the TargetInfo byte array is the sum of the lengths,
+//      in bytes, of the AV_PAIR structures it contains.
+//     Note  If a TargetInfo AV_PAIR Value is textual, it MUST be encoded in Unicode
+//      irrespective of what character set was negotiated (section 2.2.2.1).
+
+
+class NTLMChallengeMessage
+{
+    NtlmMessageType msgType;   /* 4 Bytes */
+
+    void message_emit(OutStream & stream) const {
+        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
+        stream.out_uint32_le(this->msgType);
+    }
+
+    bool message_recv(InStream & stream) {
+        constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+        uint8_t received_sig[sig_len];
+        stream.in_copy_bytes(received_sig, sig_len);
+        uint32_t type = stream.in_uint32_le();
+        return !memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)
+            && (static_cast<uint32_t>(this->msgType) == type);
+    }
+
+public:
+    NtlmField TargetName;          /* 8 Bytes */
+    NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
+    uint8_t serverChallenge[8]{};    /* 8 Bytes */
+    // uint64_t serverChallenge;
+    /* 8 Bytes reserved */
+    NtlmField TargetInfo;          /* 8 Bytes */
+    NtlmVersion version;           /* 8 Bytes */
+private:
+    uint32_t PayloadOffset;
+
+public:
+    NtlmAvPairList AvPairList;
+
+public:
+    NTLMChallengeMessage()
+        : msgType(NtlmChallenge)
+        , 
+         PayloadOffset(12+8+4+8+8+8+8)
+    {
+    }
+
+    void emit(OutStream & stream) /* TODO const*/ {
+        this->TargetInfo.buffer.reset();
+        this->AvPairList.emit(this->TargetInfo.buffer.ostream);
+        this->TargetInfo.buffer.mark_end();
+
+        uint32_t currentOffset = this->PayloadOffset;
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.ntlm_get_version_info();
+        }
+        else {
+            currentOffset -= 8;
+        }
+        this->message_emit(stream);
+        currentOffset += this->TargetName.emit(stream, currentOffset);
+        this->negoFlags.emit(stream);
+        stream.out_copy_bytes(this->serverChallenge, 8);
+        stream.out_clear_bytes(8);
+        /*currentOffset +=*/ this->TargetInfo.emit(stream, currentOffset);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.emit(stream);
+        }
+        // PAYLOAD
+        this->TargetName.write_payload(stream);
+        this->TargetInfo.write_payload(stream);
+    }
+
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
+        bool res;
+        res = this->message_recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
+        this->TargetName.recv(stream);
+        this->negoFlags.recv(stream);
+        stream.in_copy_bytes(this->serverChallenge, 8);
+        // this->serverChallenge = stream.in_uint64_le();
+        stream.in_skip_bytes(8);
+        this->TargetInfo.recv(stream);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.recv(stream);
+        }
+        // PAYLOAD
+        this->TargetName.read_payload(stream, pBegin);
+        this->TargetInfo.read_payload(stream, pBegin);
+        auto in_stream = this->TargetInfo.buffer.in_stream();
+        this->AvPairList.recv(in_stream);
+        this->TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
+    }
+
+    //void avpair_decode() {
+    //    this->TargetInfo.Buffer.reset();
+    //    this->AvPairList.emit(this->TargetInfo.Buffer);
+    //}
+
+};
+
+
+// [MS-NLMP]
+
+// 2.2.1.1 NEGOTIATE_MESSAGE
+// ============================================================
+// The NEGOTIATE_MESSAGE defines an NTLM Negotiate message that is sent from
+// the client to the server. This message allows the client to specify its
+//  supported NTLM options to the server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           Signature                           |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                          MessageType                          |
+// +---------------+---------------+---------------+---------------+
+// |                         NegotiateFlags                        |
+// +---------------+---------------+---------------+---------------+
+// |                        DomainNameFields                       |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                        WorkstationFields                      |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                            Version                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                       Payload (Variable)                      |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+
+// Signature (8 bytes):  An 8-byte character array that MUST contain the
+//  ASCII string ('N', 'T', 'L', 'M', 'S', 'S', 'P', '\0').
+
+// MessageType (4 bytes):  A 32-bit unsigned integer that indicates the message
+//  type. This field MUST be set to 0x00000001.
+
+// NegotiateFlags (4 bytes):  A NEGOTIATE structure that contains a set of bit flags,
+//  as defined in section 2.2.2.5. The client sets flags to indicate options it supports.
+
+// DomainNameFields (8 bytes):  If the NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED flag is
+//  not set in NegotiateFlags, indicating that no DomainName is supplied in Payload:
+//  - DomainNameLen and DomainNameMaxLen fields SHOULD be set to zero.
+//  - DomainNameBufferOffset field SHOULD be set to the offset from the beginning of the
+//     NEGOTIATE_MESSAGE to where the DomainName would be in Payload if it was present.
+//  - DomainNameLen, DomainNameMaxLen, and DomainNameBufferOffset MUST be ignored
+//     on receipt.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |        DomainNameLen          |       DomainNameMaxLen        |
+// +---------------+---------------+---------------+---------------+
+// |                     DomainNameBufferOffset                    |
+// +---------------+---------------+---------------+---------------+
+//    DomainNameLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of DomainName in Payload.
+//    DomainNameMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be set
+//     to the value of DomainNameLen and MUST be ignored on receipt.
+//    DomainNameBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the NEGOTIATE_MESSAGE to
+//     DomainName in Payload.
+
+// WorkstationFields (8 bytes):  If the NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED
+//  flag is not set in NegotiateFlags, indicating that no WorkstationName is
+//  supplied in Payload:
+//  - WorkstationLen and WorkstationMaxLen fields SHOULD be set to zero.
+//  - WorkstationBufferOffset field SHOULD be set to the offset from the beginning
+//     of the NEGOTIATE_MESSAGE to where the WorkstationName would be in Payload
+//     if it was present.
+//  - WorkstationLen, WorkstationMaxLen, and WorkstationBufferOffset MUST be
+//     ignored on receipt.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |         WorkstatonLen         |       WorkstationMaxLen       |
+// +---------------+---------------+---------------+---------------+
+// |                     WorkstationBufferOffset                   |
+// +---------------+---------------+---------------+---------------+
+//    WorkstationLen (2 bytes):  A 16-bit unsigned integer that defines the size,
+//     in bytes, of WorkStationName in Payload.
+//    WorkstationMaxLen (2 bytes):  A 16-bit unsigned integer that SHOULD be set
+//     to the value of WorkstationLen and MUST be ignored on receipt.
+//    WorkstationBufferOffset (4 bytes):  A 32-bit unsigned integer that defines
+//     the offset, in bytes, from the beginning of the NEGOTIATE_MESSAGE to
+//     WorkstationName in Payload.
+
+// Version (8 bytes):  A VERSION structure (as defined in section 2.2.2.10) that
+//  is present only when the NTLMSSP_NEGOTIATE_VERSION flag is set in the
+//  NegotiateFlags field. This structure is used for debugging purposes only.
+//  In normal (non-debugging) protocol messages, it is ignored and does not affect
+//  the NTLM message processing.
+
+// Payload (variable):  A byte-array that contains the data referred to by the
+//   DomainNameBufferOffset and WorkstationBufferOffset message fields. Payload data
+//   can be present in any order within the Payload field, with variable-length padding
+//   before or after the data. The data that can be present in the Payload field of
+//   this message, in no particular order, are:
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                      DomainName (Variable)                    |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                    WorkstationName (Variable)                 |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+//    DomainName (variable):  If DomainNameLen does not equal 0x0000, DomainName
+//     MUST be a byte-array that contains the name of the client authentication domain
+//     that MUST be encoded using the OEM character set. Otherwise, this data is
+//     not present.
+//    WorkstationName (variable):  If WorkstationLen does not equal 0x0000,
+//     WorkstationName MUST be a byte array that contains the name of the client
+//     machine that MUST be encoded using the OEM character set. Otherwise, this data
+//     is not present.
+
+
+
+
+class NTLMNegotiateMessage
+{
+    NtlmMessageType msgType;   /* 4 Bytes */
+
+    void message_emit(OutStream & stream) const {
+        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
+        stream.out_uint32_le(this->msgType);
+    }
+
+    bool message_recv(InStream & stream) {
+        constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+        uint8_t received_sig[sig_len];
+        stream.in_copy_bytes(received_sig, sig_len);
+        uint32_t type = stream.in_uint32_le();
+        return !memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)
+            && (static_cast<uint32_t>(this->msgType) == type);
+    }
+
+public:
+    NtlmNegotiateFlags negoFlags; /* 4 Bytes */
+    NtlmField DomainName;         /* 8 Bytes */
+    NtlmField Workstation;        /* 8 Bytes */
+    NtlmVersion version;          /* 8 Bytes */
+private:
+    uint32_t PayloadOffset;
+
+public:
+    NTLMNegotiateMessage()
+        : msgType(NtlmNegotiate)
+        , PayloadOffset(12+4+8+8+8)
+    {
+    }
+
+    void emit(OutStream & stream) /* TODO const*/ {
+        uint32_t currentOffset = this->PayloadOffset;
+        if (this->version.ignore_version) {
+            currentOffset -= 8;
+        }
+        this->message_emit(stream);
+        this->negoFlags.emit(stream);
+        currentOffset += this->DomainName.emit(stream, currentOffset);
+        currentOffset += this->Workstation.emit(stream, currentOffset);
+        (void)currentOffset;
+        this->version.emit(stream);
+
+        // PAYLOAD
+        this->DomainName.write_payload(stream);
+        this->Workstation.write_payload(stream);
+    }
+
+    void recv(InStream & stream) {
+        uint8_t const * pBegin = stream.get_current();
+        bool res;
+        res = this->message_recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
+        this->negoFlags.recv(stream);
+        this->DomainName.recv(stream);
+        this->Workstation.recv(stream);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.recv(stream);
+        }
+        // PAYLOAD
+        this->DomainName.read_payload(stream, pBegin);
+        this->Workstation.read_payload(stream, pBegin);
+    }
+
+
+    //bool check_negotiate_flag_received() {
+    //    uint32_t flags = this->negoFlags.flags;
+    //    if (!((flags & NTLMSSP_REQUEST_TARGET) &&
+    //          (flags & NTLMSSP_NEGOTIATE_NTLM) &&
+    //          (flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN) &&
+    //          (flags & NTLMSSP_NEGOTIATE_UNICODE))) {
+    //        return false;
+    //    }
+    //    return true;
+    //}
+
+};
+

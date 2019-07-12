@@ -24,7 +24,7 @@
 #include "core/RDP/nla/asn1/ber.hpp"
 #include "core/RDP/nla/sspi.hpp"
 
-#include "core/RDP/nla/ntlm/ntlm_message_challenge.hpp"
+#include "core/RDP/nla/ntlm/ntlm_message.hpp"
 /**
  * TSRequest ::= SEQUENCE {
  *     version    [0] INTEGER,

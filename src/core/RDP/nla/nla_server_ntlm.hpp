@@ -37,10 +37,6 @@
 #include "utils/stream.hpp"
 
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
-#include "core/RDP/nla/ntlm/ntlm_message_negotiate.hpp"
-#include "core/RDP/nla/ntlm/ntlm_message_challenge.hpp"
-#include "core/RDP/nla/ntlm/ntlm_message_authenticate.hpp"
-#include "core/RDP/nla/sspi.hpp"
 
 #include "system/ssl_md5.hpp"
 #include "system/ssl_rc4.hpp"
