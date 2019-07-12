@@ -30,6 +30,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <strings.h>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
@@ -456,8 +457,14 @@ namespace Cliprdr
     }
     REDEMPTION_DIAGNOSTIC_POP
 
-    constexpr auto file_list_format_name = "FileGroupDescriptorW"_av;
-    constexpr auto file_list_format_name_utf16 = "FileGroupDescriptorW"_utf16;
+    inline namespace format_name_constants
+    {
+        constexpr auto file_group_descriptor_w_utf8 = "FileGroupDescriptorW"_av;
+        constexpr auto file_group_descriptor_w_utf16 = "FileGroupDescriptorW"_utf16;
+
+        constexpr auto preferred_drop_effect_utf8 = "Preferred DropEffect"_av;
+        constexpr auto preferred_drop_effect_utf16 = "Preferred DropEffect"_av;
+    }
 
     enum class Charset : bool
     {
@@ -537,7 +544,89 @@ namespace Cliprdr
 
         return ExtractResult::Ok;
     }
-}
+
+    struct FormatNameInventory
+    {
+        using FormatId = uint32_t;
+        struct FormatName;
+
+        FormatName const& push(FormatId format_id, Charset charset, array_view_const_u8 av_name)
+        {
+            return this->formats.emplace_back(format_id, charset, av_name);
+        }
+
+        FormatName const* find(FormatId format_id) const noexcept
+        {
+            for (auto const& format : this->formats) {
+                if (format.format_id == format_id) {
+                    return &format;
+                }
+            }
+            return nullptr;
+        }
+
+        void clear() noexcept
+        {
+            this->formats.clear();
+        }
+
+        struct FormatName
+        {
+            static constexpr size_t utf8_buffer_buf_len = 123;
+
+            uint32_t format_id;
+            // TODO static_vector<raw_buf_len>
+            uint8_t len;
+            uint8_t utf8_buffer[utf8_buffer_buf_len];
+
+            FormatName(FormatId format_id, Charset charset, array_view_const_u8 raw_name) noexcept
+            : format_id(format_id)
+            , len(std::min(raw_name.size(), std::size(this->utf8_buffer)))
+            {
+                if (charset == Charset::Ascii)
+                {
+                    this->len = std::min(raw_name.size(), std::size(this->utf8_buffer));
+                    memcpy(this->utf8_buffer, raw_name.data(), this->len);
+                }
+                else
+                {
+                    this->len = UTF16toUTF8_buf(
+                        raw_name, make_array_view(this->utf8_buffer)).size();
+                }
+            }
+
+            FormatName(FormatName const& other) noexcept
+            : format_id(other.format_id)
+            , len(other.len)
+            {
+                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
+            }
+
+            FormatName& operator=(FormatName const& other) noexcept
+            {
+                this->format_id = other.format_id;
+                this->len = other.len;
+                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
+                return *this;
+            }
+
+            const_bytes_view utf8_name() const noexcept
+            {
+                return {this->utf8_buffer, this->len};
+            }
+
+            bool utf8_name_equal(const_bytes_view utf8_name_compared) const noexcept
+            {
+                return utf8_name_compared.size() == this->len
+                    && 0 == strncasecmp(utf8_name_compared.as_charp(),
+                                        char_ptr_cast(this->utf8_buffer), this->len);
+            }
+        };
+
+    private:
+        std::vector<FormatName> formats;
+    };
+} // namespace Cliprdr
 
 
 struct FormatListReceive
@@ -548,7 +637,7 @@ struct FormatListReceive
         const bool use_long_format,
         const RDPECLIP::CliprdrHeader & in_header,
         InStream & chunk,
-        std::unordered_map<uint32_t, std::string> & format_name_inventory,
+        Cliprdr::FormatNameInventory& format_name_inventory,
         const RDPVerbose verbose)
     {
         LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
@@ -573,28 +662,16 @@ struct FormatListReceive
             Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES))
         ) == Cliprdr::ExtractResult::Ok)
         {
-            const size_t max_length_of_format_name   = 256;
-            constexpr size_t size_of_utf8_buffer
-                = max_length_of_format_name * maximum_length_of_utf8_character_in_bytes;
-            uint8_t utf8_buffer[size_of_utf8_buffer + 1];
-
-            array_view_const_u8 utf8_av_name = (extracted_data.charset == Cliprdr::Charset::Ascii)
-                ? extracted_data.av_name
-                : ::UTF16toUTF8_buf(extracted_data.av_name, make_array_view(utf8_buffer));
+            auto&& format_name = format_name_inventory.push(
+                extracted_data.format_id, extracted_data.charset, extracted_data.av_name);
+            auto&& utf8_name = format_name.utf8_name();
 
             LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
                 "formatId=%s(%u) wszFormatName=\"%.*s\"",
                 RDPECLIP::get_FormatId_name(extracted_data.format_id),
-                extracted_data.format_id, int(utf8_av_name.size()), utf8_av_name.data());
+                extracted_data.format_id, int(utf8_name.size()), utf8_name.data());
 
-            format_name_inventory[extracted_data.format_id]
-                .assign(::char_ptr_cast(utf8_av_name.data()), utf8_av_name.size());
-
-            array_view_const_u8 ref_name = const_bytes_view(Cliprdr::file_list_format_name);
-            // TODO operator==(array_view, array_view) ?
-            if (ref_name.size() == utf8_av_name.size()
-             && !memcmp(ref_name.data(), utf8_av_name.data(), utf8_av_name.size())
-            ) {
+            if (format_name.utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8)) {
                 this->file_list_format_id = extracted_data.format_id;
             }
         }

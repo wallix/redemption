@@ -307,9 +307,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     }
 }
 
-RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
-
-    std::unordered_map<uint32_t, std::string> format_name_inventory;
+RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
+{
+    Cliprdr::FormatNameInventory format_name_inventory;
 
     const bool use_long_format_name = true;
 
@@ -327,9 +327,14 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
 
     FormatListReceive received(use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::none);
 
-    RED_CHECK_EQUAL(received.file_list_format_id, client_file_list_format_id);
-    RED_CHECK_EQUAL(format_name_inventory[RDPECLIP::CF_TEXT], "");
-    RED_CHECK_EQUAL(format_name_inventory[client_file_list_format_id], RDPECLIP::FILEGROUPDESCRIPTORW.data());
+    Cliprdr::FormatNameInventory::FormatName const* format_name;
+
+    RED_CHECK(received.file_list_format_id == client_file_list_format_id);
+    RED_REQUIRE(!!(format_name = format_name_inventory.find(RDPECLIP::CF_TEXT)));
+    RED_CHECK_SMEM(format_name->utf8_name(), ""_av);
+    RED_REQUIRE(!!(format_name = format_name_inventory.find(client_file_list_format_id)));
+    RED_CHECK_SMEM(format_name->utf8_name(), Cliprdr::file_group_descriptor_w_utf8);
+    RED_CHECK(format_name->utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8));
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {

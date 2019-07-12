@@ -23,10 +23,8 @@
 
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
-#include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "system/ssl_sha256.hpp"
 #include "utils/arcsight.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -37,7 +35,6 @@
 #include "mod/icap_files_service.hpp"
 #include "core/session_reactor.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
-#include "core/stream_throw_helpers.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -47,11 +44,10 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
 private:
     ClipboardData clip_data;
-    using format_name_inventory_type = std::unordered_map<uint32_t, std::string>;
 
     std::vector<RDPECLIP::FileDescriptor> file_descr_list;
 
-    format_name_inventory_type format_name_inventory;
+    Cliprdr::FormatNameInventory format_name_inventory;
 
 
     const ClipboardVirtualChannelParams params;
@@ -751,7 +747,7 @@ private:
         this->format_name_inventory.clear();
 
         FormatListReceive receiver(
-            side_data.use_long_format_names,
+            this->use_long_format_names(),
             in_header,
             chunk,
             this->format_name_inventory,
@@ -826,18 +822,21 @@ private:
                         ? "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION"_av
                         : "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"_av);
 
-                std::string format_name = this->format_name_inventory[requestedFormatId];
-                if (format_name.empty()) {
-                    format_name = RDPECLIP::get_FormatId_name(requestedFormatId);
-                }
+                auto* format_name = this->format_name_inventory.find(requestedFormatId);
+                auto utf8_format = (format_name && !format_name->utf8_name().empty())
+                    ? format_name->utf8_name()
+                    : RDPECLIP::get_FormatId_name_av(requestedFormatId);
 
                 bool const log_current_activity = (
-                    (!this->params.log_only_relevant_clipboard_activities)
-                     ||   (strcasecmp("Preferred DropEffect", format_name.c_str()) != 0
-                        && strcasecmp("FileGroupDescriptorW", format_name.c_str()) != 0)
-                );
+                    !this->params.log_only_relevant_clipboard_activities
+                 || !format_name
+                 || (
+                     !format_name->utf8_name_equal(Cliprdr::preferred_drop_effect_utf8)
+                  && !format_name->utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8)
+                ));
 
-                str_append(format_name, '(', std::to_string(requestedFormatId), ')');
+                auto format = str_concat(utf8_format.as_chars(),
+                    '(', std::to_string(requestedFormatId), ')');
 
                 auto const size_str = std::to_string(in_header.dataLen());
 
@@ -846,7 +845,7 @@ private:
                         info,
                         {
                             { "type", type },
-                            { "format", format_name },
+                            { "format", format },
                             { "size", size_str }
                         }
                     );
@@ -875,7 +874,7 @@ private:
                 }
 
                 if (!this->params.dont_log_data_into_wrm) {
-                    str_assign(info, type, '=', format_name, '\x01', size_str);
+                    str_assign(info, type, '=', format, '\x01', size_str);
                     if (!data_to_dump.empty()) {
                         str_append(info, '\x01', data_to_dump);
                     }

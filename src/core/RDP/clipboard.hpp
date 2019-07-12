@@ -67,37 +67,43 @@ enum CF
     , CF_GDIOBJLAST      = 1023
 };
 
-inline static const char * get_FormatId_name(uint32_t FormatId) {
+inline array_view_const_char get_FormatId_name_av(uint32_t FormatId) noexcept
+{
     switch (FormatId) {
-        case CF_TEXT:            return "CF_TEXT";
-        case CF_BITMAP:          return "CF_BITMAP";
-        case CF_METAFILEPICT:    return "CF_METAFILEPICT";
-        case CF_SYLK:            return "CF_SYLK";
-        case CF_DIF:             return "CF_DIF";
-        case CF_TIFF:            return "CF_TIFF";
-        case CF_OEMTEXT:         return "CF_OEMTEXT";
-        case CF_DIB:             return "CF_DIB";
-        case CF_PALETTE:         return "CF_PALETTE";
-        case CF_PENDATA:         return "CF_PENDATA";
-        case CF_RIFF:            return "CF_RIFF";
-        case CF_WAVE:            return "CF_WAVE";
-        case CF_UNICODETEXT:     return "CF_UNICODETEXT";
-        case CF_ENHMETAFILE:     return "CF_ENHMETAFILE";
-        case CF_HDROP:           return "CF_HDROP";
-        case CF_LOCALE:          return "CF_LOCALE";
-        case CF_DIBV5:           return "CF_DIBV5";
-        case CF_OWNERDISPLAY:    return "CF_OWNERDISPLAY";
-        case CF_DSPTEXT:         return "CF_DSPTEXT";
-        case CF_DSPBITMAP:       return "CF_DSPBITMAP";
-        case CF_DSPMETAFILEPICT: return "CF_DSPMETAFILEPICT";
-        case CF_DSPENHMETAFILE:  return "CF_DSPENHMETAFILE";
-        case CF_PRIVATEFIRST:    return "CF_PRIVATEFIRST";
-        case CF_PRIVATELAST:     return "CF_PRIVATELAST";
-        case CF_GDIOBJFIRST:     return "CF_GDIOBJFIRST";
-        case CF_GDIOBJLAST:      return "CF_GDIOBJLAST";
+        case CF_TEXT:            return "CF_TEXT"_av;
+        case CF_BITMAP:          return "CF_BITMAP"_av;
+        case CF_METAFILEPICT:    return "CF_METAFILEPICT"_av;
+        case CF_SYLK:            return "CF_SYLK"_av;
+        case CF_DIF:             return "CF_DIF"_av;
+        case CF_TIFF:            return "CF_TIFF"_av;
+        case CF_OEMTEXT:         return "CF_OEMTEXT"_av;
+        case CF_DIB:             return "CF_DIB"_av;
+        case CF_PALETTE:         return "CF_PALETTE"_av;
+        case CF_PENDATA:         return "CF_PENDATA"_av;
+        case CF_RIFF:            return "CF_RIFF"_av;
+        case CF_WAVE:            return "CF_WAVE"_av;
+        case CF_UNICODETEXT:     return "CF_UNICODETEXT"_av;
+        case CF_ENHMETAFILE:     return "CF_ENHMETAFILE"_av;
+        case CF_HDROP:           return "CF_HDROP"_av;
+        case CF_LOCALE:          return "CF_LOCALE"_av;
+        case CF_DIBV5:           return "CF_DIBV5"_av;
+        case CF_OWNERDISPLAY:    return "CF_OWNERDISPLAY"_av;
+        case CF_DSPTEXT:         return "CF_DSPTEXT"_av;
+        case CF_DSPBITMAP:       return "CF_DSPBITMAP"_av;
+        case CF_DSPMETAFILEPICT: return "CF_DSPMETAFILEPICT"_av;
+        case CF_DSPENHMETAFILE:  return "CF_DSPENHMETAFILE"_av;
+        case CF_PRIVATEFIRST:    return "CF_PRIVATEFIRST"_av;
+        case CF_PRIVATELAST:     return "CF_PRIVATELAST"_av;
+        case CF_GDIOBJFIRST:     return "CF_GDIOBJFIRST"_av;
+        case CF_GDIOBJLAST:      return "CF_GDIOBJLAST"_av;
     }
 
-    return "<unknown>";
+    return "<unknown>"_av;
+}
+
+inline static const char * get_FormatId_name(uint32_t FormatId) noexcept
+{
+    return get_FormatId_name_av(FormatId).data();
 }
 
 // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
