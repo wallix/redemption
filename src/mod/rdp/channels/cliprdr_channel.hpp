@@ -796,7 +796,7 @@ private:
         arc_info.fileSize = file_info.size;
         arc_info.direction_flag = from_remote_session ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
 
-        this->report_message.log6(info, arc_info, tvtime());
+        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
         if (!this->params.dont_log_data_into_syslog) {
             LOG(LOG_INFO, "%s", info);
@@ -866,7 +866,7 @@ private:
                 arc_info.direction_flag = is_from_remote_session ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
 
                 if (log_current_activity) {
-                    this->report_message.log6(info, arc_info, tvtime());
+                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
                 }
 
                 if (!this->params.dont_log_data_into_syslog) {
