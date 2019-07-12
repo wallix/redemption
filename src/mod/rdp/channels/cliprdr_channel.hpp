@@ -622,6 +622,9 @@ private:
             ? this->clip_data.server_data : this->clip_data.client_data;
         auto& from_client = from_remote_session
             ? this->clip_data.client_data : this->clip_data.server_data;
+        bool enable_icap = from_remote_session
+            ? !this->params.validator_params.down_target_name.empty()
+            : !this->params.validator_params.up_target_name.empty();
 
         FileContentsResponseReceive receive(from_server, header, flags, chunk);
 
@@ -629,7 +632,7 @@ private:
             this->log_file_info(receive.file_info, from_remote_session);
         }
 
-        if (from_client.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+        if (enable_icap && from_client.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
             auto data = chunk.remaining_bytes();
             auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -658,6 +661,10 @@ private:
         VirtualChannelDataSender* sender, ClipboardSideData& side_data,
         ChannelFile::Direction direction)
     {
+        bool enable_icap = (direction == ChannelFile::Direction::FileFromServer)
+            ? !this->params.validator_params.down_target_name.empty()
+            : !this->params.validator_params.up_target_name.empty();
+
         FilecontentsRequestReceive receiver(side_data, chunk, this->verbose, header.dataLen());
 
         if (!this->params.clipboard_file_authorized) {
@@ -665,7 +672,7 @@ private:
             return false;
         }
 
-        if (receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+        if (enable_icap && receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
             const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
             this->last_lindex_packet_remaining = receiver.requested;
