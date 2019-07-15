@@ -32,7 +32,6 @@
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
-#include "mod/rdp/channels/channel_file.hpp"
 #include "core/file_system_virtual_channel_params.hpp"
 #include "core/stream_throw_helpers.hpp"
 #include <deque>

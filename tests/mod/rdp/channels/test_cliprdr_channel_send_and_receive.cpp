@@ -37,14 +37,15 @@ struct FakeDataSender : VirtualChannelDataSender
         }
     };
 
-    PDUData streams[2];
+    std::array<PDUData, 2> streams;
     int index = 0;
 
     void operator()(
         uint32_t /*total_length*/, uint32_t /*flags*/,
         const uint8_t * chunk_data, uint32_t chunk_data_length) override
     {
-        RED_CHECK(this->index < 2);
+        RED_REQUIRE(this->index < this->streams.size());
+        RED_REQUIRE(chunk_data_length < std::size(streams[this->index].data));
         this->streams[this->index].size = chunk_data_length;
         std::memcpy(streams[this->index].data, chunk_data, chunk_data_length);
         ++this->index;

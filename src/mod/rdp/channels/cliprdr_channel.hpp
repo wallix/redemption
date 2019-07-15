@@ -21,28 +21,152 @@
 
 #pragma once
 
-#include "core/channel_list.hpp"
+#include "core/error.hpp"
 #include "core/front_api.hpp"
+#include "core/session_reactor.hpp"
+#include "mod/icap_files_service.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
+#include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
+#include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "utils/arcsight.hpp"
-#include "utils/key_qvalue_pairs.hpp"
-#include "utils/sugar/algostring.hpp"
-#include "utils/stream.hpp"
 #include "utils/difftimeval.hpp"
-#include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
-#include "mod/rdp/channels/channel_file.hpp"
-#include "mod/icap_files_service.hpp"
-#include "core/session_reactor.hpp"
-#include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
+#include "utils/key_qvalue_pairs.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/cast.hpp"
 
-#include <memory>
-#include <unordered_map>
+
+#include <vector>
+#include <optional>
+#include <algorithm>
+#include <string_view>
 
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
-private:
+    struct ICapValidator
+    {
+        enum class Direction : bool
+        {
+            FileFromServer,
+            FileFromClient,
+        };
+
+        struct ICapFileItem
+        {
+            std::string filename;
+            uint64_t filesize;
+            ICAPFileId id;
+            Direction direction;
+        };
+
+        struct FileInfo
+        {
+            ICapFileItem file;
+            std::string_view result_content;
+            LocalICAPProtocol::ValidationType validation_type;
+        };
+
+        ICapValidator(ICAPService * icap_service) noexcept
+        : icap_service(icap_service)
+        {}
+
+        explicit operator bool () const noexcept
+        {
+            return this->icap_service;
+        }
+
+        void new_file(std::string filename, uint64_t filesize, const Direction direction, std::string_view target_name)
+        {
+            assert(this->icap_service);
+
+            if (this->icap_file_id != invalid_icap_file_id) {
+                this->icap_service->send_eof(this->icap_file_id);
+            }
+
+            this->icap_file_id = this->icap_service->open_file(filename, target_name);
+            this->icap_files.items.push_back({
+                std::move(filename), filesize, this->icap_file_id, direction});
+        }
+
+        void set_data(const_bytes_view data)
+        {
+            assert(this->icap_service);
+            this->icap_service->send_data(this->icap_file_id, data);
+        }
+
+        void set_end_of_file()
+        {
+            assert(this->icap_service);
+            this->icap_service->send_eof(this->icap_file_id);
+            this->icap_file_id = invalid_icap_file_id;
+        }
+
+        std::optional<FileInfo> receive_response()
+        {
+            assert(this->icap_service);
+
+            for (;;){
+                switch (this->icap_service->receive_response()) {
+                    case ICAPService::ResponseType::WaitingData:
+                        return {};
+                    case ICAPService::ResponseType::HasContent:
+                        return {FileInfo{
+                            this->icap_files.pop_id(this->icap_service->last_file_id()),
+                            this->icap_service->get_content(),
+                            this->icap_service->last_result_flag()
+                        }};
+                    case ICAPService::ResponseType::HasPacket:
+                    case ICAPService::ResponseType::Error:
+                        ;
+                }
+            }
+        }
+
+    private:
+        struct ICapFiles
+        {
+            unsigned quick_pos = 0;
+            std::vector<ICapFileItem> items;
+
+            ICapFileItem pop_id(ICAPFileId id)
+            {
+                if (this->items.size() <= this->quick_pos
+                    || this->items[this->quick_pos].id != id
+                ) {
+                    auto it = std::find_if(this->items.begin(), this->items.end(), [id](auto& f){
+                        return f.id == id;
+                    });
+
+                    if (it == this->items.end()) {
+                        LOG(LOG_ERR, "ICapValidator::receive_response: invalid id %u",
+                            underlying_cast(id));
+                        throw Error(ERR_ICAP_LOCAl_PROTOCOL);
+                    }
+
+                    this->quick_pos = std::distance(this->items.begin(), it);
+                }
+
+                auto r = std::move(this->items[this->quick_pos]);
+                if (this->quick_pos + 1u < this->items.size()) {
+                    this->items[this->quick_pos] = std::move(this->items.back());
+                    ++this->quick_pos;
+                }
+                this->items.pop_back();
+                return r;
+            }
+        };
+
+        ICAPService * icap_service;
+        const std::string up_target_name;
+        const std::string down_target_name;
+        ICapFiles icap_files;
+        ICAPFileId icap_file_id = invalid_icap_file_id;
+    };
+
+
     ClipboardData clip_data;
 
     std::vector<RDPECLIP::FileDescriptor> file_descr_list;
@@ -64,13 +188,14 @@ private:
 
     SessionReactor& session_reactor;
 
-    ChannelFile channel_file;
+    ICapValidator icap;
 
     static constexpr uint32_t last_lindex_unknown = ~uint32_t{};
     uint32_t last_lindex = last_lindex_unknown;
     uint64_t last_lindex_total_send = 0;
     uint64_t last_lindex_packet_remaining = 0;
 
+    using Direction = ICapValidator::Direction;
 
 public:
     ClipboardVirtualChannel(
@@ -84,11 +209,18 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
-    , params(params)
+    , params([&]{
+        auto p = params;
+        if (!icap_service) {
+            p.validator_params.up_target_name.clear();
+            p.validator_params.down_target_name.clear();
+        }
+        return p;
+    }())
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , session_reactor(session_reactor)
-    , channel_file(icap_service, params.validator_params)
+    , icap(icap_service)
     {}
 
     void empty_client_clipboard() {
@@ -191,7 +323,7 @@ public:
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 send_message_to_server = this->process_filecontents_request_pdu(
                     chunk, header, this->to_client_sender_ptr(),
-                    this->clip_data.client_data, ChannelFile::Direction::FileFromServer);
+                    this->clip_data.client_data, Direction::FileFromServer);
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
@@ -352,7 +484,7 @@ public:
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 send_message_to_client = this->process_filecontents_request_pdu(
                     chunk, header, this->to_server_sender_ptr(),
-                    this->clip_data.server_data, ChannelFile::Direction::FileFromClient);
+                    this->clip_data.server_data, Direction::FileFromClient);
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
@@ -400,128 +532,48 @@ public:
 
     void DLP_antivirus_check_channels_files()
     {
-        if (!this->channel_file.receive_response()) {
-            return;
+        if (!this->icap) {
+            return ;
         }
 
-        if ((!this->channel_file.is_valid() || this->params.validator_params.log_if_accepted)
-         && this->channel_file.is_enable_validation()
-        ) {
-            auto const info = key_qvalue_pairs({
-                {"type", "FILE_VERIFICATION" },
-                {"direction",
-                    (this->channel_file.get_direction() == ChannelFile::Direction::FileFromClient)
-                    ? "UP" : "DOWN"
-                },
-                {"filename", this->channel_file.get_file_name()},
-                {"status", this->channel_file.get_result_content()}
-            });
+        auto response = this->icap.receive_response();
 
-            ArcsightLogInfo arc_info;
-            arc_info.name = "FILE_SCAN_RESULT";
-            arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
-            arc_info.ApplicationProtocol = "rdp";
-            arc_info.fileName = this->channel_file.get_file_name();
-            arc_info.fileSize = this->channel_file.get_file_size();
-            arc_info.direction_flag = (this->channel_file.get_direction() == ChannelFile::Direction::FileFromServer) ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
-            arc_info.message = this->channel_file.get_result_content();
-
-            this->report_message.log6(info, arc_info, session_reactor.get_current_time());
+        if (!response) {
+            return ;
         }
 
-        if (this->channel_file.is_enable_interuption() && this->channel_file.is_save_files()) {
-            auto* data_sender
-                = (this->channel_file.get_direction() == ChannelFile::Direction::FileFromServer)
-                ? this->to_client_sender_ptr()
-                : this->to_server_sender_ptr();
-
-            if (not data_sender) {
-                // nada
-            }
-            else if (this->channel_file.is_valid()) {
-                this->send_filtered_file_content_message(data_sender);
-            } else {
-                RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 4);
-                StaticOutStream<16> out_stream;
-                RDPECLIP::FileContentsResponseRange fileRange{safe_int(this->channel_file.get_streamID())};
-
-                fileRangeHeader.emit(out_stream);
-                fileRange.emit(out_stream);
-
-                data_sender->operator()(
-                    out_stream.get_offset(),
-                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-                    out_stream.get_data(),
-                    out_stream.get_offset());
-            }
+        switch (response->validation_type) {
+            case LocalICAPProtocol::ValidationType::Wait:
+                return ;
+            case LocalICAPProtocol::ValidationType::IsAccepted:
+                if (!this->params.validator_params.log_if_accepted) {
+                    return ;
+                }
+                [[fallthrough]];
+            case LocalICAPProtocol::ValidationType::IsRejected:
+            case LocalICAPProtocol::ValidationType::Error:
+                ;
         }
-    }
 
-    void send_filtered_file_content_message(VirtualChannelDataSender* data_sender)
-    {
-        LOG(LOG_INFO, "send_filtered_file_content_message");
+        auto const info = key_qvalue_pairs({
+            {"type", "FILE_VERIFICATION" },
+            {"direction", (response->file.direction == Direction::FileFromClient) ? "UP" : "DOWN"},
+            {"filename", response->file.filename},
+            {"status", response->result_content}
+        });
 
-        RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->channel_file.get_file_size()+4);
-        StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
-        RDPECLIP::FileContentsResponseRange fileRange{safe_int(this->channel_file.get_streamID())};
+        ArcsightLogInfo arc_info;
+        arc_info.name = "FILE_SCAN_RESULT";
+        arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
+        arc_info.ApplicationProtocol = "rdp";
+        arc_info.fileName = response->file.filename;
+        arc_info.fileSize = response->file.filesize;
+        arc_info.direction_flag = (response->file.direction == Direction::FileFromServer)
+            ? ArcsightLogInfo::Direction::SERVER_SRC
+            : ArcsightLogInfo::Direction::SERVER_DST;
+        arc_info.message = response->result_content;
 
-        uint32_t first_part_data_size(this->channel_file.get_file_size());
-        int total_length(first_part_data_size + 12);
-        if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
-            first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
-        }
-        fileRangeHeader.emit(out_stream_first_part);
-        fileRange.emit(out_stream_first_part);
-
-        std::unique_ptr<uint8_t[]> data_file = std::make_unique<uint8_t[]>(this->channel_file.get_file_size());
-
-        this->channel_file.read_data(data_file.get(), this->channel_file.get_file_size());
-
-        const_bytes_view data {data_file.get(), this->channel_file.get_file_size()};
-
-        if (data.size() > first_part_data_size ) {
-            int real_total = data.size() - first_part_data_size;
-            const int cmpt_PDU_part(real_total  / CHANNELS::CHANNEL_CHUNK_LENGTH);
-            const int remains_PDU  (real_total  % CHANNELS::CHANNEL_CHUNK_LENGTH);
-            int data_sent(0);
-
-            // First Part
-            out_stream_first_part.out_copy_bytes(data.data(), first_part_data_size);
-
-            data_sent += first_part_data_size;
-            InStream chunk_first(out_stream_first_part.get_bytes());
-
-            data_sender->operator()(total_length, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
-                chunk_first.get_offset());
-
-            for (int i = 0; i < cmpt_PDU_part; i++) {
-                // Next Part
-                StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
-                out_stream_next_part.out_copy_bytes(data.data() + data_sent, CHANNELS::CHANNEL_CHUNK_LENGTH);
-
-                data_sent += CHANNELS::CHANNEL_CHUNK_LENGTH;
-                InStream chunk_next(out_stream_next_part.get_bytes());
-
-                data_sender->operator()(total_length, CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
-                chunk_first.get_offset());
-            }
-
-            // Last part
-            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
-            out_stream_last_part.out_copy_bytes(data.data() + data_sent, remains_PDU);
-
-            InStream chunk_last(out_stream_last_part.get_bytes());
-
-            data_sender->operator()(total_length, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
-                chunk_first.get_offset());
-        }
-        else {
-            out_stream_first_part.out_copy_bytes(data.data(), data.size());
-            InStream chunk(out_stream_first_part.get_bytes());
-
-            data_sender->operator()(total_length, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, out_stream_first_part.get_data(),
-                out_stream_first_part.get_offset());
-        }
+        this->report_message.log6(info, arc_info, session_reactor.get_current_time());
     }
 
 private:
@@ -551,17 +603,17 @@ private:
                 data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
             }
             data = data.first(data_len);
-            this->channel_file.set_data(data);
+            this->icap.set_data(data);
             this->last_lindex_packet_remaining -= data_len;
             this->last_lindex_total_send += data_len;
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                 auto file_size = this->file_descr_list[this->last_lindex].file_size();
                 if (this->last_lindex_total_send == file_size) {
-                    this->channel_file.set_end_of_file();
+                    this->icap.set_end_of_file();
                 }
             }
-            return !this->channel_file.is_enable_interuption();
+            // return !this->enable_interrupting;
         }
 
         return true;
@@ -570,12 +622,8 @@ private:
     bool process_filecontents_request_pdu(
         InStream& chunk, const RDPECLIP::CliprdrHeader & header,
         VirtualChannelDataSender* sender, ClipboardSideData& side_data,
-        ChannelFile::Direction direction)
+        Direction direction)
     {
-        bool enable_icap = (direction == ChannelFile::Direction::FileFromServer)
-            ? !this->params.validator_params.down_target_name.empty()
-            : !this->params.validator_params.up_target_name.empty();
-
         FilecontentsRequestReceive receiver(side_data, chunk, this->verbose, header.dataLen());
 
         if (!this->params.clipboard_file_authorized) {
@@ -583,14 +631,18 @@ private:
             return false;
         }
 
-        if (enable_icap && receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+        std::string const& target_name = (direction == Direction::FileFromServer)
+            ? this->params.validator_params.down_target_name
+            : this->params.validator_params.up_target_name;
+
+        if (!target_name.empty() && receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
             const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
             this->last_lindex_packet_remaining = receiver.requested;
 
             if (this->last_lindex != receiver.lindex) {
                 this->last_lindex = receiver.lindex;
-                this->channel_file.new_file(desc.file_name, desc.file_size(), direction, this->session_reactor.get_current_time());
+                this->icap.new_file(desc.file_name, desc.file_size(), direction, target_name);
             }
         }
 

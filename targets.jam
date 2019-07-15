@@ -3972,18 +3972,6 @@ test-run tests/mod/rdp/channels/test_base_channel :
   <library>src/utils/hexdump.o
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
-test-run tests/mod/rdp/channels/test_channel_file :
-  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_channel_file.cpp
-:
-  <library>src/core/error.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/rdp/channels/channel_file.hpp
-;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
 :
@@ -5848,7 +5836,6 @@ alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
 alias test_null : tests/mod/null/test_null ;
 alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
-alias test_channel_file : tests/mod/rdp/channels/test_channel_file ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
@@ -6183,7 +6170,6 @@ alias test_widget.coverage : tests/mod/internal/widget/test_widget.coverage ;
 alias test_widget_rect.coverage : tests/mod/internal/widget/test_widget_rect.coverage ;
 alias test_null.coverage : tests/mod/null/test_null.coverage ;
 alias test_base_channel.coverage : tests/mod/rdp/channels/test_base_channel.coverage ;
-alias test_channel_file.coverage : tests/mod/rdp/channels/test_channel_file.coverage ;
 alias test_cliprdr_channel.coverage : tests/mod/rdp/channels/test_cliprdr_channel.coverage ;
 alias test_cliprdr_channel_send_and_receive.coverage : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive.coverage ;
 alias test_rail_window_id_manager.coverage : tests/mod/rdp/channels/test_rail_window_id_manager.coverage ;
@@ -6587,7 +6573,6 @@ alias tests/mod/null.norec :
 ;
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
-  tests/mod/rdp/channels/test_channel_file
   tests/mod/rdp/channels/test_cliprdr_channel
   tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager

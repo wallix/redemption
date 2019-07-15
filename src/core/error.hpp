@@ -354,7 +354,9 @@
     f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)               \
                                                                  \
     f(ERR_SSH_PARSE_PRIVATE_DSA_KEY)                             \
-    f(ERR_SSH_PARSE_PRIVATE_RSA_KEY)
+    f(ERR_SSH_PARSE_PRIVATE_RSA_KEY)                             \
+                                                                 \
+    fv(ERR_ICAP_LOCAl_PROTOCOL, 26000)
 
 
 #define MAKE_ENUM(e) e,
