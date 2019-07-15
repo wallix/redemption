@@ -683,9 +683,9 @@ struct FormatListReceive
             throw Error(ERR_RDP_UNSUPPORTED);
         }
 
-        if (chunk.in_remain()) {
-            LOG(LOG_WARNING, "Truncated CLIPRDR_FORMAT_LIST remains=%zu", chunk.in_remain());
-        }
+        // some version of server add "\0\0\0\0" and total_len == chunk_size + 4
+        LOG_IF(chunk.in_remain() != 4 && chunk.in_remain() != 0,
+            LOG_WARNING, "Truncated CLIPRDR_FORMAT_LIST remains=%zu", chunk.in_remain());
     }
 };
 

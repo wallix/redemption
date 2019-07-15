@@ -802,5 +802,4 @@ private:
             }
         }
     }
-
 };  // class ClipboardVirtualChannel
