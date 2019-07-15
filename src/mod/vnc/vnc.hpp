@@ -195,8 +195,6 @@ private:
 
     VncState state = WAIT_SECURITY_TYPES;
 
-    bool left_ctrl_pressed = false;
-
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
@@ -1027,11 +1025,11 @@ public:
         while (key){
             if (bool(this->verbose & VNCVerbose::keymap_stack)) {
                 LOG(LOG_INFO, "key=%d (%x) keycode=%x downflag=%u",
-                    key, static_cast<unsigned>(key), 
+                    key, static_cast<unsigned>(key),
                     static_cast<unsigned>(keycode), downflag);
             }
-            if (this->remove_server_alt_state_for_char 
-            && this->keymapSym.is_altgr_pressed() 
+            if (this->remove_server_alt_state_for_char
+            && this->keymapSym.is_altgr_pressed()
             && (key == 0x65))
             {
                 this->remove_modifiers();
@@ -1045,8 +1043,8 @@ public:
                 }
                 this->putback_modifiers();
             }
-            else if (!this->remove_server_alt_state_for_char 
-            && this->keymapSym.is_altgr_pressed() 
+            else if (!this->remove_server_alt_state_for_char
+            && this->keymapSym.is_altgr_pressed()
             && (key == 0x65))
             {
                 if (downflag == 1){
@@ -1067,7 +1065,7 @@ public:
                 }
             }
             else
-            if (this->keymapSym.is_altgr_pressed() 
+            if (this->keymapSym.is_altgr_pressed()
             // this is plain ascii: trust our decoder
             && (key >= 0x20 && key <= 0x7e)){
                 this->remove_modifiers();
@@ -1094,7 +1092,7 @@ public:
         IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
     }
 
-    // TODO: this should use the same method to take care of modifiers that 
+    // TODO: this should use the same method to take care of modifiers that
     // the non apple targets are using. We need to set an apple target to
     // check behavior
     void apple_keyboard_translation(int device_flags, long keycode, uint8_t downflag) {
@@ -1199,7 +1197,7 @@ public:
             // Note: specialize and treat special case if need arise.
             // (like french keyboard above)
             // -----------------------------------------------------------------
-            
+
 //            case 0x100c: // French Swizerland
 //            case 0x0813: // Dutch Belgium
 //            case 0x080c: // French Belgium

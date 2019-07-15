@@ -372,7 +372,6 @@ class SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
     bool keyboard_input_mask_enabled = false;
     timeval last_snapshot;
 
-    bool keyboard_input_mask_hidden = false;
     int hidden_masked_char_count = 0;
 
 private:
@@ -483,7 +482,6 @@ class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
     bool is_probe_enabled_session = false;
     ReportMessageApi & report_message;
 
-    bool keyboard_input_mask_hidden = false;
     int hidden_masked_char_count = 0;
 
     void copy_bytes(const_bytes_view bytes) {
