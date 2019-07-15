@@ -66,15 +66,9 @@ struct FontCharView
         return align4(nbbytes(this->width) * this->height);
     }
 
-    /* compare the two font items returns true if they match */
-    bool item_compare(FontCharView const & glyph) const noexcept
+    uint8_t const* data_ptr() const noexcept
     {
-        return glyph
-            && (this->offsetx == glyph.offsetx)
-            && (this->offsety == glyph.offsety)
-            && (this->width == glyph.width)
-            && (this->height == glyph.height)
-            && (0 == memcmp(this->data, glyph.data, glyph.datasize()));
+        return this->data;
     }
 
     //void show() {
@@ -179,15 +173,9 @@ struct FontChar
         return align4(nbbytes(this->width) * this->height);
     }
 
-    /* compare the two font items returns true if they match */
-    bool item_compare(FontChar const & glyph) const noexcept
+    uint8_t const* data_ptr() const noexcept
     {
-        return glyph
-            && (this->offsetx == glyph.offsetx)
-            && (this->offsety == glyph.offsety)
-            && (this->width == glyph.width)
-            && (this->height == glyph.height)
-            && (0 == memcmp(this->data.get(), glyph.data.get(), glyph.datasize()));
+        return this->data.get();
     }
 
     //void show() {
@@ -224,6 +212,17 @@ struct FontChar
     //    printf("
     //}
 }; // END STRUCT - FontChar
+
+/* compare the two font items returns true if they match */
+template<class FontChar1, class FontChar2>
+bool font_item_equal(FontChar1 const& font_char1, FontChar2 const& font_char2) noexcept
+{
+    return (font_char1.offsetx == font_char2.offsetx)
+        && (font_char1.offsety == font_char2.offsety)
+        && (font_char1.width == font_char2.width)
+        && (font_char1.height == font_char2.height)
+        && (0 == memcmp(font_char1.data_ptr(), font_char2.data_ptr(), font_char2.datasize()));
+}
 
 
 struct Font

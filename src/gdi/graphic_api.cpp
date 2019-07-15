@@ -206,9 +206,8 @@ void server_draw_text(
                 font_item = &font.unknown_glyph();
             }
 
-            // TODO avoid passing parameters by reference to get results
             const GlyphCache::t_glyph_cache_result cache_result =
-                mod_glyph_cache.add_glyph(FontChar(*font_item), cacheId, cacheIndex);
+                mod_glyph_cache.add_glyph(*font_item, cacheId, cacheIndex);
             (void)cache_result; // supress warning
 
             *data_begin++ = cacheIndex;

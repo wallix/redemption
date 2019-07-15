@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestCreateFont)
     RED_CHECK(!f.glyph_defined(0x4dff+1));
 
     RED_CHECK(f.glyph_defined('?'));
-    RED_CHECK(f.glyph_or_unknown('?').item_compare(f.unknown_glyph()));
+    RED_CHECK(font_item_equal(f.glyph_or_unknown('?'), f.unknown_glyph()));
 
     FontCharView* nullptr_char = nullptr;
     RED_CHECK_EQUAL(&f.glyph_or_unknown(31), &f.unknown_glyph());
