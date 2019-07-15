@@ -169,7 +169,7 @@ struct ShareFlow_Recv
 struct ShareFlow_Send
 {
     ShareFlow_Send(OutStream & stream, uint8_t pduTypeFlow, uint8_t flowIdentifier, uint8_t flowNumber, uint16_t pduSource) {
-        stream.out_uint16_le(0x8000),   // flowMarker(2)
+        stream.out_uint16_le(0x8000);   // flowMarker(2)
 
         // Bug Microsoft?! The fields pad8bits and pduTypeFlow are reversed from their positions described in T.128 documentation.
         stream.out_uint8(pduTypeFlow);
