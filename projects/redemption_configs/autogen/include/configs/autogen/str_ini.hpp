@@ -1158,6 +1158,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [file_validator]
 
+#_hidden
 #socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
 
 # value: 0 or 1
@@ -1171,18 +1172,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #log_if_accepted = 0
-
-# value: 0 or 1
-#_hidden
-#enable_interrupting = 0
-
-# value: 0 or 1
-#_hidden
-#enable_save_files = 0
-
-# maxlen = 4096
-#_hidden
-#save_files_directory = 
 
 [icap_server_up]
 

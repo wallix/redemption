@@ -298,9 +298,6 @@ namespace cfg {
         struct enable_up;
         struct enable_down;
         struct log_if_accepted;
-        struct enable_interrupting;
-        struct enable_save_files;
-        struct save_files_directory;
     };
 
     struct icap_server_up {

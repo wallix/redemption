@@ -3541,42 +3541,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// type: bool <br/>
-    /// value{false} <br/>
-    struct file_validator::enable_interrupting {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "file_validator";
-        static constexpr char const * name = "enable_interrupting";
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{false};
-    };
-    /// type: bool <br/>
-    /// value{false} <br/>
-    struct file_validator::enable_save_files {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "file_validator";
-        static constexpr char const * name = "enable_save_files";
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{false};
-    };
-    /// type: ::configs::spec_types::directory_path <br/>
-    /// value{} <br/>
-    struct file_validator::save_files_directory {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "file_validator";
-        static constexpr char const * name = "save_files_directory";
-        using type = ::configs::spec_types::directory_path;
-        using sesman_and_spec_type = ::configs::spec_types::directory_path;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
 
     /// Ip or fqdn of ICAP service <br/>
     /// type: std::string <br/>
@@ -5264,9 +5228,6 @@ struct file_validator
 , cfg::file_validator::enable_up
 , cfg::file_validator::enable_down
 , cfg::file_validator::log_if_accepted
-, cfg::file_validator::enable_interrupting
-, cfg::file_validator::enable_save_files
-, cfg::file_validator::save_files_directory
 { static constexpr bool is_section = true; };
 
 struct icap_server_up

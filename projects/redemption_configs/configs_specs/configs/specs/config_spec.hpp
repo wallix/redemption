@@ -603,15 +603,12 @@ void config_spec_definition(Writer && W)
 
     W.section("file_validator", [&]
     {
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
+        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up");
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down");
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "log_if_accepted", set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_interrupting", set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_save_files", set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "save_files_directory");
     });
 
     // TODO temporary

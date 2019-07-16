@@ -974,6 +974,7 @@ load_theme = string(default='')
 
 [file_validator]
 
+#_hidden
 socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
 
 #_hidden
@@ -984,15 +985,6 @@ enable_down = boolean(default=False)
 
 #_advanced
 log_if_accepted = boolean(default=False)
-
-#_hidden
-enable_interrupting = boolean(default=False)
-
-#_hidden
-enable_save_files = boolean(default=False)
-
-#_hidden
-save_files_directory = string(max=4096, default='')
 
 [icap_server_up]
 

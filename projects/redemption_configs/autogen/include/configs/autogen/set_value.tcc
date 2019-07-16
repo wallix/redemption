@@ -1945,30 +1945,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "enable_interrupting")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_validator::enable_interrupting&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "enable_save_files")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_validator::enable_save_files&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "save_files_directory")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::file_validator::save_files_directory&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                av
-            );
-        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
