@@ -150,6 +150,10 @@ namespace redemption_unit_test__
 # define RED_CHECK_SMEM(mem, memref) RED_TEST_SMEM(CHECK, mem, memref)
 # define RED_CHECK_RMEM(mem, memref) RED_TEST_RMEM(CHECK, mem, memref)
 
+# define RED_REQUIRE_MEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref)
+# define RED_REQUIRE_SMEM(mem, memref) RED_TEST_SMEM(REQUIRE, mem, memref)
+# define RED_REQUIRE_RMEM(mem, memref) RED_TEST_RMEM(REQUIRE, mem, memref)
+
 /// CHECK
 //@{
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, ErrId) \

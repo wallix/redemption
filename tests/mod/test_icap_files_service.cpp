@@ -33,7 +33,7 @@ RED_AUTO_TEST_CASE(icapSend)
     ICAPService icap{trans};
 
     auto filename = FIXTURES_PATH "/test_infile.txt";
-    auto content = tu::get_file_contents(filename);
+    auto content = RED_REQUIRE_GET_FILE_CONTENTS(filename);
 
     ICAPFileId id = icap.open_file(filename, "clamav");
     RED_CHECK(id == ICAPFileId(1));

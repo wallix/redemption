@@ -62,6 +62,5 @@ RED_AUTO_TEST_CASE_WF(testFileValid, wf)
 
     RED_CHECK(validator_close_session(validator) == 0);
 
-    RED_CHECK_MEM(tu::get_file_contents(wf),
-        str_concat(data, "\x02\x00\x00\x00\x04\x00\x00\x00\x00"_av));
+    RED_REQUIRE_MEM_FILE_CONTENTS(wf, str_concat(data, "\x02\x00\x00\x00\x04\x00\x00\x00\x00"_av));
 }

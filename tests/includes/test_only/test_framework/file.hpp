@@ -44,23 +44,12 @@ namespace redemption_unit_test__
 
 namespace tu
 {
-    inline std::string get_file_contents(const char * filename)
-    {
-        std::string s;
-        auto append_file_contents = RED_TEST_FUNC_CTX(::append_file_contents);
-        RED_TEST(append_file_contents(filename, s) == FileContentsError::None);
-        return s;
-    }
-
-    inline std::string get_file_contents(std::string const& name)
-    {
-        return get_file_contents(name.c_str());
-    }
+    using ::append_file_contents;
 
     template<class T>
-    std::string get_file_contents(T const& name)
+    FileContentsError append_file_contents(T const& filename, std::string& buffer)
     {
-        return get_file_contents(static_cast<char const*>(name));
+        return append_file_contents(static_cast<char const*>(filename), buffer);
     }
 
     constexpr auto fsize = redemption_unit_test__::fn_invoker("filesize", /* NOLINT */
@@ -73,16 +62,41 @@ namespace tu
 #define RED_TEST_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len));
 #define RED_REQUIRE_FILE_SIZE(filename, len) RED_TEST(::tu::fsize(filename) == ::tu::int_(len));
 
-# define RED_TEST_FILE_CONTENTS(lvl, filename, contents)                     \
-    [](auto&& filename__, auto&& contents__) {                               \
-        RED_TEST_CONTEXT("filename: " << filename__) {                       \
-            std::string file_contents__ = tu::get_file_contents(filename__); \
-            RED_##lvl##_SMEM(contents__, file_contents__);                   \
-        }                                                                    \
-    }(filename, contents)
+# define RED_TEST_GET_FILE_CONTENTS(lvl, filename) [](auto&& filename__){                \
+    std::string s;                                                                       \
+    RED_TEST_CONTEXT("filename: " << filename__) {                                       \
+        RED_##lvl(::tu::append_file_contents(filename__, s) == FileContentsError::None); \
+    }                                                                                    \
+    return s;                                                                            \
+}(filename)
+
+# define RED_TEST_FILE_CONTENTS(lvl1, lvl2, filename, content)                        \
+[&](auto&& filename__, auto&& content__){                                             \
+    std::string file_contents_;                                                       \
+    auto current_count_error = ::redemption_unit_test__::current_count_error();       \
+    RED_TEST_CONTEXT("filename: " << filename__) {                                    \
+        RED_##lvl1(::tu::append_file_contents(filename__,                             \
+            file_contents_) == FileContentsError::None);                              \
+        if (current_count_error == ::redemption_unit_test__::current_count_error()) { \
+            RED_##lvl1##_##lvl2(file_contents_, content__);                           \
+        }                                                                             \
+    }                                                                                 \
+}(filename, content)
+
+# define RED_CHECK_MEM_FILE_CONTENTS(filename, contents) \
+    RED_TEST_FILE_CONTENTS(CHECK, MEM, filename, contents)
 
 # define RED_CHECK_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(CHECK, filename, contents)
+    RED_TEST_FILE_CONTENTS(CHECK, SMEM, filename, contents)
+
+# define RED_CHECK_GET_FILE_CONTENTS(filename) \
+    RED_TEST_GET_FILE_CONTENTS(CHECK, filename)
+
+# define RED_REQUIRE_MEM_FILE_CONTENTS(filename, contents) \
+    RED_TEST_FILE_CONTENTS(REQUIRE, MEM, filename, contents)
 
 # define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
-    RED_TEST_FILE_CONTENTS(REQUIRE, filename, contents)
+    RED_TEST_FILE_CONTENTS(REQUIRE, SMEM, filename, contents)
+
+# define RED_REQUIRE_GET_FILE_CONTENTS(filename) \
+    RED_TEST_GET_FILE_CONTENTS(REQUIRE, filename)

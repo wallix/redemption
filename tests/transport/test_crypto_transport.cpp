@@ -1218,7 +1218,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     auto hash_encrypted_file = wd.add_file("hash_encrypted_file.enc");
 
     constexpr std::size_t original_filesize = 4166665;
-    auto original_contents = tu::get_file_contents(original_filename);
+    auto original_contents = RED_REQUIRE_GET_FILE_CONTENTS(original_filename);
     RED_CHECK_EQUAL(original_contents.size(), original_filesize);
 
     {
@@ -1268,7 +1268,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
     auto hash_encrypted_file = wd.add_file("hash_encrypted_file.enc");
 
     constexpr std::size_t original_filesize = 4166665;
-    auto original_contents = tu::get_file_contents(original_filename);
+    auto original_contents = RED_REQUIRE_GET_FILE_CONTENTS(original_filename);
     RED_REQUIRE_EQUAL(original_contents.size(), original_filesize);
 
     uint8_t qhash[MD_HASH::DIGEST_LENGTH] = {};

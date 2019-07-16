@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 {
     uint32_t verbose = 1;
 
-    auto contents = tu::get_file_contents(FIXTURES_PATH "/sample.bmp");
+    auto contents = RED_REQUIRE_GET_FILE_CONTENTS(FIXTURES_PATH "/sample.bmp");
     RED_CHECK_EQUAL(1974u, contents.size());
 
     //LogTransport log_transport;

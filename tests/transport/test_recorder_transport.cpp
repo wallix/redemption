@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         }
     }
 
-    auto s = tu::get_file_contents(wf);
+    auto s = RED_REQUIRE_GET_FILE_CONTENTS(wf);
     RED_CHECK_MEM_C(s,
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""abc"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00""defg"
