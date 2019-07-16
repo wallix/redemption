@@ -480,6 +480,7 @@ namespace Cliprdr
     };
 
     enum class IsLongFormat : bool;
+    // TODO Charset ?
     enum class IsAscii : bool;
 
     // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
@@ -543,6 +544,72 @@ namespace Cliprdr
         }
 
         return ExtractResult::Ok;
+    }
+
+    inline bool format_list_serialize(
+        OutStream& out_stream, cbytes_view name,
+        uint32_t id, IsLongFormat is_long_format, Charset charset)
+    {
+        constexpr size_t header_length = 4;
+
+        if (bool(is_long_format))
+        {
+            switch (charset)
+            {
+            case Charset::Ascii: {
+                if (!out_stream.has_room(header_length + name.size() * 2 + 2))
+                {
+                    return false;
+                }
+                out_stream.out_uint32_le(id);
+
+                auto data = out_stream.get_tailroom_bytes();
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(data.size() - 2u)));
+                out_stream.out_uint16_le(0);
+                break;
+            }
+            case Charset::Utf16: {
+                if (!out_stream.has_room(header_length + name.size() + 2))
+                {
+                    return false;
+                }
+                out_stream.out_uint32_le(id);
+                out_stream.out_copy_bytes(name);
+                out_stream.out_uint16_le(0);
+                break;
+            }
+            }
+        }
+        else
+        {
+            if (!out_stream.has_room(4 + short_format_name_length))
+            {
+                return false;
+            }
+
+            out_stream.out_uint32_le(id);
+
+            switch (charset)
+            {
+            case Charset::Ascii: {
+                auto data = out_stream.get_tailroom_bytes();
+                auto len = std::min(data.size(), std::size_t(short_format_name_length-2u));
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
+                char zero_data[short_format_name_length]{};
+                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
+                break;
+            }
+            case Charset::Utf16: {
+                auto len = std::min(name.size(), std::size_t(short_format_name_length-1u));
+                out_stream.out_copy_bytes(name);
+                char zero_data[short_format_name_length]{};
+                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
+                break;
+            }
+            }
+        }
+
+        return true;
     }
 
     struct FormatNameInventory

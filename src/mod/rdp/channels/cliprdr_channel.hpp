@@ -599,6 +599,7 @@ private:
             auto data = chunk.remaining_bytes();
             auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                this->check_descr_index(this->last_lindex);
                 auto file_size = this->file_descr_list[this->last_lindex].file_size();
                 data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
             }
@@ -636,6 +637,7 @@ private:
             : this->params.validator_params.up_target_name;
 
         if (!target_name.empty() && receiver.dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+            this->check_descr_index(receiver.lindex);
             const RDPECLIP::FileDescriptor & desc = this->file_descr_list[receiver.lindex];
 
             this->last_lindex_packet_remaining = receiver.requested;
@@ -647,6 +649,14 @@ private:
         }
 
         return true;
+    }
+
+    void check_descr_index(std::size_t i)
+    {
+        if (i >= this->file_descr_list.size()) {
+            LOG(LOG_ERR, "ClipboardVirtualChannel::check_descr_index(%zu): out of bounds index", i);
+            throw Error(ERR_RDP_PROTOCOL);
+        }
     }
 
     bool process_format_data_response_pdu(uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header, bool is_from_remote_session)
