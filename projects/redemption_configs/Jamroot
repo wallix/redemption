@@ -34,7 +34,20 @@ actions generate_cpp_enumeration
 
 actions generate_config_spec
 {
-    $(>)
+    $(>) || return 1
+    # auto gen RDP connection policy
+    echo -n 'R"xxxyyyzzz(' > autogen/include/configs/autogen/rdp_cp_spec.hpp
+    cat autogen/spec/rdp.spec >> autogen/include/configs/autogen/rdp_cp_spec.hpp
+    echo -n ')xxxyyyzzz";' >> autogen/include/configs/autogen/rdp_cp_spec.hpp
+    # auto gen VNC connection policy
+    echo -n 'R"xxxyyyzzz(' > autogen/include/configs/autogen/vnc_cp_spec.hpp
+    cat autogen/spec/vnc.spec >> autogen/include/configs/autogen/vnc_cp_spec.hpp
+    echo -n ')xxxyyyzzz";' >> autogen/include/configs/autogen/vnc_cp_spec.hpp
+    # auto gen connection policy mapping for sesman
+    echo -n 'R"xxxyyyzzz(' > autogen/include/configs/autogen/cp_mapping.hpp
+    cat ../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py >> autogen/include/configs/autogen/cp_mapping.hpp
+    echo -n ')xxxyyyzzz";' >> autogen/include/configs/autogen/cp_mapping.hpp
+
 }
 
 rule create_generator ( name : file : requirements * )
