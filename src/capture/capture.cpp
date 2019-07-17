@@ -1191,6 +1191,9 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (cstr_equal("WEB_ENCRYPTION_LEVEL_CHANGED", order)) {
             line_with_2_var("identifier", "display_name");
         }
+        else if (cstr_equal("FILE_VERIFICATION", order)) {
+            line_with_3_var("filename", "direction", "status");
+        }
 
         else {
             message.clear();

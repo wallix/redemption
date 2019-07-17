@@ -536,44 +536,46 @@ public:
             return ;
         }
 
-        auto response = this->icap.receive_response();
+        while (auto response = this->icap.receive_response()) {
+            switch (response->validation_type) {
+                case LocalICAPProtocol::ValidationType::Wait:
+                    return;
+                case LocalICAPProtocol::ValidationType::IsAccepted:
+                    if (!this->params.validator_params.log_if_accepted) {
+                        continue;
+                    }
+                    [[fallthrough]];
+                case LocalICAPProtocol::ValidationType::IsRejected:
+                case LocalICAPProtocol::ValidationType::Error:
+                    ;
+            }
 
-        if (!response) {
-            return ;
+            auto direction = (response->file.direction == Direction::FileFromClient)
+                ? "UP"_av : "DOWN"_av;
+
+            auto const info = key_qvalue_pairs({
+                {"type", "FILE_VERIFICATION" },
+                {"direction", direction},
+                {"filename", response->file.filename},
+                {"status", response->result_content}
+            });
+
+            ArcsightLogInfo arc_info;
+            arc_info.name = "FILE_SCAN_RESULT";
+            arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
+            arc_info.ApplicationProtocol = "rdp";
+            arc_info.fileName = response->file.filename;
+            arc_info.fileSize = response->file.filesize;
+            arc_info.direction_flag = (response->file.direction == Direction::FileFromServer)
+                ? ArcsightLogInfo::Direction::SERVER_SRC
+                : ArcsightLogInfo::Direction::SERVER_DST;
+            arc_info.message = response->result_content;
+
+            this->report_message.log6(info, arc_info, session_reactor.get_current_time());
+            std::string message = str_concat("FILE_VERIFICATION=",
+                response->file.filename, '\x01', direction, '\x01', response->result_content);
+            this->front.session_update(message);
         }
-
-        switch (response->validation_type) {
-            case LocalICAPProtocol::ValidationType::Wait:
-                return ;
-            case LocalICAPProtocol::ValidationType::IsAccepted:
-                if (!this->params.validator_params.log_if_accepted) {
-                    return ;
-                }
-                [[fallthrough]];
-            case LocalICAPProtocol::ValidationType::IsRejected:
-            case LocalICAPProtocol::ValidationType::Error:
-                ;
-        }
-
-        auto const info = key_qvalue_pairs({
-            {"type", "FILE_VERIFICATION" },
-            {"direction", (response->file.direction == Direction::FileFromClient) ? "UP" : "DOWN"},
-            {"filename", response->file.filename},
-            {"status", response->result_content}
-        });
-
-        ArcsightLogInfo arc_info;
-        arc_info.name = "FILE_SCAN_RESULT";
-        arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.fileName = response->file.filename;
-        arc_info.fileSize = response->file.filesize;
-        arc_info.direction_flag = (response->file.direction == Direction::FileFromServer)
-            ? ArcsightLogInfo::Direction::SERVER_SRC
-            : ArcsightLogInfo::Direction::SERVER_DST;
-        arc_info.message = response->result_content;
-
-        this->report_message.log6(info, arc_info, session_reactor.get_current_time());
     }
 
 private:

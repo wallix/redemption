@@ -127,7 +127,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 }
 
 
-class NullSender : public VirtualChannelDataSender {
+class NullSender : public VirtualChannelDataSender
+{
 public:
     virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, const uint8_t* /*chunk_data*/, uint32_t /*chunk_data_length*/) override {}
 };
@@ -400,7 +401,16 @@ struct ReportMessage : NullReportMessage
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
+    struct Front : FakeFront
+    {
+        using FakeFront::FakeFront;
+        std::string msg;
+
+        void session_update(array_view_const_char message) override
+        {
+            msg.insert(msg.end(), message.begin(), message.end());
+        }
+    } front(screen_info);
 
     SessionReactor session_reactor;
     timeval time_test;
@@ -420,6 +430,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
     clipboard_virtual_channel_params.validator_params.down_target_name = "down";
     clipboard_virtual_channel_params.validator_params.up_target_name = "up";
+    clipboard_virtual_channel_params.validator_params.log_if_accepted = true;
 
     TestResponseSender to_client_sender;
     TestResponseSender to_server_sender;
@@ -456,6 +467,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
     RED_CHECK(report_message.messages.size() == 0);
     RED_CHECK(buf_trans.buf.size() == 0);
+    RED_CHECK_SMEM(front.msg, ""_av);
 
     {
         using namespace RDPECLIP;
@@ -478,6 +490,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_CHECK(report_message.messages.size() == 0);
     RED_CHECK(buf_trans.buf.size() == 0);
+    RED_CHECK_SMEM(front.msg, ""_av);
 
     {
         Buffer buf;
@@ -497,6 +510,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_CHECK(report_message.messages.size() == 0);
     RED_CHECK(buf_trans.buf.size() == 0);
+    RED_CHECK_SMEM(front.msg, ""_av);
 
     // skip format list response
 
@@ -514,6 +528,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_CHECK(report_message.messages.size() == 0);
     RED_CHECK(buf_trans.buf.size() == 0);
+    RED_CHECK_SMEM(front.msg, ""_av);
 
     {
         using namespace Cliprdr;
@@ -579,6 +594,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     RED_CHECK_SMEM(report_message.messages[0],
         R"x(type="CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" format="<unknown>(0)" size="596")x"_av);
     RED_CHECK(buf_trans.buf.size() == 0);
+    RED_CHECK_SMEM(front.msg, "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION=<unknown>(0)\x01""596"_av);
 
     {
         using namespace RDPECLIP;
@@ -600,4 +616,21 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     RED_CHECK_SMEM(buf_trans.buf,
         "\x00\x00\x00\x00\x11\x00\x00\x00\x01\x00\x00\x00\x03""abc\x00\x00\x00\x02""up"
         ""_av);
+    RED_CHECK_SMEM(front.msg, "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION=<unknown>(0)\x01""596"_av);
+
+    front.msg.clear();
+    buf_trans.buf.clear();
+    StaticOutStream<256> out;
+    auto status = "ok"_av;
+
+    using namespace LocalICAPProtocol;
+    ICAPHeader(MsgType::Result, 0/*len*/).emit(out);
+    ICAPResultHeader{ValidationType::IsAccepted, ICAPFileId(1),
+        checked_int(status.size())}.emit(out);
+    out.out_copy_bytes(status);
+    auto av = out.get_bytes().as_chars();
+    buf_trans.buf.assign(av.data(), av.size());
+
+    clipboard_virtual_channel.DLP_antivirus_check_channels_files();
+    RED_CHECK_SMEM(front.msg, "FILE_VERIFICATION=abc\x01UP\x01ok"_av);
 }
