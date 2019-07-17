@@ -23,9 +23,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "utils/stream.hpp"
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/sec.hpp"
 
 RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
@@ -76,7 +74,7 @@ RED_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 
 RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 {
-    auto sec_pkt =
+    uint8_t raw_data[] =
         "\x48\x00\x00\x00\xf6\xc8\x5c\xd6\xe4\x2e\xd3\x88\x66\x93\x36\x57"
         "\x73\x09\x8b\xf8\xa7\xdb\x68\xf6\xaf\x75\x3a\x1a\x74\x6b\x56\xe0"
         "\x5e\x28\xd4\x04\x22\x77\x25\x85\x69\xb1\x43\xfa\x85\x74\x9e\xa1"
@@ -97,16 +95,8 @@ RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
         "\xef\x83\x26\xf4\x38\x02\xef\x06\x9b\x7b\xc1\xb1\xc6\xb3\x8f\xba"
         "\x6e\x1a\xe4\x3a\xf4\xb3\x4d\xa6\xc6\x33\x0c\x87\x2f\x6c\xe8\x92"
         "\x03\xde\x60\xf8\x56\xe6\x8d\x36\xf6\x19\xfd\x19\xb7\xd5\x55\x5e"
-        "\x8e\x83"
-        ""_av
-    ;
-    GeneratorTransport t(sec_pkt);
-
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, sec_pkt.size());
-
-    InStream stream(buf, sec_pkt.size());
+        "\x8e\x83";
+    InStream stream({raw_data, sizeof(raw_data)-1});
 
     CryptContext decrypt;
     decrypt.encryptionMethod = 1;

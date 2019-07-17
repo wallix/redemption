@@ -1517,7 +1517,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_cluster :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_cluster.hpp
 ;
@@ -1527,7 +1526,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_core :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_core.hpp
 ;
@@ -1537,7 +1535,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp
 ;
@@ -1547,7 +1544,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_monitor :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_monitor.hpp
 ;
@@ -1557,7 +1553,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_monitor_ex :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_monitor_ex.hpp
 ;
@@ -1567,7 +1562,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_multitransport :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_multitransport.hpp
 ;
@@ -1577,7 +1571,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_net :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_net.hpp
 ;
@@ -1587,7 +1580,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_security :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_security.hpp
 ;
@@ -2105,7 +2097,6 @@ test-run tests/core/RDP/test_gcc :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc.hpp
 ;
@@ -2135,7 +2126,6 @@ test-run tests/core/RDP/test_mcs :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/mcs.hpp
 ;
@@ -2244,7 +2234,6 @@ test-run tests/core/RDP/test_sec :
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/sec.hpp
 ;
@@ -2265,7 +2254,6 @@ test-run tests/core/RDP/test_slowpath :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/slowpath.hpp
 ;
@@ -5128,7 +5116,6 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/bitmap.cpp
   <covfile>src/utils/bitmap.hpp

@@ -22,14 +22,11 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_net.hpp"
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
 {
-    constexpr auto indata =
-        "\x03\xc0"         // CS_NET
+    InStream stream("\x03\xc0"         // CS_NET
         "\x20\x00"         // 32 bytes user Data
         "\x02\x00\x00\x00" // ChannelCount
         "\x63\x6c\x69\x70\x72\x64\x72\x00" // "cliprdr"
@@ -40,13 +37,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
         "\x72\x64\x70\x64\x72\x00\x00\x00" // "rdpdr"
         "\x00\x00\x80\x80" // = CHANNEL_OPTION_INITIALIZED
                            // | CHANNEL_OPTION_COMPRESS_RDP
-        ""_av
-    ;
-
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+        ""_av);
     GCC::UserData::CSNet cs_net;
     cs_net.recv(stream);
     RED_CHECK_EQUAL(CS_NET, cs_net.userDataType);

@@ -22,8 +22,6 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc.hpp"
 
 RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
@@ -78,18 +76,11 @@ RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     ""_av
     ;
 
-
-    TestTransport t(
-        ""_av,
-        gcc_conference_create_request_expected
-        .first(gcc_conference_create_request_expected.size() - gcc_user_data.size()));
-
-    StaticOutStream<65536> stream;
-    stream.out_copy_bytes(gcc_user_data); // -1 to ignore final 0
-
     StaticOutStream<65536> gcc_header;
-    GCC::Create_Request_Send(gcc_header, stream.get_offset());
-    t.send(gcc_header.get_bytes());
+    GCC::Create_Request_Send(gcc_header, gcc_user_data.size());
+
+    RED_CHECK_MEM(gcc_header.get_bytes(), gcc_conference_create_request_expected.first(
+        gcc_conference_create_request_expected.size() - gcc_user_data.size()));
 
     InStream in_stream(gcc_conference_create_request_expected);
     RED_CHECK_NO_THROW(GCC::Create_Request_Recv{in_stream});
@@ -168,7 +159,7 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_net)
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
 {
-    constexpr auto indata =
+    InStream stream(
         "\x03\xc0"         // CS_NET
         "\x20\x00"         // 32 bytes user Data
         "\x02\x00\x00\x00" // ChannelCount
@@ -180,13 +171,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
         "\x72\x64\x70\x64\x72\x00\x00\x00" // "rdpdr"
         "\x00\x00\x80\x80" // = CHANNEL_OPTION_INITIALIZED
                            // | CHANNEL_OPTION_COMPRESS_RDP
-        ""_av
-    ;
-
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+        ""_av);
     GCC::UserData::CSNet cs_net;
     cs_net.recv(stream);
     RED_CHECK_EQUAL(CS_NET, cs_net.userDataType);
@@ -212,11 +197,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
     constexpr auto indata =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av
     ;
-
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -233,11 +214,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     constexpr auto indata =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av
     ;
-
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -345,10 +322,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     ""_av
     ;
 
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -391,10 +365,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
         ""_av
     ;
 
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -428,10 +399,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
         ""_av
     ;
 
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::CSCluster cs_cluster;
     cs_cluster.recv(stream);
     RED_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
@@ -485,10 +453,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
         ""_av
     ;
 
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::CSCore cs_core;
     cs_core.recv(stream);
     RED_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
@@ -517,10 +482,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
         ""_av
     ;
 
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::CSSecurity cs_security;
     cs_security.recv(stream);
     RED_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
@@ -565,10 +527,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
         ""_av
     ;
 
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
@@ -588,12 +547,10 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
 
     // sc_sec1.log("Server Received");
 
-    OutStream out_stream(buf);
+    StaticOutStream<indata.size()> out_stream;
     sc_sec1.emit(out_stream);
 
-    CheckTransport ct(indata);
-
-    ct.send(out_stream.get_bytes());
+    RED_CHECK_MEM(out_stream.get_bytes(), indata);
 }
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
@@ -606,10 +563,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
         ""_av
     ;
 
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
     cs_mcs_msgchannel.recv(stream);
     RED_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
@@ -629,10 +583,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
         ""_av
     ;
 
-    GeneratorTransport gt(indata);
-    uint8_t buf[indata.size()];
-    gt.recv_boom(make_array_view(buf));
-    InStream stream(buf);
+    InStream stream(indata);
     GCC::UserData::CSMultiTransport cs_multitransport;
     cs_multitransport.recv(stream);
     RED_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);

@@ -24,9 +24,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "utils/stream.hpp"
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/slowpath.hpp"
 
 RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
@@ -40,8 +38,6 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 /* 0050 */ "\x01\x80\x00\x08\xd2\x01\x86\x01\xcc\xcb\x72\x01\x01\x80\x00\x08" // ..........r..... |
 /* 0060 */ "\xc7\x01\x92\x01"_av                                              // ....             |
         ;
-
-    CheckTransport     out_t(payload);
 
     InStream in_s(payload);
     StaticOutStream<65536> out_s;
@@ -104,7 +100,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
         }
     }
 
-    out_t.send(out_s.get_bytes());
+    RED_CHECK_MEM(out_s.get_bytes(), payload);
 } // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 
 
@@ -116,7 +112,6 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)
 /* 0020 */ "\x04\x00\x00\x80\x0f\x00\x00\x00\xd6\xcb\x72\x01\x01\x80\x00\x08" // ..........r..... |
 /* 0030 */ "\xbb\x01\xa0\x01"_av                                              // ....             |
         ;
-    CheckTransport out_t(payload);
 
     InStream in_s(payload);
     StaticOutStream<65536> out_s;
@@ -175,5 +170,5 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)
         }
     }
 
-    out_t.send(out_s.get_bytes());
+    RED_CHECK_MEM(out_s.get_bytes(), payload);
 } // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)

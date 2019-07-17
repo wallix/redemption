@@ -24,7 +24,6 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/data_test_case.hpp"
 
-#include "test_only/transport/test_transport.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/bitfu.hpp"
@@ -5370,9 +5369,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress2)
 
     RED_CHECK_EQUAL(22908, test_bmp.bmp_size());
 
-    CheckTransport trans(make_array_view(ori_bmp_data));
-
-    trans.send(test_bmp.data(), test_bmp.bmp_size());
+    RED_CHECK_MEM(make_array_view(ori_bmp_data), array_view(test_bmp.data(), test_bmp.bmp_size()));
 }
 
 RED_AUTO_TEST_CASE(TestBitmapConv)

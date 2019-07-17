@@ -516,12 +516,6 @@ RED_AUTO_TEST_CASE(TestSend_DT_TPDU)
     StaticOutStream<256> stream;
     X224::DT_TPDU_Send x224(stream, payload_len);
 
-    RED_CHECK_EQUAL(7, stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0C\x02\xF0\x80", stream.get_data(), 7));
-    RED_CHECK_EQUAL(5, payload_len);
-    RED_CHECK_EQUAL(0, memcmp("\x12\x34\x56\x78\x9A", payload.get_data(), 5));
-
-    CheckTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A"_av);
-    t.send(stream.get_bytes());
-    t.send(payload.get_data(), payload_len);
+    RED_CHECK_MEM(stream.get_bytes(), "\x03\x00\x00\x0C\x02\xF0\x80"_av);
+    RED_CHECK_MEM(payload.get_bytes(), "\x12\x34\x56\x78\x9A"_av);
 }
