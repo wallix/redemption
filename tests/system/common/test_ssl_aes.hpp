@@ -255,7 +255,7 @@ RED_AUTO_TEST_CASE(TestAES256_CBC)
 
 //        hexdump_d(aes.tiv.iv, 16);
 
-        RED_CHECK_MEM_AC(aes.tiv.iv, "\x04\x33\x3b\xe8\x66\x7a\x64\x35\xb5\x0d\x94\xb0\x92\x33\xb8\x0b");
+        RED_CHECK_MEM_AA(aes.tiv.iv, "\x04\x33\x3b\xe8\x66\x7a\x64\x35\xb5\x0d\x94\xb0\x92\x33\xb8\x0b"_av);
 
 //        hexdump_d(aes.tiv.iv, 16);
 
@@ -263,7 +263,7 @@ RED_AUTO_TEST_CASE(TestAES256_CBC)
         aes.crypt_cbc(32, inbuf+64, outbuf+64);
         aes.crypt_cbc(32, inbuf+96, outbuf+96);
 
-        RED_CHECK_MEM_C(
+        RED_CHECK_MEM(
             make_array_view(outbuf, 128),
             /* 0000 */ "\x6c\x47\x19\xee\xb0\x70\x40\x3e\x2e\x2c\x2a\xbd\x5c\xa8\x4f\xfb"
             /* 0010 */ "\x04\x33\x3b\xe8\x66\x7a\x64\x35\xb5\x0d\x94\xb0\x92\x33\xb8\x0b"
@@ -273,6 +273,7 @@ RED_AUTO_TEST_CASE(TestAES256_CBC)
             /* 0050 */ "\xd8\x74\x5b\x34\x50\xb9\xea\xfc\x20\x1a\x18\xde\xaa\x73\xbd\x19"
             /* 0060 */ "\x12\xdf\x8a\x47\x32\x9f\xc0\xcd\x11\xd6\x8b\x2d\x7e\xc9\xe2\x01"
             /* 0070 */ "\xa5\x52\x2f\xb6\x53\x61\x9e\xdd\xba\x9c\x39\x48\xd7\xac\x89\xb6"
+            ""_av
         );
 
 //        hexdump_d(outbuf, 128);

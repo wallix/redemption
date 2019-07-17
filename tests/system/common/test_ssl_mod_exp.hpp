@@ -85,8 +85,8 @@ RED_AUTO_TEST_CASE(TestBigModExp)
     );
 
     RED_CHECK_EQUAL(len, sizeof(modulus)-1);
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(out, sizeof(out)-1),
-        "\x1e\xc0\x4d\xea\xbd\xc5\x25\x19\x71\xa6\x69\x1d\x3a\x82"
+        "\x1e\xc0\x4d\xea\xbd\xc5\x25\x19\x71\xa6\x69\x1d\x3a\x82"_av
     );
 }

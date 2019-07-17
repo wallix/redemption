@@ -478,24 +478,12 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
 #define RED_CHECK_EQ RED_CHECK_EQUAL
 #define RED_CHECK_EQ_RANGES RED_CHECK_EQUAL_RANGES
 
-#define RED_CHECK_MEM_C(mem, memref) \
-    RED_CHECK_MEM(mem, cstr_array_view("" memref))
-#define RED_CHECK_MEM_AC(mem, memref) \
-    RED_CHECK_MEM(make_array_view(mem), cstr_array_view("" memref))
 #define RED_CHECK_MEM_AA(mem, memref) \
     RED_CHECK_MEM(make_array_view(mem), make_array_view(memref))
 
-#define RED_CHECK_SMEM_C(mem, memref) \
-    RED_CHECK_SMEM(mem, cstr_array_view("" memref))
-#define RED_CHECK_SMEM_AC(mem, memref) \
-    RED_CHECK_SMEM(make_array_view(mem), cstr_array_view("" memref))
 #define RED_CHECK_SMEM_AA(mem, memref) \
     RED_CHECK_SMEM(make_array_view(mem), make_array_view(memref))
 
-#define RED_CHECK_RMEM_C(mem, memref) \
-    RED_CHECK_RMEM(mem, cstr_array_view("" memref))
-#define RED_CHECK_RMEM_AC(mem, memref) \
-    RED_CHECK_RMEM(make_array_view(mem), cstr_array_view("" memref))
 #define RED_CHECK_RMEM_AA(mem, memref) \
     RED_CHECK_RMEM(make_array_view(mem), make_array_view(memref))
 //@}
@@ -505,18 +493,13 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
 #define RED_REQUIRE_EQ RED_REQUIRE_EQUAL
 #define RED_REQUIRE_EQ_RANGES RED_REQUIRE_EQUAL_RANGES
 
-#define RED_REQUIRE_MEM_C(mem, memref) \
-    RED_REQUIRE_MEM(mem, cstr_array_view("" memref))
-#define RED_REQUIRE_MEM_AC(mem, memref) \
-    RED_REQUIRE_MEM(make_array_view(mem), cstr_array_view("" memref))
 #define RED_REQUIRE_MEM_AA(mem, memref) \
     RED_REQUIRE_MEM(make_array_view(mem), make_array_view(memref))
 
-#define RED_REQUIRE_SMEM_C(mem, memref) \
-    RED_REQUIRE_SMEM(mem, cstr_array_view("" memref))
-#define RED_REQUIRE_SMEM_AC(mem, memref) \
-    RED_REQUIRE_SMEM(make_array_view(mem), cstr_array_view("" memref))
 #define RED_REQUIRE_SMEM_AA(mem, memref) \
+    RED_REQUIRE_SMEM(make_array_view(mem), make_array_view(memref))
+
+#define RED_REQUIRE_RMEM_AA(mem, memref) \
     RED_REQUIRE_SMEM(make_array_view(mem), make_array_view(memref))
 //@}
 

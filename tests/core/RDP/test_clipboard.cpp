@@ -33,7 +33,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFileList)
     RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems);
     fdr.emit(ou_stream_fileList);
 
-    RED_CHECK_MEM_C(ou_stream_fileList.get_bytes(), "\x01\x00\x00\x00");
+    RED_CHECK_MEM(ou_stream_fileList.get_bytes(), "\x01\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFileList)

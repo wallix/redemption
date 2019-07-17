@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TestSslMd5)
         md.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        RED_CHECK_MEM_AC(sig, "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc");
+        RED_CHECK_MEM_AA(sig, "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc"_av);
     }
 
     {
@@ -113,7 +113,7 @@ RED_AUTO_TEST_CASE(TestSslMd5)
         md.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
-        RED_CHECK_MEM_AC(sig, "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc");
+        RED_CHECK_MEM_AA(sig, "\x0b\x82\xd2\xb3\xd6\x75\x9c\xc2\x71\xab\x1d\xf7\x9e\x0b\xfa\xcc"_av);
     }
 }
 
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestSslHmacMd5)
     hmac.final(sig);
     // hexdump96_c(sig, sizeof(sig));
 
-    RED_CHECK_MEM_AC(sig, "\x80\x07\x07\x13\x46\x3e\x77\x49\xb9\x0c\x2d\xc2\x49\x11\xe2\x75");
+    RED_CHECK_MEM_AA(sig, "\x80\x07\x07\x13\x46\x3e\x77\x49\xb9\x0c\x2d\xc2\x49\x11\xe2\x75"_av);
 }
 
 

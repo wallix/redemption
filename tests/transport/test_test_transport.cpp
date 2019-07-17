@@ -53,13 +53,13 @@ RED_AUTO_TEST_CASE(TestGeneratorTransport)
     gt.recv_boom(p, 9);
     p += 9;
     RED_CHECK_EQUAL(p-buffer, 9);
-    RED_CHECK_MEM_C(make_array_view(buffer, 9), "read what");
+    RED_CHECK_MEM(make_array_view(buffer, 9), "read what"_av);
 
     p = buffer;
     gt.recv_boom(p, 12);
     p += 12;
     RED_CHECK_EQUAL(p-buffer, 12);
-    RED_CHECK_MEM_C(make_array_view(buffer, 12), " we provide!");
+    RED_CHECK_MEM(make_array_view(buffer, 12), " we provide!"_av);
 
     //p = buffer;
     //gt.recv_boom(p, 0);
@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(TestGeneratorTransport2)
     gt.recv_boom(p, 9);
     p += 9;
     RED_CHECK_EQUAL(p-buffer, 9);
-    RED_CHECK_MEM_C(make_array_view(buffer, 9), "read what");
+    RED_CHECK_MEM(make_array_view(buffer, 9), "read what"_av);
 
     p = buffer;
     RED_CHECK_EXCEPTION_ERROR_ID(gt.recv_boom(p, 13), ERR_TRANSPORT_READ_FAILED);
@@ -106,7 +106,7 @@ RED_AUTO_TEST_CASE(TestGeneratorTransport2)
     gt.recv_boom(p, 12);
     p += 12;
     RED_CHECK_EQUAL(p-buffer, 12);
-    RED_CHECK_MEM_C(make_array_view(buffer, 12), " we provide!");
+    RED_CHECK_MEM(make_array_view(buffer, 12), " we provide!"_av);
 }
 
 RED_AUTO_TEST_CASE(TestTestTransport)
@@ -125,12 +125,12 @@ RED_AUTO_TEST_CASE(TestTestTransport)
     uint32_t sz = 3;
     gt.recv_boom(p, sz);
     p += sz;
-    RED_CHECK_MEM_C(make_array_view(p - sz, sz), "OUT");
+    RED_CHECK_MEM(make_array_view(p - sz, sz), "OUT"_av);
     gt.send("in", 2);
     sz = 3;
     gt.recv_boom(p, sz);
     p += sz;
-    RED_CHECK_MEM_C(make_array_view(p - sz, sz), "PUT");
+    RED_CHECK_MEM(make_array_view(p - sz, sz), "PUT"_av);
     gt.send("put", 3);
 }
 
@@ -146,11 +146,11 @@ RED_AUTO_TEST_CASE(TestMemoryTransport)
     char     r_data[32]  = { 0 };
 
     mt.recv_boom(r_data, 4);
-    RED_CHECK_MEM_C(make_array_view(r_data, 4), "0123");
+    RED_CHECK_MEM(make_array_view(r_data, 4), "0123"_av);
 
     mt.recv_boom(r_data, 4);
-    RED_CHECK_MEM_C(make_array_view(r_data, 4), "4567");
+    RED_CHECK_MEM(make_array_view(r_data, 4), "4567"_av);
 
     mt.recv_boom(r_data, s_data_size - 8);
-    RED_CHECK_MEM_C(make_array_view(r_data, s_data_size - 8), "89ABCDEF");
+    RED_CHECK_MEM(make_array_view(r_data, s_data_size - 8), "89ABCDEF"_av);
 }

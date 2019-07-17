@@ -154,11 +154,11 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
     // hexdump_c(lmResponse.Response, 16);
-    RED_CHECK_MEM_AC(lmResponse.Response, "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3");
+    RED_CHECK_MEM_AA(lmResponse.Response, "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3"_av);
 
     // LOG(LOG_INFO, "Lm Response . ClientChallenge ===========\n");
     // hexdump_c(lmResponse.ClientChallenge, 8);
-    RED_CHECK_MEM_AC(lmResponse.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
+    RED_CHECK_MEM_AA(lmResponse.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43"_av);
 
 
     // NtChallengeResponse
@@ -168,17 +168,17 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
     // hexdump_c(ntResponse.Response, 16);
-    RED_CHECK_MEM_AC(ntResponse.Response, "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10");
+    RED_CHECK_MEM_AA(ntResponse.Response, "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10"_av);
 
     RED_CHECK_EQUAL(ntResponse.Challenge.RespType, 1);
     RED_CHECK_EQUAL(ntResponse.Challenge.HiRespType, 1);
     // LOG(LOG_INFO, "Nt Response . Challenge . Timestamp ===========\n");
     // hexdump_c(ntResponse.Challenge.Timestamp, 8);
-    RED_CHECK_MEM_AC(ntResponse.Challenge.Timestamp, "\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01");
+    RED_CHECK_MEM_AA(ntResponse.Challenge.Timestamp, "\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01"_av);
 
     // LOG(LOG_INFO, "Nt Response . Challenge . ClientChallenge ===========\n");
     // hexdump_c(ntResponse.Challenge.ClientChallenge, 8);
-    RED_CHECK_MEM_AC(ntResponse.Challenge.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
+    RED_CHECK_MEM_AA(ntResponse.Challenge.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43"_av);
 
     // LOG(LOG_INFO, "Nt Response . Challenge . AvPairList ===========\n");
     // ntResponse.Challenge.AvPairList.print();
@@ -186,37 +186,37 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     // Domain Name
     // LOG(LOG_INFO, "Domain Name ===========\n");
     // hexdump_c(AuthMsg.DomainName.Buffer.get_data(), AuthMsg.DomainName.Buffer.size());
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(AuthMsg.DomainName.buffer.ostream.get_data(), AuthMsg.DomainName.len),
-        "\x77\x00\x69\x00\x6e\x00\x37\x00"
+        "\x77\x00\x69\x00\x6e\x00\x37\x00"_av
     );
 
     // User Name
     // LOG(LOG_INFO, "User Name ===========\n");
     // hexdump_c(AuthMsg.UserName.Buffer.get_data(), AuthMsg.UserName.Buffer.size());
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(AuthMsg.UserName.buffer.ostream.get_data(), AuthMsg.UserName.len),
-        "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00"
+        "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00"_av
     );
 
     // Work Station
     // LOG(LOG_INFO, "Work Station ===========\n");
     // hexdump_c(AuthMsg.Workstation.Buffer.get_data(), AuthMsg.Workstation.Buffer.size());
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(AuthMsg.Workstation.buffer.ostream.get_data(), AuthMsg.Workstation.len),
-        "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00"
+        "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00"_av
     );
 
     // Encrypted Random Session Key
     // LOG(LOG_INFO, "Encrypted Random Session Key ===========\n");
     // hexdump_c(AuthMsg.EncryptedRandomSessionKey.Buffer.get_data(),
     //           AuthMsg.EncryptedRandomSessionKey.Buffer.size());
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(
             AuthMsg.EncryptedRandomSessionKey.buffer.ostream.get_data(),
             AuthMsg.EncryptedRandomSessionKey.len
         ),
-        "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba"
+        "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba"_av
     );
 
     StaticOutStream<65635> tosend;
