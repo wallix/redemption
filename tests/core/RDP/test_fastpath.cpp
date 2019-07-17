@@ -41,7 +41,6 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
         ;
 
     GeneratorTransport in_t(payload);
-    CheckTransport     out_t(payload);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -105,8 +104,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     FastPath::ClientInputEventPDU_Send out_cie(
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
-    out_t.send(out_s.get_bytes());
-    out_t.send(out_payload.get_bytes());
+    RED_CHECK_MEM(out_s.get_bytes(), payload.first(2));
+    RED_CHECK_MEM(out_payload.get_bytes(), payload.array_from_offset(2));
 }
 
 struct mppc_dec_error : rdp_mppc_dec
@@ -129,7 +128,6 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
         ;
 
     GeneratorTransport in_t(payload);
-    CheckTransport     out_t(payload);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -197,8 +195,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     FastPath::ClientInputEventPDU_Send out_cie(
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
-    out_t.send(out_s.get_bytes());
-    out_t.send(out_payload.get_bytes());
+    RED_CHECK_MEM(out_s.get_bytes(), payload.first(2));
+    RED_CHECK_MEM(out_payload.get_bytes(), payload.array_from_offset(2));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
@@ -308,7 +306,6 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
         ""_av;
 
     GeneratorTransport in_t(payload);
-    CheckTransport     out_t(payload);
 
     StaticOutStream<65536> out_s;
 
@@ -323,37 +320,37 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     uint8_t updateCode = static_cast<uint8_t>(FastPath::UpdateType::CACHED);
 
-    if (in_su.payload.in_remain()) {
-        mppc_dec_error dec;
-        FastPath::Update_Recv in_upd(in_su.payload, dec);
+    RED_REQUIRE(in_su.payload.in_remain());
 
-        if (in_upd.updateCode == updateCode) {
-            out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.get_capacity());
+    mppc_dec_error dec;
+    FastPath::Update_Recv in_upd(in_su.payload, dec);
 
-            OutStream Upd_s(out_s.get_data(), FastPath::Update_Send::GetSize(false));
+    RED_REQUIRE(in_upd.updateCode == updateCode);
 
-            FastPath::Update_Send Upd( Upd_s
-                                     , out_s.get_offset() - FastPath::Update_Send::GetSize(false)
-                                     , in_upd.updateCode
-                                     , in_upd.fragmentation
-                                     , 0
-                                     , 0
-                                     );
+    out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.get_capacity());
 
-            StaticOutStream<256> SvrUpdPDU_s;
+    OutStream Upd_s(out_s.get_data(), FastPath::Update_Send::GetSize(false));
 
-            FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  SvrUpdPDU_s
-                , out_s.get_data()
-                , out_s.get_offset()
-                , in_su.secFlags
-                , decrypt
-                );
+    FastPath::Update_Send Upd( Upd_s
+                                , out_s.get_offset() - FastPath::Update_Send::GetSize(false)
+                                , in_upd.updateCode
+                                , in_upd.fragmentation
+                                , 0
+                                , 0
+                                );
 
-            out_t.send(SvrUpdPDU_s.get_bytes()); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-            out_t.send(out_s.get_bytes());           // Fast-Path Update (TS_FP_UPDATE)
-        }
-    }
+    StaticOutStream<256> SvrUpdPDU_s;
+
+    FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+            SvrUpdPDU_s
+        , out_s.get_data()
+        , out_s.get_offset()
+        , in_su.secFlags
+        , decrypt
+        );
+
+    RED_CHECK_MEM(SvrUpdPDU_s.get_bytes(), payload.first(2)); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+    RED_CHECK_MEM(out_s.get_bytes(), payload.array_from_offset(2)); // Fast-Path Update (TS_FP_UPDATE)
 
     RED_CHECK_EQUAL(0, in_su.payload.in_remain());
 }

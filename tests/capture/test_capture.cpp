@@ -2096,17 +2096,14 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
         ""_av
     ;
 
-    GeneratorTransport in_png_trans(source_png);
-    constexpr std::size_t sz_buf = 8;
-    uint8_t buf[sz_buf];
-    auto end = buf;
-    in_png_trans.recv_boom(end, sz_buf); // skip first chunk header
-    InStream stream(buf);
+    InStream stream(source_png);
 
     uint16_t chunk_type = stream.in_uint16_le();
     uint32_t chunk_size = stream.in_uint32_le();
     uint16_t chunk_count = stream.in_uint16_le();
     (void)chunk_count;
+
+    GeneratorTransport in_png_trans(source_png);
 
     RDPDrawable d(20, 10);
     gdi::GraphicApi * gdi = &d;
