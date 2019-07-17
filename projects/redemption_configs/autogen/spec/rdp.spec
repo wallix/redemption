@@ -266,5 +266,6 @@ enable_up = boolean(default=False)
 
 enable_down = boolean(default=False)
 
+#_advanced
 log_if_accepted = boolean(default=False)
 

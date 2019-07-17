@@ -651,6 +651,7 @@
           "name": "log_if_accepted",
           "type": "bool",
           "default": false,
+          "advanced": true,
           "description": ""
         }
       ]

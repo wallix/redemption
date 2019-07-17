@@ -608,7 +608,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up");
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down");
 
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "log_if_accepted");
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted");
     });
 
     // TODO temporary
