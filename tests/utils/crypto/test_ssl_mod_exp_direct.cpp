@@ -23,18 +23,6 @@
 
 #include "utils/crypto/ssl_mod_exp_direct.hpp"
 
-static inline size_t mod_exp(
-    uint8_t * out, size_t out_len,
-    const uint8_t * inr, size_t in_len,
-    const uint8_t * modulus, size_t modulus_size,
-    const uint8_t * exponent, size_t exponent_size
-) {
-    return mod_exp_direct(
-        out, out_len,
-        inr, in_len,
-        modulus, modulus_size,
-        exponent, exponent_size
-    );
-}
+constexpr auto mod_exp = mod_exp_direct;
 
 #include "../../system/common/test_ssl_mod_exp.hpp"

@@ -5370,7 +5370,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress2)
 
     RED_CHECK_EQUAL(22908, test_bmp.bmp_size());
 
-    CheckTransport trans(char_ptr_cast(ori_bmp_data), 22908);
+    CheckTransport trans(make_array_view(ori_bmp_data));
 
     trans.send(test_bmp.data(), test_bmp.bmp_size());
 }

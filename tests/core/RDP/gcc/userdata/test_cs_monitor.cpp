@@ -30,7 +30,7 @@
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
 {
-    const char indata[] =
+    constexpr auto indata =
         "\x05\xc0"         // TS_UD_HEADER::type = CS_MONITOR (0xc005)
         "\x20\x00"         // length = 32 bytes
         "\x00\x00\x00\x00" // flags. Unused. MUST be set to zero
@@ -42,15 +42,14 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
 		"\x64\x00\x00\x00" // | right
 		"\xC4\xFF\xFF\xFF" // | bottom
         "\x00\x00\x00\x00" // | flags = TS_MONITOR_PRIMARY
+        ""_av
     ;
 
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    GCC::UserData::CSMonitor cs_monitor;
+    GeneratorTransport gt(indata);
+    uint8_t buf[indata.size()];
+    gt.recv_boom(make_array_view(buf));
     InStream stream(buf);
+    GCC::UserData::CSMonitor cs_monitor;
     cs_monitor.recv(stream);
     RED_CHECK_EQUAL(32, cs_monitor.length);
     RED_CHECK_EQUAL(CS_MONITOR, cs_monitor.userDataType);

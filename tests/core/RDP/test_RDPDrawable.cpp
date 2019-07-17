@@ -479,13 +479,13 @@ RED_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     d.draw(cmd, screen_rect, color_cxt);
-    TestTransport trans("", 0, expected_red, sizeof(expected_red)-1);
+    TestTransport trans(""_av, cstr_array_view(expected_red));
     dump_png24(trans, d.impl(), true);
 }
 
 RED_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
-    CheckTransport trans(expected_red, sizeof(expected_red)-1);
+    CheckTransport trans(cstr_array_view(expected_red));
     RDPDrawable drawable(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);

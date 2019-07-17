@@ -1693,7 +1693,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
 RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
 {
-    const char source_png[] =
+    auto source_png =
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
         "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
         "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
@@ -1706,10 +1706,11 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
         "\x86\x4a\x0c\x44"                                                 //.J.D
         "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
         "\xae\x42\x60\x82"                                                 //.B`.
+        ""_av
     ;
 
     RDPDrawable d(20, 10);
-    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
+    GeneratorTransport in_png_trans(source_png);
     read_png24(in_png_trans, gdi::get_mutable_image_view(d));
     BufTransport png_trans;
     dump_png24(png_trans, d, true);
@@ -2063,7 +2064,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
 RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 {
-    const char source_png[] =
+    auto source_png =
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2092,9 +2093,10 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
         "\x00\x00\x00\x49\x45\x4e\x44\xae"
     /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x42\x60\x82"
+        ""_av
     ;
 
-    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
+    GeneratorTransport in_png_trans(source_png);
     constexpr std::size_t sz_buf = 8;
     uint8_t buf[sz_buf];
     auto end = buf;

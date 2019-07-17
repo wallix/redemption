@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     big_stream.out_uint16_be(0x2);
     big_stream.out_copy_bytes("a\n"_av);
 
-    GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
+    GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
     transexcpt.disable_remaining_error();
     AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
@@ -172,7 +172,7 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     CryptoContext cctx;
     init_keys(cctx);
 
-    GeneratorTransport trans(s.data(), s.size());
+    GeneratorTransport trans(s);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
     RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
@@ -214,7 +214,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
-    CheckTransport trans(u.get(), big_stream.get_offset());
+    CheckTransport trans({u.get(), big_stream.get_offset()});
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -257,7 +257,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
-    GeneratorTransport trans(u.get(), big_stream.get_offset());
+    GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -297,7 +297,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
-    GeneratorTransport trans(u.get(), big_stream.get_offset());
+    GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -324,7 +324,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     CryptoContext cctx;
     init_keys(cctx);
 
-    GeneratorTransport trans(s.data(), s.size());
+    GeneratorTransport trans(s);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
     RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
@@ -371,7 +371,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     ini.set<cfg::session_log::log_path>(logfile.string());
     ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
-    GeneratorTransport trans("", 0);
+    GeneratorTransport trans(""_av);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0x20));
 
     acl.start_session_log();

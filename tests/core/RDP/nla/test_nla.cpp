@@ -31,7 +31,7 @@
 
 RED_AUTO_TEST_CASE(TestNlaclient)
 {
-    const char client[] =
+    auto client =
         // negotiate
     "\x30\x37\xa0\x03\x02\x01\x06\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*. !
     "\x28\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08" //(NTLMSSP........ !
@@ -67,9 +67,10 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 /* 0030 */ "\x8c\x21\x66\xa6\x78\xda\xd1\xbd\xef\xa4\xfd\x47\xa6\xf1\x56\xa5" // .!f.x......G..V.
 /* 0040 */ "\xd9\x52\x72\x92\xfa\x41\xa5\xb4\x9d\x94\xfb\x0e\xe2\x61\xba\xfc" // .Rr..A.......a..
 /* 0050 */ "\xd5\xf3\xa7\xb5\x33\xd5\x62\x8d\x93\x18\x54\x39\x8a\xe7"         // ....3.b...T9..
-        ;
+    ""_av
+    ;
 
-    const char server[] =
+    auto server =
         // challenge
 
 /* 0000 */ "\x30\x81\x88\xa0\x03\x02\x01\x02\xa1\x81\x80\x30\x7e\x30\x7c\xa0" //0..........0~0|.
@@ -86,10 +87,11 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 /* 0000 */ "\x30\x29\xa0\x03\x02\x01\x02\xa3\x22\x04\x20\x01\x00\x00\x00\xa2" //0)......". .....
 /* 0010 */ "\xe0\x5b\x50\x97\x8e\x99\x27\x00\x00\x00\x00\xdc\xa7\x0b\xfe\x37" //.[P...'........7
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
+        ""_av
         ;
 
-    TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
-    logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
+    TestTransport logtrans(server, client);
+    logtrans.set_public_key("1245789652325415"_av);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
     uint8_t pass[] = "Pénélope";
@@ -117,7 +119,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 
 RED_AUTO_TEST_CASE(TestNlaserver)
 {
-    const char client[] =
+    auto client =
         // negotiate
     "\x30\x37\xa0\x03\x02\x01\x06\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*. !
     "\x28\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08" //(NTLMSSP........ !
@@ -154,10 +156,10 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 /* 0030 */ "\x8c\x21\x66\xa6\x78\xda\xd1\xbd\xef\xa4\xfd\x47\xa6\xf1\x56\xa5" // .!f.x......G..V.
 /* 0040 */ "\xd9\x52\x72\x92\xfa\x41\xa5\xb4\x9d\x94\xfb\x0e\xe2\x61\xba\xfc" // .Rr..A.......a..
 /* 0050 */ "\xd5\xf3\xa7\xb5\x33\xd5\x62\x8d\x93\x18\x54\x39\x8a\xe7"         // ....3.b...T9..
-
+    ""_av
         ;
 
-    const char server[] =
+    auto server =
         // challenge
     "\x30\x81\x88\xa0\x03\x02\x01\x06\xa1\x81\x80\x30\x7e\x30\x7c\xa0" //0..........0~0|. !
     "\x7a\x04\x78\x4e\x54\x4c\x4d\x53\x53\x50\x00\x02\x00\x00\x00\x00" //z.xNTLMSSP...... !
@@ -172,10 +174,11 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 /* 0000 */ "\x30\x29\xa0\x03\x02\x01\x06\xa3\x22\x04\x20\x01\x00\x00\x00\xa2" //0)......". .....
 /* 0010 */ "\xe0\x5b\x50\x97\x8e\x99\x27\x00\x00\x00\x00\xdc\xa7\x0b\xfe\x37" //.[P...'........7
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
+    ""_av
         ;
 
-    TestTransport logtrans(client, sizeof(client)-1, server, sizeof(server)-1);
-    logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
+    TestTransport logtrans(client, server);
+    logtrans.set_public_key("1245789652325415"_av);
     auto user = "Ulysse"_av;
     auto domain = "Ithaque"_av;
     auto pass = "Pénélope"_av;

@@ -284,7 +284,7 @@ namespace
                     LOG(LOG_WARNING, "Failed to read conntrack file");
                 }
                 // source and dest are inverted because we get the information we want from reply path rule
-                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), 1);
+                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, make_array_view(real_target_ip), 1);
                 if (res){
                     LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
                 }

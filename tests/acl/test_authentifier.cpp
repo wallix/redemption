@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     SessionReactor session_reactor;
     MMIni mm(session_reactor, ini);
 
-    char outdata[] =
+    auto outdata =
         // Time: 10011
         "\x00\x00\x01\x85"
         "bpp\n!24\n"
@@ -87,9 +87,10 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
         // Time: 10043
         "\x00\x00\x00\x0E"
         "keepalive\nASK\n"
+        ""_av
     ;
 
-    char indata[] =
+    auto indata =
         "\x00\x00\x00\x8F"
         "login\n!toto\n"
         "password\n!totopass\n"
@@ -99,6 +100,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
         "proto_dest\n!RDP\n"
         "module\n!RDP\n"
         "authenticated\n!True\n"
+        ""_av
     ;
 
     Fstat fstat;
@@ -106,7 +108,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     CryptoContext cctx;
     init_keys(cctx);
 
-    TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    TestTransport acl_trans(indata, outdata);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, AclSerializer::Verbose::variable);
     Authentifier sesman(ini, cctx, Authentifier::Verbose::none);
     sesman.set_acl_serial(&acl_serial);
@@ -158,7 +160,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     SessionReactor session_reactor;
     MMIni mm(session_reactor, ini);
 
-    char outdata[] =
+    auto outdata =
         // Time 10011
         "\x00\x00\x01\x85"
         "bpp\n!24\n"
@@ -190,9 +192,11 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
         "\x00\x00\x00\x0E"
         "keepalive\nASK\n"
+
+        ""_av
     ;
 
-    char indata[] =
+    auto indata =
         "\x00\x00\x00\x8F"
         "login\n!toto\n"
         "password\n!totopass\n"
@@ -211,6 +215,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
         "\x00\x00\x00\x10"
         "koopalive\n!True\n"
 
+        ""_av
     ;
 
     Fstat fstat;
@@ -218,7 +223,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     CryptoContext cctx;
     init_keys(cctx);
 
-    TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    TestTransport acl_trans(indata, outdata);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
@@ -289,7 +294,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
     SessionReactor session_reactor;
     MMIni mm(session_reactor, ini);
 
-    char outdata[] =
+    auto outdata =
         // Time 10011
         "\x00\x00\x01\x85"
         "bpp\n!24\n"
@@ -314,9 +319,10 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "ip_target\n!\n"
         "target_device\nASK\n"
         "target_login\nASK\n"
+        ""_av
     ;
 
-    char indata[] =
+    auto indata =
         "\x00\x00\x00\x83"
         "login\n!toto\n"
         "password\n!totopass\n"
@@ -346,14 +352,16 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
         "\x00\x00\x00\x10"
         "keepalive\n!True\n"
-    ;
+
+        ""_av
+        ;
 
     Fstat fstat;
     LCGRandom rnd(0);
     CryptoContext cctx;
     init_keys(cctx);
 
-    TestTransport acl_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    TestTransport acl_trans(indata, outdata);
     AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(ini.get<cfg::debug::auth>()));
     Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);

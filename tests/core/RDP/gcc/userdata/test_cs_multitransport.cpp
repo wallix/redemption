@@ -28,20 +28,19 @@
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
 {
-    const char indata[] =
+    constexpr auto indata =
         "\x0a\xc0"         // CS_MULTITRANSPORT
         "\x08\x00"         // 8 bytes user Data
 
         "\x05\x03\x00\x00" // TS_UD_CS_MULTITRANSPORT::flags
+        ""_av
     ;
 
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    GCC::UserData::CSMultiTransport cs_multitransport;
+    GeneratorTransport gt(indata);
+    uint8_t buf[indata.size()];
+    gt.recv_boom(make_array_view(buf));
     InStream stream(buf);
+    GCC::UserData::CSMultiTransport cs_multitransport;
     cs_multitransport.recv(stream);
     RED_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
     RED_CHECK_EQUAL(8, cs_multitransport.length);

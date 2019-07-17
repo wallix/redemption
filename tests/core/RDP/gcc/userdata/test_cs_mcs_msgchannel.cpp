@@ -29,20 +29,19 @@
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
 {
-    const char indata[] =
+    constexpr auto indata =
         "\x06\xc0"         // CS_MCS_MSGCHANNEL
         "\x08\x00"         // 8 bytes user Data
 
         "\x00\x00\x00\x00" // TS_UD_CS_MCS_MSGCHANNEL::flags
+        ""_av
     ;
 
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
+    GeneratorTransport gt(indata);
+    uint8_t buf[indata.size()];
+    gt.recv_boom(make_array_view(buf));
     InStream stream(buf);
+    GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
     cs_mcs_msgchannel.recv(stream);
     RED_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
     RED_CHECK_EQUAL(8, cs_mcs_msgchannel.length);

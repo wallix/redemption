@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     // Comment the code block below to generate testing data.
     #include "fixtures/dump_large_pointer_disabled.hpp"
-    TestTransport t(indata, sizeof(indata) - 1, outdata, sizeof(outdata) - 1);
+    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
 
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
@@ -189,7 +189,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     // Comment the code block below to generate testing data.
     #include "fixtures/dump_large_pointer_enabled.hpp"
-    TestTransport t(indata, sizeof(indata) - 1, outdata, sizeof(outdata) - 1);
+    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
 
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 

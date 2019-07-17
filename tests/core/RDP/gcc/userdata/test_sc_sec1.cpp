@@ -28,20 +28,15 @@
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
 {
-    const char indata[] =
+    constexpr auto indata =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        ""_av
     ;
-
-    constexpr std::size_t sz = sizeof(indata) - 1;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    InStream stream(buf, sz);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(indata.size(), sc_sec1.length);
     RED_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     RED_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
 
@@ -51,20 +46,15 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
 {
-    const char indata[] =
+    constexpr auto indata =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        ""_av
     ;
-
-    constexpr std::size_t sz = sizeof(indata) - 1;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    InStream stream(buf, sz);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(indata.size(), sc_sec1.length);
     RED_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     RED_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
 
@@ -74,7 +64,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
 {
-    const char indata[] =
+    constexpr auto indata =
     // SC_SECURITY tag=0c02 length=1410
     /* 0000 */ "\x02\x0c\x82\x05\x01\x00\x00\x00\x02\x00\x00\x00\x20\x00\x00\x00" //............ ...
     /* 0010 */ "\x4e\x05\x00\x00\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6" //N...^i.'.-.5....
@@ -165,18 +155,14 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     /* 0560 */ "\xfc\x69\x0e\xb3\x1c\xd2\x4a\x02\x18\xea\x8e\x89\x71\x7f\x32\x52" //.i....J.....q.2R
     /* 0570 */ "\xb5\x6b\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.k..............
     /* 0580 */ "\x00\x00"                                                         //..
+        ""_av
     ;
 
-    constexpr std::size_t sz = sizeof(indata) - 1;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    InStream stream(buf, sz);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(indata.size(), sc_sec1.length);
     RED_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
     RED_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
     RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
@@ -194,7 +180,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
 {
-    const char indata[] =
+    constexpr auto indata =
         // SC_SECURITY tag=0c02 length=236
         /* 0000 */ "\x02\x0c\xec\x00\x01\x00\x00\x00\x01\x00\x00\x00\x20\x00\x00\x00" //............ ...
         /* 0010 */ "\xb8\x00\x00\x00\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83" //....s....P....*.
@@ -211,18 +197,14 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
         /* 00c0 */ "\xa6\xda\x60\xd7\x45\xf7\x2c\xee\xe4\x8e\x64\x2e\x37\x49\xf0\x4c" //..`.E.,...d.7I.L
         /* 00d0 */ "\x94\x6f\x08\xf5\x63\x4c\x56\x29\x55\x5a\x63\x41\x2c\x20\x65\x95" //.o..cLV)UZcA, e.
         /* 00e0 */ "\x99\xb1\x15\x7c\x00\x00\x00\x00\x00\x00\x00\x00"                 //...|........
+        ""_av
     ;
 
-    constexpr std::size_t sz = sizeof(indata) - 1;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    InStream stream(buf, sz);
+    InStream stream(indata);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(stream);
     RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
-    RED_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    RED_CHECK_EQUAL(indata.size(), sc_sec1.length);
     RED_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
     RED_CHECK_EQUAL(1, sc_sec1.encryptionLevel);
     RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);

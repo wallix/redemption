@@ -451,11 +451,11 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeRecv)
     uint32_t flag = RDPECLIP::FILECONTENTS_RANGE;
     uint64_t size = 0x0000000000000007;
 
-    const char data[] =
+    auto data =
         "\x01\x00\x00\x00\x03\x00\x00\x00\x02\x00\x00\x00\x07\x00\x00\x00"
-        "\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00";
+        "\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"_av;
 
-    InStream stream(data, sizeof(data)-1);
+    InStream stream(data);
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
     fileContentsRequest.receive(stream);
 
@@ -493,12 +493,12 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeRecv)
     uint32_t flag = RDPECLIP::FILECONTENTS_SIZE;
     uint64_t size = 0x0000000000000007;
 
-    const char data[] =
+    auto data =
         "\x01\x00\x00\x00\x03\x00\x00\x00"
         "\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00"
-        "\x01\x00\x00\x00";
+        "\x01\x00\x00\x00"_av;
 
-    InStream stream(data, sizeof(data)-1);
+    InStream stream(data);
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
     fileContentsRequest.receive(stream);
 
@@ -545,13 +545,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
 
         format_list_pdu.emit(out_stream, use_long_format_names);
 
-        auto exp_data = cstr_array_view(
-                "\x01\x00\x00\x00\x00\x00"
-                "\x0d\x00\x00\x00\x00\x00"
-            );
-
-        RED_CHECK_EQUAL(12, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
+        RED_CHECK_MEM("\x01\x00\x00\x00\x00\x00\x0d\x00\x00\x00\x00\x00"_av, out_stream.get_bytes());
     }
 
     {

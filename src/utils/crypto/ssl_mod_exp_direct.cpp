@@ -43,37 +43,36 @@ REDEMPTION_DIAGNOSTIC_POP
  * \pre  \a out_len >= \a modulus_size
  * \return  the length of the big-endian number placed at out. ~size_t{} if error
  */
-std::size_t mod_exp_direct(
-    uint8_t * out, std::size_t out_len,
-    const uint8_t * inr, std::size_t in_len,
-    const uint8_t * modulus, std::size_t modulus_size,
-    const uint8_t * exponent, std::size_t exponent_size
+bytes_view mod_exp_direct(
+    bytes_view out,
+    const_bytes_view inr,
+    const_bytes_view modulus,
+    const_bytes_view exponent
 ) {
-    assert(out_len >= modulus_size);
-    (void)out_len;
+    assert(out.size() >= modulus.size());
 
     using int_type = boost::multiprecision::cpp_int;
 
-    auto b256_to_bigint = [](uint8_t const * s, size_t n) {
+    auto b256_to_bigint = [](const_bytes_view s) {
         int_type i;
-        boost::multiprecision::import_bits(i, s, s+n);
+        boost::multiprecision::import_bits(i, s.begin(), s.end());
         return i;
     };
 
-    int_type base = b256_to_bigint(inr, in_len);
-    int_type exp = b256_to_bigint(exponent, exponent_size);
-    int_type m = b256_to_bigint(modulus, modulus_size);
+    int_type base = b256_to_bigint(inr);
+    int_type exp = b256_to_bigint(exponent);
+    int_type m = b256_to_bigint(modulus);
 
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wzero-as-null-pointer-constant")
     int_type r = boost::multiprecision::powm(base, exp, m);
     REDEMPTION_DIAGNOSTIC_POP
 
-    auto it = boost::multiprecision::export_bits(r, out, 8);
-    auto r_len = static_cast<size_t>(it - out);
+    auto it = boost::multiprecision::export_bits(r, out.data(), 8);
+    auto r_len = static_cast<size_t>(it - out.data());
     *it = 0;
-    if (r_len == 1 && *out == 0) {
+    if (r_len == 1 && out[0] == 0) {
         r_len = 0;
     }
-    return r_len;
+    return out.first(r_len);
 }

@@ -133,18 +133,14 @@ namespace
 } // namespace test_transport
 
 GeneratorTransport::GeneratorTransport(cbytes_view buffer)
-: GeneratorTransport(buffer.data(), buffer.size())
-{}
-
-GeneratorTransport::GeneratorTransport(cbyte_ptr data, size_t len)
-: data(new(std::nothrow) uint8_t[len])
-, len(len)
+: data(new(std::nothrow) uint8_t[buffer.size()])
+, len(buffer.size())
 {
     if (!this->data) {
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
     if (data) {
-        memcpy(this->data.get(), data.as_u8p(), len);
+        memcpy(this->data.get(), buffer.data(), this->len);
     }
 }
 
@@ -248,17 +244,13 @@ bool BufSequenceTransport::next()
 
 
 CheckTransport::CheckTransport(const_buffer_t buffer)
-: CheckTransport(buffer.as_charp(), buffer.size())
-{}
-
-CheckTransport::CheckTransport(cbyte_ptr data, size_t len)
-: data(new(std::nothrow) uint8_t[len])
-, len(len)
+: data(new(std::nothrow) uint8_t[buffer.size()])
+, len(buffer.size())
 {
     if (!this->data) {
         throw Error(ERR_TRANSPORT, 0);
     }
-    memcpy(this->data.get(), data.as_u8p(), len);
+    memcpy(this->data.get(), buffer.data(), this->len);
 }
 
 CheckTransport::~CheckTransport()
@@ -331,21 +323,15 @@ void CheckTransport::do_send(const uint8_t * const data, size_t len)
 
 
 TestTransport::TestTransport(cbytes_view indata, cbytes_view outdata)
-: TestTransport(indata.data(), indata.size(), outdata.data(), outdata.size())
+: check(outdata)
+, gen(indata)
 {}
 
-TestTransport::TestTransport(
-    cbyte_ptr indata, size_t inlen,
-    cbyte_ptr outdata, size_t outlen)
-: check(outdata, outlen)
-, gen(indata, inlen)
-{}
-
-void TestTransport::set_public_key(const uint8_t * data, size_t data_size)
+void TestTransport::set_public_key(const_bytes_view key)
 {
-    this->public_key.reset(new uint8_t[data_size]);
-    this->public_key_length = data_size;
-    memcpy(this->public_key.get(), data, data_size);
+    this->public_key.reset(new uint8_t[key.size()]);
+    this->public_key_length = key.size();
+    memcpy(this->public_key.get(), key.data(), key.size());
 }
 
 array_view_const_u8 TestTransport::get_public_key() const

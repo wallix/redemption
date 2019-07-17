@@ -28,13 +28,12 @@
 
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 
 struct GeneratorTransport : Transport
 {
     GeneratorTransport(cbytes_view buffer);
-
-    GeneratorTransport(cbyte_ptr data, size_t len);
 
     ~GeneratorTransport();
 
@@ -94,8 +93,6 @@ struct CheckTransport : Transport
 {
     CheckTransport(const_buffer_t buffer);
 
-    CheckTransport(cbyte_ptr data, size_t len);
-
     size_t remaining()
     {
         return this->len - this->current;
@@ -124,10 +121,6 @@ struct TestTransport : public Transport
 {
     TestTransport(cbytes_view indata, cbytes_view outdata);
 
-    TestTransport(
-        cbyte_ptr indata, size_t inlen,
-        cbyte_ptr outdata, size_t outlen);
-
     size_t remaining()
     {
         return this->check.remaining();
@@ -139,7 +132,7 @@ struct TestTransport : public Transport
         this->gen.disable_remaining_error();
     }
 
-    void set_public_key(const uint8_t * data, size_t data_size);
+    void set_public_key(const_bytes_view key);
 
     array_view_const_u8 get_public_key() const override;
 

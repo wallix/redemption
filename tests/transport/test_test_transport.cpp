@@ -28,7 +28,7 @@
 RED_AUTO_TEST_CASE(TestGeneratorTransport)
 {
     // test we can read from a GeneratorTransport;
-    GeneratorTransport gt("We read what we provide!", 24);
+    GeneratorTransport gt("We read what we provide!"_av);
     char buffer[128] = {};
     char * p = buffer;
     gt.recv_boom(p, 0);
@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestGeneratorTransport)
 RED_AUTO_TEST_CASE(TestGeneratorTransport2)
 {
     // test we can read from a GeneratorTransport;
-    GeneratorTransport gt("We read what we provide!", 24);
+    GeneratorTransport gt("We read what we provide!"_av);
     char buffer[128] = {};
     char * p = buffer;
     gt.recv_boom(p, 0);
@@ -118,7 +118,7 @@ RED_AUTO_TEST_CASE(TestTestTransport)
     // if send fails, the difference between expected and actual data is showed
     // and status is set to false (and will stay so) to allow tests to fail.
     // inside Transport, the difference is shown in trace logs.
-    TestTransport gt("OUTPUT", 6, "input", 5);
+    TestTransport gt("OUTPUT"_av, "input"_av);
     gt.disable_remaining_error();
     char buf[128] = {};
     char * p = buf;

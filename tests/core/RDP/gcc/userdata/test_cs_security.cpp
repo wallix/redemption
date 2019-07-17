@@ -31,7 +31,7 @@
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
 {
-    const char indata[] =
+    constexpr auto indata =
         "\x02\xc0"         // CS_SECURITY
         "\x0c\x00"         // 12 bytes user Data
 
@@ -42,15 +42,14 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
                            // | 56BIT_ENCRYPTION_FLAG
                            // | FIPS_ENCRYPTION_FLAG
         "\x00\x00\x00\x00" // TS_UD_CS_SEC::extEncryptionMethods
+        ""_av
     ;
 
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    GCC::UserData::CSSecurity cs_security;
+    GeneratorTransport gt(indata);
+    uint8_t buf[indata.size()];
+    gt.recv_boom(make_array_view(buf));
     InStream stream(buf);
+    GCC::UserData::CSSecurity cs_security;
     cs_security.recv(stream);
     RED_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
     RED_CHECK_EQUAL(12, cs_security.length);

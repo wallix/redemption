@@ -108,12 +108,12 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
         RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
         char transparent_target[256] = {};
 
-        RED_CHECK_EQUAL(0, parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, transparent_target, sizeof(transparent_target)));
+        RED_CHECK_EQUAL(0, parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, make_array_view(transparent_target)));
         RED_CHECK_EQUAL(transparent_target, "10.10.46.78");
 
         RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
         transparent_target[0] = 0;
-        RED_CHECK_EQUAL(-1, parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, transparent_target, sizeof(transparent_target)));
+        RED_CHECK_EQUAL(-1, parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, make_array_view(transparent_target)));
         RED_CHECK_EQUAL(transparent_target, "");
 
         close(fd);

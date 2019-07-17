@@ -24,13 +24,15 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "utils/sugar/bytes_view.hpp"
+
 /**
- * \pre  \a out_len >= \a modulus_size
+ * \pre  \a out.size() >= \a modulus.size()
  * \return  the length of the big-endian number placed at out. ~size_t{} if error
  */
-std::size_t mod_exp_direct(
-    uint8_t * out, std::size_t out_len,
-    const uint8_t * inr, std::size_t in_len,
-    const uint8_t * modulus, std::size_t modulus_size,
-    const uint8_t * exponent, std::size_t exponent_size
+bytes_view mod_exp_direct(
+    bytes_view out,
+    const_bytes_view inr,
+    const_bytes_view modulus,
+    const_bytes_view exponent
 );

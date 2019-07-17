@@ -25,13 +25,11 @@
 
 
 #include "utils/stream.hpp"
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/mcs.hpp"
 
 RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 {
-    size_t payload_length = 369;
-    GeneratorTransport t(
+    auto payload_data =
 /* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
 /* 0010 */ "\x01\x01\x01\x01\xff\x30\x1a\x02\x01\x22\x02\x01\x02\x02\x01\x00" //.....0..."...... |
 /* 0020 */ "\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x03\x00\xff\xff\x02\x01" //................ |
@@ -56,14 +54,8 @@ RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00" //................ |
 /* 0160 */ "\x04\xc0\x0c\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x02\xc0\x0c\x00" //................ |
 /* 0170 */ "\x03\x00\x00\x00\x00\x00\x00\x00"                                 //........ |
-    , payload_length);
-
-    uint8_t payload_buf[65536];
-    InStream payload(payload_buf, payload_length);
-    {
-        auto end = payload_buf;
-        t.recv_boom(end, payload_length);
-    }
+    ""_av;
+    InStream payload(payload_data);
 
     MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 
@@ -134,21 +126,16 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
 
 RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
 {
-    size_t payload_length = 93;
-    GeneratorTransport t(
+    constexpr auto payload_data =
  /* 0000 */             "\x7f\x66\x5a\x0a\x01\x00\x02\x01\x00\x30\x1a\x02\x01" //....fZ......0... |
  /* 0010 */ "\x22\x02\x01\x03\x02\x01\x00\x02\x01\x01\x02\x01\x00\x02\x01\x01" //"............... |
  /* 0020 */ "\x02\x03\x00\xff\xf8\x02\x01\x02\x04\x36\x00\x05\x00\x14\x7c\x00" //.........6....|. |
  /* 0030 */ "\x01\x2a\x14\x76\x0a\x01\x01\x00\x01\xc0\x00\x4d\x63\x44\x6e\x20" //.*.v.......McDn  |
  /* 0040 */ "\x01\x0c\x0c\x00\x04\x00\x08\x00\x01\x00\x00\x00\x03\x0c\x08\x00" //................ |
  /* 0050 */ "\xeb\x03\x00\x00\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
-   , payload_length);
+    ""_av;
 
-    uint8_t buf[65536];
-    auto end = buf;
-    t.recv_boom(end, payload_length);
-
-    InStream payload(buf, payload_length);
+    InStream payload(payload_data);
     MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 
     RED_CHECK_EQUAL(102, mcs.tag);
@@ -167,7 +154,7 @@ RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     RED_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);
 
     RED_CHECK_EQUAL(54, mcs.payload.get_capacity());
-    RED_CHECK_EQUAL(39, payload_length - mcs.payload.get_capacity());
+    RED_CHECK_EQUAL(39, payload_data.size() - mcs.payload.get_capacity());
 }
 
 RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
@@ -316,19 +303,14 @@ RED_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
 
 RED_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
 {
-    size_t length = 5;
-    GeneratorTransport t(
+    auto payload_data =
         "\x04"  // ErectDomainRequest * 4
         "\x01"  // subHeight len
         "\x00"  // subHeight
         "\x01"  // subInterval len
         "\x00"  // subInterval
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av;
+    InStream stream(payload_data);
     MCS::ErectDomainRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
     RED_CHECK_EQUAL(MCS::MCSPDU_ErectDomainRequest , mcs.type);
@@ -353,16 +335,10 @@ RED_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
 
 RED_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
 {
-    size_t length = 2;
-    GeneratorTransport t(
+    InStream stream(
         "\x20"  // DisconnectProviderUltimatum * 4
         "\x00"  // reason
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av);
     MCS::DisconnectProviderUltimatum_Recv mcs(stream, MCS::PER_ENCODING);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_DisconnectProviderUltimatum), mcs.type);
@@ -386,15 +362,9 @@ RED_AUTO_TEST_CASE(TestSend_AttachUserRequest)
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
 {
-    size_t length = 1;
-    GeneratorTransport t(
+    InStream stream(
         "\x28"  // AttachUserRequest * 4
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av);
     MCS::AttachUserRequest_Recv mcs(stream, MCS::PER_ENCODING);
     RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserRequest), mcs.type);
 }
@@ -416,16 +386,10 @@ RED_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
 {
-    size_t length = 2;
-    GeneratorTransport t(
+    InStream stream(
         "\x2C"  // AttachUserConfirm * 4
         "\x00"
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av);
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserConfirm), mcs.type);
@@ -451,17 +415,12 @@ RED_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
 {
-    size_t length = 4;
-    GeneratorTransport t(
+    InStream stream(
         "\x2E"  // AttachUserConfirm * 4
         "\x00"
         "\x00\x01"
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av
+    );
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_AttachUserConfirm), mcs.type);
@@ -488,17 +447,12 @@ RED_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
 
 RED_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
 {
-    size_t length = 5;
-    GeneratorTransport t(
+    InStream stream(
         "\x38"  // ChannelJoinRequest * 4
         "\x00\x03" // userId = 3
         "\x03\xec" // channelId = 1004
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av
+    );
 
     MCS::ChannelJoinRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
@@ -527,19 +481,13 @@ RED_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
 
 RED_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 {
-    size_t length = 8;
-    GeneratorTransport t(
+    InStream stream(
         "\x3E"  // ChannelJoinConfirm * 4
         "\x00"  // result RT_SUCCESSFUL
         "\x00\x03" // userId = 3
         "\x03\xec" // requested = 1004
         "\x03\xec" // channelId = 1004
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av);
     MCS::ChannelJoinConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_ChannelJoinConfirm), mcs.type);
@@ -569,8 +517,7 @@ RED_AUTO_TEST_CASE(TestSend_SendDataRequest)
 
 RED_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 {
-    size_t length = 8 + 379;
-    GeneratorTransport t(
+    InStream stream(
         "\x64"  // SendDataRequest * 4
         "\x00\x03" // userid  = 3
         "\x03\xec" // channel = 1005
@@ -604,13 +551,7 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataRequest)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av);
     MCS::SendDataRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataRequest), mcs.type);
@@ -640,8 +581,7 @@ RED_AUTO_TEST_CASE(TestSend_SendDataIndication)
 
 RED_AUTO_TEST_CASE(TestRecv_SendDataIndication)
 {
-    size_t length = 8 + 379;
-    GeneratorTransport t(
+    InStream stream(
         "\x68"  // SendDataIndication * 4
         "\x00\x03" // userid  = 3
         "\x03\xec" // channel = 1005
@@ -675,13 +615,7 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataIndication)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataIndication), mcs.type);
@@ -695,8 +629,7 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataIndication)
 
 RED_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
 {
-    size_t length = 8 + 363;
-    GeneratorTransport t(
+    InStream stream(
         "\x68"      // SendDataIndication * 4
         "\x00\x01"  // userid  = 1
         "\x03\xec"  // channel = 1004
@@ -728,12 +661,7 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataIndication2)
 /* 0150 */ "\xee\x00\x00\x00\x00\x08\x00\x0a\x00\x01\x00\x19\x00\x17\x00\x08" //................
 /* 0160 */ "\x00\x00\x00\x00\x00\x18\x00\x0b\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0170 */ "\x00\x00\x00\x00"                                                 //....
-   , length);
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        ""_av);
     MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(MCS::MCSPDU_SendDataIndication), mcs.type);

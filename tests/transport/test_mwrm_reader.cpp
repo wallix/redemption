@@ -333,9 +333,9 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
 RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
 {
-    auto const data = cstr_array_view("v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 33056 1001 1001 65030 28 1504107644 1504107644\n");
+    auto const data = "v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 33056 1001 1001 65030 28 1504107644 1504107644\n"_av;
 
-    GeneratorTransport transport(data.data(), data.size());
+    GeneratorTransport transport(data);
 
     MwrmReader reader(transport);
 
@@ -364,9 +364,9 @@ RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
 RED_AUTO_TEST_CASE(ReadHashV1)
 {
     {
-        auto data = cstr_array_view("file_xyz 0000000000000000000000000000000000000000000000000000000000000000");
+        auto data = "file_xyz 0000000000000000000000000000000000000000000000000000000000000000"_av;
 
-        GeneratorTransport transport(data.data(), data.size());
+        GeneratorTransport transport(data);
 
         MwrmReader reader(transport);
 
@@ -385,9 +385,9 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
     }
     {
-        auto data = cstr_array_view("file_xyz  0\n000000000000000000000000000000000000000000000000000000000000\n");
+        auto data = "file_xyz  0\n000000000000000000000000000000000000000000000000000000000000\n"_av;
 
-        GeneratorTransport transport(data.data(), data.size());
+        GeneratorTransport transport(data);
 
         MwrmReader reader(transport);
 
