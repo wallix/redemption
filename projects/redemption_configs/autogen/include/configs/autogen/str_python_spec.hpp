@@ -972,7 +972,7 @@ password_fr = string(default='')
 #_advanced
 load_theme = string(default='')
 
-[file_validator]
+[file_verification]
 
 #_hidden
 socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
@@ -983,7 +983,7 @@ enable_up = boolean(default=False)
 #_hidden
 enable_down = boolean(default=False)
 
-#_advanced
+#_hidden
 log_if_accepted = boolean(default=False)
 
 [icap_server_up]

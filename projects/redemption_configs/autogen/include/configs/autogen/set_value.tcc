@@ -1911,12 +1911,12 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
-    else if (0 == strcmp(context, "file_validator")) {
+    else if (0 == strcmp(context, "file_verification")) {
         if (0) {}
         else if (0 == strcmp(key, "socket_path")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::file_validator::socket_path&>(this->variables).value,
+                static_cast<cfg::file_verification::socket_path&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
             );
@@ -1924,7 +1924,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         else if (0 == strcmp(key, "enable_up")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::file_validator::enable_up&>(this->variables).value,
+                static_cast<cfg::file_verification::enable_up&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -1932,7 +1932,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         else if (0 == strcmp(key, "enable_down")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::file_validator::enable_down&>(this->variables).value,
+                static_cast<cfg::file_verification::enable_down&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -1940,7 +1940,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         else if (0 == strcmp(key, "log_if_accepted")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::file_validator::log_if_accepted&>(this->variables).value,
+                static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

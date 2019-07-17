@@ -293,7 +293,7 @@ namespace cfg {
         struct theme;
     };
 
-    struct file_validator {
+    struct file_verification {
         struct socket_path;
         struct enable_up;
         struct enable_down;

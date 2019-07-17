@@ -1156,7 +1156,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #load_theme = 
 
-[file_validator]
+[file_verification]
 
 #_hidden
 #socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
@@ -1170,7 +1170,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #enable_down = 0
 
 # value: 0 or 1
-#_advanced
+#_hidden
 #log_if_accepted = 0
 
 [icap_server_up]

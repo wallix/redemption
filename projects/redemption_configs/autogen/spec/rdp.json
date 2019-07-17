@@ -633,7 +633,7 @@
       ]
     },
     {
-      "name": "file_validator",
+      "name": "file_verification",
       "members": [
         {
           "name": "enable_up",
@@ -643,6 +643,12 @@
         },
         {
           "name": "enable_down",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "log_if_accepted",
           "type": "bool",
           "default": false,
           "description": ""
