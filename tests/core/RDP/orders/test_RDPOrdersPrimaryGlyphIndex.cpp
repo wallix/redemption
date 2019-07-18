@@ -91,10 +91,7 @@ RED_AUTO_TEST_CASE(TestGlyphIndex)
         RDPGlyphIndex cmd = statecmd;
         cmd.receive(in_stream, header);
 
-        if (!(RDPBrush(3, 4, 0x03, 0xDD, brush_extra)
-                == cmd.brush)){
-            RED_CHECK_EQUAL(true, false);
-        }
+        RED_CHECK(RDPBrush(3, 4, 0x03, 0xDD, brush_extra) == cmd.brush);
         // TODO " actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
 
         decltype(out_stream) out_stream2;

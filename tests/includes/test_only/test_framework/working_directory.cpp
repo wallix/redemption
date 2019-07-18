@@ -346,7 +346,7 @@ std::string WorkingDirectory::unmached_files()
             auto it = this->paths_.find(filename);
             if (it == this->paths_.end()) {
                 if (type == Type::Directory) {
-                    if(!recursive(recursive)) {
+                    if (!recursive(recursive)) {
                         str_append(err, path.name, " unknown\n");
                     }
                 }

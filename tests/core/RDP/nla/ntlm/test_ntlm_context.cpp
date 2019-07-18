@@ -230,9 +230,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
         0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00
     };
 
-    const uint8_t workstation[] = {
-        0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x58, 0x00, 0x50, 0x00
-    };
+    // const uint8_t workstation[] = {
+    //     0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x58, 0x00, 0x50, 0x00
+    // };
 
     // Initialization
     uint8_t client_to_server_buf[65535];
@@ -246,9 +246,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     // CLIENT BUILDS NEGOTIATE
     client_context.ntlm_set_negotiate_flags();
     client_context.NEGOTIATE_MESSAGE.negoFlags.flags = client_context.NegotiateFlags;
-    if (client_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-        client_context.NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
-    }
+    RED_REQUIRE(client_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION);
+    client_context.NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
 
     // send NEGOTIATE MESSAGE
     client_context.NEGOTIATE_MESSAGE.emit(out_client_to_server);
@@ -263,9 +262,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     server_context.ntlm_construct_challenge_target_info();
 
     server_context.CHALLENGE_MESSAGE.negoFlags.flags = server_context.NegotiateFlags;
-    if (server_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-        server_context.CHALLENGE_MESSAGE.version.ntlm_get_version_info();
-    }
+    RED_REQUIRE(server_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION);
+    server_context.CHALLENGE_MESSAGE.version.ntlm_get_version_info();
 
     // send CHALLENGE MESSAGE
     server_context.CHALLENGE_MESSAGE.emit(out_server_to_client);
@@ -285,16 +283,16 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     client_context.AUTHENTICATE_MESSAGE.negoFlags.flags = client_context.NegotiateFlags;
 
     uint32_t const flag = client_context.AUTHENTICATE_MESSAGE.negoFlags.flags;
-    if (flag & NTLMSSP_NEGOTIATE_VERSION) {
-        client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
-    }
+    RED_REQUIRE(flag & NTLMSSP_NEGOTIATE_VERSION);
+    client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
-    if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-        auto & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.buffer;
-        workstationbuff.reset();
-        workstationbuff.ostream.out_copy_bytes(make_array_view(workstation));
-        workstationbuff.mark_end();
-    }
+    RED_REQUIRE(!(flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED));
+    // {
+    //     auto & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.buffer;
+    //     workstationbuff.reset();
+    //     workstationbuff.ostream.out_copy_bytes(make_array_view(workstation));
+    //     workstationbuff.mark_end();
+    // }
 
     auto & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.buffer;
     domain.reset();
