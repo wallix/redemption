@@ -521,7 +521,7 @@ public:
                 }
 
                 send_client_message([](OutStream & out_s) {
-                    out_s.out_copy_bytes("Version=" "1" "\x01" "5"_av);
+                    out_s.out_copy_bytes("Version=" "1" "\x01" "6"_av);
                 });
 
                 {
@@ -1648,6 +1648,29 @@ public:
                         ArcsightLogInfo arc_info;
                         arc_info.name = "WEB_THIRD_PARTY_URL_BLOCKED";
                         arc_info.signatureID = ArcsightLogInfo::ID::WEB_THIRD_PARTY_URL_BLOCKED;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+
+                else if (!::strcasecmp(order_.c_str(), "GROUP_MEMBERSHIP")) {
+                    if (parameters_.size() == 1) {
+                        auto info = key_qvalue_pairs({
+                            {"type", "GROUP_MEMBERSHIP"},
+                            {"groups",  parameters_[0]},
+                        });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "GROUP_MEMBERSHIP";
+                        arc_info.signatureID = ArcsightLogInfo::ID::GROUP_MEMBERSHIP;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;

@@ -63,6 +63,7 @@ struct ArcsightLogInfo
         MATCH_FINDER                       = 33,
         UNIDENTIFIED_INPUT_FIELD_GET_FOCUS = 34,
         FILE_SCAN_RESULT                   = 35,
+        GROUP_MEMBERSHIP                   = 36,
 
         WEB_ATTEMPT_TO_PRINT               = 100,
         WEB_BEFORE_NAVIGATE                = 101,

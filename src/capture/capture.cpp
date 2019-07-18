@@ -1195,6 +1195,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             line_with_3_var("filename", "direction", "status");
         }
 
+        else if (cstr_equal("GROUP_MEMBERSHIP", order)) {
+            line_with_1_var("groups");
+        }
+
         else {
             message.clear();
             LOG(LOG_WARNING,
