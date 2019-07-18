@@ -159,10 +159,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
 {
     {
-    std::string text("text de test");
+    auto text = "text de test"_av;
     uint32_t cItems = 0;
     uint8_t utf16text[50] = {0};
-    size_t utf16size = ::UTF8toUTF16(text, utf16text, text.length() *2);
+    size_t utf16size = ::UTF8toUTF16(text, utf16text, text.size() *2);
 
     StaticOutStream<1600> out_stream;
     out_stream.out_copy_bytes(utf16text, utf16size+2);
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
 
     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE,
                                    RDPECLIP::CB_RESPONSE_OK,
-                                   text.length());
+                                   text.size());
     uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
     ClipboardData clip_data;

@@ -70,26 +70,6 @@ RED_AUTO_TEST_CASE(TestUTF8LenChar)
     RED_CHECK_EQUAL(2u, UTF8Len(source));
 }
 
-RED_AUTO_TEST_CASE(TestString)
-{
-    // toto is a 4 char length string
-    std::string str1("toto");
-    RED_CHECK_EQUAL(str1.length(), 4u);
-
-    // but we can get the true length
-    int l = UTF8Len(byte_ptr_cast(str1.c_str()));
-    RED_CHECK_EQUAL(l, 4);
-
-    // olé is also a 4 char length string as it is internally UTF-8 encoded
-    std::string str_unicode("olé");
-    // It means length is the number of bytes
-    RED_CHECK_EQUAL(str_unicode.length(), 4u);
-
-    // but we can get the true length
-    int len = UTF8Len(byte_ptr_cast(str_unicode.c_str()));
-    RED_CHECK_EQUAL(len, 3);
-}
-
 RED_AUTO_TEST_CASE(TestUTF8InsertAtPos_0)
 {
     uint8_t source[255] = { 0 };
