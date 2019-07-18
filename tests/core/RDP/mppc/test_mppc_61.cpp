@@ -50,9 +50,8 @@ RED_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'i'
     };
     mppc_enc_match_finder.find_match(historyBuffer1, 16, 9);
-    RED_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
-                                "\x09\x00\x00\x00\x00\x00\x00\x00", 8));
+    RED_CHECK_MEM(mppc_enc_match_finder.match_details_stream.get_bytes(),
+        "\x09\x00\x00\x00\x00\x00\x00\x00"_av);
 
 
     uint8_t historyBuffer2[] = {
@@ -63,9 +62,8 @@ RED_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'j', 'k'
     };
     mppc_enc_match_finder.find_match(historyBuffer2, 16, 10);
-    RED_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
-                                "\x09\x00\x01\x00\x02\x00\x00\x00", 8));
+    RED_CHECK_MEM(mppc_enc_match_finder.match_details_stream.get_bytes(),
+        "\x09\x00\x01\x00\x02\x00\x00\x00"_av);
 
 
     uint8_t historyBuffer3[] = {
@@ -78,9 +76,8 @@ RED_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'j', 'k'
     };
     mppc_enc_match_finder.find_match(historyBuffer3, 32, 10);
-    RED_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
-                                "\x0A\x00\x00\x00\x11\x00\x00\x00", 8));
+    RED_CHECK_MEM(mppc_enc_match_finder.match_details_stream.get_bytes(),
+        "\x0A\x00\x00\x00\x11\x00\x00\x00"_av);
 
 
     uint8_t historyBuffer4[] = {
@@ -93,7 +90,6 @@ RED_AUTO_TEST_CASE(TestRDP61BlukCompressionSequentialSearchMatchFinder)
         'j', 'k', 'b'
     };
     mppc_enc_match_finder.find_match(historyBuffer4, 32, 11);
-    RED_CHECK_EQUAL(8, mppc_enc_match_finder.match_details_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(mppc_enc_match_finder.match_details_stream.get_data(),
-                                "\x09\x00\x01\x00\x12\x00\x00\x00", 8));
+    RED_CHECK_MEM(mppc_enc_match_finder.match_details_stream.get_bytes(),
+        "\x09\x00\x01\x00\x12\x00\x00\x00"_av);
 }

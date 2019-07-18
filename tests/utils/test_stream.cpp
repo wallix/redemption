@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestStream_out_Stream)
     RED_CHECK_EQUAL((s.get_data())[11], 7);
     RED_CHECK_EQUAL((s.get_data())[12], 8);
 
-    RED_CHECK(!memcmp("\xA\1\2\4\3\4\3\2\1\5\6\7\x8", s.get_data(), 13));
+    RED_CHECK_MEM("\xA\1\2\4\3\4\3\2\1\5\6\7\x8"_av, s.get_bytes());
 
     // underflow because end is not yet moved at p
     RED_CHECK(s.tailroom());
@@ -355,7 +355,7 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
     }
 
     {
@@ -366,7 +366,7 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
     }
 
     {
@@ -377,7 +377,7 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
     }
 }
 

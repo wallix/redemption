@@ -191,14 +191,12 @@ RED_AUTO_TEST_CASE(TestSetters)
     RED_CHECK_EQUAL(context.Workstation.size(), 0);
     context.ntlm_SetContextWorkstation(work);
     RED_CHECK_EQUAL(context.Workstation.size(), work.size() * 2);
-    // TODO TEST bad test
-    RED_CHECK(memcmp(work.data(), context.Workstation.get_data(), work.size()+1));
+    RED_CHECK_MEM("C\0a\0r\0p\0e\0 \0D\0i\0e\0m\0"_av, context.Workstation.av());
 
     RED_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
     context.ntlm_SetContextServicePrincipalName(spn);
     RED_CHECK_EQUAL(context.ServicePrincipalName.size(), spn.size() * 2);
-    // TODO TEST bad test
-    RED_CHECK(memcmp(spn.data(), context.ServicePrincipalName.get_data(), spn.size()+1));
+    RED_CHECK_MEM("S\0u\0s\0t\0i\0n\0e\0 \0e\0t\0 \0a\0b\0s\0t\0i\0n\0e\0"_av, context.ServicePrincipalName.av());
 
 }
 
@@ -343,9 +341,11 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     RED_CHECK_MEM_AA(server_context.ServerSealingKey, client_context.ServerSealingKey);
 }
 
-
 RED_AUTO_TEST_CASE(TestNtlmScenario2)
 {
+    // TODO Really the test below is useless, we are testing assignment!
+    // TODO Infopacket should be replaced by some constructor with parameters and test fixed
+
     LCGRandom rand(0);
     LCGTime timeobj;
 
@@ -432,13 +432,12 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
     in_client_to_server = InStream(out_client_to_server.get_bytes());
     server_context.AUTHENTICATE_MESSAGE.recv(in_client_to_server);
-    if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
-        memset(client_to_server_buf +
-               server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
-        server_context.SavedAuthenticateMessage.init(in_client_to_server.get_offset());
-        memcpy(server_context.SavedAuthenticateMessage.get_data(),
-               in_client_to_server.get_data(), in_client_to_server.get_offset());
-    }
+    RED_REQUIRE(server_context.AUTHENTICATE_MESSAGE.has_mic);
+    memset(client_to_server_buf +
+            server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
+    server_context.SavedAuthenticateMessage.init(in_client_to_server.get_offset());
+    memcpy(server_context.SavedAuthenticateMessage.get_data(),
+            in_client_to_server.get_data(), in_client_to_server.get_offset());
 
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};

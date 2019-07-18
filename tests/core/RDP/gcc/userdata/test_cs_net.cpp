@@ -43,14 +43,13 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
     RED_CHECK_EQUAL(CS_NET, cs_net.userDataType);
     RED_CHECK_EQUAL(32, cs_net.length);
     RED_CHECK_EQUAL(2, cs_net.channelCount);
-    RED_CHECK_EQUAL('c', cs_net.channelDefArray[0].name[0]);
-    RED_CHECK_EQUAL(0, memcmp("cliprdr\0", cs_net.channelDefArray[0].name, 8));
+    RED_CHECK_MEM(make_array_view(cs_net.channelDefArray[0].name), "cliprdr\0"_av);
     RED_CHECK_EQUAL(( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                      | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL)
                      , cs_net.channelDefArray[0].options);
-    RED_CHECK_EQUAL(0, memcmp("rdpdr\0\0\0", cs_net.channelDefArray[1].name, 8));
+    RED_CHECK_MEM(make_array_view(cs_net.channelDefArray[1].name), "rdpdr\0\0\0"_av);
     RED_CHECK_EQUAL(( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP)
                      , cs_net.channelDefArray[1].options);

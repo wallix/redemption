@@ -800,7 +800,7 @@ RED_AUTO_TEST_CASE(TestBitmapUpate)
 /* 00c0 */ "\x14\xa5\x68\x00\x00\x89\x92\x94\xd3\x9c\x14\xa5\xd3\x9c\x92\x94" // ..h.............
 /* 00d0 */ "\x92\x94\x92\x94\x92\x94\xd3\x9c\x68\x00\x00\x89\x51\x8c\x92\x94" // ........h...Q...
 /* 00e0 */ "\x51\x8c\xb6\xb5\x00\x00\x00\x00\x00\x00\x51\x8c\x14\xa5\x6f\x00" // Q.........Q...o.
-/* 00f0 */ "\x00\x81\x51\x8c\x0e\x84\x00\x00\x00\x00\x00\x00\x00\x00"         // ..Q...........
+/* 00f0 */ "\x00\x81\x51\x8c\x0e\x84\x00\x00\x00\x00\x00\x00\x00"          // ..Q...........
     };
 
     const BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
@@ -819,8 +819,5 @@ RED_AUTO_TEST_CASE(TestBitmapUpate)
     StaticOutStream<1024> out;
     bmp2.compress(BitsPerPixel{16}, out);
 
-    auto data_compressed = bmp.data_compressed();
-
-    RED_CHECK_EQUAL(254, data_compressed.size());
-    RED_CHECK_EQUAL(0, memcmp(raw_bitmap, data_compressed.data(), data_compressed.size()));
+    RED_CHECK_MEM(bmp.data_compressed(), make_array_view(raw_bitmap));
 }

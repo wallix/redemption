@@ -27,10 +27,11 @@
 
 RED_AUTO_TEST_CASE(Test_gcc_sc_core)
 {
-    const char expected[] =
+    auto expected =
         "\x01\x0c\x0c\x00" // TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
         "\x04\x00\x08\x00" // TS_UD_SC_CORE::version = 0x0080004
         "\x00\x00\x00\x00" // TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
+        ""_av
     ;
 
     uint8_t buf[12];
@@ -40,8 +41,7 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_core)
     sc_core.clientRequestedProtocols = 0;
     OutStream out_stream(buf);
     sc_core.emit(out_stream);
-    RED_CHECK_EQUAL(12, out_stream.get_offset());
-    RED_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
+    RED_CHECK_MEM(out_stream.get_bytes(), expected);
 
     GCC::UserData::SCCore sc_core2;
 

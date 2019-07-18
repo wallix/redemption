@@ -765,6 +765,31 @@ struct InfoPacket {
     uint8_t WorkingDir[512]{};
     ExtendedInfoPacket extendedInfoPacket {}; // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
 
+    array_view_const_u8 av_domain() const noexcept
+    {
+        return {this->Domain, this->cbDomain};
+    }
+
+    array_view_const_u8 av_user_anme() const noexcept
+    {
+        return {this->UserName, this->cbUserName};
+    }
+
+    array_view_const_u8 av_password() const noexcept
+    {
+        return {this->Password, this->cbPassword};
+    }
+
+    array_view_const_u8 av_working_directory() const noexcept
+    {
+        return {this->WorkingDir, this->cbWorkingDir};
+    }
+
+    array_view_const_u8 av_alternate_shell() const noexcept
+    {
+        return {this->AlternateShell, this->cbAlternateShell};
+    }
+
     InfoPacket() = default;
 
     InfoPacket( int use_rdp5

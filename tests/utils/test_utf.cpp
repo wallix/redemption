@@ -516,83 +516,59 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16)
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF16_1) {
-    const uint8_t latin1_src[] = "100 \x80";
+    auto latin1_src = "100 \x80\0"_av;
 
-    const size_t number_of_characters = strlen(char_ptr_cast(latin1_src)) + 1;
-
-    const uint8_t utf16_expected[] = "\x31\x00\x30\x00\x30\x00\x20\x00"  // "100 €"
-                                     "\xac\x20\x00\x00";
+    auto utf16_expected = "\x31\x00\x30\x00\x30\x00\x20\x00"  // "100 €"
+                          "\xac\x20\x00\x00"_av;
 
     uint8_t utf16_dst[32];
 
-    RED_CHECK_EQUAL(
-        Latin1toUTF16({latin1_src, number_of_characters}, utf16_dst, sizeof(utf16_dst)),
-        number_of_characters * 2);
-
-    RED_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected, number_of_characters * 2), 0);
+    RED_CHECK_MEM(array_view(utf16_dst, Latin1toUTF16(latin1_src, utf16_dst, sizeof(utf16_dst))),
+        utf16_expected);
 
     uint8_t utf8_dst[16];
 
-    RED_CHECK_EQUAL(
-        UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
-        number_of_characters + 2 /* '€' => 0xE2 0x82 0xAC */ );
-
-    RED_CHECK_EQ(char_ptr_cast(utf8_dst), "100 €");
+    RED_CHECK_MEM(array_view(utf8_dst, UTF16toUTF8(utf16_dst, latin1_src.size() * 2, utf8_dst, sizeof(utf8_dst))),
+        "100 €\0"_av); /* '€' => 0xE2 0x82 0xAC */
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
-    const uint8_t latin1_src[] = "100 \x80"
-                                 "\x0a"
-                                 "trap\xe9zo\xef" "dal";
+    auto latin1_src = "100 \x80"
+                      "\x0a"
+                      "trap\xe9zo\xef" "dal\0"_av;
 
-    const size_t number_of_characters = strlen(char_ptr_cast(latin1_src)) + 1;
-
-    const uint8_t utf16_expected[] = "\x31\x00\x30\x00\x30\x00\x20\x00"  // "100 €"
-                                     "\xac\x20"
-                                     "\x0d\x00\x0a\x00"                  // "\r\n"
-                                     "\x74\x00\x72\x00\x61\x00\x70\x00"  // "trapézoïdal"
-                                     "\xe9\x00\x7a\x00\x6f\x00\xef\x00"
-                                     "\x64\x00\x61\x00\x6c\x00\x00\x00";
+    auto utf16_expected = "\x31\x00\x30\x00\x30\x00\x20\x00"  // "100 €"
+                          "\xac\x20"
+                          "\x0d\x00\x0a\x00"                  // "\r\n"
+                          "\x74\x00\x72\x00\x61\x00\x70\x00"  // "trapézoïdal"
+                          "\xe9\x00\x7a\x00\x6f\x00\xef\x00"
+                          "\x64\x00\x61\x00\x6c\x00\x00\x00"_av;
 
     uint8_t utf16_dst[64];
 
-    RED_CHECK_EQUAL(
-        Latin1toUTF16({latin1_src, number_of_characters}, utf16_dst, sizeof(utf16_dst)),
-        number_of_characters * 2 + 2 /* '\n' -> 0x0D 0x00 0x0A 0x00 */);
-
-    RED_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected,
-                             number_of_characters * 2 + 2   // '\n' -> 0x0D 0x00 0x0A 0x00
-                            ), 0);
+    RED_CHECK_MEM(array_view(utf16_dst, Latin1toUTF16(latin1_src, utf16_dst, sizeof(utf16_dst))),
+        utf16_expected);
 
     uint8_t utf8_dst[32];
 
-    RED_CHECK_EQUAL(
-        UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
-        number_of_characters + 2 /* '€'  => 0xE2 0x82 0xAC */
-                             + 1 /* '\n' => 0x0D 0x0A */
-                             + 2 /* 'é'  => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
-
-    RED_CHECK_EQ(char_ptr_cast(utf8_dst), "100 €\r\ntrapézoïdal");
+    RED_CHECK_MEM(array_view(utf8_dst, UTF16toUTF8(utf16_dst, latin1_src.size() * 2, utf8_dst, sizeof(utf8_dst))),
+        "100 €\r\ntrapézoïdal\0"_av);
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF8) {
-    const uint8_t latin1_src[] = "100 \x80"                 // "100 €"
-                                 "\n"                       // \n
-                                 "trap\xe9zo\xef" "dal";    // "trapézoïdal"
+    auto latin1_src = "100 \x80"                 // "100 €"
+                      "\n"                       // \n
+                      "trap\xe9zo\xef" "dal"_av; // "trapézoïdal"
 
-    const size_t number_of_characters = strlen(char_ptr_cast(latin1_src)) + 1;
-
-    const uint8_t utf8_expected[] = "100 \xc2\x80"
-                                    "\x0a"
-                                    "trap\xc3\xa9zo\xc3\xaf" "dal";
+    auto utf8_expected = "100 \xc2\x80"
+                         "\x0a"
+                         "trap\xc3\xa9zo\xc3\xaf" "dal"_av;
 
     uint8_t utf8_dst[64];
 
-    RED_CHECK_EQUAL(
-        Latin1toUTF8(latin1_src, number_of_characters, utf8_dst, sizeof(utf8_dst)),
-        sizeof(utf8_expected));
-
-    RED_CHECK_EQ_RANGES(utf8_expected, make_array_view(utf8_dst, sizeof(utf8_expected)));
+    RED_CHECK_MEM(
+        array_view(utf8_dst, Latin1toUTF8(byte_ptr_cast(latin1_src.data()), latin1_src.size(), utf8_dst, sizeof(utf8_dst))),
+        utf8_expected);
 }
 
 RED_AUTO_TEST_CASE(TestUTF8StringAdjustedNbBytes) {
@@ -643,13 +619,14 @@ RED_AUTO_TEST_CASE(TestUtf16UpperCase)
     0xFF5A ; 0xFF3A     # FULLWIDTH LATIN CAPITAL LETTER Z
     */
     int number_of_elements = sizeof(test)/sizeof(test[0])-2;
-    uint8_t expected[] ="\xb7\x01\x8A\x03\xda\x03\x01\x04"  /* Ʒ Ί Ϛ Ё */
-                        "\x25\x04\x34\x05\x10\x1e\x09\x1f"  /* Х Դ Ḑ Ἁ */
-                        "\x49\x1f\x25\xff\x52\x00\x54\x00"  /* Ὁ Ｅ R T */
-                        "\x66\x2c\xc3\x1f\x3a\xff";         /* Ⱦ ΗΙ Ｚ  */
+    auto expected = "\xb7\x01\x8A\x03\xda\x03\x01\x04"  /* Ʒ Ί Ϛ Ё */
+                    "\x25\x04\x34\x05\x10\x1e\x09\x1f"  /* Х Դ Ḑ Ἁ */
+                    "\x49\x1f\x25\xff\x52\x00\x54\x00"  /* Ὁ Ｅ R T */
+                    "\x66\x2c\xc3\x1f\x3a\xff\x00"      /* Ⱦ ΗΙ Ｚ  */
+                    ""_av;
     UTF16Upper(test, number_of_elements);
 
-    RED_CHECK_EQUAL(memcmp(test, expected, number_of_elements), 0);
+    RED_CHECK_MEM(make_array_view(test), expected);
 }
 
 

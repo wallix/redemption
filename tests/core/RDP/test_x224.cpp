@@ -231,8 +231,7 @@ RED_AUTO_TEST_CASE(TestSend_CR_TPDU)
 {
     StaticOutStream<256> stream;
     X224::CR_TPDU_Send x224(stream, "", 0, 0, 0);
-    RED_CHECK_EQUAL(11, stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", stream.get_data(), 11));
+    RED_CHECK_MEM(stream.get_bytes(), "\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
@@ -280,13 +279,12 @@ RED_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
     X224::CR_TPDU_Send(stream,
             "Cookie: mstshash=administrateur@qa\x0D\x0A",
             X224::RDP_NEG_REQ, 0, X224::PROTOCOL_TLS);
-    RED_CHECK_EQUAL(55, stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_MEM(stream.get_bytes(),
 /* 0000 */ "\x03\x00\x00\x37\x32\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...72......Cooki |
 /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69" //e: mstshash=admi |
 /* 0020 */ "\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x0d\x0a\x01" //nistrateur@qa... |
 /* 0030 */ "\x00\x08\x00\x01\x00\x00\x00"                                     //....... |
-    , stream.get_data(), 55));
+        ""_av);
 }
 
 
@@ -337,8 +335,7 @@ RED_AUTO_TEST_CASE(TestSend_CC_TPDU)
 {
     StaticOutStream<256> stream;
     X224::CC_TPDU_Send x224(stream, 0, 0, 0);
-    RED_CHECK_EQUAL(11, stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", stream.get_data(), 11));
+    RED_CHECK_MEM(stream.get_bytes(), "\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
@@ -376,9 +373,8 @@ RED_AUTO_TEST_CASE(TestSend_CC_TPDU_TLS)
 {
     StaticOutStream<256> stream;
     X224::CC_TPDU_Send x224(stream, X224::RDP_NEG_RSP, 0, X224::PROTOCOL_TLS);
-    RED_CHECK_EQUAL(19, stream.get_offset());
-    RED_CHECK_EQUAL(0,
-        memcmp("\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00", stream.get_data(), 19));
+    RED_CHECK_MEM(stream.get_bytes(),
+        "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
@@ -419,9 +415,7 @@ RED_AUTO_TEST_CASE(TestSend_DR_TPDU)
 {
     StaticOutStream<256> stream;
     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
-    RED_CHECK_EQUAL(11, stream.get_offset());
-    RED_CHECK_EQUAL(0,
-        memcmp("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x00", stream.get_data(), 11));
+    RED_CHECK_MEM(stream.get_bytes(), "\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
@@ -455,9 +449,7 @@ RED_AUTO_TEST_CASE(TestSend_ER_TPDU)
     StaticOutStream<256> stream;
     uint8_t invalid[2] = {0x06, 0x22};
     X224::ER_TPDU_Send x224(stream, X224::REASON_INVALID_TPDU_TYPE, 2, invalid);
-    RED_CHECK_EQUAL(13, stream.get_offset());
-    RED_CHECK_EQUAL(0,
-        memcmp("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", stream.get_data(), 13));
+    RED_CHECK_MEM(stream.get_bytes(), "\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22"_av);
 }
 
 

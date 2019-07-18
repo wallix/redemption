@@ -127,11 +127,12 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
 
 RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure1)
 {
-    const uint8_t reference_data[] =
+    auto reference_data =
 /* 0008 */                                 "\x7f\x00\x00\x00\x28\x00\x00\x00" //         ....(...
 /* 0010 */ "\x48\x00\x69\x00\x67\x00\x68\x00\x20\x00\x43\x00\x6f\x00\x6e\x00" // H.i.g.h. .C.o.n.
 /* 0020 */ "\x74\x00\x72\x00\x61\x00\x73\x00\x74\x00\x20\x00\x42\x00\x6c\x00" // t.r.a.s.t. .B.l.
 /* 0030 */ "\x61\x00\x63\x00\x6b\x00\x00\x00"                                 // a.c.k...
+            ""_av
         ;
 
     uint8_t buf[2048];
@@ -142,12 +143,8 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure1)
 
     high_contrast_system_information_structure.emit(out_stream);
 
-    RED_CHECK_EQUAL(sizeof(reference_data) - 1, high_contrast_system_information_structure.size());
-    RED_CHECK_EQUAL(sizeof(reference_data) - 1, out_stream.get_offset());
-
-    //hexdump(buf, out_stream.get_offset());
-
-    RED_CHECK_EQUAL(0, ::memcmp(buf, reference_data, sizeof(reference_data) - 1));
+    RED_CHECK_EQUAL(reference_data.size(), high_contrast_system_information_structure.size());
+    RED_CHECK_MEM(out_stream.get_bytes(), reference_data);
 }
 
 RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure2)
@@ -173,14 +170,12 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure2)
 }
 
 
-
-
-
 RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure3)
 {
-    const uint8_t reference_data[] =
+    auto reference_data =
 /* 0008 */                                 "\x7e\x00\x00\x00\x02\x00\x00\x00" //         ....(...
 /* 0010 */ "\x00\x00"                                                         // ..
+            ""_av
         ;
 
     uint8_t buf[2048];
@@ -191,22 +186,19 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure3)
 
     high_contrast_system_information_structure.emit(out_stream);
 
-    RED_CHECK_EQUAL(sizeof(reference_data) - 1, high_contrast_system_information_structure.size());
-    RED_CHECK_EQUAL(sizeof(reference_data) - 1, out_stream.get_offset());
-
-    //hexdump(buf, out_stream.get_offset());
-
-    RED_CHECK_EQUAL(0, ::memcmp(buf, reference_data, sizeof(reference_data) - 1));
+    RED_CHECK_EQUAL(reference_data.size(), high_contrast_system_information_structure.size());
+    RED_CHECK_MEM(out_stream.get_bytes(), reference_data);
 }
 
 RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure4)
 {
-    const uint8_t reference_data[] =
+    auto reference_data =
 /* 0008 */                                 "\x7e\x00\x00\x00\x02\x00\x00\x00" //         ....(...
 /* 0010 */ "\x00\x00"                                                         // ..
+            ""_av
         ;
 
-    InStream in_stream(reference_data, sizeof(reference_data) - 1);
+    InStream in_stream(reference_data);
 
     HighContrastSystemInformationStructure
         high_contrast_system_information_structure;

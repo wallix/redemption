@@ -24,12 +24,13 @@
 
 RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)
 {
-    const char in_data[] =
+    auto in_data =
             "\x81\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
             "\x07\x00\x00\x00\x01\x00\x00\x00\x20\x00\x00\x00\x0e\x00\x00\x00" // ........ .......
             "\x5c\x00\x2e\x00\x63\x00\x70\x00\x61\x00\x6e\x00\x00\x00"         // ....c.p.a.n...
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::DeviceCreateRequest device_create_request;
 
@@ -42,33 +43,33 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)
     RED_CHECK_EQUAL(device_create_request.CreateDisposition(), 1);
     RED_CHECK_EQUAL(device_create_request.CreateOptions(), 32);
     RED_CHECK_EQUAL(device_create_request.PathLength(), 14);
-    RED_CHECK_EQUAL(0, memcmp(device_create_request.Path().data(), "/.cpan", (device_create_request.PathLength()/2)-1));
+    RED_CHECK_MEM(device_create_request.Path(), "/.cpan"_av);
 
     //device_create_request.log();
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     device_create_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 RED_AUTO_TEST_CASE(TestDeviceCreateRequest2)
 {
-    const char in_data[] =
+    auto in_data =
             "\x89\x00\x12\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
             "\x07\x00\x00\x00\x01\x00\x00\x00\x60\x00\x00\x00\x36\x00\x00\x00" // ........`...6...
             "\x5c\x00\x50\x00\x72\x00\x6f\x00\x67\x00\x72\x00\x61\x00\x6d\x00" // ..P.r.o.g.r.a.m.
             "\x20\x00\x46\x00\x69\x00\x6c\x00\x65\x00\x73\x00\x5c\x00\x64\x00" //  .F.i.l.e.s...d.
             "\x65\x00\x73\x00\x6b\x00\x74\x00\x6f\x00\x70\x00\x2e\x00\x69\x00" // e.s.k.t.o.p...i.
             "\x6e\x00\x69\x00\x00\x00"                                         // n.i...
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::DeviceCreateRequest device_create_request;
 
@@ -81,28 +82,28 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest2)
     RED_CHECK_EQUAL(device_create_request.CreateDisposition(), 1);
     RED_CHECK_EQUAL(device_create_request.CreateOptions(), 0x00000060);
     RED_CHECK_EQUAL(device_create_request.PathLength(), 54);
-    RED_CHECK_EQUAL(0, memcmp(device_create_request.Path().data(), "/Program Files/desktop.ini", (device_create_request.PathLength()/2)-1));
+    RED_CHECK_MEM(device_create_request.Path(), "/Program Files/desktop.ini"_av);
 
     //device_create_request.log();
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     device_create_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 RED_AUTO_TEST_CASE(TestDeviceCreateResponse1)
 {
-    const char in_data[] =
+    auto in_data =
             "\x00\x00\x00\x00\x00"                                             // .....
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::DeviceCreateResponse device_create_response;
 
@@ -112,26 +113,24 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse1)
 
     //device_create_request.log(LOG_INFO);
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(),
-                      in_stream.get_offset() +
-                      1 /* Information(1) is ignored */);
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 RED_AUTO_TEST_CASE(TestDeviceCreateResponse2)
 {
-    const char in_data[] =
+    auto in_data =
             "\x00\x00\x00\x00"                                                 // ....
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::DeviceCreateResponse device_create_response;
 
@@ -141,26 +140,24 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse2)
 
     //device_create_request.log(LOG_INFO);
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(),
-                      in_stream.get_offset() +
-                      1 /* Information(1) is ignored */);
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), "\0\0\0\0\0"_av);
 }
 
 RED_AUTO_TEST_CASE(TestDeviceCreateResponse3)
 {
-    const char in_data[] =
+    auto in_data =
             "\x00\x00\x00\x00\x01"                                             // .....
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::DeviceCreateResponse device_create_response;
 
@@ -170,16 +167,15 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse3)
 
     //device_create_request.log(LOG_INFO);
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 
@@ -201,11 +197,12 @@ RED_AUTO_TEST_CASE(ClientAnnounceReply) {
 
 RED_AUTO_TEST_CASE(ClientNameRequest1)
 {
-    const char in_data[] =
+    auto in_data =
             "\x01\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x72\x00\x7a\x00" // ............r.z.
             "\x68\x00\x00\x00"                                                 // h...
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::ClientNameRequest client_name_request;
 
@@ -213,25 +210,25 @@ RED_AUTO_TEST_CASE(ClientNameRequest1)
 
     //client_name_request.log(LOG_INFO);
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     client_name_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 RED_AUTO_TEST_CASE(ClientNameRequest2)
 {
-    const char in_data[] =
+    auto in_data =
             "\x4d\x62\x16\x2d\x00\x00\x00\x00\x12\x00\x00\x00\x52\x00\x44\x00" // Mb.-........R.D.
             "\x50\x00\x2d\x00\x54\x00\x45\x00\x53\x00\x54\x00\x00\x00"         // P.-.T.E.S.T...
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::ClientNameRequest client_name_request;
 
@@ -239,26 +236,26 @@ RED_AUTO_TEST_CASE(ClientNameRequest2)
 
     //client_name_request.log(LOG_INFO);
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     client_name_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 RED_AUTO_TEST_CASE(FileRenameInformation1)
 {
-    const char in_data[] =
+    auto in_data =
             "\x00\x00\x24\x00\x00\x00\x5c\x00\x57\x00\x41\x00\x42\x00\x41\x00" // ..&.....W.A.B.A.
             "\x67\x00\x65\x00\x6e\x00\x74\x00\x20\x00\x2d\x00\x20\x00\x43\x00" // g.e.n.t. .-. .C.
             "\x6f\x00\x2e\x00\x65\x00\x78\x00\x65\x00"                         // o...e.x.e.
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::RDPFileRenameInformation file_rename_information;
 
@@ -266,26 +263,26 @@ RED_AUTO_TEST_CASE(FileRenameInformation1)
 
     //file_rename_information.log(LOG_INFO);
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     file_rename_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest1)
 {
-    const char in_data[] =
+    auto in_data =
             "\x03\x00\x00\x00\x01\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
             "\x5c\x00\x42\x00\x49\x00\x4e\x00\x00\x00"                         // ..B.I.N...
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::ServerDriveQueryDirectoryRequest server_drive_query_directory_request;
 
@@ -293,28 +290,28 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest1)
 
     //server_drive_query_directory_request.log(LOG_INFO);
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest2)
 {
-    const char in_data[] =
+    auto in_data =
             "\x03\x00\x00\x00\x01\x2a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // .....*..........
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
             "\x5c\x00\x53\x00\x70\x00\x79\x00\x5c\x00\x73\x00\x70\x00\x79\x00" // ..S.p.y...s.p.y.
             "\x78\x00\x78\x00\x5f\x00\x61\x00\x6d\x00\x64\x00\x36\x00\x34\x00" // x.x._.a.m.d.6.4.
             "\x2e\x00\x65\x00\x78\x00\x65\x00\x00\x00"                         // ..e.x.e...
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     rdpdr::ServerDriveQueryDirectoryRequest server_drive_query_directory_request;
 
@@ -322,16 +319,15 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest2)
 
     //server_drive_query_directory_request.log(LOG_INFO);
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
     //hexdump_av(out_stream.get_bytes())
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
 
 RED_AUTO_TEST_CASE(CapabilityHeader)

@@ -323,7 +323,7 @@ RED_AUTO_TEST_CASE(TestMetaFilePicDescriptor)
 
 RED_AUTO_TEST_CASE(TestFileDescriptor)
 {
-    const char in_data[] =
+    auto in_data =
             "\x64\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // d@..............
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
             "\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // .... ...........
@@ -361,8 +361,9 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
+            ""_av
         ;
-    InStream in_stream(in_data, sizeof(in_data) - 1);
+    InStream in_stream(in_data);
 
     RDPECLIP::FileDescriptor file_descriptor;
 
@@ -370,20 +371,16 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 
     //file_descriptor.log(LOG_INFO);
 
-    RED_CHECK_EQUAL(sizeof(in_data) - 1, file_descriptor.size());
+    RED_CHECK_EQUAL(in_data.size(), file_descriptor.size());
 
-    char out_data[sizeof(in_data)];
+    char out_data[1200];
 
-    OutStream out_stream(out_data, sizeof(out_data));
+    OutStream out_stream(out_data);
 
     file_descriptor.emit(out_stream);
-//     LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-//     hexdump_av(out_stream.get_bytes());
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
+    RED_CHECK_MEM(out_stream.get_bytes(), in_data);
 }
-
 
 
 RED_AUTO_TEST_CASE(TestFormatListPDU)
@@ -408,17 +405,16 @@ RED_AUTO_TEST_CASE(TestFormatListPDU)
     clipboard_header.emit(out_stream);
     format_list_pdu.emit(out_stream, use_long_format_names);
 
-    const char exp_data[] =
+    auto exp_data =
         "\x02\x00\x00\x00\x5e\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00" //....^.......F.i.
         "\x6c\x00\x65\x00\x43\x00\x6f\x00\x6e\x00\x74\x00\x65\x00\x6e\x00" //l.e.C.o.n.t.e.n.
         "\x74\x00\x73\x00\x00\x00\x99\xbb\x00\x00\x46\x00\x69\x00\x6c\x00" //t.s.......F.i.l.
         "\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00\x65\x00" //e.G.r.o.u.p.D.e.
         "\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00\x72\x00" //s.c.r.i.p.t.o.r.
         "\x57\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00" //W...............
-        "\x03\x00\x00\x00\x00\x00";
+        "\x03\x00\x00\x00\x00\x00"_av;
 
-    RED_CHECK_EQUAL(out_stream.get_offset(), sizeof(exp_data) - 1);
-    RED_CHECK_EQUAL(::memcmp(out_stream.get_data(), exp_data, std::min(out_stream.get_offset(), sizeof(exp_data) - 1)), 0);
+    RED_CHECK_MEM(out_stream.get_bytes(), exp_data);
 }
 
 
@@ -525,10 +521,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
 
         format_list_pdu.emit(out_stream, use_long_format_names);
 
-        auto exp_data = cstr_array_view("\x01\x00\x00\x00\x00\x00");
-
-        RED_CHECK_EQUAL(6, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
+        RED_CHECK_MEM("\x01\x00\x00\x00\x00\x00"_av, out_stream.get_bytes());
     }
 
     {
@@ -561,10 +554,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
 
         format_list_pdu.emit(out_stream, use_long_format_names);
 
-        auto exp_data = cstr_array_view("\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00\x00\x00");
-
-        RED_CHECK_EQUAL(14, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
+        RED_CHECK_MEM("\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00\x00\x00"_av, out_stream.get_bytes());
     }
 }
 
@@ -699,7 +689,6 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             );
 
-        RED_CHECK_EQUAL(36, out_stream.get_offset());
         RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
@@ -729,7 +718,6 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
                 "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             );
 
-        RED_CHECK_EQUAL(72, out_stream.get_offset());
         RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
@@ -752,7 +740,6 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
                             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             );
 
-        RED_CHECK_EQUAL(36, out_stream.get_offset());
         RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
@@ -774,11 +761,9 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
                 "R\x00"
                         "\xe9\x00"  // 'é'
                                 "d\x00" "e\x00" "m\x00" "p\x00" "t\x00" "i\x00"
-                "o\x00" "n\x00" "C\x00" "l\x00" "i\x00" "p\x00" "b\x00"
-                                                                        "\x00\x00"
+                "o\x00" "n\x00" "C\x00" "l\x00" "i\x00" "p\x00" "b\x00" "\x00\x00"
             );
 
-        RED_CHECK_EQUAL(36, out_stream.get_offset());
         RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
@@ -801,7 +786,6 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
                                                                             "\x00"
             );
 
-        RED_CHECK_EQUAL(36, out_stream.get_offset());
         RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 }

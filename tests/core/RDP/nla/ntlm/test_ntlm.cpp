@@ -355,9 +355,9 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(input_buffer.size(), 0);
 
     // ENCRYPT
-    uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
+    auto message = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!"_av;
     Array Result;
-    server_status = server_table.EncryptMessage(message, Result, 0);
+    server_status = server_table.EncryptMessage(const_bytes_view(message), Result, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
     const unsigned cbMaxSignature = 16u;
@@ -370,9 +370,9 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Array Result2;
     client_status = client_table.DecryptMessage({Result.get_data(), Result.size()}, Result2, 0);
 
-    RED_CHECK_EQUAL(Result.size(), make_array_view(message).size() + cbMaxSignature);
-    RED_CHECK(0 != memcmp(Result.get_data(), message, Result.size() - cbMaxSignature));
-    RED_CHECK_MEM(Result2.av(), make_array_view(message));
-
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
+
+    RED_REQUIRE(Result.size() == message.size() + cbMaxSignature);
+    RED_CHECK(0 != memcmp(Result.get_data(), message.data(), message.size()));
+    RED_CHECK_MEM(Result2.av(), make_array_view(message));
 }

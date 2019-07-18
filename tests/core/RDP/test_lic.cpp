@@ -176,18 +176,21 @@ RED_AUTO_TEST_CASE(Test_lic_new_licence)
     RED_CHECK_EQUAL(uint32_t(6), (lic.licenseInfo.dwVersion >> 16) & 0xFFFF); // major
     RED_CHECK_EQUAL(uint32_t(0), (lic.licenseInfo.dwVersion & 0xFFFF));       // minor
     RED_CHECK_EQUAL(uint32_t(14), lic.licenseInfo.cbScope);
-    RED_CHECK_EQUAL(0, memcmp("\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d\x00", lic.licenseInfo.pbScope, lic.licenseInfo.cbScope));
+    RED_CHECK_MEM("\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d\x00"_av,
+        array_view(lic.licenseInfo.pbScope, lic.licenseInfo.cbScope));
     RED_CHECK_EQUAL(uint32_t(44), lic.licenseInfo.cbCompanyName);
 
-    RED_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_MEM(
         /* 0000 */ "\x4d\x00\x69\x00\x63\x00\x72\x00\x6f\x00\x73\x00\x6f\x00\x66\x00" //M.i.c.r.o.s.o.f.
         /* 0010 */ "\x74\x00\x20\x00\x43\x00\x6f\x00\x72\x00\x70\x00\x6f\x00\x72\x00" //t. .C.o.r.p.o.r.
         /* 0020 */ "\x61\x00\x74\x00\x69\x00\x6f\x00\x6e\x00\x00\x00"                 //a.t.i.o.n...
-        , lic.licenseInfo.pbCompanyName, lic.licenseInfo.cbCompanyName));
+        ""_av,
+        array_view(lic.licenseInfo.pbCompanyName, lic.licenseInfo.cbCompanyName));
     RED_CHECK_EQUAL(uint32_t(8), lic.licenseInfo.cbProductId);
-    RED_CHECK_EQUAL(0, memcmp("\x41\x00\x30\x00\x32\x00\x00\x00", lic.licenseInfo.pbProductId, lic.licenseInfo.cbProductId));
+    RED_CHECK_MEM("\x41\x00\x30\x00\x32\x00\x00\x00"_av,
+        array_view(lic.licenseInfo.pbProductId, lic.licenseInfo.cbProductId));
     RED_CHECK_EQUAL(uint32_t(1945), lic.licenseInfo.cbLicenseInfo);
-    RED_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_MEM(
                             "\x30\x82\x07\x95\x06\x09\x2a\x86\x48\x86"
                             "\xf7\x0d\x01\x07\x02\xa0\x82\x07\x86\x30\x82\x07\x82\x02\x01\x01"
                             "\x31\x00\x30\x0b\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x07\x01\xa0"
@@ -310,9 +313,11 @@ RED_AUTO_TEST_CASE(Test_lic_new_licence)
                             "\x24\x3f\x92\x8b\xdb\x04\x7b\x9d\x64\x91\xa4\x4b\xd2\x6e\x51\x05"
                             "\x08\xc9\x91\xaf\x31\x26\x55\x21\xb1\xea\xce\xa3\xa4\x0d\x5e\x4c"
                             "\x46\xdb\x16\x2d\x98\xdc\x60\x19\xb8\x1b\xb9\xcd\xfb\x31\x00"
-                    , lic.licenseInfo.pbLicenseInfo, lic.licenseInfo.cbLicenseInfo));
-    RED_CHECK_EQUAL(0, memcmp(
-        "\xed\xe8\xbf\xd6\x13\xa0\xf5\x80\x4a\xe5\xff\x85\x16\xfa\xcb\x1f", lic.MACData, LIC::LICENSE_SIGNATURE_SIZE));
+        ""_av,
+        array_view(lic.licenseInfo.pbLicenseInfo, lic.licenseInfo.cbLicenseInfo));
+    RED_CHECK_MEM(
+        "\xed\xe8\xbf\xd6\x13\xa0\xf5\x80\x4a\xe5\xff\x85\x16\xfa\xcb\x1f"_av,
+        array_view(lic.MACData, LIC::LICENSE_SIGNATURE_SIZE));
 
 }
 
@@ -466,18 +471,21 @@ RED_AUTO_TEST_CASE(Test_lic_upgrade_licence)
     RED_CHECK_EQUAL(uint32_t(6), (lic.licenseInfo.dwVersion >> 16) & 0xFFFF); // major
     RED_CHECK_EQUAL(uint32_t(0), (lic.licenseInfo.dwVersion & 0xFFFF));       // minor
     RED_CHECK_EQUAL(uint32_t(14), lic.licenseInfo.cbScope);
-    RED_CHECK_EQUAL(0, memcmp("\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d\x00", lic.licenseInfo.pbScope, lic.licenseInfo.cbScope));
+    RED_CHECK_MEM("\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d\x00"_av,
+        array_view(lic.licenseInfo.pbScope, lic.licenseInfo.cbScope));
     RED_CHECK_EQUAL(uint32_t(44), lic.licenseInfo.cbCompanyName);
 
-    RED_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_MEM(
         /* 0000 */ "\x4d\x00\x69\x00\x63\x00\x72\x00\x6f\x00\x73\x00\x6f\x00\x66\x00" //M.i.c.r.o.s.o.f.
         /* 0010 */ "\x74\x00\x20\x00\x43\x00\x6f\x00\x72\x00\x70\x00\x6f\x00\x72\x00" //t. .C.o.r.p.o.r.
         /* 0020 */ "\x61\x00\x74\x00\x69\x00\x6f\x00\x6e\x00\x00\x00"                 //a.t.i.o.n...
-        , lic.licenseInfo.pbCompanyName, lic.licenseInfo.cbCompanyName));
+        ""_av,
+        array_view(lic.licenseInfo.pbCompanyName, lic.licenseInfo.cbCompanyName));
     RED_CHECK_EQUAL(uint32_t(8), lic.licenseInfo.cbProductId);
-    RED_CHECK_EQUAL(0, memcmp("\x41\x00\x30\x00\x32\x00\x00\x00", lic.licenseInfo.pbProductId, lic.licenseInfo.cbProductId));
+    RED_CHECK_MEM("\x41\x00\x30\x00\x32\x00\x00\x00"_av,
+        array_view(lic.licenseInfo.pbProductId, lic.licenseInfo.cbProductId));
     RED_CHECK_EQUAL(uint32_t(1945), lic.licenseInfo.cbLicenseInfo);
-    RED_CHECK_EQUAL(0, memcmp(
+    RED_CHECK_MEM(
                             "\x30\x82\x07\x95\x06\x09\x2a\x86\x48\x86"
                             "\xf7\x0d\x01\x07\x02\xa0\x82\x07\x86\x30\x82\x07\x82\x02\x01\x01"
                             "\x31\x00\x30\x0b\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x07\x01\xa0"
@@ -600,10 +608,9 @@ RED_AUTO_TEST_CASE(Test_lic_upgrade_licence)
                             "\x24\x3f\x92\x8b\xdb\x04\x7b\x9d\x64\x91\xa4\x4b\xd2\x6e\x51\x05"
                             "\x08\xc9\x91\xaf\x31\x26\x55\x21\xb1\xea\xce\xa3\xa4\x0d\x5e\x4c"
                             "\x46\xdb\x16\x2d\x98\xdc\x60\x19\xb8\x1b\xb9\xcd\xfb\x31\x00"
-                    , lic.licenseInfo.pbLicenseInfo, lic.licenseInfo.cbLicenseInfo));
-    RED_CHECK_EQUAL(0, memcmp(
-        "\xed\xe8\xbf\xd6\x13\xa0\xf5\x80\x4a\xe5\xff\x85\x16\xfa\xcb\x1f", lic.MACData, LIC::LICENSE_SIGNATURE_SIZE));
-
+                            ""_av,
+        array_view(lic.licenseInfo.pbLicenseInfo, lic.licenseInfo.cbLicenseInfo));
+    RED_CHECK_MEM(
+        "\xed\xe8\xbf\xd6\x13\xa0\xf5\x80\x4a\xe5\xff\x85\x16\xfa\xcb\x1f"_av,
+        array_view(lic.MACData, LIC::LICENSE_SIGNATURE_SIZE));
 }
-
-

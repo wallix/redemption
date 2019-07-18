@@ -165,13 +165,10 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     RED_CHECK_EQUAL(indata.size(), sc_sec1.length);
     RED_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
     RED_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
-    RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
     RED_CHECK_EQUAL(1358, sc_sec1.serverCertLen);
-//    hexdump_c(sc_sec1.serverRandom, 32);
-    RED_CHECK_EQUAL(0, memcmp(
-                        "\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6\xce\xea\xd9\x07"
-                        "\x58\x2f\x66\x6c\xd6\xa4\x32\x45\x1e\x61\x7a\xba\x95\x8c\xfd\x23"
-                     , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
+    RED_CHECK_MEM(array_view(sc_sec1.serverRandom, sc_sec1.serverRandomLen),
+        "\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6\xce\xea\xd9\x07"
+        "\x58\x2f\x66\x6c\xd6\xa4\x32\x45\x1e\x61\x7a\xba\x95\x8c\xfd\x23"_av);
     RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2), sc_sec1.dwVersion);
     RED_CHECK_EQUAL(true, sc_sec1.temporary);
 
@@ -209,14 +206,71 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     RED_CHECK_EQUAL(1, sc_sec1.encryptionLevel);
     RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
     RED_CHECK_EQUAL(184, sc_sec1.serverCertLen);
-//    hexdump_c(sc_sec1.serverRandom, 32);
-    RED_CHECK_EQUAL(0, memcmp(
-                    "\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83\xbd\xb4\xde\x56"
-                    "\xc4\x61\xb9\x5b\x05\x3d\xd9\xc6\x84\xe9\x83\x69\x25\xd4\x82\x3f"
-                             , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
+    RED_CHECK_MEM(array_view(sc_sec1.serverRandom, sc_sec1.serverRandomLen),
+        "\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83\xbd\xb4\xde\x56"
+        "\xc4\x61\xb9\x5b\x05\x3d\xd9\xc6\x84\xe9\x83\x69\x25\xd4\x82\x3f"_av);
     RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
     RED_CHECK_EQUAL(false, sc_sec1.temporary);
     RED_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
     // sc_sec1.log("Server Received");
+}
+
+RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
+{
+    constexpr auto indata =
+        // SC_SECURITY tag=0c02 length=428
+        /* 0000 */ "\x02\x0c\xac\x01\x02\x00\x00\x00\x02\x00\x00\x00\x20\x00\x00\x00" //............ ...
+        /* 0010 */ "\x78\x01\x00\x00\xd0\x33\x1c\x1c\xd1\x2e\xc6\xe0\xd2\xcf\x8f\x64" //x....3.........d
+        /* 0020 */ "\x15\x44\x44\xed\x5a\x56\x1b\xd5\x26\xb7\xce\x38\x9b\xe1\x76\xe4" //.DD.ZV..&..8..v.
+        /* 0030 */ "\x3b\x35\x37\x9f\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00" //;57.............
+        /* 0040 */ "\x06\x00\x1c\x01\x52\x53\x41\x31\x08\x01\x00\x00\x00\x08\x00\x00" //....RSA1........
+        /* 0050 */ "\xff\x00\x00\x00\x01\x00\x01\x00\xa5\xa9\x3b\x58\xeb\x5b\x52\xfa" //..........;X.[R.
+        /* 0060 */ "\x53\x91\x3f\x23\x8c\xeb\xbe\x0c\x9a\x80\x74\x12\xe7\x2e\x33\xa8" //S.?#......t...3.
+        /* 0070 */ "\x66\xa6\x4c\x4b\xb3\xdb\xdc\xc9\xf1\x71\x99\xba\x1e\x59\x9d\xc4" //f.LK.....q...Y..
+        /* 0080 */ "\x83\xa2\xea\x6d\xd6\x8d\xc6\xb2\xf3\xac\xe4\x10\xb6\xb8\x12\xae" //...m............
+        /* 0090 */ "\x03\x5b\xfd\x9d\x91\x8f\x48\x08\x96\x07\x89\x3a\x51\x54\x76\x39" //.[....H....:QTv9
+        /* 00a0 */ "\x73\x5f\x0a\x3d\x4e\xe1\x9a\x95\x88\x8a\xf8\x90\xf1\x1c\x86\xd6" //s_.=N...........
+        /* 00b0 */ "\x48\xa6\x4d\xe3\x73\xf8\xf7\xa4\xd0\x79\x21\x64\x6a\xcc\x3a\x80" //H.M.s....y!dj.:.
+        /* 00c0 */ "\x1a\x97\x99\x58\xad\x68\xc9\x64\x9d\x04\x35\x32\xf5\x65\x90\x75" //...X.h.d..52.e.u
+        /* 00d0 */ "\x05\x19\xde\x20\x16\xbd\x8b\xa3\xf3\x32\x67\xc1\x0f\x32\xb0\xb9" //... .....2g..2..
+        /* 00e0 */ "\x45\xdb\xdb\xbb\x83\xd9\xe8\xe7\x16\xcc\x47\x75\x0e\xba\xe1\xa2" //E.........Gu....
+        /* 00f0 */ "\x74\x29\x6c\xdb\x2b\x68\x92\xc8\x46\x38\x99\x3c\x52\xf0\x82\xe3" //t)l.+h..F8.<R...
+        /* 0100 */ "\xfa\xfc\x42\xdb\xa2\xc6\xda\xa2\xc3\xef\x1c\x27\x7b\x3d\x76\x31" //..B........'{=v1
+        /* 0110 */ "\x87\x13\xe3\x86\x72\xa6\xfe\xb8\xf7\x62\x44\x19\x62\x8b\x25\x15" //....r....bD.b.%.
+        /* 0120 */ "\x63\xfd\x9e\x49\xdd\x01\x31\x83\x42\xaf\x85\xb9\x27\x3c\x6f\x9f" //c..I..1.B...'<o.
+        /* 0130 */ "\x23\x66\xbd\x28\x21\x74\x88\xe3\x3e\xf8\xca\xd5\x25\x20\x96\x2b" //#f.(!t..>...% .+
+        /* 0140 */ "\xf7\xff\xf2\x55\x15\xf2\xb3\x31\xd5\xc5\x9d\xc0\xe0\xa9\x9f\xea" //...U...1........
+        /* 0150 */ "\x41\x8a\xe5\xa4\xbe\x09\xc7\xaf\x00\x00\x00\x00\x00\x00\x00\x00" //A...............
+        /* 0160 */ "\x08\x00\x48\x00\xff\xad\xca\x1a\x79\xd6\x10\x61\x0c\x65\xf0\x02" //..H.....y..a.e..
+        /* 0170 */ "\xb1\x54\x9f\x8b\x4e\x29\x9f\x09\x6a\x6b\xb7\xfe\xbd\xf3\x8a\x81" //.T..N)..jk......
+        /* 0180 */ "\x78\x3c\xae\x81\xf3\x46\x1d\x4a\x34\xa2\x03\x3b\x4d\xb5\x9d\xb6" //x<...F.J4..;M...
+        /* 0190 */ "\xf3\x69\x95\x17\xd4\x0a\x67\x4f\x84\xf4\x11\xe3\xec\xe8\x93\xa1" //.i....gO........
+        /* 01a0 */ "\xcb\x4c\x09\x25\x00\x00\x00\x00\x00\x00\x00\x00"             //.L.%........
+        ""_av
+    ;
+
+    InStream stream(indata);
+    GCC::UserData::SCSecurity sc_sec1;
+    sc_sec1.recv(stream);
+    RED_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    RED_CHECK_EQUAL(indata.size(), sc_sec1.length);
+    RED_CHECK_EQUAL(2, sc_sec1.encryptionMethod);
+    RED_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
+    RED_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    RED_CHECK_EQUAL(376, sc_sec1.serverCertLen);
+    //hexdump_c(sc_sec1.serverRandom, 32);
+    RED_CHECK_MEM(array_view(sc_sec1.serverRandom, sc_sec1.serverRandomLen),
+        "\xd0\x33\x1c\x1c\xd1\x2e\xc6\xe0\xd2\xcf\x8f\x64\x15\x44\x44\xed"
+        "\x5a\x56\x1b\xd5\x26\xb7\xce\x38\x9b\xe1\x76\xe4\x3b\x35\x37\x9f"_av);
+    RED_CHECK_EQUAL(static_cast<uint32_t>(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1), sc_sec1.dwVersion);
+    RED_CHECK_EQUAL(false, sc_sec1.temporary);
+    RED_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
+
+    // sc_sec1.log("Server Received");
+
+    StaticOutStream<indata.size()> out_stream;
+    sc_sec1.emit(out_stream);
+
+    RED_CHECK_MEM(out_stream.get_bytes(), indata);
 }

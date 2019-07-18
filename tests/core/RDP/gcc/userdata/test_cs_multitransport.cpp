@@ -30,7 +30,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
         "\x0a\xc0"         // CS_MULTITRANSPORT
         "\x08\x00"         // 8 bytes user Data
 
-        "\x05\x03\x00\x00" // TS_UD_CS_M
+        "\x05\x03\x00\x00" // TS_UD_CS_MULTITRANSPORT::flags
         ""_av);
     GCC::UserData::CSMultiTransport cs_multitransport;
     cs_multitransport.recv(stream);

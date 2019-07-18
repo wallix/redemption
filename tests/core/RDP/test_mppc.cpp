@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestMPPC)
         /* uncompress data */
         RED_CHECK_EQUAL(true, rmppc.decompress(compressed_rd5, sizeof(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K, rdata, rlen));
 
-        RED_CHECK_EQUAL(0, memcmp(decompressed_rd5, rdata, sizeof(decompressed_rd5)));
+        RED_CHECK_MEM(make_array_view(decompressed_rd5), array_view(rdata, rlen));
     }
 }
 
@@ -72,8 +72,7 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
 
     RED_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
     RED_CHECK_EQUAL(true, rmppc.decompress(enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
-    RED_CHECK_EQUAL(data_len, rlen);
-    RED_CHECK_EQUAL(0, memcmp(decompressed_rd5_data, rdata, rlen));
+    RED_CHECK_MEM(make_array_view(decompressed_rd5_data), array_view(rdata, rlen));
 }
 
 RED_AUTO_TEST_CASE(TestBitsSerializer)

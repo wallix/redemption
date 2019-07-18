@@ -110,21 +110,22 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
     uint16_t    cx       = 150;
     uint16_t    cy       = 200;
 
-    char text[] = "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
-                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
-                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
-                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà";
+    auto text =
+        "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+        "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+        "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+        "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"_av;
 
     /* TODO
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetGroupBox wgroupbox( drawable, parent, notifier, text
+    WidgetGroupBox wgroupbox( drawable, parent, notifier, text.data()
                             , fg_color, bg_color, global_font_lato_light_16());
     wgroupbox.set_wh(cx, cy);
     wgroupbox.set_xy(x, y);
 
-    RED_CHECK_EQUAL(0, memcmp(wgroupbox.get_text(), text, sizeof(text) - 3));
+    RED_CHECK_SMEM(std::string_view(wgroupbox.get_text()), text.first(text.size()-2));
 
     BGRColor focuscolor  = LIGHT_YELLOW;
     int  xtext       = 4;

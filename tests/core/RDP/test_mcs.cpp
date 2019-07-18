@@ -89,11 +89,8 @@ RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     RED_CHECK_EQUAL(65535, mcs.maximumParameters.maxMCSPDUsize);
     RED_CHECK_EQUAL(2, mcs.maximumParameters.protocolVersion);
 
-    RED_CHECK_EQUAL(1, mcs.len_callingDomainSelector);
-    RED_CHECK_EQUAL(0, memcmp("\x01", mcs.callingDomainSelector, 1));
-
-    RED_CHECK_EQUAL(1, mcs.len_calledDomainSelector);
-    RED_CHECK_EQUAL(0, memcmp("\x01", mcs.calledDomainSelector, 1));
+    RED_CHECK_MEM(array_view(mcs.callingDomainSelector, mcs.len_callingDomainSelector), "\x01"_av);
+    RED_CHECK_MEM(array_view(mcs.calledDomainSelector, mcs.len_calledDomainSelector), "\x01"_av);
 
     RED_CHECK_EQUAL(true, mcs.upwardFlag);
 
@@ -110,7 +107,7 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
     MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
     RED_CHECK_EQUAL(106, stream.get_offset());
 
-    const char * expected =
+    auto expected =
 /* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
 /* 0010 */ "\x01\x01\x01\x01\xff\x30\x1a\x02\x01\x22\x02\x01\x02\x02\x01\x00" //.....0..."...... |
 /* 0020 */ "\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x03\x00\xff\xff\x02\x01" //................ |
@@ -119,9 +116,10 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
 /* 0050 */ "\x00\xff\xff\x02\x02\xfc\x17\x02\x03\x00\xff\xff\x02\x01\x01\x02" //................ |
 /* 0060 */ "\x01\x00\x02\x01\x01\x02\x03\x00\xff\xff\x02\x01\x02\x04\x82\x01" //................ |
 /* 0070 */ "\x07" //.....|.......... |
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), 106));
+    RED_CHECK_MEM(expected, stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
@@ -165,7 +163,7 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
     MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
     RED_CHECK_EQUAL(header_size, stream.get_offset());
 
-    const char * expected =
+    auto expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
     "\x5a"     // LEN = payload_size + header_size
         // Result
@@ -214,20 +212,19 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
         // UserData
         "\x04" // BER_TAG_OCTET_STRING
         "\x36" // PAYLOAD LEN
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), header_size));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
 {
     StaticOutStream<2048> stream;
     size_t payload_size = 1024;
-    size_t header_size = 43;
     RED_CHECK_NO_THROW(MCS::CONNECT_RESPONSE_Send(stream, payload_size, MCS::BER_ENCODING));
-    RED_CHECK_EQUAL(header_size, stream.get_offset());
 
-    const char * expected =
+    auto expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
     "\x82\x04\x26"     // LEN = payload_size + header_size
         // Result
@@ -276,29 +273,29 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
         // UserData
         "\x04" // BER_TAG_OCTET_STRING
         "\x82\x04\x00" // PAYLOAD LEN
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), header_size));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
 {
     StaticOutStream<1024> stream;
-    size_t length = 5;
     int subheight = 0;
     int subinterval = 0;
     MCS::ErectDomainRequest_Send mcs(stream, subheight, subinterval, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x04"  // ErectDomainRequest * 4
         "\x01"  // subHeight len
         "\x00"  // subHeight
         "\x01"  // subInterval len
         "\x00"  // subInterval
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
@@ -321,16 +318,15 @@ RED_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
 RED_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
 {
     StaticOutStream<1024> stream;
-    size_t length = 2;
     MCS::DisconnectProviderUltimatum_Send mcs(stream, MCS::RN_DOMAIN_DISCONNECTED, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x20"  // DisconnectProviderUltimatum * 4
         "\x00"  // reason
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
@@ -349,15 +345,14 @@ RED_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
 RED_AUTO_TEST_CASE(TestSend_AttachUserRequest)
 {
     StaticOutStream<1024> stream;
-    size_t length = 1;
     MCS::AttachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x28"  // AttachUserRequest * 4
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
@@ -372,16 +367,14 @@ RED_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
 RED_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
 {
     StaticOutStream<1024> stream;
-    size_t length = 2;
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, false, 0, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x2C"  //  AttachUserConfirm * 4
         "\x00"
+        ""_av
     ;
-
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
@@ -400,17 +393,16 @@ RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
 RED_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
 {
     StaticOutStream<1024> stream;
-    size_t length = 4;
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, true, 1, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x2E"  //  AttachUserConfirm * 4
         "\x00"
         "\x00\x01"
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
@@ -432,17 +424,16 @@ RED_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
 RED_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
 {
     StaticOutStream<1024> stream;
-    size_t length = 5;
     MCS::ChannelJoinRequest_Send mcs(stream, 3, 1004, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x38"  // ChannelJoinRequest * 4
         "\x00\x03" // userId = 3
         "\x03\xec" // channelId = 1004
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
@@ -464,19 +455,18 @@ RED_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
 RED_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
 {
     StaticOutStream<1024> stream;
-    size_t length = 8;
     MCS::ChannelJoinConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, 3, 1004, true, 1004, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x3E"  // ChannelJoinConfirm * 4
         "\x00"  // result RT_SUCCESSFUL
         "\x00\x03" // userId = 3
         "\x03\xec" // requested = 1004
         "\x03\xec" // channelId = 1004
+        ""_av
     ;
 
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
@@ -501,18 +491,17 @@ RED_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 RED_AUTO_TEST_CASE(TestSend_SendDataRequest)
 {
     StaticOutStream<1024> stream;
-    size_t length = 8;
     MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x64"  // SendDataRequest * 4
         "\x00\x03" // userid  = 3
         "\x03\xec" // channel = 1005
         "\x70"     // high priority, segmentation end
         "\x81\x7b" // len 379
+        ""_av
     ;
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_SendDataRequest)
@@ -565,18 +554,17 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 RED_AUTO_TEST_CASE(TestSend_SendDataIndication)
 {
     StaticOutStream<1024> stream;
-    size_t length = 8;
     MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
-    RED_CHECK_EQUAL(length, stream.get_offset());
 
-    const char * expected =
+    auto expected =
         "\x68"  // SendDataIndication * 4
         "\x00\x03" // userid  = 3
         "\x03\xec" // channel = 1005
         "\x70"     // high priority, segmentation end
         "\x81\x7b" // len 379
+        ""_av
     ;
-    RED_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
+    RED_CHECK_MEM(stream.get_bytes(), expected);
 }
 
 RED_AUTO_TEST_CASE(TestRecv_SendDataIndication)

@@ -30,6 +30,9 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+#include <string_view>
+
+
 RED_AUTO_TEST_CASE(TraceWidgetLabel)
 {
     TestGraphic drawable(800, 600);
@@ -432,19 +435,20 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelMax)
     int16_t x = 10;
     int16_t y = 100;
 
-    char text[] = "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
-                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
-                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
-                  "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà";
+    auto text =
+        "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+        "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+        "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"
+        "éàéàéàéàéàéàéàéàéàéàéàéàéàéàéàéà"_av;
 
-    WidgetLabel wlabel(drawable, parent, notifier, text,
+    WidgetLabel wlabel(drawable, parent, notifier, text.data(),
         id, fg_color, bg_color, global_font_lato_light_16());
     Dimension dim = wlabel.get_optimal_dim();
     wlabel.set_wh(dim);
     wlabel.set_xy(x, y);
 
 
-    RED_CHECK_EQUAL(0, memcmp(wlabel.get_text(), text, sizeof(text) - 3));
+    RED_CHECK_SMEM(std::string_view(wlabel.get_text()), text.subarray(0, text.size()-2));
 
     // ask to widget to redraw at it's current position
     wlabel.rdp_input_invalidate(Rect(0 + wlabel.x(),

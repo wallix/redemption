@@ -39,7 +39,6 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
         unsigned int pFlags = 0;
         const char * posWildcard = FilePatternFindNextWildcardA(input, &pFlags);
         RED_CHECK(posWildcard - input == 4);
-        RED_CHECK(memcmp(input, "toto", 4) == 0);
         RED_CHECK(pFlags == WILDCARD_STAR);
     }
 
@@ -48,7 +47,6 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
         unsigned int pFlags = 0;
         const char * posWildcard = FilePatternFindNextWildcardA(input, &pFlags);
         RED_CHECK(posWildcard - input == 4);
-        RED_CHECK(memcmp(input, "toto", 4) == 0);
         RED_CHECK(pFlags == WILDCARD_STAR);
     }
     {
@@ -56,7 +54,6 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
         unsigned int pFlags = 0;
         const char * posWildcard = FilePatternFindNextWildcardA(input, &pFlags);
         RED_CHECK(posWildcard - input == 4);
-        RED_CHECK(memcmp(input, "toto", 4) == 0);
         RED_CHECK(pFlags == WILDCARD_QM);
     }
 
@@ -65,7 +62,6 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
         unsigned int pFlags = 0;
         const char * posWildcard = FilePatternFindNextWildcardA(input, &pFlags);
         RED_CHECK(posWildcard - input == 4);
-        RED_CHECK(memcmp(input, "toto", 4) == 0);
         RED_CHECK(pFlags == WILDCARD_DOS_STAR);
     }
 
@@ -74,7 +70,6 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
         unsigned int pFlags = 0;
         const char * posWildcard = FilePatternFindNextWildcardA(input, &pFlags);
         RED_CHECK(posWildcard - input == 4);
-        RED_CHECK(memcmp(input, "toto", 4) == 0);
         RED_CHECK(pFlags == WILDCARD_DOS_QM);
     }
     {
@@ -82,7 +77,6 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
         unsigned int pFlags = 0;
         const char * posWildcard = FilePatternFindNextWildcardA(input, &pFlags);
         RED_CHECK(posWildcard - input == 4);
-        RED_CHECK(memcmp(input, "toto", 4) == 0);
         RED_CHECK(pFlags == WILDCARD_DOS_DOT);
     }
 }
@@ -90,12 +84,6 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
 
 RED_AUTO_TEST_CASE(TestFilePatternMatchA)
 {
-    {
-        bool res = FilePatternMatchA("toto.exe", "*.exe");
-        RED_CHECK(res);
-    }
-    {
-        bool res = FilePatternMatchA("toto.exe", "*.com");
-        RED_CHECK(res == false);
-    }
+    RED_CHECK(FilePatternMatchA("toto.exe", "*.exe"));
+    RED_CHECK(!FilePatternMatchA("toto.exe", "*.com"));
 }
