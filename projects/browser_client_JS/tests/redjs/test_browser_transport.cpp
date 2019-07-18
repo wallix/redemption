@@ -26,13 +26,13 @@ RED_AUTO_TEST_CASE(TestBrowserTransport)
 {
     redjs::BrowserTransport trans;
 
-    RED_CHECK_MEM_C(trans.get_out_buffer(), "");
+    RED_CHECK_MEM(trans.get_out_buffer(), ""_av);
     trans.add_in_buffer("abc");
-    RED_CHECK_MEM_C(trans.get_out_buffer(), "");
+    RED_CHECK_MEM(trans.get_out_buffer(), ""_av);
 
     char buffer[10];
     RED_CHECK(3 == trans.partial_read(make_array_view(buffer)));
-    RED_CHECK_MEM_C(array_view(buffer, 3), "abc");
+    RED_CHECK_MEM(array_view(buffer, 3), "abc"_av);
     RED_CHECK_EXCEPTION_ERROR_ID(
         (void)trans.partial_read(make_array_view(buffer)),
         ERR_TRANSPORT_NO_MORE_DATA);
@@ -46,19 +46,19 @@ RED_AUTO_TEST_CASE(TestBrowserTransport)
     trans.add_in_buffer("vwx");
     trans.add_in_buffer("yz");
     RED_CHECK(3 == trans.partial_read(array_view(buffer, 3)));
-    RED_CHECK_MEM_C(array_view(buffer, 3), "def");
+    RED_CHECK_MEM(array_view(buffer, 3), "def"_av);
     RED_CHECK(6 == trans.partial_read(array_view(buffer, 6)));
-    RED_CHECK_MEM_C(array_view(buffer, 6), "ghijkl");
+    RED_CHECK_MEM(array_view(buffer, 6), "ghijkl"_av);
     RED_CHECK(5 == trans.partial_read(array_view(buffer, 5)));
-    RED_CHECK_MEM_C(array_view(buffer, 5), "mnopq");
+    RED_CHECK_MEM(array_view(buffer, 5), "mnopq"_av);
     RED_CHECK(6 == trans.partial_read(array_view(buffer, 6)));
-    RED_CHECK_MEM_C(array_view(buffer, 6), "rstuvw");
+    RED_CHECK_MEM(array_view(buffer, 6), "rstuvw"_av);
     RED_CHECK(3 == trans.partial_read(array_view(buffer, 6)));
-    RED_CHECK_MEM_C(array_view(buffer, 3), "xyz");
+    RED_CHECK_MEM(array_view(buffer, 3), "xyz"_av);
 
     trans.send("123"_av);
     trans.send("456"_av);
-    RED_CHECK_MEM_C(trans.get_out_buffer(), "123456");
+    RED_CHECK_MEM(trans.get_out_buffer(), "123456"_av);
     trans.clear_out_buffer();
-    RED_CHECK_MEM_C(trans.get_out_buffer(), "");
+    RED_CHECK_MEM(trans.get_out_buffer(), ""_av);
 }

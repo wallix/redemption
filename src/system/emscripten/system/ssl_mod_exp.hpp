@@ -23,16 +23,11 @@
 
 #include "utils/crypto/ssl_mod_exp_direct.hpp"
 
-static inline size_t mod_exp(
-    uint8_t * out, size_t out_len,
-    const uint8_t * inr, size_t in_len,
-    const uint8_t * modulus, size_t modulus_size,
-    const uint8_t * exponent, size_t exponent_size
+static inline bytes_view mod_exp(
+    bytes_view out,
+    const_bytes_view inr,
+    const_bytes_view modulus,
+    const_bytes_view exponent
 ) {
-    return mod_exp_direct(
-        out, out_len,
-        inr, in_len,
-        modulus, modulus_size,
-        exponent, exponent_size
-    );
+    return mod_exp_direct(out, inr, modulus, exponent);
 }
