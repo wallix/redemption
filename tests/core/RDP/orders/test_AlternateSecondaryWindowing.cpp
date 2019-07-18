@@ -28,7 +28,7 @@ int main()
     WindowInformationCommonHeader wch_s(WINDOW_ORDER_TYPE_WINDOW, WindowId);
 
     uint8_t data[256];
-    OutStream out_stream(data, sizeof(data));
+    OutStream out_stream(data);
 
     wch_s.emit_begin(out_stream);
     wch_s.emit_end();

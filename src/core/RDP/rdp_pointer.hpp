@@ -22,17 +22,17 @@
 #pragma once
 
 #include "utils/bitfu.hpp"
-
-#include <algorithm> // std::min
-#include <cassert>
-#include <cstring>
-#include <vector>
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/pixel_io.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
+
+#include <algorithm> // std::min
+#include <cassert>
+#include <cstring>
+
 
 struct CursorSize {
     unsigned width;
@@ -87,7 +87,7 @@ struct Pointer {
                            uint16_t dlen, const uint8_t * data,
                            uint16_t mlen, const uint8_t * mask,
                            bool clean_up_32_bpp_cursor);
-    friend Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max);
+    friend Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, array_view_const_u8 vncdata, array_view_const_u8 vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max);
     friend Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor);
     friend Pointer predefined_pointer(const unsigned width, const unsigned height,
                                       const char * def,
@@ -737,8 +737,7 @@ inline Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, cons
     return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor);
 }
 
-
-inline Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
+inline Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, array_view_const_u8 vncdata, array_view_const_u8 vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
 {
 // VNC Pointer format
 // ==================

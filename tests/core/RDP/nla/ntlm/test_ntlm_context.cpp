@@ -46,12 +46,12 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
 
     // hexdump_c((uint8_t*)&ntlm_nego_flag.flags, 4);
 
-    uint8_t nego_string[] =
+    auto nego_string =
         /* 0000 */ "\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08\xe2"
         /* 0010 */ "\x00\x00\x00\x00\x28\x00\x00\x00\x00\x00\x00\x00\x28\x00\x00\x00"
-        /* 0020 */ "\x05\x01\x28\x0a\x00\x00\x00\x0f";
+        /* 0020 */ "\x05\x01\x28\x0a\x00\x00\x00\x0f"_av;
 
-    uint8_t challenge_string[] =
+    auto challenge_string =
         /* 0000 */ "\x4e\x54\x4c\x4d\x53\x53\x50\x00\x02\x00\x00\x00\x08\x00\x08\x00"
         /* 0010 */ "\x38\x00\x00\x00\x35\x82\x8a\xe2\x26\x6e\xcd\x75\xaa\x41\xe7\x6f"
         /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x40\x00\x40\x00\x00\x00"
@@ -59,12 +59,12 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
         /* 0040 */ "\x02\x00\x08\x00\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00"
         /* 0050 */ "\x57\x00\x49\x00\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00"
         /* 0060 */ "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
-        /* 0070 */ "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
+        /* 0070 */ "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00"_av;
 
-    InStream s(nego_string, sizeof(nego_string) - 1);
+    InStream s(nego_string);
     context.NEGOTIATE_MESSAGE.recv(s);
 
-    s = InStream(challenge_string, sizeof(challenge_string) - 1);
+    s = InStream(challenge_string);
     context.CHALLENGE_MESSAGE.recv(s);
 
     const uint8_t password[] = {
@@ -292,19 +292,19 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
         auto & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.buffer;
         workstationbuff.reset();
-        workstationbuff.ostream.out_copy_bytes(workstation, sizeof(workstation));
+        workstationbuff.ostream.out_copy_bytes(make_array_view(workstation));
         workstationbuff.mark_end();
     }
 
     auto & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.buffer;
     domain.reset();
-    domain.ostream.out_copy_bytes(userDomain, sizeof(userDomain));
+    domain.ostream.out_copy_bytes(make_array_view(userDomain));
     domain.mark_end();
 
     auto & user = client_context.AUTHENTICATE_MESSAGE.UserName.buffer;
 
     user.reset();
-    user.ostream.out_copy_bytes(userName, sizeof(userName));
+    user.ostream.out_copy_bytes(make_array_view(userName));
     user.mark_end();
 
     client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
