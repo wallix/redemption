@@ -70,21 +70,22 @@ public:
             }
 
             char finalPathBuffer[256];
-            char const* finalPath = captureTemplate.format(finalPathBuffer, connection_counter);
+            char const* finalPath = captureTemplate.format(
+                make_array_view(finalPathBuffer), connection_counter);
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
             TimeSystem timeobj;
             RecorderFile outFile(timeobj, finalPath);
 
             SocketTransport lowFrontConn("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
-            SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort), 
+            SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort),
                 this->targetHost.c_str(), this->targetPort, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
             TraceTransport frontConn("front", lowFrontConn);
-            TraceTransport backConn("back", lowBackConn); 
+            TraceTransport backConn("back", lowBackConn);
             NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
             NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
             ProxyRecorder conn(back_nla_tee_trans, outFile, timeobj, this->targetHost.c_str(), this->nla_username, this->nla_password, enable_kerberos, verbosity);
-                
+
             try {
                 // TODO: key becomes ready quite late (just before calling nego server) inside front_step1(), henceforth doing it here won't work
                 // but as it is an array view the adress of the array that will contain the key is already ok

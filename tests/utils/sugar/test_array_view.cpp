@@ -21,9 +21,11 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "cxx/diagnostic.hpp"
 #include "utils/sugar/array_view.hpp"
 
 #include <string>
+#include <string_view>
 
 namespace {
 
@@ -44,9 +46,9 @@ RED_AUTO_TEST_CASE(TestArrayView)
     array_view<const char>{} = array_view<char>{};
     array_view<const char>{} = array_view<char>(a8, short(2));
 
-    RED_CHECK_EQUAL(test_ambiguous(a8), 1);
-    RED_CHECK_EQUAL(test_ambiguous(as8), 2);
-    RED_CHECK_EQUAL(test_ambiguous(au8), 3);
+    RED_CHECK_EQUAL(test_ambiguous(make_array_view(a8)), 1);
+    RED_CHECK_EQUAL(test_ambiguous(make_array_view(as8)), 2);
+    RED_CHECK_EQUAL(test_ambiguous(make_array_view(au8)), 3);
 
     RED_CHECK_EQUAL(make_array_view(a8).size(), 3u);
 
@@ -170,23 +172,74 @@ RED_AUTO_TEST_CASE(TestSubArray)
 }
 
 template<class T>
-auto check_call(T && a, int /*unused*/) -> decltype(cstr_array_view(a), true)
+constexpr auto check_cstr_array_view_call(T && a, int /*unused*/) -> decltype(cstr_array_view(a), true)
 {
     return true;
 }
 
 
 template<class T>
-bool check_call(T && /*unused*/, char /*unused*/)
+constexpr bool check_cstr_array_view_call(T && /*unused*/, char /*unused*/)
 {
     return false;
 }
 
-RED_AUTO_TEST_CASE(TestCStrOnlyWorksForLiterals)
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcomma")
+template<class V, class T>
+constexpr auto check_array_view_call(T && a, int /*unused*/)
+  -> decltype(void(array_view<V>(std::forward<T>(a))), true)
 {
-    char cstr[5] = {'0', '1', '2', '\0', '5'};
-    RED_CHECK_EQUAL(check_call(cstr, 1), false);
-    RED_CHECK_EQUAL(check_call("abc", 1), true);
-    char const * p = nullptr;
-    RED_CHECK_EQUAL(check_call(p, 1), false);
+    return true;
 }
+REDEMPTION_DIAGNOSTIC_POP
+
+template<class V, class T>
+constexpr bool check_array_view_call(T && /*unused*/, char /*unused*/)
+{
+    return false;
+}
+
+namespace
+{
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
+    struct Range
+    {
+        char* data() const { return nullptr; }
+        std::size_t size() const { return 0; }
+    };
+    REDEMPTION_DIAGNOSTIC_POP
+
+    char cstr[5] = {'0', '1', '2', '\0', '5'};
+    char const * p = nullptr;
+    std::string str;
+    std::string_view strv;
+    int ints[3]{};
+    Range rng;
+}
+
+static_assert(not check_cstr_array_view_call(cstr, 1));
+static_assert(check_cstr_array_view_call("abc", 1));
+static_assert(not check_cstr_array_view_call(p, 1));
+
+static_assert(not check_array_view_call<char>(cstr, 1));
+static_assert(not check_array_view_call<char>("abc", 1));
+static_assert(not check_array_view_call<char>(p, 1));
+static_assert(check_array_view_call<char>(str, 1));
+static_assert(not check_array_view_call<char>(strv, 1));
+static_assert(check_array_view_call<char>(rng, 1));
+
+static_assert(not check_array_view_call<const char>(cstr, 1));
+static_assert(not check_array_view_call<const char>("abc", 1));
+static_assert(not check_array_view_call<const char>(p, 1));
+static_assert(check_array_view_call<const char>(str, 1));
+static_assert(check_array_view_call<const char>(strv, 1));
+static_assert(check_array_view_call<const char>(std::string_view{}, 1));
+static_assert(not check_array_view_call<const char>(Range{}, 1));
+static_assert(check_array_view_call<const char>(rng, 1));
+
+static_assert(not check_array_view_call<int>(cstr, 1));
+static_assert(not check_array_view_call<int>(p, 1));
+static_assert(check_array_view_call<int>(ints, 1));
+static_assert(not check_array_view_call<int>(rng, 1));

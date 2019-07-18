@@ -24,11 +24,41 @@
 
 #include <cstdint>
 #include <cassert>
+#include <string_view>
 
 #include "utils/sugar/array.hpp"
 
 #include "cxx/cxx.hpp"
 
+namespace detail
+{
+    template<class T, class R>
+    struct filter_dangerous_implicite_array_view
+    {
+        using type = R;
+    };
+
+    template<std::size_t N, class R>
+    struct filter_dangerous_implicite_array_view<char[N], R>;
+
+    template<std::size_t N, class R>
+    struct filter_dangerous_implicite_array_view<uint8_t[N], R>;
+
+    template<std::size_t N, class R>
+    struct filter_dangerous_implicite_array_view<const char[N], R>;
+
+    template<std::size_t N, class R>
+    struct filter_dangerous_implicite_array_view<const uint8_t[N], R>;
+
+    template<class T, class R>
+    struct filter_rvalue_array_view;
+
+    template<class T, class R>
+    struct filter_rvalue_array_view<std::basic_string_view<T>, R>
+    {
+        using type = R;
+    };
+}
 
 template<class T>
 struct array_view
@@ -58,14 +88,24 @@ struct array_view
     , sz(pright - p)
     {}
 
-    template<class U, class = decltype(
+    template<class U, class = typename detail::filter_dangerous_implicite_array_view<U, decltype(
         *static_cast<type**>(nullptr) = utils::data(std::declval<U&>()),
         *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&>())
-    )>
+    )>::type>
     constexpr array_view(U & x)
     noexcept(noexcept((void(utils::data(x)), utils::size(x))))
     : p(utils::data(x))
     , sz(utils::size(x))
+    {}
+
+    template<class U, class = typename detail::filter_rvalue_array_view<std::remove_const_t<U>, decltype(
+        *static_cast<type**>(nullptr) = utils::data(std::declval<U&>()),
+        *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&>())
+    )>::type>
+    constexpr array_view(U && x)
+    noexcept(noexcept((void(utils::data(std::forward<U>(x))), utils::size(std::forward<U>(x)))))
+    : p(utils::data(std::forward<U>(x)))
+    , sz(utils::size(std::forward<U>(x)))
     {}
 
     template<class U, class = decltype(

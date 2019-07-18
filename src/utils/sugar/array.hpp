@@ -35,7 +35,7 @@ namespace utils
         { return a; }
 
         template<class C>
-        constexpr auto data(C & c)
+        constexpr auto data(C && c)
         noexcept(noexcept(c.data()))
         -> decltype(c.data())
         { return c.data(); }
@@ -45,7 +45,7 @@ namespace utils
         { return n; }
 
         template<class C>
-        constexpr auto size(C & c)
+        constexpr auto size(C && c)
         noexcept(noexcept(c.size()))
         -> decltype(c.size())
         { return c.size(); }
@@ -61,16 +61,16 @@ namespace utils
         using adl_barrier_::size;
 
         template<class C>
-        constexpr auto data_impl(C & c)
-        noexcept(noexcept(data(c)))
-        -> decltype(data(c))
-        { return data(c); }
+        constexpr auto data_impl(C && c)
+        noexcept(noexcept(data(static_cast<C&&>(c))))
+        -> decltype(data(static_cast<C&&>(c)))
+        { return data(static_cast<C&&>(c)); }
 
         template<class C>
-        constexpr auto size_impl(C & c)
-        noexcept(noexcept(size(c)))
-        -> decltype(size(c))
-        { return size(c); }
+        constexpr auto size_impl(C && c)
+        noexcept(noexcept(size(static_cast<C&&>(c))))
+        -> decltype(size(static_cast<C&&>(c)))
+        { return size(static_cast<C&&>(c)); }
 
         using std::begin;
         using std::end;
@@ -78,29 +78,29 @@ namespace utils
         using std::cend;
 
         template<class C>
-        constexpr auto begin_impl(C & c)
-        noexcept(noexcept(size(c)))
-        -> decltype(begin(c))
-        { return begin(c); }
+        constexpr auto begin_impl(C && c)
+        noexcept(noexcept(size(static_cast<C&&>(c))))
+        -> decltype(begin(static_cast<C&&>(c)))
+        { return begin(static_cast<C&&>(c)); }
 
         template<class C>
-        constexpr auto end_impl(C & c)
-        noexcept(noexcept(size(c)))
-        -> decltype(end(c))
-        { return end(c); }
+        constexpr auto end_impl(C && c)
+        noexcept(noexcept(size(static_cast<C&&>(c))))
+        -> decltype(end(static_cast<C&&>(c)))
+        { return end(static_cast<C&&>(c)); }
     }  // namespace detail_
 
     template<class C>
-    constexpr auto data(C & c)
-    noexcept(noexcept(detail_::data_impl(c)))
-    -> decltype(detail_::data_impl(c))
-    { return detail_::data_impl(c); }
+    constexpr auto data(C && c)
+    noexcept(noexcept(detail_::data_impl(static_cast<C&&>(c))))
+    -> decltype(detail_::data_impl(static_cast<C&&>(c)))
+    { return detail_::data_impl(static_cast<C&&>(c)); }
 
     template<class C>
-    constexpr auto size(C & c)
-    noexcept(noexcept(detail_::size_impl(c)))
-    -> decltype(static_cast<std::size_t>(detail_::size_impl(c)))
-    { return static_cast<std::size_t>(detail_::size_impl(c)); }
+    constexpr auto size(C && c)
+    noexcept(noexcept(detail_::size_impl(static_cast<C&&>(c))))
+    -> decltype(static_cast<std::size_t>(detail_::size_impl(static_cast<C&&>(c))))
+    { return static_cast<std::size_t>(detail_::size_impl(static_cast<C&&>(c))); }
 
     template<class Cont>
     auto begin(Cont & cont)

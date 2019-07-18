@@ -2633,7 +2633,7 @@ public:
         this->update_keyboard_input_mask_state();
 
         if (!started) {
-            this->session_update("Front::session_probe_started: Probe.Status=Unknown");
+            this->session_update("Front::session_probe_started: Probe.Status=Unknown"_av);
         }
     }
 

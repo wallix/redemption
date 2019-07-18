@@ -41,6 +41,7 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include <algorithm>
 
 #ifdef __EMSCRIPTEN__
@@ -185,7 +186,7 @@ public:
                         FILE_TIME_SYSTEM_TO_RDP(sb.st_ctime),   // VolumeCreationTime(8)
                         svfsb.f_fsid,                           // VolumeSerialNumber(4)
                         1,                                      // SupportsObjects(1) - FALSE
-                        "REDEMPTION"
+                        "REDEMPTION"_av
                     );
 
                 out_stream.out_uint32_le(file_fs_volume_information.size());    // Length(4)
@@ -249,7 +250,7 @@ public:
                             //fscc::FILE_READ_ONLY_VOLUME |
                             fscc::FILE_UNICODE_ON_DISK,
                         svfsb.f_namemax,                        // MaximumComponentNameLength(4)
-                        "FAT32"                                 // FileSystemName(variable)
+                        "FAT32"_av                              // FileSystemName(variable)
                     );
 
                 out_stream.out_uint32_le(file_fs_attribute_information.size()); // Length(4)
@@ -1093,7 +1094,7 @@ public:
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
                         Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY)
                         | Flag(!(sb.st_mode & S_IWUSR),fscc::FILE_ATTRIBUTE_READONLY),
-                        entry->d_name
+                        make_array_view(entry->d_name)
                         );
                     if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                         LOG(LOG_INFO,
@@ -1124,7 +1125,7 @@ public:
                         sb.st_size, sb.st_blocks * 512 /* Block size */,
                         Flag(S_ISDIR(sb.st_mode),fscc::FILE_ATTRIBUTE_DIRECTORY)
                         | Flag(!(sb.st_mode & S_IWUSR), fscc::FILE_ATTRIBUTE_READONLY),
-                        entry->d_name
+                        make_array_view(entry->d_name)
                         );
                     if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                         LOG(LOG_INFO,
@@ -1147,7 +1148,8 @@ public:
                         erref::NTSTATUS::STATUS_SUCCESS,
                         verbose);
 
-                    const fscc::FileNamesInformation file_name_information(entry->d_name);
+                    const fscc::FileNamesInformation file_name_information(
+                        make_array_view(entry->d_name));
                     if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                         LOG(LOG_INFO,
                             "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest");
