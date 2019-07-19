@@ -1,3 +1,8 @@
+redemption (7.2.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 19 Jul 2019 15:30:15 +0200
+
 redemption (7.2.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Export group membership of target account in metadata.
