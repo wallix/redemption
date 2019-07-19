@@ -35,12 +35,6 @@
 
 
 namespace {
-    template<class... Str>
-    std::array<char const *, sizeof...(Str)>
-    make_array(Str... str) {
-        return {{str...}};
-    }
-
     void draw_bitmap(Drawable & drawable, char const * bitmap_filename) {
         Bitmap bmp = bitmap_from_file_impl(bitmap_filename);
         RED_REQUIRE(bmp.is_valid());
@@ -64,14 +58,12 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/m-21288-2.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Gestionnaire de serveur"
-        );
+        std::array expected{"Gestionnaire de serveur"_av};
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -87,15 +79,15 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture2.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "licences TSGestionnaire de licences TS",
-            "Gestionnaire de licences TSGestionnaire de licences TS"
-        );
+        std::array expected{
+            "licences TSGestionnaire de licences TS"_av,
+            "Gestionnaire de licences TSGestionnaire de licences TS"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 1);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -104,14 +96,14 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture4.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "plop fi test fififid zjhufh .txt - Bloc-notes"
-        );
+        std::array expected{
+            "plop fi test fififid zjhufh .txt - Bloc-notes"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -120,14 +112,14 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Gestionnaire de licences TS"
-        );
+        std::array expected{
+            "Gestionnaire de licences TS"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -136,15 +128,15 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture3.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Gestionnaire de serveur",
-            "Gestionna. ? de : .en? s TS"
-        );
+        std::array expected{
+            "Gestionnaire de serveur"_av,
+            "Gestionna. ? de : .en? s TS"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -153,15 +145,15 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture5.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
+        std::array expected{
             "ff fff ffff f fa fz fe fr ft fy fu fi fo fp fq fs fd fg fh fj fk fl fm fw fx fc fv fb fn f, f;"
-            " f% fè fé f& f# fà f@ ffi p.txt - Bloc-notes"
-        );
+            " f% fè fé f& f# fà f@ ffi p.txt - Bloc-notes"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -170,14 +162,14 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture6.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "ff fff ffff ? ? ? pp ff p fff p ffff p ? p ? p ? p.txt - Bloc-notes"
-        );
+        std::array expected{
+            "ff fff ffff ? ? ? pp ff p fff p ffff p ? p ? p ? p.txt - Bloc-notes"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -186,14 +178,14 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture9.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "af rt rf th jk kk ok oo lo LM .txt - Bloc-notes"
-        );
+        std::array expected{
+            "af rt rf th jk kk ok oo lo LM .txt - Bloc-notes"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -202,14 +194,14 @@ RED_AUTO_TEST_CASE(TestPPOCR1)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture10.bmp");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes"
-        );
+        std::array expected{
+            "qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -229,14 +221,14 @@ RED_AUTO_TEST_CASE(Test2008R2)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008R2_server_manager.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Server Manager"
-        );
+        std::array expected{
+            "Server Manager"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
     }
 }
 
@@ -259,14 +251,14 @@ RED_AUTO_TEST_CASE(TestNewOCR2)
         draw_bitmap(drawable, FIXTURES_PATH "/win2008capture10.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes"
-        );
+        std::array expected{
+            "qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -277,14 +269,14 @@ RED_AUTO_TEST_CASE(TestNewOCR2)
                               "wab2-3-1-0.yourdomain,8575-001616-000000.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            ":es"
-        );
+        std::array expected{
+            ":es"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -304,14 +296,14 @@ RED_AUTO_TEST_CASE(TestNewOCR3)
         draw_bitmap(drawable, FIXTURES_PATH "/win2002capture1.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "toto"
-        );
+        std::array expected{
+            "toto"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -331,14 +323,14 @@ RED_AUTO_TEST_CASE(TestNewOCR4)
         draw_bitmap(drawable, FIXTURES_PATH "/capture1.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "É.txt - Bloc-notes"
-        );
+        std::array expected{
+            "É.txt - Bloc-notes"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -348,14 +340,14 @@ RED_AUTO_TEST_CASE(TestNewOCR4)
         extractor.reset_titlebar_color_id();
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Poste de travail"
-        );
+        std::array expected{
+            "Poste de travail"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -375,14 +367,14 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012)
         draw_bitmap(drawable, FIXTURES_PATH "/win2012capture2.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Hyper-V Manager"
-        );
+        std::array expected{
+            "Hyper-V Manager"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -391,14 +383,14 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012)
         draw_bitmap(drawable, FIXTURES_PATH "/win2012capture3.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "wab_hv-12"
-        );
+        std::array expected{
+            "wab_hv-12"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -418,14 +410,14 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012_VNC)
         draw_bitmap(drawable, FIXTURES_PATH "/win2012_vnc_t9209.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Bibliothèques"
-        );
+        std::array expected{
+            "Bibliothèques"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -445,14 +437,14 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
         draw_bitmap(drawable, FIXTURES_PATH "/w2012s_Gestionnaire_de_serveur.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-                "Gestionnaire de serveur"
-        );
+        std::array expected{
+                "Gestionnaire de serveur"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -461,14 +453,14 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
         draw_bitmap(drawable, FIXTURES_PATH "/w2012s_Gestionnaire_des_taches.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-                "Gestionnaire des tàches"
-        );
+        std::array expected{
+                "Gestionnaire des tàches"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -477,14 +469,14 @@ RED_AUTO_TEST_CASE(TestNewOCRWin2012Standard)
         draw_bitmap(drawable, FIXTURES_PATH "/w2012s_Panneau_de_configuration.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-                "Panneau de configuration"
-        );
+        std::array expected{
+                "Panneau de configuration"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 
         out_titles.clear();
     }
@@ -505,14 +497,14 @@ RED_AUTO_TEST_CASE(TestOCRBug)
         draw_bitmap(drawable, FIXTURES_PATH "/badocr.png");
         extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Computer"
-        );
+        std::array expected{
+            "Computer"_av
+        };
         RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
         auto idx_best = filter.extract_best_title(out_titles);
         RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+        RED_CHECK_SMEM(expected[idx_best], filter.get_title());
     }
 }
 
@@ -533,12 +525,12 @@ RED_DATA_TEST_CASE(TestNewOCRRussian, (std::array{
     draw_bitmap(drawable, filename);
     extractor.extract_titles(drawable, out_titles);
 
-    auto expected = make_array(
-        "Устройства и принтеры"
-    );
+    std::array expected{
+        "Устройства и принтеры"_av
+        };
     RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
     auto idx_best = filter.extract_best_title(out_titles);
     RED_CHECK_EQUAL(idx_best, 0);
-    RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
+    RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 }

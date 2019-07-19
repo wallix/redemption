@@ -131,22 +131,4 @@ namespace utils
     constexpr T &
     back(T (& a)[N])
     { return a[N-1]; }
-
-    template<class T, class... Ts>
-    constexpr
-    std::array<T, sizeof...(Ts)>
-    make_array(Ts && ... values)
-    {
-        using array_type = std::array<T, sizeof...(Ts)>;
-        return array_type{{T(std::forward<Ts>(values))...}};
-    }
-
-    template<class T, class... Ts>
-    constexpr
-    std::array<typename std::decay<T>::type, sizeof...(Ts) + 1>
-    make_array(T && value, Ts && ... values)
-    {
-        using array_type = std::array<typename std::decay<T>::type, sizeof...(Ts) + 1>;
-        return array_type{{std::forward<T>(value), std::forward<Ts>(values)...}};
-    }
 }  // namespace utils
