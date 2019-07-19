@@ -36,8 +36,6 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
         RDPOrderCommon state_common(ELLIPSESC, Rect(700, 200, 100, 200));
         RDPEllipseSC state_ellipse(Rect(0, 0, 800, 600), RDPColor{});
 
-        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
-
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 400, 800, 76));
         RDPEllipseSC(Rect(0, 0, 800, 600), RDPColor{}).emit(out_stream, newcommon, state_common, state_ellipse);
 
@@ -76,8 +74,6 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
         StaticOutStream<1000> out_stream;
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), encode_color24()(WHITE));
-
-        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
         RDPEllipseSC(Rect(0, 0, 10, 10), encode_color24()(WHITE)).emit(out_stream, newcommon, state_common, state_ellipse);
@@ -424,8 +420,6 @@ RED_AUTO_TEST_CASE(TestEllipseSC)
         StaticOutStream<1000> out_stream;
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), encode_color24()(WHITE));
-
-        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
 
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
         RDPEllipseSC(Rect(0, 0, 10, 10), encode_color24()(WHITE), 0x0A, 0x00).emit(out_stream, newcommon, state_common, state_ellipse);

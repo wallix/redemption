@@ -37,8 +37,6 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
         RDPOrderCommon state_common(POLYGONCB, Rect(700, 200, 100, 200));
         RDPPolygonCB state_PolygonCB;
 
-        RED_CHECK_EQUAL(0, (out_stream.get_offset()));
-
         RDPOrderCommon newcommon(POLYGONCB, Rect(0, 400, 800, 76));
         RDPPolygonCB().emit(out_stream, newcommon, state_common, state_PolygonCB);
 

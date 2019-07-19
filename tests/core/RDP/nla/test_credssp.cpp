@@ -95,7 +95,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send2;
 
-    RED_CHECK_EQUAL(to_send2.get_offset(), 0);
     ts_req2.emit(to_send2);
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
@@ -194,7 +193,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send3;
 
-    RED_CHECK_EQUAL(to_send3.get_offset(), 0);
     ts_req3.emit(to_send3);
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
@@ -257,7 +255,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send4;
 
-    RED_CHECK_EQUAL(to_send4.get_offset(), 0);
     ts_req4.emit(to_send4);
 
     RED_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
@@ -312,7 +309,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send5;
 
-    RED_CHECK_EQUAL(to_send5.get_offset(), 0);
     ts_req5.emit(to_send5);
 
     RED_CHECK_EQUAL(to_send5.get_offset(), 0x5c);

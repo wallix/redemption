@@ -63,7 +63,6 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     StaticOutStream<65536> to_send2;
 
-    RED_CHECK_EQUAL(to_send2.get_offset(), 0);
     ts_req2.emit(to_send2);
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);

@@ -52,7 +52,6 @@ RED_AUTO_TEST_CASE(TestNegotiate)
 
     StaticOutStream<65536> to_send;
 
-    RED_CHECK_EQUAL(to_send.get_offset(), 0);
     ts_req.emit(to_send);
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
