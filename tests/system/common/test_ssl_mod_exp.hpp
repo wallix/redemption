@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestModExp)
     constexpr auto modulus = "\x3"_av;
     constexpr auto exponent = "\x4"_av;
 
-    std::array<uint8_t, modulus.size()> out;
+    std::array<uint8_t, modulus.size()+1> out;
 
     // 12^4 % 3 = 20736 % 3 = 0
     RED_CHECK_MEM(mod_exp(out, inr, modulus, exponent), ""_av);
@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(TestBigModExp)
     constexpr auto modulus = "6TBD*S^0b5F*^%"_av;
     constexpr auto exponent = "f89sn6B*(FD(bf5sd969g"_av;
 
-    std::array<uint8_t, modulus.size()> out;
+    std::array<uint8_t, modulus.size()+1> out;
 
     RED_CHECK_MEM(mod_exp(out, inr, modulus, exponent),
         "\x1e\xc0\x4d\xea\xbd\xc5\x25\x19\x71\xa6\x69\x1d\x3a\x82"_av);
