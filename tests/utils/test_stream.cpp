@@ -291,8 +291,8 @@ RED_AUTO_TEST_CASE(TestStream_Stream_Compatibility)
     stream.out_copy_bytes("0123456789", 10);
 
     RED_CHECK_EQUAL(502u,   stream.tailroom());
-    RED_CHECK_EQUAL(true,  stream.has_room(502));
-    RED_CHECK_EQUAL(false, stream.has_room(503));
+    RED_CHECK( stream.has_room(502));
+    RED_CHECK(not stream.has_room(503));
 }
 
 RED_AUTO_TEST_CASE(TestStream_2BUE)

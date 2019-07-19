@@ -234,49 +234,49 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     acl_serial.check(sesman, sesman, mm, 10011, signal, front_signal,has_activity);
     // Receive answer, OK to connect
     sesman.receive();
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
     // instanciate new mod, start keepalive (proxy ASK keepalive and should receive result in less than keepalive_grace_delay)
     acl_serial.check(sesman, sesman, mm, 10012, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
     acl_serial.check(sesman, sesman, mm, 10042, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
     // Send keepalive=ASK
     acl_serial.check(sesman, sesman, mm, 10043, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
 
     sesman.receive();
     //  keepalive=True
     acl_serial.check(sesman, sesman, mm, 10045, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
 
     // koopalive=True => unknown var...
     sesman.receive();
     acl_serial.check(sesman, sesman, mm, 10072, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
     acl_serial.check(sesman, sesman, mm, 10075, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
     RED_CHECK_EQUAL(mm.last_module, false);  // still connected
 
     // Renew Keepalive time:
     // Send keepalive=ASK
     acl_serial.check(sesman, sesman, mm, 10076, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
     acl_serial.check(sesman, sesman, mm, 10105, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(false, has_activity);
+    RED_CHECK(not has_activity);
     has_activity = true;
     RED_CHECK_EQUAL(mm.last_module, false); // still connected
 
     // Keep alive not received, disconnection
     acl_serial.check(sesman, sesman, mm, 10106, signal, front_signal,has_activity);
-    RED_CHECK_EQUAL(true, has_activity);
+    RED_CHECK(has_activity);
     //has_activity = true;
     RED_CHECK_EQUAL(mm.last_module, true);  // close box
 }

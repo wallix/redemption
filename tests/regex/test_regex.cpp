@@ -27,7 +27,6 @@
 #include "regex/regex.hpp"
 
 #include <vector>
-#include <sstream>
 
 using namespace re;
 
@@ -59,6 +58,12 @@ void regex_test(Regex & p_regex,
                    p_match_result)\
 regex_test(p_regex, p_str, p_exact_result_search, p_result_search, p_exact_result_match, p_exact_match_result, p_result_match, p_match_result)
 
+#define RESET_CHECK_REGEX(regex, str_regex, flags) [&]{                                   \
+    regex.reset(str_regex, flags);                                                        \
+    RED_CHECK_MESSAGE(!regex.message_error(),                                             \
+        str_regex << (regex.message_error()) << " at offset " << regex.position_error()); \
+}()
+
 inline void test_re(re::Regex::flag_t flags)
 {
     using range_t = re::StateMachine2::range_t;
@@ -66,14 +71,9 @@ inline void test_re(re::Regex::flag_t flags)
     Regex::range_matches matches;
     Regex::range_matches matches2;
 
-    const char * str_regex = "a";
-    Regex regex(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    Regex regex;
+
+    RESET_CHECK_REGEX(regex, "a", flags);
     regex_test(regex, "aaaa", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
@@ -84,73 +84,31 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "abc", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "dabc", 0, 1, 0, matches, 1, matches);
 
-    str_regex = "^";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "^", flags);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "$", flags);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "^$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "^$", flags);
     regex_test(regex, "aaa", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "$^";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "$^", flags);
     regex_test(regex, "aaa", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "(^$)";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(^$)", flags);
     const char * str = "";
     matches.push_back(range_t(str, str));
     regex_test(regex, "", 1, 1, 1, matches, 1, matches);
     matches.clear();
 
-    str_regex = "^a";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "^a", flags);
     regex_test(regex, "aaaa", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
@@ -161,27 +119,13 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "abc", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "dabc", 0, 0, 0, matches, 0, matches);
 
-    str_regex = "a^b";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "a^b", flags);
     regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "ba", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "b", 0, 0, 0, matches, 0, matches);
 
-    str_regex = "a$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "a$", flags);
     regex_test(regex, "aaaa", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
@@ -193,14 +137,7 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "abc", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "dabc", 0, 0, 0, matches, 0, matches);
 
-    str_regex = "^a$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "^a$", flags);
     regex_test(regex, "aaaa", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
@@ -211,27 +148,13 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "abc", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "dabc", 0, 0, 0, matches, 0, matches);
 
-    str_regex = "^a|^.?";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "^a|^.?", flags);
     regex_test(regex, "aaaa", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "ba", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "a+";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "a+", flags);
     regex_test(regex, "aaaa", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
@@ -242,14 +165,7 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "abc", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "dabc", 0, 1, 0, matches, 1, matches);
 
-    str_regex = ".*a.*$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, ".*a.*$", flags);
     regex_test(regex, "aaaa", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
@@ -260,14 +176,7 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "abc", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "dabc", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "aa+$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "aa+$", flags);
     regex_test(regex, "aaaa", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
@@ -278,14 +187,7 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "ab", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "dabc", 0, 0, 0, matches, 0, matches);
 
-    str_regex = "aa*b?a";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "aa*b?a", flags);
     regex_test(regex, "aa", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "aaaa", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "ab", 0, 0, 0, matches, 0, matches);
@@ -297,14 +199,8 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "aba", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "dabc", 0, 0, 0, matches, 0, matches);
 
-    str_regex = "[a-cd]";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "[a-cd]", flags);
+
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "b", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "c", 1, 1, 1, matches, 1, matches);
@@ -312,14 +208,7 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "lka", 0, 1, 0, matches, 1, matches);
 
-    str_regex = "[^a-cd]";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "[^a-cd]", flags);
     regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "b", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "c", 0, 0, 0, matches, 0, matches);
@@ -327,63 +216,28 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, "lka", 0, 1, 0, matches, 1, matches);
 
 
-    str_regex = "\\a";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "\\a", flags);
     str = "a";
     regex_test(regex, str, 1, 1, 1, matches2, 1, matches);
 
 
-    str_regex = "[\\a]";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "[\\a]", flags);
     str = "a";
     regex_test(regex, str, 1, 1, 1, matches2, 1, matches);
 
 
-    str_regex = "\\[a]";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "\\[a]", flags);
     str = "[a]";
     regex_test(regex, str, 1, 1, 1, matches2, 1, matches);
 
 
-    str_regex = "(.*)";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(.*)", flags);
     str = "abcd";
     matches.push_back(range_t(str, str+1));
     matches2.push_back(range_t(str, str+4));
     regex_test(regex, str, 1, 1, 1, matches2, 1, matches);
 
-    str_regex = "(a?b?c?)d(.*)";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(a?b?c?)d(.*)", flags);
     str = "abcdefg";
     matches.clear();
     matches.push_back(range_t(str, str+3));
@@ -393,14 +247,7 @@ inline void test_re(re::Regex::flag_t flags)
     matches2.push_back(range_t(nullptr, nullptr));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches2);
 
-    str_regex = "u(a?b?c?)d(.*)";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "u(a?b?c?)d(.*)", flags);
     str = "uabcdefg";
     matches.clear();
     matches.push_back(range_t(str+1, str+4));
@@ -410,73 +257,31 @@ inline void test_re(re::Regex::flag_t flags)
     matches2.push_back(range_t(nullptr, nullptr));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches2);
 
-    str_regex = "(a?b?c?)d(.*)h";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(a?b?c?)d(.*)h", flags);
     str = "abcdefgh";
     matches.clear();
     matches.push_back(range_t(str, str+3));
     matches.push_back(range_t(str+4, str+7));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
-    str_regex = "(a?b?c?)d(.*)h$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(a?b?c?)d(.*)h$", flags);
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
-    str_regex = "(a?b?c?)d(.*)gh";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(a?b?c?)d(.*)gh", flags);
     str = "abcdefggh";
     matches.clear();
     matches.push_back(range_t(str, str+3));
     matches.push_back(range_t(str+4, str+7));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
-    str_regex = "(a?b?c?)d(.*)gh$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(a?b?c?)d(.*)gh$", flags);
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
-    str_regex = "(a?b?c?)d(.*)gh$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(a?b?c?)d(.*)gh$", flags);
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
 
-    str_regex = "(?:.)?";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(?:.)?", flags);
     str = "a";
     matches.clear();
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
@@ -484,14 +289,7 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
 
-    str_regex = "(?:a(bv)|(av))(d)";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(?:a(bv)|(av))(d)", flags);
     str = "abvd";
     matches.clear();
     matches.push_back(range_t(str+1, str+3));
@@ -509,14 +307,7 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
 
-    str_regex = "((.)(.))";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "((.)(.))", flags);
     str = "ab";
     matches.clear();
     matches.push_back(range_t(str, str+2));
@@ -525,27 +316,13 @@ inline void test_re(re::Regex::flag_t flags)
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
 
-    str_regex = " *|(?:.)?";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, " *|(?:.)?", flags);
     str = "";
     matches.clear();
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
 
-    str_regex = "(\\d){3}";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "(\\d){3}", flags);
     str = "012";
     matches.clear();
     matches.push_back(range_t(str+2, str+3));
@@ -579,74 +356,25 @@ inline void test_re(re::Regex::flag_t flags)
 
    matches.clear();
 
-    str_regex = "b?a{,1}c";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "b?a{,1}c", flags);
     regex_test(regex, "a{,1}c", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "b?a{0,1}c";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "b?a{0,1}c", flags);
     regex_test(regex, "ac", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "b?a{0,3}c";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "b?a{0,3}c", flags);
     regex_test(regex, "ac", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "b?a{2,4}c";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "b?a{2,4}c", flags);
     regex_test(regex, "aaac", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "b?a{2,}c";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "b?a{2,}c", flags);
     regex_test(regex, "aaaaaac", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "b?a{0,}c";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "b?a{0,}c", flags);
     regex_test(regex, "c", 1, 1, 1, matches, 1, matches);
 
-    str_regex = "^ +\\d+.*bc.*$";
-    regex.reset(str_regex, flags);
-    if (regex.message_error()) {
-        std::ostringstream os;
-        os << str_regex << (regex.message_error())
-        << " at offset " << regex.position_error();
-        RED_CHECK_MESSAGE(false, os.str().c_str());
-    }
+    RESET_CHECK_REGEX(regex, "^ +\\d+.*bc.*$", flags);
     regex_test(regex, " 24abcd", 1, 1, 1, matches, 1, matches);
 }
 
@@ -663,8 +391,7 @@ RED_AUTO_TEST_CASE(TestRegexOptimize)
 
 RED_AUTO_TEST_CASE(TestRegexPartOfText)
 {
-    const char * str_regex = "a";
-    Regex regex(str_regex);
+    Regex regex("a");
 
     {
         const char * str = "a";

@@ -879,24 +879,24 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         Fstat fstat;
         InCryptoTransport ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[30], 1));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[31], 1));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, 31), "We write, and again, and so on."_av);
         // close followed by open
         ct.open(finalname);
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[30], 1));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[31], 1));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, 31), "We write, and again, and so on."_av);
 
@@ -959,13 +959,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         InCryptoTransport ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, sizeof(buffer)-10));
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[sizeof(buffer)-10], 10));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AA(buffer, randomSample);
 
@@ -1032,11 +1032,11 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[30], 1));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[30], 1));
         ct.close();
         RED_CHECK_MEM_AA(make_array_view(buffer, 31), "We write, and again, and so on."_av);
@@ -1104,13 +1104,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, sizeof(buffer)-10));
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(&buffer[sizeof(buffer)-10], 10));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(&buffer[sizeof(buffer)], 1));
-        RED_CHECK_EQUAL(true, ct.is_eof());
+        RED_CHECK(ct.is_eof());
         ct.close();
         RED_CHECK_MEM_AA(buffer, clearSample);
 
@@ -1179,7 +1179,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(20, ct.partial_read(buffer, 20));
         RED_CHECK_EQUAL(100, ct.partial_read(&buffer[20], 100));
         // At end of file partial_read should return what it can
@@ -1235,7 +1235,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(encrypted_file);
         RED_CHECK_EQUAL(ct.is_encrypted(), false);
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
         ct.close();
@@ -1288,7 +1288,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(encrypted_file);
         RED_CHECK_EQUAL(ct.is_encrypted(), true);
-        RED_CHECK_EQUAL(false, ct.is_eof());
+        RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
         ct.close();

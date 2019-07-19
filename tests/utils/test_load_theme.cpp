@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(TestLoadTheme)
     RED_CHECK_EQUAL(WHITE,          colors.selector_focus.fgcolor);
     RED_CHECK_EQUAL(MEDIUM_BLUE,    colors.selector_label.bgcolor);
     RED_CHECK_EQUAL(WHITE,          colors.selector_label.fgcolor);
-    RED_CHECK_EQUAL(false,          colors.global.logo);
+    RED_CHECK(not          colors.global.logo);
     RED_CHECK_EQUAL("",             colors.global.logo_path);
 
     load_theme(colors, "test_theme"_av);
@@ -78,6 +78,6 @@ RED_AUTO_TEST_CASE(TestLoadTheme)
     RED_CHECK_EQUAL(WHITE,              colors.selector_focus.fgcolor);
     RED_CHECK_EQUAL(MEDIUM_BLUE,        colors.selector_label.bgcolor);
     RED_CHECK_EQUAL(WHITE,              colors.selector_label.fgcolor);
-    RED_CHECK_EQUAL(true,               colors.global.logo);
+    RED_CHECK(              colors.global.logo);
     RED_CHECK_EQUAL(app_path_s(AppPath::Cfg) + "/themes/test_theme/logo.png", colors.global.logo_path);
 }

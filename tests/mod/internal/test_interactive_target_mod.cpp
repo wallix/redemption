@@ -74,7 +74,7 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    RED_CHECK_EQUAL(false, ini.get<cfg::context::display_message>());
+    RED_CHECK(not ini.get<cfg::context::display_message>());
 }
 
 RED_AUTO_TEST_CASE(TestDialogModChallenge)

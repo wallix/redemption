@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     RED_CHECK_MEM(array_view(mcs.callingDomainSelector, mcs.len_callingDomainSelector), "\x01"_av);
     RED_CHECK_MEM(array_view(mcs.calledDomainSelector, mcs.len_calledDomainSelector), "\x01"_av);
 
-    RED_CHECK_EQUAL(true, mcs.upwardFlag);
+    RED_CHECK(mcs.upwardFlag);
 
     RED_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
     RED_CHECK_EQUAL(263, mcs.payload.in_remain()); // USER_DATA (after len)

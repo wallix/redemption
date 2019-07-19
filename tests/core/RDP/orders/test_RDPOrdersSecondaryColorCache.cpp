@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(TestColCache)
         InStream in_stream(out_stream.get_bytes());
 
         uint8_t control = in_stream.in_uint8();
-        RED_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
+        RED_CHECK(!!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(in_stream);
         RDPColCache cmd(0, newcmd.palette);
         cmd.receive(in_stream, header);
