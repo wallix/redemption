@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_polyline);
         RED_CHECK_MEM(
-            out_stream.get_bytes().array_from_offset(1),
-            out_stream2.get_bytes().array_from_offset(1));
+            out_stream.get_bytes().from_at(1),
+            out_stream2.get_bytes().from_at(1));
     }
 }

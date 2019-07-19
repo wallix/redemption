@@ -1676,7 +1676,7 @@ public:
         : read_only_(false)
         {
             if (!name.empty() && name[0] == '*') {
-                name = name.array_from_offset(1);
+                name = name.from_at(1);
                 this->read_only_ = true;
             }
 

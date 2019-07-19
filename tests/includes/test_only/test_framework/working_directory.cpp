@@ -68,7 +68,7 @@ namespace
             char buf[1024*4];
             auto dsz = dirname.size();
             dirname += getcwd(buf, sizeof(buf));
-            for (char& c : array_view_char(dirname).array_from_offset(dsz)) {
+            for (char& c : array_view_char(dirname).from_at(dsz)) {
                 if (c == '/') {
                     c = ':';
                 }

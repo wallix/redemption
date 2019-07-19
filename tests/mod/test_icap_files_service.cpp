@@ -86,7 +86,7 @@ RED_AUTO_TEST_CASE(icapReceive)
         auto pos = response.size() / 2;
         setbuf(response.first(pos));
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
-        setbuf(response.array_from_offset(pos));
+        setbuf(response.from_at(pos));
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
         setbuf("o"_av);
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);

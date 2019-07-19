@@ -737,7 +737,7 @@ public:
         // data_out [signature][data_buffer]
 
         data_out.init(data_in.size() + cbMaxSignature);
-        auto message_out = data_out.av().array_from_offset(cbMaxSignature);
+        auto message_out = data_out.av().from_at(cbMaxSignature);
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         this->compute_hmac_md5(digest, this->ntlm_context.ServerSigningKey, data_in, MessageSeqNo);
         // this->ntlm_context.confidentiality == true
@@ -758,7 +758,7 @@ public:
 
         // data_in [signature][data_buffer]
 
-        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
+        auto data_buffer = data_in.from_at(cbMaxSignature);
         data_out.init(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */

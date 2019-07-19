@@ -40,7 +40,7 @@ struct BlockTransport : Transport
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
         memcpy(buffer, this->data.as_u8p(), n);
-        this->data = this->data.array_from_offset(n);
+        this->data = this->data.from_at(n);
         return n;
     }
 
