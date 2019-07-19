@@ -407,10 +407,15 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<types::u32>(), "session_probe_disabled_features", desc{
             "Disable some features of Session Probe:\n"
-            "  0x00000001: Java Access Bridge\n"
-            "  0x00000002: MS Active Accessbility\n"
-            "  0x00000004: MS UI Automation\n"
-        }, set(0x0));
+            "  0x00: (nothing is disabled)\n"
+            "  0x01: Java Access Bridge\n"
+            "  0x02: MS Active Accessbility\n"
+            "  0x04: MS UI Automation\n"
+            "  0x10: Inspect Edge location URL\n"
+            "  0x20: Inspect Chrome Address/Search bar\n"
+            "  0x40: Inspect Firefox Address/Search bar\n"
+            "  0x80: Monitor Internet Explorer event\n"
+        }, set(0x60));
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", set(true));
         W.sep();

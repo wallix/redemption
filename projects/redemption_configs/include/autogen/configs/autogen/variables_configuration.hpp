@@ -1961,13 +1961,18 @@ namespace cfg {
         type value{0};
     };
     /// Disable some features of Session Probe: <br/>
-    ///   0x00000001: Java Access Bridge <br/>
-    ///   0x00000002: MS Active Accessbility <br/>
-    ///   0x00000004: MS UI Automation <br/>
+    ///   0x00: (nothing is disabled) <br/>
+    ///   0x01: Java Access Bridge <br/>
+    ///   0x02: MS Active Accessbility <br/>
+    ///   0x04: MS UI Automation <br/>
+    ///   0x10: Inspect Edge location URL <br/>
+    ///   0x20: Inspect Chrome Address/Search bar <br/>
+    ///   0x40: Inspect Firefox Address/Search bar <br/>
+    ///   0x80: Monitor Internet Explorer event <br/>
     /// AUTHID_MOD_RDP_SESSION_PROBE_DISABLED_FEATURES <br/>
     /// type: uint32_t <br/>
     /// sesman -> proxy <br/>
-    /// value{0} <br/>
+    /// value{96} <br/>
     struct mod_rdp::session_probe_disabled_features {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1979,7 +1984,7 @@ namespace cfg {
         using type = uint32_t;
         using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value{96};
     };
     /// AUTHID_MOD_RDP_SESSION_PROBE_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK <br/>
     /// type: bool <br/>
