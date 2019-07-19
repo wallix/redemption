@@ -105,7 +105,6 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
     StaticOutStream<1024> stream;
     size_t payload_length = 263;
     MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
-    RED_CHECK_EQUAL(106, stream.get_offset());
 
     auto expected =
 /* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
@@ -159,9 +158,7 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
 {
     StaticOutStream<1024> stream;
     size_t payload_size = 54;
-    size_t header_size = 39;
     MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
-    RED_CHECK_EQUAL(header_size, stream.get_offset());
 
     auto expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE

@@ -190,12 +190,10 @@ RED_AUTO_TEST_CASE(TestSetters)
 
     RED_CHECK_EQUAL(context.Workstation.size(), 0);
     context.ntlm_SetContextWorkstation(work);
-    RED_CHECK_EQUAL(context.Workstation.size(), work.size() * 2);
     RED_CHECK_MEM("C\0a\0r\0p\0e\0 \0D\0i\0e\0m\0"_av, context.Workstation.av());
 
     RED_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
     context.ntlm_SetContextServicePrincipalName(spn);
-    RED_CHECK_EQUAL(context.ServicePrincipalName.size(), spn.size() * 2);
     RED_CHECK_MEM("S\0u\0s\0t\0i\0n\0e\0 \0e\0t\0 \0a\0b\0s\0t\0i\0n\0e\0"_av, context.ServicePrincipalName.av());
 
 }

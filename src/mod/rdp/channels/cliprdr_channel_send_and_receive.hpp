@@ -593,14 +593,14 @@ namespace Cliprdr
             {
             case Charset::Ascii: {
                 auto data = out_stream.get_tailroom_bytes();
-                auto len = std::min(data.size(), std::size_t(short_format_name_length-2u));
+                auto len = std::min(data.size(), short_format_name_length-2u);
                 out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
                 char zero_data[short_format_name_length]{};
                 out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
                 break;
             }
             case Charset::Utf16: {
-                auto len = std::min(name.size(), std::size_t(short_format_name_length-1u));
+                auto len = std::min(name.size(), short_format_name_length-1u);
                 out_stream.out_copy_bytes(name);
                 char zero_data[short_format_name_length]{};
                 out_stream.out_copy_bytes(zero_data, short_format_name_length - len);

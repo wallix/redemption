@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
         "\x6e\x1a\xe4\x3a\xf4\xb3\x4d\xa6\xc6\x33\x0c\x87\x2f\x6c\xe8\x92"
         "\x03\xde\x60\xf8\x56\xe6\x8d\x36\xf6\x19\xfd\x19\xb7\xd5\x55\x5e"
         "\x8e\x83";
-    InStream stream({raw_data, sizeof(raw_data)-1});
+    InStream stream(raw_data, sizeof(raw_data)-1);
 
     CryptContext decrypt;
     decrypt.encryptionMethod = 1;
