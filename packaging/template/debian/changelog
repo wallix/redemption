@@ -1,3 +1,8 @@
+redemption (1.1.167%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 19 Jul 2019 16:57:14 +0200
+
 redemption (1.1.163%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Add feature to list Kerberos tickets.
