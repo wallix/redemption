@@ -219,7 +219,7 @@ RED_AUTO_TEST_CASE_WF(TestEncryption2, wf)
     decrypter.open(wf, { derivator, sizeof(derivator)});
     RED_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, 4));
     RED_CHECK_EQUAL(decrypter.partial_read(clear+4, 1), 0);
-    RED_CHECK_EQUAL(decrypter.is_encrypted(), true);
+    RED_CHECK(decrypter.is_encrypted());
     decrypter.close();
 
     RED_CHECK_MEM(make_array_view(clear, 4), "toto"_av);
@@ -258,7 +258,7 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
             "-192304,wab-4-2-4.yourdomain,5560.mwrm"
         ));
 
-        RED_CHECK_EQUAL(cctx.old_encryption_scheme, false);
+        RED_CHECK(not cctx.old_encryption_scheme);
         RED_CHECK_EQUAL(
             get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/verifier/recorded/"
@@ -958,7 +958,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         char buffer[sizeof(randomSample)];
         InCryptoTransport ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
-        RED_CHECK_EQUAL(ct.is_encrypted(), true);
+        RED_CHECK(ct.is_encrypted());
         RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, sizeof(buffer)-10));
         RED_CHECK(not ct.is_eof());
@@ -980,7 +980,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         char hash_buf[512];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
-        RED_CHECK_EQUAL(ct.is_encrypted(), true);
+        RED_CHECK(ct.is_encrypted());
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
         RED_CHECK_EQ(hash_buf,
@@ -1031,7 +1031,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         char buffer[40];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
-        RED_CHECK_EQUAL(ct.is_encrypted(), true);
+        RED_CHECK(ct.is_encrypted());
         RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, 30));
         RED_CHECK(not ct.is_eof());
@@ -1103,7 +1103,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         char buffer[sizeof(clearSample)];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
-        RED_CHECK_EQUAL(ct.is_encrypted(), false);
+        RED_CHECK(not ct.is_encrypted());
         RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, sizeof(buffer)-10));
         RED_CHECK(not ct.is_eof());
@@ -1178,7 +1178,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         char buffer[sizeof(clearSample)];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(finalname);
-        RED_CHECK_EQUAL(ct.is_encrypted(), false);
+        RED_CHECK(not ct.is_encrypted());
         RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(20, ct.partial_read(buffer, 20));
         RED_CHECK_EQUAL(100, ct.partial_read(&buffer[20], 100));
@@ -1234,7 +1234,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         Fstat fstat;
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(encrypted_file);
-        RED_CHECK_EQUAL(ct.is_encrypted(), false);
+        RED_CHECK(not ct.is_encrypted());
         RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
@@ -1245,7 +1245,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         char hash_buf[512];
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(hash_encrypted_file, cstr_array_view("encrypted_file.enc"));
-        RED_CHECK_EQUAL(ct.is_encrypted(), false);
+        RED_CHECK(not ct.is_encrypted());
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
         ct.close();
@@ -1287,7 +1287,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         Fstat fstat;
         InCryptoTransport  ct(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
         ct.open(encrypted_file);
-        RED_CHECK_EQUAL(ct.is_encrypted(), true);
+        RED_CHECK(ct.is_encrypted());
         RED_CHECK(not ct.is_eof());
         RED_CHECK_EQUAL(Read::Ok, ct.atomic_read(buffer, original_filesize));
         RED_CHECK_EQUAL(Read::Eof, ct.atomic_read(buffer, 1));
@@ -1302,7 +1302,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
 
         char hash_buf[512];
         ct.open(hash_encrypted_file, cstr_array_view("encrypted_file.enc"));
-        RED_CHECK_EQUAL(ct.is_encrypted(), true);
+        RED_CHECK(ct.is_encrypted());
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
         ct.close();

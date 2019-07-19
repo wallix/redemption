@@ -41,12 +41,12 @@ RED_AUTO_TEST_CASE(TestIDManagerGeneral)
     RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020u);
     RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020u);
 
-    RED_CHECK_EQUAL(id_manager.is_dest_only_id(40020), false);
+    RED_CHECK(not id_manager.is_dest_only_id(40020));
 
 
     uint32_t const dest_only_id = id_manager.reg_dest_only_id();
 
-    RED_CHECK_EQUAL(id_manager.is_dest_only_id(dest_only_id), true);
+    RED_CHECK(id_manager.is_dest_only_id(dest_only_id));
 
 
     uint32_t const src_id  = dest_only_id;
@@ -57,7 +57,7 @@ RED_AUTO_TEST_CASE(TestIDManagerGeneral)
     RED_CHECK_EQUAL(id_manager.get_dest_id(src_id), dest_id);
     RED_CHECK_EQUAL(id_manager.get_src_id(dest_id), src_id);
 
-    RED_CHECK_EQUAL(id_manager.is_dest_only_id(dest_id), false);
+    RED_CHECK(not id_manager.is_dest_only_id(dest_id));
 }
 
 RED_AUTO_TEST_CASE(TestIDManagerGeneral2)
@@ -79,7 +79,7 @@ RED_AUTO_TEST_CASE(TestIDManagerGeneral2)
     RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020u);
     RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020u);
 
-    RED_CHECK_EQUAL(id_manager.is_dest_only_id(40020), false);
+    RED_CHECK(not id_manager.is_dest_only_id(40020));
 
 
     decltype(NEXT_USABLE_ID) src_id = id_manager.get_src_id(40020);

@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     InStream chunk_clipboardCapabilitiesPDU(out_clipboardCapabilitiesPDU.get_bytes());
 
     channel.receive(chunk_clipboardCapabilitiesPDU, flag_channel);
-    RED_CHECK_EQUAL(channel.server_use_long_format_names, true);
+    RED_CHECK(channel.server_use_long_format_names);
 
     // Monitor Ready PDU
     StaticOutStream<512> out_serverMonitorReadyPDU;
@@ -446,7 +446,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0x00000000); // clipDataId
 
     // channel and clipboard_io checks
-    RED_CHECK_EQUAL(channel._waiting_for_data, false);
+    RED_CHECK(not channel._waiting_for_data);
     RED_CHECK_EQUAL(0, clip_io.offset);
     RED_CHECK_EQUAL(channel.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
 
@@ -464,7 +464,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     channel.receive(chunk_FileContentResponse_range_part1, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
     RED_CHECK_EQUAL(channel.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
-    RED_CHECK_EQUAL(channel._waiting_for_data, true);
+    RED_CHECK(channel._waiting_for_data);
     RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
     RED_CHECK_SMEM(make_array_view(clip_io._chunk.get(), 1588), std::string(1588, 'a'));
@@ -478,7 +478,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     channel.receive(chunk_FileContentResponse_range_part2, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
     RED_CHECK_EQUAL(channel.file_content_flag, RDPECLIP::FILECONTENTS_SIZE);
-    RED_CHECK_EQUAL(channel._waiting_for_data, false);
+    RED_CHECK(not channel._waiting_for_data);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 6);
 
     // Unlock Clipboard Data PDU (Optional)

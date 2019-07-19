@@ -58,21 +58,21 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
-    RED_CHECK_EQUAL(config.quick_connection_test, true);
-    RED_CHECK_EQUAL(config.persist, false);
+    RED_CHECK(config.quick_connection_test);
+    RED_CHECK(not config.persist);
 //     std::chrono::milliseconds time_out_disconnection(5000);
 //     RED_CHECK_EQUAL(config.time_out_disconnection, time_out_disconnection);
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
-    RED_CHECK_EQUAL(config.is_recording, false);
-    RED_CHECK_EQUAL(config.is_spanning, false);
+    RED_CHECK(not config.is_recording);
+    RED_CHECK(not config.is_spanning);
     RED_CHECK_EQUAL(config.rdp_width, 800);
     RED_CHECK_EQUAL(config.rdp_height, 600);
-    RED_CHECK_EQUAL(config.is_full_capturing, false);
-    RED_CHECK_EQUAL(config.is_full_replaying, false);
+    RED_CHECK(not config.is_full_capturing);
+    RED_CHECK(not config.is_full_replaying);
     RED_CHECK_EQUAL(config.full_capture_file_name, "");
-    RED_CHECK_EQUAL(config.is_replaying, false);
-    RED_CHECK_EQUAL(config.is_loading_replay_mod, false);
-    RED_CHECK_EQUAL(config.connected, false);
+    RED_CHECK(not config.is_replaying);
+    RED_CHECK(not config.is_loading_replay_mod);
+    RED_CHECK(not config.connected);
     RED_CHECK_EQUAL(config._movie_name, "");
     RED_CHECK_EQUAL(config._movie_dir, "");
     RED_CHECK_EQUAL(config._movie_full_path, "");
@@ -109,7 +109,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.info.screen_info.width, 800);
     RED_CHECK_EQUAL(config.info.screen_info.height, 600);
     RED_CHECK_EQUAL(config.info.keylayout, 0x040C);
-    RED_CHECK_EQUAL(config.info.console_session, false);
+    RED_CHECK(not config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 0);
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{24});
 
@@ -121,7 +121,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 
     // CLIPRDR
     RED_CHECK_EQUAL(config.rDPClipboardConfig.arbitrary_scale, 40);
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.server_use_long_format_names, true);
+    RED_CHECK(config.rDPClipboardConfig.server_use_long_format_names);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.cCapabilitiesSets, 1);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.generalFlags, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);
 
@@ -141,8 +141,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp");
 
     // RED_CHECK_EQUAL(config.
-    RED_CHECK_EQUAL(config.rDPDiskConfig.enable_drive_type, true);
-    RED_CHECK_EQUAL(config.rDPDiskConfig.enable_printer_type, true);
+    RED_CHECK(config.rDPDiskConfig.enable_drive_type);
+    RED_CHECK(config.rDPDiskConfig.enable_printer_type);
     RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].name, "home");
     RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].type, rdpdr::RDPDR_DTYP_FILESYSTEM);
 
@@ -157,30 +157,30 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     // RDPPARAM
     RED_CHECK_EQUAL(config.modRDPParamsData.rdp_width, 0);
     RED_CHECK_EQUAL(config.modRDPParamsData.rdp_height, 0);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_tls, true);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_nla, true);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_sound, false);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_shared_virtual_disk, true);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_shared_remoteapp, false);
-    RED_CHECK_EQUAL(config.enable_shared_clipboard, true);
+    RED_CHECK(config.modRDPParamsData.enable_tls);
+    RED_CHECK(config.modRDPParamsData.enable_nla);
+    RED_CHECK(not config.modRDPParamsData.enable_sound);
+    RED_CHECK(config.modRDPParamsData.enable_shared_virtual_disk);
+    RED_CHECK(not config.modRDPParamsData.enable_shared_remoteapp);
+    RED_CHECK(config.enable_shared_clipboard);
 
     // VNC
-    RED_CHECK_EQUAL(config.modVNCParamsData.is_apple, false);
+    RED_CHECK(not config.modVNCParamsData.is_apple);
     RED_CHECK_EQUAL(config.modVNCParamsData.vnc_encodings, "5,16,0,1,-239");
     RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, 0x040C);
     RED_CHECK_EQUAL(config.modVNCParamsData.width, 800);
     RED_CHECK_EQUAL(config.modVNCParamsData.height, 600);
-    RED_CHECK_EQUAL(config.modVNCParamsData.enable_tls, false);
-    RED_CHECK_EQUAL(config.modVNCParamsData.enable_nla, false);
-    RED_CHECK_EQUAL(config.modVNCParamsData.enable_sound, false);
-    RED_CHECK_EQUAL(config.modVNCParamsData.enable_shared_clipboard, false);
+    RED_CHECK(not config.modVNCParamsData.enable_tls);
+    RED_CHECK(not config.modVNCParamsData.enable_nla);
+    RED_CHECK(not config.modVNCParamsData.enable_sound);
+    RED_CHECK(not config.modVNCParamsData.enable_shared_clipboard);
     RED_CHECK_EQUAL(config.modVNCParamsData.userProfils.size(), 0);
     RED_CHECK_EQUAL(config.modVNCParamsData.current_user_profil, 0);
 
     // ACCOUNT
     RED_CHECK_EQUAL(config._accountData.size(), 0);
     RED_CHECK_EQUAL(config._accountNB, 0);
-    RED_CHECK_EQUAL(config._save_password_account, false);
+    RED_CHECK(not config._save_password_account);
     RED_CHECK_EQUAL(config._last_target_index, 0);
     RED_CHECK_EQUAL(config.current_user_profil, 0);
 }
@@ -232,21 +232,21 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, (RDPVerbose::basic_trace | RDPVerbose::connection | RDPVerbose::capabilities | RDPVerbose::asynchronous_task | RDPVerbose::graphics | RDPVerbose::printer | RDPVerbose::rdpsnd | RDPVerbose::rail | RDPVerbose::cliprdr | RDPVerbose::rdpdr | RDPVerbose::rail_dump | RDPVerbose::basic_trace | RDPVerbose::rdpdr_dump | RDPVerbose::rail_order | RDPVerbose::cliprdr_dump));
-    RED_CHECK_EQUAL(config.quick_connection_test, true);
-    RED_CHECK_EQUAL(config.persist, false);
+    RED_CHECK(config.quick_connection_test);
+    RED_CHECK(not config.persist);
 //     std::chrono::milliseconds time_out_disconnection(5000);
 //     RED_CHECK_EQUAL(config.time_out_disconnection, time_out_disconnection);
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
-    RED_CHECK_EQUAL(config.is_recording, false);
-    RED_CHECK_EQUAL(config.is_spanning, false);
+    RED_CHECK(not config.is_recording);
+    RED_CHECK(not config.is_spanning);
     RED_CHECK_EQUAL(config.rdp_width, 1600);
     RED_CHECK_EQUAL(config.rdp_height, 900);
-    RED_CHECK_EQUAL(config.is_full_capturing, false);
-    RED_CHECK_EQUAL(config.is_full_replaying, false);
+    RED_CHECK(not config.is_full_capturing);
+    RED_CHECK(not config.is_full_replaying);
     RED_CHECK_EQUAL(config.full_capture_file_name, "");
-    RED_CHECK_EQUAL(config.is_replaying, false);
-    RED_CHECK_EQUAL(config.is_loading_replay_mod, false);
-    RED_CHECK_EQUAL(config.connected, false);
+    RED_CHECK(not config.is_replaying);
+    RED_CHECK(not config.is_loading_replay_mod);
+    RED_CHECK(not config.connected);
     RED_CHECK_EQUAL(config._movie_name, "");
     RED_CHECK_EQUAL(config._movie_dir, "");
     RED_CHECK_EQUAL(config._movie_full_path, "");
@@ -283,7 +283,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.info.screen_info.width, 800);
     RED_CHECK_EQUAL(config.info.screen_info.height, 600);
     RED_CHECK_EQUAL(config.info.keylayout, 0x040C);
-    RED_CHECK_EQUAL(config.info.console_session, false);
+    RED_CHECK(not config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 0);
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{24});
 
@@ -295,7 +295,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     // CLIPRDR
     RED_CHECK_EQUAL(config.rDPClipboardConfig.arbitrary_scale, 40);
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.server_use_long_format_names, true);
+    RED_CHECK(config.rDPClipboardConfig.server_use_long_format_names);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.cCapabilitiesSets, 1);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.generalFlags, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);
 
@@ -315,8 +315,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp");
 
     // RED_CHECK_EQUAL(config.
-    RED_CHECK_EQUAL(config.rDPDiskConfig.enable_drive_type, true);
-    RED_CHECK_EQUAL(config.rDPDiskConfig.enable_printer_type, true);
+    RED_CHECK(config.rDPDiskConfig.enable_drive_type);
+    RED_CHECK(config.rDPDiskConfig.enable_printer_type);
     RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].name, "home");
     RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].type, rdpdr::RDPDR_DTYP_FILESYSTEM);
 
@@ -331,30 +331,30 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     // RDPPARAM
     RED_CHECK_EQUAL(config.modRDPParamsData.rdp_width, 0);
     RED_CHECK_EQUAL(config.modRDPParamsData.rdp_height, 0);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_tls, true);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_nla, true);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_sound, true);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_shared_virtual_disk, true);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_shared_remoteapp, false);
-    RED_CHECK_EQUAL(config.enable_shared_clipboard, true);
+    RED_CHECK(config.modRDPParamsData.enable_tls);
+    RED_CHECK(config.modRDPParamsData.enable_nla);
+    RED_CHECK(config.modRDPParamsData.enable_sound);
+    RED_CHECK(config.modRDPParamsData.enable_shared_virtual_disk);
+    RED_CHECK(not config.modRDPParamsData.enable_shared_remoteapp);
+    RED_CHECK(config.enable_shared_clipboard);
 
     // VNC
-    RED_CHECK_EQUAL(config.modVNCParamsData.is_apple, false);
+    RED_CHECK(not config.modVNCParamsData.is_apple);
     RED_CHECK_EQUAL(config.modVNCParamsData.vnc_encodings, "5,16,0,1,-239");
     RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, 0x040C);
     RED_CHECK_EQUAL(config.modVNCParamsData.width, 800);
     RED_CHECK_EQUAL(config.modVNCParamsData.height, 600);
-    RED_CHECK_EQUAL(config.modVNCParamsData.enable_tls, false);
-    RED_CHECK_EQUAL(config.modVNCParamsData.enable_nla, false);
-    RED_CHECK_EQUAL(config.modVNCParamsData.enable_sound, false);
-    RED_CHECK_EQUAL(config.modVNCParamsData.enable_shared_clipboard, false);
+    RED_CHECK(not config.modVNCParamsData.enable_tls);
+    RED_CHECK(not config.modVNCParamsData.enable_nla);
+    RED_CHECK(not config.modVNCParamsData.enable_sound);
+    RED_CHECK(not config.modVNCParamsData.enable_shared_clipboard);
     RED_CHECK_EQUAL(config.modVNCParamsData.userProfils.size(), 0);
     RED_CHECK_EQUAL(config.modVNCParamsData.current_user_profil, 0);
 
     // ACCOUNT
     RED_CHECK_EQUAL(config._accountData.size(), 0);
     RED_CHECK_EQUAL(config._accountNB, 0);
-    RED_CHECK_EQUAL(config._save_password_account, false);
+    RED_CHECK(not config._save_password_account);
     RED_CHECK_EQUAL(config._last_target_index, 0);
     RED_CHECK_EQUAL(config.current_user_profil, 0);
     }
@@ -376,21 +376,21 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
-    RED_CHECK_EQUAL(config.quick_connection_test, true);
-    RED_CHECK_EQUAL(config.persist, false);
+    RED_CHECK(config.quick_connection_test);
+    RED_CHECK(not config.persist);
 //     std::chrono::milliseconds time_out_disconnection(5000);
 //     RED_CHECK_EQUAL(config.time_out_disconnection, time_out_disconnection);
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
-    RED_CHECK_EQUAL(config.is_recording, false);
-    RED_CHECK_EQUAL(config.is_spanning, false);
+    RED_CHECK(not config.is_recording);
+    RED_CHECK(not config.is_spanning);
     RED_CHECK_EQUAL(config.rdp_width, 800);
     RED_CHECK_EQUAL(config.rdp_height, 600);
-    RED_CHECK_EQUAL(config.is_full_capturing, false);
-    RED_CHECK_EQUAL(config.is_full_replaying, false);
+    RED_CHECK(not config.is_full_capturing);
+    RED_CHECK(not config.is_full_replaying);
     RED_CHECK_EQUAL(config.full_capture_file_name, "");
-    RED_CHECK_EQUAL(config.is_replaying, false);
-    RED_CHECK_EQUAL(config.is_loading_replay_mod, false);
-    RED_CHECK_EQUAL(config.connected, false);
+    RED_CHECK(not config.is_replaying);
+    RED_CHECK(not config.is_loading_replay_mod);
+    RED_CHECK(not config.connected);
     RED_CHECK_EQUAL(config._movie_name, "");
     RED_CHECK_EQUAL(config._movie_dir, "");
     RED_CHECK_EQUAL(config._movie_full_path, "");
@@ -421,21 +421,21 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
-    RED_CHECK_EQUAL(config.quick_connection_test, true);
-    RED_CHECK_EQUAL(config.persist, false);
+    RED_CHECK(config.quick_connection_test);
+    RED_CHECK(not config.persist);
 //     std::chrono::milliseconds time_out_disconnection(5000);
 //     RED_CHECK_EQUAL(config.time_out_disconnection, time_out_disconnection);
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
-    RED_CHECK_EQUAL(config.is_recording, false);
-    RED_CHECK_EQUAL(config.is_spanning, false);
+    RED_CHECK(not config.is_recording);
+    RED_CHECK(not config.is_spanning);
     RED_CHECK_EQUAL(config.rdp_width, 800);
     RED_CHECK_EQUAL(config.rdp_height, 600);
-    RED_CHECK_EQUAL(config.is_full_capturing, false);
-    RED_CHECK_EQUAL(config.is_full_replaying, false);
+    RED_CHECK(not config.is_full_capturing);
+    RED_CHECK(not config.is_full_replaying);
     RED_CHECK_EQUAL(config.full_capture_file_name, "");
-    RED_CHECK_EQUAL(config.is_replaying, false);
-    RED_CHECK_EQUAL(config.is_loading_replay_mod, false);
-    RED_CHECK_EQUAL(config.connected, false);
+    RED_CHECK(not config.is_replaying);
+    RED_CHECK(not config.is_loading_replay_mod);
+    RED_CHECK(not config.connected);
     RED_CHECK_EQUAL(config._movie_name, "");
     RED_CHECK_EQUAL(config._movie_dir, "");
     RED_CHECK_EQUAL(config._movie_full_path, "");
@@ -489,10 +489,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
 
         std::string line;
 
-        RED_CHECK_EQUAL(ClientConfig::read_line(fd_read.fd(), line), true);
+        RED_CHECK(ClientConfig::read_line(fd_read.fd(), line));
         RED_CHECK_EQUAL(line, "hello");
 
-        RED_CHECK_EQUAL(ClientConfig::read_line(fd_read.fd(), line), false);
+        RED_CHECK(not ClientConfig::read_line(fd_read.fd(), line));
         RED_CHECK_EQUAL(line, "world");
     }
 
@@ -572,21 +572,21 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     RED_CHECK_EQUAL(config.rdp_width, 1600);
     RED_CHECK_EQUAL(config.rdp_height, 900);
     RED_CHECK_EQUAL(config.info.keylayout, 0x040D);
-    RED_CHECK_EQUAL(config.info.console_session, true);
+    RED_CHECK(config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 2);
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{16});
     RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "C:\\Windows\\system32\\eclipse.exe");
     RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "C:\\Users\\user2");
     RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, "-h");
     RED_CHECK_EQUAL(config.rDPRemoteAppConfig.full_cmd_line, "C:\\Windows\\system32\\eclipse.exe -h");
-    RED_CHECK_EQUAL(config.is_recording, true);
-    RED_CHECK_EQUAL(config.is_spanning, true);
-    RED_CHECK_EQUAL(config.enable_shared_clipboard, false);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_tls, false);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_nla, false);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_sound, false);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_shared_virtual_disk, false);
-    RED_CHECK_EQUAL(config.modRDPParamsData.enable_shared_remoteapp, true);
+    RED_CHECK(config.is_recording);
+    RED_CHECK(config.is_spanning);
+    RED_CHECK(not config.enable_shared_clipboard);
+    RED_CHECK(not config.modRDPParamsData.enable_tls);
+    RED_CHECK(not config.modRDPParamsData.enable_nla);
+    RED_CHECK(not config.modRDPParamsData.enable_sound);
+    RED_CHECK(not config.modRDPParamsData.enable_shared_virtual_disk);
+    RED_CHECK(config.modRDPParamsData.enable_shared_remoteapp);
     RED_CHECK_EQUAL(config.info.rdp5_performanceflags, 4);
     RED_CHECK_EQUAL(config.SHARE_DIR, "/home/test");
     RED_CHECK_EQUAL(config.mod_state, 2);
@@ -690,7 +690,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
     ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
     ClientConfig::set_config(argc, argv, config);
 
-    RED_CHECK_EQUAL(config.windowsData.no_data, false);
+    RED_CHECK(not config.windowsData.no_data);
     RED_CHECK_EQUAL(config.windowsData.form_x, 1920);
     RED_CHECK_EQUAL(config.windowsData.form_y, 351);
     RED_CHECK_EQUAL(config.windowsData.screen_x, 465);
@@ -778,7 +778,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
     ClientConfig::set_config(argc, argv, config);
 
     RED_CHECK_EQUAL(config._last_target_index, 1);
-    RED_CHECK_EQUAL(config._save_password_account, true);
+    RED_CHECK(config._save_password_account);
     RED_REQUIRE_EQUAL(config._accountData.size(), 2);
 
     RED_CHECK_EQUAL(config._accountData[0].title, "10.10.45.55 - user1");

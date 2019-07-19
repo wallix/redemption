@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestBERInteger)
 
     InStream in_s(s.get_bytes());
     res = BER::read_integer(in_s, value);
-    RED_CHECK_EQUAL(res, true);
+    RED_CHECK(res);
 
     RED_CHECK_EQUAL(value, 114178754);
 
@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(TestBERInteger)
 
     in_s = InStream(s.get_bytes());
     res = BER::read_integer(in_s, value);
-    RED_CHECK_EQUAL(res, true);
+    RED_CHECK(res);
 
     RED_CHECK_EQUAL(value, 1);
 
@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE(TestBERInteger)
 
     in_s = InStream(s.get_bytes());
     res = BER::read_integer(in_s, value);
-    RED_CHECK_EQUAL(res, true);
+    RED_CHECK(res);
 
     RED_CHECK_EQUAL(value, 52165);
 
@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestBERInteger)
 
     in_s = InStream(s.get_bytes());
     res = BER::read_integer(in_s, value);
-    RED_CHECK_EQUAL(res, true);
+    RED_CHECK(res);
 
     RED_CHECK_EQUAL(value, 0x0FFF);
 
@@ -84,8 +84,8 @@ RED_AUTO_TEST_CASE(TestBERInteger)
 //    s.mark_end();
 //    s.rewind();
 //    res = BER::read_bool(s, value);
-//    RED_CHECK_EQUAL(res, true);
-//    RED_CHECK_EQUAL(value, true);
+//    RED_CHECK(res);
+//    RED_CHECK(value);
 //
 //    s.rewind();
 //
@@ -93,8 +93,8 @@ RED_AUTO_TEST_CASE(TestBERInteger)
 //    s.mark_end();
 //    s.rewind();
 //    res = BER::read_bool(s, value);
-//    RED_CHECK_EQUAL(res, true);
-//    RED_CHECK_EQUAL(value, false);
+//    RED_CHECK(res);
+//    RED_CHECK(not value);
 //
 //    s.rewind();
 //
@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TestBEROctetString)
     BER::write_octet_string(s, oct_str, 7);
     InStream in_s(s.get_bytes());
     res = BER::read_octet_string_tag(in_s, value);
-    RED_CHECK_EQUAL(res, true);
+    RED_CHECK(res);
     RED_CHECK_EQUAL(value, 7);
 
     s.rewind();
@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestBERContextual)
     BER::write_contextual_tag(s, tag, 3, true);
     InStream in_s(s.get_bytes());
     res = BER::read_contextual_tag(in_s, tag, value, true);
-    RED_CHECK_EQUAL(res, true);
+    RED_CHECK(res);
     RED_CHECK_EQUAL(value, 3);
 
     s.rewind();

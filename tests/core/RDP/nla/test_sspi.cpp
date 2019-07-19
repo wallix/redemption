@@ -94,7 +94,7 @@ RED_AUTO_TEST_CASE(TestSecIdentity)
     RED_CHECK_MEM(id.get_password_utf16_av(), "H\0\xe9\0l\0\xe8\0n\0e\0"_av);
 
     id2.clear();
-    RED_CHECK_EQUAL(id2.is_empty_user_domain(), true);
+    RED_CHECK(id2.is_empty_user_domain());
     RED_CHECK_EQUAL(id2.get_password_utf16_av().size(), 0);
 
     id.SetUserFromUtf8(byte_ptr_cast("Zeus"));

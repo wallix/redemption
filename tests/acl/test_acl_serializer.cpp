@@ -175,7 +175,7 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     GeneratorTransport trans(s);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
-    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
+    RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
 
     ini.ask<cfg::context::opt_bpp>();
@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
 
     acl.incoming();
 
-    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
+    RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }
 
@@ -327,7 +327,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     GeneratorTransport trans(s);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
-    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
+    RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
 
     ini.ask<cfg::context::opt_bpp>();
@@ -341,7 +341,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
             "WARNING -- Unexpected receving 'efg' - 'other something'\n");
     }
 
-    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
+    RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }
 
@@ -718,6 +718,6 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
     mwrm_reader.set_header({WrmVersion::v2, false});
     mwrm_reader.read_meta_hash_line(meta_line);
     RED_CHECK_EQ(meta_line.filename, logname);
-    RED_CHECK_EQ(meta_line.with_hash, false);
+    RED_CHECK(not meta_line.with_hash);
     RED_CHECK_EQ(meta_line.size, 63);
 }

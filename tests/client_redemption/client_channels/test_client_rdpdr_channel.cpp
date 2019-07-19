@@ -125,11 +125,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     channel.receive(chunk_serverCapabilityRequest);
 
     RED_CHECK_EQUAL(channel.server_capability_number, 5);
-    //RED_CHECK_EQUAL(channel.fileSystemCapacity[rdpdr::CAP_GENERAL_TYPE], true);
-    RED_CHECK_EQUAL(channel.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE], true);
-    RED_CHECK_EQUAL(channel.fileSystemCapacity[rdpdr::CAP_PORT_TYPE], true);
-    RED_CHECK_EQUAL(channel.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE], true);
-    RED_CHECK_EQUAL(channel.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE], true);
+    //RED_CHECK(channel.fileSystemCapacity[rdpdr::CAP_GENERAL_TYPE]);
+    RED_CHECK(channel.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE]);
+    RED_CHECK(channel.fileSystemCapacity[rdpdr::CAP_PORT_TYPE]);
+    RED_CHECK(channel.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE]);
+    RED_CHECK(channel.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE]);
 
 
     StaticOutStream<512> out_serverClientIDConfirm;

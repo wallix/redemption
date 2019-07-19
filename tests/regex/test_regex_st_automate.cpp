@@ -61,23 +61,23 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("a"), true);
-        RED_CHECK_EQUAL(reg.search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.search("baaaa"), true);
-        RED_CHECK_EQUAL(reg.search("b"), false);
-        RED_CHECK_EQUAL(reg.search("ab"), true);
-        RED_CHECK_EQUAL(reg.search("abc"), true);
-        RED_CHECK_EQUAL(reg.search("dabc"), true);
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(reg.search("a"));
+        RED_CHECK(reg.search("aaaa"));
+        RED_CHECK(reg.search("baaaa"));
+        RED_CHECK(not reg.search("b"));
+        RED_CHECK(reg.search("ab"));
+        RED_CHECK(reg.search("abc"));
+        RED_CHECK(reg.search("dabc"));
 
-        RED_CHECK_EQUAL(reg.exact_search(""), false);
-        RED_CHECK_EQUAL(reg.exact_search("a"), true);
-        RED_CHECK_EQUAL(reg.exact_search("aaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("b"), false);
-        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
-        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
-        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK(not reg.exact_search(""));
+        RED_CHECK(reg.exact_search("a"));
+        RED_CHECK(not reg.exact_search("aaaa"));
+        RED_CHECK(not reg.exact_search("baaaa"));
+        RED_CHECK(not reg.exact_search("b"));
+        RED_CHECK(not reg.exact_search("ab"));
+        RED_CHECK(not reg.exact_search("abc"));
+        RED_CHECK(not reg.exact_search("dabc"));
     }
 
     {
@@ -85,23 +85,23 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("a"), true);
-        RED_CHECK_EQUAL(reg.search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.search("b"), false);
-        RED_CHECK_EQUAL(reg.search("ab"), true);
-        RED_CHECK_EQUAL(reg.search("abc"), true);
-        RED_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(reg.search("a"));
+        RED_CHECK(reg.search("aaaa"));
+        RED_CHECK(not reg.search("baaaa"));
+        RED_CHECK(not reg.search("b"));
+        RED_CHECK(reg.search("ab"));
+        RED_CHECK(reg.search("abc"));
+        RED_CHECK(not reg.search("dabc"));
 
-        RED_CHECK_EQUAL(reg.exact_search(""), false);
-        RED_CHECK_EQUAL(reg.exact_search("a"), true);
-        RED_CHECK_EQUAL(reg.exact_search("aaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("b"), false);
-        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
-        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
-        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK(not reg.exact_search(""));
+        RED_CHECK(reg.exact_search("a"));
+        RED_CHECK(not reg.exact_search("aaaa"));
+        RED_CHECK(not reg.exact_search("baaaa"));
+        RED_CHECK(not reg.exact_search("b"));
+        RED_CHECK(not reg.exact_search("ab"));
+        RED_CHECK(not reg.exact_search("abc"));
+        RED_CHECK(not reg.exact_search("dabc"));
     }
 
     {
@@ -109,23 +109,23 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("a"), true);
-        RED_CHECK_EQUAL(reg.search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.search("baaaa"), true);
-        RED_CHECK_EQUAL(reg.search("b"), false);
-        RED_CHECK_EQUAL(reg.search("ab"), false);
-        RED_CHECK_EQUAL(reg.search("abc"), false);
-        RED_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(reg.search("a"));
+        RED_CHECK(reg.search("aaaa"));
+        RED_CHECK(reg.search("baaaa"));
+        RED_CHECK(not reg.search("b"));
+        RED_CHECK(not reg.search("ab"));
+        RED_CHECK(not reg.search("abc"));
+        RED_CHECK(not reg.search("dabc"));
 
-        RED_CHECK_EQUAL(reg.exact_search(""), false);
-        RED_CHECK_EQUAL(reg.exact_search("a"), true);
-        RED_CHECK_EQUAL(reg.exact_search("aaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("b"), false);
-        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
-        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
-        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK(not reg.exact_search(""));
+        RED_CHECK(reg.exact_search("a"));
+        RED_CHECK(not reg.exact_search("aaaa"));
+        RED_CHECK(not reg.exact_search("baaaa"));
+        RED_CHECK(not reg.exact_search("b"));
+        RED_CHECK(not reg.exact_search("ab"));
+        RED_CHECK(not reg.exact_search("abc"));
+        RED_CHECK(not reg.exact_search("dabc"));
     }
 
     {
@@ -133,23 +133,23 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("a"), true);
-        RED_CHECK_EQUAL(reg.search("aaaa"), false);
-        RED_CHECK_EQUAL(reg.search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.search("b"), false);
-        RED_CHECK_EQUAL(reg.search("ab"), false);
-        RED_CHECK_EQUAL(reg.search("abc"), false);
-        RED_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(reg.search("a"));
+        RED_CHECK(not reg.search("aaaa"));
+        RED_CHECK(not reg.search("baaaa"));
+        RED_CHECK(not reg.search("b"));
+        RED_CHECK(not reg.search("ab"));
+        RED_CHECK(not reg.search("abc"));
+        RED_CHECK(not reg.search("dabc"));
 
-        RED_CHECK_EQUAL(reg.exact_search(""), false);
-        RED_CHECK_EQUAL(reg.exact_search("a"), true);
-        RED_CHECK_EQUAL(reg.exact_search("aaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("b"), false);
-        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
-        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
-        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK(not reg.exact_search(""));
+        RED_CHECK(reg.exact_search("a"));
+        RED_CHECK(not reg.exact_search("aaaa"));
+        RED_CHECK(not reg.exact_search("baaaa"));
+        RED_CHECK(not reg.exact_search("b"));
+        RED_CHECK(not reg.exact_search("ab"));
+        RED_CHECK(not reg.exact_search("abc"));
+        RED_CHECK(not reg.exact_search("dabc"));
     }
 
     {
@@ -157,23 +157,23 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("a"), true);
-        RED_CHECK_EQUAL(reg.search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.search("baaaa"), true);
-        RED_CHECK_EQUAL(reg.search("b"), false);
-        RED_CHECK_EQUAL(reg.search("ab"), true);
-        RED_CHECK_EQUAL(reg.search("abc"), true);
-        RED_CHECK_EQUAL(reg.search("dabc"), true);
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(reg.search("a"));
+        RED_CHECK(reg.search("aaaa"));
+        RED_CHECK(reg.search("baaaa"));
+        RED_CHECK(not reg.search("b"));
+        RED_CHECK(reg.search("ab"));
+        RED_CHECK(reg.search("abc"));
+        RED_CHECK(reg.search("dabc"));
 
-        RED_CHECK_EQUAL(reg.exact_search(""), false);
-        RED_CHECK_EQUAL(reg.exact_search("a"), true);
-        RED_CHECK_EQUAL(reg.exact_search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("b"), false);
-        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
-        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
-        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK(not reg.exact_search(""));
+        RED_CHECK(reg.exact_search("a"));
+        RED_CHECK(reg.exact_search("aaaa"));
+        RED_CHECK(not reg.exact_search("baaaa"));
+        RED_CHECK(not reg.exact_search("b"));
+        RED_CHECK(not reg.exact_search("ab"));
+        RED_CHECK(not reg.exact_search("abc"));
+        RED_CHECK(not reg.exact_search("dabc"));
     }
 
     {
@@ -181,23 +181,23 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("a"), true);
-        RED_CHECK_EQUAL(reg.search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.search("baaaa"), true);
-        RED_CHECK_EQUAL(reg.search("b"), false);
-        RED_CHECK_EQUAL(reg.search("ab"), true);
-        RED_CHECK_EQUAL(reg.search("abc"), true);
-        RED_CHECK_EQUAL(reg.search("dabc"), true);
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(reg.search("a"));
+        RED_CHECK(reg.search("aaaa"));
+        RED_CHECK(reg.search("baaaa"));
+        RED_CHECK(not reg.search("b"));
+        RED_CHECK(reg.search("ab"));
+        RED_CHECK(reg.search("abc"));
+        RED_CHECK(reg.search("dabc"));
 
-        RED_CHECK_EQUAL(reg.exact_search(""), false);
-        RED_CHECK_EQUAL(reg.exact_search("a"), true);
-        RED_CHECK_EQUAL(reg.exact_search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.exact_search("baaaa"), true);
-        RED_CHECK_EQUAL(reg.exact_search("b"), false);
-        RED_CHECK_EQUAL(reg.exact_search("ab"), true);
-        RED_CHECK_EQUAL(reg.exact_search("abc"), true);
-        RED_CHECK_EQUAL(reg.exact_search("dabc"), true);
+        RED_CHECK(not reg.exact_search(""));
+        RED_CHECK(reg.exact_search("a"));
+        RED_CHECK(reg.exact_search("aaaa"));
+        RED_CHECK(reg.exact_search("baaaa"));
+        RED_CHECK(not reg.exact_search("b"));
+        RED_CHECK(reg.exact_search("ab"));
+        RED_CHECK(reg.exact_search("abc"));
+        RED_CHECK(reg.exact_search("dabc"));
     }
 
     {
@@ -205,23 +205,23 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("a"), false);
-        RED_CHECK_EQUAL(reg.search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.search("baaaa"), true);
-        RED_CHECK_EQUAL(reg.search("b"), false);
-        RED_CHECK_EQUAL(reg.search("ab"), false);
-        RED_CHECK_EQUAL(reg.search("abc"), false);
-        RED_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(not reg.search("a"));
+        RED_CHECK(reg.search("aaaa"));
+        RED_CHECK(reg.search("baaaa"));
+        RED_CHECK(not reg.search("b"));
+        RED_CHECK(not reg.search("ab"));
+        RED_CHECK(not reg.search("abc"));
+        RED_CHECK(not reg.search("dabc"));
 
-        RED_CHECK_EQUAL(reg.exact_search(""), false);
-        RED_CHECK_EQUAL(reg.exact_search("a"), false);
-        RED_CHECK_EQUAL(reg.exact_search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("b"), false);
-        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
-        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
-        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK(not reg.exact_search(""));
+        RED_CHECK(not reg.exact_search("a"));
+        RED_CHECK(reg.exact_search("aaaa"));
+        RED_CHECK(not reg.exact_search("baaaa"));
+        RED_CHECK(not reg.exact_search("b"));
+        RED_CHECK(not reg.exact_search("ab"));
+        RED_CHECK(not reg.exact_search("abc"));
+        RED_CHECK(not reg.exact_search("dabc"));
     }
 
     {
@@ -229,28 +229,28 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("a"), false);
-        RED_CHECK_EQUAL(reg.search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.search("baaaa"), true);
-        RED_CHECK_EQUAL(reg.search("baaba"), true);
-        RED_CHECK_EQUAL(reg.search("abaaba"), true);
-        RED_CHECK_EQUAL(reg.search("b"), false);
-        RED_CHECK_EQUAL(reg.search("ab"), false);
-        RED_CHECK_EQUAL(reg.search("abc"), false);
-        RED_CHECK_EQUAL(reg.search("dabc"), false);
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(not reg.search("a"));
+        RED_CHECK(reg.search("aaaa"));
+        RED_CHECK(reg.search("baaaa"));
+        RED_CHECK(reg.search("baaba"));
+        RED_CHECK(reg.search("abaaba"));
+        RED_CHECK(not reg.search("b"));
+        RED_CHECK(not reg.search("ab"));
+        RED_CHECK(not reg.search("abc"));
+        RED_CHECK(not reg.search("dabc"));
 
-        RED_CHECK_EQUAL(reg.exact_search(""), false);
-        RED_CHECK_EQUAL(reg.exact_search("a"), false);
-        RED_CHECK_EQUAL(reg.exact_search("aaaa"), true);
-        RED_CHECK_EQUAL(reg.exact_search("baaaa"), false);
-        RED_CHECK_EQUAL(reg.exact_search("abaaba"), false);
-        RED_CHECK_EQUAL(reg.exact_search("baaba"), false);
-        RED_CHECK_EQUAL(reg.exact_search("aaba"), true);
-        RED_CHECK_EQUAL(reg.exact_search("b"), false);
-        RED_CHECK_EQUAL(reg.exact_search("ab"), false);
-        RED_CHECK_EQUAL(reg.exact_search("abc"), false);
-        RED_CHECK_EQUAL(reg.exact_search("dabc"), false);
+        RED_CHECK(not reg.exact_search(""));
+        RED_CHECK(not reg.exact_search("a"));
+        RED_CHECK(reg.exact_search("aaaa"));
+        RED_CHECK(not reg.exact_search("baaaa"));
+        RED_CHECK(not reg.exact_search("abaaba"));
+        RED_CHECK(not reg.exact_search("baaba"));
+        RED_CHECK(reg.exact_search("aaba"));
+        RED_CHECK(not reg.exact_search("b"));
+        RED_CHECK(not reg.exact_search("ab"));
+        RED_CHECK(not reg.exact_search("abc"));
+        RED_CHECK(not reg.exact_search("dabc"));
     }
 
     {
@@ -258,14 +258,14 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search("a"), true);
-        RED_CHECK_EQUAL(reg.search("b"), true);
-        RED_CHECK_EQUAL(reg.search("c"), true);
-        RED_CHECK_EQUAL(reg.search("d"), false);
-        RED_CHECK_EQUAL(reg.search("e"), true);
-        RED_CHECK_EQUAL(reg.search(""), false);
-        RED_CHECK_EQUAL(reg.search("lka"), true);
-        RED_CHECK_EQUAL(reg.search("lkd"), false);
+        RED_CHECK(reg.search("a"));
+        RED_CHECK(reg.search("b"));
+        RED_CHECK(reg.search("c"));
+        RED_CHECK(not reg.search("d"));
+        RED_CHECK(reg.search("e"));
+        RED_CHECK(not reg.search(""));
+        RED_CHECK(reg.search("lka"));
+        RED_CHECK(not reg.search("lkd"));
     }
 
     {
@@ -277,7 +277,7 @@ RED_AUTO_TEST_CASE(TestRegexSt)
         RED_CHECK_EQUAL(reg.search("b"), !true);
         RED_CHECK_EQUAL(reg.search("c"), !true);
         RED_CHECK_EQUAL(reg.search("d"), !true);
-        RED_CHECK_EQUAL(reg.search(""), false);
+        RED_CHECK(not reg.search(""));
         RED_CHECK_EQUAL(reg.search("lka"), !false);
     }
 
@@ -286,7 +286,7 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search("adefg"), true);
+        RED_CHECK(reg.search("adefg"));
     }
 
     {
@@ -294,8 +294,8 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search("a{,1}c"), true);
-        RED_CHECK_EQUAL(reg.exact_search("a{,1}c"), true);
+        RED_CHECK(reg.search("a{,1}c"));
+        RED_CHECK(reg.exact_search("a{,1}c"));
     }
 
     {
@@ -303,8 +303,8 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search("ac"), true);
-        RED_CHECK_EQUAL(reg.exact_search("ac"), true);
+        RED_CHECK(reg.search("ac"));
+        RED_CHECK(reg.exact_search("ac"));
     }
 
     {
@@ -312,8 +312,8 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search("aaac"), true);
-        RED_CHECK_EQUAL(reg.exact_search("aaac"), true);
+        RED_CHECK(reg.search("aaac"));
+        RED_CHECK(reg.exact_search("aaac"));
     }
 
     {
@@ -321,8 +321,8 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search("aaaaaaaac"), true);
-        RED_CHECK_EQUAL(reg.exact_search("aaaaaaac"), true);
+        RED_CHECK(reg.search("aaaaaaaac"));
+        RED_CHECK(reg.exact_search("aaaaaaac"));
     }
 
     {
@@ -330,7 +330,7 @@ RED_AUTO_TEST_CASE(TestRegexSt)
 
         RED_CHECK(reg.root());
 
-        RED_CHECK_EQUAL(reg.search("c"), true);
-        RED_CHECK_EQUAL(reg.exact_search("c"), true);
+        RED_CHECK(reg.search("c"));
+        RED_CHECK(reg.exact_search("c"));
     }
 }

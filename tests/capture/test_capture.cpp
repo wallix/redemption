@@ -1988,7 +1988,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         }
     }
     RED_CHECK_EQUAL(1, pattern_count);
-    RED_CHECK_EQUAL(report_message.is_killed, true);
+    RED_CHECK(report_message.is_killed);
 }
 
 

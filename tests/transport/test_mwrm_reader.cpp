@@ -138,7 +138,7 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV1)
     RED_CHECK_EQUAL(meta_line.ctime, 0);
     RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
     RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
-    RED_CHECK_EQUAL(meta_line.with_hash, false);
+    RED_CHECK(not meta_line.with_hash);
 }
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV2)
@@ -169,7 +169,7 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2)
     RED_CHECK_EQUAL(meta_line.ctime, 1455816421);
     RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
     RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
-    RED_CHECK_EQUAL(meta_line.with_hash, false);
+    RED_CHECK(not meta_line.with_hash);
 }
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     RED_CHECK_EQUAL(meta_line.ctime, 8);
     RED_CHECK_EQUAL(meta_line.start_time, 1352304810);
     RED_CHECK_EQUAL(meta_line.stop_time, 1352304870);
-    RED_CHECK_EQUAL(meta_line.with_hash, true);
+    RED_CHECK(meta_line.with_hash);
     RED_CHECK_MEM_AA(
         meta_line.hash1,
         "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
@@ -269,7 +269,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
     RED_CHECK_EQUAL(meta_line.ctime, 0);
     RED_CHECK_EQUAL(meta_line.start_time, 1477416187);
     RED_CHECK_EQUAL(meta_line.stop_time, 1477416298);
-    RED_CHECK_EQUAL(meta_line.with_hash, true);
+    RED_CHECK(meta_line.with_hash);
     RED_CHECK_MEM_AA(meta_line.hash1,
       "\x32\xd7\xbb\xef\x41\xa7\xc1\x53\x47\xc9\xe8\xab\xc1\xec\xe0\x3b"
       "\xbd\x23\x0a\x71\xae\xba\x5c\xe2\xa0\xf5\x10\xd6\xe6\x94\x8e\x9a"_av);
@@ -320,7 +320,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     RED_CHECK_EQUAL(meta_line.ctime, 1455816632);
     RED_CHECK_EQUAL(meta_line.start_time, 1455816611);
     RED_CHECK_EQUAL(meta_line.stop_time, 1455816633);
-    RED_CHECK_EQUAL(meta_line.with_hash, true);
+    RED_CHECK(meta_line.with_hash);
     RED_CHECK_MEM_AA(meta_line.hash1,
       "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
       "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77"_av);
@@ -352,7 +352,7 @@ RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
     RED_CHECK_EQUAL(meta_line.ino, 28);
     RED_CHECK_EQUAL(meta_line.mtime, 1504107644);
     RED_CHECK_EQUAL(meta_line.ctime, 1504107644);
-    RED_CHECK_EQUAL(meta_line.with_hash, false);
+    RED_CHECK(not meta_line.with_hash);
 
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
 
@@ -374,7 +374,7 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         reader.set_header({WrmVersion::v1, true});
         reader.read_meta_hash_line(meta_line);
         RED_CHECK_EQUAL(meta_line.filename, "file_xyz");
-        RED_CHECK_EQUAL(meta_line.with_hash, true);
+        RED_CHECK(meta_line.with_hash);
         RED_CHECK_MEM_AA(meta_line.hash1,
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);
@@ -395,7 +395,7 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         reader.set_header({WrmVersion::v1, false});
         reader.read_meta_hash_line(meta_line);
         RED_CHECK_EQUAL(meta_line.filename, "file_xyz");
-        RED_CHECK_EQUAL(meta_line.with_hash, true);
+        RED_CHECK(meta_line.with_hash);
         RED_CHECK_MEM_AA(meta_line.hash1,
         " \x30\n\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);

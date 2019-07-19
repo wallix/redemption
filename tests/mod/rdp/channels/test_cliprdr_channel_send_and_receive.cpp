@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClipboardCapabilitiesReceive)
 
     ClipboardCapabilitiesReceive receiver(state, chunk, RDPVerbose::none);
 
-    RED_CHECK_EQUAL(state.use_long_format_names, true);
+    RED_CHECK(state.use_long_format_names);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
@@ -402,7 +402,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
         RED_CHECK_EQUAL(format_list_pdu.num_format_names(), 1);
         RED_CHECK_EQUAL(format_list_pdu.format_name(0).format_name(), "");
         RED_CHECK_EQUAL(format_list_pdu.format_name(0).formatId(), RDPECLIP::CF_TEXT);
-        RED_CHECK_EQUAL(format_list_pdu.will_be_sent_in_ASCII_8(true), false);
+        RED_CHECK(not format_list_pdu.will_be_sent_in_ASCII_8(true));
     }
 
 }
@@ -440,7 +440,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
 
     UnlockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
 
-    RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.empty(), true);
+    RED_CHECK(state.client_data.file_stream_data_inventory.empty());
 }
 
 // RED_AUTO_TEST_CASE(TestCliprdrChannelFileContentsResponseReceive)
@@ -489,5 +489,5 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
 //
 //     FileContentsResponseReceive receiver(state.client_data, header, CHANNELS::CHANNEL_FLAG_FIRST, chunk);
 //
-//     RED_CHECK_EQUAL(receiver.must_log_file_info_type, true);
+//     RED_CHECK(receiver.must_log_file_info_type);
 // }
