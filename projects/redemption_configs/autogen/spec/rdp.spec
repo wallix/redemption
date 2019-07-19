@@ -177,10 +177,16 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #   1: Java Access Bridge
 #   2: MS Active Accessbility
 #   4: MS UI Automation
+#   8: Reserved (do not use)
+#   16: Inspect Edge location URL
+#   32: Inspect Chrome Address/Search bar
+#   64: Inspect Firefox Address/Search bar
+#   128: Monitor Internet Explorer event
+#   256: Inspect group membership of user
 # (note: values can be added (everyone: 1+2+4=7, mute: 0))
 #_advanced
 #_hex
-disabled_features = integer(min=0, max=7, default=0)
+disabled_features = integer(min=0, max=511, default=96)
 
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)

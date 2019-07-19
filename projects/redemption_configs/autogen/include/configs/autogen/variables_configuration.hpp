@@ -2011,7 +2011,7 @@ namespace cfg {
     /// type: SessionProbeDisabledFeature <br/>
     /// sesman -> proxy <br/>
     /// connpolicy -> proxy    [name: session_probe::disabled_features] <br/>
-    /// value = static_cast<type>(0) <br/>
+    /// value = static_cast<type>(96) <br/>
     struct mod_rdp::session_probe_disabled_features {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2023,7 +2023,7 @@ namespace cfg {
         using type = SessionProbeDisabledFeature;
         using sesman_and_spec_type = SessionProbeDisabledFeature;
         using mapped_type = sesman_and_spec_type;
-        type value = static_cast<type>(0);
+        type value = static_cast<type>(96);
     };
     /// If enabled, disconnected session can be recovered by a different primary user. <br/>
     /// type: bool <br/>
@@ -5047,6 +5047,7 @@ struct mod_rdp
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::server_cert
 , cfg::mod_rdp::server_cert_response
+, cfg::mod_rdp::session_probe_disabled_features
 , cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::disconnect_on_logon_user_change
 , cfg::mod_rdp::extra_orders
@@ -5093,7 +5094,6 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_memory_usage_limit
 , cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check
 , cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field
-, cfg::mod_rdp::session_probe_disabled_features
 , cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
