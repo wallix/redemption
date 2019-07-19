@@ -201,10 +201,10 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             std::vector<uint8_t> vec;
             vec.resize(user.size() * 2);
             UTF8toUTF16(user, vec.data(), vec.size());
-            RED_CHECK_MEM_AA(user_av, vec);
+            RED_CHECK_MEM(user_av, vec);
             vec.resize(domain.size() * 2);
             UTF8toUTF16(domain, vec.data(), vec.size());
-            RED_CHECK_MEM_AA(domain_av, vec);
+            RED_CHECK_MEM(domain_av, vec);
             size_t user_len = UTF8Len(byte_ptr_cast(pass.data()));
             LOG(LOG_INFO, "callback lambda: user_len=%lu", user_len);
             password_array.init(user_len * 2);

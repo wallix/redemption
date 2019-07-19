@@ -335,13 +335,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane) {
 
     compress_color_plane(100, 1, outbuffer, data);
 
-    uint8_t result[] = {
-        0x1F, 0x41,
-        0xF2,
-        0x52
-    };
-
-    RED_CHECK_MEM_AA(outbuffer.get_bytes(), result);
+    RED_CHECK_MEM(outbuffer.get_bytes(), "\x1F\x41\xF2\x52"_av);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
@@ -355,14 +349,8 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
 
     compress_color_plane(6, 3, outbuffer, data);
 
-    uint8_t result[] = {
-        0x13, 0xFF,
-        0x20, 0xFE, 0xFD,
-        0x60, 0x01, 0x7D, 0xF5, 0xC2, 0x9A, 0x38,
-        0x60, 0x01, 0x67, 0x8B, 0xA3, 0x78, 0xAF
-    };
-
-    RED_CHECK_MEM_AA(outbuffer.get_bytes(), result);
+    RED_CHECK_MEM(outbuffer.get_bytes(),
+        "\x13\xFF\x20\xFE\xFD\x60\x01\x7D\xF5\xC2\x9A\x38\x60\x01\x67\x8B\xA3\x78\xAF"_av);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {

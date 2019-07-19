@@ -315,8 +315,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_SIG_FROM(to_send5, packet5);
 
-//    auto av = make_array_view(to_send5.get_data(), sizeof(packet5));
-//    RED_CHECK_MEM_AA(av, packet5);
+    // RED_CHECK_MEM(to_send5.get_bytes(), packet5);
 
     // hexdump_c(to_send5.get_data(), to_send5.size());
 }

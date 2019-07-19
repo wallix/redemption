@@ -24,28 +24,16 @@
 #include "utils/sugar/cast.hpp"
 
 
-
 RED_AUTO_TEST_CASE(RDPSNDPDUHeaderEmit)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\x07\x00\x26\x00";
+    auto data = "\x07\x00\x26\x00"_av;
 
     StaticOutStream<8> stream;
-    rdpsnd::RDPSNDPDUHeader ch(rdpsnd::SNDC_FORMATS, 38);
+    rdpsnd::RDPSNDPDUHeader(rdpsnd::SNDC_FORMATS, 38).emit(stream);
 
-    ch.emit(stream);
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(RDPSNDPDUHeaderReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x07\x00\x26\x00";
-
-    InStream in_stream(data, len);
+    InStream in_stream(stream.get_bytes());
 
     rdpsnd::RDPSNDPDUHeader ch;
     ch.receive(in_stream);
@@ -56,27 +44,16 @@ RED_AUTO_TEST_CASE(RDPSNDPDUHeaderReceive)
 
 RED_AUTO_TEST_CASE(ServerAudioFormatsandVersionHeaderEmit)
 {
-    const size_t len = 20;
-    const char data[] =
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x16\x00"
-            "\xff\x06\x00\x00";
+    auto data =
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x16\x00"
+        "\xff\x06\x00\x00"_av;
 
     StaticOutStream<32> stream;
-    rdpsnd::ServerAudioFormatsandVersionHeader ch(22, 0xff, 6);
+    rdpsnd::ServerAudioFormatsandVersionHeader(22, 0xff, 6).emit(stream);
 
-    ch.emit(stream);
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(ServerAudioFormatsandVersionHeaderReceive)
-{
-    const size_t len = 20;
-    const char data[] =
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x16\x00"
-            "\xff\x06\x00\x00";
-
-    InStream in_stream(data, len);
+    InStream in_stream(stream.get_bytes());
 
     rdpsnd::ServerAudioFormatsandVersionHeader ch;
     ch.receive(in_stream);
@@ -88,27 +65,16 @@ RED_AUTO_TEST_CASE(ServerAudioFormatsandVersionHeaderReceive)
 
 RED_AUTO_TEST_CASE(AudioFormatEmit)
 {
-    const size_t len = 18;
-    const char data[] =
-            "\x01\x00\x02\x00\x44\xac\x00\x00\x10\xb1\x02\x00\x04\x00\x10\x00"
-            "\x00\x00";
+    auto data =
+        "\x01\x00\x02\x00\x44\xac\x00\x00\x10\xb1\x02\x00\x04\x00\x10\x00"
+        "\x00\x00"_av;
 
     StaticOutStream<32> stream;
-    rdpsnd::AudioFormat ch(rdpsnd::WAVE_FORMAT_PCM, 2, 0x0000ac44, 0x0002b110, 4, 16, 0);
+    rdpsnd::AudioFormat(rdpsnd::WAVE_FORMAT_PCM, 2, 0x0000ac44, 0x0002b110, 4, 16, 0).emit(stream);
 
-    ch.emit(stream);
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(AudioFormatReceive)
-{
-    const size_t len = 18;
-    const char data[] =
-            "\x01\x00\x02\x00\x44\xac\x00\x00\x10\xb1\x02\x00\x04\x00\x10\x00"
-            "\x00\x00";
-
-    InStream in_stream(data, len);
+    InStream in_stream(stream.get_bytes());
 
     rdpsnd::AudioFormat ch;
     ch.receive(in_stream);
@@ -124,27 +90,16 @@ RED_AUTO_TEST_CASE(AudioFormatReceive)
 
 RED_AUTO_TEST_CASE(ClientAudioFormatsandVersionHeaderEmit)
 {
-    const size_t len = 20;
-    const char data[] =
-            "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00"
-            "\x00\x06\x00";
+    auto data =
+        "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00"
+        "\x00\x06\x00\x00"_av;
 
     StaticOutStream<32> stream;
-    rdpsnd::ClientAudioFormatsandVersionHeader ch(0x00000001, 0x00000000, 0x00000000, 0x0000, 1, 6);
+    rdpsnd::ClientAudioFormatsandVersionHeader(0x00000001, 0x00000000, 0x00000000, 0x0000, 1, 6).emit(stream);
 
-    ch.emit(stream);
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(ClientAudioFormatsandVersionHeaderReceive)
-{
-    const size_t len = 20;
-    const char data[] =
-            "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00"
-            "\x00\x06\x00\x00";
-
-    InStream in_stream(data, len);
+    InStream in_stream(stream.get_bytes());
 
     rdpsnd::ClientAudioFormatsandVersionHeader ch;
     ch.receive(in_stream);
@@ -159,25 +114,14 @@ RED_AUTO_TEST_CASE(ClientAudioFormatsandVersionHeaderReceive)
 
 RED_AUTO_TEST_CASE(QualityModePDUEmit)
 {
-    const size_t len = 2;
-    const char data[] =
-            "\x01\x00";
+    auto data = "\x01\x00\x00\x00"_av;
 
     StaticOutStream<32> stream;
-    rdpsnd::QualityModePDU ch(rdpsnd::MEDIUM_QUALITY);
+    rdpsnd::QualityModePDU(rdpsnd::MEDIUM_QUALITY).emit(stream);
 
-    ch.emit(stream);
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(QualityModePDUReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x00";
-
-    InStream in_stream(data, len);
+    InStream in_stream(stream.get_bytes());
 
     rdpsnd::QualityModePDU ch;
     ch.receive(in_stream);
@@ -187,25 +131,14 @@ RED_AUTO_TEST_CASE(QualityModePDUReceive)
 
 RED_AUTO_TEST_CASE(TrainingPDUEmit)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\x73\xfd\x00\x04";
+    auto data = "\x73\xfd\x00\x04"_av;
 
     StaticOutStream<32> stream;
-    rdpsnd::TrainingPDU ch(0xfd73, 1024);
+    rdpsnd::TrainingPDU(0xfd73, 1024).emit(stream);
 
-    ch.emit(stream);
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(TrainingPDUReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x73\xfd\x00\x04";
-
-    InStream in_stream(data, len);
+    InStream in_stream(stream.get_bytes());
 
     rdpsnd::TrainingPDU ch;
     ch.receive(in_stream);
@@ -217,25 +150,14 @@ RED_AUTO_TEST_CASE(TrainingPDUReceive)
 
 RED_AUTO_TEST_CASE(TrainingConfirmPDUEmit)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\x73\xfd\x00\x04";
+    auto data = "\x73\xfd\x00\x04"_av;
 
     StaticOutStream<32> stream;
-    rdpsnd::TrainingConfirmPDU ch(0xfd73, 1024);
+    rdpsnd::TrainingConfirmPDU(0xfd73, 1024).emit(stream);
 
-    ch.emit(stream);
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(TrainingConfirmPDUReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x73\xfd\x00\x04";
-
-    InStream in_stream(data, len);
+    InStream in_stream(stream.get_bytes());
 
     rdpsnd::TrainingConfirmPDU ch;
     ch.receive(in_stream);
@@ -246,21 +168,19 @@ RED_AUTO_TEST_CASE(TrainingConfirmPDUReceive)
 
 RED_AUTO_TEST_CASE(WaveInfoPDUEmit)
 {
-    const size_t len = 8;
-    const char data[] =
-            "\xa7\x11\x00\x00\x00\x00\x00\x00";
+    auto data = "\xa7\x11\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04"_av;
 
     StaticOutStream<32> stream;
-    rdpsnd::WaveInfoPDU ch(0x11a7, 0x0000, 0x00);
+    {
+        rdpsnd::WaveInfoPDU ch(0x11a7, 0x0000, 0x00);
+        ch.Data[0] = 1;
+        ch.Data[1] = 2;
+        ch.Data[2] = 3;
+        ch.Data[3] = 4;
+        ch.emit(stream);
+    }
 
-    ch.emit(stream);
-
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(WaveInfoPDUReceive)
-{
-    const auto data = cstr_array_view("\xa7\x11\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04");
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
     InStream in_stream(data);
 
@@ -275,25 +195,14 @@ RED_AUTO_TEST_CASE(WaveInfoPDUReceive)
 
 RED_AUTO_TEST_CASE(WaveConfirmPDUEmit)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\xa7\x11\x01\x00";
+    auto data = "\xa7\x11\x01\x00"_av;
 
     StaticOutStream<32> stream;
-    rdpsnd::WaveConfirmPDU ch(0x11a7, 0x01);
+    rdpsnd::WaveConfirmPDU(0x11a7, 0x01).emit(stream);
 
-    ch.emit(stream);
+    RED_CHECK_MEM(stream.get_bytes(), data);
 
-    RED_CHECK_MEM_AA(make_array_view(stream.get_data(), len), make_array_view(data, len));
-}
-
-RED_AUTO_TEST_CASE(WaveConfirmPDUReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\xa7\x11\x01\x00";
-
-    InStream in_stream(data, len);
+    InStream in_stream(stream.get_bytes());
 
     rdpsnd::WaveConfirmPDU ch;
     ch.receive(in_stream);
