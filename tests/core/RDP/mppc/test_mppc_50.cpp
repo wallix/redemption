@@ -56,8 +56,8 @@ RED_AUTO_TEST_CASE(TestRDP50BlukCompression2)
 
     RED_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
     RED_CHECK_EQUAL(3015,  datalen);
-    RED_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc.outputBuffer
-                                   , mppc_enc.bytes_in_opb));
+    RED_CHECK_MEM(make_array_view(compressed_data),
+        array_view(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb));
 }
 
 RED_AUTO_TEST_CASE(TestRDP50BlukCompression3)
@@ -93,8 +93,8 @@ RED_AUTO_TEST_CASE(TestRDP50BlukCompression3)
 
     RED_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
     RED_CHECK_EQUAL(8893,  datalen);
-    RED_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc.outputBuffer
-                                   , mppc_enc.bytes_in_opb));
+    RED_CHECK_MEM(make_array_view(compressed_data),
+        array_view(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb));
 }
 
 RED_AUTO_TEST_CASE(TestRDP50BlukDecompression5)
@@ -120,5 +120,5 @@ RED_AUTO_TEST_CASE(TestRDP50BlukDecompression5)
     mppc_dec.decompress(compressed_data, sizeof(compressed_data), compressionFlags, rdata, rlen);
 
     RED_CHECK_EQUAL(3790, rlen);
-    RED_CHECK_EQUAL(0,   memcmp(uncompressed_data, rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
 }

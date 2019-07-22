@@ -591,14 +591,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
-# min = 0, max = 4
+# min = 0, max = 10
 #   0: none
 #   1: Java Access Bridge
 #   2: MS Active Accessbility
 #   4: MS UI Automation
+#   8: Reserved (do not use)
+#   16: Inspect Edge location URL
+#   32: Inspect Chrome Address/Search bar
+#   64: Inspect Firefox Address/Search bar
+#   128: Monitor Internet Explorer event
+#   256: Inspect group membership of user
 # (note: values can be added (everyone: 1+2+4=7, mute: 0))
 #_hidden
-#session_probe_disabled_features = 0
+#session_probe_disabled_features = 96
 
 # If enabled, disconnected session can be recovered by a different primary user.
 # value: 0 or 1
@@ -1156,27 +1162,53 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #load_theme = 
 
-[validator]
+[file_verification]
 
-# value: 0 or 1
-#enable_validator = 0
-
+#_hidden
 #socket_path = )gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(
 
-#up_target_name = 
-
-#down_target_name = 
+# value: 0 or 1
+#_hidden
+#enable_up = 0
 
 # value: 0 or 1
-#enable_interrupting = 0
+#_hidden
+#enable_down = 0
 
 # value: 0 or 1
+#_hidden
 #log_if_accepted = 0
 
-# value: 0 or 1
-#enable_save_files = 0
+[icap_server_up]
 
-# maxlen = 4096
-#save_files_directory = 
+# Ip or fqdn of ICAP service
+#host = 
+
+# Port of ICAP service
+# min = 0
+#port = 0
+
+# Service name of ICAP service
+#service_name = up
+
+# ICAP service use tls
+# value: 0 or 1
+#tls = 0
+
+[icap_server_down]
+
+# Ip or fqdn of ICAP service
+#host = 
+
+# Port of ICAP service
+# min = 0
+#port = 0
+
+# Service name of ICAP service
+#service_name = down
+
+# ICAP service use tls
+# value: 0 or 1
+#tls = 0
 
 )gen_config_ini"

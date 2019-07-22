@@ -515,9 +515,11 @@ public:
         this->p+=8;
     }
 
-    void out_skip_bytes(unsigned int n) noexcept {
+    array_view_u8 out_skip_bytes(unsigned int n) noexcept {
         assert(this->has_room(n));
+        array_view_u8 ret(this->get_current(), n);
         this->p+=n;
+        return ret;
     }
 
     void out_uint8(uint8_t v) noexcept {

@@ -189,6 +189,13 @@ struct ICAPResultHeader
 
         return ReceiveStatus::Ok;
     }
+
+    void emit(OutStream& stream) noexcept
+    {
+        stream.out_uint8(safe_int(this->result));
+        stream.out_uint32_be(safe_int(this->file_id));
+        stream.out_uint32_be(safe_int(this->content_size));
+    }
 };
 
 struct ICAPCheck

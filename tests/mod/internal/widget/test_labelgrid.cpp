@@ -20,6 +20,7 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/check_sig.hpp"
 
 
 #include "mod/internal/widget/grid.hpp"
@@ -67,7 +68,7 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
         { 50, 150 }, { 150, 800 }, { 50, 150 }, { 50, 100 }
     };
 
-    uint16_t row_height[line_number+4]      = { 0 };
+    uint16_t row_height[line_number+4]   = { 0 };
     uint16_t column_width[column_number] = { 0 };
 
     compute_format(wgrid, column_width_strategies, row_height, column_width);
@@ -80,13 +81,8 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    // drawable.save_to_png("/tmp/labelgrid.png");
-    // char message[1024];
-    // if (!check_sig(drawable.drawable, message,
-    //                "\x47\x86\xd6\xd2\x1d\x47\xa2\x4e\xcf\x7b"
-    //                "\x3f\xce\x8f\x0b\x25\x8b\xf7\x3b\xcf\x01")){
-    //     RED_CHECK_MESSAGE(false, message);
-    // }
+    RED_CHECK_SIG(drawable,
+        "\x26\xb1\xa5\x1d\x05\x05\x04\x85\xbb\xc3\xda\x5a\x09\xab\x8a\x1b\xf1\xeb\x7b\x8a");
 
     wgrid.has_focus = true;
     // ask to widget to redraw at it's current position
@@ -95,10 +91,6 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    // drawable.save_to_png("/tmp/labelgrid2.png");
-    // if (!check_sig(drawable.drawable, message,
-    //                "\x0f\xf6\x9f\xa5\xfb\x38\x4c\xb4\x8e\x66"
-    //                "\x8e\x6d\x99\x64\x4e\x3c\x9c\x7b\xb6\xca")){
-    //     RED_CHECK_MESSAGE(false, message);
-    // }
+    RED_CHECK_SIG(drawable,
+        "\x05\xba\x77\x54\x62\xd7\x88\xbe\xf2\xdf\x09\x33\x74\x87\xb1\x67\x8f\x9d\xc7\xad");
 }

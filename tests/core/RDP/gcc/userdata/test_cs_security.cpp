@@ -23,7 +23,6 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_security.hpp"
 
 // 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes
@@ -31,7 +30,7 @@
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
 {
-    const char indata[] =
+    InStream stream(
         "\x02\xc0"         // CS_SECURITY
         "\x0c\x00"         // 12 bytes user Data
 
@@ -42,15 +41,8 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
                            // | 56BIT_ENCRYPTION_FLAG
                            // | FIPS_ENCRYPTION_FLAG
         "\x00\x00\x00\x00" // TS_UD_CS_SEC::extEncryptionMethods
-    ;
-
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
+        ""_av);
     GCC::UserData::CSSecurity cs_security;
-    InStream stream(buf);
     cs_security.recv(stream);
     RED_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
     RED_CHECK_EQUAL(12, cs_security.length);

@@ -1517,7 +1517,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_cluster :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_cluster.hpp
 ;
@@ -1527,7 +1526,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_core :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_core.hpp
 ;
@@ -1537,7 +1535,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp
 ;
@@ -1547,7 +1544,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_monitor :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_monitor.hpp
 ;
@@ -1557,7 +1553,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_monitor_ex :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_monitor_ex.hpp
 ;
@@ -1567,7 +1562,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_multitransport :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_multitransport.hpp
 ;
@@ -1577,7 +1571,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_net :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_net.hpp
 ;
@@ -1587,7 +1580,6 @@ test-run tests/core/RDP/gcc/userdata/test_cs_security :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc/userdata/cs_security.hpp
 ;
@@ -2053,7 +2045,6 @@ test-run tests/core/RDP/test_gcc :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/gcc.hpp
 ;
@@ -2083,7 +2074,6 @@ test-run tests/core/RDP/test_mcs :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/mcs.hpp
 ;
@@ -2192,7 +2182,6 @@ test-run tests/core/RDP/test_sec :
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/sec.hpp
 ;
@@ -2213,7 +2202,6 @@ test-run tests/core/RDP/test_slowpath :
   <library>src/core/error.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/slowpath.hpp
 ;
@@ -3920,18 +3908,6 @@ test-run tests/mod/rdp/channels/test_base_channel :
   <library>src/utils/hexdump.o
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
-test-run tests/mod/rdp/channels/test_channel_file :
-  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_channel_file.cpp
-:
-  <library>src/core/error.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/rdp/channels/channel_file.hpp
-;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
 :
@@ -3943,16 +3919,12 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
@@ -4270,6 +4242,15 @@ test-run tests/mod/test_icap_files_service :
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/icap_files_service.hpp
+;
+test-run tests/mod/test_metrics_hmac :
+  $(REDEMPTION_TEST_PATH)/mod/test_metrics_hmac.cpp
+:
+  <library>crypto
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/metrics_hmac.hpp
 ;
 test-run tests/mod/test_mod_api :
   $(REDEMPTION_TEST_PATH)/mod/test_mod_api.cpp
@@ -5092,7 +5073,6 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/bitmap.cpp
   <covfile>src/utils/bitmap.hpp
@@ -5791,7 +5771,6 @@ alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
 alias test_null : tests/mod/null/test_null ;
 alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
-alias test_channel_file : tests/mod/rdp/channels/test_channel_file ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
@@ -5809,6 +5788,7 @@ alias test_rdp_negociation : tests/mod/rdp/test_rdp_negociation ;
 alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
 alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
 alias test_icap_files_service : tests/mod/test_icap_files_service ;
+alias test_metrics_hmac : tests/mod/test_metrics_hmac ;
 alias test_mod_api : tests/mod/test_mod_api ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
 alias test_zrle : tests/mod/vnc/encoder/test_zrle ;
@@ -6121,7 +6101,6 @@ alias test_widget.coverage : tests/mod/internal/widget/test_widget.coverage ;
 alias test_widget_rect.coverage : tests/mod/internal/widget/test_widget_rect.coverage ;
 alias test_null.coverage : tests/mod/null/test_null.coverage ;
 alias test_base_channel.coverage : tests/mod/rdp/channels/test_base_channel.coverage ;
-alias test_channel_file.coverage : tests/mod/rdp/channels/test_channel_file.coverage ;
 alias test_cliprdr_channel.coverage : tests/mod/rdp/channels/test_cliprdr_channel.coverage ;
 alias test_cliprdr_channel_send_and_receive.coverage : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive.coverage ;
 alias test_rail_window_id_manager.coverage : tests/mod/rdp/channels/test_rail_window_id_manager.coverage ;
@@ -6139,6 +6118,7 @@ alias test_rdp_negociation.coverage : tests/mod/rdp/test_rdp_negociation.coverag
 alias test_rdp_orders.coverage : tests/mod/rdp/test_rdp_orders.coverage ;
 alias test_rdp_params.coverage : tests/mod/rdp/test_rdp_params.coverage ;
 alias test_icap_files_service.coverage : tests/mod/test_icap_files_service.coverage ;
+alias test_metrics_hmac.coverage : tests/mod/test_metrics_hmac.coverage ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
 alias test_hextile.coverage : tests/mod/vnc/encoder/test_hextile.coverage ;
 alias test_zrle.coverage : tests/mod/vnc/encoder/test_zrle.coverage ;
@@ -6520,7 +6500,6 @@ alias tests/mod/null.norec :
 ;
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
-  tests/mod/rdp/channels/test_channel_file
   tests/mod/rdp/channels/test_cliprdr_channel
   tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager
@@ -6542,6 +6521,7 @@ alias tests/mod/rdp.norec :
 ;
 alias tests/mod.norec :
   tests/mod/test_icap_files_service
+  tests/mod/test_metrics_hmac
   tests/mod/test_mod_api
 ;
 alias tests/mod/vnc/encoder.norec :

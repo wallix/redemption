@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)
 
 RED_AUTO_TEST_CASE(TestBitmapCodecCaps_recv)
 {
-    uint8_t data[] = { 
+    uint8_t data[] = {
     /* 0000 */ 0x1d, 0x00, // capset bitmap codec capabilities
                0x60, 0x00, // 96 bytes long
                0x04,       // 4 bitmap codecs to follow
@@ -52,7 +52,7 @@ RED_AUTO_TEST_CASE(TestBitmapCodecCaps_recv)
                0x58, 0x9f, 0xae, 0x2d, 0x1a, 0x87, 0xe2, 0xd6,
                0x00,       // codecID=0
                0x03, 0x00, // property len to follow = 3 bytes
-               0x01, 0x01, 0x03, 
+               0x01, 0x01, 0x03,
                // CODEC_GUID_REMOTEFX
                0x12, 0x2f, 0x77, 0x76, 0x72, 0xbd, 0x63, 0x44,
                0xaf, 0xb3, 0xb7, 0x3c, 0x9c, 0x6f, 0x78, 0x86,
@@ -80,14 +80,14 @@ RED_AUTO_TEST_CASE(TestBitmapCodecCaps_recv)
 
     };
 
- 
-    InStream in_stream(data, sizeof(data));
- 
+
+    InStream in_stream(data);
+
     uint16_t capstype = in_stream.in_uint16_le();
     uint16_t capslen = in_stream.in_uint16_le();
     RED_CHECK_EQUAL(CAPSETTYPE_BITMAP_CODECS, capstype);
     RED_CHECK_EQUAL(0x60, capslen);
- 
+
     BitmapCodecCaps caps(false);
     caps.recv(in_stream, capslen);
 }

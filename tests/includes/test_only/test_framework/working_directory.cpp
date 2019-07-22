@@ -68,7 +68,7 @@ namespace
             char buf[1024*4];
             auto dsz = dirname.size();
             dirname += getcwd(buf, sizeof(buf));
-            for (char& c : array_view_char(dirname).array_from_offset(dsz)) {
+            for (char& c : array_view_char(dirname).from_at(dsz)) {
                 if (c == '/') {
                     c = ':';
                 }
@@ -346,7 +346,7 @@ std::string WorkingDirectory::unmached_files()
             auto it = this->paths_.find(filename);
             if (it == this->paths_.end()) {
                 if (type == Type::Directory) {
-                    if(!recursive(recursive)) {
+                    if (!recursive(recursive)) {
                         str_append(err, path.name, " unknown\n");
                     }
                 }

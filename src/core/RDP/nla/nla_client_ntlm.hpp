@@ -472,8 +472,7 @@ private:
         }
 
         // data_in [signature][data_buffer]
-
-        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
+        auto data_buffer = data_in.from_at(cbMaxSignature);
         data_out.resize(data_buffer.size(), 0);
 
         /* Decrypt message using with RC4, result overwrites original buffer */
@@ -636,7 +635,7 @@ private:
 
         // data_in [signature][data_buffer]
 
-        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
+        auto data_buffer = data_in.from_at(cbMaxSignature);
         data_out.resize(data_buffer.size(), 0);
 
         /* Decrypt message using with RC4, result overwrites original buffer */

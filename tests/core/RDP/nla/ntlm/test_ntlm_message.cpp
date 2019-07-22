@@ -99,20 +99,20 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     RED_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
     RED_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(ChallengeMsg.TargetName.buffer.ostream.get_data(), ChallengeMsg.TargetName.len),
-        "\x57\x00\x49\x00\x4e\x00\x37\x00"
+        "\x57\x00\x49\x00\x4e\x00\x37\x00"_av
     );
     // hexdump_c(ChallengeMsg.TargetName.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetName.buffer.ostream.size());
     RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
     RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(ChallengeMsg.TargetInfo.buffer.ostream.get_data(), ChallengeMsg.TargetInfo.len),
         "\x02\x00\x08\x00\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00"
         "\x57\x00\x49\x00\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00"
         "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
-        "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00"
+        "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00"_av
     );
     // hexdump_c(ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetInfo.buffer.ostream.size());
@@ -465,11 +465,11 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
     // hexdump_c(lmResponse.Response, 16);
-    RED_CHECK_MEM_AC(lmResponse.Response, "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3");
+    RED_CHECK_MEM_AA(lmResponse.Response, "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3"_av);
 
     // LOG(LOG_INFO, "Lm Response . ClientChallenge ===========\n");
     // hexdump_c(lmResponse.ClientChallenge, 8);
-    RED_CHECK_MEM_AC(lmResponse.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
+    RED_CHECK_MEM_AA(lmResponse.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43"_av);
 
 
     // NtChallengeResponse
@@ -479,17 +479,17 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
     // hexdump_c(ntResponse.Response, 16);
-    RED_CHECK_MEM_AC(ntResponse.Response, "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10");
+    RED_CHECK_MEM_AA(ntResponse.Response, "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10"_av);
 
     RED_CHECK_EQUAL(ntResponse.Challenge.RespType, 1);
     RED_CHECK_EQUAL(ntResponse.Challenge.HiRespType, 1);
     // LOG(LOG_INFO, "Nt Response . Challenge . Timestamp ===========\n");
     // hexdump_c(ntResponse.Challenge.Timestamp, 8);
-    RED_CHECK_MEM_AC(ntResponse.Challenge.Timestamp, "\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01");
+    RED_CHECK_MEM_AA(ntResponse.Challenge.Timestamp, "\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01"_av);
 
     // LOG(LOG_INFO, "Nt Response . Challenge . ClientChallenge ===========\n");
     // hexdump_c(ntResponse.Challenge.ClientChallenge, 8);
-    RED_CHECK_MEM_AC(ntResponse.Challenge.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43");
+    RED_CHECK_MEM_AA(ntResponse.Challenge.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43"_av);
 
     // LOG(LOG_INFO, "Nt Response . Challenge . AvPairList ===========\n");
     // ntResponse.Challenge.AvPairList.print();
@@ -497,37 +497,37 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     // Domain Name
     // LOG(LOG_INFO, "Domain Name ===========\n");
     // hexdump_c(AuthMsg.DomainName.Buffer.get_data(), AuthMsg.DomainName.Buffer.size());
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(AuthMsg.DomainName.buffer.ostream.get_data(), AuthMsg.DomainName.len),
-        "\x77\x00\x69\x00\x6e\x00\x37\x00"
+        "\x77\x00\x69\x00\x6e\x00\x37\x00"_av
     );
 
     // User Name
     // LOG(LOG_INFO, "User Name ===========\n");
     // hexdump_c(AuthMsg.UserName.Buffer.get_data(), AuthMsg.UserName.Buffer.size());
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(AuthMsg.UserName.buffer.ostream.get_data(), AuthMsg.UserName.len),
-        "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00"
+        "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00"_av
     );
 
     // Work Station
     // LOG(LOG_INFO, "Work Station ===========\n");
     // hexdump_c(AuthMsg.Workstation.Buffer.get_data(), AuthMsg.Workstation.Buffer.size());
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(AuthMsg.Workstation.buffer.ostream.get_data(), AuthMsg.Workstation.len),
-        "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00"
+        "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00"_av
     );
 
     // Encrypted Random Session Key
     // LOG(LOG_INFO, "Encrypted Random Session Key ===========\n");
     // hexdump_c(AuthMsg.EncryptedRandomSessionKey.Buffer.get_data(),
     //           AuthMsg.EncryptedRandomSessionKey.Buffer.size());
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(
             AuthMsg.EncryptedRandomSessionKey.buffer.ostream.get_data(),
             AuthMsg.EncryptedRandomSessionKey.len
         ),
-        "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba"
+        "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba"_av
     );
 
     StaticOutStream<65635> tosend;
@@ -1765,7 +1765,7 @@ public:
         // data_out [signature][data_buffer]
 
         data_out.init(data_in.size() + cbMaxSignature);
-        auto message_out = data_out.av().array_from_offset(cbMaxSignature);
+        auto message_out = data_out.av().from_at(cbMaxSignature);
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         this->compute_hmac_md5(digest, *this->context->SendSigningKey, data_in, MessageSeqNo);
@@ -1794,7 +1794,7 @@ public:
 
         // data_in [signature][data_buffer]
 
-        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
+        auto data_buffer = data_in.from_at(cbMaxSignature);
         data_out.init(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */
@@ -1892,9 +1892,9 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(input_buffer.size(), 0);
 
     // ENCRYPT
-    uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
+    auto message = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!"_av;
     Array Result;
-    server_status = server_table.EncryptMessage(message, Result, 0);
+    server_status = server_table.EncryptMessage(cbytes_view(message), Result, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
     const unsigned cbMaxSignature = 16u;
@@ -1907,9 +1907,9 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Array Result2;
     client_status = client_table.DecryptMessage({Result.get_data(), Result.size()}, Result2, 0);
 
-    RED_CHECK_EQUAL(Result.size(), make_array_view(message).size() + cbMaxSignature);
-    RED_CHECK(0 != memcmp(Result.get_data(), message, Result.size() - cbMaxSignature));
-    RED_CHECK_MEM(Result2.av(), make_array_view(message));
+    RED_CHECK_EQUAL(Result.size(), message.size() + cbMaxSignature);
+    RED_CHECK(0 != memcmp(Result.get_data(), message.data(), Result.size() - cbMaxSignature));
+    RED_CHECK_MEM(Result2.av(), message);
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 }
@@ -1984,14 +1984,14 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
                                                    make_array_view(userDomain));
 
     auto & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(LmChallengeResponse.get_data(), LmChallengeResponse.size()),
         /* 0000 */ "\x11\x1b\x69\x4b\xdb\x30\x53\x91\xef\x94\x8b\x20\x83\xbd\x07\x43" //..iK.0S.... ...C
-        /* 0010 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d"                                 //.l....0.
+        /* 0010 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d"_av                                 //.l....0.
     );
     auto & NtChallengeResponse = context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
 
-    RED_CHECK_MEM_C(
+    RED_CHECK_MEM(
         make_array_view(NtChallengeResponse.get_data(), NtChallengeResponse.size()),
         "\x54\x01\x2a\xc9\x4e\x20\x30\x7d\xed\x6a\xcf\xb8\x6b\xb0\x45\xc5" //T.*.N 0}.j..k.E. !
         "\x01\x01\x00\x00\x00\x00\x00\x00\x67\x95\x0e\x5a\x4e\x56\x76\xd6" //........g..ZNVv. !
@@ -1999,39 +1999,39 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
         "\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00\x57\x00\x49\x00" //W.I.N.7.....W.I. !
         "\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00" //N.7.....w.i.n.7. !
         "\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00\x07\x00\x08\x00" //....w.i.n.7..... !
-        "\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00\x00\x00\x00\x00" //....l........... !
+        "\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00\x00\x00\x00\x00"_av //....l........... !
     );
-    RED_CHECK_MEM_AC(
+    RED_CHECK_MEM_AA(
         context.SessionBaseKey,
-        "\x1b\x76\xfd\xe3\x46\x77\x60\x04\x39\x7a\x47\x8a\x60\x92\x0c\x4c"
+        "\x1b\x76\xfd\xe3\x46\x77\x60\x04\x39\x7a\x47\x8a\x60\x92\x0c\x4c"_av
     );
 
     context.ntlm_encrypt_random_session_key();
 
-    RED_CHECK_MEM_AC(
+    RED_CHECK_MEM_AA(
         context.EncryptedRandomSessionKey,
-        "\x5a\xcb\x6c\xba\x58\x07\xb5\xd4\xf4\x61\x65\xfb\xb0\x9a\xe7\xc6"
+        "\x5a\xcb\x6c\xba\x58\x07\xb5\xd4\xf4\x61\x65\xfb\xb0\x9a\xe7\xc6"_av
     );
 
     context.ntlm_generate_client_signing_key();
-    RED_CHECK_MEM_AC(
+    RED_CHECK_MEM_AA(
         context.ClientSigningKey,
-        /* 0000 */ "\xb6\x18\x61\x5b\xdb\x97\x6c\x62\xfd\xd5\x72\xab\x37\x24\xd1\x38" //..a[..lb..r.7$.8
+        /* 0000 */ "\xb6\x18\x61\x5b\xdb\x97\x6c\x62\xfd\xd5\x72\xab\x37\x24\xd1\x38"_av //..a[..lb..r.7$.8
     );
     context.ntlm_generate_client_sealing_key();
-    RED_CHECK_MEM_AC(
+    RED_CHECK_MEM_AA(
         context.ClientSealingKey,
-        /* 0000 */ "\x02\x46\xea\x18\xc8\xba\x71\xf3\xc1\x06\xb9\xf0\x54\x37\x44\x01" //.F....q.....T7D.
+        /* 0000 */ "\x02\x46\xea\x18\xc8\xba\x71\xf3\xc1\x06\xb9\xf0\x54\x37\x44\x01"_av //.F....q.....T7D.
     );
     context.ntlm_generate_server_signing_key();
-    RED_CHECK_MEM_AC(
+    RED_CHECK_MEM_AA(
         context.ServerSigningKey,
-      /* 0000 */ "\x56\x66\xbd\xc3\x82\xda\xb7\x70\x08\x36\xb3\xed\xcd\x67\x8b\x5a" //Vf.....p.6...g.Z
+      /* 0000 */ "\x56\x66\xbd\xc3\x82\xda\xb7\x70\x08\x36\xb3\xed\xcd\x67\x8b\x5a"_av //Vf.....p.6...g.Z
     );
     context.ntlm_generate_server_sealing_key();
-    RED_CHECK_MEM_AC(
+    RED_CHECK_MEM_AA(
         context.ServerSealingKey,
-        /* 0000 */ "\x19\x3a\x3f\x24\x89\x27\xd3\x8b\x4b\xf5\x63\x2d\xa4\xc2\xb2\x78" //.:?$.'..K.c-...x
+        /* 0000 */ "\x19\x3a\x3f\x24\x89\x27\xd3\x8b\x4b\xf5\x63\x2d\xa4\xc2\xb2\x78"_av //.:?$.'..K.c-...x
     );
 }
 RED_AUTO_TEST_CASE(TestNTOWFv2)
@@ -2057,7 +2057,7 @@ RED_AUTO_TEST_CASE(TestNTOWFv2)
                     make_array_view(uuser),
                     make_array_view(udomain),
                     make_array_view(buff));
-    RED_CHECK_MEM_AC(buff, "\x0c\x86\x8a\x40\x3b\xfd\x7a\x93\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f");
+    RED_CHECK_MEM_AA(buff, "\x0c\x86\x8a\x40\x3b\xfd\x7a\x93\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f"_av);
 }
 
 RED_AUTO_TEST_CASE(TestSetters)

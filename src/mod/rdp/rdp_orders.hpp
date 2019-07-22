@@ -154,6 +154,8 @@ public:
 #else
     {
         (void)report_error;
+        (void)enable_persistent_disk_bitmap_cache;
+        (void)persist_bitmap_cache_on_disk;
         assert(!enable_persistent_disk_bitmap_cache);
         assert(!persist_bitmap_cache_on_disk);
     }

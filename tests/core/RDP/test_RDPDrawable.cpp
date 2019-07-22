@@ -286,8 +286,9 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
     //DUMP_PNG("/tmp/test_multiopaquerect_000_", gd);
 }
 
-
-const char expected_red[] =
+RED_AUTO_TEST_CASE(TestPngOneRedScreen)
+{
+    auto expected_red =
     /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
     /* 0000 */ "\x00\x00\x03\x20\x00\x00\x02\x58\x08\x02\x00\x00\x00"             //... ...X.....
@@ -467,43 +468,20 @@ const char expected_red[] =
     /* 0000 */ "\x0d\x9d\x5e\xa4"                                                 //..^.
     /* 0000 */ "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
     /* 0000 */ "\xae\x42\x60\x82"                                                 //.B`.
+    ""_av
     ;
 
-RED_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
-{
     // This is how the expected raw PNG (a big flat RED 800x600 screen)
     // will look as a string
 
+    BufTransport trans;
     RDPDrawable d(800, 600);
     auto const color_cxt = gdi::ColorCtx::depth24();
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     d.draw(cmd, screen_rect, color_cxt);
-    TestTransport trans("", 0, expected_red, sizeof(expected_red)-1);
     dump_png24(trans, d.impl(), true);
-}
-
-RED_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
-{
-    CheckTransport trans(expected_red, sizeof(expected_red)-1);
-    RDPDrawable drawable(800, 600);
-    auto const color_cxt = gdi::ColorCtx::depth24();
-    Rect screen_rect(0, 0, 800, 600);
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
-    drawable.draw(cmd, screen_rect, color_cxt);
-    dump_png24(trans, drawable, true);
-}
-
-RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
-{
-    BufTransport trans;
-    RDPDrawable drawable(800, 600);
-    auto const color_cxt = gdi::ColorCtx::depth24();
-    Rect screen_rect(0, 0, 800, 600);
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
-    drawable.draw(cmd, screen_rect, color_cxt);
-    dump_png24(trans, drawable, true);
-    RED_CHECK_EQUAL(2786, trans.buf.size());
+    RED_CHECK_MEM(expected_red, trans.buf);
 }
 
 RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)

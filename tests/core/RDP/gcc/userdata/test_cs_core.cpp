@@ -22,14 +22,12 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_core.hpp"
 
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
 {
-    const char indata[] =
+    InStream stream(
         "\x01\xc0"         // TS_UD_HEADER::type = CS_CORE (0xc001)
         "\xd8\x00"         // length = 216 bytes
         "\x04\x00\x08\x00" // TS_UD_CS_CORE::version = 0x0008004
@@ -66,14 +64,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
         "\x00"             // TS_UD_CS_CORE::connectionType = 0 (not used as RNS_UD_CS_VALID_CONNECTION_TYPE not set)
         "\x00"             // TS_UD_CS_CORE::pad1octet
         "\x00\x00\x00\x00" // TS_UD_CS_CORE::serverSelectedProtocol
-    ;
-
-    constexpr std::size_t sz = sizeof(indata) - 1;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
-    InStream stream(buf, sz);
+        ""_av);
     GCC::UserData::CSCore cs_core;
     cs_core.recv(stream);
     RED_CHECK_EQUAL(CS_CORE, cs_core.userDataType);

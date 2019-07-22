@@ -107,7 +107,7 @@ struct WrmPlayer
         {
             this->offset += this->in_stream.get_capacity();
 
-            InStream header(const_bytes_view(this->data).array_from_offset(this->offset));
+            InStream header(const_bytes_view(this->data).from_at(this->offset));
             if (header.in_remain() < WRM_HEADER_SIZE)
             {
                 this->in_stream = InStream();

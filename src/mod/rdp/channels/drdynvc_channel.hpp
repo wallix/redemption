@@ -42,14 +42,6 @@ public:
                          params)
     {}
 
-protected:
-    const char* get_reporting_reason_exchanged_data_limit_reached() const
-        override
-    {
-        return "DRDYNVC_LIMIT";
-    }
-
-public:
     void process_client_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length) override
@@ -66,23 +58,36 @@ public:
                 chunk_data, chunk_data_length);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
-
         uint8_t Cmd = 0x00;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            InStream chunk(chunk_data, chunk_data_length);
+
             /* cbId(:2) + Sp(:2) + Cmd(:4) */
             ::check_throw(chunk, 1, "DynamicChannelVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
 
             Cmd = ((chunk.in_uint8() & 0xF0) >> 4);
         }
 
+        InStream chunk(chunk_data, chunk_data_length);
+
         bool send_message_to_server = true;
 
         switch (Cmd)
         {
-            // case drdynvc::CB_CLIP_CAPS:
+            // case drdynvc::CMD_CAPABILITIES:
             // break;
+
+            case drdynvc::CMD_CREATE:
+                if (bool(this->verbose & RDPVerbose::drdynvc) &&
+                    (flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)))
+                {
+                    drdynvc::DVCCreateResponsePDU create_response;
+
+                    create_response.receive(chunk);
+                    create_response.log(LOG_INFO);
+                }
+            break;
 
             default:
 //                assert(false);
@@ -118,11 +123,10 @@ public:
                 chunk_data, chunk_data_length);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
-
         uint8_t Cmd = 0x00;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            InStream chunk(chunk_data, chunk_data_length);
 
             /* cbId(:2) + Sp(:2) + Cmd(:4) */
             ::check_throw(chunk, 1, "DynamicChannelVirtualChannel::process_server_message", ERR_RDP_DATA_TRUNCATED);
@@ -130,12 +134,22 @@ public:
             Cmd = ((chunk.in_uint8() & 0xF0) >> 4);
         }
 
+        InStream chunk(chunk_data, chunk_data_length);
+
         bool send_message_to_client = true;
 
         switch (Cmd)
         {
-            // case drdynvc::CMD_CAPABILITIES:
-            // break;
+            case drdynvc::CMD_CREATE:
+                if (bool(this->verbose & RDPVerbose::drdynvc) &&
+                    (flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)))
+                {
+                    drdynvc::DVCCreateRequestPDU create_request;
+
+                    create_request.receive(chunk);
+                    create_request.log(LOG_INFO);
+                }
+            break;
 
             default:
 //                assert(false);
@@ -153,5 +167,4 @@ public:
                 chunk_data_length);
         }   // switch (this->server_message_type)
     }   // process_server_message
-
 };

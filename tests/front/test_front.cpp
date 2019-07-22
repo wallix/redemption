@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestFront)
     #include "fixtures/trace_front_client.hpp"
 
     // Comment the code block below to generate testing data.
-    FrontTransport front_trans(indata, sizeof(indata)-1);
+    FrontTransport front_trans(cstr_array_view(indata));
 
     LCGRandom gen1(0);
     CryptoContext cctx;
@@ -181,7 +181,7 @@ RED_AUTO_TEST_CASE(TestFront)
     //                  , &error_message
     //                  );
 
-    FrontTransport t(dump2008::indata, sizeof(dump2008::indata)-1);
+    FrontTransport t(cstr_array_view(dump2008::indata));
 
     Theme theme;
 
@@ -292,7 +292,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     #include "fixtures/trace_front_client.hpp"
 
     // Comment the code block below to generate testing data.
-    GeneratorTransport front_trans(indata, sizeof(indata)-1);
+    GeneratorTransport front_trans(cstr_array_view(indata));
     front_trans.disable_remaining_error();
 
     LCGRandom gen1(0);
@@ -339,7 +339,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     // //                  , &error_message
     // //                  );
     //
-    // GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata)-1);
+    // GeneratorTransport t(cstr_array_view(dump2008::indata));
     //
     // if (verbose > 2){
     //     LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -466,8 +466,8 @@ RED_AUTO_TEST_CASE(TestFront3)
     #include "fixtures/trace_front_client_patblt.hpp"
 
     // Comment the code block below to generate testing data.
-    // GeneratorTransport front_trans(indata, sizeof(indata), verbose);
-    TestTransport front_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    // GeneratorTransport front_trans(cstr_array_view(indata), verbose);
+    TestTransport front_trans(cstr_array_view(indata), cstr_array_view(outdata));
 
     LCGRandom gen1(0);
     CryptoContext cctx;
@@ -510,7 +510,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     //                  , &error_message
     //                  );
 
-    GeneratorTransport t(dump2008_PatBlt::indata, sizeof(dump2008_PatBlt::indata)-1);
+    GeneratorTransport t(cstr_array_view(dump2008_PatBlt::indata));
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");

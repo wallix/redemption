@@ -56,14 +56,14 @@ RED_AUTO_TEST_CASE(configure_regexes)
     RED_CHECK_EQUAL(regexes[5].name, "exact str");
     RED_CHECK_EQUAL(regexes[6].name, "exact regex");
     RED_CHECK_EQUAL(regexes[7].name, "str");
-    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[1].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[2].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[3].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[4].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[5].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[6].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[7].is_exact_search, false);
+    RED_CHECK(not regexes[0].is_exact_search);
+    RED_CHECK(not regexes[1].is_exact_search);
+    RED_CHECK(not regexes[2].is_exact_search);
+    RED_CHECK(not regexes[3].is_exact_search);
+    RED_CHECK(not regexes[4].is_exact_search);
+    RED_CHECK(not regexes[5].is_exact_search);
+    RED_CHECK(not regexes[6].is_exact_search);
+    RED_CHECK(not regexes[7].is_exact_search);
 
     utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, verbosity);
 
@@ -75,13 +75,13 @@ RED_AUTO_TEST_CASE(configure_regexes)
     RED_CHECK_EQUAL(regexes[4].name, "exact regex");
     RED_CHECK_EQUAL(regexes[5].name, "str");
     RED_CHECK_EQUAL(regexes[6].name, "title");
-    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[1].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[2].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[3].is_exact_search, true);
-    RED_CHECK_EQUAL(regexes[4].is_exact_search, true);
-    RED_CHECK_EQUAL(regexes[5].is_exact_search, false);
-    RED_CHECK_EQUAL(regexes[6].is_exact_search, false);
+    RED_CHECK(not regexes[0].is_exact_search);
+    RED_CHECK(not regexes[1].is_exact_search);
+    RED_CHECK(not regexes[2].is_exact_search);
+    RED_CHECK(regexes[3].is_exact_search);
+    RED_CHECK(regexes[4].is_exact_search);
+    RED_CHECK(not regexes[5].is_exact_search);
+    RED_CHECK(not regexes[6].is_exact_search);
 
     regexes.resize(0);
     RED_REQUIRE_EQUAL(regexes.size(), 0);
@@ -94,18 +94,18 @@ RED_AUTO_TEST_CASE(configure_regexes)
     utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "$ocr:abc", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 1);
     RED_CHECK_EQUAL(regexes[0].name, "abc");
-    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
+    RED_CHECK(not regexes[0].is_exact_search);
 
     utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "cba", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 1);
     RED_CHECK_EQUAL(regexes[0].name, "cba");
-    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
+    RED_CHECK(not regexes[0].is_exact_search);
 
     regexes.resize(0);
     utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, "  abc", regexes, verbosity);
     RED_REQUIRE_EQUAL(regexes.size(), 1);
     RED_CHECK_EQUAL(regexes[0].name, "abc"); // left space is stripped
-    RED_CHECK_EQUAL(regexes[0].is_exact_search, false);
+    RED_CHECK(not regexes[0].is_exact_search);
 
     regexes.resize(0);
     utils::MatchFinder::configure_regexes(utils::MatchFinder::KBD_INPUT, "cba", regexes, verbosity);
@@ -133,17 +133,17 @@ RED_AUTO_TEST_CASE(search)
     utils::MatchFinder::configure_regexes(utils::MatchFinder::OCR, pattern, regexes, verbosity);
 
     RED_REQUIRE_EQUAL(regexes.size(), 5);
-    RED_CHECK_EQ(regexes[0].search("(a)"), true);
-    RED_CHECK_EQ(regexes[1].search("(b)"), true);
-    RED_CHECK_EQ(regexes[2].search("(c)"), true);
-    RED_CHECK_EQ(regexes[3].search("(d)"), false);
-    RED_CHECK_EQ(regexes[4].search("(e)"), true);
+    RED_CHECK(regexes[0].search("(a)"));
+    RED_CHECK(regexes[1].search("(b)"));
+    RED_CHECK(regexes[2].search("(c)"));
+    RED_CHECK(not regexes[3].search("(d)"));
+    RED_CHECK(regexes[4].search("(e)"));
 
-    RED_CHECK_EQ(regexes[0].search("-(a)-"), true);
-    RED_CHECK_EQ(regexes[1].search("-(b)-"), true);
-    RED_CHECK_EQ(regexes[2].search("-(c)-"), true);
-    RED_CHECK_EQ(regexes[3].search("-(d)-"), false);
-    RED_CHECK_EQ(regexes[4].search("-(e)-"), false);
+    RED_CHECK(regexes[0].search("-(a)-"));
+    RED_CHECK(regexes[1].search("-(b)-"));
+    RED_CHECK(regexes[2].search("-(c)-"));
+    RED_CHECK(not regexes[3].search("-(d)-"));
+    RED_CHECK(not regexes[4].search("-(e)-"));
 }
 
 RED_AUTO_TEST_CASE(report_notify)

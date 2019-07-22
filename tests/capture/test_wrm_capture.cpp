@@ -592,7 +592,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         player.interpret_order();
     }
 
-    RED_CHECK_SMEM_AC(output, "ipconfig\rFOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE\x00");
+    RED_CHECK_SMEM(output, "ipconfig\rFOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE\x00"_av);
 
     RED_TEST_FILE_SIZE(first_file, 292);
     RED_TEST_FILE_SIZE(record_wd.add_file("capture_kbd_input.mwrm"), 75 + record_wd.dirname().size());

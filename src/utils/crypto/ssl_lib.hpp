@@ -52,7 +52,12 @@ public:
             inr[in_len-1-i] = in[i];
         }
 
-        size_t outlen = mod_exp(out, out_len, inr, in_len, modulus, modulus_size, exponent, exponent_size);
+        size_t outlen = mod_exp(
+            {out, out_len},
+            {inr, in_len},
+            {modulus, modulus_size},
+            {exponent, exponent_size}
+        ).size();
 
         reverseit(out, outlen);
 
@@ -71,7 +76,12 @@ public:
         uint8_t l_mod[64]; rmemcpy(l_mod, mod, mod_len);
         uint8_t l_exp[64]; rmemcpy(l_exp, exp, exp_len);
 
-        size_t outlen = mod_exp(l_out, 64, l_in, in_len, l_mod, mod_len, l_exp, exp_len);
+        size_t outlen = mod_exp(
+            {l_out, 64},
+            {l_in, in_len},
+            {l_mod, mod_len},
+            {l_exp, exp_len}
+        ).size();
 
         if (outlen <= 64) {
             reverseit(l_out, outlen);

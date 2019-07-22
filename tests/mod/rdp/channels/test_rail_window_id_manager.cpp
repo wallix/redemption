@@ -33,7 +33,7 @@ RED_AUTO_TEST_CASE(TestRailWindowIDManagerGeneral)
     RED_CHECK_EQUAL(rail_window_id_manager.get_client_window_id(40020), 40020);
     RED_CHECK_EQUAL(rail_window_id_manager.get_server_window_id(40020), 40020);
 
-    RED_CHECK_EQUAL(rail_window_id_manager.is_client_only_window(40020), false);
+    RED_CHECK(not rail_window_id_manager.is_client_only_window(40020));
 
 
     uint32_t client_only_window_id = rail_window_id_manager.register_client_window();
@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestRailWindowIDManagerGeneral)
     RED_CHECK_EQUAL(rail_window_id_manager.get_server_window_id(client_only_window_id),
         uint32_t(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID));
 
-    RED_CHECK_EQUAL(rail_window_id_manager.is_client_only_window(client_only_window_id), true);
+    RED_CHECK(rail_window_id_manager.is_client_only_window(client_only_window_id));
 
 
     uint32_t server_window_id = client_only_window_id;
@@ -52,7 +52,7 @@ RED_AUTO_TEST_CASE(TestRailWindowIDManagerGeneral)
     RED_CHECK_EQUAL(rail_window_id_manager.get_client_window_id(server_window_id), client_window_id);
     RED_CHECK_EQUAL(rail_window_id_manager.get_server_window_id(client_window_id), server_window_id);
 
-    RED_CHECK_EQUAL(rail_window_id_manager.is_client_only_window(client_window_id), false);
+    RED_CHECK(not rail_window_id_manager.is_client_only_window(client_window_id));
 }
 
 RED_AUTO_TEST_CASE(TestRailWindowIDManagerGeneralUnregisterClientWindow)

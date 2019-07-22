@@ -83,10 +83,6 @@ public:
         this->to_client_sender = nullptr;
     }
 
-    // TODO unused
-    virtual const char * get_reporting_reason_exchanged_data_limit_reached()
-        const = 0;
-
 protected:
     inline bool has_valid_to_client_sender() const
     {

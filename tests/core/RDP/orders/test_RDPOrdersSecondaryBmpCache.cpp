@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
     InStream in_stream(buf, out_stream.get_offset());
 
     uint8_t control = in_stream.in_uint8();
-    RED_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
+    RED_CHECK(!!(control & (STANDARD|SECONDARY)));
     RDPSecondaryOrderHeader header(in_stream);
     RED_CHECK_EQUAL(static_cast<uint16_t>(33 - 7), header.order_length); // length after type - 7
     RED_CHECK_EQUAL(0x08u, header.flags);

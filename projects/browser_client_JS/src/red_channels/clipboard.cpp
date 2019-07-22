@@ -146,7 +146,7 @@ namespace
                 out_stream.out_uint32_le(id);
 
                 auto data = out_stream.get_tailroom_bytes();
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data));
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(data.size() - 2u)));
                 out_stream.out_uint16_le(0);
                 break;
             }

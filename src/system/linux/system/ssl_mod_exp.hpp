@@ -26,19 +26,20 @@
 
 #include <openssl/bn.h>
 
+#include "utils/sugar/bytes_view.hpp"
+
 
 /**
- * \pre  \a out_len >= \a modulus_size
+ * \pre  \a out.size() >= \a modulus.size()
  * \return  the length of the big-endian number placed at out. ~size_t{} if error
  */
-static inline size_t mod_exp(
-    uint8_t * out, size_t out_len,
-    const uint8_t * inr, size_t in_len,
-    const uint8_t * modulus, size_t modulus_size,
-    const uint8_t * exponent, size_t exponent_size
+static inline bytes_view mod_exp(
+    bytes_view out,
+    const_bytes_view inr,
+    const_bytes_view modulus,
+    const_bytes_view exponent
 ) {
-    (void)out_len;
-    assert(out_len >= modulus_size);
+    assert(out.size() >= modulus.size());
 
     struct Bignum_base
     {
@@ -46,10 +47,10 @@ static inline size_t mod_exp(
           : bn(BN_new())
         {}
 
-        Bignum_base(const uint8_t * data, size_t len)
+        Bignum_base(const_bytes_view data)
           : bn(BN_new())
         {
-            BN_bin2bn(data, len, this->bn);
+            BN_bin2bn(data.data(), data.size(), this->bn);
         }
 
         operator BIGNUM * ()
@@ -66,9 +67,9 @@ static inline size_t mod_exp(
         BIGNUM * bn;
     };
 
-    Bignum_base mod(modulus, modulus_size);
-    Bignum_base exp(exponent, exponent_size);
-    Bignum_base x(inr, in_len);
+    Bignum_base mod(modulus);
+    Bignum_base exp(exponent);
+    Bignum_base x(inr);
 
     Bignum_base result;
 
@@ -76,8 +77,9 @@ static inline size_t mod_exp(
     BN_mod_exp(result, x, exp, mod, ctx);
     BN_CTX_free(ctx);
 
-    auto const outlen = BN_bn2bin(result, out);
+    auto const outlen = BN_bn2bin(result, out.data());
     // BN_clear is used to destroy sensitive data
     BN_clear(x);
-    return outlen;
+
+    return out.first(outlen);
 }

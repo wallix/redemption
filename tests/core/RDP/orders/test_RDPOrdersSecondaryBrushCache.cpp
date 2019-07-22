@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestBrushCache1BPP)
         InStream in_stream(out_stream.get_bytes());
 
         uint8_t control = in_stream.in_uint8();
-        RED_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
+        RED_CHECK(!!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(in_stream);
 
         RDPBrushCache cmd(0, BMF_1BPP, 8, 8, 0, 8, pattern);

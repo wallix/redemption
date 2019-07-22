@@ -113,6 +113,12 @@ cfg::mod_rdp::session_probe_disabled_features <- session_probe_disabled_features
       1: Java Access Bridge
       2: MS Active Accessbility
       4: MS UI Automation
+      8: Reserved (do not use)
+      16: Inspect Edge location URL
+      32: Inspect Chrome Address/Search bar
+      64: Inspect Firefox Address/Search bar
+      128: Monitor Internet Explorer event
+      256: Inspect group membership of user
     (note: values can be added (everyone: 1+2+4=7, mute: 0))
 cfg::mod_rdp::session_probe_public_session <- session_probe_public_session   [bool]
     If enabled, disconnected session can be recovered by a different primary user.
@@ -197,6 +203,11 @@ cfg::remote_program::allow_resize_hosted_desktop <- allow_resize_hosted_desktop 
 cfg::translation::language <- language   [Language]
 cfg::translation::password_en <- password_en   [std::string]
 cfg::translation::password_fr <- password_fr   [std::string]
+
+
+cfg::file_verification::enable_up <- enable_up   [bool]
+cfg::file_verification::enable_down <- enable_down   [bool]
+cfg::file_verification::log_if_accepted <- log_if_accepted   [bool]
 
 
 

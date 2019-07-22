@@ -90,7 +90,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     #include "fixtures/trace_mstsc_client_rdp50bulk.hpp"
 
     // Comment the code block below to generate testing data.
-    TestTransport front_trans(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    TestTransport front_trans(cstr_array_view(indata), cstr_array_view(outdata));
 
     ini.set<cfg::client::tls_support>(true);
     ini.set<cfg::client::tls_fallback_legacy>(false);

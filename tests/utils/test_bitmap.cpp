@@ -24,7 +24,6 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/data_test_case.hpp"
 
-#include "test_only/transport/test_transport.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/bitfu.hpp"
@@ -58,13 +57,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x8c, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x12, 0x13
         };
 
-
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
     }
 
     // test COPY 16 bits
@@ -87,14 +83,11 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x81, 0x10, 0x00, // 1 COPY
         };
 
-
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         // empty set to 0,0,0,0,0,0,...
         Bitmap bmp2(BitsPerPixel{16}, BitsPerPixel{16}, nullptr, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
     }
 
     // test COLOR
@@ -114,12 +107,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x6c, 0x01, // 12 COLOR (01)
         };
 
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
 
     }
 
@@ -142,12 +133,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x81, 0x0f, // 1 COPY
         };
 
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
     }
 
     // test interleaved COLOR and COPY
@@ -170,12 +159,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x64, 0x01                    // COLOR
         };
 
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
 
     }
 
@@ -195,12 +182,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         uint8_t expected[] = {
             0xeC, 0x01, 0x02 // BICOLOR
         };
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 24, 1, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
     }
 
     // test FILL
@@ -220,12 +205,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x84, 0x02, 0x03, 0x04, 0x05, // 4 COPY
             0x0c, // 12 FILL
         };
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
     }
 
     // test MIX
@@ -245,12 +228,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x2c, // 12 MIX
         };
 
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
     }
 
 
@@ -272,12 +253,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x64, 0x03, // 4 COLOR
         };
 
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
     }
 
     // test FOM 2
@@ -296,12 +275,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x84, 0x02, 0x03, 0x04, 0x05, // 4 COPY
             0x40, 0x0b, 0xa5, 0x05, // 11 FILL or MIX
         };
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(data));
     }
 
     {
@@ -416,9 +393,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         };
 
         Bitmap bmp2(bpp, bpp, &palette332, 548, 1, compressed, sizeof(compressed), true);
-
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
-        RED_CHECK(0 == memcmp(bmp2.data(), raw, sizeof(raw)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(raw));
     }
 
 
@@ -519,10 +494,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         };
 
         Bitmap bmp2(BitsPerPixel{16}, BitsPerPixel{16}, &palette332, 548, 1, compressed, sizeof(compressed), true);
-
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
-        RED_CHECK(0 == memcmp(bmp2.data(), raw, sizeof(raw)));
-
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(raw));
     }
 
 
@@ -561,12 +533,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
 // c2 ea 31 0c 03
 
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         Bitmap bmp2(bpp, bpp, &palette332, 16, 2, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
-        RED_CHECK(0 == memcmp(bmp2.data(), raw, sizeof(raw)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(raw));
     }
 
 
@@ -589,7 +559,9 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x01, 0x02
         };
 
-        RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
+        // TODO partial comparison
+        RED_CHECK_MEM(make_array_view(expected),
+            array_view(bmp.data(), bmp.bmp_size()).first(make_array_view(expected).size()));
     }
 
 
@@ -626,8 +598,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         };
 
-        RED_CHECK_EQUAL(bmp.bmp_size(), sizeof(expected));
-        RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(array_view(bmp.data(), bmp.bmp_size()), make_array_view(expected));
     }
 
     // Test for magic mix pixel on first line
@@ -643,7 +614,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x00, 0x00, 0xff, 0x00,
         };
 
-        RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(array_view(bmp.data(), bmp.bmp_size()), make_array_view(expected));
     }
 
 
@@ -661,7 +632,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x00, 0x00, 0x00, 0x00,
         };
 
-        RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(array_view(bmp.data(), bmp.bmp_size()), make_array_view(expected));
     }
 
 
@@ -681,7 +652,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xFF, 0x00, 0x00, 0x00,
         };
 
-        RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(array_view(bmp.data(), bmp.bmp_size()), make_array_view(expected));
     }
 
 
@@ -701,7 +672,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x00, 0x00, 0xFF, 0x00,
         };
 
-        RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(array_view(bmp.data(), bmp.bmp_size()), make_array_view(expected));
     }
 
 
@@ -745,7 +716,9 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x01, 0x02, 0x03, 0x04,
         };
 
-        RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
+        // TODO partial comparison
+        RED_CHECK_MEM(make_array_view(expected),
+            array_view(bmp.data(), bmp.bmp_size()).first(make_array_view(expected).size()));
     }
 
 
@@ -1350,7 +1323,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp2(bpp, bpp, &palette332, 64, 64, out.get_data(), (out.get_offset()), true);
 
-        RED_CHECK_EQUAL(0, memcmp(bmp2.data(), bmp.data(), 8192));
+        RED_CHECK_MEM(array_view(bmp.data(), bmp.bmp_size()), array_view(bmp2.data(), bmp2.bmp_size()));
     }
 
     {
@@ -2518,14 +2491,12 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xc0, 0x30, 0xff, 0x00, 0x00, 0xf0, 0xc0, 0x0f,
         };
 
-
-        RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
-        RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
+        RED_CHECK_MEM(out.get_bytes(), make_array_view(expected));
 
         // empty set to 0,0,0,0,0,0,...
         Bitmap bmp2(bpp, bpp, nullptr, 64, 64, out.get_data(), out.get_offset(), true);
-        RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
-        RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
+
+        RED_CHECK_MEM(make_array_view(data), array_view(bmp2.data(), bmp2.bmp_size()));
     }
 
     {
@@ -2966,7 +2937,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         };
         bmp2.compute_sha1(sha1);
 //        hexdump_d(sha1, sizeof(sha1));
-        RED_CHECK(0 == memcmp(expected_sha1, sha1, 20));
+        RED_CHECK_MEM(make_array_view(expected_sha1), make_array_view(sha1));
 
 // BOGUS VERSION, BEFORE FIXING SPECIAL_FGBG_1 and FIXING SPECIAL_FGBG_2
 //00_.............................................................................................................................................................................................
@@ -3315,7 +3286,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp2(bpp, bpp, &palette332, 32, 32, out.get_data(), out.get_offset(), true);
 
-        RED_CHECK_EQUAL(0, memcmp(bmp2.data(), bmp.data(), sizeof(uncompressed)));
+        RED_CHECK_MEM(array_view(bmp2.data(), bmp2.bmp_size()), make_array_view(uncompressed));
     }
 }
 
@@ -3344,7 +3315,8 @@ RED_DATA_TEST_CASE(TestRDP60BitmapCompression, (std::array{
 
     Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
-    RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
+    RED_CHECK_MEM(array_view(bmp.data(), bmp.bmp_size()),
+        array_view(bmp2.data(), bmp2.bmp_size()));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapDecompression)
@@ -5370,9 +5342,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress2)
 
     RED_CHECK_EQUAL(22908, test_bmp.bmp_size());
 
-    CheckTransport trans(char_ptr_cast(ori_bmp_data), 22908);
-
-    trans.send(test_bmp.data(), test_bmp.bmp_size());
+    RED_CHECK_MEM(make_array_view(ori_bmp_data), array_view(test_bmp.data(), test_bmp.bmp_size()));
 }
 
 RED_AUTO_TEST_CASE(TestBitmapConv)

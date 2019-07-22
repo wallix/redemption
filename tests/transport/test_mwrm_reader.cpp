@@ -138,7 +138,7 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV1)
     RED_CHECK_EQUAL(meta_line.ctime, 0);
     RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
     RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
-    RED_CHECK_EQUAL(meta_line.with_hash, false);
+    RED_CHECK(not meta_line.with_hash);
 }
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV2)
@@ -169,7 +169,7 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2)
     RED_CHECK_EQUAL(meta_line.ctime, 1455816421);
     RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
     RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
-    RED_CHECK_EQUAL(meta_line.with_hash, false);
+    RED_CHECK(not meta_line.with_hash);
 }
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
@@ -197,15 +197,15 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     RED_CHECK_EQUAL(meta_line.ctime, 8);
     RED_CHECK_EQUAL(meta_line.start_time, 1352304810);
     RED_CHECK_EQUAL(meta_line.stop_time, 1352304870);
-    RED_CHECK_EQUAL(meta_line.with_hash, true);
-    RED_CHECK_MEM_AC(
+    RED_CHECK(meta_line.with_hash);
+    RED_CHECK_MEM_AA(
         meta_line.hash1,
         "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
-        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA");
-    RED_CHECK_MEM_AC(
+        "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"_av);
+    RED_CHECK_MEM_AA(
         meta_line.hash2,
         "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
-        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB");
+        "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"_av);
 }
 
 inline int hmac_2016_fn(uint8_t * buffer)
@@ -269,13 +269,13 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
     RED_CHECK_EQUAL(meta_line.ctime, 0);
     RED_CHECK_EQUAL(meta_line.start_time, 1477416187);
     RED_CHECK_EQUAL(meta_line.stop_time, 1477416298);
-    RED_CHECK_EQUAL(meta_line.with_hash, true);
-    RED_CHECK_MEM_AC(meta_line.hash1,
+    RED_CHECK(meta_line.with_hash);
+    RED_CHECK_MEM_AA(meta_line.hash1,
       "\x32\xd7\xbb\xef\x41\xa7\xc1\x53\x47\xc9\xe8\xab\xc1\xec\xe0\x3b"
-      "\xbd\x23\x0a\x71\xae\xba\x5c\xe2\xa0\xf5\x10\xd6\xe6\x94\x8e\x9a");
-    RED_CHECK_MEM_AC(meta_line.hash2,
+      "\xbd\x23\x0a\x71\xae\xba\x5c\xe2\xa0\xf5\x10\xd6\xe6\x94\x8e\x9a"_av);
+    RED_CHECK_MEM_AA(meta_line.hash2,
       "\xf4\xbd\x5d\xfb\xbc\xc3\x0d\x9d\x30\xfa\xdf\xed\x00\xec\x81\xad"
-      "\xc2\x02\x19\xdd\xff\x79\x6f\xfa\xc1\xe7\x61\xfc\x4e\x07\x0b\x2c");
+      "\xc2\x02\x19\xdd\xff\x79\x6f\xfa\xc1\xe7\x61\xfc\x4e\x07\x0b\x2c"_av);
 
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
 }
@@ -320,22 +320,22 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     RED_CHECK_EQUAL(meta_line.ctime, 1455816632);
     RED_CHECK_EQUAL(meta_line.start_time, 1455816611);
     RED_CHECK_EQUAL(meta_line.stop_time, 1455816633);
-    RED_CHECK_EQUAL(meta_line.with_hash, true);
-    RED_CHECK_MEM_AC(meta_line.hash1,
+    RED_CHECK(meta_line.with_hash);
+    RED_CHECK_MEM_AA(meta_line.hash1,
       "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
-      "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77");
-    RED_CHECK_MEM_AC(meta_line.hash2,
+      "\x56\x06\xa1\xf9\xf0\xe6\x37\x12\x07\x22\xe3\x0c\x2c\x8c\xd7\x77"_av);
+    RED_CHECK_MEM_AA(meta_line.hash2,
       "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
-      "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c");
+      "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c"_av);
 
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
 }
 
 RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
 {
-    auto const data = cstr_array_view("v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 33056 1001 1001 65030 28 1504107644 1504107644\n");
+    auto const data = "v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 33056 1001 1001 65030 28 1504107644 1504107644\n"_av;
 
-    GeneratorTransport transport(data.data(), data.size());
+    GeneratorTransport transport(data);
 
     MwrmReader reader(transport);
 
@@ -352,7 +352,7 @@ RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
     RED_CHECK_EQUAL(meta_line.ino, 28);
     RED_CHECK_EQUAL(meta_line.mtime, 1504107644);
     RED_CHECK_EQUAL(meta_line.ctime, 1504107644);
-    RED_CHECK_EQUAL(meta_line.with_hash, false);
+    RED_CHECK(not meta_line.with_hash);
 
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
 
@@ -364,9 +364,9 @@ RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
 RED_AUTO_TEST_CASE(ReadHashV1)
 {
     {
-        auto data = cstr_array_view("file_xyz 0000000000000000000000000000000000000000000000000000000000000000");
+        auto data = "file_xyz 0000000000000000000000000000000000000000000000000000000000000000"_av;
 
-        GeneratorTransport transport(data.data(), data.size());
+        GeneratorTransport transport(data);
 
         MwrmReader reader(transport);
 
@@ -374,20 +374,20 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         reader.set_header({WrmVersion::v1, true});
         reader.read_meta_hash_line(meta_line);
         RED_CHECK_EQUAL(meta_line.filename, "file_xyz");
-        RED_CHECK_EQUAL(meta_line.with_hash, true);
-        RED_CHECK_MEM_AC(meta_line.hash1,
+        RED_CHECK(meta_line.with_hash);
+        RED_CHECK_MEM_AA(meta_line.hash1,
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
-        "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30");
-        RED_CHECK_MEM_AC(meta_line.hash2,
+        "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);
+        RED_CHECK_MEM_AA(meta_line.hash2,
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
-        "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30");
+        "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);
 
         RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
     }
     {
-        auto data = cstr_array_view("file_xyz  0\n000000000000000000000000000000000000000000000000000000000000\n");
+        auto data = "file_xyz  0\n000000000000000000000000000000000000000000000000000000000000\n"_av;
 
-        GeneratorTransport transport(data.data(), data.size());
+        GeneratorTransport transport(data);
 
         MwrmReader reader(transport);
 
@@ -395,13 +395,13 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         reader.set_header({WrmVersion::v1, false});
         reader.read_meta_hash_line(meta_line);
         RED_CHECK_EQUAL(meta_line.filename, "file_xyz");
-        RED_CHECK_EQUAL(meta_line.with_hash, true);
-        RED_CHECK_MEM_AC(meta_line.hash1,
+        RED_CHECK(meta_line.with_hash);
+        RED_CHECK_MEM_AA(meta_line.hash1,
         " \x30\n\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
-        "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30");
-        RED_CHECK_MEM_AC(meta_line.hash2,
+        "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);
+        RED_CHECK_MEM_AA(meta_line.hash2,
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
-        "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\n");
+        "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\n"_av);
 
         RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
     }

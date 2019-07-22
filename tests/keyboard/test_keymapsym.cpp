@@ -38,10 +38,10 @@ struct check_key_events {
     ScancodeState flags;   // input keyboard flags
     uint8_t  code;         // key scancode, or 0 if there is another keysym to read from previous keys
     uint16_t rflags;       // expected keymap flags (persistant flags)
-    uint32_t rkey;         // expected generated key (or 0 if no key to send, 
+    uint32_t rkey;         // expected generated key (or 0 if no key to send,
                            // like for deadkeys or char keys up)
     int      downflag;     // 1: keydown, 0: keyup
-    
+
 };
 
 RED_AUTO_TEST_CASE(TestKeymapSym)
@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
     KeymapSym keymap(0x040C, 0, false, false, 0);
     uint8_t downflag = 0;
 
-    RED_CHECK_EQUAL(false, keymap.is_shift_pressed());
+    RED_CHECK(not keymap.is_shift_pressed());
 
     uint16_t keyboardFlags = 0 ; // key is not extended, key was up, key goes down
     uint16_t keyCode = 54 ; // key is left shift
@@ -58,26 +58,26 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
     RED_CHECK_EQUAL(0, keymap.nb_sym_available());
     RED_CHECK_EQUAL(0xffe2, key); // Shift_R
 
-    RED_CHECK_EQUAL(true, keymap.is_shift_pressed());
-    RED_CHECK_EQUAL(true, keymap.is_left_shift_pressed());
-    RED_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
+    RED_CHECK(keymap.is_shift_pressed());
+    RED_CHECK(keymap.is_left_shift_pressed());
+    RED_CHECK(not keymap.is_right_shift_pressed());
 
     keyboardFlags = 0 ; // key is not extended, key was up, key goes down
     keyCode = 16 ; // key is 'A'
     keymap.event(keyboardFlags, keyCode);
 
-//    RED_CHECK_EQUAL(true, keymap.is_shift_pressed());
-//    RED_CHECK_EQUAL(true, keymap.is_left_shift_pressed());
-//    RED_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
+//    RED_CHECK(keymap.is_shift_pressed());
+//    RED_CHECK(keymap.is_left_shift_pressed());
+//    RED_CHECK(not keymap.is_right_shift_pressed());
 
     RED_CHECK_EQUAL('A', keymap.get_sym(downflag));
 
     keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
     keymap.event(keyboardFlags, 54); // key is left shift
 
-    RED_CHECK_EQUAL(false, keymap.is_shift_pressed());
-    RED_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
-    RED_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
+    RED_CHECK(not keymap.is_shift_pressed());
+    RED_CHECK(not keymap.is_left_shift_pressed());
+    RED_CHECK(not keymap.is_right_shift_pressed());
 
     // shift was released, but not A (last char down goes 'a' for autorepeat)
     keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
@@ -94,19 +94,19 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK(not keymap.is_caps_locked());
     keymap.event(0, 0x3A);
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
 
     // CAPSLOCK Up
     // RDP_INPUT_SCANCODE time=538384894 flags=c000 param1=003a param2=0000
     keymap.event(0xc000, 0x3A);
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
 
     // Now I hit the 'A' key on french keyboard
     keymap.event(0, 0x10);
     keymap.event(0xc000, 0x10); // A up
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
     RED_CHECK_EQUAL(2, keymap.nb_sym_available());
     RED_CHECK_EQUAL('A', keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag);
@@ -135,11 +135,11 @@ RED_AUTO_TEST_CASE(TestKeymapSym)
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
     keymap.event(0, 0x3A); // capslock down
-    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK(not keymap.is_caps_locked());
     keymap.event(0xC000, 0x3A); // capslock up
-    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK(not keymap.is_caps_locked());
     // Capse Lock do not send anything: fully managed inside proxy
     RED_CHECK_EQUAL(0, keymap.nb_sym_available());
 
@@ -160,7 +160,7 @@ RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
 
     // CAPSLOCK is not transmitted but has effect on keyboard (applied by Bastion)
     // Is is really the right thing to do ?
-    
+
     check_key_events keys[] = {
         {DOWN, 0x3A, 4, 0, 1},  // CAPSLOCK ON
         {UP,   0x3A, 4, 0, 0},
@@ -176,9 +176,9 @@ RED_AUTO_TEST_CASE(TestKeymapSymCAPSLOCK_FR)
     size_t i = 0;
     for (auto k: keys){
         i++;
-        BOOST_TEST_CONTEXT("Loop " << i << ": " 
+        BOOST_TEST_CONTEXT("Loop " << i << ": "
                    << std::hex << static_cast<uint16_t>(k.flags) << ", "
-                   << std::dec << +k.code << ", " 
+                   << std::dec << +k.code << ", "
                    << std::hex << k.rflags << ", " << k.rkey){
             keymap.event(k.flags, k.code);
             RED_CHECK_EQUAL(k.rflags, keymap.key_flags);
@@ -279,7 +279,7 @@ RED_AUTO_TEST_CASE(TestKeymapSymEuro)
     RED_CHECK_EQUAL(0, downflag); // up
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(0, downflag); // up
-    
+
     RED_CHECK_EQUAL(KS_Alt_L, keymap.get_sym(downflag));
     RED_CHECK_EQUAL(1, downflag); // down
     RED_CHECK_EQUAL(KS_Ctrl_L, keymap.get_sym(downflag));

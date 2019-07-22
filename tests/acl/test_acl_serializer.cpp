@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     big_stream.out_uint16_be(0x2);
     big_stream.out_copy_bytes("a\n"_av);
 
-    GeneratorTransport transexcpt(u.get(), big_stream.get_offset());
+    GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
     transexcpt.disable_remaining_error();
     AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
@@ -172,10 +172,10 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     CryptoContext cctx;
     init_keys(cctx);
 
-    GeneratorTransport trans(s.data(), s.size());
+    GeneratorTransport trans(s);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
-    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
+    RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
 
     ini.ask<cfg::context::opt_bpp>();
@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
 
     acl.incoming();
 
-    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
+    RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }
 
@@ -214,7 +214,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
-    CheckTransport trans(u.get(), big_stream.get_offset());
+    CheckTransport trans({u.get(), big_stream.get_offset()});
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -257,7 +257,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
-    GeneratorTransport trans(u.get(), big_stream.get_offset());
+    GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -292,12 +292,12 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     big_stream.out_copy_bytes(key1.first(key2_splitted_len));
     big_stream.out_uint16_be(0);
     big_stream.out_uint16_be(key2.size() - key2_splitted_len + 5);
-    big_stream.out_copy_bytes(key2.array_from_offset(key2_splitted_len));
+    big_stream.out_copy_bytes(key2.from_at(key2_splitted_len));
     big_stream.out_copy_bytes("\n!xy\n"_av);
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
 
-    GeneratorTransport trans(u.get(), big_stream.get_offset());
+    GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -324,10 +324,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     CryptoContext cctx;
     init_keys(cctx);
 
-    GeneratorTransport trans(s.data(), s.size());
+    GeneratorTransport trans(s);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
 
-    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
+    RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
 
     ini.ask<cfg::context::opt_bpp>();
@@ -341,7 +341,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
             "WARNING -- Unexpected receving 'efg' - 'other something'\n");
     }
 
-    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
+    RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }
 
@@ -371,7 +371,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     ini.set<cfg::session_log::log_path>(logfile.string());
     ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
-    GeneratorTransport trans("", 0);
+    GeneratorTransport trans(""_av);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0x20));
 
     acl.start_session_log();
@@ -718,6 +718,6 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
     mwrm_reader.set_header({WrmVersion::v2, false});
     mwrm_reader.read_meta_hash_line(meta_line);
     RED_CHECK_EQ(meta_line.filename, logname);
-    RED_CHECK_EQ(meta_line.with_hash, false);
+    RED_CHECK(not meta_line.with_hash);
     RED_CHECK_EQ(meta_line.size, 63);
 }

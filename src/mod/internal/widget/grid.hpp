@@ -71,7 +71,7 @@ private:
 
         array_view<const uint16_t> row_heights() const
         {
-            return make_array_view(this->column_and_row_height).array_from_offset(nb_columns);
+            return make_array_view(this->column_and_row_height).from_at(nb_columns);
         }
 
         array_view<const uint16_t> column_widths() const
@@ -81,7 +81,7 @@ private:
 
         array_view<uint16_t> row_heights()
         {
-            return make_array_view(this->column_and_row_height).array_from_offset(nb_columns);
+            return make_array_view(this->column_and_row_height).from_at(nb_columns);
         }
 
         array_view<uint16_t> column_widths()

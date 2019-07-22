@@ -64,8 +64,7 @@ inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
     InStream virtual_channel_stream(virtual_channel_data);
 
     while (true) {
-        auto end = virtual_channel_data;
-        t.recv_boom(end,
+        t.recv_boom(virtual_channel_data,
                 16    // dest(4) + total_length(4) + flags(4) +
                         //     chunk_length(4)
             );
@@ -85,24 +84,21 @@ inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
         //    ", chunk_data_length=" << chunk_data_length <<
         //    std::endl;
 
-        end = virtual_channel_data;
-        uint8_t * chunk_data = end;
-
-        t.recv_boom(end, chunk_data_length);
+        t.recv_boom(virtual_channel_data, chunk_data_length);
 
         //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
         if (!dest)  // Client
         {
             virtual_channel.process_client_message(
-                total_length, flags, chunk_data, chunk_data_length);
+                total_length, flags, virtual_channel_data, chunk_data_length);
         }
         else
         {
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
             virtual_channel.process_server_message(
-                total_length, flags, chunk_data, chunk_data_length,
+                total_length, flags, virtual_channel_data, chunk_data_length,
                 out_asynchronous_task);
 
             if (out_asynchronous_task) {

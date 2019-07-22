@@ -37,12 +37,9 @@ RED_AUTO_TEST_CASE_WF(TestFileTransport, wf)
     char buf[128];
     char * pbuf = buf;
     FileTransport in(unique_fd{::open(FIXTURES_PATH "/test_infile.txt", O_RDONLY)});
-    in.recv_boom(pbuf, 10);
-    pbuf += 10;
-    in.recv_boom(pbuf, 11);
-    pbuf += 11;
-    in.recv_boom(pbuf, 3);
-    pbuf += 3;
+    pbuf += in.recv_boom(pbuf, 10).size();
+    pbuf += in.recv_boom(pbuf, 11).size();
+    pbuf += in.recv_boom(pbuf, 3).size();
     RED_CHECK_SMEM(array_view(buf, pbuf), "We read what we provide!"_av);
     RED_CHECK_EXCEPTION_ERROR_ID(in.recv_boom(buf, 1), ERR_TRANSPORT_NO_MORE_DATA);
 }

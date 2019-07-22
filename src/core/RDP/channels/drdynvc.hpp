@@ -251,7 +251,7 @@ enum {
 
 class DVCCapabilitiesRequestPDU
 {
-    uint8_t  cdId            = 0x00;
+    uint8_t  cbId            = 0x00;
     uint8_t  Sp              = 0x00;
     uint8_t  Cmd             = CMD_CAPABILITIES;
     uint16_t Version         = CAPS_VERSION1;
@@ -267,7 +267,7 @@ public:
 
         uint8_t const tmp = stream.in_uint8();
 
-        this->cdId =  (tmp & 0x03);
+        this->cbId =  (tmp & 0x03);
         this->Sp   = ((tmp & 0x0C) >> 2);
         this->Cmd  = ((tmp & 0xF0) >> 4);
 
@@ -292,7 +292,7 @@ public:
 
     void emit(OutStream & stream) const {
         uint8_t const tmp = (
-                 (this->cdId & 0x03)       |
+                 (this->cbId & 0x03)       |
                 ((this->Sp   & 0x03) << 2) |
                 ((this->Cmd  & 0x0F) << 4)
             );
@@ -320,8 +320,8 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "cdId=0x%02X Sp=0x%02X Cmd=0x%02X Version=0x%04X",
-            static_cast<unsigned int>(this->cdId),
+            "cbId=0x%02X Sp=0x%02X Cmd=0x%02X Version=0x%04X",
+            static_cast<unsigned int>(this->cbId),
             static_cast<unsigned int>(this->Sp),
             static_cast<unsigned int>(this->Cmd),
             static_cast<unsigned int>(this->Version));
@@ -338,6 +338,319 @@ private:
                 static_cast<unsigned int>(this->PriorityCharge3));
             length += ((result < size - length) ? result : (size - length - 1));
         }
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPEDYC] - 2.2.2.1 DVC Create Request PDU (DYNVC_CREATE_REQ)
+
+// The DYNVC_CREATE_REQ (section 2.2.2.1) PDU is sent by the DVC server
+//  manager to the DVC client manager to request that a channel be opened.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | cb| Pr|  Cmd  |              ChannelId (variable)             |
+// | Id| i |       |                                               |
+// +---+---+-------+-----------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                     ChannelName (variable)                    |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// cbId (2 bits): Indicates the length of the ChannelId field.
+
+//  +-------+----------------------------------------+
+//  | Value | Meaning                                |
+//  +-------+----------------------------------------+
+//  | 0x00  | The ChannelId field length is 1 byte.  |
+//  +-------+----------------------------------------+
+//  | 0x01  | The ChannelId field length is 2 bytes. |
+//  +-------+----------------------------------------+
+//  | 0x02  | The ChannelId field length is 4 bytes. |
+//  +-------+----------------------------------------+
+//  | 0x03  | Invalid value.                         |
+//  +-------+----------------------------------------+
+
+// Pri (2 bits): Version 1 of the Remote Desktop Protocol: Dynamic Virtual
+//  Channel Extension (as specified in section 2.2.1.1.1) does not support
+//  priority classes. The client SHOULD ignore this field.
+
+// In version 2 of the Remote Desktop Protocol: Dynamic Virtual Channel
+//  Extension, this field specifies the priority class for the channel that
+//  is being created, with the Pri field values 0, 1, 2, and 3 corresponding
+//  to PriorityCharge0, PriorityCharge1, PriorityCharge2, and
+//  PriorityCharge3, as specified in section 2.2.1.1.2. The method of
+//  determining priority class is the same for both client to server data
+//  and server to client data.
+
+// Cmd (4 bits): MUST be set to 0x01 (Create).
+
+// ChannelId (variable): A variable-length 8-bit, 16-bit, or 32-bit unsigned
+//  integer. This is a server-generated identifier for the channel being
+//  created. The DVC server manager MUST ensure that this number is unique
+//  within a static virtual channel connection.
+
+// ChannelName (variable): A null-terminated ANSI encoded character string.
+//  The name of the listener on the TS client with which the TS server
+//  application is requesting that a channel be opened.
+
+class DVCCreateRequestPDU
+{
+    uint8_t     cbId        = 0x00;
+    uint8_t     Sp          = 0x00;
+    uint8_t     Cmd         = CMD_CREATE;
+
+    uint32_t    ChannelId   = 0;
+
+    std::string channel_name;
+
+public:
+    void receive(InStream & stream) {
+        // cbId(:2) + Sp(:2) + Cmd(:4)
+        ::check_throw(stream, 1, "class DVCCreateRequestPDU::receive (0)", ERR_RDPDR_PDU_TRUNCATED);
+
+        uint8_t const tmp = stream.in_uint8();
+
+        this->cbId =  (tmp & 0x03);
+        this->Sp   = ((tmp & 0x0C) >> 2);
+        this->Cmd  = ((tmp & 0xF0) >> 4);
+
+        switch (this->cbId)
+        {
+            case 0x00:
+                ::check_throw(stream, 1, "class DVCCreateRequestPDU::receive (1)", ERR_RDPDR_PDU_TRUNCATED);
+                this->ChannelId = stream.in_uint8();
+            break;
+
+            case 0x01:
+                ::check_throw(stream, 2, "class DVCCreateRequestPDU::receive (2)", ERR_RDPDR_PDU_TRUNCATED);
+                this->ChannelId = stream.in_uint16_le();
+            break;
+
+            case 0x02:
+                ::check_throw(stream, 4, "class DVCCreateRequestPDU::receive (3)", ERR_RDPDR_PDU_TRUNCATED);
+                this->ChannelId = stream.in_uint32_le();
+            break;
+
+            default:
+                LOG(LOG_ERR, "DVCCreateRequestPDU::receive invalid length of the ChannelId field! (cbId=%u)", this->cbId);
+                throw Error(ERR_RDP_PROTOCOL);
+        }
+
+        this->channel_name = char_ptr_cast(stream.get_current());
+
+        stream.in_skip_bytes(this->channel_name.length() + 1);
+    }
+
+    void emit(OutStream & stream) const {
+        uint8_t const tmp = (
+                 (this->cbId & 0x03)       |
+                ((this->Sp   & 0x03) << 2) |
+                ((this->Cmd  & 0x0F) << 4)
+            );
+        stream.out_uint8(tmp);
+
+        switch (this->cbId)
+        {
+            case 0x00:
+                stream.out_uint8(this->ChannelId);
+            break;
+
+            case 0x01:
+                stream.out_uint16_le(this->ChannelId);
+            break;
+
+            case 0x02:
+                stream.out_uint32_le(this->ChannelId);
+            break;
+
+            default:
+                LOG(LOG_ERR, "DVCCreateRequestPDU::emit invalid length of the ChannelId field! (cbId=%u)", this->cbId);
+                throw Error(ERR_RDP_PROTOCOL);
+        }
+
+        stream.out_copy_bytes(this->channel_name.c_str(), this->channel_name.length() + 1);
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length,
+            "DVCCreateRequestPDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "cbId=0x%02X Sp=0x%02X Cmd=0x%02X ChannelId=0x%X ChannelName=\"%s\"",
+            static_cast<unsigned int>(this->cbId),
+            static_cast<unsigned int>(this->Sp),
+            static_cast<unsigned int>(this->Cmd),
+            static_cast<unsigned int>(this->ChannelId),
+            this->channel_name.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
+};
+
+// [MS-RDPEDYC] - 2.2.2.2 DVC Create Response PDU (DYNVC_CREATE_RSP)
+
+// The DYNVC_CREATE_RSP (section 2.2.2.2) PDU is sent by the DVC client
+//  manager to indicate the status of the client DVC create operation.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | cb| Pr|  Cmd  |              ChannelId (variable)             |
+// | Id| i |       |                                               |
+// +---+---+-------+-----------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                         CreationStatus                        |
+// +---------------------------------------------------------------+
+
+// cbId (2 bits): Indicates the length of the ChannelId field.
+
+//  +-------+----------------------------------------+
+//  | Value | Meaning                                |
+//  +-------+----------------------------------------+
+//  | 0x00  | The ChannelId field length is 1 byte.  |
+//  +-------+----------------------------------------+
+//  | 0x01  | The ChannelId field length is 2 bytes. |
+//  +-------+----------------------------------------+
+//  | 0x02  | The ChannelId field length is 4 bytes. |
+//  +-------+----------------------------------------+
+//  | 0x03  | Invalid value.                         |
+//  +-------+----------------------------------------+
+
+// Sp (2 bits): Unused. SHOULD be initialized to 0x00.
+
+// Cmd (4 bits): MUST be set to 0x01 (Create).
+
+// ChannelId (variable): A variable length 8-bit, 16-bit, or 32-bit unsigned
+//  integer. Set to the value of the ChannelId in the DYNVC_CREATE_REQ
+//  (section 2.2.2.1) PDU.
+
+// CreationStatus (4 bytes): A 32-bit, signed integer that specifies the
+//  HRESULT code that indicates success or failure of the client DVC
+//  creation. HRESULT codes are specified in [MS-ERREF] section 2.1. A zero
+//  or positive value indicates success; a negative value indicates failure.
+
+
+class DVCCreateResponsePDU
+{
+    uint8_t  cbId           = 0x00;
+    uint8_t  Sp             = 0x00;
+    uint8_t  Cmd            = CMD_CREATE;
+
+    uint32_t ChannelId      = 0;
+    uint32_t CreationStatus = 0;
+
+public:
+    void receive(InStream & stream) {
+        // cbId(:2) + Sp(:2) + Cmd(:4)
+        ::check_throw(stream, 1, "class DVCCreateResponsePDU::receive (0)", ERR_RDPDR_PDU_TRUNCATED);
+
+        uint8_t const tmp = stream.in_uint8();
+
+        this->cbId =  (tmp & 0x03);
+        this->Sp   = ((tmp & 0x0C) >> 2);
+        this->Cmd  = ((tmp & 0xF0) >> 4);
+
+        switch (this->cbId)
+        {
+            case 0x00:
+                ::check_throw(stream, 1, "class DVCCreateResponsePDU::receive (1)", ERR_RDPDR_PDU_TRUNCATED);
+                this->ChannelId = stream.in_uint8();
+            break;
+
+            case 0x01:
+                ::check_throw(stream, 2, "class DVCCreateResponsePDU::receive (2)", ERR_RDPDR_PDU_TRUNCATED);
+                this->ChannelId = stream.in_uint16_le();
+            break;
+
+            case 0x02:
+                ::check_throw(stream, 4, "class DVCCreateResponsePDU::receive (3)", ERR_RDPDR_PDU_TRUNCATED);
+                this->ChannelId = stream.in_uint32_le();
+            break;
+
+            default:
+                LOG(LOG_ERR, "DVCCreateResponsePDU::receive invalid length of the ChannelId field! (cbId=%u)", this->cbId);
+                throw Error(ERR_RDP_PROTOCOL);
+        }
+
+        ::check_throw(stream, 1, "class DVCCreateResponsePDU::receive (4)", ERR_RDPDR_PDU_TRUNCATED);
+        this->CreationStatus = stream.in_uint32_le();
+    }
+
+    void emit(OutStream & stream) const {
+        uint8_t const tmp = (
+                 (this->cbId & 0x03)       |
+                ((this->Sp   & 0x03) << 2) |
+                ((this->Cmd  & 0x0F) << 4)
+            );
+        stream.out_uint8(tmp);
+
+        switch (this->cbId)
+        {
+            case 0x00:
+                stream.out_uint8(this->ChannelId);
+            break;
+
+            case 0x01:
+                stream.out_uint16_le(this->ChannelId);
+            break;
+
+            case 0x02:
+                stream.out_uint32_le(this->ChannelId);
+            break;
+
+            default:
+                LOG(LOG_ERR, "DVCCreateResponsePDU::emit invalid length of the ChannelId field! (cbId=%u)", this->cbId);
+                throw Error(ERR_RDP_PROTOCOL);
+        }
+
+        stream.out_uint32_le(this->CreationStatus);
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length,
+            "DVCCreateResponsePDU: ");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        result = ::snprintf(buffer + length, size - length,
+            "cbId=0x%02X Sp=0x%02X Cmd=0x%02X ChannelId=0x%X CreationStatus=0x%X",
+            static_cast<unsigned int>(this->cbId),
+            static_cast<unsigned int>(this->Sp),
+            static_cast<unsigned int>(this->Cmd),
+            static_cast<unsigned int>(this->ChannelId),
+            this->CreationStatus);
+        length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
     }

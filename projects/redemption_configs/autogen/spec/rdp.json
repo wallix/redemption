@@ -373,8 +373,8 @@
           "name": "disabled_features",
           "type": "integer",
           "min": 0,
-          "max": 7,
-          "default": 0,
+          "max": 511,
+          "default": 96,
           "subtype": "bitset",
           "values": [
             {
@@ -396,6 +396,36 @@
                "value": 4,
                "label": "msuia",
                "description": "MS UI Automation"
+            },
+            {
+               "value": 8,
+               "label": "r1",
+               "description": "Reserved (do not use)"
+            },
+            {
+               "value": 16,
+               "label": "edge_inspection",
+               "description": "Inspect Edge location URL"
+            },
+            {
+               "value": 32,
+               "label": "chrome_inspection",
+               "description": "Inspect Chrome Address/Search bar"
+            },
+            {
+               "value": 64,
+               "label": "firefox_inspection",
+               "description": "Inspect Firefox Address/Search bar"
+            },
+            {
+               "value": 128,
+               "label": "ie_monitoring",
+               "description": "Monitor Internet Explorer event"
+            },
+            {
+               "value": 256,
+               "label": "group_membership",
+               "description": "Inspect group membership of user"
             }
           ],
           "advanced": true,
@@ -629,6 +659,30 @@
             }
           ],
           "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
+        }
+      ]
+    },
+    {
+      "name": "file_verification",
+      "members": [
+        {
+          "name": "enable_up",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "enable_down",
+          "type": "bool",
+          "default": false,
+          "description": ""
+        },
+        {
+          "name": "log_if_accepted",
+          "type": "bool",
+          "default": false,
+          "advanced": true,
+          "description": ""
         }
       ]
     }

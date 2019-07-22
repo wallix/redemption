@@ -30,6 +30,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <strings.h>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
@@ -103,24 +104,13 @@ struct ClipboardData
     uint32_t requestedFormatId = 0;
 };
 
-struct ClipboardCapabilitiesReceive {
-
-    ClipboardCapabilitiesReceive(ClipboardSideData & clip_data, InStream& chunk, const RDPVerbose verbose) {
-        {
-            const unsigned int expected = 4;   //     cCapabilitiesSets(2) +
-                                                //     pad1(2)
-            if (!chunk.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_%s_clipboard_capabilities_pdu: "
-                        "Truncated CLIPRDR_CAPS, need=%u remains=%zu", clip_data.provider_name,
-                    expected, chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
-
-        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_%s_message: "
-                "Clipboard Capabilities PDU", clip_data.provider_name);
+struct ClipboardCapabilitiesReceive
+{
+    ClipboardCapabilitiesReceive(ClipboardSideData & clip_data, InStream& chunk, const RDPVerbose verbose)
+    {
+        // cCapabilitiesSets(2) +
+        // pad1(2)
+        check_throw(chunk, 4, "CLIPRDR_CAPS", ERR_RDP_DATA_TRUNCATED);
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
         assert(1 == cCapabilitiesSets);
@@ -136,28 +126,25 @@ struct ClipboardCapabilitiesReceive {
                 general_caps.recv(chunk, f);
 
                 if (bool(verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_%s_clipboard_capabilities_pdu: "
-                            "General Capability Set", clip_data.provider_name);
                     general_caps.log(LOG_INFO);
                 }
 
                 clip_data.use_long_format_names =
                     bool(general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-
             }
         }
     }
 };
 
-struct FilecontentsRequestReceive {
-
+struct FilecontentsRequestReceive
+{
     uint32_t dwFlags = 0;
     uint32_t streamID = 0;
     uint32_t lindex = 0;
     uint32_t requested = 0;
 
-    FilecontentsRequestReceive(ClipboardSideData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen) {
+    FilecontentsRequestReceive(ClipboardSideData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen)
+    {
         LOG(LOG_INFO, "dataLen=%u FileContentsRequestPDU::minimum_size()=%zu", dataLen, RDPECLIP::FileContentsRequestPDU::minimum_size());
         if (dataLen >= RDPECLIP::FileContentsRequestPDU::minimum_size()) {
             RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
@@ -185,8 +172,8 @@ struct FilecontentsRequestReceive {
     }
 };
 
-struct FilecontentsRequestSendBack {
-
+struct FilecontentsRequestSendBack
+{
     FilecontentsRequestSendBack(uint32_t dwFlags, uint32_t streamID, VirtualChannelDataSender* sender)
     {
         if (!sender) {
@@ -230,23 +217,13 @@ struct FilecontentsRequestSendBack {
 
 struct FormatDataRequestReceive
 {
-    FormatDataRequestReceive(ClipboardData & clip_data, ClipboardSideData & clip_side_data, const RDPVerbose verbose, InStream& chunk) {
-        {
-            const unsigned int expected = 4;   //     requestedFormatId(4)
-            if (!chunk.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_%s_format_data_request_pdu: "
-                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%u remains=%zu"
-                    , clip_side_data.provider_name, expected, chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
+    FormatDataRequestReceive(ClipboardData & clip_data, const RDPVerbose verbose, InStream& chunk) {
+        check_throw(chunk, 4, "CLIPRDR_FORMAT_DATA_REQUEST", ERR_RDP_DATA_TRUNCATED);
 
         clip_data.requestedFormatId = chunk.in_uint32_le();
 
         LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_%s_format_data_request_pdu: "
-                "requestedFormatId=%s(%u)", clip_side_data.provider_name,
+            "requestedFormatId=%s(%u)",
             RDPECLIP::get_FormatId_name(clip_data.requestedFormatId),
             clip_data.requestedFormatId);
     }
@@ -272,138 +249,143 @@ struct FormatDataRequestSendBack
     }
 };
 
-struct FormatDataResponseReceive
+struct FormatDataResponseReceiveFileList
 {
-    std::string data_to_dump;
-
     std::vector<RDPECLIP::FileDescriptor> files_descriptors;
 
-    FormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* direction) {
+    FormatDataResponseReceiveFileList(InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* direction)
+    {
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
+                const uint32_t cItems = chunk.in_uint32_le();
 
-        if (file_list_format_id && (requestedFormatId == file_list_format_id)) {
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
-                    const uint32_t cItems = chunk.in_uint32_le();
-
-                    if (!param_dont_log_data_into_syslog) {
-                        LOG(LOG_INFO,
-                            "Sending %sFileGroupDescriptorW(%u) clipboard data to %s. "
-                                "cItems=%u",
-                            ((flags & CHANNELS::CHANNEL_FLAG_LAST) ? "" : "(chunked) "),
-                            file_list_format_id, direction, cItems);
-                    }
-                }
-            } else {
-
-                if (file_descriptor_stream.get_offset()) {
-                    const uint32_t complementary_data_length =
-                        RDPECLIP::FileDescriptor::size() -
-                            file_descriptor_stream.get_offset();
-
-                    assert(chunk.in_remain() >= complementary_data_length);
-
-                    file_descriptor_stream.out_copy_bytes(chunk.get_current(),
-                        complementary_data_length);
-
-                    chunk.in_skip_bytes(complementary_data_length);
-
-                    RDPECLIP::FileDescriptor fd;
-
-                    InStream in_stream(
-                        file_descriptor_stream.get_data(),
-                        file_descriptor_stream.get_offset()
-                    );
-                    fd.receive(in_stream);
-                    if (bool(verbose & RDPVerbose::cliprdr)) {
-                        fd.log(LOG_INFO);
-                    }
-
-                    this->files_descriptors.push_back(fd);
-
-                    file_descriptor_stream.rewind();
+                if (!param_dont_log_data_into_syslog) {
+                    LOG(LOG_INFO,
+                        "Sending %sFileGroupDescriptorW(%u) clipboard data to %s. "
+                            "cItems=%u",
+                        ((flags & CHANNELS::CHANNEL_FLAG_LAST) ? "" : "(chunked) "),
+                        file_list_format_id, direction, cItems);
                 }
             }
+        } else {
 
-            while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
+            if (file_descriptor_stream.get_offset()) {
+                const uint32_t complementary_data_length =
+                    RDPECLIP::FileDescriptor::size() -
+                        file_descriptor_stream.get_offset();
+
+                assert(chunk.in_remain() >= complementary_data_length);
+
+                file_descriptor_stream.out_copy_bytes(chunk.get_current(),
+                    complementary_data_length);
+
+                chunk.in_skip_bytes(complementary_data_length);
+
                 RDPECLIP::FileDescriptor fd;
 
-                fd.receive(chunk);
-
+                InStream in_stream(
+                    file_descriptor_stream.get_data(),
+                    file_descriptor_stream.get_offset()
+                );
+                fd.receive(in_stream);
                 if (bool(verbose & RDPVerbose::cliprdr)) {
                     fd.log(LOG_INFO);
                 }
 
-                this->files_descriptors.push_back(fd);
-            }
+                this->files_descriptors.push_back(std::move(fd));
 
-            if (chunk.in_remain()) {
                 file_descriptor_stream.rewind();
+            }
+        }
 
-                file_descriptor_stream.out_copy_bytes(
-                    chunk.get_current(), chunk.in_remain());
+        while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
+            RDPECLIP::FileDescriptor fd;
 
-                chunk.in_skip_bytes(chunk.in_remain());
+            fd.receive(chunk);
+
+            if (bool(verbose & RDPVerbose::cliprdr)) {
+                fd.log(LOG_INFO);
             }
 
-        } else {
+            this->files_descriptors.push_back(std::move(fd));
+        }
 
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-//                 InStream chunk_serie = chunk.clone();
+        if (chunk.in_remain()) {
+            file_descriptor_stream.rewind();
 
-                constexpr size_t const max_length_of_data_to_dump = 256;
+            file_descriptor_stream.out_copy_bytes(
+                chunk.get_current(), chunk.in_remain());
 
-                switch (requestedFormatId) {
-        /*
-                    case RDPECLIP::CF_TEXT:
-                    {
-                        const size_t length_of_data_to_dump = std::min(
-                            chunk.in_remain(), max_length_of_data_to_dump);
-                        const std::string data_to_dump(
-                            ::char_ptr_cast(chunk.get_current()),
-                            length_of_data_to_dump);
-                        LOG(LOG_INFO, "%s", data_to_dump);
-                    }
-                    break;
-        */
-                    case RDPECLIP::CF_UNICODETEXT:
-                    {
-                        assert(!(chunk.in_remain() & 1));
+            chunk.in_skip_bytes(chunk.in_remain());
+        }
+    }
+};
 
-                        const size_t length_of_data_to_dump = std::min(
-                            chunk.in_remain(), max_length_of_data_to_dump * 2);
+struct FormatDataResponseReceive
+{
+    std::string data_to_dump;
 
-                        constexpr size_t size_of_utf8_string =
-                            max_length_of_data_to_dump *
-                                maximum_length_of_utf8_character_in_bytes;
+    FormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const uint32_t flags)
+    {
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
-                        uint8_t utf8_string[size_of_utf8_string + 1] {};
-                        const size_t length_of_utf8_string = ::UTF16toUTF8(
-                            chunk.get_current(), length_of_data_to_dump / 2,
-                            utf8_string, size_of_utf8_string);
-                        data_to_dump.assign(
-                            ::char_ptr_cast(utf8_string),
-                            ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
-                                length_of_utf8_string - 1 :
-                                length_of_utf8_string));
-                    }
-                    break;
+            constexpr size_t const max_length_of_data_to_dump = 256;
 
-                    case RDPECLIP::CF_LOCALE:
-                    {
-                        const uint32_t locale_identifier = chunk.in_uint32_le();
-                        data_to_dump = std::to_string(locale_identifier);
-                    }
-                    break;
+            switch (requestedFormatId) {
+    /*
+                case RDPECLIP::CF_TEXT:
+                {
+                    const size_t length_of_data_to_dump = std::min(
+                        chunk.in_remain(), max_length_of_data_to_dump);
+                    data_to_dump.assign(
+                        ::char_ptr_cast(chunk.get_current()),
+                        length_of_data_to_dump);
                 }
+                break;
+    */
+                case RDPECLIP::CF_UNICODETEXT:
+                {
+                    assert(!(chunk.in_remain() & 1));
+
+                    const size_t length_of_data_to_dump = std::min(
+                        chunk.in_remain(), max_length_of_data_to_dump * 2);
+
+                    constexpr size_t size_of_utf8_string =
+                        max_length_of_data_to_dump *
+                            maximum_length_of_utf8_character_in_bytes;
+
+                    uint8_t utf8_string[size_of_utf8_string + 1] {};
+                    const size_t length_of_utf8_string = ::UTF16toUTF8(
+                        chunk.get_current(), length_of_data_to_dump / 2,
+                        utf8_string, size_of_utf8_string);
+                    this->data_to_dump.assign(
+                        ::char_ptr_cast(utf8_string),
+                        ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
+                            length_of_utf8_string - 1 :
+                            length_of_utf8_string));
+                }
+                break;
+
+                case RDPECLIP::CF_LOCALE:
+                {
+                    const uint32_t locale_identifier = chunk.in_uint32_le();
+                    this->data_to_dump = std::to_string(locale_identifier);
+                }
+                break;
             }
         }
     }
 };
 
 
-struct ServerMonitorReadySendBack {
+struct ServerMonitorReadySendBack
+{
+    ServerMonitorReadySendBack(const RDPVerbose verbose, const bool use_long_format_names, VirtualChannelDataSender* sender)
+    {
+        if (!sender) {
+            return ;
+        }
 
-    ServerMonitorReadySendBack(const RDPVerbose verbose, const bool current_use_long_format_names, BaseVirtualChannel * base_channel) {
         LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
                 "Send Clipboard Capabilities PDU.");
@@ -421,7 +403,7 @@ struct ServerMonitorReadySendBack {
         clipboard_caps_pdu.emit(caps_stream);
         general_cap_set.emit(caps_stream);
 
-        base_channel->send_message_to_server(
+        sender->operator()(
             caps_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             caps_stream.get_data(),
@@ -434,7 +416,6 @@ struct ServerMonitorReadySendBack {
         RDPECLIP::FormatListPDUEx format_list_pdu;
         format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
 
-        const bool use_long_format_names = current_use_long_format_names;
         const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
         RDPECLIP::CliprdrHeader list_clipboard_header(RDPECLIP::CB_FORMAT_LIST,
@@ -446,13 +427,12 @@ struct ServerMonitorReadySendBack {
         list_clipboard_header.emit(list_stream);
         format_list_pdu.emit(list_stream, use_long_format_names);
 
-        base_channel->send_message_to_server(
+        sender->operator()(
             list_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
             list_stream.get_data(),
             list_stream.get_offset());
     }
-
 };
 
 // TODO copy from /browser_client_JS/src/red_channels/clipboard.cpp
@@ -477,8 +457,14 @@ namespace Cliprdr
     }
     REDEMPTION_DIAGNOSTIC_POP
 
-    constexpr auto file_list_format_name = "FileGroupDescriptorW"_av;
-    constexpr auto file_list_format_name_utf16 = "FileGroupDescriptorW"_utf16;
+    inline namespace format_name_constants
+    {
+        constexpr auto file_group_descriptor_w_utf8 = "FileGroupDescriptorW"_av;
+        constexpr auto file_group_descriptor_w_utf16 = "FileGroupDescriptorW"_utf16;
+
+        constexpr auto preferred_drop_effect_utf8 = "Preferred DropEffect"_av;
+        constexpr auto preferred_drop_effect_utf16 = "Preferred DropEffect"_av;
+    }
 
     enum class Charset : bool
     {
@@ -494,6 +480,7 @@ namespace Cliprdr
     };
 
     enum class IsLongFormat : bool;
+    // TODO Charset ?
     enum class IsAscii : bool;
 
     // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
@@ -508,13 +495,20 @@ namespace Cliprdr
         min_long_format_name_data_length
     };
 
-    inline bool format_list_extract(
+    enum class ExtractResult : int8_t
+    {
+        Ok,
+        WaitingData,
+        LongFormatNameTooLong,
+    };
+
+    inline ExtractResult format_list_extract(
         FormatListExtractorData& data, InStream& stream,
-        IsLongFormat is_long_format, IsAscii is_ascii)
+        IsLongFormat is_long_format, IsAscii is_ascii) noexcept
     {
         if (stream.in_remain() < format_name_data_length[int(is_long_format)])
         {
-            return false;
+            return ExtractResult::WaitingData;
         }
 
         data.format_id = stream.in_uint32_le();
@@ -525,7 +519,10 @@ namespace Cliprdr
             auto av = stream.remaining_bytes();
             data.av_name = av.first(UTF16ByteLen(av));
 
-            // TODO check zero terminal
+            if (data.av_name.size() == av.size())
+            {
+                return ExtractResult::LongFormatNameTooLong;
+            }
 
             stream.in_skip_bytes(data.av_name.size() + 2);
         }
@@ -546,9 +543,157 @@ namespace Cliprdr
             stream.in_skip_bytes(short_format_name_length);
         }
 
+        return ExtractResult::Ok;
+    }
+
+    inline bool format_list_serialize(
+        OutStream& out_stream, cbytes_view name,
+        uint32_t id, IsLongFormat is_long_format, Charset charset)
+    {
+        constexpr size_t header_length = 4;
+
+        if (bool(is_long_format))
+        {
+            switch (charset)
+            {
+            case Charset::Ascii: {
+                if (!out_stream.has_room(header_length + name.size() * 2 + 2))
+                {
+                    return false;
+                }
+                out_stream.out_uint32_le(id);
+
+                auto data = out_stream.get_tailroom_bytes();
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(data.size() - 2u)));
+                out_stream.out_uint16_le(0);
+                break;
+            }
+            case Charset::Utf16: {
+                if (!out_stream.has_room(header_length + name.size() + 2))
+                {
+                    return false;
+                }
+                out_stream.out_uint32_le(id);
+                out_stream.out_copy_bytes(name);
+                out_stream.out_uint16_le(0);
+                break;
+            }
+            }
+        }
+        else
+        {
+            if (!out_stream.has_room(4 + short_format_name_length))
+            {
+                return false;
+            }
+
+            out_stream.out_uint32_le(id);
+
+            switch (charset)
+            {
+            case Charset::Ascii: {
+                auto data = out_stream.get_tailroom_bytes();
+                auto len = std::min(data.size(), short_format_name_length-2u);
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
+                char zero_data[short_format_name_length]{};
+                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
+                break;
+            }
+            case Charset::Utf16: {
+                auto len = std::min(name.size(), short_format_name_length-1u);
+                out_stream.out_copy_bytes(name);
+                char zero_data[short_format_name_length]{};
+                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
+                break;
+            }
+            }
+        }
+
         return true;
     }
-}
+
+    struct FormatNameInventory
+    {
+        using FormatId = uint32_t;
+        struct FormatName;
+
+        FormatName const& push(FormatId format_id, Charset charset, array_view_const_u8 av_name)
+        {
+            return this->formats.emplace_back(format_id, charset, av_name);
+        }
+
+        FormatName const* find(FormatId format_id) const noexcept
+        {
+            for (auto const& format : this->formats) {
+                if (format.format_id == format_id) {
+                    return &format;
+                }
+            }
+            return nullptr;
+        }
+
+        void clear() noexcept
+        {
+            this->formats.clear();
+        }
+
+        struct FormatName
+        {
+            static constexpr size_t utf8_buffer_buf_len = 123;
+
+            uint32_t format_id;
+            // TODO static_vector<raw_buf_len>
+            uint8_t len;
+            uint8_t utf8_buffer[utf8_buffer_buf_len];
+
+            FormatName(FormatId format_id, Charset charset, array_view_const_u8 raw_name) noexcept
+            : format_id(format_id)
+            , len(std::min(raw_name.size(), std::size(this->utf8_buffer)))
+            {
+                if (charset == Charset::Ascii)
+                {
+                    this->len = std::min(raw_name.size(), std::size(this->utf8_buffer));
+                    memcpy(this->utf8_buffer, raw_name.data(), this->len);
+                }
+                else
+                {
+                    this->len = UTF16toUTF8_buf(
+                        raw_name, make_array_view(this->utf8_buffer)).size();
+                }
+            }
+
+            FormatName(FormatName const& other) noexcept
+            : format_id(other.format_id)
+            , len(other.len)
+            {
+                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
+            }
+
+            FormatName& operator=(FormatName const& other) noexcept
+            {
+                this->format_id = other.format_id;
+                this->len = other.len;
+                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
+                return *this;
+            }
+
+            const_bytes_view utf8_name() const noexcept
+            {
+                return {this->utf8_buffer, this->len};
+            }
+
+            bool utf8_name_equal(const_bytes_view utf8_name_compared) const noexcept
+            {
+                return utf8_name_compared.size() == this->len
+                    && 0 == strncasecmp(utf8_name_compared.as_charp(),
+                                        char_ptr_cast(this->utf8_buffer), this->len);
+            }
+        };
+
+    private:
+        std::vector<FormatName> formats;
+    };
+} // namespace Cliprdr
 
 
 struct FormatListReceive
@@ -556,71 +701,58 @@ struct FormatListReceive
     uint32_t file_list_format_id = 0;
 
     FormatListReceive(
-        const bool client_use_long_format_names,
-        const bool server_use_long_format_names,
+        const bool use_long_format,
         const RDPECLIP::CliprdrHeader & in_header,
         InStream & chunk,
-        std::unordered_map<uint32_t, std::string> & format_name_inventory,
+        Cliprdr::FormatNameInventory& format_name_inventory,
         const RDPVerbose verbose)
     {
-        bool use_long_format = !(!client_use_long_format_names || !server_use_long_format_names);
-        if (!use_long_format) {
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                    "Short Format Name%s variant of Format List PDU is used "
-                    "for exchanging updated format names.",
-                ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)" : ""));
-        }
-        else {
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                    "Long Format Name variant of Format List PDU is used "
-                    "for exchanging updated format names.");
-        }
+        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "%s variant of Format List PDU is used for exchanging updated format names.",
+            use_long_format
+                ? "Long Format Name"
+            : (in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES)
+                ? "Short Format Name (ASCII 8)"
+                : "Short Format Name"
+        );
 
         Cliprdr::FormatListExtractorData extracted_data;
 
         auto buf = chunk.remaining_bytes();
         InStream in_stream(buf.first(std::min<size_t>(in_header.dataLen(), buf.size())));
 
-        while (Cliprdr::format_list_extract(
+        Cliprdr::ExtractResult r;
+
+        while ((r = Cliprdr::format_list_extract(
             extracted_data, in_stream,
             Cliprdr::IsLongFormat(use_long_format),
             Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES))
-        ) {
-            const size_t max_length_of_format_name   = 256;
-            constexpr size_t size_of_utf8_buffer
-                = max_length_of_format_name * maximum_length_of_utf8_character_in_bytes;
-            uint8_t utf8_buffer[size_of_utf8_buffer + 1];
-
-            array_view_const_u8 utf8_av_name;
-
-            if (extracted_data.charset == Cliprdr::Charset::Ascii) {
-                utf8_av_name = extracted_data.av_name;
-            }
-            else {
-                utf8_av_name = ::UTF16toUTF8_buf(extracted_data.av_name, make_array_view(utf8_buffer));
-            }
+        ) == Cliprdr::ExtractResult::Ok)
+        {
+            auto&& format_name = format_name_inventory.push(
+                extracted_data.format_id, extracted_data.charset, extracted_data.av_name);
+            auto&& utf8_name = format_name.utf8_name();
 
             LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                    "formatId=%s(%u) wszFormatName=\"%.*s\"",
+                "formatId=%s(%u) wszFormatName=\"%.*s\"",
                 RDPECLIP::get_FormatId_name(extracted_data.format_id),
-                extracted_data.format_id, int(utf8_av_name.size()), utf8_av_name.data());
+                extracted_data.format_id, int(utf8_name.size()), utf8_name.data());
 
-            format_name_inventory[extracted_data.format_id]
-                .assign(::char_ptr_cast(utf8_av_name.data()), utf8_av_name.size());
-
-            array_view_const_u8 ref_name = const_bytes_view(Cliprdr::file_list_format_name);
-            // TODO operator==(array_view, array_view) ?
-            if (ref_name.size() == utf8_av_name.size()
-             && !memcmp(ref_name.data(), utf8_av_name.data(), utf8_av_name.size())
-            ) {
+            if (format_name.utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8)) {
                 this->file_list_format_id = extracted_data.format_id;
             }
         }
 
         chunk.in_skip_bytes(in_stream.get_offset());
+
+        if (r == Cliprdr::ExtractResult::LongFormatNameTooLong) {
+            LOG(LOG_ERR, "Truncated CLIPRDR_FORMAT_LIST (Long) FormatName");
+            throw Error(ERR_RDP_UNSUPPORTED);
+        }
+
+        // some version of server add "\0\0\0\0" and total_len == chunk_size + 4
+        LOG_IF(chunk.in_remain() != 4 && chunk.in_remain() != 0,
+            LOG_WARNING, "Truncated CLIPRDR_FORMAT_LIST remains=%zu", chunk.in_remain());
     }
 };
 
@@ -649,23 +781,15 @@ struct FormatListSendBack
     }
 };
 
-struct LockClipDataReceive {
-
-    LockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header) {
+struct LockClipDataReceive
+{
+    LockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header)
+    {
         if (header.dataLen() >= 4 /* clipDataId(4) */) {
-            {
-                const unsigned int expected = 4;
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "ClipboardVirtualChannel::process_%s_message: "
-                            "Truncated CLIPRDR_LOCK_CLIPDATA, "
-                            "need=%u remains=%zu", clip_sender_side_data.provider_name,
-                        expected, chunk.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
+            // clipDataId(4)
+            check_throw(chunk, 4, "CLIPRDR_LOCK_CLIPDATA", ERR_RDP_DATA_TRUNCATED);
 
-           clip_receiver_side_data.clipDataId  = chunk.in_uint32_le();
+            clip_receiver_side_data.clipDataId = chunk.in_uint32_le();
 
             LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
                 "ClipboardVirtualChannel::process_%s_message: "
@@ -676,21 +800,13 @@ struct LockClipDataReceive {
     }
 };
 
-struct UnlockClipDataReceive {
-
-    UnlockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header) {
+struct UnlockClipDataReceive
+{
+    UnlockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header)
+    {
          if (header.dataLen() >= 4 /* clipDataId(4) */) {
-            {
-                const unsigned int expected = 4;    // clipDataId(4)
-                if (!chunk.in_check_rem(expected)) {
-                    LOG(LOG_ERR,
-                        "ClipboardVirtualChannel::process_%s_message: "
-                            "Truncated CLIPRDR_UNLOCK_CLIPDATA, "
-                            "need=%u remains=%zu",clip_sender_side_data.provider_name,
-                        expected, chunk.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
+            // clipDataId(4)
+            check_throw(chunk, 4, "CLIPRDR_UNLOCK_CLIPDATA", ERR_RDP_DATA_TRUNCATED);
 
             uint32_t const clipDataId = chunk.in_uint32_le();
 
@@ -703,12 +819,13 @@ struct UnlockClipDataReceive {
     }
 };
 
-struct FileContentsResponseReceive {
-
+struct FileContentsResponseReceive
+{
     bool must_log_file_info_type = false;
     ClipboardSideData::file_info_type file_info;
 
-    FileContentsResponseReceive(ClipboardSideData & clip_side_data, const RDPECLIP::CliprdrHeader & header, const uint32_t flags, InStream & chunk) {
+    FileContentsResponseReceive(ClipboardSideData & clip_side_data, const RDPECLIP::CliprdrHeader & header, const uint32_t flags, InStream & chunk)
+    {
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
             clip_side_data.dataLen = header.dataLen();
@@ -718,37 +835,35 @@ struct FileContentsResponseReceive {
             }
         }
 
-        if (clip_side_data.file_contents_request_info_inventory.end() !=
-            clip_side_data.file_contents_request_info_inventory.find(clip_side_data.streamId))
+        auto it = clip_side_data.file_contents_request_info_inventory.find(clip_side_data.streamId);
+
+        if (clip_side_data.file_contents_request_info_inventory.end() != it)
         {
-            ClipboardSideData::file_contents_request_info& file_contents_request =
-                clip_side_data.file_contents_request_info_inventory[clip_side_data.streamId];
+            ClipboardSideData::file_contents_request_info& file_contents_request = it->second;
 
-            {
-                ClipboardSideData::file_info_inventory_type& file_info_inventory =
-                    clip_side_data.file_stream_data_inventory[
-                        file_contents_request.clipDataId];
+            ClipboardSideData::file_info_inventory_type& file_info_inventory =
+                clip_side_data.file_stream_data_inventory[
+                    file_contents_request.clipDataId];
 
-                this->file_info = file_info_inventory[file_contents_request.lindex];
+            this->file_info = file_info_inventory[file_contents_request.lindex];
 
-                uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
+            uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
 
-                if (chunk.in_remain()) {
-                    if (this->file_info.sequential_access_offset == file_contents_request_position_current) {
+            if (chunk.in_remain()) {
+                if (this->file_info.sequential_access_offset == file_contents_request_position_current) {
 
-                        uint32_t const length_ = std::min({
-                                static_cast<uint32_t>(chunk.in_remain()),
-                                static_cast<uint32_t>(this->file_info.size - this->file_info.sequential_access_offset),
-                                file_contents_request.cbRequested - file_contents_request.offset
-                            });
+                    uint32_t const length_ = std::min({
+                            static_cast<uint32_t>(chunk.in_remain()),
+                            static_cast<uint32_t>(this->file_info.size - this->file_info.sequential_access_offset),
+                            file_contents_request.cbRequested - file_contents_request.offset
+                        });
 
-                        this->file_info.sha256.update({ chunk.get_current(), length_ });
+                    this->file_info.sha256.update({ chunk.get_current(), length_ });
 
-                        file_contents_request.offset       += length_;
-                        this->file_info.sequential_access_offset += length_;
+                    file_contents_request.offset += length_;
+                    this->file_info.sequential_access_offset += length_;
 
-                        this->must_log_file_info_type = this->file_info.sequential_access_offset == this->file_info.size;
-                    }
+                    this->must_log_file_info_type = this->file_info.sequential_access_offset == this->file_info.size;
                 }
             }
         }

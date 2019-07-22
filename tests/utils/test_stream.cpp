@@ -43,8 +43,7 @@ RED_AUTO_TEST_CASE(TestStream_uint8)
 {
     // test reading of 8 bits data from Stream signed or unsigned is working
 
-    char buf[] = "\1\xFE\xFD\4\5";
-    InStream s(buf, sizeof(buf)-1);
+    InStream s("\1\xFE\xFD\4\5"_av);
     // 5 characters are availables
     RED_CHECK(s.in_check_rem(5));
     // but not 6...
@@ -86,8 +85,7 @@ RED_AUTO_TEST_CASE(TestStream_uint16)
     // target endianness is care of automagically.
     // (the + operator does the job).
 
-    char buf[] = "\1\0\xFE\xFF\xFF\xFD\xFF\xFC\xFB\xFF\0\1";
-    InStream s(buf, sizeof(buf)-1);
+    InStream s("\1\0\xFE\xFF\xFF\xFD\xFF\xFC\xFB\xFF\0\1"_av);
 
     uint8_t const * oldp = s.get_current();
     // 12 characters are availables
@@ -117,8 +115,7 @@ RED_AUTO_TEST_CASE(TestStream_uint32)
     // target endianness is taken care of automagically.
     // (the + operator does the job).
 
-    char data[] = "\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF";
-    InStream s(data, sizeof(data)-1);
+    InStream s("\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF"_av);
 
     uint8_t const * oldp = s.get_current();
 
@@ -140,8 +137,8 @@ RED_AUTO_TEST_CASE(TestStream_uint64)
     // target endianness is taken care of automagically.
     // (the + operator does the job).
 
-    char data[] = "\1\0\0\0\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE\0\0\0\0\0\0\0\1\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
-    InStream s(data, sizeof(data)-1);
+    auto data = "\1\0\0\0\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE\0\0\0\0\0\0\0\1\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF"_av;
+    InStream s(data);
 
     uint8_t const * oldp = s.get_current();
 
@@ -155,13 +152,14 @@ RED_AUTO_TEST_CASE(TestStream_uint64)
     // empty is OK
     RED_CHECK(!s.in_remain());
 
-    OutStream out(data);
+    uint8_t out_data[32];
+    OutStream out(out_data);
     out.out_uint64_be(1LL);
     out.out_uint64_le(0xFFEECCLL);
-    s.rewind();
+    s = InStream(out_data);
     RED_CHECK_EQUAL(s.in_uint64_be(), 1ull);
     RED_CHECK_EQUAL(s.in_uint64_le(), 0xFFEECCull);
-    RED_CHECK(s.get_current() == oldp + 16);
+    RED_CHECK(s.get_current() == out_data + 16);
 }
 
 RED_AUTO_TEST_CASE(TestStream_in_uint8p)
@@ -170,8 +168,7 @@ RED_AUTO_TEST_CASE(TestStream_in_uint8p)
     // in_uint8p returns a pointer to current beginning of buffer
     // and advance by some given amount of characters.
 
-    char data[] = "\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF";
-    InStream s(data, sizeof(data)-1);
+    InStream s("\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF"_av);
 
     uint8_t const * oldp = s.get_current();
 
@@ -189,8 +186,7 @@ RED_AUTO_TEST_CASE(TestStream_in_skip_bytes)
 {
     // test use of skip_bytes that skip a given number of bytes
 
-    char data[] = "\0\1\2\3\4\5\6\7\x8\x9\xA\xB\xC\xD";
-    InStream s(data, sizeof(data)-1);
+    InStream s("\0\1\2\3\4\5\6\7\x8\x9\xA\xB\xC\xD"_av);
 
     uint8_t const * oldp = s.get_current();
 
@@ -237,7 +233,7 @@ RED_AUTO_TEST_CASE(TestStream_out_Stream)
     RED_CHECK_EQUAL((s.get_data())[11], 7);
     RED_CHECK_EQUAL((s.get_data())[12], 8);
 
-    RED_CHECK(!memcmp("\xA\1\2\4\3\4\3\2\1\5\6\7\x8", s.get_data(), 13));
+    RED_CHECK_MEM("\xA\1\2\4\3\4\3\2\1\5\6\7\x8"_av, s.get_bytes());
 
     // underflow because end is not yet moved at p
     RED_CHECK(s.tailroom());
@@ -295,8 +291,8 @@ RED_AUTO_TEST_CASE(TestStream_Stream_Compatibility)
     stream.out_copy_bytes("0123456789", 10);
 
     RED_CHECK_EQUAL(502u,   stream.tailroom());
-    RED_CHECK_EQUAL(true,  stream.has_room(502));
-    RED_CHECK_EQUAL(false, stream.has_room(503));
+    RED_CHECK( stream.has_room(502));
+    RED_CHECK(not stream.has_room(503));
 }
 
 RED_AUTO_TEST_CASE(TestStream_2BUE)
@@ -359,7 +355,7 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
     }
 
     {
@@ -370,7 +366,7 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
     }
 
     {
@@ -381,40 +377,25 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(!memcmp(stream.get_data(), data_test, sizeof(data_test)));
+        RED_CHECK_MEM(stream.get_bytes(), make_array_view(data_test));
     }
 }
 
 RED_AUTO_TEST_CASE(TestInSInt64Le)
 {
     {
-        int64_t i64_original = -6000000000LLU;
-
-        uint8_t data_test[] = { 0x00, 0x44, 0x5f, 0x9a, 0xfe, 0xff, 0xff, 0xff };
-
-        InStream stream(data_test, sizeof(data_test));
-
-        RED_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+        InStream stream("\x00\x44\x5f\x9a\xfe\xff\xff\xff"_av);
+        RED_CHECK_EQUAL(stream.in_sint64_le(), int64_t(-6000000000LLU));
     }
 
     {
-        int64_t i64_original = 0LLU;
-
-        uint8_t data_test[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-
-        InStream stream(data_test, sizeof(data_test));
-
-        RED_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+        InStream stream("\x00\x00\x00\x00\x00\x00\x00\x00"_av);
+        RED_CHECK_EQUAL(stream.in_sint64_le(), 0);
     }
 
     {
-        int64_t i64_original = 12000000000LLU;
-
-        uint8_t data_test[] = { 0x00, 0x78, 0x41, 0xcb, 0x02, 0x00, 0x00, 0x00 };
-
-        InStream stream(data_test, sizeof(data_test));
-
-        RED_CHECK_EQUAL(stream.in_sint64_le(), i64_original);
+        InStream stream("\x00\x78\x41\xcb\x02\x00\x00\x00"_av);
+        RED_CHECK_EQUAL(stream.in_sint64_le(), int64_t(12000000000LLU));
     }
 }
 
@@ -423,7 +404,7 @@ RED_AUTO_TEST_CASE(TestStreamAt)
     StaticOutStream<12> stream;
     stream.out_copy_bytes("abcde"_av);
 
-    RED_CHECK(stream.get_bytes()[1] == 'b');
+    RED_CHECK_MEM(stream.get_bytes(), "abcde"_av);
     stream.stream_at(1).out_uint8('x');
-    RED_CHECK(stream.get_bytes()[1] == 'x');
+    RED_CHECK_MEM(stream.get_bytes(), "axcde"_av);
 }

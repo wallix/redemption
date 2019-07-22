@@ -49,34 +49,34 @@ RED_AUTO_TEST_CASE(TestHextile1)
 {
     VNC::Encoder::Hextile encoder(BitsPerPixel{16}, BytesPerPixel{2}, {0, 0, 44, 19}, VNCVerbose::basic_trace);
     RED_CHECK_EQUAL(Rect( 0,  0, 16, 16), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(16,  0, 16, 16), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(32,  0, 12, 16), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect( 0, 16, 16, 3), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(16, 16, 16, 3), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(32, 16, 12, 3), encoder.current_tile());
-    RED_CHECK_EQUAL(false, encoder.next_tile());
+    RED_CHECK(not encoder.next_tile());
 }
 
 RED_AUTO_TEST_CASE(TestHextile2)
 {
     VNC::Encoder::Hextile encoder(BitsPerPixel{16}, BytesPerPixel{2}, {0, 0, 48, 19}, VNCVerbose::basic_trace);
     RED_CHECK_EQUAL(Rect( 0,  0, 16, 16), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(16,  0, 16, 16), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(32,  0, 16, 16), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect( 0, 16, 16, 3), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(16, 16, 16, 3), encoder.current_tile());
-    RED_CHECK_EQUAL(true, encoder.next_tile());
+    RED_CHECK(encoder.next_tile());
     RED_CHECK_EQUAL(Rect(32, 16, 16, 3), encoder.current_tile());
-    RED_CHECK_EQUAL(false, encoder.next_tile());
+    RED_CHECK(not encoder.next_tile());
 
 
 //    encoder->consume(buf, drawable);

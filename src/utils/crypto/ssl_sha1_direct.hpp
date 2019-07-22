@@ -73,7 +73,7 @@ public:
             i = 0;
         }
 
-        auto data_remaining = data.array_from_offset(i);
+        auto data_remaining = data.from_at(i);
         memcpy(&this->ctx.buffer[j], data_remaining.data(), data_remaining.size());
     }
 

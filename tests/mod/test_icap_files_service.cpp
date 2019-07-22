@@ -33,7 +33,7 @@ RED_AUTO_TEST_CASE(icapSend)
     ICAPService icap{trans};
 
     auto filename = FIXTURES_PATH "/test_infile.txt";
-    auto content = tu::get_file_contents(filename);
+    auto content = RED_REQUIRE_GET_FILE_CONTENTS(filename);
 
     ICAPFileId id = icap.open_file(filename, "clamav");
     RED_CHECK(id == ICAPFileId(1));
@@ -86,7 +86,7 @@ RED_AUTO_TEST_CASE(icapReceive)
         auto pos = response.size() / 2;
         setbuf(response.first(pos));
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
-        setbuf(response.array_from_offset(pos));
+        setbuf(response.from_at(pos));
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
         setbuf("o"_av);
         RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);

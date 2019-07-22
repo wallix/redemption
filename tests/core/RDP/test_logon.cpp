@@ -79,17 +79,11 @@ RED_AUTO_TEST_CASE(TestLogon)
         |INFO_LOGONERRORS
         |INFO_NOAUDIOPLAYBACK
         ));
-    RED_CHECK_EQUAL(0, memcmp(infoPacket.Domain, "Domain_Test", infoPacket.cbDomain));
-    RED_CHECK_EQUAL(infoPacket.cbDomain, strlen("Domain_Test"));
-    RED_CHECK_EQUAL(0, memcmp(infoPacket.UserName, "UserName_Test", infoPacket.cbUserName));
-    RED_CHECK_EQUAL(infoPacket.cbUserName, strlen("UserName_Test"));
-    RED_CHECK_EQUAL(0, memcmp(infoPacket.Password, "Password_Test", infoPacket.cbPassword));
-    RED_CHECK_EQUAL(infoPacket.cbPassword, strlen("Password_Test"));
-    RED_CHECK_EQUAL(0, memcmp(infoPacket.AlternateShell, "Program_Test", infoPacket.cbAlternateShell));
-    RED_CHECK_EQUAL(infoPacket.cbAlternateShell, strlen("Program_Test"));
-    RED_CHECK_EQUAL(0, memcmp(infoPacket.WorkingDir, "Directory_Test", infoPacket.cbWorkingDir));
-    RED_CHECK_EQUAL(infoPacket.cbWorkingDir, strlen("Directory_Test"));
+    RED_CHECK_MEM("Domain_Test"_av, infoPacket.av_domain());
+    RED_CHECK_MEM("UserName_Test"_av, infoPacket.av_user_anme());
+    RED_CHECK_MEM("Password_Test"_av, infoPacket.av_password());
+    RED_CHECK_MEM("Program_Test"_av, infoPacket.av_alternate_shell());
+    RED_CHECK_MEM("Directory_Test"_av, infoPacket.av_working_directory());
     RED_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags,
         (PERF_DISABLE_WALLPAPER|PERF_DISABLE_FULLWINDOWDRAG|PERF_DISABLE_MENUANIMATIONS));
-
 }

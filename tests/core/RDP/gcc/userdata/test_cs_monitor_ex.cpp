@@ -22,13 +22,11 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor_ex.hpp"
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
 {
-    const char indata[] =
+    InStream stream(
         "\x08\xc0"         // TS_UD_HEADER::type = CS_MONITOR_EX (0xc008)
         "\x24\x00"         // length = 36 bytes
         "\x00\x00\x00\x00" // TS_UD_CS_MONITOR_EX::flags. Unused. MUST be set to zero
@@ -41,15 +39,8 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     		"\x5A\x00\x00\x00" // | orientation = ORIENTATION_PORTRAIT = 90
     		"\x78\x00\x00\x00" // | desktopScaleFactor // 120%
         "\x64\x00\x00\x00" // | deviceScaleFactor // 100%
-    ;
-
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
+        ""_av);
     GCC::UserData::CSMonitorEx cs_monitor_ex;
-    InStream stream(buf);
     cs_monitor_ex.recv(stream);
     RED_CHECK_EQUAL(36, cs_monitor_ex.length);
     RED_CHECK_EQUAL(CS_MONITOR_EX, cs_monitor_ex.userDataType);
@@ -61,7 +52,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     RED_CHECK_EQUAL(90, cs_monitor_ex.monitorAttributesArray[0].orientation); // ORIENTATION_PORTRAIT = 90
 
     RED_CHECK_EQUAL(120, cs_monitor_ex.monitorAttributesArray[0].desktopScaleFactor);
-	  RED_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].deviceScaleFactor);
+    RED_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].deviceScaleFactor);
 
     // cs_monitor_ex.log("Client Received");
 }

@@ -84,18 +84,20 @@ public:
     /// recv_boom read len bytes into buffer or throw an Error
     /// if EOF is encountered at that point it's also an error and
     /// it throws Error(ERR_TRANSPORT_NO_MORE_DATA)
-    void recv_boom(byte_ptr buffer, size_t len)
+    bytes_view recv_boom(byte_ptr buffer, size_t len)
     {
         if (Read::Eof == this->atomic_read(buffer, len)) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
+        return {buffer, len};
     }
 
-    void recv_boom(bytes_view buffer)
+    bytes_view recv_boom(bytes_view buffer)
     {
         if (Read::Eof == this->atomic_read(buffer.as_u8p(), buffer.size())) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
+        return buffer;
     }
 
     /// atomic_read either read len bytes into buffer or throw an Error

@@ -499,9 +499,15 @@ session_probe_childless_window_as_unidentified_input_field = boolean(default=Tru
 #   1: Java Access Bridge
 #   2: MS Active Accessbility
 #   4: MS UI Automation
+#   8: Reserved (do not use)
+#   16: Inspect Edge location URL
+#   32: Inspect Chrome Address/Search bar
+#   64: Inspect Firefox Address/Search bar
+#   128: Monitor Internet Explorer event
+#   256: Inspect group membership of user
 # (note: values can be added (everyone: 1+2+4=7, mute: 0))
 #_hidden
-session_probe_disabled_features = integer(min=0, max=7, default=0)
+session_probe_disabled_features = integer(min=0, max=511, default=96)
 
 # If enabled, disconnected session can be recovered by a different primary user.
 #_hidden
@@ -972,22 +978,46 @@ password_fr = string(default='')
 #_advanced
 load_theme = string(default='')
 
-[validator]
+[file_verification]
 
-enable_validator = boolean(default=False)
-
+#_hidden
 socket_path = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_VALIDATOR_PATH) << R"gen_config_ini(')
 
-up_target_name = string(default='')
+#_hidden
+enable_up = boolean(default=False)
 
-down_target_name = string(default='')
+#_hidden
+enable_down = boolean(default=False)
 
-enable_interrupting = boolean(default=False)
-
+#_hidden
 log_if_accepted = boolean(default=False)
 
-enable_save_files = boolean(default=False)
+[icap_server_up]
 
-save_files_directory = string(max=4096, default='')
+# Ip or fqdn of ICAP service
+host = string(default='')
+
+# Port of ICAP service
+port = integer(min=0, default=0)
+
+# Service name of ICAP service
+service_name = string(default='up')
+
+# ICAP service use tls
+tls = boolean(default=False)
+
+[icap_server_down]
+
+# Ip or fqdn of ICAP service
+host = string(default='')
+
+# Port of ICAP service
+port = integer(min=0, default=0)
+
+# Service name of ICAP service
+service_name = string(default='down')
+
+# ICAP service use tls
+tls = boolean(default=False)
 
 )gen_config_ini"

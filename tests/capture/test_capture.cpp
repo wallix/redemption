@@ -227,8 +227,35 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
     });
 
-    RED_CHECK_SIG(tu::get_file_contents(record_wd.add_file("test_capture-000000.png")),
-        "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87");
+    RED_CHECK_MEM_FILE_CONTENTS(record_wd.add_file("test_capture-000000.png"),
+        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR !
+        "\x00\x00\x00\x64\x00\x00\x00\x64\x08\x02\x00\x00\x00\xff\x80\x02" //...d...d........ !
+        "\x03\x00\x00\x01\x6d\x49\x44\x41\x54\x78\x9c\xed\xd6\xc1\x0e\x82" //....mIDATx...... !
+        "\x30\x10\x00\xd1\x5d\xe2\xff\xff\xf2\x7a\x30\x41\x02\x2d\x74\x82" //0...]....z0A.-t. !
+        "\x08\x87\x79\x17\x23\xa5\x96\x8c\x58\x8c\x90\xae\x90\x9f\x97\xaa" //..y.#...X....... !
+        "\x8a\x88\xcc\x5c\x8e\x7d\x0e\x2e\x8f\xcf\x47\x7a\xc7\x57\x9f\xb0" //...\.}....Gz.W.. !
+        "\xd5\x3c\xb3\xb9\xfa\x03\xa7\x7f\xcf\x5e\x85\x58\xbe\x5d\x0d\xed" //.<.......^.X.].. !
+        "\x8c\x6e\xcf\x3c\x9c\xd5\x5c\xfd\xf6\xe9\x55\xb5\x0d\x32\xc5\x78" //.n.<..\...U..2.x !
+        "\xd4\x6b\x9c\x5c\xfd\x6f\xd3\x33\xf3\xb5\x33\xd6\xfb\xba\xaa\x6a" //.k.\.o.3..3....j !
+        "\xfc\xe7\x46\xaf\xe9\x27\xd3\xcf\x6b\xae\xd8\x8d\x15\x9d\xad\x6a" //..F..'..k......j !
+        "\xa4\x54\x6f\xb1\x71\xf7\xde\xec\xd1\xd9\xc8\xa6\x91\x69\xb7\x5f" //.To.q........i._ !
+        "\xfa\x43\x64\x74\xee\xf9\xde\x83\xa3\x19\xee\xcc\xd3\x10\xfd\xe2" //.Cdt............ !
+        "\x6e\x9c\x3e\xf2\x0c\x91\x74\xb5\x5c\x6e\x43\x55\xe5\x56\xbe\x23" //n.>...t.\nCU.V.# !
+        "\x57\x3b\x97\xb1\x76\x64\x84\x9b\xfc\xa8\xe3\xff\x59\x9a\x19\x0b" //W;..vd......Y... !
+        "\x30\x16\x60\x2c\xc0\x58\x80\xb1\x00\x63\x01\xc6\x02\x8c\x05\x18" //0.`,.X...c...... !
+        "\x0b\x30\x16\x60\x2c\xc0\x58\x80\xb1\x00\x63\x01\xc6\x02\x8c\x05" //.0.`,.X...c..... !
+        "\x18\x0b\x30\x16\x60\x2c\xc0\x58\x80\xb1\x00\x63\x01\xc6\x02\x8c" //..0.`,.X...c.... !
+        "\x05\x18\x0b\x30\x16\x60\x2c\xc0\x58\x80\xb1\x00\x63\x01\xc6\x02" //...0.`,.X...c... !
+        "\x8c\x05\x18\x0b\x30\x16\x60\x2c\xc0\x58\x80\xb1\x00\x63\x01\xc6" //....0.`,.X...c.. !
+        "\x02\x8c\x05\x18\x0b\x30\x16\x60\x2c\xc0\x58\x80\xb1\x00\x63\x01" //.....0.`,.X...c. !
+        "\xc6\x02\x8c\x05\x18\x0b\x30\x16\x60\x2c\xc0\x58\x80\xb1\x00\x63" //......0.`,.X...c !
+        "\x01\xc6\x02\x8c\x05\x18\x0b\x30\x16\x60\x2c\xc0\x58\x80\xb1\x00" //.......0.`,.X... !
+        "\x63\x01\xc6\x02\x8c\x05\x18\x0b\x30\x16\x60\x2c\xc0\x58\x80\xb1" //c.......0.`,.X.. !
+        "\x00\x63\x01\xc6\x02\x8c\x05\x18\x0b\x30\x16\x60\x2c\xc0\x58\x80" //.c.......0.`,.X. !
+        "\xb1\x00\x63\x01\xc6\x02\x8c\x05\x18\x0b\x30\x16\x60\x2c\xc0\x58" //..c.......0.`,.X !
+        "\xc0\x1b\x24\xa9\xa3\x8c\xa4\x69\x8f\x78\x00\x00\x00\x00\x49\x45" //..$....i.x....IE !
+        "\x4e\x44\xae\x42\x60\x82" //ND.B`. !
+        ""_av);
 
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
@@ -1666,7 +1693,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
 RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
 {
-    const char source_png[] =
+    auto source_png =
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
         "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
         "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
@@ -1679,10 +1706,11 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
         "\x86\x4a\x0c\x44"                                                 //.J.D
         "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
         "\xae\x42\x60\x82"                                                 //.B`.
+        ""_av
     ;
 
     RDPDrawable d(20, 10);
-    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
+    GeneratorTransport in_png_trans(source_png);
     read_png24(in_png_trans, gdi::get_mutable_image_view(d));
     BufTransport png_trans;
     dump_png24(png_trans, d, true);
@@ -1960,7 +1988,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
         }
     }
     RED_CHECK_EQUAL(1, pattern_count);
-    RED_CHECK_EQUAL(report_message.is_killed, true);
+    RED_CHECK(report_message.is_killed);
 }
 
 
@@ -2036,7 +2064,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
 RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 {
-    const char source_png[] =
+    auto source_png =
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2065,19 +2093,17 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
         "\x00\x00\x00\x49\x45\x4e\x44\xae"
     /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x42\x60\x82"
+        ""_av
     ;
 
-    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
-    constexpr std::size_t sz_buf = 8;
-    uint8_t buf[sz_buf];
-    auto end = buf;
-    in_png_trans.recv_boom(end, sz_buf); // skip first chunk header
-    InStream stream(buf);
+    InStream stream(source_png);
 
     uint16_t chunk_type = stream.in_uint16_le();
     uint32_t chunk_size = stream.in_uint32_le();
     uint16_t chunk_count = stream.in_uint16_le();
     (void)chunk_count;
+
+    GeneratorTransport in_png_trans(source_png.from_at(8));
 
     RDPDrawable d(20, 10);
     gdi::GraphicApi * gdi = &d;

@@ -189,9 +189,7 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression)
     mppc_dec.decompress(compressed_data, sizeof(compressed_data),
         compressionFlags, rdata, rlen);
 
-    RED_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
-    RED_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
-        rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
@@ -215,9 +213,7 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
     mppc_dec.decompress(compressed_data, sizeof(compressed_data),
         compressionFlags, rdata, rlen);
 
-    RED_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
-    RED_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
-        rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
@@ -241,9 +237,7 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
     mppc_dec.decompress(compressed_data, sizeof(compressed_data),
         compressionFlags, rdata, rlen);
 
-    RED_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
-    RED_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
-        rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
@@ -362,9 +356,7 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
     mppc_dec.decompress(compressed_data, sizeof(compressed_data),
         compressionFlags, rdata, rlen);
 
-    RED_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
-    RED_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
-        rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
@@ -385,8 +377,7 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
     mppc_dec.decompress(__outputBuffer, sizeof(__outputBuffer),
         compressionFlags, rdata, rlen);
 
-    RED_CHECK_EQUAL(sizeof(__srcData), rlen);
-    RED_CHECK_EQUAL(0,                 memcmp(__srcData, rdata, rlen));
+    RED_CHECK_MEM(make_array_view(__srcData), array_view(rdata, rlen));
 }
 
 RED_AUTO_TEST_CASE(TestCacheAdd) {

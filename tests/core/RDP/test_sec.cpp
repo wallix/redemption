@@ -23,15 +23,12 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "utils/stream.hpp"
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/sec.hpp"
 
 RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
 {
-
-    const char sec_pkt[] =
+    auto sec_pkt =
         "\x01\x00\x00\x00" // 0x00000001 = SEC_EXCHANGE_PKT
         "\x48\x00\x00\x00" // 0x00000048 = 72 (64 bytes key + 8 bytes padding)
         "\xca\xe7\xdf\x85\x01\x42\x02\x47\x28\xfc\x11\x97\x85\xa3\xf9\x40"
@@ -39,6 +36,7 @@ RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
         "\xe0\x4e\x7d\xdc\x12\x1d\x41\xf1\xd8\x17\x86\x0e\x79\x9b\x4f\x44"
         "\xb2\x82\xf0\x93\x17\xf8\x59\xc9\x7b\xba\x2a\x22\x59\x45\xa7\x3a"
         "\x00\x00\x00\x00\x00\x00\x00\x00" // Padding
+        ""_av
     ;
 
     uint8_t client_encrypted_key[] = {
@@ -47,16 +45,15 @@ RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
         0xe0, 0x4e, 0x7d, 0xdc, 0x12, 0x1d, 0x41, 0xf1, 0xd8, 0x17, 0x86, 0x0e, 0x79, 0x9b, 0x4f, 0x44,
         0xb2, 0x82, 0xf0, 0x93, 0x17, 0xf8, 0x59, 0xc9, 0x7b, 0xba, 0x2a, 0x22, 0x59, 0x45, 0xa7, 0x3a
         };
-    size_t length = sizeof(sec_pkt) - 1;
     StaticOutStream<1024> stream;
     SEC::SecExchangePacket_Send sec(stream, client_encrypted_key, sizeof(client_encrypted_key));
 
-    RED_CHECK_EQUAL(0, memcmp(sec_pkt, stream.get_data(), length));
+    RED_CHECK_MEM(sec_pkt, stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 {
-    const char sec_pkt[] =
+    auto sec_pkt =
         "\x01\x00\x00\x00" // 0x00000001 = SEC_EXCHANGE_PKT
         "\x48\x00\x00\x00" // 0x00000048 = 72 (64 bytes key + 8 bytes padding)
         "\xca\xe7\xdf\x85\x01\x42\x02\x47\x28\xfc\x11\x97\x85\xa3\xf9\x40"
@@ -64,26 +61,20 @@ RED_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
         "\xe0\x4e\x7d\xdc\x12\x1d\x41\xf1\xd8\x17\x86\x0e\x79\x9b\x4f\x44"
         "\xb2\x82\xf0\x93\x17\xf8\x59\xc9\x7b\xba\x2a\x22\x59\x45\xa7\x3a"
         "\x00\x00\x00\x00\x00\x00\x00\x00" // Padding
+        ""_av
     ;
-    size_t length = sizeof(sec_pkt)-1;
-    GeneratorTransport t(sec_pkt, length);
-
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+    InStream stream(sec_pkt);
     SEC::SecExchangePacket_Recv sec(stream);
     RED_CHECK_EQUAL(static_cast<uint32_t>(SEC::SEC_EXCHANGE_PKT), sec.basicSecurityHeader);
-    RED_CHECK_EQUAL(length - 16, sec.payload.get_capacity());
+    RED_CHECK_EQUAL(sec_pkt.size() - 16, sec.payload.get_capacity());
     RED_CHECK_EQUAL(64, sec.payload.get_capacity());
     // We won't compare padding
-    RED_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.get_data(), sec.payload.get_capacity()));
+    RED_CHECK_MEM(sec_pkt.subarray(8, sec_pkt.size()-16), sec.payload.remaining_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 {
-    const char sec_pkt[] =
+    uint8_t raw_data[] =
         "\x48\x00\x00\x00\xf6\xc8\x5c\xd6\xe4\x2e\xd3\x88\x66\x93\x36\x57"
         "\x73\x09\x8b\xf8\xa7\xdb\x68\xf6\xaf\x75\x3a\x1a\x74\x6b\x56\xe0"
         "\x5e\x28\xd4\x04\x22\x77\x25\x85\x69\xb1\x43\xfa\x85\x74\x9e\xa1"
@@ -104,16 +95,8 @@ RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
         "\xef\x83\x26\xf4\x38\x02\xef\x06\x9b\x7b\xc1\xb1\xc6\xb3\x8f\xba"
         "\x6e\x1a\xe4\x3a\xf4\xb3\x4d\xa6\xc6\x33\x0c\x87\x2f\x6c\xe8\x92"
         "\x03\xde\x60\xf8\x56\xe6\x8d\x36\xf6\x19\xfd\x19\xb7\xd5\x55\x5e"
-        "\x8e\x83"
-    ;
-    size_t length = sizeof(sec_pkt) - 1;
-    GeneratorTransport t(sec_pkt, length);
-
-    uint8_t buf[1024];
-    auto end = buf;
-    t.recv_boom(end, length);
-
-    InStream stream(buf, length);
+        "\x8e\x83";
+    InStream stream(raw_data, sizeof(raw_data)-1);
 
     CryptContext decrypt;
     decrypt.encryptionMethod = 1;
@@ -124,7 +107,7 @@ RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
     SEC::SecInfoPacket_Recv sec(stream, decrypt);
 
-    const char expected[] =
+    auto expected =
         /* 0000 */ "\x0c\x04\x0c\x04\xb3\x47\x03\x00\x00\x00\x02\x00\x00\x00\x00\x00" //.....G..........
         /* 0010 */ "\x00\x00\x00\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00" //....x...........
         /* 0020 */ "\x18\x00\x31\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00" //..1.0...1.0...4.
@@ -145,9 +128,9 @@ RED_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
         /* 0110 */ "\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x05\x00\x02\x00\x00\x00" //................
         /* 0120 */ "\x00\x00\x00\x00\xc4\xff\xff\xff\x01\x00\x00\x00\x07\x00\x00\x00" //................
         /* 0130 */ "\x00\x00\x64\x00\x00\x00"
+        ""_av
         ;
-    RED_CHECK_EQUAL(sizeof(expected)-1, sec.payload.get_capacity());
-    RED_CHECK_EQUAL(0, memcmp(expected, sec.payload.get_data(), sizeof(expected)-1));
+    RED_CHECK_MEM(expected, sec.payload.remaining_bytes());
 }
 
 

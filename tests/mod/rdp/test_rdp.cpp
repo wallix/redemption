@@ -63,7 +63,7 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
 
 
     #include "fixtures/dump_xp_mem3blt.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -153,7 +153,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //                  );
 
     #include "fixtures/dump_w2008.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
 
     Inifile ini;
     Theme theme;
@@ -239,7 +239,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
 
 
     #include "fixtures/dump_w2003_mem3blt.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -326,7 +326,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     //                  );
 
     #include "fixtures/dump_w2000_mem3blt.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");

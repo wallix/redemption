@@ -378,7 +378,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
 
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy | hex_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::none));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy | hex_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection));
 
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
@@ -601,18 +601,32 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "theme", spec::name{"load_theme"});
     });
 
-    W.section("validator", [&]
+    W.section("file_verification", [&]
     {
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_validator", set(false));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "up_target_name");
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "down_target_name");
+        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_interrupting", set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up");
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down");
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "log_if_accepted", set(false));
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_save_files", set(false));
-        W.member(ini_and_gui, no_sesman, L, type_<types::dirpath>(), "save_files_directory");
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted");
+    });
+
+    // TODO temporary
+    W.section("icap_server_up", [&]
+    {
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP service"});
+        W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP service"});
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name of ICAP service"}, set("up"));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP service use tls"});
+    });
+
+    // TODO temporary
+    W.section("icap_server_down", [&]
+    {
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP service"});
+        W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP service"});
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name of ICAP service"}, set("down"));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP service use tls"});
     });
 
     W.section("context", [&]

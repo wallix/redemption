@@ -24,10 +24,11 @@
 
 #include <numeric>
 #include "core/buf64k.hpp"
+#include "utils/sugar/buffer_t.hpp"
 
 struct BlockTransport : Transport
 {
-    BlockTransport(array_view_const_u8 data, std::size_t n_by_bloc)
+    BlockTransport(buffer_t data, std::size_t n_by_bloc)
       : data(data)
       , n_by_bloc(n_by_bloc)
     {}
@@ -39,7 +40,7 @@ struct BlockTransport : Transport
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
         memcpy(buffer, this->data.as_u8p(), n);
-        this->data = this->data.array_from_offset(n);
+        this->data = this->data.from_at(n);
         return n;
     }
 

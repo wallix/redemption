@@ -37,16 +37,16 @@ RED_AUTO_TEST_CASE(TestKeymap)
     Keymap2::DecodedKeys decoded_keys;
     bool    ctrl_alt_delete;
 
-    RED_CHECK_EQUAL(false, keymap.is_shift_pressed());
+    RED_CHECK(not keymap.is_shift_pressed());
 
     uint16_t keyboardFlags = 0 ; // key is not extended, key was up, key goes down
     uint16_t keyCode = 54 ; // key is right shift
     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
 
     RED_CHECK_EQUAL(0, decoded_keys.count);
-    RED_CHECK_EQUAL(true, keymap.is_shift_pressed());
-    RED_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
-    RED_CHECK_EQUAL(true, keymap.is_right_shift_pressed());
+    RED_CHECK(keymap.is_shift_pressed());
+    RED_CHECK(not keymap.is_left_shift_pressed());
+    RED_CHECK(keymap.is_right_shift_pressed());
 
     keyboardFlags = 0 ; // key is not extended, key was up, key goes down
     keyCode = 16 ; // key is 'A'
@@ -54,9 +54,9 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     RED_CHECK_EQUAL(1, decoded_keys.count);
     RED_CHECK_EQUAL('A', decoded_keys.uchars[0]);
-    RED_CHECK_EQUAL(true, keymap.is_shift_pressed());
-    RED_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
-    RED_CHECK_EQUAL(true, keymap.is_right_shift_pressed());
+    RED_CHECK(keymap.is_shift_pressed());
+    RED_CHECK(not keymap.is_left_shift_pressed());
+    RED_CHECK(keymap.is_right_shift_pressed());
 
     uint32_t key = keymap.get_char();
     RED_CHECK_EQUAL('A', key);
@@ -66,9 +66,9 @@ RED_AUTO_TEST_CASE(TestKeymap)
     decoded_keys = keymap.event(keyboardFlags, keyCode, ctrl_alt_delete);
 
     RED_CHECK_EQUAL(0, decoded_keys.count);
-    RED_CHECK_EQUAL(false, keymap.is_shift_pressed());
-    RED_CHECK_EQUAL(false, keymap.is_left_shift_pressed());
-    RED_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
+    RED_CHECK(not keymap.is_shift_pressed());
+    RED_CHECK(not keymap.is_left_shift_pressed());
+    RED_CHECK(not keymap.is_right_shift_pressed());
 
     // shift was released, but not A (last char down goes 'a' for autorepeat)
 
@@ -84,14 +84,14 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK(not keymap.is_caps_locked());
     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
 
     // CAPSLOCK Up
     // RDP_INPUT_SCANCODE time=538384894 flags=c000 param1=003a param2=0000
     decoded_keys = keymap.event(0xc000, 0x3A, ctrl_alt_delete);
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
 
     // Now I hit the 'A' key on french keyboard
     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     decoded_keys = keymap.event(0xc000, 0x10, ctrl_alt_delete); // A up
 
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
     decoded_keys = keymap.event(0, 0x02, ctrl_alt_delete);
     key = keymap.get_char();
     RED_CHECK_EQUAL('1', key);
@@ -119,11 +119,11 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK(not keymap.is_caps_locked());
     decoded_keys = keymap.event(0xC000, 0x3A, ctrl_alt_delete); // capslock up
-    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK(not keymap.is_caps_locked());
 
     // Now I hit the 'A' key on french keyboard
     decoded_keys = keymap.event(0, 0x10, ctrl_alt_delete);
@@ -148,11 +148,11 @@ RED_AUTO_TEST_CASE(TestKeymap)
     key = keymap.get_char();
     RED_CHECK_EQUAL('&', key);
 
-    RED_CHECK_EQUAL(false, keymap.is_caps_locked());
+    RED_CHECK(not keymap.is_caps_locked());
     decoded_keys = keymap.event(0, 0x3A, ctrl_alt_delete);
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
     decoded_keys = keymap.event(0xC000, 0x3A, ctrl_alt_delete); // capslock up
-    RED_CHECK_EQUAL(true, keymap.is_caps_locked());
+    RED_CHECK(keymap.is_caps_locked());
 
 
     // Now I hit the 'A' key on french keyboard
@@ -179,18 +179,18 @@ RED_AUTO_TEST_CASE(TestKeymap)
     // altgr down autorepeat
     // RDP_INPUT_SCANCODE time=538966481 flags=0100 param1=0038 param2=0000 -> ALT
     decoded_keys = keymap.event(0x0000, 0x1d, ctrl_alt_delete); // CTRL
-    RED_CHECK_EQUAL(true, keymap.is_ctrl_pressed());
+    RED_CHECK(keymap.is_ctrl_pressed());
     decoded_keys = keymap.event(0x0100, 0x38, ctrl_alt_delete); // ALT Right
-    RED_CHECK_EQUAL(true, keymap.is_right_alt_pressed());
+    RED_CHECK(keymap.is_right_alt_pressed());
     decoded_keys = keymap.event(0x0000, 0x04, ctrl_alt_delete); // Sharp
     RED_CHECK_EQUAL(1, keymap.nb_char_available());
     RED_CHECK_EQUAL('#', keymap.get_char());
 
     decoded_keys = keymap.event(0xC000, 0x03, ctrl_alt_delete); // Tilde
     decoded_keys = keymap.event(0xC100, 0x38, ctrl_alt_delete); // ALT Right
-    RED_CHECK_EQUAL(false, keymap.is_right_alt_pressed());
+    RED_CHECK(not keymap.is_right_alt_pressed());
     decoded_keys = keymap.event(0xC000, 0x1d, ctrl_alt_delete); // CTRL
-    RED_CHECK_EQUAL(false, keymap.is_ctrl_pressed());
+    RED_CHECK(not keymap.is_ctrl_pressed());
 
 
     decoded_keys = keymap.event(0x0100, 0x35, ctrl_alt_delete); // '/' on keypad
@@ -200,9 +200,9 @@ RED_AUTO_TEST_CASE(TestKeymap)
 
     decoded_keys = keymap.event(0xC000, 0x03, ctrl_alt_delete); // Tilde
     decoded_keys = keymap.event(0xC100, 0x38, ctrl_alt_delete); // ALT Right
-    RED_CHECK_EQUAL(false, keymap.is_right_alt_pressed());
+    RED_CHECK(not keymap.is_right_alt_pressed());
     decoded_keys = keymap.event(0xC000, 0x1d, ctrl_alt_delete); // CTRL
-    RED_CHECK_EQUAL(false, keymap.is_ctrl_pressed());
+    RED_CHECK(not keymap.is_ctrl_pressed());
 
     decoded_keys = keymap.event(0x0100, 0x35, ctrl_alt_delete); // '/' on keypad
     RED_CHECK_EQUAL(1, keymap.nb_char_available());

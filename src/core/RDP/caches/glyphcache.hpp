@@ -95,9 +95,18 @@ public:
         return ret;
     }
 
+    t_glyph_cache_result add_glyph(FontCharView const& font_item, int cacheid, int & cacheidx) {
+        const t_glyph_cache_result ret = priv_add_glyph(font_item, cacheid, cacheidx);
+        if (ret == GLYPH_ADDED_TO_CACHE) {
+            this->glyphs[cacheid][cacheidx].font_item = FontChar(font_item);
+        }
+        return ret;
+    }
+
 private:
     // TODO FontChar -> FontCharView
-    t_glyph_cache_result priv_add_glyph(FontChar const & font_item, int cacheid, int & cacheidx) {
+    template<class FontCharItem>
+    t_glyph_cache_result priv_add_glyph(FontCharItem const & font_item, int cacheid, int & cacheidx) {
         this->glyph_stamp++;
 
         /* look for match */
@@ -105,7 +114,7 @@ private:
         int oldest = 0x7fffffff;
         for (uint8_t cacheIndex = 0; cacheIndex < this->number_of_entries_in_cache[cacheid]; ++ cacheIndex) {
             Glyph & item = this->glyphs[cacheid][cacheIndex];
-            if (item.font_item && item.font_item.item_compare(font_item)) {
+            if (item.font_item && font_item_equal(item.font_item, font_item)) {
                 item.stamp = this->glyph_stamp;
                 cacheidx   = &item - std::begin(this->glyphs[cacheid]);
 
@@ -132,20 +141,6 @@ public:
         this->glyphs[cacheid][cacheidx].font_item = std::move(fc);
         this->glyphs[cacheid][cacheidx].stamp     = this->glyph_stamp;
     }
-
-/*
-    int find_glyph(FontChar & font_item, int cacheid) {
-        // look for match
-        for (uint8_t cacheIndex = 0; cacheIndex < this->number_of_entries_in_cache[cacheid]; ++cacheIndex) {
-            Glyph & item = this->glyphs[cacheid][cacheIndex];
-            if (item.font_item && item.font_item.item_compare(font_item)) {
-                return cacheIndex;
-            }
-        }
-
-        return -1;
-    }
-*/
 
     bool is_cached(uint8_t cacheId, uint8_t cacheIndex) const {
         return this->glyphs[cacheId][cacheIndex].cached;

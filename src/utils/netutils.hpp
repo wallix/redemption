@@ -24,6 +24,7 @@
 #pragma once
 
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint>
 
@@ -43,4 +44,4 @@ unique_fd local_connect(const char* sck_name);
 unique_fd addr_connect(const char* addr);
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
-                       char * transparent_dest, size_t sz_transparent_dest, uint32_t verbose = 0);
+                       bytes_view transparent_dest, uint32_t verbose = 0);

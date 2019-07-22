@@ -22,26 +22,17 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_multitransport.hpp"
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
 {
-    const char indata[] =
+    InStream stream(
         "\x0a\xc0"         // CS_MULTITRANSPORT
         "\x08\x00"         // 8 bytes user Data
 
         "\x05\x03\x00\x00" // TS_UD_CS_MULTITRANSPORT::flags
-    ;
-
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
+        ""_av);
     GCC::UserData::CSMultiTransport cs_multitransport;
-    InStream stream(buf);
     cs_multitransport.recv(stream);
     RED_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
     RED_CHECK_EQUAL(8, cs_multitransport.length);

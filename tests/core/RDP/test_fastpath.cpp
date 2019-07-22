@@ -35,13 +35,12 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
     // TODO We should fix that test (and a few other below) to make it independant from transport
 
-    const char *payload =
+    constexpr auto payload =
 /* 0000 */ "\x10\x0e\x01\x0f\x62\x01\x0f\x20\x00\x08\xca\x00\x41\x03"         // ....b.. ....A.   |
+        ""_av
         ;
-    size_t payload_length = 14;
 
-    GeneratorTransport in_t(payload, payload_length);
-    CheckTransport     out_t(payload, payload_length);
+    GeneratorTransport in_t(payload);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -105,8 +104,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     FastPath::ClientInputEventPDU_Send out_cie(
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
-    out_t.send(out_s.get_bytes());
-    out_t.send(out_payload.get_bytes());
+    RED_CHECK_MEM(out_s.get_bytes(), payload.first(2));
+    RED_CHECK_MEM(out_payload.get_bytes(), payload.from_at(2));
 }
 
 struct mppc_dec_error : rdp_mppc_dec
@@ -121,15 +120,14 @@ struct mppc_dec_error : rdp_mppc_dec
 RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     CryptContext decrypt;
 
-    const char *payload =
+    auto payload =
 /* 0000 */ "\x18\x27\x20\x00\x08\x4a\x01\x92\x02\x20\x00\x08\x50\x01\x96\x02" // .' ..J... ..P... |
 /* 0010 */ "\x20\x00\x08\x63\x01\x9d\x02\x20\x00\x08\x80\x01\xa6\x02\x20\x00" //  ..c... ...... . |
 /* 0020 */ "\x08\xa5\x01\xad\x02\x00\x39"                                     // ......9          |
+        ""_av
         ;
-    size_t payload_length = 39;
 
-    GeneratorTransport in_t(payload, payload_length);
-    CheckTransport     out_t(payload, payload_length);
+    GeneratorTransport in_t(payload);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -197,21 +195,21 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     FastPath::ClientInputEventPDU_Send out_cie(
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
-    out_t.send(out_s.get_bytes());
-    out_t.send(out_payload.get_bytes());
+    RED_CHECK_MEM(out_s.get_bytes(), payload.first(2));
+    RED_CHECK_MEM(out_payload.get_bytes(), payload.from_at(2));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     CryptContext decrypt;
 
-    const char *payload =
+    auto payload =
 /* 0000 */ "\x00\x2e\x03\x00\x00\x01\x20\x00\x01\x00\x01\x00\x00\x00\x00\x00" // ...... ......... |
 /* 0010 */ "\x0f\x00\x00\x00\x10\x00\x01\x00\x10\x00\x01\x04\x0a\x00\x0c\x84" // ................ |
 /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x06\x00\x00"         // ..............   |
+            ""_av
         ;
-    size_t payload_length = 46;
 
-    GeneratorTransport in_t(payload, payload_length);
+    GeneratorTransport in_t(payload);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -246,7 +244,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
 RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     CryptContext decrypt;
 
-    const char *payload =
+    auto payload =
 /* 0000 */ "\x00\x81\x4a\x00\x0a\x00\x02\x00\x09\x0a\x0c\x80\x04\x60\x03\x51" // ..J..........`.Q |
 /* 0010 */ "\x01\x20\x00\x01\x00\x01\x00\x00\x00\x00\x00\x0f\x00\x00\x00\x10" // . .............. |
 /* 0020 */ "\x00\x01\x00\x10\x00\x01\x04\x0a\x00\x0c\x84\x00\x00\x00\x00\x00" // ................ |
@@ -268,10 +266,9 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
 /* 0120 */ "\xff\xff\xc0\x3f\xff\xff\xc0\x3f\xff\xff\xc6\x1f\xff\xff\xce\x1f" // ...?...?........ |
 /* 0130 */ "\xff\xff\xdf\x0f\xff\xff\xff\x0f\xff\xff\xff\x87\xff\xff\xff\x87" // ................ |
 /* 0140 */ "\xff\xff\xff\xcf\xff\xff\xff\xff\xff\x7a"                         // .........z       |
-        ;
-    size_t payload_length = 330;
+        ""_av;
 
-    GeneratorTransport in_t(payload, payload_length);
+    GeneratorTransport in_t(payload);
 
     constexpr size_t array_size = AUTOSIZE;
     uint8_t array[array_size];
@@ -304,13 +301,11 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
 RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     CryptContext decrypt;
 
-    const char *payload =
+    auto payload =
 /* 0000 */ "\x00\x07\x0a\x02\x00\x00\x00"                                     //.......
-        ;
-    size_t payload_length = 7;
+        ""_av;
 
-    GeneratorTransport in_t(payload, payload_length);
-    CheckTransport     out_t(payload, payload_length);
+    GeneratorTransport in_t(payload);
 
     StaticOutStream<65536> out_s;
 
@@ -325,37 +320,37 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     uint8_t updateCode = static_cast<uint8_t>(FastPath::UpdateType::CACHED);
 
-    if (in_su.payload.in_remain()) {
-        mppc_dec_error dec;
-        FastPath::Update_Recv in_upd(in_su.payload, dec);
+    RED_REQUIRE(in_su.payload.in_remain());
 
-        if (in_upd.updateCode == updateCode) {
-            out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.get_capacity());
+    mppc_dec_error dec;
+    FastPath::Update_Recv in_upd(in_su.payload, dec);
 
-            OutStream Upd_s(out_s.get_data(), FastPath::Update_Send::GetSize(false));
+    RED_REQUIRE(in_upd.updateCode == updateCode);
 
-            FastPath::Update_Send Upd( Upd_s
-                                     , out_s.get_offset() - FastPath::Update_Send::GetSize(false)
-                                     , in_upd.updateCode
-                                     , in_upd.fragmentation
-                                     , 0
-                                     , 0
-                                     );
+    out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.get_capacity());
 
-            StaticOutStream<256> SvrUpdPDU_s;
+    OutStream Upd_s(out_s.get_data(), FastPath::Update_Send::GetSize(false));
 
-            FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  SvrUpdPDU_s
-                , out_s.get_data()
-                , out_s.get_offset()
-                , in_su.secFlags
-                , decrypt
-                );
+    FastPath::Update_Send Upd( Upd_s
+                                , out_s.get_offset() - FastPath::Update_Send::GetSize(false)
+                                , in_upd.updateCode
+                                , in_upd.fragmentation
+                                , 0
+                                , 0
+                                );
 
-            out_t.send(SvrUpdPDU_s.get_bytes()); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-            out_t.send(out_s.get_bytes());           // Fast-Path Update (TS_FP_UPDATE)
-        }
-    }
+    StaticOutStream<256> SvrUpdPDU_s;
+
+    FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+            SvrUpdPDU_s
+        , out_s.get_data()
+        , out_s.get_offset()
+        , in_su.secFlags
+        , decrypt
+        );
+
+    RED_CHECK_MEM(SvrUpdPDU_s.get_bytes(), payload.first(2)); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+    RED_CHECK_MEM(out_s.get_bytes(), payload.from_at(2)); // Fast-Path Update (TS_FP_UPDATE)
 
     RED_CHECK_EQUAL(0, in_su.payload.in_remain());
 }

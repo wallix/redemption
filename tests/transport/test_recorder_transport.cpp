@@ -91,8 +91,8 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         }
     }
 
-    auto s = tu::get_file_contents(wf);
-    RED_CHECK_MEM_C(s,
+    auto s = RED_REQUIRE_GET_FILE_CONTENTS(wf);
+    RED_CHECK_MEM(s,
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""abc"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00""defg"
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""123"
@@ -112,7 +112,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00""rstuvw"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""xyz"
         // Eof
-        "\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
+        "\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av);
 
     {
         GeneratorTransport trans(s);
@@ -158,7 +158,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
                     RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
                     RED_CHECK_EQ(3, trans.partial_read(av));
                     RED_CHECK_MEM(in.first(3), make_array_view(buf, 3));
-                    in = in.array_from_offset(3);
+                    in = in.from_at(3);
                     break;
                 case Pck::DataOut: trans.send(m.s); break;
                 case Pck::ServerCert: trans.enable_server_tls("", "", 0); break;
@@ -195,7 +195,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
                     RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
                     RED_CHECK_EQ(3, trans.partial_read(av));
                     RED_CHECK_MEM(in.first(3), make_array_view(buf, 3));
-                    in = in.array_from_offset(3);
+                    in = in.from_at(3);
                     break;
                 case Pck::DataOut: trans.send(m.s); break;
                 case Pck::ServerCert: trans.enable_server_tls("", "", 0); break;

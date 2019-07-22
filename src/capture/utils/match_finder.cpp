@@ -200,7 +200,7 @@ void MatchFinder::report(
 
     snprintf(message, sizeof(message), "$%s:%s|%s",
         ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
-    array_view_char(message).back() = '\0';
+    utils::back(message) = '\0';
 
     auto pattern_detection_type = (is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED");
     auto info = key_qvalue_pairs({

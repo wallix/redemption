@@ -23,70 +23,36 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "utils/sugar/cast.hpp"
 
+#include <array>
+
+
 RED_AUTO_TEST_CASE(TestModExp)
 {
-    char inr[] = "\xc";
-    char modulus[] = "\x3";
-    char exponent[] = "\x4";
+    constexpr auto inr = "\xc"_av;
+    constexpr auto modulus = "\x3"_av;
+    constexpr auto exponent = "\x4"_av;
 
-    uint8_t out[sizeof(modulus)];
-
+    std::array<uint8_t, modulus.size()+1> out;
 
     // 12^4 % 3 = 20736 % 3 = 0
-    size_t len = mod_exp(
-        out, sizeof(out)
-      , byte_ptr_cast(inr), sizeof(inr)-1
-      , byte_ptr_cast(modulus), sizeof(modulus)-1
-      , byte_ptr_cast(exponent), sizeof(exponent)-1
-    );
-
-    RED_CHECK_EQUAL(len, 0);
-
+    RED_CHECK_MEM(mod_exp(out, inr, modulus, exponent), ""_av);
 
     // 12^4 % 5 = 20736 % 5 = 1
-    modulus[0] = '\x5';
-    len = mod_exp(
-        out, sizeof(out)
-      , byte_ptr_cast(inr), sizeof(inr)-1
-      , byte_ptr_cast(modulus), sizeof(modulus)-1
-      , byte_ptr_cast(exponent), sizeof(exponent)-1
-    );
-
-    RED_CHECK_EQUAL(len, 1);
-    RED_CHECK_EQUAL(*out, '\x1');
-
+    RED_CHECK_MEM(mod_exp(out, inr, "\x5"_av, exponent), "\x1"_av);
 
     // 12^4 % 17 = 20736 % 17 = 13
-    char modulus2[] = "\x11";
-    len = mod_exp(
-        out, sizeof(out)
-      , byte_ptr_cast(inr), sizeof(inr)-1
-      , byte_ptr_cast(modulus2), sizeof(modulus2)-1
-      , byte_ptr_cast(exponent), sizeof(exponent)-1
-    );
-
-    RED_CHECK_EQUAL(len, 1);
-    RED_CHECK_EQUAL(*out, '\xd');
+    RED_CHECK_MEM(mod_exp(out, inr, "\x11"_av, exponent), "\xd"_av);
 }
 
 
 RED_AUTO_TEST_CASE(TestBigModExp)
 {
-    char inr[] = "c9bt8v6pbtr73";
-    char modulus[] = "6TBD*S^0b5F*^%";
-    char exponent[] = "f89sn6B*(FD(bf5sd969g";
-    uint8_t out[sizeof(modulus)];
+    constexpr auto inr = "c9bt8v6pbtr73"_av;
+    constexpr auto modulus = "6TBD*S^0b5F*^%"_av;
+    constexpr auto exponent = "f89sn6B*(FD(bf5sd969g"_av;
 
-    size_t len = mod_exp(
-        out, sizeof(out)
-      , byte_ptr_cast(inr), sizeof(inr)-1
-      , byte_ptr_cast(modulus), sizeof(modulus)-1
-      , byte_ptr_cast(exponent), sizeof(exponent)-1
-    );
+    std::array<uint8_t, modulus.size()+1> out;
 
-    RED_CHECK_EQUAL(len, sizeof(modulus)-1);
-    RED_CHECK_MEM_C(
-        make_array_view(out, sizeof(out)-1),
-        "\x1e\xc0\x4d\xea\xbd\xc5\x25\x19\x71\xa6\x69\x1d\x3a\x82"
-    );
+    RED_CHECK_MEM(mod_exp(out, inr, modulus, exponent),
+        "\x1e\xc0\x4d\xea\xbd\xc5\x25\x19\x71\xa6\x69\x1d\x3a\x82"_av);
 }

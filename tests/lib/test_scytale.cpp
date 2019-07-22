@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
             RED_REQUIRE_GT(res, 0);
             total += size_t(res);
         }
-        RED_CHECK_MEM_C(bytes_view(buf, 31), "We write, and again, and so on.");
+        RED_CHECK_MEM(bytes_view(buf, 31), "We write, and again, and so on."_av);
         RED_CHECK_EQ(scytale_reader_close(handle), 0);
 
         RED_CHECK_EQ(scytale_reader_error_message(handle), "No error");
@@ -314,7 +314,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(line->ctime, 1455816421);
         RED_CHECK_EQ(line->start_time, 1455815820);
         RED_CHECK_EQ(line->stop_time, 1455816422);
-        RED_CHECK_EQ(line->with_hash, false);
+        RED_CHECK(not line->with_hash);
 
         RED_CHECK_EQ(scytale_meta_reader_read_line_eof(meta_handle), 0);
 
@@ -352,7 +352,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(line->ctime, 0);
         RED_CHECK_EQ(line->start_time, 1352304810);
         RED_CHECK_EQ(line->stop_time, 1352304870);
-        RED_CHECK_EQ(line->with_hash, false);
+        RED_CHECK(not line->with_hash);
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
         line = scytale_meta_reader_get_line(meta_handle);
@@ -367,7 +367,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(line->ctime, 0);
         RED_CHECK_EQ(line->start_time, 1352304870);
         RED_CHECK_EQ(line->stop_time, 1352304930);
-        RED_CHECK_EQ(line->with_hash, false);
+        RED_CHECK(not line->with_hash);
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
         line = scytale_meta_reader_get_line(meta_handle);
@@ -382,7 +382,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(line->ctime, 0);
         RED_CHECK_EQ(line->start_time, 1352304930);
         RED_CHECK_EQ(line->stop_time, 1352304990);
-        RED_CHECK_EQ(line->with_hash, false);
+        RED_CHECK(not line->with_hash);
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), ERR_TRANSPORT_NO_MORE_DATA);
         RED_CHECK_EQ(scytale_meta_reader_read_line_eof(meta_handle), 1);

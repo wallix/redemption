@@ -1911,44 +1911,28 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
-    else if (0 == strcmp(context, "validator")) {
+    else if (0 == strcmp(context, "file_verification")) {
         if (0) {}
-        else if (0 == strcmp(key, "enable_validator")) {
+        else if (0 == strcmp(key, "socket_path")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::enable_validator&>(this->variables).value,
+                static_cast<cfg::file_verification::socket_path&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_up")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::file_verification::enable_up&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
         }
-        else if (0 == strcmp(key, "socket_path")) {
+        else if (0 == strcmp(key, "enable_down")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::socket_path&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "up_target_name")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::validator::up_target_name&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "down_target_name")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::validator::down_target_name&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "enable_interrupting")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::validator::enable_interrupting&>(this->variables).value,
+                static_cast<cfg::file_verification::enable_down&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
@@ -1956,24 +1940,86 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
         else if (0 == strcmp(key, "log_if_accepted")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::log_if_accepted&>(this->variables).value,
+                static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
         }
-        else if (0 == strcmp(key, "enable_save_files")) {
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "icap_server_up")) {
+        if (0) {}
+        else if (0 == strcmp(key, "host")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::enable_save_files&>(this->variables).value,
+                static_cast<cfg::icap_server_up::host&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "port")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::port&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "service_name")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::service_name&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tls")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_up::tls&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );
         }
-        else if (0 == strcmp(key, "save_files_directory")) {
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else if (0 == strcmp(context, "icap_server_down")) {
+        if (0) {}
+        else if (0 == strcmp(key, "host")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::validator::save_files_directory&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                static_cast<cfg::icap_server_down::host&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "port")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_down::port&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "service_name")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_down::service_name&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "tls")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::icap_server_down::tls&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 av
             );
         }

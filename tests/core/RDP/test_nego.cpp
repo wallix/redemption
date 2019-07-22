@@ -32,7 +32,7 @@
 
 RED_AUTO_TEST_CASE(TestNego)
 {
-    const char client[] =
+    auto client =
 // RDP Negotiation Request
 /* 0000 */ "\x03\x00\x00\x2a\x25\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...*%......Cooki
 /* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x74\x65\x73\x74" //e: mstshash=test
@@ -72,10 +72,10 @@ RED_AUTO_TEST_CASE(TestNego)
 /* 0030 */ "\x8c\x21\x66\xa6\x78\xda\xd1\xbd\xef\xa4\xfd\x47\xa6\xf1\x56\xa5" //.!f.x......G..V.
 /* 0040 */ "\xd9\x52\x72\x92\xfa\x41\xa5\xb4\x9d\x94\xfb\x0e\xe2\x61\xba\xfc" //.Rr..A.......a..
 /* 0050 */ "\xd5\xf3\xa7\xb5\x33\xd5\x62\x8d\x93\x18\x54\x39\x8a\xe7"         //....3.b...T9..
-
+        ""_av
         ;
 
-    const char server[] =
+    auto server =
 // RDP Negotiation Response
 /* 0000 */ "\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x02" //................
 /* 0010 */ "\x00\x00\x00"                                                     //...
@@ -95,10 +95,10 @@ RED_AUTO_TEST_CASE(TestNego)
 /* 0000 */ "\x30\x29\xa0\x03\x02\x01\x02\xa3\x22\x04\x20\x01\x00\x00\x00\xa2" //0)......". .....
 /* 0010 */ "\xe0\x5b\x50\x97\x8e\x99\x27\x00\x00\x00\x00\xdc\xa7\x0b\xfe\x37" //.[P...'........7
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
-
+        ""_av
         ;
-    TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
-    logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
+    TestTransport logtrans(server, client);
+    logtrans.set_public_key("1245789652325415"_av);
     char user[] = "Ulysse";
     char domain[] = "Ithaque";
     char pass[] = "Pénélope\x00";

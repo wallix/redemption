@@ -22,15 +22,13 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 
 #define TS_MONITOR_PRIMARY 0x00000001
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
 {
-    const char indata[] =
+    InStream stream(
         "\x05\xc0"         // TS_UD_HEADER::type = CS_MONITOR (0xc005)
         "\x20\x00"         // length = 32 bytes
         "\x00\x00\x00\x00" // flags. Unused. MUST be set to zero
@@ -42,15 +40,8 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
 		"\x64\x00\x00\x00" // | right
 		"\xC4\xFF\xFF\xFF" // | bottom
         "\x00\x00\x00\x00" // | flags = TS_MONITOR_PRIMARY
-    ;
-
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
+        ""_av);
     GCC::UserData::CSMonitor cs_monitor;
-    InStream stream(buf);
     cs_monitor.recv(stream);
     RED_CHECK_EQUAL(32, cs_monitor.length);
     RED_CHECK_EQUAL(CS_MONITOR, cs_monitor.userDataType);

@@ -77,7 +77,7 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        RED_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK(!!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSECB), common_cmd.order);
@@ -89,8 +89,8 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
         RED_CHECK_MEM(
-            out_stream.get_bytes().array_from_offset(2),
-            out_stream2.get_bytes().array_from_offset(1));
+            out_stream.get_bytes().from_at(2),
+            out_stream2.get_bytes().from_at(1));
     }
 
     {
@@ -118,7 +118,7 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        RED_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK(!!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSECB), common_cmd.order);
@@ -130,8 +130,8 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
         RED_CHECK_MEM(
-            out_stream.get_bytes().array_from_offset(2),
-            out_stream2.get_bytes().array_from_offset(1));
+            out_stream.get_bytes().from_at(2),
+            out_stream2.get_bytes().from_at(1));
     }
 
     {
@@ -159,7 +159,7 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
-        RED_CHECK_EQUAL(true, !!(control & STANDARD));
+        RED_CHECK(!!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
         RED_CHECK_EQUAL(static_cast<uint8_t>(ELLIPSECB), common_cmd.order);
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
         RED_CHECK_MEM(
-            out_stream.get_bytes().array_from_offset(2),
-            out_stream2.get_bytes().array_from_offset(1));
+            out_stream.get_bytes().from_at(2),
+            out_stream2.get_bytes().from_at(1));
     }
 }

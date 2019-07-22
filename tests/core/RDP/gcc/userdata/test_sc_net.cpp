@@ -27,7 +27,7 @@
 
 RED_AUTO_TEST_CASE(Test_gcc_sc_net)
 {
-    const char expected[] =
+    auto expected =
         "\x03\x0c\x10\x00" // TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
         "\xeb\x03"         // TS_UD_SC_NET::MCSChannelID = 0x3eb = 1003 (I/O channel)
         "\x03\x00"         // TS_UD_SC_NET::channelCount = 3
@@ -35,6 +35,7 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_net)
         "\xed\x03"         // channel1 = 0x3ed = 1005 (cliprdr)
         "\xee\x03"         // channel2 = 0x3ee = 1006 (rdpsnd)
         "\x00\x00"         // padding
+        ""_av
     ;
 
     uint8_t buf[16];
@@ -46,8 +47,7 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_net)
     sc_net.channelDefArray[1].id = 1005;
     sc_net.channelDefArray[2].id = 1006;
     sc_net.emit(out_stream);
-    RED_CHECK_EQUAL(16, out_stream.get_offset());
-    RED_CHECK(0 == memcmp(expected, out_stream.get_data(), 12));
+    RED_CHECK_MEM(out_stream.get_bytes(), expected);
 
     GCC::UserData::SCNet sc_net2;
 

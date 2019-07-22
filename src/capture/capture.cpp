@@ -895,24 +895,19 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         auto left = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
         auto right = [](Av s, char const * pos) { return Av(pos + 1, begin(s) + s.size() - (pos + 1)); };
 
-        auto zstr = [](Av var) {
-            // array_view with zero terminal
-            return make_array_view(var.data(), var.size()-1);
-        };
-
         auto const order = left(data, pos_separator);
         auto const parameters = (data.back() == '\x0')
           ? Av(pos_separator+1, data.end()-1)
           : Av(pos_separator+1, data.end());
 
         auto line_with_1_var = [&](Av var1) {
-            message.assign(order, {{zstr(var1), parameters}});
+            message.assign(order, {{var1, parameters}});
         };
         auto line_with_2_var = [&](Av var1, Av var2) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
                 message.assign(order, {
-                    {zstr(var1), left(parameters, subitem_separator)},
-                    {zstr(var2), right(parameters, subitem_separator)},
+                    {var1, left(parameters, subitem_separator)},
+                    {var2, right(parameters, subitem_separator)},
                 });
             }
         };
@@ -922,9 +917,9 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                 auto const remaining = right(parameters, subitem_separator);
                 if (auto const subitem_separator2 = find(remaining, '\x01')) {
                     message.assign(order, {
-                        {zstr(var1), text},
-                        {zstr(var2), left(remaining, subitem_separator2)},
-                        {zstr(var3), right(remaining, subitem_separator2)},
+                        {var1, text},
+                        {var2, left(remaining, subitem_separator2)},
+                        {var3, right(remaining, subitem_separator2)},
                     });
                 }
             }
@@ -940,10 +935,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                         auto const text3 = left(remaining2, subitem_separator3);
                         auto const text4 = right(remaining2, subitem_separator3);
                         message.assign(order, {
-                            {zstr(var1), text},
-                            {zstr(var2), text2},
-                            {zstr(var3), text3},
-                            {zstr(var4), text4},
+                            {var1, text},
+                            {var2, text2},
+                            {var3, text3},
+                            {var4, text4},
                         });
                     }
                 }
@@ -963,11 +958,11 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                             auto const text4 = left(remaining3, subitem_separator4);
                             auto const text5 = right(remaining3, subitem_separator4);
                             message.assign(order, {
-                                {zstr(var1), text},
-                                {zstr(var2), text2},
-                                {zstr(var3), text3},
-                                {zstr(var4), text4},
-                                {zstr(var5), text5},
+                                {var1, text},
+                                {var2, text2},
+                                {var3, text3},
+                                {var4, text4},
+                                {var5, text5},
                             });
                         }
                     }
@@ -998,13 +993,13 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                                     auto const text6 = left(remaining5, subitem_separator6);
                                     auto const text7 = right(remaining5, subitem_separator6);
                                     message.assign(order, {
-                                        {zstr(var1), text},
-                                        {zstr(var2), text2},
-                                        {zstr(var3), text3},
-                                        {zstr(var4), text4},
-                                        {zstr(var5), text5},
-                                        {zstr(var6), text6},
-                                        {zstr(var7), text7},
+                                        {var1, text},
+                                        {var2, text2},
+                                        {var3, text3},
+                                        {var4, text4},
+                                        {var5, text5},
+                                        {var6, text6},
+                                        {var7, text7},
                                     });
                                 }
                             }
@@ -1021,24 +1016,24 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         if (cstr_equal("PASSWORD_TEXT_BOX_GET_FOCUS", order)
          || cstr_equal("UAC_PROMPT_BECOME_VISIBLE", order)
          || cstr_equal("UNIDENTIFIED_INPUT_FIELD_GET_FOCUS", order)) {
-            line_with_1_var("status");
+            line_with_1_var("status"_av);
         }
         else if (cstr_equal("INPUT_LANGUAGE", order)) {
-            line_with_2_var("identifier", "display_name");
+            line_with_2_var("identifier"_av, "display_name"_av);
         }
         else if (cstr_equal("NEW_PROCESS", order)
               || cstr_equal("COMPLETED_PROCESS", order)) {
-            line_with_1_var("command_line");
+            line_with_1_var("command_line"_av);
         }
         else if (cstr_equal("OUTBOUND_CONNECTION_BLOCKED", order)
               || cstr_equal("OUTBOUND_CONNECTION_DETECTED", order)) {
-            line_with_2_var("rule", "application_name");
+            line_with_2_var("rule"_av, "application_name"_av);
         }
         else if (cstr_equal("FOREGROUND_WINDOW_CHANGED", order)) {
-            line_with_3_var("windows", "class", "command_line");
+            line_with_3_var("windows"_av, "class"_av, "command_line"_av);
         }
         else if (cstr_equal("BUTTON_CLICKED", order)) {
-            line_with_2_var("windows", "button");
+            line_with_2_var("windows"_av, "button"_av);
         }
         else if (cstr_equal("CHECKBOX_CLICKED", order)) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
@@ -1049,81 +1044,79 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                     char r_sz[64] = {0};
                     memcpy(r_sz, r.data(), std::min(r.size(), sizeof(r_sz) - 1));
                     message.assign(order, {
-                        {zstr("windows"),  text},
-                        {zstr("checkbox"), left(remaining, subitem_separator2)},
-                        {zstr("state"),    ::button_state_to_string(::atoi(r_sz))},
+                        {"windows"_av,  text},
+                        {"checkbox"_av, left(remaining, subitem_separator2)},
+                        {"state"_av,    ::button_state_to_string(::atoi(r_sz))},
                     });
                 }
             }
         }
         else if (cstr_equal("EDIT_CHANGED", order)) {
-            line_with_2_var("windows", "edit");
+            line_with_2_var("windows"_av, "edit"_av);
         }
         else if (underlying_cast(meta_params.log_file_system_activities) &&
                  cstr_equal("DRIVE_REDIRECTION_USE", order)) {
-            line_with_2_var("device_name", "device_type");
+            line_with_2_var("device_name"_av, "device_type"_av);
         }
         else if (underlying_cast(meta_params.log_file_system_activities) &&
                  (cstr_equal("DRIVE_REDIRECTION_READ", order)
                || cstr_equal("DRIVE_REDIRECTION_WRITE", order)
                || cstr_equal("DRIVE_REDIRECTION_DELETE", order))) {
-            line_with_1_var("file_name");
+            line_with_1_var("file_name"_av);
         }
         else if (underlying_cast(meta_params.log_file_system_activities) &&
                  (cstr_equal("DRIVE_REDIRECTION_READ_EX", order)
                || cstr_equal("DRIVE_REDIRECTION_WRITE_EX", order))) {
-            line_with_3_var("file_name", "size", "sha256");
+            line_with_3_var("file_name"_av, "size"_av, "sha256"_av);
         }
         else if (underlying_cast(meta_params.log_file_system_activities) &&
                  cstr_equal("DRIVE_REDIRECTION_RENAME", order)) {
-            line_with_2_var("old_file_name", "new_file_name");
+            line_with_2_var("old_file_name"_av, "new_file_name"_av);
         }
         else if (underlying_cast(meta_params.log_clipboard_activities) &&
                  (cstr_equal("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION", order)
                || cstr_equal("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION", order))) {
-            line_with_3_var("file_name", "size", "sha256");
+            line_with_3_var("file_name"_av, "size"_av, "sha256"_av);
         }
         else if (cstr_equal("CLIENT_EXECUTE_REMOTEAPP", order)) {
-            line_with_1_var("exe_or_file");
+            line_with_1_var("exe_or_file"_av);
         }
         else if (cstr_equal("CERTIFICATE_CHECK_SUCCESS", order)
               || cstr_equal("SERVER_CERTIFICATE_NEW", order)
               || cstr_equal("SERVER_CERTIFICATE_MATCH_SUCCESS", order)
               || cstr_equal("SERVER_CERTIFICATE_MATCH_FAILURE", order)
               || cstr_equal("SERVER_CERTIFICATE_ERROR", order)) {
-            line_with_1_var("description");
+            line_with_1_var("description"_av);
         }
         else if ((cstr_equal("OUTBOUND_CONNECTION_BLOCKED_2", order)) ||
                  (cstr_equal("OUTBOUND_CONNECTION_DETECTED_2", order))) {
-            line_with_5_var("rule", "app_name", "app_cmd_line", "dst_addr", "dst_port");
+            line_with_5_var("rule"_av, "app_name"_av, "app_cmd_line"_av, "dst_addr"_av, "dst_port"_av);
         }
         else if (cstr_equal("STARTUP_APPLICATION_FAIL_TO_RUN", order)) {
-            line_with_2_var("application_name", "raw_result");
+            line_with_2_var("application_name"_av, "raw_result"_av);
         }
         else if (cstr_equal("STARTUP_APPLICATION_FAIL_TO_RUN_2", order)) {
-            line_with_3_var("application_name", "raw_result", "raw_result_message");
+            line_with_3_var("application_name"_av, "raw_result"_av, "raw_result_message"_av);
         }
         else if (cstr_equal("PROCESS_BLOCKED", order)
               || cstr_equal("PROCESS_DETECTED", order)) {
-            line_with_3_var("rule", "app_name", "app_cmd_line");
+            line_with_3_var("rule"_av, "app_name"_av, "app_cmd_line"_av);
         }
         else if (cstr_equal("KERBEROS_TICKET_CREATION", order)
               || cstr_equal("KERBEROS_TICKET_DELETION", order)) {
-            line_with_7_var("encryption_type", "client_name", "server_name", "start_time", "end_time", "renew_time", "flags");
+            line_with_7_var("encryption_type"_av, "client_name"_av, "server_name"_av, "start_time"_av, "end_time"_av, "renew_time"_av, "flags"_av);
         }
         else if (underlying_cast(meta_params.log_clipboard_activities) &&
                  (cstr_equal("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION", order)
                || cstr_equal("CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION", order))) {
-            Av var1{"format"};
-            Av var2{"size"};
             if (auto const subitem_separator = find(parameters, '\x01')) {
                 auto const format = left(parameters, subitem_separator);
                 if ((!underlying_cast(meta_params.log_only_relevant_clipboard_activities)) ||
                     (strncasecmp(Format_PreferredDropEffect, format.data(), std::min<>(format.size(), sizeof(Format_PreferredDropEffect) - 1)) &&
                      strncasecmp(Format_FileGroupDescriptorW, format.data(), std::min<>(format.size(), sizeof(Format_FileGroupDescriptorW) - 1)))) {
                     message.assign(order, {
-                        {zstr(var1), format},
-                        {zstr(var2), right(parameters, subitem_separator)},
+                        {"format"_av, format},
+                        {"size"_av, right(parameters, subitem_separator)},
                     });
                 }
             }
@@ -1131,9 +1124,6 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (underlying_cast(meta_params.log_clipboard_activities) &&
                  (cstr_equal("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX", order)
                || cstr_equal("CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX", order))) {
-            Av var1{"format"};
-            Av var2{"size"};
-            Av var3{"partial_data"};
             if (auto const subitem_separator = find(parameters, '\x01')) {
                 auto const format = left(parameters, subitem_separator);
                 auto const remaining = right(parameters, subitem_separator);
@@ -1162,9 +1152,9 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                         }
 
                         message.assign(order, {
-                            {zstr(var1), format},
-                            {zstr(var2), left(remaining, subitem_separator2)},
-                            {zstr(var3), partial_data},
+                            {"format"_av, format},
+                            {"size"_av, left(remaining, subitem_separator2)},
+                            {"partial_data"_av, partial_data},
                         });
                     }
                 }
@@ -1173,23 +1163,30 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
 
         else if ((cstr_equal("WEB_ATTEMPT_TO_PRINT", order)) ||
                  (cstr_equal("WEB_DOCUMENT_COMPLETE", order))) {
-            line_with_2_var("url", "title");
+            line_with_2_var("url"_av, "title"_av);
         }
         else if (cstr_equal("WEB_BEFORE_NAVIGATE", order)) {
-            line_with_2_var("url", "post");
+            line_with_2_var("url"_av, "post"_av);
         }
         else if (cstr_equal("WEB_NAVIGATE_ERROR", order)) {
-            line_with_4_var("url", "title", "code", "display_name");
+            line_with_4_var("url"_av, "title"_av, "code"_av, "display_name"_av);
         }
         else if ((cstr_equal("WEB_NAVIGATION", order)) ||
                  (cstr_equal("WEB_THIRD_PARTY_URL_BLOCKED", order))) {
-            line_with_1_var("url");
+            line_with_1_var("url"_av);
         }
         else if (cstr_equal("WEB_PRIVACY_IMPACTED", order)) {
-            line_with_1_var("impacted");
+            line_with_1_var("impacted"_av);
         }
         else if (cstr_equal("WEB_ENCRYPTION_LEVEL_CHANGED", order)) {
-            line_with_2_var("identifier", "display_name");
+            line_with_2_var("identifier"_av, "display_name"_av);
+        }
+        else if (cstr_equal("FILE_VERIFICATION", order)) {
+            line_with_3_var("filename"_av, "direction"_av, "status"_av);
+        }
+
+        else if (cstr_equal("GROUP_MEMBERSHIP", order)) {
+            line_with_1_var("groups"_av);
         }
 
         else {

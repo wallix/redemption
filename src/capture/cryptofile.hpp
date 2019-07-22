@@ -93,10 +93,10 @@ public:
     }
 
     // for test only
-    const uint8_t * get_master_key() const
+    array_view<const uint8_t> get_master_key() const
     {
         assert(this->master_key_loaded);
-        return this->master_key;
+        return make_array_view(this->master_key);
     }
 
     void set_master_derivator(const_bytes_view derivator)

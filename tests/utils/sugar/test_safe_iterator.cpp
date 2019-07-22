@@ -30,7 +30,6 @@ RED_TEST_DONT_PRINT_LOG_VALUE(Iter)
 
 RED_AUTO_TEST_CASE(TestSafeIterator)
 {
-
     RED_CHECK(!Iter().base());
 
     char const * const s = "abcd";

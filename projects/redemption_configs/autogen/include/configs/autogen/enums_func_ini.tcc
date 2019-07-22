@@ -362,7 +362,7 @@ array_view_const_char assign_zbuf_from_cfg(
 
 parse_error parse(SessionProbeDisabledFeature & x, spec_type<SessionProbeDisabledFeature> /*type*/, array_view_const_char value)
 {
-    return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 511>());
 }
 
 array_view_const_char assign_zbuf_from_cfg(

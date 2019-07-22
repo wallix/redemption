@@ -25,14 +25,12 @@
 // TEST missing
 int main()
 {
-    const char *payload =
+    auto payload =
 /* 0000 */ "\x03\x00\x00\x2c\x02\xf0\x80\x64\x00\x07\x03\xeb\x70\x1e\x1e\x00" //...,...d....p...
 /* 0010 */ "\x17\x00\xf0\x03\xea\x03\x02\x00\x00\x02\x1e\x00\x21\x00\x00\x00" //............!...
 /* 0020 */ "\x01\x00\x00\x00\x00\x00\x00\x00\x1f\x03\x57\x02"                 //..........W.
-        ;
-    size_t payload_length = 44;
-
-    CheckTransport out_t(payload, payload_length);
+        ""_av;
+    CheckTransport out_t(payload);
     CryptContext   encrypt;
 
     RDP::RefreshRectPDU rrpdu(132074, 7, 0, encrypt);

@@ -41,9 +41,9 @@ RED_AUTO_TEST_CASE(TestMPPC)
         rdp_mppc_dec & rmppc = rmppc_d;
 
         /* uncompress data */
-        RED_CHECK_EQUAL(true, rmppc.decompress(compressed_rd5, sizeof(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K, rdata, rlen));
+        RED_CHECK(rmppc.decompress(compressed_rd5, sizeof(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K, rdata, rlen));
 
-        RED_CHECK_EQUAL(0, memcmp(decompressed_rd5, rdata, sizeof(decompressed_rd5)));
+        RED_CHECK_MEM(make_array_view(decompressed_rd5), array_view(rdata, rlen));
     }
 }
 
@@ -71,9 +71,8 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     RED_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
-    RED_CHECK_EQUAL(true, rmppc.decompress(enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
-    RED_CHECK_EQUAL(data_len, rlen);
-    RED_CHECK_EQUAL(0, memcmp(decompressed_rd5_data, rdata, rlen));
+    RED_CHECK(rmppc.decompress(enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
+    RED_CHECK_MEM(make_array_view(decompressed_rd5_data), array_view(rdata, rlen));
 }
 
 RED_AUTO_TEST_CASE(TestBitsSerializer)
@@ -153,7 +152,7 @@ RED_AUTO_TEST_CASE(TestHashTableManager)
     hash = hash_tab_mgr.sign(data + offset);
     hash_tab_mgr.update_indirect(data, offset);
     RED_CHECK_EQUAL(offset,      hash_tab_mgr.get_offset(hash));
-    RED_CHECK_EQUAL(true,        hash_tab_mgr.undo_last_changes());
+    RED_CHECK(       hash_tab_mgr.undo_last_changes());
     RED_CHECK_EQUAL(0,           hash_tab_mgr.get_offset(hash));
     RED_CHECK_EQUAL(offset_save, hash_tab_mgr.get_offset(hash_save));
 
@@ -163,5 +162,5 @@ RED_AUTO_TEST_CASE(TestHashTableManager)
     for (int i = 0; i < 10; i++) {
         hash_tab_mgr.update_indirect(data + i, offset);
     }
-    RED_CHECK_EQUAL(false, hash_tab_mgr.undo_last_changes());
+    RED_CHECK(not hash_tab_mgr.undo_last_changes());
 }

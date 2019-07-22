@@ -78,7 +78,7 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
                    0x7F, 0xFF, 0xFF, 0xFF,
     };
 
-    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
     RED_CHECK_EQUAL(av.size(), 32*32*3);
     RED_CHECK_SIG(av, "\x48\x58\x41\x28\xb0\xb4\x03\x27\x69\x31\x47\xc8\x2b\x43\x3e\xf3\x33\x80\x1c\xb2");
@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE(TestPointerEdit)
         /* 0078 */  ,0xff ,0xff ,0xff ,0xff
                     ,0xff ,0xff ,0xff ,0xff
     };
-    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
     RED_CHECK_SIG(av, "\x09\xb3\xc6\x81\x07\xef\x2e\xd4\xcb\x1a\xa9\xeb\x2c\xb8\xe9\x13\xfb\xaf\xe2\xe3");
 }
@@ -169,7 +169,7 @@ RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
         /* 0078 */ , 0x3f, 0xff, 0xFF, 0xFF
                    , 0x7f, 0xff, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
     RED_CHECK_SIG(av, "\x46\x59\xfc\xbc\x13\x24\x18\xd6\x83\xa3\x6a\xc2\xea\xf8\x93\x2b\x30\x4f\x80\x0e");
 }
@@ -214,7 +214,7 @@ RED_AUTO_TEST_CASE(TestPointerSystemDefault)
         /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
     RED_CHECK_SIG(av, "\xc5\xc1\x0e\x3a\x17\x39\x56\x0c\xf9\xd7\x66\xac\x3b\x23\x23\xad\xec\xb5\xd9\x46");
 }
@@ -259,7 +259,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNS)
         /* 0078 */ , 0xFF, 0x8f, 0xFF, 0xFF
                    , 0xFF, 0xdf, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
     RED_CHECK_SIG(av, "\x3a\x74\xfe\x82\xcf\xa9\x15\x9e\xa0\x8a\xf9\x43\x77\x40\xf8\xe6\xdf\x13\xd0\xe1");
 }
@@ -305,7 +305,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNESW)
         /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
     RED_CHECK_SIG(av, "\x57\xed\x01\xb4\xe3\x9c\xe7\xc1\x0c\x9f\x01\xa1\xdc\x66\x4c\x92\x83\x05\x0e\x91");
 }
@@ -351,7 +351,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
         /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
     RED_CHECK_SIG(av, "\x6b\x3a\xec\xa9\x22\x1f\x23\x5d\x2c\xe6\x91\xcc\x70\x56\xf9\x02\x30\x05\xaa\x3f");
 }
@@ -396,7 +396,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeWE)
         /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
     RED_CHECK_SIG(av, "\xae\x83\x2a\x8e\xd0\x73\x0b\x77\xe3\xb5\xf0\x4e\xbd\x0f\x4e\xa9\xd0\x65\xeb\x59");
 }
@@ -457,12 +457,10 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
                    0x01, 0x00,
     };
 
-    std::vector<uint8_t> vncdata(data, sizeof(data) + data);
-    std::vector<uint8_t> vncmask(mask, sizeof(mask) + mask);
-
     // r31 rs<<11 g63 gs<<5 b31 bs<<0
 
-    Pointer vnccursor = pointer_loader_vnc(BytesPerPixel{2}, 12, 19, 0, 0, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
+    Pointer vnccursor = pointer_loader_vnc(BytesPerPixel{2}, 12, 19, 0, 0,
+        make_array_view(data), make_array_view(mask), 11, 31, 5, 63, 0, 31);
 
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
     RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 19);
@@ -822,10 +820,8 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
                    0b00000001, 0b00000000, 0b00000000,
     };
 
-    std::vector<uint8_t> vncdata(data, sizeof(data) + data);
-    std::vector<uint8_t> vncmask(mask, sizeof(mask) + mask);
-
-    Pointer vnccursor = pointer_loader_vnc(BytesPerPixel{2}, 23, 27, 0, 8, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
+    Pointer vnccursor = pointer_loader_vnc(BytesPerPixel{2}, 23, 27, 0, 8,
+        make_array_view(data), make_array_view(mask), 11, 31, 5, 63, 0, 31);
 
     // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid some annoying border cases
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
@@ -988,7 +984,7 @@ Mask For Cursor
             /*0070*/ 0xff, 0xdf, 0xff, 0xff, 0xfe, 0x23, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /*....#..........*/
     };
 
-    InStream in_stream_cursor(buffer, sizeof(buffer));
+    InStream in_stream_cursor(buffer);
     Pointer cursor = pointer_loader_new(BitsPerPixel{1}, in_stream_cursor, BGRPalette::classic_332(), true);
 
     RED_CHECK_EQ(cursor.get_hotspot().x, 8);

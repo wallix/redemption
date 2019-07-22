@@ -34,8 +34,6 @@ RED_AUTO_TEST_CASE(TestPolygonSCEmpty)
     RDPOrderCommon state_common(POLYGONSC, Rect(700, 200, 100, 200));
     RDPPolygonSC state_Polygon;
 
-    RED_CHECK_EQUAL(0, (out_stream.get_offset()));
-
     RDPOrderCommon newcommon(POLYGONSC, Rect(0, 400, 800, 76));
     RDPPolygonSC().emit(out_stream, newcommon, state_common, state_Polygon);
 
@@ -53,7 +51,7 @@ RED_AUTO_TEST_CASE(TestPolygonSCEmpty)
 
     RDPOrderCommon common_cmd = state_common;
     uint8_t control = in_stream.in_uint8();
-    RED_CHECK_EQUAL(true, !!(control & STANDARD));
+    RED_CHECK(!!(control & STANDARD));
     RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(POLYGONSC), common_cmd.order);
@@ -68,8 +66,8 @@ RED_AUTO_TEST_CASE(TestPolygonSCEmpty)
     decltype(out_stream) out_stream2;
     cmd.emit(out_stream2, newcommon, state_common, state_Polygon);
     RED_CHECK_MEM(
-        out_stream.get_bytes().array_from_offset(1),
-        out_stream2.get_bytes().array_from_offset(1));
+        out_stream.get_bytes().from_at(1),
+        out_stream2.get_bytes().from_at(1));
 }
 RED_AUTO_TEST_CASE(TestPolygonSC)
 {
@@ -130,7 +128,7 @@ RED_AUTO_TEST_CASE(TestPolygonSC)
 
     RDPOrderCommon common_cmd = state_common;
     uint8_t control = in_stream.in_uint8();
-    RED_CHECK_EQUAL(true, !!(control & STANDARD));
+    RED_CHECK(!!(control & STANDARD));
     RDPPrimaryOrderHeader header = common_cmd.receive(in_stream, control);
 
     RED_CHECK_EQUAL(static_cast<uint8_t>(0x09), header.control);
@@ -144,6 +142,6 @@ RED_AUTO_TEST_CASE(TestPolygonSC)
     decltype(out_stream) out_stream2;
     cmd.emit(out_stream2, newcommon, state_common, state_polygonSC);
     RED_CHECK_MEM(
-        out_stream.get_bytes().array_from_offset(1),
-        out_stream2.get_bytes().array_from_offset(1));
+        out_stream.get_bytes().from_at(1),
+        out_stream2.get_bytes().from_at(1));
 }

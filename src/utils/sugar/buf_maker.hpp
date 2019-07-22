@@ -42,7 +42,7 @@ struct BufMaker
 
     array_view<T> static_array() & noexcept
     {
-        return this->buf_;
+        return make_array_view(this->buf_);
     }
 
     static constexpr std::size_t min_size() noexcept
@@ -74,7 +74,7 @@ struct BufArrayMaker
 
     array_view<T> static_array() & noexcept
     {
-        return this->buf_;
+        return make_array_view(this->buf_);
     }
 
     static constexpr std::size_t min_size() noexcept

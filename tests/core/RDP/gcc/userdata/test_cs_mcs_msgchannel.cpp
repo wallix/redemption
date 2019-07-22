@@ -22,27 +22,18 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
-#include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp"
 
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)
 {
-    const char indata[] =
+    InStream stream(
         "\x06\xc0"         // CS_MCS_MSGCHANNEL
         "\x08\x00"         // 8 bytes user Data
 
         "\x00\x00\x00\x00" // TS_UD_CS_MCS_MSGCHANNEL::flags
-    ;
-
-    constexpr auto sz = sizeof(indata) - 1u;
-    GeneratorTransport gt(indata, sz);
-    uint8_t buf[sz];
-    auto end = buf;
-    gt.recv_boom(end, sz);
+        ""_av);
     GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;
-    InStream stream(buf);
     cs_mcs_msgchannel.recv(stream);
     RED_CHECK_EQUAL(CS_MCS_MSGCHANNEL, cs_mcs_msgchannel.userDataType);
     RED_CHECK_EQUAL(8, cs_mcs_msgchannel.length);

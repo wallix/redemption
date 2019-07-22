@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(TestDateDirFromFilename)
         RED_CHECK_SMEM(s, d.full_path());
         RED_CHECK_SMEM(base, d.base_path());
         RED_CHECK_SMEM(base, d.directory());
-        RED_CHECK_SMEM(s.array_from_offset(base.size()), d.filename());
+        RED_CHECK_SMEM(s.from_at(base.size()), d.filename());
         RED_CHECK_SMEM(array_view_char{}, d.date_path());
     }
     {
@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE(TestDateDirFromFilename)
         RED_CHECK_SMEM(s, d.full_path());
         RED_CHECK_SMEM(base, d.base_path());
         RED_CHECK_SMEM(base, d.directory());
-        RED_CHECK_SMEM(s.array_from_offset(base.size()), d.filename());
+        RED_CHECK_SMEM(s.from_at(base.size()), d.filename());
         RED_CHECK_SMEM(array_view_char{}, d.date_path());
     }
     {
@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestDateDirFromFilename)
         RED_CHECK(d.has_date());
         RED_CHECK_SMEM(s, d.full_path());
         RED_CHECK_SMEM(array_view_char{}, d.base_path());
-        RED_CHECK_SMEM(s.array_from_offset(date.size()), d.filename());
+        RED_CHECK_SMEM(s.from_at(date.size()), d.filename());
         RED_CHECK_SMEM(date, d.date_path());
         RED_CHECK_SMEM(date, d.directory());
     }
@@ -79,7 +79,7 @@ RED_AUTO_TEST_CASE(TestDateDirFromFilename)
         RED_CHECK(d.has_date());
         RED_CHECK_SMEM(s, d.full_path());
         RED_CHECK_SMEM(base, d.base_path());
-        RED_CHECK_SMEM(s.array_from_offset(dir.size()), d.filename());
+        RED_CHECK_SMEM(s.from_at(dir.size()), d.filename());
         RED_CHECK_SMEM(date, d.date_path());
         RED_CHECK_SMEM(dir, d.directory());
     }
@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestDateDirFromFilename)
         RED_CHECK_SMEM(s, d.full_path());
         RED_CHECK_SMEM(base, d.base_path());
         RED_CHECK_SMEM(base, d.directory());
-        RED_CHECK_SMEM(s.array_from_offset(base.size()), d.filename());
+        RED_CHECK_SMEM(s.from_at(base.size()), d.filename());
         RED_CHECK_SMEM(array_view_char{}, d.date_path());
     }
 }

@@ -955,7 +955,7 @@ struct WaveInfoPDU {
     uint16_t wTimeStamp;
     uint16_t wFormatNo;
     uint8_t  cBlockNo;
-    uint8_t  Data[4];
+    uint8_t  Data[4] {};
 
     WaveInfoPDU() = default;
 

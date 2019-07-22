@@ -236,6 +236,9 @@ int main(int argc, char** argv)
     std::string config_filename = app_path(AppPath::CfgIni);
 
     static constexpr char const * opt_print_ini_spec = "print-spec";
+    static constexpr char const * opt_print_rdp_cp_spec = "print-rdp-cp-spec";
+    static constexpr char const * opt_print_vnc_cp_spec = "print-vnc-cp-spec";
+    static constexpr char const * opt_print_cp_mapping = "print-cp-mapping";
     static constexpr char const * opt_print_ini = "print-default-ini";
 
     program_options::options_description desc({
@@ -259,6 +262,9 @@ int main(int argc, char** argv)
         {"config-file", &config_filename, "use an another ini file"},
 
         {opt_print_ini_spec, "Show file spec for rdpproxy.ini"},
+        {opt_print_rdp_cp_spec, "Show connection policy spec for rdp protocol"},
+        {opt_print_vnc_cp_spec, "Show connection policy spec for vnc protocol"},
+        {opt_print_cp_mapping, "Show connection policy mapping for sesman"},
         {opt_print_ini, "Show default rdpproxy.ini"}
 
         //{"test", "check Inifile syntax"}
@@ -299,6 +305,24 @@ int main(int argc, char** argv)
     if (options.count(opt_print_ini_spec)) {
         std::cout <<
             #include "configs/autogen/str_python_spec.hpp"
+        ;
+        return 0;
+    }
+    if (options.count(opt_print_rdp_cp_spec)) {
+        std::cout <<
+            #include "configs/autogen/rdp_cp_spec.hpp"
+        ;
+        return 0;
+    }
+    if (options.count(opt_print_vnc_cp_spec)) {
+        std::cout <<
+            #include "configs/autogen/vnc_cp_spec.hpp"
+        ;
+        return 0;
+    }
+    if (options.count(opt_print_cp_mapping)) {
+        std::cout <<
+            #include "configs/autogen/cp_mapping.hpp"
         ;
         return 0;
     }

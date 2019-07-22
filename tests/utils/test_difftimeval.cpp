@@ -148,108 +148,108 @@ RED_AUTO_TEST_CASE(TestLessThanTimeVal)
     before.tv_usec = 0;
     after = before;
 
-    RED_CHECK_EQUAL(lessthantimeval(before, after), false);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(not lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after.tv_sec += 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after = before;
     after.tv_usec += 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after = before;
     after.tv_sec += 1;
     after.tv_usec += 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
 
     before.tv_sec = 184635;
     before.tv_usec = 564732;
     after = before;
 
-    RED_CHECK_EQUAL(lessthantimeval(before, after), false);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(not lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after.tv_sec += 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after = before;
     after.tv_usec += 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after = before;
     after.tv_sec += 1;
     after.tv_usec += 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
 
     after = before;
 
-    RED_CHECK_EQUAL(lessthantimeval(before, after), false);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(not lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after.tv_sec += 4651;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after = before;
     after.tv_usec += 573;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after = before;
     after.tv_sec += 1272;
     after.tv_usec += 151236;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     after = before;
 
-    RED_CHECK_EQUAL(lessthantimeval(before, after), false);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(not lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     before.tv_sec -= 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     before = after;
     before.tv_usec -= 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     before = after;
     before.tv_sec -= 1;
     before.tv_usec -= 1;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
 
     before = after;
 
-    RED_CHECK_EQUAL(lessthantimeval(before, after), false);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(not lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     before.tv_sec -= 13477;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     before = after;
     before.tv_usec -= 321697;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
     before = after;
     before.tv_sec -= 324;
     before.tv_usec -= 3277;
-    RED_CHECK_EQUAL(lessthantimeval(before, after), true);
-    RED_CHECK_EQUAL(lessthantimeval(after, before), false);
+    RED_CHECK(lessthantimeval(before, after));
+    RED_CHECK(not lessthantimeval(after, before));
 
 }
 

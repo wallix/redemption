@@ -1128,7 +1128,7 @@ uint8_t security[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-    InStream input(security, sizeof(security));
+    InStream input(security);
     GCC::UserData::SCSecurity sc_sec1;
     sc_sec1.recv(input);
     RED_CHECK_EQUAL(sc_sec1.encryptionMethod, 2);
