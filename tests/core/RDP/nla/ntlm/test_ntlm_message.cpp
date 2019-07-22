@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     // ChallengeMsg.recv(ts_req2.negoTokens);
 
     InStream token(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
-    ChallengeMsg.recv(token);
+    RecvNTLMChallengeMessage(token, ChallengeMsg);
 
     RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
     //ChallengeMsg.negoFlags.log();
@@ -132,7 +132,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
     InStream in_tosend(tosend.get_bytes());
-    ChallengeMsgDuplicate.recv(in_tosend);
+    RecvNTLMChallengeMessage(in_tosend, ChallengeMsgDuplicate);
 
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
     // ChallengeMsgDuplicate.negoFlags.print();
@@ -1492,7 +1492,7 @@ public:
     SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Challenge");
         InStream in_stream(input_buffer);
-        this->CHALLENGE_MESSAGE.recv(in_stream);
+        RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
         this->SavedChallengeMessage.init(in_stream.get_offset());
         this->SavedChallengeMessage.copy(in_stream.get_bytes());
 
@@ -1954,7 +1954,7 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
     context.NEGOTIATE_MESSAGE.recv(s);
 
     s = InStream(challenge_string, sizeof(challenge_string) - 1);
-    context.CHALLENGE_MESSAGE.recv(s);
+    RecvNTLMChallengeMessage(s, context.CHALLENGE_MESSAGE);
 
     const uint8_t password[] = {
         // 0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
@@ -2155,7 +2155,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     // send CHALLENGE MESSAGE
     server_context.CHALLENGE_MESSAGE.emit(out_server_to_client);
     InStream in_server_to_client(out_server_to_client.get_bytes());
-    client_context.CHALLENGE_MESSAGE.recv(in_server_to_client);
+    RecvNTLMChallengeMessage(in_server_to_client, client_context.CHALLENGE_MESSAGE);
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
@@ -2287,7 +2287,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
            out_server_to_client.get_data(), out_server_to_client.get_offset());
 
     InStream in_server_to_client(out_server_to_client.get_bytes());
-    client_context.CHALLENGE_MESSAGE.recv(in_server_to_client);
+    RecvNTLMChallengeMessage(in_server_to_client, client_context.CHALLENGE_MESSAGE);
     client_context.SavedChallengeMessage.init(in_server_to_client.get_offset());
     memcpy(client_context.SavedChallengeMessage.get_data(),
            in_server_to_client.get_data(), in_server_to_client.get_offset());

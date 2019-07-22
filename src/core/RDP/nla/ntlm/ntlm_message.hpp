@@ -1529,20 +1529,10 @@ struct NTLMv2_Response {
 class NTLMChallengeMessage
 {
     friend void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message);
-    NtlmMessageType msgType{NtlmChallenge};   /* 4 Bytes */
 
     void message_emit(OutStream & stream) const {
         stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-        stream.out_uint32_le(this->msgType);
-    }
-
-    bool message_recv(InStream & stream) {
-        constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
-        uint8_t received_sig[sig_len];
-        stream.in_copy_bytes(received_sig, sig_len);
-        uint32_t type = stream.in_uint32_le();
-        return !memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)
-            && (static_cast<uint32_t>(this->msgType) == type);
+        stream.out_uint32_le(NtlmChallenge);
     }
 
 public:
@@ -1584,36 +1574,6 @@ public:
         this->TargetName.write_payload(stream);
         this->TargetInfo.write_payload(stream);
     }
-
-    void recv(InStream & stream) {
-        uint8_t const * pBegin = stream.get_current();
-        bool res;
-        res = this->message_recv(stream);
-        if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
-        }
-        this->TargetName.recv(stream);
-        this->negoFlags.recv(stream);
-        stream.in_copy_bytes(this->serverChallenge, 8);
-        // this->serverChallenge = stream.in_uint64_le();
-        stream.in_skip_bytes(8);
-        this->TargetInfo.recv(stream);
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.recv(stream);
-        }
-        // PAYLOAD
-        this->TargetName.read_payload(stream, pBegin);
-        this->TargetInfo.read_payload(stream, pBegin);
-        auto in_stream = this->TargetInfo.buffer.in_stream();
-        this->AvPairList.recv(in_stream);
-        this->TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
-    }
-
-    //void avpair_decode() {
-    //    this->TargetInfo.Buffer.reset();
-    //    this->AvPairList.emit(this->TargetInfo.Buffer);
-    //}
-
 };
 
 

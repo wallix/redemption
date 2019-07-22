@@ -119,10 +119,16 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
 inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message) 
 {
     uint8_t const * pBegin = stream.get_current();
-    bool res;
-    res = message.message_recv(stream);
-    if (!res) {
-        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", message.msgType);
+    
+    constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+    uint8_t received_sig[sig_len];
+    stream.in_copy_bytes(received_sig, sig_len);
+    uint32_t type = stream.in_uint32_le();
+    if (type != NtlmChallenge){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
+    }
+    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
     }
     message.TargetName.recv(stream);
     message.negoFlags.recv(stream);
