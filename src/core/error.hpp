@@ -150,7 +150,6 @@
     fv(ERR_WRM_INVALID_INIT_CRYPT, 20012)                           \
                                                                     \
     fv(ERR_WIDGET, 21000)                                           \
-    f(ERR_WIDGET_INVALID_COMPOSITE_DESTROY)                         \
                                                                     \
     fv(ERR_RDP61_DECOMPRESS, 22000)                                 \
     f(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED)                          \
@@ -178,8 +177,7 @@
     f(ERR_PDBC_SAVE)                                                \
                                                                     \
     fv(ERR_SESSION_PROBE_LAUNCH, 24200)                             \
-    f(ERR_SESSION_PROBE_ENDING_IN_PROGRESS)                         \
-    f(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION)                 \
+    fv(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION, 24201)         \
     f(ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)                      \
     f(ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS)                \
     f(ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON)                        \
