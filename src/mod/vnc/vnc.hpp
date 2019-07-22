@@ -2493,7 +2493,7 @@ private:
         const CHANNELS::ChannelDef * front_channel =
             this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
-            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+            this->front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);
             IF_ENABLE_METRICS(clipboard_data_from_client(chunk_size));
         }
     }

@@ -25,7 +25,7 @@
 #pragma once
 
 #include "gdi/screen_info.hpp"
-#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
 namespace CHANNELS {
@@ -40,8 +40,8 @@ public:
     virtual bool must_be_stop_capture() = 0;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data
-                                , std::size_t length, std::size_t chunk_size, int flags) = 0;
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, const_bytes_view chunk_data
+                                , std::size_t total_length, int flags) = 0;
 
     enum class ResizeResult {
         no_need = 0,

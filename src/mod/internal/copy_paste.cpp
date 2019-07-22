@@ -121,9 +121,9 @@ bool CopyPaste::ready(FrontAPI & front)
         general_cap_set.emit(out_s_cb_clip_caps);
 
         const size_t length_cb_clip_caps     = out_s_cb_clip_caps.get_offset();
-        const size_t chunk_size_cb_clip_caps = length_cb_clip_caps;
-        this->front_->send_to_channel(*this->channel_, out_s_cb_clip_caps.get_data(), length_cb_clip_caps, chunk_size_cb_clip_caps,
-                                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+        this->front_->send_to_channel(
+            *this->channel_, out_s_cb_clip_caps.get_bytes(), length_cb_clip_caps,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
         RDPECLIP::ServerMonitorReadyPDU monitor_ready_pdu;
         RDPECLIP::CliprdrHeader monitor_ready_header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_, monitor_ready_pdu.size());
@@ -132,9 +132,8 @@ bool CopyPaste::ready(FrontAPI & front)
         monitor_ready_pdu.emit(out_s_cb_monitor_ready);
 
         const size_t length_cb_monitor_ready  = out_s_cb_monitor_ready.get_offset();
-        const size_t chunk_size_cb_monitor_ready = length_cb_monitor_ready;
         this->front_->send_to_channel(
-            *this->channel_, out_s_cb_monitor_ready.get_data(), length_cb_monitor_ready, chunk_size_cb_monitor_ready,
+            *this->channel_, out_s_cb_monitor_ready.get_bytes(), length_cb_monitor_ready,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
         );
 
@@ -160,9 +159,8 @@ void CopyPaste::paste(WidgetEdit & edit)
         header.emit(out_s);
         pdu.emit(out_s);
         const size_t length     = out_s.get_offset();
-        const size_t chunk_size = length;
         this->front_->send_to_channel(
-            *this->channel_, out_s.get_data(), length, chunk_size,
+            *this->channel_, out_s.get_bytes(), length,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
         );
     }
@@ -191,8 +189,7 @@ void CopyPaste::copy(const char * s, size_t n)
     const size_t totalLength = out_s.get_offset();
 
     this->front_->send_to_channel(*this->channel_,
-                                 out_s.get_data(),
-                                 totalLength,
+                                 out_s.get_bytes(),
                                  totalLength,
                                    CHANNELS::CHANNEL_FLAG_FIRST
                                  | CHANNELS::CHANNEL_FLAG_LAST
@@ -260,9 +257,8 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
                 pdu.emit(out_s);
 
                 const size_t length     = out_s.get_offset();
-                const size_t chunk_size = length;
                 this->front_->send_to_channel(
-                    *this->channel_, out_s.get_data(), length, chunk_size,
+                    *this->channel_, out_s.get_bytes(), length,
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                 );
 

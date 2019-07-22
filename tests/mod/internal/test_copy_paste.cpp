@@ -51,11 +51,11 @@ struct CopyPasteFront : FakeFront
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef& channel, uint8_t const * data, size_t length, size_t /*unused*/, int
-     /*unused*/) override {
+        const CHANNELS::ChannelDef& channel, const_bytes_view chunk_data,
+        std::size_t /*total_length*/, int /*flags*/) override {
         RED_REQUIRE(channel.name == channel_names::cliprdr);
 
-        InStream stream(data, length);
+        InStream stream(chunk_data);
         RDPECLIP::RecvPredictor rp(stream);
 
         switch (rp.msgType()) {

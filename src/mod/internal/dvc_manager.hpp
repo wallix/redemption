@@ -57,8 +57,7 @@ public:
             DVCCapsReqPDU.emit(out_s);
 
             const size_t length     = out_s.get_offset();
-            const size_t chunk_size = length;
-            this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+            this->front_->send_to_channel(*(this->channel_), out_s.get_bytes(), length,
                                           CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST/* | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL*/);
 
             return true;

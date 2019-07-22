@@ -1242,13 +1242,13 @@ public:
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel
-                                , uint8_t const * chunk
-                                , size_t length
-                                , size_t chunk_size
-                                , int flags) override {
+                        , const_bytes_view chunk_data
+                        , std::size_t total_length
+                        , int flags) override {
         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
             "Front::send_to_channel: (channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)",
-            channel.name, channel.chanid, voidp(chunk), length, chunk_size, unsigned(flags));
+            channel.name, channel.chanid, voidp(chunk_data.data()),
+            total_length, chunk_data.size(), unsigned(flags));
 
         if ((channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) &&
             (channel.chanid != this->rail_channel_id)) {
@@ -1259,7 +1259,7 @@ public:
 
         virtual_channel_pdu.send_to_client( this->trans, this->encrypt
                                           , this->encryptionLevel, userid, channel.chanid
-                                          , length, flags, chunk, chunk_size);
+                                          , total_length, flags, chunk_data.data(), chunk_data.size());
     }
 
     TpduBuffer rbuf;

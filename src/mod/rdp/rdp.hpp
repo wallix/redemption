@@ -535,8 +535,7 @@ private:
                     ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
                 }
 
-                this->front.send_to_channel(this->channel,
-                    chunk_data.data(), total_length, chunk_data.size(), flags);
+                this->front.send_to_channel(this->channel, chunk_data, total_length, flags);
             }
         };
 
@@ -847,7 +846,7 @@ public:
     void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
         const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
-            front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+            front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);
         }
     }
 
@@ -2715,7 +2714,7 @@ public:
             }
 #else
             if (const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel.name)) {
-                front.send_to_channel(*front_channel, sec.payload.get_current(), length, chunk_size, flags);
+                front.send_to_channel(*front_channel, {sec.payload.get_current(), chunk_size}, length, flags);
             }
 #endif
 

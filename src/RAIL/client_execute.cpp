@@ -566,7 +566,6 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
         header.emit_end();
 
         const size_t   length     = out_s.get_offset();
-        const size_t   chunk_size = length;
         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -580,8 +579,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
             smmipdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
-                                        flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
     }
 
     int move_size_type = 0;
@@ -621,7 +619,6 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
         header.emit_end();
 
         const size_t   length     = out_s.get_offset();
-        const size_t   chunk_size = length;
         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -635,8 +632,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
             smssoepdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
-                                        flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
     }   // if (move_size_type)
 
     this->move_size_initialized = true;
@@ -1284,7 +1280,6 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 header.emit_end();
 
                 const size_t   length     = out_s.get_offset();
-                const size_t   chunk_size = length;
                 const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                             | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -1298,7 +1293,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     smssoepdu.log(LOG_INFO);
                 }
 
-                this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size, flags);
+                this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
 
                 this->move_size_initialized = false;
             }   // if (0 != move_size_type)
@@ -1689,7 +1684,6 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
         header.emit_end();
 
         const size_t   length     = out_s.get_offset();
-        const size_t   chunk_size = length;
         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -1709,8 +1703,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             }
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
-                                        flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
     }
 
     {
@@ -1726,7 +1719,6 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
         header.emit_end();
 
         const size_t   length     = out_s.get_offset();
-        const size_t   chunk_size = length;
         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -1740,8 +1732,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             server_system_parameters_update_pdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
-                                        flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
     }
 
     {
@@ -1757,7 +1748,6 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
         header.emit_end();
 
         const size_t length     = out_s.get_offset();
-        const size_t chunk_size = length;
         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -1771,8 +1761,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
             server_system_parameters_update_pdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
-                                        flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
     }
 }   // ready
 
@@ -1957,7 +1946,6 @@ void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
         header.emit_end();
 
         const size_t   length     = out_s.get_offset();
-        const size_t   chunk_size = length;
         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -1973,8 +1961,7 @@ void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
             server_get_application_id_response_pdu.log(LOG_INFO);
         }
 
-        this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
-                                        flags);
+        this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
 
         server_execute_result_sent = true;
     }
@@ -2681,7 +2668,6 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
             header.emit_end();
 
             const size_t   length     = out_s.get_offset();
-            const size_t   chunk_size = length;
             const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                         | CHANNELS::CHANNEL_FLAG_LAST;
 
@@ -2695,8 +2681,7 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
                 smssoepdu.log(LOG_INFO);
             }
 
-            this->front_.send_to_channel(*this->channel_, out_s.get_data(), length, chunk_size,
-                                            flags);
+            this->front_.send_to_channel(*this->channel_, out_s.get_bytes(), length, flags);
 
             this->move_size_initialized = false;
         }

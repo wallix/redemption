@@ -140,7 +140,7 @@ int main(int argc, char const** argv)
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
 
-    ClientRedemptionHeadless client( session_reactor, config);
+    ClientRedemptionHeadless client(session_reactor, config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }

@@ -849,14 +849,15 @@ public:
     //      CHANNELS FUNCTIONS
     //--------------------------------
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t  /*unused*/, size_t chunk_size, int flags) override {
+    void send_to_channel( const CHANNELS::ChannelDef & channel, const_bytes_view chunk_data
+                        , std::size_t /*total_length*/, int flags) override {
 
         const CHANNELS::ChannelDef * mod_channel = this->cl.get_by_name(channel.name);
         if (!mod_channel) {
             return;
         }
 
-        InStream chunk(data, chunk_size);
+        InStream chunk(chunk_data);
 
         switch (channel.chanid) {
 

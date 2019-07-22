@@ -69,9 +69,8 @@ public:
 
     void send_to_channel(
         const CHANNELS::ChannelDef & /*channel*/,
-        uint8_t const * /*chunk*/,
-        size_t  /*length*/,
-        size_t  /*chunk_size*/,
+        const_bytes_view /*chunk_data*/,
+        std::size_t /*total_length*/,
         int  /*flags*/) override
     {
     }
