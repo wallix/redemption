@@ -37,6 +37,8 @@
                                                                     \
     fv(ERR_MEMORY_ALLOCATION_FAILED, 200)                           \
                                                                     \
+    fv(ERR_ICAP_LOCAl_PROTOCOL, 500)                                \
+                                                                    \
     fv(ERR_SOCKET_CONNECT_FAILED, 1000)                             \
                                                                     \
     fv(ERR_TRANSPORT, 1500)                                         \
@@ -202,9 +204,7 @@
                                                                     \
     fv(ERR_CRYPTO_BUFFER_TOO_SMALL, 25500)                          \
     f(ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL)                           \
-    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)                  \
-                                                                    \
-    fv(ERR_ICAP_LOCAl_PROTOCOL, 26000)
+    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)
 
 
 #define MAKE_ENUM(e) e,
