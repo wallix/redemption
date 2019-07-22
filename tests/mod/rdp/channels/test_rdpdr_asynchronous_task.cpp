@@ -35,13 +35,13 @@ public:
     TestToServerSender(Transport & transport) : transport(transport) {}
 
     virtual void operator() (uint32_t total_length, uint32_t flags,
-        const uint8_t * chunk_data, uint32_t chunk_data_length) override {
+        const_bytes_view chunk_data) override {
         StaticOutStream<8> stream;
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
 
         this->transport.send(stream.get_bytes());
-        this->transport.send(chunk_data, chunk_data_length);
+        this->transport.send(chunk_data);
     }
 };
 

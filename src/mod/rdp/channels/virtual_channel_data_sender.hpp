@@ -26,7 +26,7 @@
 inline void msgdump_impl(
     bool from_or_to_client,
     uint32_t total_length, uint32_t flags,
-    const uint8_t* chunk_data, uint32_t chunk_data_length)
+    const_bytes_view chunk_data)
 {
     const unsigned dest = (from_or_to_client
                             ? 0  // Client
@@ -39,34 +39,32 @@ inline void msgdump_impl(
     LOG(LOG_INFO, "\\x%x\\x%x\\x%x\\x%x",
         (flags >> 24), (flags >> 16) & 0xff,
         (flags >> 8) & 0xff, (flags & 0xff));
-    LOG(LOG_INFO, "\\x%x\\x%x\\x%x\\x%x",
-        (chunk_data_length >> 24), (chunk_data_length >> 16) & 0xffu,
-        (chunk_data_length >> 8) & 0xffu, (chunk_data_length & 0xffu));
-    hexdump_c(chunk_data, chunk_data_length);
+    LOG(LOG_INFO, "\\x%lx\\x%lx\\x%lx\\x%lx",
+        (chunk_data.size() >> 24), (chunk_data.size() >> 16) & 0xffu,
+        (chunk_data.size() >> 8) & 0xffu, (chunk_data.size() & 0xffu));
+    hexdump_av_c(chunk_data);
 }
 
 inline static void msgdump_c(bool send, bool from_or_to_client,
-    uint32_t total_length, uint32_t flags, const uint8_t* chunk_data,
-    uint32_t chunk_data_length)
+    uint32_t total_length, uint32_t flags, const_bytes_view chunk_data)
 {
     if (send) {
-        LOG(LOG_INFO, "Sending on channel (%u) n bytes", chunk_data_length);
+        LOG(LOG_INFO, "Sending on channel (%zu) n bytes", chunk_data.size());
     }
     else {
-        LOG(LOG_INFO, "Recv done on channel (%u) n bytes", chunk_data_length);
+        LOG(LOG_INFO, "Recv done on channel (%zu) n bytes", chunk_data.size());
     }
-    msgdump_impl(from_or_to_client, total_length, flags, chunk_data, chunk_data_length);
+    msgdump_impl(from_or_to_client, total_length, flags, chunk_data);
     if (send) {
-        LOG(LOG_INFO, "Sent dumped on channel (%u) n bytes", chunk_data_length);
+        LOG(LOG_INFO, "Sent dumped on channel (%zu) n bytes", chunk_data.size());
     }
     else {
-        LOG(LOG_INFO, "Dump done on channel (%u) n bytes", chunk_data_length);
+        LOG(LOG_INFO, "Dump done on channel (%zu) n bytes", chunk_data.size());
     }
 }
 
 inline static void msgdump_d(bool send, bool from_or_to_client,
-    uint32_t total_length, uint32_t flags, const uint8_t* chunk_data,
-    uint32_t chunk_data_length)
+    uint32_t total_length, uint32_t flags, const_bytes_view chunk_data)
 {
     if (send) {
         LOG(LOG_INFO, "Sending on channel (%u) n bytes", total_length);
@@ -74,8 +72,8 @@ inline static void msgdump_d(bool send, bool from_or_to_client,
     else {
         LOG(LOG_INFO, "Recv done on channel (%u) n bytes", total_length);
     }
-    msgdump_impl(from_or_to_client, total_length, flags, chunk_data, chunk_data_length);
-    if (total_length > chunk_data_length) {
+    msgdump_impl(from_or_to_client, total_length, flags, chunk_data);
+    if (total_length > chunk_data.size()) {
         LOG(LOG_INFO, "/* ---- */ \"...                                                             \" //................");
     }
     if (send) {
@@ -95,7 +93,6 @@ public:
         return *this;
     }
 
-    virtual void operator()(uint32_t total_length, uint32_t flags,
-        const uint8_t * chunk_data, uint32_t chunk_data_length) = 0;
+    virtual void operator()(uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) = 0;
 };
 

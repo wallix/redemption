@@ -615,8 +615,7 @@ public:
                           CHANNELS::CHANNEL_FLAG_FIRST
                         | CHANNELS::CHANNEL_FLAG_LAST
                         | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-                        out_s.get_data(),
-                        totalLength);
+                        out_s.get_bytes());
 
                 ret = false;
             }
@@ -701,8 +700,8 @@ public:
                 this->cliprdr_channel->process_client_message(
                         this->current_client_format_list_pdu_length,
                         this->current_client_format_list_pdu_flags,
-                        this->current_client_format_list_pdu.get(),
-                        this->current_client_format_list_pdu_length);
+                        {this->current_client_format_list_pdu.get(),
+                        this->current_client_format_list_pdu_length});
             }
             else {
                 this->cliprdr_channel->empty_client_clipboard();

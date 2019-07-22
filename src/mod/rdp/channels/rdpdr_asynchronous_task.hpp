@@ -190,7 +190,7 @@ public:
 
             assert(this->length);
 
-            this->to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.get_offset());
+            this->to_server_sender(this->length, out_flags, out_stream.get_bytes());
         }
         catch (const Error & e) {
             LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%u", e.id);
@@ -243,7 +243,8 @@ public:
     bool run()
     {
         if (this->data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
-            this->to_server_sender(this->data_length, this->flags, this->data.get(), this->data_length);
+            this->to_server_sender(this->data_length, this->flags,
+                {this->data.get(), this->data_length});
 
             this->remaining_number_of_bytes_to_send = 0;
 
@@ -267,8 +268,7 @@ public:
         }
 
         this->to_server_sender(this->data_length, out_flags,
-            this->data.get() + number_of_bytes_sent,
-            number_of_bytes_to_send);
+            {this->data.get() + number_of_bytes_sent, number_of_bytes_to_send});
 
         this->remaining_number_of_bytes_to_send -= number_of_bytes_to_send;
 
@@ -290,20 +290,19 @@ public:
     RdpdrSendClientMessageTask(
         size_t total_length,
         uint32_t flags,
-        const uint8_t * chunked_data,
-        size_t chunked_data_length,
+        const_bytes_view chunked_data,
         VirtualChannelDataSender & to_server_sender,
         RDPVerbose verbose)
     : total_length(total_length)
     , flags(flags)
-    , chunked_data(std::make_unique<uint8_t[]>(chunked_data_length))
-    , chunked_data_length(chunked_data_length)
+    , chunked_data(std::make_unique<uint8_t[]>(chunked_data.size()))
+    , chunked_data_length(chunked_data.size())
     , to_server_sender(to_server_sender.SynchronousSender())
     {
-        assert(chunked_data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH);
+        assert(this->chunked_data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH);
         (void)verbose;
 
-        ::memcpy(this->chunked_data.get(), chunked_data, chunked_data_length);
+        ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
     void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
@@ -326,7 +325,7 @@ public:
             CHANNELS::CHANNEL_CHUNK_LENGTH);
 
         this->to_server_sender(this->total_length, this->flags,
-            this->chunked_data.get(), this->chunked_data_length);
+            {this->chunked_data.get(), this->chunked_data_length});
 
         return false;
     }

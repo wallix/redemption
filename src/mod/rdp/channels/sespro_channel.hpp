@@ -244,7 +244,7 @@ private:
 
             this->send_message_to_server(out_s.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_s.get_data(), out_s.get_offset());
+                out_s.get_bytes());
         }
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
@@ -366,30 +366,28 @@ private:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_data(), out_s.get_offset());
+            out_s.get_bytes());
     }
 
 public:
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length,
+        uint32_t flags, const_bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask>& out_asynchronous_task) override
     {
         (void)out_asynchronous_task;
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::process_server_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::sesprobe_dump)) {
             const bool send              = false;
             const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
 
         uint16_t message_length = chunk.in_uint16_le();
         this->server_message.reserve(message_length);
@@ -1732,7 +1730,7 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_data(), out_s.get_offset());
+            out_s.get_bytes());
     }
 
     void rail_exec(const char* application_name, const char* command_line,
@@ -1779,6 +1777,6 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_data(), out_s.get_offset());
+            out_s.get_bytes());
     }
 };  // class SessionProbeVirtualChannel

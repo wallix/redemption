@@ -245,8 +245,7 @@ public:
         this->send_message_to_server(
             totalLength,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_data(),
-            totalLength);
+            out_s.get_bytes());
     }
 
     bool use_long_format_names() const {
@@ -256,22 +255,20 @@ public:
 
 public:
     void process_client_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length) override
+        uint32_t flags, const_bytes_view chunk_data) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_client_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
             const bool send              = false;
             const bool from_or_to_client = true;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
         RDPECLIP::CliprdrHeader header;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -351,8 +348,7 @@ public:
         }   // switch (this->client_message_type)
 
         if (send_message_to_server) {
-            this->send_message_to_server(total_length, flags, chunk_data,
-                chunk_data_length);
+            this->send_message_to_server(total_length, flags, chunk_data);
         }
     }   // process_client_message
 
@@ -386,25 +382,23 @@ public:
     }   // process_server_format_data_request_pdu
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length,
+        uint32_t flags, const_bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override
     {
         (void)out_asynchronous_task;
 
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_server_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
             const bool send              = false;
             const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
         RDPECLIP::CliprdrHeader header;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -512,8 +506,7 @@ public:
         }   // switch (this->server_message_type)
 
         if (send_message_to_client) {
-            this->send_message_to_client(total_length, flags, chunk_data,
-                chunk_data_length);
+            this->send_message_to_client(total_length, flags, chunk_data);
         }   // switch (this->server_message_type)
     }   // process_server_message
 

@@ -42,12 +42,12 @@ struct FakeDataSender : VirtualChannelDataSender
 
     void operator()(
         uint32_t /*total_length*/, uint32_t /*flags*/,
-        const uint8_t * chunk_data, uint32_t chunk_data_length) override
+        const_bytes_view chunk_data) override
     {
         RED_REQUIRE(this->index < this->streams.size());
-        RED_REQUIRE(chunk_data_length < std::size(streams[this->index].data));
-        this->streams[this->index].size = chunk_data_length;
-        std::memcpy(streams[this->index].data, chunk_data, chunk_data_length);
+        RED_REQUIRE(chunk_data.size() < std::size(streams[this->index].data));
+        this->streams[this->index].size = chunk_data.size();
+        std::memcpy(streams[this->index].data, chunk_data.data(), chunk_data.size());
         ++this->index;
     }
 };

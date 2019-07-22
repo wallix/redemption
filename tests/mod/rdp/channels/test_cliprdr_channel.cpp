@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 class NullSender : public VirtualChannelDataSender
 {
 public:
-    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, const uint8_t* /*chunk_data*/, uint32_t /*chunk_data_length*/) override {}
+    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, const_bytes_view /*chunk_data*/) override {}
 };
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
@@ -183,8 +183,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            out_s.get_data(),
-            totalLength);
+            out_s.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
@@ -231,11 +230,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            byte_ptr_cast(
         /* 0000 */ "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" // ................
         /* 0010 */ "\x02\x00\x00\x00\x1e\x00\x00\x00\x00\x00\x00\x00"                 // ............
-                ),
-            28,
+                ""_av,
             out_asynchronous_task);
 
 // ClipboardVirtualChannel::process_client_message: total_length=24 flags=0x00000013 chunk_data_length=24
@@ -256,11 +253,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            byte_ptr_cast(
     /* 0000 */ "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" // ................
     /* 0010 */ "\x02\x00\x00\x00\x1e\x00\x00\x00"                                 // ........
-                ),
-            24);
+                ""_av);
 
 // ClipboardVirtualChannel::process_client_message: total_length=130 flags=0x00000013 chunk_data_length=130
 // Recv done on channel (130) n bytes
@@ -289,7 +284,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            byte_ptr_cast(
         /* 0000 */ "\x02\x00\x00\x00\x7a\x00\x00\x00\x6e\xc0\x00\x00\x46\x00\x69\x00" // ....z...n...F.i.
         /* 0010 */ "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" // l.e.G.r.o.u.p.D.
         /* 0020 */ "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" // e.s.c.r.i.p.t.o.
@@ -299,8 +293,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
         /* 0060 */ "\x65\x00\x72\x00\x72\x00\x65\x00\x64\x00\x20\x00\x44\x00\x72\x00" // e.r.r.e.d. .D.r.
         /* 0070 */ "\x6f\x00\x70\x00\x45\x00\x66\x00\x66\x00\x65\x00\x63\x00\x74\x00" // o.p.E.f.f.e.c.t.
         /* 0080 */ "\x00\x00"                                                         // ..
-                ),
-            130);
+                ""_av);
 
 // ClipboardVirtualChannel::process_server_format_data_request_pdu: requestedFormatId=<unknown>(49262)
 // Sending on channel (16) n bytes
@@ -317,10 +310,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            byte_ptr_cast(
-        /* 0000 */ "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00\x00\x00\x00\x00"
-                ),
-            16,
+        /* 0000 */ "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00\x00\x00\x00\x00"_av,
             out_asynchronous_task);
 
 // ClipboardVirtualChannel::process_client_message: total_length=8 flags=0x00000013 chunk_data_length=8
@@ -338,10 +328,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            byte_ptr_cast(
-        /* 0000 */ "\x05\x00\x02\x00\x00\x00\x00\x00"
-                ),
-            8);
+        /* 0000 */ "\x05\x00\x02\x00\x00\x00\x00\x00"_av);
 }
 
 
@@ -355,12 +342,11 @@ public:
 
     explicit TestResponseSender() = default;
 
-    void operator()(uint32_t /*total_length*/, uint32_t /*flags*/,
-        const uint8_t* chunk_data, uint32_t chunk_data_length)
+    void operator()(uint32_t /*total_length*/, uint32_t /*flags*/, const_bytes_view chunk_data)
             override
     {
         if (this->total_in_stream < 10) {
-            this->streams[this->total_in_stream].out_copy_bytes(chunk_data, chunk_data_length);
+            this->streams[this->total_in_stream].out_copy_bytes(chunk_data);
             this->total_in_stream++;
         }
     }
@@ -448,8 +434,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
           | CHANNELS::CHANNEL_FLAG_LAST
           | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         clipboard_virtual_channel.process_server_message(
-            av.size(), flags, av.data(), av.size(),
-            out_asynchronous_task);
+            av.size(), flags, av, out_asynchronous_task);
     };
 
     auto process_client_message = [&](cbytes_view av){
@@ -457,7 +442,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
           = CHANNELS::CHANNEL_FLAG_FIRST
           | CHANNELS::CHANNEL_FLAG_LAST
           | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-        clipboard_virtual_channel.process_client_message(av.size(), flags, av.data(), av.size());
+        clipboard_virtual_channel.process_client_message(av.size(), flags, av);
     };
 
     const auto use_long_format = Cliprdr::IsLongFormat(true);
