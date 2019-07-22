@@ -113,6 +113,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
                     case ICAPService::ResponseType::WaitingData:
                         return {};
                     case ICAPService::ResponseType::HasContent:
+                        this->icap_file_id = invalid_icap_file_id;
                         return {FileInfo{
                             this->icap_files.pop_id(this->icap_service->last_file_id()),
                             this->icap_service->get_content(),
@@ -123,6 +124,11 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
                         ;
                 }
             }
+        }
+
+        bool has_valid_file_id() const noexcept
+        {
+            return this->icap_file_id != invalid_icap_file_id;
         }
 
     private:
@@ -597,7 +603,10 @@ private:
             this->log_file_info(receive.file_info, from_remote_session);
         }
 
-        if (enable_icap && from_client.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+        if (icap.has_valid_file_id()
+         && enable_icap
+         && from_client.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE
+        ) {
             auto data = chunk.remaining_bytes();
             auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
