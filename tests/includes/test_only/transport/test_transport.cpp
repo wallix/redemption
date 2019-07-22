@@ -243,7 +243,7 @@ bool BufSequenceTransport::next()
 }
 
 
-CheckTransport::CheckTransport(const_buffer_t buffer)
+CheckTransport::CheckTransport(const_buffer_view buffer)
 : data(new(std::nothrow) uint8_t[buffer.size()])
 , len(buffer.size())
 {

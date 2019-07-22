@@ -27,7 +27,7 @@
 #include "utils/bitfu.hpp"
 #include "utils/utf.hpp"
 #include "utils/parse.hpp"
-#include "utils/sugar/buffer_t.hpp"
+#include "utils/sugar/buffer_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/buf_maker.hpp"
 
@@ -67,7 +67,7 @@ public:
     {
     }
 
-    explicit InStream(const_buffer_t buf) noexcept
+    explicit InStream(const_buffer_view buf) noexcept
     : InStream(buf.data(), buf.size())
     {
     }
@@ -415,7 +415,7 @@ public:
     {
     }
 
-    explicit OutStream(buffer_t buf) noexcept
+    explicit OutStream(buffer_view buf) noexcept
     : OutStream(buf.data(), buf.size())
     {
     }

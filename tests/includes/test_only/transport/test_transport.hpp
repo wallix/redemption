@@ -91,7 +91,7 @@ private:
 
 struct CheckTransport : Transport
 {
-    CheckTransport(const_buffer_t buffer);
+    CheckTransport(const_buffer_view buffer);
 
     size_t remaining()
     {

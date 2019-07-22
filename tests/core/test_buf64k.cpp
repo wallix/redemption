@@ -24,11 +24,11 @@
 
 #include <numeric>
 #include "core/buf64k.hpp"
-#include "utils/sugar/buffer_t.hpp"
+#include "utils/sugar/buffer_view.hpp"
 
 struct BlockTransport : Transport
 {
-    BlockTransport(buffer_t data, std::size_t n_by_bloc)
+    BlockTransport(buffer_view data, std::size_t n_by_bloc)
       : data(data)
       , n_by_bloc(n_by_bloc)
     {}
