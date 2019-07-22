@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 
     StaticOutStream<65535> tosend;
-    ChallengeMsg.emit(tosend);
+    EmitNTLMChallengeMessage(tosend, ChallengeMsg);
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
@@ -1478,7 +1478,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Challenge");
         this->ntlm_server_build_challenge();
         StaticOutStream<65535> out_stream;
-        this->CHALLENGE_MESSAGE.emit(out_stream);
+        EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
         output_buffer.init(out_stream.get_offset());
         output_buffer.copy(out_stream.get_bytes());
 
@@ -2153,7 +2153,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     }
 
     // send CHALLENGE MESSAGE
-    server_context.CHALLENGE_MESSAGE.emit(out_server_to_client);
+    EmitNTLMChallengeMessage(out_server_to_client, server_context.CHALLENGE_MESSAGE);
     InStream in_server_to_client(out_server_to_client.get_bytes());
     RecvNTLMChallengeMessage(in_server_to_client, client_context.CHALLENGE_MESSAGE);
 
@@ -2281,7 +2281,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     server_context.ntlm_server_build_challenge();
 
     // send CHALLENGE MESSAGE
-    server_context.CHALLENGE_MESSAGE.emit(out_server_to_client);
+    EmitNTLMChallengeMessage(out_server_to_client, server_context.CHALLENGE_MESSAGE);
     server_context.SavedChallengeMessage.init(out_server_to_client.get_offset());
     memcpy(server_context.SavedChallengeMessage.get_data(),
            out_server_to_client.get_data(), out_server_to_client.get_offset());

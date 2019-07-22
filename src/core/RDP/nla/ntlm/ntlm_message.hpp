@@ -1529,12 +1529,8 @@ struct NTLMv2_Response {
 
 class NTLMChallengeMessage
 {
-    friend void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message);
-
-    void message_emit(OutStream & stream) const {
-        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-        stream.out_uint32_le(NtlmChallenge);
-    }
+friend void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message);
+friend void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self);
 
 public:
     NtlmField TargetName;          /* 8 Bytes */
@@ -1550,33 +1546,38 @@ private:
 public:
     NtlmAvPairList AvPairList;
 
-    void emit(OutStream & stream) /* TODO const*/ {
-        this->TargetInfo.buffer.reset();
-        this->AvPairList.emit(this->TargetInfo.buffer.ostream);
-        this->TargetInfo.buffer.mark_end();
+};
 
-        uint32_t currentOffset = this->PayloadOffset;
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.ntlm_get_version_info();
+
+inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self)
+{
+        self.TargetInfo.buffer.reset();
+        self.AvPairList.emit(self.TargetInfo.buffer.ostream);
+        self.TargetInfo.buffer.mark_end();
+
+        uint32_t currentOffset = self.PayloadOffset;
+        if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            self.version.ntlm_get_version_info();
         }
         else {
             currentOffset -= 8;
         }
-        this->message_emit(stream);
-        currentOffset += this->TargetName.emit(stream, currentOffset);
-        this->negoFlags.emit(stream);
-        stream.out_copy_bytes(this->serverChallenge, 8);
+
+        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
+        stream.out_uint32_le(NtlmChallenge);
+
+        currentOffset += self.TargetName.emit(stream, currentOffset);
+        self.negoFlags.emit(stream);
+        stream.out_copy_bytes(self.serverChallenge, 8);
         stream.out_clear_bytes(8);
-        /*currentOffset +=*/ this->TargetInfo.emit(stream, currentOffset);
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.emit(stream);
+        /*currentOffset +=*/ self.TargetInfo.emit(stream, currentOffset);
+        if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            self.version.emit(stream);
         }
         // PAYLOAD
-        this->TargetName.write_payload(stream);
-        this->TargetInfo.write_payload(stream);
-    }
-};
-
+        self.TargetName.write_payload(stream);
+        self.TargetInfo.write_payload(stream);
+}
 
 inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & self) 
 {

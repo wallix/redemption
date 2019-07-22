@@ -584,7 +584,7 @@ protected:
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
             this->ntlm_server_build_challenge();
             StaticOutStream<65535> out_stream;
-            this->CHALLENGE_MESSAGE.emit(out_stream);
+            EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
             output_buffer.init(out_stream.get_offset());
             output_buffer.copy(out_stream.get_bytes());
 
