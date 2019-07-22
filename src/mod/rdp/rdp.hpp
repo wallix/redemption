@@ -616,7 +616,7 @@ private:
 
                 CHANNELS::VirtualChannelPDU virtual_channel_pdu;
                 virtual_channel_pdu.send_to_server(this->stc, this->channel_id,
-                    total_length, flags, chunk_data.data(), chunk_data.size());
+                    total_length, flags, chunk_data);
             }
         };
 
@@ -1455,7 +1455,7 @@ public:
                 }
             }
 
-            this->send_to_channel(*rdpdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+            this->send_to_channel(*rdpdr_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
             return;
         }
 
@@ -1485,18 +1485,17 @@ public:
 
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
-        uint8_t const * chunk, std::size_t chunk_size,
-        size_t length, uint32_t flags,
+        const_bytes_view chunk, size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
 #ifndef __EMSCRIPTEN__
         if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
-            InStream clone(chunk, chunk_size);
+            InStream clone(chunk);
             rdpsnd::streamLogClient(clone, flags);
         }
 
         if (bool(this->verbose & RDPVerbose::channels)) {
-            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
+            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk.size());
             channel.log(-1u);
         }
 #endif
@@ -1505,13 +1504,13 @@ public:
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
-        if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+        if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-            virtual_channel_pdu.send_to_server(stc, channel.chanid, length, flags, chunk, chunk_size);
+            virtual_channel_pdu.send_to_server(stc, channel.chanid, length, flags, chunk);
         }
         else {
-            uint8_t const * virtual_channel_data = chunk;
+            uint8_t const * virtual_channel_data = chunk.data();
             size_t          remaining_data_length = length;
 
             auto get_channel_control_flags = [] (uint32_t flags, size_t data_length,
@@ -1535,9 +1534,10 @@ public:
 
                 LOG(LOG_INFO, "send to server");
 
-                virtual_channel_pdu.send_to_server(stc, channel.chanid, length, get_channel_control_flags(
-                        flags, length, remaining_data_length, virtual_channel_data_length
-                    ), virtual_channel_data, virtual_channel_data_length);
+                virtual_channel_pdu.send_to_server(stc, channel.chanid, length,
+                    get_channel_control_flags(
+                        flags, length, remaining_data_length, virtual_channel_data_length),
+                    {virtual_channel_data, virtual_channel_data_length});
 
                 remaining_data_length -= virtual_channel_data_length;
                 virtual_channel_data  += virtual_channel_data_length;
@@ -1591,10 +1591,10 @@ public:
                 break;
             default:
                 IF_ENABLE_METRICS(client_other_channel_data(length));
-                this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+                this->send_to_channel(*mod_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
         }
 #else
-        this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+        this->send_to_channel(*mod_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
         (void)front;
         (void)asynchronous_tasks;
         (void)client_general_caps;
@@ -2213,8 +2213,7 @@ public:
         virtual_channel_pdu.send_to_server(stc, this->channels.auth_channel_chanid
                                           , stream_data.get_offset()
                                           , this->channels.auth_channel_flags
-                                          , stream_data.get_data()
-                                          , stream_data.get_offset());
+                                          , stream_data.get_bytes());
 #else
         (void)string_data;
 #endif
@@ -2240,8 +2239,7 @@ private:
         virtual_channel_pdu.send_to_server(stc, this->channels.checkout_channel_chanid
           , stream_data.get_offset()
           , this->channels.checkout_channel_flags
-          , stream_data.get_data()
-          , stream_data.get_offset());
+          , stream_data.get_bytes());
 #else
         (void)string_data;
 #endif

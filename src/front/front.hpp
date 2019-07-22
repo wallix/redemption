@@ -1259,7 +1259,7 @@ public:
 
         virtual_channel_pdu.send_to_client( this->trans, this->encrypt
                                           , this->encryptionLevel, userid, channel.chanid
-                                          , total_length, flags, chunk_data.data(), chunk_data.size());
+                                          , total_length, flags, chunk_data);
     }
 
     TpduBuffer rbuf;
