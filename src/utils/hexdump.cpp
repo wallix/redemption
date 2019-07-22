@@ -28,11 +28,12 @@ namespace {
 
 // $line_prefix "%.4x" $sep_page_values ($value_prefix "%.2x" $value_suffix) $sep_value_chars "%*c" $prefix_chars ("%c")
 void hexdump_impl(
-    const unsigned char * data, size_t size, unsigned line_length,
+    const unsigned char * data, size_t size,
     char const * line_prefix, char const * sep_page_values,
     char const * value_prefix, char const * value_suffix,
     char const * sep_value_chars, char const * prefix_chars)
 {
+    constexpr unsigned line_length = 16;
     char buffer[2048];
     size_t const sep_len = strlen(value_prefix) + strlen(value_suffix) + 2;
     for (size_t j = 0; j < size; j += line_length){
@@ -71,45 +72,37 @@ void hexdump_impl(
 } // namespace
 
 
-void hexdump(const_byte_ptr data, size_t size, unsigned line_length)
+void hexdump(const_byte_ptr data, size_t size)
 {
     // %.4x %x %x ... %c%c..
-    hexdump_impl(data.as_u8p(), size, line_length, "", " ", "", " ", "", "");
+    hexdump_impl(data.as_u8p(), size, "", " ", "", " ", "", "");
 }
 
-void hexdump_av(const_bytes_view data, unsigned line_length)
+void hexdump_av(const_bytes_view data)
 {
-    hexdump(data.as_u8p(), data.size(), line_length);
-}
-
-// also available for 16 bits items arrays, size in bytes and must be even
-void hexdump16_d(const uint16_t * data, size_t size)
-{
-    // /* %.4x */ 0x%x 0x%x ... // %c%c..
-    hexdump_impl(reinterpret_cast<const uint8_t *>(data), size, 16, "/* ", " */ ", "0x", ", ", "", " // "); /* NOLINT */
-
+    hexdump(data.as_u8p(), data.size());
 }
 
 
-void hexdump_d(const_byte_ptr data, size_t size, unsigned line_length)
+void hexdump_d(const_byte_ptr data, size_t size)
 {
     // /* %.4x */ 0x%x 0x%x ... // %c%c..
-    hexdump_impl(data.as_u8p(), size, line_length, "/* ", " */ ", "0x", ", ", "", " // ");
+    hexdump_impl(data.as_u8p(), size, "/* ", " */ ", "0x", ", ", "", " // ");
 }
 
-void hexdump_av_d(const_bytes_view data, unsigned line_length)
+void hexdump_av_d(const_bytes_view data)
 {
-    hexdump_d(data.as_u8p(), data.size(), line_length);
+    hexdump_d(data.as_u8p(), data.size());
 }
 
 
-void hexdump_c(const_byte_ptr data, size_t size, unsigned line_length)
+void hexdump_c(const_byte_ptr data, size_t size)
 {
     // /* %.4x */ "\x%x\x%x ..." // %c%c..
-    hexdump_impl(data.as_u8p(), size, line_length, "/* ", " */ \"", "\\x", "", "\"", " // ");
+    hexdump_impl(data.as_u8p(), size, "/* ", " */ \"", "\\x", "", "\"", " // ");
 }
 
-void hexdump_av_c(const_bytes_view data, unsigned line_length)
+void hexdump_av_c(const_bytes_view data)
 {
-    hexdump_c(data.as_u8p(), data.size(), line_length);
+    hexdump_c(data.as_u8p(), data.size());
 }

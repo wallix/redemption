@@ -151,7 +151,7 @@ class NtlmAvPairList final
         void log(NTLM_AV_ID avId) const
         {
             LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avId, unsigned(this->avLen));
-            hexdump_c(this->data.get(), this->avLen, 8);
+            hexdump_c(this->data.get(), this->avLen);
         }
     };
     AvPair list[AV_ID_MAX]{{byte_ptr_cast(""), 0}};
