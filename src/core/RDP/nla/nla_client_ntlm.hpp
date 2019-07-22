@@ -116,36 +116,6 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
     return result;
 }
 
-inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message) 
-{
-    uint8_t const * pBegin = stream.get_current();
-    
-    constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
-    uint8_t received_sig[sig_len];
-    stream.in_copy_bytes(received_sig, sig_len);
-    uint32_t type = stream.in_uint32_le();
-    if (type != NtlmChallenge){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
-    }
-    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
-    }
-    message.TargetName.recv(stream);
-    message.negoFlags.recv(stream);
-    stream.in_copy_bytes(message.serverChallenge, 8);
-    // message.serverChallenge = stream.in_uint64_le();
-    stream.in_skip_bytes(8);
-    message.TargetInfo.recv(stream);
-    if (message.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        message.version.recv(stream);
-    }
-    // PAYLOAD
-    message.TargetName.read_payload(stream, pBegin);
-    message.TargetInfo.read_payload(stream, pBegin);
-    auto in_stream = message.TargetInfo.buffer.in_stream();
-    message.AvPairList.recv(in_stream);
-    message.TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
-}
 
 
 class rdpCredsspClientNTLM

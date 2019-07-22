@@ -1526,6 +1526,7 @@ struct NTLMv2_Response {
 //     Note  If a TargetInfo AV_PAIR Value is textual, it MUST be encoded in Unicode
 //      irrespective of what character set was negotiated (section 2.2.2.1).
 
+
 class NTLMChallengeMessage
 {
     friend void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message);
@@ -1576,6 +1577,37 @@ public:
     }
 };
 
+
+inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & self) 
+{
+    uint8_t const * pBegin = stream.get_current();
+    
+    constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+    uint8_t received_sig[sig_len];
+    stream.in_copy_bytes(received_sig, sig_len);
+    uint32_t type = stream.in_uint32_le();
+    if (type != NtlmChallenge){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
+    }
+    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
+    }
+    self.TargetName.recv(stream);
+    self.negoFlags.recv(stream);
+    stream.in_copy_bytes(self.serverChallenge, 8);
+    // self.serverChallenge = stream.in_uint64_le();
+    stream.in_skip_bytes(8);
+    self.TargetInfo.recv(stream);
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+        self.version.recv(stream);
+    }
+    // PAYLOAD
+    self.TargetName.read_payload(stream, pBegin);
+    self.TargetInfo.read_payload(stream, pBegin);
+    auto in_stream = self.TargetInfo.buffer.in_stream();
+    self.AvPairList.recv(in_stream);
+    self.TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
+}
 
 // [MS-NLMP]
 
@@ -1714,15 +1746,6 @@ class NTLMNegotiateMessage
         stream.out_uint32_le(this->msgType);
     }
 
-    bool message_recv(InStream & stream) {
-        constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
-        uint8_t received_sig[sig_len];
-        stream.in_copy_bytes(received_sig, sig_len);
-        uint32_t type = stream.in_uint32_le();
-        return !memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)
-            && (static_cast<uint32_t>(this->msgType) == type);
-    }
-
 public:
     NtlmNegotiateFlags negoFlags; /* 4 Bytes */
     NtlmField DomainName;         /* 8 Bytes */
@@ -1754,36 +1777,33 @@ public:
         this->DomainName.write_payload(stream);
         this->Workstation.write_payload(stream);
     }
+};
 
-    void recv(InStream & stream) {
-        uint8_t const * pBegin = stream.get_current();
-        bool res;
-        res = this->message_recv(stream);
-        if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
-        }
-        this->negoFlags.recv(stream);
-        this->DomainName.recv(stream);
-        this->Workstation.recv(stream);
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.recv(stream);
-        }
-        // PAYLOAD
-        this->DomainName.read_payload(stream, pBegin);
-        this->Workstation.read_payload(stream, pBegin);
+inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & self) 
+{
+    uint8_t const * pBegin = stream.get_current();
+
+    constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+    uint8_t received_sig[sig_len];
+    stream.in_copy_bytes(received_sig, sig_len);
+    uint32_t type = stream.in_uint32_le();
+
+    if (type != NtlmNegotiate){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
+    }
+    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
     }
 
+    self.negoFlags.recv(stream);
+    self.DomainName.recv(stream);
+    self.Workstation.recv(stream);
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+        self.version.recv(stream);
+    }
+    // PAYLOAD
+    self.DomainName.read_payload(stream, pBegin);
+    self.Workstation.read_payload(stream, pBegin);
+}
 
-    //bool check_negotiate_flag_received() {
-    //    uint32_t flags = this->negoFlags.flags;
-    //    if (!((flags & NTLMSSP_REQUEST_TARGET) &&
-    //          (flags & NTLMSSP_NEGOTIATE_NTLM) &&
-    //          (flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN) &&
-    //          (flags & NTLMSSP_NEGOTIATE_UNICODE))) {
-    //        return false;
-    //    }
-    //    return true;
-    //}
-
-};
 

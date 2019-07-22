@@ -568,7 +568,7 @@ protected:
         SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
             InStream in_stream(input_buffer);
-            this->NEGOTIATE_MESSAGE.recv(in_stream);
+            RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
             if (!this->ntlm_check_nego()) {
                 return SEC_E_INVALID_TOKEN;
             }

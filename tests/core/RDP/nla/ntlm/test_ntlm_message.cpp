@@ -185,7 +185,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     NTLMNegotiateMessage NegoMsg;
 
     InStream nego(ts_req.negoTokens.get_data(), ts_req.negoTokens.size());
-    NegoMsg.recv(nego);
+    RecvNTLMNegotiateMessage(nego, NegoMsg);
 
 
     RED_CHECK_EQUAL(NegoMsg.negoFlags.flags, 0xe20882b7);
@@ -1462,7 +1462,7 @@ public:
     SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Negotiate");
         InStream in_stream(input_buffer);
-        this->NEGOTIATE_MESSAGE.recv(in_stream);
+        RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
         if (!this->ntlm_check_nego()) {
             return SEC_E_INVALID_TOKEN;
         }
@@ -1951,7 +1951,7 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
         /* 0070 */ "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
 
     InStream s(nego_string, sizeof(nego_string) - 1);
-    context.NEGOTIATE_MESSAGE.recv(s);
+    RecvNTLMNegotiateMessage(s, context.NEGOTIATE_MESSAGE);
 
     s = InStream(challenge_string, sizeof(challenge_string) - 1);
     RecvNTLMChallengeMessage(s, context.CHALLENGE_MESSAGE);
@@ -2137,7 +2137,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     // send NEGOTIATE MESSAGE
     client_context.NEGOTIATE_MESSAGE.emit(out_client_to_server);
-    server_context.NEGOTIATE_MESSAGE.recv(in_client_to_server);
+    RecvNTLMNegotiateMessage(in_client_to_server, server_context.NEGOTIATE_MESSAGE);
 
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
     result = server_context.ntlm_check_nego();
@@ -2273,7 +2273,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
            out_client_to_server.get_data(), out_client_to_server.get_offset());
 
     InStream in_client_to_server(out_client_to_server.get_bytes());
-    server_context.NEGOTIATE_MESSAGE.recv(in_client_to_server);
+    RecvNTLMNegotiateMessage(in_client_to_server, server_context.NEGOTIATE_MESSAGE);
     server_context.SavedNegotiateMessage.init(in_client_to_server.get_offset());
     memcpy(server_context.SavedNegotiateMessage.get_data(),
            in_client_to_server.get_data(), in_client_to_server.get_offset());
