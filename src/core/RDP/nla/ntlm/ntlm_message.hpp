@@ -61,25 +61,25 @@
 // | Value                | Meaning                                                     |
 // +----------------------+-------------------------------------------------------------+
 // | MsvAvEOL             | Indicates that this is the last AV_PAIR in the list. AvLen  |
-// |                      |  MUST be 0. This type of information MUST be present in     |
+// | 0x0000               |  MUST be 0. This type of information MUST be present in     |
 // |                      |  the AV pair list.                                          |
 // +----------------------+-------------------------------------------------------------+
 // | MsvAvNbComputerName  | The server's NetBIOS computer name. The name MUST be in     |
-// |                      |  Unicode, and is not null-terminated. This type of          |
+// | 0x0001               |  Unicode, and is not null-terminated. This type of          |
 // |                      |  information MUST be present in the AV_pair list.           |
 // +----------------------+-------------------------------------------------------------+
 // | MsvAvNbDomainName    | The server's NetBIOS domain name. The name MUST be in       |
-// |                      |  Unicode, and is not null-terminated. This type of          |
+// | 0x0002               |  Unicode, and is not null-terminated. This type of          |
 // |                      |  information MUST be present in the AV_pair list.           |
 // +----------------------+-------------------------------------------------------------+
 // | MsvAvDnsComputerName | The fully qualified domain name (FQDN (1)) of the computer. |
-// |                      |  The name MUST be in Unicode, and is not null-terminated.   |
+// | 0x0003               |  The name MUST be in Unicode, and is not null-terminated.   |
 // +----------------------+-------------------------------------------------------------+
 // | MsvAvDnsDomainName   | The FQDN (2) of the domain. The name MUST be in Unicode,    |
-// |                      |  and is not null-terminated.                                |
+// | 0x0004               |  and is not null-terminated.                                |
 // +----------------------+-------------------------------------------------------------+
 // | MsvAvDnsTreeName     | The FQDN (2) of the forest. The name MUST be in Unicode,    |
-// |                      |  and is not null-terminated.                                |
+// | 0x0005               |  and is not null-terminated.                                |
 // +----------------------+-------------------------------------------------------------+
 // | MsvAvFlags           | A 32-bit value indicating server or client configuration.   |
 // | 0x0006               | 0x00000001: indicates to the client that the account        |
@@ -131,13 +131,6 @@ enum NTLM_AV_ID : uint16_t {
 };
 
 using AvPair = std::vector<uint8_t>;
-
-inline void EmitAvPair(NTLM_AV_ID avId, OutStream & stream, const AvPair & avp)
-{
-    stream.out_uint16_le(avId);
-    stream.out_uint16_le(avp.size());
-    stream.out_copy_bytes(avp);
-}
 
 inline void LogAvPair(NTLM_AV_ID avId, const AvPair & avp)
 {
