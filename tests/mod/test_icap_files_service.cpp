@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(icapSendInfos)
     });
 
     const auto data_ref =
-        "\x06\x00\x00\x00\x28"
+        "\x06\x00\x00\x00\x24"
         "\x00\x03"
         "\x00\x04key1" "\x00\x06value1"
         "\x00\x03key"  "\x00\x02v2"

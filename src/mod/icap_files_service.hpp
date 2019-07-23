@@ -253,6 +253,39 @@ inline void send_data_file(OutTransport trans, ICAPFileId file_id, const_bytes_v
 /// data_map is a key value list
 inline void send_infos(OutTransport trans, std::initializer_list<const_bytes_view> data_map)
 {
+    /*
+    InfosMessage
+
+    This message contains additionnal infos for the session.
+    It begins with an ICAPHeader its msg_type must be INFOS_FLAG.
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |           nb_items            |       item1_key_length        |
+    +---------------------------------------------------------------+
+    |                    item1_key      ...                         |
+    +---------------------------------------------------------------+
+    |      item1_value_length       |       item1_value ...         |
+    +---------------------------------------------------------------+
+    |       item2_key_length        |        item2_key ...          |
+    +---------------------------------------------------------------+
+    |      item2_value_length       |       item2_value ...         |
+    +---------------------------------------------------------------+
+    |                              ...                              |
+    +---------------------------------------------------------------+
+
+    nb_items : An unsigned, 16-bits integer that the number of items.
+
+    item<i>_key_length : An unsigned, 16-bits integer size of the <i>th
+                         item key length.
+    item<i>_key : String of size item<i>_key_length
+    item<i>_value_length : An unsigned, 16-bits integer size of the <i>th
+                           item value length.
+    item<i>_value : String of size item<i>_value_length
+    */
+
     assert(0 == (data_map.size() & 1));
 
     const std::size_t data_len = std::accumulate(data_map.begin(), data_map.end(), 0l,
@@ -261,7 +294,7 @@ inline void send_infos(OutTransport trans, std::initializer_list<const_bytes_vie
 
     StaticOutStream<8*1024> message;
 
-    ICAPHeader(MsgType::Infos, 4u + pkt_len).emit(message);
+    ICAPHeader(MsgType::Infos, pkt_len).emit(message);
     message.out_uint16_be(data_map.size() / 2);
 
     for (auto const& data : data_map) {
