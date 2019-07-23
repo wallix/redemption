@@ -116,78 +116,52 @@
 //  AvId field. The available types and resulting format and contents of this field are
 //  specified in the table within the AvId field description in this topic.
 enum NTLM_AV_ID : uint16_t {
-    MsvAvEOL = 0x0000,
-    MsvAvNbComputerName,
-    MsvAvNbDomainName,
-    MsvAvDnsComputerName,
-    MsvAvDnsDomainName,
-    MsvAvDnsTreeName,
-    MsvAvFlags,
-    MsvAvTimestamp,
-    MsvAvSingleHost,
-    MsvAvTargetName,
-    MsvChannelBindings,
+    MsvAvEOL             = 0x0000,
+    MsvAvNbComputerName  = 0x01,
+    MsvAvNbDomainName    = 0x02,
+    MsvAvDnsComputerName = 0x03,
+    MsvAvDnsDomainName   = 0x04,
+    MsvAvDnsTreeName     = 0x05,
+    MsvAvFlags           = 0x06,
+    MsvAvTimestamp       = 0x07,
+    MsvAvSingleHost      = 0x08,
+    MsvAvTargetName      = 0x09,
+    MsvChannelBindings   = 0x0A,
     AV_ID_MAX
 };
 
+using AvPair = std::vector<uint8_t>;
+
+inline void EmitAvPair(NTLM_AV_ID avId, OutStream & stream, const AvPair & avp)
+{
+    stream.out_uint16_le(avId);
+    stream.out_uint16_le(avp.size());
+    stream.out_copy_bytes(avp);
+}
+
+inline void LogAvPair(NTLM_AV_ID avId, const AvPair & avp)
+{
+    LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avId, unsigned(avp.size()));
+    hexdump_c(avp.data(), avp.size(), 8);
+}
+
 class NtlmAvPairList final
 {
-    struct AvPair
-    {
-        uint16_t avLen = 0;
-        // Unicode, uint32_t, FILETIME, Single_Host_Data, MD5Hash or gss_channel_bindings_struct
-        std::unique_ptr<uint8_t[]> data;
-
-        AvPair() = default;
-
-        AvPair(not_null_ptr<uint8_t const> value, uint16_t length)
-        : avLen(length)
-        , data(std::make_unique<uint8_t[]>(length))
-        {
-            memcpy(this->data.get(), value.get(), length);
-        }
-
-        void emit(NTLM_AV_ID avId, OutStream & stream) const
-        {
-            stream.out_uint16_le(avId);
-            stream.out_uint16_le(this->avLen);
-            stream.out_copy_bytes(this->data.get(), this->avLen);
-        }
-
-        void log(NTLM_AV_ID avId) const
-        {
-            LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avId, unsigned(this->avLen));
-            hexdump_c(this->data.get(), this->avLen, 8);
-        }
-    };
-    AvPair list[AV_ID_MAX]{{byte_ptr_cast(""), 0}};
+    AvPair list[AV_ID_MAX];
 
 public:
     NtlmAvPairList() = default;
 
-    void add(NTLM_AV_ID avId, not_null_ptr<uint8_t const> value, checked_int<uint16_t> length)
+    void add(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length)
     {
-        this->list[avId] = AvPair(value, length);
+        this->list[avId] = AvPair(value, value+length);
     }
-
-    //bool rm(NTLM_AV_ID avId)
-    //{
-    //    // ASSUME avID != MsvAvEOL
-    //    bool res = false;
-    //    if (this->list[avId]) {
-    //        delete this->list[avId];
-    //        this->list[avId] = nullptr;
-    //        res = true;
-    //    }
-    //    return res;
-    //}
 
     size_t length() const
     {
         size_t res = 1;
         for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
-            auto & p = this->list[i];
-            if (p.avLen) {
+            if (this->list[i].size()) {
                 ++res;
             }
         }
@@ -196,12 +170,11 @@ public:
 
     size_t packet_length() const
     {
-        const size_t static_pair_len = sizeof(NTLM_AV_ID) + sizeof(AvPair::avLen);
+        const size_t static_pair_len = sizeof(NTLM_AV_ID) + sizeof(uint16_t); // AVPair len field
         size_t res = static_pair_len;
         for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
-            auto & p = this->list[i];
-                if (p.avLen) {
-                res += static_pair_len + p.avLen;
+            if (this->list[i].size()) {
+                res += static_pair_len + this->list[i].size();
             }
         }
         return res;
@@ -210,12 +183,11 @@ public:
     void emit(OutStream & stream) const
     {
         for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
-            auto & p = this->list[i];
-            if (p.avLen) {
-                p.emit(NTLM_AV_ID(i), stream);
+            if (this->list[i].size()) {
+                EmitAvPair(NTLM_AV_ID(i), stream, this->list[i]);
             }
         }
-        this->list[MsvAvEOL].emit(MsvAvEOL, stream);
+        EmitAvPair(MsvAvEOL, stream, this->list[MsvAvEOL]);
     }
 
     void recv(InStream & stream)
@@ -238,12 +210,10 @@ public:
         LOG(LOG_INFO, "Av Pair List : %zu elements {", this->length());
 
         for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
-            auto & p = this->list[i];
-            if (p.avLen) {
-                p.log(NTLM_AV_ID(i));
+            if (this->list[i].size()) {
+                LogAvPair(NTLM_AV_ID(i), this->list[i]);
             }
         }
-
         LOG(LOG_INFO, "}");
     }
 };
