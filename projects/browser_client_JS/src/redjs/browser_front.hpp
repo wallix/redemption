@@ -59,8 +59,8 @@ public:
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef& channel_def, uint8_t const* data,
-        std::size_t length, std::size_t chunk_size, int flags) override;
+        const CHANNELS::ChannelDef& channel_def, const_bytes_view chunk_data,
+        std::size_t total_data_len, int flags) override;
 
     void update_pointer_position(uint16_t x, uint16_t y) override;
 

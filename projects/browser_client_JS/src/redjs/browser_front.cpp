@@ -71,8 +71,8 @@ BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
 }
 
 void BrowserFront::send_to_channel(
-    const CHANNELS::ChannelDef & channel_def, const uint8_t * data,
-    std::size_t /*length*/, std::size_t chunk_size, int flags)
+    const CHANNELS::ChannelDef & channel_def, const_bytes_view chunk_data,
+        std::size_t /*total_data_len*/, int flags)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::channels),
         LOG_INFO, "BrowserFront::send_to_channel");
@@ -81,7 +81,7 @@ void BrowserFront::send_to_channel(
     {
         if (receiver.name() == channel_def.name)
         {
-            receiver({data, chunk_size}, flags);
+            receiver(chunk_data, flags);
             break;
         }
     }
