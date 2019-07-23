@@ -184,10 +184,13 @@ public:
     {
         for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
             if (this->list[i].size()) {
-                EmitAvPair(NTLM_AV_ID(i), stream, this->list[i]);
+                stream.out_uint16_le(NTLM_AV_ID(i));
+                stream.out_uint16_le(this->list[i].size());
+                stream.out_copy_bytes(this->list[i]);
             }
         }
-        EmitAvPair(MsvAvEOL, stream, this->list[MsvAvEOL]);
+        stream.out_uint16_le(MsvAvEOL);
+        stream.out_uint16_le(0);
     }
 
     void recv(InStream & stream)
