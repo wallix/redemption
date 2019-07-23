@@ -156,7 +156,14 @@ public:
 
     void add(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length)
     {
-            this->list[avId-1].pair.assign(value, value+length);
+        for (auto & avp: this->list) {
+            if (avp.id == avId){
+                avp.pair.assign(value, value+length);
+                return;
+            }
+        }
+        // TODO: usefull once the list is changed to vector
+        //this->list.pushback({avId, AvPair(value, value+length)});
     }
 
     size_t length() const
