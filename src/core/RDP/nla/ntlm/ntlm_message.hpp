@@ -134,21 +134,36 @@ using AvPair = std::vector<uint8_t>;
 
 class NtlmAvPairList final
 {
-    AvPair list[AV_ID_MAX];
+    struct {
+        NTLM_AV_ID id;
+        AvPair pair;
+    } list[AV_ID_MAX] = {
+        {MsvAvNbComputerName,{}},
+        {MsvAvNbDomainName,{}},
+        {MsvAvDnsComputerName,{}},
+        {MsvAvDnsDomainName,{}},
+        {MsvAvDnsTreeName,{}},
+        {MsvAvFlags,{}},
+        {MsvAvTimestamp,{}},
+        {MsvAvSingleHost,{}},
+        {MsvAvTargetName,{}},
+        {MsvChannelBindings,{}},
+        {MsvAvEOL,{}},
+    };
 
 public:
     NtlmAvPairList() = default;
 
     void add(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length)
     {
-        this->list[avId] = AvPair(value, value+length);
+            this->list[avId-1].pair.assign(value, value+length);
     }
 
     size_t length() const
     {
         size_t res = 1;
-        for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
-            if (this->list[i].size()) {
+        for (auto & avp: this->list) {
+            if (avp.pair.size()) {
                 ++res;
             }
         }
@@ -159,9 +174,9 @@ public:
     {
         const size_t static_pair_len = sizeof(NTLM_AV_ID) + sizeof(uint16_t); // AVPair len field
         size_t res = static_pair_len;
-        for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
-            if (this->list[i].size()) {
-                res += static_pair_len + this->list[i].size();
+        for (auto & avp: this->list) {
+            if (avp.pair.size()) {
+                res += static_pair_len + avp.pair.size();
             }
         }
         return res;
@@ -169,11 +184,11 @@ public:
 
     void emit(OutStream & stream) const
     {
-        for (std::size_t i = 1; i < AV_ID_MAX; ++i) {
-            if (this->list[i].size()) {
-                stream.out_uint16_le(NTLM_AV_ID(i));
-                stream.out_uint16_le(this->list[i].size());
-                stream.out_copy_bytes(this->list[i]);
+        for (auto & avp: this->list) {
+            if (avp.pair.size()) {
+                stream.out_uint16_le(avp.id);
+                stream.out_uint16_le(avp.pair.size());
+                stream.out_copy_bytes(avp.pair);
             }
         }
         stream.out_uint16_le(MsvAvEOL);
@@ -190,7 +205,7 @@ public:
                 stream.in_skip_bytes(length);
                 break;
             }
-            this->add(id, stream.get_current(), length);
+            this->list[id-1].pair.assign(stream.get_current(), stream.get_current()+length);
             stream.in_skip_bytes(length);
         }
     }
@@ -199,10 +214,10 @@ public:
     {
         LOG(LOG_INFO, "Av Pair List : %zu elements {", this->length());
 
-        for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
-            if (this->list[i].size()) {
-                LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", NTLM_AV_ID(i), unsigned(this->list[i].size()));
-                hexdump_c(this->list[i].data(), this->list[i].size(), 8);
+        for (auto & avp: this->list) {
+            if (avp.pair.size()) {
+                LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.pair.size()));
+                hexdump_c(avp.pair.data(), avp.pair.size(), 8);
             }
         }
         LOG(LOG_INFO, "}");
