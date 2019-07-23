@@ -28,6 +28,7 @@
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "keyboard/keymap2.hpp"
+#include "mod/metrics_hmac.hpp"
 #include "mod/rdp/parse_extra_orders.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
@@ -35,13 +36,6 @@
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
-
-
-#ifndef __EMSCRIPTEN__
-# include "mod/metrics_hmac.hpp"
-# include "mod/icap_files_service.hpp"
-#endif
-
 
 
 void ModuleManager::create_mod_rdp(
@@ -324,7 +318,6 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-#ifndef __EMSCRIPTEN__
         struct ModRDPWithMetrics : public mod_rdp
         {
             struct ModMetrics : Metrics
@@ -428,10 +421,6 @@ void ModuleManager::create_mod_rdp(
                 ini.get<cfg::metrics::log_interval>());
         }
 
-#else
-        using ModRDPWithMetrics = mod_rdp;
-#endif
-
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
             authentifier,
@@ -458,7 +447,6 @@ void ModuleManager::create_mod_rdp(
             enable_validator ? &icap->service : nullptr
         );
 
-#ifndef __EMSCRIPTEN__
         if (enable_validator) {
             new_mod->icap = std::move(icap);
             new_mod->icap->validator_event = this->session_reactor.create_fd_event(validator_fd)
@@ -480,7 +468,6 @@ void ModuleManager::create_mod_rdp(
                 })
             ;
         }
-#endif
 
         if (host_mod_in_widget) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");

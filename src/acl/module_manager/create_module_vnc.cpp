@@ -26,13 +26,11 @@
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/vnc/vnc.hpp"
+#include "mod/metrics_hmac.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
 #include "acl/module_manager.hpp"
 
-#ifndef __EMSCRIPTEN__
-# include "mod/metrics_hmac.hpp"
-#endif
 
 void ModuleManager::create_mod_vnc(
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -49,7 +47,6 @@ void ModuleManager::create_mod_vnc(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-#ifndef __EMSCRIPTEN__
         struct ModVNCWithMetrics : public mod_vnc
         {
             struct ModMetrics : Metrics
@@ -91,9 +88,6 @@ void ModuleManager::create_mod_vnc(
                 ini.get<cfg::metrics::log_file_turnover_interval>(),
                 ini.get<cfg::metrics::log_interval>());
         }
-#else
-        using ModVNCWithMetrics = mod_rdp;
-#endif
 
         auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
             *this,
