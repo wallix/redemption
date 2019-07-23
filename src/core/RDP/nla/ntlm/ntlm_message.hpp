@@ -1280,6 +1280,7 @@ struct NTLM_Response {
 //   2.2.2.1). The sequence contains the server-naming context and is terminated by an AV_PAIR
 //   structure with an AvId field of MsvAvEOL.
 
+   
 struct NTLMv2_Client_Challenge {
     uint8_t  RespType;              // MUST BE 0x01
     uint8_t  HiRespType;            // MUST BE 0x01
@@ -1291,39 +1292,38 @@ struct NTLMv2_Client_Challenge {
     NtlmAvPairList AvPairList;
     uint32_t Reserved4;             // MUST BE 0x00
 
-    NTLMv2_Client_Challenge()
-
-    = default;
-
-    void emit(OutStream & stream) /* TODO const*/ {
-        // ULONG length;
-
-        this->RespType = 0x01;
-        this->HiRespType = 0x01;
-        stream.out_uint8(this->RespType);
-        stream.out_uint8(this->HiRespType);
-        stream.out_clear_bytes(2);
-        stream.out_clear_bytes(4);
-        stream.out_copy_bytes(this->Timestamp, 8);
-        stream.out_copy_bytes(this->ClientChallenge, 8);
-        stream.out_clear_bytes(4);
-        this->AvPairList.emit(stream);
-        stream.out_clear_bytes(4);
-    }
-
-    void recv(InStream & stream) {
-        // size_t size;
-        this->RespType = stream.in_uint8();
-        this->HiRespType = stream.in_uint8();
-        stream.in_skip_bytes(2);
-        stream.in_skip_bytes(4);
-        stream.in_copy_bytes(this->Timestamp, 8);
-        stream.in_copy_bytes(this->ClientChallenge, 8);
-        stream.in_skip_bytes(4);
-        this->AvPairList.recv(stream);
-        stream.in_skip_bytes(4);
-    }
+    NTLMv2_Client_Challenge() = default;
 };
+
+inline void EmitNTLMv2_Client_Challenge(OutStream & stream, NTLMv2_Client_Challenge & self)
+{
+    self.RespType = 0x01;
+    self.HiRespType = 0x01;
+    stream.out_uint8(self.RespType);
+    stream.out_uint8(self.HiRespType);
+    stream.out_clear_bytes(2);
+    stream.out_clear_bytes(4);
+    stream.out_copy_bytes(self.Timestamp, 8);
+    stream.out_copy_bytes(self.ClientChallenge, 8);
+    stream.out_clear_bytes(4);
+    self.AvPairList.emit(stream);
+    stream.out_clear_bytes(4);
+}
+
+inline void RecvNTLMv2_Client_Challenge(InStream & stream, NTLMv2_Client_Challenge & self) 
+{
+    // size_t size;
+    self.RespType = stream.in_uint8();
+    self.HiRespType = stream.in_uint8();
+    stream.in_skip_bytes(2);
+    stream.in_skip_bytes(4);
+    stream.in_copy_bytes(self.Timestamp, 8);
+    stream.in_copy_bytes(self.ClientChallenge, 8);
+    stream.in_skip_bytes(4);
+    self.AvPairList.recv(stream);
+    stream.in_skip_bytes(4);
+}
+
 
 // 2.2.2.8   NTLM2 V2 Response: NTLMv2_RESPONSE
 // ==================================================
@@ -1356,18 +1356,16 @@ struct NTLMv2_Response {
     uint8_t Response[16]{};
     NTLMv2_Client_Challenge Challenge;
 
-    NTLMv2_Response()
-
-    = default;
+    NTLMv2_Response() = default;
 
     void emit(OutStream & stream) /* TODO const*/ {
         stream.out_copy_bytes(this->Response, 16);
-        this->Challenge.emit(stream);
+        EmitNTLMv2_Client_Challenge(stream, this->Challenge);
     }
 
     void recv(InStream & stream) {
         stream.in_copy_bytes(this->Response, 16);
-        this->Challenge.recv(stream);
+        RecvNTLMv2_Client_Challenge(stream, this->Challenge);
     }
 
 };
