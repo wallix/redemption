@@ -132,12 +132,6 @@ enum NTLM_AV_ID : uint16_t {
 
 using AvPair = std::vector<uint8_t>;
 
-inline void LogAvPair(NTLM_AV_ID avId, const AvPair & avp)
-{
-    LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avId, unsigned(avp.size()));
-    hexdump_c(avp.data(), avp.size(), 8);
-}
-
 class NtlmAvPairList final
 {
     AvPair list[AV_ID_MAX];
@@ -207,7 +201,8 @@ public:
 
         for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
             if (this->list[i].size()) {
-                LogAvPair(NTLM_AV_ID(i), this->list[i]);
+                LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", NTLM_AV_ID(i), unsigned(this->list[i].size()));
+                hexdump_c(this->list[i].data(), this->list[i].size(), 8);
             }
         }
         LOG(LOG_INFO, "}");
