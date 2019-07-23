@@ -140,13 +140,6 @@ int validator_get_errno(ValidatorApi* validator) noexcept
     return validator->transport.errnum;
 }
 
-int validator_service_is_up(ValidatorApi* validator) noexcept
-{
-    SCOPED_TRACE;
-    CHECK_HANDLE(validator);
-    return validator->icap.service_is_up();
-}
-
 ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_name, char const* target_name) noexcept
 {
     SCOPED_TRACE;
@@ -156,7 +149,7 @@ ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_na
     return safe_int(file_id);
 }
 
-int validator_send_data(const ValidatorApi* validator, ValidatorFileId id, char const* data, const unsigned size) noexcept
+int validator_send_data(ValidatorApi* validator, ValidatorFileId id, char const* data, const unsigned size) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);

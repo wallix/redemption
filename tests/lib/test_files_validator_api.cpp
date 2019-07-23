@@ -22,6 +22,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "lib/files_validator_api.hpp"
+#include "mod/icap_files_service.hpp"
 
 #include "utils/sugar/algostring.hpp"
 
@@ -35,7 +36,7 @@
 RED_AUTO_TEST_CASE_WF(testFileValid, wf)
 {
     auto data =
-        "\x07"                  // msg_type
+        "\x07"                  // invalid msg_type
         "\x00\x00\x00\x05"      // len
         "\x01"                  // flag
         "\x00\x00\x00\x01"      // max_connection_number
@@ -50,15 +51,19 @@ RED_AUTO_TEST_CASE_WF(testFileValid, wf)
     auto* validator = validator_open_fd_session(fd);
     RED_REQUIRE(validator);
 
-    RED_CHECK(validator_receive_response(validator) == 2);
+    using R = ICAPService::ResponseType;
 
-    RED_CHECK(validator_receive_response(validator) == 3);
+    RED_CHECK(validator_get_response_type(validator) == underlying_cast(R::WaitingData));
+
+    RED_CHECK(validator_receive_response(validator) == underlying_cast(R::Error));
+
+    RED_CHECK(validator_receive_response(validator) == underlying_cast(R::HasContent));
     RED_CHECK(validator_get_content(validator) == "ok");
-    RED_CHECK(validator_get_response_type(validator) == 3);
+    RED_CHECK(validator_get_response_type(validator) == underlying_cast(R::HasContent));
     RED_CHECK(validator_get_result_file_id(validator) == 8);
     RED_CHECK(validator_get_result_flag(validator) == 1);
 
-    RED_CHECK(validator_receive_response(validator) == 0);
+    RED_CHECK(validator_receive_response(validator) == underlying_cast(R::WaitingData));
 
     RED_CHECK(validator_close_session(validator) == 0);
 

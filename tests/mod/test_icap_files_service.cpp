@@ -54,6 +54,27 @@ RED_AUTO_TEST_CASE(icapSend)
     RED_CHECK(icap.open_file(filename, "clamav") == ICAPFileId(2));
 }
 
+RED_AUTO_TEST_CASE(icapSendInfos)
+{
+    BufTransport trans;
+    ICAPService icap{trans};
+
+    icap.send_infos({
+        "key1"_av, "value1"_av,
+        "key"_av, "v2"_av,
+        "k3"_av, "value"_av,
+    });
+
+    const auto data_ref =
+        "\x06\x00\x00\x00\x28"
+        "\x00\x03"
+        "\x00\x04key1" "\x00\x06value1"
+        "\x00\x03key"  "\x00\x02v2"
+        "\x00\x02k3"   "\x00\x05value"
+        ""_av;
+    RED_CHECK_MEM(trans.data(), data_ref);
+}
+
 RED_AUTO_TEST_CASE(icapReceive)
 {
     BufTransport trans;
@@ -63,16 +84,6 @@ RED_AUTO_TEST_CASE(icapReceive)
         trans.buf.assign(data.as_charp(), data.size());
     };
 
-    // init header
-    RED_CHECK(!icap.service_is_up());
-    RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
-    setbuf("\x07\x00\x00\x00"_av); // msg_type, len(3)
-    RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
-    setbuf("\x05\x01"_av);         // len(1), flag
-    RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
-    setbuf("\x00\x00\x00\x01"_av); // max_connection_number
-    RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasPacket);
-    RED_REQUIRE(icap.service_is_up());
     RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
 
     // message 1

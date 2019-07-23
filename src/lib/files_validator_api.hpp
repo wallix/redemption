@@ -46,13 +46,10 @@ extern "C"
     int validator_get_errno(ValidatorApi* validator) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_service_is_up(ValidatorApi* validator) noexcept;
-
-    REDEMPTION_LIB_EXPORT
     ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_name, char const* target_name) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    int validator_send_data(const ValidatorApi* validator, ValidatorFileId id, char const* data, unsigned size) noexcept;
+    int validator_send_data(ValidatorApi* validator, ValidatorFileId id, char const* data, unsigned size) noexcept;
 
     REDEMPTION_LIB_EXPORT
     int validator_end_of_file(ValidatorApi* validator, ValidatorFileId id) noexcept;

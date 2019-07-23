@@ -325,7 +325,6 @@ void ModuleManager::create_mod_rdp(
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
 #ifndef __EMSCRIPTEN__
-
         struct ModRDPWithMetrics : public mod_rdp
         {
             struct ModMetrics : Metrics
@@ -394,6 +393,11 @@ void ModuleManager::create_mod_rdp(
                 validator_fd = ufd.fd();
                 fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
                 icap = std::make_unique<ModRDPWithMetrics::ICAP>(std::move(ufd));
+                icap->service.send_infos({
+                    "server_ip"_av, this->ini.get<cfg::context::target_host>(),
+                    "client_ip"_av, this->ini.get<cfg::globals::host>(),
+                    "auth_user"_av, this->ini.get<cfg::globals::auth_user>()
+                });
             }
             else {
                 enable_validator = false;

@@ -91,7 +91,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
                 std::move(filename), filesize, this->icap_file_id, direction});
         }
 
-        void set_data(const_bytes_view data)
+        void send_data(const_bytes_view data)
         {
             assert(this->icap_service);
             this->icap_service->send_data(this->icap_file_id, data);
@@ -119,7 +119,6 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
                             this->icap_service->get_content(),
                             this->icap_service->last_result_flag()
                         }};
-                    case ICAPService::ResponseType::HasPacket:
                     case ICAPService::ResponseType::Error:
                         ;
                 }
@@ -608,7 +607,7 @@ private:
                 data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
             }
             data = data.first(data_len);
-            this->icap.set_data(data);
+            this->icap.send_data(data);
             this->last_lindex_packet_remaining -= data_len;
             this->last_lindex_total_send += data_len;
 

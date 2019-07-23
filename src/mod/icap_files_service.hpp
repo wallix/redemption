@@ -30,6 +30,7 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <string>
+#include <numeric>
 #include <string_view>
 
 #include "utils/log.hpp"
@@ -66,8 +67,8 @@ enum class MsgType : uint8_t
     AbortFile = 0x04,
     // Result received from Validator
     Result = 0x05,
-    // File validator check server icap result
-    Check = 0x07,
+    // map with key(string), value(string)
+    Infos = 0x06,
 
     Unknown,
 };
@@ -198,47 +199,6 @@ struct ICAPResultHeader
     }
 };
 
-struct ICAPCheck
-{
-    enum class IsUp : bool { Down, Up };
-
-    IsUp service_is_up;
-    uint32_t max_connections_number;
-
-    //     Check message
-
-    //     This message is send from the local service to sessions. It begins with an
-    //     ICAPHeader, its msg_type must be Result_FLAG.
-
-    //     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    //     | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-    //     |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-    //     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    //     |    up_flag    |            max_connections_number             |
-    //     +---------------+-----------------------------------------------+
-    //     |               |
-    //     +---------------+
-
-    //     up_flag: An unsigned, 8-bit integer that contains flag SERVICE_UP_FLAG
-    //              or SERVICE_DOWN_FLAG
-
-    //     max_connections_number: An unsigned, 32-bit integer that contains the
-    //                             maximum number of connection icap service support
-
-    ReceiveStatus recv(InStream& stream) noexcept
-    {
-        /* up_flag(1) + max_connections_number(4) */
-        if (stream.in_remain() < 5) {
-            return ReceiveStatus::WaitingData;
-        }
-
-        this->service_is_up = IsUp(bool(stream.in_uint8()));
-        this->max_connections_number = stream.in_uint32_be();
-
-        return ReceiveStatus::Ok;
-    }
-};
-
 inline ICAPFileId send_open_file(
     OutTransport trans, ICAPFileId file_id, std::string_view file_name, std::string_view target_name)
 {
@@ -277,7 +237,7 @@ inline void send_header(
 
 inline void send_data_file(OutTransport trans, ICAPFileId file_id, const_bytes_view data)
 {
-    constexpr std::ptrdiff_t max_pkt_len = 1024*64;
+    constexpr std::ptrdiff_t max_pkt_len = 0x0fff'ffff;
 
     auto p = data.begin();
     const auto pend = data.end();
@@ -290,6 +250,33 @@ inline void send_data_file(OutTransport trans, ICAPFileId file_id, const_bytes_v
     }
 }
 
+/// data_map is a key value list
+inline void send_infos(OutTransport trans, std::initializer_list<const_bytes_view> data_map)
+{
+    assert(0 == (data_map.size() & 1));
+
+    const std::size_t data_len = std::accumulate(data_map.begin(), data_map.end(), 0l,
+        [](auto n, auto const av) { return n + av.size(); });
+    const std::size_t pkt_len = 2u + data_len + data_map.size() * 2u;
+
+    StaticOutStream<8*1024> message;
+
+    ICAPHeader(MsgType::Infos, 4u + pkt_len).emit(message);
+    message.out_uint16_be(data_map.size() / 2);
+
+    for (auto const& data : data_map) {
+        if (!message.has_room(data.size() + 2u)) {
+            trans.send(message.get_bytes());
+            message.rewind();
+        }
+        assert(message.has_room(data.size() + 2u));
+        message.out_uint16_be(checked_int(data.size()));
+        message.out_copy_bytes(data);
+    }
+
+    trans.send(message.get_bytes());
+}
+
 } // namespace LocalICAPProtocol
 
 struct ICAPService
@@ -298,34 +285,35 @@ struct ICAPService
     : trans(trans)
     {}
 
-    bool service_is_up() const noexcept
-    {
-        return this->check.service_is_up == LocalICAPProtocol::ICAPCheck::IsUp::Up;
-    }
-
     ICAPFileId open_file(std::string_view file_name, std::string_view target_name)
     {
         return LocalICAPProtocol::send_open_file(this->trans, this->generate_id(), file_name, target_name);
     }
 
-    void send_data(ICAPFileId file_id, const_bytes_view data) const
+    void send_data(ICAPFileId file_id, const_bytes_view data)
     {
         LocalICAPProtocol::send_data_file(this->trans, file_id, data);
     }
 
-    void send_eof(ICAPFileId file_id) const
+    /// data_map is a key value list
+    void send_infos(std::initializer_list<const_bytes_view> data_map)
+    {
+        LocalICAPProtocol::send_infos(this->trans, data_map);
+    }
+
+    void send_eof(ICAPFileId file_id)
     {
         using namespace LocalICAPProtocol;
         send_header(this->trans, file_id, MsgType::Eof);
     }
 
-    void send_abort(ICAPFileId file_id) const
+    void send_abort(ICAPFileId file_id)
     {
         using namespace LocalICAPProtocol;
         send_header(this->trans, file_id, MsgType::AbortFile);
     }
 
-    void send_close_session() const
+    void send_close_session()
     {
         using namespace LocalICAPProtocol;
         send_header(this->trans, ICAPFileId(), MsgType::CloseSession);
@@ -350,7 +338,6 @@ struct ICAPService
     {
         WaitingData,
         Error,
-        HasPacket,
         HasContent,
     };
 
@@ -368,7 +355,6 @@ struct ICAPService
         // switch (this->state) {
         //     case State::Error:      return ResponseType::Error;
         //     case State::HasContent: return ResponseType::HasContent;
-        //     case State::HasPacket:  return ResponseType::HasPacket;
         //     default:                return ResponseType::WaitingData;
         // }
     }
@@ -380,7 +366,6 @@ private:
         WaitingData,
 
         Error,
-        HasPacket,
         HasContent,
     };
 
@@ -419,13 +404,6 @@ private:
 
         switch (header.msg_type)
         {
-            case MsgType::Check:
-                if (this->check.recv(in_stream) != ReceiveStatus::Ok) {
-                    return State::WaitingData;
-                }
-
-                return shift_data(State::HasPacket);
-
             case MsgType::Result:
                 if (this->result_header.recv(in_stream) != ReceiveStatus::Ok) {
                     return State::WaitingData;
@@ -451,7 +429,6 @@ private:
 
     Transport& trans;
     LocalICAPProtocol::ICAPResultHeader result_header;
-    LocalICAPProtocol::ICAPCheck check {};
     std::string content;
     int32_t current_id = 0;
     State state = State::WaitingData;
