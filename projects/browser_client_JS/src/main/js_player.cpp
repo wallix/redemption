@@ -124,7 +124,8 @@ struct WrmPlayer
                 return false;
             }
 
-            this->in_stream = InStream(header.get_data(), chunk_size, WRM_HEADER_SIZE);
+            this->in_stream = InStream({header.get_data(), chunk_size});
+            this->in_stream.in_skip_bytes(WRM_HEADER_SIZE);
         }
 
         if (this->chunk.count > 0)

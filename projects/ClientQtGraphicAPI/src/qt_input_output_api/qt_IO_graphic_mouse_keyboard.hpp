@@ -1223,7 +1223,7 @@ public:
 
         uint16_t draw_pos = 0;
 
-        InStream variable_bytes(cmd.data, cmd.data_len);
+        InStream variable_bytes({cmd.data, cmd.data_len});
 
         //uint8_t const * fragment_begin_position = variable_bytes.get_current();
 
