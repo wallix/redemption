@@ -130,15 +130,15 @@ enum NTLM_AV_ID : uint16_t {
     AV_ID_MAX
 };
 
-struct AvItem {
+struct AvPair {
     NTLM_AV_ID id;
     std::vector<uint8_t> data;
 };
 
 
-using NtlmAvPairList = std::vector<AvItem>;
+using NtlmAvPairList = std::vector<AvPair>;
 
-inline void EmitNtlmAvPairList(OutStream & stream, const std::vector<AvItem> & list)
+inline void EmitNtlmAvPairList(OutStream & stream, const std::vector<AvPair> & list)
 {
     for (auto & avp: list) {
         stream.out_uint16_le(avp.id);
@@ -149,7 +149,7 @@ inline void EmitNtlmAvPairList(OutStream & stream, const std::vector<AvItem> & l
     stream.out_uint16_le(0);
 }
 
-inline void RecvNtlmAvPairList(InStream & stream, std::vector<AvItem> & list)
+inline void RecvNtlmAvPairList(InStream & stream, std::vector<AvPair> & list)
 {
     for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
         auto id = stream.in_uint16_le();
@@ -165,7 +165,7 @@ inline void RecvNtlmAvPairList(InStream & stream, std::vector<AvItem> & list)
 }
 
 // TODO: use array_view for (value/length)
-inline void NtlmAddToAvPairList(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length, std::vector<AvItem> & list)
+inline void NtlmAddToAvPairList(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length, std::vector<AvPair> & list)
 {
     for (auto & avp: list) {
         if (avp.id == avId){
@@ -178,7 +178,7 @@ inline void NtlmAddToAvPairList(NTLM_AV_ID avId, uint8_t const * value, checked_
 
 
 
-inline void LogNtlmAvPairList(const std::vector<AvItem> & list)
+inline void LogNtlmAvPairList(const std::vector<AvPair> & list)
 {
     LOG(LOG_INFO, "Av Pair List : %zu elements {", list.size());
 
