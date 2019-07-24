@@ -17,6 +17,7 @@ import os
 import signal
 import traceback
 import json
+import re
 from logger import Logger
 
 from .cutmessage import cut_message
@@ -1073,7 +1074,6 @@ class Sesman():
             'host': gethostname(),
             'random': random.randint(1000, 9999)
         }
-        import re
         basename = re.sub(r'[^-A-Za-z0-9_@,.]', "", basename)
         return basename
 
@@ -1254,7 +1254,6 @@ class Sesman():
     def parse_duration(self, duration):
         if duration:
             try:
-                import re
                 mpat = re.compile("(\d+)m")
                 hpat = re.compile("(\d+)h")
                 hres = hpat.search(duration)
