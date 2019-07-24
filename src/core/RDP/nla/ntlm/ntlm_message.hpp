@@ -147,40 +147,35 @@ public:
 
     size_t length() const  { return list.size()+1; }
 
-    size_t packet_length() const
-    {
-        size_t res = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (this->list.size()+1);
-        for (auto & avp: this->list) { res += avp.pair.size(); }
-        return res;
-    }
 
-    void emit(OutStream & stream) const
-    {
-        for (auto & avp: this->list) {
-            stream.out_uint16_le(avp.id);
-            stream.out_uint16_le(avp.pair.size());
-            stream.out_copy_bytes(avp.pair);
-        }
-        stream.out_uint16_le(MsvAvEOL);
-        stream.out_uint16_le(0);
-    }
-
-    void recv(InStream & stream)
-    {
-        for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
-            NTLM_AV_ID id = static_cast<NTLM_AV_ID>(stream.in_uint16_le());
-            uint16_t length = stream.in_uint16_le();
-            if (id == MsvAvEOL) {
-                // ASSUME last element is MsvAvEOL
-                stream.in_skip_bytes(length);
-                break;
-            }
-            this->list.push_back({id, AvPair(stream.get_current(), stream.get_current()+length)});
-            stream.in_skip_bytes(length);
-        }
-    }
 };
 
+
+inline void EmitNtlmAvPairList(OutStream & stream, const std::vector<AvItem> & list)
+{
+    for (auto & avp: list) {
+        stream.out_uint16_le(avp.id);
+        stream.out_uint16_le(avp.pair.size());
+        stream.out_copy_bytes(avp.pair);
+    }
+    stream.out_uint16_le(MsvAvEOL);
+    stream.out_uint16_le(0);
+}
+
+inline void RecvNtlmAvPairList(InStream & stream, std::vector<AvItem> & list)
+{
+    for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
+        auto id = stream.in_uint16_le();
+        auto length = stream.in_uint16_le();
+        if (id == MsvAvEOL) {
+            // ASSUME last element is MsvAvEOL
+            stream.in_skip_bytes(length);
+            break;
+        }
+        list.push_back({static_cast<NTLM_AV_ID>(id), AvPair(stream.get_current(), stream.get_current()+length)});
+        stream.in_skip_bytes(length);
+    }
+}
 
 // TODO: use array_view for (value/length)
 inline void NtlmAddToAvPairList(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length, std::vector<AvItem> & list)
@@ -1484,7 +1479,7 @@ inline void EmitNTLMv2_Client_Challenge(OutStream & stream, NTLMv2_Client_Challe
     stream.out_copy_bytes(self.Timestamp, 8);
     stream.out_copy_bytes(self.ClientChallenge, 8);
     stream.out_clear_bytes(4);
-    self.AvPairList.emit(stream);
+    EmitNtlmAvPairList(stream, self.AvPairList.list);
     stream.out_clear_bytes(4);
 }
 
@@ -1498,7 +1493,7 @@ inline void RecvNTLMv2_Client_Challenge(InStream & stream, NTLMv2_Client_Challen
     stream.in_copy_bytes(self.Timestamp, 8);
     stream.in_copy_bytes(self.ClientChallenge, 8);
     stream.in_skip_bytes(4);
-    self.AvPairList.recv(stream);
+    RecvNtlmAvPairList(stream, self.AvPairList.list);
     stream.in_skip_bytes(4);
 }
 
@@ -1728,7 +1723,7 @@ public:
 inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self)
 {
         self.TargetInfo.buffer.reset();
-        self.AvPairList.emit(self.TargetInfo.buffer.ostream);
+        EmitNtlmAvPairList(self.TargetInfo.buffer.ostream, self.AvPairList.list);
         self.TargetInfo.buffer.mark_end();
 
         uint32_t currentOffset = self.PayloadOffset;
@@ -1782,7 +1777,7 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     self.TargetName.read_payload(stream, pBegin);
     self.TargetInfo.read_payload(stream, pBegin);
     auto in_stream = self.TargetInfo.buffer.in_stream();
-    self.AvPairList.recv(in_stream);
+    RecvNtlmAvPairList(in_stream, self.AvPairList.list);
     self.TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
 }
 

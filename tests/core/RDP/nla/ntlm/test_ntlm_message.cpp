@@ -47,19 +47,25 @@ RED_AUTO_TEST_CASE(TestAvPair)
     NtlmAvPairList listAvPair;
 
     RED_CHECK_EQUAL(listAvPair.list.size(), 0);
-    RED_CHECK_EQUAL(listAvPair.packet_length(), 4);
+    size_t packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
+    for (auto & avp: listAvPair.list) { packet_length += avp.pair.size(); }
+    RED_CHECK_EQUAL(packet_length, 4);
 
     const uint8_t tartempion[] = "NomDeDomaine";
 
     NtlmAddToAvPairList(MsvAvNbDomainName, tartempion, sizeof(tartempion), listAvPair.list);
 
     RED_CHECK_EQUAL(listAvPair.list.size(), 1);
-    RED_CHECK_EQUAL(listAvPair.packet_length(), 21);
+    packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
+    for (auto & avp: listAvPair.list) { packet_length += avp.pair.size(); }    
+    RED_CHECK_EQUAL(packet_length, 21);
 
     StaticOutStream<65535> stream;
 
-    listAvPair.emit(stream);
-    RED_CHECK_EQUAL(listAvPair.packet_length(), stream.get_offset());
+    EmitNtlmAvPairList(stream, listAvPair.list);
+    packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
+    for (auto & avp: listAvPair.list) { packet_length += avp.pair.size(); }
+    RED_CHECK_EQUAL(packet_length, stream.get_offset());
     LogNtlmAvPairList(listAvPair.list);
 }
 
@@ -79,7 +85,7 @@ RED_AUTO_TEST_CASE(TestAvPairRecv)
     NtlmAvPairList avpairlist;
 
     InStream in_stream(TargetInfo);
-    avpairlist.recv(in_stream);
+    RecvNtlmAvPairList(in_stream, avpairlist.list);
     //avpairlist.log();
 }
 
