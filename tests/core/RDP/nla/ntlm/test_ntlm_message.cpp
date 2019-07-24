@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestAvPair)
 
     RED_CHECK_EQUAL(listAvPair.list.size(), 0);
     size_t packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
-    for (auto & avp: listAvPair.list) { packet_length += avp.pair.size(); }
+    for (auto & avp: listAvPair.list) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, 4);
 
     const uint8_t tartempion[] = "NomDeDomaine";
@@ -57,14 +57,14 @@ RED_AUTO_TEST_CASE(TestAvPair)
 
     RED_CHECK_EQUAL(listAvPair.list.size(), 1);
     packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
-    for (auto & avp: listAvPair.list) { packet_length += avp.pair.size(); }    
+    for (auto & avp: listAvPair.list) { packet_length += avp.data.size(); }    
     RED_CHECK_EQUAL(packet_length, 21);
 
     StaticOutStream<65535> stream;
 
     EmitNtlmAvPairList(stream, listAvPair.list);
     packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
-    for (auto & avp: listAvPair.list) { packet_length += avp.pair.size(); }
+    for (auto & avp: listAvPair.list) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, stream.get_offset());
     LogNtlmAvPairList(listAvPair.list);
 }

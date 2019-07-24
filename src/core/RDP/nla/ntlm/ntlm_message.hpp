@@ -130,11 +130,9 @@ enum NTLM_AV_ID : uint16_t {
     AV_ID_MAX
 };
 
-using AvPair = std::vector<uint8_t>;
-
 struct AvItem {
     NTLM_AV_ID id;
-    AvPair pair;
+    std::vector<uint8_t> data;
 };
 
 
@@ -155,8 +153,8 @@ inline void EmitNtlmAvPairList(OutStream & stream, const std::vector<AvItem> & l
 {
     for (auto & avp: list) {
         stream.out_uint16_le(avp.id);
-        stream.out_uint16_le(avp.pair.size());
-        stream.out_copy_bytes(avp.pair);
+        stream.out_uint16_le(avp.data.size());
+        stream.out_copy_bytes(avp.data);
     }
     stream.out_uint16_le(MsvAvEOL);
     stream.out_uint16_le(0);
@@ -172,7 +170,7 @@ inline void RecvNtlmAvPairList(InStream & stream, std::vector<AvItem> & list)
             stream.in_skip_bytes(length);
             break;
         }
-        list.push_back({static_cast<NTLM_AV_ID>(id), AvPair(stream.get_current(), stream.get_current()+length)});
+        list.push_back({static_cast<NTLM_AV_ID>(id), std::vector<uint8_t>(stream.get_current(), stream.get_current()+length)});
         stream.in_skip_bytes(length);
     }
 }
@@ -182,11 +180,11 @@ inline void NtlmAddToAvPairList(NTLM_AV_ID avId, uint8_t const * value, checked_
 {
     for (auto & avp: list) {
         if (avp.id == avId){
-            avp.pair.assign(value, value+length);
+            avp.data.assign(value, value+length);
             return;
         }
     }
-    list.push_back({avId, AvPair(value, value+length)});
+    list.push_back({avId, std::vector<uint8_t>(value, value+length)});
 }
 
 
@@ -196,9 +194,9 @@ inline void LogNtlmAvPairList(const std::vector<AvItem> & list)
     LOG(LOG_INFO, "Av Pair List : %zu elements {", list.size());
 
     for (auto & avp: list) {
-        if (avp.pair.size()) {
-            LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.pair.size()));
-            hexdump_c(avp.pair.data(), avp.pair.size(), 8);
+        if (avp.data.size()) {
+            LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
+            hexdump_c(avp.data.data(), avp.data.size(), 8);
         }
     }
     LOG(LOG_INFO, "}");
