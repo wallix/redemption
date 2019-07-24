@@ -228,7 +228,7 @@ public:
         uncompressed_data      = nullptr;
         uncompressed_data_size = 0;
 
-        InStream compressed_data_stream(compressed_data, compressed_data_size);
+        InStream compressed_data_stream({compressed_data, std::size_t(compressed_data_size)});
 
         // Level1ComprFlags(1) + Level2ComprFlags(1)
         ::check_throw(compressed_data_stream, 2, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (0)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
@@ -261,7 +261,8 @@ public:
             }
             //LOG(LOG_INFO, "level_1_compressed_data_size=%d", level_1_compressed_data_size);
 
-            InStream level_1_compressed_data_stream(level_1_compressed_data, level_1_compressed_data_size);
+            InStream level_1_compressed_data_stream(
+                {level_1_compressed_data, level_1_compressed_data_size});
 
             prepare_compressed_data(level_1_compressed_data_stream,
                 !(Level1ComprFlags & L1_NO_COMPRESSION),
@@ -280,10 +281,9 @@ public:
         }
 
 
-        InStream match_details_stream(MatchDetails,
-            MatchCount *
-            8);   // MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4)
-        InStream literals_stream(Literals, literals_length);
+        // MatchLength(2) + MatchOutputOffset(2) + MatchHistoryOffset(4)
+        InStream match_details_stream({MatchDetails, MatchCount * 8u});
+        InStream literals_stream({Literals, literals_length});
 
         uint8_t  * current_output_buffer = this->historyBuffer + this->historyOffset;
         uint16_t   current_output_offset = 0;
@@ -608,7 +608,7 @@ private:
         }
         else {
             this->match_finder.find_match(this->historyBuffer, this->historyOffset, uncompressed_data_size);
-            OutStream level_1_output_stream(this->level_1_output_buffer, RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE);
+            OutStream level_1_output_stream({this->level_1_output_buffer, RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE});
             uint32_t match_details_data_size = this->match_finder.match_details_stream.get_offset();
             uint32_t MatchCount = (match_details_data_size ?
                                    match_details_data_size / 8 :   // sizeof(RDP61_COMPRESSED_DATA) = 8
@@ -622,8 +622,8 @@ private:
             level_1_output_stream.out_uint16_le(MatchCount);
             level_1_output_stream.out_copy_bytes(this->match_finder.match_details_stream.get_data(),
                 match_details_data_size);
-            InStream match_details_in_stream(this->match_finder.match_details_stream.get_data(),
-                match_details_data_size);
+            InStream match_details_in_stream(
+                {this->match_finder.match_details_stream.get_data(), match_details_data_size});
             uint16_t current_output_offset = 0;
             for (uint32_t match_index = 0; match_index < MatchCount; match_index++) {
                 uint16_t match_length        = match_details_in_stream.in_uint16_le();

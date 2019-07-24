@@ -102,7 +102,7 @@ namespace SlowPath {
             }()
         )
         // (time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)) * 12
-        , payload(stream.get_current(), this->numEvents * 12)
+        , payload({stream.get_current(), this->numEvents * 12u})
         {
             // This is the constructor body, we skip payload now that it is packaged
 
@@ -192,7 +192,7 @@ namespace SlowPath {
         }())
         , messageType(stream.in_uint16_le())
          // device_flags(2) + param1(2) + param2(2)
-        , payload(stream.get_current(), 6)
+        , payload({stream.get_current(), 6})
         // Body of constructor
         {
             stream.in_skip_bytes(this->payload.get_capacity());

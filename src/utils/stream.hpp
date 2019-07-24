@@ -54,21 +54,10 @@ class InStream
     Parse p;
 
 public:
-    explicit InStream(uint8_t const * array, std::size_t len, std::size_t offset = 0) noexcept
-    : begin(array)
-    , end(array + len)
-    , p(this->begin + offset)
-    {
-        assert(len >= offset);
-    }
-
-    explicit InStream(char const * array, std::size_t len, std::size_t offset = 0) noexcept
-    : InStream(byte_ptr_cast(array), len, offset)
-    {
-    }
-
     explicit InStream(const_buffer_view buf) noexcept
-    : InStream(buf.data(), buf.size())
+    : begin(buf.begin())
+    , end(buf.end())
+    , p(this->begin)
     {
     }
 

@@ -238,9 +238,8 @@ namespace FastPath {
         }())
         , payload([&stream, this](){
             InStream istream((0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED))
-                                ? this->decrypted_payload.get()
-                                : stream.get_current(),
-                              stream.in_remain()
+                                ? cbytes_view{this->decrypted_payload.get(), stream.in_remain()}
+                                : stream.remaining_bytes()
                             );
             // Consumes everything remaining in stream after decrypting was done
             stream.in_skip_bytes(stream.in_remain());
@@ -1142,9 +1141,9 @@ namespace FastPath {
                 assert(out_decrypt_stream);
                 decrypt.decrypt(stream.get_current(), stream.in_remain(), out_decrypt_stream);
 
-                return InStream(out_decrypt_stream, stream.in_remain());
+                return InStream({out_decrypt_stream, stream.in_remain()});
             }
-            return InStream(stream.get_current(), stream.in_remain());
+            return InStream(stream.remaining_bytes());
         }())
         // Body of constructor
         {
@@ -1454,9 +1453,9 @@ namespace FastPath {
 
                 dec.decompress(stream.get_current(), size, compressionFlags, rdata, rlen);
 
-                return InStream(rdata, rlen);
+                return InStream({rdata, rlen});
             }
-            return InStream(stream.get_current(), size);
+            return InStream({stream.get_current(), size});
         }(this->size, this->compression, this->compressionFlags))
         // Body of constructor
         {

@@ -281,10 +281,7 @@ struct FormatDataResponseReceiveFileList
 
                 RDPECLIP::FileDescriptor fd;
 
-                InStream in_stream(
-                    file_descriptor_stream.get_data(),
-                    file_descriptor_stream.get_offset()
-                );
+                InStream in_stream(file_descriptor_stream.get_bytes());
                 fd.receive(in_stream);
                 if (bool(verbose & RDPVerbose::cliprdr)) {
                     fd.log(LOG_INFO);

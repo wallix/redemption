@@ -831,7 +831,7 @@ namespace MCS
                         payload_size, this->ber_stream.in_remain());
                     throw Error(ERR_MCS);
                 }
-                return InStream(stream.get_current(), payload_size);
+                return InStream({stream.get_current(), payload_size});
             }())
         {
 // The payload is the USER_DATA block
@@ -1059,7 +1059,7 @@ namespace MCS
                         throw Error(ERR_MCS);
                     }
 
-                    return InStream(stream.get_current(), payload_size);
+                    return InStream({stream.get_current(), payload_size});
             }())
         {
             if (this->result){
@@ -2460,7 +2460,7 @@ namespace MCS
                         payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
-                return InStream(stream.get_current(), stream.in_remain());
+                return InStream(stream.remaining_bytes());
             }())
         {
 //            stream.in_skip_bytes(this->payload.size());
@@ -2554,7 +2554,7 @@ namespace MCS
                         payload_size, stream.in_remain());
                     throw Error(ERR_MCS);
                 }
-                return InStream(stream.get_current(), stream.in_remain());
+                return InStream(stream.remaining_bytes());
             }())
         {
             stream.in_skip_bytes(this->payload.get_capacity());

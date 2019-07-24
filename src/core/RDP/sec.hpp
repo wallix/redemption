@@ -681,7 +681,7 @@ enum {
                 }
                 return length;
             }())
-            , payload(stream.get_current(), stream.in_remain() - 8)
+            , payload({stream.get_current(), stream.in_remain() - 8u})
         {
             if (this->payload.get_capacity() != 64){
                 LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %zu", this->payload.get_capacity());
@@ -724,11 +724,11 @@ enum {
                 LOG_INFO, "SEC_ENCRYPT expected, got %x", basicSecurityHeader);
             return basicSecurityHeader;
         }())
-        , signature(stream.get_current(), 8)
+        , signature({stream.get_current(), 8})
         , payload([&stream, this, &crypt](){
             stream.in_skip_bytes(this->signature.get_capacity());
             crypt.decrypt({const_cast<uint8_t*>(stream.get_current()), stream.in_remain()});
-            return InStream(stream.get_current(), stream.in_remain());
+            return InStream(stream.remaining_bytes());
         }())
         // Body of constructor
         {
@@ -780,7 +780,7 @@ enum {
                     //    hexdump_c(stream.get_current(), stream.in_remain());
                     //}
                 }
-                return InStream(stream.get_current(), stream.in_remain());
+                return InStream(stream.remaining_bytes());
             }())
         // Constructor
         {
@@ -830,7 +830,7 @@ enum {
                 }
                 return flags;
             }())
-            , payload(stream.get_current(), stream.in_remain())
+            , payload(stream.remaining_bytes())
         // Constructor Body
         {
             stream.in_skip_bytes(this->payload.get_capacity());

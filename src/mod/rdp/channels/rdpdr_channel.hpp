@@ -163,7 +163,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         std::make_unique<uint8_t[]>(total_length);
 
                     this->device_announce_stream = OutStream(
-                        this->device_announce_data.get(), total_length);
+                        {this->device_announce_data.get(), total_length});
                 }
 
                 assert(this->device_announce_stream.tailroom() >=
@@ -487,8 +487,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         chunk.in_skip_bytes(needed_data_length);
 
                         remaining_device_announce_request_header_stream_in = InStream(
-                            this->remaining_device_announce_request_header_stream.get_data(),
-                            this->remaining_device_announce_request_header_stream.get_offset());
+                            this->remaining_device_announce_request_header_stream.get_bytes());
                         device_announce_request_header_stream =
                             &remaining_device_announce_request_header_stream_in;
 
@@ -553,8 +552,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                                     current_device_announce_data_length);
 
                             this->current_device_announce_stream = OutStream(
-                                this->current_device_announce_data.get(),
-                                current_device_announce_data_length);
+                                {this->current_device_announce_data.get(),
+                                current_device_announce_data_length});
                         }
                         else {
                             this->current_device_announce_stream.rewind();
@@ -731,7 +730,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 bool device_removed = false;
                 for (auto iter = this->device_announces.begin(); iter != this->device_announces.end(); ++iter) {
                     // DeviceCount(4) + DeviceType(4) + DeviceId(4)
-                    InStream header_stream(iter->data.get(), rdpdr::SharedHeader::size() + 12);
+                    InStream header_stream({iter->data.get(), rdpdr::SharedHeader::size() + 12});
                     // DeviceCount(4) + DeviceType(4)
                     header_stream.in_skip_bytes(rdpdr::SharedHeader::size() + 8);
                     const uint32_t current_device_id = header_stream.in_uint32_le();
@@ -1028,8 +1027,8 @@ public:
 
         if (need_enable_user_loggedon_pdu || need_deny_asyncio) {
             OutStream out_stream(
-                const_cast<uint8_t*>(chunk.get_current()),
-                rdpdr::GeneralCapabilitySet::size(Version));
+                {const_cast<uint8_t*>(chunk.get_current()),
+                rdpdr::GeneralCapabilitySet::size(Version)});
 
             if (need_enable_user_loggedon_pdu) {
                 LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,

@@ -631,7 +631,7 @@ namespace X224
     }
 
     inline CR_Header CR_Header_Recv(InStream & stream);
-    CR_Header CR_Header_Recv(InStream & stream) 
+    CR_Header CR_Header_Recv(InStream & stream)
     {
         /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
         if (!stream.in_check_rem(7)){
@@ -665,7 +665,7 @@ namespace X224
     }
 
     inline CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose);
-    CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose) 
+    CR_Cookie CR_Cookie_Recv(InStream & stream, size_t header_len, uint32_t verbose)
     {
         // TODO CGR: we should fix the code here to support routingtoken (or we may have some troubles with load balancing RDP hardware
         CR_Cookie cookie;
@@ -743,7 +743,7 @@ namespace X224
     }; // END CLASS CR_TPDU_Data
 
 
-    
+
 
     inline CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose);
     CR_TPDU_Data CR_TPDU_Data_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose)
@@ -819,13 +819,13 @@ namespace X224
             throw Error(ERR_X224);
         }
         _header_size = stream.get_offset();
-        
+
         return CR_TPDU_Data{
-                tpkt, 
-                header, 
-                _header_size, 
-                cookie, 
-                rdp_neg_type, 
+                tpkt,
+                header,
+                _header_size,
+                cookie,
+                rdp_neg_type,
                 rdp_neg_flags,
                 rdp_neg_length,
                 rdp_neg_requestedProtocols,
@@ -1542,7 +1542,7 @@ namespace X224
                 LOG(LOG_ERR, "Truncated DT TPDU data: expected=%zu remains=%zu", payload_size, stream.in_remain());
                 throw Error(ERR_X224);
             }
-            return InStream(stream.get_data() + this->_header_size, payload_size);
+            return InStream({stream.get_data() + this->_header_size, payload_size});
         }())
         // ========= Constructor's body ============
         {

@@ -355,13 +355,11 @@ public:
 
                         rpduh.emit_end();
 
-                        const size_t totalLength = out_s.get_offset();
-
-                        InStream in_s(out_s.get_data(), totalLength);
+                        InStream in_s(out_s.get_bytes());
 
                         this->mod.send_to_mod_channel(channel_names::rail,
                                                       in_s,
-                                                      totalLength,
+                                                      out_s.get_offset(),
                                                         CHANNELS::CHANNEL_FLAG_FIRST
                                                       | CHANNELS::CHANNEL_FLAG_LAST
                                                       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
