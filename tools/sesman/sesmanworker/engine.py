@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 from logger import Logger
 try:
     from wabengine.common.exception import AuthenticationFailed
@@ -31,7 +32,7 @@ except Exception as e:
     import traceback
     tracelog = traceback.format_exc()
     try:
-        from fake.proxyengine import *
+        from .fake.proxyengine import *
         LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
@@ -43,8 +44,8 @@ except Exception as e:
 
 import time
 import socket
-from checkout import CheckoutEngine
-from checkout import (
+from .checkout import CheckoutEngine
+from .checkout import (
     APPROVAL_ACCEPTED,
     APPROVAL_REJECTED,
     APPROVAL_PENDING,
@@ -1631,13 +1632,15 @@ class Engine(object):
 
     def get_account_login(self, right, check_in_creds=True):
         login = right['account_login']
-        if check_in_creds:
-            login = (self.checkout.get_target_login(right)
-                     or right['account_login'])
         try:
             domain = right['domain_name']
         except:
             domain = ""
+        if check_in_creds:
+            login = (self.checkout.get_target_login(right)
+                     or login)
+            domain = (self.checkout.get_target_domain(right)
+                      or domain)
         if not login and right['domain_cn'] == AM_IL_DOMAIN:
             # Interactive Login
             return login

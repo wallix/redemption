@@ -1,13 +1,14 @@
 #!/usr/bin/python -O
 
 ##
-# Copyright (c) 2010 WALLIX, SARL. All rights reserved.
+# Copyright (c) 2017 WALLIX. All rights reserved.
 # Licensed computer software. Property of WALLIX.
-# Product name: WALLIX Admin Bastion V 2.x
+# Product Name: WALLIX Bastion v6.0
 # Author(s): Olivier Hervieu
 # Id: $Id$
 # URL: $URL$
 # Module description: init script for RDPWorker Module
 ##
 
-from sesman import * # pyflakes:ignore
+from __future__ import absolute_import
+from .sesman import * # pyflakes:ignore

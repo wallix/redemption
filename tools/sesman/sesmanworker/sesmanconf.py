@@ -218,7 +218,7 @@ class SesmanConfig(object):
             }
         }
 
-        # parse_conf_file(self.conf, "/opt/wab/share/sesman/config/sesman.conf")
+        # parse_conf_file(self.conf, "/var/wab/etc/sesman/config/sesman.conf")
 
 
     def __getitem__(self, para):

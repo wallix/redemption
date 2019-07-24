@@ -10,15 +10,17 @@
 # Module description:  Sesman Worker
 ##
 from __future__ import with_statement
+from __future__ import absolute_import
 
 import random
 import os
 import signal
 import traceback
+import re
 import json
 from logger import Logger
 
-from cutmessage import cut_message
+from .cutmessage import cut_message
 from struct     import unpack
 from struct     import pack
 from select     import select
@@ -31,16 +33,15 @@ from datetime   import datetime
 import socket
 from socket     import gethostname
 
-from sesmanconf import TR, SESMANCONF
-import sesmanconnpolicyspec
-import engine
+from .sesmanconf import TR, SESMANCONF
+from . import engine, sesmanconnpolicyspec
 
-from engine import LOCAL_TRACE_PATH_RDP
-from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
+from .engine import LOCAL_TRACE_PATH_RDP
+from .engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
-from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
-from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
-from engine import TargetContext
+from .engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
+from .engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
+from .engine import TargetContext
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 def mundane(value):
@@ -977,7 +978,6 @@ class Sesman():
             'host': gethostname(),
             'random': random.randint(1000, 9999)
         }
-        import re
         basename = re.sub(r'[^-A-Za-z0-9_@,.]', "", basename)
         return basename
 
@@ -1155,7 +1155,6 @@ class Sesman():
     def parse_duration(self, duration):
         if duration:
             try:
-                import re
                 mpat = re.compile("(\d+)m")
                 hpat = re.compile("(\d+)h")
                 hres = hpat.search(duration)
