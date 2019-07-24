@@ -540,12 +540,13 @@ public:
                     return;
                 case LocalICAPProtocol::ValidationType::IsAccepted:
                     if (!this->params.validator_params.log_if_accepted) {
+                        this->reset_lindex();
                         continue;
                     }
                     [[fallthrough]];
                 case LocalICAPProtocol::ValidationType::IsRejected:
                 case LocalICAPProtocol::ValidationType::Error:
-                    ;
+                    this->reset_lindex();
             }
 
             auto direction = (response->file.direction == Direction::FileFromClient)
@@ -599,6 +600,8 @@ private:
          && enable_icap
          && from_client.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE
         ) {
+            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::icap_send_data");
             auto data = chunk.remaining_bytes();
             auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -615,6 +618,7 @@ private:
                 auto file_size = this->file_descr_list[this->last_lindex].file_size();
                 if (this->last_lindex_total_send == file_size) {
                     this->icap.set_end_of_file();
+                    this->reset_lindex();
                 }
             }
             // return !this->enable_interrupting;
@@ -646,6 +650,8 @@ private:
             this->last_lindex_packet_remaining = receiver.requested;
 
             if (this->last_lindex != receiver.lindex) {
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::icap_new_file");
                 this->last_lindex = receiver.lindex;
                 this->icap.new_file(desc.file_name, desc.file_size(), direction, target_name);
             }
@@ -717,9 +723,7 @@ private:
         }
 
         this->file_descr_list.clear();
-        this->last_lindex = last_lindex_unknown;
-        this->last_lindex_total_send = 0;
-        this->last_lindex_packet_remaining = 0;
+        this->reset_lindex();
 
         if (!clip_enabled) {
             LOG(LOG_WARNING, "Clipboard is fully disabled.");
@@ -740,6 +744,13 @@ private:
             side_data.file_list_format_id = receiver.file_list_format_id;
         }
         return true;
+    }
+
+    void reset_lindex()
+    {
+        this->last_lindex = last_lindex_unknown;
+        this->last_lindex_total_send = 0;
+        this->last_lindex_packet_remaining = 0;
     }
 
     void log_file_info(ClipboardSideData::file_info_type & file_info, bool from_remote_session)
