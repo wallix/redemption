@@ -736,8 +736,7 @@ namespace
         {
             uint16_t buf_sz = 0;
             do {
-                this->trans.recv_boom(this->buf, ACL_SERIALIZER_HEADER_SIZE);
-                InStream in_stream(this->buf, 4);
+                InStream in_stream(this->trans.recv_boom(this->buf, ACL_SERIALIZER_HEADER_SIZE));
                 this->has_next_buffer = in_stream.in_uint16_be();
                 buf_sz = in_stream.in_uint16_be();
             } while (buf_sz == 0 && this->has_next_buffer);

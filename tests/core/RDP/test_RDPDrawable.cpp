@@ -185,7 +185,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
     deltaPoints.out_sint16_le(-160);
     deltaPoints.out_sint16_le(0);
 
-    InStream dp(array, deltaPoints.get_offset());
+    InStream dp(deltaPoints.get_bytes());
 
     gd.draw(RDPPolyline(158, 230, 0x06, 0, encode_color24()(WHITE), 7, dp), screen_rect, color_cxt);
 

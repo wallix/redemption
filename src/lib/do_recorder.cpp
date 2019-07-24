@@ -342,12 +342,12 @@ private:
                 LOG(LOG_INFO,"chunk_size (%u) > 65536", this->chunk_size);
                 return false;
             }
-            this->stream = InStream(this->stream_buf, 0);   // empty stream
+            this->stream = InStream({this->stream_buf, 0});   // empty stream
             auto const ssize = this->chunk_size - WRM_HEADER_SIZE;
             if (ssize > 0) {
                 auto const size = size_t(ssize);
                 this->trans->recv_boom(this->stream_buf, size);
-                this->stream = InStream(this->stream_buf, size);
+                this->stream = InStream({this->stream_buf, size});
             }
         }
         catch (Error const & e) {

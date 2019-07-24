@@ -293,7 +293,7 @@ private:
         LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "rdp_orders::process_windowing");
 
         const uint32_t FieldsPresentFlags = [&]{
-            InStream stream2(stream.get_current(), stream.in_remain());
+            InStream stream2(stream.remaining_bytes());
             stream2.in_skip_bytes(2);    // OrderSize(2)
             return stream2.in_uint32_le();
         }();

@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
 
     NTLMNegotiateMessage NegoMsg;
 
-    InStream nego(ts_req.negoTokens.get_data(), ts_req.negoTokens.size());
+    InStream nego(ts_req.negoTokens.av());
     NegoMsg.recv(nego);
 
 

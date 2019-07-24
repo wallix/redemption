@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     NTLMAuthenticateMessage AuthMsg;
     // AuthMsg.recv(ts_req3.negoTokens);
 
-    InStream token(ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size());
+    InStream token(ts_req3.negoTokens.av());
     AuthMsg.recv(token);
 
     RED_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // LmChallengeResponse
     LMv2_Response lmResponse;
-    InStream in_stream(AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.size());
+    InStream in_stream({AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.size()});
     lmResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
@@ -162,7 +162,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // NtChallengeResponse
     NTLMv2_Response ntResponse;
-    in_stream = InStream(AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.size());
+    in_stream = InStream({AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.size()});
     ntResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");

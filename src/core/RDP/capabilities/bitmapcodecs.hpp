@@ -800,7 +800,7 @@ struct BitmapCodecCaps : public Capability {
 
         this->bitmapCodecCount = stream.in_uint8();
 
-        InStream subStream(stream.get_current(), len-5);
+        InStream subStream({stream.get_current(), len-5u});
 
         for (int i = 0; i < this->bitmapCodecCount; i++) {
             this->bitmapCodecArray[i].recv(subStream, this->clientMode);

@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
         high_contrast_system_information_structure.emit(out_stream);
     }
 
-    InStream in_stream(buf, out_stream.get_offset());
+    InStream in_stream(out_stream.get_bytes());
 
     {
         HighContrastSystemInformationStructure

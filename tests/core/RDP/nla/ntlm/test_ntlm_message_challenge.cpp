@@ -74,7 +74,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     hexdump_c(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
     // ChallengeMsg.recv(ts_req2.negoTokens);
 
-    InStream token(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
+    InStream token(ts_req2.negoTokens.av());
     ChallengeMsg.recv(token);
 
     RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
@@ -99,7 +99,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     );
     // hexdump_c(ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetInfo.buffer.ostream.size());
-    InStream servChall(ChallengeMsg.serverChallenge, 8);
+    InStream servChall(ChallengeMsg.serverChallenge);
     uint64_t servchallengeinteger = servChall.in_uint64_le();
     RED_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
 
@@ -125,7 +125,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.len, 64);
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
-    InStream servChall2(ChallengeMsgDuplicate.serverChallenge, 8);
+    InStream servChall2(ChallengeMsgDuplicate.serverChallenge);
     uint64_t servchallengeinteger2 = servChall2.in_uint64_le();
     RED_CHECK_EQUAL(servchallengeinteger2, 8063485858206805542LL);
 

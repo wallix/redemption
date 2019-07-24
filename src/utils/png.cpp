@@ -363,7 +363,7 @@ void set_rows_from_image_chunk(
         , chunk_size(chunk_size)
         , chunk_count(1)
         , trans(trans)
-        , in_stream(this->buf, this->chunk_size - 8)
+        , in_stream({this->buf, this->chunk_size - 8})
         {
             this->trans.recv_boom(this->buf, this->in_stream.get_capacity());
         }
@@ -394,8 +394,8 @@ void set_rows_from_image_chunk(
                 chunk_trans.chunk_type = header.in_uint16_le();
                 chunk_trans.chunk_size = header.in_uint32_le();
                 chunk_trans.chunk_count = header.in_uint16_le();
-                chunk_trans.in_stream = InStream(chunk_trans.buf, chunk_trans.chunk_size - 8);
-                chunk_trans.trans.recv_boom(chunk_trans.buf, chunk_trans.chunk_size - 8);
+                auto av = chunk_trans.trans.recv_boom(chunk_trans.buf, chunk_trans.chunk_size - 8);
+                chunk_trans.in_stream = InStream(av);
             }
             break;
             case WrmChunkType::LAST_IMAGE_CHUNK:

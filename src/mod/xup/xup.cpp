@@ -199,18 +199,13 @@ void xup_mod::draw_event(gdi::GraphicApi & gd)
 {
     try{
         BufMaker<32768> buf_maker;
-        auto* buf = buf_maker.static_array().data();
 
-        this->t.recv_boom(buf, 8);
-
-        InStream stream(buf, 8);
+        InStream stream(this->t.recv_boom(buf_maker.static_array().data(), 8));
         unsigned type = stream.in_uint16_le();
         unsigned num_orders = stream.in_uint16_le();
         unsigned len = stream.in_uint32_le();
         if (type == 1) {
-            buf = buf_maker.dyn_array(len).data();
-            stream = InStream(buf, len);
-            this->t.recv_boom(buf, len);
+            stream = InStream(this->t.recv_boom(buf_maker.dyn_array(len)));
 
             for (unsigned index = 0; index < num_orders; index++) {
                 type = stream.in_uint16_le();

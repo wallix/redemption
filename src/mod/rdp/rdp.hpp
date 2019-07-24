@@ -2521,7 +2521,7 @@ public:
                 setSurface.recv(stream);
 
                 if (setSurface.codecId == this->remoteFx_codec_id) {
-                    InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
+                    InStream remoteFxStream({stream.get_current(), setSurface.bitmapDataLength});
                     this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
                 }
                 else {

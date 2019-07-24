@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 12);
-    InStream stream_clientIDConfirm(pdu_data->data, pdu_data->size);
+    InStream stream_clientIDConfirm(pdu_data->av());
     RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), rdpdr::RDPDR_CTYP_CORE);
     RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), rdpdr::PAKID_CORE_CLIENTID_CONFIRM);
     RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), 0x0001);
@@ -77,7 +77,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint32_le(), 0x00000002);
 
     pdu_data = mod.stream();
-    InStream stream_clientName(pdu_data->data, pdu_data->size);
+    InStream stream_clientName(pdu_data->av());
     RED_CHECK_EQUAL(stream_clientName.in_uint16_le(), rdpdr::RDPDR_CTYP_CORE);
     RED_CHECK_EQUAL(stream_clientName.in_uint16_le(), rdpdr::PAKID_CORE_CLIENT_NAME);
     RED_CHECK_EQUAL(stream_clientName.in_uint32_le(), 0x00000001);
@@ -146,7 +146,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 4);
 
     pdu_data = mod.stream();
-    InStream stream_clientCapability(pdu_data->data, pdu_data->size);
+    InStream stream_clientCapability(pdu_data->av());
     RED_CHECK_EQUAL(pdu_data->size, 84);
     rdpdr::SharedHeader header_clientCapability;
     header_clientCapability.receive(stream_clientCapability);
@@ -188,7 +188,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
 
     pdu_data = mod.stream();
-    InStream stream_deviceListAnnounce(pdu_data->data, pdu_data->size);
+    InStream stream_deviceListAnnounce(pdu_data->av());
     rdpdr::SharedHeader header_deviceListAnnounce;
     header_deviceListAnnounce.receive(stream_deviceListAnnounce);
     RED_CHECK_EQUAL(header_deviceListAnnounce.component, rdpdr::RDPDR_CTYP_CORE);
@@ -238,7 +238,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 21);
-    InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
+    InStream stream_deviceIOCompletion(pdu_data->av());
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);
@@ -283,7 +283,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 21);
-    InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
+    InStream stream_deviceIOCompletion(pdu_data->av());
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);
@@ -331,7 +331,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 56);
-    InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
+    InStream stream_deviceIOCompletion(pdu_data->av());
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);
@@ -387,7 +387,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 42);
-    InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
+    InStream stream_deviceIOCompletion(pdu_data->av());
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);
@@ -443,7 +443,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 28);
-    InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
+    InStream stream_deviceIOCompletion(pdu_data->av());
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);
@@ -493,7 +493,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 20);
-    InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
+    InStream stream_deviceIOCompletion(pdu_data->av());
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);
@@ -540,7 +540,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 24);
-    InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
+    InStream stream_deviceIOCompletion(pdu_data->av());
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);
@@ -585,7 +585,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
-    InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
+    InStream stream_deviceIOCompletion(pdu_data->av());
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);

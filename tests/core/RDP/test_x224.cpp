@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
 
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     auto x224 = X224::CR_TPDU_Data_Recv(stream, false, false);
 
     RED_CHECK_EQUAL(3, x224.tpkt.version);
@@ -133,7 +133,7 @@ RED_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
@@ -145,7 +145,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
@@ -163,7 +163,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
@@ -180,7 +180,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
@@ -198,7 +198,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EXCEPTION_ERROR_ID(X224::CR_TPDU_Data_Recv(stream, false, false), ERR_X224);
 }
 
@@ -210,7 +210,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(size_t(11), fac_x224.length);
 
@@ -248,7 +248,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::CR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
@@ -305,7 +305,7 @@ RED_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EQUAL(static_cast<int>(X224::CC_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(11u, fac_x224.length);
 
@@ -347,7 +347,7 @@ RED_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EQUAL(static_cast<int>(X224::CC_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(tpkt_len, fac_x224.length);
 
@@ -385,7 +385,7 @@ RED_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EQUAL(static_cast<int>(X224::DR_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(11u, fac_x224.length);
 
@@ -426,7 +426,7 @@ RED_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EQUAL(static_cast<uint8_t>(X224::ER_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(13u, fac_x224.length);
 
@@ -471,7 +471,7 @@ RED_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
-    InStream stream(array, end - array);
+    InStream stream({array, std::size_t(end - array)});
     RED_CHECK_EQUAL(static_cast<int>(X224::DT_TPDU), fac_x224.type);
     RED_CHECK_EQUAL(12u, fac_x224.length);
 

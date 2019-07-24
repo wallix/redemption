@@ -2475,7 +2475,7 @@ public:
                         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
                             "Front::incoming: channel_name=\"%s\"", channel.name);
 
-                        InStream chunk(sec.payload.get_current(), chunk_size);
+                        InStream chunk({sec.payload.get_current(), chunk_size});
 
                         cb.send_to_mod_channel(channel.name, chunk, length, flags);
                     }
@@ -4219,7 +4219,7 @@ protected:
             const BGRColor color_back = color_decode(cmd.back_color, color_ctx);
 
             uint16_t draw_pos_ref = 0;
-            InStream variable_bytes(cmd.data, cmd.data_len);
+            InStream variable_bytes({cmd.data, cmd.data_len});
 
             this->draw(RDPOpaqueRect(cmd.bk, cmd.fore_color), clip, color_ctx);
 

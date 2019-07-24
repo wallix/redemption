@@ -118,7 +118,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFilePic)
     int bpp=24;
     int data_lenght = height * width * 3;
     const double ARBITRARY_SCALE = 40;
-    const char metafilepic_out_data[] =
+    const auto metafilepic_out_data =
 //         // header
 //         "\x05\x00" // msgType  : 5 = CB_FORMAT_DATA_RESPONSE
 //         "\x01\x00" // MsgFlags : 1 = CB_RESPONSE_OK
@@ -182,9 +182,10 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFilePic)
         "\x00\x00\x00\x00" // YPelsPerMeter : 0
         "\x00\x00\x00\x00" // ColorUsed : 0
         "\x00\x00\x00\x00" // ColorImportant : 0
+        ""_av
         ;
 
-    InStream stream(metafilepic_out_data, 124);
+    InStream stream(metafilepic_out_data);
 
     RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr;
     fdr.recv(stream);
@@ -243,7 +244,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFilePic)
 
 RED_AUTO_TEST_CASE(TestMetaFilePicDescriptor)
 {
-   const char metafilepic_in_data[] =
+   const auto metafilepic_in_data =
        // header
             "\x05\x00" // msgType  : 5 = CB_FORMAT_DATA_RESPONSE
             "\x01\x00" // MsgFlags : 1 = CB_RESPONSE_OK
@@ -307,9 +308,10 @@ RED_AUTO_TEST_CASE(TestMetaFilePicDescriptor)
             "\x00\x00\x00\x00" // YPelsPerMeter : 0
             "\x00\x00\x00\x00" // ColorUsed : 0
             "\x00\x00\x00\x00" // ColorImportant : 0
+            ""_av
             ;
 
-   InStream in_stream_metaFilePic(metafilepic_in_data, 132);
+   InStream in_stream_metaFilePic(metafilepic_in_data);
    RDPECLIP::MetaFilePicDescriptor mfpd;
    mfpd.receive(in_stream_metaFilePic);
 

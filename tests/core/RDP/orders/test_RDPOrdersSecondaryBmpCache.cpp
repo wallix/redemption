@@ -64,7 +64,7 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
 
     RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
 
-    InStream in_stream(buf, out_stream.get_offset());
+    InStream in_stream(out_stream.get_bytes());
 
     uint8_t control = in_stream.in_uint8();
     RED_CHECK(!!(control & (STANDARD|SECONDARY)));

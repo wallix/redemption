@@ -47,7 +47,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
 
-    InStream in_s(array, end - array);
+    InStream in_s({array, std::size_t(end - array)});
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     RED_CHECK_EQUAL(4, in_cie.numEvents);
@@ -133,7 +133,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
-    InStream in_s(array, end - array);
+    InStream in_s({array, std::size_t(end - array)});
     FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     RED_CHECK_EQUAL(6, in_cie.numEvents);
@@ -215,7 +215,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
-    InStream in_s(array, end - array);
+    InStream in_s({array, std::size_t(end - array)});
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
     uint8_t updateCodes[4] = {
@@ -274,7 +274,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
-    InStream in_s(array, end - array);
+    InStream in_s({array, std::size_t(end - array)});
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
     uint8_t updateCodes[4] = {
@@ -313,7 +313,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
-    InStream in_s(array, end - array);
+    InStream in_s({array, std::size_t(end - array)});
     FastPath::ServerUpdatePDU_Recv in_su(in_s, decrypt, array);
 
     out_s.out_clear_bytes(FastPath::Update_Send::GetSize(false)); // Fast-Path Update (TS_FP_UPDATE structure) size

@@ -98,8 +98,8 @@ public:
         return static_cast<size_t>(this->p.p - this->begin);
     }
 
-    bool in_check_rem(const unsigned n) const noexcept {
     // returns true if there is enough data available to read n bytes
+    bool in_check_rem(const unsigned n) const noexcept {
         return (n <= this->in_remain());
     }
 

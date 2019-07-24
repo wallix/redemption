@@ -772,12 +772,12 @@ enum {
                     stream.in_skip_bytes(8); /* signature */
                     //if (this->verbose >= 0x200){
                     //    LOG(LOG_INFO, "Receiving encrypted TPDU");
-                    //    hexdump_c(stream.get_current(), stream.in_remain());
+                    //    hexdump_c(stream.remaining_bytes());
                     //}
                     crypt.decrypt({const_cast<uint8_t*>(stream.get_current()), stream.in_remain()});
                     //if (this->verbose >= 0x80){
                     //    LOG(LOG_INFO, "Decrypted %zu bytes", stream.in_remain());
-                    //    hexdump_c(stream.get_current(), stream.in_remain());
+                    //    hexdump_c(stream.remaining_bytes());
                     //}
                 }
                 return InStream(stream.remaining_bytes());
@@ -819,12 +819,12 @@ enum {
                         stream.in_skip_bytes(8); /* signature */
                         //if (this->verbose >= 0x200){
                         //    LOG(LOG_INFO, "Receiving encrypted TPDU");
-                        //    hexdump_c(stream.get_current(), stream.in_remain());
+                        //    hexdump_c(stream.remaining_bytes());
                         //}
                         crypt.decrypt({const_cast<uint8_t*>(stream.get_current()), stream.in_remain()});
                         //if (this->verbose >= 0x80){
                         //    LOG(LOG_INFO, "Decrypted %zu bytes", stream.get_capacity());
-                        //    hexdump_c(stream.get_current(), stream.in_remain());
+                        //    hexdump_c(stream.remaining_bytes());
                         //}
                     }
                 }

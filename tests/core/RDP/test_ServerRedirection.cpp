@@ -40,12 +40,11 @@ RED_AUTO_TEST_CASE(TestServerRedirectionPDU)
 
     // srv_redir_init.log(LOG_INFO, "test server_redirection_pdu");
 
-    uint8_t buf[65536];
-    OutStream out_buffer(buf);
+    StaticOutStream<65536> out_buffer;
     srv_redir_init.emit(out_buffer);
 
     ServerRedirectionPDU srv_redir_target;
-    InStream in_stream(buf, out_buffer.get_offset());
+    InStream in_stream(out_buffer.get_bytes());
     srv_redir_target.receive(in_stream);
 
     // srv_redir_target.log(LOG_INFO, "test 2 server_redirection_pdu");
