@@ -2043,7 +2043,7 @@ public:
 
                             if (bool(this->verbose & Verbose::global_channel)) {
                                 LOG(LOG_INFO, "Front::incoming: Sec clear payload to send:");
-                                hexdump_av_d(stream.get_bytes());
+                                hexdump_d(stream.get_bytes());
                             }
 
                             StaticOutStream<8> tmp_sec_header;
@@ -4050,7 +4050,7 @@ private:
                 ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_deactive: Sec clear payload to send:");
-                    hexdump_av_d(stream.get_bytes());
+                    hexdump_d(stream.get_bytes());
                 }
             }
         );

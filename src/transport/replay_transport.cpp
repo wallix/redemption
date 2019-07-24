@@ -54,9 +54,9 @@ namespace
         auto pos = unsigned(p.first - data.begin());
 		LOG(LOG_INFO, "At position: %u (0x%x)", pos, pos);
 		LOG(LOG_INFO, "Data:");
-        hexdump_av(data);
+        hexdump(data);
 		LOG(LOG_INFO, "Expected:");
-        hexdump_av(expected_data);
+        hexdump(expected_data);
     }
 
     #ifdef DEBUG_PACKETS

@@ -1480,7 +1480,7 @@ private:
                 LOG(LOG_ERR, "VNC INVALID Auth");
 
                 if (!this->invalid_auth_ctx.run(this->server_data_buf, [](array_view_u8 av){
-                    hexdump_c(av.data(), av.size());
+                    hexdump_c(av);
                 })) {
                     return false;
                 }

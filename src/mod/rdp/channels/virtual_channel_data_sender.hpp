@@ -42,7 +42,7 @@ inline void msgdump_impl(
     LOG(LOG_INFO, "\\x%lx\\x%lx\\x%lx\\x%lx",
         (chunk_data.size() >> 24), (chunk_data.size() >> 16) & 0xffu,
         (chunk_data.size() >> 8) & 0xffu, (chunk_data.size() & 0xffu));
-    hexdump_av_c(chunk_data);
+    hexdump_c(chunk_data);
 }
 
 inline static void msgdump_c(bool send, bool from_or_to_client,

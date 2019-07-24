@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestCapabilityOrderEmit)
     StaticOutStream<1024> out_stream;
     order_caps.emit(out_stream);
 
-    hexdump_av_d(out_stream.get_bytes());
+    hexdump_d(out_stream.get_bytes());
 
     InStream stream(out_stream.get_bytes());
 

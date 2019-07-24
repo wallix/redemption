@@ -58,11 +58,11 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     || (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
         frontConn.enable_server_tls("inquisition", nullptr, 0);
     }
-    
-    
-    
+
+
+
 }
-        
+
 void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
 {
 
@@ -88,9 +88,9 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
     // equivalent to nego_client->send_negotiation_request()
     StaticOutStream<256> back_x224_stream;
     X224::CR_TPDU_Send(
-        back_x224_stream, 
-        this->front_CR_TPDU.cookie.data, 
-        this->front_CR_TPDU.rdp_neg_type, 
+        back_x224_stream,
+        this->front_CR_TPDU.cookie.data,
+        this->front_CR_TPDU.rdp_neg_type,
         this->front_CR_TPDU.rdp_neg_flags,
         !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
 
@@ -101,7 +101,7 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn)
 void ProxyRecorder::front_nla(Transport & frontConn)
 {
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_NLA frontbuffer content ======");
-    StaticOutStream<65535> frontResponse; 
+    StaticOutStream<65535> frontResponse;
     credssp::State st = this->nego_server->recv_data(this->frontBuffer, frontResponse);
     frontConn.send(frontResponse.get_bytes());
 
@@ -178,8 +178,8 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
 
         if (!nla_username.empty()) {
             if (this->verbosity > 4) {
-                LOG(LOG_INFO, "Front: force protocol tls=%u nla=%u", 
-                    (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS), 
+                LOG(LOG_INFO, "Front: force protocol tls=%u nla=%u",
+                    (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS),
                     (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID));
             }
             InStream new_x224_stream(currentPacket);
@@ -191,11 +191,11 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
                 GCC::UserData::SCCore sc_core;
                 sc_core.recv(f.payload);
                 if (sc_core.length >= 12) {
-                    hexdump_av_d(f.payload.get_bytes());
+                    hexdump_d(f.payload.get_bytes());
                     auto const offset = (sc_core.length >= 16) ? 8 : 4;
                     auto const idx = f.payload.get_current() - currentPacket.data() - offset;
                     currentPacket[idx] = this->front_CR_TPDU.rdp_neg_requestedProtocols & 0xFF;
-                    hexdump_av_d(f.payload.get_bytes());
+                    hexdump_d(f.payload.get_bytes());
                 }
             }
         }

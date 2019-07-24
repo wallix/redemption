@@ -129,7 +129,7 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
 
     if (verbose & log_condition) {
         LOG(LOG_INFO, "Sec clear payload to send:");
-        hexdump_d(data_.get().get_packet().data(), data_.get().get_packet().size());
+        hexdump_d(data_.get().get_packet());
     }
 
     ::send_data_indication_ex(trans, encryptionLevel, encrypt, initiator, data_.get());
