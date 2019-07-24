@@ -1831,6 +1831,30 @@ class Sesman():
                                 if self.shared.get("pm_request"):
                                     self._manage_pm()
 
+                                if self.shared.get("rd_shadow_available") == 'True':
+                                    update_args = {}
+                                    update_args["shadow_allow"] = True
+                                    self.engine.update_session(**update_args)
+                                    self.shared["rd_shadow_available"] = 'False'
+
+                                if self.shared.get("rd_shadow_invitation_id"):
+                                    update_args = {}
+                                    update_args["shadow_userdata"] = self.shared.get("rd_shadow_userdata")
+                                    update_args["shadow_errcode"] = self.shared.get("rd_shadow_invitation_error_code")
+                                    update_args["shadow_errmsg"] = self.shared.get("rd_shadow_invitation_error_message")
+                                    update_args["shadow_id"] = self.shared.get("rd_shadow_invitation_id")
+                                    update_args["shadow_ip"] = self.shared.get("rd_shadow_invitation_addr")
+                                    update_args["shadow_port"] = self.shared.get("rd_shadow_invitation_port")
+                                    self.engine.update_session(**update_args)
+                                    self.shared["rd_shadow_available"] = 'False'
+
+                                    self.shared["rd_shadow_userdata"] = None
+                                    self.shared["rd_shadow_invitation_error_code"] = 0
+                                    self.shared["rd_shadow_invitation_error_message"] = None
+                                    self.shared["rd_shadow_invitation_id"] = None
+                                    self.shared["rd_shadow_invitation_addr"] = None
+                                    self.shared["rd_shadow_invitation_port"] = None
+
                                 if self.shared.get("native_session_id"):
                                     update_args = {}
                                     update_args["native_session_id"] = self.shared.get("native_session_id")
@@ -2193,6 +2217,15 @@ class Sesman():
         Logger().debug("rt_display=%s" % res)
         if res:
             self.rtmanager.start(current_time)
+
+        res = params.get("shadow_type")
+        Logger().debug("shadow_type=%s" % res)
+        if res:
+            userdata = params.get("shadow_userdata")
+            Logger().debug("sending rd_shadow_type=%s" % res)
+            self.send_data({
+                  u'rd_shadow_type': res
+                , u'rd_shadow_userdata' : u'0'})
 
     def parse_app(self, value):
         acc_name, sep, app_name = value.rpartition('@')

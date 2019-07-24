@@ -22,6 +22,8 @@
 
 #include "utils/sugar/noncopyable.hpp"
 
+#include <cstdint>
+
 struct AuthApi : noncopyable
 {
     virtual void set_auth_channel_target(const char * target) = 0;
@@ -36,6 +38,10 @@ struct AuthApi : noncopyable
     virtual void set_pm_request(const char * request) = 0;
 
     virtual void set_native_session_id(unsigned int session_id) = 0;
+
+    virtual void rd_shadow_available() = 0;
+
+    virtual void rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * request, const char * id, const char * addr, uint16_t port) = 0;
 
     virtual ~AuthApi() = default;
 };
@@ -70,5 +76,18 @@ struct NullAuthentifier : AuthApi
     void set_native_session_id(unsigned int session_id) override
     {
         (void)session_id;
+    }
+
+    void rd_shadow_available() override
+    {}
+
+    void rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * userdata, const char * id, const char * addr, uint16_t port) override
+    {
+        (void)error_code;
+        (void)error_message;
+        (void)userdata;
+        (void)id;
+        (void)addr;
+        (void)port;
     }
 };

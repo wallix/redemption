@@ -169,4 +169,23 @@ public:
             this->acl_serial->ini.set_acl<cfg::context::native_session_id>(session_id);
         }
     }
+
+    void rd_shadow_available() override
+    {
+        if (this->acl_serial){
+            this->acl_serial->ini.set_acl<cfg::context::rd_shadow_available>(true);
+        }
+    }
+
+    void rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * userdata, const char * id, const char * addr, uint16_t port) override
+    {
+        if (this->acl_serial){
+            this->acl_serial->ini.set_acl<cfg::context::rd_shadow_invitation_error_code>(error_code);
+            this->acl_serial->ini.set_acl<cfg::context::rd_shadow_invitation_error_message>(error_message);
+            this->acl_serial->ini.set_acl<cfg::context::rd_shadow_userdata>(userdata);
+            this->acl_serial->ini.set_acl<cfg::context::rd_shadow_invitation_id>(id);
+            this->acl_serial->ini.set_acl<cfg::context::rd_shadow_invitation_addr>(addr);
+            this->acl_serial->ini.set_acl<cfg::context::rd_shadow_invitation_port>(port);
+        }
+    }
 };

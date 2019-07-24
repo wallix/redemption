@@ -744,7 +744,7 @@ public:
                     FrontAPI& front,
                     ServerTransportContext stc,
                     AsynchronousTaskContainer & asynchronous_tasks,
-                    mod_api& mod, rdp_api& rdp,
+                    mod_api& mod, rdp_api& rdp, AuthApi& authentifier,
                     const Translation::language_t & lang,
                     const bool bogus_refresh_rect,
                     const uint32_t monitor_count,
@@ -784,6 +784,7 @@ public:
             front,
             mod,
             rdp,
+            authentifier,
             file_system_virtual_channel,
             this->gen,
             base_params,
@@ -969,6 +970,7 @@ public:
         FrontAPI& front,
         mod_api & mod_rdp,
         rdp_api& rdp,
+        AuthApi& authentifier,
         ServerTransportContext & stc,
         AsynchronousTaskContainer & asynchronous_tasks,
         GeneralCaps const & client_general_caps,
@@ -982,7 +984,7 @@ public:
             this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp,
+                    mod_rdp, rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -1612,6 +1614,7 @@ public:
         ServerTransportContext & stc,
         mod_api & mod_rdp,
         rdp_api& rdp,
+        AuthApi& authentifier,
         AsynchronousTaskContainer & asynchronous_tasks,
         GeneralCaps const & client_general_caps,
         const ModRdpVariables & vars,
@@ -1644,7 +1647,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp,
+                    mod_rdp, rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -1675,7 +1678,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp,
+                    mod_rdp, rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -2107,7 +2110,7 @@ public:
                         this->channels.create_session_probe_virtual_channel(
                                 this->front, stc,
                                 this->asynchronous_tasks,
-                                *this, *this,
+                                *this, *this, this->authentifier,
                                 this->lang,
                                 this->bogus_refresh_rect,
                                 this->monitor_count,
@@ -2219,7 +2222,6 @@ public:
 #endif
     }
 
-private:
     // TODO: move to channels (and also remains here as it is mod API)
     void send_checkout_channel_data(const char * string_data) override {
 #ifndef __EMSCRIPTEN__
@@ -2242,6 +2244,17 @@ private:
           , stream_data.get_bytes());
 #else
         (void)string_data;
+#endif
+    }
+
+    void create_shadow_session(const char * userdata, const char * type) override {
+#ifndef __EMSCRIPTEN__
+        if (this->channels.session_probe_virtual_channel) {
+            this->channels.session_probe_virtual_channel->create_shadow_session(userdata, type);
+        }
+#else
+        (void)userdata;
+        (void)type;
 #endif
     }
 
@@ -2674,7 +2687,7 @@ public:
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
-                    this->front, *this, *this, stc,
+                    this->front, *this, *this, this->authentifier, stc,
                     this->asynchronous_tasks,
                     this->client_general_caps, this->client_name,
                     this->monitor_count, this->bogus_refresh_rect, this->lang);
@@ -2867,6 +2880,7 @@ public:
                                         stc,
                                         *this,
                                         *this,
+                                        this->authentifier,
                                         this->asynchronous_tasks,
                                         this->client_general_caps,
                                         this->vars,

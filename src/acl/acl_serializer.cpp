@@ -597,6 +597,13 @@ bool AclSerializer::check(
                 this->ini.get_ref<cfg::context::pm_response>().clear();
             }
         }
+
+        if (!this->ini.get<cfg::context::rd_shadow_type>().empty()) {
+            mm.get_mod()->create_shadow_session(this->ini.get<cfg::context::rd_shadow_userdata>().c_str(),
+                this->ini.get<cfg::context::rd_shadow_type>().c_str());
+
+            this->ini.get_ref<cfg::context::rd_shadow_type>().clear();
+        }
     }
 
     return true;

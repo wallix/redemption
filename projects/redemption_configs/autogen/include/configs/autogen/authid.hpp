@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(166);
+constexpr authid_t MAX_AUTHID = authid_t(174);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -177,4 +177,12 @@ constexpr array_view_const_char const authstr[] = {
     "pm_response"_av,
     "pm_request"_av,
     "native_session_id"_av,
+    "rd_shadow_available"_av,
+    "rd_shadow_userdata"_av,
+    "rd_shadow_type"_av,
+    "rd_shadow_invitation_error_code"_av,
+    "rd_shadow_invitation_error_message"_av,
+    "rd_shadow_invitation_id"_av,
+    "rd_shadow_invitation_addr"_av,
+    "rd_shadow_invitation_port"_av,
 };

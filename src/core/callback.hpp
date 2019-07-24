@@ -124,5 +124,10 @@ struct Callback : RdpInput
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
     virtual void send_auth_channel_data(const char * data) { (void)data; }
     virtual void send_checkout_channel_data(const char * data) { (void)data; }
+
+    virtual void create_shadow_session(const char * userdata, const char * type) {
+        (void)userdata;
+        (void)type;
+    }
 };
 
