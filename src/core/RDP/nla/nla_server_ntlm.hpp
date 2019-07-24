@@ -426,22 +426,6 @@ protected:
             return true;
         }
 
-        void ntlm_construct_challenge_target_info() {
-            uint8_t win7[] =  {
-                0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00
-            };
-            uint8_t upwin7[] =  {
-                0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00
-            };
-            
-            NtlmAvPairList & list = this->CHALLENGE_MESSAGE.AvPairList;
-            list.add(MsvAvNbComputerName,  upwin7,          sizeof(upwin7));
-            list.add(MsvAvNbDomainName,    upwin7,          sizeof(upwin7));
-            list.add(MsvAvDnsComputerName, win7,            sizeof(win7));
-            list.add(MsvAvDnsDomainName,   win7,            sizeof(win7));
-            list.add(MsvAvTimestamp,       this->Timestamp, 8);
-        }
-
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
         void ntlm_server_build_challenge() {
             if (!this->ntlm_check_nego()) {
@@ -450,7 +434,17 @@ protected:
             this->ntlm_generate_server_challenge();
             memcpy(this->CHALLENGE_MESSAGE.serverChallenge, this->ServerChallenge, 8);
             this->ntlm_generate_timestamp();
-            this->ntlm_construct_challenge_target_info();
+
+            // NTLM: construct challenge target info
+            uint8_t win7[] =  { 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
+            uint8_t upwin7[] =  { 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
+            
+            auto & list = this->CHALLENGE_MESSAGE.AvPairList.list;
+            NtlmAddToAvPairList(MsvAvNbComputerName, upwin7, sizeof(upwin7), list);
+            NtlmAddToAvPairList(MsvAvNbDomainName, upwin7, sizeof(upwin7), list);
+            NtlmAddToAvPairList(MsvAvDnsComputerName, win7, sizeof(win7), list);
+            NtlmAddToAvPairList(MsvAvDnsDomainName, win7, sizeof(win7), list);
+            NtlmAddToAvPairList(MsvAvTimestamp, this->Timestamp, 8, list);
 
             this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {

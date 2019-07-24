@@ -132,41 +132,18 @@ enum NTLM_AV_ID : uint16_t {
 
 using AvPair = std::vector<uint8_t>;
 
+struct AvItem {
+    NTLM_AV_ID id;
+    AvPair pair;
+};
+
+
 class NtlmAvPairList final
 {
-    struct AvItem {
-        NTLM_AV_ID id;
-        AvPair pair;
-    };
-    
-    std::vector<AvItem> list;
-//    {
-//        {MsvAvNbComputerName,{}},
-//        {MsvAvNbDomainName,{}},
-//        {MsvAvDnsComputerName,{}},
-//        {MsvAvDnsDomainName,{}},
-//        {MsvAvDnsTreeName,{}},
-//        {MsvAvFlags,{}},
-//        {MsvAvTimestamp,{}},
-//        {MsvAvSingleHost,{}},
-//        {MsvAvTargetName,{}},
-//        {MsvChannelBindings,{}},
-//        {MsvAvEOL,{}}
-//    };
-
 public:
-    NtlmAvPairList() = default;
+    std::vector<AvItem> list;
 
-    void add(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length)
-    {
-        for (auto & avp: this->list) {
-            if (avp.id == avId){
-                avp.pair.assign(value, value+length);
-                return;
-            }
-        }
-        this->list.push_back({avId, AvPair(value, value+length)});
-    }
+    NtlmAvPairList() = default;
 
     size_t length() const  { return list.size()+1; }
 
@@ -202,20 +179,35 @@ public:
             stream.in_skip_bytes(length);
         }
     }
-
-    void log() const
-    {
-        LOG(LOG_INFO, "Av Pair List : %zu elements {", this->list.size());
-
-        for (auto & avp: this->list) {
-            if (avp.pair.size()) {
-                LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.pair.size()));
-                hexdump_c(avp.pair.data(), avp.pair.size(), 8);
-            }
-        }
-        LOG(LOG_INFO, "}");
-    }
 };
+
+
+// TODO: use array_view for (value/length)
+inline void NtlmAddToAvPairList(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length, std::vector<AvItem> & list)
+{
+    for (auto & avp: list) {
+        if (avp.id == avId){
+            avp.pair.assign(value, value+length);
+            return;
+        }
+    }
+    list.push_back({avId, AvPair(value, value+length)});
+}
+
+
+
+inline void LogNtlmAvPairList(const std::vector<AvItem> & list)
+{
+    LOG(LOG_INFO, "Av Pair List : %zu elements {", list.size());
+
+    for (auto & avp: list) {
+        if (avp.pair.size()) {
+            LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.pair.size()));
+            hexdump_c(avp.pair.data(), avp.pair.size(), 8);
+        }
+    }
+    LOG(LOG_INFO, "}");
+}
 
 enum NtlmState {
     NTLM_STATE_INITIAL,
@@ -1466,7 +1458,7 @@ struct NTLM_Response {
 //   2.2.2.1). The sequence contains the server-naming context and is terminated by an AV_PAIR
 //   structure with an AvId field of MsvAvEOL.
 
-   
+
 struct NTLMv2_Client_Challenge {
     uint8_t  RespType;              // MUST BE 0x01
     uint8_t  HiRespType;            // MUST BE 0x01
@@ -1496,7 +1488,7 @@ inline void EmitNTLMv2_Client_Challenge(OutStream & stream, NTLMv2_Client_Challe
     stream.out_clear_bytes(4);
 }
 
-inline void RecvNTLMv2_Client_Challenge(InStream & stream, NTLMv2_Client_Challenge & self) 
+inline void RecvNTLMv2_Client_Challenge(InStream & stream, NTLMv2_Client_Challenge & self)
 {
     // size_t size;
     self.RespType = stream.in_uint8();
@@ -1763,10 +1755,10 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         self.TargetInfo.write_payload(stream);
 }
 
-inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & self) 
+inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & self)
 {
     uint8_t const * pBegin = stream.get_current();
-    
+
     constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
     uint8_t received_sig[sig_len];
     stream.in_copy_bytes(received_sig, sig_len);
@@ -1964,7 +1956,7 @@ public:
     }
 };
 
-inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & self) 
+inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & self)
 {
     uint8_t const * pBegin = stream.get_current();
 

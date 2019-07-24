@@ -46,21 +46,21 @@ RED_AUTO_TEST_CASE(TestAvPair)
 {
     NtlmAvPairList listAvPair;
 
-    RED_CHECK_EQUAL(listAvPair.length(), 1);
+    RED_CHECK_EQUAL(listAvPair.list.size(), 0);
     RED_CHECK_EQUAL(listAvPair.packet_length(), 4);
 
     const uint8_t tartempion[] = "NomDeDomaine";
 
-    listAvPair.add(MsvAvNbDomainName, tartempion, sizeof(tartempion));
+    NtlmAddToAvPairList(MsvAvNbDomainName, tartempion, sizeof(tartempion), listAvPair.list);
 
-    RED_CHECK_EQUAL(listAvPair.length(), 2);
+    RED_CHECK_EQUAL(listAvPair.list.size(), 1);
     RED_CHECK_EQUAL(listAvPair.packet_length(), 21);
 
     StaticOutStream<65535> stream;
 
     listAvPair.emit(stream);
     RED_CHECK_EQUAL(listAvPair.packet_length(), stream.get_offset());
-    //listAvPair.log();
+    LogNtlmAvPairList(listAvPair.list);
 }
 
 
@@ -1288,12 +1288,12 @@ public:
         uint8_t upwin7[] =  {
             0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00
         };
-        NtlmAvPairList & list = this->CHALLENGE_MESSAGE.AvPairList;
-        list.add(MsvAvTimestamp,       this->Timestamp, 8);
-        list.add(MsvAvNbDomainName,    upwin7,          sizeof(upwin7));
-        list.add(MsvAvNbComputerName,  upwin7,          sizeof(upwin7));
-        list.add(MsvAvDnsDomainName,   win7,            sizeof(win7));
-        list.add(MsvAvDnsComputerName, win7,            sizeof(win7));
+        auto & list = this->CHALLENGE_MESSAGE.AvPairList.list;
+        NtlmAddToAvPairList(MsvAvTimestamp, this->Timestamp, 8, list);
+        NtlmAddToAvPairList(MsvAvNbDomainName, upwin7, sizeof(upwin7), list);
+        NtlmAddToAvPairList(MsvAvNbComputerName, upwin7, sizeof(upwin7), list);
+        NtlmAddToAvPairList(MsvAvDnsDomainName, win7, sizeof(win7), list);
+        NtlmAddToAvPairList(MsvAvDnsComputerName, win7, sizeof(win7), list);
     }
 
 
