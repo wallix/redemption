@@ -869,7 +869,7 @@ namespace
             LOG_IF(bool(this->verbose & Verbose::buffer),
                 LOG_INFO, "ACL SERIALIZER : Data size without header (send) %d",
                 this->buf.sz - ACL_SERIALIZER_HEADER_SIZE);
-            OutStream stream(this->buf.data, ACL_SERIALIZER_HEADER_SIZE);
+            OutStream stream({this->buf.data, ACL_SERIALIZER_HEADER_SIZE});
             stream.out_uint16_be(this->buf.flags);
             stream.out_uint16_be(this->buf.sz - ACL_SERIALIZER_HEADER_SIZE);
             this->trans.send(this->buf.data, this->buf.sz);

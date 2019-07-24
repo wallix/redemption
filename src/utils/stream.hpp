@@ -391,21 +391,10 @@ class OutStream
     uint8_t * p = nullptr;
 
 public:
-    explicit OutStream(uint8_t * array, std::size_t len, std::size_t offset = 0) noexcept
-    : begin(array)
-    , end(array + len)
-    , p(this->begin + offset)
-    {
-        assert(len >= offset);
-    }
-
-    explicit OutStream(char * array, std::size_t len, std::size_t offset = 0) noexcept
-    : OutStream(byte_ptr_cast(array), len, offset)
-    {
-    }
-
     explicit OutStream(buffer_view buf) noexcept
-    : OutStream(buf.data(), buf.size())
+    : begin(buf.begin())
+    , end(buf.end())
+    , p(this->begin)
     {
     }
 
@@ -828,8 +817,8 @@ public:
 template<std::size_t N>
 struct StaticOutStream : OutStream
 {
-    explicit StaticOutStream(std::size_t offset = 0) noexcept
-    : OutStream(this->array_, N, offset)
+    explicit StaticOutStream() noexcept
+    : OutStream(this->array_)
     {}
 
     StaticOutStream(StaticOutStream const &) = delete;
@@ -850,12 +839,12 @@ struct StreamBufMaker
 {
     OutStream reserve_out_stream(std::size_t n) &
     {
-        return OutStream(this->buf_maker_.dyn_array(n).data(), n);
+        return OutStream(this->buf_maker_.dyn_array(n));
     }
 
     InStream reserve_in_stream(std::size_t n) &
     {
-        return InStream(this->buf_maker_.dyn_array(n).data(), n);
+        return InStream(this->buf_maker_.dyn_array(n));
     }
 
 private:
@@ -870,7 +859,7 @@ struct OutReservedStreamHelper
     OutReservedStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len) noexcept
     : buf(data + reserved_leading_space)
     , reserved_leading_space(reserved_leading_space)
-    , stream(this->buf, buf_len - reserved_leading_space)
+    , stream({this->buf, buf_len - reserved_leading_space})
     {}
 
     struct Packet
@@ -1136,7 +1125,7 @@ namespace details_ {
         DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, uint8_t * buf, /*NOLINT*/
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
-        OutStream data_stream(buf + header_buf_sz, data_buf_sz);
+        OutStream data_stream({buf + header_buf_sz, data_buf_sz});
         data_writer(data_buf_sz, data_stream);
         auto * start = data_stream.get_data();
         std::size_t used_buf_sz = data_stream.get_offset();

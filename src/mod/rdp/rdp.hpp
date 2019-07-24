@@ -2019,7 +2019,7 @@ public:
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
-        , multifragment_update_data(multifragment_update_buffer.get(), 65536, 0)
+        , multifragment_update_data({multifragment_update_buffer.get(), 65536})
         , client_large_pointer_caps(info.large_pointer_caps)
         , client_multi_fragment_update_caps(info.multi_fragment_update_caps)
         , client_general_caps(info.general_caps)
@@ -3653,7 +3653,7 @@ public:
                 }
                 if (this->multifragment_update_data.get_capacity() < multi_fragment_update_caps.MaxRequestSize) {
                     this->multifragment_update_buffer = std::make_unique<uint8_t[]>(multi_fragment_update_caps.MaxRequestSize);
-                    this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), multi_fragment_update_caps.MaxRequestSize);
+                    this->multifragment_update_data = OutStream({this->multifragment_update_buffer.get(), multi_fragment_update_caps.MaxRequestSize});
                 }
 
                 /** OffscreenBitmapCacheCapabilitySet */
@@ -4838,9 +4838,7 @@ public:
                 auto_reconnect.receive(lif.payload);
                 auto_reconnect.log(LOG_INFO);
 
-                OutStream stream(
-                    this->server_auto_reconnect_packet_ref.data(),
-                    this->server_auto_reconnect_packet_ref.size());
+                OutStream stream(this->server_auto_reconnect_packet_ref);
 
                 auto_reconnect.emit(stream);
 
@@ -5834,7 +5832,7 @@ private:
                 ShareData sdata(stream);
                 sdata.emit_begin(pdu_type2, this->share_id, stream_id);
                 {
-                    OutStream substream(stream.get_current(), packet_size_t{});
+                    OutStream substream({stream.get_current(), packet_size_t{}});
                     data_writer(packet_size_t{}, substream);
                     stream.out_skip_bytes(substream.get_offset());
                 }

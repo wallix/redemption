@@ -162,7 +162,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
 
     constexpr std::size_t array_size = 1024;
     uint8_t array[array_size];
-    OutStream deltaPoints(array, array_size);
+    OutStream deltaPoints(array);
 
     deltaPoints.out_sint16_le(0);
     deltaPoints.out_sint16_le(20);

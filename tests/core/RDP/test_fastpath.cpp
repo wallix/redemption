@@ -329,7 +329,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.get_capacity());
 
-    OutStream Upd_s(out_s.get_data(), FastPath::Update_Send::GetSize(false));
+    OutStream Upd_s({out_s.get_data(), FastPath::Update_Send::GetSize(false)});
 
     FastPath::Update_Send Upd( Upd_s
                                 , out_s.get_offset() - FastPath::Update_Send::GetSize(false)

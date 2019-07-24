@@ -527,7 +527,7 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
 
 public:
     explicit SessionLogKbd(ReportMessageApi & report_message)
-    : kbd_stream{this->buffer + session_log_prefix().size(), buffer_size}
+    : kbd_stream{{this->buffer + session_log_prefix().size(), buffer_size}}
     , report_message(report_message)
     {
         memcpy(this->buffer, session_log_prefix().data(), session_log_prefix().size());
@@ -1244,7 +1244,7 @@ class Capture::SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureA
 
 public:
     explicit SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state, MetaParams meta_params)
-    : kbd_stream{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}
+    : kbd_stream{{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}}
     , last_time(now.tv_sec)
     , trans(trans)
     , key_markers_hidden_state(key_markers_hidden_state)

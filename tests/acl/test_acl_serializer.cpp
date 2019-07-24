@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz = 1024 * 1024 * 2;
     std::unique_ptr<char[]> u(new char[sz]);
-    OutStream big_stream(u.get(), sz);
+    OutStream big_stream({u.get(), sz});
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xFFFF);
     big_stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index));
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
         "\nASK\n",
         string_from_authid(cfg::globals::auth_user::index),
         "\n!didier\n");
-    OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
+    OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -198,7 +198,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     auto const key = string_from_authid(cfg::context::rejected::index);
     auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
-    OutStream big_stream(u.get(), total_sz);
+    OutStream big_stream({u.get(), total_sz});
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xffff - 4);
     big_stream.out_copy_bytes(key);
@@ -241,7 +241,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     auto const key = string_from_authid(cfg::context::rejected::index);
     auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
-    OutStream big_stream(u.get(), total_sz);
+    OutStream big_stream({u.get(), total_sz});
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xffff - 4);
     big_stream.out_copy_bytes(key);
@@ -284,7 +284,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     size_t const key2_splitted_len = key2.size() / 2;
     auto const total_sz = 4 * 2 + key1.size() + key2.size() + 5 * 2;
     std::unique_ptr<char[]> u(new char[total_sz]);
-    OutStream big_stream(u.get(), total_sz);
+    OutStream big_stream({u.get(), total_sz});
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(key1.size() + 5 + key2_splitted_len);
     big_stream.out_copy_bytes(key1);
@@ -317,7 +317,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     ini.clear_send_index();
 
     std::string s("----abcd\n!something\nefg\n!other something\n");
-    OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
+    OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
 
     LCGRandom rnd(0);
     Fstat fstat;

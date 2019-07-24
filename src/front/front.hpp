@@ -2054,7 +2054,8 @@ public:
                             (void)sec;
 
                             auto packet = hstream.copy_to_head(tmp_sec_header);
-                            sec_header = OutStream(packet.data(), packet.size(), packet.size());
+                            sec_header = OutStream(packet);
+                            sec_header.out_skip_bytes(packet.size());
                         }
                     );
 

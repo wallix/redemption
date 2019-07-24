@@ -1690,8 +1690,7 @@ void RdpNegociation::send_client_info_pdu()
                 sizeof(server_auto_reconnect_packet.ArcRandomBits));
         }
 
-        OutStream out_s(infoPacket.extendedInfoPacket.autoReconnectCookie,
-            sizeof(infoPacket.extendedInfoPacket.autoReconnectCookie));
+        OutStream out_s(infoPacket.extendedInfoPacket.autoReconnectCookie);
 
         uint8_t digest[SslMd5::DIGEST_LENGTH] = { 0 };
 

@@ -3309,7 +3309,7 @@ RED_DATA_TEST_CASE(TestRDP60BitmapCompression, (std::array{
     auto sz = std::max(std::size_t{65536}, 2u * bmp.bmp_size());
     auto uptr = std::make_unique<uint8_t[]>(sz);
 
-    OutStream compressed_bitmap_data(uptr.get(), sz);
+    OutStream compressed_bitmap_data({uptr.get(), sz});
 
     bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
 
