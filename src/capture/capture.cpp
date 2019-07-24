@@ -378,8 +378,7 @@ REDEMPTION_DIAGNOSTIC_POP
 
 class Capture::SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 {
-    uint8_t kbd_buffer[1024];
-    OutStream kbd_stream;
+    StaticOutStream<1024> kbd_stream;
     bool keyboard_input_mask_enabled = false;
     timeval last_snapshot;
 
@@ -418,8 +417,7 @@ private:
 
 public:
     explicit SyslogKbd(timeval const & now)
-    : kbd_stream(this->kbd_buffer)
-    , last_snapshot(now)
+    : last_snapshot(now)
     {}
 
     ~SyslogKbd() {

@@ -591,8 +591,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         this->length_of_remaining_device_data_to_be_skipped   =
                             DeviceDataLength;
 
-                        uint8_t out_data[512];
-                        OutStream out_stream(out_data);
+                        StaticOutStream<512> out_stream;
 
                         rdpdr::SharedHeader server_message_header(
                             rdpdr::Component::RDPDR_CTYP_CORE,
@@ -621,21 +620,16 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         const uint32_t flags_             =
                             CHANNELS::CHANNEL_FLAG_FIRST |
                             CHANNELS::CHANNEL_FLAG_LAST;
-                        const uint8_t* chunk_data_        = out_data;
-                        const uint32_t chunk_data_length_ = total_length_;
 
                         if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
                             const bool send              = true;
                             const bool from_or_to_client = true;
                             ::msgdump_c(send,
                                 from_or_to_client, total_length_, flags_,
-                                {chunk_data_, chunk_data_length_});
+                                out_stream.get_bytes());
                         }
 
-                        (*this->to_client_sender)(
-                            total_length_,
-                            flags_,
-                            {chunk_data_, chunk_data_length_});
+                        (*this->to_client_sender)(total_length_, flags_, out_stream.get_bytes());
                     }
                 }   // if (!this->length_of_remaining_device_data_to_be_processed &&
 
@@ -697,16 +691,14 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
             const uint32_t max_number_of_removable_device = 128;
 
-            uint8_t client_drive_device_list_remove_data[
-                    // > rdpdr::SharedHeader::size()
-                    64
-                    // DeviceCount(4)
-                    + 4
-                    // DeviceId(4)
-                    + 4 * max_number_of_removable_device
-                ];
-            OutStream client_drive_device_list_remove_stream(
-                client_drive_device_list_remove_data);
+            StaticOutStream<
+                // > rdpdr::SharedHeader::size()
+                64
+                // DeviceCount(4)
+                + 4
+                // DeviceId(4)
+                + 4 * max_number_of_removable_device
+            > client_drive_device_list_remove_stream;
 
             uint32_t number_of_removable_device = 0;
 
@@ -760,21 +752,18 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 const uint32_t flags_             =
                     CHANNELS::CHANNEL_FLAG_FIRST |
                     CHANNELS::CHANNEL_FLAG_LAST;
-                const uint8_t* chunk_data_        =
-                    client_drive_device_list_remove_data;
-                const uint32_t chunk_data_length_ = total_length_;
 
                 if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
                     const bool send              = true;
                     const bool from_or_to_client = false;
-                    ::msgdump_c(send, from_or_to_client,
-                        total_length_, flags_, {chunk_data_, chunk_data_length_});
+                    ::msgdump_c(send, from_or_to_client, total_length_, flags_,
+                        client_drive_device_list_remove_stream.get_bytes());
                 }
 
                 (*this->to_server_sender)(
                     total_length_,
                     flags_,
-                    {chunk_data_, chunk_data_length_});
+                    client_drive_device_list_remove_stream.get_bytes());
             }
         }
 
@@ -2197,8 +2186,7 @@ public:
         }
 
         {
-            uint8_t message_buffer[1024];
-            OutStream out_stream(message_buffer);
+            StaticOutStream<1024> out_stream;
 
             const rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
@@ -2332,9 +2320,7 @@ public:
 
         if (!access_ok)
         {
-            uint8_t message_buffer[1024];
-
-            OutStream out_stream(message_buffer);
+            StaticOutStream<1024> out_stream;
 
             const rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,

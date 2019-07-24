@@ -375,9 +375,7 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 
     RED_CHECK_EQUAL(in_data.size(), file_descriptor.size());
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     file_descriptor.emit(out_stream);
 
