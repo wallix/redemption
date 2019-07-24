@@ -134,22 +134,25 @@ using AvPair = std::vector<uint8_t>;
 
 class NtlmAvPairList final
 {
-    struct {
+    struct AvItem {
         NTLM_AV_ID id;
         AvPair pair;
-    } list[AV_ID_MAX] = {
-        {MsvAvNbComputerName,{}},
-        {MsvAvNbDomainName,{}},
-        {MsvAvDnsComputerName,{}},
-        {MsvAvDnsDomainName,{}},
-        {MsvAvDnsTreeName,{}},
-        {MsvAvFlags,{}},
-        {MsvAvTimestamp,{}},
-        {MsvAvSingleHost,{}},
-        {MsvAvTargetName,{}},
-        {MsvChannelBindings,{}},
-        {MsvAvEOL,{}},
     };
+    
+    std::vector<AvItem> list;
+//    {
+//        {MsvAvNbComputerName,{}},
+//        {MsvAvNbDomainName,{}},
+//        {MsvAvDnsComputerName,{}},
+//        {MsvAvDnsDomainName,{}},
+//        {MsvAvDnsTreeName,{}},
+//        {MsvAvFlags,{}},
+//        {MsvAvTimestamp,{}},
+//        {MsvAvSingleHost,{}},
+//        {MsvAvTargetName,{}},
+//        {MsvChannelBindings,{}},
+//        {MsvAvEOL,{}}
+//    };
 
 public:
     NtlmAvPairList() = default;
@@ -162,41 +165,24 @@ public:
                 return;
             }
         }
-        // TODO: usefull once the list is changed to vector
-        //this->list.pushback({avId, AvPair(value, value+length)});
+        this->list.push_back({avId, AvPair(value, value+length)});
     }
 
-    size_t length() const
-    {
-        size_t res = 1;
-        for (auto & avp: this->list) {
-            if (avp.pair.size()) {
-                ++res;
-            }
-        }
-        return res;
-    }
+    size_t length() const  { return list.size()+1; }
 
     size_t packet_length() const
     {
-        const size_t static_pair_len = sizeof(NTLM_AV_ID) + sizeof(uint16_t); // AVPair len field
-        size_t res = static_pair_len;
-        for (auto & avp: this->list) {
-            if (avp.pair.size()) {
-                res += static_pair_len + avp.pair.size();
-            }
-        }
+        size_t res = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (this->list.size()+1);
+        for (auto & avp: this->list) { res += avp.pair.size(); }
         return res;
     }
 
     void emit(OutStream & stream) const
     {
         for (auto & avp: this->list) {
-            if (avp.pair.size()) {
-                stream.out_uint16_le(avp.id);
-                stream.out_uint16_le(avp.pair.size());
-                stream.out_copy_bytes(avp.pair);
-            }
+            stream.out_uint16_le(avp.id);
+            stream.out_uint16_le(avp.pair.size());
+            stream.out_copy_bytes(avp.pair);
         }
         stream.out_uint16_le(MsvAvEOL);
         stream.out_uint16_le(0);
@@ -212,14 +198,14 @@ public:
                 stream.in_skip_bytes(length);
                 break;
             }
-            this->list[id-1].pair.assign(stream.get_current(), stream.get_current()+length);
+            this->list.push_back({id, AvPair(stream.get_current(), stream.get_current()+length)});
             stream.in_skip_bytes(length);
         }
     }
 
     void log() const
     {
-        LOG(LOG_INFO, "Av Pair List : %zu elements {", this->length());
+        LOG(LOG_INFO, "Av Pair List : %zu elements {", this->list.size());
 
         for (auto & avp: this->list) {
             if (avp.pair.size()) {

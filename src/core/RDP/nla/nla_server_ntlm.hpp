@@ -433,12 +433,13 @@ protected:
             uint8_t upwin7[] =  {
                 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00
             };
+            
             NtlmAvPairList & list = this->CHALLENGE_MESSAGE.AvPairList;
-            list.add(MsvAvTimestamp,       this->Timestamp, 8);
-            list.add(MsvAvNbDomainName,    upwin7,          sizeof(upwin7));
             list.add(MsvAvNbComputerName,  upwin7,          sizeof(upwin7));
-            list.add(MsvAvDnsDomainName,   win7,            sizeof(win7));
+            list.add(MsvAvNbDomainName,    upwin7,          sizeof(upwin7));
             list.add(MsvAvDnsComputerName, win7,            sizeof(win7));
+            list.add(MsvAvDnsDomainName,   win7,            sizeof(win7));
+            list.add(MsvAvTimestamp,       this->Timestamp, 8);
         }
 
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
