@@ -46,27 +46,27 @@ RED_AUTO_TEST_CASE(TestAvPair)
 {
     NtlmAvPairList listAvPair;
 
-    RED_CHECK_EQUAL(listAvPair.list.size(), 0);
-    size_t packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
-    for (auto & avp: listAvPair.list) { packet_length += avp.data.size(); }
+    RED_CHECK_EQUAL(listAvPair.size(), 0);
+    size_t packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.size()+1);
+    for (auto & avp: listAvPair) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, 4);
 
     const uint8_t tartempion[] = "NomDeDomaine";
 
-    NtlmAddToAvPairList(MsvAvNbDomainName, tartempion, sizeof(tartempion), listAvPair.list);
+    NtlmAddToAvPairList(MsvAvNbDomainName, tartempion, sizeof(tartempion), listAvPair);
 
-    RED_CHECK_EQUAL(listAvPair.list.size(), 1);
-    packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
-    for (auto & avp: listAvPair.list) { packet_length += avp.data.size(); }    
+    RED_CHECK_EQUAL(listAvPair.size(), 1);
+    packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.size()+1);
+    for (auto & avp: listAvPair) { packet_length += avp.data.size(); }    
     RED_CHECK_EQUAL(packet_length, 21);
 
     StaticOutStream<65535> stream;
 
-    EmitNtlmAvPairList(stream, listAvPair.list);
-    packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.list.size()+1);
-    for (auto & avp: listAvPair.list) { packet_length += avp.data.size(); }
+    EmitNtlmAvPairList(stream, listAvPair);
+    packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.size()+1);
+    for (auto & avp: listAvPair) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, stream.get_offset());
-    LogNtlmAvPairList(listAvPair.list);
+    LogNtlmAvPairList(listAvPair);
 }
 
 
@@ -85,7 +85,7 @@ RED_AUTO_TEST_CASE(TestAvPairRecv)
     NtlmAvPairList avpairlist;
 
     InStream in_stream(TargetInfo);
-    RecvNtlmAvPairList(in_stream, avpairlist.list);
+    RecvNtlmAvPairList(in_stream, avpairlist);
     //avpairlist.log();
 }
 
@@ -1294,7 +1294,7 @@ public:
         uint8_t upwin7[] =  {
             0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00
         };
-        auto & list = this->CHALLENGE_MESSAGE.AvPairList.list;
+        auto & list = this->CHALLENGE_MESSAGE.AvPairList;
         NtlmAddToAvPairList(MsvAvTimestamp, this->Timestamp, 8, list);
         NtlmAddToAvPairList(MsvAvNbDomainName, upwin7, sizeof(upwin7), list);
         NtlmAddToAvPairList(MsvAvNbComputerName, upwin7, sizeof(upwin7), list);

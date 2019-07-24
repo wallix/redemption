@@ -439,7 +439,7 @@ protected:
             uint8_t win7[] =  { 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
             uint8_t upwin7[] =  { 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
             
-            auto & list = this->CHALLENGE_MESSAGE.AvPairList.list;
+            auto & list = this->CHALLENGE_MESSAGE.AvPairList;
             NtlmAddToAvPairList(MsvAvNbComputerName, upwin7, sizeof(upwin7), list);
             NtlmAddToAvPairList(MsvAvNbDomainName, upwin7, sizeof(upwin7), list);
             NtlmAddToAvPairList(MsvAvDnsComputerName, win7, sizeof(win7), list);

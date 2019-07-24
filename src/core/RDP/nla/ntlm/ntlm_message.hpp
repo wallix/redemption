@@ -136,15 +136,7 @@ struct AvItem {
 };
 
 
-class NtlmAvPairList final
-{
-public:
-    std::vector<AvItem> list;
-
-    NtlmAvPairList() = default;
-
-};
-
+using NtlmAvPairList = std::vector<AvItem>;
 
 inline void EmitNtlmAvPairList(OutStream & stream, const std::vector<AvItem> & list)
 {
@@ -1474,7 +1466,7 @@ inline void EmitNTLMv2_Client_Challenge(OutStream & stream, NTLMv2_Client_Challe
     stream.out_copy_bytes(self.Timestamp, 8);
     stream.out_copy_bytes(self.ClientChallenge, 8);
     stream.out_clear_bytes(4);
-    EmitNtlmAvPairList(stream, self.AvPairList.list);
+    EmitNtlmAvPairList(stream, self.AvPairList);
     stream.out_clear_bytes(4);
 }
 
@@ -1488,7 +1480,7 @@ inline void RecvNTLMv2_Client_Challenge(InStream & stream, NTLMv2_Client_Challen
     stream.in_copy_bytes(self.Timestamp, 8);
     stream.in_copy_bytes(self.ClientChallenge, 8);
     stream.in_skip_bytes(4);
-    RecvNtlmAvPairList(stream, self.AvPairList.list);
+    RecvNtlmAvPairList(stream, self.AvPairList);
     stream.in_skip_bytes(4);
 }
 
@@ -1718,7 +1710,7 @@ public:
 inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self)
 {
         self.TargetInfo.buffer.reset();
-        EmitNtlmAvPairList(self.TargetInfo.buffer.ostream, self.AvPairList.list);
+        EmitNtlmAvPairList(self.TargetInfo.buffer.ostream, self.AvPairList);
         self.TargetInfo.buffer.mark_end();
 
         uint32_t currentOffset = self.PayloadOffset;
@@ -1772,7 +1764,7 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     self.TargetName.read_payload(stream, pBegin);
     self.TargetInfo.read_payload(stream, pBegin);
     auto in_stream = self.TargetInfo.buffer.in_stream();
-    RecvNtlmAvPairList(in_stream, self.AvPairList.list);
+    RecvNtlmAvPairList(in_stream, self.AvPairList);
     self.TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
 }
 
