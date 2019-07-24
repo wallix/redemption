@@ -143,9 +143,6 @@ public:
 
     NtlmAvPairList() = default;
 
-    size_t length() const  { return list.size()+1; }
-
-
 };
 
 
