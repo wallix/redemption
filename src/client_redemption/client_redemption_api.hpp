@@ -46,8 +46,8 @@ public:
     virtual ~ClientRedemptionAPI() = default;
 
     bool can_be_start_capture() override { return true; }
-    void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, uint8_t const *
-                         /*data*/, std::size_t  /*length*/, std::size_t  /*chunk_size*/, int  /*flags*/) override {}
+    void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, const_bytes_view /*chunk_data*/
+                        , std::size_t /*total_length*/, int  /*flags*/) override {}
 
     virtual bool is_connected() {return false;}
     virtual int wait_and_draw_event(std::chrono::milliseconds timeout) = 0;

@@ -1679,8 +1679,7 @@ void RdpNegociation::send_client_info_pdu()
     }
 
     if (this->perform_automatic_reconnection) {
-        InStream in_s(this->server_auto_reconnect_packet_ref.data(),
-            this->server_auto_reconnect_packet_ref.size());
+        InStream in_s(this->server_auto_reconnect_packet_ref);
         RDP::ServerAutoReconnectPacket server_auto_reconnect_packet;
         server_auto_reconnect_packet.receive(in_s);
 
@@ -1691,8 +1690,7 @@ void RdpNegociation::send_client_info_pdu()
                 sizeof(server_auto_reconnect_packet.ArcRandomBits));
         }
 
-        OutStream out_s(infoPacket.extendedInfoPacket.autoReconnectCookie,
-            sizeof(infoPacket.extendedInfoPacket.autoReconnectCookie));
+        OutStream out_s(infoPacket.extendedInfoPacket.autoReconnectCookie);
 
         uint8_t digest[SslMd5::DIGEST_LENGTH] = { 0 };
 

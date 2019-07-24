@@ -527,17 +527,15 @@ private:
             {}
 
             void operator()(uint32_t total_length, uint32_t flags,
-                const uint8_t* chunk_data, uint32_t chunk_data_length) override
+                const_bytes_view chunk_data) override
             {
                 if (this->verbose) {
                     const bool send              = true;
                     const bool from_or_to_client = true;
-                    ::msgdump_c(send, from_or_to_client, total_length, flags,
-                        chunk_data, chunk_data_length);
+                    ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
                 }
 
-                this->front.send_to_channel(this->channel,
-                    chunk_data, total_length, chunk_data_length, flags);
+                this->front.send_to_channel(this->channel, chunk_data, total_length, flags);
             }
         };
 
@@ -604,9 +602,8 @@ private:
             , verbose(verbose)
             {}
 
-            void operator()(uint32_t total_length, uint32_t flags,
-                const uint8_t* chunk_data, uint32_t chunk_data_length
-            ) override {
+            void operator()(uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) override
+            {
                 if (this->show_protocol) {
                     flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
                 }
@@ -614,13 +611,12 @@ private:
                 if (verbose) {
                     const bool send              = true;
                     const bool from_or_to_client = false;
-                    ::msgdump_c(send, from_or_to_client, total_length, flags,
-                        chunk_data, chunk_data_length);
+                    ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
                 }
 
                 CHANNELS::VirtualChannelPDU virtual_channel_pdu;
                 virtual_channel_pdu.send_to_server(this->stc, this->channel_id,
-                    total_length, flags, chunk_data, chunk_data_length);
+                    total_length, flags, chunk_data);
             }
         };
 
@@ -661,12 +657,11 @@ private:
             }
 
             void operator()(
-                uint32_t total_length, uint32_t flags,
-                const uint8_t* chunk_data, uint32_t chunk_data_length) override
+                uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) override
             {
                 this->asynchronous_tasks.add(
                     std::make_unique<RdpdrSendClientMessageTask>(
-                        total_length, flags, chunk_data, chunk_data_length,
+                        total_length, flags, chunk_data,
                         *this->to_server_synchronous_sender,
                         this->verbose
                     )
@@ -749,7 +744,7 @@ public:
                     FrontAPI& front,
                     ServerTransportContext stc,
                     AsynchronousTaskContainer & asynchronous_tasks,
-                    mod_api& mod, rdp_api& rdp,
+                    mod_api& mod, rdp_api& rdp, AuthApi& authentifier,
                     const Translation::language_t & lang,
                     const bool bogus_refresh_rect,
                     const uint32_t monitor_count,
@@ -789,6 +784,7 @@ public:
             front,
             mod,
             rdp,
+            authentifier,
             file_system_virtual_channel,
             this->gen,
             base_params,
@@ -851,7 +847,7 @@ public:
     void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
         const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
-            front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+            front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);
         }
     }
 
@@ -872,7 +868,7 @@ public:
         }
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
         assert(!out_asynchronous_task);
     }   // process_cliprdr_event
 
@@ -974,6 +970,7 @@ public:
         FrontAPI& front,
         mod_api & mod_rdp,
         rdp_api& rdp,
+        AuthApi& authentifier,
         ServerTransportContext & stc,
         AsynchronousTaskContainer & asynchronous_tasks,
         GeneralCaps const & client_general_caps,
@@ -987,7 +984,7 @@ public:
             this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp,
+                    mod_rdp, rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -999,7 +996,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         assert(!out_asynchronous_task);
     }
@@ -1021,7 +1018,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         assert(!out_asynchronous_task);
     }
@@ -1039,7 +1036,7 @@ public:
         RemoteProgramsVirtualChannel& channel = *this->remote_programs_virtual_channel;
 
 
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        channel.process_client_message(length, flags, chunk.remaining_bytes());
 
     }   // send_to_mod_rail_channel
 
@@ -1063,7 +1060,7 @@ public:
             }
         }
 
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        channel.process_client_message(length, flags, chunk.remaining_bytes());
     }
 
     void process_drdynvc_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
@@ -1079,7 +1076,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         if (out_asynchronous_task) {
             asynchronous_tasks.add(std::move(out_asynchronous_task));
@@ -1119,7 +1116,7 @@ public:
                     const bool from_or_to_client = false;
 
                     ::msgdump_d(send, from_or_to_client, length, flags,
-                        stream.get_data()+8, chunk_size);
+                        {stream.get_data()+8, chunk_size});
 
                     rdpdr::streamLog(stream, this->rdpdrLogStatus);
                 }
@@ -1136,7 +1133,7 @@ public:
         FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
         if (out_asynchronous_task) {
             asynchronous_tasks.add(std::move(out_asynchronous_task));
         }
@@ -1454,13 +1451,13 @@ public:
                         total_length = chunk.get_capacity() - chunk.get_offset();
                     }
                     ::msgdump_d(send, from_or_to_client, length, flags,
-                    chunk.get_data(), total_length);
+                    {chunk.get_data(), total_length});
 
                     rdpdr::streamLog(chunk, this->rdpdrLogStatus);
                 }
             }
 
-            this->send_to_channel(*rdpdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+            this->send_to_channel(*rdpdr_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
             return;
         }
 
@@ -1470,7 +1467,7 @@ public:
 
         FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
 
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        channel.process_client_message(length, flags, chunk.remaining_bytes());
     }
 
     void send_to_mod_drdynvc_channel(InStream & chunk, size_t length, uint32_t flags,
@@ -1484,24 +1481,23 @@ public:
 
         DynamicChannelVirtualChannel& channel = *this->dynamic_channel_virtual_channel;
 
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        channel.process_client_message(length, flags, chunk.remaining_bytes());
     }
 #endif
 
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
-        uint8_t const * chunk, std::size_t chunk_size,
-        size_t length, uint32_t flags,
+        const_bytes_view chunk, size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
 #ifndef __EMSCRIPTEN__
         if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
-            InStream clone(chunk, chunk_size);
+            InStream clone(chunk);
             rdpsnd::streamLogClient(clone, flags);
         }
 
         if (bool(this->verbose & RDPVerbose::channels)) {
-            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
+            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk.size());
             channel.log(-1u);
         }
 #endif
@@ -1510,13 +1506,13 @@ public:
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
-        if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+        if (chunk.size() <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-            virtual_channel_pdu.send_to_server(stc, channel.chanid, length, flags, chunk, chunk_size);
+            virtual_channel_pdu.send_to_server(stc, channel.chanid, length, flags, chunk);
         }
         else {
-            uint8_t const * virtual_channel_data = chunk;
+            uint8_t const * virtual_channel_data = chunk.data();
             size_t          remaining_data_length = length;
 
             auto get_channel_control_flags = [] (uint32_t flags, size_t data_length,
@@ -1540,9 +1536,10 @@ public:
 
                 LOG(LOG_INFO, "send to server");
 
-                virtual_channel_pdu.send_to_server(stc, channel.chanid, length, get_channel_control_flags(
-                        flags, length, remaining_data_length, virtual_channel_data_length
-                    ), virtual_channel_data, virtual_channel_data_length);
+                virtual_channel_pdu.send_to_server(stc, channel.chanid, length,
+                    get_channel_control_flags(
+                        flags, length, remaining_data_length, virtual_channel_data_length),
+                    {virtual_channel_data, virtual_channel_data_length});
 
                 remaining_data_length -= virtual_channel_data_length;
                 virtual_channel_data  += virtual_channel_data_length;
@@ -1596,10 +1593,10 @@ public:
                 break;
             default:
                 IF_ENABLE_METRICS(client_other_channel_data(length));
-                this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+                this->send_to_channel(*mod_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
         }
 #else
-        this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+        this->send_to_channel(*mod_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
         (void)front;
         (void)asynchronous_tasks;
         (void)client_general_caps;
@@ -1617,6 +1614,7 @@ public:
         ServerTransportContext & stc,
         mod_api & mod_rdp,
         rdp_api& rdp,
+        AuthApi& authentifier,
         AsynchronousTaskContainer & asynchronous_tasks,
         GeneralCaps const & client_general_caps,
         const ModRdpVariables & vars,
@@ -1649,7 +1647,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp,
+                    mod_rdp, rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -1680,7 +1678,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp,
+                    mod_rdp, rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -2021,7 +2019,7 @@ public:
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
-        , multifragment_update_data(multifragment_update_buffer.get(), 65536, 0)
+        , multifragment_update_data({multifragment_update_buffer.get(), 65536})
         , client_large_pointer_caps(info.large_pointer_caps)
         , client_multi_fragment_update_caps(info.multi_fragment_update_caps)
         , client_general_caps(info.general_caps)
@@ -2112,7 +2110,7 @@ public:
                         this->channels.create_session_probe_virtual_channel(
                                 this->front, stc,
                                 this->asynchronous_tasks,
-                                *this, *this,
+                                *this, *this, this->authentifier,
                                 this->lang,
                                 this->bogus_refresh_rect,
                                 this->monitor_count,
@@ -2218,14 +2216,12 @@ public:
         virtual_channel_pdu.send_to_server(stc, this->channels.auth_channel_chanid
                                           , stream_data.get_offset()
                                           , this->channels.auth_channel_flags
-                                          , stream_data.get_data()
-                                          , stream_data.get_offset());
+                                          , stream_data.get_bytes());
 #else
         (void)string_data;
 #endif
     }
 
-private:
     // TODO: move to channels (and also remains here as it is mod API)
     void send_checkout_channel_data(const char * string_data) override {
 #ifndef __EMSCRIPTEN__
@@ -2245,10 +2241,20 @@ private:
         virtual_channel_pdu.send_to_server(stc, this->channels.checkout_channel_chanid
           , stream_data.get_offset()
           , this->channels.checkout_channel_flags
-          , stream_data.get_data()
-          , stream_data.get_offset());
+          , stream_data.get_bytes());
 #else
         (void)string_data;
+#endif
+    }
+
+    void create_shadow_session(const char * userdata, const char * type) override {
+#ifndef __EMSCRIPTEN__
+        if (this->channels.session_probe_virtual_channel) {
+            this->channels.session_probe_virtual_channel->create_shadow_session(userdata, type);
+        }
+#else
+        (void)userdata;
+        (void)type;
 #endif
     }
 
@@ -2515,7 +2521,7 @@ public:
                 setSurface.recv(stream);
 
                 if (setSurface.codecId == this->remoteFx_codec_id) {
-                    InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
+                    InStream remoteFxStream({stream.get_current(), setSurface.bitmapDataLength});
                     this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
                 }
                 else {
@@ -2681,7 +2687,7 @@ public:
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
-                    this->front, *this, *this, stc,
+                    this->front, *this, *this, this->authentifier, stc,
                     this->asynchronous_tasks,
                     this->client_general_caps, this->client_name,
                     this->monitor_count, this->bogus_refresh_rect, this->lang);
@@ -2719,7 +2725,7 @@ public:
             }
 #else
             if (const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel.name)) {
-                front.send_to_channel(*front_channel, sec.payload.get_current(), length, chunk_size, flags);
+                front.send_to_channel(*front_channel, {sec.payload.get_current(), chunk_size}, length, flags);
             }
 #endif
 
@@ -2874,6 +2880,7 @@ public:
                                         stc,
                                         *this,
                                         *this,
+                                        this->authentifier,
                                         this->asynchronous_tasks,
                                         this->client_general_caps,
                                         this->vars,
@@ -3646,7 +3653,7 @@ public:
                 }
                 if (this->multifragment_update_data.get_capacity() < multi_fragment_update_caps.MaxRequestSize) {
                     this->multifragment_update_buffer = std::make_unique<uint8_t[]>(multi_fragment_update_caps.MaxRequestSize);
-                    this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), multi_fragment_update_caps.MaxRequestSize);
+                    this->multifragment_update_data = OutStream({this->multifragment_update_buffer.get(), multi_fragment_update_caps.MaxRequestSize});
                 }
 
                 /** OffscreenBitmapCacheCapabilitySet */
@@ -4831,9 +4838,7 @@ public:
                 auto_reconnect.receive(lif.payload);
                 auto_reconnect.log(LOG_INFO);
 
-                OutStream stream(
-                    this->server_auto_reconnect_packet_ref.data(),
-                    this->server_auto_reconnect_packet_ref.size());
+                OutStream stream(this->server_auto_reconnect_packet_ref);
 
                 auto_reconnect.emit(stream);
 
@@ -5827,7 +5832,7 @@ private:
                 ShareData sdata(stream);
                 sdata.emit_begin(pdu_type2, this->share_id, stream_id);
                 {
-                    OutStream substream(stream.get_current(), packet_size_t{});
+                    OutStream substream({stream.get_current(), packet_size_t{}});
                     data_writer(packet_size_t{}, substream);
                     stream.out_skip_bytes(substream.get_offset());
                 }

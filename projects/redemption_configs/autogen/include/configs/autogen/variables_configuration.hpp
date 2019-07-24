@@ -4938,6 +4938,134 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// type: bool <br/>
+    /// sesman <- proxy <br/>
+    /// value{false} <br/>
+    struct context::rd_shadow_available {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rd_shadow_available";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(166);
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// type: std::string <br/>
+    /// sesman <-> proxy <br/>
+    /// value{} <br/>
+    struct context::rd_shadow_userdata {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rd_shadow_userdata";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(167);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
+    struct context::rd_shadow_type {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rd_shadow_type";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(168);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: unsigned int <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
+    struct context::rd_shadow_invitation_error_code {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rd_shadow_invitation_error_code";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(169);
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: std::string <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
+    struct context::rd_shadow_invitation_error_message {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rd_shadow_invitation_error_message";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(170);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: std::string <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
+    struct context::rd_shadow_invitation_id {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rd_shadow_invitation_id";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(171);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: std::string <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
+    struct context::rd_shadow_invitation_addr {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rd_shadow_invitation_addr";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(172);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: unsigned int <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
+    struct context::rd_shadow_invitation_port {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "rd_shadow_invitation_port";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(173);
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
 
 } // namespace cfg
 
@@ -5298,6 +5426,11 @@ struct context
 , cfg::context::close_box_extra_message
 , cfg::context::pm_response
 , cfg::context::pm_request
+, cfg::context::rd_shadow_userdata
+, cfg::context::rd_shadow_type
+, cfg::context::rd_shadow_invitation_error_message
+, cfg::context::rd_shadow_invitation_id
+, cfg::context::rd_shadow_invitation_addr
 , cfg::context::opt_bitrate
 , cfg::context::opt_framerate
 , cfg::context::opt_qscale
@@ -5312,6 +5445,8 @@ struct context
 , cfg::context::auth_command_rail_exec_exec_result
 , cfg::context::auth_command_rail_exec_flags
 , cfg::context::native_session_id
+, cfg::context::rd_shadow_invitation_error_code
+, cfg::context::rd_shadow_invitation_port
 , cfg::context::opt_bpp
 , cfg::context::opt_height
 , cfg::context::opt_width
@@ -5330,6 +5465,7 @@ struct context
 , cfg::context::perform_automatic_reconnection
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::is_wabam
+, cfg::context::rd_shadow_available
 { static constexpr bool is_section = true; };
 
 } // namespace cfg_section
@@ -5523,6 +5659,14 @@ using VariablesAclPack = Pack<
 , cfg::context::pm_response
 , cfg::context::pm_request
 , cfg::context::native_session_id
+, cfg::context::rd_shadow_available
+, cfg::context::rd_shadow_userdata
+, cfg::context::rd_shadow_type
+, cfg::context::rd_shadow_invitation_error_code
+, cfg::context::rd_shadow_invitation_error_message
+, cfg::context::rd_shadow_invitation_id
+, cfg::context::rd_shadow_invitation_addr
+, cfg::context::rd_shadow_invitation_port
 >;
 
 
@@ -5534,7 +5678,7 @@ struct BitFlags {
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111111101111111111
 , 0b1111111111111110101111101111111111111111111110011111111111111111
-, 0b0000000000000000000000000011111110111111111111111111111111111111
+, 0b0000000000000000001111111111111110111111111111111111111111111111
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000

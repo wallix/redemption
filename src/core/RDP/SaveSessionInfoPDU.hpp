@@ -121,7 +121,7 @@ struct SaveSessionInfoPDUData_Recv {
         ::check_throw(stream, 4, "Save Session Info PDU", ERR_RDP_DATA_TRUNCATED);
         return stream.in_uint32_le();
     }()),
-    payload(stream.get_current(), stream.in_remain())
+    payload(stream.remaining_bytes())
     {
         stream.in_skip_bytes(this->payload.get_capacity());
     }
@@ -546,7 +546,7 @@ struct LogonInfoExtended_Recv {
         return stream.in_uint16_le();
     }())
     , FieldsPresent(stream.in_uint32_le())
-    , payload(stream.get_current(), stream.in_remain())
+    , payload(stream.remaining_bytes())
     {
         //LOG(LOG_INFO, "LogonInfoExtended: Length=%u", this->Length);
         stream.in_skip_bytes(this->payload.get_capacity());
@@ -609,7 +609,7 @@ struct LogonInfoField_Recv {
 
         return stream.in_uint32_le();
     }())
-    , payload(stream.get_current(), stream.in_remain())
+    , payload(stream.remaining_bytes())
     {
         stream.in_skip_bytes(this->payload.get_capacity());
     }

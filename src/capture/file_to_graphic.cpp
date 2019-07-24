@@ -181,8 +181,9 @@ bool FileToGraphic::next_order()
             }
             this->stream = InStream(this->stream_buf);
             if (this->chunk_size - WRM_HEADER_SIZE > 0) {
-                this->stream = InStream(this->stream_buf, this->chunk_size - WRM_HEADER_SIZE);
-                this->trans->recv_boom(this->stream_buf, this->chunk_size - WRM_HEADER_SIZE);
+                auto av = this->trans->recv_boom(
+                    this->stream_buf, this->chunk_size - WRM_HEADER_SIZE);
+                this->stream = InStream(av);
                 this->statistics.internal_order_read_len += WRM_HEADER_SIZE;
             }
         }
@@ -492,18 +493,16 @@ void FileToGraphic::interpret_order()
                 , this->mouse_x
                 , this->mouse_y);
 
-            auto const input_data = this->stream.get_current();
-            auto const input_len = this->stream.in_remain();
-            this->stream.in_skip_bytes(input_len);
+            auto input = this->stream.in_skip_bytes(this->stream.in_remain());
             for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
-                InStream input(input_data, input_len);
-                while (input.in_remain()) {
-                    kbd->kbd_input(this->record_now, input.in_uint32_le());
+                InStream in_stream(input);
+                while (in_stream.in_remain()) {
+                    kbd->kbd_input(this->record_now, in_stream.in_uint32_le());
                 }
             }
 
             if (bool(this->verbose & Verbose::timestamp)) {
-                for (auto data = input_data, end = data + input_len/4*4; data != end; data += 4) {
+                for (auto data = input.data(), end = data + input.size()/4*4; data != end; data += 4) {
                     uint8_t         key8[6];
                     const size_t    len = UTF32toUTF8(data, 4/4, key8, sizeof(key8)-1);
                     key8[len] = 0;
@@ -598,8 +597,9 @@ void FileToGraphic::interpret_order()
             // If no drawable is available ignore images chunks
             this->stream.rewind();
             std::size_t sz = this->chunk_size - WRM_HEADER_SIZE;
-            this->trans->recv_boom(this->stream_buf, sz);
-            this->stream = InStream(this->stream_buf, sz, sz);
+            auto av = this->trans->recv_boom(this->stream_buf, sz);
+            this->stream = InStream(av);
+            this->stream.in_skip_bytes(av.size());
         }
         this->remaining_order_count = 0;
     }
@@ -834,7 +834,7 @@ void FileToGraphic::process_windowing( InStream & stream, const RDP::AltsecDrawi
     LOG_IF(bool(this->verbose & Verbose::probe), LOG_INFO, "rdp_orders::process_windowing");
 
     const uint32_t FieldsPresentFlags = [&]{
-        InStream stream2(stream.get_current(), stream.in_remain());
+        InStream stream2(stream.remaining_bytes());
         stream2.in_skip_bytes(2);    // OrderSize(2)
         return stream2.in_uint32_le();
     }();

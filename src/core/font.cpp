@@ -103,7 +103,7 @@ void Font::load_from_file(char const * file_path)
 
     size_t const stream_buf_sz = 8192;
     char stream_buf[stream_buf_sz];
-    InStream stream(stream_buf, 0);
+    InStream stream({stream_buf, 0});
 
     auto prepare_stream = [&](size_t const len, int index) -> Read {
         assert(len < stream_buf_sz / 2);
@@ -125,7 +125,7 @@ void Font::load_from_file(char const * file_path)
                     file_path, index < 0 ? index : index+32);
                 return Read::error;
             }
-            stream = InStream(stream_buf, new_size);
+            stream = InStream({stream_buf, new_size});
         }
         return Read::ok;
     };

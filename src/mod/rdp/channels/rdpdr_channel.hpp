@@ -153,8 +153,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             : device_announces(device_announces) {}
 
             void operator()(uint32_t total_length, uint32_t flags,
-                const uint8_t* chunk_data, uint32_t chunk_data_length)
-                    override {
+                const_bytes_view chunk_data) override
+            {
                 assert((flags & CHANNELS::CHANNEL_FLAG_FIRST) ||
                           bool(this->device_announce_data));
 
@@ -163,14 +163,13 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         std::make_unique<uint8_t[]>(total_length);
 
                     this->device_announce_stream = OutStream(
-                        this->device_announce_data.get(), total_length);
+                        {this->device_announce_data.get(), total_length});
                 }
 
                 assert(this->device_announce_stream.tailroom() >=
-                    chunk_data_length);
+                    chunk_data.size());
 
-                this->device_announce_stream.out_copy_bytes(chunk_data,
-                    chunk_data_length);
+                this->device_announce_stream.out_copy_bytes(chunk_data);
 
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                     this->device_announces.push_back({
@@ -353,7 +352,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 uint32_t remaining_data_length = total_length;
 
                 {
-                    InStream chunk(chunk_data, total_length);
+                    InStream chunk({chunk_data, total_length});
 
                     rdpdr::SharedHeader client_message_header;
 
@@ -401,15 +400,13 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         const bool send              = true;
                         const bool from_or_to_client = false;
                         ::msgdump_c(send, from_or_to_client,
-                            total_length, flags, chunk_data,
-                            chunk_data_length);
+                            total_length, flags,
+                            {chunk_data, chunk_data_length});
                     }
 
                     (*this->to_server_sender)(
-                        total_length,
-                        flags,
-                        chunk_data,
-                        chunk_data_length);
+                        total_length, flags,
+                        {chunk_data, chunk_data_length});
 
                     chunk_data            += chunk_data_length;
                     remaining_data_length -= chunk_data_length;
@@ -490,8 +487,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         chunk.in_skip_bytes(needed_data_length);
 
                         remaining_device_announce_request_header_stream_in = InStream(
-                            this->remaining_device_announce_request_header_stream.get_data(),
-                            this->remaining_device_announce_request_header_stream.get_offset());
+                            this->remaining_device_announce_request_header_stream.get_bytes());
                         device_announce_request_header_stream =
                             &remaining_device_announce_request_header_stream_in;
 
@@ -556,8 +552,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                                     current_device_announce_data_length);
 
                             this->current_device_announce_stream = OutStream(
-                                this->current_device_announce_data.get(),
-                                current_device_announce_data_length);
+                                {this->current_device_announce_data.get(),
+                                current_device_announce_data_length});
                         }
                         else {
                             this->current_device_announce_stream.rewind();
@@ -595,8 +591,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         this->length_of_remaining_device_data_to_be_skipped   =
                             DeviceDataLength;
 
-                        uint8_t out_data[512];
-                        OutStream out_stream(out_data);
+                        StaticOutStream<512> out_stream;
 
                         rdpdr::SharedHeader server_message_header(
                             rdpdr::Component::RDPDR_CTYP_CORE,
@@ -625,22 +620,16 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         const uint32_t flags_             =
                             CHANNELS::CHANNEL_FLAG_FIRST |
                             CHANNELS::CHANNEL_FLAG_LAST;
-                        const uint8_t* chunk_data_        = out_data;
-                        const uint32_t chunk_data_length_ = total_length_;
 
                         if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
                             const bool send              = true;
                             const bool from_or_to_client = true;
                             ::msgdump_c(send,
                                 from_or_to_client, total_length_, flags_,
-                                chunk_data_, chunk_data_length_);
+                                out_stream.get_bytes());
                         }
 
-                        (*this->to_client_sender)(
-                            total_length_,
-                            flags_,
-                            chunk_data_,
-                            chunk_data_length_);
+                        (*this->to_client_sender)(total_length_, flags_, out_stream.get_bytes());
                     }
                 }   // if (!this->length_of_remaining_device_data_to_be_processed &&
 
@@ -702,16 +691,14 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
             const uint32_t max_number_of_removable_device = 128;
 
-            uint8_t client_drive_device_list_remove_data[
-                    // > rdpdr::SharedHeader::size()
-                    64
-                    // DeviceCount(4)
-                    + 4
-                    // DeviceId(4)
-                    + 4 * max_number_of_removable_device
-                ];
-            OutStream client_drive_device_list_remove_stream(
-                client_drive_device_list_remove_data);
+            StaticOutStream<
+                // > rdpdr::SharedHeader::size()
+                64
+                // DeviceCount(4)
+                + 4
+                // DeviceId(4)
+                + 4 * max_number_of_removable_device
+            > client_drive_device_list_remove_stream;
 
             uint32_t number_of_removable_device = 0;
 
@@ -735,7 +722,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 bool device_removed = false;
                 for (auto iter = this->device_announces.begin(); iter != this->device_announces.end(); ++iter) {
                     // DeviceCount(4) + DeviceType(4) + DeviceId(4)
-                    InStream header_stream(iter->data.get(), rdpdr::SharedHeader::size() + 12);
+                    InStream header_stream({iter->data.get(), rdpdr::SharedHeader::size() + 12});
                     // DeviceCount(4) + DeviceType(4)
                     header_stream.in_skip_bytes(rdpdr::SharedHeader::size() + 8);
                     const uint32_t current_device_id = header_stream.in_uint32_le();
@@ -765,23 +752,18 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 const uint32_t flags_             =
                     CHANNELS::CHANNEL_FLAG_FIRST |
                     CHANNELS::CHANNEL_FLAG_LAST;
-                const uint8_t* chunk_data_        =
-                    client_drive_device_list_remove_data;
-                const uint32_t chunk_data_length_ = total_length_;
 
                 if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
                     const bool send              = true;
                     const bool from_or_to_client = false;
-                    ::msgdump_c(send, from_or_to_client,
-                        total_length_, flags_, chunk_data_,
-                        chunk_data_length_);
+                    ::msgdump_c(send, from_or_to_client, total_length_, flags_,
+                        client_drive_device_list_remove_stream.get_bytes());
                 }
 
                 (*this->to_server_sender)(
                     total_length_,
                     flags_,
-                    chunk_data_,
-                    chunk_data_length_);
+                    client_drive_device_list_remove_stream.get_bytes());
             }
         }
 
@@ -859,7 +841,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     {
         void operator()(
             uint32_t /*total_length*/, uint32_t /*flags*/,
-            const uint8_t * /*chunk_data*/, uint32_t /*chunk_data_length*/) override
+            const_bytes_view /*chunk_data*/) override
         {}
     };
     NullVirtualChannelDataSender null_virtual_channel_data_sender;
@@ -1034,8 +1016,8 @@ public:
 
         if (need_enable_user_loggedon_pdu || need_deny_asyncio) {
             OutStream out_stream(
-                const_cast<uint8_t*>(chunk.get_current()),
-                rdpdr::GeneralCapabilitySet::size(Version));
+                {const_cast<uint8_t*>(chunk.get_current()),
+                rdpdr::GeneralCapabilitySet::size(Version)});
 
             if (need_enable_user_loggedon_pdu) {
                 LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
@@ -1931,8 +1913,7 @@ public:
             out_stream.rewind(chunk_offset);
             this->client_device_io_response.emit(out_stream);
 
-            this->send_message_to_server(total_length, flags, out_chunk.get_data(),
-                out_chunk.get_offset());
+            this->send_message_to_server(total_length, flags, out_chunk.get_bytes());
 
             send_message_to_server = false;
         }
@@ -1941,22 +1922,20 @@ public:
     }   // process_client_drive_io_response
 
     void process_client_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
-            override
+        uint32_t flags, const_bytes_view chunk_data) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
             "FileSystemVirtualChannel::process_client_message:"
-            " total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%" PRIu32,
-            total_length, flags, chunk_data_length);
+            " total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
             const bool send              = false;
             const bool from_or_to_client = true;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->client_message_header.receive(chunk);
@@ -2098,8 +2077,7 @@ public:
         }   // switch (this->client_message_header.packet_id)
 
         if (send_message_to_server) {
-            this->send_message_to_server(total_length, flags, chunk_data,
-                chunk_data_length);
+            this->send_message_to_server(total_length, flags, chunk_data);
         }
     }   // process_client_message
 
@@ -2159,8 +2137,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_data(),
-                out_stream.get_offset());
+                out_stream.get_bytes());
         }
 
         {
@@ -2184,8 +2161,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_data(),
-                out_stream.get_offset());
+                out_stream.get_bytes());
         }
 
         return false;
@@ -2210,8 +2186,7 @@ public:
         }
 
         {
-            uint8_t message_buffer[1024];
-            OutStream out_stream(message_buffer);
+            StaticOutStream<1024> out_stream;
 
             const rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
@@ -2293,8 +2268,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_data(),
-                out_stream.get_offset());
+                out_stream.get_bytes());
         }
 
         return false;
@@ -2346,9 +2320,7 @@ public:
 
         if (!access_ok)
         {
-            uint8_t message_buffer[1024];
-
-            OutStream out_stream(message_buffer);
+            StaticOutStream<1024> out_stream;
 
             const rdpdr::SharedHeader clent_message_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
@@ -2378,8 +2350,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_data(),
-                out_stream.get_offset());
+                out_stream.get_bytes());
 
             return false;
         }
@@ -2530,8 +2501,7 @@ public:
                 }
                 server_drive_query_information_request.emit(out_stream);
 
-                this->send_message_to_client(out_stream.get_offset(), flags, out_stream.get_data(),
-                    out_stream.get_offset());
+                this->send_message_to_client(out_stream.get_offset(), flags, out_stream.get_bytes());
 
                 this->device_io_request_info_inventory.push_back({
                     this->server_device_io_request.DeviceId(),
@@ -2799,8 +2769,7 @@ public:
             out_stream.rewind(chunk_offset);
             this->server_device_io_request.emit(out_stream);
 
-            this->send_message_to_client(total_length, flags, out_chunk.get_data(),
-                out_chunk.get_offset());
+            this->send_message_to_client(total_length, flags, out_chunk.get_bytes());
 
             send_message_to_client          = false;
             send_replaced_message_to_client = true;
@@ -2826,23 +2795,22 @@ public:
     }   // process_server_drive_io_request
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length,
+        uint32_t flags, const_bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
             override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
             "FileSystemVirtualChannel::process_server_message: "
-                "total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%" PRIu32,
-            total_length, flags, chunk_data_length);
+                "total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
             const bool send              = false;
             const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->server_message_header.receive(chunk);
@@ -2962,8 +2930,7 @@ public:
         }   // switch (this->server_message_header.packet_id)
 
         if (send_message_to_client) {
-            this->send_message_to_client(total_length, flags, chunk_data,
-                chunk_data_length);
+            this->send_message_to_client(total_length, flags, chunk_data);
         }
     }   // process_server_message
 
@@ -3005,8 +2972,7 @@ private:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_data(),
-                out_stream.get_offset());
+                out_stream.get_bytes());
         }
 
         {
@@ -3030,8 +2996,7 @@ private:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_data(),
-                out_stream.get_offset());
+                out_stream.get_bytes());
         }
 
         LOG(LOG_INFO,

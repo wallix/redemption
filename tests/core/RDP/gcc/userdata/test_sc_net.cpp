@@ -38,8 +38,7 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_net)
         ""_av
     ;
 
-    uint8_t buf[16];
-    OutStream out_stream(buf);
+    StaticOutStream<16> out_stream;
     GCC::UserData::SCNet sc_net;
     sc_net.MCSChannelId = 1003;
     sc_net.channelCount = 3;
@@ -52,7 +51,7 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_net)
     GCC::UserData::SCNet sc_net2;
 
     const bool bogus_sc_net_size = false;
-    InStream in_stream(buf);
+    InStream in_stream(out_stream.get_bytes());
     RED_CHECK_NO_THROW(sc_net2.recv(in_stream, bogus_sc_net_size));
     RED_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
     RED_CHECK_EQUAL(1003, sc_net2.MCSChannelId);

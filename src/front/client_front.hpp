@@ -71,8 +71,8 @@ public:
 
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return cl; }
 
-    void send_to_channel( const CHANNELS::ChannelDef & /*channel*/, const uint8_t * /*data*/, std::size_t
-                         /*length*/, std::size_t /*chunk_size*/, int /*flags*/) override {
+    void send_to_channel( const CHANNELS::ChannelDef & /*channel*/, const_bytes_view /*chunk_data*/
+                        , std::size_t /*total_length*/, int /*flags*/) override {
         LOG_IF(this->verbose, LOG_INFO, "ClientFront::send_to_channel");
     }
 

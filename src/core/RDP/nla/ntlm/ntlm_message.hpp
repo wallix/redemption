@@ -159,21 +159,19 @@ inline void RecvNtlmAvPairList(InStream & stream, NtlmAvPairList & list)
             stream.in_skip_bytes(length);
             break;
         }
-        list.push_back({static_cast<NTLM_AV_ID>(id), std::vector<uint8_t>(stream.get_current(), stream.get_current()+length)});
-        stream.in_skip_bytes(length);
+        list.push_back({static_cast<NTLM_AV_ID>(id), stream.in_copy_bytes_as_vector(length)});
     }
 }
 
-// TODO: use array_view for (value/length)
-inline void NtlmAddToAvPairList(NTLM_AV_ID avId, uint8_t const * value, checked_int<uint16_t> length, NtlmAvPairList & list)
+inline void NtlmAddToAvPairList(NTLM_AV_ID avId, cbytes_view data, NtlmAvPairList & list)
 {
     for (auto & avp: list) {
         if (avp.id == avId){
-            avp.data.assign(value, value+length);
+            avp.data.assign(data.data(), data.data()+data.size());
             return;
         }
     }
-    list.push_back({avId, std::vector<uint8_t>(value, value+length)});
+    list.push_back({avId, std::vector<uint8_t>(data.data(), data.data()+data.size())});
 }
 
 
@@ -183,10 +181,8 @@ inline void LogNtlmAvPairList(const NtlmAvPairList & list)
     LOG(LOG_INFO, "Av Pair List : %zu elements {", list.size());
 
     for (auto & avp: list) {
-        if (avp.data.size()) {
-            LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
-            hexdump_c(avp.data.data(), avp.data.size(), 8);
-        }
+        LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
+        hexdump_av_c(avp.data);
     }
     LOG(LOG_INFO, "}");
 }

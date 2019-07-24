@@ -365,21 +365,19 @@ namespace CHANNELS {
 
         void send_to_server( ServerTransportContext & stc,
                              uint16_t channelId, uint32_t length, uint32_t flags
-                           , const uint8_t * chunk, size_t chunk_size) {
+                           , const_bytes_view chunk) {
             this->send_<false, MCS::SendDataRequest_Send>(
                 stc.trans, stc.encrypt, stc.negociation_result.encryptionLevel,
-                stc.negociation_result.userid, channelId, length, flags,
-                chunk, chunk_size
+                stc.negociation_result.userid, channelId, length, flags, chunk
             );
         }
 
         void send_to_client( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-                           , const uint8_t * chunk, size_t chunk_size) {
+                           , const_bytes_view chunk) {
             this->send_<true, MCS::SendDataIndication_Send>(
                 trans, crypt_context, encryptionLevel,
-                userId, channelId, length, flags,
-                chunk, chunk_size
+                userId, channelId, length, flags, chunk
             );
         }
 
@@ -388,13 +386,13 @@ namespace CHANNELS {
         void send_(
           OutTransport trans, CryptContext & crypt_context, int encryptionLevel
         , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-        , const uint8_t * chunk, size_t chunk_size) {
+        , const_bytes_view chunk) {
             write_packets(
                 trans,
                 [&](StreamSize<65536-1024>, OutStream & stream) {
                     stream.out_uint32_le(length);
                     stream.out_uint32_le(flags);
-                    stream.out_copy_bytes(chunk, chunk_size);
+                    stream.out_copy_bytes(chunk);
 
                     if (enable_verbose && this->verbose) {
                         LOG(LOG_INFO, "Sec clear payload to send (channelId=%d):", channelId);

@@ -950,31 +950,8 @@ public:
     }
 
 protected:
-/*
-    //==============================================================================================================
-    void rdp_input_clip_data(const uint8_t * data, uint32_t length) {
-    //==============================================================================================================
-        if (this->state != UP_AND_RUNNING) {
-            return;
-        }
-
-        StreamBufMaker<65535> stream_maker;
-        OutStream stream = stream_maker.reserve_out_stream((length + 8);
-
-        stream.out_uint8(6);                      // message-type : ClientCutText
-        stream.out_clear_bytes(3);                // padding
-        stream.out_uint32_be(length);             // length
-        stream.out_copy_bytes(data, length);      // text
-
-        this->t.send(stream.get_data(), (length + 8));
-        IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
-
-        this->event.set(1000);
-    } // rdp_input_clip_data
-*/
-
-    void rdp_input_clip_data(uint8_t * data, size_t data_length) {
-
+    void rdp_input_clip_data(bytes_view data)
+    {
         auto client_cut_text = [this](char * str) {
             ::in_place_windows_to_linux_newline_convert(str);
             size_t const str_len = ::strlen(str);
@@ -998,10 +975,10 @@ protected:
                     LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
 
                     const size_t utf8_data_length =
-                        data_length / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes + 1;
+                        data.size() / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes + 1;
                     std::unique_ptr<uint8_t[]> utf8_data(new uint8_t[utf8_data_length]);
 
-                    const auto len = ::UTF16toUTF8(data, data_length, utf8_data.get(),  utf8_data_length);
+                    const auto len = ::UTF16toUTF8(data.data(), data.size(), utf8_data.get(),  utf8_data_length);
                     utf8_data[len] = 0;
 
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
@@ -1009,10 +986,10 @@ protected:
                 else {
                     LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
 
-                    const size_t latin1_data_length = data_length / sizeof(uint16_t) + 1;
+                    const size_t latin1_data_length = data.size() / sizeof(uint16_t) + 1;
                     std::unique_ptr<uint8_t[]> latin1_data(new uint8_t[latin1_data_length]);
 
-                    const auto len = ::UTF16toLatin1(data, data_length, latin1_data.get(), latin1_data_length);
+                    const auto len = ::UTF16toLatin1(data.data(), data.size(), latin1_data.get(), latin1_data_length);
                     latin1_data[len] = 0;
 
                     client_cut_text(::char_ptr_cast(latin1_data.get()));
@@ -1022,10 +999,10 @@ protected:
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                     LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
 
-                    const size_t utf8_data_length = data_length * 2 + 1;
+                    const size_t utf8_data_length = data.size() * 2 + 1;
                     auto utf8_data = std::make_unique<uint8_t[]>(utf8_data_length);
 
-                    const size_t len = ::Latin1toUTF8(data, data_length, utf8_data.get(),
+                    const size_t len = ::Latin1toUTF8(data.data(), data.size(), utf8_data.get(),
                         utf8_data_length);
                     utf8_data[len] = 0;
 
@@ -1034,7 +1011,7 @@ protected:
                 else {
                     LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> Latin-1");
 
-                    client_cut_text(::char_ptr_cast(data));
+                    client_cut_text(::char_ptr_cast(data.data()));
                 }
             }
         }
@@ -2493,7 +2470,7 @@ private:
         const CHANNELS::ChannelDef * front_channel =
             this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
-            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+            this->front.send_to_channel(*front_channel, {data, chunk_size}, length, flags);
             IF_ENABLE_METRICS(clipboard_data_from_client(chunk_size));
         }
     }
@@ -2929,8 +2906,7 @@ private:
                         this->to_vnc_clipboard_data.out_copy_bytes(
                                     chunk.get_current(), header.dataLen());
 
-                        this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),
-                                                  this->to_vnc_clipboard_data.get_offset());
+                        this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_bytes());
                     } // CHANNELS::CHANNEL_FLAG_LAST
                     else {
                         // Virtual channel data span in multiple Virtual Channel PDUs.
@@ -3013,8 +2989,7 @@ private:
                     assert((this->to_vnc_clipboard_data.get_capacity() < this->to_vnc_clipboard_data_size) ||
                         !this->to_vnc_clipboard_data_remaining);
 
-                    this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),
-                        this->to_vnc_clipboard_data.get_offset());
+                    this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_bytes());
                 }
             break;
 

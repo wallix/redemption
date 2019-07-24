@@ -1242,13 +1242,13 @@ public:
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel
-                                , uint8_t const * chunk
-                                , size_t length
-                                , size_t chunk_size
-                                , int flags) override {
+                        , const_bytes_view chunk_data
+                        , std::size_t total_length
+                        , int flags) override {
         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
             "Front::send_to_channel: (channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)",
-            channel.name, channel.chanid, voidp(chunk), length, chunk_size, unsigned(flags));
+            channel.name, channel.chanid, voidp(chunk_data.data()),
+            total_length, chunk_data.size(), unsigned(flags));
 
         if ((channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) &&
             (channel.chanid != this->rail_channel_id)) {
@@ -1259,7 +1259,7 @@ public:
 
         virtual_channel_pdu.send_to_client( this->trans, this->encrypt
                                           , this->encryptionLevel, userid, channel.chanid
-                                          , length, flags, chunk, chunk_size);
+                                          , total_length, flags, chunk_data);
     }
 
     TpduBuffer rbuf;
@@ -2054,7 +2054,8 @@ public:
                             (void)sec;
 
                             auto packet = hstream.copy_to_head(tmp_sec_header);
-                            sec_header = OutStream(packet.data(), packet.size(), packet.size());
+                            sec_header = OutStream(packet);
+                            sec_header.out_skip_bytes(packet.size());
                         }
                     );
 
@@ -2475,7 +2476,7 @@ public:
                         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
                             "Front::incoming: channel_name=\"%s\"", channel.name);
 
-                        InStream chunk(sec.payload.get_current(), chunk_size);
+                        InStream chunk({sec.payload.get_current(), chunk_size});
 
                         cb.send_to_mod_channel(channel.name, chunk, length, flags);
                     }
@@ -4219,7 +4220,7 @@ protected:
             const BGRColor color_back = color_decode(cmd.back_color, color_ctx);
 
             uint16_t draw_pos_ref = 0;
-            InStream variable_bytes(cmd.data, cmd.data_len);
+            InStream variable_bytes({cmd.data, cmd.data_len});
 
             this->draw(RDPOpaqueRect(cmd.bk, cmd.fore_color), clip, color_ctx);
 

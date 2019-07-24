@@ -91,7 +91,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
                 std::move(filename), filesize, this->icap_file_id, direction});
         }
 
-        void set_data(const_bytes_view data)
+        void send_data(const_bytes_view data)
         {
             assert(this->icap_service);
             this->icap_service->send_data(this->icap_file_id, data);
@@ -113,16 +113,21 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
                     case ICAPService::ResponseType::WaitingData:
                         return {};
                     case ICAPService::ResponseType::HasContent:
+                        this->icap_file_id = invalid_icap_file_id;
                         return {FileInfo{
                             this->icap_files.pop_id(this->icap_service->last_file_id()),
                             this->icap_service->get_content(),
                             this->icap_service->last_result_flag()
                         }};
-                    case ICAPService::ResponseType::HasPacket:
                     case ICAPService::ResponseType::Error:
                         ;
                 }
             }
+        }
+
+        bool has_valid_file_id() const noexcept
+        {
+            return this->icap_file_id != invalid_icap_file_id;
         }
 
     private:
@@ -239,8 +244,7 @@ public:
         this->send_message_to_server(
             totalLength,
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_data(),
-            totalLength);
+            out_s.get_bytes());
     }
 
     bool use_long_format_names() const {
@@ -250,22 +254,20 @@ public:
 
 public:
     void process_client_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length) override
+        uint32_t flags, const_bytes_view chunk_data) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_client_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
             const bool send              = false;
             const bool from_or_to_client = true;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
         RDPECLIP::CliprdrHeader header;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -345,8 +347,7 @@ public:
         }   // switch (this->client_message_type)
 
         if (send_message_to_server) {
-            this->send_message_to_server(total_length, flags, chunk_data,
-                chunk_data_length);
+            this->send_message_to_server(total_length, flags, chunk_data);
         }
     }   // process_client_message
 
@@ -380,25 +381,23 @@ public:
     }   // process_server_format_data_request_pdu
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length,
+        uint32_t flags, const_bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override
     {
         (void)out_asynchronous_task;
 
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_server_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
             const bool send              = false;
             const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
         RDPECLIP::CliprdrHeader header;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -506,8 +505,7 @@ public:
         }   // switch (this->server_message_type)
 
         if (send_message_to_client) {
-            this->send_message_to_client(total_length, flags, chunk_data,
-                chunk_data_length);
+            this->send_message_to_client(total_length, flags, chunk_data);
         }   // switch (this->server_message_type)
     }   // process_server_message
 
@@ -542,12 +540,13 @@ public:
                     return;
                 case LocalICAPProtocol::ValidationType::IsAccepted:
                     if (!this->params.validator_params.log_if_accepted) {
+                        this->reset_lindex();
                         continue;
                     }
                     [[fallthrough]];
                 case LocalICAPProtocol::ValidationType::IsRejected:
                 case LocalICAPProtocol::ValidationType::Error:
-                    ;
+                    this->reset_lindex();
             }
 
             auto direction = (response->file.direction == Direction::FileFromClient)
@@ -597,7 +596,12 @@ private:
             this->log_file_info(receive.file_info, from_remote_session);
         }
 
-        if (enable_icap && from_client.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE) {
+        if (icap.has_valid_file_id()
+         && enable_icap
+         && from_client.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE
+        ) {
+            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "ClipboardVirtualChannel::icap_send_data");
             auto data = chunk.remaining_bytes();
             auto data_len = std::min<size_t>(data.size(), this->last_lindex_packet_remaining);
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -606,7 +610,7 @@ private:
                 data_len = std::min<size_t>(data_len, file_size - this->last_lindex_total_send);
             }
             data = data.first(data_len);
-            this->icap.set_data(data);
+            this->icap.send_data(data);
             this->last_lindex_packet_remaining -= data_len;
             this->last_lindex_total_send += data_len;
 
@@ -614,6 +618,7 @@ private:
                 auto file_size = this->file_descr_list[this->last_lindex].file_size();
                 if (this->last_lindex_total_send == file_size) {
                     this->icap.set_end_of_file();
+                    this->reset_lindex();
                 }
             }
             // return !this->enable_interrupting;
@@ -645,6 +650,8 @@ private:
             this->last_lindex_packet_remaining = receiver.requested;
 
             if (this->last_lindex != receiver.lindex) {
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::icap_new_file");
                 this->last_lindex = receiver.lindex;
                 this->icap.new_file(desc.file_name, desc.file_size(), direction, target_name);
             }
@@ -716,9 +723,7 @@ private:
         }
 
         this->file_descr_list.clear();
-        this->last_lindex = last_lindex_unknown;
-        this->last_lindex_total_send = 0;
-        this->last_lindex_packet_remaining = 0;
+        this->reset_lindex();
 
         if (!clip_enabled) {
             LOG(LOG_WARNING, "Clipboard is fully disabled.");
@@ -739,6 +744,13 @@ private:
             side_data.file_list_format_id = receiver.file_list_format_id;
         }
         return true;
+    }
+
+    void reset_lindex()
+    {
+        this->last_lindex = last_lindex_unknown;
+        this->last_lindex_total_send = 0;
+        this->last_lindex_packet_remaining = 0;
     }
 
     void log_file_info(ClipboardSideData::file_info_type & file_info, bool from_remote_session)

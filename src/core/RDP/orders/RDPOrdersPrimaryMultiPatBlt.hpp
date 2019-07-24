@@ -336,15 +336,13 @@ public:
             uint16_t cbData = stream.in_uint16_le();
             //LOG(LOG_INFO, "cbData=%d", cbData);
 
-            InStream rgbData(stream.get_current(), cbData);
-            stream.in_skip_bytes(cbData);
+            InStream rgbData(stream.in_skip_bytes(cbData));
             //hexdump_d(rgbData.get_current(), rgbData.get_capacity());
 
             uint8_t zeroBitsSize = ((this->nDeltaEntries + 1) / 2);
             //LOG(LOG_INFO, "zeroBitsSize=%d", zeroBitsSize);
 
-            InStream zeroBits(rgbData.get_current(), zeroBitsSize);
-            rgbData.in_skip_bytes(zeroBitsSize);
+            InStream zeroBits(rgbData.in_skip_bytes(zeroBitsSize));
 
             uint8_t zeroBit = 0;
 

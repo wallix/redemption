@@ -469,7 +469,7 @@ void TS_RFX_TILE::recv(InStream & stream) {
 		throw Error(ERR_MCS_PDU_TRUNCATED);
     }
 
-    InStream tileStream(stream.get_current(), blockLen - 6);
+    InStream tileStream({stream.get_current(), blockLen - 6u});
 
     quantIdxY = tileStream.in_uint8();
     quantIdxCb = tileStream.in_uint8();
@@ -678,7 +678,7 @@ void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, co
 
     ::check_throw(stream, tileDataSize, "TS_RFX_TILESET::recv invalid TS_RFX_TILESET tileDataSize", ERR_MCS_PDU_TRUNCATED);
 
-    InStream tilesStream(stream.get_current(), tileDataSize);
+    InStream tilesStream({stream.get_current(), tileDataSize});
     for (int i = 0; i < numTiles; i++)
     	tiles[i].recv(tilesStream);
 
@@ -715,7 +715,7 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 
 		::check_throw(stream, blockLen-6, "RFX_PACKET::recv invalid RFX_PACKET", ERR_MCS_PDU_TRUNCATED);
 
-		InStream packetStream(stream.get_current(), blockLen - 6);
+		InStream packetStream({stream.get_current(), blockLen - 6});
 		stream.in_skip_bytes(blockLen - 6);
 
 		switch(decoderState) {

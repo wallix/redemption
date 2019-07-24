@@ -47,9 +47,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)
 
     //device_create_request.log();
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     device_create_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -86,9 +84,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest2)
 
     //device_create_request.log();
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     device_create_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -113,9 +109,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse1)
 
     //device_create_request.log(LOG_INFO);
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -140,9 +134,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse2)
 
     //device_create_request.log(LOG_INFO);
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -167,9 +159,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse3)
 
     //device_create_request.log(LOG_INFO);
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -210,9 +200,7 @@ RED_AUTO_TEST_CASE(ClientNameRequest1)
 
     //client_name_request.log(LOG_INFO);
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     client_name_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -236,9 +224,7 @@ RED_AUTO_TEST_CASE(ClientNameRequest2)
 
     //client_name_request.log(LOG_INFO);
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     client_name_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -263,9 +249,7 @@ RED_AUTO_TEST_CASE(FileRenameInformation1)
 
     //file_rename_information.log(LOG_INFO);
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     file_rename_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -290,9 +274,7 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest1)
 
     //server_drive_query_directory_request.log(LOG_INFO);
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
@@ -319,9 +301,7 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest2)
 
     //server_drive_query_directory_request.log(LOG_INFO);
 
-    char out_data[1200];
-
-    OutStream out_stream(out_data);
+    StaticOutStream<1200> out_stream;
 
     server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());

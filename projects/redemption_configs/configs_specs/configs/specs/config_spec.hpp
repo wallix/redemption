@@ -758,10 +758,21 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "is_wabam", set(false));
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "pm_response");
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "pm_request");
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "pm_response");
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "pm_request");
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "native_session_id");
+
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<bool>(), "rd_shadow_available", set(false));
+
+        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "rd_shadow_userdata");
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "rd_shadow_type");
+
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_error_code");
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_error_message");
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_id");
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_addr");
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_port");
     });
 }
 

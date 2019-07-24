@@ -91,38 +91,33 @@ protected:
 
 public:
     virtual void process_client_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length
+        uint32_t flags, const_bytes_view chunk_data
     ) {
         (void)total_length;
         (void)flags;
         (void)chunk_data;
-        (void)chunk_data_length;
     }
 
     virtual void process_server_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length,
+        uint32_t flags, const_bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
 
 public:
     void send_message_to_client(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
+        uint32_t flags, const_bytes_view chunk_data)
     {
         if (this->to_client_sender)
         {
-            (*this->to_client_sender)(total_length, flags, chunk_data,
-                chunk_data_length);
+            (*this->to_client_sender)(total_length, flags, chunk_data);
         }
     }
 
     void send_message_to_server(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
+        uint32_t flags, const_bytes_view chunk_data)
     {
         if (this->to_server_sender)
         {
-            (*this->to_server_sender)(total_length, flags, chunk_data,
-                chunk_data_length);
+            (*this->to_server_sender)(total_length, flags, chunk_data);
         }
     }
 };  // class BaseVirtualChannel

@@ -395,6 +395,14 @@ namespace cfg {
         struct pm_response;
         struct pm_request;
         struct native_session_id;
+        struct rd_shadow_available;
+        struct rd_shadow_userdata;
+        struct rd_shadow_type;
+        struct rd_shadow_invitation_error_code;
+        struct rd_shadow_invitation_error_message;
+        struct rd_shadow_invitation_id;
+        struct rd_shadow_invitation_addr;
+        struct rd_shadow_invitation_port;
     };
 
 } // namespace cfg

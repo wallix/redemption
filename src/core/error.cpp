@@ -135,11 +135,6 @@ const char * Error::errmsg(bool with_id) const noexcept
         return "TLS certificate is inaccessible";
     case ERR_VNC_CONNECTION_ERROR:
         return "VNC connection error.";
-    case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
-        return "Composite Widget Destroyed without child list not empty";
-
-    case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
-        return "Session logoff in progress";
 
     case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
         return "Unsupported client display monitor layout";
@@ -212,9 +207,6 @@ const char* local_err_msg(const Error& error, Translation::language_t lang, bool
 
     case ERR_VNC_CONNECTION_ERROR:
         return TR(trkeys::err_vnc_connection_error, lang);
-
-    case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
-        return TR(trkeys::session_logoff_in_progress, lang);
 
     case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
         return TR(trkeys::err_rdp_unsupported_monitor_layout, lang);

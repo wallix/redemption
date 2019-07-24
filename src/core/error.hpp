@@ -37,6 +37,8 @@
                                                                     \
     fv(ERR_MEMORY_ALLOCATION_FAILED, 200)                           \
                                                                     \
+    fv(ERR_ICAP_LOCAl_PROTOCOL, 500)                                \
+                                                                    \
     fv(ERR_SOCKET_CONNECT_FAILED, 1000)                             \
                                                                     \
     fv(ERR_TRANSPORT, 1500)                                         \
@@ -150,7 +152,6 @@
     fv(ERR_WRM_INVALID_INIT_CRYPT, 20012)                           \
                                                                     \
     fv(ERR_WIDGET, 21000)                                           \
-    f(ERR_WIDGET_INVALID_COMPOSITE_DESTROY)                         \
                                                                     \
     fv(ERR_RDP61_DECOMPRESS, 22000)                                 \
     f(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED)                          \
@@ -178,8 +179,7 @@
     f(ERR_PDBC_SAVE)                                                \
                                                                     \
     fv(ERR_SESSION_PROBE_LAUNCH, 24200)                             \
-    f(ERR_SESSION_PROBE_ENDING_IN_PROGRESS)                         \
-    f(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION)                 \
+    fv(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION, 24201)         \
     f(ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)                      \
     f(ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS)                \
     f(ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON)                        \
@@ -204,9 +204,7 @@
                                                                     \
     fv(ERR_CRYPTO_BUFFER_TOO_SMALL, 25500)                          \
     f(ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL)                           \
-    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)                  \
-                                                                    \
-    fv(ERR_ICAP_LOCAl_PROTOCOL, 26000)
+    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)
 
 
 #define MAKE_ENUM(e) e,

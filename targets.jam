@@ -4962,10 +4962,10 @@ test-run tests/utils/sugar/test_buf_maker :
 :
   <covfile>src/utils/sugar/buf_maker.hpp
 ;
-test-run tests/utils/sugar/test_buffer_t :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_buffer_t.cpp
+test-run tests/utils/sugar/test_buffer_view :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_buffer_view.cpp
 :
-  <covfile>src/utils/sugar/buffer_t.hpp
+  <covfile>src/utils/sugar/buffer_view.hpp
 ;
 test-run tests/utils/sugar/test_bytes_view :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_bytes_view.cpp
@@ -5844,7 +5844,7 @@ alias test_safe_conversions : tests/utils/sugar/numerics/test_safe_conversions ;
 alias test_algostring : tests/utils/sugar/test_algostring ;
 alias test_array_view : tests/utils/sugar/test_array_view ;
 alias test_buf_maker : tests/utils/sugar/test_buf_maker ;
-alias test_buffer_t : tests/utils/sugar/test_buffer_t ;
+alias test_buffer_view : tests/utils/sugar/test_buffer_view ;
 alias test_bytes_view : tests/utils/sugar/test_bytes_view ;
 alias test_cast : tests/utils/sugar/test_cast ;
 alias test_finally : tests/utils/sugar/test_finally ;
@@ -6170,7 +6170,7 @@ alias test_safe_conversions.coverage : tests/utils/sugar/numerics/test_safe_conv
 alias test_algostring.coverage : tests/utils/sugar/test_algostring.coverage ;
 alias test_array_view.coverage : tests/utils/sugar/test_array_view.coverage ;
 alias test_buf_maker.coverage : tests/utils/sugar/test_buf_maker.coverage ;
-alias test_buffer_t.coverage : tests/utils/sugar/test_buffer_t.coverage ;
+alias test_buffer_view.coverage : tests/utils/sugar/test_buffer_view.coverage ;
 alias test_bytes_view.coverage : tests/utils/sugar/test_bytes_view.coverage ;
 alias test_cast.coverage : tests/utils/sugar/test_cast.coverage ;
 alias test_finally.coverage : tests/utils/sugar/test_finally.coverage ;
@@ -6601,7 +6601,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_algostring
   tests/utils/sugar/test_array_view
   tests/utils/sugar/test_buf_maker
-  tests/utils/sugar/test_buffer_t
+  tests/utils/sugar/test_buffer_view
   tests/utils/sugar/test_bytes_view
   tests/utils/sugar/test_cast
   tests/utils/sugar/test_finally

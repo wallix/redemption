@@ -43,25 +43,23 @@ public:
     {}
 
     void process_client_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length) override
+        uint32_t flags, const_bytes_view chunk_data) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
             "DynamicChannelVirtualChannel::process_client_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::drdynvc_dump)) {
             const bool send              = false;
             const bool from_or_to_client = true;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
         uint8_t Cmd = 0x00;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            InStream chunk(chunk_data, chunk_data_length);
+            InStream chunk(chunk_data);
 
             /* cbId(:2) + Sp(:2) + Cmd(:4) */
             ::check_throw(chunk, 1, "DynamicChannelVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
@@ -69,7 +67,7 @@ public:
             Cmd = ((chunk.in_uint8() & 0xF0) >> 4);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
 
         bool send_message_to_server = true;
 
@@ -101,32 +99,29 @@ public:
         }   // switch (Cmd)
 
         if (send_message_to_server) {
-            this->send_message_to_server(total_length, flags, chunk_data,
-                chunk_data_length);
+            this->send_message_to_server(total_length, flags, chunk_data);
         }
     }   // process_client_message
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length,
+        uint32_t flags, const_bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & /*out_asynchronous_task*/) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
             "DynamicChannelVirtualChannel::process_server_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::drdynvc_dump)) {
             const bool send              = false;
             const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
         uint8_t Cmd = 0x00;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            InStream chunk(chunk_data, chunk_data_length);
+            InStream chunk(chunk_data);
 
             /* cbId(:2) + Sp(:2) + Cmd(:4) */
             ::check_throw(chunk, 1, "DynamicChannelVirtualChannel::process_server_message", ERR_RDP_DATA_TRUNCATED);
@@ -134,7 +129,7 @@ public:
             Cmd = ((chunk.in_uint8() & 0xF0) >> 4);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
 
         bool send_message_to_client = true;
 
@@ -163,8 +158,7 @@ public:
         }   // switch (Cmd)
 
         if (send_message_to_client) {
-            this->send_message_to_client(total_length, flags, chunk_data,
-                chunk_data_length);
+            this->send_message_to_client(total_length, flags, chunk_data);
         }   // switch (this->server_message_type)
     }   // process_server_message
 };

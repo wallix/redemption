@@ -38,12 +38,6 @@ const CHANNELS::ChannelDefArray & FakeFront::get_channel_list() const
     return d->cl;
 }
 
-void FakeFront::send_to_channel(
-    const CHANNELS::ChannelDef & /*channel*/, uint8_t const * /*data*/, size_t /*length*/,
-    size_t /*chunk_size*/, int /*flags*/)
-{
-}
-
 FakeFront::ResizeResult FakeFront::server_resize(ScreenInfo screen_server)
 {
     this->d->gd.resize(screen_server.width, screen_server.height);

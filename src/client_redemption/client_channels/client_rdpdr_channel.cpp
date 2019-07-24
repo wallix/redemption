@@ -471,8 +471,8 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
             ch.emit(out_stream);
         }
 
-        int total_length(out_stream.get_offset());
-        InStream chunk_to_send(out_stream.get_data(), total_length);
+        auto total_length = out_stream.get_offset();
+        InStream chunk_to_send(out_stream.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::rdpdr
                                             , chunk_to_send

@@ -55,8 +55,8 @@ public:
 
     const CHANNELS::ChannelDefArray & get_channel_list() const override;
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t length
-                        , size_t chunk_size, int flags) override;
+    void send_to_channel( const CHANNELS::ChannelDef & channel, const_bytes_view chunk_data
+                        , std::size_t total_length, int flags) override;
 
     ResizeResult server_resize(ScreenInfo screen_server) override;
 

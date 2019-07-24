@@ -26,9 +26,7 @@
 /*
 RED_AUTO_TEST_CASE(TestRAILPDUHeader)
 {
-    uint8_t buf[128];
-
-    OutStream out_stream(buf);
+    StaticOutStream<128> out_stream;
 
     const uint8_t order_data[] = "0123456789";
 
@@ -50,9 +48,7 @@ RED_AUTO_TEST_CASE(TestRAILPDUHeader)
 
 RED_AUTO_TEST_CASE(TestHandshakePDU)
 {
-    uint8_t buf[128];
-
-    OutStream out_stream(buf);
+    StaticOutStream<128> out_stream;
     HandshakePDU_Send handshake_pdu_s(out_stream, 0x01020304);
 
     InStream in_stream(buf, out_stream.get_offset());
@@ -63,9 +59,7 @@ RED_AUTO_TEST_CASE(TestHandshakePDU)
 
 RED_AUTO_TEST_CASE(ClientExecutePDU)
 {
-    uint8_t buf[2048];
-
-    OutStream out_stream(buf);
+    StaticOutStream<128> out_stream;
     ClientExecutePDU_Send client_execute_pdu_s(out_stream,
         TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY,
         "%%SystemRoot%%\\system32\\notepad.exe", "%%HOMEDRIVE%%%%HOMEPATH%%",
@@ -86,9 +80,7 @@ RED_AUTO_TEST_CASE(ClientExecutePDU)
 
 RED_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
 {
-    uint8_t buf[128];
-
-    OutStream out_stream(buf);
+    StaticOutStream<128> out_stream;
     ClientSystemParametersUpdatePDU_Send client_system_parameters_update_pdu_s(out_stream, SPI_SETHIGHCONTRAST);
 
     InStream in_stream(buf, out_stream.get_offset());
@@ -100,8 +92,7 @@ RED_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
 
 RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
 {
-    uint8_t buf[2048];
-    OutStream out_stream(buf);
+    StaticOutStream<2048> out_stream;
 
     {
         HighContrastSystemInformationStructure
@@ -110,7 +101,7 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
         high_contrast_system_information_structure.emit(out_stream);
     }
 
-    InStream in_stream(buf, out_stream.get_offset());
+    InStream in_stream(out_stream.get_bytes());
 
     {
         HighContrastSystemInformationStructure
@@ -135,8 +126,7 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure1)
             ""_av
         ;
 
-    uint8_t buf[2048];
-    OutStream out_stream(buf);
+    StaticOutStream<2048> out_stream;
 
     HighContrastSystemInformationStructure
         high_contrast_system_information_structure(0x7f, "High Contrast Black");
@@ -176,8 +166,7 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure3)
             ""_av
         ;
 
-    uint8_t buf[2048];
-    OutStream out_stream(buf);
+    StaticOutStream<2048> out_stream;
 
     HighContrastSystemInformationStructure
         high_contrast_system_information_structure(0x7e, "");

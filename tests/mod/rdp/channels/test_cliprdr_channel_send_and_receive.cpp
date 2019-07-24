@@ -42,12 +42,12 @@ struct FakeDataSender : VirtualChannelDataSender
 
     void operator()(
         uint32_t /*total_length*/, uint32_t /*flags*/,
-        const uint8_t * chunk_data, uint32_t chunk_data_length) override
+        const_bytes_view chunk_data) override
     {
         RED_REQUIRE(this->index < this->streams.size());
-        RED_REQUIRE(chunk_data_length < std::size(streams[this->index].data));
-        this->streams[this->index].size = chunk_data_length;
-        std::memcpy(streams[this->index].data, chunk_data, chunk_data_length);
+        RED_REQUIRE(chunk_data.size() < std::size(streams[this->index].data));
+        this->streams[this->index].size = chunk_data.size();
+        std::memcpy(streams[this->index].data, chunk_data.data(), chunk_data.size());
         ++this->index;
     }
 };
@@ -82,12 +82,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
 
     ClipboardSideData state("client");
 
-    InStream chunk(stream.get_data(), 28);
+    InStream chunk(stream.get_bytes());
 
-    FilecontentsRequestReceive receiver(state, chunk, RDPVerbose::cliprdr, 28);
+    FilecontentsRequestReceive receiver(state, chunk, RDPVerbose::cliprdr, stream.get_offset());
 
     RED_CHECK_EQUAL(receiver.dwFlags, RDPECLIP::FILECONTENTS_RANGE);
-    RED_REQUIRE_EQUAL(receiver.streamID, 1 );
+    RED_REQUIRE_EQUAL(receiver.streamID, 1);
 
     ClipboardSideData::file_contents_request_info & fcri = state.file_contents_request_info_inventory[receiver.streamID];
 
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestReceive)
 
     stream.out_uint32_le(3);
 
-    InStream chunk(stream.get_data(), 28);
+    InStream chunk(stream.get_bytes());
 
     ClipboardData state;
 
@@ -256,7 +256,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     fd1.emit(pre_stream);
     fd2.emit(pre_stream);
 
-    InStream stream(pre_stream.get_data(), cItems*RDPECLIP::FileDescriptor::size());
+    InStream stream({pre_stream.get_data(), cItems*RDPECLIP::FileDescriptor::size()});
 
     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (cItems*RDPECLIP::FileDescriptor::size())+4);
     bool param_dont_log_data_into_syslog = false;

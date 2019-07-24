@@ -489,7 +489,7 @@
                 this->send_to_clipboard_Buffer(chunk);
 
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    InStream stream(cb_buffers.data.get(), cb_buffers.sizeTotal);
+                    InStream stream({cb_buffers.data.get(), cb_buffers.sizeTotal});
 
                     RDPECLIP::FileDescriptor fd;
 
@@ -519,7 +519,7 @@
                     fileContentsRequest.emit(out_streamRequest);
                     const uint32_t total_length_FormatContentRequestPDU = out_streamRequest.get_offset();
 
-                    InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatContentRequestPDU);
+                    InStream chunkRequest({out_streamRequest.get_data(), total_length_FormatContentRequestPDU});
 
                     this->callback->send_to_mod_channel( channel_names::cliprdr
                                                   , chunkRequest
@@ -566,7 +566,7 @@
                         fileContentsRequest.emit(out_streamRequest);
                         const uint32_t total_length_FormatContentRequestPDU = out_streamRequest.get_offset();
 
-                        InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatContentRequestPDU);
+                        InStream chunkRequest({out_streamRequest.get_data(), total_length_FormatContentRequestPDU});
 
                         this->callback->send_to_mod_channel( channel_names::cliprdr
                                                               , chunkRequest
@@ -628,7 +628,7 @@
                                 fileContentsRequest.emit(out_streamRequest);
                                 const uint32_t total_length_FormatContentRequestPDU = out_streamRequest.get_offset();
 
-                                InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatContentRequestPDU);
+                                InStream chunkRequest({out_streamRequest.get_data(), total_length_FormatContentRequestPDU});
 
                                 this->callback->send_to_mod_channel( channel_names::cliprdr
                                                                         , chunkRequest
@@ -788,7 +788,7 @@
             general_cap_set.emit(out_stream);
 
             const uint32_t total_length = out_stream.get_offset();
-            InStream chunk(out_stream.get_data(), total_length);
+            InStream chunk(out_stream.get_bytes());
 
             this->callback->send_to_mod_channel( channel_names::cliprdr
                                                 , chunk
@@ -1012,9 +1012,7 @@
                         out_stream_first_part.out_uint32_le(0);
                         data_sent += 4;
                     }
-                    InStream chunk_first_part( out_stream_first_part.get_data()
-                                             , out_stream_first_part.get_offset()
-                                             );
+                    InStream chunk_first_part( out_stream_first_part.get_bytes());
 
                     this->callback->send_to_mod_channel( channel_names::cliprdr
                                                         , chunk_first_part
@@ -1045,9 +1043,7 @@
                             data_sent += 4;
                         }
 
-                        InStream chunk_next_part( out_stream_next_part.get_data()
-                                                , out_stream_next_part.get_offset()
-                                                );
+                        InStream chunk_next_part(out_stream_next_part.get_bytes());
 
                         this->callback->send_to_mod_channel( channel_names::cliprdr
                                                         , chunk_next_part

@@ -244,7 +244,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             LOG(LOG_ERR, "Widget_load: error read file size");
             return bitmap;
         }
-        stream = InStream(stream_data, 4);
+        stream = InStream({stream_data, 4});
         {
             // TODO Check what is this size ? header size ? used as fixed below ?
                 /* uint32_t size = */ stream.in_uint32_le();
@@ -256,7 +256,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             LOG(LOG_ERR, "Widget_load: error read file size (2)");
             return bitmap;
         }
-        stream = InStream(stream_data, 40);
+        stream = InStream({stream_data, 40});
         // TODO we should read header size and use it to read header instead of using magic constant 40
         header.size = stream.in_uint32_le();
         if (header.size != 40){
@@ -294,7 +294,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
                 if (not read_all(fd, stream_data, header.clr_used * 4)){
                     return bitmap;
                 }
-                stream = InStream(stream_data, header.clr_used * 4);
+                stream = InStream({stream_data, header.clr_used * 4u});
                 for (int i = 0; i < header.clr_used; i++) {
                     uint8_t r = stream.in_uint8();
                     uint8_t g = stream.in_uint8();
@@ -328,7 +328,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
                     return bitmap;
                 }
             }
-            stream = InStream(p, size);
+            stream = InStream({p, size});
         }
     }
 

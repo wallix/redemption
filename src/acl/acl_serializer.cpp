@@ -597,6 +597,13 @@ bool AclSerializer::check(
                 this->ini.get_ref<cfg::context::pm_response>().clear();
             }
         }
+
+        if (!this->ini.get<cfg::context::rd_shadow_type>().empty()) {
+            mm.get_mod()->create_shadow_session(this->ini.get<cfg::context::rd_shadow_userdata>().c_str(),
+                this->ini.get<cfg::context::rd_shadow_type>().c_str());
+
+            this->ini.get_ref<cfg::context::rd_shadow_type>().clear();
+        }
     }
 
     return true;
@@ -729,8 +736,7 @@ namespace
         {
             uint16_t buf_sz = 0;
             do {
-                this->trans.recv_boom(this->buf, ACL_SERIALIZER_HEADER_SIZE);
-                InStream in_stream(this->buf, 4);
+                InStream in_stream(this->trans.recv_boom(this->buf, ACL_SERIALIZER_HEADER_SIZE));
                 this->has_next_buffer = in_stream.in_uint16_be();
                 buf_sz = in_stream.in_uint16_be();
             } while (buf_sz == 0 && this->has_next_buffer);
@@ -863,7 +869,7 @@ namespace
             LOG_IF(bool(this->verbose & Verbose::buffer),
                 LOG_INFO, "ACL SERIALIZER : Data size without header (send) %d",
                 this->buf.sz - ACL_SERIALIZER_HEADER_SIZE);
-            OutStream stream(this->buf.data, ACL_SERIALIZER_HEADER_SIZE);
+            OutStream stream({this->buf.data, ACL_SERIALIZER_HEADER_SIZE});
             stream.out_uint16_be(this->buf.flags);
             stream.out_uint16_be(this->buf.sz - ACL_SERIALIZER_HEADER_SIZE);
             this->trans.send(this->buf.data, this->buf.sz);

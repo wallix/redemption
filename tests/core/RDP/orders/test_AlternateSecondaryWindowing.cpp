@@ -27,8 +27,7 @@ int main()
     const uint32_t WindowId = 1000;
     WindowInformationCommonHeader wch_s(WINDOW_ORDER_TYPE_WINDOW, WindowId);
 
-    uint8_t data[256];
-    OutStream out_stream(data);
+    StaticOutStream<256> out_stream;
 
     wch_s.emit_begin(out_stream);
     wch_s.emit_end();

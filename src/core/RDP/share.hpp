@@ -273,7 +273,7 @@ struct ShareControl_Recv
         if (this->pduType == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4) {
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
-            return InStream(stream.get_current(), 0);
+            return InStream({stream.get_current(), 0});
         }
 
         if (this->totalLength < 6) {
@@ -288,7 +288,7 @@ struct ShareControl_Recv
                 stream.in_remain());
             throw Error(ERR_SEC);
         }
-        return InStream(stream.get_current(), this->totalLength - 6);
+        return InStream({stream.get_current(), this->totalLength - 6u});
     }())
     // body of constructor
     {
@@ -569,9 +569,9 @@ struct ShareData_Recv : private CheckShareData_Recv
             dec->decompress(stream.get_current(), stream.in_remain(),
                 this->compressedType, rdata, rlen);
 
-            return InStream(rdata, rlen);
+            return InStream({rdata, rlen});
         }
-        return InStream(stream.get_current(), stream.in_remain());
+        return InStream(stream.remaining_bytes());
       }())
     // BEGIN CONSTRUCTOR
     {

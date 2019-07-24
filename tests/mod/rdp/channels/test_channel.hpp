@@ -39,16 +39,16 @@ public:
 
     void operator() (
         uint32_t total_length, uint32_t flags,
-        const uint8_t* chunk_data, uint32_t chunk_data_length
+        const_bytes_view chunk_data
     ) override
     {
         StaticOutStream<4*4> stream;
         stream.out_uint32_le(dest);
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
-        stream.out_uint32_le(chunk_data_length);
+        stream.out_uint32_le(chunk_data.size());
         this->transport.send(stream.get_bytes());
-        this->transport.send(chunk_data, chunk_data_length);
+        this->transport.send(chunk_data);
     }
 };
 
@@ -84,22 +84,20 @@ inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
         //    ", chunk_data_length=" << chunk_data_length <<
         //    std::endl;
 
-        t.recv_boom(virtual_channel_data, chunk_data_length);
+        auto chunk_data = t.recv_boom(virtual_channel_data, chunk_data_length);
 
         //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
 
         if (!dest)  // Client
         {
-            virtual_channel.process_client_message(
-                total_length, flags, virtual_channel_data, chunk_data_length);
+            virtual_channel.process_client_message(total_length, flags, chunk_data);
         }
         else
         {
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
             virtual_channel.process_server_message(
-                total_length, flags, virtual_channel_data, chunk_data_length,
-                out_asynchronous_task);
+                total_length, flags, chunk_data, out_asynchronous_task);
 
             if (out_asynchronous_task) {
                 return false;

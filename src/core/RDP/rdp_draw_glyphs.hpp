@@ -274,13 +274,13 @@ template<class SetPoint>
 void rdp_draw_glyphs(
     SetPoint&& set_point,
     uint8_t (&fragment_cache)[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE],
-    uint8_t const * data, uint16_t size,
+    const_bytes_view data,
     bool has_delta_bytes, uint16_t ui_charinc,
     uint16_t & draw_pos_ref, int16_t offset_y,
     int16_t bmp_pos_x, int16_t bmp_pos_y, Rect clip,
     uint8_t cache_id, const GlyphCache & gly_cache)
 {
-    InStream variable_bytes(data, size);
+    InStream variable_bytes(data);
 
     uint8_t const * fragment_begin_position = variable_bytes.get_current();
 
@@ -352,10 +352,10 @@ void rdp_draw_glyphs(
                 draw_pos_ref += ui_charinc;
             }
 
-            rdp_draw_glyphs(set_point, fragment_cache, &fragment_cache[fragment_index][1],
-                fragment_cache[fragment_index][0], has_delta_bytes, ui_charinc,
-                draw_pos_ref, offset_y, bmp_pos_x, bmp_pos_y, clip,
-                cache_id, gly_cache);
+            rdp_draw_glyphs(set_point, fragment_cache,
+                {&fragment_cache[fragment_index][1],fragment_cache[fragment_index][0]},
+                has_delta_bytes, ui_charinc, draw_pos_ref, offset_y,
+                bmp_pos_x, bmp_pos_y, clip, cache_id, gly_cache);
         }
         else if (data == 0xFF)
         {

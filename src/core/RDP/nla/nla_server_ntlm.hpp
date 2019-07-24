@@ -340,7 +340,7 @@ protected:
             size_t temp_size = AuthNtResponse.size() - 16;
             // LOG(LOG_INFO, "tmp size = %u", temp_size);
             uint8_t NtProofStr_from_msg[16] = {};
-            InStream in_AuthNtResponse(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom());
+            InStream in_AuthNtResponse(AuthNtResponse.ostream.get_tailroom_bytes());
             in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
 
             auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
@@ -377,7 +377,7 @@ protected:
                 return false;
             }
             uint8_t response[16] = {};
-            InStream in_AuthLmResponse(AuthLmResponse.ostream.get_current(), AuthLmResponse.ostream.tailroom());
+            InStream in_AuthLmResponse(AuthLmResponse.ostream.get_tailroom_bytes());
             in_AuthLmResponse.in_copy_bytes(response, 16);
             in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
             AuthLmResponse.ostream.rewind();
@@ -401,7 +401,7 @@ protected:
             auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
             uint8_t NtProofStr[16] = {};
-            InStream(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom())
+            InStream(AuthNtResponse.ostream.get_tailroom_bytes())
                 .in_copy_bytes(NtProofStr, 16);
             AuthNtResponse.ostream.rewind();
             uint8_t ResponseKeyNT[16] = {};
@@ -440,11 +440,11 @@ protected:
             uint8_t upwin7[] =  { 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
             
             auto & list = this->CHALLENGE_MESSAGE.AvPairList;
-            NtlmAddToAvPairList(MsvAvNbComputerName, upwin7, sizeof(upwin7), list);
-            NtlmAddToAvPairList(MsvAvNbDomainName, upwin7, sizeof(upwin7), list);
-            NtlmAddToAvPairList(MsvAvDnsComputerName, win7, sizeof(win7), list);
-            NtlmAddToAvPairList(MsvAvDnsDomainName, win7, sizeof(win7), list);
-            NtlmAddToAvPairList(MsvAvTimestamp, this->Timestamp, 8, list);
+            NtlmAddToAvPairList(MsvAvNbComputerName, buffer_view(upwin7), list);
+            NtlmAddToAvPairList(MsvAvNbDomainName, buffer_view(upwin7), list);
+            NtlmAddToAvPairList(MsvAvDnsComputerName, buffer_view(win7), list);
+            NtlmAddToAvPairList(MsvAvDnsDomainName, buffer_view(win7), list);
+            NtlmAddToAvPairList(MsvAvTimestamp, buffer_view(this->Timestamp), list);
 
             this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
@@ -933,7 +933,7 @@ private:
             return status;
         }
 
-        InStream decrypted_creds(Buffer.get_data(), Buffer.size());
+        InStream decrypted_creds(Buffer.av());
         this->ts_credentials.recv(decrypted_creds);
 
         // hexdump(this->ts_credentials.passCreds.userName,

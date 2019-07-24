@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "gdi/screen_functions.hpp"
 #include "core/error.hpp"
 #include "core/front_api.hpp"
@@ -87,6 +88,7 @@ private:
 
     mod_api& mod;
     rdp_api& rdp;
+    AuthApi& authentifier;
 
     FileSystemVirtualChannel& file_system_virtual_channel;
 
@@ -147,6 +149,7 @@ public:
         FrontAPI& front,
         mod_api& mod,
         rdp_api& rdp,
+        AuthApi& authentifier,
         FileSystemVirtualChannel& file_system_virtual_channel,
         Random & gen,
         const BaseVirtualChannel::Params & base_params,
@@ -164,6 +167,7 @@ public:
     , front(front)
     , mod(mod)
     , rdp(rdp)
+    , authentifier(authentifier)
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
     , session_reactor(session_reactor)
@@ -244,7 +248,7 @@ private:
 
             this->send_message_to_server(out_s.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_s.get_data(), out_s.get_offset());
+                out_s.get_bytes());
         }
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
@@ -366,30 +370,28 @@ private:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_data(), out_s.get_offset());
+            out_s.get_bytes());
     }
 
 public:
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length,
+        uint32_t flags, const_bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask>& out_asynchronous_task) override
     {
         (void)out_asynchronous_task;
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::process_server_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            total_length, flags, chunk_data.size());
 
         if (bool(this->verbose & RDPVerbose::sesprobe_dump)) {
             const bool send              = false;
             const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, total_length, flags,
-                chunk_data, chunk_data_length);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk(chunk_data);
 
         uint16_t message_length = chunk.in_uint16_le();
         this->server_message.reserve(message_length);
@@ -1684,6 +1686,40 @@ public:
                     }
                 }
 
+
+                else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_SUPPORTED")) {
+                    if (parameters_.size() == 1) {
+                        if (!::strcasecmp(parameters_[0].c_str(), "yes")) {
+                            this->authentifier.rd_shadow_available();
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+
+                else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_RESPONSE")) {
+                    if (parameters_.size() >= 3)
+                    {
+                        const uint32_t shadow_errcode = ::strtoul(parameters_[0].c_str(), nullptr, 16);
+                        const char *   shadow_errmsg  = parameters_[1].c_str();
+                        const char *   shadow_userdata = parameters_[2].c_str();
+                        if (parameters_.size() >= 6) {
+                            const char *   shadow_id   = parameters_[3].c_str();
+                            const char *   shadow_addr = parameters_[4].c_str();
+                            const uint16_t shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
+
+                            this->authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
+                        }
+                        else {
+                            this->authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
+                        }
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+
                 else {
                     LOG(LOG_WARNING,
                         "SessionProbeVirtualChannel::process_server_message: "
@@ -1732,7 +1768,7 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_data(), out_s.get_offset());
+            out_s.get_bytes());
     }
 
     void rail_exec(const char* application_name, const char* command_line,
@@ -1779,6 +1815,68 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_data(), out_s.get_offset());
+            out_s.get_bytes());
+    }
+
+    void create_shadow_session(const char * userdata, const char * type) {
+        bool bTakeControl       = true;
+        bool bRequestPermission = true;
+
+        if (!strcasecmp(type, "PermissionControl")) {
+            bTakeControl       = true;
+            bRequestPermission = true;
+        }
+        else if (!strcasecmp(type, "PermissionView")) {
+            bTakeControl       = false;
+            bRequestPermission = true;
+        }
+        else if (!strcasecmp(type, "SilentControl")) {
+            bTakeControl       = true;
+            bRequestPermission = false;
+        }
+        else if (!strcasecmp(type, "SilentView")) {
+            bTakeControl       = false;
+            bRequestPermission = false;
+        }
+        else {
+            LOG(LOG_WARNING,
+                "SessionProbeVirtualChannel::create_shadow_session: "
+                    "Invalid shadow session type! Operation canceled. Type=%s",
+                type);
+
+            this->authentifier.rd_shadow_invitation(
+                    0x80004005, // E_FAIL
+                    "The shadow session type specified is invalid!",
+                    userdata,
+                    "",
+                    "",
+                    0
+                );
+
+            return;
+        }
+
+        send_client_message([bTakeControl, bRequestPermission, userdata](OutStream & out_s) {
+            out_s.out_copy_bytes("SHADOW_SESSION_REQUEST="_av);
+
+            if (bTakeControl) {
+                out_s.out_copy_bytes("Yes"_av);
+            }
+            else {
+                out_s.out_copy_bytes("No"_av);
+            }
+
+            out_s.out_uint8('\x01');
+
+            if (bRequestPermission) {
+                out_s.out_copy_bytes("Yes"_av);
+            }
+            else {
+                out_s.out_copy_bytes("No"_av);
+            }
+
+            out_s.out_copy_bytes(userdata, ::strlen(userdata));
+
+        });
     }
 };  // class SessionProbeVirtualChannel

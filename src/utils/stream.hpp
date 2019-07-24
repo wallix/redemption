@@ -27,7 +27,7 @@
 #include "utils/bitfu.hpp"
 #include "utils/utf.hpp"
 #include "utils/parse.hpp"
-#include "utils/sugar/buffer_t.hpp"
+#include "utils/sugar/buffer_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/buf_maker.hpp"
 
@@ -54,21 +54,10 @@ class InStream
     Parse p;
 
 public:
-    explicit InStream(uint8_t const * array, std::size_t len, std::size_t offset = 0) noexcept
-    : begin(array)
-    , end(array + len)
-    , p(this->begin + offset)
-    {
-        assert(len >= offset);
-    }
-
-    explicit InStream(char const * array, std::size_t len, std::size_t offset = 0) noexcept
-    : InStream(byte_ptr_cast(array), len, offset)
-    {
-    }
-
-    explicit InStream(const_buffer_t buf) noexcept
-    : InStream(buf.data(), buf.size())
+    explicit InStream(const_buffer_view buf) noexcept
+    : begin(buf.begin())
+    , end(buf.end())
+    , p(this->begin)
     {
     }
 
@@ -109,8 +98,8 @@ public:
         return static_cast<size_t>(this->p.p - this->begin);
     }
 
-    bool in_check_rem(const unsigned n) const noexcept {
     // returns true if there is enough data available to read n bytes
+    bool in_check_rem(const unsigned n) const noexcept {
         return (n <= this->in_remain());
     }
 
@@ -247,6 +236,13 @@ public:
 
     void in_copy_bytes(byte_ptr v, size_t n) noexcept {
         return this->in_copy_bytes({v, n});
+    }
+
+    std::vector<uint8_t> in_copy_bytes_as_vector(size_t n) noexcept {
+        assert(this->in_check_rem(n));
+        std::vector<uint8_t> v(this->get_current(), this->get_current()+n);
+        this->p.in_skip_bytes(n);
+        return v;
     }
 
     const uint8_t *in_uint8p(unsigned int n) noexcept {
@@ -402,21 +398,10 @@ class OutStream
     uint8_t * p = nullptr;
 
 public:
-    explicit OutStream(uint8_t * array, std::size_t len, std::size_t offset = 0) noexcept
-    : begin(array)
-    , end(array + len)
-    , p(this->begin + offset)
-    {
-        assert(len >= offset);
-    }
-
-    explicit OutStream(char * array, std::size_t len, std::size_t offset = 0) noexcept
-    : OutStream(byte_ptr_cast(array), len, offset)
-    {
-    }
-
-    explicit OutStream(buffer_t buf) noexcept
-    : OutStream(buf.data(), buf.size())
+    explicit OutStream(buffer_view buf) noexcept
+    : begin(buf.begin())
+    , end(buf.end())
+    , p(this->begin)
     {
     }
 
@@ -839,8 +824,8 @@ public:
 template<std::size_t N>
 struct StaticOutStream : OutStream
 {
-    explicit StaticOutStream(std::size_t offset = 0) noexcept
-    : OutStream(this->array_, N, offset)
+    explicit StaticOutStream() noexcept
+    : OutStream(this->array_)
     {}
 
     StaticOutStream(StaticOutStream const &) = delete;
@@ -861,12 +846,12 @@ struct StreamBufMaker
 {
     OutStream reserve_out_stream(std::size_t n) &
     {
-        return OutStream(this->buf_maker_.dyn_array(n).data(), n);
+        return OutStream(this->buf_maker_.dyn_array(n));
     }
 
     InStream reserve_in_stream(std::size_t n) &
     {
-        return InStream(this->buf_maker_.dyn_array(n).data(), n);
+        return InStream(this->buf_maker_.dyn_array(n));
     }
 
 private:
@@ -881,7 +866,7 @@ struct OutReservedStreamHelper
     OutReservedStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len) noexcept
     : buf(data + reserved_leading_space)
     , reserved_leading_space(reserved_leading_space)
-    , stream(this->buf, buf_len - reserved_leading_space)
+    , stream({this->buf, buf_len - reserved_leading_space})
     {}
 
     struct Packet
@@ -1147,7 +1132,7 @@ namespace details_ {
         DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, uint8_t * buf, /*NOLINT*/
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
-        OutStream data_stream(buf + header_buf_sz, data_buf_sz);
+        OutStream data_stream({buf + header_buf_sz, data_buf_sz});
         data_writer(data_buf_sz, data_stream);
         auto * start = data_stream.get_data();
         std::size_t used_buf_sz = data_stream.get_offset();

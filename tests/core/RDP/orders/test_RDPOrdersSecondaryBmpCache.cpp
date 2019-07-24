@@ -41,8 +41,7 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
     };
     Bitmap bmp(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, 8, 1, data, sizeof(data), false);
     RDPBmpCache newcmd(bmp, 1, 10, false, false);
-    uint8_t buf[65536];
-    OutStream out_stream(buf);
+    StaticOutStream<65536> out_stream;
     newcmd.emit(BitsPerPixel{24}, out_stream, bitmap_cache_version, use_bitmap_comp, use_compact_packets);
 
     uint8_t datas[] = {
@@ -64,7 +63,7 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
 
     RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
 
-    InStream in_stream(buf, out_stream.get_offset());
+    InStream in_stream(out_stream.get_bytes());
 
     uint8_t control = in_stream.in_uint8();
     RED_CHECK(!!(control & (STANDARD|SECONDARY)));

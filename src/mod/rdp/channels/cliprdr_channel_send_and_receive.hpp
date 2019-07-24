@@ -210,8 +210,7 @@ struct FilecontentsRequestSendBack
         sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_data(),
-            out_stream.get_offset());
+            out_stream.get_bytes());
     }
 };
 
@@ -244,8 +243,7 @@ struct FormatDataRequestSendBack
         sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_data(),
-            out_stream.get_offset());
+            out_stream.get_bytes());
     }
 };
 
@@ -283,10 +281,7 @@ struct FormatDataResponseReceiveFileList
 
                 RDPECLIP::FileDescriptor fd;
 
-                InStream in_stream(
-                    file_descriptor_stream.get_data(),
-                    file_descriptor_stream.get_offset()
-                );
+                InStream in_stream(file_descriptor_stream.get_bytes());
                 fd.receive(in_stream);
                 if (bool(verbose & RDPVerbose::cliprdr)) {
                     fd.log(LOG_INFO);
@@ -406,8 +401,7 @@ struct ServerMonitorReadySendBack
         sender->operator()(
             caps_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            caps_stream.get_data(),
-            caps_stream.get_offset());
+            caps_stream.get_bytes());
 
         LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
@@ -430,8 +424,7 @@ struct ServerMonitorReadySendBack
         sender->operator()(
             list_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            list_stream.get_data(),
-            list_stream.get_offset());
+            list_stream.get_bytes());
     }
 };
 
@@ -776,8 +769,7 @@ struct FormatListSendBack
         sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_data(),
-            out_stream.get_offset());
+            out_stream.get_bytes());
     }
 };
 

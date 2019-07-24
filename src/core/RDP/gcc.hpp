@@ -266,7 +266,7 @@ namespace GCC
                     LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %" PRIu16 " %zu", length, stream.in_remain());
                     throw Error(ERR_GCC);
                 }
-                return InStream(stream.get_current(), stream.in_remain());
+                return InStream(stream.remaining_bytes());
             }())
         // Body of constructor
         {
@@ -478,7 +478,7 @@ namespace GCC
                     throw Error(ERR_GCC);
                 }
 
-                return InStream(stream.get_current(), stream.in_remain());
+                return InStream(stream.remaining_bytes());
             }())
         {
         }
@@ -545,7 +545,7 @@ namespace GCC
                                      tag, length, stream.get_capacity() - 4);
                     throw Error(ERR_GCC);
                 }
-                return InStream(stream.get_current() - 4, this->length);
+                return InStream({stream.get_current() - 4, this->length});
             }())
             {
                 stream.in_skip_bytes(this->length - 4);

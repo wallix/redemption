@@ -51,9 +51,9 @@ RED_AUTO_TEST_CASE(TestAvPair)
     for (auto & avp: listAvPair) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, 4);
 
-    const uint8_t tartempion[] = "NomDeDomaine";
+    auto tartempion = "NomDeDomaine\0"_av;
 
-    NtlmAddToAvPairList(MsvAvNbDomainName, tartempion, sizeof(tartempion), listAvPair);
+    NtlmAddToAvPairList(MsvAvNbDomainName, tartempion, listAvPair);
 
     RED_CHECK_EQUAL(listAvPair.size(), 1);
     packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.size()+1);
@@ -138,7 +138,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     hexdump_c(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
     // ChallengeMsg.recv(ts_req2.negoTokens);
 
-    InStream token(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
+    InStream token({ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size()});
     RecvNTLMChallengeMessage(token, ChallengeMsg);
 
     RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
@@ -163,7 +163,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     );
     // hexdump_c(ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetInfo.buffer.ostream.size());
-    InStream servChall(ChallengeMsg.serverChallenge, 8);
+    InStream servChall({ChallengeMsg.serverChallenge, 8});
     uint64_t servchallengeinteger = servChall.in_uint64_le();
     RED_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
 
@@ -189,7 +189,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.len, 64);
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
-    InStream servChall2(ChallengeMsgDuplicate.serverChallenge, 8);
+    InStream servChall2({ChallengeMsgDuplicate.serverChallenge, 8});
     uint64_t servchallengeinteger2 = servChall2.in_uint64_le();
     RED_CHECK_EQUAL(servchallengeinteger2, 8063485858206805542LL);
 
@@ -231,7 +231,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
 
     NTLMNegotiateMessage NegoMsg;
 
-    InStream nego(ts_req.negoTokens.get_data(), ts_req.negoTokens.size());
+    InStream nego({ts_req.negoTokens.get_data(), ts_req.negoTokens.size()});
     RecvNTLMNegotiateMessage(nego, NegoMsg);
 
 
@@ -487,7 +487,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     NTLMAuthenticateMessage AuthMsg;
     // AuthMsg.recv(ts_req3.negoTokens);
 
-    InStream token(ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size());
+    InStream token({ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size()});
     AuthMsg.recv(token);
 
     RED_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
@@ -507,7 +507,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // LmChallengeResponse
     LMv2_Response lmResponse;
-    InStream in_stream(AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.size());
+    InStream in_stream({AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.size()});
     lmResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
@@ -521,7 +521,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // NtChallengeResponse
     NTLMv2_Response ntResponse;
-    in_stream = InStream(AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.size());
+    in_stream = InStream({AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.size()});
     ntResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
@@ -1114,7 +1114,7 @@ public:
         size_t temp_size = AuthNtResponse.size() - 16;
         // LOG(LOG_INFO, "tmp size = %u", temp_size);
         uint8_t NtProofStr_from_msg[16] = {};
-        InStream in_AuthNtResponse(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom());
+        InStream in_AuthNtResponse(AuthNtResponse.ostream.get_tailroom_bytes());
         in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
 
         auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
@@ -1151,7 +1151,7 @@ public:
             return false;
         }
         uint8_t response[16] = {};
-        InStream in_AuthLmResponse(AuthLmResponse.ostream.get_current(), AuthLmResponse.ostream.tailroom());
+        InStream in_AuthLmResponse(AuthLmResponse.ostream.get_tailroom_bytes());
         in_AuthLmResponse.in_copy_bytes(response, 16);
         in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
         AuthLmResponse.ostream.rewind();
@@ -1175,8 +1175,7 @@ public:
         auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         uint8_t NtProofStr[16] = {};
-        InStream(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom())
-            .in_copy_bytes(NtProofStr, 16);
+        InStream(AuthNtResponse.ostream.get_tailroom_bytes()).in_copy_bytes(NtProofStr, 16);
         AuthNtResponse.ostream.rewind();
         uint8_t ResponseKeyNT[16] = {};
         this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
@@ -1295,11 +1294,11 @@ public:
             0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00
         };
         auto & list = this->CHALLENGE_MESSAGE.AvPairList;
-        NtlmAddToAvPairList(MsvAvTimestamp, this->Timestamp, 8, list);
-        NtlmAddToAvPairList(MsvAvNbDomainName, upwin7, sizeof(upwin7), list);
-        NtlmAddToAvPairList(MsvAvNbComputerName, upwin7, sizeof(upwin7), list);
-        NtlmAddToAvPairList(MsvAvDnsDomainName, win7, sizeof(win7), list);
-        NtlmAddToAvPairList(MsvAvDnsComputerName, win7, sizeof(win7), list);
+        NtlmAddToAvPairList(MsvAvTimestamp, buffer_view(this->Timestamp), list);
+        NtlmAddToAvPairList(MsvAvNbDomainName, buffer_view(upwin7), list);
+        NtlmAddToAvPairList(MsvAvNbComputerName, buffer_view(upwin7), list);
+        NtlmAddToAvPairList(MsvAvDnsDomainName, buffer_view(win7), list);
+        NtlmAddToAvPairList(MsvAvDnsComputerName, buffer_view(win7), list);
     }
 
 
@@ -1982,12 +1981,12 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
 
     // hexdump_c((uint8_t*)&ntlm_nego_flag.flags, 4);
 
-    uint8_t nego_string[] =
+    auto nego_string =
         /* 0000 */ "\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08\xe2"
         /* 0010 */ "\x00\x00\x00\x00\x28\x00\x00\x00\x00\x00\x00\x00\x28\x00\x00\x00"
-        /* 0020 */ "\x05\x01\x28\x0a\x00\x00\x00\x0f";
+        /* 0020 */ "\x05\x01\x28\x0a\x00\x00\x00\x0f"_av;
 
-    uint8_t challenge_string[] =
+    auto challenge_string =
         /* 0000 */ "\x4e\x54\x4c\x4d\x53\x53\x50\x00\x02\x00\x00\x00\x08\x00\x08\x00"
         /* 0010 */ "\x38\x00\x00\x00\x35\x82\x8a\xe2\x26\x6e\xcd\x75\xaa\x41\xe7\x6f"
         /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x40\x00\x40\x00\x00\x00"
@@ -1995,12 +1994,12 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
         /* 0040 */ "\x02\x00\x08\x00\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00"
         /* 0050 */ "\x57\x00\x49\x00\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00"
         /* 0060 */ "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
-        /* 0070 */ "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
+        /* 0070 */ "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00"_av;
 
-    InStream s(nego_string, sizeof(nego_string) - 1);
+    InStream s(nego_string);
     RecvNTLMNegotiateMessage(s, context.NEGOTIATE_MESSAGE);
 
-    s = InStream(challenge_string, sizeof(challenge_string) - 1);
+    s = InStream(challenge_string);
     RecvNTLMChallengeMessage(s, context.CHALLENGE_MESSAGE);
 
     const uint8_t password[] = {

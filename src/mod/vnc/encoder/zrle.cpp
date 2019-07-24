@@ -150,7 +150,7 @@ namespace
                     data_ready += this->zd.flush_ready(this->accumulator_uncompressed);
                 }
 
-                InStream zlib_uncompressed_data_stream(this->accumulator_uncompressed.data(), data_ready);
+                InStream zlib_uncompressed_data_stream({this->accumulator_uncompressed.data(), data_ready});
                 this->accumulator.clear();
 
                 this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, drawable);

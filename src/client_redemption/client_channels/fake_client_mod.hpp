@@ -44,6 +44,11 @@ public:
     struct PDUData {
         uint8_t data[1600] = {0};
         size_t size = 0;
+
+        array_view_const_u8 av() noexcept
+        {
+            return {data, size};
+        }
     } last_pdu[10];
 
     int index_in = 0;

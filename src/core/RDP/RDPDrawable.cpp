@@ -433,9 +433,9 @@ void RDPDrawable::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color
     uint16_t draw_pos = 0;
 
     rdp_draw_glyphs(
-        set_point, this->fragment_cache, cmd.data,
-        cmd.data_len, has_delta_bytes, cmd.ui_charinc,
-        draw_pos, offset_y, cmd.bk.x + offset_x, cmd.bk.y,
+        set_point, this->fragment_cache, {cmd.data, cmd.data_len},
+        has_delta_bytes, cmd.ui_charinc, draw_pos,
+        offset_y, cmd.bk.x + offset_x, cmd.bk.y,
         clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
     this->last_update_index++;
 }

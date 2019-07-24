@@ -160,9 +160,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
     gd.draw(RDPOpaqueRect(screen_rect, encode_color24()(WHITE)), screen_rect, color_cxt);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), encode_color24()(BLACK)), screen_rect, color_cxt);
 
-    constexpr std::size_t array_size = 1024;
-    uint8_t array[array_size];
-    OutStream deltaPoints(array, array_size);
+    StaticOutStream<1024> deltaPoints;
 
     deltaPoints.out_sint16_le(0);
     deltaPoints.out_sint16_le(20);
@@ -185,7 +183,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
     deltaPoints.out_sint16_le(-160);
     deltaPoints.out_sint16_le(0);
 
-    InStream dp(array, deltaPoints.get_offset());
+    InStream dp(deltaPoints.get_bytes());
 
     gd.draw(RDPPolyline(158, 230, 0x06, 0, encode_color24()(WHITE), 7, dp), screen_rect, color_cxt);
 

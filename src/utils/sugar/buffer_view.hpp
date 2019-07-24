@@ -23,45 +23,45 @@
 #include "utils/sugar/bytes_view.hpp"
 
 /**
- * \c array_view on \c uint8_t*, \c char*, \c uint8_t[n], \c char[n]
+ * \c bytes_view on \c uint8_t*, \c char*, \c uint8_t[n], \c char[n]
  */
-struct buffer_t : bytes_view
+struct buffer_view : bytes_view
 {
-    buffer_t() = default;
-    buffer_t(buffer_t const &) = default;
+    buffer_view() = default;
+    buffer_view(buffer_view const &) = default;
 
-    buffer_t & operator=(buffer_t const &) = default;
+    buffer_view & operator=(buffer_view const &) = default;
 
     using bytes_view::bytes_view;
 
-    buffer_t(bytes_view a) noexcept
+    buffer_view(bytes_view a) noexcept
     : bytes_view(a)
     {}
 
     template<class T, std::size_t n>
-    buffer_t(T (& a)[n]) noexcept
+    buffer_view(T (& a)[n]) noexcept
     : bytes_view(a, n)
     {}
 };
 
 /**
- * \c const_array_view on \c uint8_t*, \c char*, \c uint8_t[n], \c char[n]
+ * \c const_bytes_view on \c uint8_t*, \c char*, \c uint8_t[n], \c char[n]
  */
-struct const_buffer_t : const_bytes_view
+struct const_buffer_view : const_bytes_view
 {
-    const_buffer_t() = default;
-    const_buffer_t(const_buffer_t const &) = default;
+    const_buffer_view() = default;
+    const_buffer_view(const_buffer_view const &) = default;
 
-    const_buffer_t & operator=(const_buffer_t const &) = default;
+    const_buffer_view & operator=(const_buffer_view const &) = default;
 
     using const_bytes_view::const_bytes_view;
 
-    const_buffer_t(const_bytes_view a) noexcept
+    const_buffer_view(const_bytes_view a) noexcept
     : const_bytes_view(a)
     {}
 
     template<class T, std::size_t n>
-    const_buffer_t(T (& a)[n]) noexcept
+    const_buffer_view(T (& a)[n]) noexcept
     : const_bytes_view(a, n)
     {}
 };

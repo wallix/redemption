@@ -34,18 +34,17 @@ RED_AUTO_TEST_CASE(Test_gcc_sc_core)
         ""_av
     ;
 
-    uint8_t buf[12];
     GCC::UserData::SCCore sc_core;
     sc_core.length = 12;
     sc_core.version = 0x0080004;
     sc_core.clientRequestedProtocols = 0;
-    OutStream out_stream(buf);
+    StaticOutStream<12> out_stream;
     sc_core.emit(out_stream);
     RED_CHECK_MEM(out_stream.get_bytes(), expected);
 
     GCC::UserData::SCCore sc_core2;
 
-    InStream in_stream(buf);
+    InStream in_stream(out_stream.get_bytes());
     sc_core2.recv(in_stream);
     RED_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
     RED_CHECK_EQUAL(12, sc_core2.length);
