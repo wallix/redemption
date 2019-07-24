@@ -1856,7 +1856,7 @@ public:
             return;
         }
 
-        send_client_message([this, bTakeControl, bRequestPermission, userdata](OutStream & out_s) {
+        send_client_message([bTakeControl, bRequestPermission, userdata](OutStream & out_s) {
             out_s.out_copy_bytes("SHADOW_SESSION_REQUEST="_av);
 
             if (bTakeControl) {
