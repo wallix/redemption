@@ -225,6 +225,19 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L 
 
 namespace impl
 {
+    struct HexFlag
+    {
+        unsigned long long v;
+        std::size_t max_element;
+    };
+
+    inline std::ostream& operator<<(std::ostream& out, HexFlag const& h)
+    {
+        return out << "0x"
+            << std::setfill('0') << std::setw((h.max_element+3)/4)
+            << std::hex << h.v << std::dec;
+    }
+
     template<class T, class V>
     void write_value_(std::ostream& out, T const & name, V const & v, char const * prefix)
     {
@@ -236,7 +249,7 @@ namespace impl
             }
             out << v.desc;
         }
-        else if (std::is_integral<T>::value) {
+        else if (std::is_integral<T>::value || std::is_same<T, HexFlag>::value) {
             out << ": " << io_replace(v.name, '_', ' ');
         }
         out << "\n";
@@ -258,14 +271,17 @@ namespace impl
             if (e.is_string_parser) {
                 write_value_(out, (v.alias ? v.alias : v.name), v, prefix);
             }
+            else if (is_autoinc) {
+                write_value_(out, d, v, prefix);
+            }
             else {
-                write_value_(out, (is_autoinc ? d : (1 << d >> 1)), v, prefix);
+                write_value_(out, HexFlag{(1ull << d >> 1), e.values.size()}, v, prefix);
             }
             ++d;
         }
 
         if (type_enumeration::flags == e.flag) {
-            out << "(note: values can be added (everyone: 1+2+4=7, mute: 0))";
+            out << "(note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))";
         }
     }
 

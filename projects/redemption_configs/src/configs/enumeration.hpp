@@ -92,9 +92,9 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
         return *this;
     }
 
-    type_enumeration & reserved()
+    type_enumeration & exclude()
     {
-        this->reserved_value |= (1 << this->values.size());
+        this->exclude_flag |= (1 << (this->values.size()-1));
         return *this;
     }
 
@@ -127,7 +127,7 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
         const char * alias;
     };
     std::vector<Value> values;
-    uint64_t reserved_value = 0;
+    uint64_t exclude_flag = 0;
 };
 
 struct type_enumeration_set : type_enumeration_base<type_enumeration_set>
