@@ -24,9 +24,6 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-// Comment the code block below to generate testing data.
-// Uncomment the code block below to generate testing data.
-
 #include "capture/cryptofile.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
@@ -67,7 +64,6 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
 
 
     Inifile ini;
-    //ini.set<cfg::font>(Font(app_path_s(AppPath::Share) + "/sans-10.fv1"));
     ini.set<cfg::debug::front>(511);
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);
