@@ -92,8 +92,24 @@ void write_description(std::ostream& out, type_enumerations& enums, type_<T>, Pa
     }
 }
 
-
 using spec_internal_attr = cfg_attributes::spec::internal::attr;
+
+template<class T>
+spec_internal_attr attr_hex_if_enum_flag(type_<T>, type_enumerations& enums)
+{
+    spec_internal_attr attr{};
+    if constexpr (std::is_enum_v<T>)
+    {
+        apply_enumeration_for<T>(enums, [&](auto const & e) {
+            if constexpr (std::is_same_v<decltype(e), type_enumeration const &>) {
+                if (type_enumeration::flags == e.flag) {
+                    attr = spec_internal_attr::hex_in_gui;
+                }
+            }
+        });
+    }
+    return attr;
+}
 
 inline void write_spec_attr(std::ostream& out, spec_internal_attr attr)
 {
@@ -433,7 +449,9 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
             this->out() << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
-            write_spec_attr(comments, get_elem<spec_attr_t>(infos).value);
+            write_spec_attr(comments,
+                get_elem<spec_attr_t>(infos).value
+              | attr_hex_if_enum_flag(type, enums));
 
             this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 

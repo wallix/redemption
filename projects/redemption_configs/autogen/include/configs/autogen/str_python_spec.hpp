@@ -506,6 +506,7 @@ session_probe_childless_window_as_unidentified_input_field = boolean(default=Tru
 #   0x100: Inspect group membership of user
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 session_probe_disabled_features = integer(min=0, max=511, default=96)
 
 # If enabled, disconnected session can be recovered by a different primary user.
@@ -532,6 +533,7 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_access_allowed_message = integer(min=0, max=7, default=1)
 
 # Warn that new server certificate file was created.
@@ -541,6 +543,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_cert_create_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file was successfully checked.
@@ -550,6 +553,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_cert_success_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file checking failed.
@@ -559,6 +563,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate check raised some internal error.
@@ -568,6 +573,7 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_cert_error_message = integer(min=0, max=7, default=1)
 
 # Do not transmit client machine name or RDP server.
@@ -709,6 +715,7 @@ capture_groupid = integer(min=0, default=33)
 #   0x08: ocr
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 capture_flags = integer(min=0, max=15, default=11)
 
 # Frame interval.
@@ -749,6 +756,7 @@ record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::R
 #   0x2: disable keyboard log in recorded sessions
 #   0x4: disable keyboard log in recorded meta
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 disable_keyboard_log = integer(min=0, max=7, default=1)
 
 # Disable clipboard log:
@@ -757,6 +765,7 @@ disable_keyboard_log = integer(min=0, max=7, default=1)
 #   0x2: disable clipboard log in recorded sessions
 #   0x4: disable clipboard log in recorded meta
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 disable_clipboard_log = integer(min=0, max=7, default=1)
 
 # Disable (redirected) file system log:
@@ -765,6 +774,7 @@ disable_clipboard_log = integer(min=0, max=7, default=1)
 #   0x2: disable (redirected) file system log in recorded sessions
 #   0x4: disable (redirected) file system log in recorded meta
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 disable_file_system_log = integer(min=0, max=7, default=1)
 
 #_hidden

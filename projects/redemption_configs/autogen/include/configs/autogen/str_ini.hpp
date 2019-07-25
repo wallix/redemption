@@ -603,6 +603,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x100: Inspect group membership of user
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 #session_probe_disabled_features = 96
 
 # If enabled, disconnected session can be recovered by a different primary user.
@@ -633,6 +634,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 #server_access_allowed_message = 1
 
 # Warn that new server certificate file was created.
@@ -643,6 +645,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 #server_cert_create_message = 1
 
 # Warn that server certificate file was successfully checked.
@@ -653,6 +656,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 #server_cert_success_message = 1
 
 # Warn that server certificate file checking failed.
@@ -663,6 +667,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 #server_cert_failure_message = 1
 
 # Warn that server certificate check raised some internal error.
@@ -673,6 +678,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 #server_cert_error_message = 1
 
 # Do not transmit client machine name or RDP server.
@@ -840,6 +846,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x08: ocr
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 #capture_flags = 11
 
 # Frame interval.
@@ -886,6 +893,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x2: disable keyboard log in recorded sessions
 #   0x4: disable keyboard log in recorded meta
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 #disable_keyboard_log = 1
 
 # Disable clipboard log:
@@ -895,6 +903,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x2: disable clipboard log in recorded sessions
 #   0x4: disable clipboard log in recorded meta
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 #disable_clipboard_log = 1
 
 # Disable (redirected) file system log:
@@ -904,6 +913,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x2: disable (redirected) file system log in recorded sessions
 #   0x4: disable (redirected) file system log in recorded meta
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 #disable_file_system_log = 1
 
 # value: 0 or 1

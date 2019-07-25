@@ -531,6 +531,7 @@
             }
           ],
           "advanced": true,
+          "prefered_representation": "hex",
           "description": "Warn if check allow connexion to server."
         },
         {
@@ -563,6 +564,7 @@
             }
           ],
           "advanced": true,
+          "prefered_representation": "hex",
           "description": "Warn that new server certificate file was created."
         },
         {
@@ -595,6 +597,7 @@
             }
           ],
           "advanced": true,
+          "prefered_representation": "hex",
           "description": "Warn that server certificate file was successfully checked."
         },
         {
@@ -627,6 +630,7 @@
             }
           ],
           "advanced": true,
+          "prefered_representation": "hex",
           "description": "Warn that server certificate file checking failed."
         }
       ]
@@ -658,6 +662,7 @@
                "description": "keyboard log in recorded sessions"
             }
           ],
+          "prefered_representation": "hex",
           "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
         }
       ]

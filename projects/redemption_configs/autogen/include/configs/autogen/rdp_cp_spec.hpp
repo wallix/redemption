@@ -230,6 +230,7 @@ server_cert_check = option(0, 1, 2, 3, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 server_access_allowed_message = integer(min=0, max=7, default=1)
 
 # Warn that new server certificate file was created.
@@ -239,6 +240,7 @@ server_access_allowed_message = integer(min=0, max=7, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 server_cert_create_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file was successfully checked.
@@ -248,6 +250,7 @@ server_cert_create_message = integer(min=0, max=7, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 server_cert_success_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file checking failed.
@@ -257,6 +260,7 @@ server_cert_success_message = integer(min=0, max=7, default=1)
 #   0x4: admin notified (wab notification)
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
 
 [video]
@@ -267,6 +271,7 @@ server_cert_failure_message = integer(min=0, max=7, default=1)
 #   0x1: disable keyboard log in syslog
 #   0x2: disable keyboard log in recorded sessions
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 disable_keyboard_log = integer(min=0, max=3, default=1)
 
 [file_verification]
