@@ -64,8 +64,8 @@ void send_data_indication_ex( Transport & trans
     write_packets(
         trans,
         data_writer...,
-        [&](StreamSize<256>, OutStream & security_header, uint8_t * data, std::size_t data_sz) {
-            SEC::Sec_Send sec(security_header, data, data_sz, 0, encrypt, encryptionLevel);
+        [&](StreamSize<256>, OutStream & security_header, bytes_view packet) {
+            SEC::Sec_Send sec(security_header, packet.data(), packet.size(), 0, encrypt, encryptionLevel);
         },
         [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
             MCS::SendDataIndication_Send mcs( mcs_header

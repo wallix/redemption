@@ -860,8 +860,8 @@ enum {
         CryptContext & encrypt;
         int encryption_level;
 
-        void operator()(StreamSize<256> /*unused*/, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) const {
-            SEC::Sec_Send sec(sec_header, packet_data, packet_size, this->flags, this->encrypt, this->encryption_level);
+        void operator()(StreamSize<256> /*unused*/, OutStream & sec_header, bytes_view packet) const {
+            SEC::Sec_Send sec(sec_header, packet.data(), packet.size(), this->flags, this->encrypt, this->encryption_level);
             (void)sec;
         }
     };

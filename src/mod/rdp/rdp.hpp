@@ -5920,9 +5920,9 @@ private:
 
                 channel_data_size = stream.tailroom();
             },
-            [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
+            [&](StreamSize<256>, OutStream & fastpath_header, bytes_view packet) {
                 FastPath::ClientInputEventPDU_Send out_cie(
-                    fastpath_header, packet_data, packet_size, 1,
+                    fastpath_header, packet.data(), packet.size(), 1,
                     this->encrypt, this->negociation_result.encryptionLevel,
                     this->negociation_result.encryptionMethod
                 );

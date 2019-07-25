@@ -2905,10 +2905,10 @@ private:
                 ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             },
-            [this](StreamSize<0>, OutStream &, uint8_t  const * packet_data, std::size_t packet_size) {
+            [this](StreamSize<0>, OutStream &, const_bytes_view packet) {
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_demand_active: Sec clear payload to send:");
-                    hexdump_d(packet_data, packet_size);
+                    hexdump_d(packet);
                 }
             }
         );

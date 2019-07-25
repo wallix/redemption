@@ -1092,7 +1092,7 @@ namespace details_ {
 
     template<class StreamSz, class Writer>
     void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, Writer & writer, unsigned /*unused*/)
-    { writer(sz, ostream, buf, used_buf_sz); }
+    { writer(sz, ostream, bytes_view(buf, used_buf_sz)); }
 
 
     template<class StreamSz, class Writer>
