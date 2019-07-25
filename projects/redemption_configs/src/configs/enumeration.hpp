@@ -92,6 +92,12 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
         return *this;
     }
 
+    type_enumeration & reserved()
+    {
+        this->reserved_value |= (1 << this->values.size());
+        return *this;
+    }
+
     unsigned long count() const
     {
         return this->values.size();
@@ -121,6 +127,7 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
         const char * alias;
     };
     std::vector<Value> values;
+    uint64_t reserved_value = 0;
 };
 
 struct type_enumeration_set : type_enumeration_base<type_enumeration_set>
