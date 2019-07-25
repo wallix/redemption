@@ -275,7 +275,10 @@ namespace impl
                 write_value_(out, d, v, prefix);
             }
             else {
-                write_value_(out, HexFlag{(1ull << d >> 1), e.values.size()}, v, prefix);
+                auto f = (1ull << d >> 1);
+                if (!(f & e.exclude_flag)) {
+                    write_value_(out, HexFlag{f, e.values.size()}, v, prefix);
+                }
             }
             ++d;
         }

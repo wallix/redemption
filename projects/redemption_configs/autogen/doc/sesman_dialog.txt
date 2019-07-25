@@ -113,13 +113,12 @@ cfg::mod_rdp::session_probe_disabled_features <- session_probe_disabled_features
       0x001: Java Access Bridge
       0x002: MS Active Accessbility
       0x004: MS UI Automation
-      0x008: Reserved (do not use)
       0x010: Inspect Edge location URL
       0x020: Inspect Chrome Address/Search bar
       0x040: Inspect Firefox Address/Search bar
       0x080: Monitor Internet Explorer event
       0x100: Inspect group membership of user
-    (note: values can be added (everyone: 1+2+4=7, mute: 0))
+    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 cfg::mod_rdp::session_probe_public_session <- session_probe_public_session   [bool]
     If enabled, disconnected session can be recovered by a different primary user.
 cfg::mod_rdp::server_cert_store <- server_cert_store   [bool]
@@ -137,28 +136,28 @@ cfg::mod_rdp::server_access_allowed_message <- server_access_allowed_message   [
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
-    (note: values can be added (everyone: 1+2+4=7, mute: 0))
+    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 cfg::mod_rdp::server_cert_create_message <- server_cert_create_message   [ServerNotification]
     Warn that new server certificate file was created.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
-    (note: values can be added (everyone: 1+2+4=7, mute: 0))
+    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 cfg::mod_rdp::server_cert_success_message <- server_cert_success_message   [ServerNotification]
     Warn that server certificate file was successfully checked.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
-    (note: values can be added (everyone: 1+2+4=7, mute: 0))
+    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 cfg::mod_rdp::server_cert_failure_message <- server_cert_failure_message   [ServerNotification]
     Warn that server certificate file checking failed.
       0x0: nobody
       0x1: message sent to syslog
       0x2: User notified (through proxy interface)
       0x4: admin notified (wab notification)
-    (note: values can be added (everyone: 1+2+4=7, mute: 0))
+    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 cfg::mod_rdp::enable_rdpdr_data_analysis <- enable_rdpdr_data_analysis   [bool]
 cfg::mod_rdp::wabam_uses_translated_remoteapp <- wabam_uses_translated_remoteapp   [bool]
 cfg::mod_rdp::enable_server_cert_external_validation <- enable_server_cert_external_validation   [bool]
@@ -191,7 +190,7 @@ cfg::video::disable_keyboard_log <- disable_keyboard_log   [KeyboardLogFlags]
       0x1: disable keyboard log in syslog
       0x2: disable keyboard log in recorded sessions
       0x4: disable keyboard log in recorded meta
-    (note: values can be added (everyone: 1+2+4=7, mute: 0))
+    (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 cfg::video::rt_display <- rt_display   [bool]
 
 cfg::crypto::key0 <- encryption_key   [std::array<unsigned char, 32>]

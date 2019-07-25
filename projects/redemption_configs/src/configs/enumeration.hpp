@@ -94,7 +94,7 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
 
     type_enumeration & exclude()
     {
-        this->exclude_flag |= (1 << (this->values.size()-1));
+        this->exclude_flag |= (1 << this->values.size() >> 2);
         return *this;
     }
 
