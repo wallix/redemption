@@ -25,15 +25,17 @@
 #define RED_TEST_MODULE TestFrontRdesktopClient
 #include "system/redemption_unit_tests.hpp"
 
-// Comment the code block below to generate testing data.
-// Uncomment the code block below to generate testing data.
-
+#include "test_only/transport/test_transport.hpp"
 #include "capture/cryptofile.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
-#include "test_only/transport/test_transport.hpp"
 #include "configs/config.hpp"
 #include "front/front.hpp"
+// Uncomment the code block below to generate testing data.
+//#include "core/listen.hpp"
+//#include "core/session.hpp"
+//#include "transport/socket_transport.hpp"
+
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
 
@@ -51,7 +53,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //        ip_source[0] = 0;
     //    }
     //
-    //    virtual Server_status start(int incoming_sck) {
+    //    virtual Server_status start(int incoming_sck, bool forkable) {
     //        union {
     //            struct sockaddr s;
     //            struct sockaddr_storage ss;
@@ -67,10 +69,9 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //    }
     //} one_shot_server;
     //Listen listener(one_shot_server, 0, 3389, true, 5); // 25 seconds to connect, or timeout
-    //listener.run();
+    //listener.run(false);
 
     Inifile ini;
-    // ini.set<cfg::font>(Font(app_path_s(AppPath::Share) + "/sans-10.fv1"));
     ini.set<cfg::debug::front>(511);
     ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
     ini.set<cfg::client::cache_waiting_list>(true);
@@ -86,8 +87,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //                    , (char *)&nodelay, sizeof(nodelay))) {
     //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     //}
-    //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-    //                           , ini.get<cfg::debug::front>(), 0);
+    //SocketTransport front_trans( "RDP Client", unique_fd{one_shot_server.sck}, "0.0.0.0", 0, {}
+    //                           , to_verbose_flags(ini.get<cfg::debug::front>()));
 
     // Comment the code block below to generate testing data.
     #include "fixtures/trace_rdesktop_client.hpp"
@@ -118,7 +119,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
         front.incoming(no_mod, now);
     }
 
-    // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
+    //LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     RED_CHECK_EQUAL(1, front.up_and_running);
     TestCardMod mod(session_reactor, front, front.client_info.screen_info.width, front.client_info.screen_info.height, global_font());
