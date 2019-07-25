@@ -34,6 +34,7 @@
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
 //#include "core/session.hpp"
+//#include "transport/socket_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 
@@ -44,27 +45,27 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     //// This server only support one incoming connection before closing listener
     //class ServerOnce : public Server {
     //public:
-    //    int  sck;
-    //    char ip_source[256];
+    //   int  sck;
+    //   char ip_source[256];
     //
-    //    ServerOnce() : sck(0) {
-    //        ip_source[0] = 0;
-    //    }
+    //   ServerOnce() : sck(0) {
+    //       ip_source[0] = 0;
+    //   }
     //
-    //    virtual Server_status start(int incoming_sck) {
-    //        union {
-    //            struct sockaddr s;
-    //            struct sockaddr_storage ss;
-    //            struct sockaddr_in s4;
-    //            struct sockaddr_in6 s6;
-    //        } u;
-    //        unsigned int sin_size = sizeof(u);
-    //        memset(&u, 0, sin_size);
-    //        this->sck = accept(incoming_sck, &u.s, &sin_size);
-    //        strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
-    //        LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
-    //        return START_WANT_STOP;
-    //    }
+    //   virtual Server_status start(int incoming_sck) {
+    //       union {
+    //           struct sockaddr s;
+    //           struct sockaddr_storage ss;
+    //           struct sockaddr_in s4;
+    //           struct sockaddr_in6 s6;
+    //       } u;
+    //       unsigned int sin_size = sizeof(u);
+    //       memset(&u, 0, sin_size);
+    //       this->sck = accept(incoming_sck, &u.s, &sin_size);
+    //       strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
+    //       LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
+    //       return START_WANT_STOP;
+    //   }
     //} one_shot_server;
     //Listen listener(one_shot_server, 0, 3389, true, 5); // 25 seconds to connect, or timeout
     //listener.run();
@@ -83,11 +84,11 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     // Uncomment the code block below to generate testing data.
     //int nodelay = 1;
     //if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY
-    //                    , (char *)&nodelay, sizeof(nodelay))) {
-    //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+    //                   , (char *)&nodelay, sizeof(nodelay))) {
+    //   LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     //}
     //SocketTransport front_trans( "RDP Client", unique_fd{one_shot_server.sck}, "0.0.0.0", 0
-    //                           , std::chrono::seconds(1), to_verbose_flags(511));
+    //                          , std::chrono::seconds(1), to_verbose_flags(511));
 
     // Comment the code block below to generate testing data.
     #include "fixtures/trace_mstsc_client.hpp"

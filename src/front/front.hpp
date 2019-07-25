@@ -2575,7 +2575,7 @@ public:
                                 // reset caches, etc.
                                 this->reset();
                                 // resizing done
-                                {
+                                if (this->client_info.bpp == 8) {
                                     RDPColCache cmd(0, BGRPalette::classic_332());
                                     this->orders.graphics_update_pdu().draw(cmd);
                                 }

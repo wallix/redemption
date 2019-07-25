@@ -25,15 +25,17 @@
 #define RED_TEST_MODULE TestFrontRdesktopClient
 #include "system/redemption_unit_tests.hpp"
 
-// Comment the code block below to generate testing data.
-// Uncomment the code block below to generate testing data.
-
+#include "test_only/transport/test_transport.hpp"
 #include "core/font.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
-#include "test_only/transport/test_transport.hpp"
 #include "configs/config.hpp"
 #include "front/front.hpp"
+// Uncomment the code block below to generate testing data.
+//#include "core/listen.hpp"
+//#include "core/session.hpp"
+//#include "transport/socket_transport.hpp"
+
 #include "test_only/lcg_random.hpp"
 
 
