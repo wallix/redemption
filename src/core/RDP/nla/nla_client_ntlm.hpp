@@ -292,13 +292,12 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
         auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
         // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-        LmChallengeResponse.reset();
 
         array_md5 LCResponse = ::HmacMd5(ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
 
-        LmChallengeResponse.ostream.out_copy_bytes(LCResponse);
-        LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
-        LmChallengeResponse.mark_end();
+        LmChallengeResponse.assign(LCResponse.data(), LCResponse.data()+LCResponse.size());
+        LmChallengeResponse.insert(std::end(LmChallengeResponse), 
+            this->ClientChallenge, this->ClientChallenge+8);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)

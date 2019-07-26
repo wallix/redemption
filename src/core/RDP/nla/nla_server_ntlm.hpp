@@ -377,11 +377,9 @@ protected:
                 return false;
             }
             uint8_t response[16] = {};
-            InStream in_AuthLmResponse(AuthLmResponse.ostream.get_tailroom_bytes());
-            in_AuthLmResponse.in_copy_bytes(response, 16);
-            in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
-            AuthLmResponse.ostream.rewind();
-
+            memcpy(response, AuthLmResponse.data(), 16);
+            memcpy(this->ClientChallenge, AuthLmResponse.data()+16, 8);
+            
             uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
             uint8_t ResponseKeyLM[16] = {};
             this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyLM);

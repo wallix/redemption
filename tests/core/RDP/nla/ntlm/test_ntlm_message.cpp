@@ -507,7 +507,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // LmChallengeResponse
     LMv2_Response lmResponse;
-    InStream in_stream({AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.size()});
+    InStream in_stream(AuthMsg.LmChallengeResponse.buffer);
     lmResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
@@ -918,15 +918,13 @@ public:
         auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
         // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
         SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
-        LmChallengeResponse.reset();
         hmac_md5lmresp.update({this->ServerChallenge, 8});
         hmac_md5lmresp.update({this->ClientChallenge, 8});
         uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
         hmac_md5lmresp.final(LCResponse);
 
-        LmChallengeResponse.ostream.out_copy_bytes(LCResponse, SslMd5::DIGEST_LENGTH);
-        LmChallengeResponse.ostream.out_copy_bytes(this->ClientChallenge, 8);
-        LmChallengeResponse.mark_end();
+        LmChallengeResponse.assign(LCResponse, LCResponse+SslMd5::DIGEST_LENGTH);
+        LmChallengeResponse.insert(std::end(LmChallengeResponse), this->ClientChallenge, this->ClientChallenge+8);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: SessionBaseKey");
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
@@ -1151,10 +1149,8 @@ public:
             return false;
         }
         uint8_t response[16] = {};
-        InStream in_AuthLmResponse(AuthLmResponse.ostream.get_tailroom_bytes());
-        in_AuthLmResponse.in_copy_bytes(response, 16);
-        in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
-        AuthLmResponse.ostream.rewind();
+        memcpy(response, AuthLmResponse.data(), 16);
+        memcpy(this->ClientChallenge, AuthLmResponse.data()+16, 8);
 
         uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
         uint8_t ResponseKeyLM[16] = {};
@@ -2072,7 +2068,7 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
 
     auto & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
     RED_CHECK_MEM(
-        make_array_view(LmChallengeResponse.get_data(), LmChallengeResponse.size()),
+        LmChallengeResponse,
         /* 0000 */ "\x11\x1b\x69\x4b\xdb\x30\x53\x91\xef\x94\x8b\x20\x83\xbd\x07\x43" //..iK.0S.... ...C
         /* 0010 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d"_av                                 //.l....0.
     );
