@@ -1186,7 +1186,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
-#log_if_accepted = 0
+#log_if_accepted = 1
 
 [icap_server_up]
 

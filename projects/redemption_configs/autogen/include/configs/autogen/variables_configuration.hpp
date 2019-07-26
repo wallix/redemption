@@ -3532,7 +3532,7 @@ namespace cfg {
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// connpolicy -> proxy <br/>
-    /// value{} <br/>
+    /// value{true} <br/>
     struct file_verification::log_if_accepted {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3544,7 +3544,7 @@ namespace cfg {
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{};
+        type value{true};
     };
 
     /// Ip or fqdn of ICAP service <br/>

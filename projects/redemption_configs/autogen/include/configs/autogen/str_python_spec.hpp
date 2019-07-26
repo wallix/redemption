@@ -999,7 +999,7 @@ enable_up = boolean(default=False)
 enable_down = boolean(default=False)
 
 #_hidden
-log_if_accepted = boolean(default=False)
+log_if_accepted = boolean(default=True)
 
 [icap_server_up]
 
