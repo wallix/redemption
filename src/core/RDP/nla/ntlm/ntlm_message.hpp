@@ -379,9 +379,6 @@ struct NtlmVersion {
 
 inline void EmitNtlmVersion(OutStream & stream, const NtlmVersion & self)
 {
-    if (self.ignore_version) {
-        return;
-    }
     stream.out_uint8(self.ProductMajorVersion);
     stream.out_uint8(self.ProductMinorVersion);
     stream.out_uint16_le(self.ProductBuild);
@@ -1203,7 +1200,9 @@ struct NTLMAuthenticateMessage {
         currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
         (void)currentOffset;
         this->negoFlags.emit(stream);
-        EmitNtlmVersion(stream, this->version);
+        if (!this->version.ignore_version) {
+            EmitNtlmVersion(stream, this->version);
+        }
 
         if (this->has_mic) {
             if (this->ignore_mic) {
@@ -1718,7 +1717,9 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         stream.out_clear_bytes(8);
         /*currentOffset +=*/ self.TargetInfo.emit(stream, currentOffset);
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            EmitNtlmVersion(stream, self.version);
+            if (!self.version.ignore_version) {
+                EmitNtlmVersion(stream, self.version);
+            }
         }
         // PAYLOAD
         self.TargetName.write_payload(stream);
@@ -1918,7 +1919,9 @@ public:
         currentOffset += this->DomainName.emit(stream, currentOffset);
         currentOffset += this->Workstation.emit(stream, currentOffset);
         (void)currentOffset;
-        EmitNtlmVersion(stream, this->version);
+        if (!this->version.ignore_version) {
+            EmitNtlmVersion(stream, this->version);
+        }
 
         // PAYLOAD
         this->DomainName.write_payload(stream);
