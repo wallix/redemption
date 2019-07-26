@@ -615,6 +615,10 @@ split_domain = boolean(default=False)
 #_hidden
 wabam_uses_translated_remoteapp = boolean(default=False)
 
+# Enables Session Shadowing Support.
+#_advanced
+session_shadowing_support = boolean(default=True)
+
 [metrics]
 
 #_advanced

@@ -177,6 +177,7 @@ namespace cfg {
         struct enable_server_cert_external_validation;
         struct server_cert;
         struct server_cert_response;
+        struct session_shadowing_support;
     };
 
     struct metrics {

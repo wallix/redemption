@@ -159,6 +159,8 @@ struct SessionProbeVirtualChannelParams
 
     std::chrono::milliseconds launcher_abort_delay {};
 
+    bool session_shadowing_support = true;
+
     explicit SessionProbeVirtualChannelParams() = default;
 };
 

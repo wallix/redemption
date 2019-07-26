@@ -309,6 +309,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.used_to_launch_remote_program);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.fix_too_long_cookie);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.session_shadowing_support);
 #endif
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);

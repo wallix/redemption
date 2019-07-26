@@ -429,6 +429,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "enable_server_cert_external_validation");
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "server_cert");
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "server_cert_response", desc{"empty string for wait, 'Ok' or error message"});
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_shadowing_support", desc{"Enables Session Shadowing Support."}, set(true));
     });
 
     W.section("metrics", [&]
