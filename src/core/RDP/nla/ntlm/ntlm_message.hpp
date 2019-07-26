@@ -751,11 +751,7 @@ struct NtlmField {
         if (this->len > 0) {
             uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
             if (pEnd > stream.get_current()) {
-                if (pEnd > stream.get_data_end()) {
-                    LOG(LOG_ERR, "INVALID stream read");
-                    return;
-                }
-                stream.in_skip_bytes(pEnd - stream.get_current());;
+                stream.in_skip_bytes(pEnd - stream.get_current());
             }
             this->buffer.init(this->len);
             this->buffer.ostream.out_copy_bytes(pBegin + this->bufferOffset, this->len);
@@ -770,6 +766,52 @@ struct NtlmField {
         }
     }
 
+};
+
+
+struct NtlmFieldImplVector {
+    uint16_t len{0};           /* 2 Bytes */
+    uint16_t maxLen{0};        /* 2 Bytes */
+    uint32_t bufferOffset{0};  /* 4 Bytes */
+
+    std::vector<uint8_t> buffer;
+
+    NtlmFieldImplVector() = default;
+
+    void log(const char * name) {
+        LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",
+            name, this->len, this->maxLen, this->bufferOffset);
+        hexdump_d(this->buffer);
+    }
+
+    unsigned int emit(OutStream & stream, unsigned int currentOffset) /* TODO const*/ {
+        this->len = this->maxLen= this->buffer.size();
+        this->bufferOffset = currentOffset;
+        // currentOffset += this->len;
+
+        stream.out_uint16_le(this->buffer.size());
+        stream.out_uint16_le(this->buffer.size());
+        stream.out_uint32_le(this->bufferOffset);
+        return this->buffer.size();
+    }
+
+    void recv(InStream & stream) {
+        this->len = stream.in_uint16_le();
+        this->maxLen = stream.in_uint16_le();
+        this->bufferOffset = stream.in_uint32_le();
+    }
+
+    void read_payload(InStream & stream, uint8_t const * pBegin) {
+        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+        if (pEnd > stream.get_current()) {
+            stream.in_skip_bytes(pEnd - stream.get_current());
+        }
+        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+    }
+
+    void write_payload(OutStream & stream) const {
+        stream.out_copy_bytes(this->buffer.data(), this->buffer.size());
+    }
 };
 
 
