@@ -386,8 +386,8 @@ private:
             this->AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
-            this->version.ignore_version_info();
-            this->AUTHENTICATE_MESSAGE.version.ignore_version_info();
+            this->version.ignore_version = true;
+            this->AUTHENTICATE_MESSAGE.version.ignore_version = true;
         }
 
         uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
@@ -892,8 +892,8 @@ public:
 
         }
         else {
-            this->version.ignore_version_info();
-            this->NEGOTIATE_MESSAGE.version.ignore_version_info();
+            this->version.ignore_version = true;
+            this->NEGOTIATE_MESSAGE.version.ignore_version = true;
         }
         this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
@@ -1008,8 +1008,8 @@ public:
 
                     }
                     else {
-                        this->version.ignore_version_info();
-                        this->NEGOTIATE_MESSAGE.version.ignore_version_info();
+                        this->version.ignore_version = true;
+                        this->NEGOTIATE_MESSAGE.version.ignore_version = true;
                     }
                     this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 

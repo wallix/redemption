@@ -1239,7 +1239,7 @@ public:
             this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
-            this->version.ignore_version_info();
+            this->version.ignore_version = true;
         }
 
         this->NegotiateFlags = negoFlag;
@@ -1292,7 +1292,7 @@ public:
             
         }
         else {
-            this->version.ignore_version_info();
+            this->version.ignore_version = true;
         }
 
         this->NegotiateFlags = negoFlag;
@@ -1339,7 +1339,7 @@ public:
             this->NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
-            this->NEGOTIATE_MESSAGE.version.ignore_version_info();
+            this->NEGOTIATE_MESSAGE.version.ignore_version = true;
         }
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
@@ -1387,7 +1387,7 @@ public:
             this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
-            this->CHALLENGE_MESSAGE.version.ignore_version_info();
+            this->CHALLENGE_MESSAGE.version.ignore_version = true;
         }
 
         this->state = NTLM_STATE_AUTHENTICATE;
@@ -1425,7 +1425,7 @@ public:
             this->AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
-            this->AUTHENTICATE_MESSAGE.version.ignore_version_info();
+            this->AUTHENTICATE_MESSAGE.version.ignore_version = true;
         }
 
         if (!(flag & NTLMSSP_NEGOTIATE_KEY_EXCH)) {

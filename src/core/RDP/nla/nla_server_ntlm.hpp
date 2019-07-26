@@ -460,7 +460,7 @@ protected:
                 
             }
             else {
-                this->CHALLENGE_MESSAGE.version.ignore_version_info();
+                this->CHALLENGE_MESSAGE.version.ignore_version = true;
             }
 
             this->state = NTLM_STATE_AUTHENTICATE;

@@ -374,24 +374,6 @@ struct NtlmVersion {
     ::NTLMRevisionCurrent NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
     bool ignore_version{true};
-
-    NtlmVersion() = default;
-
-    void ignore_version_info() {
-        this->ignore_version = true;
-    }
-
-//    void ntlm_get_version_info() {
-//        this->ignore_version = false;
-//        // this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-//        // this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-//        // this->ProductBuild        = 2600;
-//        // this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-//        this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-//        this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-//        this->ProductBuild        = 7601;
-//        this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-//    }
 };
 
 
