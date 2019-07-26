@@ -406,7 +406,7 @@ private:
         StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
             this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-            this->AUTHENTICATE_MESSAGE.emit(out_stream);
+            emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
             this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
@@ -420,11 +420,11 @@ private:
         }
         out_stream.rewind();
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-        this->AUTHENTICATE_MESSAGE.emit(out_stream);
+        emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
         output_buffer.init(out_stream.get_offset());
         output_buffer.copy(out_stream.get_bytes());
         if (this->verbose) {
-            this->AUTHENTICATE_MESSAGE.log();
+            logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
         }
         return SEC_I_COMPLETE_NEEDED;
     }

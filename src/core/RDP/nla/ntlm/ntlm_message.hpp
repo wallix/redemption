@@ -387,7 +387,6 @@ inline void EmitNtlmVersion(OutStream & stream, const NtlmVersion & self)
 }
 
 inline void RecvNtlmVersion(InStream & stream, NtlmVersion & self) {
-    self.ignore_version = false;
     self.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
     self.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
     self.ProductBuild = stream.in_uint16_le();
@@ -1169,109 +1168,111 @@ struct NTLMAuthenticateMessage {
     {
         memset(this->MIC, 0x00, 16);
     }
+};
 
-    void log() {
-        this->LmChallengeResponse.log("LmChallengeResponse");
-        this->NtChallengeResponse.log("NtChallengeResponse");
-        this->DomainName.log("DomainName");
-        this->UserName.log("UserName");
-        this->Workstation.log("Workstation");
-        this->EncryptedRandomSessionKey.log("EncryptedRandomSessionKey");
-        this->negoFlags.log();
-        LogNtlmVersion(this->version);
-        LOG(LOG_DEBUG, "MIC");
-        hexdump_d(this->MIC, 16);
+
+inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
+    self.LmChallengeResponse.log("LmChallengeResponse");
+    self.NtChallengeResponse.log("NtChallengeResponse");
+    self.DomainName.log("DomainName");
+    self.UserName.log("UserName");
+    self.Workstation.log("Workstation");
+    self.EncryptedRandomSessionKey.log("EncryptedRandomSessionKey");
+    self.negoFlags.log();
+    LogNtlmVersion(self.version);
+    LOG(LOG_DEBUG, "MIC");
+    hexdump_d(self.MIC, 16);
+}
+
+inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMessage & self) /* TODO const*/ {
+    uint32_t currentOffset = self.PayloadOffset;
+    if (self.version.ignore_version) {
+        currentOffset -= 8;
+    }
+    if (self.has_mic) {
+        currentOffset += 16;
+    }
+    self.message_emit(stream);
+    currentOffset += self.LmChallengeResponse.emit(stream, currentOffset);
+    currentOffset += self.NtChallengeResponse.emit(stream, currentOffset);
+    currentOffset += self.DomainName.emit(stream, currentOffset);
+    currentOffset += self.UserName.emit(stream, currentOffset);
+    currentOffset += self.Workstation.emit(stream, currentOffset);
+    currentOffset += self.EncryptedRandomSessionKey.emit(stream, currentOffset);
+    (void)currentOffset;
+    self.negoFlags.emit(stream);
+    if (!self.version.ignore_version) {
+        EmitNtlmVersion(stream, self.version);
     }
 
-    void emit(OutStream & stream) /* TODO const*/ {
-        uint32_t currentOffset = this->PayloadOffset;
-        if (this->version.ignore_version) {
-            currentOffset -= 8;
-        }
-        if (this->has_mic) {
-            currentOffset += 16;
-        }
-        this->message_emit(stream);
-        currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
-        currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
-        currentOffset += this->DomainName.emit(stream, currentOffset);
-        currentOffset += this->UserName.emit(stream, currentOffset);
-        currentOffset += this->Workstation.emit(stream, currentOffset);
-        currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
-        (void)currentOffset;
-        this->negoFlags.emit(stream);
-        if (!this->version.ignore_version) {
-            EmitNtlmVersion(stream, this->version);
-        }
-
-        if (this->has_mic) {
-            if (this->ignore_mic) {
-                stream.out_clear_bytes(16);
-            }
-            else {
-                stream.out_copy_bytes(this->MIC, 16);
-            }
-        }
-
-        // PAYLOAD
-        this->LmChallengeResponse.write_payload(stream);
-        this->NtChallengeResponse.write_payload(stream);
-        this->DomainName.write_payload(stream);
-        this->UserName.write_payload(stream);
-        this->Workstation.write_payload(stream);
-        this->EncryptedRandomSessionKey.write_payload(stream);
-    }
-
-    void recv(InStream & stream) {
-        uint8_t const * pBegin = stream.get_current();
-        bool res;
-        res = this->message_recv(stream);
-        if (!res) {
-            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
-        }
-        this->LmChallengeResponse.recv(stream);
-        this->NtChallengeResponse.recv(stream);
-        this->DomainName.recv(stream);
-        this->UserName.recv(stream);
-        this->Workstation.recv(stream);
-        this->EncryptedRandomSessionKey.recv(stream);
-        this->negoFlags.recv(stream);
-        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            RecvNtlmVersion(stream, this->version);
-        }
-        uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
-        if (this->NtChallengeResponse.bufferOffset < min_offset) {
-            min_offset = this->NtChallengeResponse.bufferOffset;
-        }
-        if (this->DomainName.bufferOffset < min_offset) {
-            min_offset = this->DomainName.bufferOffset;
-        }
-        if (this->UserName.bufferOffset < min_offset) {
-            min_offset = this->UserName.bufferOffset;
-        }
-        if (this->Workstation.bufferOffset < min_offset) {
-            min_offset = this->Workstation.bufferOffset;
-        }
-        if (this->EncryptedRandomSessionKey.bufferOffset < min_offset) {
-            min_offset = this->EncryptedRandomSessionKey.bufferOffset;
-        }
-        if (min_offset + pBegin > stream.get_current()) {
-            this->has_mic = true;
-            stream.in_copy_bytes(this->MIC, 16);
+    if (self.has_mic) {
+        if (self.ignore_mic) {
+            stream.out_clear_bytes(16);
         }
         else {
-            this->has_mic = false;
+            stream.out_copy_bytes(self.MIC, 16);
         }
-
-        // PAYLOAD
-        this->LmChallengeResponse.read_payload(stream, pBegin);
-        this->NtChallengeResponse.read_payload(stream, pBegin);
-        this->DomainName.read_payload(stream, pBegin);
-        this->UserName.read_payload(stream, pBegin);
-        this->Workstation.read_payload(stream, pBegin);
-        this->EncryptedRandomSessionKey.read_payload(stream, pBegin);
     }
-};
+
+    // PAYLOAD
+    self.LmChallengeResponse.write_payload(stream);
+    self.NtChallengeResponse.write_payload(stream);
+    self.DomainName.write_payload(stream);
+    self.UserName.write_payload(stream);
+    self.Workstation.write_payload(stream);
+    self.EncryptedRandomSessionKey.write_payload(stream);
+}
+
+inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
+    uint8_t const * pBegin = stream.get_current();
+    bool res;
+    res = self.message_recv(stream);
+    if (!res) {
+        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", self.msgType);
+    }
+    self.LmChallengeResponse.recv(stream);
+    self.NtChallengeResponse.recv(stream);
+    self.DomainName.recv(stream);
+    self.UserName.recv(stream);
+    self.Workstation.recv(stream);
+    self.EncryptedRandomSessionKey.recv(stream);
+    self.negoFlags.recv(stream);
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+        self.version.ignore_version = false;
+        RecvNtlmVersion(stream, self.version);
+    }
+    uint32_t min_offset = self.LmChallengeResponse.bufferOffset;
+    if (self.NtChallengeResponse.bufferOffset < min_offset) {
+        min_offset = self.NtChallengeResponse.bufferOffset;
+    }
+    if (self.DomainName.bufferOffset < min_offset) {
+        min_offset = self.DomainName.bufferOffset;
+    }
+    if (self.UserName.bufferOffset < min_offset) {
+        min_offset = self.UserName.bufferOffset;
+    }
+    if (self.Workstation.bufferOffset < min_offset) {
+        min_offset = self.Workstation.bufferOffset;
+    }
+    if (self.EncryptedRandomSessionKey.bufferOffset < min_offset) {
+        min_offset = self.EncryptedRandomSessionKey.bufferOffset;
+    }
+    if (min_offset + pBegin > stream.get_current()) {
+        self.has_mic = true;
+        stream.in_copy_bytes(self.MIC, 16);
+    }
+    else {
+        self.has_mic = false;
+    }
+
+    // PAYLOAD
+    self.LmChallengeResponse.read_payload(stream, pBegin);
+    self.NtChallengeResponse.read_payload(stream, pBegin);
+    self.DomainName.read_payload(stream, pBegin);
+    self.UserName.read_payload(stream, pBegin);
+    self.Workstation.read_payload(stream, pBegin);
+    self.EncryptedRandomSessionKey.read_payload(stream, pBegin);
+}
 
 // 2.2.2.3   LM_RESPONSE
 // ====================================
@@ -1747,6 +1748,7 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     stream.in_skip_bytes(8);
     self.TargetInfo.recv(stream);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+        self.version.ignore_version = false;
         RecvNtlmVersion(stream, self.version);
     }
     // PAYLOAD
@@ -1949,6 +1951,7 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
     self.DomainName.recv(stream);
     self.Workstation.recv(stream);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+        self.version.ignore_version = false;
         RecvNtlmVersion(stream, self.version);
     }
     // PAYLOAD

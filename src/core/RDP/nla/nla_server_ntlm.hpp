@@ -602,7 +602,7 @@ protected:
         SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
             InStream in_stream(input_buffer);
-            this->AUTHENTICATE_MESSAGE.recv(in_stream);
+            recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
             if (this->AUTHENTICATE_MESSAGE.has_mic) {
                 this->UseMIC = true;
                 this->SavedAuthenticateMessage.init(in_stream.get_offset());

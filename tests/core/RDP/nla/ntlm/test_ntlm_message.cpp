@@ -488,7 +488,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     // AuthMsg.recv(ts_req3.negoTokens);
 
     InStream token({ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size()});
-    AuthMsg.recv(token);
+    recvNTLMAuthenticateMessage(token, AuthMsg);
 
     RED_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
     // AuthMsg.negoFlags.print();
@@ -578,12 +578,12 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     );
 
     StaticOutStream<65635> tosend;
-    AuthMsg.emit(tosend);
+    emitNTLMAuthenticateMessage(tosend, AuthMsg);
 
     NTLMAuthenticateMessage AuthMsgDuplicate;
 
     InStream in_tosend(tosend.get_bytes());
-    AuthMsgDuplicate.recv(in_tosend);
+    recvNTLMAuthenticateMessage(in_tosend, AuthMsgDuplicate);
 
     RED_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
     // AuthMsgDuplicate.negoFlags.print();
@@ -1598,7 +1598,7 @@ public:
         StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
             this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-            this->AUTHENTICATE_MESSAGE.emit(out_stream);
+            emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
             this->SavedAuthenticateMessage.init(out_stream.get_offset());
@@ -1609,11 +1609,11 @@ public:
         }
         out_stream.rewind();
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-        this->AUTHENTICATE_MESSAGE.emit(out_stream);
+        emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
         output_buffer.init(out_stream.get_offset());
         output_buffer.copy(out_stream.get_bytes());
         if (this->verbose) {
-            this->AUTHENTICATE_MESSAGE.log();
+            logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
         }
         return SEC_I_COMPLETE_NEEDED;
     }
@@ -1621,7 +1621,7 @@ public:
     SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Authenticate");
         InStream in_stream(input_buffer);
-        this->AUTHENTICATE_MESSAGE.recv(in_stream);
+        recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
         if (this->AUTHENTICATE_MESSAGE.has_mic) {
             this->UseMIC = true;
             this->SavedAuthenticateMessage.init(in_stream.get_offset());
@@ -2316,9 +2316,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     // send AUTHENTICATE MESSAGE
     out_client_to_server.rewind();
-    client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
+    emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
     in_client_to_server.rewind();
-    server_context.AUTHENTICATE_MESSAGE.recv(in_client_to_server);
+    recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
 
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};
@@ -2421,7 +2421,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     out_client_to_server.rewind();
     /*client_context.UseMIC*/ {
         client_context.AUTHENTICATE_MESSAGE.ignore_mic = true;
-        client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
+        emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
         client_context.AUTHENTICATE_MESSAGE.ignore_mic = false;
 
         client_context.SavedAuthenticateMessage.init(out_client_to_server.get_offset());
@@ -2431,9 +2431,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
         memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
     }
     out_client_to_server.rewind();
-    client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
+    emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
     in_client_to_server = InStream(out_client_to_server.get_bytes());
-    server_context.AUTHENTICATE_MESSAGE.recv(in_client_to_server);
+    recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
     if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
         memset(client_to_server_buf +
                server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
