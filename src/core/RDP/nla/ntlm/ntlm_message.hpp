@@ -381,17 +381,17 @@ struct NtlmVersion {
         this->ignore_version = true;
     }
 
-    void ntlm_get_version_info() {
-        this->ignore_version = false;
-        // this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-        // this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-        // this->ProductBuild        = 2600;
-        // this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-        this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-        this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-        this->ProductBuild        = 7601;
-        this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-    }
+//    void ntlm_get_version_info() {
+//        this->ignore_version = false;
+//        // this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+//        // this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+//        // this->ProductBuild        = 2600;
+//        // this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+//        this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+//        this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+//        this->ProductBuild        = 7601;
+//        this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+//    }
 };
 
 
@@ -1713,7 +1713,15 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
 
         uint32_t currentOffset = self.PayloadOffset;
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            self.version.ntlm_get_version_info();
+            self.version.ignore_version = false;
+            // this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+            // this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            // this->ProductBuild        = 2600;
+            // this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+            self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+            self.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            self.version.ProductBuild        = 7601;
+            self.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
             currentOffset -= 8;

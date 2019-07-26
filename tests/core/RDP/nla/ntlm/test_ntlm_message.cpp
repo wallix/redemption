@@ -1228,7 +1228,15 @@ public:
         }
 
         if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.ntlm_get_version_info();
+            this->version.ignore_version = false;
+            // this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+            // this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            // this->version.ProductBuild        = 2600;
+            // this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+            this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+            this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            this->version.ProductBuild        = 7601;
+            this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
             this->version.ignore_version_info();
@@ -1272,7 +1280,16 @@ public:
         // }
 
         if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.ntlm_get_version_info();
+            this->version.ignore_version = false;
+            // this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+            // this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            // this->version.ProductBuild        = 2600;
+            // this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+            this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+            this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            this->version.ProductBuild        = 7601;
+            this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+            
         }
         else {
             this->version.ignore_version_info();
@@ -1311,7 +1328,15 @@ public:
         this->ntlm_set_negotiate_flags();
         this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
+            this->NEGOTIATE_MESSAGE.version.ignore_version = false;
+            // this->NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+            // this->NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            // this->NEGOTIATE_MESSAGE.version.ProductBuild        = 2600;
+            // this->NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+            this->NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+            this->NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            this->NEGOTIATE_MESSAGE.version.ProductBuild        = 7601;
+            this->NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
             this->NEGOTIATE_MESSAGE.version.ignore_version_info();
@@ -1351,7 +1376,15 @@ public:
 
         this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->CHALLENGE_MESSAGE.version.ntlm_get_version_info();
+            this->CHALLENGE_MESSAGE.version.ignore_version = false;
+        //  this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+        //  this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+        //  this->CHALLENGE_MESSAGE.version.ProductBuild        = 2600;
+        //  this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+            this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+            this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
+            this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
             this->CHALLENGE_MESSAGE.version.ignore_version_info();
@@ -1381,7 +1414,15 @@ public:
 
         uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
         if (flag & NTLMSSP_NEGOTIATE_VERSION) {
-            this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
+            this->AUTHENTICATE_MESSAGE.version.ignore_version = false;
+//            this->AUTHENTICATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+//            this->AUTHENTICATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+//            this->AUTHENTICATE_MESSAGE.version.ProductBuild        = 2600;
+//            this->AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+            this->AUTHENTICATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+            this->AUTHENTICATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            this->AUTHENTICATE_MESSAGE.version.ProductBuild        = 7601;
+            this->AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
             this->AUTHENTICATE_MESSAGE.version.ignore_version_info();
@@ -2178,7 +2219,15 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     client_context.ntlm_set_negotiate_flags();
     client_context.NEGOTIATE_MESSAGE.negoFlags.flags = client_context.NegotiateFlags;
     if (client_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-        client_context.NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
+        client_context.NEGOTIATE_MESSAGE.version.ignore_version = false;
+//      client_context.NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+//      client_context.NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+//      client_context.NEGOTIATE_MESSAGE.version.ProductBuild        = 2600;
+//      client_context.NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+        client_context.NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+        client_context.NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+        client_context.NEGOTIATE_MESSAGE.version.ProductBuild        = 7601;
+        client_context.NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
     // send NEGOTIATE MESSAGE
@@ -2195,7 +2244,15 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     server_context.CHALLENGE_MESSAGE.negoFlags.flags = server_context.NegotiateFlags;
     if (server_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-        server_context.CHALLENGE_MESSAGE.version.ntlm_get_version_info();
+        server_context.NEGOTIATE_MESSAGE.version.ignore_version = false;
+//      server_context.NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+//      server_context.NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+//      server_context.NEGOTIATE_MESSAGE.version.ProductBuild        = 2600;
+//      server_context.NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+        server_context.NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+        server_context.NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+        server_context.NEGOTIATE_MESSAGE.version.ProductBuild        = 7601;
+        server_context.NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
     // send CHALLENGE MESSAGE
@@ -2217,7 +2274,16 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     uint32_t const flag = client_context.AUTHENTICATE_MESSAGE.negoFlags.flags;
     if (flag & NTLMSSP_NEGOTIATE_VERSION) {
-        client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
+        client_context.NEGOTIATE_MESSAGE.version.ignore_version = false;
+//      client_context.NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+//      client_context.NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+//      client_context.NEGOTIATE_MESSAGE.version.ProductBuild        = 2600;
+//      client_context.NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+        client_context.NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+        client_context.NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+        client_context.NEGOTIATE_MESSAGE.version.ProductBuild        = 7601;
+        client_context.NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+
     }
 
     if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
@@ -2238,8 +2304,15 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     user.ostream.out_copy_bytes(userName, sizeof(userName));
     user.mark_end();
 
-    client_context.AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
-
+    client_context.AUTHENTICATE_MESSAGE.version.ignore_version = false;
+//  client_context.AUTHENTICATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+//  client_context.AUTHENTICATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+//  client_context.AUTHENTICATE_MESSAGE.version.ProductBuild        = 2600;
+//  client_context.AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+    client_context.AUTHENTICATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+    client_context.AUTHENTICATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+    client_context.AUTHENTICATE_MESSAGE.version.ProductBuild        = 7601;
+    client_context.AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
     // send AUTHENTICATE MESSAGE
     out_client_to_server.rewind();

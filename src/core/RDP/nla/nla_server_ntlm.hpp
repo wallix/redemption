@@ -448,7 +448,16 @@ protected:
 
             this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-                this->CHALLENGE_MESSAGE.version.ntlm_get_version_info();
+                this->CHALLENGE_MESSAGE.version.ignore_version = false;
+                // this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+                // this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+                // this->CHALLENGE_MESSAGE.version.ProductBuild        = 2600;
+                // this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+                this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+                this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+                this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
+                this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+                
             }
             else {
                 this->CHALLENGE_MESSAGE.version.ignore_version_info();
