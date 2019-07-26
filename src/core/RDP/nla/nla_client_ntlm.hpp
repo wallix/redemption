@@ -385,10 +385,7 @@ private:
             this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.reset();
         }
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-            auto & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.buffer;
-            workstationbuff.reset();
-            workstationbuff.ostream.out_copy_bytes(this->Workstation);
-            workstationbuff.mark_end();
+            this->AUTHENTICATE_MESSAGE.Workstation.buffer = this->Workstation;
         }
 
         //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
@@ -877,9 +874,7 @@ public:
         this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-            this->NEGOTIATE_MESSAGE.Workstation.buffer.reset();
-            this->NEGOTIATE_MESSAGE.Workstation.buffer.ostream.out_copy_bytes(this->Workstation);
-            this->NEGOTIATE_MESSAGE.Workstation.buffer.mark_end();
+            this->NEGOTIATE_MESSAGE.Workstation.buffer = this->Workstation;
         }
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
@@ -982,9 +977,7 @@ public:
                     this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
                     if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-                        this->NEGOTIATE_MESSAGE.Workstation.buffer.reset();
-                        this->NEGOTIATE_MESSAGE.Workstation.buffer.ostream.out_copy_bytes(this->Workstation);
-                        this->NEGOTIATE_MESSAGE.Workstation.buffer.mark_end();
+                        this->NEGOTIATE_MESSAGE.Workstation.buffer = this->Workstation;
                     }
 
                     if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {

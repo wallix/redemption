@@ -559,10 +559,8 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // Work Station
     // LOG(LOG_INFO, "Work Station ===========\n");
-    // hexdump_c(AuthMsg.Workstation.Buffer.get_data(), AuthMsg.Workstation.Buffer.size());
-    RED_CHECK_MEM(
-        make_array_view(AuthMsg.Workstation.buffer.ostream.get_data(), AuthMsg.Workstation.len),
-        "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00"_av
+    // hexdump_c(AuthMsg.Workstation.buffer);
+    RED_CHECK_MEM(AuthMsg.Workstation.buffer, "\x57\x00\x49\x00\x4e\x00\x58\x00\x50\x00"_av
     );
 
     // Encrypted Random Session Key
@@ -637,7 +635,7 @@ private:
     //int LmCompatibilityLevel;
     bool SendWorkstationName = true;
 public:
-    Array Workstation;
+    std::vector<uint8_t> Workstation;
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
 
@@ -685,7 +683,6 @@ public:
         , server(is_server)
         , UseMIC(this->NTLMv2/* == true*/)
         //, LmCompatibilityLevel(3)
-        , Workstation(0)
         , ServicePrincipalName(0)
         , SavedNegotiateMessage(0)
         , SavedChallengeMessage(0)
@@ -1339,11 +1336,7 @@ public:
         }
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-            auto & workstationbuff = this->NEGOTIATE_MESSAGE.Workstation.buffer;
-            workstationbuff.reset();
-            workstationbuff.ostream.out_copy_bytes(this->Workstation.get_data(),
-                                                   this->Workstation.size());
-            workstationbuff.mark_end();
+            this->Workstation = this->NEGOTIATE_MESSAGE.Workstation.buffer;
         }
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
@@ -1429,10 +1422,7 @@ public:
             this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.reset();
         }
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-            auto & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.buffer;
-            workstationbuff.reset();
-            workstationbuff.ostream.out_copy_bytes(workstation);
-            workstationbuff.mark_end();
+            this->AUTHENTICATE_MESSAGE.Workstation.buffer.assign(workstation.data(), workstation.data() + workstation.size());
         }
 
         //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
@@ -1502,15 +1492,12 @@ public:
 
     void ntlm_SetContextWorkstation(array_view_const_char workstation) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
-        if (!workstation.empty()) {
+        this->SendWorkstationName = !workstation.empty();
+        this->Workstation.clear();
+        if (this->SendWorkstationName) {
             size_t host_len = UTF8Len(workstation.data());
-            this->Workstation.init(host_len * 2);
-            UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
-            this->SendWorkstationName = true;
-        }
-        else {
-            this->Workstation.init(0);
-            this->SendWorkstationName = false;
+            this->Workstation.assign(workstation.data(), workstation.data() + (host_len * 2));
+            UTF8toUTF16(workstation, this->Workstation.data(), host_len * 2);
         }
     }
 
@@ -1590,7 +1577,7 @@ public:
         auto domain_av = this->identity.get_domain_utf16_av();
 
         this->ntlm_client_build_authenticate(password_av, user_av, domain_av,
-                                             this->Workstation.av());
+                                             this->Workstation);
         StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
             this->AUTHENTICATE_MESSAGE.ignore_mic = true;
@@ -2158,7 +2145,7 @@ RED_AUTO_TEST_CASE(TestSetters)
     context.ntlm_SetContextWorkstation(work);
     RED_CHECK_EQUAL(context.Workstation.size(), work.size() * 2);
     // TODO TEST bad test
-    RED_CHECK(memcmp(work.data(), context.Workstation.get_data(), work.size()+1));
+    RED_CHECK(memcmp(work.data(), context.Workstation.data(), work.size()+1));
 
     RED_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
     context.ntlm_SetContextServicePrincipalName(spn);
@@ -2283,10 +2270,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     }
 
     if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-        auto & workstationbuff = client_context.AUTHENTICATE_MESSAGE.Workstation.buffer;
-        workstationbuff.reset();
-        workstationbuff.ostream.out_copy_bytes(workstation, sizeof(workstation));
-        workstationbuff.mark_end();
+        client_context.AUTHENTICATE_MESSAGE.Workstation.buffer.assign(workstation, workstation + sizeof(workstation));
     }
 
     auto & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.buffer;

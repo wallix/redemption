@@ -1195,7 +1195,7 @@ struct NTLMAuthenticateMessage {
     NtlmField NtChallengeResponse;        /* 8 Bytes */
     NtlmField DomainName;                 /* 8 Bytes */
     NtlmField UserName;                   /* 8 Bytes */
-    NtlmField Workstation;                /* 8 Bytes */
+    NtlmFieldImplVector Workstation;                /* 8 Bytes */
     NtlmField EncryptedRandomSessionKey;  /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
@@ -1941,7 +1941,7 @@ class NTLMNegotiateMessage
 public:
     NtlmNegotiateFlags negoFlags; /* 4 Bytes */
     NtlmField DomainName;         /* 8 Bytes */
-    NtlmField Workstation;        /* 8 Bytes */
+    NtlmFieldImplVector Workstation;        /* 8 Bytes */
     NtlmVersion version;          /* 8 Bytes */
 private:
     uint32_t PayloadOffset;
