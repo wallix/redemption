@@ -355,7 +355,7 @@ protected:
             // LOG(LOG_INFO, "DomainName size = %u", DomainName.size());
             // LOG(LOG_INFO, "hash size = %u", hash_size);
 
-            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
+            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyNT);
             // LOG(LOG_INFO, "ResponseKeyNT");
             // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
             SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
@@ -382,7 +382,7 @@ protected:
             
             uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
             uint8_t ResponseKeyLM[16] = {};
-            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyLM);
+            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyLM);
 
             SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
             hmac_md5resp.update({this->ServerChallenge, 8});
@@ -403,7 +403,7 @@ protected:
                 .in_copy_bytes(NtProofStr, 16);
             AuthNtResponse.ostream.rewind();
             uint8_t ResponseKeyNT[16] = {};
-            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
+            this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyNT);
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
             //                           NtProofStr)
             SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
@@ -616,7 +616,7 @@ protected:
             }
 
             this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.av());
-            this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
+            this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer);
 
             if (this->identity.is_empty_user_domain()){
                 LOG(LOG_ERR, "ANONYMOUS User not allowed");

@@ -544,8 +544,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     // Domain Name
     // LOG(LOG_INFO, "Domain Name ===========\n");
     // hexdump_c(AuthMsg.DomainName.Buffer.get_data(), AuthMsg.DomainName.Buffer.size());
-    RED_CHECK_MEM(
-        make_array_view(AuthMsg.DomainName.buffer.ostream.get_data(), AuthMsg.DomainName.len),
+    RED_CHECK_MEM(AuthMsg.DomainName.buffer,
         "\x77\x00\x69\x00\x6e\x00\x37\x00"_av
     );
 
@@ -1124,7 +1123,7 @@ public:
         // LOG(LOG_INFO, "DomainName size = %u", DomainName.size());
         // LOG(LOG_INFO, "hash size = %u", hash_size);
 
-        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
+        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyNT);
         // LOG(LOG_INFO, "ResponseKeyNT");
         // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
@@ -1151,7 +1150,7 @@ public:
 
         uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
         uint8_t ResponseKeyLM[16] = {};
-        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyLM);
+        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyLM);
 
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
         hmac_md5resp.update({this->ServerChallenge, 8});
@@ -1171,7 +1170,7 @@ public:
         InStream(AuthNtResponse.ostream.get_tailroom_bytes()).in_copy_bytes(NtProofStr, 16);
         AuthNtResponse.ostream.rewind();
         uint8_t ResponseKeyNT[16] = {};
-        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
+        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyNT);
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
         SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
@@ -1341,10 +1340,8 @@ public:
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
             auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            domain.reset();
             auto domain_av = this->identity.get_domain_utf16_av();
-            domain.ostream.out_copy_bytes(domain_av);
-            domain.mark_end();
+            domain.assign(domain_av.data(), domain_av.data()+domain_av.size());
         }
 
         this->state = NTLM_STATE_CHALLENGE;
@@ -1427,9 +1424,7 @@ public:
 
         //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
         auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-        domain.reset();
-        domain.ostream.out_copy_bytes(userDomain);
-        domain.mark_end();
+        domain.assign(userDomain.data(),userDomain.data()+userDomain.size());
 
         auto & user = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         user.reset();
@@ -1620,7 +1615,7 @@ public:
         }
         
         this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.av());
-        this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
+        this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer);
 
         if (this->identity.is_empty_user_domain()){
             LOG(LOG_ERR, "ANONYMOUS User not allowed");
@@ -2274,9 +2269,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     }
 
     auto & domain = client_context.AUTHENTICATE_MESSAGE.DomainName.buffer;
-    domain.reset();
-    domain.ostream.out_copy_bytes(userDomain, sizeof(userDomain));
-    domain.mark_end();
+    domain.assign(userDomain, userDomain + sizeof(userDomain));
 
     auto & user = client_context.AUTHENTICATE_MESSAGE.UserName.buffer;
 

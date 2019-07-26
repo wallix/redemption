@@ -389,9 +389,7 @@ private:
         }
 
         //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-        this->AUTHENTICATE_MESSAGE.DomainName.buffer.reset();
-        this->AUTHENTICATE_MESSAGE.DomainName.buffer.ostream.out_copy_bytes(this->identity_Domain);
-        this->AUTHENTICATE_MESSAGE.DomainName.buffer.mark_end();
+        this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
 
         this->AUTHENTICATE_MESSAGE.UserName.buffer.reset();
         this->AUTHENTICATE_MESSAGE.UserName.buffer.ostream.out_copy_bytes(this->identity_User);
@@ -878,10 +876,7 @@ public:
         }
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
-            auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            domain.reset();
-            domain.ostream.out_copy_bytes(this->identity_Domain);
-            domain.mark_end();
+            this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
         }
 
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
@@ -981,10 +976,7 @@ public:
                     }
 
                     if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
-                        auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-                        domain.reset();
-                        domain.ostream.out_copy_bytes(this->identity_Domain);
-                        domain.mark_end();
+                        this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
                     }
 
                     this->sspi_context_state = NTLM_STATE_CHALLENGE;
