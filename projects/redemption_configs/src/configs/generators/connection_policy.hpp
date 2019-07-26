@@ -372,7 +372,8 @@ struct ConnectionPolicyWriterBase
                  this->json_spec.out << "          \"advanced\": true,\n";
             }
             if (bool(attr1 & attr1_t::hex_in_gui)
-             || bool(attr2 & attr2_t::hex_in_connpolicy)) {
+             || bool(attr2 & attr2_t::hex_in_connpolicy)
+             || bool(python_spec_writer::attr_hex_if_enum_flag(type, enums))) {
                 comments << "_hex\n";
                 this->json_spec.out << "          \"prefered_representation\": \"hex\",\n";
             }

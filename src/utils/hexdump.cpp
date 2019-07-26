@@ -34,8 +34,12 @@ void hexdump_impl(
     char const * sep_value_chars, char const * prefix_chars)
 {
     constexpr unsigned line_length = 16;
+    constexpr auto spaces =
+        "                                                                     "
+        "                                                                     "_av;
     char buffer[2048];
     size_t const sep_len = strlen(value_prefix) + strlen(value_suffix) + 2;
+    assert(sep_len * line_length < spaces.size());
     for (size_t j = 0; j < size; j += line_length){
         char * line = buffer;
         line += std::sprintf(line, "%s%.4x%s",
@@ -75,10 +79,10 @@ void hexdump_impl(
 void hexdump(const_byte_ptr data, size_t size)
 {
     // %.4x %x %x ... %c%c..
-    hexdump_impl(data.as_u8p(), size, "", " ", "", " ", "", "");
+    hexdump_impl(data.as_u8p(), size, "", " ", "", " ", " ", "");
 }
 
-void hexdump_av(const_bytes_view data)
+void hexdump(const_bytes_view data)
 {
     hexdump(data.as_u8p(), data.size());
 }
@@ -90,7 +94,7 @@ void hexdump_d(const_byte_ptr data, size_t size)
     hexdump_impl(data.as_u8p(), size, "/* ", " */ ", "0x", ", ", "", " // ");
 }
 
-void hexdump_av_d(const_bytes_view data)
+void hexdump_d(const_bytes_view data)
 {
     hexdump_d(data.as_u8p(), data.size());
 }
@@ -102,7 +106,7 @@ void hexdump_c(const_byte_ptr data, size_t size)
     hexdump_impl(data.as_u8p(), size, "/* ", " */ \"", "\\x", "", "\"", " // ");
 }
 
-void hexdump_av_c(const_bytes_view data)
+void hexdump_c(const_bytes_view data)
 {
     hexdump_c(data.as_u8p(), data.size());
 }

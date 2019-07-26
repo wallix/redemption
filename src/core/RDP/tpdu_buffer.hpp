@@ -50,7 +50,7 @@ struct TpduBuffer
     }
 
 
-// Having two 'next' functions is a bit awkward. 
+// Having two 'next' functions is a bit awkward.
 // Also it will work only if the buffer
 // knows how to consume the previous packet *and* the reader code
 // knows what the current packet type is (TPDU or CREDSSP)
@@ -100,7 +100,7 @@ struct TpduBuffer
         assert(this->pdu_len);
         auto av = this->buf.av(this->pdu_len);
         if (this->trace_pdu){
-            ::hexdump_av_d(av);
+            ::hexdump_d(av);
         }
         return av;
     }

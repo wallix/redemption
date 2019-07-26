@@ -58,8 +58,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_SIG_FROM(to_send, packet);
 
-    // hexdump_c(to_send.get_data(), to_send.size());
-
     // ===== NTLMSSP_CHALLENGE =====
     constexpr static uint8_t packet2[] = {
         0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x03,
@@ -100,8 +98,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
     RED_CHECK_SIG_FROM(to_send2, packet2);
-
-    // hexdump_c(to_send2.get_data(), to_send2.size());
 
     // ===== NTLMSSP_AUTH =====
     constexpr static uint8_t packet3[] = {
@@ -199,8 +195,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_SIG_FROM(to_send3, packet3);
 
-    // hexdump_c(to_send3.get_data(), to_send3.size());
-
     // ===== PUBKEYAUTH =====
     constexpr static uint8_t packet4[] = {
         0x30, 0x82, 0x01, 0x2b, 0xa0, 0x03, 0x02, 0x01,
@@ -261,9 +255,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_SIG_FROM(to_send4, packet4);
 
-    // hexdump_c(to_send4.get_data(), to_send4.size());
-
-
     // ===== AUTHINFO =====
     constexpr static uint8_t packet5[] = {
         0x30, 0x5a, 0xa0, 0x03, 0x02, 0x01, 0x03, 0xa2,
@@ -316,8 +307,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     RED_CHECK_SIG_FROM(to_send5, packet5);
 
     // RED_CHECK_MEM(to_send5.get_bytes(), packet5);
-
-    // hexdump_c(to_send5.get_data(), to_send5.size());
 }
 
 

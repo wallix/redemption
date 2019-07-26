@@ -869,17 +869,8 @@ struct OutReservedStreamHelper
     , stream({this->buf, buf_len - reserved_leading_space})
     {}
 
-    struct Packet
-    {
-        uint8_t * data() const noexcept { return this->data_; }
-        std::size_t size() const noexcept { return this->size_; }
-
-        uint8_t * data_;
-        std::size_t size_;
-    };
-
-    Packet get_packet() const noexcept {
-        return Packet{this->buf, std::size_t(this->stream.get_current() - this->buf)};
+    bytes_view get_packet() const noexcept {
+        return bytes_view{this->buf, std::size_t(this->stream.get_current() - this->buf)};
     }
 
     std::size_t get_reserved_leading_space() const noexcept {
@@ -890,7 +881,7 @@ struct OutReservedStreamHelper
         return this->stream;
     }
 
-    Packet copy_to_head(OutStream const & stream) noexcept {
+    bytes_view copy_to_head(OutStream const & stream) noexcept {
         assert(stream.get_offset() <= this->reserved_leading_space);
         this->buf -= stream.get_offset();
         this->reserved_leading_space -= stream.get_offset();
@@ -899,7 +890,7 @@ struct OutReservedStreamHelper
         return get_packet();
     }
 
-    Packet copy_to_head(OutStream const & stream1, OutStream const & stream2) noexcept {
+    bytes_view copy_to_head(OutStream const & stream1, OutStream const & stream2) noexcept {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
@@ -913,7 +904,7 @@ struct OutReservedStreamHelper
         return get_packet();
     }
 
-    Packet copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) noexcept {
+    bytes_view copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) noexcept {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
@@ -1108,7 +1099,7 @@ namespace details_ {
 
     template<class StreamSz, class Writer>
     void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, Writer & writer, unsigned /*unused*/)
-    { writer(sz, ostream, buf, used_buf_sz); }
+    { writer(sz, ostream, bytes_view(buf, used_buf_sz)); }
 
 
     template<class StreamSz, class Writer>

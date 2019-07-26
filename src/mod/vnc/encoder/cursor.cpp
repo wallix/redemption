@@ -116,8 +116,8 @@ namespace
                 LOG(LOG_INFO, "VNC Cursor(%hd, %hd, %hu, %hu) %u %zu",
                     this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
                     this->Bpp, sz_pixel_array);
-                hexdump_d(data.data(), data.size());
-                hexdump_d(mask.data(), mask.size());
+                hexdump_d(data);
+                hexdump_d(mask);
             }
             Pointer cursor = pointer_loader_vnc(
                 this->Bpp, this->rect.cx, this->rect.cy, this->rect.x, this->rect.y,

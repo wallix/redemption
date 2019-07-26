@@ -301,8 +301,6 @@ RED_AUTO_TEST_CASE(TestStream_2BUE)
 
     stream.out_2BUE(0x1A1B);
 
-    //hexdump_d(stream.get_data(), stream.size());
-
     InStream in_stream(stream.get_bytes());
 
     RED_CHECK_EQUAL(0x1A1Bu, in_stream.in_2BUE());
@@ -313,8 +311,6 @@ RED_AUTO_TEST_CASE(TestStream_4BUE)
     StaticOutStream<256> stream;
 
     stream.out_4BUE(0x001A1B1C);
-
-    //hexdump_d(stream.get_data(), stream.size());
 
     InStream in_stream(stream.get_bytes());
 

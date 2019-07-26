@@ -103,7 +103,7 @@ class rdpCredsspServerKerberos final
         this->ts_request.error_code = 0;
     }
 
-public:    
+public:
 
     struct ServerAuthenticateData
     {
@@ -111,7 +111,7 @@ public:
     };
 
     ServerAuthenticateData server_auth_data;
-    
+
     enum class Res : bool { Err, Ok };
 
 protected:
@@ -155,7 +155,7 @@ public:
         this->identity.SetPasswordFromUtf8(nullptr);
         this->SetHostnameFromUtf8(nullptr);
         this->identity.SetKrbAuthIdentity(nullptr, nullptr);
-        
+
         this->server_auth_data.state = ServerAuthenticateData::Start;
 
         // TODO: sspi_GlobalInit();
@@ -175,8 +175,8 @@ public:
         // or setting some status field in the object returning a value is
         // not an option
         if (SEC_E_OK != this->table->AcquireCredentialsHandle(
-                            /*char* pszPrincipal*/nullptr, 
-                            /*Array* pvLogonID*/nullptr, 
+                            /*char* pszPrincipal*/nullptr,
+                            /*Array* pvLogonID*/nullptr,
                             /*SEC_WINNT_AUTH_IDENTITY const* pAuthData*/nullptr))
         {
             LOG(LOG_ERR, "InitSecurityInterface status: SEC_E_NO_CREDENTIALS");
@@ -197,7 +197,7 @@ public:
     credssp::State credssp_server_authenticate_next(InStream & in_stream, OutStream & out_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::credssp_server_authenticate_next");
-    
+
         switch (this->server_auth_data.state)
         {
             case ServerAuthenticateData::Start:
@@ -286,17 +286,17 @@ private:
             LOG(LOG_ERR, "Could not verify server's public key echo");
 
             LOG(LOG_ERR, "Expected (length = %zu):", public_key.size());
-            hexdump_av_c(public_key);
+            hexdump_c(public_key);
 
             LOG(LOG_ERR, "Actual (length = %zu):", public_key.size());
-            hexdump_av_c(public_key2);
+            hexdump_c(public_key2);
 
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
         return SEC_E_OK;
     }
-    
+
         SEC_STATUS credssp_decrypt_ts_credentials() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
 
@@ -394,7 +394,7 @@ private:
 
         return Res::Ok;
     }
-    
+
     Res sm_credssp_server_authenticate_final(InStream & in_stream)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");

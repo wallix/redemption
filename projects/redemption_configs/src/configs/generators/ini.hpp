@@ -245,7 +245,9 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
             this->out() << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
-            python_spec_writer::write_spec_attr(comments, get_elem<spec_attr_t>(infos).value);
+            python_spec_writer::write_spec_attr(comments,
+                get_elem<spec_attr_t>(infos).value
+              | python_spec_writer::attr_hex_if_enum_flag(type, enums));
 
             this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 

@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2019
    Author(s): Christophe Grosjean, David Fort
 
-   Transport layer abstraction, Extension on SocketTransport 
+   Transport layer abstraction, Extension on SocketTransport
    with recording traffic abilities
 */
 
@@ -27,7 +27,7 @@ struct TraceTransport final : public Transport
 {
     using Transport::send;
 
-    TraceTransport(const char * name, SocketTransport & sck_trans) 
+    TraceTransport(const char * name, SocketTransport & sck_trans)
     : strans(sck_trans)
     , name(name)
         {}
@@ -49,12 +49,12 @@ public:
     {
         LOG_IF(this->enable_trace_send, LOG_DEBUG, "%s do_send", this->name);
         if (this->enable_trace_send){
-            hexdump_av_d({buffer, len});
+            hexdump_d({buffer, len});
         }
         this->strans.send(buffer, len);
     }
 
-    int get_fd() const override 
+    int get_fd() const override
     {
         return this->strans.sck;
     }
@@ -97,7 +97,7 @@ public:
 //        private:
     SocketTransport & strans;
     const char * name;
-    
+
     bool enable_trace = false;
     bool enable_trace_send = false;
 };

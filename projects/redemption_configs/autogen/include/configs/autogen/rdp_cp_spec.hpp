@@ -177,17 +177,16 @@ ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 #_advanced
 childless_window_as_unidentified_input_field = boolean(default=True)
 
-#   0: none
-#   1: Java Access Bridge
-#   2: MS Active Accessbility
-#   4: MS UI Automation
-#   8: Reserved (do not use)
-#   16: Inspect Edge location URL
-#   32: Inspect Chrome Address/Search bar
-#   64: Inspect Firefox Address/Search bar
-#   128: Monitor Internet Explorer event
-#   256: Inspect group membership of user
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x000: none
+#   0x001: Java Access Bridge
+#   0x002: MS Active Accessbility
+#   0x004: MS UI Automation
+#   0x010: Inspect Edge location URL
+#   0x020: Inspect Chrome Address/Search bar
+#   0x040: Inspect Firefox Address/Search bar
+#   0x080: Monitor Internet Explorer event
+#   0x100: Inspect group membership of user
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
 #_hex
 disabled_features = integer(min=0, max=511, default=96)
@@ -225,49 +224,54 @@ server_cert_store = boolean(default=True)
 server_cert_check = option(0, 1, 2, 3, default=1)
 
 # Warn if check allow connexion to server.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 server_access_allowed_message = integer(min=0, max=7, default=1)
 
 # Warn that new server certificate file was created.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 server_cert_create_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file was successfully checked.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 server_cert_success_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file checking failed.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
 
 [video]
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
-#   0: none
-#   1: disable keyboard log in syslog
-#   2: disable keyboard log in recorded sessions
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: none
+#   0x1: disable keyboard log in syslog
+#   0x2: disable keyboard log in recorded sessions
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 disable_keyboard_log = integer(min=0, max=3, default=1)
 
 [file_verification]

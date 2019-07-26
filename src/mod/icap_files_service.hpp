@@ -378,7 +378,7 @@ struct ICAPService
     {
         if (this->state <= State::WaitingData) {
             this->buf.read_from(this->trans);
-            // hexdump_av(this->buf.av());
+            // hexdump(this->buf.av());
         }
 
         this->state = this->_receive_response();

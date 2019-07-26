@@ -198,10 +198,10 @@ struct RefreshRectPDU {
                 sctrl_header.out_copy_bytes(this->buffer_stream.get_data(),
                                             this->buffer_stream.get_offset());
             },
-            [this](StreamSize<256>, OutStream & sec_header, uint8_t * pkt_data, std::size_t pkt_size) {
+            [this](StreamSize<256>, OutStream & sec_header, bytes_view pkt) {
                 SEC::Sec_Send sec(sec_header,
-                                  pkt_data,
-                                  pkt_size,
+                                  pkt.data(),
+                                  pkt.size(),
                                   0,
                                   this->encrypt,
                                   this->encryptionLevel);

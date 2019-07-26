@@ -78,7 +78,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
             return this->icap_service;
         }
 
-        void new_file(std::string filename, uint64_t filesize, const Direction direction, std::string_view target_name)
+        void new_file(std::string const& filename, uint64_t filesize, const Direction direction, std::string_view target_name)
         {
             assert(this->icap_service);
 
@@ -87,8 +87,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
             }
 
             this->icap_file_id = this->icap_service->open_file(filename, target_name);
-            this->icap_files.items.push_back({
-                std::move(filename), filesize, this->icap_file_id, direction});
+            this->icap_files.push_back({filename, filesize, this->icap_file_id, direction});
         }
 
         void send_data(const_bytes_view data)
@@ -112,13 +111,31 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
                 switch (this->icap_service->receive_response()) {
                     case ICAPService::ResponseType::WaitingData:
                         return {};
-                    case ICAPService::ResponseType::HasContent:
+                    case ICAPService::ResponseType::HasContent: {
                         this->icap_file_id = invalid_icap_file_id;
-                        return {FileInfo{
-                            this->icap_files.pop_id(this->icap_service->last_file_id()),
+                        auto id = this->icap_service->last_file_id();
+                        auto it = std::find_if(
+                            this->icap_files.begin(), this->icap_files.end(),
+                            [id](auto& f){ return f.id == id; });
+                        if (it == this->icap_files.end()) {
+                            LOG(LOG_ERR, "ICapValidator::receive_response: invalid id %u",
+                                underlying_cast(id));
+                            continue;
+                        }
+
+                        std::optional<FileInfo> r{FileInfo{
+                            std::move(*it),
                             this->icap_service->get_content(),
                             this->icap_service->last_result_flag()
                         }};
+
+                        if (it != this->icap_files.end() - 1) {
+                            *it = std::move(this->icap_files.back());
+                            this->icap_files.pop_back();
+                        }
+
+                        return r;
+                    }
                     case ICAPService::ResponseType::Error:
                         ;
                 }
@@ -131,43 +148,10 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
         }
 
     private:
-        struct ICapFiles
-        {
-            unsigned quick_pos = 0;
-            std::vector<ICapFileItem> items;
-
-            ICapFileItem pop_id(ICAPFileId id)
-            {
-                if (this->items.size() <= this->quick_pos
-                    || this->items[this->quick_pos].id != id
-                ) {
-                    auto it = std::find_if(this->items.begin(), this->items.end(), [id](auto& f){
-                        return f.id == id;
-                    });
-
-                    if (it == this->items.end()) {
-                        LOG(LOG_ERR, "ICapValidator::receive_response: invalid id %u",
-                            underlying_cast(id));
-                        throw Error(ERR_ICAP_LOCAl_PROTOCOL);
-                    }
-
-                    this->quick_pos = std::distance(this->items.begin(), it);
-                }
-
-                auto r = std::move(this->items[this->quick_pos]);
-                if (this->quick_pos + 1u < this->items.size()) {
-                    this->items[this->quick_pos] = std::move(this->items.back());
-                    ++this->quick_pos;
-                }
-                this->items.pop_back();
-                return r;
-            }
-        };
-
         ICAPService * icap_service;
         const std::string up_target_name;
         const std::string down_target_name;
-        ICapFiles icap_files;
+        std::vector<ICapFileItem> icap_files;
         ICAPFileId icap_file_id = invalid_icap_file_id;
     };
 

@@ -2043,7 +2043,7 @@ public:
 
                             if (bool(this->verbose & Verbose::global_channel)) {
                                 LOG(LOG_INFO, "Front::incoming: Sec clear payload to send:");
-                                hexdump_av_d(stream.get_bytes());
+                                hexdump_d(stream.get_bytes());
                             }
 
                             StaticOutStream<8> tmp_sec_header;
@@ -2511,7 +2511,7 @@ public:
                             // reset caches, etc.
                             this->reset();
                             // resizing done
-                            {
+                            if (this->client_info.screen_info.bpp == BitsPerPixel{8}) {
                                 RDPColCache cmd(0, BGRPalette::classic_332());
                                 this->orders.graphics_update_pdu().draw(cmd);
                             }
@@ -2905,10 +2905,10 @@ private:
                 ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             },
-            [this](StreamSize<0>, OutStream &, uint8_t  const * packet_data, std::size_t packet_size) {
+            [this](StreamSize<0>, OutStream &, const_bytes_view packet) {
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_demand_active: Sec clear payload to send:");
-                    hexdump_d(packet_data, packet_size);
+                    hexdump_d(packet);
                 }
             }
         );
@@ -4050,7 +4050,7 @@ private:
                 ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_deactive: Sec clear payload to send:");
-                    hexdump_av_d(stream.get_bytes());
+                    hexdump_d(stream.get_bytes());
                 }
             }
         );

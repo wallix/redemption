@@ -92,7 +92,7 @@ namespace
             }
 
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "zrle consuming data  %zu", buf.av().size());
-//                hexdump_d(buf.av().data(), buf.av().size());
+            // hexdump_d(buf.av());
             switch (this->state) {
             case ZrleState::Header:
             {

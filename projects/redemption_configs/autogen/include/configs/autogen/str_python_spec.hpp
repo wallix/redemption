@@ -495,18 +495,18 @@ session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(def
 #_hidden
 session_probe_childless_window_as_unidentified_input_field = boolean(default=True)
 
-#   0: none
-#   1: Java Access Bridge
-#   2: MS Active Accessbility
-#   4: MS UI Automation
-#   8: Reserved (do not use)
-#   16: Inspect Edge location URL
-#   32: Inspect Chrome Address/Search bar
-#   64: Inspect Firefox Address/Search bar
-#   128: Monitor Internet Explorer event
-#   256: Inspect group membership of user
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x000: none
+#   0x001: Java Access Bridge
+#   0x002: MS Active Accessbility
+#   0x004: MS UI Automation
+#   0x010: Inspect Edge location URL
+#   0x020: Inspect Chrome Address/Search bar
+#   0x040: Inspect Firefox Address/Search bar
+#   0x080: Monitor Internet Explorer event
+#   0x100: Inspect group membership of user
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 session_probe_disabled_features = integer(min=0, max=511, default=96)
 
 # If enabled, disconnected session can be recovered by a different primary user.
@@ -527,48 +527,53 @@ server_cert_store = boolean(default=True)
 server_cert_check = option(0, 1, 2, 3, default=1)
 
 # Warn if check allow connexion to server.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_access_allowed_message = integer(min=0, max=7, default=1)
 
 # Warn that new server certificate file was created.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_cert_create_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file was successfully checked.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_cert_success_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate file checking failed.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_cert_failure_message = integer(min=0, max=7, default=1)
 
 # Warn that server certificate check raised some internal error.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: nobody
+#   0x1: message sent to syslog
+#   0x2: User notified (through proxy interface)
+#   0x4: admin notified (wab notification)
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
+#_hex
 server_cert_error_message = integer(min=0, max=7, default=1)
 
 # Do not transmit client machine name or RDP server.
@@ -703,13 +708,14 @@ max_unrecog_char_rate = integer(min=0, max=100, default=40)
 capture_groupid = integer(min=0, default=33)
 
 # Specifies the type of data to be captured:
-#   0: none
-#   1: png
-#   2: wrm
-#   4: video
-#   8: ocr
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x00: none
+#   0x01: png
+#   0x02: wrm
+#   0x04: video
+#   0x08: ocr
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_advanced
+#_hex
 capture_flags = integer(min=0, max=15, default=11)
 
 # Frame interval.
@@ -745,27 +751,30 @@ record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::R
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
-#   0: none
-#   1: disable keyboard log in syslog
-#   2: disable keyboard log in recorded sessions
-#   4: disable keyboard log in recorded meta
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: none
+#   0x1: disable keyboard log in syslog
+#   0x2: disable keyboard log in recorded sessions
+#   0x4: disable keyboard log in recorded meta
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 disable_keyboard_log = integer(min=0, max=7, default=1)
 
 # Disable clipboard log:
-#   0: none
-#   1: disable clipboard log in syslog
-#   2: disable clipboard log in recorded sessions
-#   4: disable clipboard log in recorded meta
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: none
+#   0x1: disable clipboard log in syslog
+#   0x2: disable clipboard log in recorded sessions
+#   0x4: disable clipboard log in recorded meta
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 disable_clipboard_log = integer(min=0, max=7, default=1)
 
 # Disable (redirected) file system log:
-#   0: none
-#   1: disable (redirected) file system log in syslog
-#   2: disable (redirected) file system log in recorded sessions
-#   4: disable (redirected) file system log in recorded meta
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#   0x0: none
+#   0x1: disable (redirected) file system log in syslog
+#   0x2: disable (redirected) file system log in recorded sessions
+#   0x4: disable (redirected) file system log in recorded meta
+# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
+#_hex
 disable_file_system_log = integer(min=0, max=7, default=1)
 
 #_hidden

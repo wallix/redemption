@@ -1,3 +1,15 @@
+redemption (7.2.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix compatibility issue with FreeRDP/Remmina. (Cache Color Table)
+  * icap: disable protocol error exception
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Jul 2019 17:58:09 +0200
+
+redemption (7.2.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Jul 2019 14:43:32 +0200
+
 redemption (7.2.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 

@@ -905,10 +905,10 @@ private:
             LOG(LOG_ERR, "Could not verify server's public key echo");
 
             LOG(LOG_ERR, "Expected (length = %zu):", this->public_key.size());
-            hexdump_av_c(this->public_key);
+            hexdump_c(this->public_key);
 
             LOG(LOG_ERR, "Actual (length = %zu):", this->public_key.size());
-            hexdump_av_c(public_key2);
+            hexdump_c(public_key2);
 
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }

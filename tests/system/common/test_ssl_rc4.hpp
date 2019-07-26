@@ -97,7 +97,6 @@ RED_AUTO_TEST_CASE(TestSslRc4)
     uint8_t encrypted_data[512];
     rc.set_key(make_array_view(key));
     rc.crypt(512, data, encrypted_data);
-    // hexdump_c(encrypted_data, sizeof(encrypted_data));
 
 
     uint8_t expected_data[] = {
@@ -171,7 +170,6 @@ RED_AUTO_TEST_CASE(TestSslRc4)
     uint8_t decrypted_data[512];
     rc.set_key(make_array_view(key));
     rc.crypt(512, encrypted_data, decrypted_data);
-    // hexdump96_c(decrypted_data, sizeof(decrypted_data));
 
     RED_CHECK_MEM_AA(decrypted_data, data);
 }

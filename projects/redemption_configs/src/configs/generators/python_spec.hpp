@@ -92,8 +92,24 @@ void write_description(std::ostream& out, type_enumerations& enums, type_<T>, Pa
     }
 }
 
-
 using spec_internal_attr = cfg_attributes::spec::internal::attr;
+
+template<class T>
+spec_internal_attr attr_hex_if_enum_flag(type_<T>, type_enumerations& enums)
+{
+    spec_internal_attr attr{};
+    if constexpr (std::is_enum_v<T>)
+    {
+        apply_enumeration_for<T>(enums, [&](auto const & e) {
+            if constexpr (std::is_same_v<decltype(e), type_enumeration const &>) {
+                if (type_enumeration::flags == e.flag) {
+                    attr = spec_internal_attr::hex_in_gui;
+                }
+            }
+        });
+    }
+    return attr;
+}
 
 inline void write_spec_attr(std::ostream& out, spec_internal_attr attr)
 {
@@ -225,6 +241,19 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L 
 
 namespace impl
 {
+    struct HexFlag
+    {
+        unsigned long long v;
+        std::size_t max_element;
+    };
+
+    inline std::ostream& operator<<(std::ostream& out, HexFlag const& h)
+    {
+        return out << "0x"
+            << std::setfill('0') << std::setw((h.max_element+3)/4)
+            << std::hex << h.v << std::dec;
+    }
+
     template<class T, class V>
     void write_value_(std::ostream& out, T const & name, V const & v, char const * prefix)
     {
@@ -236,7 +265,7 @@ namespace impl
             }
             out << v.desc;
         }
-        else if (std::is_integral<T>::value) {
+        else if (std::is_integral<T>::value || std::is_same<T, HexFlag>::value) {
             out << ": " << io_replace(v.name, '_', ' ');
         }
         out << "\n";
@@ -258,14 +287,20 @@ namespace impl
             if (e.is_string_parser) {
                 write_value_(out, (v.alias ? v.alias : v.name), v, prefix);
             }
+            else if (is_autoinc) {
+                write_value_(out, d, v, prefix);
+            }
             else {
-                write_value_(out, (is_autoinc ? d : (1 << d >> 1)), v, prefix);
+                auto f = (1ull << d >> 1);
+                if (!(f & e.exclude_flag)) {
+                    write_value_(out, HexFlag{f, e.values.size()}, v, prefix);
+                }
             }
             ++d;
         }
 
         if (type_enumeration::flags == e.flag) {
-            out << "(note: values can be added (everyone: 1+2+4=7, mute: 0))";
+            out << "(note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))";
         }
     }
 
@@ -414,7 +449,9 @@ struct PythonSpecWriterBase : IniPythonSpecWriterBase
             this->out() << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
-            write_spec_attr(comments, get_elem<spec_attr_t>(infos).value);
+            write_spec_attr(comments,
+                get_elem<spec_attr_t>(infos).value
+              | attr_hex_if_enum_flag(type, enums));
 
             this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
