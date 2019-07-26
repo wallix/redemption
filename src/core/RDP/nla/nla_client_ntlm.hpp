@@ -373,22 +373,11 @@ private:
             this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
             this->version.ProductBuild        = 7601;
             this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
-
-            this->AUTHENTICATE_MESSAGE.version.ignore_version = false;
-            // this->AUTHENTICATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-            // this->AUTHENTICATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            // this->AUTHENTICATE_MESSAGE.version.ProductBuild        = 2600;
-            // this->AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-            this->AUTHENTICATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-            this->AUTHENTICATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            this->AUTHENTICATE_MESSAGE.version.ProductBuild        = 7601;
-            this->AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
         else {
             this->version.ignore_version = true;
-            this->AUTHENTICATE_MESSAGE.version.ignore_version = true;
         }
+        this->AUTHENTICATE_MESSAGE.version = this->version;
 
         uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
 
@@ -879,22 +868,13 @@ public:
             this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
             this->version.ProductBuild        = 7601;
             this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-            
-            this->NEGOTIATE_MESSAGE.version.ignore_version = false;
-            // this->NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-            // this->NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            // this->NEGOTIATE_MESSAGE.version.ProductBuild        = 2600;
-            // this->NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-            this->NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-            this->NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            this->NEGOTIATE_MESSAGE.version.ProductBuild        = 7601;
-            this->NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
         }
         else {
             this->version.ignore_version = true;
-            this->NEGOTIATE_MESSAGE.version.ignore_version = true;
         }
+        this->NEGOTIATE_MESSAGE.version = this->version;
+
+
         this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
@@ -995,22 +975,11 @@ public:
                         this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                         this->version.ProductBuild        = 7601;
                         this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-                        
-                        this->NEGOTIATE_MESSAGE.version.ignore_version = false;
-                        // this->NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-                        // this->NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                        // this->NEGOTIATE_MESSAGE.version.ProductBuild        = 2600;
-                        // this->NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-                        this->NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-                        this->NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                        this->NEGOTIATE_MESSAGE.version.ProductBuild        = 7601;
-                        this->NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
                     }
                     else {
                         this->version.ignore_version = true;
-                        this->NEGOTIATE_MESSAGE.version.ignore_version = true;
                     }
+                    this->NEGOTIATE_MESSAGE.version = this->version;
                     this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
                     if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
