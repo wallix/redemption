@@ -1682,9 +1682,6 @@ test-run tests/core/RDP/nla/kerberos/test_kerberos :
 test-run tests/core/RDP/nla/ntlm/test_ntlm_avpair :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_avpair.cpp
 :
-  <library>src/utils/hexdump.o
-  <library>src/utils/utf.o
-  <covfile>src/core/RDP/nla/ntlm/ntlm_avpair.hpp
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
@@ -5979,7 +5976,6 @@ alias test_mppc_61.coverage : tests/core/RDP/mppc/test_mppc_61.coverage ;
 alias test_ber.coverage : tests/core/RDP/nla/asn1/test_ber.coverage ;
 alias test_credentials.coverage : tests/core/RDP/nla/kerberos/test_credentials.coverage ;
 alias test_kerberos.coverage : tests/core/RDP/nla/kerberos/test_kerberos.coverage ;
-alias test_ntlm_avpair.coverage : tests/core/RDP/nla/ntlm/test_ntlm_avpair.coverage ;
 alias test_ntlm_message.coverage : tests/core/RDP/nla/ntlm/test_ntlm_message.coverage ;
 alias test_credssp.coverage : tests/core/RDP/nla/test_credssp.coverage ;
 alias test_sspi.coverage : tests/core/RDP/nla/test_sspi.coverage ;

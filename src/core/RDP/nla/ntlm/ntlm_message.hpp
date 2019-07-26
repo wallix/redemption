@@ -182,7 +182,7 @@ inline void LogNtlmAvPairList(const NtlmAvPairList & list)
 
     for (auto & avp: list) {
         LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
-        hexdump_av_c(avp.data);
+        hexdump_c(avp.data);
     }
     LOG(LOG_INFO, "}");
 }
@@ -392,36 +392,38 @@ struct NtlmVersion {
         this->ProductBuild        = 7601;
         this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
-
-    void emit(OutStream & stream) const {
-        if (this->ignore_version) {
-            return;
-        }
-        stream.out_uint8(this->ProductMajorVersion);
-        stream.out_uint8(this->ProductMinorVersion);
-        stream.out_uint16_le(this->ProductBuild);
-        stream.out_clear_bytes(3);
-        stream.out_uint8(this->NtlmRevisionCurrent);
-    }
-
-    void recv(InStream & stream) {
-        this->ignore_version = false;
-        this->ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
-        this->ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
-        this->ProductBuild = stream.in_uint16_le();
-        stream.in_skip_bytes(3);
-        this->NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "VERSION = {");
-        LOG(LOG_INFO, "\tProductMajorVersion: %d", this->ProductMajorVersion);
-        LOG(LOG_INFO, "\tProductMinorVersion: %d", this->ProductMinorVersion);
-        LOG(LOG_INFO, "\tProductBuild: %d", this->ProductBuild);
-        LOG(LOG_INFO, "\tNTLMRevisionCurrent: 0x%02X", this->NtlmRevisionCurrent);
-        LOG(LOG_INFO, "}");
-    }
 };
+
+
+inline void EmitNtlmVersion(OutStream & stream, const NtlmVersion & self)
+{
+    if (self.ignore_version) {
+        return;
+    }
+    stream.out_uint8(self.ProductMajorVersion);
+    stream.out_uint8(self.ProductMinorVersion);
+    stream.out_uint16_le(self.ProductBuild);
+    stream.out_clear_bytes(3);
+    stream.out_uint8(self.NtlmRevisionCurrent);
+}
+
+inline void RecvNtlmVersion(InStream & stream, NtlmVersion & self) {
+    self.ignore_version = false;
+    self.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
+    self.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
+    self.ProductBuild = stream.in_uint16_le();
+    stream.in_skip_bytes(3);
+    self.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
+}
+
+inline void LogNtlmVersion(const NtlmVersion & self) {
+    LOG(LOG_INFO, "VERSION = {");
+    LOG(LOG_INFO, "\tProductMajorVersion: %d", self.ProductMajorVersion);
+    LOG(LOG_INFO, "\tProductMinorVersion: %d", self.ProductMinorVersion);
+    LOG(LOG_INFO, "\tProductBuild: %d", self.ProductBuild);
+    LOG(LOG_INFO, "\tNTLMRevisionCurrent: 0x%02X", self.NtlmRevisionCurrent);
+    LOG(LOG_INFO, "}");
+}
 
 // 2.2.2.5 NEGOTIATE
 // ===================================================
@@ -1197,7 +1199,7 @@ struct NTLMAuthenticateMessage {
         this->Workstation.log("Workstation");
         this->EncryptedRandomSessionKey.log("EncryptedRandomSessionKey");
         this->negoFlags.log();
-        this->version.log();
+        LogNtlmVersion(this->version);
         LOG(LOG_DEBUG, "MIC");
         hexdump_d(this->MIC, 16);
     }
@@ -1219,7 +1221,7 @@ struct NTLMAuthenticateMessage {
         currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
         (void)currentOffset;
         this->negoFlags.emit(stream);
-        this->version.emit(stream);
+        EmitNtlmVersion(stream, this->version);
 
         if (this->has_mic) {
             if (this->ignore_mic) {
@@ -1254,7 +1256,7 @@ struct NTLMAuthenticateMessage {
         this->EncryptedRandomSessionKey.recv(stream);
         this->negoFlags.recv(stream);
         if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.recv(stream);
+            RecvNtlmVersion(stream, this->version);
         }
         uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
         if (this->NtChallengeResponse.bufferOffset < min_offset) {
@@ -1726,7 +1728,7 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         stream.out_clear_bytes(8);
         /*currentOffset +=*/ self.TargetInfo.emit(stream, currentOffset);
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            self.version.emit(stream);
+            EmitNtlmVersion(stream, self.version);
         }
         // PAYLOAD
         self.TargetName.write_payload(stream);
@@ -1754,7 +1756,7 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     stream.in_skip_bytes(8);
     self.TargetInfo.recv(stream);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        self.version.recv(stream);
+        RecvNtlmVersion(stream, self.version);
     }
     // PAYLOAD
     self.TargetName.read_payload(stream, pBegin);
@@ -1926,7 +1928,7 @@ public:
         currentOffset += this->DomainName.emit(stream, currentOffset);
         currentOffset += this->Workstation.emit(stream, currentOffset);
         (void)currentOffset;
-        this->version.emit(stream);
+        EmitNtlmVersion(stream, this->version);
 
         // PAYLOAD
         this->DomainName.write_payload(stream);
@@ -1954,7 +1956,7 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
     self.DomainName.recv(stream);
     self.Workstation.recv(stream);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        self.version.recv(stream);
+        RecvNtlmVersion(stream, self.version);
     }
     // PAYLOAD
     self.DomainName.read_payload(stream, pBegin);
