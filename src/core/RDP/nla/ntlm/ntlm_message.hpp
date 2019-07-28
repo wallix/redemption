@@ -1192,7 +1192,7 @@ struct NTLMAuthenticateMessage {
 
 
     NtlmFieldImplVector LmChallengeResponse;        /* 8 Bytes */
-    NtlmField NtChallengeResponse;        /* 8 Bytes */
+    NtlmFieldImplVector NtChallengeResponse;        /* 8 Bytes */
     NtlmFieldImplVector DomainName;                 /* 8 Bytes */
     NtlmField UserName;                   /* 8 Bytes */
     NtlmFieldImplVector Workstation;                /* 8 Bytes */

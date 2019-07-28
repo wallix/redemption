@@ -337,16 +337,6 @@ protected:
             auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
             auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-            size_t temp_size = AuthNtResponse.size() - 16;
-            // LOG(LOG_INFO, "tmp size = %u", temp_size);
-            uint8_t NtProofStr_from_msg[16] = {};
-            InStream in_AuthNtResponse(AuthNtResponse.ostream.get_tailroom_bytes());
-            in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
-
-            auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
-            uint8_t* temp = unique_temp.get();
-            in_AuthNtResponse.in_copy_bytes(temp, temp_size);
-            AuthNtResponse.ostream.rewind();
 
             uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
             uint8_t ResponseKeyNT[16] = {};
@@ -360,8 +350,11 @@ protected:
             // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
             SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
             hmac_md5resp.update(make_array_view(this->ServerChallenge));
-            hmac_md5resp.update({temp, temp_size});
+            hmac_md5resp.update({AuthNtResponse.data()+16, AuthNtResponse.size()-16});
             hmac_md5resp.final(NtProofStr);
+
+            uint8_t NtProofStr_from_msg[16] = {};
+            memcpy(NtProofStr_from_msg, AuthNtResponse.data(), 16); 
 
             return !memcmp(NtProofStr, NtProofStr_from_msg, 16);
         }
@@ -399,13 +392,11 @@ protected:
             auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
             uint8_t NtProofStr[16] = {};
-            InStream(AuthNtResponse.ostream.get_tailroom_bytes())
-                .in_copy_bytes(NtProofStr, 16);
-            AuthNtResponse.ostream.rewind();
+            memcpy(NtProofStr, AuthNtResponse.data(), 16);
+
             uint8_t ResponseKeyNT[16] = {};
             this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyNT);
-            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
-            //                           NtProofStr)
+            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
             SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
             hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
             hmac_md5seskey.final(this->SessionBaseKey);

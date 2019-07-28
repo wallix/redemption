@@ -276,10 +276,8 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtChallengeResponse");
         auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
         // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
-        NtChallengeResponse.reset();
-        NtChallengeResponse.ostream.out_copy_bytes(NtProofStr.data(), NtProofStr.size());
-        NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
-        NtChallengeResponse.mark_end();
+        NtChallengeResponse.assign(NtProofStr.data(), NtProofStr.data()+NtProofStr.size());
+        NtChallengeResponse.insert(std::end(NtChallengeResponse), temp, temp + temp_size);
 
         LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
 

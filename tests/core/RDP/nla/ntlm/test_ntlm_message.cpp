@@ -521,7 +521,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // NtChallengeResponse
     NTLMv2_Response ntResponse;
-    in_stream = InStream({AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.size()});
+    in_stream = InStream(AuthMsg.NtChallengeResponse.buffer);
     ntResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
@@ -897,10 +897,8 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: NtChallengeResponse");
         auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
         // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
-        NtChallengeResponse.reset();
-        NtChallengeResponse.ostream.out_copy_bytes(NtProofStr, sizeof(NtProofStr));
-        NtChallengeResponse.ostream.out_copy_bytes(temp, temp_size);
-        NtChallengeResponse.mark_end();
+        NtChallengeResponse.assign(NtProofStr, NtProofStr + sizeof(NtProofStr));
+        NtChallengeResponse.insert(std::end(NtChallengeResponse), temp, temp+temp_size);
 
         LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
 
@@ -1105,16 +1103,9 @@ public:
         auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
         auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-        size_t temp_size = AuthNtResponse.size() - 16;
         // LOG(LOG_INFO, "tmp size = %u", temp_size);
         uint8_t NtProofStr_from_msg[16] = {};
-        InStream in_AuthNtResponse(AuthNtResponse.ostream.get_tailroom_bytes());
-        in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
-
-        auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
-        uint8_t* temp = unique_temp.get();
-        in_AuthNtResponse.in_copy_bytes(temp, temp_size);
-        AuthNtResponse.ostream.rewind();
+        memcpy(NtProofStr_from_msg, AuthNtResponse.data(), 16);
 
         uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
         uint8_t ResponseKeyNT[16] = {};
@@ -1128,7 +1119,7 @@ public:
         // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
         hmac_md5resp.update(make_array_view(this->ServerChallenge));
-        hmac_md5resp.update({temp, temp_size});
+        hmac_md5resp.update({AuthNtResponse.data()+16, AuthNtResponse.size() - 16});
         hmac_md5resp.final(NtProofStr);
 
         return !memcmp(NtProofStr, NtProofStr_from_msg, 16);
@@ -1167,8 +1158,7 @@ public:
         auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         uint8_t NtProofStr[16] = {};
-        InStream(AuthNtResponse.ostream.get_tailroom_bytes()).in_copy_bytes(NtProofStr, 16);
-        AuthNtResponse.ostream.rewind();
+        memcpy(NtProofStr, AuthNtResponse.data(), 16);
         uint8_t ResponseKeyNT[16] = {};
         this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyNT);
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
@@ -2049,15 +2039,13 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
                                                    make_array_view(userDomain));
 
     auto & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
-    RED_CHECK_MEM(
-        LmChallengeResponse,
+    RED_CHECK_MEM(LmChallengeResponse,
         /* 0000 */ "\x11\x1b\x69\x4b\xdb\x30\x53\x91\xef\x94\x8b\x20\x83\xbd\x07\x43" //..iK.0S.... ...C
         /* 0010 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d"_av                                 //.l....0.
     );
     auto & NtChallengeResponse = context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
 
-    RED_CHECK_MEM(
-        make_array_view(NtChallengeResponse.get_data(), NtChallengeResponse.size()),
+    RED_CHECK_MEM(NtChallengeResponse,
         "\x54\x01\x2a\xc9\x4e\x20\x30\x7d\xed\x6a\xcf\xb8\x6b\xb0\x45\xc5" //T.*.N 0}.j..k.E. !
         "\x01\x01\x00\x00\x00\x00\x00\x00\x67\x95\x0e\x5a\x4e\x56\x76\xd6" //........g..ZNVv. !
         "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d\x00\x00\x00\x00\x02\x00\x08\x00" //.l....0......... !
