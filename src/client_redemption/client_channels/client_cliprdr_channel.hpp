@@ -23,22 +23,20 @@
 
 #pragma once
 
-#include <unordered_map>
+#include "mod/rdp/rdp_verbose.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "gdi/screen_info.hpp"
-#include "utils/image_data_view.hpp"
 
+#include <unordered_map>
+#include <vector>
 #include <string>
 
-#include "utils/log.hpp"
-#include "utils/sugar/cast.hpp"
-#include "utils/fileutils.hpp"
-#include "core/RDP/clipboard.hpp"
 
-#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
-#include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
-
-#include "mod/rdp/rdp_verbose.hpp"
-
+class ConstImageDataView;
+class ClientChannelMod;
+class RDPClipboardConfig;
+class InStream;
 
 
 class ClientIOClipboardAPI
@@ -54,7 +52,7 @@ public:
     virtual void setClipboard_text(std::string const& str) = 0;
     virtual void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) = 0;
     virtual void setClipboard_files(std::string const& name) = 0;
-    virtual void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) = 0;
+    virtual void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) = 0;
 
     //  get local clipboard data
     virtual uint16_t get_buffer_type_id() = 0;
