@@ -689,10 +689,6 @@ struct NtlmField {
         }
         this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
     }
-
-    void write_payload(OutStream & stream) const {
-        stream.out_copy_bytes(this->buffer.data(), this->buffer.size());
-    }
 };
 
 inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const std::vector<uint8_t> & buffer, NtlmField & self) /* TODO const*/ {
@@ -704,7 +700,6 @@ inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const 
     stream.out_uint16_le(buffer.size());
     stream.out_uint32_le(self.bufferOffset);
 }
-
 
 // 2.2.2.9   NTLMSSP_MESSAGE_SIGNATURE
 // ===================================================
@@ -1154,12 +1149,12 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
     }
 
     // PAYLOAD
-    self.LmChallengeResponse.write_payload(stream);
-    self.NtChallengeResponse.write_payload(stream);
-    self.DomainName.write_payload(stream);
-    self.UserName.write_payload(stream);
-    self.Workstation.write_payload(stream);
-    self.EncryptedRandomSessionKey.write_payload(stream);
+    stream.out_copy_bytes(self.LmChallengeResponse.buffer);
+    stream.out_copy_bytes(self.NtChallengeResponse.buffer);
+    stream.out_copy_bytes(self.DomainName.buffer);
+    stream.out_copy_bytes(self.UserName.buffer);
+    stream.out_copy_bytes(self.Workstation.buffer);
+    stream.out_copy_bytes(self.EncryptedRandomSessionKey.buffer);
 }
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
@@ -1669,8 +1664,8 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
             }
         }
         // PAYLOAD
-        self.TargetName.write_payload(stream);
-        self.TargetInfo.write_payload(stream);
+        stream.out_copy_bytes(self.TargetName.buffer);
+        stream.out_copy_bytes(self.TargetInfo.buffer);
 }
 
 inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & self)
@@ -1883,8 +1878,8 @@ public:
         }
 
         // PAYLOAD
-        this->DomainName.write_payload(stream);
-        this->Workstation.write_payload(stream);
+        stream.out_copy_bytes(this->DomainName.buffer);
+        stream.out_copy_bytes(this->Workstation.buffer);
     }
 };
 
