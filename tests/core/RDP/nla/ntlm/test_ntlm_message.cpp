@@ -153,8 +153,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     //           ChallengeMsg.TargetName.buffer.ostream.size());
     RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
     RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
-    RED_CHECK_MEM(
-        make_array_view(ChallengeMsg.TargetInfo.buffer.ostream.get_data(), ChallengeMsg.TargetInfo.len),
+    RED_CHECK_MEM(ChallengeMsg.TargetInfo.buffer,
         "\x02\x00\x08\x00\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00"
         "\x57\x00\x49\x00\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00"
         "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
@@ -872,7 +871,7 @@ public:
         this->ntlm_generate_client_challenge();
         memcpy(&temp[1+1+6], this->Timestamp, 8);
         memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
-        memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
+        memcpy(&temp[1+1+6+8+8+4], AvPairsStream.data(), AvPairsStream.size());
 
         // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                       Concat(ServerChallenge, temp))

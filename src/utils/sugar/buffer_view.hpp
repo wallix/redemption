@@ -42,6 +42,12 @@ struct buffer_view : bytes_view
     buffer_view(T (& a)[n]) noexcept
     : bytes_view(a, n)
     {}
+
+    template<class U>
+    constexpr buffer_view(U && x)
+    noexcept(noexcept(bytes_view(x)))
+    : bytes_view(x)
+    {}
 };
 
 /**
@@ -63,5 +69,11 @@ struct const_buffer_view : const_bytes_view
     template<class T, std::size_t n>
     const_buffer_view(T (& a)[n]) noexcept
     : const_bytes_view(a, n)
+    {}
+
+    template<class U>
+    constexpr const_buffer_view(U && x)
+    noexcept(noexcept(const_bytes_view(x)))
+    : const_bytes_view(x)
     {}
 };

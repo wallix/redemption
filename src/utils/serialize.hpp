@@ -22,12 +22,12 @@
 
 #pragma once
 
-inline -> std::array<uint8_t, 2> out_uint16_le(unsigned int v)
+inline std::array<uint8_t, 2> out_uint16_le(unsigned int v)
 {
-    return {v & 0xFF, (v >> 8) & 0xFF};
+    return {uint8_t(v), uint8_t(v >> 8)};
 }
 
-inline void push_back_array(std::vector & v, const_array_view a)
+inline void push_back_array(std::vector<uint8_t> & v, const array_view_u8 a)
 {
     v.insert(std::end(v), a.data(), a.data() + a.size());
 }

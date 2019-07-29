@@ -23,6 +23,7 @@
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/serialize.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
@@ -1718,7 +1719,7 @@ public:
     uint8_t serverChallenge[8]{};    /* 8 Bytes */
     // uint64_t serverChallenge;
     /* 8 Bytes reserved */
-    NtlmField TargetInfo;          /* 8 Bytes */
+    NtlmFieldImplVector TargetInfo;          /* 8 Bytes */
     NtlmVersion version;           /* 8 Bytes */
 private:
     uint32_t PayloadOffset{12+8+4+8+8+8+8};
@@ -1731,9 +1732,14 @@ public:
 
 inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self)
 {
-        self.TargetInfo.buffer.reset();
-        EmitNtlmAvPairList(self.TargetInfo.buffer.ostream, self.AvPairList);
-        self.TargetInfo.buffer.mark_end();
+        self.TargetInfo.buffer.clear();
+        for (auto & avp: self.AvPairList) {
+            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.id)));
+            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
+            push_back_array(self.TargetInfo.buffer, avp.data);
+        }
+        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(MsvAvEOL)));
+        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(0)));
 
         uint32_t currentOffset = self.PayloadOffset;
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
@@ -1796,9 +1802,20 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     // PAYLOAD
     self.TargetName.read_payload(stream, pBegin);
     self.TargetInfo.read_payload(stream, pBegin);
-    auto in_stream = self.TargetInfo.buffer.in_stream();
-    RecvNtlmAvPairList(in_stream, self.AvPairList);
-    self.TargetInfo.buffer.ostream.out_skip_bytes(in_stream.get_offset());
+    
+    InStream in_stream(self.TargetInfo.buffer);
+    
+    for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
+        auto id = in_stream.in_uint16_le();
+        auto length = in_stream.in_uint16_le();
+        if (id == MsvAvEOL) {
+            // ASSUME last element is MsvAvEOL
+            in_stream.in_skip_bytes(length);
+            break;
+        }
+        auto v = in_stream.in_copy_bytes_as_vector(length);
+        self.AvPairList.push_back({static_cast<NTLM_AV_ID>(id), v});
+    }
 }
 
 // [MS-NLMP]

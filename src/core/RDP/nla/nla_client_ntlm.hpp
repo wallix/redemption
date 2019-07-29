@@ -259,7 +259,7 @@ private:
         rand.random(this->ClientChallenge, 8);
         memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
 
-        memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
+        memcpy(&temp[1+1+6+8+8+4], AvPairsStream.data(), AvPairsStream.size());
 
         // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                       Concat(ServerChallenge, temp))
