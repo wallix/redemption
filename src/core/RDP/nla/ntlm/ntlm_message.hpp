@@ -688,7 +688,7 @@ inline void read_payload(InStream & stream, uint8_t const * pBegin, NtlmField & 
     if (pEnd > stream.get_current()) {
         stream.in_skip_bytes(pEnd - stream.get_current());
     }
-    self.buffer.assign(pBegin + self.bufferOffset, pBegin + self.bufferOffset + self.len);
+    self.buffer.assign(pBegin + self.bufferOffset, pEnd);
 }
 
 
@@ -1201,54 +1201,48 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
     }
 
     // PAYLOAD
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }
-    read_payload(stream, pBegin, self.LmChallengeResponse);
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }
-    read_payload(stream, pBegin, self.NtChallengeResponse);
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }
-    read_payload(stream, pBegin, self.DomainName);
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }
-    read_payload(stream, pBegin, self.UserName);
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }
-    read_payload(stream, pBegin, self.Workstation);
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }
-    read_payload(stream, pBegin, self.EncryptedRandomSessionKey);
+    {
+        uint8_t const * pEnd = pBegin + self.LmChallengeResponse.bufferOffset + self.LmChallengeResponse.len;
+        if (pEnd > stream.get_current()) {
+            stream.in_skip_bytes(pEnd - stream.get_current());
+        }
+        self.LmChallengeResponse.buffer.assign(pBegin + self.LmChallengeResponse.bufferOffset, pEnd);
+    }
+    {
+        uint8_t const * pEnd = pBegin + self.NtChallengeResponse.bufferOffset + self.NtChallengeResponse.len;
+        if (pEnd > stream.get_current()) {
+            stream.in_skip_bytes(pEnd - stream.get_current());
+        }
+        self.NtChallengeResponse.buffer.assign(pBegin + self.NtChallengeResponse.bufferOffset, pEnd);
+    }
+    {
+        uint8_t const * pEnd = pBegin + self.DomainName.bufferOffset + self.DomainName.len;
+        if (pEnd > stream.get_current()) {
+            stream.in_skip_bytes(pEnd - stream.get_current());
+        }
+        self.DomainName.buffer.assign(pBegin + self.DomainName.bufferOffset, pEnd);
+    }
+    {
+        uint8_t const * pEnd = pBegin + self.UserName.bufferOffset + self.UserName.len;
+        if (pEnd > stream.get_current()) {
+            stream.in_skip_bytes(pEnd - stream.get_current());
+        }
+        self.UserName.buffer.assign(pBegin + self.UserName.bufferOffset, pEnd);
+    }
+    {
+        uint8_t const * pEnd = pBegin + self.Workstation.bufferOffset + self.Workstation.len;
+        if (pEnd > stream.get_current()) {
+            stream.in_skip_bytes(pEnd - stream.get_current());
+        }
+        self.Workstation.buffer.assign(pBegin + self.Workstation.bufferOffset, pEnd);
+    }
+    {
+        uint8_t const * pEnd = pBegin + self.EncryptedRandomSessionKey.bufferOffset + self.EncryptedRandomSessionKey.len;
+        if (pEnd > stream.get_current()) {
+            stream.in_skip_bytes(pEnd - stream.get_current());
+        }
+        self.EncryptedRandomSessionKey.buffer.assign(pBegin + self.EncryptedRandomSessionKey.bufferOffset, pEnd);
+    }
 }
 
 // 2.2.2.3   LM_RESPONSE
