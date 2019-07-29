@@ -2120,10 +2120,10 @@ RED_AUTO_TEST_CASE(TestPatternSearcher)
     PatternSearcher searcher(utils::MatchFinder::KBD_INPUT, "$kbd:e");
     bool check = false;
     auto report = [&](auto&, auto&){ check = true; };
-    searcher.test_uchar(byte_ptr_cast("e"), 1, report); RED_CHECK(check); check = false;
-    searcher.test_uchar(byte_ptr_cast("a"), 1, report); RED_CHECK(!check);
+    searcher.test_uchar(ZStrUtf8Char('e'), report); RED_CHECK(check); check = false;
+    searcher.test_uchar(ZStrUtf8Char('a'), report); RED_CHECK(!check);
     // #15241: Pattern detection crash
-    searcher.test_uchar(byte_ptr_cast("e"), 1, report); RED_CHECK(check);
+    searcher.test_uchar(ZStrUtf8Char('e'), report); RED_CHECK(check);
 }
 
 extern "C" {
