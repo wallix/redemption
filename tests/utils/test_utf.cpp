@@ -84,65 +84,27 @@ RED_AUTO_TEST_CASE(TestUTF8InsertAtPos_0)
     RED_CHECK_EQUAL(1u, UTF8Len(source));
 }
 
-RED_AUTO_TEST_CASE(TestUTF8InsertAtPos_beyond_end)
+struct Data
 {
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-    uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
+    std::size_t pos;
+    array_view_const_char expected;
+};
 
-    UTF8InsertAtPos(source, 20, to_insert, sizeof(source));
-
-    uint8_t expected_result[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@',
-                                  0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0
-    };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(17u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_start)
+RED_AUTO_TEST_CASE(TestUTF8InsertAtPos)
 {
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-    uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
+    RED_TEST_CONTEXT_DATA(Data const& data, "insert at position " << data.pos, {
+        Data{20, "abcedef\xC3\xA9\xC3\xA7\xC3\xA0@\xC3\xA9x\xC3\xA7\xC3\xA0yz\0"_av},
+        Data{0,  "\xC3\xA9x\xC3\xA7\xC3\xA0yzabcedef\xC3\xA9\xC3\xA7\xC3\xA0@\0"_av},
+        Data{1,  "a\xC3\xA9x\xC3\xA7\xC3\xA0yzbcedef\xC3\xA9\xC3\xA7\xC3\xA0@\0"_av},
+        Data{8,  "abcedef\xC3\xA9\xC3\xA9x\xC3\xA7\xC3\xA0yz\xC3\xA7\xC3\xA0@\0"_av}
+    }) {
+        uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+        uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
 
-    UTF8InsertAtPos(source, 0, to_insert, sizeof(source));
+        UTF8InsertAtPos(source, data.pos, to_insert, sizeof(source));
 
-    uint8_t expected_result[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z',
-                                 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
-    };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(17u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_1)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-    uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
-
-    UTF8InsertAtPos(source, 1, to_insert, sizeof(source));
-
-    uint8_t expected_result[] = {'a', 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z',
-                                 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
-    };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(17u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_8)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-    uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
-
-    UTF8InsertAtPos(source, 8, to_insert, sizeof(source));
-
-    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9,
-                                 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z',
-                                 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
-    };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(17u, UTF8Len(source));
+        RED_CHECK_SMEM(array_view(source, data.expected.size()), data.expected);
+    }
 }
 
 RED_AUTO_TEST_CASE(TestUTF8InsertOneAtPos_at_8)
@@ -155,104 +117,28 @@ RED_AUTO_TEST_CASE(TestUTF8InsertOneAtPos_at_8)
                                  0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
     };
 
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
+    RED_CHECK_SMEM(array_view(source, sizeof(expected_result)), make_array_view(expected_result));
     RED_CHECK_EQUAL(12u, UTF8Len(source));
 }
 
 RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos0)
 {
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+    RED_TEST_CONTEXT_DATA(Data const& data, "insert at position " << data.pos, {
+        Data{0,  "bcedef\xC3\xA0\xC3\xA7\xC3\xA0@\0"_av},
+        Data{1,  "acedef\xC3\xA0\xC3\xA7\xC3\xA0@\0"_av},
+        Data{7,  "abcedef\xC3\xA7\xC3\xA0@\0"_av},
+        Data{8,  "abcedef\xC3\xA0\xC3\xA0@\0"_av},
+        Data{9,  "abcedef\xC3\xA0\xC3\xA7@\0"_av},
+        Data{10, "abcedef\xC3\xA0\xC3\xA7\xC3\xA0\0"_av},
+        Data{11, "abcedef\xC3\xA0\xC3\xA7\xC3\xA0@\0"_av},
+        Data{12, "abcedef\xC3\xA0\xC3\xA7\xC3\xA0@\0"_av}
+    }) {
+        uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
 
-    UTF8RemoveOneAtPos(source, 0);
+        UTF8RemoveOneAtPos(source, data.pos);
 
-    uint8_t expected_result[] = {'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(10u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos1)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    UTF8RemoveOneAtPos(source, 1);
-
-    uint8_t expected_result[] = {'a', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(10u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos7)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    UTF8RemoveOneAtPos(source, 7);
-
-    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(10u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos8)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    UTF8RemoveOneAtPos(source, 8);
-
-    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA0, '@', 0 };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(10u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos9)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    UTF8RemoveOneAtPos(source, 9);
-
-    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, '@', 0 };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(10u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos10)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    UTF8RemoveOneAtPos(source, 10);
-
-    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, 0 };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(10u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos11)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    UTF8RemoveOneAtPos(source, 11);
-
-    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(11u, UTF8Len(source));
-}
-
-RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos12)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    UTF8RemoveOneAtPos(source, 12);
-
-    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
-
-    RED_CHECK_SMEM_AA(make_array_view(source, sizeof(expected_result)), expected_result);
-    RED_CHECK_EQUAL(11u, UTF8Len(source));
+        RED_CHECK_SMEM(array_view(source, data.expected.size()), data.expected);
+    }
 }
 
 RED_AUTO_TEST_CASE(TestUTF8_UTF16)
@@ -344,68 +230,27 @@ RED_AUTO_TEST_CASE(TestUTF32toUTF8) {
 
 RED_AUTO_TEST_CASE(TestUTF8ToUTF8LCopy)
 {
+    struct Data
+    {
+        std::size_t dest_len;
+        std::size_t byte_len;
+        std::size_t utf_len;
+    };
     uint8_t   source[11] = "aÉ€𝄞"; // 0x61, |0xc3, 0x89, |0xe2, 0x82, 0xac,| 0xf0, 0x9d, 0x84, 0x9e,| 0x00
-
-    {
+    RED_TEST_CONTEXT_DATA(Data const& data, "dest_len: " << data.dest_len, {
+        Data{11, 10, 4},
+        Data{10, 6, 3},
+        Data{9, 6, 3},
+        Data{7, 6, 3},
+        Data{6, 3, 2},
+        Data{5, 3, 2},
+        Data{2, 1, 1},
+        Data{1, 0, 0}
+    }) {
         uint8_t dest[11] = {};
-        int res = UTF8ToUTF8LCopy(dest, 11, source);
-        RED_CHECK_EQUAL(4, res);
-    }
-
-    {
-        uint8_t dest[11] = {};
-        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
-        RED_CHECK_EQUAL(4, res);
-        RED_CHECK_EQUAL(10u, strlen(char_ptr_cast(dest)));
-    }
-
-    {
-        uint8_t dest[10] = {};
-        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
-        RED_CHECK_EQUAL(3, res);
-        RED_CHECK_EQUAL(6u, strlen(char_ptr_cast(dest)));
-    }
-
-    {
-        uint8_t dest[9] = {};
-        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
-        RED_CHECK_EQUAL(3, res);
-        RED_CHECK_EQUAL(6u, strlen(char_ptr_cast(dest)));
-    }
-
-    {
-        uint8_t dest[7] = {};
-        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
-        RED_CHECK_EQUAL(3, res);
-        RED_CHECK_EQUAL(6u, strlen(char_ptr_cast(dest)));
-    }
-
-    {
-        uint8_t dest[6] = {};
-        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
-        RED_CHECK_EQUAL(2, res);
-        RED_CHECK_EQUAL(3u, strlen(char_ptr_cast(dest)));
-    }
-
-    {
-        uint8_t dest[5] = {};
-        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
-        RED_CHECK_EQUAL(2, res);
-        RED_CHECK_EQUAL(3u, strlen(char_ptr_cast(dest)));
-    }
-
-    {
-        uint8_t dest[2] = {};
-        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
-        RED_CHECK_EQUAL(1, res);
-        RED_CHECK_EQUAL(1u, strlen(char_ptr_cast(dest)));
-    }
-
-    {
-        uint8_t dest[1] = {};
-        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
-        RED_CHECK_EQUAL(0, res);
-        RED_CHECK_EQUAL(0u, strlen(char_ptr_cast(dest)));
+        int res = UTF8ToUTF8LCopy(dest, data.dest_len, source);
+        RED_CHECK_EQUAL(data.utf_len, res);
+        RED_CHECK_EQUAL(data.byte_len, strlen(char_ptr_cast(dest)));
     }
 }
 
