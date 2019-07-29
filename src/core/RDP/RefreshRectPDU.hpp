@@ -200,8 +200,7 @@ struct RefreshRectPDU {
             },
             [this](StreamSize<256>, OutStream & sec_header, bytes_view pkt) {
                 SEC::Sec_Send sec(sec_header,
-                                  pkt.data(),
-                                  pkt.size(),
+                                  pkt,
                                   0,
                                   this->encrypt,
                                   this->encryptionLevel);

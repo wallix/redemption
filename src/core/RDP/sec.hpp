@@ -694,10 +694,10 @@ enum {
 
     struct SecExchangePacket_Send
     {
-        SecExchangePacket_Send(OutStream & stream, const uint8_t * client_encrypted_key, size_t keylen_in_bytes){
+        SecExchangePacket_Send(OutStream & stream, cbytes_view client_encrypted_key){
             stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
-            stream.out_uint32_le(keylen_in_bytes + 8);
-            stream.out_copy_bytes(client_encrypted_key, keylen_in_bytes);
+            stream.out_uint32_le(client_encrypted_key.size() + 8);
+            stream.out_copy_bytes(client_encrypted_key);
             const uint8_t null[8] = {};
             stream.out_copy_bytes(null, 8);
         }
@@ -839,7 +839,7 @@ enum {
 
     struct Sec_Send
     {
-        Sec_Send(OutStream & stream, uint8_t * data, size_t len, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
+        Sec_Send(OutStream & stream, bytes_view data, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
             flags |= encryptionLevel?SEC_ENCRYPT:0;
             if (flags) {
                 stream.out_uint32_le(flags);
@@ -847,9 +847,9 @@ enum {
             if (flags & SEC_ENCRYPT){
                 size_t const sig_sz = 8;
                 auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(*stream.get_current()); /*NOLINT*/
-                crypt.sign({data, len}, signature);
+                crypt.sign(data, signature);
                 stream.out_skip_bytes(sig_sz);
-                crypt.decrypt({data, len});
+                crypt.decrypt(data);
             }
         }
     };
@@ -861,7 +861,7 @@ enum {
         int encryption_level;
 
         void operator()(StreamSize<256> /*unused*/, OutStream & sec_header, bytes_view packet) const {
-            SEC::Sec_Send sec(sec_header, packet.data(), packet.size(), this->flags, this->encrypt, this->encryption_level);
+            SEC::Sec_Send sec(sec_header, packet, this->flags, this->encrypt, this->encryption_level);
             (void)sec;
         }
     };

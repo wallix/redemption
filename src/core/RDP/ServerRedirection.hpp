@@ -285,25 +285,19 @@ struct ServerRedirectionPDU {
     uint32_t TargetNetAddressesLength{0};
     uint8_t  TargetNetAddresses[1024]{};
 
-    ServerRedirectionPDU()
+    ServerRedirectionPDU() = default;
 
-    = default;
-
-    unsigned recv_field_process(InStream & stream, uint8_t* field, size_t field_size,
-                                uint32_t & field_length) {
-        unsigned offset = 0;
-        field_length = stream.in_uint32_le();
-        offset += 4;
-        if (field_length > field_size) {
+    uint32_t recv_field_process(InStream & stream, bytes_view field) {
+        uint32_t field_length = stream.in_uint32_le();
+        if (field_length > field.size()) {
             ::check_throw(stream, field_length, "ServerRedirectionPDU::recv_field_process", ERR_RDP_DATA_TRUNCATED);
         }
-        stream.in_copy_bytes(field, field_length);
-        offset += field_length;
-        return offset;
+        stream.in_copy_bytes(field.first(field_length));
+        return field_length;
     }
 
     void receive(InStream & stream) {
-        unsigned offset = 0;
+        std::size_t offset = stream.get_offset();
 
          /* Flags(2) + Length(2) + SessionID(4) + RedirFlags(4) */
         ::check_throw(stream, 12, "ServerRedirectionPDU::receive RDP_SERVER_REDIRECTION_PACKET", ERR_RDP_DATA_TRUNCATED);
@@ -312,53 +306,43 @@ struct ServerRedirectionPDU {
         this->Length = stream.in_uint16_le();
         this->SessionID = stream.in_uint32_le();
         this->RedirFlags = stream.in_uint32_le();
-        offset += 12;
         if (this->RedirFlags & LB_TARGET_NET_ADDRESS) {
-            offset += this->recv_field_process(stream, this->TargetNetAddress,
-                                               sizeof(this->TargetNetAddress),
-                                               this->TargetNetAddressLength);
+            this->TargetNetAddressLength = this->recv_field_process(
+                stream, make_array_view(this->TargetNetAddress));
         }
         if (this->RedirFlags & LB_LOAD_BALANCE_INFO) {
-            offset += this->recv_field_process(stream, this->LoadBalanceInfo,
-                                               sizeof(this->LoadBalanceInfo),
-                                               this->LoadBalanceInfoLength);
+            this->LoadBalanceInfoLength = this->recv_field_process(
+                stream, make_array_view(this->LoadBalanceInfo));
         }
         if (this->RedirFlags & LB_USERNAME) {
-            offset += this->recv_field_process(stream, this->UserName,
-                                               sizeof(this->UserName),
-                                               this->UserNameLength);
+            this->UserNameLength = this->recv_field_process(
+                stream, make_array_view(this->UserName));
         }
         if (this->RedirFlags & LB_DOMAIN) {
-            offset += this->recv_field_process(stream, this->Domain,
-                                               sizeof(this->Domain),
-                                               this->DomainLength);
+            this->DomainLength = this->recv_field_process(
+                stream, make_array_view(this->Domain));
         }
         if (this->RedirFlags & LB_PASSWORD) {
-            offset += this->recv_field_process(stream, this->Password,
-                                               sizeof(this->Password),
-                                               this->PasswordLength);
+            this->PasswordLength = this->recv_field_process(
+                stream, make_array_view(this->Password));
         }
         if (this->RedirFlags & LB_TARGET_FQDN) {
-            offset += this->recv_field_process(stream, this->TargetFQDN,
-                                               sizeof(this->TargetFQDN),
-                                               this->TargetFQDNLength);
+            this->TargetFQDNLength = this->recv_field_process(
+                stream, make_array_view(this->TargetFQDN));
         }
         if (this->RedirFlags & LB_TARGET_NETBIOS_NAME) {
-            offset += this->recv_field_process(stream, this->TargetNetBiosName,
-                                               sizeof(this->TargetNetBiosName),
-                                               this->TargetNetBiosNameLength);
+            this->TargetNetBiosNameLength = this->recv_field_process(
+                stream, make_array_view(this->TargetNetBiosName));
         }
         if (this->RedirFlags & LB_CLIENT_TSV_URL) {
-            offset += this->recv_field_process(stream, this->TsvUrl,
-                                               sizeof(this->TsvUrl),
-                                               this->TsvUrlLength);
+            this->TsvUrlLength = this->recv_field_process(
+                stream, make_array_view(this->TsvUrl));
         }
         if (this->RedirFlags & LB_TARGET_NET_ADDRESSES) {
-            offset += this->recv_field_process(stream, this->TargetNetAddresses,
-                                               sizeof(this->TargetNetAddresses),
-                                               this->TargetNetAddressesLength);
+            this->TargetNetAddressesLength = this->recv_field_process(
+                stream, make_array_view(this->TargetNetAddresses));
         }
-        int remains = this->Length - offset;
+        int remains = this->Length - (stream.get_offset() - offset);
         // LOG(LOG_INFO, "receive RDP_SERVER_REDIRECTION_PACKET pad = %d", remains);
         if ((remains <= 8) && (remains >= 0)) {
             stream.in_skip_bytes(remains);

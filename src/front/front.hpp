@@ -1941,7 +1941,7 @@ public:
                             static_assert(sizeof(lic3) == 16);
 
                             SEC::Sec_Send sec(
-                                sec_header, lic3, sizeof(lic3),
+                                sec_header, make_array_view(lic3),
                                 SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0
                             );
                             (void)sec;
@@ -2048,7 +2048,7 @@ public:
 
                             StaticOutStream<8> tmp_sec_header;
                             SEC::Sec_Send sec(
-                                tmp_sec_header, stream.get_data(), stream.get_offset(),
+                                tmp_sec_header, stream.get_bytes(),
                                 SEC::SEC_LICENSE_PKT, this->encrypt, 0
                             );
                             (void)sec;
@@ -2585,7 +2585,7 @@ public:
                     0x00, 0x00              // wBlobLen  : 0
                 };
                 SEC::Sec_Send sec(
-                    sec_header, lic2, sizeof(lic2),
+                    sec_header, make_array_view(lic2),
                     SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0
                 );
                 (void)sec;

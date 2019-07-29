@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(TestSend_SecExchangePacket)
         0xb2, 0x82, 0xf0, 0x93, 0x17, 0xf8, 0x59, 0xc9, 0x7b, 0xba, 0x2a, 0x22, 0x59, 0x45, 0xa7, 0x3a
         };
     StaticOutStream<1024> stream;
-    SEC::SecExchangePacket_Send sec(stream, client_encrypted_key, sizeof(client_encrypted_key));
+    SEC::SecExchangePacket_Send sec(stream, make_array_view(client_encrypted_key));
 
     RED_CHECK_MEM(sec_pkt, stream.get_bytes());
 }
