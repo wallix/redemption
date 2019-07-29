@@ -146,8 +146,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     RED_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
     RED_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
-    RED_CHECK_MEM(
-        make_array_view(ChallengeMsg.TargetName.buffer.ostream.get_data(), ChallengeMsg.TargetName.len),
+    RED_CHECK_MEM(ChallengeMsg.TargetName.buffer,
         "\x57\x00\x49\x00\x4e\x00\x37\x00"_av
     );
     // hexdump_c(ChallengeMsg.TargetName.buffer.ostream.get_data(),

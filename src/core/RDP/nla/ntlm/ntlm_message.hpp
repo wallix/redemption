@@ -1713,7 +1713,7 @@ friend void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & m
 friend void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self);
 
 public:
-    NtlmField TargetName;          /* 8 Bytes */
+    NtlmFieldImplVector TargetName;          /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
     uint8_t serverChallenge[8]{};    /* 8 Bytes */
     // uint64_t serverChallenge;
