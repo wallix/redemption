@@ -615,6 +615,10 @@ split_domain = boolean(default=False)
 #_hidden
 wabam_uses_translated_remoteapp = boolean(default=False)
 
+# Enables Session Shadowing Support.
+#_advanced
+session_shadowing_support = boolean(default=True)
+
 [metrics]
 
 #_advanced
@@ -999,7 +1003,7 @@ enable_up = boolean(default=False)
 enable_down = boolean(default=False)
 
 #_hidden
-log_if_accepted = boolean(default=False)
+log_if_accepted = boolean(default=True)
 
 [icap_server_up]
 

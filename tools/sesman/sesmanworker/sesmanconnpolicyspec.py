@@ -70,7 +70,7 @@ cp_spec = {
   'file_verification': {
     u'enable_up': ('enable_up', False),
     u'enable_down': ('enable_down', False),
-    u'log_if_accepted': ('log_if_accepted', False),
+    u'log_if_accepted': ('log_if_accepted', True),
   },
   'vnc': {
     u'server_is_apple': ('server_is_apple', False),

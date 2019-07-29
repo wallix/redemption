@@ -685,7 +685,7 @@
         {
           "name": "log_if_accepted",
           "type": "bool",
-          "default": false,
+          "default": true,
           "advanced": true,
           "description": ""
         }

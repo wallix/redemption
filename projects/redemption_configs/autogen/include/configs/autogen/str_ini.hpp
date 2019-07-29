@@ -729,6 +729,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #wabam_uses_translated_remoteapp = 0
 
+# Enables Session Shadowing Support.
+# value: 0 or 1
+#_advanced
+#session_shadowing_support = 1
+
 [metrics]
 
 # value: 0 or 1
@@ -1186,7 +1191,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
-#log_if_accepted = 0
+#log_if_accepted = 1
 
 [icap_server_up]
 
