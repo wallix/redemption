@@ -665,119 +665,10 @@ struct NtlmField {
     uint16_t len{0};           /* 2 Bytes */
     uint16_t maxLen{0};        /* 2 Bytes */
     uint32_t bufferOffset{0};  /* 4 Bytes */
-    class Buffer
-    {
-        BufMaker<65535> buf_maker;
-        array_view_u8 avbuf;
-
-    public:
-        OutStream ostream;
-
-    private:
-        std::size_t in_sz{0};
-
-    public:
-        Buffer()
-        : avbuf(this->buf_maker.static_array())
-        , ostream(this->avbuf)
-        {}
-
-        Buffer(Buffer const &) = delete;
-
-        void init(std::size_t sz) {
-            if (this->avbuf.size() < sz) {
-                this->avbuf = this->buf_maker.dyn_array(sz);
-            }
-            this->in_sz = 0;
-            this->ostream = OutStream(this->avbuf);
-        }
-
-        void mark_end() {
-            this->in_sz = this->ostream.get_offset();
-        }
-
-        array_view_const_u8 av() const {
-            return {this->get_data(), this->size()};
-        }
-
-        uint8_t * get_data() {
-            return this->ostream.get_data();
-        }
-
-        uint8_t const * get_data() const {
-            return this->ostream.get_data();
-        }
-
-        std::size_t size() const {
-            return this->in_sz;
-        }
-
-        InStream in_stream() const {
-            return InStream(this->av());
-        }
-
-        void reset() {
-            this->ostream.rewind();
-            this->in_sz = 0;
-        }
-    } buffer;
-
-    NtlmField() = default;
-
-    void log(const char * name) {
-        LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",
-            name, this->len, this->maxLen, this->bufferOffset);
-        hexdump_d(this->buffer.get_data(), this->len);
-    }
-
-    unsigned int emit(OutStream & stream, unsigned int currentOffset) /* TODO const*/ {
-        this->len = this->buffer.size();
-        this->maxLen = this->len;
-        this->bufferOffset = currentOffset;
-        // currentOffset += this->len;
-
-        stream.out_uint16_le(this->len);
-        stream.out_uint16_le(this->maxLen);
-        stream.out_uint32_le(this->bufferOffset);
-        return this->len;
-    }
-
-    void recv(InStream & stream) {
-        this->len = stream.in_uint16_le();
-        this->maxLen = stream.in_uint16_le();
-        this->bufferOffset = stream.in_uint32_le();
-    }
-
-    void read_payload(InStream & stream, uint8_t const * pBegin) {
-        if (this->len > 0) {
-            uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-            if (pEnd > stream.get_current()) {
-                stream.in_skip_bytes(pEnd - stream.get_current());
-            }
-            this->buffer.init(this->len);
-            this->buffer.ostream.out_copy_bytes(pBegin + this->bufferOffset, this->len);
-            this->buffer.mark_end();
-            this->buffer.ostream.rewind();
-        }
-    }
-
-    void write_payload(OutStream & stream) const {
-        if (this->len > 0) {
-            stream.out_copy_bytes(this->buffer.get_data(), this->len);
-        }
-    }
-
-};
-
-
-struct NtlmFieldImplVector {
-    uint16_t len{0};           /* 2 Bytes */
-    uint16_t maxLen{0};        /* 2 Bytes */
-    uint32_t bufferOffset{0};  /* 4 Bytes */
 
     std::vector<uint8_t> buffer;
 
-    NtlmFieldImplVector() = default;
+    NtlmField() = default;
 
     void log(const char * name) {
         LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",
@@ -1192,12 +1083,12 @@ struct NTLMAuthenticateMessage {
     }
 
 
-    NtlmFieldImplVector LmChallengeResponse;        /* 8 Bytes */
-    NtlmFieldImplVector NtChallengeResponse;        /* 8 Bytes */
-    NtlmFieldImplVector DomainName;                 /* 8 Bytes */
-    NtlmFieldImplVector UserName;                   /* 8 Bytes */
-    NtlmFieldImplVector Workstation;                /* 8 Bytes */
-    NtlmFieldImplVector EncryptedRandomSessionKey;  /* 8 Bytes */
+    NtlmField LmChallengeResponse;        /* 8 Bytes */
+    NtlmField NtChallengeResponse;        /* 8 Bytes */
+    NtlmField DomainName;                 /* 8 Bytes */
+    NtlmField UserName;                   /* 8 Bytes */
+    NtlmField Workstation;                /* 8 Bytes */
+    NtlmField EncryptedRandomSessionKey;  /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
     uint8_t MIC[16]{};                      /* 16 Bytes */
@@ -1714,12 +1605,12 @@ friend void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & m
 friend void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self);
 
 public:
-    NtlmFieldImplVector TargetName;          /* 8 Bytes */
+    NtlmField TargetName;          /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
     uint8_t serverChallenge[8]{};    /* 8 Bytes */
     // uint64_t serverChallenge;
     /* 8 Bytes reserved */
-    NtlmFieldImplVector TargetInfo;          /* 8 Bytes */
+    NtlmField TargetInfo;          /* 8 Bytes */
     NtlmVersion version;           /* 8 Bytes */
 private:
     uint32_t PayloadOffset{12+8+4+8+8+8+8};
@@ -1957,8 +1848,8 @@ class NTLMNegotiateMessage
 
 public:
     NtlmNegotiateFlags negoFlags; /* 4 Bytes */
-    NtlmFieldImplVector DomainName;         /* 8 Bytes */
-    NtlmFieldImplVector Workstation;        /* 8 Bytes */
+    NtlmField DomainName;         /* 8 Bytes */
+    NtlmField Workstation;        /* 8 Bytes */
     NtlmVersion version;          /* 8 Bytes */
 private:
     uint32_t PayloadOffset;
