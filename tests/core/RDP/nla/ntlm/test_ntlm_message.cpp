@@ -551,8 +551,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     // User Name
     // LOG(LOG_INFO, "User Name ===========\n");
     // hexdump_c(AuthMsg.UserName.Buffer.get_data(), AuthMsg.UserName.Buffer.size());
-    RED_CHECK_MEM(
-        make_array_view(AuthMsg.UserName.buffer.ostream.get_data(), AuthMsg.UserName.len),
+    RED_CHECK_MEM(AuthMsg.UserName.buffer,
         "\x75\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00\x6d\x00\x65\x00"_av
     );
 
@@ -1114,7 +1113,7 @@ public:
         // LOG(LOG_INFO, "DomainName size = %u", DomainName.size());
         // LOG(LOG_INFO, "hash size = %u", hash_size);
 
-        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyNT);
+        this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
         // LOG(LOG_INFO, "ResponseKeyNT");
         // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
@@ -1141,7 +1140,7 @@ public:
 
         uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
         uint8_t ResponseKeyLM[16] = {};
-        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyLM);
+        this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyLM);
 
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
         hmac_md5resp.update({this->ServerChallenge, 8});
@@ -1160,7 +1159,7 @@ public:
         uint8_t NtProofStr[16] = {};
         memcpy(NtProofStr, AuthNtResponse.data(), 16);
         uint8_t ResponseKeyNT[16] = {};
-        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName, ResponseKeyNT);
+        this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
         SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
@@ -1416,10 +1415,8 @@ public:
         auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         domain.assign(userDomain.data(),userDomain.data()+userDomain.size());
 
-        auto & user = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-        user.reset();
-        user.ostream.out_copy_bytes(userName);
-        user.mark_end();
+        this->AUTHENTICATE_MESSAGE.UserName.buffer
+            .assign(userName.data(),userName.data()+userName.size());
 
         // this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
@@ -1604,7 +1601,7 @@ public:
             this->SavedAuthenticateMessage.copy({p + offset, in_stream.get_offset() - offset}, offset);
         }
         
-        this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.av());
+        this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer);
         this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer);
 
         if (this->identity.is_empty_user_domain()){
@@ -2260,10 +2257,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     domain.assign(userDomain, userDomain + sizeof(userDomain));
 
     auto & user = client_context.AUTHENTICATE_MESSAGE.UserName.buffer;
-
-    user.reset();
-    user.ostream.out_copy_bytes(userName, sizeof(userName));
-    user.mark_end();
+    user.assign(userName, userName + sizeof(userName));
 
     client_context.AUTHENTICATE_MESSAGE.version.ignore_version = false;
 //  client_context.AUTHENTICATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
