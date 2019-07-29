@@ -362,18 +362,18 @@ struct EncryptContext
     }
 
     /**
-     * \brief Encrypt \c src_buf into \c dst_buf.
+     * \brief Encrypt \c src into \c dst.
      * \return encrypted output size
      */
-    size_t encrypt(uint8_t const * src_buf, size_t src_sz, uint8_t * dst_buf, size_t dst_sz)
+    size_t encrypt(cbytes_view src, bytes_view dst)
     {
         assert(this->cctx.is_initialized());
-        int safe_size = dst_sz;
+        int safe_size = dst.size();
         int remaining_size = 0;
         /* allows reusing of ectx for multiple encryption cycles */
         if (EVP_EncryptInit_ex(this->cctx.get_ctx(), nullptr, nullptr, nullptr, nullptr) != 1
-         || EVP_EncryptUpdate(this->cctx.get_ctx(), dst_buf, &safe_size, src_buf, src_sz) != 1
-         || EVP_EncryptFinal_ex(this->cctx.get_ctx(), dst_buf + safe_size, &remaining_size) != 1) {
+         || EVP_EncryptUpdate(this->cctx.get_ctx(), dst.data(), &safe_size, src.data(), src.size()) != 1
+         || EVP_EncryptFinal_ex(this->cctx.get_ctx(), dst.data() + safe_size, &remaining_size) != 1) {
             LOG(LOG_ERR, "EncryptContext::encrypt");
             throw Error(ERR_SSL_CALL_FAILED);
         }
@@ -406,17 +406,17 @@ struct DecryptContext
     }
 
     /**
-     * \brief Decrypt \c src_buf into \c dst_buf.
+     * \brief Decrypt \c src into \c dst_buf.
      * \return decrypted output size
      */
-    size_t decrypt(const uint8_t * src_buf, size_t src_sz, uint8_t * dst_buf)
+    size_t decrypt(cbytes_view src, uint8_t * dst_buf)
     {
         assert(this->cctx.is_initialized());
         int written = 0;
         int trail = 0;
         /* allows reusing of ectx for multiple encryption cycles */
         if (EVP_DecryptInit_ex(this->cctx.get_ctx(), nullptr, nullptr, nullptr, nullptr) != 1
-         || EVP_DecryptUpdate(this->cctx.get_ctx(), dst_buf, &written, src_buf, src_sz) != 1
+         || EVP_DecryptUpdate(this->cctx.get_ctx(), dst_buf, &written, src.data(), src.size()) != 1
          || EVP_DecryptFinal_ex(this->cctx.get_ctx(), dst_buf + written, &trail) != 1){
             if (this->enable_log_decrypt) {
                 LOG(LOG_ERR, "DecryptContext::decrypt");

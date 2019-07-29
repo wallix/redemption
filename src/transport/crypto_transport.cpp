@@ -375,7 +375,7 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
             auto * dec_buf = this->enc_buffer_handle.decrypted_buffer(enc_len);
 
             this->raw_read(raw_buf, enc_len);
-            const size_t pack_buf_size = this->ectx.decrypt(raw_buf, enc_len, dec_buf);
+            const size_t pack_buf_size = this->ectx.decrypt({raw_buf, enc_len}, dec_buf);
 
             size_t chunk_size = CRYPTO_BUFFER_SIZE;
             const snappy_status status = snappy_uncompress(
@@ -501,8 +501,8 @@ void ocrypto::flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     uint8_t ciphered_buf[4 + 65536];
     uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
     ciphered_buf_sz = this->ectx.encrypt(
-        byte_ptr_cast(compressed_buf), compressed_buf_sz,
-        ciphered_buf + 4, ciphered_buf_sz
+        {compressed_buf, compressed_buf_sz},
+        {ciphered_buf + 4, ciphered_buf_sz}
     );
 
     ciphered_buf[0] = ciphered_buf_sz & 0xFF;
