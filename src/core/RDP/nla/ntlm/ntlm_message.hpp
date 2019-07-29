@@ -1196,7 +1196,7 @@ struct NTLMAuthenticateMessage {
     NtlmFieldImplVector DomainName;                 /* 8 Bytes */
     NtlmFieldImplVector UserName;                   /* 8 Bytes */
     NtlmFieldImplVector Workstation;                /* 8 Bytes */
-    NtlmField EncryptedRandomSessionKey;  /* 8 Bytes */
+    NtlmFieldImplVector EncryptedRandomSessionKey;  /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
     uint8_t MIC[16]{};                      /* 16 Bytes */

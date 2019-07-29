@@ -313,9 +313,7 @@ private:
         this->EncryptedRandomSessionKey = ::Rc4Key(this->SessionBaseKey, this->ExportedSessionKey);
 
         auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-        AuthEncryptedRSK.reset();
-        AuthEncryptedRSK.ostream.out_copy_bytes(this->EncryptedRandomSessionKey.data(), 16);
-        AuthEncryptedRSK.mark_end();
+        AuthEncryptedRSK.assign(this->EncryptedRandomSessionKey.data(), this->EncryptedRandomSessionKey.data()+16);
 
         // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
         this->sspi_context_ClientSigningKey = ::Md5(this->ExportedSessionKey,
@@ -380,7 +378,7 @@ private:
 
         if (!(flag & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
             // If flag is not set, encryted session key buffer is not send
-            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.reset();
+            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.clear();
         }
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
             this->AUTHENTICATE_MESSAGE.Workstation.buffer = this->Workstation;

@@ -565,11 +565,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     // LOG(LOG_INFO, "Encrypted Random Session Key ===========\n");
     // hexdump_c(AuthMsg.EncryptedRandomSessionKey.Buffer.get_data(),
     //           AuthMsg.EncryptedRandomSessionKey.Buffer.size());
-    RED_CHECK_MEM(
-        make_array_view(
-            AuthMsg.EncryptedRandomSessionKey.buffer.ostream.get_data(),
-            AuthMsg.EncryptedRandomSessionKey.len
-        ),
+    RED_CHECK_MEM(AuthMsg.EncryptedRandomSessionKey.buffer,
         "\xb1\xd2\x45\x42\x0f\x37\x9a\x0e\xe0\xce\x77\x40\x10\x8a\xda\xba"_av
     );
 
@@ -950,16 +946,14 @@ public:
                         this->ExportedSessionKey, this->EncryptedRandomSessionKey);
 
         auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-        AuthEncryptedRSK.reset();
-        AuthEncryptedRSK.ostream.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
-        AuthEncryptedRSK.mark_end();
+        AuthEncryptedRSK.assign(this->EncryptedRandomSessionKey, this->EncryptedRandomSessionKey+16);
     }
     // server method to decrypt exported session key from authenticate message with
     // session base key computed with Responses.
     void ntlm_decrypt_exported_session_key() {
         auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Decrypt RandomSessionKey");
-        memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.get_data(),
+        memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.data(),
                AuthEncryptedRSK.size());
         this->ntlm_rc4k(this->SessionBaseKey, 16,
                         this->EncryptedRandomSessionKey, this->ExportedSessionKey);
@@ -1405,7 +1399,7 @@ public:
 
         if (!(flag & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
             // If flag is not set, encryted session key buffer is not send
-            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.reset();
+            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.clear();
         }
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
             this->AUTHENTICATE_MESSAGE.Workstation.buffer.assign(workstation.data(), workstation.data() + workstation.size());

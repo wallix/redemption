@@ -311,7 +311,7 @@ protected:
         void ntlm_decrypt_exported_session_key() {
             auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Decrypt RandomSessionKey");
-            memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.get_data(),
+            memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.data(),
                    AuthEncryptedRSK.size());
 
             // ntlm_rc4k
