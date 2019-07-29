@@ -676,17 +676,6 @@ struct NtlmField {
         hexdump_d(this->buffer);
     }
 
-    unsigned int emit(OutStream & stream, unsigned int currentOffset) /* TODO const*/ {
-        this->len = this->maxLen= this->buffer.size();
-        this->bufferOffset = currentOffset;
-        // currentOffset += this->len;
-
-        stream.out_uint16_le(this->buffer.size());
-        stream.out_uint16_le(this->buffer.size());
-        stream.out_uint32_le(this->bufferOffset);
-        return this->buffer.size();
-    }
-
     void recv(InStream & stream) {
         this->len = stream.in_uint16_le();
         this->maxLen = stream.in_uint16_le();
@@ -705,6 +694,16 @@ struct NtlmField {
         stream.out_copy_bytes(this->buffer.data(), this->buffer.size());
     }
 };
+
+inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const std::vector<uint8_t> & buffer, NtlmField & self) /* TODO const*/ {
+    self.len = self.maxLen= buffer.size();
+    self.bufferOffset = currentOffset;
+    // currentOffset += this->len;
+
+    stream.out_uint16_le(buffer.size());
+    stream.out_uint16_le(buffer.size());
+    stream.out_uint32_le(self.bufferOffset);
+}
 
 
 // 2.2.2.9   NTLMSSP_MESSAGE_SIGNATURE
@@ -1127,13 +1126,19 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
         currentOffset += 16;
     }
     self.message_emit(stream);
-    currentOffset += self.LmChallengeResponse.emit(stream, currentOffset);
-    currentOffset += self.NtChallengeResponse.emit(stream, currentOffset);
-    currentOffset += self.DomainName.emit(stream, currentOffset);
-    currentOffset += self.UserName.emit(stream, currentOffset);
-    currentOffset += self.Workstation.emit(stream, currentOffset);
-    currentOffset += self.EncryptedRandomSessionKey.emit(stream, currentOffset);
-    (void)currentOffset;
+
+    emitNtlmField(stream, currentOffset, self.LmChallengeResponse.buffer, self.LmChallengeResponse);
+    currentOffset += self.LmChallengeResponse.buffer.size();
+    emitNtlmField(stream, currentOffset, self.NtChallengeResponse.buffer, self.NtChallengeResponse);
+    currentOffset += self.NtChallengeResponse.buffer.size();
+    emitNtlmField(stream, currentOffset, self.DomainName.buffer, self.DomainName);
+    currentOffset += self.DomainName.buffer.size();
+    emitNtlmField(stream, currentOffset, self.UserName.buffer, self.UserName);
+    currentOffset += self.UserName.buffer.size();
+    emitNtlmField(stream, currentOffset, self.Workstation.buffer, self.Workstation);
+    currentOffset += self.Workstation.buffer.size();
+    emitNtlmField(stream, currentOffset, self.EncryptedRandomSessionKey.buffer, self.EncryptedRandomSessionKey);
+
     self.negoFlags.emit(stream);
     if (!self.version.ignore_version) {
         EmitNtlmVersion(stream, self.version);
@@ -1651,11 +1656,13 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
         stream.out_uint32_le(NtlmChallenge);
 
-        currentOffset += self.TargetName.emit(stream, currentOffset);
+        emitNtlmField(stream, currentOffset, self.TargetName.buffer, self.TargetName);
+        currentOffset += self.TargetName.buffer.size();
         self.negoFlags.emit(stream);
         stream.out_copy_bytes(self.serverChallenge, 8);
         stream.out_clear_bytes(8);
-        /*currentOffset +=*/ self.TargetInfo.emit(stream, currentOffset);
+        emitNtlmField(stream, currentOffset, self.TargetInfo.buffer, self.TargetInfo);
+        
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
             if (!self.version.ignore_version) {
                 EmitNtlmVersion(stream, self.version);
@@ -1868,9 +1875,9 @@ public:
         }
         this->message_emit(stream);
         this->negoFlags.emit(stream);
-        currentOffset += this->DomainName.emit(stream, currentOffset);
-        currentOffset += this->Workstation.emit(stream, currentOffset);
-        (void)currentOffset;
+        emitNtlmField(stream, currentOffset, this->DomainName.buffer, this->DomainName);
+        currentOffset += this->DomainName.buffer.size();
+        emitNtlmField(stream, currentOffset,  this->Workstation.buffer,  this->Workstation);
         if (!this->version.ignore_version) {
             EmitNtlmVersion(stream, this->version);
         }
