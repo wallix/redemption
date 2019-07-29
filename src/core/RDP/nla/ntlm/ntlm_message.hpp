@@ -33,6 +33,8 @@
 #include "system/ssl_rc4.hpp"
 #include "system/ssl_md4.hpp"
 
+#include <numeric>
+
 // 2.2.2.1   AV_PAIR
 // ==================================
 // The AV_PAIR structure defines an attribute/value pair. Sequences of AV_PAIR
@@ -683,15 +685,6 @@ struct NtlmField {
     }
 };
 
-inline void read_payload(InStream & stream, uint8_t const * pBegin, NtlmField & self) {
-    uint8_t const * pEnd = pBegin + self.bufferOffset + self.len;
-    if (pEnd > stream.get_current()) {
-        stream.in_skip_bytes(pEnd - stream.get_current());
-    }
-    self.buffer.assign(pBegin + self.bufferOffset, pEnd);
-}
-
-
 inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const std::vector<uint8_t> & buffer, NtlmField & self) /* TODO const*/ {
     self.len = self.maxLen= buffer.size();
     self.bufferOffset = currentOffset;
@@ -1200,48 +1193,26 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         self.has_mic = false;
     }
 
+    auto l = {
+         &self.LmChallengeResponse,
+         &self.NtChallengeResponse,
+         &self.DomainName,
+         &self.UserName,
+         &self.Workstation,
+         &self.EncryptedRandomSessionKey};
+
+    auto maxp = std::accumulate(l.begin(), l.end(), 0, 
+        [](size_t a, const NtlmField * field) {
+             return std::max(a, size_t(field->bufferOffset + field->len));
+    });
+    if (pBegin + maxp > stream.get_current()) {
+        stream.in_skip_bytes(pBegin + maxp - stream.get_current());
+    }
+
     // PAYLOAD
-    {
-        uint8_t const * pEnd = pBegin + self.LmChallengeResponse.bufferOffset + self.LmChallengeResponse.len;
-        if (pEnd > stream.get_current()) {
-            stream.in_skip_bytes(pEnd - stream.get_current());
-        }
-        self.LmChallengeResponse.buffer.assign(pBegin + self.LmChallengeResponse.bufferOffset, pEnd);
-    }
-    {
-        uint8_t const * pEnd = pBegin + self.NtChallengeResponse.bufferOffset + self.NtChallengeResponse.len;
-        if (pEnd > stream.get_current()) {
-            stream.in_skip_bytes(pEnd - stream.get_current());
-        }
-        self.NtChallengeResponse.buffer.assign(pBegin + self.NtChallengeResponse.bufferOffset, pEnd);
-    }
-    {
-        uint8_t const * pEnd = pBegin + self.DomainName.bufferOffset + self.DomainName.len;
-        if (pEnd > stream.get_current()) {
-            stream.in_skip_bytes(pEnd - stream.get_current());
-        }
-        self.DomainName.buffer.assign(pBegin + self.DomainName.bufferOffset, pEnd);
-    }
-    {
-        uint8_t const * pEnd = pBegin + self.UserName.bufferOffset + self.UserName.len;
-        if (pEnd > stream.get_current()) {
-            stream.in_skip_bytes(pEnd - stream.get_current());
-        }
-        self.UserName.buffer.assign(pBegin + self.UserName.bufferOffset, pEnd);
-    }
-    {
-        uint8_t const * pEnd = pBegin + self.Workstation.bufferOffset + self.Workstation.len;
-        if (pEnd > stream.get_current()) {
-            stream.in_skip_bytes(pEnd - stream.get_current());
-        }
-        self.Workstation.buffer.assign(pBegin + self.Workstation.bufferOffset, pEnd);
-    }
-    {
-        uint8_t const * pEnd = pBegin + self.EncryptedRandomSessionKey.bufferOffset + self.EncryptedRandomSessionKey.len;
-        if (pEnd > stream.get_current()) {
-            stream.in_skip_bytes(pEnd - stream.get_current());
-        }
-        self.EncryptedRandomSessionKey.buffer.assign(pBegin + self.EncryptedRandomSessionKey.bufferOffset, pEnd);
+    for(auto * field: l){
+        field->buffer.assign(pBegin + field->bufferOffset, 
+                             pBegin + field->bufferOffset + field->len);
     }
 }
 
@@ -1730,22 +1701,19 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
         RecvNtlmVersion(stream, self.version);
     }
     // PAYLOAD
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }
-    read_payload(stream, pBegin, self.TargetName);
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }    
-    read_payload(stream, pBegin, self.TargetInfo);
+    auto l = {&self.TargetName,&self.TargetInfo};
+    auto maxp = std::accumulate(l.begin(), l.end(), 0, 
+        [](size_t a, const NtlmField * field) {
+             return std::max(a, size_t(field->bufferOffset + field->len));
+    });
+    if (pBegin + maxp > stream.get_current()) {
+        stream.in_skip_bytes(pBegin + maxp - stream.get_current());
+    }
+
+    for(auto * field: l){
+        field->buffer.assign(pBegin + field->bufferOffset, 
+                             pBegin + field->bufferOffset + field->len);
+    }
     
     InStream in_stream(self.TargetInfo.buffer);
     
@@ -1958,22 +1926,19 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
         RecvNtlmVersion(stream, self.version);
     }
     // PAYLOAD
-//    void read_payload(InStream & stream, uint8_t const * pBegin, NtlmField & self) {
-//        uint8_t const * pEnd = pBegin + self.bufferOffset + self.len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + self.bufferOffset, pBegin + self.bufferOffset + self.len);
-//    }
-    read_payload(stream, pBegin, self.DomainName);
-//    void read_payload(uint8_t const * pBegin) {
-//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-//        if (pEnd > stream.get_current()) {
-//            stream.in_skip_bytes(pEnd - stream.get_current());
-//        }
-//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-//    }
-    read_payload(stream, pBegin, self.Workstation);
+    auto l = {&self.DomainName,&self.Workstation};
+    auto maxp = std::accumulate(l.begin(), l.end(), 0, 
+        [](size_t a, const NtlmField * field) {
+             return std::max(a, size_t(field->bufferOffset + field->len));
+    });
+    if (pBegin + maxp > stream.get_current()) {
+        stream.in_skip_bytes(pBegin + maxp - stream.get_current());
+    }
+
+    for(auto * field: l){
+        field->buffer.assign(pBegin + field->bufferOffset, 
+                             pBegin + field->bufferOffset + field->len);
+    }    
 }
 
 
