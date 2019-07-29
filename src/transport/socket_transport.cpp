@@ -290,7 +290,7 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
         ? this->tls->privpartial_send_tls(buffer, len)
         : socket_send_partial(this->sck, buffer, len);
 
-    if (res <= 0) {
+    if (this->tls ? (res < 0) : (res <= 0)) {
         LOG(LOG_WARNING,
             "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
             this->name, this->sck, errno, strerror(errno));
@@ -314,6 +314,10 @@ void SocketTransport::send_waiting_data()
         ssize_t res = (this->tls)
             ? this->tls->privpartial_send_tls(first->p, len)
             : socket_send_partial(this->sck, first->p, len);
+
+        if (this->tls && res == 0) {
+            break;
+        }
 
         if (res <= 0) {
             LOG(LOG_WARNING,

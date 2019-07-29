@@ -117,6 +117,7 @@ public:
         }
 
         this->allocated_ctx = ctx;
+        SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER/* | SSL_MODE_ENABLE_PARTIAL_WRITE*/);
 
         /*
          * This is necessary, because the Microsoft TLS implementation is not perfect.
@@ -330,6 +331,7 @@ public:
 
         SSL_CTX* ctx = SSL_CTX_new(SSLv23_server_method());
         this->allocated_ctx = ctx;
+        SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER/* | SSL_MODE_ENABLE_PARTIAL_WRITE*/);
 
         /*
          * This is necessary, because the Microsoft TLS implementation is not perfect.
@@ -711,7 +713,7 @@ public:
 
                 case SSL_ERROR_WANT_WRITE:
                     LOG(LOG_INFO, "send_tls WANT WRITE");
-                    continue;
+                    return 0;
 
                 default:
                 {
