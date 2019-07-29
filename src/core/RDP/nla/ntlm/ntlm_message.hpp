@@ -681,15 +681,16 @@ struct NtlmField {
         this->maxLen = stream.in_uint16_le();
         this->bufferOffset = stream.in_uint32_le();
     }
-
-    void read_payload(InStream & stream, uint8_t const * pBegin) {
-        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
-        if (pEnd > stream.get_current()) {
-            stream.in_skip_bytes(pEnd - stream.get_current());
-        }
-        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
-    }
 };
+
+inline void read_payload(InStream & stream, uint8_t const * pBegin, NtlmField & self) {
+    uint8_t const * pEnd = pBegin + self.bufferOffset + self.len;
+    if (pEnd > stream.get_current()) {
+        stream.in_skip_bytes(pEnd - stream.get_current());
+    }
+    self.buffer.assign(pBegin + self.bufferOffset, pBegin + self.bufferOffset + self.len);
+}
+
 
 inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const std::vector<uint8_t> & buffer, NtlmField & self) /* TODO const*/ {
     self.len = self.maxLen= buffer.size();
@@ -1200,12 +1201,54 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
     }
 
     // PAYLOAD
-    self.LmChallengeResponse.read_payload(stream, pBegin);
-    self.NtChallengeResponse.read_payload(stream, pBegin);
-    self.DomainName.read_payload(stream, pBegin);
-    self.UserName.read_payload(stream, pBegin);
-    self.Workstation.read_payload(stream, pBegin);
-    self.EncryptedRandomSessionKey.read_payload(stream, pBegin);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }
+    read_payload(stream, pBegin, self.LmChallengeResponse);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }
+    read_payload(stream, pBegin, self.NtChallengeResponse);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }
+    read_payload(stream, pBegin, self.DomainName);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }
+    read_payload(stream, pBegin, self.UserName);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }
+    read_payload(stream, pBegin, self.Workstation);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }
+    read_payload(stream, pBegin, self.EncryptedRandomSessionKey);
 }
 
 // 2.2.2.3   LM_RESPONSE
@@ -1693,8 +1736,22 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
         RecvNtlmVersion(stream, self.version);
     }
     // PAYLOAD
-    self.TargetName.read_payload(stream, pBegin);
-    self.TargetInfo.read_payload(stream, pBegin);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }
+    read_payload(stream, pBegin, self.TargetName);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }    
+    read_payload(stream, pBegin, self.TargetInfo);
     
     InStream in_stream(self.TargetInfo.buffer);
     
@@ -1907,8 +1964,22 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
         RecvNtlmVersion(stream, self.version);
     }
     // PAYLOAD
-    self.DomainName.read_payload(stream, pBegin);
-    self.Workstation.read_payload(stream, pBegin);
+//    void read_payload(InStream & stream, uint8_t const * pBegin, NtlmField & self) {
+//        uint8_t const * pEnd = pBegin + self.bufferOffset + self.len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + self.bufferOffset, pBegin + self.bufferOffset + self.len);
+//    }
+    read_payload(stream, pBegin, self.DomainName);
+//    void read_payload(uint8_t const * pBegin) {
+//        uint8_t const * pEnd = pBegin + this->bufferOffset + this->len;
+//        if (pEnd > stream.get_current()) {
+//            stream.in_skip_bytes(pEnd - stream.get_current());
+//        }
+//        this->buffer.assign(pBegin + this->bufferOffset, pBegin + this->bufferOffset + this->len);
+//    }
+    read_payload(stream, pBegin, self.Workstation);
 }
 
 
