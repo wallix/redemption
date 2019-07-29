@@ -74,8 +74,7 @@ rdp_mppc_unified_dec::~rdp_mppc_unified_dec()
     delete this->mppc_dec;
 }
 
-int rdp_mppc_unified_dec::decompress(
-    uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen)
+cbytes_view rdp_mppc_unified_dec::decompress(cbytes_view cbuf, int ctype)
 {
     if (!this->mppc_dec) {
         const int type = ctype & 0x0f;
@@ -86,11 +85,11 @@ int rdp_mppc_unified_dec::decompress(
             case PACKET_COMPR_TYPE_RDP61: this->mppc_dec = new rdp_mppc_61_dec; break;
             default:
                 LOG(LOG_ERR, "rdp_mppc_unified_dec::decompress: invalid RDP compression code 0x%2.2x", unsigned(type));
-                return false;
+                return {};
         }
     }
 
-    return this->mppc_dec->decompress(cbuf, len, ctype, rdata, rlen);
+    return this->mppc_dec->decompress(cbuf, ctype);
 }
 
 std::unique_ptr<rdp_mppc_enc>

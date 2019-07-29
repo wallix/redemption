@@ -29,12 +29,11 @@ RED_AUTO_TEST_CASE(TestRDP40BlukCompression4)
 
     rdp_mppc_40_enc mppc_enc;
 
-
-    RED_CHECK_EQUAL(sizeof(historyBuffer),     RDP_40_HIST_BUF_LEN);
-    RED_CHECK_EQUAL(sizeof(outputBufferPlus),  RDP_40_HIST_BUF_LEN + 64);
-    RED_CHECK_EQUAL(sizeof(hash_table),        rdp_mppc_40_enc::hash_table_manager::get_table_size());
-    RED_CHECK_EQUAL(sizeof(uncompressed_data), 204);
-    RED_CHECK_EQUAL(sizeof(compressed_data),   18);
+    static_assert(sizeof(historyBuffer) == RDP_40_HIST_BUF_LEN);
+    static_assert(sizeof(outputBufferPlus) == RDP_40_HIST_BUF_LEN + 64);
+    static_assert(sizeof(hash_table) == rdp_mppc_40_enc::hash_table_manager::get_table_size());
+    static_assert(sizeof(uncompressed_data) == 204);
+    static_assert(sizeof(compressed_data) == 18);
 
 
     memcpy(mppc_enc.historyBuffer,           historyBuffer,    RDP_40_HIST_BUF_LEN);
@@ -66,10 +65,8 @@ RED_AUTO_TEST_CASE(TestRDP50BlukDecompression6)
 
     rdp_mppc_40_dec mppc_dec;
 
-
-    RED_CHECK_EQUAL(sizeof(compressed_data),   2241);
-    RED_CHECK_EQUAL(sizeof(uncompressed_data), 4312);
-
+    static_assert(sizeof(compressed_data) == 2241);
+    static_assert(sizeof(uncompressed_data) == 4312);
 
     memcpy(mppc_dec.history_buf, historyBuffer, RDP_40_HIST_BUF_LEN);
     mppc_dec.history_buf_end = mppc_dec.history_buf + 8191;
@@ -77,11 +74,6 @@ RED_AUTO_TEST_CASE(TestRDP50BlukDecompression6)
 
     uint8_t  compressionFlags = 0x60;
 
-    const uint8_t * rdata;
-    uint32_t        rlen;
-
-    mppc_dec.decompress(compressed_data, sizeof(compressed_data), compressionFlags, rdata, rlen);
-
-    RED_CHECK_EQUAL(4312, rlen);
-    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data),
+        mppc_dec.decompress(make_array_view(compressed_data), compressionFlags));
 }

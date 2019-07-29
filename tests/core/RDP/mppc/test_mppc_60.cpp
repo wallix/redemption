@@ -183,13 +183,8 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression)
 
     uint8_t  compressionFlags = 0x22;
 
-    const uint8_t * rdata;
-    uint32_t        rlen;
-
-    mppc_dec.decompress(compressed_data, sizeof(compressed_data),
-        compressionFlags, rdata, rlen);
-
-    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data),
+        mppc_dec.decompress(make_array_view(compressed_data), compressionFlags));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
@@ -207,13 +202,8 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
 
     uint8_t  compressionFlags = 0x22;
 
-    const uint8_t * rdata;
-    uint32_t        rlen;
-
-    mppc_dec.decompress(compressed_data, sizeof(compressed_data),
-        compressionFlags, rdata, rlen);
-
-    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data),
+        mppc_dec.decompress(make_array_view(compressed_data), compressionFlags));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
@@ -231,13 +221,8 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
 
     uint8_t  compressionFlags = 0x22;
 
-    const uint8_t * rdata;
-    uint32_t        rlen;
-
-    mppc_dec.decompress(compressed_data, sizeof(compressed_data),
-        compressionFlags, rdata, rlen);
-
-    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data),
+        mppc_dec.decompress(make_array_view(compressed_data), compressionFlags));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
@@ -350,13 +335,8 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
 
     uint8_t  compressionFlags = 0x22;
 
-    const uint8_t * rdata;
-    uint32_t        rlen;
-
-    mppc_dec.decompress(compressed_data, sizeof(compressed_data),
-        compressionFlags, rdata, rlen);
-
-    RED_CHECK_MEM(make_array_view(uncompressed_data), array_view(rdata, rlen));
+    RED_CHECK_MEM(make_array_view(uncompressed_data),
+        mppc_dec.decompress(make_array_view(compressed_data), compressionFlags));
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
@@ -371,13 +351,8 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
 
     uint8_t  compressionFlags = 0x22;
 
-    const uint8_t * rdata;
-    uint32_t        rlen;
-
-    mppc_dec.decompress(__outputBuffer, sizeof(__outputBuffer),
-        compressionFlags, rdata, rlen);
-
-    RED_CHECK_MEM(make_array_view(__srcData), array_view(rdata, rlen));
+    RED_CHECK_MEM(make_array_view(__srcData),
+        mppc_dec.decompress(make_array_view(__outputBuffer), compressionFlags));
 }
 
 RED_AUTO_TEST_CASE(TestCacheAdd) {

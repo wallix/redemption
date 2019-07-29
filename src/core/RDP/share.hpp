@@ -562,14 +562,7 @@ struct ShareData_Recv : private CheckShareData_Recv
                 LOG(LOG_INFO, "ShareData_Recv: got unexpected compressed share data");
                 throw Error(ERR_SEC);
             }
-
-            const uint8_t * rdata;
-            uint32_t        rlen;
-
-            dec->decompress(stream.get_current(), stream.in_remain(),
-                this->compressedType, rdata, rlen);
-
-            return InStream({rdata, rlen});
+            return InStream(dec->decompress(stream.remaining_bytes(), this->compressedType));
         }
         return InStream(stream.remaining_bytes());
       }())

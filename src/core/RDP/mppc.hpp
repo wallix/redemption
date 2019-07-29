@@ -28,6 +28,7 @@
 #pragma once
 
 #include <memory>
+#include "utils/sugar/bytes_view.hpp"
 
 class OutStream;
 
@@ -433,7 +434,7 @@ protected:
 public:
     virtual ~rdp_mppc_dec() = default;
 
-    virtual int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) = 0;
+    virtual cbytes_view decompress(cbytes_view cbuf, int ctype) = 0;
 };
 
 
@@ -479,7 +480,7 @@ public:
     rdp_mppc_unified_dec() = default;
     ~rdp_mppc_unified_dec() override;
 
-    int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override;
+    cbytes_view decompress(cbytes_view cbuf, int ctype) override;
 };
 
 std::unique_ptr<rdp_mppc_enc>
