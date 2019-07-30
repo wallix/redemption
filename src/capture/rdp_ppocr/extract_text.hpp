@@ -170,90 +170,72 @@ unsigned extract_text(
 {
     (void)button_col;
 
-    bool const is_win2012 = (tid == ::ocr::titlebar_color_id::WINDOWS_2012);
-    bool const is_win2012_vnc = (tid == ::ocr::titlebar_color_id::WINDOWS_2012_VNC);
+    ::ocr::dispatch_title_color(tid, [&](auto const& tcolor, bool is_win2012){
+        /*chrono*///using resolution_clock = std::chrono::high_resolution_clock;
+        /*chrono*///auto t1 = resolution_clock::now();
 
-    /*chrono*///using resolution_clock = std::chrono::high_resolution_clock;
-    /*chrono*///auto t1 = resolution_clock::now();
+        size_t x = box.min_col();
+        size_t y = box.min_row();
+        size_t w = static_cast<unsigned>(box.max_col()+1);
+        size_t h = static_cast<unsigned>(box.max_row()+1);
+        detail_::shrink_box(input, tcolor, x, y, w, h);
+        auto const bounds = ppocr::Bounds{w, h};
 
-    size_t x = box.min_col();
-    size_t y = box.min_row();
-    size_t w = static_cast<unsigned>(box.max_col()+1);
-    size_t h = static_cast<unsigned>(box.max_row()+1);
-    if (is_win2012) {
-        detail_::shrink_box(input, ::ocr::titlebar_color_windows2012_standard(), x, y, w, h);
-    }
-    else if (is_win2012_vnc) {
-        detail_::shrink_box(input, ::ocr::titlebar_color_windows2012_vnc_standard(), x, y, w, h);
-    }
-    else {
-        detail_::shrink_box(input, ::ocr::titlebar_colors[tid], x, y, w, h);
-    }
-    auto const bounds = ppocr::Bounds{w, h};
+        ocr_context.ambiguous.clear();
 
-    ocr_context.ambiguous.clear();
+        std::vector<ppocr::Box> & boxes = ocr_context.boxes;
+        std::vector<unsigned> & spaces = ocr_context.spaces;
+        boxes.clear();
+        spaces.clear();
 
-    std::vector<ppocr::Box> & boxes = ocr_context.boxes;
-    std::vector<unsigned> & spaces = ocr_context.spaces;
-    boxes.clear();
-    spaces.clear();
+        size_t const whitespace = (is_win2012 ? /*4*/5 : 3);
 
-    size_t const whitespace = (is_win2012 || is_win2012_vnc) ? /*4*/5 : 3;
+        unsigned i_space = 0;
+        while (auto const cbox = detail_::box_character(input, tcolor, {x, y}, bounds)) {
+            //min_y = std::min(cbox.y(), min_y);
+            //bounds_y = std::max(cbox.y() + cbox.h(), bounds_y);
+            //bounds_x = cbox.x() + cbox.w();
+            //std::cerr << "\nbox(" << cbox << ")\n";
 
-    unsigned i_space = 0;
-    while (auto const cbox = is_win2012
-        ? detail_::box_character(input, ::ocr::titlebar_color_windows2012_standard(), {x, y}, bounds)
-        : is_win2012_vnc
-        ? detail_::box_character(input, ::ocr::titlebar_color_windows2012_vnc_standard(), {x, y}, bounds)
-        : detail_::box_character(input, ::ocr::titlebar_colors[tid], {x, y}, bounds)
-    ) {
-        //min_y = std::min(cbox.y(), min_y);
-        //bounds_y = std::max(cbox.y() + cbox.h(), bounds_y);
-        //bounds_x = cbox.x() + cbox.w();
-        //std::cerr << "\nbox(" << cbox << ")\n";
+            mln::box2d new_box(mln::point2d(cbox.y(), cbox.x()), mln::point2d(cbox.bottom(), cbox.right()));
+            auto & img_word = detail_::to_img(ocr_context.img_ctx, input, tcolor, new_box);
+            //std::cout << img_word << std::endl;
 
-        mln::box2d new_box(mln::point2d(cbox.y(), cbox.x()), mln::point2d(cbox.bottom(), cbox.right()));
-        auto & img_word = is_win2012
-            ? detail_::to_img(ocr_context.img_ctx, input, ::ocr::titlebar_color_windows2012_standard(), new_box)
-            : is_win2012_vnc
-            ? detail_::to_img(ocr_context.img_ctx, input, ::ocr::titlebar_color_windows2012_vnc_standard(), new_box)
-            : detail_::to_img(ocr_context.img_ctx, input, ::ocr::titlebar_colors[tid], new_box);
-        //std::cout << img_word << std::endl;
+            if (x + whitespace <= cbox.x()) {
+                spaces.push_back(i_space);
+            }
+            ++i_space;
 
-        if (x + whitespace <= cbox.x()) {
-            spaces.push_back(i_space);
+            auto it = ocr_context.images_cache.find(img_word);
+            if (it != ocr_context.images_cache.end()) {
+                ocr_context.ambiguous.emplace_back(it->second);
+            }
+            else {
+                auto it = ocr_context.images_cache.emplace(
+                    img_word.clone(),
+                    ppocr::ocr2::compute_image(
+                        ppocr::PpOcrSimpleDatas{},
+                        ppocr::PpOcrComplexDatas{},
+                        ppocr::PpOcrExclusiveDatas{},
+                        ocr_context.probabilities,
+                        ocr_context.tmp_probabilities,
+                        ocr_constant.datas,
+                        ocr_constant.first_strategy_ortered,
+                        ocr_constant.data_indexes_by_words,
+                        ocr_constant.glyphs,
+                        ocr_constant.id_views,
+                        img_word,
+                        ocr_context.img_ctx.img90()
+                    )
+                ).first;
+                ocr_context.ambiguous.emplace_back(it->second);
+            }
+
+            boxes.push_back(cbox);
+
+            x = cbox.x() + cbox.w();
         }
-        ++i_space;
-
-        auto it = ocr_context.images_cache.find(img_word);
-        if (it != ocr_context.images_cache.end()) {
-            ocr_context.ambiguous.emplace_back(it->second);
-        }
-        else {
-            auto it = ocr_context.images_cache.emplace(
-                img_word.clone(),
-                ppocr::ocr2::compute_image(
-                    ppocr::PpOcrSimpleDatas{},
-                    ppocr::PpOcrComplexDatas{},
-                    ppocr::PpOcrExclusiveDatas{},
-                    ocr_context.probabilities,
-                    ocr_context.tmp_probabilities,
-                    ocr_constant.datas,
-                    ocr_constant.first_strategy_ortered,
-                    ocr_constant.data_indexes_by_words,
-                    ocr_constant.glyphs,
-                    ocr_constant.id_views,
-                    img_word,
-                    ocr_context.img_ctx.img90()
-                )
-            ).first;
-            ocr_context.ambiguous.emplace_back(it->second);
-        }
-
-        boxes.push_back(cbox);
-
-        x = cbox.x() + cbox.w();
-    }
+    });
 
     ppocr::ocr2::filter_by_lines(
         /*ocr_context.filter_by_lines_context,*/
