@@ -994,15 +994,9 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
 
 inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMessage & self)
 {
-    uint32_t currentOffset = self.PayloadOffset;
-    bool ignore_version = !(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
-
-    if (ignore_version) {
-        currentOffset -= 8;
-    }
-    if (self.has_mic) {
-        currentOffset += 16;
-    }
+    uint32_t payloadOffset = 12+8+8+8+8+8+8+4
+                            +8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION)
+                            +16*self.has_mic;
 
     stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
     stream.out_uint32_le(self.msgType);
@@ -1018,12 +1012,12 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
     for (auto * field: l){
         stream.out_uint16_le(field->buffer.size());
         stream.out_uint16_le(field->buffer.size());
-        stream.out_uint32_le(currentOffset);
-        currentOffset += field->buffer.size();
+        stream.out_uint32_le(payloadOffset);
+        payloadOffset += field->buffer.size();
     }
 
     stream.out_uint32_le(self.negoFlags.flags);
-    if (!ignore_version) {
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         stream.out_uint8(self.version.ProductMajorVersion);
         stream.out_uint8(self.version.ProductMinorVersion);
         stream.out_uint16_le(self.version.ProductBuild);
@@ -1041,12 +1035,10 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
     }
 
     // PAYLOAD
-    stream.out_copy_bytes(self.LmChallengeResponse.buffer);
-    stream.out_copy_bytes(self.NtChallengeResponse.buffer);
-    stream.out_copy_bytes(self.DomainName.buffer);
-    stream.out_copy_bytes(self.UserName.buffer);
-    stream.out_copy_bytes(self.Workstation.buffer);
-    stream.out_copy_bytes(self.EncryptedRandomSessionKey.buffer);
+    for (auto * field: l){
+        stream.out_copy_bytes(field->buffer);
+    }
+
 }
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
