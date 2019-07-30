@@ -571,23 +571,17 @@ struct NtlmNegotiateFlags {
 };
 
 struct NtlmField {
-    uint16_t len{0};           /* 2 Bytes */
-    uint16_t maxLen{0};        /* 2 Bytes */
+//    uint16_t len{0};         /* 2 Bytes */ // becomes size of the vector
+//    uint16_t maxLen{0};      /* 2 Bytes */ // dropped
     uint32_t bufferOffset{0};  /* 4 Bytes */
     std::vector<uint8_t> buffer;
 
     NtlmField() = default;
 };
 
-inline void recvNtlmField(InStream & stream, NtlmField & self) {
-    self.len = stream.in_uint16_le();
-    self.maxLen = stream.in_uint16_le();
-    self.bufferOffset = stream.in_uint32_le();
-}
-
 inline void logNtlmField(const char * name, const NtlmField & self) {
-    LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",
-        name, self.len, self.maxLen, self.bufferOffset);
+    LOG(LOG_DEBUG, "Field %s, len: %lu, maxlen: %lu, offset: %u",
+        name, self.buffer.size(), self.buffer.size(), self.bufferOffset);
     hexdump_d(self.buffer);
 }
 
@@ -1069,13 +1063,26 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         LOG(LOG_ERR, "INVALID MSG RECEIVED, invalid type type: %u", self.msgType);
     }
 
-    recvNtlmField(stream, self.LmChallengeResponse);
-    recvNtlmField(stream, self.NtChallengeResponse);
-    recvNtlmField(stream, self.DomainName);
-    recvNtlmField(stream, self.UserName);
-    recvNtlmField(stream, self.Workstation);
-    recvNtlmField(stream, self.EncryptedRandomSessionKey);
-    
+    struct TmpNtlmField {
+        uint16_t len;
+        NtlmField * f;
+    };
+
+    std::array<TmpNtlmField, 6> l{{
+        {0, &self.LmChallengeResponse},
+        {0, &self.NtChallengeResponse},
+        {0, &self.DomainName},
+        {0, &self.UserName},
+        {0, &self.Workstation},
+        {0, &self.EncryptedRandomSessionKey}}};
+
+    for (auto & tmp: l){
+        tmp.len = stream.in_uint16_le();
+        uint16_t max_len = stream.in_uint16_le();
+        (void)max_len; // TODO: we should check that max_len is equal to len
+        tmp.f->bufferOffset = stream.in_uint32_le();
+    }
+
     self.negoFlags.flags = stream.in_uint32_le();
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
@@ -1108,26 +1115,20 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         self.has_mic = false;
     }
 
-    auto l = {
-         &self.LmChallengeResponse,
-         &self.NtChallengeResponse,
-         &self.DomainName,
-         &self.UserName,
-         &self.Workstation,
-         &self.EncryptedRandomSessionKey};
-
+    // PAYLOAD
+    // Ensure payload is available
     auto maxp = std::accumulate(l.begin(), l.end(), 0, 
-        [](size_t a, const NtlmField * field) {
-             return std::max(a, size_t(field->bufferOffset + field->len));
+        [](size_t a, const TmpNtlmField tmp) {
+             return std::max(a, size_t(tmp.f->bufferOffset + tmp.len));
     });
     if (pBegin + maxp > stream.get_current()) {
         stream.in_skip_bytes(pBegin + maxp - stream.get_current());
     }
 
-    // PAYLOAD
-    for(auto * field: l){
-        field->buffer.assign(pBegin + field->bufferOffset, 
-                             pBegin + field->bufferOffset + field->len);
+    // Actually read payload data
+    for(auto & tmp: l){
+        tmp.f->buffer.assign(pBegin + tmp.f->bufferOffset, 
+                             pBegin + tmp.f->bufferOffset + tmp.len);
     }
 }
 
@@ -1620,13 +1621,22 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
         LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
     }
-    recvNtlmField(stream, self.TargetName);
     
+    uint16_t TargetName_len = stream.in_uint16_le();
+    uint16_t TargetName_maxlen = stream.in_uint16_le();
+    (void)TargetName_maxlen; // we should check it's the same as len
+    self.TargetName.bufferOffset = stream.in_uint32_le();
+
     self.negoFlags.flags = stream.in_uint32_le();
     stream.in_copy_bytes(self.serverChallenge, 8);
     // self.serverChallenge = stream.in_uint64_le();
     stream.in_skip_bytes(8);
-    recvNtlmField(stream, self.TargetInfo);
+
+    uint16_t TargetInfo_len = stream.in_uint16_le();
+    uint16_t TargetInfo_maxlen = stream.in_uint16_le();
+    (void)TargetInfo_maxlen; // we should check it's the same as len
+    self.TargetInfo.bufferOffset = stream.in_uint32_le();
+
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
         self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
@@ -1634,20 +1644,20 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
         stream.in_skip_bytes(3);
         self.version.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
+
     // PAYLOAD
-    auto l = {&self.TargetName,&self.TargetInfo};
-    auto maxp = std::accumulate(l.begin(), l.end(), 0, 
-        [](size_t a, const NtlmField * field) {
-             return std::max(a, size_t(field->bufferOffset + field->len));
-    });
+    auto maxp = std::max(size_t(self.TargetName.bufferOffset + TargetName_len),
+                         size_t(self.TargetInfo.bufferOffset + TargetInfo_len));
+    
     if (pBegin + maxp > stream.get_current()) {
         stream.in_skip_bytes(pBegin + maxp - stream.get_current());
     }
 
-    for(auto * field: l){
-        field->buffer.assign(pBegin + field->bufferOffset, 
-                             pBegin + field->bufferOffset + field->len);
-    }
+    self.TargetName.buffer.assign(pBegin + self.TargetName.bufferOffset, 
+                         pBegin + self.TargetName.bufferOffset + TargetName_len);
+
+    self.TargetInfo.buffer.assign(pBegin + self.TargetInfo.bufferOffset, 
+                         pBegin + self.TargetInfo.bufferOffset + TargetInfo_len);
     
     InStream in_stream(self.TargetInfo.buffer);
     
@@ -1857,8 +1867,17 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
     }
 
     self.negoFlags.flags = stream.in_uint32_le();
-    recvNtlmField(stream, self.DomainName);
-    recvNtlmField(stream, self.Workstation);
+    
+    uint16_t DomainName_len = stream.in_uint16_le();
+    uint16_t DomainName_maxlen = stream.in_uint16_le();
+    (void)DomainName_maxlen; // ensure it's identical to len
+    self.DomainName.bufferOffset = stream.in_uint32_le();
+
+    uint16_t Workstation_len = stream.in_uint16_le();
+    uint16_t Workstation_maxlen = stream.in_uint16_le();
+    (void)Workstation_maxlen; // ensure it's identical to len
+    self.Workstation.bufferOffset = stream.in_uint32_le();
+    
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
         self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
@@ -1866,20 +1885,19 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
         stream.in_skip_bytes(3);
         self.version.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
+
     // PAYLOAD
-    auto l = {&self.DomainName,&self.Workstation};
-    auto maxp = std::accumulate(l.begin(), l.end(), 0, 
-        [](size_t a, const NtlmField * field) {
-             return std::max(a, size_t(field->bufferOffset + field->len));
-    });
+    auto maxp = std::max(size_t(self.DomainName.bufferOffset + DomainName_len),
+                         size_t(self.Workstation.bufferOffset + Workstation_len));
+    
     if (pBegin + maxp > stream.get_current()) {
         stream.in_skip_bytes(pBegin + maxp - stream.get_current());
     }
 
-    for(auto * field: l){
-        field->buffer.assign(pBegin + field->bufferOffset, 
-                             pBegin + field->bufferOffset + field->len);
-    }    
+    self.DomainName.buffer.assign(pBegin + self.DomainName.bufferOffset, 
+                         pBegin + self.DomainName.bufferOffset + DomainName_len);
+    self.Workstation.buffer.assign(pBegin + self.Workstation.bufferOffset, 
+                         pBegin + self.Workstation.bufferOffset + Workstation_len);
 }
 
 

@@ -176,14 +176,14 @@ RED_AUTO_TEST_CASE(TestChallenge)
     RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
     //ChallengeMsg.negoFlags.log();
 
-    RED_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
+    RED_CHECK_EQUAL(ChallengeMsg.TargetName.buffer.size(), 8);
     RED_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
     RED_CHECK_MEM(ChallengeMsg.TargetName.buffer,
         "\x57\x00\x49\x00\x4e\x00\x37\x00"_av
     );
     // hexdump_c(ChallengeMsg.TargetName.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetName.buffer.ostream.size());
-    RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
+    RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.buffer.size(), 64);
     RED_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
     RED_CHECK_MEM(ChallengeMsg.TargetInfo.buffer,
         "\x02\x00\x08\x00\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00"
@@ -214,10 +214,10 @@ RED_AUTO_TEST_CASE(TestChallenge)
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
     // ChallengeMsgDuplicate.negoFlags.print();
 
-    RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.len, 8);
+    RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.buffer.size(), 8);
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.bufferOffset, 56);
 
-    RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.len, 64);
+    RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.buffer.size(), 64);
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
     InStream servChall2({ChallengeMsgDuplicate.serverChallenge, 8});
     uint64_t servchallengeinteger2 = servChall2.in_uint64_le();
@@ -268,7 +268,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     RED_CHECK_EQUAL(NegoMsg.negoFlags.flags, 0xe20882b7);
     // NegoMsg.negoFlags.print();
 
-    RED_CHECK_EQUAL(NegoMsg.DomainName.len, 0);
+    RED_CHECK_EQUAL(NegoMsg.DomainName.buffer.size(), 0);
     RED_CHECK_EQUAL(NegoMsg.DomainName.bufferOffset, 0);
     // hexdump_c(NegoMsg.DomainName.Buffer.get_data(),
     //           NegoMsg.DomainName.Buffer.size());
@@ -278,7 +278,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     //                          NegoMsg.DomainName.len),
     //                   0);
 
-    RED_CHECK_EQUAL(NegoMsg.Workstation.len, 0);
+    RED_CHECK_EQUAL(NegoMsg.Workstation.buffer.size(), 0);
     RED_CHECK_EQUAL(NegoMsg.Workstation.bufferOffset, 0);
     // uint8_t workstation_match[] = "";
     // RED_CHECK_EQUAL(memcmp(workstation_match,
@@ -523,17 +523,17 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     RED_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
     // AuthMsg.negoFlags.print();
 
-    RED_CHECK_EQUAL(AuthMsg.LmChallengeResponse.len, 24);
+    RED_CHECK_EQUAL(AuthMsg.LmChallengeResponse.buffer.size(), 24);
     RED_CHECK_EQUAL(AuthMsg.LmChallengeResponse.bufferOffset, 106);
-    RED_CHECK_EQUAL(AuthMsg.NtChallengeResponse.len, 112);
+    RED_CHECK_EQUAL(AuthMsg.NtChallengeResponse.buffer.size(), 112);
     RED_CHECK_EQUAL(AuthMsg.NtChallengeResponse.bufferOffset, 130);
-    RED_CHECK_EQUAL(AuthMsg.DomainName.len, 8);
+    RED_CHECK_EQUAL(AuthMsg.DomainName.buffer.size(), 8);
     RED_CHECK_EQUAL(AuthMsg.DomainName.bufferOffset, 72);
-    RED_CHECK_EQUAL(AuthMsg.UserName.len, 16);
+    RED_CHECK_EQUAL(AuthMsg.UserName.buffer.size(), 16);
     RED_CHECK_EQUAL(AuthMsg.UserName.bufferOffset, 80);
-    RED_CHECK_EQUAL(AuthMsg.Workstation.len, 10);
+    RED_CHECK_EQUAL(AuthMsg.Workstation.buffer.size(), 10);
     RED_CHECK_EQUAL(AuthMsg.Workstation.bufferOffset, 96);
-    RED_CHECK_EQUAL(AuthMsg.EncryptedRandomSessionKey.len, 16);
+    RED_CHECK_EQUAL(AuthMsg.EncryptedRandomSessionKey.buffer.size(), 16);
 
     // LmChallengeResponse
     LMv2_Response lmResponse;
@@ -610,17 +610,17 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     RED_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
     // AuthMsgDuplicate.negoFlags.print();
 
-    RED_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.len, 24);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.buffer.size(), 24);
     RED_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.bufferOffset, 72);
-    RED_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.len, 112);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.buffer.size(), 112);
     RED_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.bufferOffset, 96);
-    RED_CHECK_EQUAL(AuthMsgDuplicate.DomainName.len, 8);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.DomainName.buffer.size(), 8);
     RED_CHECK_EQUAL(AuthMsgDuplicate.DomainName.bufferOffset, 208);
-    RED_CHECK_EQUAL(AuthMsgDuplicate.UserName.len, 16);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.UserName.buffer.size(), 16);
     RED_CHECK_EQUAL(AuthMsgDuplicate.UserName.bufferOffset, 216);
-    RED_CHECK_EQUAL(AuthMsgDuplicate.Workstation.len, 10);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.Workstation.buffer.size(), 10);
     RED_CHECK_EQUAL(AuthMsgDuplicate.Workstation.bufferOffset, 232);
-    RED_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.len, 16);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.buffer.size(), 16);
 }
 
 
