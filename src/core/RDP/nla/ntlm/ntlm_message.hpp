@@ -138,19 +138,7 @@ struct AvPair {
     std::vector<uint8_t> data;
 };
 
-
 using NtlmAvPairList = std::vector<AvPair>;
-
-inline void EmitNtlmAvPairList(OutStream & stream, const NtlmAvPairList & list)
-{
-    for (auto & avp: list) {
-        stream.out_uint16_le(avp.id);
-        stream.out_uint16_le(avp.data.size());
-        stream.out_copy_bytes(avp.data);
-    }
-    stream.out_uint16_le(MsvAvEOL);
-    stream.out_uint16_le(0);
-}
 
 inline void RecvNtlmAvPairList(InStream & stream, NtlmAvPairList & list)
 {
@@ -1389,7 +1377,15 @@ inline void EmitNTLMv2_Client_Challenge(OutStream & stream, NTLMv2_Client_Challe
     stream.out_copy_bytes(self.Timestamp, 8);
     stream.out_copy_bytes(self.ClientChallenge, 8);
     stream.out_clear_bytes(4);
-    EmitNtlmAvPairList(stream, self.AvPairList);
+
+    for (auto & avp: self.AvPairList) {
+        stream.out_uint16_le(avp.id);
+        stream.out_uint16_le(avp.data.size());
+        stream.out_copy_bytes(avp.data);
+    }
+    stream.out_uint16_le(MsvAvEOL);
+    stream.out_uint16_le(0);
+
     stream.out_clear_bytes(4);
 }
 

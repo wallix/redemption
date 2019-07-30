@@ -62,7 +62,14 @@ RED_AUTO_TEST_CASE(TestAvPair)
 
     StaticOutStream<65535> stream;
 
-    EmitNtlmAvPairList(stream, listAvPair);
+    for (auto & avp: listAvPair) {
+        stream.out_uint16_le(avp.id);
+        stream.out_uint16_le(avp.data.size());
+        stream.out_copy_bytes(avp.data);
+    }
+    stream.out_uint16_le(MsvAvEOL);
+    stream.out_uint16_le(0);
+    
     packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.size()+1);
     for (auto & avp: listAvPair) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, stream.get_offset());
