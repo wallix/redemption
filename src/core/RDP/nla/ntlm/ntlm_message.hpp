@@ -588,29 +588,10 @@ struct NtlmNegotiateFlags {
     NtlmNegotiateFlags() = default;
 };
 
-inline void recvNtlmNegotiateFlags(InStream & stream, NtlmNegotiateFlags & self) {
-    self.flags = stream.in_uint32_le();
-}
-
-inline void logNtlmNegotiateFlags(NtlmNegotiateFlags & self)
-{
-    LOG(LOG_INFO, "negotiateFlags \"0x%08X\"{", self.flags);
-
-    for (int i = 31; i >= 0; i--) {
-        if ((self.flags >> i) & 1) {
-            const char* str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
-            LOG(LOG_INFO, "\t%s (%d),", str, (31 - i));
-        }
-    }
-
-    LOG(LOG_INFO, "}");
-}
-
 struct NtlmField {
     uint16_t len{0};           /* 2 Bytes */
     uint16_t maxLen{0};        /* 2 Bytes */
     uint32_t bufferOffset{0};  /* 4 Bytes */
-
     std::vector<uint8_t> buffer;
 
     NtlmField() = default;
@@ -1005,16 +986,6 @@ struct NTLMAuthenticateMessage {
         stream.out_uint32_le(this->msgType);
     }
 
-    bool message_recv(InStream & stream) {
-        constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
-        uint8_t received_sig[sig_len];
-        stream.in_copy_bytes(received_sig, sig_len);
-        uint32_t type = stream.in_uint32_le();
-        return !memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)
-            && (static_cast<uint32_t>(this->msgType) == type);
-    }
-
-
     NtlmField LmChallengeResponse;        /* 8 Bytes */
     NtlmField NtChallengeResponse;        /* 8 Bytes */
     NtlmField DomainName;                 /* 8 Bytes */
@@ -1044,7 +1015,18 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
     logNtlmField("UserName", self.UserName);
     logNtlmField("Workstation", self.Workstation);
     logNtlmField("EncryptedRandomSessionKey", self.EncryptedRandomSessionKey);
-    logNtlmNegotiateFlags(self.negoFlags);
+    
+    LOG(LOG_INFO, "negotiateFlags \"0x%08X\"{", self.negoFlags.flags);
+
+    for (int i = 31; i >= 0; i--) {
+        if ((self.negoFlags.flags >> i) & 1) {
+            const char* str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
+            LOG(LOG_INFO, "\t%s (%d),", str, (31 - i));
+        }
+    }
+
+    LOG(LOG_INFO, "}");
+    
     LogNtlmVersion(self.version);
     LOG(LOG_DEBUG, "MIC");
     hexdump_d(self.MIC, 16);
@@ -1097,18 +1079,26 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
     uint8_t const * pBegin = stream.get_current();
-    bool res;
-    res = self.message_recv(stream);
-    if (!res) {
+    
+    constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+    uint8_t received_sig[sig_len];
+    stream.in_copy_bytes(received_sig, sig_len);
+    uint32_t type = stream.in_uint32_le();
+    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
         LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", self.msgType);
     }
+    if (static_cast<uint32_t>(self.msgType) == type){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED, invalid type type: %u", self.msgType);
+    }
+
     recvNtlmField(stream, self.LmChallengeResponse);
     recvNtlmField(stream, self.NtChallengeResponse);
     recvNtlmField(stream, self.DomainName);
     recvNtlmField(stream, self.UserName);
     recvNtlmField(stream, self.Workstation);
     recvNtlmField(stream, self.EncryptedRandomSessionKey);
-    recvNtlmNegotiateFlags(stream, self.negoFlags);
+    
+    self.negoFlags.flags = stream.in_uint32_le();
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ignore_version = false;
         RecvNtlmVersion(stream, self.version);
@@ -1655,7 +1645,8 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
         LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
     }
     recvNtlmField(stream, self.TargetName);
-    recvNtlmNegotiateFlags(stream, self.negoFlags);
+    
+    self.negoFlags.flags = stream.in_uint32_le();
     stream.in_copy_bytes(self.serverChallenge, 8);
     // self.serverChallenge = stream.in_uint64_le();
     stream.in_skip_bytes(8);
@@ -1883,7 +1874,7 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
         LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
     }
 
-    recvNtlmNegotiateFlags(stream, self.negoFlags);
+    self.negoFlags.flags = stream.in_uint32_le();
     recvNtlmField(stream, self.DomainName);
     recvNtlmField(stream, self.Workstation);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
