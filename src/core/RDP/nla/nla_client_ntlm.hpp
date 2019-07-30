@@ -875,7 +875,7 @@ public:
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
 
         StaticOutStream<65535> out_stream;
-        this->NEGOTIATE_MESSAGE.emit(out_stream);
+        emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
         this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());        this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
         this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
@@ -975,7 +975,7 @@ public:
                     this->sspi_context_state = NTLM_STATE_CHALLENGE;
 
                     StaticOutStream<65535> out_stream;
-                    this->NEGOTIATE_MESSAGE.emit(out_stream);
+                    emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
                     this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());                    this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
                     this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
                     this->sspi_context_state = NTLM_STATE_CHALLENGE;

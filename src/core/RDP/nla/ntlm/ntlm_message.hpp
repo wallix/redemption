@@ -1811,46 +1811,34 @@ class NTLMNegotiateMessage
 {
     NtlmMessageType msgType;   /* 4 Bytes */
 
-    void message_emit(OutStream & stream) const {
-        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-        stream.out_uint32_le(this->msgType);
-    }
-
 public:
     NtlmNegotiateFlags negoFlags; /* 4 Bytes */
     NtlmField DomainName;         /* 8 Bytes */
     NtlmField Workstation;        /* 8 Bytes */
     NtlmVersion version;          /* 8 Bytes */
-private:
-    uint32_t PayloadOffset;
 
 public:
-    NTLMNegotiateMessage()
-        : msgType(NtlmNegotiate)
-        , PayloadOffset(12+4+8+8+8)
-    {
-    }
-
-    void emit(OutStream & stream) /* TODO const*/ {
-        uint32_t currentOffset = this->PayloadOffset;
-        if (this->version.ignore_version) {
-            currentOffset -= 8;
-        }
-        this->message_emit(stream);
-
-        stream.out_uint32_le(this->negoFlags.flags);
-        emitNtlmField(stream, currentOffset, this->DomainName.buffer, this->DomainName);
-        currentOffset += this->DomainName.buffer.size();
-        emitNtlmField(stream, currentOffset,  this->Workstation.buffer,  this->Workstation);
-        if (!this->version.ignore_version) {
-            EmitNtlmVersion(stream, this->version);
-        }
-
-        // PAYLOAD
-        stream.out_copy_bytes(this->DomainName.buffer);
-        stream.out_copy_bytes(this->Workstation.buffer);
-    }
+    NTLMNegotiateMessage() {}
 };
+
+inline void emitNTLMNegotiateMessage(OutStream & stream, NTLMNegotiateMessage & self)
+{
+    uint32_t currentOffset = 12+4+8+8 + 8*(!self.version.ignore_version);
+    stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
+    stream.out_uint32_le(NtlmNegotiate);
+
+    stream.out_uint32_le(self.negoFlags.flags);
+    emitNtlmField(stream, currentOffset, self.DomainName.buffer, self.DomainName);
+    currentOffset += self.DomainName.buffer.size();
+    emitNtlmField(stream, currentOffset,  self.Workstation.buffer,  self.Workstation);
+    if (!self.version.ignore_version) {
+        EmitNtlmVersion(stream, self.version);
+    }
+
+    // PAYLOAD
+    stream.out_copy_bytes(self.DomainName.buffer);
+    stream.out_copy_bytes(self.Workstation.buffer);
+}
 
 inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & self)
 {

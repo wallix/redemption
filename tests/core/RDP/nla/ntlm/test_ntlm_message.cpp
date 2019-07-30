@@ -1526,7 +1526,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Negotiate");
         this->ntlm_client_build_negotiate();
         StaticOutStream<65535> out_stream;
-        this->NEGOTIATE_MESSAGE.emit(out_stream);
+        emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
         output_buffer.init(out_stream.get_offset());
         output_buffer.copy(out_stream.get_bytes());
 
@@ -2226,7 +2226,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     }
 
     // send NEGOTIATE MESSAGE
-    client_context.NEGOTIATE_MESSAGE.emit(out_client_to_server);
+    emitNTLMNegotiateMessage(out_client_to_server, client_context.NEGOTIATE_MESSAGE);
     RecvNTLMNegotiateMessage(in_client_to_server, server_context.NEGOTIATE_MESSAGE);
 
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
@@ -2392,7 +2392,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     client_context.ntlm_client_build_negotiate();
 
     // send NEGOTIATE MESSAGE
-    client_context.NEGOTIATE_MESSAGE.emit(out_client_to_server);
+    emitNTLMNegotiateMessage(out_client_to_server, client_context.NEGOTIATE_MESSAGE);
 
     client_context.SavedNegotiateMessage.init(out_client_to_server.get_offset());
     memcpy(client_context.SavedNegotiateMessage.get_data(),
