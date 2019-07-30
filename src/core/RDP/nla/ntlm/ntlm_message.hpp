@@ -999,7 +999,7 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
                             +16*self.has_mic;
 
     stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-    stream.out_uint32_le(self.msgType);
+    stream.out_uint32_le(NtlmAuthenticate);
 
     auto l = {
          &self.LmChallengeResponse,
