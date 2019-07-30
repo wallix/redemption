@@ -671,21 +671,10 @@ struct NtlmField {
     std::vector<uint8_t> buffer;
 
     NtlmField() = default;
-
-    void log(const char * name) {
-        LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",
-            name, this->len, this->maxLen, this->bufferOffset);
-        hexdump_d(this->buffer);
-    }
-
-    void recv(InStream & stream) {
-        this->len = stream.in_uint16_le();
-        this->maxLen = stream.in_uint16_le();
-        this->bufferOffset = stream.in_uint32_le();
-    }
 };
 
-inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const std::vector<uint8_t> & buffer, NtlmField & self) /* TODO const*/ {
+inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const std::vector<uint8_t> & buffer, NtlmField & self) 
+{
     self.len = self.maxLen= buffer.size();
     self.bufferOffset = currentOffset;
     // currentOffset += this->len;
@@ -693,6 +682,18 @@ inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const 
     stream.out_uint16_le(buffer.size());
     stream.out_uint16_le(buffer.size());
     stream.out_uint32_le(self.bufferOffset);
+}
+
+inline void recvNtlmField(InStream & stream, NtlmField & self) {
+    self.len = stream.in_uint16_le();
+    self.maxLen = stream.in_uint16_le();
+    self.bufferOffset = stream.in_uint32_le();
+}
+
+inline void logNtlmField(const char * name, const NtlmField & self) {
+    LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",
+        name, self.len, self.maxLen, self.bufferOffset);
+    hexdump_d(self.buffer);
 }
 
 // 2.2.2.9   NTLMSSP_MESSAGE_SIGNATURE
@@ -1094,12 +1095,12 @@ struct NTLMAuthenticateMessage {
 
 
 inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
-    self.LmChallengeResponse.log("LmChallengeResponse");
-    self.NtChallengeResponse.log("NtChallengeResponse");
-    self.DomainName.log("DomainName");
-    self.UserName.log("UserName");
-    self.Workstation.log("Workstation");
-    self.EncryptedRandomSessionKey.log("EncryptedRandomSessionKey");
+    logNtlmField("LmChallengeResponse", self.LmChallengeResponse);
+    logNtlmField("NtChallengeResponse", self.NtChallengeResponse);
+    logNtlmField("DomainName", self.DomainName);
+    logNtlmField("UserName", self.UserName);
+    logNtlmField("Workstation", self.Workstation);
+    logNtlmField("EncryptedRandomSessionKey", self.EncryptedRandomSessionKey);
     self.negoFlags.log();
     LogNtlmVersion(self.version);
     LOG(LOG_DEBUG, "MIC");
@@ -1158,12 +1159,12 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
     if (!res) {
         LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", self.msgType);
     }
-    self.LmChallengeResponse.recv(stream);
-    self.NtChallengeResponse.recv(stream);
-    self.DomainName.recv(stream);
-    self.UserName.recv(stream);
-    self.Workstation.recv(stream);
-    self.EncryptedRandomSessionKey.recv(stream);
+    recvNtlmField(stream, self.LmChallengeResponse);
+    recvNtlmField(stream, self.NtChallengeResponse);
+    recvNtlmField(stream, self.DomainName);
+    recvNtlmField(stream, self.UserName);
+    recvNtlmField(stream, self.Workstation);
+    recvNtlmField(stream, self.EncryptedRandomSessionKey);
     self.negoFlags.recv(stream);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ignore_version = false;
@@ -1690,12 +1691,12 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
         LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
     }
-    self.TargetName.recv(stream);
+    recvNtlmField(stream, self.TargetName);
     self.negoFlags.recv(stream);
     stream.in_copy_bytes(self.serverChallenge, 8);
     // self.serverChallenge = stream.in_uint64_le();
     stream.in_skip_bytes(8);
-    self.TargetInfo.recv(stream);
+    recvNtlmField(stream, self.TargetInfo);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ignore_version = false;
         RecvNtlmVersion(stream, self.version);
@@ -1919,8 +1920,8 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
     }
 
     self.negoFlags.recv(stream);
-    self.DomainName.recv(stream);
-    self.Workstation.recv(stream);
+    recvNtlmField(stream, self.DomainName);
+    recvNtlmField(stream, self.Workstation);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ignore_version = false;
         RecvNtlmVersion(stream, self.version);
