@@ -53,6 +53,17 @@ RED_AUTO_TEST_CASE(TestAvPair)
 
     auto tartempion = "NomDeDomaine\0"_av;
 
+    auto NtlmAddToAvPairList = [](NTLM_AV_ID avId, cbytes_view data, NtlmAvPairList & list) -> void
+    {
+        for (auto & avp: list) {
+            if (avp.id == avId){
+                avp.data.assign(data.data(), data.data()+data.size());
+                return;
+            }
+        }
+        list.push_back({avId, std::vector<uint8_t>(data.data(), data.data()+data.size())});
+    };
+
     NtlmAddToAvPairList(MsvAvNbDomainName, tartempion, listAvPair);
 
     RED_CHECK_EQUAL(listAvPair.size(), 1);
@@ -73,7 +84,13 @@ RED_AUTO_TEST_CASE(TestAvPair)
     packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.size()+1);
     for (auto & avp: listAvPair) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, stream.get_offset());
-    LogNtlmAvPairList(listAvPair);
+    
+    LOG(LOG_INFO, "Av Pair List : %zu elements {", listAvPair.size());
+    for (auto & avp: listAvPair) {
+        LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
+        hexdump_c(avp.data);
+    }
+    LOG(LOG_INFO, "}");
 }
 
 
@@ -90,10 +107,18 @@ RED_AUTO_TEST_CASE(TestAvPairRecv)
         0x6c, 0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
     NtlmAvPairList avpairlist;
+    InStream stream(TargetInfo);
 
-    InStream in_stream(TargetInfo);
-    RecvNtlmAvPairList(in_stream, avpairlist);
-    //avpairlist.log();
+    for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
+        auto id = stream.in_uint16_le();
+        auto length = stream.in_uint16_le();
+        if (id == MsvAvEOL) {
+            // ASSUME last element is MsvAvEOL
+            stream.in_skip_bytes(length);
+            break;
+        }
+        avpairlist.push_back({static_cast<NTLM_AV_ID>(id), stream.in_copy_bytes_as_vector(length)});
+    }
 }
 
 RED_AUTO_TEST_CASE(TestChallenge)
@@ -1291,6 +1316,18 @@ public:
             0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00
         };
         auto & list = this->CHALLENGE_MESSAGE.AvPairList;
+        
+        auto NtlmAddToAvPairList = [](NTLM_AV_ID avId, cbytes_view data, NtlmAvPairList & list) -> void
+        {
+            for (auto & avp: list) {
+                if (avp.id == avId){
+                    avp.data.assign(data.data(), data.data()+data.size());
+                    return;
+                }
+            }
+            list.push_back({avId, std::vector<uint8_t>(data.data(), data.data()+data.size())});
+        };
+        
         NtlmAddToAvPairList(MsvAvTimestamp, buffer_view(this->Timestamp), list);
         NtlmAddToAvPairList(MsvAvNbDomainName, buffer_view(upwin7), list);
         NtlmAddToAvPairList(MsvAvNbComputerName, buffer_view(upwin7), list);

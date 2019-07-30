@@ -140,44 +140,6 @@ struct AvPair {
 
 using NtlmAvPairList = std::vector<AvPair>;
 
-inline void RecvNtlmAvPairList(InStream & stream, NtlmAvPairList & list)
-{
-    for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
-        auto id = stream.in_uint16_le();
-        auto length = stream.in_uint16_le();
-        if (id == MsvAvEOL) {
-            // ASSUME last element is MsvAvEOL
-            stream.in_skip_bytes(length);
-            break;
-        }
-        list.push_back({static_cast<NTLM_AV_ID>(id), stream.in_copy_bytes_as_vector(length)});
-    }
-}
-
-inline void NtlmAddToAvPairList(NTLM_AV_ID avId, cbytes_view data, NtlmAvPairList & list)
-{
-    for (auto & avp: list) {
-        if (avp.id == avId){
-            avp.data.assign(data.data(), data.data()+data.size());
-            return;
-        }
-    }
-    list.push_back({avId, std::vector<uint8_t>(data.data(), data.data()+data.size())});
-}
-
-
-
-inline void LogNtlmAvPairList(const NtlmAvPairList & list)
-{
-    LOG(LOG_INFO, "Av Pair List : %zu elements {", list.size());
-
-    for (auto & avp: list) {
-        LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
-        hexdump_c(avp.data);
-    }
-    LOG(LOG_INFO, "}");
-}
-
 enum NtlmState {
     NTLM_STATE_INITIAL,
     NTLM_STATE_NEGOTIATE,
@@ -1399,7 +1361,18 @@ inline void RecvNTLMv2_Client_Challenge(InStream & stream, NTLMv2_Client_Challen
     stream.in_copy_bytes(self.Timestamp, 8);
     stream.in_copy_bytes(self.ClientChallenge, 8);
     stream.in_skip_bytes(4);
-    RecvNtlmAvPairList(stream, self.AvPairList);
+
+    for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
+        auto id = stream.in_uint16_le();
+        auto length = stream.in_uint16_le();
+        if (id == MsvAvEOL) {
+            // ASSUME last element is MsvAvEOL
+            stream.in_skip_bytes(length);
+            break;
+        }
+        self.AvPairList.push_back({static_cast<NTLM_AV_ID>(id), stream.in_copy_bytes_as_vector(length)});
+    }
+
     stream.in_skip_bytes(4);
 }
 

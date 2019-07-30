@@ -428,12 +428,18 @@ protected:
             uint8_t win7[] =  { 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
             uint8_t upwin7[] =  { 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
             
+            
+            auto clone_av_to_vector = [](cbytes_view data) -> std::vector<uint8_t>
+            {
+                return std::vector<uint8_t>(data.data(), data.data()+data.size());
+            };
+
             auto & list = this->CHALLENGE_MESSAGE.AvPairList;
-            NtlmAddToAvPairList(MsvAvNbComputerName, buffer_view(upwin7), list);
-            NtlmAddToAvPairList(MsvAvNbDomainName, buffer_view(upwin7), list);
-            NtlmAddToAvPairList(MsvAvDnsComputerName, buffer_view(win7), list);
-            NtlmAddToAvPairList(MsvAvDnsDomainName, buffer_view(win7), list);
-            NtlmAddToAvPairList(MsvAvTimestamp, buffer_view(this->Timestamp), list);
+            list.push_back({MsvAvNbComputerName, clone_av_to_vector(buffer_view(upwin7))});
+            list.push_back({MsvAvNbDomainName, clone_av_to_vector(buffer_view(upwin7))});
+            list.push_back({MsvAvDnsComputerName, clone_av_to_vector(buffer_view(win7))});
+            list.push_back({MsvAvDnsDomainName, clone_av_to_vector(buffer_view(win7))});
+            list.push_back({MsvAvTimestamp, clone_av_to_vector(buffer_view(this->Timestamp))});
 
             this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
             if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
