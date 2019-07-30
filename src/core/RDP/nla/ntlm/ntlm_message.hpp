@@ -1573,26 +1573,12 @@ public:
     /* 8 Bytes reserved */
     NtlmField TargetInfo;          /* 8 Bytes */
     NtlmVersion version;           /* 8 Bytes */
-private:
-    uint32_t PayloadOffset{12+8+4+8+8+8+8};
-
-public:
-    NtlmAvPairList AvPairList;
-
+    NtlmAvPairList AvPairList; // used to build TargetInfo payload
 };
 
 
 inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self)
 {
-        self.TargetInfo.buffer.clear();
-        for (auto & avp: self.AvPairList) {
-            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.id)));
-            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
-            push_back_array(self.TargetInfo.buffer, avp.data);
-        }
-        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(MsvAvEOL)));
-        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(0)));
-
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
             self.version.ignore_version = false;
             self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
@@ -1604,20 +1590,29 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
         stream.out_uint32_le(NtlmChallenge);
 
-        uint32_t currentOffset = self.PayloadOffset - 8*(0==(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION));
+        uint32_t payloadOffset = 12+8+4+8+8+8 + 8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
 
         stream.out_uint16_le(self.TargetName.buffer.size());
         stream.out_uint16_le(self.TargetName.buffer.size());
-        stream.out_uint32_le(currentOffset);
-        currentOffset += self.TargetName.buffer.size();
+        stream.out_uint32_le(payloadOffset);
+        payloadOffset += self.TargetName.buffer.size();
         
         stream.out_uint32_le(self.negoFlags.flags);
         stream.out_copy_bytes(self.serverChallenge, 8);
         stream.out_clear_bytes(8);
 
+        self.TargetInfo.buffer.clear();
+        for (auto & avp: self.AvPairList) {
+            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.id)));
+            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
+            push_back_array(self.TargetInfo.buffer, avp.data);
+        }
+        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(MsvAvEOL)));
+        push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(0)));
+
         stream.out_uint16_le(self.TargetInfo.buffer.size());
         stream.out_uint16_le(self.TargetInfo.buffer.size());
-        stream.out_uint32_le(currentOffset);
+        stream.out_uint32_le(payloadOffset);
 
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
             if (!self.version.ignore_version) {
