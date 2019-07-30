@@ -329,16 +329,6 @@ struct NtlmVersion {
     bool ignore_version{true};
 };
 
-
-inline void EmitNtlmVersion(OutStream & stream, const NtlmVersion & self)
-{
-    stream.out_uint8(self.ProductMajorVersion);
-    stream.out_uint8(self.ProductMinorVersion);
-    stream.out_uint16_le(self.ProductBuild);
-    stream.out_clear_bytes(3);
-    stream.out_uint8(self.NtlmRevisionCurrent);
-}
-
 inline void RecvNtlmVersion(InStream & stream, NtlmVersion & self) {
     self.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
     self.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
@@ -1056,7 +1046,11 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 
     stream.out_uint32_le(self.negoFlags.flags);
     if (!self.version.ignore_version) {
-        EmitNtlmVersion(stream, self.version);
+        stream.out_uint8(self.version.ProductMajorVersion);
+        stream.out_uint8(self.version.ProductMinorVersion);
+        stream.out_uint16_le(self.version.ProductBuild);
+        stream.out_clear_bytes(3);
+        stream.out_uint8(self.version.NtlmRevisionCurrent);
     }
 
     if (self.has_mic) {
@@ -1615,9 +1609,11 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         stream.out_uint32_le(payloadOffset);
 
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            if (!self.version.ignore_version) {
-                EmitNtlmVersion(stream, self.version);
-            }
+            stream.out_uint8(self.version.ProductMajorVersion);
+            stream.out_uint8(self.version.ProductMinorVersion);
+            stream.out_uint16_le(self.version.ProductBuild);
+            stream.out_clear_bytes(3);
+            stream.out_uint8(self.version.NtlmRevisionCurrent);
         }
         // PAYLOAD
         stream.out_copy_bytes(self.TargetName.buffer);
@@ -1823,16 +1819,31 @@ public:
 
 inline void emitNTLMNegotiateMessage(OutStream & stream, NTLMNegotiateMessage & self)
 {
-    uint32_t currentOffset = 12+4+8+8 + 8*(!self.version.ignore_version);
     stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
     stream.out_uint32_le(NtlmNegotiate);
-
     stream.out_uint32_le(self.negoFlags.flags);
-    emitNtlmField(stream, currentOffset, self.DomainName.buffer, self.DomainName);
-    currentOffset += self.DomainName.buffer.size();
-    emitNtlmField(stream, currentOffset,  self.Workstation.buffer,  self.Workstation);
+
+    uint32_t payloadOffset = 8+  // message signature 
+                             4+  // MessageType = Negociate
+                             4+  // negoFlags
+                             8+  // DomainName field header
+                             8+  // Workstation field header
+                             8*(!self.version.ignore_version);
+    stream.out_uint16_le(self.DomainName.buffer.size());
+    stream.out_uint16_le(self.DomainName.buffer.size());
+    stream.out_uint32_le(payloadOffset);
+
+    payloadOffset += self.DomainName.buffer.size();
+    stream.out_uint16_le(self.Workstation.buffer.size());
+    stream.out_uint16_le(self.Workstation.buffer.size());
+    stream.out_uint32_le(payloadOffset);
+    
     if (!self.version.ignore_version) {
-        EmitNtlmVersion(stream, self.version);
+        stream.out_uint8(self.version.ProductMajorVersion);
+        stream.out_uint8(self.version.ProductMinorVersion);
+        stream.out_uint16_le(self.version.ProductBuild);
+        stream.out_clear_bytes(3);
+        stream.out_uint8(self.version.NtlmRevisionCurrent);
     }
 
     // PAYLOAD
