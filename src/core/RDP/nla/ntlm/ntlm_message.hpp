@@ -981,11 +981,6 @@ struct NTLMSSPMessageSignatureESS {
 struct NTLMAuthenticateMessage {
     NtlmMessageType msgType;   /* 4 Bytes */
 
-    void message_emit(OutStream & stream) const {
-        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-        stream.out_uint32_le(this->msgType);
-    }
-
     NtlmField LmChallengeResponse;        /* 8 Bytes */
     NtlmField NtChallengeResponse;        /* 8 Bytes */
     NtlmField DomainName;                 /* 8 Bytes */
@@ -1040,19 +1035,24 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
     if (self.has_mic) {
         currentOffset += 16;
     }
-    self.message_emit(stream);
 
-    emitNtlmField(stream, currentOffset, self.LmChallengeResponse.buffer, self.LmChallengeResponse);
-    currentOffset += self.LmChallengeResponse.buffer.size();
-    emitNtlmField(stream, currentOffset, self.NtChallengeResponse.buffer, self.NtChallengeResponse);
-    currentOffset += self.NtChallengeResponse.buffer.size();
-    emitNtlmField(stream, currentOffset, self.DomainName.buffer, self.DomainName);
-    currentOffset += self.DomainName.buffer.size();
-    emitNtlmField(stream, currentOffset, self.UserName.buffer, self.UserName);
-    currentOffset += self.UserName.buffer.size();
-    emitNtlmField(stream, currentOffset, self.Workstation.buffer, self.Workstation);
-    currentOffset += self.Workstation.buffer.size();
-    emitNtlmField(stream, currentOffset, self.EncryptedRandomSessionKey.buffer, self.EncryptedRandomSessionKey);
+    stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
+    stream.out_uint32_le(self.msgType);
+
+    auto l = {
+         &self.LmChallengeResponse,
+         &self.NtChallengeResponse,
+         &self.DomainName,
+         &self.UserName,
+         &self.Workstation,
+         &self.EncryptedRandomSessionKey};
+
+    for (auto * field: l){
+        stream.out_uint16_le(field->buffer.size());
+        stream.out_uint16_le(field->buffer.size());
+        stream.out_uint32_le(currentOffset);
+        currentOffset += field->buffer.size();
+    }
 
     stream.out_uint32_le(self.negoFlags.flags);
     if (!self.version.ignore_version) {
@@ -1593,33 +1593,32 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(MsvAvEOL)));
         push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(0)));
 
-        uint32_t currentOffset = self.PayloadOffset;
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
             self.version.ignore_version = false;
-            // this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-            // this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            // this->ProductBuild        = 2600;
-            // this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
             self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
             self.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
             self.version.ProductBuild        = 7601;
             self.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
-        else {
-            currentOffset -= 8;
-        }
 
         stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
         stream.out_uint32_le(NtlmChallenge);
 
-        emitNtlmField(stream, currentOffset, self.TargetName.buffer, self.TargetName);
+        uint32_t currentOffset = self.PayloadOffset - 8*(0==(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION));
+
+        stream.out_uint16_le(self.TargetName.buffer.size());
+        stream.out_uint16_le(self.TargetName.buffer.size());
+        stream.out_uint32_le(currentOffset);
         currentOffset += self.TargetName.buffer.size();
         
         stream.out_uint32_le(self.negoFlags.flags);
         stream.out_copy_bytes(self.serverChallenge, 8);
         stream.out_clear_bytes(8);
-        emitNtlmField(stream, currentOffset, self.TargetInfo.buffer, self.TargetInfo);
-        
+
+        stream.out_uint16_le(self.TargetInfo.buffer.size());
+        stream.out_uint16_le(self.TargetInfo.buffer.size());
+        stream.out_uint32_le(currentOffset);
+
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
             if (!self.version.ignore_version) {
                 EmitNtlmVersion(stream, self.version);
