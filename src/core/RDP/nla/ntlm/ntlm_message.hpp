@@ -329,13 +329,13 @@ struct NtlmVersion {
     bool ignore_version{true};
 };
 
-inline void RecvNtlmVersion(InStream & stream, NtlmVersion & self) {
-    self.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
-    self.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
-    self.ProductBuild = stream.in_uint16_le();
-    stream.in_skip_bytes(3);
-    self.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
-}
+//inline void RecvNtlmVersion(InStream & stream, NtlmVersion & self) {
+//    self.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
+//    self.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
+//    self.ProductBuild = stream.in_uint16_le();
+//    stream.in_skip_bytes(3);
+//    self.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
+//}
 
 inline void LogNtlmVersion(const NtlmVersion & self) {
     LOG(LOG_INFO, "VERSION = {");
@@ -1095,7 +1095,12 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
     self.negoFlags.flags = stream.in_uint32_le();
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ignore_version = false;
-        RecvNtlmVersion(stream, self.version);
+
+        self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
+        self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
+        self.version.ProductBuild = stream.in_uint16_le();
+        stream.in_skip_bytes(3);
+        self.version.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
     uint32_t min_offset = self.LmChallengeResponse.bufferOffset;
     if (self.NtChallengeResponse.bufferOffset < min_offset) {
@@ -1643,7 +1648,12 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     recvNtlmField(stream, self.TargetInfo);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ignore_version = false;
-        RecvNtlmVersion(stream, self.version);
+
+        self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
+        self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
+        self.version.ProductBuild = stream.in_uint16_le();
+        stream.in_skip_bytes(3);
+        self.version.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
     // PAYLOAD
     auto l = {&self.TargetName,&self.TargetInfo};
@@ -1872,7 +1882,12 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
     recvNtlmField(stream, self.Workstation);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ignore_version = false;
-        RecvNtlmVersion(stream, self.version);
+
+        self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
+        self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
+        self.version.ProductBuild = stream.in_uint16_le();
+        stream.in_skip_bytes(3);
+        self.version.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
     // PAYLOAD
     auto l = {&self.DomainName,&self.Workstation};
