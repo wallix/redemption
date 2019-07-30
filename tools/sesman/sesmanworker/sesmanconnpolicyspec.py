@@ -49,7 +49,7 @@ cp_spec = {
     u'session_probe_memory_usage_limit': ('memory_usage_limit', 0),
     u'session_probe_ignore_ui_less_processes_during_end_of_session_check': ('ignore_ui_less_processes_during_end_of_session_check', True),
     u'session_probe_childless_window_as_unidentified_input_field': ('childless_window_as_unidentified_input_field', True),
-    u'session_probe_disabled_features': ('disabled_features', 96),
+    u'session_probe_disabled_features': ('disabled_features', 352),
     u'session_probe_public_session': ('public_session', False),
     u'session_probe_outbound_connection_monitoring_rules': ('outbound_connection_monitoring_rules', u''),
     u'session_probe_process_monitoring_rules': ('process_monitoring_rules', u''),

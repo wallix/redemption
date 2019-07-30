@@ -604,7 +604,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
 #_hex
-#session_probe_disabled_features = 96
+#session_probe_disabled_features = 352
 
 # If enabled, disconnected session can be recovered by a different primary user.
 # value: 0 or 1
