@@ -326,16 +326,8 @@ struct NtlmVersion {
     /* 3 Bytes Reserved */
     ::NTLMRevisionCurrent NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
-    bool ignore_version{true};
+//    bool ignore_version{true};
 };
-
-//inline void RecvNtlmVersion(InStream & stream, NtlmVersion & self) {
-//    self.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
-//    self.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
-//    self.ProductBuild = stream.in_uint16_le();
-//    stream.in_skip_bytes(3);
-//    self.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
-//}
 
 inline void LogNtlmVersion(const NtlmVersion & self) {
     LOG(LOG_INFO, "VERSION = {");
@@ -1017,9 +1009,12 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
     hexdump_d(self.MIC, 16);
 }
 
-inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMessage & self) /* TODO const*/ {
+inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMessage & self)
+{
     uint32_t currentOffset = self.PayloadOffset;
-    if (self.version.ignore_version) {
+    bool ignore_version = !(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
+
+    if (ignore_version) {
         currentOffset -= 8;
     }
     if (self.has_mic) {
@@ -1045,7 +1040,7 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
     }
 
     stream.out_uint32_le(self.negoFlags.flags);
-    if (!self.version.ignore_version) {
+    if (!ignore_version) {
         stream.out_uint8(self.version.ProductMajorVersion);
         stream.out_uint8(self.version.ProductMinorVersion);
         stream.out_uint16_le(self.version.ProductBuild);
@@ -1094,8 +1089,6 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
     
     self.negoFlags.flags = stream.in_uint32_le();
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        self.version.ignore_version = false;
-
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
         self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
         self.version.ProductBuild = stream.in_uint16_le();
@@ -1579,7 +1572,6 @@ public:
 inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self)
 {
         if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-            self.version.ignore_version = false;
             self.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
             self.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
             self.version.ProductBuild        = 7601;
@@ -1647,8 +1639,6 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     stream.in_skip_bytes(8);
     recvNtlmField(stream, self.TargetInfo);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        self.version.ignore_version = false;
-
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
         self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
         self.version.ProductBuild = stream.in_uint16_le();
@@ -1838,7 +1828,7 @@ inline void emitNTLMNegotiateMessage(OutStream & stream, NTLMNegotiateMessage & 
                              4+  // negoFlags
                              8+  // DomainName field header
                              8+  // Workstation field header
-                             8*(!self.version.ignore_version);
+                             8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
     stream.out_uint16_le(self.DomainName.buffer.size());
     stream.out_uint16_le(self.DomainName.buffer.size());
     stream.out_uint32_le(payloadOffset);
@@ -1848,7 +1838,7 @@ inline void emitNTLMNegotiateMessage(OutStream & stream, NTLMNegotiateMessage & 
     stream.out_uint16_le(self.Workstation.buffer.size());
     stream.out_uint32_le(payloadOffset);
     
-    if (!self.version.ignore_version) {
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         stream.out_uint8(self.version.ProductMajorVersion);
         stream.out_uint8(self.version.ProductMinorVersion);
         stream.out_uint16_le(self.version.ProductBuild);
@@ -1881,8 +1871,6 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
     recvNtlmField(stream, self.DomainName);
     recvNtlmField(stream, self.Workstation);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        self.version.ignore_version = false;
-
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
         self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
         self.version.ProductBuild = stream.in_uint16_le();

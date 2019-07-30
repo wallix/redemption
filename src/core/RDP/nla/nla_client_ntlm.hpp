@@ -359,19 +359,12 @@ private:
         this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.ignore_version = false;
-            // this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-            // this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            // this->version.ProductBuild        = 2600;
-            // this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
             this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
             this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
             this->version.ProductBuild        = 7601;
             this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
-        else {
-            this->version.ignore_version = true;
-        }
+
         this->AUTHENTICATE_MESSAGE.version = this->version;
 
         uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
@@ -846,7 +839,6 @@ public:
         | (this->SendVersionInfo) * NTLMSSP_NEGOTIATE_VERSION;
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-            this->version.ignore_version = false;
             // this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
             // this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
             // this->version.ProductBuild        = 2600;
@@ -856,9 +848,7 @@ public:
             this->version.ProductBuild        = 7601;
             this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
-        else {
-            this->version.ignore_version = true;
-        }
+
         this->NEGOTIATE_MESSAGE.version = this->version;
 
 
@@ -948,19 +938,12 @@ public:
                     | (this->SendVersionInfo) * NTLMSSP_NEGOTIATE_VERSION;
 
                     if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-                        this->version.ignore_version = false;
-                        // this->.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-                        // this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                        // this->version.ProductBuild        = 2600;
-                        // this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
                         this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
                         this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                         this->version.ProductBuild        = 7601;
                         this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
                     }
-                    else {
-                        this->version.ignore_version = true;
-                    }
+
                     this->NEGOTIATE_MESSAGE.version = this->version;
                     this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
