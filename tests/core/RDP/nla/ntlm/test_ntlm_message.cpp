@@ -676,8 +676,8 @@ public:
     Array SavedChallengeMessage;
     Array SavedAuthenticateMessage;
 
-private:
     uint8_t Timestamp[8]{};
+private:
     uint8_t ChallengeTimestamp[8]{};
 public:
     uint8_t ServerChallenge[8]{};
@@ -1309,19 +1309,6 @@ public:
     // server method
     // TODO COMPLETE
     void ntlm_construct_challenge_target_info() {
-        uint8_t win7[] =  {0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00};
-        uint8_t upwin7[] = {0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00};
-        
-        auto clone_av_to_vector = [](cbytes_view data) -> std::vector<uint8_t> {
-            return std::vector<uint8_t>(data.data(), data.data()+data.size());
-        };
-
-        auto & list = this->CHALLENGE_MESSAGE.AvPairList;
-        list.push_back({MsvAvNbComputerName, clone_av_to_vector(buffer_view(upwin7))});
-        list.push_back({MsvAvNbDomainName, clone_av_to_vector(buffer_view(upwin7))});
-        list.push_back({MsvAvDnsComputerName, clone_av_to_vector(buffer_view(win7))});
-        list.push_back({MsvAvDnsDomainName, clone_av_to_vector(buffer_view(win7))});
-        list.push_back({MsvAvTimestamp, clone_av_to_vector(buffer_view(this->Timestamp))});
     }
 
 
@@ -1366,21 +1353,34 @@ public:
         if (!this->server) {
             return;
         }
-        if (!this->ntlm_check_nego()) {
+        
+        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
+        uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                            | NTLMSSP_NEGOTIATE_NTLM
+                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                            | NTLMSSP_NEGOTIATE_UNICODE;
+        if ((negoFlag & mask) != mask) {
             LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
         }
+        this->NegotiateFlags = negoFlag;
+        
         this->ntlm_generate_server_challenge();
         memcpy(this->CHALLENGE_MESSAGE.serverChallenge, this->ServerChallenge, 8);
         this->ntlm_generate_timestamp();
-        this->ntlm_construct_challenge_target_info();
+
+        std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
+        std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
+        
+        auto & list = this->CHALLENGE_MESSAGE.AvPairList;
+        list.push_back({MsvAvNbComputerName, upwin7});
+        list.push_back({MsvAvNbDomainName, upwin7});
+        list.push_back({MsvAvDnsComputerName, win7});
+        list.push_back({MsvAvDnsDomainName, win7});
+        list.push_back({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))});
 
         this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
             this->CHALLENGE_MESSAGE.version.ignore_version = false;
-        //  this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-        //  this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-        //  this->CHALLENGE_MESSAGE.version.ProductBuild        = 2600;
-        //  this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
             this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
             this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
             this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
@@ -1540,9 +1540,16 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Negotiate");
         InStream in_stream(input_buffer);
         RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
-        if (!this->ntlm_check_nego()) {
+
+        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
+        uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                            | NTLMSSP_NEGOTIATE_NTLM
+                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                            | NTLMSSP_NEGOTIATE_UNICODE;
+        if ((negoFlag & mask) != mask) {
             return SEC_E_INVALID_TOKEN;
         }
+        this->NegotiateFlags = negoFlag;
 
         this->SavedNegotiateMessage.init(in_stream.get_offset());
         this->SavedNegotiateMessage.copy(in_stream.get_bytes());
@@ -2223,20 +2230,40 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     RecvNTLMNegotiateMessage(in_client_to_server, server_context.NEGOTIATE_MESSAGE);
 
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
-    result = server_context.ntlm_check_nego();
+    uint32_t const negoFlag = server_context.NEGOTIATE_MESSAGE.negoFlags.flags;
+    uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                        | NTLMSSP_NEGOTIATE_NTLM
+                        | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                        | NTLMSSP_NEGOTIATE_UNICODE;
+    if ((negoFlag & mask) != mask) {
+        result = false;
+    }
+    else {
+        server_context.NegotiateFlags = negoFlag;
+        result = true;
+    }
     RED_CHECK(result);
     server_context.ntlm_generate_server_challenge();
     memcpy(server_context.ServerChallenge, server_context.CHALLENGE_MESSAGE.serverChallenge, 8);
     server_context.ntlm_generate_timestamp();
-    server_context.ntlm_construct_challenge_target_info();
+
+    uint8_t win7[] =  {0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00};
+    uint8_t upwin7[] = {0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00};
+    
+    auto clone_av_to_vector = [](cbytes_view data) -> std::vector<uint8_t> {
+        return std::vector<uint8_t>(data.data(), data.data()+data.size());
+    };
+
+    auto & list = server_context.CHALLENGE_MESSAGE.AvPairList;
+    list.push_back({MsvAvNbComputerName, clone_av_to_vector(buffer_view(upwin7))});
+    list.push_back({MsvAvNbDomainName, clone_av_to_vector(buffer_view(upwin7))});
+    list.push_back({MsvAvDnsComputerName, clone_av_to_vector(buffer_view(win7))});
+    list.push_back({MsvAvDnsDomainName, clone_av_to_vector(buffer_view(win7))});
+    list.push_back({MsvAvTimestamp, clone_av_to_vector(buffer_view(server_context.Timestamp))});
 
     server_context.CHALLENGE_MESSAGE.negoFlags.flags = server_context.NegotiateFlags;
     if (server_context.NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
         server_context.NEGOTIATE_MESSAGE.version.ignore_version = false;
-//      server_context.NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-//      server_context.NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-//      server_context.NEGOTIATE_MESSAGE.version.ProductBuild        = 2600;
-//      server_context.NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         server_context.NEGOTIATE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
         server_context.NEGOTIATE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
         server_context.NEGOTIATE_MESSAGE.version.ProductBuild        = 7601;

@@ -419,19 +419,15 @@ protected:
             this->ntlm_generate_timestamp();
 
             // NTLM: construct challenge target info
-            uint8_t win7[] =  { 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
-            uint8_t upwin7[] =  { 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
+            std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
+            std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
              
-            auto clone_av_to_vector = [](cbytes_view data) -> std::vector<uint8_t> {
-                return std::vector<uint8_t>(data.data(), data.data()+data.size());
-            };
-
             auto & list = this->CHALLENGE_MESSAGE.AvPairList;
-            list.push_back({MsvAvNbComputerName, clone_av_to_vector(buffer_view(upwin7))});
-            list.push_back({MsvAvNbDomainName, clone_av_to_vector(buffer_view(upwin7))});
-            list.push_back({MsvAvDnsComputerName, clone_av_to_vector(buffer_view(win7))});
-            list.push_back({MsvAvDnsDomainName, clone_av_to_vector(buffer_view(win7))});
-            list.push_back({MsvAvTimestamp, clone_av_to_vector(buffer_view(this->Timestamp))});
+            list.push_back(AvPair({MsvAvNbComputerName, upwin7}));
+            list.push_back(AvPair({MsvAvNbDomainName, upwin7}));
+            list.push_back(AvPair({MsvAvDnsComputerName, win7}));
+            list.push_back(AvPair({MsvAvDnsDomainName, win7}));
+            list.push_back({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))});
 
             this->CHALLENGE_MESSAGE.negoFlags.flags = negoFlag;
             if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
