@@ -579,17 +579,6 @@ struct NtlmField {
     NtlmField() = default;
 };
 
-inline void emitNtlmField(OutStream & stream, unsigned int currentOffset, const std::vector<uint8_t> & buffer, NtlmField & self) 
-{
-    self.len = self.maxLen= buffer.size();
-    self.bufferOffset = currentOffset;
-    // currentOffset += this->len;
-
-    stream.out_uint16_le(buffer.size());
-    stream.out_uint16_le(buffer.size());
-    stream.out_uint32_le(self.bufferOffset);
-}
-
 inline void recvNtlmField(InStream & stream, NtlmField & self) {
     self.len = stream.in_uint16_le();
     self.maxLen = stream.in_uint16_le();
