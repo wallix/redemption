@@ -1309,30 +1309,19 @@ public:
     // server method
     // TODO COMPLETE
     void ntlm_construct_challenge_target_info() {
-        uint8_t win7[] =  {
-            0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00
+        uint8_t win7[] =  {0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00};
+        uint8_t upwin7[] = {0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00};
+        
+        auto clone_av_to_vector = [](cbytes_view data) -> std::vector<uint8_t> {
+            return std::vector<uint8_t>(data.data(), data.data()+data.size());
         };
-        uint8_t upwin7[] =  {
-            0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00
-        };
+
         auto & list = this->CHALLENGE_MESSAGE.AvPairList;
-        
-        auto NtlmAddToAvPairList = [](NTLM_AV_ID avId, cbytes_view data, NtlmAvPairList & list) -> void
-        {
-            for (auto & avp: list) {
-                if (avp.id == avId){
-                    avp.data.assign(data.data(), data.data()+data.size());
-                    return;
-                }
-            }
-            list.push_back({avId, std::vector<uint8_t>(data.data(), data.data()+data.size())});
-        };
-        
-        NtlmAddToAvPairList(MsvAvTimestamp, buffer_view(this->Timestamp), list);
-        NtlmAddToAvPairList(MsvAvNbDomainName, buffer_view(upwin7), list);
-        NtlmAddToAvPairList(MsvAvNbComputerName, buffer_view(upwin7), list);
-        NtlmAddToAvPairList(MsvAvDnsDomainName, buffer_view(win7), list);
-        NtlmAddToAvPairList(MsvAvDnsComputerName, buffer_view(win7), list);
+        list.push_back({MsvAvNbComputerName, clone_av_to_vector(buffer_view(upwin7))});
+        list.push_back({MsvAvNbDomainName, clone_av_to_vector(buffer_view(upwin7))});
+        list.push_back({MsvAvDnsComputerName, clone_av_to_vector(buffer_view(win7))});
+        list.push_back({MsvAvDnsDomainName, clone_av_to_vector(buffer_view(win7))});
+        list.push_back({MsvAvTimestamp, clone_av_to_vector(buffer_view(this->Timestamp))});
     }
 
 

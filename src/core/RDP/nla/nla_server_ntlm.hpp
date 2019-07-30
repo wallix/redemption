@@ -402,24 +402,18 @@ protected:
             hmac_md5seskey.final(this->SessionBaseKey);
         }
 
-        bool ntlm_check_nego() {
+        // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
+        void ntlm_server_build_challenge() {
             uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
             uint32_t const mask = NTLMSSP_REQUEST_TARGET
                                 | NTLMSSP_NEGOTIATE_NTLM
                                 | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
                                 | NTLMSSP_NEGOTIATE_UNICODE;
             if ((negoFlag & mask) != mask) {
-                return false;
-            }
-            this->NegotiateFlags = negoFlag;
-            return true;
-        }
-
-        // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
-        void ntlm_server_build_challenge() {
-            if (!this->ntlm_check_nego()) {
                 LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
             }
+            this->NegotiateFlags = negoFlag;
+        
             this->ntlm_generate_server_challenge();
             memcpy(this->CHALLENGE_MESSAGE.serverChallenge, this->ServerChallenge, 8);
             this->ntlm_generate_timestamp();
@@ -427,10 +421,8 @@ protected:
             // NTLM: construct challenge target info
             uint8_t win7[] =  { 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
             uint8_t upwin7[] =  { 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
-            
-            
-            auto clone_av_to_vector = [](cbytes_view data) -> std::vector<uint8_t>
-            {
+             
+            auto clone_av_to_vector = [](cbytes_view data) -> std::vector<uint8_t> {
                 return std::vector<uint8_t>(data.data(), data.data()+data.size());
             };
 
@@ -441,13 +433,9 @@ protected:
             list.push_back({MsvAvDnsDomainName, clone_av_to_vector(buffer_view(win7))});
             list.push_back({MsvAvTimestamp, clone_av_to_vector(buffer_view(this->Timestamp))});
 
-            this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-            if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->CHALLENGE_MESSAGE.negoFlags.flags = negoFlag;
+            if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
                 this->CHALLENGE_MESSAGE.version.ignore_version = false;
-                // this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-                // this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                // this->CHALLENGE_MESSAGE.version.ProductBuild        = 2600;
-                // this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
                 this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
                 this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                 this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
@@ -568,9 +556,15 @@ protected:
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
             InStream in_stream(input_buffer);
             RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
-            if (!this->ntlm_check_nego()) {
+            uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
+            uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                                | NTLMSSP_NEGOTIATE_NTLM
+                                | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                                | NTLMSSP_NEGOTIATE_UNICODE;
+            if ((negoFlag & mask) != mask) {
                 return SEC_E_INVALID_TOKEN;
             }
+            this->NegotiateFlags = negoFlag;
 
             this->SavedNegotiateMessage.init(in_stream.get_offset());
             this->SavedNegotiateMessage.copy(in_stream.get_bytes());
@@ -722,7 +716,6 @@ private:
         memcpy(&signature[12], &SeqNo, 4);
     }
 
-public:
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo)
