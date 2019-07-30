@@ -12,6 +12,8 @@
 #include "capture/rdp_ppocr/extract_text.hpp"
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 #include "capture/ocr/locale/latin_to_cyrillic.hpp"
+#include "capture/ocr/io_char_box.hpp"
+#include "capture/ocr/extract_text_classification.hh"
 
 
 using ImageView = ocr::Image2dView<ocr::rgb8>;
@@ -23,15 +25,25 @@ struct Classification
     rdp_ppocr::OcrDatasConstant const & ocr_constant;
     rdp_ppocr::OcrContext ocr_context;
     ocr::fonts::LocaleId locale_id;
+    bool display_char;
 
-    Classification(std::string const & directory, ocr::fonts::LocaleId locale_id)
+    Classification(std::string const & directory, ocr::fonts::LocaleId locale_id, bool display_char)
     : ocr_constant(rdp_ppocr::get_ocr_constants(directory))
     , ocr_context{this->ocr_constant.glyphs.size()}
     , locale_id(locale_id)
+    , display_char(display_char)
     {}
 
     void operator()(ImageView const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
     {
+        if (this->display_char) {
+            mln::image2d<bool> ima;
+            ocr::image_view_to_image2d_bool(input, tid, ima, box);
+            std::vector<ocr::label_attr_t> attrs;
+            ocr::labelize(attrs, ima);
+            display_char_box(std::cout, ima, attrs);
+        }
+
         struct PtrImageView {
             unsigned char * drawable;
             unsigned w;
@@ -130,22 +142,23 @@ struct ReferenceClassification
 inline void usage(char** argv)
 {
     std::cerr
-      << "Usage: " << argv[0] << " input.ppm/pnm directory_ressources [latin|cyrillic]\n"
+      << "Usage: " << argv[0] << " input.ppm/pnm directory_ressources {latin|cyrillic} [d]\n"
       "  d - display characters" << std::endl
     ;
 }
 
 int main(int argc, char** argv)
 {
-    if (argc < 3 || argc > 4) {
+    if (argc < 3 || argc > 5) {
         usage(argv);
         return 1;
     }
 
     ocr::fonts::LocaleId locale_id = ocr::fonts::LocaleId::latin;
     char const * dir = argv[2];
+    bool display_char = false;
 
-    if (argc == 4) {
+    if (argc >= 4) {
         if (strcmp(argv[3], "latin") == 0) {
             locale_id = ocr::fonts::LocaleId::latin;
         }
@@ -155,6 +168,14 @@ int main(int argc, char** argv)
         else {
             usage(argv);
             return 3;
+        }
+
+        if (argc > 4) {
+            if (!('d' == argv[4][0] && !argv[4][1])) {
+                usage(argv);
+                return 4;
+            }
+            display_char = true;
         }
     }
 
@@ -169,7 +190,7 @@ int main(int argc, char** argv)
     ocr::ExtractTitles extract_titles;
 
     auto t1 = resolution_clock::now();
-    Classification classification(dir, locale_id);
+    Classification classification(dir, locale_id, display_char);
     auto t2 = resolution_clock::now();
     std::cerr << "load: " << std::chrono::duration<double>(t2-t1).count() << "s\n\n";
     t1 = resolution_clock::now();

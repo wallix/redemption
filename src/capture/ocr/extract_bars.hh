@@ -4,6 +4,7 @@
 #include "rgb8.hpp"
 
 #include "mln/image/image2d.hh"
+#include "cxx/diagnostic.hpp"
 
 #include <vector>
 #include <cstdlib>
@@ -38,19 +39,42 @@ namespace ocr
         {rgb8(0,   85,  231), rgb8(255,255,255), 0},
         {rgb8(99,  203, 239), rgb8(0,0,0)      , 5}, // windows 2012
         {rgb8(99,  203, 231), rgb8(0,0,0)      , 5}, // windows 2012 VNC
+        {rgb8(80,  203, 228), rgb8(0,0,0)      , 5}, // windows 2012 R2 VNC (2)
         {rgb8(0,   0,   132), rgb8(255,255,255), 0}, // windows 2000
         {rgb8(156, 182, 214), rgb8(0,0,0)      , 2}, // russian (areo theme ?)
     };
 
-    struct titlebar_color_id {
+    struct titlebar_color_id
+    {
+        static_assert(sizeof(titlebar_colors)/sizeof(titlebar_colors[0]) == 10, "Please, check titlebar_color_id");
+
         enum type {
             WINDOWS_2012 = 5,
             WINDOWS_2012_VNC = 6,
-            WINDOWS_RUSSIAN = 8
+            WINDOWS_2012_VNC_2 = 7,
+            WINDOWS_RUSSIAN = 9,
         };
-    };
 
-    static_assert(sizeof(titlebar_colors)/sizeof(titlebar_colors[0]) == 9, "Please, check titlebar_color_id");
+        static bool is_win2012(unsigned tid)
+        {
+            return is_win2012_rdp(tid) || is_win2012_vnc(tid);
+        }
+
+        static bool is_win2012_rdp(unsigned tid)
+        {
+            return tid == WINDOWS_2012;
+        }
+
+        static bool is_win2012_vnc(unsigned tid)
+        {
+            return tid == WINDOWS_2012_VNC || tid == WINDOWS_2012_VNC_2;
+        }
+
+        static bool is_russian1(unsigned tid)
+        {
+            return tid == WINDOWS_RUSSIAN;
+        }
+    };
 
     struct titlebar_color_windows2012_standard {
         template<class Color>
@@ -118,6 +142,78 @@ namespace ocr
         bool is_color_bar(const Color & c) const
         { return this->threshold_bars(c) || this->threshold_chars(c); }
     };
+
+    struct titlebar_color_windows2012_vnc_2_standard {
+        template<class Color>
+        bool threshold_bars(const Color & c) const
+        {
+            return
+                rgb8( 0, 147, 226) == c
+             || rgb8( 0, 174, 227) == c
+             || rgb8(40, 203, 228) == c
+             || rgb8(67, 203, 228) == c
+             || rgb8(80, 203, 228) == c
+             || rgb8(84, 202, 196) == c
+             || rgb8(88, 145,  95) == c
+             || rgb8(88, 202, 166) == c
+             || rgb8(93, 173, 134) == c
+             || rgb8(97, 145,  95) == c
+            ;
+        }
+
+        template<class Color>
+        bool threshold_chars(const Color & c) const
+        {
+            return
+                rgb8( 0,   0,   0) == c
+             || rgb8( 0,   2,  51) == c
+             || rgb8( 0,   6,  88) == c
+             || rgb8( 0,  50, 127) == c
+             || rgb8( 0,  84, 160) == c
+             || rgb8( 0, 114, 160) == c
+             || rgb8( 0, 114, 192) == c
+             || rgb8( 0, 145, 162) == c
+             || rgb8( 0, 146, 193) == c
+             || rgb8(22,  49,  88) == c
+             || rgb8(23,   5,  88) == c
+             || rgb8(29,   1,  51) == c
+             || rgb8(31,   0,   1) == c
+             || rgb8(46,   1,  51) == c
+             || rgb8(47,   0,   1) == c
+             || rgb8(61,  47,  10) == c
+             || rgb8(77,  82,  23) == c
+             || rgb8(74, 112,  58) == c
+             || rgb8(91, 112,  58) == c
+             || rgb8(90, 112,  92) == c
+            ;
+        }
+
+        template<class Color>
+        bool is_color_bar(const Color & c) const
+        { return this->threshold_bars(c) || this->threshold_chars(c); }
+    };
+
+    template<class F>
+    void dispatch_title_color(unsigned int tid, F&& f)
+    {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_WARNING("-Wswitch-enum")
+        switch (titlebar_color_id::type(tid)) {
+            case titlebar_color_id::WINDOWS_2012:
+                f(titlebar_color_windows2012_standard(), true);
+                break;
+            case titlebar_color_id::WINDOWS_2012_VNC:
+                f(titlebar_color_windows2012_vnc_standard(), true);
+                break;
+            case titlebar_color_id::WINDOWS_2012_VNC_2:
+                f(titlebar_color_windows2012_vnc_2_standard(), true);
+                break;
+            case titlebar_color_id::WINDOWS_RUSSIAN:
+            default:
+                f(titlebar_colors[tid], titlebar_color_id::is_win2012(tid));
+        }
+        REDEMPTION_DIAGNOSTIC_POP
+    }
 
     template<class Color>
     unsigned titlebar_color_id_by_bg(const Color & color)
@@ -222,15 +318,11 @@ namespace ocr
                             const unsigned x_max = std::min(xp + 4096, nx);
                             const unsigned y_max = std::min(y + this->context.bbox_max_height + ocr::bbox_treshold + 1, ny);
                             if (x_max - xp >= ocr::bbox_min_width && y_max - y >= ocr::bbox_treshold) {
-                                if (tid == titlebar_color_id::WINDOWS_2012) {
-                                    this->propagate(input, titlebar_color_windows2012_standard(), xp, x, y, x_max, y_max);
-                                }
-                                else if (tid == titlebar_color_id::WINDOWS_2012_VNC) {
-                                    this->propagate(input, titlebar_color_windows2012_vnc_standard(), xp, x, y, x_max, y_max);
-                                }
-                                else {
-                                    this->propagate(input, tcolor, xp, x, y, x_max, y_max);
-                                }
+                                dispatch_title_color(tid, [&](auto const& tcolor, bool is_win2012){
+                                    this->propagate(
+                                        input, tcolor, is_win2012, xp, x, y, x_max, y_max);
+                                });
+
                                 if (this->context.col_last_text != 0) {
                                     f(input, tid, this->context.box(), this->context.col_button);
                                     x = this->context.col_button;
@@ -254,25 +346,13 @@ namespace ocr
         }
 
     private:
-        static bool is_win2012(const titlebar_color_windows2012_standard& /*win2012*/)
-        { return true; }
-
-        static bool is_win2012(const titlebar_color_windows2012_vnc_standard& /*win2012_vnc*/)
-        { return true; }
-
-        static bool is_win2012(const titlebar_color & tcolor)
-        {
-            return &tcolor == &titlebar_colors[titlebar_color_id::WINDOWS_2012]
-                || &tcolor == &titlebar_colors[titlebar_color_id::WINDOWS_2012_VNC];
-        }
-
         template <class ImageView, class TitlebarColor>
         void propagate(
-            ImageView const & input, TitlebarColor const & tcolor,
+            ImageView const & input, TitlebarColor const & tcolor, bool is_win2012,
             unsigned bx, unsigned bxx, unsigned y, unsigned x_max, unsigned y_max)
         {
             // ignore icons
-            const unsigned px_ignore = is_win2012(tcolor) ? 108 : this->context.bbox_max_height*2;
+            const unsigned px_ignore = is_win2012 ? 108 : this->context.bbox_max_height*2;
             /*const*/ unsigned x = std::min(bx + px_ignore, x_max - 1);
             /*const*/ unsigned xx = std::min(bxx + px_ignore, x_max - 1);
 
@@ -543,8 +623,8 @@ namespace ocr
             return false;
         }
 
-        if (tid == titlebar_color_id::WINDOWS_2012 || tid == titlebar_color_id::WINDOWS_2012_VNC) {
-            rgb8 const cbutton(49, tid == titlebar_color_id::WINDOWS_2012 ? 48 : 52, 49);
+        if (titlebar_color_id::is_win2012(tid)) {
+            rgb8 const cbutton(49, titlebar_color_id::is_win2012_rdp(tid) ? 48 : 52, 49);
             /*
              * legend:
              *  b -> bar
@@ -624,7 +704,7 @@ namespace ocr
          * bLL
          * GG
          */
-        if (tid == titlebar_color_id::WINDOWS_RUSSIAN) {
+        if (titlebar_color_id::is_russian1(tid)) {
             if (button_col + 4 >= input.width()) {
                 return false;
             }

@@ -52,15 +52,9 @@ void image_view_to_image2d_bool(
     ImageView const & input, unsigned tid,
     mln::image2d<bool> & ima, mln::box2d const & box)
 {
-    if (tid == titlebar_color_id::WINDOWS_2012) {
-        aux_::image_view_to_image2d_bool(input, titlebar_color_windows2012_standard(), ima, box);
-    }
-    else if (tid == titlebar_color_id::WINDOWS_2012_VNC) {
-        aux_::image_view_to_image2d_bool(input, titlebar_color_windows2012_vnc_standard(), ima, box);
-    }
-    else {
-        aux_::image_view_to_image2d_bool(input, titlebar_colors[tid], ima, box);
-    }
+    dispatch_title_color(tid, [&](auto const& tcolor, bool /*is_win2012*/){
+        aux_::image_view_to_image2d_bool(input, tcolor, ima, box);
+    });
 }
 
 struct ExtractTextClassification
