@@ -275,31 +275,21 @@ protected:
                      array_view_const_u8 domain,
                      array_view_u8 buff) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer NTOWFv2");
-            SslMd4 md4;
-            uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
-
-            md4.update(pass);
-            md4.final(md4password);
-
-            SslHMAC_Md5 hmac_md5(make_array_view(md4password));
-
+            
+            array_md4 md4password = Md4(pass);
+            
             auto unique_userup = std::make_unique<uint8_t[]>(user.size());
             uint8_t * userup = unique_userup.get();
             memcpy(userup, user.data(), user.size());
             UTF16Upper(userup, user.size());
-            hmac_md5.update({userup, user.size()});
-            unique_userup.reset();
 
-            uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
+            array_md5 tmp_md5 = HmacMd5(md4password, {userup, user.size()}, domain);
 
-            userup = nullptr;
-            hmac_md5.update(domain);
-            hmac_md5.final(tmp_md5);
             // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
             // if it is so no need to use a temporary variable
             // and copy digest afterward.
             memset(buff.data(), 0, buff.size());
-            memcpy(buff.data(), tmp_md5, std::min(buff.size(), size_t(SslMd5::DIGEST_LENGTH)));
+            memcpy(buff.data(), tmp_md5.data(), std::min(buff.size(), size_t(SslMd5::DIGEST_LENGTH)));
         }
 
         // server method to decrypt exported session key from authenticate message with
