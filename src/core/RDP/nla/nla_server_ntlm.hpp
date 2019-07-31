@@ -192,7 +192,7 @@ protected:
         uint8_t ServerSigningKey[16]{};
     private:
         uint8_t ServerSealingKey[16]{};
-        uint8_t MessageIntegrityCheck[SslMd5::DIGEST_LENGTH];
+        array_md5 MessageIntegrityCheck;
         // uint8_t NtProofStr[16];
     public:
         const bool verbose;
@@ -209,7 +209,7 @@ protected:
             , verbose(verbose)
         {
             memset(this->MachineID, 0xAA, sizeof(this->MachineID));
-            memset(this->MessageIntegrityCheck, 0x00, sizeof(this->MessageIntegrityCheck));
+            memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Init");
         }
@@ -321,11 +321,10 @@ protected:
         }
 
         void ntlm_compute_MIC() {
-            SslHMAC_Md5 hmac_md5resp(make_array_view(this->ExportedSessionKey));
-            hmac_md5resp.update(this->SavedNegotiateMessage.av());
-            hmac_md5resp.update(this->SavedChallengeMessage.av());
-            hmac_md5resp.update(this->SavedAuthenticateMessage.av());
-            hmac_md5resp.final(this->MessageIntegrityCheck);
+            this->MessageIntegrityCheck = HmacMd5(make_array_view(this->ExportedSessionKey),
+                this->SavedNegotiateMessage.av(),
+                this->SavedChallengeMessage.av(),
+                this->SavedAuthenticateMessage.av());
         }
 
 
@@ -507,9 +506,9 @@ protected:
 
             if (this->UseMIC) {
                 this->ntlm_compute_MIC();
-                if (0 != memcmp(this->MessageIntegrityCheck, this->AUTHENTICATE_MESSAGE.MIC, 16)) {
+                if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                     LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
-                    hexdump_c(this->MessageIntegrityCheck, 16);
+                    hexdump_c(this->MessageIntegrityCheck.data(), 16);
                     hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
                     return SEC_E_MESSAGE_ALTERED;
                 }
