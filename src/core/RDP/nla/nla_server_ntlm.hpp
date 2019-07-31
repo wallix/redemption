@@ -250,20 +250,16 @@ protected:
         void NTOWFv2_FromHash(array_view_const_u8 hash,
                               array_view_const_u8 user,
                               array_view_const_u8 domain,
-                              uint8_t (&buff)[SslMd5::DIGEST_LENGTH]) {
+                              array_md5 & buff) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer NTOWFv2 Hash");
-            SslHMAC_Md5 hmac_md5(hash);
 
             auto unique_userup = std::make_unique<uint8_t[]>(user.size());
             uint8_t * userup = unique_userup.get();
             memcpy(userup, user.data(), user.size());
             UTF16Upper(userup, user.size());
-            hmac_md5.update({userup, user.size()});
-            unique_userup.reset();
-
+            
+            buff = HmacMd5(hash, {userup, user.size()}, domain);
             // hmac_md5.update({user, user_size});
-            hmac_md5.update(domain);
-            hmac_md5.final(buff);
         }
 
         // all strings are in unicode utf16
@@ -337,21 +333,16 @@ protected:
             auto & DomainName = AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto & UserName = AUTHENTICATE_MESSAGE.UserName.buffer;
 
-            uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
-            uint8_t ResponseKeyNT[16] = {};
-
+            array_md5 ResponseKeyNT;
             this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
-            // LOG(LOG_INFO, "ResponseKeyNT");
-            // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
-            SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
-            hmac_md5resp.update(make_array_view(this->ServerChallenge));
-            hmac_md5resp.update({AuthNtResponse.data()+16, AuthNtResponse.size()-16});
-            hmac_md5resp.final(NtProofStr);
+            array_md5 NtProofStr = HmacMd5(ResponseKeyNT,
+                                           make_array_view(this->ServerChallenge),
+                                           {AuthNtResponse.data()+16, AuthNtResponse.size()-16});
 
             uint8_t NtProofStr_from_msg[16] = {};
             memcpy(NtProofStr_from_msg, AuthNtResponse.data(), 16); 
 
-            return !memcmp(NtProofStr, NtProofStr_from_msg, 16);
+            return !memcmp(NtProofStr.data(), NtProofStr_from_msg, 16);
         }
 
         // Server check lm response
@@ -367,10 +358,10 @@ protected:
             }
             LMv2_Response response(AuthLmResponse);
 
-            uint8_t ResponseKeyLM[16] = {};
+            array_md5 ResponseKeyLM;
             this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyLM);
 
-            auto computed_response = compute_LMv2_Response(make_array_view(ResponseKeyLM), 
+            auto computed_response = compute_LMv2_Response(ResponseKeyLM, 
                                                           {this->ServerChallenge, 8},
                                                           {response.ClientChallenge, sizeof(response.ClientChallenge)});
 
@@ -386,7 +377,7 @@ protected:
             uint8_t NtProofStr[16] = {};
             memcpy(NtProofStr, AuthNtResponse.data(), 16);
 
-            uint8_t ResponseKeyNT[16] = {};
+            array_md5 ResponseKeyNT;
             this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
             SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
