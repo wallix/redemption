@@ -247,13 +247,6 @@ protected:
         }
 
         // all strings are in unicode utf16
-        void hash_password(array_view_const_u8 pass, uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
-            SslMd4 md4;
-            md4.update(pass);
-            md4.final(hash);
-        }
-
-        // all strings are in unicode utf16
         void NTOWFv2(array_view_const_u8 pass,
                      array_view_const_u8 user,
                      array_view_const_u8 domain,
@@ -399,7 +392,9 @@ protected:
             auto password_av = this->identity.get_password_utf16_av();
             if (password_av.size() > 0) {
                 // password is available
-                this->hash_password(password_av, hash);
+                SslMd4 md4;
+                md4.update(password_av);
+                md4.final(hash);
             }
         }
 
