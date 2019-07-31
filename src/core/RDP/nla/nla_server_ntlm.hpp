@@ -247,17 +247,6 @@ protected:
         }
 
         // all strings are in unicode utf16
-        void NTOWFv2_FromHash(array_view_const_u8 hash,
-                              array_view_const_u8 user,
-                              array_view_const_u8 domain,
-                              array_md5 & buff) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer NTOWFv2 Hash");
-            auto userup = UTF16_to_upper(user);
-            buff = HmacMd5(hash, userup, domain);
-            // hmac_md5.update({user, user_size});
-        }
-
-        // all strings are in unicode utf16
         void hash_password(array_view_const_u8 pass, uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
             SslMd4 md4;
             md4.update(pass);
@@ -310,8 +299,8 @@ protected:
             auto & DomainName = AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto & UserName = AUTHENTICATE_MESSAGE.UserName.buffer;
 
-            array_md5 ResponseKeyNT;
-            this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
+            auto userup = UTF16_to_upper(UserName);
+            array_md5 ResponseKeyNT = HmacMd5(hash, userup, DomainName);
             array_md5 NtProofStr = HmacMd5(ResponseKeyNT,
                                            make_array_view(this->ServerChallenge),
                                            {AuthNtResponse.data()+16, AuthNtResponse.size()-16});
@@ -335,8 +324,8 @@ protected:
             }
             LMv2_Response response(AuthLmResponse);
 
-            array_md5 ResponseKeyLM;
-            this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyLM);
+            auto userup = UTF16_to_upper(UserName);
+            array_md5 ResponseKeyLM = HmacMd5(hash, userup, DomainName);
 
             auto computed_response = compute_LMv2_Response(ResponseKeyLM, 
                                                           {this->ServerChallenge, 8},
@@ -354,10 +343,11 @@ protected:
             uint8_t NtProofStr[16] = {};
             memcpy(NtProofStr, AuthNtResponse.data(), 16);
 
-            array_md5 ResponseKeyNT;
-            this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
+            auto userup = UTF16_to_upper(UserName);
+            array_md5 ResponseKeyNT = HmacMd5(hash, userup, DomainName);;
+
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-            this->SessionBaseKey = HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
+            this->SessionBaseKey = HmacMd5(ResponseKeyNT, {NtProofStr, sizeof(NtProofStr)});
         }
 
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
