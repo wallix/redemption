@@ -969,6 +969,15 @@ struct NTLMAuthenticateMessage {
 
 
 inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
+
+//    auto l = {
+//         &self.LmChallengeResponse,
+//         &self.NtChallengeResponse,
+//         &self.DomainName,
+//         &self.UserName,
+//         &self.Workstation,
+//         &self.EncryptedRandomSessionKey};
+
     logNtlmField("LmChallengeResponse", self.LmChallengeResponse);
     logNtlmField("NtChallengeResponse", self.NtChallengeResponse);
     logNtlmField("DomainName", self.DomainName);
@@ -1044,6 +1053,7 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
     uint8_t const * pBegin = stream.get_current();
     
+    // Read Message Header
     constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
     uint8_t received_sig[sig_len];
     stream.in_copy_bytes(received_sig, sig_len);
@@ -1055,6 +1065,7 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         LOG(LOG_ERR, "INVALID MSG RECEIVED, invalid type type: %u", self.msgType);
     }
 
+    // Read Ntlm Fields Headers
     struct TmpNtlmField {
         uint16_t len;
         NtlmField * f;
@@ -1068,13 +1079,17 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         {0, &self.Workstation},
         {0, &self.EncryptedRandomSessionKey}}};
 
+    uint32_t min_offset = stream.get_current()+stream.in_remain() - pBegin;
     for (auto & tmp: l){
         tmp.len = stream.in_uint16_le();
-        uint16_t max_len = stream.in_uint16_le();
+        auto max_len = stream.in_uint16_le();
         (void)max_len; // TODO: we should check that max_len is equal to len
-        tmp.f->bufferOffset = stream.in_uint32_le();
+        auto offset = stream.in_uint32_le();
+        min_offset = std::min(min_offset, offset);
+        tmp.f->bufferOffset = offset;
     }
 
+    // Read Flags
     self.negoFlags.flags = stream.in_uint32_le();
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
@@ -1083,28 +1098,12 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
         stream.in_skip_bytes(3);
         self.version.NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
-    uint32_t min_offset = self.LmChallengeResponse.bufferOffset;
-    if (self.NtChallengeResponse.bufferOffset < min_offset) {
-        min_offset = self.NtChallengeResponse.bufferOffset;
-    }
-    if (self.DomainName.bufferOffset < min_offset) {
-        min_offset = self.DomainName.bufferOffset;
-    }
-    if (self.UserName.bufferOffset < min_offset) {
-        min_offset = self.UserName.bufferOffset;
-    }
-    if (self.Workstation.bufferOffset < min_offset) {
-        min_offset = self.Workstation.bufferOffset;
-    }
-    if (self.EncryptedRandomSessionKey.bufferOffset < min_offset) {
-        min_offset = self.EncryptedRandomSessionKey.bufferOffset;
-    }
-    if (min_offset + pBegin > stream.get_current()) {
-        self.has_mic = true;
+
+    // Read Mic is there is a gap between headers and payload
+    // TODO: don't we have a flag to know if we should read MIC ?
+    self.has_mic = pBegin + min_offset > stream.get_current();
+    if (self.has_mic){
         stream.in_copy_bytes(self.MIC, 16);
-    }
-    else {
-        self.has_mic = false;
     }
 
     // PAYLOAD
