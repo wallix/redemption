@@ -60,7 +60,7 @@ private:
 
     struct AsyncBuf
     {
-        std::unique_ptr<uint8_t const> data;
+        std::unique_ptr<uint8_t const[]> data;
         uint8_t const * p;
         uint8_t const * e;
 
