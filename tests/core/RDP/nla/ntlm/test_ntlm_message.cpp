@@ -536,14 +536,15 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     RED_CHECK_EQUAL(AuthMsg.EncryptedRandomSessionKey.buffer.size(), 16);
 
     // LmChallengeResponse
-    LMv2_Response lmResponse(AuthMsg.LmChallengeResponse.buffer);
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
     // hexdump_c(lmResponse.Response, 16);
-    RED_CHECK_MEM_AA(lmResponse.Response, "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3"_av);
+    RED_CHECK_MEM_AA(lmv2_response(AuthMsg.LmChallengeResponse.buffer),
+                    "\xa0\x98\x01\x10\x19\xbb\x5d\x00\xf6\xbe\x00\x33\x90\x20\x34\xb3"_av);
 
     // LOG(LOG_INFO, "Lm Response . ClientChallenge ===========\n");
     // hexdump_c(lmResponse.ClientChallenge, 8);
-    RED_CHECK_MEM_AA(lmResponse.ClientChallenge, "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43"_av);
+    RED_CHECK_MEM_AA(lmv2_client_challenge(AuthMsg.LmChallengeResponse.buffer),
+                    "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43"_av);
 
 
     // NtChallengeResponse

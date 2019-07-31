@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <cassert>
 #include <string_view>
+#include <string.h>
 
 #include "utils/sugar/array.hpp"
 #include "utils/sugar/byte_ptr.hpp"
@@ -298,4 +299,7 @@ static inline void ap_integer_decrement_le(array_view_u8 number) {
     }
 }
 
-
+static inline bool are_buffer_equal(array_view_const_u8 a, array_view_const_u8 b)
+{
+    return a.size() == b.size() && (0 == memcmp(a.data(), b.data(), a.size()));
+}

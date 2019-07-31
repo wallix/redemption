@@ -739,6 +739,55 @@ struct NTLMSSPMessageSignatureESS {
     uint32_t SeqNum;
 };
 
+
+// 2.2.2.4   LMv2_RESPONSE
+// =================================================
+// The LMv2_RESPONSE structure defines the NTLM v2 authentication LmChallengeResponse in the
+// AUTHENTICATE_MESSAGE. This response is used only when NTLM v2 authentication is configured.
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           Response                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                      ChallengeFromClient                      |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+//  Response (16 bytes):  A 16-byte array of unsigned char that contains the client's LM
+//   challenge-response. This is the portion of the LmChallengeResponse field to which the
+//   HMAC_MD5 algorithm has been applied, as defined in section 3.3.2. Specifically, Response
+//   corresponds to the result of applying the HMAC_MD5 algorithm, using the key
+//   ResponseKeyLM, to a message consisting of the concatenation of the ResponseKeyLM,
+//   ServerChallenge and ClientChallenge.
+//  ChallengeFromClient (8 bytes):  An 8-byte array of unsigned char that contains the client's
+//   ClientChallenge, as defined in section 3.1.5.1.2.
+
+inline array_view_const_u8 lmv2_response(std::vector<uint8_t> & buffer)
+{
+    return {buffer.data(), 16};
+}
+
+inline array_view_const_u8 lmv2_client_challenge(std::vector<uint8_t> & buffer)
+{
+    return {buffer.data() + 16, 8};
+}
+
+inline std::vector<uint8_t> compute_LMv2_Response(array_view_const_u8 responseKeyLM, array_view_const_u8 serverChallenge, array_view_const_u8 clientChallenge)
+{
+    array_md5 response = ::HmacMd5(responseKeyLM, serverChallenge, clientChallenge);
+    std::vector<uint8_t> message(response.data(), response.data()+response.size());
+    message.insert(std::end(message), clientChallenge.data(), clientChallenge.data()+clientChallenge.size());
+    return message;
+}
+
+
 // [MS-NLMP]
 // 2.2.1.3   AUTHENTICATE_MESSAGE
 // ===================================================
@@ -1066,6 +1115,16 @@ struct NTLMAuthenticateMessage {
         return NtProofStr_from_msg == NtProofStr;
     }
 
+    bool check_lm_response_from_authenticate(array_view_const_u8 hash, array_view_const_u8 server_challenge) 
+    {
+        if (this->LmChallengeResponse.buffer.size() != 24) {
+            return false;
+        }
+        return are_buffer_equal(
+            compute_LMv2_Response(this->NTOWFv2(hash), server_challenge,
+                         lmv2_client_challenge(this->LmChallengeResponse.buffer)),
+            lmv2_response(this->LmChallengeResponse.buffer));
+    }
 };
 
 
@@ -1125,6 +1184,11 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
         stream.out_uint32_le(payloadOffset);
         payloadOffset += field->buffer.size();
     }
+
+// Check that when reading buffer
+//    if (self.LmChallengeResponse.buffer.size() != 24) {
+//        // This is some message format error
+//    }
 
     stream.out_uint32_le(self.negoFlags.flags);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
@@ -1252,53 +1316,6 @@ struct LM_Response {
 };
 
 
-// 2.2.2.4   LMv2_RESPONSE
-// =================================================
-// The LMv2_RESPONSE structure defines the NTLM v2 authentication LmChallengeResponse in the
-// AUTHENTICATE_MESSAGE. This response is used only when NTLM v2 authentication is configured.
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                           Response                            |
-// +---------------+---------------+---------------+---------------+
-// |                              ...                              |
-// +---------------+---------------+---------------+---------------+
-// |                              ...                              |
-// +---------------+---------------+---------------+---------------+
-// |                              ...                              |
-// +---------------+---------------+---------------+---------------+
-// |                      ChallengeFromClient                      |
-// +---------------+---------------+---------------+---------------+
-// |                              ...                              |
-// +---------------+---------------+---------------+---------------+
-//  Response (16 bytes):  A 16-byte array of unsigned char that contains the client's LM
-//   challenge-response. This is the portion of the LmChallengeResponse field to which the
-//   HMAC_MD5 algorithm has been applied, as defined in section 3.3.2. Specifically, Response
-//   corresponds to the result of applying the HMAC_MD5 algorithm, using the key
-//   ResponseKeyLM, to a message consisting of the concatenation of the ResponseKeyLM,
-//   ServerChallenge and ClientChallenge.
-//  ChallengeFromClient (8 bytes):  An 8-byte array of unsigned char that contains the client's
-//   ClientChallenge, as defined in section 3.1.5.1.2.
-
-struct LMv2_Response {
-    uint8_t Response[16]{};
-    uint8_t ClientChallenge[8]{};
-
-    LMv2_Response(std::vector<uint8_t> & buffer) {
-        memcpy(this->Response, buffer.data(), 16);
-        memcpy(this->ClientChallenge, buffer.data() + 16, 8);
-    }
-};
-
-
-inline std::vector<uint8_t> compute_LMv2_Response(array_view_u8 responseKeyLM, array_view_u8 serverChallenge, array_view_u8 clientChallenge)
-{
-    array_md5 response = ::HmacMd5(responseKeyLM, serverChallenge, clientChallenge);
-    std::vector<uint8_t> message(response.data(), response.data()+response.size());
-    message.insert(std::end(message), clientChallenge.data(), clientChallenge.data()+clientChallenge.size());
-    return message;
-}
 
 
 // 2.2.2.6   NTLM v1 Response: NTLM_RESPONSE
