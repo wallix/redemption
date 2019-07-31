@@ -208,8 +208,11 @@ private:
         // LmChallengeResponse.ChallengeFromClient = ClientChallenge
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
         
-        this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer = compute_LMv2_Response(
-            ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
+        auto response = compute_LMv2_Response(ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
+        this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
+        this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.insert(
+            std::end(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer),
+            this->ClientChallenge, this->ClientChallenge + 8);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)

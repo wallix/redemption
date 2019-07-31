@@ -267,6 +267,31 @@ protected:
 
         private:
 
+//        // Server check lm response
+//        bool ntlm_check_lm_response_from_authenticate(array_view_const_u8 hash) {
+//            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Check LmResponse");
+//            auto & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
+//            auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+//            auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
+
+//            size_t lm_response_size = AuthLmResponse.size(); // should be 24
+//            if (lm_response_size != 24) {
+//                return false;
+//            }
+//            LMv2_Response response(AuthLmResponse);
+
+//            auto userup = UTF16_to_upper(UserName);
+//            array_md5 ResponseKeyLM = HmacMd5(hash, userup, DomainName);
+
+//            auto computed_response = compute_LMv2_Response(ResponseKeyLM, 
+//                                                          {this->ServerChallenge, 8},
+//                                                          {response.ClientChallenge, sizeof(response.ClientChallenge)});
+
+//            return !memcmp(response.Response, computed_response.data(), SslMd5::DIGEST_LENGTH);
+//        }
+
+
+
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
         void ntlm_server_build_challenge() {
             uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;

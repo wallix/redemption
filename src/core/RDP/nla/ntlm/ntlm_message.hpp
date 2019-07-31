@@ -779,12 +779,9 @@ inline array_view_const_u8 lmv2_client_challenge(std::vector<uint8_t> & buffer)
     return {buffer.data() + 16, 8};
 }
 
-inline std::vector<uint8_t> compute_LMv2_Response(array_view_const_u8 responseKeyLM, array_view_const_u8 serverChallenge, array_view_const_u8 clientChallenge)
+inline array_md5 compute_LMv2_Response(array_view_const_u8 responseKeyLM, array_view_const_u8 serverChallenge, array_view_const_u8 clientChallenge)
 {
-    array_md5 response = ::HmacMd5(responseKeyLM, serverChallenge, clientChallenge);
-    std::vector<uint8_t> message(response.data(), response.data()+response.size());
-    message.insert(std::end(message), clientChallenge.data(), clientChallenge.data()+clientChallenge.size());
-    return message;
+    return ::HmacMd5(responseKeyLM, serverChallenge, clientChallenge);
 }
 
 
@@ -1120,10 +1117,13 @@ struct NTLMAuthenticateMessage {
         if (this->LmChallengeResponse.buffer.size() != 24) {
             return false;
         }
-        return are_buffer_equal(
-            compute_LMv2_Response(this->NTOWFv2(hash), server_challenge,
-                         lmv2_client_challenge(this->LmChallengeResponse.buffer)),
-            lmv2_response(this->LmChallengeResponse.buffer));
+        auto a = compute_LMv2_Response(this->NTOWFv2(hash), server_challenge,
+                         lmv2_client_challenge(this->LmChallengeResponse.buffer));
+
+        hexdump_c(a);
+        auto b = lmv2_response(this->LmChallengeResponse.buffer);
+        hexdump_c(b);
+        return are_buffer_equal(a, b);
     }
 };
 
