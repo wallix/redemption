@@ -246,24 +246,6 @@ protected:
             this->rand.random(this->ServerChallenge, 8);
         }
 
-        // all strings are in unicode utf16
-        void NTOWFv2(array_view_const_u8 pass,
-                     array_view_const_u8 user,
-                     array_view_const_u8 domain,
-                     array_view_u8 buff) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer NTOWFv2");
-            
-            array_md4 md4password = Md4(pass);
-            auto userup = UTF16_to_upper(user);
-            array_md5 tmp_md5 = HmacMd5(md4password, userup, domain);
-
-            // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
-            // if it is so no need to use a temporary variable
-            // and copy digest afterward.
-            memset(buff.data(), 0, buff.size());
-            memcpy(buff.data(), tmp_md5.data(), std::min(buff.size(), size_t(SslMd5::DIGEST_LENGTH)));
-        }
-
         // server method to decrypt exported session key from authenticate message with
         // session base key computed with Responses.
         void ntlm_decrypt_exported_session_key() {
@@ -325,22 +307,6 @@ protected:
                                                           {response.ClientChallenge, sizeof(response.ClientChallenge)});
 
             return !memcmp(response.Response, computed_response.data(), SslMd5::DIGEST_LENGTH);
-        }
-
-        // server compute Session Base Key
-        void ntlm_compute_session_base_key(array_view_const_u8 hash) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Compute Session Base Key");
-            auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-            auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-            uint8_t NtProofStr[16] = {};
-            memcpy(NtProofStr, AuthNtResponse.data(), 16);
-
-            auto userup = UTF16_to_upper(UserName);
-            array_md5 ResponseKeyNT = HmacMd5(hash, userup, DomainName);;
-
-            // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-            this->SessionBaseKey = HmacMd5(ResponseKeyNT, {NtProofStr, sizeof(NtProofStr)});
         }
 
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
@@ -409,7 +375,7 @@ protected:
                 return SEC_E_LOGON_DENIED;
             }
             // SERVER COMPUTE SHARED KEY WITH CLIENT
-            this->ntlm_compute_session_base_key(make_array_view(hash));
+            this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(make_array_view(hash));
             this->ntlm_decrypt_exported_session_key();
 
             /**

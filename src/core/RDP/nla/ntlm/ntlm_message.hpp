@@ -1044,6 +1044,15 @@ struct NTLMAuthenticateMessage {
     {
         memset(this->MIC, 0x00, 16);
     }
+    
+    array_md5 compute_session_base_key(array_view_const_u8 hash) {
+        array_view_u8 NtProofStr{this->NtChallengeResponse.buffer.data(), 16};
+        // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
+        auto userup = UTF16_to_upper(this->UserName.buffer);
+        array_md5 ResponseKeyNT = HmacMd5(hash, userup, this->DomainName.buffer);
+        return HmacMd5(ResponseKeyNT, NtProofStr);
+    }
+
 };
 
 
