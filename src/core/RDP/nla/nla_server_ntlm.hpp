@@ -181,9 +181,9 @@ protected:
         uint8_t ChallengeTimestamp[8]{};
         uint8_t ServerChallenge[8]{};
         uint8_t ClientChallenge[8]{};
-        uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH]{};
-        uint8_t ExportedSessionKey[16]{};
-        uint8_t EncryptedRandomSessionKey[16]{};
+        array_md5 SessionBaseKey;
+        array_md5 ExportedSessionKey;
+        array_md5 EncryptedRandomSessionKey;
     public:
         array_md5 ClientSigningKey;
     private:
@@ -307,17 +307,14 @@ protected:
         void ntlm_decrypt_exported_session_key() {
             auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Decrypt RandomSessionKey");
-            memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.data(),
-                   AuthEncryptedRSK.size());
+            memcpy(this->EncryptedRandomSessionKey.data(), AuthEncryptedRSK.data(), AuthEncryptedRSK.size());
 
             // ntlm_rc4k
-            SslRC4 rc4;
-            rc4.set_key({this->SessionBaseKey, 16});
-            rc4.crypt(16, this->EncryptedRandomSessionKey, this->ExportedSessionKey);
+            this->ExportedSessionKey = Rc4Key(this->SessionBaseKey, this->EncryptedRandomSessionKey); 
         }
 
         void ntlm_compute_MIC() {
-            this->MessageIntegrityCheck = HmacMd5(make_array_view(this->ExportedSessionKey),
+            this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
                 this->SavedNegotiateMessage.av(),
                 this->SavedChallengeMessage.av(),
                 this->SavedAuthenticateMessage.av());
@@ -380,9 +377,7 @@ protected:
             array_md5 ResponseKeyNT;
             this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
             // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-            SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
-            hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
-            hmac_md5seskey.final(this->SessionBaseKey);
+            this->SessionBaseKey = HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
         }
 
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
@@ -457,14 +452,14 @@ protected:
              * @msdn{cc236711}
              */
 
-            this->ClientSigningKey = Md5({this->ExportedSessionKey, 16}, make_array_view(client_sign_magic));
+            this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
 
             /**
              * Generate client sealing key (ClientSealingKey).\n
              * @msdn{cc236712}
              */
 
-            this->ClientSealingKey = Md5(make_array_view(this->ExportedSessionKey), make_array_view(client_seal_magic));
+            this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
 
             /**
              * Generate server signing key (ServerSigningKey).\n
@@ -472,7 +467,7 @@ protected:
              */
 
             SslMd5 md5sign_server;
-            md5sign_server.update({this->ExportedSessionKey, 16});
+            md5sign_server.update(this->ExportedSessionKey);
             md5sign_server.update(make_array_view(server_sign_magic));
             md5sign_server.final(this->ServerSigningKey);
 
@@ -482,7 +477,7 @@ protected:
              */
 
             SslMd5 md5seal_server;
-            md5seal_server.update(make_array_view(this->ExportedSessionKey));
+            md5seal_server.update(this->ExportedSessionKey);
             md5seal_server.update(make_array_view(server_seal_magic));
             md5seal_server.final(this->ServerSealingKey);
 
