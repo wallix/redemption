@@ -66,7 +66,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
         {
             ICapFileItem file;
             std::string_view result_content;
-            LocalICAPProtocol::ValidationType validation_type;
+            LocalICAPProtocol::ValidationResult validation_type;
         };
 
         ICapValidator(ICAPService * icap_service) noexcept
@@ -520,16 +520,16 @@ public:
 
         while (auto response = this->icap.receive_response()) {
             switch (response->validation_type) {
-                case LocalICAPProtocol::ValidationType::Wait:
+                case LocalICAPProtocol::ValidationResult::Wait:
                     return;
-                case LocalICAPProtocol::ValidationType::IsAccepted:
+                case LocalICAPProtocol::ValidationResult::IsAccepted:
                     if (!this->params.validator_params.log_if_accepted) {
                         this->reset_lindex();
                         continue;
                     }
                     [[fallthrough]];
-                case LocalICAPProtocol::ValidationType::IsRejected:
-                case LocalICAPProtocol::ValidationType::Error:
+                case LocalICAPProtocol::ValidationResult::IsRejected:
+                case LocalICAPProtocol::ValidationResult::Error:
                     this->reset_lindex();
             }
 

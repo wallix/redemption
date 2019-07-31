@@ -73,7 +73,7 @@ enum class MsgType : uint8_t
     Unknown,
 };
 
-enum class ValidationType : uint8_t
+enum class ValidationResult : uint8_t
 {
     IsAccepted,
     IsRejected,
@@ -131,7 +131,7 @@ struct ICAPHeader
 
 struct ICAPResultHeader
 {
-    ValidationType result = ValidationType::Wait;
+    ValidationResult result = ValidationResult::Wait;
     ICAPFileId file_id;
     uint32_t content_size;
 
@@ -362,7 +362,7 @@ struct ICAPService
         return this->result_header.file_id;
     }
 
-    LocalICAPProtocol::ValidationType last_result_flag() const noexcept
+    LocalICAPProtocol::ValidationResult last_result_flag() const noexcept
     {
         return this->result_header.result;
     }

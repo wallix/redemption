@@ -610,7 +610,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
     using namespace LocalICAPProtocol;
     ICAPHeader(MsgType::Result, 0/*len*/).emit(out);
-    ICAPResultHeader{ValidationType::IsAccepted, ICAPFileId(1),
+    ICAPResultHeader{ValidationResult::IsAccepted, ICAPFileId(1),
         checked_int(status.size())}.emit(out);
     out.out_copy_bytes(status);
     auto av = out.get_bytes().as_chars();
