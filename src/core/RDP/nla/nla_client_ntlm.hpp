@@ -44,80 +44,6 @@ static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
     return result;
 }
 
-
-using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;
-static inline array_md4 Md4(array_view_const_u8 data)
-{
-    array_md4 result;
-    SslMd4 md4;
-    md4.update(data);
-    md4.unchecked_final(result.data());
-    return result;
-}
-
-using array_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
-static inline array_md5 Rc4Key(array_view_const_u8 key, array_md5 plaintext)
-{
-    array_md5 cyphertext;
-    SslRC4 rc4;
-    rc4.set_key(key);
-    rc4.crypt(plaintext.size(), plaintext.data(), cyphertext.data());
-    return cyphertext;
-}
-
-
-static inline array_md5 Md5(array_view_const_u8 data)
-{
-    array_md5 result;
-    SslMd5 md5;
-    md5.update(data);
-    md5.unchecked_final(result.data());
-    return result;
-}
-
-static inline array_md5 Md5(array_view_const_u8 data1, const_bytes_view data2)
-{
-    array_md5 result;
-    SslMd5 md5;
-    md5.update(data1);
-    md5.update(data2);
-    md5.unchecked_final(result.data());
-    return result;
-}
-
-
-static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
-{
-    array_md5 result;
-    SslHMAC_Md5 hmac_md5(key);
-    hmac_md5.update(data);
-    hmac_md5.unchecked_final(result.data());
-    return result;
-}
-
-static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2)
-{
-    array_md5 result;
-    SslHMAC_Md5 hmac_md5(key);
-    hmac_md5.update(data1);
-    hmac_md5.update(data2);
-    hmac_md5.unchecked_final(result.data());
-    return result;
-}
-
-static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2, array_view_const_u8 data3)
-{
-    array_md5 result;
-    SslHMAC_Md5 hmac_md5(key);
-    hmac_md5.update(data1);
-    hmac_md5.update(data2);
-    hmac_md5.update(data3);
-    hmac_md5.unchecked_final(result.data());
-    return result;
-}
-
-
-
 class rdpCredsspClientNTLM
 {
     static constexpr uint32_t cbMaxSignature = 16;
@@ -288,14 +214,9 @@ private:
         //                                         Concat(ServerChallenge, ClientChallenge))
         // LmChallengeResponse.ChallengeFromClient = ClientChallenge
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
-        auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
-        // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-
-        array_md5 LCResponse = ::HmacMd5(ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
-
-        LmChallengeResponse.assign(LCResponse.data(), LCResponse.data()+LCResponse.size());
-        LmChallengeResponse.insert(std::end(LmChallengeResponse), 
-            this->ClientChallenge, this->ClientChallenge+8);
+        
+        this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer = compute_LMv2_Response(
+            ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)

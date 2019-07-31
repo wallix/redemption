@@ -332,18 +332,14 @@ protected:
         private:
 
         // server check nt response
-        bool ntlm_check_nt_response_from_authenticate(array_view_const_u8 hash) {
+        bool ntlm_check_nt_response_from_authenticate(NTLMAuthenticateMessage & AUTHENTICATE_MESSAGE, array_view_const_u8 hash) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Check NtResponse");
-            auto & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-            auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
+            auto & AuthNtResponse = AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
+            auto & DomainName = AUTHENTICATE_MESSAGE.DomainName.buffer;
+            auto & UserName = AUTHENTICATE_MESSAGE.UserName.buffer;
 
             uint8_t NtProofStr[SslMd5::DIGEST_LENGTH] = {};
             uint8_t ResponseKeyNT[16] = {};
-            // LOG(LOG_INFO, "NTLM CHECK NT RESPONSE FROM AUTHENTICATE");
-            // LOG(LOG_INFO, "UserName size = %u", UserName.size());
-            // LOG(LOG_INFO, "DomainName size = %u", DomainName.size());
-            // LOG(LOG_INFO, "hash size = %u", hash_size);
 
             this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
             // LOG(LOG_INFO, "ResponseKeyNT");
@@ -365,24 +361,21 @@ protected:
             auto & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
             auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
+
             size_t lm_response_size = AuthLmResponse.size(); // should be 24
             if (lm_response_size != 24) {
                 return false;
             }
-            uint8_t response[16] = {};
-            memcpy(response, AuthLmResponse.data(), 16);
-            memcpy(this->ClientChallenge, AuthLmResponse.data()+16, 8);
-            
-            uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
+            LMv2_Response response(AuthLmResponse);
+
             uint8_t ResponseKeyLM[16] = {};
             this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyLM);
 
-            SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
-            hmac_md5resp.update({this->ServerChallenge, 8});
-            hmac_md5resp.update({this->ClientChallenge, 8});
-            hmac_md5resp.final(compute_response);
+            auto computed_response = compute_LMv2_Response(make_array_view(ResponseKeyLM), 
+                                                          {this->ServerChallenge, 8},
+                                                          {response.ClientChallenge, sizeof(response.ClientChallenge)});
 
-            return !memcmp(response, compute_response, 16);
+            return !memcmp(response.Response, computed_response.data(), SslMd5::DIGEST_LENGTH);
         }
 
         // server compute Session Base Key
@@ -457,7 +450,7 @@ protected:
 
         // SERVER PROCEED RESPONSE CHECKING
         SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t (&hash)[16]) {
-            if (!this->ntlm_check_nt_response_from_authenticate(make_array_view(hash))) {
+            if (!this->ntlm_check_nt_response_from_authenticate(this->AUTHENTICATE_MESSAGE, make_array_view(hash))) {
                 LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                 return SEC_E_LOGON_DENIED;
             }

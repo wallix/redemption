@@ -35,6 +35,77 @@
 
 #include <numeric>
 
+using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;
+static inline array_md4 Md4(array_view_const_u8 data)
+{
+    array_md4 result;
+    SslMd4 md4;
+    md4.update(data);
+    md4.unchecked_final(result.data());
+    return result;
+}
+
+using array_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
+static inline array_md5 Rc4Key(array_view_const_u8 key, array_md5 plaintext)
+{
+    array_md5 cyphertext;
+    SslRC4 rc4;
+    rc4.set_key(key);
+    rc4.crypt(plaintext.size(), plaintext.data(), cyphertext.data());
+    return cyphertext;
+}
+
+
+static inline array_md5 Md5(array_view_const_u8 data)
+{
+    array_md5 result;
+    SslMd5 md5;
+    md5.update(data);
+    md5.unchecked_final(result.data());
+    return result;
+}
+
+static inline array_md5 Md5(array_view_const_u8 data1, const_bytes_view data2)
+{
+    array_md5 result;
+    SslMd5 md5;
+    md5.update(data1);
+    md5.update(data2);
+    md5.unchecked_final(result.data());
+    return result;
+}
+
+
+static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
+{
+    array_md5 result;
+    SslHMAC_Md5 hmac_md5(key);
+    hmac_md5.update(data);
+    hmac_md5.unchecked_final(result.data());
+    return result;
+}
+
+static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2)
+{
+    array_md5 result;
+    SslHMAC_Md5 hmac_md5(key);
+    hmac_md5.update(data1);
+    hmac_md5.update(data2);
+    hmac_md5.unchecked_final(result.data());
+    return result;
+}
+
+static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2, array_view_const_u8 data3)
+{
+    array_md5 result;
+    SslHMAC_Md5 hmac_md5(key);
+    hmac_md5.update(data1);
+    hmac_md5.update(data2);
+    hmac_md5.update(data3);
+    hmac_md5.unchecked_final(result.data());
+    return result;
+}
+
 // 2.2.2.1   AV_PAIR
 // ==================================
 // The AV_PAIR structure defines an attribute/value pair. Sequences of AV_PAIR
@@ -1184,20 +1255,21 @@ struct LMv2_Response {
     uint8_t Response[16]{};
     uint8_t ClientChallenge[8]{};
 
-    LMv2_Response()
-    = default;
-
-    void emit(OutStream & stream) const {
-        stream.out_copy_bytes(this->Response, 16);
-        stream.out_copy_bytes(this->ClientChallenge, 8);
+    LMv2_Response(std::vector<uint8_t> & buffer) {
+        memcpy(this->Response, buffer.data(), 16);
+        memcpy(this->ClientChallenge, buffer.data() + 16, 8);
     }
-
-    void recv(InStream & stream) {
-        stream.in_copy_bytes(this->Response, 16);
-        stream.in_copy_bytes(this->ClientChallenge, 8);
-    }
-
 };
+
+
+inline std::vector<uint8_t> compute_LMv2_Response(array_view_u8 responseKeyLM, array_view_u8 serverChallenge, array_view_u8 clientChallenge)
+{
+    array_md5 response = ::HmacMd5(responseKeyLM, serverChallenge, clientChallenge);
+    std::vector<uint8_t> message(response.data(), response.data()+response.size());
+    message.insert(std::end(message), clientChallenge.data(), clientChallenge.data()+clientChallenge.size());
+    return message;
+}
+
 
 // 2.2.2.6   NTLM v1 Response: NTLM_RESPONSE
 // ===============================================
