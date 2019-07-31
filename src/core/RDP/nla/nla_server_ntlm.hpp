@@ -185,7 +185,7 @@ protected:
         uint8_t ExportedSessionKey[16]{};
         uint8_t EncryptedRandomSessionKey[16]{};
     public:
-        uint8_t ClientSigningKey[16]{};
+        array_md5 ClientSigningKey;
     private:
         uint8_t ClientSealingKey[16]{};
     public:
@@ -467,10 +467,7 @@ protected:
              * @msdn{cc236711}
              */
 
-            SslMd5 md5sign_client;
-            md5sign_client.update({this->ExportedSessionKey, 16});
-            md5sign_client.update(make_array_view(client_sign_magic));
-            md5sign_client.final(this->ClientSigningKey);
+            this->ClientSigningKey = Md5({this->ExportedSessionKey, 16}, make_array_view(client_sign_magic));
 
             /**
              * Generate client sealing key (ClientSealingKey).\n
@@ -739,7 +736,7 @@ private:
         this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, this->ntlm_context.ClientSigningKey, data_out.av(), MessageSeqNo);
+        this->compute_hmac_md5(digest, this->ntlm_context.ClientSigningKey.data(), data_out.av(), MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->compute_signature(
