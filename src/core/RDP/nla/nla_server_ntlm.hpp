@@ -187,7 +187,7 @@ protected:
     public:
         array_md5 ClientSigningKey;
     private:
-        uint8_t ClientSealingKey[16]{};
+        array_md5 ClientSealingKey;
     public:
         uint8_t ServerSigningKey[16]{};
     private:
@@ -474,10 +474,7 @@ protected:
              * @msdn{cc236712}
              */
 
-            SslMd5 md5seal_client;
-            md5seal_client.update(make_array_view(this->ExportedSessionKey));
-            md5seal_client.update(make_array_view(client_seal_magic));
-            md5seal_client.final(this->ClientSealingKey);
+            this->ClientSealingKey = Md5(make_array_view(this->ExportedSessionKey), make_array_view(client_seal_magic));
 
             /**
              * Generate server signing key (ServerSigningKey).\n
@@ -504,7 +501,7 @@ protected:
              */
 
             this->SendRc4Seal.set_key(make_array_view(this->ServerSealingKey));
-            this->RecvRc4Seal.set_key(make_array_view(this->ClientSealingKey));
+            this->RecvRc4Seal.set_key(this->ClientSealingKey);
 
             // =======================================================
 
