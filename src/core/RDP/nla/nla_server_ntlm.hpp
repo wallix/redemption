@@ -252,13 +252,8 @@ protected:
                               array_view_const_u8 domain,
                               array_md5 & buff) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer NTOWFv2 Hash");
-
-            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
-            uint8_t * userup = unique_userup.get();
-            memcpy(userup, user.data(), user.size());
-            UTF16Upper(userup, user.size());
-            
-            buff = HmacMd5(hash, {userup, user.size()}, domain);
+            auto userup = UTF16_to_upper(user);
+            buff = HmacMd5(hash, userup, domain);
             // hmac_md5.update({user, user_size});
         }
 
@@ -277,13 +272,8 @@ protected:
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer NTOWFv2");
             
             array_md4 md4password = Md4(pass);
-            
-            auto unique_userup = std::make_unique<uint8_t[]>(user.size());
-            uint8_t * userup = unique_userup.get();
-            memcpy(userup, user.data(), user.size());
-            UTF16Upper(userup, user.size());
-
-            array_md5 tmp_md5 = HmacMd5(md4password, {userup, user.size()}, domain);
+            auto userup = UTF16_to_upper(user);
+            array_md5 tmp_md5 = HmacMd5(md4password, userup, domain);
 
             // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
             // if it is so no need to use a temporary variable

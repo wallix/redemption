@@ -37,13 +37,6 @@
 #include <vector>
 
 
-static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
-{
-    std::vector<uint8_t> result(name.data(), name.data()+name.size());
-    ::UTF16Upper(result.data(), result.size());
-    return result;
-}
-
 class rdpCredsspClientNTLM
 {
     static constexpr uint32_t cbMaxSignature = 16;

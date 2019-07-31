@@ -35,6 +35,14 @@
 
 #include <numeric>
 
+static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
+{
+    std::vector<uint8_t> result(name.data(), name.data()+name.size());
+    ::UTF16Upper(result.data(), result.size());
+    return result;
+}
+
+
 using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;
 static inline array_md4 Md4(array_view_const_u8 data)
 {
