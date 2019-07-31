@@ -236,7 +236,7 @@ static_assert(not check_array_view_call<const char>(p, 1));
 static_assert(check_array_view_call<const char>(str, 1));
 static_assert(check_array_view_call<const char>(strv, 1));
 static_assert(check_array_view_call<const char>(std::string_view{}, 1));
-static_assert(not check_array_view_call<const char>(Range{}, 1));
+static_assert(check_array_view_call<const char>(Range{}, 1));
 static_assert(check_array_view_call<const char>(rng, 1));
 
 static_assert(not check_array_view_call<int>(cstr, 1));

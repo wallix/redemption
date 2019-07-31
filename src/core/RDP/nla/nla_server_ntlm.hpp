@@ -267,25 +267,6 @@ protected:
 
         private:
 
-        // server check nt response
-        bool ntlm_check_nt_response_from_authenticate(NTLMAuthenticateMessage & AUTHENTICATE_MESSAGE, array_view_const_u8 hash) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Check NtResponse");
-            auto & AuthNtResponse = AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-            auto & DomainName = AUTHENTICATE_MESSAGE.DomainName.buffer;
-            auto & UserName = AUTHENTICATE_MESSAGE.UserName.buffer;
-
-            auto userup = UTF16_to_upper(UserName);
-            array_md5 ResponseKeyNT = HmacMd5(hash, userup, DomainName);
-            array_md5 NtProofStr = HmacMd5(ResponseKeyNT,
-                                           make_array_view(this->ServerChallenge),
-                                           {AuthNtResponse.data()+16, AuthNtResponse.size()-16});
-
-            uint8_t NtProofStr_from_msg[16] = {};
-            memcpy(NtProofStr_from_msg, AuthNtResponse.data(), 16); 
-
-            return !memcmp(NtProofStr.data(), NtProofStr_from_msg, 16);
-        }
-
         // Server check lm response
         bool ntlm_check_lm_response_from_authenticate(array_view_const_u8 hash) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Check LmResponse");
@@ -366,7 +347,7 @@ protected:
 
         // SERVER PROCEED RESPONSE CHECKING
         SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t (&hash)[16]) {
-            if (!this->ntlm_check_nt_response_from_authenticate(this->AUTHENTICATE_MESSAGE, make_array_view(hash))) {
+            if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(make_array_view(hash), make_array_view(this->ServerChallenge))) {
                 LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                 return SEC_E_LOGON_DENIED;
             }

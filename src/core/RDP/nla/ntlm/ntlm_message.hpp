@@ -1045,12 +1045,25 @@ struct NTLMAuthenticateMessage {
         memset(this->MIC, 0x00, 16);
     }
     
+    array_md5 NTOWFv2(array_view_const_u8 hash) {
+        auto userup = UTF16_to_upper(this->UserName.buffer);
+        return HmacMd5(hash, userup, this->DomainName.buffer);
+    }
+    
     array_md5 compute_session_base_key(array_view_const_u8 hash) {
         array_view_u8 NtProofStr{this->NtChallengeResponse.buffer.data(), 16};
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-        auto userup = UTF16_to_upper(this->UserName.buffer);
-        array_md5 ResponseKeyNT = HmacMd5(hash, userup, this->DomainName.buffer);
-        return HmacMd5(ResponseKeyNT, NtProofStr);
+        return HmacMd5(this->NTOWFv2(hash), NtProofStr);
+    }
+
+    bool check_nt_response_from_authenticate(array_view_const_u8 hash, array_view_const_u8 server_challenge) {
+        auto & AuthNtResponse = this->NtChallengeResponse.buffer;
+        array_md5 NtProofStr = HmacMd5(this->NTOWFv2(hash), server_challenge, {AuthNtResponse.data()+16, AuthNtResponse.size()-16});
+
+        array_md5 NtProofStr_from_msg;
+        memcpy(NtProofStr_from_msg.data(), AuthNtResponse.data(), NtProofStr_from_msg.size()); 
+
+        return NtProofStr_from_msg == NtProofStr;
     }
 
 };
@@ -1664,7 +1677,7 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
 
         self.TargetInfo.buffer.clear();
         for (auto & avp: self.AvPairList) {
-            push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.id)));
+            push_back_array(self.TargetInfo.buffer, out_uint16_le(avp.id));
             push_back_array(self.TargetInfo.buffer, buffer_view(out_uint16_le(avp.data.size())));
             push_back_array(self.TargetInfo.buffer, avp.data);
         }
