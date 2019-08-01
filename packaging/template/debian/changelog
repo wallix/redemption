@@ -1,3 +1,9 @@
+redemption (7.2.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix RDP_AUDIO_OUTPUT proxy option issue.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 01 Aug 2019 16:08:27 +0200
+
 redemption (7.2.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
