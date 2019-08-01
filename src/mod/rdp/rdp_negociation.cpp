@@ -1679,6 +1679,11 @@ void RdpNegociation::send_client_info_pdu()
         // }
     }
 
+    if (!this->channels_authorizations.rdpsnd_audio_output_is_authorized()) {
+        infoPacket.flags &= ~INFO_REMOTECONSOLEAUDIO;
+        infoPacket.flags |=  INFO_NOAUDIOPLAYBACK;
+    }
+
     if (this->perform_automatic_reconnection) {
         InStream in_s(this->server_auto_reconnect_packet_ref);
         RDP::ServerAutoReconnectPacket server_auto_reconnect_packet;
