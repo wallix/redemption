@@ -554,24 +554,23 @@ private:
         this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.get_data());
 
         array_md5 digest = HmacMd5(this->ntlm_context.ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer.av());
-
-        uint8_t expected_signature[16] = {};
         uint8_t checksum[8];
         /* RC4-encrypt first 8 bytes of digest */
         this->ntlm_context.RecvRc4Seal.crypt(8, digest.data(), checksum);
 
+        std::vector<uint8_t> expected_signature;
         uint32_t seal_version = 1;
         /* Concatenate version, ciphertext and sequence number to build signature */
         
-        memcpy(&expected_signature[0], &seal_version, 4);
-        memcpy(&expected_signature[4], checksum, 8);
-        memcpy(&expected_signature[12], &MessageSeqNo, 4);
+        push_back_array(expected_signature, out_uint32_le(seal_version));
+        push_back_array(expected_signature, {checksum, 8});
+        push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
 
-        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+        if (memcmp(data_in.data(), expected_signature.data(),  expected_signature.size()) != 0) {
             /* signature verification failed! */
             LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
             LOG(LOG_ERR, "Expected Signature:");
-            hexdump_c(expected_signature, 16);
+            hexdump_c(expected_signature);
             LOG(LOG_ERR, "Actual Signature:");
             hexdump_c(data_in.data(), 16);
 
@@ -585,9 +584,7 @@ private:
             return SEC_E_MESSAGE_ALTERED;
         }
 
-        const uint32_t version = this->ts_request.use_version;
-
-        if (version >= 5) {
+        if (this->ts_request.use_version >= 5) {
             if (this->ts_request.clientNonce.isset()){
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
@@ -615,7 +612,6 @@ private:
 
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
-
         return SEC_E_OK;
     }
 
