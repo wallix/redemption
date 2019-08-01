@@ -171,95 +171,6 @@ private:
     // SERVER PROCEED RESPONSE CHECKING
     public:
 
-    SEC_STATUS write_challenge(Array& output_buffer, TimeObj & timeobj, Random & rand) {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
-        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
-        uint32_t const mask = NTLMSSP_REQUEST_TARGET
-                            | NTLMSSP_NEGOTIATE_NTLM
-                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                            | NTLMSSP_NEGOTIATE_UNICODE;
-        if ((negoFlag & mask) != mask) {
-            LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
-        }
-        this->NegotiateFlags = negoFlag;
-    
-        rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
-        this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
-
-        uint8_t ZeroTimestamp[8] = {};
-
-        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
-            memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-        }
-        else {
-            const timeval tv = timeobj.get_time();
-            OutStream out_stream(this->Timestamp);
-            out_stream.out_uint32_le(tv.tv_usec);
-            out_stream.out_uint32_le(tv.tv_sec);
-        }
-
-        // NTLM: construct challenge target info
-        std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
-        std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
-         
-        auto & list = this->CHALLENGE_MESSAGE.AvPairList;
-        list.push_back(AvPair({MsvAvNbComputerName, upwin7}));
-        list.push_back(AvPair({MsvAvNbDomainName, upwin7}));
-        list.push_back(AvPair({MsvAvDnsComputerName, win7}));
-        list.push_back(AvPair({MsvAvDnsDomainName, win7}));
-        list.push_back({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))});
-
-        this->CHALLENGE_MESSAGE.negoFlags.flags = negoFlag;
-        if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-            this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-            this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
-            this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-            
-        }
-
-        this->state = NTLM_STATE_AUTHENTICATE;
-
-        StaticOutStream<65535> out_stream;
-        EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
-        output_buffer.init(out_stream.get_offset());
-        output_buffer.copy(out_stream.get_bytes());
-
-        this->SavedChallengeMessage.clear();
-        push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
-
-        this->state = NTLM_STATE_AUTHENTICATE;
-        return SEC_I_CONTINUE_NEEDED;
-    }
-
-    SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
-        InStream in_stream(input_buffer);
-        recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
-        if (this->AUTHENTICATE_MESSAGE.has_mic) {
-            this->UseMIC = true;
-            this->SavedAuthenticateMessage.clear();
-            constexpr std::size_t null_data_sz = 16;
-            uint8_t const null_data[null_data_sz]{0u};
-            push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data(), this->AUTHENTICATE_MESSAGE.PayloadOffset});
-            push_back_array(this->SavedAuthenticateMessage, {null_data, null_data_sz});
-            push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset + null_data_sz, in_stream.get_offset() - this->AUTHENTICATE_MESSAGE.PayloadOffset - null_data_sz});
-        }
-
-        auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-        this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
-        auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-        this->identity_Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
-
-
-        if ((this->identity_User.size() == 0) && (this->identity_Domain.size() == 0)){
-            LOG(LOG_ERR, "ANONYMOUS User not allowed");
-            return SEC_E_LOGON_DENIED;
-        }
-
-        return SEC_I_CONTINUE_NEEDED;
-    }
-
     SEC_STATUS check_authenticate() {
         cbytes_view password_av{this->identity_Password.get_data(), this->identity_Password.size()};
         array_md4 hash;
@@ -342,28 +253,95 @@ private:
             this->SavedNegotiateMessage.clear();
             push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
 
-            return this->write_challenge(output_buffer, timeobj, rand);
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
+        
+            rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
+            this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
+
+            uint8_t ZeroTimestamp[8] = {};
+
+            if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
+                memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+            }
+            else {
+                const timeval tv = timeobj.get_time();
+                OutStream out_stream(this->Timestamp);
+                out_stream.out_uint32_le(tv.tv_usec);
+                out_stream.out_uint32_le(tv.tv_sec);
+            }
+
+            // NTLM: construct challenge target info
+            std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
+            std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
+             
+            auto & list = this->CHALLENGE_MESSAGE.AvPairList;
+            list.push_back(AvPair({MsvAvNbComputerName, upwin7}));
+            list.push_back(AvPair({MsvAvNbDomainName, upwin7}));
+            list.push_back(AvPair({MsvAvDnsComputerName, win7}));
+            list.push_back(AvPair({MsvAvDnsDomainName, win7}));
+            list.push_back({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))});
+
+            this->CHALLENGE_MESSAGE.negoFlags.flags = negoFlag;
+            if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
+                this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+                this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+                this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
+                this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+                
+            }
+
+            this->state = NTLM_STATE_AUTHENTICATE;
+
+            StaticOutStream<65535> out_stream;
+            EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
+            output_buffer.init(out_stream.get_offset());
+            output_buffer.copy(out_stream.get_bytes());
+
+            this->SavedChallengeMessage.clear();
+            push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
+
+            this->state = NTLM_STATE_AUTHENTICATE;
+            return SEC_I_CONTINUE_NEEDED;
         }
 
         if (this->state == NTLM_STATE_AUTHENTICATE) {
-            SEC_STATUS status = this->read_authenticate(input_buffer);
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
+            InStream in_stream(input_buffer);
+            recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
+            if (this->AUTHENTICATE_MESSAGE.has_mic) {
+                this->UseMIC = true;
+                this->SavedAuthenticateMessage.clear();
+                constexpr std::size_t null_data_sz = 16;
+                uint8_t const null_data[null_data_sz]{0u};
+                push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data(), this->AUTHENTICATE_MESSAGE.PayloadOffset});
+                push_back_array(this->SavedAuthenticateMessage, {null_data, null_data_sz});
+                push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset + null_data_sz, in_stream.get_offset() - this->AUTHENTICATE_MESSAGE.PayloadOffset - null_data_sz});
+            }
 
-            if (status == SEC_I_CONTINUE_NEEDED) {
-                if (!this->set_password_cb) {
+            auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
+            this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
+            auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+            this->identity_Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
+
+            if ((this->identity_User.size() == 0) && (this->identity_Domain.size() == 0)){
+                LOG(LOG_ERR, "ANONYMOUS User not allowed");
+                return SEC_E_LOGON_DENIED;
+            }
+
+            if (!this->set_password_cb) {
+                return SEC_E_LOGON_DENIED;
+            }
+            switch (set_password_cb(this->identity_User
+                                   ,this->identity_Domain
+                                   ,this->identity_Password)) {
+                case PasswordCallback::Error:
                     return SEC_E_LOGON_DENIED;
-                }
-                switch (set_password_cb(this->identity_User
-                                       ,this->identity_Domain
-                                       ,this->identity_Password)) {
-                    case PasswordCallback::Error:
-                        return SEC_E_LOGON_DENIED;
-                    case PasswordCallback::Ok:
-                        this->state = NTLM_STATE_WAIT_PASSWORD;
-                        break;
-                    case PasswordCallback::Wait:
-                        this->state = NTLM_STATE_WAIT_PASSWORD;
-                        return SEC_I_LOCAL_LOGON;
-                }
+                case PasswordCallback::Ok:
+                    this->state = NTLM_STATE_WAIT_PASSWORD;
+                    break;
+                case PasswordCallback::Wait:
+                    this->state = NTLM_STATE_WAIT_PASSWORD;
+                    return SEC_I_LOCAL_LOGON;
             }
         }
 
