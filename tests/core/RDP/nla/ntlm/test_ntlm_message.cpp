@@ -1522,7 +1522,7 @@ public:
         this->NegotiateFlags = negoFlag;
 
         this->SavedNegotiateMessage.init(in_stream.get_offset());
-        this->SavedNegotiateMessage.copy(in_stream.get_bytes());
+        this->SavedNegotiateMessage.copy(in_stream.get_consumed_bytes());
 
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
@@ -1548,7 +1548,7 @@ public:
         InStream in_stream(input_buffer);
         RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
         this->SavedChallengeMessage.init(in_stream.get_offset());
-        this->SavedChallengeMessage.copy(in_stream.get_bytes());
+        this->SavedChallengeMessage.copy(in_stream.get_consumed_bytes());
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;

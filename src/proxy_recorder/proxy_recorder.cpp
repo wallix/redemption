@@ -191,11 +191,11 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn)
                 GCC::UserData::SCCore sc_core;
                 sc_core.recv(f.payload);
                 if (sc_core.length >= 12) {
-                    hexdump_d(f.payload.get_bytes());
+                    hexdump_d(f.payload.get_consumed_bytes());
                     auto const offset = (sc_core.length >= 16) ? 8 : 4;
                     auto const idx = f.payload.get_current() - currentPacket.data() - offset;
                     currentPacket[idx] = this->front_CR_TPDU.rdp_neg_requestedProtocols & 0xFF;
-                    hexdump_d(f.payload.get_bytes());
+                    hexdump_d(f.payload.get_consumed_bytes());
                 }
             }
         }

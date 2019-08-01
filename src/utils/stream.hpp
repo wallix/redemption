@@ -74,7 +74,7 @@ public:
         return InStream(*this);
     }
 
-    const_bytes_view get_bytes() const noexcept {
+    const_bytes_view get_consumed_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
     }
 

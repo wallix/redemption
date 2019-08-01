@@ -210,7 +210,6 @@ protected:
     public:
         explicit NTLMContextServer(bool verbose = false)
             : UseMIC(this->NTLMv2/* == true*/)
-            , SavedNegotiateMessage(0)
             , SavedChallengeMessage(0)
             , SavedAuthenticateMessage(0)
             , verbose(verbose)
@@ -305,7 +304,7 @@ protected:
 
             if (this->UseMIC) {
                 this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
-                    this->SavedNegotiateMessage.av(),
+                    this->SavedNegotiateMessage,
                     this->SavedChallengeMessage.av(),
                     this->SavedAuthenticateMessage.av());
 
@@ -337,7 +336,7 @@ protected:
             this->NegotiateFlags = negoFlag;
 
             this->SavedNegotiateMessage.init(in_stream.get_offset());
-            this->SavedNegotiateMessage.copy(in_stream.get_bytes());
+            this->SavedNegotiateMessage.copy(in_stream.get_consumed_bytes());
 
             this->state = NTLM_STATE_CHALLENGE;
             return SEC_I_CONTINUE_NEEDED;

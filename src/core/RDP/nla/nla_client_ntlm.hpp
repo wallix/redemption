@@ -107,7 +107,7 @@ private:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
         InStream in_stream(input_buffer);
         RecvNTLMChallengeMessage(in_stream, CHALLENGE_MESSAGE);
-        this->SavedChallengeMessage.assign(in_stream.get_bytes().data(),in_stream.get_bytes().data()+in_stream.get_offset());
+        this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
 
         this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
