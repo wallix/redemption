@@ -27,6 +27,11 @@ inline std::array<uint8_t, 2> out_uint16_le(unsigned int v)
     return {uint8_t(v), uint8_t(v >> 8)};
 }
 
+inline std::array<uint8_t, 4> out_uint32_le(unsigned int v)
+{
+    return {uint8_t(v), uint8_t(v >> 8), uint8_t(v >> 16), uint8_t(v >> 24)};
+}
+
 inline void push_back_array(std::vector<uint8_t> & v, array_view_const_u8 a)
 {
     v.insert(std::end(v), a.data(), a.data() + a.size());

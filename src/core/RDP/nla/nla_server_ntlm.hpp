@@ -187,7 +187,7 @@ protected:
     private:
         array_md5 ClientSealingKey;
     public:
-        uint8_t ServerSigningKey[16]{};
+        array_md5 ServerSigningKey;
     private:
         uint8_t ServerSealingKey[16]{};
         array_md5 MessageIntegrityCheck;
@@ -297,10 +297,7 @@ protected:
              * @msdn{cc236711}
              */
 
-            SslMd5 md5sign_server;
-            md5sign_server.update(this->ExportedSessionKey);
-            md5sign_server.update(make_array_view(server_sign_magic));
-            md5sign_server.final(this->ServerSigningKey);
+            this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
 
             /**
              * Generate server sealing key (ServerSealingKey).\n
@@ -481,24 +478,16 @@ protected:
 
 private:
     /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
-    static void compute_hmac_md5(
-        uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-        const_bytes_view data_buffer, uint32_t SeqNo)
+    static array_md5 compute_hmac_md5(uint8_t* signing_key, const_bytes_view data_buffer, uint32_t SeqNo)
     {
-        // TODO signing_key by array reference
-        SslHMAC_Md5 hmac_md5({signing_key, 16});
-        StaticOutStream<4> out_stream;
-        out_stream.out_uint32_le(SeqNo);
-        hmac_md5.update(out_stream.get_bytes());
-        hmac_md5.update(data_buffer);
-        hmac_md5.final(digest);
+        return HmacMd5({signing_key, 16}, out_uint32_le(SeqNo), data_buffer);
     }
 
-    static void compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint32_t SeqNo)
+    static void compute_signature(uint8_t* signature, SslRC4& rc4, array_view_const_u8 digest, uint32_t SeqNo)
     {
         uint8_t checksum[8];
         /* RC4-encrypt first 8 bytes of digest */
-        rc4.crypt(8, digest, checksum);
+        rc4.crypt(8, digest.data(), checksum);
 
         uint32_t version = 1;
         /* Concatenate version, ciphertext and sequence number to build signature */
@@ -517,8 +506,7 @@ private:
 
         data_out.init(data_in.size() + cbMaxSignature);
         auto message_out = data_out.av().from_at(cbMaxSignature);
-        uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, this->ntlm_context.ServerSigningKey, data_in, MessageSeqNo);
+        array_md5 digest = this->compute_hmac_md5(this->ntlm_context.ServerSigningKey.data(), data_in, MessageSeqNo);
         // this->ntlm_context.confidentiality == true
         this->ntlm_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
         this->compute_signature(data_out.get_data(), this->ntlm_context.SendRc4Seal, digest, MessageSeqNo);
@@ -544,12 +532,10 @@ private:
         // context->confidentiality == true
         this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
-        uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, this->ntlm_context.ClientSigningKey.data(), data_out.av(), MessageSeqNo);
+        array_md5 digest = this->compute_hmac_md5(this->ntlm_context.ClientSigningKey.data(), data_out.av(), MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
-        this->compute_signature(
-            expected_signature, this->ntlm_context.RecvRc4Seal, digest, MessageSeqNo);
+        this->compute_signature(expected_signature, this->ntlm_context.RecvRc4Seal, digest, MessageSeqNo);
 
         if (memcmp(data_in.data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
