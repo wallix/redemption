@@ -42,6 +42,7 @@ static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
     return result;
 }
 
+using array_challenge = std::array<uint8_t, 8>;
 
 using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;
 static inline array_md4 Md4(array_view_const_u8 data)
@@ -1398,7 +1399,7 @@ struct NTLMv2_Client_Challenge {
     uint16_t Reserved1;             // MUST BE 0x00
     uint32_t Reserved2;             // MUST BE 0x00
     uint8_t  Timestamp[8]{};          // Current system time
-    uint8_t  ClientChallenge[8]{};    // Client Challenge
+    array_challenge ClientChallenge;    // Client Challenge
     uint32_t Reserved3;             // MUST BE 0x00
     NtlmAvPairList AvPairList;
     uint32_t Reserved4;             // MUST BE 0x00
@@ -1415,7 +1416,7 @@ inline void EmitNTLMv2_Client_Challenge(OutStream & stream, NTLMv2_Client_Challe
     stream.out_clear_bytes(2);
     stream.out_clear_bytes(4);
     stream.out_copy_bytes(self.Timestamp, 8);
-    stream.out_copy_bytes(self.ClientChallenge, 8);
+    stream.out_copy_bytes(self.ClientChallenge);
     stream.out_clear_bytes(4);
 
     for (auto & avp: self.AvPairList) {
@@ -1437,7 +1438,7 @@ inline void RecvNTLMv2_Client_Challenge(InStream & stream, NTLMv2_Client_Challen
     stream.in_skip_bytes(2);
     stream.in_skip_bytes(4);
     stream.in_copy_bytes(self.Timestamp, 8);
-    stream.in_copy_bytes(self.ClientChallenge, 8);
+    stream.in_copy_bytes(self.ClientChallenge);
     stream.in_skip_bytes(4);
 
     for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
@@ -1663,7 +1664,7 @@ friend void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
 public:
     NtlmField TargetName;          /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
-    uint8_t serverChallenge[8]{};    /* 8 Bytes */
+    array_challenge serverChallenge;    /* 8 Bytes */
     // uint64_t serverChallenge;
     /* 8 Bytes reserved */
     NtlmField TargetInfo;          /* 8 Bytes */
@@ -1692,7 +1693,7 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         payloadOffset += self.TargetName.buffer.size();
         
         stream.out_uint32_le(self.negoFlags.flags);
-        stream.out_copy_bytes(self.serverChallenge, 8);
+        stream.out_copy_bytes(self.serverChallenge);
         stream.out_clear_bytes(8);
 
         self.TargetInfo.buffer.clear();
@@ -1741,7 +1742,7 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     self.TargetName.bufferOffset = stream.in_uint32_le();
 
     self.negoFlags.flags = stream.in_uint32_le();
-    stream.in_copy_bytes(self.serverChallenge, 8);
+    stream.in_copy_bytes(self.serverChallenge);
     // self.serverChallenge = stream.in_uint64_le();
     stream.in_skip_bytes(8);
 

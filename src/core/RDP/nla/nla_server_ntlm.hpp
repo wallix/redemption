@@ -178,18 +178,38 @@ protected:
     private:
         uint8_t Timestamp[8]{};
         uint8_t ChallengeTimestamp[8]{};
-        uint8_t ServerChallenge[8]{};
-        uint8_t ClientChallenge[8]{};
+        array_challenge ServerChallenge;
+        array_challenge ClientChallenge;
         array_md5 SessionBaseKey;
         array_md5 ExportedSessionKey;
     public:
+        /**
+         * Generate client signing key (ClientSigningKey).\n
+         * @msdn{cc236711}
+         */
+    
         array_md5 ClientSigningKey;
     private:
+        /**
+         * Generate client sealing key (ClientSealingKey).\n
+         * @msdn{cc236712}
+         */
+    
         array_md5 ClientSealingKey;
     public:
+        /**
+         * Generate server signing key (ServerSigningKey).\n
+         * @msdn{cc236711}
+         */
+    
         array_md5 ServerSigningKey;
     private:
-        uint8_t ServerSealingKey[16]{};
+        /**
+         * Generate server sealing key (ServerSealingKey).\n
+         * @msdn{cc236712}
+         */
+
+        array_md5 ServerSealingKey;
         array_md5 MessageIntegrityCheck;
         // uint8_t NtProofStr[16];
     public:
@@ -227,8 +247,8 @@ protected:
             }
             this->NegotiateFlags = negoFlag;
         
-            rand.random(this->ServerChallenge, 8);
-            memcpy(this->CHALLENGE_MESSAGE.serverChallenge, this->ServerChallenge, 8);
+            rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
+            this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
 
             uint8_t ZeroTimestamp[8] = {};
 
@@ -267,47 +287,21 @@ protected:
 
         // SERVER PROCEED RESPONSE CHECKING
         SEC_STATUS ntlm_server_proceed_authenticate(array_view_const_u8 hash) {
-            if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, make_array_view(this->ServerChallenge))) {
+            if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
                 LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                 return SEC_E_LOGON_DENIED;
             }
-            if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, {this->ServerChallenge, 8})) {
+            if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
                 LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
                 return SEC_E_LOGON_DENIED;
             }
             // SERVER COMPUTE SHARED KEY WITH CLIENT
-            this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(make_array_view(hash));
+            this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
             this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
-            /**
-             * Generate client signing key (ClientSigningKey).\n
-             * @msdn{cc236711}
-             */
-
             this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
-
-            /**
-             * Generate client sealing key (ClientSealingKey).\n
-             * @msdn{cc236712}
-             */
-
             this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
-
-            /**
-             * Generate server signing key (ServerSigningKey).\n
-             * @msdn{cc236711}
-             */
-
             this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
-
-            /**
-             * Generate server sealing key (ServerSealingKey).\n
-             * @msdn{cc236712}
-             */
-
-            SslMd5 md5seal_server;
-            md5seal_server.update(this->ExportedSessionKey);
-            md5seal_server.update(make_array_view(server_seal_magic));
-            md5seal_server.final(this->ServerSealingKey);
+            this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
 
             /**
              * Initialize RC4 stream cipher states for sealing.

@@ -193,7 +193,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     );
     // hexdump_c(ChallengeMsg.TargetInfo.buffer.ostream.get_data(),
     //           ChallengeMsg.TargetInfo.buffer.ostream.size());
-    InStream servChall({ChallengeMsg.serverChallenge, 8});
+    InStream servChall(ChallengeMsg.serverChallenge);
     uint64_t servchallengeinteger = servChall.in_uint64_le();
     RED_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
 
@@ -219,7 +219,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.buffer.size(), 64);
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
-    InStream servChall2({ChallengeMsgDuplicate.serverChallenge, 8});
+    InStream servChall2(ChallengeMsgDuplicate.serverChallenge);
     uint64_t servchallengeinteger2 = servChall2.in_uint64_le();
     RED_CHECK_EQUAL(servchallengeinteger2, 8063485858206805542LL);
 
@@ -678,9 +678,9 @@ public:
 private:
     uint8_t ChallengeTimestamp[8]{};
 public:
-    uint8_t ServerChallenge[8]{};
+    array_challenge ServerChallenge;
 private:
-    uint8_t ClientChallenge[8]{};
+    array_challenge ClientChallenge;
 public:
     uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH]{};
 private:
@@ -750,7 +750,7 @@ public:
     {
         // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Client Challenge");
-        this->rand.random(this->ClientChallenge, 8);
+        this->rand.random(this->ClientChallenge.data(), this->ClientChallenge.size());
 
     }
     /**
@@ -760,11 +760,11 @@ public:
     void ntlm_generate_server_challenge()
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Server Challenge");
-        this->rand.random(this->ServerChallenge, 8);
+        this->rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
     }
     // client method
     void ntlm_get_server_challenge() {
-        memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
+        this->ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
     }
 
     /**
@@ -900,7 +900,7 @@ public:
         // compute ClientChallenge (nonce(8))
         this->ntlm_generate_client_challenge();
         memcpy(&temp[1+1+6], this->Timestamp, 8);
-        memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
+        memcpy(&temp[1+1+6+8], this->ClientChallenge.data(), this->ClientChallenge.size());
         memcpy(&temp[1+1+6+8+8+4], AvPairsStream.data(), AvPairsStream.size());
 
         // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
@@ -911,7 +911,7 @@ public:
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
 
         this->ntlm_get_server_challenge();
-        hmac_md5resp.update({this->ServerChallenge, 8});
+        hmac_md5resp.update(this->ServerChallenge);
         hmac_md5resp.update({temp, temp_size});
         hmac_md5resp.final(NtProofStr);
 
@@ -935,13 +935,13 @@ public:
         auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
         // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
         SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
-        hmac_md5lmresp.update({this->ServerChallenge, 8});
-        hmac_md5lmresp.update({this->ClientChallenge, 8});
+        hmac_md5lmresp.update(this->ServerChallenge);
+        hmac_md5lmresp.update(this->ClientChallenge);
         uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
         hmac_md5lmresp.final(LCResponse);
 
         LmChallengeResponse.assign(LCResponse, LCResponse+SslMd5::DIGEST_LENGTH);
-        LmChallengeResponse.insert(std::end(LmChallengeResponse), this->ClientChallenge, this->ClientChallenge+8);
+        LmChallengeResponse.insert(std::end(LmChallengeResponse), this->ClientChallenge.data(), this->ClientChallenge.data()+this->ClientChallenge.size());
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: SessionBaseKey");
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
@@ -1139,7 +1139,7 @@ public:
         // LOG(LOG_INFO, "ResponseKeyNT");
         // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
-        hmac_md5resp.update(make_array_view(this->ServerChallenge));
+        hmac_md5resp.update(this->ServerChallenge);
         hmac_md5resp.update({AuthNtResponse.data()+16, AuthNtResponse.size() - 16});
         hmac_md5resp.final(NtProofStr);
 
@@ -1158,15 +1158,15 @@ public:
         }
         uint8_t response[16] = {};
         memcpy(response, AuthLmResponse.data(), 16);
-        memcpy(this->ClientChallenge, AuthLmResponse.data()+16, 8);
+        memcpy(this->ClientChallenge.data(), AuthLmResponse.data()+16, 8);
 
         uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
         uint8_t ResponseKeyLM[16] = {};
         this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyLM);
 
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
-        hmac_md5resp.update({this->ServerChallenge, 8});
-        hmac_md5resp.update({this->ClientChallenge, 8});
+        hmac_md5resp.update(this->ServerChallenge);
+        hmac_md5resp.update(this->ClientChallenge);
         hmac_md5resp.final(compute_response);
 
         return !memcmp(response, compute_response, 16);
@@ -1351,7 +1351,7 @@ public:
         this->NegotiateFlags = negoFlag;
         
         this->ntlm_generate_server_challenge();
-        memcpy(this->CHALLENGE_MESSAGE.serverChallenge, this->ServerChallenge, 8);
+        this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
         this->ntlm_generate_timestamp();
 
         std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
@@ -2213,7 +2213,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     }
     RED_CHECK(result);
     server_context.ntlm_generate_server_challenge();
-    memcpy(server_context.ServerChallenge, server_context.CHALLENGE_MESSAGE.serverChallenge, 8);
+    server_context.ServerChallenge = server_context.CHALLENGE_MESSAGE.serverChallenge;
     server_context.ntlm_generate_timestamp();
 
     uint8_t win7[] =  {0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00};

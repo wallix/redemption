@@ -91,8 +91,8 @@ private:
 
     uint8_t Timestamp[8]{};
     uint8_t ChallengeTimestamp[8]{};
-    uint8_t ServerChallenge[8]{};
-    uint8_t ClientChallenge[8]{};
+    array_challenge ServerChallenge;
+    array_challenge ClientChallenge;
     array_md5 SessionBaseKey; 
     array_md5 ExportedSessionKey;
     array_md5 EncryptedRandomSessionKey;
@@ -175,8 +175,8 @@ private:
         memcpy(&temp[1+1+6], this->Timestamp, 8);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
-        rand.random(this->ClientChallenge, 8);
-        memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
+        rand.random(this->ClientChallenge.data(), 8);
+        memcpy(&temp[1+1+6+8], this->ClientChallenge.data(), 8);
 
         memcpy(&temp[1+1+6+8+8+4], AvPairsStream.data(), AvPairsStream.size());
 
@@ -185,9 +185,9 @@ private:
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
 
-        memcpy(this->ServerChallenge, CHALLENGE_MESSAGE.serverChallenge, 8);
+        this->ServerChallenge = CHALLENGE_MESSAGE.serverChallenge;
 
-        array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),{this->ServerChallenge, 8},{temp, temp_size});
+        array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),this->ServerChallenge,{temp, temp_size});
 
 
         // NtChallengeResponse = Concat(NtProofStr, temp)
@@ -208,11 +208,9 @@ private:
         // LmChallengeResponse.ChallengeFromClient = ClientChallenge
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
         
-        auto response = compute_LMv2_Response(ResponseKeyLM, {this->ServerChallenge, 8}, {this->ClientChallenge, 8});
+        auto response = compute_LMv2_Response(ResponseKeyLM, this->ServerChallenge, this->ClientChallenge);
         this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
-        this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.insert(
-            std::end(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer),
-            this->ClientChallenge, this->ClientChallenge + 8);
+        push_back_array(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer, this->ClientChallenge);
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
