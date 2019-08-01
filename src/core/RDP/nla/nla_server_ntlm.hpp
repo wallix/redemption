@@ -167,7 +167,33 @@ private:
     private:
 
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
-    void ntlm_server_build_challenge(TimeObj & timeobj, Random & rand) {
+
+    // SERVER PROCEED RESPONSE CHECKING
+    public:
+
+    SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
+        InStream in_stream(input_buffer);
+        RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
+        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
+        uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                            | NTLMSSP_NEGOTIATE_NTLM
+                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                            | NTLMSSP_NEGOTIATE_UNICODE;
+        if ((negoFlag & mask) != mask) {
+            return SEC_E_INVALID_TOKEN;
+        }
+        this->NegotiateFlags = negoFlag;
+
+        this->SavedNegotiateMessage.clear();
+        push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
+
+        this->state = NTLM_STATE_CHALLENGE;
+        return SEC_I_CONTINUE_NEEDED;
+    }
+
+    SEC_STATUS write_challenge(Array& output_buffer, TimeObj & timeobj, Random & rand) {
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
         uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
         uint32_t const mask = NTLMSSP_REQUEST_TARGET
                             | NTLMSSP_NEGOTIATE_NTLM
@@ -214,35 +240,7 @@ private:
         }
 
         this->state = NTLM_STATE_AUTHENTICATE;
-    }
 
-    // SERVER PROCEED RESPONSE CHECKING
-    public:
-
-    SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
-        InStream in_stream(input_buffer);
-        RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
-        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
-        uint32_t const mask = NTLMSSP_REQUEST_TARGET
-                            | NTLMSSP_NEGOTIATE_NTLM
-                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                            | NTLMSSP_NEGOTIATE_UNICODE;
-        if ((negoFlag & mask) != mask) {
-            return SEC_E_INVALID_TOKEN;
-        }
-        this->NegotiateFlags = negoFlag;
-
-        this->SavedNegotiateMessage.clear();
-        push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
-
-        this->state = NTLM_STATE_CHALLENGE;
-        return SEC_I_CONTINUE_NEEDED;
-    }
-
-    SEC_STATUS write_challenge(Array& output_buffer, TimeObj & timeobj, Random & rand) {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
-        this->ntlm_server_build_challenge(timeobj, rand);
         StaticOutStream<65535> out_stream;
         EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
         output_buffer.init(out_stream.get_offset());
