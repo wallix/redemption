@@ -1120,9 +1120,7 @@ struct NTLMAuthenticateMessage {
         auto a = compute_LMv2_Response(this->NTOWFv2(hash), server_challenge,
                          lmv2_client_challenge(this->LmChallengeResponse.buffer));
 
-        hexdump_c(a);
         auto b = lmv2_response(this->LmChallengeResponse.buffer);
-        hexdump_c(b);
         return are_buffer_equal(a, b);
     }
     

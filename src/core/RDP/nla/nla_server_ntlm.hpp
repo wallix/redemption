@@ -217,46 +217,6 @@ protected:
         NTLMContextServer& operator = (NTLMContextServer const &) = delete;
 
         private:
-        /**
-         * Generate timestamp for AUTHENTICATE_MESSAGE.
-         */
-        void ntlm_generate_timestamp()
-        {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer TimeStamp");
-            uint8_t ZeroTimestamp[8] = {};
-
-            if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
-                memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-            }
-            else {
-                const timeval tv = this->timeobj.get_time();
-                OutStream out_stream(this->Timestamp);
-                out_stream.out_uint32_le(tv.tv_usec);
-                out_stream.out_uint32_le(tv.tv_sec);
-            }
-        }
-
-        /**
-         * Generate server challenge (8-byte nonce).
-         */
-        void ntlm_generate_server_challenge()
-        {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Generate Server Challenge");
-            this->rand.random(this->ServerChallenge, 8);
-        }
-
-        // server method to decrypt exported session key from authenticate message with
-        // session base key computed with Responses.
-
-        void ntlm_compute_MIC() {
-            this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
-                this->SavedNegotiateMessage.av(),
-                this->SavedChallengeMessage.av(),
-                this->SavedAuthenticateMessage.av());
-        }
-
-
-        private:
 
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
         void ntlm_server_build_challenge() {
@@ -270,9 +230,20 @@ protected:
             }
             this->NegotiateFlags = negoFlag;
         
-            this->ntlm_generate_server_challenge();
+            this->rand.random(this->ServerChallenge, 8);
             memcpy(this->CHALLENGE_MESSAGE.serverChallenge, this->ServerChallenge, 8);
-            this->ntlm_generate_timestamp();
+
+            uint8_t ZeroTimestamp[8] = {};
+
+            if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
+                memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+            }
+            else {
+                const timeval tv = this->timeobj.get_time();
+                OutStream out_stream(this->Timestamp);
+                out_stream.out_uint32_le(tv.tv_usec);
+                out_stream.out_uint32_le(tv.tv_sec);
+            }
 
             // NTLM: construct challenge target info
             std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
@@ -354,7 +325,11 @@ protected:
             // =======================================================
 
             if (this->UseMIC) {
-                this->ntlm_compute_MIC();
+                this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
+                    this->SavedNegotiateMessage.av(),
+                    this->SavedChallengeMessage.av(),
+                    this->SavedAuthenticateMessage.av());
+
                 if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                     LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
                     hexdump_c(this->MessageIntegrityCheck.data(), 16);
@@ -367,17 +342,6 @@ protected:
         }
 
         public:
-        void ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
-            // CHECK UTF8 or UTF16 (should store in UTF16)
-            if (!pszTargetName.empty()) {
-                size_t host_len = UTF8Len(pszTargetName.data());
-                this->ServicePrincipalName.init(host_len * 2);
-                UTF8toUTF16(pszTargetName, this->ServicePrincipalName.get_data(), host_len * 2);
-            }
-            else {
-                this->ServicePrincipalName.init(0);
-            }
-        }
 
         SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
@@ -637,7 +601,7 @@ public:
         */
         this->server_auth_data.state = ServerAuthenticateData::Loop;
         this->ntlm_context.identity.CopyAuthIdentity({},{},{});
-        this->ntlm_context.ntlm_SetContextServicePrincipalName(nullptr);
+        this->ServicePrincipalName.init(0);
     }
 
 public:
