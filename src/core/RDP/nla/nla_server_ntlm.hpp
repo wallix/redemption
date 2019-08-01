@@ -78,17 +78,10 @@ class rdpCredsspServerNTLM final
     Array ClientServerHash;
     Array ServerClientHash;
 
-    Array ServicePrincipalName;
-
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         LOG(LOG_INFO, "set hostname from UTF8");
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
         LOG(LOG_INFO, "length=%lu", length);
-        this->ServicePrincipalName.init(length + 1);
-        if (length){
-            this->ServicePrincipalName.copy({pszTargetName, length});
-        }
-        this->ServicePrincipalName.get_data()[length] = 0;
     }
 
     void credssp_generate_public_key_hash_client_to_server() {
@@ -159,7 +152,6 @@ protected:
         uint32_t NegotiateFlags = 0;
 
     public:
-        Array ServicePrincipalName;
         SEC_WINNT_AUTH_IDENTITY identity;
 
         // bool SendSingleHostData;
@@ -218,7 +210,6 @@ protected:
     public:
         explicit NTLMContextServer(bool verbose = false)
             : UseMIC(this->NTLMv2/* == true*/)
-            , ServicePrincipalName(0)
             , SavedNegotiateMessage(0)
             , SavedChallengeMessage(0)
             , SavedAuthenticateMessage(0)
@@ -579,7 +570,6 @@ public:
         */
         this->server_auth_data.state = ServerAuthenticateData::Loop;
         this->ntlm_context.identity.CopyAuthIdentity({},{},{});
-        this->ServicePrincipalName.init(0);
     }
 
 public:
