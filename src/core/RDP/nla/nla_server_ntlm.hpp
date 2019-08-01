@@ -217,49 +217,6 @@ private:
     }
 
     // SERVER PROCEED RESPONSE CHECKING
-    SEC_STATUS ntlm_server_proceed_authenticate(array_view_const_u8 hash) {
-        if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
-            LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
-            return SEC_E_LOGON_DENIED;
-        }
-        if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
-            LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
-            return SEC_E_LOGON_DENIED;
-        }
-        // SERVER COMPUTE SHARED KEY WITH CLIENT
-        this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
-        this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
-        this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
-        this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
-        this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
-        this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
-
-        /**
-         * Initialize RC4 stream cipher states for sealing.
-         */
-
-        this->SendRc4Seal.set_key(this->ServerSealingKey);
-        this->RecvRc4Seal.set_key(this->ClientSealingKey);
-
-        // =======================================================
-
-        if (this->UseMIC) {
-            this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
-                this->SavedNegotiateMessage,
-                this->SavedChallengeMessage,
-                this->SavedAuthenticateMessage);
-
-            if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
-                LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
-                hexdump_c(this->MessageIntegrityCheck.data(), 16);
-                hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
-                return SEC_E_MESSAGE_ALTERED;
-            }
-        }
-        this->state = NTLM_STATE_FINAL;
-        return SEC_I_COMPLETE_NEEDED;
-    }
-
     public:
 
     SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
@@ -332,7 +289,46 @@ private:
         if (password_av.size() > 0){
             hash = Md4(password_av);
         }
-        return this->ntlm_server_proceed_authenticate(hash);
+        if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
+            LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
+            return SEC_E_LOGON_DENIED;
+        }
+        if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
+            LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
+            return SEC_E_LOGON_DENIED;
+        }
+        // SERVER COMPUTE SHARED KEY WITH CLIENT
+        this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
+        this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
+        this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
+        this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
+        this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
+        this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
+
+        /**
+         * Initialize RC4 stream cipher states for sealing.
+         */
+
+        this->SendRc4Seal.set_key(this->ServerSealingKey);
+        this->RecvRc4Seal.set_key(this->ClientSealingKey);
+
+        // =======================================================
+
+        if (this->UseMIC) {
+            this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
+                this->SavedNegotiateMessage,
+                this->SavedChallengeMessage,
+                this->SavedAuthenticateMessage);
+
+            if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
+                LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
+                hexdump_c(this->MessageIntegrityCheck.data(), 16);
+                hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+                return SEC_E_MESSAGE_ALTERED;
+            }
+        }
+        this->state = NTLM_STATE_FINAL;
+        return SEC_I_COMPLETE_NEEDED;
     }
 
     // GSS_Acquire_cred
