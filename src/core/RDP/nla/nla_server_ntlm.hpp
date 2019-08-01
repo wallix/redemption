@@ -107,265 +107,248 @@ public:
 protected:
     SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
 
-    private:
-    class NTLMContextServer
-    {
-        const bool NTLMv2 = true;
-        bool UseMIC = true; // NTLMv2
-    public:
-        NtlmState state = NTLM_STATE_INITIAL;
+private:
+    const bool NTLMv2 = true;
+    bool UseMIC = true; // NTLMv2
+public:
+    NtlmState state = NTLM_STATE_INITIAL;
+
+private:
+    uint8_t MachineID[32];
+
+public:
+    SslRC4 SendRc4Seal {};
+    SslRC4 RecvRc4Seal {};
+private:
+    uint32_t NegotiateFlags = 0;
+
+public:
+
+    std::vector<uint8_t> identity_User;
+    std::vector<uint8_t> identity_Domain;
+    Array identity_Password{0};
+
+    // bool SendSingleHostData;
+    // NTLM_SINGLE_HOST_DATA SingleHostData;
+    NTLMNegotiateMessage NEGOTIATE_MESSAGE;
+    NTLMChallengeMessage CHALLENGE_MESSAGE;
+    NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
+
+private:
+    NtlmVersion version;
+public:
+    std::vector<uint8_t> SavedNegotiateMessage;
+    std::vector<uint8_t> SavedChallengeMessage;
+    std::vector<uint8_t> SavedAuthenticateMessage;
+
+private:
+    uint8_t Timestamp[8]{};
+    uint8_t ChallengeTimestamp[8]{};
+    array_challenge ServerChallenge;
+    array_challenge ClientChallenge;
+    array_md5 SessionBaseKey;
+    array_md5 ExportedSessionKey;
+public:
+    /**
+     * Generate client signing key (ClientSigningKey).\n
+     * @msdn{cc236711}
+     */
+
+    array_md5 ClientSigningKey;
+private:
+    /**
+     * Generate client sealing key (ClientSealingKey).\n
+     * @msdn{cc236712}
+     */
+
+    array_md5 ClientSealingKey;
+public:
+    /**
+     * Generate server signing key (ServerSigningKey).\n
+     * @msdn{cc236711}
+     */
+
+    array_md5 ServerSigningKey;
+private:
+    /**
+     * Generate server sealing key (ServerSealingKey).\n
+     * @msdn{cc236712}
+     */
+
+    array_md5 ServerSealingKey;
+    array_md5 MessageIntegrityCheck;
+    // uint8_t NtProofStr[16];
 
     private:
-        uint8_t MachineID[32];
 
-    public:
-        SslRC4 SendRc4Seal {};
-        SslRC4 RecvRc4Seal {};
-    private:
-        uint32_t NegotiateFlags = 0;
-
-    public:
-
-        std::vector<uint8_t> identity_User;
-        std::vector<uint8_t> identity_Domain;
-        Array identity_Password{0};
-
-        // bool SendSingleHostData;
-        // NTLM_SINGLE_HOST_DATA SingleHostData;
-        NTLMNegotiateMessage NEGOTIATE_MESSAGE;
-        NTLMChallengeMessage CHALLENGE_MESSAGE;
-        NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
-
-    private:
-        NtlmVersion version;
-    public:
-        std::vector<uint8_t> SavedNegotiateMessage;
-        std::vector<uint8_t> SavedChallengeMessage;
-        std::vector<uint8_t> SavedAuthenticateMessage;
-
-    private:
-        uint8_t Timestamp[8]{};
-        uint8_t ChallengeTimestamp[8]{};
-        array_challenge ServerChallenge;
-        array_challenge ClientChallenge;
-        array_md5 SessionBaseKey;
-        array_md5 ExportedSessionKey;
-    public:
-        /**
-         * Generate client signing key (ClientSigningKey).\n
-         * @msdn{cc236711}
-         */
+    // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
+    void ntlm_server_build_challenge(TimeObj & timeobj, Random & rand) {
+        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
+        uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                            | NTLMSSP_NEGOTIATE_NTLM
+                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                            | NTLMSSP_NEGOTIATE_UNICODE;
+        if ((negoFlag & mask) != mask) {
+            LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
+        }
+        this->NegotiateFlags = negoFlag;
     
-        array_md5 ClientSigningKey;
-    private:
+        rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
+        this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
+
+        uint8_t ZeroTimestamp[8] = {};
+
+        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
+            memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+        }
+        else {
+            const timeval tv = timeobj.get_time();
+            OutStream out_stream(this->Timestamp);
+            out_stream.out_uint32_le(tv.tv_usec);
+            out_stream.out_uint32_le(tv.tv_sec);
+        }
+
+        // NTLM: construct challenge target info
+        std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
+        std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
+         
+        auto & list = this->CHALLENGE_MESSAGE.AvPairList;
+        list.push_back(AvPair({MsvAvNbComputerName, upwin7}));
+        list.push_back(AvPair({MsvAvNbDomainName, upwin7}));
+        list.push_back(AvPair({MsvAvDnsComputerName, win7}));
+        list.push_back(AvPair({MsvAvDnsDomainName, win7}));
+        list.push_back({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))});
+
+        this->CHALLENGE_MESSAGE.negoFlags.flags = negoFlag;
+        if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
+            this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+            this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+            this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
+            this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+            
+        }
+
+        this->state = NTLM_STATE_AUTHENTICATE;
+    }
+
+    // SERVER PROCEED RESPONSE CHECKING
+    SEC_STATUS ntlm_server_proceed_authenticate(array_view_const_u8 hash) {
+        if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
+            LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
+            return SEC_E_LOGON_DENIED;
+        }
+        if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
+            LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
+            return SEC_E_LOGON_DENIED;
+        }
+        // SERVER COMPUTE SHARED KEY WITH CLIENT
+        this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
+        this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
+        this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
+        this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
+        this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
+        this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
+
         /**
-         * Generate client sealing key (ClientSealingKey).\n
-         * @msdn{cc236712}
-         */
-    
-        array_md5 ClientSealingKey;
-    public:
-        /**
-         * Generate server signing key (ServerSigningKey).\n
-         * @msdn{cc236711}
-         */
-    
-        array_md5 ServerSigningKey;
-    private:
-        /**
-         * Generate server sealing key (ServerSealingKey).\n
-         * @msdn{cc236712}
+         * Initialize RC4 stream cipher states for sealing.
          */
 
-        array_md5 ServerSealingKey;
-        array_md5 MessageIntegrityCheck;
-        // uint8_t NtProofStr[16];
+        this->SendRc4Seal.set_key(this->ServerSealingKey);
+        this->RecvRc4Seal.set_key(this->ClientSealingKey);
+
+        // =======================================================
+
+        if (this->UseMIC) {
+            this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
+                this->SavedNegotiateMessage,
+                this->SavedChallengeMessage,
+                this->SavedAuthenticateMessage);
+
+            if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
+                LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
+                hexdump_c(this->MessageIntegrityCheck.data(), 16);
+                hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+                return SEC_E_MESSAGE_ALTERED;
+            }
+        }
+        this->state = NTLM_STATE_FINAL;
+        return SEC_I_COMPLETE_NEEDED;
+    }
+
     public:
-        const bool verbose = false;
 
-    public:
-        explicit NTLMContextServer()
-        {
-            memset(this->MachineID, 0xAA, sizeof(this->MachineID));
-            memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
+    SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
+        InStream in_stream(input_buffer);
+        RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
+        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
+        uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                            | NTLMSSP_NEGOTIATE_NTLM
+                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                            | NTLMSSP_NEGOTIATE_UNICODE;
+        if ((negoFlag & mask) != mask) {
+            return SEC_E_INVALID_TOKEN;
+        }
+        this->NegotiateFlags = negoFlag;
 
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Init");
+        this->SavedNegotiateMessage.clear();
+        push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
+
+        this->state = NTLM_STATE_CHALLENGE;
+        return SEC_I_CONTINUE_NEEDED;
+    }
+
+    SEC_STATUS write_challenge(Array& output_buffer, TimeObj & timeobj, Random & rand) {
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
+        this->ntlm_server_build_challenge(timeobj, rand);
+        StaticOutStream<65535> out_stream;
+        EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
+        output_buffer.init(out_stream.get_offset());
+        output_buffer.copy(out_stream.get_bytes());
+
+        this->SavedChallengeMessage.clear();
+        push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
+
+        this->state = NTLM_STATE_AUTHENTICATE;
+        return SEC_I_CONTINUE_NEEDED;
+    }
+
+    SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
+        InStream in_stream(input_buffer);
+        recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
+        if (this->AUTHENTICATE_MESSAGE.has_mic) {
+            this->UseMIC = true;
+            this->SavedAuthenticateMessage.clear();
+            constexpr std::size_t null_data_sz = 16;
+            uint8_t const null_data[null_data_sz]{0u};
+            push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data(), this->AUTHENTICATE_MESSAGE.PayloadOffset});
+            push_back_array(this->SavedAuthenticateMessage, {null_data, null_data_sz});
+            push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset + null_data_sz, in_stream.get_offset() - this->AUTHENTICATE_MESSAGE.PayloadOffset - null_data_sz});
         }
 
-        NTLMContextServer(NTLMContextServer const &) = delete;
-        NTLMContextServer& operator = (NTLMContextServer const &) = delete;
+        auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
+        this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
+        auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+        this->identity_Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
 
-        private:
 
-        // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
-        void ntlm_server_build_challenge(TimeObj & timeobj, Random & rand) {
-            uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
-            uint32_t const mask = NTLMSSP_REQUEST_TARGET
-                                | NTLMSSP_NEGOTIATE_NTLM
-                                | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                                | NTLMSSP_NEGOTIATE_UNICODE;
-            if ((negoFlag & mask) != mask) {
-                LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
-            }
-            this->NegotiateFlags = negoFlag;
-        
-            rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
-            this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
-
-            uint8_t ZeroTimestamp[8] = {};
-
-            if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
-                memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-            }
-            else {
-                const timeval tv = timeobj.get_time();
-                OutStream out_stream(this->Timestamp);
-                out_stream.out_uint32_le(tv.tv_usec);
-                out_stream.out_uint32_le(tv.tv_sec);
-            }
-
-            // NTLM: construct challenge target info
-            std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
-            std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
-             
-            auto & list = this->CHALLENGE_MESSAGE.AvPairList;
-            list.push_back(AvPair({MsvAvNbComputerName, upwin7}));
-            list.push_back(AvPair({MsvAvNbDomainName, upwin7}));
-            list.push_back(AvPair({MsvAvDnsComputerName, win7}));
-            list.push_back(AvPair({MsvAvDnsDomainName, win7}));
-            list.push_back({MsvAvTimestamp, std::vector<uint8_t>(this->Timestamp, this->Timestamp+sizeof(this->Timestamp))});
-
-            this->CHALLENGE_MESSAGE.negoFlags.flags = negoFlag;
-            if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
-                this->CHALLENGE_MESSAGE.version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-                this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
-                this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-                
-            }
-
-            this->state = NTLM_STATE_AUTHENTICATE;
+        if ((this->identity_User.size() == 0) && (this->identity_Domain.size() == 0)){
+            LOG(LOG_ERR, "ANONYMOUS User not allowed");
+            return SEC_E_LOGON_DENIED;
         }
 
-        // SERVER PROCEED RESPONSE CHECKING
-        SEC_STATUS ntlm_server_proceed_authenticate(array_view_const_u8 hash) {
-            if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
-                LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
-                return SEC_E_LOGON_DENIED;
-            }
-            if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
-                LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
-                return SEC_E_LOGON_DENIED;
-            }
-            // SERVER COMPUTE SHARED KEY WITH CLIENT
-            this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
-            this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
-            this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
-            this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
-            this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
-            this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
+        return SEC_I_CONTINUE_NEEDED;
+    }
 
-            /**
-             * Initialize RC4 stream cipher states for sealing.
-             */
-
-            this->SendRc4Seal.set_key(this->ServerSealingKey);
-            this->RecvRc4Seal.set_key(this->ClientSealingKey);
-
-            // =======================================================
-
-            if (this->UseMIC) {
-                this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
-                    this->SavedNegotiateMessage,
-                    this->SavedChallengeMessage,
-                    this->SavedAuthenticateMessage);
-
-                if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
-                    LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
-                    hexdump_c(this->MessageIntegrityCheck.data(), 16);
-                    hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
-                    return SEC_E_MESSAGE_ALTERED;
-                }
-            }
-            this->state = NTLM_STATE_FINAL;
-            return SEC_I_COMPLETE_NEEDED;
+    SEC_STATUS check_authenticate() {
+        cbytes_view password_av{this->identity_Password.get_data(), this->identity_Password.size()};
+        array_md4 hash;
+        if (password_av.size() > 0){
+            hash = Md4(password_av);
         }
-
-        public:
-
-        SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
-            InStream in_stream(input_buffer);
-            RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
-            uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
-            uint32_t const mask = NTLMSSP_REQUEST_TARGET
-                                | NTLMSSP_NEGOTIATE_NTLM
-                                | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                                | NTLMSSP_NEGOTIATE_UNICODE;
-            if ((negoFlag & mask) != mask) {
-                return SEC_E_INVALID_TOKEN;
-            }
-            this->NegotiateFlags = negoFlag;
-
-            this->SavedNegotiateMessage.clear();
-            push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
-
-            this->state = NTLM_STATE_CHALLENGE;
-            return SEC_I_CONTINUE_NEEDED;
-        }
-
-        SEC_STATUS write_challenge(Array& output_buffer, TimeObj & timeobj, Random & rand) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
-            this->ntlm_server_build_challenge(timeobj, rand);
-            StaticOutStream<65535> out_stream;
-            EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
-            output_buffer.init(out_stream.get_offset());
-            output_buffer.copy(out_stream.get_bytes());
-
-            this->SavedChallengeMessage.clear();
-            push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
-
-            this->state = NTLM_STATE_AUTHENTICATE;
-            return SEC_I_CONTINUE_NEEDED;
-        }
-
-        SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
-            InStream in_stream(input_buffer);
-            recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
-            if (this->AUTHENTICATE_MESSAGE.has_mic) {
-                this->UseMIC = true;
-                this->SavedAuthenticateMessage.clear();
-                constexpr std::size_t null_data_sz = 16;
-                uint8_t const null_data[null_data_sz]{0u};
-                push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data(), this->AUTHENTICATE_MESSAGE.PayloadOffset});
-                push_back_array(this->SavedAuthenticateMessage, {null_data, null_data_sz});
-                push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset + null_data_sz, in_stream.get_offset() - this->AUTHENTICATE_MESSAGE.PayloadOffset - null_data_sz});
-            }
-
-            auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-            this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
-            auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            this->identity_Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
-
-
-            if ((this->identity_User.size() == 0) && (this->identity_Domain.size() == 0)){
-                LOG(LOG_ERR, "ANONYMOUS User not allowed");
-                return SEC_E_LOGON_DENIED;
-            }
-
-            return SEC_I_CONTINUE_NEEDED;
-        }
-
-        SEC_STATUS check_authenticate() {
-            cbytes_view password_av{this->identity_Password.get_data(), this->identity_Password.size()};
-            array_md4 hash;
-            if (password_av.size() > 0){
-                hash = Md4(password_av);
-            }
-            return this->ntlm_server_proceed_authenticate(hash);
-        }
-    } ntlm_context;
+        return this->ntlm_server_proceed_authenticate(hash);
+    }
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
@@ -380,45 +363,45 @@ protected:
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
 
-        if (this->ntlm_context.state == NTLM_STATE_INITIAL) {
+        if (this->state == NTLM_STATE_INITIAL) {
 
-            this->ntlm_context.state = NTLM_STATE_NEGOTIATE;
-            SEC_STATUS status = this->ntlm_context.read_negotiate(input_buffer);
+            this->state = NTLM_STATE_NEGOTIATE;
+            SEC_STATUS status = this->read_negotiate(input_buffer);
             if (status != SEC_I_CONTINUE_NEEDED) {
                 return SEC_E_INVALID_TOKEN;
             }
 
-            if (this->ntlm_context.state == NTLM_STATE_CHALLENGE) {
-                return this->ntlm_context.write_challenge(output_buffer, timeobj, rand);
+            if (this->state == NTLM_STATE_CHALLENGE) {
+                return this->write_challenge(output_buffer, timeobj, rand);
             }
 
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-        if (this->ntlm_context.state == NTLM_STATE_AUTHENTICATE) {
-            SEC_STATUS status = this->ntlm_context.read_authenticate(input_buffer);
+        if (this->state == NTLM_STATE_AUTHENTICATE) {
+            SEC_STATUS status = this->read_authenticate(input_buffer);
 
             if (status == SEC_I_CONTINUE_NEEDED) {
                 if (!this->set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
-                switch (set_password_cb(this->ntlm_context.identity_User
-                                       ,this->ntlm_context.identity_Domain
-                                       ,this->ntlm_context.identity_Password)) {
+                switch (set_password_cb(this->identity_User
+                                       ,this->identity_Domain
+                                       ,this->identity_Password)) {
                     case PasswordCallback::Error:
                         return SEC_E_LOGON_DENIED;
                     case PasswordCallback::Ok:
-                        this->ntlm_context.state = NTLM_STATE_WAIT_PASSWORD;
+                        this->state = NTLM_STATE_WAIT_PASSWORD;
                         break;
                     case PasswordCallback::Wait:
-                        this->ntlm_context.state = NTLM_STATE_WAIT_PASSWORD;
+                        this->state = NTLM_STATE_WAIT_PASSWORD;
                         return SEC_I_LOCAL_LOGON;
                 }
             }
         }
 
-        if (this->ntlm_context.state == NTLM_STATE_WAIT_PASSWORD) {
-            SEC_STATUS status = this->ntlm_context.check_authenticate();
+        if (this->state == NTLM_STATE_WAIT_PASSWORD) {
+            SEC_STATUS status = this->check_authenticate();
             if (status != SEC_I_CONTINUE_NEEDED && status != SEC_I_COMPLETE_NEEDED) {
                 return status;
             }
@@ -435,20 +418,20 @@ private:
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo)
     {
-        LOG_IF(this->ntlm_context.verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
+        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::EncryptMessage");
 
         // data_out [signature][data_buffer]
 
         data_out.init(data_in.size() + cbMaxSignature);
         auto message_out = data_out.av().from_at(cbMaxSignature);
-        array_md5 digest = HmacMd5(this->ntlm_context.ServerSigningKey, out_uint32_le(MessageSeqNo), data_in);
-        // this->ntlm_context.confidentiality == true
-        this->ntlm_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
+        array_md5 digest = HmacMd5(this->ServerSigningKey, out_uint32_le(MessageSeqNo), data_in);
+        // this->confidentiality == true
+        this->SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
         
         uint8_t * signature = data_out.get_data();
         uint8_t checksum[8];
         /* RC4-encrypt first 8 bytes of digest */
-        this->ntlm_context.SendRc4Seal.crypt(8, digest.data(), checksum);
+        this->SendRc4Seal.crypt(8, digest.data(), checksum);
 
         uint32_t version = 1;
         /* Concatenate version, ciphertext and sequence number to build signature */
@@ -478,6 +461,11 @@ public:
         , lang(lang)
         , verbose(verbose)
     {
+        memset(this->MachineID, 0xAA, sizeof(this->MachineID));
+        memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
+
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Init");
+
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
         this->SetHostnameFromUtf8(nullptr);
         LOG_IF(this->verbose, LOG_INFO, "this->server_auth_data.state = ServerAuthenticateData::Start");
@@ -493,9 +481,9 @@ public:
         * ASC_REQ_ALLOCATE_MEMORY
         */
         this->server_auth_data.state = ServerAuthenticateData::Loop;
-        this->ntlm_context.identity_User = {};
-        this->ntlm_context.identity_Domain = {};
-        this->ntlm_context.identity_Password.init(0);
+        this->identity_User = {};
+        this->identity_Domain = {};
+        this->identity_Password.init(0);
     }
 
 public:
@@ -534,7 +522,7 @@ private:
 
         array_view_const_u8 data_in = this->ts_request.pubKeyAuth.av();
         unsigned long MessageSeqNo = this->recv_seq_num++;
-        LOG_IF(this->ntlm_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
+        LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
         if (data_in.size() < cbMaxSignature) {
             if (this->ts_request.pubKeyAuth.size() == 0) {
@@ -553,12 +541,12 @@ private:
 
         /* Decrypt message using with RC4 */
         // context->confidentiality == true
-        this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), result_buffer.data());
+        this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), result_buffer.data());
 
-        array_md5 digest = HmacMd5(this->ntlm_context.ClientSigningKey, out_uint32_le(MessageSeqNo), result_buffer);
+        array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), result_buffer);
         uint8_t checksum[8];
         /* RC4-encrypt first 8 bytes of digest */
-        this->ntlm_context.RecvRc4Seal.crypt(8, digest.data(), checksum);
+        this->RecvRc4Seal.crypt(8, digest.data(), checksum);
 
         std::vector<uint8_t> expected_signature;
         uint32_t seal_version = 1;
@@ -627,7 +615,7 @@ private:
 
         array_view_const_u8 data_in = this->ts_request.authInfo.av();
         unsigned long MessageSeqNo = this->recv_seq_num++;
-        LOG_IF(this->ntlm_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
+        LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
         if (data_in.size() < cbMaxSignature) {
             return SEC_E_INVALID_TOKEN;
         }
@@ -638,15 +626,15 @@ private:
 
         /* Decrypt message using with RC4, result overwrites original buffer */
         // context->confidentiality == true
-        this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.get_data());
+        this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.get_data());
 
-        array_md5 digest = HmacMd5(this->ntlm_context.ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer.av());
+        array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer.av());
 
         uint8_t expected_signature[16] = {};
         uint8_t * signature = expected_signature;
         uint8_t checksum[8];
         /* RC4-encrypt first 8 bytes of digest */
-        this->ntlm_context.RecvRc4Seal.crypt(8, digest.data(), checksum);
+        this->RecvRc4Seal.crypt(8, digest.data(), checksum);
 
         uint32_t version = 1;
         /* Concatenate version, ciphertext and sequence number to build signature */
@@ -776,6 +764,5 @@ private:
         return Res::Ok;
     }
 };
-
 
 
