@@ -272,7 +272,7 @@ protected:
              * Initialize RC4 stream cipher states for sealing.
              */
 
-            this->SendRc4Seal.set_key(make_array_view(this->ServerSealingKey));
+            this->SendRc4Seal.set_key(this->ServerSealingKey);
             this->RecvRc4Seal.set_key(this->ClientSealingKey);
 
             // =======================================================
