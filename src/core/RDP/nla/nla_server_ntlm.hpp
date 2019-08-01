@@ -78,21 +78,6 @@ class rdpCredsspServerNTLM final
     array_sha256 ClientServerHash;
     array_sha256 ServerClientHash;
 
-    void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        LOG(LOG_INFO, "set hostname from UTF8");
-        size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
-        LOG(LOG_INFO, "length=%lu", length);
-    }
-
-    void credssp_buffer_free() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
-        this->ts_request.negoTokens.init(0);
-        this->ts_request.pubKeyAuth.init(0);
-        this->ts_request.authInfo.init(0);
-        this->ts_request.clientNonce.reset();
-        this->ts_request.error_code = 0;
-    }
-
 public:
 
     struct ServerAuthenticateData
@@ -467,7 +452,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Init");
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
-        this->SetHostnameFromUtf8(nullptr);
+
         LOG_IF(this->verbose, LOG_INFO, "this->server_auth_data.state = ServerAuthenticateData::Start");
         this->server_auth_data.state = ServerAuthenticateData::Start;
         // TODO: sspi_GlobalInit();
@@ -735,7 +720,12 @@ private:
         }
 
         this->ts_request.emit(out_stream);
-        this->credssp_buffer_free();
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
+        this->ts_request.negoTokens.init(0);
+        this->ts_request.pubKeyAuth.init(0);
+        this->ts_request.authInfo.init(0);
+        this->ts_request.clientNonce.reset();
+        this->ts_request.error_code = 0;
 
         if (status != SEC_I_CONTINUE_NEEDED) {
             if (status != SEC_E_OK) {
