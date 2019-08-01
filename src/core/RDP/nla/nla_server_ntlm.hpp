@@ -569,29 +569,6 @@ public:
     }
 private:
 
-    SEC_STATUS credssp_encrypt_public_key_echo() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
-        uint32_t version = this->ts_request.use_version;
-
-        if (version >= 5) {
-            if (this->ts_request.clientNonce.isset()){
-                this->SavedClientNonce = this->ts_request.clientNonce;
-            }
-            this->ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
-                                        make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
-                                        this->public_key);
-            this->public_key = this->ServerClientHash;
-        }
-        else {
-            // if we are server and protocol is 2,3,4
-            // then echos the public key +1
-            ::ap_integer_increment_le(this->public_key);
-        }
-
-        return this->EncryptMessage(
-            this->public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
-    }
-
     SEC_STATUS credssp_decrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_public_key_echo");
 
@@ -722,7 +699,27 @@ private:
 
             this->ts_request.negoTokens.init(0);
 
-            this->credssp_encrypt_public_key_echo();
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
+            uint32_t version = this->ts_request.use_version;
+
+            if (version >= 5) {
+                if (this->ts_request.clientNonce.isset()){
+                    this->SavedClientNonce = this->ts_request.clientNonce;
+                }
+                this->ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
+                                            make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
+                                            this->public_key);
+                this->public_key = this->ServerClientHash;
+            }
+            else {
+                // if we are server and protocol is 2,3,4
+                // then echos the public key +1
+                ::ap_integer_increment_le(this->public_key);
+            }
+
+            this->EncryptMessage(
+                this->public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
+
         }
 
         if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
