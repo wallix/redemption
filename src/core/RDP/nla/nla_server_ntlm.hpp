@@ -127,26 +127,14 @@ protected:
     public:
         struct SEC_WINNT_AUTH_IDENTITY
         {
-            private:
             std::vector<uint8_t> User;
             std::vector<uint8_t> Domain;
-            public:
             Array Password;
 
             public:
             SEC_WINNT_AUTH_IDENTITY()
                 : Password(0)
             {
-            }
-
-            void user_init_copy(cbytes_view av)
-            {
-                this->User.assign(av.data(),av.data()+av.size());
-            }
-
-            void domain_init_copy(cbytes_view av)
-            {
-                this->Domain.assign(av.data(),av.data()+av.size());
             }
 
             bool is_empty_user_domain(){
@@ -157,16 +145,6 @@ protected:
             {
                 cbytes_view av{this->Password.get_data(), this->Password.size()};
                 return av;
-            }
-
-            cbytes_view get_user_utf16_av() const
-            {
-                return this->User;
-            }
-
-            cbytes_view get_domain_utf16_av() const
-            {
-                return this->Domain;
             }
 
             void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
@@ -392,8 +370,10 @@ protected:
                 push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset + null_data_sz, in_stream.get_offset() - this->AUTHENTICATE_MESSAGE.PayloadOffset - null_data_sz});
             }
 
-            this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer);
-            this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer);
+            auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
+            this->identity.User.assign(avuser.data(), avuser.data()+avuser.size());
+            auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
+            this->identity.Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
 
             if (this->identity.is_empty_user_domain()){
                 LOG(LOG_ERR, "ANONYMOUS User not allowed");
@@ -448,8 +428,8 @@ protected:
                 if (!this->set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
-                switch (set_password_cb(this->ntlm_context.identity.get_user_utf16_av()
-                                       ,this->ntlm_context.identity.get_domain_utf16_av()
+                switch (set_password_cb(this->ntlm_context.identity.User
+                                       ,this->ntlm_context.identity.Domain
                                        ,this->ntlm_context.identity.Password)) {
                     case PasswordCallback::Error:
                         return SEC_E_LOGON_DENIED;
