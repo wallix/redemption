@@ -183,7 +183,6 @@ protected:
         uint8_t ClientChallenge[8]{};
         array_md5 SessionBaseKey;
         array_md5 ExportedSessionKey;
-        array_md5 EncryptedRandomSessionKey;
     public:
         array_md5 ClientSigningKey;
     private:
@@ -248,14 +247,6 @@ protected:
 
         // server method to decrypt exported session key from authenticate message with
         // session base key computed with Responses.
-        void ntlm_decrypt_exported_session_key() {
-            auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Decrypt RandomSessionKey");
-            memcpy(this->EncryptedRandomSessionKey.data(), AuthEncryptedRSK.data(), AuthEncryptedRSK.size());
-
-            // ntlm_rc4k
-            this->ExportedSessionKey = Rc4Key(this->SessionBaseKey, this->EncryptedRandomSessionKey); 
-        }
 
         void ntlm_compute_MIC() {
             this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
@@ -266,31 +257,6 @@ protected:
 
 
         private:
-
-//        // Server check lm response
-//        bool ntlm_check_lm_response_from_authenticate(array_view_const_u8 hash) {
-//            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Check LmResponse");
-//            auto & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
-//            auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-//            auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-
-//            size_t lm_response_size = AuthLmResponse.size(); // should be 24
-//            if (lm_response_size != 24) {
-//                return false;
-//            }
-//            LMv2_Response response(AuthLmResponse);
-
-//            auto userup = UTF16_to_upper(UserName);
-//            array_md5 ResponseKeyLM = HmacMd5(hash, userup, DomainName);
-
-//            auto computed_response = compute_LMv2_Response(ResponseKeyLM, 
-//                                                          {this->ServerChallenge, 8},
-//                                                          {response.ClientChallenge, sizeof(response.ClientChallenge)});
-
-//            return !memcmp(response.Response, computed_response.data(), SslMd5::DIGEST_LENGTH);
-//        }
-
-
 
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
         void ntlm_server_build_challenge() {
@@ -331,36 +297,19 @@ protected:
             this->state = NTLM_STATE_AUTHENTICATE;
         }
 
-        void ntlm_server_fetch_hash(uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
-            // TODO get password hash from DC or find ourself
-            // LOG(LOG_INFO, "MARK %u, %u, %u",
-            //     this->identity.User.size(),
-            //     this->identity.Domain.size(),
-            //     this->identity.Password.size());
-
-            auto password_av = this->identity.get_password_utf16_av();
-            if (password_av.size() > 0) {
-                // password is available
-                SslMd4 md4;
-                md4.update(password_av);
-                md4.final(hash);
-            }
-        }
-
         // SERVER PROCEED RESPONSE CHECKING
-        SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t (&hash)[16]) {
-            if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(make_array_view(hash), make_array_view(this->ServerChallenge))) {
+        SEC_STATUS ntlm_server_proceed_authenticate(array_view_const_u8 hash) {
+            if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, make_array_view(this->ServerChallenge))) {
                 LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
                 return SEC_E_LOGON_DENIED;
             }
-            if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(make_array_view(hash), {this->ServerChallenge, 8})) {
+            if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, {this->ServerChallenge, 8})) {
                 LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
                 return SEC_E_LOGON_DENIED;
             }
             // SERVER COMPUTE SHARED KEY WITH CLIENT
             this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(make_array_view(hash));
-            this->ntlm_decrypt_exported_session_key();
-
+            this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
             /**
              * Generate client signing key (ClientSigningKey).\n
              * @msdn{cc236711}
@@ -496,8 +445,11 @@ protected:
         }
 
         SEC_STATUS check_authenticate() {
-            uint8_t hash[16];
-            this->ntlm_server_fetch_hash(hash);
+            auto password_av = this->identity.get_password_utf16_av();
+            array_md4 hash;
+            if (password_av.size() > 0){
+                hash = Md4(password_av);
+            }
             return this->ntlm_server_proceed_authenticate(hash);
         }
     } ntlm_context;

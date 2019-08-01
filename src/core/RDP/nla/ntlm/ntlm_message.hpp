@@ -54,7 +54,7 @@ static inline array_md4 Md4(array_view_const_u8 data)
 }
 
 using array_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
-static inline array_md5 Rc4Key(array_view_const_u8 key, array_md5 plaintext)
+static inline array_md5 Rc4Key(array_view_const_u8 key, array_view_const_u8 plaintext)
 {
     array_md5 cyphertext;
     SslRC4 rc4;
@@ -1124,6 +1124,11 @@ struct NTLMAuthenticateMessage {
         auto b = lmv2_response(this->LmChallengeResponse.buffer);
         hexdump_c(b);
         return are_buffer_equal(a, b);
+    }
+    
+    array_md5 get_exported_session_key(array_view_const_u8 sessionBaseKey)
+    {
+        return Rc4Key(sessionBaseKey, this->EncryptedRandomSessionKey.buffer); 
     }
 };
 
