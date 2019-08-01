@@ -163,7 +163,7 @@ protected:
     private:
         NtlmVersion version;
     public:
-        Array SavedNegotiateMessage;
+        std::vector<uint8_t> SavedNegotiateMessage;
         Array SavedChallengeMessage;
         Array SavedAuthenticateMessage;
 
@@ -335,8 +335,8 @@ protected:
             }
             this->NegotiateFlags = negoFlag;
 
-            this->SavedNegotiateMessage.init(in_stream.get_offset());
-            this->SavedNegotiateMessage.copy(in_stream.get_consumed_bytes());
+            this->SavedNegotiateMessage.clear();
+            push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
 
             this->state = NTLM_STATE_CHALLENGE;
             return SEC_I_CONTINUE_NEEDED;
