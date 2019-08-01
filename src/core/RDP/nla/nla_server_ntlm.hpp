@@ -171,27 +171,6 @@ private:
     // SERVER PROCEED RESPONSE CHECKING
     public:
 
-    SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
-        InStream in_stream(input_buffer);
-        RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
-        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
-        uint32_t const mask = NTLMSSP_REQUEST_TARGET
-                            | NTLMSSP_NEGOTIATE_NTLM
-                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                            | NTLMSSP_NEGOTIATE_UNICODE;
-        if ((negoFlag & mask) != mask) {
-            return SEC_E_INVALID_TOKEN;
-        }
-        this->NegotiateFlags = negoFlag;
-
-        this->SavedNegotiateMessage.clear();
-        push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
-
-        this->state = NTLM_STATE_CHALLENGE;
-        return SEC_I_CONTINUE_NEEDED;
-    }
-
     SEC_STATUS write_challenge(Array& output_buffer, TimeObj & timeobj, Random & rand) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
         uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
@@ -345,16 +324,25 @@ private:
         if (this->state == NTLM_STATE_INITIAL) {
 
             this->state = NTLM_STATE_NEGOTIATE;
-            SEC_STATUS status = this->read_negotiate(input_buffer);
-            if (status != SEC_I_CONTINUE_NEEDED) {
+
+            LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
+            InStream in_stream(input_buffer);
+            RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
+            uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
+            uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                                | NTLMSSP_NEGOTIATE_NTLM
+                                | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                                | NTLMSSP_NEGOTIATE_UNICODE;
+            if ((negoFlag & mask) != mask) {
                 return SEC_E_INVALID_TOKEN;
             }
 
-            if (this->state == NTLM_STATE_CHALLENGE) {
-                return this->write_challenge(output_buffer, timeobj, rand);
-            }
+            this->NegotiateFlags = negoFlag;
 
-            return SEC_E_OUT_OF_SEQUENCE;
+            this->SavedNegotiateMessage.clear();
+            push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
+
+            return this->write_challenge(output_buffer, timeobj, rand);
         }
 
         if (this->state == NTLM_STATE_AUTHENTICATE) {
