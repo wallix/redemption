@@ -682,7 +682,7 @@ public:
 private:
     array_challenge ClientChallenge;
 public:
-    uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH]{};
+    array_md5 SessionBaseKey;
 private:
     //uint8_t KeyExchangeKey[16];
     //uint8_t RandomSessionKey[16];
@@ -946,9 +946,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Compute response: SessionBaseKey");
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
-        SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
-        hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
-        hmac_md5seskey.final(this->SessionBaseKey);
+        this->SessionBaseKey = HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
     }
 
     // static method for both client and server (encrypt and decrypt)
@@ -970,7 +968,7 @@ public:
         // generate NONCE(16) exportedsessionkey
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Encrypt RandomSessionKey");
         this->ntlm_generate_exported_session_key();
-        this->ntlm_rc4k(this->SessionBaseKey, 16,
+        this->ntlm_rc4k(this->SessionBaseKey.data(), 16,
                         this->ExportedSessionKey, this->EncryptedRandomSessionKey);
 
         auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
@@ -983,7 +981,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Decrypt RandomSessionKey");
         memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.data(),
                AuthEncryptedRSK.size());
-        this->ntlm_rc4k(this->SessionBaseKey, 16,
+        this->ntlm_rc4k(this->SessionBaseKey.data(), 16,
                         this->EncryptedRandomSessionKey, this->ExportedSessionKey);
     }
 
@@ -1184,9 +1182,7 @@ public:
         this->NTOWFv2_FromHash(hash, UserName, DomainName, ResponseKeyNT);
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
-        SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
-        hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
-        hmac_md5seskey.final(this->SessionBaseKey);
+        this->SessionBaseKey = HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
     }
 
 
