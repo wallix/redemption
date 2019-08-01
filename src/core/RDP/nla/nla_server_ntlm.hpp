@@ -125,35 +125,10 @@ protected:
         uint32_t NegotiateFlags = 0;
 
     public:
-        struct SEC_WINNT_AUTH_IDENTITY
-        {
-            std::vector<uint8_t> User;
-            std::vector<uint8_t> Domain;
-            Array Password;
 
-            public:
-            SEC_WINNT_AUTH_IDENTITY()
-                : Password(0)
-            {
-            }
-
-            bool is_empty_user_domain(){
-                return (this->User.size() == 0) && (this->Domain.size() == 0);
-            }
-
-            cbytes_view get_password_utf16_av() const
-            {
-                cbytes_view av{this->Password.get_data(), this->Password.size()};
-                return av;
-            }
-
-            void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
-            {
-                this->User.assign(user_utf16_av.data(), user_utf16_av.data()+user_utf16_av.size());
-                this->Domain.assign(domain_utf16_av.data(), domain_utf16_av.data()+domain_utf16_av.size());
-                this->Password.copy(password_utf16_av);
-            }
-        } identity;
+        std::vector<uint8_t> identity_User;
+        std::vector<uint8_t> identity_Domain;
+        Array identity_Password;
 
         // bool SendSingleHostData;
         // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -211,6 +186,7 @@ protected:
     public:
         explicit NTLMContextServer(bool verbose = false)
             : UseMIC(this->NTLMv2/* == true*/)
+            , identity_Password(0)
             , verbose(verbose)
         {
             memset(this->MachineID, 0xAA, sizeof(this->MachineID));
@@ -371,11 +347,12 @@ protected:
             }
 
             auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
-            this->identity.User.assign(avuser.data(), avuser.data()+avuser.size());
+            this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
             auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
-            this->identity.Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
+            this->identity_Domain.assign(avdomain.data(), avdomain.data()+avdomain.size());
 
-            if (this->identity.is_empty_user_domain()){
+
+            if ((this->identity_User.size() == 0) && (this->identity_Domain.size() == 0)){
                 LOG(LOG_ERR, "ANONYMOUS User not allowed");
                 return SEC_E_LOGON_DENIED;
             }
@@ -384,7 +361,7 @@ protected:
         }
 
         SEC_STATUS check_authenticate() {
-            auto password_av = this->identity.get_password_utf16_av();
+            cbytes_view password_av{this->identity_Password.get_data(), this->identity_Password.size()};
             array_md4 hash;
             if (password_av.size() > 0){
                 hash = Md4(password_av);
@@ -428,9 +405,9 @@ protected:
                 if (!this->set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
-                switch (set_password_cb(this->ntlm_context.identity.User
-                                       ,this->ntlm_context.identity.Domain
-                                       ,this->ntlm_context.identity.Password)) {
+                switch (set_password_cb(this->ntlm_context.identity_User
+                                       ,this->ntlm_context.identity_Domain
+                                       ,this->ntlm_context.identity_Password)) {
                     case PasswordCallback::Error:
                         return SEC_E_LOGON_DENIED;
                     case PasswordCallback::Ok:
@@ -505,8 +482,6 @@ public:
         , verbose(verbose)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
-        LOG_IF(this->verbose, LOG_INFO, "this->identity.SetUserFromUtf8(nullptr)");
-        LOG_IF(this->verbose, LOG_INFO, "this->SetHostnameFromUtf8(nullptr)");
         this->SetHostnameFromUtf8(nullptr);
         LOG_IF(this->verbose, LOG_INFO, "this->server_auth_data.state = ServerAuthenticateData::Start");
         this->server_auth_data.state = ServerAuthenticateData::Start;
@@ -521,7 +496,9 @@ public:
         * ASC_REQ_ALLOCATE_MEMORY
         */
         this->server_auth_data.state = ServerAuthenticateData::Loop;
-        this->ntlm_context.identity.CopyAuthIdentity({},{},{});
+        this->ntlm_context.identity_User = {};
+        this->ntlm_context.identity_Domain = {};
+        this->ntlm_context.identity_Password.init(0);
     }
 
 public:
