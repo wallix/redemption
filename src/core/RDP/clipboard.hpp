@@ -1278,23 +1278,21 @@ struct FormatListResponsePDU
 
 struct FormatDataRequestPDU
 {
-
     uint32_t requestedFormatId{0};
 
     FormatDataRequestPDU() = default;
 
     explicit FormatDataRequestPDU(uint32_t requestedFormatId)
-  :  requestedFormatId(requestedFormatId) {
-    }   // FormatDataRequestPDU(uint32_t requestedFormatId)
+    : requestedFormatId(requestedFormatId)
+    {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->requestedFormatId);
-    }   // void emit(OutStream & stream)
+    }
 
-    void recv(InStream & stream) {
-
-        // requestedFormatId(4)
-        ::check_throw(stream, 4, "FormatDataRequestPDU::recv truncated requestedFormatId", ERR_RDP_DATA_TRUNCATED);
+    void recv(InStream & stream)
+    {
+        ::check_throw(stream, 4, "FormatDataRequestPDU::recv", ERR_RDP_DATA_TRUNCATED);
 
         this->requestedFormatId = stream.in_uint32_le();
     }
@@ -1306,7 +1304,6 @@ struct FormatDataRequestPDU
     constexpr static size_t size() {
        return 4;                                            // requestedFormatId(4)
     }
-
 };  // struct FormatDataRequestPDU
 
 
@@ -1444,7 +1441,7 @@ public:
     }
 
     void receive(InStream& stream) {
-        ::check_throw(stream, this->minimum_size(), "FileContentsRequestPDUEx::recv: File Contents Request PDU", ERR_RDP_DATA_TRUNCATED);
+        ::check_throw(stream, this->minimum_size(), "FileContentsRequest", ERR_RDP_DATA_TRUNCATED);
 
         this->streamId_      = stream.in_uint32_le();
         this->lindex_        = stream.in_uint32_le();
@@ -1567,7 +1564,7 @@ public:
 struct FileContentsResponseSize
 {
    uint32_t streamID{0};
-   uint64_t _size{0};
+   uint64_t size{0};
 
 
    FileContentsResponseSize() = default;
@@ -1575,26 +1572,26 @@ struct FileContentsResponseSize
    // SIZE (16 bytes)
    explicit FileContentsResponseSize(const uint32_t streamID, const uint64_t size)
    : streamID(streamID)
-   , _size(size)
+   , size(size)
    {}
 
    void receive(InStream & stream) {
+       ::check_throw(stream, 12, "FileContentsResponseSize::receive", ERR_RDP_DATA_TRUNCATED);
        this->streamID = stream.in_uint32_le();
-        this->_size = stream.in_uint64_le();
+       this->size = stream.in_uint64_le();
    }
 
    void emit(OutStream & stream) const {
        stream.out_uint32_le(this->streamID);
-       stream.out_uint64_le(this->_size);
-       stream.out_uint32_le(0);
+       stream.out_uint64_le(this->size);
    }
 
    void log() const {
-       LOG(LOG_INFO, "     File Contents Response Size: streamID = 0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding - (4 byte) NOT USED", this->streamID, this->_size);
+       LOG(LOG_INFO, "     File Contents Response Size: streamID = 0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding - (4 byte) NOT USED", this->streamID, this->size);
    }
 
-    size_t size() {
-        return 16;                                          // streamID(4) + size(8)
+   size_t packet_size() {
+        return 12;                                          // streamID(4) + size(8)
    }
 };
 
@@ -1611,6 +1608,7 @@ struct FileContentsResponseRange
    {}
 
    void receive(InStream & stream) {
+       ::check_throw(stream, 4, "FileContentsResponseRange::receive", ERR_RDP_DATA_TRUNCATED);
        this->streamID = stream.in_uint32_le();
    }
 
@@ -1622,7 +1620,7 @@ struct FileContentsResponseRange
        LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes)", this->streamID);
    }
 
-   size_t size() {
+   size_t packet_size() {
         return 4;                                          // streamID(4)
    }
 };
