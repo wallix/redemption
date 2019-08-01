@@ -477,13 +477,6 @@ protected:
     }
 
 private:
-    /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
-    static array_md5 compute_hmac_md5(uint8_t* signing_key, const_bytes_view data_buffer, uint32_t SeqNo)
-    {
-        return HmacMd5({signing_key, 16}, out_uint32_le(SeqNo), data_buffer);
-    }
-
-    // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo)
     {
@@ -493,7 +486,7 @@ private:
 
         data_out.init(data_in.size() + cbMaxSignature);
         auto message_out = data_out.av().from_at(cbMaxSignature);
-        array_md5 digest = this->compute_hmac_md5(this->ntlm_context.ServerSigningKey.data(), data_in, MessageSeqNo);
+        array_md5 digest = HmacMd5(this->ntlm_context.ServerSigningKey, out_uint32_le(MessageSeqNo), data_in);
         // this->ntlm_context.confidentiality == true
         this->ntlm_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
         
@@ -530,7 +523,7 @@ private:
         // context->confidentiality == true
         this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
-        array_md5 digest = this->compute_hmac_md5(this->ntlm_context.ClientSigningKey.data(), data_out.av(), MessageSeqNo);
+        array_md5 digest = HmacMd5(this->ntlm_context.ClientSigningKey, out_uint32_le(MessageSeqNo), data_out.av());
 
         uint8_t expected_signature[16] = {};
         uint8_t * signature = expected_signature;
