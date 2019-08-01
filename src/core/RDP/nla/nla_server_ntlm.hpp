@@ -290,8 +290,6 @@ private:
                 
             }
 
-            this->state = NTLM_STATE_AUTHENTICATE;
-
             StaticOutStream<65535> out_stream;
             EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
             output_buffer.init(out_stream.get_offset());
