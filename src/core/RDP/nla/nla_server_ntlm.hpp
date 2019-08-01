@@ -687,7 +687,92 @@ private:
         }
 
         if (status == SEC_E_OK) {
-            if (this->credssp_decrypt_public_key_echo() != SEC_E_OK) {
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_public_key_echo");
+
+            array_view_const_u8 data_in = this->ts_request.pubKeyAuth.av();
+            unsigned long MessageSeqNo = this->recv_seq_num++;
+            LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
+
+            if (data_in.size() < cbMaxSignature) {
+                if (this->ts_request.pubKeyAuth.size() == 0) {
+                    // report_error
+                    this->extra_message = " ";
+                    this->extra_message.append(TR(trkeys::err_login_password, this->lang));
+                    LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+                }
+                LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN 0x%08X", SEC_E_INVALID_TOKEN);
+                // SEC_E_INVALID_TOKEN; /* DO NOT SEND CREDENTIALS! */
+                LOG(LOG_ERR, "Error: could not verify client's public key echo");
+                return Res::Err;
+            }
+
+            // data_in [signature][data_buffer]
+            auto data_buffer = data_in.from_at(cbMaxSignature);
+            std::vector<uint8_t> result_buffer(data_buffer.size());
+
+            /* Decrypt message using with RC4 */
+            // context->confidentiality == true
+            this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), result_buffer.data());
+
+            array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), result_buffer);
+            uint8_t checksum[8];
+            /* RC4-encrypt first 8 bytes of digest */
+            this->RecvRc4Seal.crypt(8, digest.data(), checksum);
+
+            std::vector<uint8_t> expected_signature;
+            uint32_t seal_version = 1;
+            /* Concatenate version, ciphertext and sequence number to build signature */
+            
+            push_back_array(expected_signature, out_uint32_le(seal_version));
+            push_back_array(expected_signature, {checksum, 8});
+            push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
+
+            if (memcmp(data_in.data(), expected_signature.data(),  expected_signature.size()) != 0) {
+                /* signature verification failed! */
+                LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+                LOG(LOG_ERR, "Expected Signature:");
+                hexdump_c(expected_signature);
+                LOG(LOG_ERR, "Actual Signature:");
+                hexdump_c(data_in.data(), 16);
+
+                if (this->ts_request.pubKeyAuth.size() == 0) {
+                    // report_error
+                    this->extra_message = " ";
+                    this->extra_message.append(TR(trkeys::err_login_password, this->lang));
+                    LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+                }
+                LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED 0x%08X", SEC_E_MESSAGE_ALTERED);
+                // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+                LOG(LOG_ERR, "Error: could not verify client's public key echo");
+                return Res::Err;
+            }
+
+            if (this->ts_request.use_version >= 5) {
+                if (this->ts_request.clientNonce.isset()){
+                    this->SavedClientNonce = this->ts_request.clientNonce;
+                }
+                this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
+                                        make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
+                                        this->public_key);
+                this->public_key = this->ClientServerHash;
+            }
+
+            if (result_buffer.size() != this->public_key.size()) {
+                LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", result_buffer.size(), this->public_key.size());
+                // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+                LOG(LOG_ERR, "Error: could not verify client's public key echo");
+                return Res::Err;
+            }
+            if (memcmp(this->public_key.data(), result_buffer.data(), public_key.size()) != 0) {
+                LOG(LOG_ERR, "Could not verify server's public key echo");
+
+                LOG(LOG_ERR, "Expected (length = %zu):", this->public_key.size());
+                hexdump_c(this->public_key);
+
+                LOG(LOG_ERR, "Actual (length = %zu):", this->public_key.size());
+                hexdump_c(result_buffer);
+
+                // SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
                 LOG(LOG_ERR, "Error: could not verify client's public key echo");
                 return Res::Err;
             }
