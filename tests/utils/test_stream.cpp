@@ -320,23 +320,21 @@ RED_AUTO_TEST_CASE(TestStream_4BUE)
 RED_AUTO_TEST_CASE(TestStream_sint32)
 {
     {
-        const uint8_t tmp[4] = {0xFE, 0xFD, 0xFC, 0xFF};
+        auto tmp = "\xFE\xFD\xFC\xFF"_av;
         InStream ss_min_val(tmp);
-        RED_CHECK_EQUAL(static_cast<int32_t>(0xFFFCFDFE), ss_min_val.in_sint32_le());
-        uint8_t vartmp[4] = {};
-        OutStream fs_min_val(vartmp);
+        RED_CHECK_EQUAL(0xFFFCFDFE, ss_min_val.in_sint32_le());
+        StaticOutStream<4> fs_min_val;
         fs_min_val.out_sint32_le(0xFFFCFDFE);
-        RED_CHECK_MEM_AA(vartmp, tmp);
+        RED_CHECK_MEM(fs_min_val.get_bytes(), tmp);
     }
 
     {
-        const uint8_t tmp[4] = {0xFC, 0xFD, 0xFE, 0x7F};
+        auto tmp = "\xFC\xFD\xFE\x7F"_av;
         InStream ss_max_val(tmp);
         RED_CHECK_EQUAL(0x7FFEFDFC, ss_max_val.in_sint32_le());
-        uint8_t vartmp[4] = {};
-        OutStream fs_max_val(vartmp);
+        StaticOutStream<4> fs_max_val;
         fs_max_val.out_sint32_le(0x7FFEFDFC);
-        RED_CHECK_MEM_AA(tmp, vartmp);
+        RED_CHECK_MEM(fs_max_val.get_bytes(), tmp);
     }
 
 }

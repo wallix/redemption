@@ -23,12 +23,17 @@
 
 
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
-#include "utils/difftimeval.hpp"
+#include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/image_data_view.hpp"
+#include "utils/difftimeval.hpp"
+
+#include <chrono>
 
 #include <sys/stat.h>
 #include <sys/types.h>
-
 
 
 // [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension
@@ -589,10 +594,9 @@
                                 "SERVER >> CB Channel: File Contents Response PDU RANGE");
                         }
 
-                        this->clientIOClipboardAPI->write_clipboard_temp_file( cb_filesList.itemslist[cb_filesList.lindexToRequest].name
-                                                    , chunk.get_current()
-                                                    , chunk.in_remain()
-                                                    );
+                        this->clientIOClipboardAPI->write_clipboard_temp_file(
+                            cb_filesList.itemslist[cb_filesList.lindexToRequest].name,
+                            chunk.remaining_bytes());
 
                         if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
 

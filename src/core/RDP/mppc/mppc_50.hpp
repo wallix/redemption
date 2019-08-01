@@ -51,10 +51,8 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec
      * @param ctype   compression flags
      * @param roff    starting offset of uncompressed data
      * @param rlen    length of uncompressed data
-     *
-     * @return        true on success, False on failure
      */
-    bool decompress_50(uint8_t const * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen)
+    void decompress_50(uint8_t const * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen)
     {
         //LOG(LOG_INFO, "decompress_50");
 
@@ -93,7 +91,7 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec
             history_ptr       += len;
             *rlen             =  history_ptr - this->history_ptr;
             this->history_ptr =  history_ptr;
-            return true;
+            return ;
         }
 
         /* load initial data */
@@ -436,20 +434,14 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec
         *rlen = history_ptr - this->history_ptr;
 
         this->history_ptr = history_ptr;
-
-        return true;
     }   // decompress_50
 
-    int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override
+    cbytes_view decompress(cbytes_view cbuf, int ctype) override
     {
         uint32_t roff   = 0;
-        int      result;
-
-        rlen   = 0;
-        result = this->decompress_50(cbuf, len, ctype, &roff, &rlen);
-        rdata  = this->history_buf + roff;
-
-        return result;
+        uint32_t rlen   = 0;
+        this->decompress_50(cbuf.data(), cbuf.size(), ctype, &roff, &rlen);
+        return {this->history_buf + roff, rlen};
     }
 };  // struct rdp_mppc_50_dec
 

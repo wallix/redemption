@@ -34,6 +34,8 @@
 #include "core/RDP/clipboard.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/sugar/byte_ptr.hpp"
+#include "utils/sugar/bytes_view.hpp"
+#include "utils/image_data_view.hpp"
 
 #include <chrono>
 
@@ -149,13 +151,13 @@ public:
 
     void setClipboard_files(std::string const& /*name*/) override {}
 
-    void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
+    void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) override {
         this->fileName = fileName;
-        size_t data_end = this->offset + data_len;
-        for (size_t i = this->offset; i < this->size && i < data_end; i++) {
-            this->_chunk.get()[i] = data[i-this->offset];
+        size_t data_end = std::min(this->offset + data.size(), this->size);
+        for (size_t i = this->offset; i < data_end; i++) {
+            this->_chunk[i] = data[i-this->offset];
         }
-        this->offset += data_len;
+        this->offset += data.size();
     }
 
     array_view_const_char get_file_item(int /*index*/) override {
@@ -183,8 +185,8 @@ public:
 class FakeClientOutPutSound : public ClientOutputSoundAPI {
 
 public:
-    void init(size_t raw_total_size) override {(void) raw_total_size; }
-    void setData(const uint8_t * data, size_t size) override {(void) data; (void) size; }
+    void init(size_t raw_total_size) override { (void)raw_total_size; }
+    void setData(cbytes_view data) override { (void)data; }
     void play() override {}
 };
 

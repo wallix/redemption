@@ -576,7 +576,8 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
                             GCC::MCS_GLOBAL_CHANNEL,
                             dynamic_packet(this->server_public_key_len + 32, [this](OutStream & stream) {
                                 SEC::SecExchangePacket_Send mcs(
-                                    stream, this->client_crypt_random, this->server_public_key_len
+                                    stream,
+                                    {this->client_crypt_random, this->server_public_key_len}
                                 );
                                 (void)mcs;
                             })

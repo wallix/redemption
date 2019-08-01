@@ -374,7 +374,7 @@
           "type": "integer",
           "min": 0,
           "max": 511,
-          "default": 96,
+          "default": 352,
           "subtype": "bitset",
           "values": [
             {

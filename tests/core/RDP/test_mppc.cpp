@@ -33,17 +33,13 @@ RED_AUTO_TEST_CASE(TestMPPC)
     // Load compressed_rd5 and decompressed_rd5
     #include "fixtures/test_mppc_TestMPPC.hpp"
 
-    const uint8_t * rdata;
-    uint32_t        rlen;
-
     for (int x = 0; x < 1000 ; x++){
         rdp_mppc_unified_dec rmppc_d;
         rdp_mppc_dec & rmppc = rmppc_d;
 
         /* uncompress data */
-        RED_CHECK(rmppc.decompress(compressed_rd5, sizeof(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K, rdata, rlen));
-
-        RED_CHECK_MEM(make_array_view(decompressed_rd5), array_view(rdata, rlen));
+        RED_CHECK_MEM(make_array_view(decompressed_rd5),
+            rmppc.decompress(make_array_view(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K));
     }
 }
 
@@ -51,9 +47,6 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
 {
     // Load decompressed_rd5_data
     #include "fixtures/test_mppc_TestMPPC_enc.hpp"
-
-    const uint8_t * rdata = nullptr;
-    uint32_t        rlen = 0;
 
     /* setup decoder */
     rdp_mppc_unified_dec rmppc_d;
@@ -71,8 +64,8 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     RED_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
-    RED_CHECK(rmppc.decompress(enc.outputBuffer, enc.bytes_in_opb, enc.flags, rdata, rlen));
-    RED_CHECK_MEM(make_array_view(decompressed_rd5_data), array_view(rdata, rlen));
+    RED_CHECK_MEM(make_array_view(decompressed_rd5_data),
+        rmppc.decompress({enc.outputBuffer, enc.bytes_in_opb}, enc.flags));
 }
 
 RED_AUTO_TEST_CASE(TestBitsSerializer)

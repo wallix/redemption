@@ -1448,12 +1448,7 @@ namespace FastPath {
 
             if ((compression & FASTPATH_OUTPUT_COMPRESSION_USED)
             && (compressionFlags & PACKET_COMPRESSED)) {
-                const uint8_t * rdata;
-                uint32_t        rlen;
-
-                dec.decompress(stream.get_current(), size, compressionFlags, rdata, rlen);
-
-                return InStream({rdata, rlen});
+                return InStream(dec.decompress({stream.get_current(), size}, compressionFlags));
             }
             return InStream({stream.get_current(), size});
         }(this->size, this->compression, this->compressionFlags))

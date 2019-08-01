@@ -36,7 +36,7 @@ static inline void send_data_indication_ex( Transport & trans
                                           , StaticOutReservedStreamHelper<1024, 65536-1024> & stream)
 {
     StaticOutStream<256> security_header;
-    SEC::Sec_Send sec(security_header, stream.get_packet().data(), stream.get_packet().size(), 0, encrypt, encryptionLevel);
+    SEC::Sec_Send sec(security_header, stream.get_packet(), 0, encrypt, encryptionLevel);
     stream.copy_to_head(security_header);
 
     StaticOutStream<256> mcs_header;
@@ -65,7 +65,7 @@ void send_data_indication_ex( Transport & trans
         trans,
         data_writer...,
         [&](StreamSize<256>, OutStream & security_header, bytes_view packet) {
-            SEC::Sec_Send sec(security_header, packet.data(), packet.size(), 0, encrypt, encryptionLevel);
+            SEC::Sec_Send sec(security_header, packet, 0, encrypt, encryptionLevel);
         },
         [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
             MCS::SendDataIndication_Send mcs( mcs_header

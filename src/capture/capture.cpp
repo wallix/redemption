@@ -96,6 +96,24 @@ using std::end;
 namespace
 {
 
+struct ZStrUtf8Char
+{
+    uint8_t buf_char[5];
+    uint8_t char_len;
+
+    ZStrUtf8Char(uint32_t uchar) noexcept
+    : char_len(UTF32toUTF8(uchar, buf_char, sizeof(buf_char)))
+    {
+        buf_char[char_len] = 0;
+    }
+
+    uint8_t const* data() const noexcept { return buf_char; }
+    uint8_t size() const noexcept { return char_len; }
+
+    uint8_t const* begin() const noexcept { return data(); }
+    uint8_t const* end() const noexcept { return data() + size(); }
+};
+
 class PatternSearcher
 {
     struct TextSearcher
@@ -107,8 +125,8 @@ class PatternSearcher
             this->searcher = rgx.part_of_text_search(false);
         }
 
-        bool next(uint8_t const * uchar) {
-            return re::Regex::match_success == this->searcher.next(char_ptr_cast(uchar));
+        bool next(ZStrUtf8Char const& utf8_char) {
+            return re::Regex::match_success == this->searcher.next(char_ptr_cast(utf8_char.data()));
         }
 
         re::Regex::range_matches const & match_result(re::Regex & rgx) {
@@ -144,10 +162,8 @@ class PatternSearcher
             this->beg = this->p;
         }
 
-        void push_utf8_char(uint8_t const * c, size_t char_len) {
-            assert(c && char_len <= 4);
-
-            if (static_cast<size_t>(this->data_end() - this->beg) < char_len + 1u) {
+        void push_utf8_char(ZStrUtf8Char const& utf8_char) {
+            if (static_cast<size_t>(this->data_end() - this->beg) < utf8_char.size() + 1u) {
                 std::size_t pchar_len = 0;
                 do {
                     size_t const len = UTF8CharNbBytes(this->beg);
@@ -159,12 +175,11 @@ class PatternSearcher
                         this->beg += len;
                     }
                     pchar_len += len;
-                } while (pchar_len < char_len + 1);
+                } while (pchar_len < utf8_char.size() + 1);
             }
 
-            auto ec = c + char_len;
-            for (; c != ec; ++c) {
-                *this->p = *c;
+            for (uint8_t c : utf8_char) {
+                *this->p = c;
                 ++this->p;
                 if (this->p == this->data_end()) {
                     this->p = this->data_begin();
@@ -214,15 +229,15 @@ public:
     }
 
     template<class Report>
-    bool test_uchar(uint8_t const * const utf8_char, size_t const char_len, Report report)
+    bool test_uchar(ZStrUtf8Char const& utf8_char, Report report)
     {
-        if (char_len == 0) {
+        if (utf8_char.size() == 0) {
             return false;
         }
 
         bool has_notify = false;
 
-        utf8_kbd_data.push_utf8_char(utf8_char, char_len);
+        utf8_kbd_data.push_utf8_char(utf8_char);
         TextSearcher * test_searcher_it = this->regexes_searcher.get();
 
         for (utils::MatchFinder::NamedRegex & named_regex : this->regexes_filter) {
@@ -322,21 +337,15 @@ public:
 
         filtering_kbd_input(
             uchar,
-            [this, &can_be_sent_to_server](uint32_t uchar) {
-                uint8_t buf_char[5];
-                size_t const char_len = UTF32toUTF8(uchar, buf_char, sizeof(buf_char));
-
-                if (char_len > 0) {
-                    buf_char[char_len] = '\0';
+            [this, &can_be_sent_to_server](ZStrUtf8Char utf8_char) {
+                if (utf8_char.size() > 0) {
                     if (!this->pattern_kill.is_empty()) {
                         can_be_sent_to_server &= !this->test_pattern(
-                            buf_char, char_len, this->pattern_kill, true
+                            utf8_char, this->pattern_kill, true
                         );
                     }
                     if (!this->pattern_notify.is_empty()) {
-                        this->test_pattern(
-                            buf_char, char_len, this->pattern_notify, false
-                        );
+                        this->test_pattern(utf8_char, this->pattern_notify, false);
                     }
                 }
             },
@@ -356,11 +365,11 @@ public:
 private:
     KeyQvalueFormatter message;
     bool test_pattern(
-        uint8_t const * uchar, size_t char_len,
+        ZStrUtf8Char const& utf8_char,
         PatternSearcher & searcher, bool is_pattern_kill
     ) {
         return searcher.test_uchar(
-            uchar, char_len,
+            utf8_char,
             [&, this](std::string const & pattern, char const * str) {
                 assert(this->report_message);
                 utils::MatchFinder::report(

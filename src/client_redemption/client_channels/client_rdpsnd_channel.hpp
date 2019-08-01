@@ -23,20 +23,16 @@
 #pragma once
 
 #include "mod/rdp/rdp_verbose.hpp"
-#include "utils/log.hpp"
-
-#include "core/RDPEA/audio_output.hpp"
-
-#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
-// #include "client_redemption/client_input_output_api/client_sound_api.hpp"
-#include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
+#include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 
+class ClientChannelMod;
+class InStream;
+class RDPSoundConfig;
 
-#include <string>
-
-class ClientOutputSoundAPI {
-
+class ClientOutputSoundAPI : noncopyable
+{
 public:
     uint32_t n_sample_per_sec = 0;
     uint16_t bit_per_sample = 0;
@@ -45,16 +41,15 @@ public:
     uint32_t bit_per_sec = 0;
 
     virtual void init(size_t raw_total_size) = 0;
-    virtual void setData(const uint8_t * data, size_t size) = 0;
+    virtual void setData(cbytes_view data) = 0;
     virtual void play() = 0;
 
     virtual ~ClientOutputSoundAPI() = default;
-
 };
 
 
-class ClientRDPSNDChannel {
-
+class ClientRDPSNDChannel
+{
     RDPVerbose verbose;
     ClientOutputSoundAPI * impl_sound;
     ClientChannelMod * callback;
@@ -73,7 +68,6 @@ class ClientRDPSNDChannel {
     uint16_t wDGramPort;
     uint16_t wNumberOfFormats;
     uint16_t wVersion;
-
 
 public:
     ClientRDPSNDChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPSoundConfig & config);

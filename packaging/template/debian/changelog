@@ -1,3 +1,8 @@
+redemption (7.2.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 30 Jul 2019 16:03:58 +0200
+
 redemption (7.2.11%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix compatibility issue with FreeRDP/Remmina. (Cache Color Table)

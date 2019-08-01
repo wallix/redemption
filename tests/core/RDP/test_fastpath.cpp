@@ -110,10 +110,10 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
 struct mppc_dec_error : rdp_mppc_dec
 {
-    int decompress(uint8_t const * /*cbuf*/, int /*len*/, int /*ctype*/, const uint8_t *& /*rdata*/, uint32_t & /*rlen*/) override
+    cbytes_view decompress(cbytes_view /*cbuf*/, int /*ctype*/) override
     {
         RED_ERROR("rdp_mppc_dec::decompress is called");
-        return 0;
+        return {};
     }
 };
 

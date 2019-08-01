@@ -507,7 +507,7 @@ session_probe_childless_window_as_unidentified_input_field = boolean(default=Tru
 # (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))
 #_hidden
 #_hex
-session_probe_disabled_features = integer(min=0, max=511, default=96)
+session_probe_disabled_features = integer(min=0, max=511, default=352)
 
 # If enabled, disconnected session can be recovered by a different primary user.
 #_hidden

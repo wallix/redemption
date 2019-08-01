@@ -20,10 +20,10 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
-
-
+#include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
+#include "utils/stream.hpp"
 
 
 // [MS-RDPEA]: Remote Desktop Protocol: Audio Output Virtual Channel Extension
@@ -228,7 +228,7 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
         }
 
         if (this->impl_sound) {
-            this->impl_sound->setData(chunk.get_current(), chunk.in_remain());
+            this->impl_sound->setData(chunk.remaining_bytes());
         }
 
         if (!(this->wave_data_to_wait)) {
@@ -237,10 +237,9 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                 "SERVER >> RDPEA: Wave PDU");
 
             if (this->impl_sound) {
-                uint8_t data[] = {'\0'};
-                this->impl_sound->setData(data, 1);
+                this->impl_sound->setData("\0"_av);
                 this->impl_sound->play();
-//                 LOG(LOG_INFO, "ClientRDPSNDChannel::receive play!!!");
+                // LOG(LOG_INFO, "ClientRDPSNDChannel::receive play!!!");
             }
 
             StaticOutStream<16> out_stream;
@@ -381,7 +380,7 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
 
                 if (this->impl_sound) {
                     this->impl_sound->init(header.BodySize - 12);
-                    this->impl_sound->setData(wi.Data, 4);
+                    this->impl_sound->setData(make_array_view(wi.Data));
                 }
                 this->last_PDU_is_WaveInfo = true;
                 }
@@ -436,7 +435,7 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                 w2.receive(chunk);
                 if (this->impl_sound) {
                     this->impl_sound->init(header.BodySize - 12);
-                    this->impl_sound->setData(chunk.get_current(), chunk.in_remain());
+                    this->impl_sound->setData(chunk.remaining_bytes());
                 }
 
                 this->last_PDU_is_WaveInfo = true;

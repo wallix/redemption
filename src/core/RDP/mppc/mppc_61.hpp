@@ -218,17 +218,13 @@ private:
     }
 
 public:
-    int decompress(uint8_t const * compressed_data, int compressed_data_size,
-        int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size) override
+    cbytes_view decompress(cbytes_view compressed_data, int compressionFlags) override
     {
         (void)compressionFlags;
         //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
         //    this->historyOffset, compressed_data_size, compressionFlags);
 
-        uncompressed_data      = nullptr;
-        uncompressed_data_size = 0;
-
-        InStream compressed_data_stream({compressed_data, std::size_t(compressed_data_size)});
+        InStream compressed_data_stream(compressed_data);
 
         // Level1ComprFlags(1) + Level2ComprFlags(1)
         ::check_throw(compressed_data_stream, 2, "rdp_mppc_61_dec::decompress RDP61_COMPRESSED_DATA (0)", ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
@@ -248,21 +244,11 @@ public:
         size_t   literals_length;
 
         if ((Level1ComprFlags & L1_INNER_COMPRESSION) && (Level2ComprFlags & PACKET_COMPRESSED)) {
-
-            const uint8_t * level_1_compressed_data;
-            uint32_t        level_1_compressed_data_size;
-
-            bool nResult = this->level_2_decompressor.decompress(compressed_data_stream.get_current(),
-                compressed_data_stream.in_remain(), Level2ComprFlags, level_1_compressed_data,
-                level_1_compressed_data_size);
-            if (!nResult) {
-                LOG(LOG_ERR, "RDP 6.1 bluk compression Level-2 decompression error");
-                throw Error(ERR_RDP61_DECOMPRESS_LEVEL_2);
-            }
+            auto level_1_compressed_data = this->level_2_decompressor.decompress(
+                compressed_data_stream.remaining_bytes(), Level2ComprFlags);
             //LOG(LOG_INFO, "level_1_compressed_data_size=%d", level_1_compressed_data_size);
 
-            InStream level_1_compressed_data_stream(
-                {level_1_compressed_data, level_1_compressed_data_size});
+            InStream level_1_compressed_data_stream(level_1_compressed_data);
 
             prepare_compressed_data(level_1_compressed_data_stream,
                 !(Level1ComprFlags & L1_NO_COMPRESSION),
@@ -325,13 +311,12 @@ public:
             current_output_offset += remaining_bytes;
         }
 
-        uncompressed_data      = this->historyBuffer + this->historyOffset;
-        uncompressed_data_size = current_output_offset;
+        cbytes_view res{this->historyBuffer + this->historyOffset, current_output_offset};
 
         this->historyOffset += current_output_offset;
         //LOG(LOG_INFO, "uncompressed_data_size=%d historyOffset=%d", uncompressed_data_size, this->historyOffset);
 
-        return true;
+        return res;
     }
 };
 
