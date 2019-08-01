@@ -533,60 +533,56 @@ private:
         array_view_const_u8 data_in = this->ts_request.pubKeyAuth.av();
         unsigned long MessageSeqNo = this->recv_seq_num++;
         LOG_IF(this->ntlm_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-        SEC_STATUS result;
 
         if (data_in.size() < cbMaxSignature) {
-            result = SEC_E_INVALID_TOKEN;
-        }
-        else {
-            // data_in [signature][data_buffer]
-
-            auto data_buffer = data_in.from_at(cbMaxSignature);
-            Buffer.init(data_buffer.size());
-
-            /* Decrypt message using with RC4, result overwrites original buffer */
-            // context->confidentiality == true
-            this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.get_data());
-
-            array_md5 digest = HmacMd5(this->ntlm_context.ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer.av());
-
-            uint8_t expected_signature[16] = {};
-            uint8_t * signature = expected_signature;
-            uint8_t checksum[8];
-            /* RC4-encrypt first 8 bytes of digest */
-            this->ntlm_context.RecvRc4Seal.crypt(8, digest.data(), checksum);
-
-            uint32_t version = 1;
-            /* Concatenate version, ciphertext and sequence number to build signature */
-            memcpy(signature, &version, 4);
-            memcpy(&signature[4], checksum, 8);
-            memcpy(&signature[12], &MessageSeqNo, 4);
-
-            if (memcmp(data_in.data(), expected_signature, 16) != 0) {
-                /* signature verification failed! */
-                LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-                LOG(LOG_ERR, "Expected Signature:");
-                hexdump_c(expected_signature, 16);
-                LOG(LOG_ERR, "Actual Signature:");
-                hexdump_c(data_in.data(), 16);
-
-                result = SEC_E_MESSAGE_ALTERED;
-            }
-            else {
-                result = SEC_E_OK;
-            }
-        }
-        SEC_STATUS const status = result;
-
-        if (status != SEC_E_OK) {
             if (this->ts_request.pubKeyAuth.size() == 0) {
                 // report_error
                 this->extra_message = " ";
                 this->extra_message.append(TR(trkeys::err_login_password, this->lang));
                 LOG(LOG_INFO, "Provided login/password is probably incorrect.");
             }
-            LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
-            return status;
+            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN 0x%08X", SEC_E_INVALID_TOKEN);
+            return SEC_E_INVALID_TOKEN;
+        }
+        // data_in [signature][data_buffer]
+
+        auto data_buffer = data_in.from_at(cbMaxSignature);
+        Buffer.init(data_buffer.size());
+
+        /* Decrypt message using with RC4, result overwrites original buffer */
+        // context->confidentiality == true
+        this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.get_data());
+
+        array_md5 digest = HmacMd5(this->ntlm_context.ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer.av());
+
+        uint8_t expected_signature[16] = {};
+        uint8_t checksum[8];
+        /* RC4-encrypt first 8 bytes of digest */
+        this->ntlm_context.RecvRc4Seal.crypt(8, digest.data(), checksum);
+
+        uint32_t seal_version = 1;
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        
+        memcpy(&expected_signature[0], &seal_version, 4);
+        memcpy(&expected_signature[4], checksum, 8);
+        memcpy(&expected_signature[12], &MessageSeqNo, 4);
+
+        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+            /* signature verification failed! */
+            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+            LOG(LOG_ERR, "Expected Signature:");
+            hexdump_c(expected_signature, 16);
+            LOG(LOG_ERR, "Actual Signature:");
+            hexdump_c(data_in.data(), 16);
+
+            if (this->ts_request.pubKeyAuth.size() == 0) {
+                // report_error
+                this->extra_message = " ";
+                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
+                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+            }
+            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED 0x%08X", SEC_E_MESSAGE_ALTERED);
+            return SEC_E_MESSAGE_ALTERED;
         }
 
         const uint32_t version = this->ts_request.use_version;
@@ -636,64 +632,45 @@ private:
         array_view_const_u8 data_in = this->ts_request.authInfo.av();
         unsigned long MessageSeqNo = this->recv_seq_num++;
         LOG_IF(this->ntlm_context.verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-        SEC_STATUS result;
-
         if (data_in.size() < cbMaxSignature) {
-            result = SEC_E_INVALID_TOKEN;
+            return SEC_E_INVALID_TOKEN;
         }
-        else {
-            // data_in [signature][data_buffer]
+        // data_in [signature][data_buffer]
 
-            auto data_buffer = data_in.from_at(cbMaxSignature);
-            Buffer.init(data_buffer.size());
+        auto data_buffer = data_in.from_at(cbMaxSignature);
+        Buffer.init(data_buffer.size());
 
-            /* Decrypt message using with RC4, result overwrites original buffer */
-            // context->confidentiality == true
-            this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.get_data());
+        /* Decrypt message using with RC4, result overwrites original buffer */
+        // context->confidentiality == true
+        this->ntlm_context.RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.get_data());
 
-            array_md5 digest = HmacMd5(this->ntlm_context.ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer.av());
+        array_md5 digest = HmacMd5(this->ntlm_context.ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer.av());
 
-            uint8_t expected_signature[16] = {};
-            uint8_t * signature = expected_signature;
-            uint8_t checksum[8];
-            /* RC4-encrypt first 8 bytes of digest */
-            this->ntlm_context.RecvRc4Seal.crypt(8, digest.data(), checksum);
+        uint8_t expected_signature[16] = {};
+        uint8_t * signature = expected_signature;
+        uint8_t checksum[8];
+        /* RC4-encrypt first 8 bytes of digest */
+        this->ntlm_context.RecvRc4Seal.crypt(8, digest.data(), checksum);
 
-            uint32_t version = 1;
-            /* Concatenate version, ciphertext and sequence number to build signature */
-            memcpy(signature, &version, 4);
-            memcpy(&signature[4], checksum, 8);
-            memcpy(&signature[12], &MessageSeqNo, 4);
+        uint32_t version = 1;
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        memcpy(signature, &version, 4);
+        memcpy(&signature[4], checksum, 8);
+        memcpy(&signature[12], &MessageSeqNo, 4);
 
-            if (memcmp(data_in.data(), expected_signature, 16) != 0) {
-                /* signature verification failed! */
-                LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-                LOG(LOG_ERR, "Expected Signature:");
-                hexdump_c(expected_signature, 16);
-                LOG(LOG_ERR, "Actual Signature:");
-                hexdump_c(data_in.data(), 16);
+        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+            /* signature verification failed! */
+            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+            LOG(LOG_ERR, "Expected Signature:");
+            hexdump_c(expected_signature, 16);
+            LOG(LOG_ERR, "Actual Signature:");
+            hexdump_c(data_in.data(), 16);
 
-                result = SEC_E_MESSAGE_ALTERED;
-            }
-            else {
-                result = SEC_E_OK;
-            }
-        }
-        SEC_STATUS const status = result;
-
-        if (status != SEC_E_OK) {
-            return status;
+            return SEC_E_MESSAGE_ALTERED;
         }
 
         InStream decrypted_creds(Buffer.av());
         this->ts_credentials.recv(decrypted_creds);
-
-        // hexdump(this->ts_credentials.passCreds.userName,
-        //         this->ts_credentials.passCreds.userName_length);
-        // hexdump(this->ts_credentials.passCreds.domainName,
-        //         this->ts_credentials.passCreds.domainName_length);
-        // hexdump(this->ts_credentials.passCreds.password,
-        //         this->ts_credentials.passCreds.password_length);
 
         return SEC_E_OK;
     }
