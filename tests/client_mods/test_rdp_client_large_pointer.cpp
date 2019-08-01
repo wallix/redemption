@@ -114,6 +114,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     mod_rdp_params.large_pointer_support             = true;
     mod_rdp_params.experimental_fix_input_event_sync = false;
 
+    std::string allow_channels{"rdpsnd_audio_output"};
+    mod_rdp_params.allow_channels                    = &allow_channels;
+
     // To always get the same client random, in tests
     LCGRandom gen(0);
     LCGTime timeobj;
@@ -211,6 +214,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = true;
     mod_rdp_params.experimental_fix_input_event_sync = false;
+
+    std::string allow_channels{"rdpsnd_audio_output"};
+    mod_rdp_params.allow_channels                    = &allow_channels;
 
     // To always get the same client random, in tests
     LCGRandom gen(0);

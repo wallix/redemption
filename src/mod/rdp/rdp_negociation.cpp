@@ -1709,6 +1709,11 @@ void RdpNegociation::send_client_info_pdu()
                 // }
             }
 
+            if (!this->authorization_channels.rdpsnd_audio_output_is_authorized()) {
+                infoPacket.flags &= ~INFO_REMOTECONSOLEAUDIO;
+                infoPacket.flags |=  INFO_NOAUDIOPLAYBACK;
+            }
+
             infoPacket.emit(stream);
 
         },
