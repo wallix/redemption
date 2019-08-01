@@ -65,6 +65,7 @@ class rdpCredsspServerNTLM final
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
 
+    TimeObj & timeobj;
     array_view_u8 public_key;
 
     private:
@@ -142,7 +143,6 @@ protected:
     private:
     class NTLMContextServer
     {
-        TimeObj & timeobj;
         Random & rand;
 
         const bool NTLMv2 = true;
@@ -197,9 +197,8 @@ protected:
         const bool verbose;
 
     public:
-        explicit NTLMContextServer(Random & rand, TimeObj & timeobj, bool verbose = false)
-            : timeobj(timeobj)
-            , rand(rand)
+        explicit NTLMContextServer(Random & rand, bool verbose = false)
+            : rand(rand)
             , UseMIC(this->NTLMv2/* == true*/)
             , ServicePrincipalName(0)
             , SavedNegotiateMessage(0)
@@ -219,7 +218,7 @@ protected:
         private:
 
         // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
-        void ntlm_server_build_challenge() {
+        void ntlm_server_build_challenge(TimeObj & timeobj) {
             uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
             uint32_t const mask = NTLMSSP_REQUEST_TARGET
                                 | NTLMSSP_NEGOTIATE_NTLM
@@ -239,7 +238,7 @@ protected:
                 memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
             }
             else {
-                const timeval tv = this->timeobj.get_time();
+                const timeval tv = timeobj.get_time();
                 OutStream out_stream(this->Timestamp);
                 out_stream.out_uint32_le(tv.tv_usec);
                 out_stream.out_uint32_le(tv.tv_sec);
@@ -364,9 +363,9 @@ protected:
             return SEC_I_CONTINUE_NEEDED;
         }
 
-        SEC_STATUS write_challenge(Array& output_buffer) {
+        SEC_STATUS write_challenge(Array& output_buffer, TimeObj & timeobj) {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
-            this->ntlm_server_build_challenge();
+            this->ntlm_server_build_challenge(timeobj);
             StaticOutStream<65535> out_stream;
             EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
             output_buffer.init(out_stream.get_offset());
@@ -427,7 +426,7 @@ protected:
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer)
+    SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer, TimeObj & timeobj)
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
 
@@ -440,7 +439,7 @@ protected:
             }
 
             if (this->ntlm_context.state == NTLM_STATE_CHALLENGE) {
-                return this->ntlm_context.write_challenge(output_buffer);
+                return this->ntlm_context.write_challenge(output_buffer, timeobj);
             }
 
             return SEC_E_OUT_OF_SEQUENCE;
@@ -576,12 +575,13 @@ public:
                Translation::language_t lang,
                std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb,
                const bool verbose = false)
-        : public_key(key)
+        : timeobj(timeobj)
+        , public_key(key)
         , set_password_cb(set_password_cb)
         , extra_message(extra_message)
         , lang(lang)
         , verbose(verbose)
-        , ntlm_context(rand, timeobj)
+        , ntlm_context(rand)
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
         LOG_IF(this->verbose, LOG_INFO, "this->identity.SetUserFromUtf8(nullptr)");
@@ -761,7 +761,7 @@ private:
         //     | ASC_REQ_EXTENDED_ERROR;
 
 
-        SEC_STATUS status = this->AcceptSecurityContext(this->ts_request.negoTokens.av(), /*output*/this->ts_request.negoTokens);
+        SEC_STATUS status = this->AcceptSecurityContext(this->ts_request.negoTokens.av(), /*output*/this->ts_request.negoTokens, this->timeobj);
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
