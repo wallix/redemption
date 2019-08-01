@@ -111,7 +111,7 @@ protected:
     class NTLMContextServer
     {
         const bool NTLMv2 = true;
-        bool UseMIC;
+        bool UseMIC = true; // NTLMv2
     public:
         NtlmState state = NTLM_STATE_INITIAL;
 
@@ -128,7 +128,7 @@ protected:
 
         std::vector<uint8_t> identity_User;
         std::vector<uint8_t> identity_Domain;
-        Array identity_Password;
+        Array identity_Password{0};
 
         // bool SendSingleHostData;
         // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -181,13 +181,10 @@ protected:
         array_md5 MessageIntegrityCheck;
         // uint8_t NtProofStr[16];
     public:
-        const bool verbose;
+        const bool verbose = false;
 
     public:
-        explicit NTLMContextServer(bool verbose = false)
-            : UseMIC(this->NTLMv2/* == true*/)
-            , identity_Password(0)
-            , verbose(verbose)
+        explicit NTLMContextServer()
         {
             memset(this->MachineID, 0xAA, sizeof(this->MachineID));
             memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
