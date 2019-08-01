@@ -127,40 +127,26 @@ protected:
     public:
         struct SEC_WINNT_AUTH_IDENTITY
         {
-            // kerberos only
-            //@{
-            char princname[256];
-            char princpass[256];
-            //@}
-            // ntlm only
-            //@{
             private:
-            Array User;
-            Array Domain;
+            std::vector<uint8_t> User;
+            std::vector<uint8_t> Domain;
             public:
             Array Password;
-            //@}
 
             public:
             SEC_WINNT_AUTH_IDENTITY()
-                : User(0)
-                , Domain(0)
-                , Password(0)
+                : Password(0)
             {
-                this->princname[0] = 0;
-                this->princpass[0] = 0;
             }
 
             void user_init_copy(cbytes_view av)
             {
-                this->User.init(av.size());
-                this->User.copy(av);
+                this->User.assign(av.data(),av.data()+av.size());
             }
 
             void domain_init_copy(cbytes_view av)
             {
-                this->Domain.init(av.size());
-                this->Domain.copy(av);
+                this->Domain.assign(av.data(),av.data()+av.size());
             }
 
             bool is_empty_user_domain(){
@@ -175,81 +161,19 @@ protected:
 
             cbytes_view get_user_utf16_av() const
             {
-                cbytes_view av{this->User.get_data(), this->User.size()};
-                return av;
+                return this->User;
             }
 
             cbytes_view get_domain_utf16_av() const
             {
-                cbytes_view av{this->Domain.get_data(), this->Domain.size()};
-                return av;
-            }
-
-            void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
-            {
-                UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
-            }
-
-            void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
-                UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
-            }
-
-
-            void SetUserFromUtf8(const uint8_t * user)
-            {
-                this->copyFromUtf8(this->User, user);
-            }
-
-            void SetDomainFromUtf8(const uint8_t * domain)
-            {
-                this->copyFromUtf8(this->Domain, domain);
-            }
-
-            void SetPasswordFromUtf8(const uint8_t * password)
-            {
-                this->copyFromUtf8(this->Password, password);
-            }
-
-            void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
-            {
-                auto copy = [](char (&arr)[256], uint8_t const* data){
-                    if (data) {
-                        const char * p = char_ptr_cast(data);
-                        const size_t length = p ? strnlen(p, 255) : 0;
-                        memcpy(arr, data, length);
-                        arr[length] = 0;
-                    }
-                };
-
-                copy(this->princname, user);
-                copy(this->princpass, pass);
-            }
-
-            void clear()
-            {
-                this->User.init(0);
-                this->Domain.init(0);
-                this->Password.init(0);
+                return this->Domain;
             }
 
             void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
             {
-                this->User.copy(user_utf16_av);
-                this->Domain.copy(domain_utf16_av);
+                this->User.assign(user_utf16_av.data(), user_utf16_av.data()+user_utf16_av.size());
+                this->Domain.assign(domain_utf16_av.data(), domain_utf16_av.data()+domain_utf16_av.size());
                 this->Password.copy(password_utf16_av);
-            }
-
-        private:
-            static void copyFromUtf8(Array& arr, uint8_t const* data)
-            {
-                if (data) {
-                    size_t user_len = UTF8Len(data);
-                    arr.init(user_len * 2);
-                    UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
-                }
-                else {
-                    arr.init(0);
-                }
             }
         } identity;
 
