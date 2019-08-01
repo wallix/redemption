@@ -449,13 +449,8 @@ public:
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
         memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
 
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Init");
-
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::Initialization: NTLM Authentication");
-
         LOG_IF(this->verbose, LOG_INFO, "this->server_auth_data.state = ServerAuthenticateData::Start");
         this->server_auth_data.state = ServerAuthenticateData::Start;
-        // TODO: sspi_GlobalInit();
 
         // Note: NTLMAcquireCredentialHandle never fails
 
@@ -503,6 +498,7 @@ public:
 private:
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
+        SEC_STATUS result;
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_public_key_echo");
 
         array_view_const_u8 data_in = this->ts_request.pubKeyAuth.av();
@@ -517,75 +513,82 @@ private:
                 LOG(LOG_INFO, "Provided login/password is probably incorrect.");
             }
             LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN 0x%08X", SEC_E_INVALID_TOKEN);
-            return SEC_E_INVALID_TOKEN;
+            result = SEC_E_INVALID_TOKEN;
         }
-        // data_in [signature][data_buffer]
+        else {
+            // data_in [signature][data_buffer]
 
-        auto data_buffer = data_in.from_at(cbMaxSignature);
-        std::vector<uint8_t> result_buffer(data_buffer.size());
+            auto data_buffer = data_in.from_at(cbMaxSignature);
+            std::vector<uint8_t> result_buffer(data_buffer.size());
 
-        /* Decrypt message using with RC4 */
-        // context->confidentiality == true
-        this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), result_buffer.data());
+            /* Decrypt message using with RC4 */
+            // context->confidentiality == true
+            this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), result_buffer.data());
 
-        array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), result_buffer);
-        uint8_t checksum[8];
-        /* RC4-encrypt first 8 bytes of digest */
-        this->RecvRc4Seal.crypt(8, digest.data(), checksum);
+            array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), result_buffer);
+            uint8_t checksum[8];
+            /* RC4-encrypt first 8 bytes of digest */
+            this->RecvRc4Seal.crypt(8, digest.data(), checksum);
 
-        std::vector<uint8_t> expected_signature;
-        uint32_t seal_version = 1;
-        /* Concatenate version, ciphertext and sequence number to build signature */
-        
-        push_back_array(expected_signature, out_uint32_le(seal_version));
-        push_back_array(expected_signature, {checksum, 8});
-        push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
+            std::vector<uint8_t> expected_signature;
+            uint32_t seal_version = 1;
+            /* Concatenate version, ciphertext and sequence number to build signature */
+            
+            push_back_array(expected_signature, out_uint32_le(seal_version));
+            push_back_array(expected_signature, {checksum, 8});
+            push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
 
-        if (memcmp(data_in.data(), expected_signature.data(),  expected_signature.size()) != 0) {
-            /* signature verification failed! */
-            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-            LOG(LOG_ERR, "Expected Signature:");
-            hexdump_c(expected_signature);
-            LOG(LOG_ERR, "Actual Signature:");
-            hexdump_c(data_in.data(), 16);
+            if (memcmp(data_in.data(), expected_signature.data(),  expected_signature.size()) != 0) {
+                /* signature verification failed! */
+                LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
+                LOG(LOG_ERR, "Expected Signature:");
+                hexdump_c(expected_signature);
+                LOG(LOG_ERR, "Actual Signature:");
+                hexdump_c(data_in.data(), 16);
 
-            if (this->ts_request.pubKeyAuth.size() == 0) {
-                // report_error
-                this->extra_message = " ";
-                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
-                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+                if (this->ts_request.pubKeyAuth.size() == 0) {
+                    // report_error
+                    this->extra_message = " ";
+                    this->extra_message.append(TR(trkeys::err_login_password, this->lang));
+                    LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+                }
+                LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED 0x%08X", SEC_E_MESSAGE_ALTERED);
+                result = SEC_E_MESSAGE_ALTERED;
             }
-            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED 0x%08X", SEC_E_MESSAGE_ALTERED);
-            return SEC_E_MESSAGE_ALTERED;
-        }
+            else {
+                if (this->ts_request.use_version >= 5) {
+                    if (this->ts_request.clientNonce.isset()){
+                        this->SavedClientNonce = this->ts_request.clientNonce;
+                    }
+                    this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
+                                            make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
+                                            this->public_key);
+                    this->public_key = this->ClientServerHash;
+                }
 
-        if (this->ts_request.use_version >= 5) {
-            if (this->ts_request.clientNonce.isset()){
-                this->SavedClientNonce = this->ts_request.clientNonce;
+                if (result_buffer.size() != this->public_key.size()) {
+                    LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", result_buffer.size(), this->public_key.size());
+                    result = SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+                }
+                else {
+                    if (memcmp(this->public_key.data(), result_buffer.data(), public_key.size()) != 0) {
+                        LOG(LOG_ERR, "Could not verify server's public key echo");
+
+                        LOG(LOG_ERR, "Expected (length = %zu):", this->public_key.size());
+                        hexdump_c(this->public_key);
+
+                        LOG(LOG_ERR, "Actual (length = %zu):", this->public_key.size());
+                        hexdump_c(result_buffer);
+
+                        result = SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+                    }
+                    else {
+                        result = SEC_E_OK;
+                    }
+                }
             }
-            this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
-                                    make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
-                                    this->public_key);
-            this->public_key = this->ClientServerHash;
         }
-
-        if (result_buffer.size() != this->public_key.size()) {
-            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", result_buffer.size(), this->public_key.size());
-            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-        }
-
-        if (memcmp(this->public_key.data(), result_buffer.data(), public_key.size()) != 0) {
-            LOG(LOG_ERR, "Could not verify server's public key echo");
-
-            LOG(LOG_ERR, "Expected (length = %zu):", this->public_key.size());
-            hexdump_c(this->public_key);
-
-            LOG(LOG_ERR, "Actual (length = %zu):", this->public_key.size());
-            hexdump_c(result_buffer);
-
-            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-        }
-        return SEC_E_OK;
+        return result;
     }
 
     SEC_STATUS credssp_decrypt_ts_credentials() {
