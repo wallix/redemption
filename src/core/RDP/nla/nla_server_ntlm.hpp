@@ -164,8 +164,8 @@ protected:
         NtlmVersion version;
     public:
         std::vector<uint8_t> SavedNegotiateMessage;
-        Array SavedChallengeMessage;
-        Array SavedAuthenticateMessage;
+        std::vector<uint8_t> SavedChallengeMessage;
+        std::vector<uint8_t> SavedAuthenticateMessage;
 
     private:
         uint8_t Timestamp[8]{};
@@ -210,8 +210,6 @@ protected:
     public:
         explicit NTLMContextServer(bool verbose = false)
             : UseMIC(this->NTLMv2/* == true*/)
-            , SavedChallengeMessage(0)
-            , SavedAuthenticateMessage(0)
             , verbose(verbose)
         {
             memset(this->MachineID, 0xAA, sizeof(this->MachineID));
@@ -305,8 +303,8 @@ protected:
             if (this->UseMIC) {
                 this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
                     this->SavedNegotiateMessage,
-                    this->SavedChallengeMessage.av(),
-                    this->SavedAuthenticateMessage.av());
+                    this->SavedChallengeMessage,
+                    this->SavedAuthenticateMessage);
 
                 if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                     LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
@@ -350,8 +348,8 @@ protected:
             output_buffer.init(out_stream.get_offset());
             output_buffer.copy(out_stream.get_bytes());
 
-            this->SavedChallengeMessage.init(out_stream.get_offset());
-            this->SavedChallengeMessage.copy(out_stream.get_bytes());
+            this->SavedChallengeMessage.clear();
+            push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
 
             this->state = NTLM_STATE_AUTHENTICATE;
             return SEC_I_CONTINUE_NEEDED;
@@ -363,16 +361,12 @@ protected:
             recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
             if (this->AUTHENTICATE_MESSAGE.has_mic) {
                 this->UseMIC = true;
-                this->SavedAuthenticateMessage.init(in_stream.get_offset());
+                this->SavedAuthenticateMessage.clear();
                 constexpr std::size_t null_data_sz = 16;
                 uint8_t const null_data[null_data_sz]{0u};
-                auto const p = in_stream.get_data();
-                std::size_t offset = 0u;
-                this->SavedAuthenticateMessage.copy({p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset}, offset);
-                offset += this->AUTHENTICATE_MESSAGE.PayloadOffset;
-                this->SavedAuthenticateMessage.copy({null_data, null_data_sz}, offset);
-                offset += null_data_sz;
-                this->SavedAuthenticateMessage.copy({p + offset, in_stream.get_offset() - offset}, offset);
+                push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data(), this->AUTHENTICATE_MESSAGE.PayloadOffset});
+                push_back_array(this->SavedAuthenticateMessage, {null_data, null_data_sz});
+                push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset + null_data_sz, in_stream.get_offset() - this->AUTHENTICATE_MESSAGE.PayloadOffset - null_data_sz});
             }
 
             this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer);
