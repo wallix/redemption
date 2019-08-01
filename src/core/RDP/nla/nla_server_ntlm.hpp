@@ -483,19 +483,6 @@ private:
         return HmacMd5({signing_key, 16}, out_uint32_le(SeqNo), data_buffer);
     }
 
-    static void compute_signature(uint8_t* signature, SslRC4& rc4, array_view_const_u8 digest, uint32_t SeqNo)
-    {
-        uint8_t checksum[8];
-        /* RC4-encrypt first 8 bytes of digest */
-        rc4.crypt(8, digest.data(), checksum);
-
-        uint32_t version = 1;
-        /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(signature, &version, 4);
-        memcpy(&signature[4], checksum, 8);
-        memcpy(&signature[12], &SeqNo, 4);
-    }
-
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo)
@@ -509,7 +496,18 @@ private:
         array_md5 digest = this->compute_hmac_md5(this->ntlm_context.ServerSigningKey.data(), data_in, MessageSeqNo);
         // this->ntlm_context.confidentiality == true
         this->ntlm_context.SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
-        this->compute_signature(data_out.get_data(), this->ntlm_context.SendRc4Seal, digest, MessageSeqNo);
+        
+        uint8_t * signature = data_out.get_data();
+        uint8_t checksum[8];
+        /* RC4-encrypt first 8 bytes of digest */
+        this->ntlm_context.SendRc4Seal.crypt(8, digest.data(), checksum);
+
+        uint32_t version = 1;
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        memcpy(signature, &version, 4);
+        memcpy(&signature[4], checksum, 8);
+        memcpy(&signature[12], &MessageSeqNo, 4);
+        
         return SEC_E_OK;
     }
 
@@ -535,7 +533,16 @@ private:
         array_md5 digest = this->compute_hmac_md5(this->ntlm_context.ClientSigningKey.data(), data_out.av(), MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
-        this->compute_signature(expected_signature, this->ntlm_context.RecvRc4Seal, digest, MessageSeqNo);
+        uint8_t * signature = expected_signature;
+        uint8_t checksum[8];
+        /* RC4-encrypt first 8 bytes of digest */
+        this->ntlm_context.RecvRc4Seal.crypt(8, digest.data(), checksum);
+
+        uint32_t version = 1;
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        memcpy(signature, &version, 4);
+        memcpy(&signature[4], checksum, 8);
+        memcpy(&signature[12], &MessageSeqNo, 4);
 
         if (memcmp(data_in.data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
