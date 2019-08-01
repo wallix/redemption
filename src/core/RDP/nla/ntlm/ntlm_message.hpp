@@ -32,6 +32,7 @@
 #include "system/ssl_md5.hpp"
 #include "system/ssl_rc4.hpp"
 #include "system/ssl_md4.hpp"
+#include "system/ssl_sha256.hpp"
 
 #include <numeric>
 
@@ -114,6 +115,19 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
     hmac_md5.unchecked_final(result.data());
     return result;
 }
+
+using array_sha256 = std::array<uint8_t, SslSha256::DIGEST_LENGTH>;
+static inline array_sha256 Sha256(const_bytes_view data1, array_view_const_u8 data2, array_view_const_u8 data3)
+{
+    array_sha256 result;
+    SslSha256 sha256;
+    sha256.update(data1);
+    sha256.update(data2);
+    sha256.update(data3);
+    sha256.unchecked_final(result.data());
+    return result;
+}
+
 
 // 2.2.2.1   AV_PAIR
 // ==================================

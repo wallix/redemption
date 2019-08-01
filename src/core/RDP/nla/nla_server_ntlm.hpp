@@ -75,41 +75,14 @@ class rdpCredsspServerNTLM final
     Translation::language_t lang;
     const bool verbose;
 
-    Array ClientServerHash;
-    Array ServerClientHash;
+    array_sha256 ClientServerHash;
+    array_sha256 ServerClientHash;
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         LOG(LOG_INFO, "set hostname from UTF8");
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
         LOG(LOG_INFO, "length=%lu", length);
     }
-
-    void credssp_generate_public_key_hash_client_to_server() {
-        LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (client->server)");
-        Array & SavedHash = this->ClientServerHash;
-        SslSha256 sha256;
-        uint8_t hash[SslSha256::DIGEST_LENGTH];
-        sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
-        sha256.update(this->public_key);
-        sha256.final(hash);
-        SavedHash.init(sizeof(hash));
-        memcpy(SavedHash.get_data(), hash, sizeof(hash));
-    }
-
-    void credssp_generate_public_key_hash_server_to_client() {
-        LOG(LOG_DEBUG, "rdpCredsspServer::generate credssp public key hash (server->client)");
-        Array & SavedHash = this->ServerClientHash;
-        SslSha256 sha256;
-        uint8_t hash[SslSha256::DIGEST_LENGTH];
-        sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
-        sha256.update(this->public_key);
-        sha256.final(hash);
-        SavedHash.init(sizeof(hash));
-        memcpy(SavedHash.get_data(), hash, sizeof(hash));
-    }
-
 
     void credssp_buffer_free() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
@@ -604,8 +577,10 @@ private:
             if (this->ts_request.clientNonce.isset()){
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
-            this->credssp_generate_public_key_hash_server_to_client();
-            this->public_key = this->ServerClientHash.av();
+            this->ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
+                                        make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
+                                        this->public_key);
+            this->public_key = this->ServerClientHash;
         }
         else {
             // if we are server and protocol is 2,3,4
@@ -642,8 +617,10 @@ private:
             if (this->ts_request.clientNonce.isset()){
                 this->SavedClientNonce = this->ts_request.clientNonce;
             }
-            this->credssp_generate_public_key_hash_client_to_server();
-            this->public_key = this->ClientServerHash.av();
+            this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
+                                    make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
+                                    this->public_key);
+            this->public_key = this->ClientServerHash;
         }
 
         array_view_u8 public_key2 = Buffer.av();
