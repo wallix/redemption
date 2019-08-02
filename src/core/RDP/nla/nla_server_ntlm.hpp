@@ -473,12 +473,9 @@ public:
                 {
                     LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_WAIT_PASSWORD");
                     status = this->check_authenticate();
-                    if (status != SEC_I_CONTINUE_NEEDED && status != SEC_I_COMPLETE_NEEDED) {
-                        break;
+                    if (status == SEC_I_CONTINUE_NEEDED || status == SEC_I_COMPLETE_NEEDED) {
+                        output_buffer.init(0);
                     }
-
-                    output_buffer.init(0);
-
                     break;
                 }
                 default:
