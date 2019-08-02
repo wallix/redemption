@@ -202,6 +202,18 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
     void write_type_info(type_<types::range<std::chrono::duration<T, Ratio>, min, max>>)
     { write_type_info(type_<std::chrono::duration<T, Ratio>>{}); }
 
+    struct HexFlag
+    {
+        unsigned long long v;
+        std::size_t max_element;
+
+        friend inline std::ostream& operator<<(std::ostream& out, HexFlag const& h)
+        {
+            return out << "0x"
+                << std::setfill('0') << std::setw((h.max_element+3)/4)
+                << std::hex << h.v << std::dec;
+        }
+    };
 
     template<class T, class V>
     void write_value_(T const & name, V const & v, char const * prefix)
@@ -215,7 +227,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
             }
             this->out() << v.desc;
         }
-        else if (std::is_integral<T>::value) {
+        else if (std::is_integral<T>::value || std::is_same<T, HexFlag>::value) {
             this->out() << ": " << io_replace(v.name, '_', ' ');
         }
         this->out() << prefixes.suffix << "\n";
@@ -237,14 +249,17 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
             if (e.is_string_parser) {
                 this->write_value_((v.alias ? v.alias : v.name), v, prefix);
             }
+            else if (is_autoinc) {
+                write_value_(d, v, prefix);
+            }
             else {
-                this->write_value_((is_autoinc ? d : (1 << d >> 1)), v, prefix);
+                write_value_(HexFlag{(1ull << d >> 1), e.values.size()}, v, prefix);
             }
             ++d;
         }
 
         if (type_enumeration::flags == e.flag) {
-            this->out() << this->inherit().comment("(note: values can be added (everyone: 1+2+4=7, mute: 0))");
+            this->out() << this->inherit().comment("(note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))");
         }
     }
 
