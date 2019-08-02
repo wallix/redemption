@@ -92,7 +92,6 @@ public:
 protected:
     SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
 
-private:
     const bool NTLMv2 = true;
     bool UseMIC = true; // NTLMv2
 public:
@@ -232,18 +231,22 @@ private:
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
 
-        if (this->state == NTLM_STATE_INITIAL) {
+        switch (this->state) {
+        case NTLM_STATE_INITIAL:
+        {
 
             this->state = NTLM_STATE_NEGOTIATE;
 
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
             InStream in_stream(input_buffer);
+            
             RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
             uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
             uint32_t const mask = NTLMSSP_REQUEST_TARGET
                                 | NTLMSSP_NEGOTIATE_NTLM
                                 | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
                                 | NTLMSSP_NEGOTIATE_UNICODE;
+
             if ((negoFlag & mask) != mask) {
                 return SEC_E_INVALID_TOKEN;
             }
@@ -302,20 +305,19 @@ private:
             return SEC_I_CONTINUE_NEEDED;
         }
 
-        if (this->state == NTLM_STATE_AUTHENTICATE) {
+        case NTLM_STATE_AUTHENTICATE:
+        {
             LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
             InStream in_stream(input_buffer);
             recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
+
+
             if (this->AUTHENTICATE_MESSAGE.has_mic) {
                 this->UseMIC = true;
-                this->SavedAuthenticateMessage.clear();
-                constexpr std::size_t null_data_sz = 16;
-                uint8_t const null_data[null_data_sz]{0u};
-                push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data(), this->AUTHENTICATE_MESSAGE.PayloadOffset});
-                push_back_array(this->SavedAuthenticateMessage, {null_data, null_data_sz});
-                push_back_array(this->SavedAuthenticateMessage, {in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset + null_data_sz, in_stream.get_offset() - this->AUTHENTICATE_MESSAGE.PayloadOffset - null_data_sz});
+                this->SavedAuthenticateMessage = this->AUTHENTICATE_MESSAGE.get_bytes();
             }
 
+            
             auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
             this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
             auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
@@ -341,9 +343,23 @@ private:
                     this->state = NTLM_STATE_WAIT_PASSWORD;
                     return SEC_I_LOCAL_LOGON;
             }
+
+            if (this->state == NTLM_STATE_WAIT_PASSWORD) {
+                SEC_STATUS status = this->check_authenticate();
+                if (status != SEC_I_CONTINUE_NEEDED && status != SEC_I_COMPLETE_NEEDED) {
+                    return status;
+                }
+
+                output_buffer.init(0);
+
+                return status;
+            }
+
+            return SEC_E_OUT_OF_SEQUENCE;
         }
 
-        if (this->state == NTLM_STATE_WAIT_PASSWORD) {
+        case NTLM_STATE_WAIT_PASSWORD:
+        {
             SEC_STATUS status = this->check_authenticate();
             if (status != SEC_I_CONTINUE_NEEDED && status != SEC_I_COMPLETE_NEEDED) {
                 return status;
@@ -353,6 +369,7 @@ private:
 
             return status;
         }
+        } // Switch
 
         return SEC_E_OUT_OF_SEQUENCE;
     }
@@ -630,6 +647,8 @@ private:
 
 
         SEC_STATUS status = this->AcceptSecurityContext(this->ts_request.negoTokens.av(), /*output*/this->ts_request.negoTokens, this->timeobj, this->rand);
+
+
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;

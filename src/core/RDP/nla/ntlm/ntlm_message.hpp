@@ -246,7 +246,7 @@ enum NtlmState {
 // TODO: constants below are still globals,
 // better to move them in the scope of functions/objects using them
 //const char* NTLM_PACKAGE_NAME = "NTLM";
-// const char Ntlm_Name[] = "NTLM";
+// const char Ntlm_Name[] = "NTLM";NtlmAuthenticate
 // const char Ntlm_Comment[] = "NTLM Security Package";
 // const SecPkgInfo NTLM_SecPkgInfo = {
 //     0x00082B37,             // fCapabilities
@@ -1098,12 +1098,18 @@ struct NTLMAuthenticateMessage {
     bool ignore_mic{false};
     bool has_mic{true};
     uint32_t PayloadOffset;
+    std::vector<uint8_t> message_bytes_dump;
 
     NTLMAuthenticateMessage()
         : msgType(NtlmAuthenticate)
         , PayloadOffset(12+8+8+8+8+8+8+4+8)
     {
         memset(this->MIC, 0x00, 16);
+    }
+    
+    std::vector<uint8_t> get_bytes() 
+    {
+        return this->message_bytes_dump;
     }
     
     array_md5 NTOWFv2(array_view_const_u8 hash) {
@@ -1303,6 +1309,17 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
     for(auto & tmp: l){
         tmp.f->buffer.assign(pBegin + tmp.f->bufferOffset, 
                              pBegin + tmp.f->bufferOffset + tmp.len);
+    }
+
+    if (self.has_mic){
+        // Store message bytes for later reference
+        std::vector<uint8_t> v;
+        constexpr std::size_t null_data_sz = 16;
+        uint8_t const null_data[null_data_sz]{0u};
+        push_back_array(v, {stream.get_data(), stream.get_data()+12+8+8+8+8+8+8+4+8});
+        push_back_array(v, {null_data, 16});
+        push_back_array(v, {stream.get_data() + 12+8+8+8+8+8+8+4+8 + 16, stream.get_offset() - (12+8+8+8+8+8+8+4+8 + 16)});
+        self.message_bytes_dump = v;
     }
 }
 
