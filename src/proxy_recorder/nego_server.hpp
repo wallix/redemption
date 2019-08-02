@@ -39,37 +39,29 @@ public:
     : credssp(key, rand, timeobj, extra_message, Translation::EN,
         [&](cbytes_view user_av, cbytes_view domain_av, std::vector<uint8_t> & password_array){
             LOG(LOG_INFO, "NTLM Check identity");
-
+            
+            // fROM COMMAND LINE
             auto [username, domain] = extract_user_domain(user.c_str());
-
-            char utf8_user_buffer[1024] = {};
-            UTF16toUTF8(user_av.data(), user_av.size(), reinterpret_cast<uint8_t *>(utf8_user_buffer), sizeof(utf8_user_buffer));
-
-            char utf8_domain_buffer[1024] = {};
-            UTF16toUTF8(domain_av.data(), domain_av.size(), reinterpret_cast<uint8_t *>(utf8_domain_buffer), sizeof(utf8_domain_buffer));
-
-            bool check_identities = false;
-            if (utf8_domain_buffer[0] == 0){
-                auto [identity_username, identity_domain] = extract_user_domain(utf8_user_buffer);
-                LOG(LOG_INFO, "NTML IDENTITY: identity.User=%s identity.Domain=%s username=%s, domain=%s",
-                    identity_username, identity_domain, username, domain);
-                if ((username == identity_username) && (domain == identity_domain)) {
-                    check_identities = true;
-                }
-            }
-            else {
-                if ((username == utf8_user_buffer) && (domain == utf8_domain_buffer)) {
-                    check_identities = true;
-                }
-            }
+            // from protocol
+            auto utf8_user = ::encode_UTF16_to_UTF8(user_av);
+            auto utf8_domain = ::encode_UTF16_to_UTF8(domain_av);
 
             LOG(LOG_INFO, "NTML IDENTITY: identity.User=%s identity.Domain=%s username=%s, domain=%s",
-                utf8_user_buffer, utf8_domain_buffer, username, domain);
+                utf8_user, utf8_domain, username, domain);
 
-            if (check_identities){
-                size_t user_len = UTF8Len(byte_ptr_cast(password.c_str()));
-                password_array = std::vector<uint8_t>(user_len * 2, 0);
-                UTF8toUTF16({password.c_str(), strlen(char_ptr_cast(byte_ptr_cast(password.c_str())))}, password_array.data(), user_len * 2);
+            if (utf8_domain.size() == 0){
+                auto [identity_username, identity_domain] = extract_user_domain(utf8_user);
+                if (are_buffer_equal(username,identity_username) 
+                && are_buffer_equal(domain, identity_domain)) {
+                    password_array = UTF8toUTF16(password);
+                    return PasswordCallback::Ok;
+                }
+            }
+
+            if ((utf8_domain.size() != 0) 
+            && (are_buffer_equal(username, utf8_user)
+            && (are_buffer_equal(domain, utf8_domain)) {
+                password_array = UTF8toUTF16(password);
                 return PasswordCallback::Ok;
             }
 

@@ -43,14 +43,6 @@ static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
     return result;
 }
 
-static inline std::vector<uint8_t> UTF8_to_UTF16(array_view_const_u8 name)
-{
-    std::vector<uint8_t> result(name.data(), name.data()+name.size());
-    ::UTF16Upper(result.data(), result.size());
-    return result;
-}
-
-
 using array_challenge = std::array<uint8_t, 8>;
 
 using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;
@@ -1092,8 +1084,6 @@ inline array_md5 compute_LMv2_Response(array_view_const_u8 responseKeyLM, array_
 
 
 struct NTLMAuthenticateMessage {
-    NtlmMessageType msgType;   /* 4 Bytes */
-
     NtlmField LmChallengeResponse;        /* 8 Bytes */
     NtlmField NtChallengeResponse;        /* 8 Bytes */
     NtlmField DomainName;                 /* 8 Bytes */
@@ -1109,8 +1099,7 @@ struct NTLMAuthenticateMessage {
     std::vector<uint8_t> message_bytes_dump;
 
     NTLMAuthenticateMessage()
-        : msgType(NtlmAuthenticate)
-        , PayloadOffset(12+8+8+8+8+8+8+4+8)
+        : PayloadOffset(12+8+8+8+8+8+8+4+8)
     {
         memset(this->MIC, 0x00, 16);
     }
@@ -1248,6 +1237,10 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 }
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
+    LOG(LOG_INFO, "Message Authenticate Dump");
+    hexdump_d(stream.remaining_bytes());
+
+
     uint8_t const * pBegin = stream.get_current();
     
     // Read Message Header
@@ -1255,11 +1248,11 @@ inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessa
     uint8_t received_sig[sig_len];
     stream.in_copy_bytes(received_sig, sig_len);
     uint32_t type = stream.in_uint32_le();
-    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", self.msgType);
+    if (NtlmAuthenticate != type){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED expected NtlmAuthenticate (0003), got type: %u", type);
     }
-    if (static_cast<uint32_t>(self.msgType) == type){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED, invalid type type: %u", self.msgType);
+    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
+        LOG(LOG_ERR, "INVALID MSG RECEIVED BAD SIGNATURE (NtlmAuthenticate)");
     }
 
     // Read Ntlm Fields Headers
@@ -1957,8 +1950,6 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
 
 class NTLMNegotiateMessage
 {
-    NtlmMessageType msgType;   /* 4 Bytes */
-
 public:
     NtlmNegotiateFlags negoFlags; /* 4 Bytes */
     NtlmField DomainName;         /* 8 Bytes */
@@ -2013,7 +2004,7 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
     uint32_t type = stream.in_uint32_le();
 
     if (type != NtlmNegotiate){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
+        LOG(LOG_ERR, "INVALID MSG RECEIVED NtlmNegotiate (0001) expected, got type: %u", type);
     }
     if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
         LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
