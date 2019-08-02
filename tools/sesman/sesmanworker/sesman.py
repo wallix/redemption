@@ -1839,7 +1839,7 @@ class Sesman():
                                 if self.shared.get("rd_shadow_invitation_id"):
                                     update_args = {}
                                     update_args["shadow_userdata"] = self.shared.get("rd_shadow_userdata")
-                                    update_args["shadow_errcode"] = self.shared.get("rd_shadow_invitation_error_code")
+                                    update_args["shadow_errcode"] = int(self.shared.get("rd_shadow_invitation_error_code"))
                                     update_args["shadow_errmsg"] = self.shared.get("rd_shadow_invitation_error_message")
                                     update_args["shadow_id"] = self.shared.get("rd_shadow_invitation_id")
                                     update_args["shadow_ip"] = self.shared.get("rd_shadow_invitation_addr")
@@ -1848,7 +1848,7 @@ class Sesman():
                                     self.shared["rd_shadow_available"] = 'False'
 
                                     self.shared["rd_shadow_userdata"] = None
-                                    self.shared["rd_shadow_invitation_error_code"] = 0
+                                    self.shared["rd_shadow_invitation_error_code"] = None
                                     self.shared["rd_shadow_invitation_error_message"] = None
                                     self.shared["rd_shadow_invitation_id"] = None
                                     self.shared["rd_shadow_invitation_addr"] = None
