@@ -169,58 +169,6 @@ private:
     // SERVER PROCEED RESPONSE CHECKING
     public:
 
-    SEC_STATUS check_authenticate() {
-        array_md4 hash;
-        if (this->identity_Password.size() > 0){
-            hash = Md4(this->identity_Password);
-        }
-        if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
-            LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
-            return SEC_E_LOGON_DENIED;
-        }
-        if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
-            LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
-            return SEC_E_LOGON_DENIED;
-        }
-        // SERVER COMPUTE SHARED KEY WITH CLIENT
-        this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
-        this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
-        this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
-        this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
-        this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
-        this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
-
-        /**
-         * Initialize RC4 stream cipher states for sealing.
-         */
-
-        this->SendRc4Seal.set_key(this->ServerSealingKey);
-        this->RecvRc4Seal.set_key(this->ClientSealingKey);
-
-        // =======================================================
-
-        if (this->AUTHENTICATE_MESSAGE.has_mic) {
-            this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
-                this->SavedNegotiateMessage,
-                this->SavedChallengeMessage,
-                this->AUTHENTICATE_MESSAGE.get_bytes());
-
-            LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
-
-            hexdump_c(this->MessageIntegrityCheck.data(), 16);
-            hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
-
-            if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
-                LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
-                hexdump_c(this->MessageIntegrityCheck.data(), 16);
-                hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
-                return SEC_E_MESSAGE_ALTERED;
-            }
-        }
-        this->state = NTLM_STATE_FINAL;
-        return SEC_I_COMPLETE_NEEDED;
-    }
-
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
 
@@ -462,20 +410,120 @@ public:
                         break;
                     }
 
-                    status = this->check_authenticate();
+                    array_md4 hash;
+                    if (this->identity_Password.size() > 0){
+                        hash = Md4(this->identity_Password);
+                    }
+                    if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
+                        LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
+                        status = SEC_E_LOGON_DENIED;
+                        break;
+                    }
+                    if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
+                        status = SEC_E_LOGON_DENIED;
+                        break;
+                    }
+                    // SERVER COMPUTE SHARED KEY WITH CLIENT
+                    this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
+                    this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
+                    this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
+                    this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
+                    this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
+                    this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
+
+                    /**
+                     * Initialize RC4 stream cipher states for sealing.
+                     */
+
+                    this->SendRc4Seal.set_key(this->ServerSealingKey);
+                    this->RecvRc4Seal.set_key(this->ClientSealingKey);
+
+                    // =======================================================
+
+                    if (this->AUTHENTICATE_MESSAGE.has_mic) {
+                        this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
+                            this->SavedNegotiateMessage,
+                            this->SavedChallengeMessage,
+                            this->AUTHENTICATE_MESSAGE.get_bytes());
+
+                        LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
+
+                        hexdump_c(this->MessageIntegrityCheck.data(), 16);
+                        hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+
+                        if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
+                            LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
+                            hexdump_c(this->MessageIntegrityCheck.data(), 16);
+                            hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+                            status = SEC_E_MESSAGE_ALTERED;
+                            break;
+                        }
+                    }
+                    this->state = NTLM_STATE_FINAL;
                     if (status == SEC_I_CONTINUE_NEEDED || status == SEC_I_COMPLETE_NEEDED) {
                         output_buffer.init(0);
                     }
+                    status = SEC_I_COMPLETE_NEEDED;
                     break;
                 }
 
                 case NTLM_STATE_WAIT_PASSWORD:
                 {
                     LOG_IF(this->verbose, LOG_INFO, "+++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_WAIT_PASSWORD");
-                    status = this->check_authenticate();
+                    array_md4 hash;
+                    if (this->identity_Password.size() > 0){
+                        hash = Md4(this->identity_Password);
+                    }
+                    if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
+                        LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
+                        status = SEC_E_LOGON_DENIED;
+                        break;
+                    }
+                    if (!this->AUTHENTICATE_MESSAGE.check_lm_response_from_authenticate(hash, this->ServerChallenge)) {
+                        status = SEC_E_LOGON_DENIED;
+                        break;
+                    }
+                    // SERVER COMPUTE SHARED KEY WITH CLIENT
+                    this->SessionBaseKey = this->AUTHENTICATE_MESSAGE.compute_session_base_key(hash);
+                    this->ExportedSessionKey = this->AUTHENTICATE_MESSAGE.get_exported_session_key(this->SessionBaseKey);
+                    this->ClientSigningKey = Md5(this->ExportedSessionKey, make_array_view(client_sign_magic));
+                    this->ClientSealingKey = Md5(this->ExportedSessionKey, make_array_view(client_seal_magic));
+                    this->ServerSigningKey = Md5(this->ExportedSessionKey, make_array_view(server_sign_magic));
+                    this->ServerSealingKey  = Md5(this->ExportedSessionKey, make_array_view(server_seal_magic));
+
+                    /**
+                     * Initialize RC4 stream cipher states for sealing.
+                     */
+
+                    this->SendRc4Seal.set_key(this->ServerSealingKey);
+                    this->RecvRc4Seal.set_key(this->ClientSealingKey);
+
+                    // =======================================================
+
+                    if (this->AUTHENTICATE_MESSAGE.has_mic) {
+                        this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
+                            this->SavedNegotiateMessage,
+                            this->SavedChallengeMessage,
+                            this->AUTHENTICATE_MESSAGE.get_bytes());
+
+                        LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
+
+                        hexdump_c(this->MessageIntegrityCheck.data(), 16);
+                        hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+
+                        if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
+                            LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
+                            hexdump_c(this->MessageIntegrityCheck.data(), 16);
+                            hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+                            status = SEC_E_MESSAGE_ALTERED;
+                            break;
+                        }
+                    }
+                    this->state = NTLM_STATE_FINAL;
                     if (status == SEC_I_CONTINUE_NEEDED || status == SEC_I_COMPLETE_NEEDED) {
                         output_buffer.init(0);
                     }
+                    status = SEC_I_COMPLETE_NEEDED;
                     break;
                 }
                 default:
@@ -488,13 +536,11 @@ public:
                     return credssp::State::Cont;
                 }
 
-                if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
-                    if (status == SEC_I_COMPLETE_NEEDED) {
-                        status = SEC_E_OK;
-                    }
-                    else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
-                        status = SEC_I_CONTINUE_NEEDED;
-                    }
+                if (status == SEC_I_COMPLETE_NEEDED) {
+                    status = SEC_E_OK;
+                }
+                else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
+                    status = SEC_I_CONTINUE_NEEDED;
                 }
 
                 if (status == SEC_E_OK) {
@@ -646,7 +692,7 @@ public:
                LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final");
                if (Res::Err == this->sm_credssp_server_authenticate_final(in_stream)) {
                    LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
-                    return credssp::State::Err;
+                   return credssp::State::Err;
                 }
                 this->server_auth_data.state = ServerAuthenticateData::Start;
                 return credssp::State::Finish;
