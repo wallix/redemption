@@ -1876,6 +1876,8 @@ public:
                 out_s.out_copy_bytes("No"_av);
             }
 
+            out_s.out_uint8('\x01');
+
             out_s.out_copy_bytes(userdata, ::strlen(userdata));
 
         });
