@@ -305,42 +305,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
         "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"_av);
 }
 
-RED_AUTO_TEST_CASE(TestCliprdrChannelLockClipDataReceive)
-{
-    ClipboardData state;
-    const uint32_t clipDataId = 1;
-    RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
-    StaticOutStream<64> stream;
-    pdu.emit(stream);
-
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
-
-    InStream chunk(stream.get_bytes());
-
-    LockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
-
-    // TODO RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.count(1), 1);
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
-{
-    ClipboardData state;
-    const uint32_t clipDataId = 1;
-    // state.client_data.file_stream_data_inventory[clipDataId] = ClipboardSideData::file_info_inventory_type();
-
-    RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
-    StaticOutStream<64> stream;
-    pdu.emit(stream);
-
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
-
-    InStream chunk(stream.get_bytes());
-
-    UnlockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
-
-    // TODO RED_CHECK(state.client_data.file_stream_data_inventory.empty());
-}
-
 // RED_AUTO_TEST_CASE(TestCliprdrChannelFileContentsResponseReceive)
 // {
 //     ClipboardData state;

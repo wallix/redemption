@@ -267,14 +267,12 @@ public:
             }
             break;
 
-            case RDPECLIP::CB_LOCK_CLIPDATA: {
-                LockClipDataReceive receiver(this->clip_data.server_data, this->clip_data.client_data, chunk, this->verbose, header);
-            }
+            case RDPECLIP::CB_LOCK_CLIPDATA:
+                this->process_lock_pdu(chunk, this->clip_data.client_data);
             break;
 
-            case RDPECLIP::CB_UNLOCK_CLIPDATA: {
-                UnlockClipDataReceive receive(this->clip_data.server_data, this->clip_data.client_data, chunk, this->verbose, header);
-            }
+            case RDPECLIP::CB_UNLOCK_CLIPDATA:
+                this->process_unlock_pdu(chunk, this->clip_data.client_data);
             break;
         }   // switch (this->client_message_type)
 
@@ -351,7 +349,7 @@ public:
         {
             case RDPECLIP::CB_MONITOR_READY: {
                 if (this->proxy_managed) {
-                    this->clip_data.client_data.use_long_format_names = true;
+                    this->clip_data.server_data.use_long_format_names = true;
                     ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names(), this->to_server_sender_ptr());
                 }
 
@@ -425,14 +423,12 @@ public:
             }
             break;
 
-            case RDPECLIP::CB_LOCK_CLIPDATA: {
-                LockClipDataReceive receiver(this->clip_data.client_data, this->clip_data.server_data, chunk, this->verbose, header);
-            }
+            case RDPECLIP::CB_LOCK_CLIPDATA:
+                this->process_lock_pdu(chunk, this->clip_data.server_data);
             break;
 
-            case RDPECLIP::CB_UNLOCK_CLIPDATA: {
-                UnlockClipDataReceive receive(this->clip_data.client_data, this->clip_data.server_data, chunk, this->verbose, header);
-            }
+            case RDPECLIP::CB_UNLOCK_CLIPDATA:
+                this->process_unlock_pdu(chunk, this->clip_data.server_data);
             break;
         }   // switch (this->server_message_type)
 
@@ -529,6 +525,20 @@ public:
     }
 
 private:
+    void process_lock_pdu(InStream& chunk, ClipboardSideData& side_data)
+    {
+        RDPECLIP::LockClipboardDataPDU pdu;
+        pdu.recv(chunk);
+        side_data.push_lock_id(pdu.clipDataId);
+    }
+
+    void process_unlock_pdu(InStream& chunk, ClipboardSideData& side_data)
+    {
+        RDPECLIP::UnlockClipboardDataPDU pdu;
+        pdu.recv(chunk);
+        side_data.remove_lock_id(pdu.clipDataId);
+    }
+
     bool process_filecontents_response_pdu(
         uint32_t flags, InStream& chunk,
         RDPECLIP::CliprdrHeader const& in_header, ClipboardSideData& side_data,
@@ -554,7 +564,6 @@ private:
             side_data.remove_file(file);
         }
         else if (file && file->is_file_range()) {
-            // is a FILECONTENTS_RANGE
             auto& file_data = *file->file_data;
             auto data_fragment = chunk.remaining_bytes();
             if (file_data.file_size < file_data.file_offset + data_fragment.size()) {
@@ -568,7 +577,9 @@ private:
                 this->icap.send_data(file_data.validator_id, data_fragment);
                 if (file_data.file_offset == file_data.file_size && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                     this->icap.set_end_of_file(file_data.validator_id);
-                    file->stream_id.reset();
+                    if (!file->file_data->clip_data_id) {
+                        file->stream_id.reset();
+                    }
                 }
             }
 
@@ -623,16 +634,28 @@ private:
                     // TODO if lock ?
                     auto* file = side_data.find_file_by_stream_id(stream_id);
                     if (file) {
+                        if (!file_contents_request_pdu.has_optional_clipDataId()) {
+                            // TODO
+                            throw Error(ERR_RDP_PROTOCOL);
+                        }
+                        if (!file->file_data) {
+                            // TODO
+                            throw Error(ERR_RDP_PROTOCOL);
+                        }
+                        if (file->file_data->file_offset != offset) {
+                            // TODO
+                            throw Error(ERR_RDP_PROTOCOL);
+                        }
+                    }
+                    else {
+                        file = side_data.find_file_by_offset(lindex, offset);
                         // TODO
-                        throw Error(ERR_RDP_PROTOCOL);
+                        if (!file) {
+                            // TODO validator error + log
+                            throw Error(ERR_ICAP_LOCAl_PROTOCOL);
+                        }
                     }
 
-                    file = side_data.find_file_by_offset(lindex, offset);
-                    // TODO
-                    if (!file) {
-                        // TODO validator error + log
-                        throw Error(ERR_ICAP_LOCAl_PROTOCOL);
-                    }
                     file->stream_id = stream_id;
                 }
                 else {
@@ -640,8 +663,12 @@ private:
                     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
                         "ClipboardVirtualChannel::icap_new_file");
                     auto validator_id = this->icap.icap_service->open_file(desc.file_name, target_name);
+                    auto optional_lock_id = file_contents_request_pdu.has_optional_clipDataId()
+                        ? side_data.get_lock_id(file_contents_request_pdu.clipDataId())
+                        : std::optional<uint32_t>{};
                     side_data.push_file_content_range(
-                        stream_id, lindex, validator_id, desc.file_name, desc.file_size);
+                        stream_id, lindex, optional_lock_id,
+                        validator_id, desc.file_name, desc.file_size);
                 }
             }
             else {

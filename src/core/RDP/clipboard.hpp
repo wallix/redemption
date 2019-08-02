@@ -2360,24 +2360,28 @@ public:
 
 struct LockClipboardDataPDU
 {
-    uint32_t streamDataID;
+    uint32_t clipDataId;
 
     explicit LockClipboardDataPDU() = default;
 
-    explicit LockClipboardDataPDU(uint32_t streamDataID)
-    : streamDataID(streamDataID)
+    explicit LockClipboardDataPDU(uint32_t clipDataId)
+    : clipDataId(clipDataId)
     {}
 
-    void emit(OutStream & stream) const {
-        stream.out_uint32_le(streamDataID);
+    void emit(OutStream & stream) const
+    {
+        stream.out_uint32_le(this->clipDataId);
     }
 
-    void recv(InStream & stream) {
-        streamDataID = stream.in_uint32_le();
+    void recv(InStream & stream)
+    {
+        check_throw(stream, 4, "LockClipboardDataPDU", ERR_RDPDR_PDU_TRUNCATED);
+        clipDataId = stream.in_uint32_le();
     }
 
-    void log() const {
-        LOG(LOG_INFO, "LockClipboardDataPDU: streamDataID=0x%08x(4 bytes)", this->streamDataID);
+    void log() const
+    {
+        LOG(LOG_INFO, "LockClipboardDataPDU: clipDataId=0x%08x(4 bytes)", this->clipDataId);
     }
 
 };
@@ -2405,27 +2409,28 @@ struct LockClipboardDataPDU
 
 struct UnlockClipboardDataPDU
 {
-    uint32_t streamDataID;
+    uint32_t clipDataId;
 
-     explicit UnlockClipboardDataPDU() = default;
+    explicit UnlockClipboardDataPDU() = default;
 
-    explicit UnlockClipboardDataPDU(uint32_t streamDataID)
-    : streamDataID(streamDataID)
+    explicit UnlockClipboardDataPDU(uint32_t clipDataId)
+    : clipDataId(clipDataId)
     {}
 
     void emit(OutStream & stream) const
     {
-        stream.out_uint32_le(this->streamDataID);
+        stream.out_uint32_le(this->clipDataId);
     }
 
     void recv(InStream & stream)
     {
-        streamDataID = stream.in_uint32_le();
+        check_throw(stream, 4, "LockClipboardDataPDU", ERR_RDPDR_PDU_TRUNCATED);
+        clipDataId = stream.in_uint32_le();
     }
 
     void log() const
     {
-        LOG(LOG_INFO, "UnlockClipboardDataPDU: streamDataID=0x%08x(4 bytes)", this->streamDataID);
+        LOG(LOG_INFO, "UnlockClipboardDataPDU: clipDataId=0x%08x(4 bytes)", this->clipDataId);
     }
 };
 

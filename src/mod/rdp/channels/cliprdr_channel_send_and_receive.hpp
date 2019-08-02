@@ -51,12 +51,6 @@ struct ClipboardSideData
       : provider_name(std::move(provider_name))
     {}
 
-    enum class Direction : bool
-    {
-        FileFromServer,
-        FileFromClient,
-    };
-
     enum class StreamId : uint32_t;
     enum class FileGroupId : uint32_t;
 
@@ -72,6 +66,7 @@ struct ClipboardSideData
         struct FileData
         {
             ICAPFileId validator_id;
+            std::optional<uint32_t> clip_data_id;
 
             std::string file_name;
             uint64_t file_size;
@@ -93,36 +88,76 @@ struct ClipboardSideData
         }
     };
 
-    std::vector<FileContent> file_contents;
+    std::vector<FileContent> file_contents_list;
+    std::vector<uint32_t> lock_id_list;
+
+private:
+    auto _find_lock_id_it(uint32_t id)
+    {
+        return std::find(this->lock_id_list.begin(), this->lock_id_list.end(), id);
+    }
+
+public:
+    void push_lock_id(uint32_t id)
+    {
+        if (this->_find_lock_id_it(id) == this->lock_id_list.end()) {
+            this->lock_id_list.push_back(id);
+        }
+    }
+
+    void remove_lock_id(uint32_t id)
+    {
+        auto pos = this->_find_lock_id_it(id);
+        if (pos != this->lock_id_list.end()) {
+            this->lock_id_list.erase(pos);
+            for (auto& file : this->file_contents_list) {
+                if (file.file_data
+                 && file.file_data->clip_data_id
+                 && file.file_data->clip_data_id == id
+                ) {
+                     file.file_data->clip_data_id.reset();
+                }
+            }
+        }
+    }
+
+    std::optional<uint32_t> get_lock_id(uint32_t id)
+    {
+        if (this->_find_lock_id_it(id) != this->lock_id_list.end()) {
+            return id;
+        }
+        return {};
+    }
 
     void push_file_content_size(StreamId stream_id, FileGroupId file_group_id)
     {
-        this->file_contents.push_back({stream_id, file_group_id, {}});
+        this->file_contents_list.push_back({stream_id, file_group_id, {}});
     }
 
     void push_file_content_range(
-        StreamId stream_id, FileGroupId file_group_id, ICAPFileId validator_id,
+        StreamId stream_id, FileGroupId file_group_id,
+        std::optional<uint32_t> clip_data_id, ICAPFileId validator_id,
         std::string const& filename, uint64_t filesize)
     {
-        this->file_contents.push_back({
+        this->file_contents_list.push_back({
             stream_id, file_group_id,
-            FileContent::FileData{validator_id, filename, filesize}
+            FileContent::FileData{validator_id, clip_data_id, filename, filesize}
         });
     }
 
     void remove_file(FileContent* file)
     {
         assert(file);
-        auto n = std::size_t(file - this->file_contents.data());
-        if (n+1u != this->file_contents.size()) {
-            this->file_contents[n] = std::move(this->file_contents.back());
+        auto n = std::size_t(file - this->file_contents_list.data());
+        if (n+1u != this->file_contents_list.size()) {
+            this->file_contents_list[n] = std::move(this->file_contents_list.back());
         }
-        this->file_contents.pop_back();
+        this->file_contents_list.pop_back();
     }
 
     FileContent* find_file_by_offset(FileGroupId file_group_id, uint64_t offset)
     {
-        for (auto& file : this->file_contents) {
+        for (auto& file : this->file_contents_list) {
             if (file.file_group_id == file_group_id
              && !file.stream_id
              && file.file_data->file_offset == offset
@@ -136,7 +171,7 @@ struct ClipboardSideData
 
     FileContent* find_file_by_stream_id(StreamId stream_id)
     {
-        for (auto& file : this->file_contents) {
+        for (auto& file : this->file_contents_list) {
             if (file.stream_id && file.stream_id.value() == stream_id) {
                 return &file;
             }
@@ -146,7 +181,7 @@ struct ClipboardSideData
 
     FileContent* find_file_by_validator_id(ICAPFileId validator_id)
     {
-        for (auto& file : this->file_contents) {
+        for (auto& file : this->file_contents_list) {
             if (file.file_data && file.file_data->validator_id == validator_id) {
                 return &file;
             }
@@ -788,43 +823,5 @@ struct FormatListSendBack
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             out_stream.get_bytes());
-    }
-};
-
-struct LockClipDataReceive
-{
-    LockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header)
-    {
-        if (header.dataLen() >= 4 /* clipDataId(4) */) {
-            // clipDataId(4)
-            check_throw(chunk, 4, "CLIPRDR_LOCK_CLIPDATA", ERR_RDP_DATA_TRUNCATED);
-
-            clip_receiver_side_data.clipDataId = chunk.in_uint32_le();
-
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_%s_message: "
-                    "clipDataId=%u", clip_sender_side_data.provider_name, clip_receiver_side_data.clipDataId);
-
-            // TODO clip_receiver_side_data.file_stream_data_inventory[clip_receiver_side_data.clipDataId] = ClipboardSideData::file_info_inventory_type();
-        }
-    }
-};
-
-struct UnlockClipDataReceive
-{
-    UnlockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header)
-    {
-         if (header.dataLen() >= 4 /* clipDataId(4) */) {
-            // clipDataId(4)
-            check_throw(chunk, 4, "CLIPRDR_UNLOCK_CLIPDATA", ERR_RDP_DATA_TRUNCATED);
-
-            uint32_t const clipDataId = chunk.in_uint32_le();
-
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_%s_message: "
-                    "clipDataId=%u",clip_sender_side_data.provider_name, clipDataId);
-
-            // TODO clip_receiver_side_data.file_stream_data_inventory.erase(clipDataId);
-        }
     }
 };
