@@ -25,36 +25,134 @@
 #include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
+#include "mod/icap_files_service.hpp"
 #include "utils/stream.hpp"
 #include "system/ssl_sha256.hpp"
 
-#include <unordered_map>
 #include <vector>
-#include <strings.h>
-
-#define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
-
+#include <optional>
 
 
 struct ClipboardSideData
 {
     uint16_t message_type = 0;
     bool use_long_format_names = false;
+    // TODO
     uint32_t clipDataId = 0;
     uint32_t file_list_format_id = 0;
-    uint32_t dataLen = 0;
-    uint32_t streamId = 0;
     StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
+    // TODO
     std::string provider_name;
 
-    uint32_t last_dwFlags = RDPECLIP::FILECONTENTS_SIZE;
+    uint32_t last_stream_id = 0;
 
     ClipboardSideData(std::string provider_name)
       : provider_name(std::move(provider_name))
     {}
 
-    uint32_t last_stream_id = 0;
+    enum class Direction : bool
+    {
+        FileFromServer,
+        FileFromClient,
+    };
+
+    enum class StreamId : uint32_t;
+    enum class FileGroupId : uint32_t;
+
+    struct FileContent
+    {
+        // if not stream_id then file_data has value
+
+        // TODO CLIPRDR
+        std::optional<StreamId> stream_id;
+        // TODO ICAPFileId -> FileValidatorId
+        FileGroupId file_group_id;
+
+        struct FileData
+        {
+            ICAPFileId validator_id;
+
+            std::string file_name;
+            uint64_t file_size;
+            uint64_t file_offset = 0;
+
+            SslSha256 sha256 {};
+        };
+
+        std::optional<FileData> file_data;
+
+        bool is_file_range() const
+        {
+            return bool(this->file_data);
+        }
+
+        bool is_file_size() const
+        {
+            return not this->is_file_range();
+        }
+    };
+
+    std::vector<FileContent> file_contents;
+
+    void push_file_content_size(StreamId stream_id, FileGroupId file_group_id)
+    {
+        this->file_contents.push_back({stream_id, file_group_id, {}});
+    }
+
+    void push_file_content_range(
+        StreamId stream_id, FileGroupId file_group_id, ICAPFileId validator_id,
+        std::string const& filename, uint64_t filesize)
+    {
+        this->file_contents.push_back({
+            stream_id, file_group_id,
+            FileContent::FileData{validator_id, filename, filesize}
+        });
+    }
+
+    void remove_file(FileContent* file)
+    {
+        assert(file);
+        auto n = std::size_t(file - this->file_contents.data());
+        if (n+1u != this->file_contents.size()) {
+            this->file_contents[n] = std::move(this->file_contents.back());
+        }
+        this->file_contents.pop_back();
+    }
+
+    FileContent* find_file_by_offset(FileGroupId file_group_id, uint64_t offset)
+    {
+        for (auto& file : this->file_contents) {
+            if (file.file_group_id == file_group_id
+             && !file.stream_id
+             && file.file_data->file_offset == offset
+            ) {
+                assert(file.file_data);
+                return &file;
+            }
+        }
+        return nullptr;
+    }
+
+    FileContent* find_file_by_stream_id(StreamId stream_id)
+    {
+        for (auto& file : this->file_contents) {
+            if (file.stream_id && file.stream_id.value() == stream_id) {
+                return &file;
+            }
+        }
+        return nullptr;
+    }
+
+    FileContent* find_file_by_validator_id(ICAPFileId validator_id)
+    {
+        for (auto& file : this->file_contents) {
+            if (file.file_data && file.file_data->validator_id == validator_id) {
+                return &file;
+            }
+        }
+        return nullptr;
+    }
 };
 
 struct ClipboardData
@@ -67,7 +165,7 @@ struct ClipboardData
 
 struct ClipboardCapabilitiesReceive
 {
-    ClipboardCapabilitiesReceive(ClipboardSideData & clip_data, InStream& chunk, const RDPVerbose verbose)
+    ClipboardCapabilitiesReceive(ClipboardSideData& side_data, InStream& chunk, const RDPVerbose verbose)
     {
         // cCapabilitiesSets(2) +
         // pad1(2)
@@ -90,7 +188,7 @@ struct ClipboardCapabilitiesReceive
                     general_caps.log(LOG_INFO);
                 }
 
-                clip_data.use_long_format_names =
+                side_data.use_long_format_names =
                     bool(general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
             }
         }
