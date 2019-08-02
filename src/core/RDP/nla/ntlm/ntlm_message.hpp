@@ -43,6 +43,14 @@ static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
     return result;
 }
 
+static inline std::vector<uint8_t> UTF8_to_UTF16(array_view_const_u8 name)
+{
+    std::vector<uint8_t> result(name.data(), name.data()+name.size());
+    ::UTF16Upper(result.data(), result.size());
+    return result;
+}
+
+
 using array_challenge = std::array<uint8_t, 8>;
 
 using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;

@@ -70,7 +70,7 @@ class rdpCredsspServerNTLM final
     array_view_u8 public_key;
 
     private:
-    std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb;
+    std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)> set_password_cb;
     std::string& extra_message;
     Translation::language_t lang;
     const bool verbose;
@@ -110,7 +110,7 @@ public:
 
     std::vector<uint8_t> identity_User;
     std::vector<uint8_t> identity_Domain;
-    Array identity_Password{0};
+    std::vector<uint8_t> identity_Password;
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -170,10 +170,9 @@ private:
     public:
 
     SEC_STATUS check_authenticate() {
-        cbytes_view password_av{this->identity_Password.get_data(), this->identity_Password.size()};
         array_md4 hash;
-        if (password_av.size() > 0){
-            hash = Md4(password_av);
+        if (this->identity_Password.size() > 0){
+            hash = Md4(this->identity_Password);
         }
         if (!this->AUTHENTICATE_MESSAGE.check_nt_response_from_authenticate(hash, this->ServerChallenge)) {
             LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
@@ -269,7 +268,7 @@ public:
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
-               std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb,
+               std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)> set_password_cb,
                const bool verbose = false)
         : timeobj(timeobj)
         , rand(rand)
@@ -296,7 +295,7 @@ public:
         this->server_auth_data.state = ServerAuthenticateData::Loop;
         this->identity_User = {};
         this->identity_Domain = {};
-        this->identity_Password.init(0);
+        this->identity_Password = {};
     }
 
 public:
@@ -447,14 +446,7 @@ public:
                         break;
                     }
 
-                    if (!this->set_password_cb) {
-                        LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED (2)");
-                        status = SEC_E_LOGON_DENIED;
-                        break;
-                    }
-                    auto res = (set_password_cb(this->identity_User
-                                           ,this->identity_Domain
-                                           ,this->identity_Password));
+                    auto res = (set_password_cb(this->identity_User, this->identity_Domain, this->identity_Password));
                                            
                     if (res == PasswordCallback::Error){
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED (3)");
