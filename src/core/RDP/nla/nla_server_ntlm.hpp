@@ -231,9 +231,6 @@ private:
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer, Array& output_buffer, TimeObj & timeobj, Random & rand)
-    {
-    }
 
 private:
     // ENCRYPT_MESSAGE EncryptMessage;
