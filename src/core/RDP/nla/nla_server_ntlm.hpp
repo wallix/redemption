@@ -123,7 +123,6 @@ private:
 public:
     std::vector<uint8_t> SavedNegotiateMessage;
     std::vector<uint8_t> SavedChallengeMessage;
-    std::vector<uint8_t> SavedAuthenticateMessage;
 
 private:
     uint8_t Timestamp[8]{};
@@ -201,11 +200,16 @@ private:
 
         // =======================================================
 
-        if (this->UseMIC) {
+        if (this->AUTHENTICATE_MESSAGE.has_mic) {
             this->MessageIntegrityCheck = HmacMd5(this->ExportedSessionKey,
                 this->SavedNegotiateMessage,
                 this->SavedChallengeMessage,
-                this->SavedAuthenticateMessage);
+                this->AUTHENTICATE_MESSAGE.get_bytes());
+
+            LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
+
+            hexdump_c(this->MessageIntegrityCheck.data(), 16);
+            hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
 
             if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                 LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
@@ -314,7 +318,6 @@ private:
 
             if (this->AUTHENTICATE_MESSAGE.has_mic) {
                 this->UseMIC = true;
-                this->SavedAuthenticateMessage = this->AUTHENTICATE_MESSAGE.get_bytes();
             }
 
             
