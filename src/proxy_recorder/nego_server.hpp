@@ -52,10 +52,16 @@ public:
 
             if (utf8_domain.size() == 0){
                 auto [identity_username, identity_domain] = extract_user_domain(utf8_user);
+
+                LOG(LOG_INFO, "NTML IDENTITY: identity.User=%*s identity.Domain=%*s username=%s, domain=%s",
+                    int(identity_username.size()),reinterpret_cast<char*>(identity_username.data()), 
+                    int(identity_domain.size()),reinterpret_cast<char*>(identity_domain.data()), username, domain);
+
                 if (are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(username.data())),
                     username.size()}, identity_username)
                 && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
                     domain.size()}, identity_domain)) {
+                    LOG(LOG_INFO, "identity match");
                     password_array = UTF8toUTF16(password);
                     return PasswordCallback::Ok;
                 }

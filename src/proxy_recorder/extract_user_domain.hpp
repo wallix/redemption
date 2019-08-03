@@ -65,7 +65,7 @@ extract_user_domain(cbytes_view target_user)
         separator = reinterpret_cast<uint8_t*>(strchr(reinterpret_cast<char *>(tmp.data()), '@'));
         if (separator) {
             username.assign(tmp.data(), separator);
-            domain.assign(separator+1, tmp.data()+tmp.size());
+            domain.assign(separator+1, tmp.data()+tmp.size()-1);
         }
         else {
             username.assign(tmp.data(), tmp.data()+tmp.size());
