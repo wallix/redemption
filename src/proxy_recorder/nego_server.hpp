@@ -46,21 +46,26 @@ public:
             auto utf8_user = ::encode_UTF16_to_UTF8(user_av);
             auto utf8_domain = ::encode_UTF16_to_UTF8(domain_av);
 
-            LOG(LOG_INFO, "NTML IDENTITY: identity.User=%s identity.Domain=%s username=%s, domain=%s",
-                utf8_user, utf8_domain, username, domain);
+            LOG(LOG_INFO, "NTML IDENTITY: identity.User=%*s identity.Domain=%*s username=%s, domain=%s",
+                int(utf8_user.size()),reinterpret_cast<char*>(utf8_user.data()), 
+                int(utf8_domain.size()),reinterpret_cast<char*>(utf8_domain.data()), username, domain);
 
             if (utf8_domain.size() == 0){
                 auto [identity_username, identity_domain] = extract_user_domain(utf8_user);
-                if (are_buffer_equal(username,identity_username) 
-                && are_buffer_equal(domain, identity_domain)) {
+                if (are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(username.data())),
+                    username.size()}, identity_username)
+                && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
+                    domain.size()}, identity_domain)) {
                     password_array = UTF8toUTF16(password);
                     return PasswordCallback::Ok;
                 }
             }
 
             if ((utf8_domain.size() != 0) 
-            && (are_buffer_equal(username, utf8_user)
-            && (are_buffer_equal(domain, utf8_domain)) {
+            && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(username.data())),
+                    username.size()}, utf8_user)
+            && are_buffer_equal({const_cast<const uint8_t*>(reinterpret_cast<uint8_t*>(domain.data())), 
+                    domain.size()}, utf8_domain)) {
                 password_array = UTF8toUTF16(password);
                 return PasswordCallback::Ok;
             }
