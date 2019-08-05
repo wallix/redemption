@@ -172,7 +172,7 @@ struct TSRequest final {
     uint32_t use_version;
 
     /* [1] negoTokens (NegoData) */
-    Array negoTokens;
+    std::vector<uint8_t> negoTokens;
     // BStream negoTokens;
     /* [2] authInfo (OCTET STRING) */
     Array authInfo;
@@ -255,9 +255,7 @@ struct TSRequest final {
             length -= BER::write_contextual_tag(stream, 1, context_length, true);
             length -= BER::write_sequence_tag(stream, sequenceof_length);
             length -= BER::write_sequence_tag(stream, sequence_length);
-            length -= BER::write_sequence_octet_string(stream, 0,
-                                                       this->negoTokens.get_data(),
-                                                       this->negoTokens.size());
+            length -= BER::write_sequence_octet_string(stream, 0, this->negoTokens.data(), this->negoTokens.size());
 
             assert(length == 0);
             (void)length;
@@ -326,8 +324,8 @@ struct TSRequest final {
                 return -1;
             }
 
-            this->negoTokens.init(length);
-            stream.in_copy_bytes(this->negoTokens.get_data(), length);
+            this->negoTokens = std::vector<uint8_t>(length);
+            stream.in_copy_bytes(this->negoTokens.data(), length);
         }
 
         /* [2] authInfo (OCTET STRING) */

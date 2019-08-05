@@ -121,7 +121,7 @@ private:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS sspi_InitializeSecurityContext(
-        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
+        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, std::vector<uint8_t> & output_buffer
     ) 
     {
         OM_uint32 major_status, minor_status;
@@ -191,8 +191,7 @@ private:
         }
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
-        output_buffer.init(output_tok.length);
-        output_buffer.copy({static_cast<uint8_t const*>(output_tok.value), output_tok.length});
+        output_buffer.assign(static_cast<uint8_t const*>(output_tok.value), static_cast<uint8_t const*>(output_tok.value)+output_tok.length);
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 
@@ -499,7 +498,7 @@ private:
 
     void credssp_buffer_free() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::buffer_free");
-        this->ts_request.negoTokens.init(0);
+        this->ts_request.negoTokens.clear();
         this->ts_request.pubKeyAuth.init(0);
         this->ts_request.authInfo.init(0);
         this->ts_request.clientNonce.reset();
@@ -529,8 +528,7 @@ private:
 
         SEC_STATUS status = this->sspi_InitializeSecurityContext(
             bytes_view(this->ServicePrincipalName.av()).as_chars(),
-            this->client_auth_data.input_buffer.av(),
-            /*output*/this->ts_request.negoTokens);
+            this->client_auth_data.input_buffer.av(), /*output*/this->ts_request.negoTokens);
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
             (status != SEC_I_COMPLETE_NEEDED) &&
             (status != SEC_E_OK) &&

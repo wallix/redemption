@@ -260,8 +260,8 @@ public:
 
         StaticOutStream<65535> out_stream;
         emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
-        this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());        this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
-        this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
+        this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
+        this->ts_request.negoTokens.assign(this->SavedNegotiateMessage.data(),this->SavedNegotiateMessage.data()+this->SavedNegotiateMessage.size());
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
 
         /* send authentication token to server */
@@ -274,7 +274,7 @@ public:
             this->ts_request.emit(ts_request_emit);
             transport.get_transport().send(ts_request_emit.get_bytes());
 
-            this->ts_request.negoTokens.init(0);
+            this->ts_request.negoTokens.clear();
             this->ts_request.pubKeyAuth.init(0);
             this->ts_request.authInfo.init(0);
             this->ts_request.clientNonce.reset();
@@ -353,8 +353,8 @@ public:
 
                     StaticOutStream<65535> out_stream;
                     emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
-                    this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());                    this->ts_request.negoTokens.init(this->SavedNegotiateMessage.size());
-                    this->ts_request.negoTokens.copy(this->SavedNegotiateMessage);
+                    this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
+                    this->ts_request.negoTokens.assign(this->SavedNegotiateMessage.data(),this->SavedNegotiateMessage.data()+this->SavedNegotiateMessage.size());
                     this->sspi_context_state = NTLM_STATE_CHALLENGE;
                     status = SEC_I_CONTINUE_NEEDED;
                 }
@@ -555,8 +555,8 @@ public:
                         out_stream.rewind();
                         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
                         emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
-                        this->ts_request.negoTokens.init(out_stream.get_offset());
-                        this->ts_request.negoTokens.copy(out_stream.get_bytes());
+                        auto out_stream_bytes = out_stream.get_bytes();
+                        this->ts_request.negoTokens.assign(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
                         if (this->verbose) {
                             logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
                         }
@@ -642,7 +642,7 @@ public:
                     this->ts_request.emit(ts_request_emit);
                     transport.get_transport().send(ts_request_emit.get_bytes());
 
-                    this->ts_request.negoTokens.init(0);
+                    this->ts_request.negoTokens.clear();
                     this->ts_request.pubKeyAuth.init(0);
                     this->ts_request.authInfo.init(0);
                     this->ts_request.clientNonce.reset();
@@ -681,7 +681,7 @@ public:
                     }
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN");
                     // return SEC_E_INVALID_TOKEN;
-                    this->ts_request.negoTokens.init(0);
+                    this->ts_request.negoTokens.clear();
                     this->ts_request.pubKeyAuth.init(0);
                     this->ts_request.authInfo.init(0);
                     this->ts_request.clientNonce.reset();
@@ -723,7 +723,7 @@ public:
                     }
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED");
                     // return SEC_E_MESSAGE_ALTERED;
-                    this->ts_request.negoTokens.init(0);
+                    this->ts_request.negoTokens.clear();
                     this->ts_request.pubKeyAuth.init(0);
                     this->ts_request.authInfo.init(0);
                     this->ts_request.clientNonce.reset();
@@ -757,7 +757,7 @@ public:
                 if (public_key2.size() != public_key.size()) {
                     LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
                     // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-                    this->ts_request.negoTokens.init(0);
+                    this->ts_request.negoTokens.clear();
                     this->ts_request.pubKeyAuth.init(0);
                     this->ts_request.authInfo.init(0);
                     this->ts_request.clientNonce.reset();
@@ -783,7 +783,7 @@ public:
                     hexdump_c(public_key2);
 
                     // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-                    this->ts_request.negoTokens.init(0);
+                    this->ts_request.negoTokens.clear();
                     this->ts_request.pubKeyAuth.init(0);
                     this->ts_request.authInfo.init(0);
                     this->ts_request.clientNonce.reset();
@@ -793,7 +793,7 @@ public:
                     return credssp::State::Err;
                 }
 
-                this->ts_request.negoTokens.init(0);
+                this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.init(0);
                 this->ts_request.authInfo.init(0);
                 this->ts_request.clientNonce.reset();
@@ -832,7 +832,7 @@ public:
                     StaticOutStream<65536> ts_request_emit;
                     this->ts_request.emit(ts_request_emit);
                     transport.get_transport().send(ts_request_emit.get_bytes());
-                    this->ts_request.negoTokens.init(0);
+                    this->ts_request.negoTokens.clear();
                     this->ts_request.pubKeyAuth.init(0);
                     this->ts_request.authInfo.init(0);
                     this->ts_request.clientNonce.reset();

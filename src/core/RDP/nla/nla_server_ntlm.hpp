@@ -257,9 +257,6 @@ public:
                 //     | ASC_REQ_EXTENDED_ERROR;
 
 
-                array_view_const_u8 input_buffer = this->ts_request.negoTokens.av();
-                Array& output_buffer = this->ts_request.negoTokens;
-
                 SEC_STATUS status = SEC_E_OUT_OF_SEQUENCE; // this->AcceptSecurityContext
 
                 LOG_IF(this->verbose, LOG_INFO, "--------------------- NTLM_SSPI::AcceptSecurityContext ---------------------");
@@ -272,7 +269,7 @@ public:
                     this->state = NTLM_STATE_NEGOTIATE;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
-                    InStream in_stream(input_buffer);
+                    InStream in_stream(this->ts_request.negoTokens);
                     
                     RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
                     uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
@@ -331,8 +328,7 @@ public:
 
                     StaticOutStream<65535> out_stream;
                     EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
-                    output_buffer.init(out_stream.get_offset());
-                    output_buffer.copy(out_stream.get_bytes());
+                    this->ts_request.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
                     this->SavedChallengeMessage.clear();
                     push_back_array(this->SavedChallengeMessage, out_stream.get_bytes());
@@ -348,7 +344,7 @@ public:
                 {
                     LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE");
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
-                    InStream in_stream(input_buffer);
+                    InStream in_stream(this->ts_request.negoTokens);
                     recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
 
 
@@ -436,7 +432,7 @@ public:
                     }
                     this->state = NTLM_STATE_FINAL;
                     if (status == SEC_I_CONTINUE_NEEDED || status == SEC_I_COMPLETE_NEEDED) {
-                        output_buffer.init(0);
+                        this->ts_request.negoTokens.clear();
                     }
                     status = SEC_I_COMPLETE_NEEDED;
                     break;
@@ -496,7 +492,7 @@ public:
                     }
                     this->state = NTLM_STATE_FINAL;
                     if (status == SEC_I_CONTINUE_NEEDED || status == SEC_I_COMPLETE_NEEDED) {
-                        output_buffer.init(0);
+                        this->ts_request.negoTokens.clear();
                     }
                     status = SEC_I_COMPLETE_NEEDED;
                     break;
@@ -613,7 +609,7 @@ public:
                         return credssp::State::Err;
                     }
 
-                    this->ts_request.negoTokens.init(0);
+                    this->ts_request.negoTokens.clear();
 
                     LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::encrypt_public_key_echo");
                     uint32_t version = this->ts_request.use_version;
@@ -672,7 +668,7 @@ public:
 
                 this->ts_request.emit(out_stream);
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
-                this->ts_request.negoTokens.init(0);
+                this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.init(0);
                 this->ts_request.authInfo.init(0);
                 this->ts_request.clientNonce.reset();

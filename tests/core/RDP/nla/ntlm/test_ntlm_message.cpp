@@ -167,10 +167,10 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     NTLMChallengeMessage ChallengeMsg;
 
-    hexdump_c(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
+    hexdump_c(ts_req2.negoTokens.data(), ts_req2.negoTokens.size());
     // ChallengeMsg.recv(ts_req2.negoTokens);
 
-    InStream token({ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size()});
+    InStream token({ts_req2.negoTokens.data(), ts_req2.negoTokens.size()});
     RecvNTLMChallengeMessage(token, ChallengeMsg);
 
     RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
@@ -261,7 +261,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
 
     NTLMNegotiateMessage NegoMsg;
 
-    InStream nego({ts_req.negoTokens.get_data(), ts_req.negoTokens.size()});
+    InStream nego({ts_req.negoTokens.data(), ts_req.negoTokens.size()});
     RecvNTLMNegotiateMessage(nego, NegoMsg);
 
 
@@ -517,7 +517,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     NTLMAuthenticateMessage AuthMsg;
     // AuthMsg.recv(ts_req3.negoTokens);
 
-    InStream token({ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size()});
+    InStream token({ts_req3.negoTokens.data(), ts_req3.negoTokens.size()});
     recvNTLMAuthenticateMessage(token, AuthMsg);
 
     RED_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
