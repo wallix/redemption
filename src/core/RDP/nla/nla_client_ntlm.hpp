@@ -400,17 +400,11 @@ public:
                         auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
                         // BStream AvPairsStream;
                         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
-                        size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
-                        if (this->verbose) {
-                            LOG(LOG_INFO, "NTLMContextClient Compute response: AvPairs size %zu", AvPairsStream.size());
-                            LOG(LOG_INFO, "NTLMContextClient Compute response: temp size %zu", temp_size);
-                        }
 
-                        auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
-                        uint8_t* temp = unique_temp.get();
-                        memset(temp, 0, temp_size);
-                        temp[0] = 0x01;
-                        temp[1] = 0x01;
+                        std::vector<uint8_t> temp;
+                        for (auto x: {1, 1, 0, 0, 0, 0, 0, 0}){
+                            temp.push_back(x);
+                        }
 
                         // compute ClientChallenge (nonce(8))
                         // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
@@ -419,29 +413,23 @@ public:
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
 
                         const timeval tv = this->timeobj.get_time();
-                        {
-                            OutStream out_stream(this->Timestamp);
-                            out_stream.out_uint32_le(tv.tv_usec);
-                            out_stream.out_uint32_le(tv.tv_sec);
-                        }
-                        memcpy(&temp[1+1+6], this->Timestamp, 8);
+                        push_back_array(temp, out_uint32_le(tv.tv_usec));
+                        push_back_array(temp, out_uint32_le(tv.tv_sec));
 
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
                         array_challenge ClientChallenge;
-
                         this->rand.random(ClientChallenge.data(), 8);
-                        memcpy(&temp[1+1+6+8], ClientChallenge.data(), 8);
-
-                        memcpy(&temp[1+1+6+8+8+4], AvPairsStream.data(), AvPairsStream.size());
-
-                        // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
-                        //                       Concat(ServerChallenge, temp))
+                        push_back_array(temp, {ClientChallenge.data(), 8});
+                        push_back_array(temp, out_uint32_le(0));
+                        push_back_array(temp, {AvPairsStream.data(), AvPairsStream.size()});
+                        push_back_array(temp, out_uint32_le(0));
+                        // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain), Concat(ServerChallenge, temp))
 
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
 
                         array_challenge ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
 
-                        array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,{temp, temp_size});
+                        array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,temp);
 
 
                         // NtChallengeResponse = Concat(NtProofStr, temp)
@@ -450,13 +438,10 @@ public:
                         auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
                         // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
                         NtChallengeResponse.assign(NtProofStr.data(), NtProofStr.data()+NtProofStr.size());
-                        NtChallengeResponse.insert(std::end(NtChallengeResponse), temp, temp + temp_size);
+                        NtChallengeResponse.insert(std::end(NtChallengeResponse), temp.data(), temp.data() + temp.size());
 
                         LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
 
-                        unique_temp.reset();
-
-                        LOG_IF(this->verbose, LOG_INFO, "Compute response: temp buff successfully deleted");
                         // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
                         //                                         Concat(ServerChallenge, ClientChallenge))
                         // LmChallengeResponse.ChallengeFromClient = ClientChallenge
