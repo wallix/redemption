@@ -90,7 +90,6 @@ private:
 
     uint8_t Timestamp[8]{};
     uint8_t ChallengeTimestamp[8]{};
-    array_challenge ServerChallenge;
     array_challenge ClientChallenge;
     array_md5 SessionBaseKey; 
     array_md5 ExportedSessionKey;
@@ -444,9 +443,9 @@ public:
 
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
 
-                        this->ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
+                        array_challenge ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
 
-                        array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),this->ServerChallenge,{temp, temp_size});
+                        array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,{temp, temp_size});
 
 
                         // NtChallengeResponse = Concat(NtProofStr, temp)
@@ -467,7 +466,7 @@ public:
                         // LmChallengeResponse.ChallengeFromClient = ClientChallenge
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
                         
-                        auto response = compute_LMv2_Response(ResponseKeyLM, this->ServerChallenge, this->ClientChallenge);
+                        auto response = compute_LMv2_Response(ResponseKeyLM, ServerChallenge, this->ClientChallenge);
                         this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
                         push_back_array(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer, this->ClientChallenge);
 
