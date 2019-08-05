@@ -210,7 +210,7 @@ private:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS sspi_EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) {
+    SEC_STATUS sspi_EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) {
         (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
@@ -242,8 +242,7 @@ private:
             return SEC_E_ENCRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
-        data_out.init(outbuf.length);
-        data_out.copy({static_cast<uint8_t const*>(outbuf.value), outbuf.length});
+        data_out.assign(static_cast<uint8_t const*>(outbuf.value), static_cast<uint8_t const*>(outbuf.value)+ outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
@@ -436,8 +435,7 @@ private:
             public_key = {this->ClientServerHash.data(),this->ClientServerHash.size()};
         }
 
-        return this->sspi_EncryptMessage(
-            public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
+        return this->sspi_EncryptMessage(public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -446,7 +444,7 @@ private:
         Array Buffer;
 
         SEC_STATUS const status = this->sspi_DecryptMessage(
-            this->ts_request.pubKeyAuth.av(), Buffer, this->recv_seq_num++);
+            this->ts_request.pubKeyAuth, Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             if (this->ts_request.pubKeyAuth.size() == 0) {
@@ -499,8 +497,8 @@ private:
     void credssp_buffer_free() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::buffer_free");
         this->ts_request.negoTokens.clear();
-        this->ts_request.pubKeyAuth.init(0);
-        this->ts_request.authInfo.init(0);
+        this->ts_request.pubKeyAuth.clear();
+        this->ts_request.authInfo.clear();
         this->ts_request.clientNonce.reset();
         this->ts_request.error_code = 0;
     }

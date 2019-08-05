@@ -275,8 +275,8 @@ public:
             transport.get_transport().send(ts_request_emit.get_bytes());
 
             this->ts_request.negoTokens.clear();
-            this->ts_request.pubKeyAuth.init(0);
-            this->ts_request.authInfo.init(0);
+            this->ts_request.pubKeyAuth.clear();
+            this->ts_request.authInfo.clear();
             this->ts_request.clientNonce.reset();
             this->ts_request.error_code = 0;
         }
@@ -620,8 +620,7 @@ public:
             //            uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
             //        this->RecvRc4Seal.crypt(8, digest, signature.data()+4);
 
-                    this->ts_request.pubKeyAuth.init(data_out.size());
-                    this->ts_request.pubKeyAuth.copy(const_bytes_view{data_out.data(),data_out.size()});
+                    this->ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
                     encrypted = SEC_E_OK;
                     status = (status == SEC_I_COMPLETE_AND_CONTINUE)?SEC_I_CONTINUE_NEEDED:SEC_E_OK;
@@ -643,8 +642,8 @@ public:
                     transport.get_transport().send(ts_request_emit.get_bytes());
 
                     this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.init(0);
-                    this->ts_request.authInfo.init(0);
+                    this->ts_request.pubKeyAuth.clear();
+                    this->ts_request.authInfo.clear();
                     this->ts_request.clientNonce.reset();
                     this->ts_request.error_code = 0;
                 }
@@ -666,7 +665,7 @@ public:
                 /* Verify Server Public Key Echo */
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::decrypt_public_key_echo");
 
-                array_view_const_u8 data_in = this->ts_request.pubKeyAuth.av();
+                array_view_const_u8 data_in = this->ts_request.pubKeyAuth;
                 unsigned long MessageSeqNo = this->recv_seq_num++;
                 std::vector<uint8_t> data_out;
             
@@ -682,8 +681,8 @@ public:
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN");
                     // return SEC_E_INVALID_TOKEN;
                     this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.init(0);
-                    this->ts_request.authInfo.init(0);
+                    this->ts_request.pubKeyAuth.clear();
+                    this->ts_request.authInfo.clear();
                     this->ts_request.clientNonce.reset();
                     this->ts_request.error_code = 0;
 
@@ -724,8 +723,8 @@ public:
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED");
                     // return SEC_E_MESSAGE_ALTERED;
                     this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.init(0);
-                    this->ts_request.authInfo.init(0);
+                    this->ts_request.pubKeyAuth.clear();
+                    this->ts_request.authInfo.clear();
                     this->ts_request.clientNonce.reset();
                     this->ts_request.error_code = 0;
 
@@ -758,8 +757,8 @@ public:
                     LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
                     // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
                     this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.init(0);
-                    this->ts_request.authInfo.init(0);
+                    this->ts_request.pubKeyAuth.clear();
+                    this->ts_request.authInfo.clear();
                     this->ts_request.clientNonce.reset();
                     this->ts_request.error_code = 0;
 
@@ -784,8 +783,8 @@ public:
 
                     // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
                     this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.init(0);
-                    this->ts_request.authInfo.init(0);
+                    this->ts_request.pubKeyAuth.clear();
+                    this->ts_request.authInfo.clear();
                     this->ts_request.clientNonce.reset();
                     this->ts_request.error_code = 0;
 
@@ -794,8 +793,8 @@ public:
                 }
 
                 this->ts_request.negoTokens.clear();
-                this->ts_request.pubKeyAuth.init(0);
-                this->ts_request.authInfo.init(0);
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
                 this->ts_request.clientNonce.reset();
                 this->ts_request.error_code = 0;
 
@@ -825,16 +824,15 @@ public:
                     this->SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
                     this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
                     
-                    this->ts_request.authInfo.init(data_out.size());
-                    this->ts_request.authInfo.copy(const_bytes_view{data_out.data(),data_out.size()});
+                    this->ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
 
                     LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
                     StaticOutStream<65536> ts_request_emit;
                     this->ts_request.emit(ts_request_emit);
                     transport.get_transport().send(ts_request_emit.get_bytes());
                     this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.init(0);
-                    this->ts_request.authInfo.init(0);
+                    this->ts_request.pubKeyAuth.clear();
+                    this->ts_request.authInfo.clear();
                     this->ts_request.clientNonce.reset();
                     this->ts_request.error_code = 0;
                 }

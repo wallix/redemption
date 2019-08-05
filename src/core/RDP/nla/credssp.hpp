@@ -175,10 +175,10 @@ struct TSRequest final {
     std::vector<uint8_t> negoTokens;
     // BStream negoTokens;
     /* [2] authInfo (OCTET STRING) */
-    Array authInfo;
+    std::vector<uint8_t> authInfo;
     // BStream authInfo;
     /* [3] pubKeyAuth (OCTET STRING) */
-    Array pubKeyAuth;
+    std::vector<uint8_t> pubKeyAuth;
     // BStream pubKeyAuth;
     /* [4] errorCode (INTEGER OPTIONAL) */
     uint32_t error_code{0};
@@ -188,9 +188,6 @@ struct TSRequest final {
     TSRequest(uint32_t version = 6)
         : version(version)
         , use_version(this->version)
-        , negoTokens(0)
-        , authInfo(0)
-        , pubKeyAuth(0)
         , error_code(0)
     {
     }
@@ -266,7 +263,7 @@ struct TSRequest final {
             // LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
             length = auth_info_length;
             length -= BER::write_sequence_octet_string(stream, 2,
-                                                       this->authInfo.get_data(),
+                                                       this->authInfo.data(),
                                                        this->authInfo.size());
             assert(length == 0);
             (void)length;
@@ -277,7 +274,7 @@ struct TSRequest final {
             // LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
             length = pub_key_auth_length;
             length -= BER::write_sequence_octet_string(stream, 3,
-                                                       this->pubKeyAuth.get_data(),
+                                                       this->pubKeyAuth.data(),
                                                        this->pubKeyAuth.size());
             assert(length == 0);
             (void)length;
@@ -336,8 +333,8 @@ struct TSRequest final {
                 return -1;
             }
 
-            this->authInfo.init(length);
-            stream.in_copy_bytes(this->authInfo.get_data(), length);
+            this->authInfo = std::vector<uint8_t>(length);
+            stream.in_copy_bytes(this->authInfo.data(), length);
         }
 
         /* [3] pubKeyAuth (OCTET STRING) */
@@ -347,8 +344,8 @@ struct TSRequest final {
                !stream.in_check_rem(length)) {
                 return -1;
             }
-            this->pubKeyAuth.init(length);
-            stream.in_copy_bytes(this->pubKeyAuth.get_data(), length);
+            this->pubKeyAuth = std::vector<uint8_t>(length);
+            stream.in_copy_bytes(this->pubKeyAuth.data(), length);
         }
         /* [4] errorCode (INTEGER) */
         if (remote_version >= 3

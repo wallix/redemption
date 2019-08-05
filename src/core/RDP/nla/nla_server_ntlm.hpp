@@ -517,11 +517,10 @@ public:
                 if (status == SEC_E_OK) {
                     LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_public_key_echo");
 
-                    array_view_const_u8 data_in = this->ts_request.pubKeyAuth.av();
                     unsigned long MessageSeqNo = this->recv_seq_num++;
                     LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
-                    if (data_in.size() < cbMaxSignature) {
+                    if (this->ts_request.pubKeyAuth.size() < cbMaxSignature) {
                         if (this->ts_request.pubKeyAuth.size() == 0) {
                             // report_error
                             this->extra_message = " ";
@@ -535,8 +534,8 @@ public:
                         return credssp::State::Err;
                     }
 
-                    // data_in [signature][data_buffer]
-                    auto data_buffer = data_in.from_at(cbMaxSignature);
+                    // this->ts_request.pubKeyAuth [signature][data_buffer]
+                    array_view_u8 data_buffer = {this->ts_request.pubKeyAuth.data()+cbMaxSignature, this->ts_request.pubKeyAuth.size()-cbMaxSignature};
                     std::vector<uint8_t> result_buffer(data_buffer.size());
 
                     /* Decrypt message using with RC4 */
@@ -556,13 +555,13 @@ public:
                     push_back_array(expected_signature, {checksum, 8});
                     push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
 
-                    if (memcmp(data_in.data(), expected_signature.data(),  expected_signature.size()) != 0) {
+                    if (memcmp(this->ts_request.pubKeyAuth.data(), expected_signature.data(),  expected_signature.size()) != 0) {
                         /* signature verification failed! */
                         LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
                         LOG(LOG_ERR, "Expected Signature:");
                         hexdump_c(expected_signature);
                         LOG(LOG_ERR, "Actual Signature:");
-                        hexdump_c(data_in.data(), 16);
+                        hexdump_c(this->ts_request.pubKeyAuth.data(), 16);
 
                         if (this->ts_request.pubKeyAuth.size() == 0) {
                             // report_error
@@ -656,8 +655,7 @@ public:
                         memcpy(signature.data()+12, av_seqno.data(), av_seqno.size());
                     }
                     
-                    this->ts_request.pubKeyAuth.init(data_out.size());
-                    this->ts_request.pubKeyAuth.copy(data_out);
+                    this->ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
                 }
 
                 if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
@@ -669,8 +667,8 @@ public:
                 this->ts_request.emit(out_stream);
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
                 this->ts_request.negoTokens.clear();
-                this->ts_request.pubKeyAuth.init(0);
-                this->ts_request.authInfo.init(0);
+                this->ts_request.pubKeyAuth.clear();
+                this->ts_request.authInfo.clear();
                 this->ts_request.clientNonce.reset();
                 this->ts_request.error_code = 0;
 
@@ -700,26 +698,23 @@ public:
                     return credssp::State::Err;
                 }
 
-                Array Buffer;
-
-                array_view_const_u8 data_in = this->ts_request.authInfo.av();
                 unsigned long MessageSeqNo = this->recv_seq_num++;
                 LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-                if (data_in.size() < cbMaxSignature) {
+                if (this->ts_request.authInfo.size() < cbMaxSignature) {
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);
                     LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
                     return credssp::State::Err;
                 }
-                // data_in [signature][data_buffer]
+                // this->ts_request.authInfo [signature][data_buffer]
 
-                auto data_buffer = data_in.from_at(cbMaxSignature);
-                Buffer.init(data_buffer.size());
+                array_view_const_u8 data_buffer = {this->ts_request.authInfo.data()+cbMaxSignature, this->ts_request.authInfo.size()-cbMaxSignature};
+                auto Buffer = std::vector<uint8_t>(data_buffer.size());
 
                 /* Decrypt message using with RC4, result overwrites original buffer */
                 // context->confidentiality == true
-                this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.get_data());
+                this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.data());
 
-                array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer.av());
+                array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer);
 
                 uint8_t expected_signature[16] = {};
                 uint8_t * signature = expected_signature;
@@ -733,20 +728,20 @@ public:
                 memcpy(&signature[4], checksum, 8);
                 memcpy(&signature[12], &MessageSeqNo, 4);
 
-                if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+                if (memcmp(this->ts_request.authInfo.data(), expected_signature, 16) != 0) {
                     /* signature verification failed! */
                     LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
                     LOG(LOG_ERR, "Expected Signature:");
                     hexdump_c(expected_signature, 16);
                     LOG(LOG_ERR, "Actual Signature:");
-                    hexdump_c(data_in.data(), 16);
+                    hexdump_c(this->ts_request.authInfo.data(), 16);
 
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_MESSAGE_ALTERED);
                     LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final::Err");
                     return credssp::State::Err;
                 }
 
-                InStream decrypted_creds(Buffer.av());
+                InStream decrypted_creds(Buffer);
                 this->ts_credentials.recv(decrypted_creds);
  
                 this->server_auth_data.state = ServerAuthenticateData::Start;
