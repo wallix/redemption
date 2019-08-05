@@ -103,16 +103,6 @@ private:
     array_md5 MessageIntegrityCheck;
     // uint8_t NtProofStr[16];
 
-    SEC_STATUS sspi_context_read_challenge(array_view_const_u8 input_buffer, NTLMChallengeMessage & CHALLENGE_MESSAGE) {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
-        InStream in_stream(input_buffer);
-        RecvNTLMChallengeMessage(in_stream, CHALLENGE_MESSAGE);
-        this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
-
-        this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
-        return SEC_I_CONTINUE_NEEDED;
-    }
-        
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     // Inlined
@@ -670,7 +660,15 @@ public:
                 }
                 else {
                     if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
-                        this->sspi_context_read_challenge(this->client_auth_data_input_buffer, this->CHALLENGE_MESSAGE);
+                        array_view_const_u8 input_buffer =  this->client_auth_data_input_buffer;
+                        NTLMChallengeMessage & CHALLENGE_MESSAGE = this->CHALLENGE_MESSAGE;
+                        
+                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
+                        InStream in_stream(input_buffer);
+                        RecvNTLMChallengeMessage(in_stream, CHALLENGE_MESSAGE);
+                        this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
+
+                        this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
                     }
                     if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
                         Array& output_buffer = this->ts_request.negoTokens;
