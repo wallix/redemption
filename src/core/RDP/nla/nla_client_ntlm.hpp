@@ -115,51 +115,6 @@ private:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    std::pair<SEC_STATUS,std::vector<uint8_t>> sspi_DecryptMessage(array_view_const_u8 data_in, unsigned long MessageSeqNo) 
-    {
-        std::vector<uint8_t> data_out;
-    
-        if (!this->sspi_context_initialized) {
-            return {SEC_E_NO_CONTEXT, data_out};
-        }
-        LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-
-        if (data_in.size() < cbMaxSignature) {
-            return {SEC_E_INVALID_TOKEN, data_out};
-        }
-
-        // data_in [signature][data_buffer]
-        auto data_buffer = data_in.from_at(cbMaxSignature);
-        data_out.resize(data_buffer.size(), 0);
-
-        /* Decrypt message using with RC4, result overwrites original buffer */
-        // this->confidentiality == true
-        this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
-
-        std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-        array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, seqno, data_out);
-
-        /* Concatenate version, ciphertext and sequence number to build signature */
-        std::array<uint8_t,16> expected_signature{
-            1, 0, 0, 0, // Version
-            0, 0, 0, 0, 0, 0, 0, 0,
-            uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-        this->RecvRc4Seal.crypt(8, digest.data(), &expected_signature[4]);
-
-
-        if (memcmp(data_in.data(), expected_signature.data(), 16) != 0) {
-            /* signature verification failed! */
-            LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-            LOG(LOG_ERR, "Expected Signature:");
-            hexdump_c(expected_signature.data(), 16);
-            LOG(LOG_ERR, "Actual Signature:");
-            hexdump_c(data_in.data(), 16);
-
-            return {SEC_E_MESSAGE_ALTERED, data_out};
-        }
-        return {SEC_E_OK, data_out};
-    }
-
     bool restricted_admin_mode;
 
     const char * target_host;
