@@ -188,36 +188,15 @@ public:
     void process_client_message(uint32_t total_length,
         uint32_t flags, const_bytes_view chunk_data) override
     {
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_client_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%zu",
-            total_length, flags, chunk_data.size());
-
-        if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
-            const bool send              = false;
-            const bool from_or_to_client = true;
-            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
-        }
+        this->log_process_message(total_length, flags, chunk_data, Direction::FileFromClient);
 
         InStream chunk(chunk_data);
         RDPECLIP::CliprdrHeader header;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            /* msgType(2) + msgFlags(2) + dataLen(4) */
-            ::check_throw(chunk, 8, "ClipboardVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
-            header.recv(chunk);
-            this->clip_data.client_data.current_message_type = header.msgType();
-        }
-
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            log_client_message_type(
-                "process_client_message",
-                this->clip_data.client_data.current_message_type, flags);
-        }
-
         bool send_message_to_server = true;
 
-        switch (this->clip_data.client_data.current_message_type)
+        switch (this->process_header_message(
+            this->clip_data.client_data, flags, chunk, header, Direction::FileFromClient
+        ))
         {
             case RDPECLIP::CB_FORMAT_LIST:
                 send_message_to_server = this->process_format_list_pdu(
@@ -316,36 +295,15 @@ public:
     {
         (void)out_asynchronous_task;
 
-        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_server_message: "
-                "total_length=%u flags=0x%08X chunk_data_length=%zu",
-            total_length, flags, chunk_data.size());
-
-        if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
-            const bool send              = false;
-            const bool from_or_to_client = false;
-            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
-        }
+        this->log_process_message(total_length, flags, chunk_data, Direction::FileFromServer);
 
         InStream chunk(chunk_data);
         RDPECLIP::CliprdrHeader header;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            /* msgType(2) + msgFlags(2) + dataLen(4) */
-            ::check_throw(chunk, 8, "ClipboardVirtualChannel::process_server_message", ERR_RDP_DATA_TRUNCATED);
-            header.recv(chunk);
-            this->clip_data.server_data.current_message_type = header.msgType();
-        }
-
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            log_client_message_type(
-                "process_server_message",
-                this->clip_data.server_data.current_message_type, flags);
-        }
-
         bool send_message_to_client = true;
 
-        switch (this->clip_data.server_data.current_message_type)
+        switch (this->process_header_message(
+            this->clip_data.server_data, flags, chunk, header, Direction::FileFromServer
+        ))
         {
             case RDPECLIP::CB_MONITOR_READY: {
                 if (this->proxy_managed) {
@@ -444,17 +402,6 @@ public:
         this->format_data_request_notifier     = launcher;
     }
 
-    void log_client_message_type(char const* funcname, uint16_t message_type, uint32_t flags)
-    {
-        const auto first_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        LOG(LOG_INFO, "ClipboardVirtualChannel::%s: %s (%u)%s)",
-            funcname, RDPECLIP::get_msgType_name(message_type), message_type,
-            ((flags & first_last) == first_last) ? " FIRST|LAST"
-            : (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? "FIRST"
-            : (flags & CHANNELS::CHANNEL_FLAG_LAST) ? "LAST"
-            : "");
-    }
-
     void DLP_antivirus_check_channels_files()
     {
         if (!this->icap) {
@@ -528,6 +475,53 @@ public:
     }
 
 private:
+    void log_process_message(
+        uint32_t total_length, uint32_t flags, const_bytes_view chunk_data, Direction direction)
+    {
+        LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+            "ClipboardVirtualChannel::process_%s_message: "
+                "total_length=%u flags=0x%08X chunk_data_length=%zu",
+            (direction == Direction::FileFromClient)
+                ? "client" : "server",
+            total_length, flags, chunk_data.size());
+
+        if (bool(this->verbose & RDPVerbose::cliprdr_dump)) {
+            const bool send              = false;
+            const bool from_or_to_client = (direction == Direction::FileFromClient);
+            ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
+        }
+    }
+
+    uint16_t process_header_message(
+        ClipboardSideData& side_data,
+        uint32_t flags, InStream& chunk, RDPECLIP::CliprdrHeader& header, Direction direction)
+    {
+        char const* funcname = (direction == Direction::FileFromClient)
+            ? "ClipboardVirtualChannel::process_client_message"
+            : "ClipboardVirtualChannel::process_server_message";
+
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            /* msgType(2) + msgFlags(2) + dataLen(4) */
+            ::check_throw(chunk, 8, funcname, ERR_RDP_DATA_TRUNCATED);
+            header.recv(chunk);
+            side_data.current_message_type = header.msgType();
+        }
+
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            const auto first_last = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+            LOG(LOG_INFO, "%s: %s (%u)%s)",
+                funcname,
+                RDPECLIP::get_msgType_name(side_data.current_message_type),
+                side_data.current_message_type,
+                ((flags & first_last) == first_last) ? " FIRST|LAST"
+                : (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? "FIRST"
+                : (flags & CHANNELS::CHANNEL_FLAG_LAST) ? "LAST"
+                : "");
+        }
+
+        return side_data.current_message_type;
+    }
+
     void process_lock_pdu(InStream& chunk, ClipboardSideData& side_data)
     {
         RDPECLIP::LockClipboardDataPDU pdu;
