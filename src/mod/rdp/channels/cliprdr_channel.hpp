@@ -206,18 +206,18 @@ public:
             /* msgType(2) + msgFlags(2) + dataLen(4) */
             ::check_throw(chunk, 8, "ClipboardVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
             header.recv(chunk);
-            this->clip_data.client_data.message_type = header.msgType();
+            this->clip_data.client_data.current_message_type = header.msgType();
         }
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             log_client_message_type(
                 "process_client_message",
-                this->clip_data.client_data.message_type, flags);
+                this->clip_data.client_data.current_message_type, flags);
         }
 
         bool send_message_to_server = true;
 
-        switch (this->clip_data.client_data.message_type)
+        switch (this->clip_data.client_data.current_message_type)
         {
             case RDPECLIP::CB_FORMAT_LIST:
                 send_message_to_server = this->process_format_list_pdu(
@@ -334,18 +334,18 @@ public:
             /* msgType(2) + msgFlags(2) + dataLen(4) */
             ::check_throw(chunk, 8, "ClipboardVirtualChannel::process_server_message", ERR_RDP_DATA_TRUNCATED);
             header.recv(chunk);
-            this->clip_data.server_data.message_type = header.msgType();
+            this->clip_data.server_data.current_message_type = header.msgType();
         }
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             log_client_message_type(
                 "process_server_message",
-                this->clip_data.server_data.message_type, flags);
+                this->clip_data.server_data.current_message_type, flags);
         }
 
         bool send_message_to_client = true;
 
-        switch (this->clip_data.server_data.message_type)
+        switch (this->clip_data.server_data.current_message_type)
         {
             case RDPECLIP::CB_MONITOR_READY: {
                 if (this->proxy_managed) {
@@ -391,9 +391,8 @@ public:
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                send_message_to_client =
-                    this->process_server_format_data_request_pdu(
-                        total_length, flags, chunk, header);
+                send_message_to_client = this->process_server_format_data_request_pdu(
+                    total_length, flags, chunk, header);
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
@@ -561,12 +560,12 @@ private:
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             check_throw(chunk, 4, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
-            from_server.last_stream_id = chunk.in_uint32_le();
+            from_server.file_contents_stream_id = safe_int(chunk.in_uint32_le());
             LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "File Contents Response: streamId=%u", from_server.last_stream_id);
+                "File Contents Response: streamId=%u", from_server.file_contents_stream_id);
         }
 
-        auto* file = side_data.find_file_by_stream_id(StreamId(from_server.last_stream_id));
+        auto* file = side_data.find_file_by_stream_id(from_server.file_contents_stream_id);
 
         if (in_header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
             if (file && bool(file->file_data.validator_id) && file->is_file_range()) {

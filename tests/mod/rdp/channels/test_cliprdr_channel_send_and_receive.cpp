@@ -65,7 +65,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClipboardCapabilitiesReceive)
 
     InStream chunk(stream.get_bytes());
 
-    ClipboardSideData state("client");
+    ClipboardSideData state;
 
     ClipboardCapabilitiesReceive receiver(state, chunk, RDPVerbose::none);
 
@@ -161,13 +161,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
     RDPVerbose verbose = RDPVerbose::none;
 
-    uint32_t clipDataId = 7;
     uint32_t requestedFormatId = 48025;
 
     ClipboardData clip_data;
     clip_data.requestedFormatId = requestedFormatId;
     clip_data.client_data.file_list_format_id = requestedFormatId;
-    clip_data.client_data.clipDataId = clipDataId;
 
     std::vector<CliprdFileInfo> files;
     FormatDataResponseReceiveFileList receiver(
@@ -212,13 +210,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
 
     RDPVerbose verbose = RDPVerbose::none;
 
-    uint32_t clipDataId = 7;
     uint32_t requestedFormatId = 48025;
 
     ClipboardData clip_data;
     clip_data.requestedFormatId = requestedFormatId;
     clip_data.client_data.file_list_format_id = requestedFormatId;
-    clip_data.client_data.clipDataId = clipDataId;
     size_t size_part_1 = 150;
     clip_data.client_data.file_descriptor_stream.rewind();
     clip_data.client_data.file_descriptor_stream.out_copy_bytes(pre_stream.get_data(), size_part_1);

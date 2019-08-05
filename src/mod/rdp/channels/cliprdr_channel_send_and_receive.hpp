@@ -34,24 +34,15 @@
 
 struct ClipboardSideData
 {
-    uint16_t message_type = 0;
+    uint16_t current_message_type = 0;
     bool use_long_format_names = false;
-    // TODO
-    uint32_t clipDataId = 0;
     uint32_t file_list_format_id = 0;
     StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
-    // TODO
-    std::string provider_name;
-
-    uint32_t last_stream_id = 0;
-
-    ClipboardSideData(std::string provider_name)
-      : provider_name(std::move(provider_name))
-    {}
-
     enum class StreamId : uint32_t;
     enum class FileGroupId : uint32_t;
+
+    StreamId file_contents_stream_id {};
 
     struct FileContent
     {
@@ -301,8 +292,8 @@ public:
 
 struct ClipboardData
 {
-    ClipboardSideData server_data {"server"};
-    ClipboardSideData client_data {"client"};
+    ClipboardSideData server_data;
+    ClipboardSideData client_data;
 
     uint32_t requestedFormatId = 0;
 };
