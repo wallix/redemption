@@ -57,7 +57,6 @@ private:
     std::vector<uint8_t> identity_Domain;
     std::vector<uint8_t> identity_Password;
 
-    bool sspi_context_initialized = false;
     TimeObj & timeobj;
     Random & rand;
 
@@ -122,49 +121,6 @@ private:
     Translation::language_t lang;
     const bool verbose;
 
-    void credssp_generate_client_nonce(Random & rand) {
-        LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
-        rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
-        this->SavedClientNonce.initialized = true;
-        this->credssp_set_client_nonce();
-    }
-
-    void credssp_get_client_nonce() {
-        LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp get client nonce");
-        if (this->ts_request.clientNonce.isset()){
-            this->SavedClientNonce = this->ts_request.clientNonce;
-        }
-    }
-    void credssp_set_client_nonce() {
-        LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp set client nonce");
-        if (!this->ts_request.clientNonce.isset()) {
-            this->ts_request.clientNonce = this->SavedClientNonce;
-        }
-    }
-
-    void credssp_generate_public_key_hash_client_to_server() {
-        LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
-        SslSha256 sha256;
-        uint8_t hash[SslSha256::DIGEST_LENGTH];
-        sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-
-        sha256.update({this->PublicKey.data(),this->PublicKey.size()});
-        sha256.final(hash);
-        this->ClientServerHash.assign(hash, hash+sizeof(hash));
-    }
-
-    void credssp_generate_public_key_hash_server_to_client() {
-        LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (server->client)");
-        SslSha256 sha256;
-        uint8_t hash[SslSha256::DIGEST_LENGTH];
-        sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-        sha256.update({this->PublicKey.data(),this->PublicKey.size()});
-        sha256.final(hash);
-        this->ServerClientHash.assign(hash, hash + sizeof(hash));
-    }
-
     static void sspi_compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
     {
         uint8_t checksum[8];
@@ -185,13 +141,24 @@ private:
 
         array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
-            this->credssp_generate_client_nonce(this->rand);
-            this->credssp_generate_public_key_hash_client_to_server();
-            public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
-        }
+            LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
+            this->rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
+            this->SavedClientNonce.initialized = true;
+            LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp set client nonce");
+            if (!this->ts_request.clientNonce.isset()) {
+                this->ts_request.clientNonce = this->SavedClientNonce;
+            }
+            
+            LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
+            SslSha256 sha256;
+            uint8_t hash[SslSha256::DIGEST_LENGTH];
+            sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
+            sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
 
-        if (!this->sspi_context_initialized) {
-            return SEC_E_NO_CONTEXT;
+            sha256.update({this->PublicKey.data(),this->PublicKey.size()});
+            sha256.final(hash);
+            this->ClientServerHash.assign(hash, hash+sizeof(hash));
+            public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
         }
 
         unsigned long MessageSeqNo = this->send_seq_num++;
@@ -222,16 +189,6 @@ private:
         unsigned long MessageSeqNo = this->recv_seq_num++;
         std::vector<uint8_t> data_out;
     
-        if (!this->sspi_context_initialized) {
-            if (this->ts_request.pubKeyAuth.size() == 0) {
-                // report_error
-                this->extra_message = " ";
-                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
-                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
-            }
-            LOG(LOG_ERR, "DecryptMessage failure: SEC_E_NO_CONTEXT");
-            return SEC_E_NO_CONTEXT;
-        }
         LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
         if (data_in.size() < cbMaxSignature) {
@@ -283,8 +240,18 @@ private:
 
         array_view_const_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
         if (version >= 5) {
-            this->credssp_get_client_nonce();
-            this->credssp_generate_public_key_hash_server_to_client();
+            LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp get client nonce");
+            if (this->ts_request.clientNonce.isset()){
+                this->SavedClientNonce = this->ts_request.clientNonce;
+            }
+            LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (server->client)");
+            SslSha256 sha256;
+            uint8_t hash[SslSha256::DIGEST_LENGTH];
+            sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
+            sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
+            sha256.update({this->PublicKey.data(),this->PublicKey.size()});
+            sha256.final(hash);
+            this->ServerClientHash.assign(hash, hash + sizeof(hash));
             public_key = {this->ServerClientHash.data(), this->ServerClientHash.size()};
         }
 
@@ -354,11 +321,6 @@ private:
 
         StaticOutStream<65536> ts_credentials_send;
         this->ts_credentials.emit(ts_credentials_send);
-
-        if (!this->sspi_context_initialized) {
-            LOG(LOG_ERR, "credssp_encrypt_ts_credentials error status:SEC_E_NO_CONTEXT");
-            return Res::Err;
-        }
 
         array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
         unsigned long MessageSeqNo = this->send_seq_num++;
@@ -430,16 +392,13 @@ public:
         this->ServicePrincipalName.push_back(0);
 
         array_view_const_char spn = bytes_view(this->ServicePrincipalName).as_chars();
-        if (!this->sspi_context_initialized) {
-            if (!spn.empty()) {
-                this->Workstation = ::UTF8toUTF16(spn);
-                this->SendWorkstationName = true;
-            }
-            else {
-                this->Workstation.clear();
-                this->SendWorkstationName = false;
-            }
-            this->sspi_context_initialized = true;
+        if (!spn.empty()) {
+            this->Workstation = ::UTF8toUTF16(spn);
+            this->SendWorkstationName = true;
+        }
+        else {
+            this->Workstation.clear();
+            this->SendWorkstationName = false;
         }
 
         this->client_auth_data_state = Start;
