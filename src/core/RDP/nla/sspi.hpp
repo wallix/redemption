@@ -115,16 +115,14 @@ struct SEC_WINNT_AUTH_IDENTITY
     //@{
     private:
     std::vector<uint8_t> User;
-    Array Domain;
+    std::vector<uint8_t> Domain;
     public:
     Array Password;
     //@}
 
     public:
     SEC_WINNT_AUTH_IDENTITY()
-        : User(0)
-        , Domain(0)
-        , Password(0)
+        : Password(0)
     {
         this->princname[0] = 0;
         this->princpass[0] = 0;
@@ -137,8 +135,7 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void domain_init_copy(cbytes_view av)
     {
-        this->Domain.init(av.size());
-        this->Domain.copy(av);
+        this->Domain.assign(av.data(), av.data()+av.size());
     }
 
     bool is_empty_user_domain(){
@@ -158,13 +155,12 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     cbytes_view get_domain_utf16_av() const
     {
-        cbytes_view av{this->Domain.get_data(), this->Domain.size()};
-        return av;
+        return this->Domain;
     }
 
     void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
     {
-        UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
+        UTF16toUTF8(this->Domain.data(), this->Domain.size(), buffer, buffer_len);
     }
 
     void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
@@ -186,7 +182,14 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void SetDomainFromUtf8(const uint8_t * domain)
     {
-        this->copyFromUtf8(this->Domain, domain);
+        if (domain) {
+            size_t domain_len = UTF8Len(domain);
+            this->Domain = std::vector<uint8_t>(domain_len * 2);
+            UTF8toUTF16({domain, strlen(char_ptr_cast(domain))}, this->Domain.data(), domain_len * 2);
+        }
+        else {
+            this->Domain.clear();
+        }
     }
 
     void SetPasswordFromUtf8(const uint8_t * password)
@@ -212,14 +215,14 @@ struct SEC_WINNT_AUTH_IDENTITY
     void clear()
     {
         this->User.clear();
-        this->Domain.init(0);
+        this->Domain.clear();
         this->Password.init(0);
     }
 
     void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
     {
         this->User.assign(user_utf16_av.data(),user_utf16_av.data()+user_utf16_av.size());
-        this->Domain.copy(domain_utf16_av);
+        this->Domain.assign(domain_utf16_av.data(),domain_utf16_av.data()+domain_utf16_av.size());
         this->Password.copy(password_utf16_av);
     }
 
