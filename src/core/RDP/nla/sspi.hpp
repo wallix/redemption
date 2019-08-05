@@ -39,6 +39,7 @@ namespace credssp {
 
 
 // TODO: CGR. This array here should be replaced by a plain std::vector<uint8_t>
+
 class Array
 {
     enum {
@@ -113,7 +114,7 @@ struct SEC_WINNT_AUTH_IDENTITY
     // ntlm only
     //@{
     private:
-    Array User;
+    std::vector<uint8_t> User;
     Array Domain;
     public:
     Array Password;
@@ -131,8 +132,7 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void user_init_copy(cbytes_view av)
     {
-        this->User.init(av.size());
-        this->User.copy(av);
+        this->User.assign(av.data(), av.data()+av.size());
     }
 
     void domain_init_copy(cbytes_view av)
@@ -153,8 +153,7 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     cbytes_view get_user_utf16_av() const
     {
-        cbytes_view av{this->User.get_data(), this->User.size()};
-        return av;
+        return this->User;
     }
 
     cbytes_view get_domain_utf16_av() const
@@ -169,13 +168,20 @@ struct SEC_WINNT_AUTH_IDENTITY
     }
 
     void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
-        UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
+        UTF16toUTF8(this->User.data(), this->User.size(), buffer, buffer_len);
     }
 
 
     void SetUserFromUtf8(const uint8_t * user)
     {
-        this->copyFromUtf8(this->User, user);
+        if (user) {
+            size_t user_len = UTF8Len(user);
+            this->User = std::vector<uint8_t>(user_len * 2);
+            UTF8toUTF16({user, strlen(char_ptr_cast(user))}, this->User.data(), user_len * 2);
+        }
+        else {
+            this->User.clear();
+        }
     }
 
     void SetDomainFromUtf8(const uint8_t * domain)
@@ -205,14 +211,14 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void clear()
     {
-        this->User.init(0);
+        this->User.clear();
         this->Domain.init(0);
         this->Password.init(0);
     }
 
     void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
     {
-        this->User.copy(user_utf16_av);
+        this->User.assign(user_utf16_av.data(),user_utf16_av.data()+user_utf16_av.size());
         this->Domain.copy(domain_utf16_av);
         this->Password.copy(password_utf16_av);
     }
