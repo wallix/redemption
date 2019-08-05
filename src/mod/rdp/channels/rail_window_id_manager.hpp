@@ -69,7 +69,7 @@ public:
         }
 
         LOG(LOG_ERR, "RemoteProgramsWindowIdManager::get_server_window_id: Unknown client window. WindowId=0x%X", client_window_id);
-        throw Error(ERR_UNEXPECTED);
+        throw Error(ERR_RAIL_NO_SUCH_WINDOW_EXIST);
 
         return RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
     }

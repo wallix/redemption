@@ -305,6 +305,7 @@
     f(ERR_RAIL_CLIENT_EXECUTE)                                   \
     f(ERR_RAIL_STARTING_PROGRAM)                                 \
     f(ERR_RAIL_UNAUTHORIZED_PROGRAM)                             \
+    f(ERR_RAIL_NO_SUCH_WINDOW_EXIST)                             \
                                                                  \
     fv(ERR_RDPDR_PDU_TRUNCATED, 22300)                           \
     f(ERR_RDPDR_READ_REQUEST)                                    \
