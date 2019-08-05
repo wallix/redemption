@@ -134,54 +134,6 @@ private:
         memcpy(&signature[12], &SeqNo, 4);
     }
 
-
-    SEC_STATUS credssp_encrypt_public_key_echo() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_public_key_echo");
-        uint32_t version = this->ts_request.use_version;
-
-        array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
-        if (version >= 5) {
-            LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
-            this->rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
-            this->SavedClientNonce.initialized = true;
-            LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp set client nonce");
-            if (!this->ts_request.clientNonce.isset()) {
-                this->ts_request.clientNonce = this->SavedClientNonce;
-            }
-            
-            LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
-            SslSha256 sha256;
-            uint8_t hash[SslSha256::DIGEST_LENGTH];
-            sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-            sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-
-            sha256.update({this->PublicKey.data(),this->PublicKey.size()});
-            sha256.final(hash);
-            this->ClientServerHash.assign(hash, hash+sizeof(hash));
-            public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
-        }
-
-        unsigned long MessageSeqNo = this->send_seq_num++;
-        // data_out [signature][data_buffer]
-        std::vector<uint8_t> data_out(public_key.size() + cbMaxSignature);
-        std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-        array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, public_key);
-        
-        this->SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
-        this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
-        
-//        /* Concatenate version, ciphertext and sequence number to build signature */
-//        std::array<uint8_t,16> expected_signature{
-//            1, 0, 0, 0, // Version
-//            0, 0, 0, 0, 0, 0, 0, 0,
-//            uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-//        this->RecvRc4Seal.crypt(8, digest, signature.data()+4);
-
-        this->ts_request.pubKeyAuth.init(data_out.size());
-        this->ts_request.pubKeyAuth.copy(const_bytes_view{data_out.data(),data_out.size()});
-        return SEC_E_OK;
-    }
-
     SEC_STATUS credssp_decrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::decrypt_public_key_echo");
 
@@ -814,13 +766,53 @@ public:
                     (status == SEC_I_COMPLETE_NEEDED) ||
                     (status == SEC_E_OK)) {
                     // have_pub_key_auth = true;
-                    encrypted = this->credssp_encrypt_public_key_echo();
-                    if (status == SEC_I_COMPLETE_NEEDED) {
-                        status = SEC_E_OK;
+
+                    LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_public_key_echo");
+                    uint32_t version = this->ts_request.use_version;
+
+                    array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
+                    if (version >= 5) {
+                        LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
+                        this->rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
+                        this->SavedClientNonce.initialized = true;
+                        LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp set client nonce");
+                        if (!this->ts_request.clientNonce.isset()) {
+                            this->ts_request.clientNonce = this->SavedClientNonce;
+                        }
+                        
+                        LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
+                        SslSha256 sha256;
+                        uint8_t hash[SslSha256::DIGEST_LENGTH];
+                        sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
+                        sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
+
+                        sha256.update({this->PublicKey.data(),this->PublicKey.size()});
+                        sha256.final(hash);
+                        this->ClientServerHash.assign(hash, hash+sizeof(hash));
+                        public_key = {this->ClientServerHash.data(), this->ClientServerHash.size()};
                     }
-                    else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
-                        status = SEC_I_CONTINUE_NEEDED;
-                    }
+
+                    unsigned long MessageSeqNo = this->send_seq_num++;
+                    // data_out [signature][data_buffer]
+                    std::vector<uint8_t> data_out(public_key.size() + cbMaxSignature);
+                    std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+                    array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, public_key);
+                    
+                    this->SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
+                    this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
+                    
+            //        /* Concatenate version, ciphertext and sequence number to build signature */
+            //        std::array<uint8_t,16> expected_signature{
+            //            1, 0, 0, 0, // Version
+            //            0, 0, 0, 0, 0, 0, 0, 0,
+            //            uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+            //        this->RecvRc4Seal.crypt(8, digest, signature.data()+4);
+
+                    this->ts_request.pubKeyAuth.init(data_out.size());
+                    this->ts_request.pubKeyAuth.copy(const_bytes_view{data_out.data(),data_out.size()});
+
+                    encrypted = SEC_E_OK;
+                    status = (status == SEC_I_COMPLETE_AND_CONTINUE)?SEC_I_CONTINUE_NEEDED:SEC_E_OK;
                 }
 
                 /* send authentication token to server */
