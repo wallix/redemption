@@ -25,5 +25,5 @@
 
 #pragma once
 
-#define VERSION "7.2.19"
+#define VERSION "7.2.21"
 

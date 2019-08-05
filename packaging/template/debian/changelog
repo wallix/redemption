@@ -1,3 +1,9 @@
+redemption (7.2.21%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * (RemoteApp) Fix 'Unknown client window' issue.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 05 Aug 2019 15:33:22 +0200
+
 redemption (7.2.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix RDP_AUDIO_OUTPUT proxy option issue.
