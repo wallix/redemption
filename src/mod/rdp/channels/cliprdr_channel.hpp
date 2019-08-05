@@ -488,7 +488,9 @@ public:
                 continue;
             }
 
-            auto& file_data = *file->file_data;
+            auto& file_data = file->file_data;
+            file_data.validator_id = ICAPFileId();
+
             auto& result_content = this->icap.icap_service->get_content();
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
@@ -515,11 +517,13 @@ public:
                 file_data.file_name, '\x01', str_direction, '\x01', result_content);
             this->front.session_update(message);
 
-            if (direction == Direction::FileFromClient) {
-                this->clip_data.server_data.remove_file(file);
-            }
-            else {
-                this->clip_data.client_data.remove_file(file);
+            if (file->is_wait_validator()) {
+                if (direction == Direction::FileFromClient) {
+                    this->clip_data.server_data.remove_file(file);
+                }
+                else {
+                    this->clip_data.client_data.remove_file(file);
+                }
             }
         }
     }
@@ -554,9 +558,6 @@ private:
     {
         auto& from_server = from_remote_session
             ? this->clip_data.server_data : this->clip_data.client_data;
-        bool enable_icap = from_remote_session
-            ? !this->params.validator_params.down_target_name.empty()
-            : !this->params.validator_params.up_target_name.empty();
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             check_throw(chunk, 4, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
@@ -568,48 +569,28 @@ private:
         auto* file = side_data.find_file_by_stream_id(StreamId(from_server.last_stream_id));
 
         if (in_header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
-            if (file && file->is_file_range()) {
-                // TODO end of file with error
-                this->icap.set_end_of_file(file->file_data->validator_id);
+            if (file && bool(file->file_data.validator_id) && file->is_file_range()) {
+                this->icap.set_end_of_file(file->file_data.validator_id);
+                file->set_wait_validator();
             }
-            file->set_eof();
-            // side_data.remove_file(file);
         }
         else if (file && file->is_file_range()) {
-            auto& file_data = *file->file_data;
-            auto data_fragment = chunk.remaining_bytes();
-            LOG(LOG_DEBUG, "%zu/%lu|%lu", data_fragment.size(), file_data.file_size_requested, file_data.file_size);
-            if (data_fragment.size() >= file_data.file_size_requested) {
-                data_fragment = data_fragment.first(file_data.file_size_requested);
-            }
-            auto new_offset = file_data.file_offset + data_fragment.size();
-            LOG(LOG_DEBUG, "fsize: %lu  next: %zu", file_data.file_size, new_offset);
-            if (new_offset > file_data.file_size) {
-                throw Error(ERR_RDP_PROTOCOL);
-            }
-            file_data.sha256.update(data_fragment);
-            file_data.file_offset = new_offset;
-            file_data.file_size_requested -= data_fragment.size();
+            auto& file_data = file->file_data;
+            auto data_fragment = file->receive_data(chunk.remaining_bytes());
 
-            if (!file_data.file_size_requested){
-                file->set_wait_continuation();
-            }
-
-            if (enable_icap) {
+            if (bool(file_data.validator_id)) {
                 this->icap.send_data(file_data.validator_id, data_fragment);
-                if (file_data.file_offset == file_data.file_size && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
+            }
+
+            if ((flags & CHANNELS::CHANNEL_FLAG_LAST) && file_data.file_offset == file_data.file_size) {
+                this->log_file_info(file_data, from_remote_session);
+                if (bool(file_data.validator_id)) {
                     this->icap.set_end_of_file(file_data.validator_id);
-                    if (!file->file_data->clip_data_id) {
-                        file->set_eof();
-                    }
+                }
+                else {
+                    side_data.remove_file(file);
                 }
             }
-            else {
-                // TODO SslSha256 + remove + log ?
-            }
-            file->set_consumed();
-
-            this->log_file_info(file_data, from_remote_session);
         }
         else if (file && file->is_file_size()) {
             if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
@@ -658,67 +639,64 @@ private:
             ? this->params.validator_params.down_target_name
             : this->params.validator_params.up_target_name;
 
-        // TODO is validator and not log
-        if (!target_name.empty()) {
-            auto stream_id = StreamId(file_contents_request_pdu.streamId());
-            auto lindex = FileGroupId(file_contents_request_pdu.lindex());
-            if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE) {
-                auto offset = file_contents_request_pdu.position();
-                if (offset) {
-                    auto* file = side_data.find_continuation_stream_id(stream_id);
-                    if (file) {
-                        if (!file_contents_request_pdu.has_optional_clipDataId()) {
-                            // TODO
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
-                        if (file_contents_request_pdu.clipDataId() != file->file_data->clip_data_id) {
-                            // TODO
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
-                        if (file->is_file_size()) {
-                            // TODO
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
-                        if (!file->file_data) {
-                            // TODO
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
-                        if (file->file_data->file_offset != offset) {
-                            // TODO
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
-                    }
-                    else {
-                        file = side_data.find_file_by_offset(lindex, offset);
+        auto stream_id = StreamId(file_contents_request_pdu.streamId());
+        auto lindex = FileGroupId(file_contents_request_pdu.lindex());
+        if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE) {
+            auto offset = file_contents_request_pdu.position();
+            if (offset) {
+                auto* file = side_data.find_continuation_stream_id(stream_id);
+                if (file) {
+                    if (!file_contents_request_pdu.has_optional_clipDataId()) {
                         // TODO
-                        if (!file) {
-                            // TODO validator error + log
-                            throw Error(ERR_ICAP_LOCAl_PROTOCOL);
-                        }
-                        if (file_contents_request_pdu.has_optional_clipDataId()) {
-                            // TODO
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
-                        file->stream_id = stream_id;
+                        throw Error(ERR_RDP_PROTOCOL);
                     }
-                    file->set_continuation(file_contents_request_pdu.cbRequested());
+                    if (file_contents_request_pdu.clipDataId() != file->file_data.clip_data_id) {
+                        // TODO
+                        throw Error(ERR_RDP_PROTOCOL);
+                    }
+                    if (file->is_file_size()) {
+                        // TODO
+                        throw Error(ERR_RDP_PROTOCOL);
+                    }
+                    if (file->file_data.file_offset != offset) {
+                        // TODO
+                        throw Error(ERR_RDP_PROTOCOL);
+                    }
                 }
                 else {
-                    CliprdFileInfo const& desc = this->check_descr_index(safe_int(lindex));
-                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                        "ClipboardVirtualChannel::icap_new_file");
-                    auto validator_id = this->icap.icap_service->open_file(desc.file_name, target_name);
-                    side_data.push_file_content_range(
-                        stream_id, lindex,
-                        file_contents_request_pdu.has_optional_clipDataId(),
-                        file_contents_request_pdu.clipDataId(),
-                        validator_id, desc.file_name, desc.file_size,
-                        file_contents_request_pdu.cbRequested());
+                    file = side_data.find_file_by_offset(lindex, offset);
+                    // TODO
+                    if (!file) {
+                        // TODO validator error + log
+                        throw Error(ERR_ICAP_LOCAl_PROTOCOL);
+                    }
+                    if (file_contents_request_pdu.has_optional_clipDataId()) {
+                        // TODO
+                        throw Error(ERR_RDP_PROTOCOL);
+                    }
+                    file->stream_id = stream_id;
                 }
+
+                file->update_requested(file_contents_request_pdu.cbRequested());
             }
             else {
-                side_data.push_file_content_size(stream_id, lindex);
+                CliprdFileInfo const& desc = this->check_descr_index(safe_int(lindex));
+                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "ClipboardVirtualChannel::icap_new_file");
+                ICAPFileId validator_id{};
+                if (!target_name.empty()) {
+                    validator_id = this->icap.icap_service->open_file(desc.file_name, target_name);
+                }
+                side_data.push_file_content_range(
+                    stream_id, lindex,
+                    file_contents_request_pdu.has_optional_clipDataId(),
+                    file_contents_request_pdu.clipDataId(),
+                    validator_id, desc.file_name, desc.file_size,
+                    file_contents_request_pdu.cbRequested());
             }
+        }
+        else {
+            side_data.push_file_content_size(stream_id, lindex);
         }
 
         return true;

@@ -38,8 +38,6 @@
 
 enum class ICAPFileId : uint32_t;
 
-constexpr ICAPFileId invalid_icap_file_id = ICAPFileId(-1);
-
 namespace LocalICAPProtocol
 {
 
