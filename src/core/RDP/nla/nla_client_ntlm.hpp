@@ -121,6 +121,11 @@ private:
     Translation::language_t lang;
     const bool verbose;
 
+    enum class Res : bool { Err, Ok };
+
+    enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
+    std::vector<uint8_t> client_auth_data_input_buffer;
+
     static void sspi_compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
     {
         uint8_t checksum[8];
@@ -134,7 +139,14 @@ private:
         memcpy(&signature[12], &SeqNo, 4);
     }
 
-    SEC_STATUS credssp_decrypt_public_key_echo() {
+    Res sm_credssp_client_authenticate_stop(InStream & in_stream, OutTransport transport)
+    {
+        /* Encrypted Public Key +1 */
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
+
+        this->ts_request.recv(in_stream);
+
+        /* Verify Server Public Key Echo */
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::decrypt_public_key_echo");
 
         array_view_const_u8 data_in = this->ts_request.pubKeyAuth.av();
@@ -151,7 +163,15 @@ private:
                 LOG(LOG_INFO, "Provided login/password is probably incorrect.");
             }
             LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN");
-            return SEC_E_INVALID_TOKEN;
+            // return SEC_E_INVALID_TOKEN;
+            this->ts_request.negoTokens.init(0);
+            this->ts_request.pubKeyAuth.init(0);
+            this->ts_request.authInfo.init(0);
+            this->ts_request.clientNonce.reset();
+            this->ts_request.error_code = 0;
+
+            LOG(LOG_ERR, "Could not verify public key echo!");
+            return Res::Err;
         }
 
         // data_in [signature][data_buffer]
@@ -185,7 +205,15 @@ private:
                 LOG(LOG_INFO, "Provided login/password is probably incorrect.");
             }
             LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED");
-            return SEC_E_MESSAGE_ALTERED;
+            // return SEC_E_MESSAGE_ALTERED;
+            this->ts_request.negoTokens.init(0);
+            this->ts_request.pubKeyAuth.init(0);
+            this->ts_request.authInfo.init(0);
+            this->ts_request.clientNonce.reset();
+            this->ts_request.error_code = 0;
+
+            LOG(LOG_ERR, "Could not verify public key echo!");
+            return Res::Err;
         }
 
         const uint32_t version = this->ts_request.use_version;
@@ -211,7 +239,15 @@ private:
 
         if (public_key2.size() != public_key.size()) {
             LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
-            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+            // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+            this->ts_request.negoTokens.init(0);
+            this->ts_request.pubKeyAuth.init(0);
+            this->ts_request.authInfo.init(0);
+            this->ts_request.clientNonce.reset();
+            this->ts_request.error_code = 0;
+
+            LOG(LOG_ERR, "Could not verify public key echo!");
+            return Res::Err;
         }
 
         if (version < 5) {
@@ -229,36 +265,22 @@ private:
             LOG(LOG_ERR, "Actual (length = %zu):", public_key.size());
             hexdump_c(public_key2);
 
-            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+            // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+            this->ts_request.negoTokens.init(0);
+            this->ts_request.pubKeyAuth.init(0);
+            this->ts_request.authInfo.init(0);
+            this->ts_request.clientNonce.reset();
+            this->ts_request.error_code = 0;
+
+            LOG(LOG_ERR, "Could not verify public key echo!");
+            return Res::Err;
         }
 
-        return SEC_E_OK;
-    }
-
-    enum class Res : bool { Err, Ok };
-
-    enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
-    std::vector<uint8_t> client_auth_data_input_buffer;
-
-    Res sm_credssp_client_authenticate_stop(InStream & in_stream, OutTransport transport)
-    {
-        /* Encrypted Public Key +1 */
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
-
-        this->ts_request.recv(in_stream);
-
-        /* Verify Server Public Key Echo */
-        SEC_STATUS status = this->credssp_decrypt_public_key_echo();
         this->ts_request.negoTokens.init(0);
         this->ts_request.pubKeyAuth.init(0);
         this->ts_request.authInfo.init(0);
         this->ts_request.clientNonce.reset();
         this->ts_request.error_code = 0;
-
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "Could not verify public key echo!");
-            return Res::Err;
-        }
 
         /* Send encrypted credentials */
 
@@ -271,34 +293,34 @@ private:
             this->ts_credentials.set_credentials_from_av(this->identity_Domain, this->identity_User, this->identity_Password);
         }
 
-        StaticOutStream<65536> ts_credentials_send;
-        this->ts_credentials.emit(ts_credentials_send);
+        {
+            StaticOutStream<65536> ts_credentials_send;
+            this->ts_credentials.emit(ts_credentials_send);
+            array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
+            unsigned long MessageSeqNo = this->send_seq_num++;
+            // data_out [signature][data_buffer]
+            std::vector<uint8_t> data_out;
+            data_out.resize(data_in.size() + cbMaxSignature, 0);
+            
+            std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
+            array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, data_in);
 
-        array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
-        unsigned long MessageSeqNo = this->send_seq_num++;
-        // data_out [signature][data_buffer]
-        std::vector<uint8_t> data_out;
-        data_out.resize(data_in.size() + cbMaxSignature, 0);
-        
-        std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-        array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, data_in);
+            this->SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
+            this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
+            
+            this->ts_request.authInfo.init(data_out.size());
+            this->ts_request.authInfo.copy(const_bytes_view{data_out.data(),data_out.size()});
 
-        this->SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
-        this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
-        
-        this->ts_request.authInfo.init(data_out.size());
-        this->ts_request.authInfo.copy(const_bytes_view{data_out.data(),data_out.size()});
-
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
-        StaticOutStream<65536> ts_request_emit;
-        this->ts_request.emit(ts_request_emit);
-        transport.get_transport().send(ts_request_emit.get_bytes());
-        this->ts_request.negoTokens.init(0);
-        this->ts_request.pubKeyAuth.init(0);
-        this->ts_request.authInfo.init(0);
-        this->ts_request.clientNonce.reset();
-        this->ts_request.error_code = 0;
-
+            LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
+            StaticOutStream<65536> ts_request_emit;
+            this->ts_request.emit(ts_request_emit);
+            transport.get_transport().send(ts_request_emit.get_bytes());
+            this->ts_request.negoTokens.init(0);
+            this->ts_request.pubKeyAuth.init(0);
+            this->ts_request.authInfo.init(0);
+            this->ts_request.clientNonce.reset();
+            this->ts_request.error_code = 0;
+        }
         return Res::Ok;
     }
 
