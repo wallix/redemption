@@ -364,20 +364,15 @@ public:
                 else {
                     if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
                         array_view_const_u8 input_buffer =  this->client_auth_data_input_buffer;
-                        NTLMChallengeMessage & CHALLENGE_MESSAGE = this->CHALLENGE_MESSAGE;
                         
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
                         InStream in_stream(input_buffer);
-                        RecvNTLMChallengeMessage(in_stream, CHALLENGE_MESSAGE);
+                        RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
                         this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
 
                         this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
                     }
                     if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
-                        Array& output_buffer = this->ts_request.negoTokens;
-                        Random & rand = this->rand;
-                        TimeObj & timeobj = this->timeobj;
-                        const NTLMChallengeMessage & CHALLENGE_MESSAGE = this->CHALLENGE_MESSAGE;
                         
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
                         
@@ -405,7 +400,7 @@ public:
                         // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
                         // Z(n) = { 0x00, ... , 0x00 } n times
                         // ServerName = AvPairs received in Challenge message
-                        auto & AvPairsStream = CHALLENGE_MESSAGE.TargetInfo.buffer;
+                        auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
                         // BStream AvPairsStream;
                         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
                         size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
@@ -431,7 +426,7 @@ public:
                             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
                         }
                         else {
-                            const timeval tv = timeobj.get_time();
+                            const timeval tv = this->timeobj.get_time();
                             OutStream out_stream(this->Timestamp);
                             out_stream.out_uint32_le(tv.tv_usec);
                             out_stream.out_uint32_le(tv.tv_sec);
@@ -439,7 +434,7 @@ public:
                         memcpy(&temp[1+1+6], this->Timestamp, 8);
 
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
-                        rand.random(this->ClientChallenge.data(), 8);
+                        this->rand.random(this->ClientChallenge.data(), 8);
                         memcpy(&temp[1+1+6+8], this->ClientChallenge.data(), 8);
 
                         memcpy(&temp[1+1+6+8+8+4], AvPairsStream.data(), AvPairsStream.size());
@@ -449,7 +444,7 @@ public:
 
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
 
-                        this->ServerChallenge = CHALLENGE_MESSAGE.serverChallenge;
+                        this->ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
 
                         array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),this->ServerChallenge,{temp, temp_size});
 
@@ -488,7 +483,7 @@ public:
                         // generate NONCE(16) exportedsessionkey
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Encrypt RandomSessionKey");
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
-                        rand.random(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
+                        this->rand.random(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
                         this->EncryptedRandomSessionKey = ::Rc4Key(this->SessionBaseKey, this->ExportedSessionKey);
 
                         auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
@@ -524,7 +519,7 @@ public:
                         if (this->confidentiality) {
                             this->NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
                         }
-                        if (CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
+                        if (this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
                             this->NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
                         }
                         this->NegotiateFlags |= (NTLMSSP_NEGOTIATE_128
@@ -580,8 +575,8 @@ public:
                         out_stream.rewind();
                         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
                         emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
-                        output_buffer.init(out_stream.get_offset());
-                        output_buffer.copy(out_stream.get_bytes());
+                        this->ts_request.negoTokens.init(out_stream.get_offset());
+                        this->ts_request.negoTokens.copy(out_stream.get_bytes());
                         if (this->verbose) {
                             logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
                         }
