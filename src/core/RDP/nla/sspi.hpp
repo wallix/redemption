@@ -65,10 +65,6 @@ public:
         return this->avbuf.data();
     }
 
-    uint8_t * data() {
-        return this->avbuf.data();
-    }
-
     uint8_t const * get_data() const {
         return this->avbuf.data();
     }
@@ -97,13 +93,6 @@ public:
         }
         if (!(source.data() == nullptr) && !(source.size() == 0)) {
             memcpy(this->avbuf.data(), source.data(), source.size());
-        }
-    }
-
-    void copy(const_bytes_view source, uint32_t offset) {
-        assert(this->size() >= source.size() + offset);
-        if (!source.empty()) {
-            memcpy(this->avbuf.data() + offset, source.data(), source.size());
         }
     }
 };

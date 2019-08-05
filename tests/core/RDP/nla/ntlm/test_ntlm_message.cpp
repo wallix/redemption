@@ -1596,11 +1596,11 @@ public:
             uint8_t const null_data[null_data_sz]{0u};
             auto const p = in_stream.get_data();
             std::size_t offset = 0u;
-            this->SavedAuthenticateMessage.copy({p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset}, offset);
+            memcpy(this->SavedAuthenticateMessage.get_data()+offset, p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset);
             offset += this->AUTHENTICATE_MESSAGE.PayloadOffset;
-            this->SavedAuthenticateMessage.copy({null_data, null_data_sz}, offset);
+            memcpy(this->SavedAuthenticateMessage.get_data()+offset, null_data, null_data_sz);
             offset += null_data_sz;
-            this->SavedAuthenticateMessage.copy({p + offset, in_stream.get_offset() - offset}, offset);
+            memcpy(this->SavedAuthenticateMessage.get_data()+offset, p + offset, in_stream.get_offset() - offset);
         }
         
         this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer);
