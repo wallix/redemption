@@ -117,12 +117,11 @@ struct SEC_WINNT_AUTH_IDENTITY
     std::vector<uint8_t> User;
     std::vector<uint8_t> Domain;
     public:
-    Array Password;
+    std::vector<uint8_t> Password;
     //@}
 
     public:
     SEC_WINNT_AUTH_IDENTITY()
-        : Password(0)
     {
         this->princname[0] = 0;
         this->princpass[0] = 0;
@@ -144,8 +143,7 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     cbytes_view get_password_utf16_av() const
     {
-        cbytes_view av{this->Password.get_data(), this->Password.size()};
-        return av;
+        return this->Password;
     }
 
     cbytes_view get_user_utf16_av() const
@@ -194,7 +192,14 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void SetPasswordFromUtf8(const uint8_t * password)
     {
-        this->copyFromUtf8(this->Password, password);
+        if (password) {
+            size_t password_len = UTF8Len(password);
+            this->Password = std::vector<uint8_t>(password_len * 2);
+            UTF8toUTF16({password, strlen(char_ptr_cast(password))}, this->Password.data(), password_len * 2);
+        }
+        else {
+            this->Password.clear();
+        }
     }
 
     void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
@@ -216,28 +221,16 @@ struct SEC_WINNT_AUTH_IDENTITY
     {
         this->User.clear();
         this->Domain.clear();
-        this->Password.init(0);
+        this->Password.clear();
     }
 
     void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
     {
         this->User.assign(user_utf16_av.data(),user_utf16_av.data()+user_utf16_av.size());
         this->Domain.assign(domain_utf16_av.data(),domain_utf16_av.data()+domain_utf16_av.size());
-        this->Password.copy(password_utf16_av);
+        this->Password.assign(password_utf16_av.data(),password_utf16_av.data()+password_utf16_av.size());
     }
 
-private:
-    static void copyFromUtf8(Array& arr, uint8_t const* data)
-    {
-        if (data) {
-            size_t user_len = UTF8Len(data);
-            arr.init(user_len * 2);
-            UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
-        }
-        else {
-            arr.init(0);
-        }
-    }
 };
 
 

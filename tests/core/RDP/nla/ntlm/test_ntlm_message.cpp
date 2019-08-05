@@ -1629,13 +1629,13 @@ private:
     TimeObj & timeobj;
     std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
     std::unique_ptr<NTLMContext> context;
-    std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)>& set_password_cb;
+    std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)>& set_password_cb;
     bool verbose;
 
 public:
     explicit Ntlm_SecurityFunctionTable(
         Random & rand, TimeObj & timeobj,
-        std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> & set_password_cb,
+        std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)> & set_password_cb,
         bool verbose = false
     )
         : rand(rand)
@@ -1884,8 +1884,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
     LCGTime timeobj;
 
 
-    std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb
-      = [](cbytes_view,cbytes_view,Array&){ return PasswordCallback::Ok; };
+    std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)> set_password_cb
+      = [](cbytes_view,cbytes_view,std::vector<uint8_t>&){ return PasswordCallback::Ok; };
 
     Ntlm_SecurityFunctionTable server_table(rand, timeobj, set_password_cb);
     Ntlm_SecurityFunctionTable client_table(rand, timeobj, set_password_cb);
