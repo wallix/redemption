@@ -90,7 +90,6 @@ private:
 
     uint8_t Timestamp[8]{};
     uint8_t ChallengeTimestamp[8]{};
-    array_challenge ClientChallenge;
     array_md5 SessionBaseKey; 
     array_md5 ExportedSessionKey;
     array_md5 EncryptedRandomSessionKey;
@@ -433,8 +432,10 @@ public:
                         memcpy(&temp[1+1+6], this->Timestamp, 8);
 
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
-                        this->rand.random(this->ClientChallenge.data(), 8);
-                        memcpy(&temp[1+1+6+8], this->ClientChallenge.data(), 8);
+                        array_challenge ClientChallenge;
+
+                        this->rand.random(ClientChallenge.data(), 8);
+                        memcpy(&temp[1+1+6+8], ClientChallenge.data(), 8);
 
                         memcpy(&temp[1+1+6+8+8+4], AvPairsStream.data(), AvPairsStream.size());
 
@@ -466,9 +467,9 @@ public:
                         // LmChallengeResponse.ChallengeFromClient = ClientChallenge
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
                         
-                        auto response = compute_LMv2_Response(ResponseKeyLM, ServerChallenge, this->ClientChallenge);
+                        auto response = compute_LMv2_Response(ResponseKeyLM, ServerChallenge, ClientChallenge);
                         this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
-                        push_back_array(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer, this->ClientChallenge);
+                        push_back_array(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer, ClientChallenge);
 
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
                         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
