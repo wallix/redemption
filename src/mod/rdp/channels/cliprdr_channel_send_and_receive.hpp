@@ -59,31 +59,92 @@ struct ClipboardSideData
         // if not stream_id then file_data has value
 
         // TODO CLIPRDR
-        std::optional<StreamId> stream_id;
+        StreamId stream_id;
         // TODO ICAPFileId -> FileValidatorId
         FileGroupId file_group_id;
+
+        // TODO type
+        enum class Status : uint8_t
+        {
+            // WithId: file_data with optional clip_data_id
+            // WaitContinuation*: file transfered to several packet
+            WaitValidator,              // send eof to validator
+            WaitDataWithId,
+            WaitData,
+            WaitContinuationWithId,
+            WaitContinuation,
+            WaitStreamId,               // file_data without optional clip_data_id and consumed
+            IsSize,
+        };
+
+        Status status;
+
+        // @{
+        // TODO receive_data_file(av):view
+        void set_eof()
+        {
+            // TODO Eof status
+            this->status = Status::WaitValidator;
+        }
+
+        void set_consumed()
+        {
+            if (this->status == Status::WaitData) {
+                this->status = Status::WaitStreamId;
+            }
+        }
+
+        void set_wait_continuation()
+        {
+            if (file_data->file_offset != file_data->file_size) {
+                if (this->status == Status::WaitData) {
+                    this->status = Status::WaitContinuation;
+                }
+                else if (this->status == Status::WaitDataWithId) {
+                    this->status = Status::WaitContinuationWithId;
+                }
+            }
+        }
+
+        void set_continuation(uint64_t file_size_requested)
+        {
+            if (this->status == Status::WaitContinuation) {
+                this->status = Status::WaitData;
+            }
+            else if (this->status == Status::WaitContinuationWithId) {
+                this->status = Status::WaitDataWithId;
+            }
+            this->file_data->file_size_requested = file_size_requested;
+        }
+        // @}
 
         struct FileData
         {
             ICAPFileId validator_id;
-            std::optional<uint32_t> clip_data_id;
+            uint32_t clip_data_id;
+            bool active_lock;
 
             std::string file_name;
             uint64_t file_size;
-            uint64_t file_offset = 0;
+            uint64_t file_offset;
+            uint64_t file_size_requested;
 
+            // TODO SslSha256Delayed
             SslSha256 sha256 {};
         };
 
+        // TODO enable if Status::WaitData*
         std::optional<FileData> file_data;
 
         bool is_file_range() const
         {
+            // TODO Status::WaitData*
             return bool(this->file_data);
         }
 
         bool is_file_size() const
         {
+            // TODO Status::IsSize
             return not this->is_file_range();
         }
     };
@@ -100,27 +161,45 @@ private:
 public:
     void push_lock_id(uint32_t id)
     {
+        LOG(LOG_DEBUG, "push_lock_id: %u", id);
         if (this->_find_lock_id_it(id) == this->lock_id_list.end()) {
             this->lock_id_list.push_back(id);
-        }
-    }
-
-    void remove_lock_id(uint32_t id)
-    {
-        auto pos = this->_find_lock_id_it(id);
-        if (pos != this->lock_id_list.end()) {
-            this->lock_id_list.erase(pos);
             for (auto& file : this->file_contents_list) {
-                if (file.file_data
-                 && file.file_data->clip_data_id
-                 && file.file_data->clip_data_id == id
-                ) {
-                     file.file_data->clip_data_id.reset();
+                if ((
+                    file.status == FileContent::Status::WaitDataWithId
+                 || file.status == FileContent::Status::WaitContinuationWithId
+                ) && file.file_data->clip_data_id == id) {
+                    file.file_data->active_lock = true;
                 }
             }
         }
     }
 
+    void remove_lock_id(uint32_t id)
+    {
+        LOG(LOG_DEBUG, "remove_lock_id: %u", id);
+        auto pos = this->_find_lock_id_it(id);
+        if (pos != this->lock_id_list.end()) {
+            this->lock_id_list.erase(pos);
+            for (auto& file : this->file_contents_list) {
+                if ((
+                    (file.status == FileContent::Status::WaitDataWithId)
+                 || file.status == FileContent::Status::WaitContinuationWithId
+                ) && file.file_data->clip_data_id == id
+                ) {
+                    if (file.status == FileContent::Status::WaitDataWithId) {
+                        file.status = FileContent::Status::WaitData;
+                    }
+                    else {
+                        file.status = FileContent::Status::WaitContinuation;
+                    }
+                    file.file_data->active_lock = false;
+                }
+            }
+        }
+    }
+
+    // TODO unused ?
     std::optional<uint32_t> get_lock_id(uint32_t id)
     {
         if (this->_find_lock_id_it(id) != this->lock_id_list.end()) {
@@ -131,23 +210,42 @@ public:
 
     void push_file_content_size(StreamId stream_id, FileGroupId file_group_id)
     {
-        this->file_contents_list.push_back({stream_id, file_group_id, {}});
+        LOG(LOG_DEBUG, "push_file_content_size: %u", stream_id);
+        this->file_contents_list.push_back({stream_id, file_group_id, FileContent::Status::IsSize, {}});
     }
 
     void push_file_content_range(
         StreamId stream_id, FileGroupId file_group_id,
-        std::optional<uint32_t> clip_data_id, ICAPFileId validator_id,
-        std::string const& filename, uint64_t filesize)
+        bool has_clip_data_id, uint32_t clip_data_id, ICAPFileId validator_id,
+        std::string const& filename, uint64_t filesize, uint64_t file_size_requested)
     {
+        LOG(LOG_DEBUG, "push_file_content_range: %u", stream_id);
+        bool active_lock = false;
+        if (has_clip_data_id) {
+            if (this->_find_lock_id_it(clip_data_id) != this->lock_id_list.end()) {
+                active_lock = true;
+            }
+        }
         this->file_contents_list.push_back({
-            stream_id, file_group_id,
-            FileContent::FileData{validator_id, clip_data_id, filename, filesize}
+            stream_id, file_group_id, has_clip_data_id
+                ? FileContent::Status::WaitDataWithId
+                : FileContent::Status::WaitData,
+            FileContent::FileData{
+                validator_id, clip_data_id, active_lock, filename, filesize, 0,
+                std::min(file_size_requested, filesize)
+            }
         });
     }
 
     void remove_file(FileContent* file)
     {
         assert(file);
+        if (file->file_data) {
+            LOG(LOG_DEBUG, "remove_file: %u %u %u", file->status, file->stream_id, file->file_data->validator_id);
+        }
+        else {
+            LOG(LOG_DEBUG, "remove_file: %u %u", file->status, file->stream_id);
+        }
         auto n = std::size_t(file - this->file_contents_list.data());
         if (n+1u != this->file_contents_list.size()) {
             this->file_contents_list[n] = std::move(this->file_contents_list.back());
@@ -157,9 +255,10 @@ public:
 
     FileContent* find_file_by_offset(FileGroupId file_group_id, uint64_t offset)
     {
+        LOG(LOG_DEBUG, "find_file_by_offset: %u %lu", file_group_id, offset);
         for (auto& file : this->file_contents_list) {
             if (file.file_group_id == file_group_id
-             && !file.stream_id
+             && file.status == FileContent::Status::WaitStreamId
              && file.file_data->file_offset == offset
             ) {
                 assert(file.file_data);
@@ -171,8 +270,31 @@ public:
 
     FileContent* find_file_by_stream_id(StreamId stream_id)
     {
+        LOG(LOG_DEBUG, "find_file_by_stream_id: %u [%zu]", stream_id, this->file_contents_list.size());
         for (auto& file : this->file_contents_list) {
-            if (file.stream_id && file.stream_id.value() == stream_id) {
+            LOG(LOG_DEBUG, "  status: %d  stream_id %u", int(file.status), file.stream_id);
+            if ((
+                file.status == FileContent::Status::WaitData
+             || file.status == FileContent::Status::WaitContinuation
+             || file.status == FileContent::Status::WaitContinuationWithId
+             || file.status == FileContent::Status::WaitDataWithId
+             || file.status == FileContent::Status::IsSize
+            ) && file.stream_id == stream_id) {
+                return &file;
+            }
+        }
+        return nullptr;
+    }
+
+    FileContent* find_continuation_stream_id(StreamId stream_id)
+    {
+        LOG(LOG_DEBUG, "find_continuation_stream_id: %u [%zu]", stream_id, this->file_contents_list.size());
+        for (auto& file : this->file_contents_list) {
+            LOG(LOG_DEBUG, "  status: %d  stream_id %u", int(file.status), file.stream_id);
+            if ((
+                file.status == FileContent::Status::WaitContinuationWithId
+             || file.status == FileContent::Status::WaitDataWithId
+            ) && file.file_data->active_lock && file.stream_id == stream_id) {
                 return &file;
             }
         }
@@ -181,6 +303,7 @@ public:
 
     FileContent* find_file_by_validator_id(ICAPFileId validator_id)
     {
+        LOG(LOG_DEBUG, "find_file_by_validator_id: %u", validator_id);
         for (auto& file : this->file_contents_list) {
             if (file.file_data && file.file_data->validator_id == validator_id) {
                 return &file;

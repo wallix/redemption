@@ -1617,7 +1617,7 @@ struct FileContentsResponseRange
    }
 
    void log() const {
-       LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes)", this->streamID);
+       LOG(LOG_INFO, "     File Contents Response Range: streamID=0X%08x(4 bytes)", this->streamID);
    }
 
    size_t packet_size() {

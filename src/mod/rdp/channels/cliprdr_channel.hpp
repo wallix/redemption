@@ -256,14 +256,14 @@ public:
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 send_message_to_server = this->process_filecontents_request_pdu(
-                    chunk, this->to_client_sender_ptr(),
+                    flags, chunk, this->to_client_sender_ptr(),
                     this->clip_data.client_data, Direction::FileFromServer);
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
                 const bool from_remote_session = false;
                 send_message_to_server = this->process_filecontents_response_pdu(
-                    flags, chunk, header, this->clip_data.client_data, from_remote_session);
+                    flags, chunk, header, this->clip_data.server_data, from_remote_session);
             }
             break;
 
@@ -412,14 +412,14 @@ public:
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 send_message_to_client = this->process_filecontents_request_pdu(
-                    chunk, this->to_server_sender_ptr(),
+                    flags, chunk, this->to_server_sender_ptr(),
                     this->clip_data.server_data, Direction::FileFromClient);
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
                 const bool from_remote_session = true;
                 send_message_to_client = this->process_filecontents_response_pdu(
-                    flags, chunk, header, this->clip_data.server_data, from_remote_session);
+                    flags, chunk, header, this->clip_data.client_data, from_remote_session);
             }
             break;
 
@@ -530,6 +530,10 @@ private:
         RDPECLIP::LockClipboardDataPDU pdu;
         pdu.recv(chunk);
         side_data.push_lock_id(pdu.clipDataId);
+
+        if (bool(verbose & RDPVerbose::cliprdr)) {
+            pdu.log();
+        }
     }
 
     void process_unlock_pdu(InStream& chunk, ClipboardSideData& side_data)
@@ -537,6 +541,10 @@ private:
         RDPECLIP::UnlockClipboardDataPDU pdu;
         pdu.recv(chunk);
         side_data.remove_lock_id(pdu.clipDataId);
+
+        if (bool(verbose & RDPVerbose::cliprdr)) {
+            pdu.log();
+        }
     }
 
     bool process_filecontents_response_pdu(
@@ -553,35 +561,53 @@ private:
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             check_throw(chunk, 4, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
             from_server.last_stream_id = chunk.in_uint32_le();
+            LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                "File Contents Response: streamId=%u", from_server.last_stream_id);
         }
 
         auto* file = side_data.find_file_by_stream_id(StreamId(from_server.last_stream_id));
 
         if (in_header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
             if (file && file->is_file_range()) {
+                // TODO end of file with error
                 this->icap.set_end_of_file(file->file_data->validator_id);
             }
-            side_data.remove_file(file);
+            file->set_eof();
+            // side_data.remove_file(file);
         }
         else if (file && file->is_file_range()) {
             auto& file_data = *file->file_data;
             auto data_fragment = chunk.remaining_bytes();
-            if (file_data.file_size < file_data.file_offset + data_fragment.size()) {
-                // TODO
+            LOG(LOG_DEBUG, "%zu/%lu|%lu", data_fragment.size(), file_data.file_size_requested, file_data.file_size);
+            if (data_fragment.size() >= file_data.file_size_requested) {
+                data_fragment = data_fragment.first(file_data.file_size_requested);
+            }
+            auto new_offset = file_data.file_offset + data_fragment.size();
+            LOG(LOG_DEBUG, "fsize: %lu  next: %zu", file_data.file_size, new_offset);
+            if (new_offset > file_data.file_size) {
                 throw Error(ERR_RDP_PROTOCOL);
             }
             file_data.sha256.update(data_fragment);
-            file_data.file_offset += data_fragment.size();
+            file_data.file_offset = new_offset;
+            file_data.file_size_requested -= data_fragment.size();
+
+            if (!file_data.file_size_requested){
+                file->set_wait_continuation();
+            }
 
             if (enable_icap) {
                 this->icap.send_data(file_data.validator_id, data_fragment);
                 if (file_data.file_offset == file_data.file_size && (flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                     this->icap.set_end_of_file(file_data.validator_id);
                     if (!file->file_data->clip_data_id) {
-                        file->stream_id.reset();
+                        file->set_eof();
                     }
                 }
             }
+            else {
+                // TODO SslSha256 + remove + log ?
+            }
+            file->set_consumed();
 
             this->log_file_info(file_data, from_remote_session);
         }
@@ -592,6 +618,7 @@ private:
             }
             check_throw(chunk, 8, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
             this->file_descr_list[safe_int(file->file_group_id)].file_size = chunk.in_uint64_le();
+            side_data.remove_file(file);
         }
         else {
             // TODO
@@ -602,7 +629,7 @@ private:
     }
 
     bool process_filecontents_request_pdu(
-        InStream& chunk, VirtualChannelDataSender* sender,
+        uint32_t flags, InStream& chunk, VirtualChannelDataSender* sender,
         ClipboardSideData& side_data, Direction direction)
     {
         RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
@@ -610,6 +637,13 @@ private:
 
         if (bool(verbose & RDPVerbose::cliprdr)) {
             file_contents_request_pdu.log(LOG_INFO);
+        }
+
+        // TODO is validtor and not log
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
+          != (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) {
+            // TODO
+            throw Error(ERR_RDP_PROTOCOL);
         }
 
         if (!this->params.clipboard_file_authorized) {
@@ -624,17 +658,24 @@ private:
             ? this->params.validator_params.down_target_name
             : this->params.validator_params.up_target_name;
 
+        // TODO is validator and not log
         if (!target_name.empty()) {
             auto stream_id = StreamId(file_contents_request_pdu.streamId());
             auto lindex = FileGroupId(file_contents_request_pdu.lindex());
-            this->check_descr_index(safe_int(lindex));
             if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE) {
                 auto offset = file_contents_request_pdu.position();
                 if (offset) {
-                    // TODO if lock ?
-                    auto* file = side_data.find_file_by_stream_id(stream_id);
+                    auto* file = side_data.find_continuation_stream_id(stream_id);
                     if (file) {
                         if (!file_contents_request_pdu.has_optional_clipDataId()) {
+                            // TODO
+                            throw Error(ERR_RDP_PROTOCOL);
+                        }
+                        if (file_contents_request_pdu.clipDataId() != file->file_data->clip_data_id) {
+                            // TODO
+                            throw Error(ERR_RDP_PROTOCOL);
+                        }
+                        if (file->is_file_size()) {
                             // TODO
                             throw Error(ERR_RDP_PROTOCOL);
                         }
@@ -654,21 +695,25 @@ private:
                             // TODO validator error + log
                             throw Error(ERR_ICAP_LOCAl_PROTOCOL);
                         }
+                        if (file_contents_request_pdu.has_optional_clipDataId()) {
+                            // TODO
+                            throw Error(ERR_RDP_PROTOCOL);
+                        }
+                        file->stream_id = stream_id;
                     }
-
-                    file->stream_id = stream_id;
+                    file->set_continuation(file_contents_request_pdu.cbRequested());
                 }
                 else {
-                    CliprdFileInfo const& desc = this->check_descr_index(file_contents_request_pdu.lindex());
+                    CliprdFileInfo const& desc = this->check_descr_index(safe_int(lindex));
                     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
                         "ClipboardVirtualChannel::icap_new_file");
                     auto validator_id = this->icap.icap_service->open_file(desc.file_name, target_name);
-                    auto optional_lock_id = file_contents_request_pdu.has_optional_clipDataId()
-                        ? side_data.get_lock_id(file_contents_request_pdu.clipDataId())
-                        : std::optional<uint32_t>{};
                     side_data.push_file_content_range(
-                        stream_id, lindex, optional_lock_id,
-                        validator_id, desc.file_name, desc.file_size);
+                        stream_id, lindex,
+                        file_contents_request_pdu.has_optional_clipDataId(),
+                        file_contents_request_pdu.clipDataId(),
+                        validator_id, desc.file_name, desc.file_size,
+                        file_contents_request_pdu.cbRequested());
                 }
             }
             else {
