@@ -89,7 +89,6 @@ private:
     std::vector<uint8_t> SavedAuthenticateMessage;
 
     uint8_t Timestamp[8]{};
-    uint8_t ChallengeTimestamp[8]{};
     array_md5 SessionBaseKey; 
     array_md5 ExportedSessionKey;
     array_md5 EncryptedRandomSessionKey;
@@ -418,13 +417,9 @@ public:
 
                         // compute ClientTimeStamp
                         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
-                        uint8_t ZeroTimestamp[8] = {};
 
-                        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
-                            memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
-                        }
-                        else {
-                            const timeval tv = this->timeobj.get_time();
+                        const timeval tv = this->timeobj.get_time();
+                        {
                             OutStream out_stream(this->Timestamp);
                             out_stream.out_uint32_le(tv.tv_usec);
                             out_stream.out_uint32_le(tv.tv_sec);
