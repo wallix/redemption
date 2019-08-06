@@ -46,66 +46,6 @@
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
-    struct ICapValidator
-    {
-        enum class Direction : bool
-        {
-            FileFromServer,
-            FileFromClient,
-        };
-
-        struct FileInfo
-        {
-            LocalICAPProtocol::ValidationResult validation_type
-                = LocalICAPProtocol::ValidationResult::Wait;
-            std::string_view result_content;
-
-            operator bool() const noexcept
-            {
-                return validation_type != LocalICAPProtocol::ValidationResult::Wait;
-            }
-        };
-
-        ICapValidator(ICAPService * icap_service) noexcept
-        : icap_service(icap_service)
-        {}
-
-        explicit operator bool () const noexcept
-        {
-            return this->icap_service;
-        }
-
-        void send_data(ICAPFileId validator_id, const_bytes_view data)
-        {
-            assert(this->icap_service);
-            this->icap_service->send_data(validator_id, data);
-        }
-
-        void set_end_of_file(ICAPFileId validator_id)
-        {
-            assert(this->icap_service);
-            this->icap_service->send_eof(validator_id);
-        }
-
-        bool receive_response()
-        {
-            assert(this->icap_service);
-
-            for (;;){
-                switch (this->icap_service->receive_response()) {
-                    case ICAPService::ResponseType::WaitingData:
-                        return false;
-                    case ICAPService::ResponseType::HasContent:
-                        return true;
-                    case ICAPService::ResponseType::Error:
-                        ;
-                }
-            }
-        }
-
-        ICAPService * icap_service;
-    };
-
     using StreamId = ClipboardSideData::StreamId;
     using FileGroupId = ClipboardSideData::FileGroupId;
 
@@ -130,9 +70,13 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
 
     SessionReactor& session_reactor;
 
-    ICapValidator icap;
+    ICAPService * icap;
 
-    using Direction = ICapValidator::Direction;
+    enum class Direction : bool
+    {
+        FileFromServer,
+        FileFromClient,
+    };
 
 public:
     ClipboardVirtualChannel(
@@ -408,8 +352,21 @@ public:
             return ;
         }
 
-        while (this->icap.receive_response()) {
-            switch (this->icap.icap_service->last_result_flag()) {
+        auto receive_data = [this]{
+            for (;;) {
+                switch (this->icap->receive_response()) {
+                    case ICAPService::ResponseType::WaitingData:
+                        return false;
+                    case ICAPService::ResponseType::HasContent:
+                        return true;
+                    case ICAPService::ResponseType::Error:
+                        ;
+                }
+            }
+        };
+
+        while (receive_data()){
+            switch (this->icap->last_result_flag()) {
                 case LocalICAPProtocol::ValidationResult::Wait:
                     return;
                 case LocalICAPProtocol::ValidationResult::IsAccepted:
@@ -422,7 +379,7 @@ public:
                     ;
             }
 
-            auto validator_id = this->icap.icap_service->last_file_id();
+            auto validator_id = this->icap->last_file_id();
             Direction direction = Direction::FileFromClient;
             auto* file = this->clip_data.server_data.find_file_by_validator_id(validator_id);
             if (!file) {
@@ -450,7 +407,7 @@ public:
             auto& file_data = file->file_data;
             file_data.validator_id = ICAPFileId();
 
-            auto& result_content = this->icap.icap_service->get_content();
+            auto& result_content = this->icap->get_content();
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
             auto const info = key_qvalue_pairs({
@@ -576,7 +533,7 @@ private:
 
         if (in_header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
             if (file && bool(file->file_data.validator_id) && file->is_file_range()) {
-                this->icap.set_end_of_file(file->file_data.validator_id);
+                this->icap->send_eof(file->file_data.validator_id);
                 file->set_wait_validator();
             }
         }
@@ -585,13 +542,13 @@ private:
             auto data_fragment = file->receive_data(chunk.remaining_bytes());
 
             if (bool(file_data.validator_id)) {
-                this->icap.send_data(file_data.validator_id, data_fragment);
+                this->icap->send_data(file_data.validator_id, data_fragment);
             }
 
             if ((flags & CHANNELS::CHANNEL_FLAG_LAST) && file_data.file_offset == file_data.file_size) {
                 this->log_file_info(file_data, from_remote_session);
                 if (bool(file_data.validator_id)) {
-                    this->icap.set_end_of_file(file_data.validator_id);
+                    this->icap->send_eof(file_data.validator_id);
                 }
                 else {
                     side_data.remove_file(file);
@@ -702,7 +659,7 @@ private:
                 if (!target_name.empty()) {
                     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
                         "ClipboardVirtualChannel::Validator::open_file");
-                    validator_id = this->icap.icap_service->open_file(desc.file_name, target_name);
+                    validator_id = this->icap->open_file(desc.file_name, target_name);
                 }
                 side_data.push_file_content_range(
                     stream_id, lindex,
