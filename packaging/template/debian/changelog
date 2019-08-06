@@ -1,3 +1,9 @@
+redemption (7.1.9a%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix 'check_throw' issue.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 06 Aug 2019 14:39:28 +0200
+
 redemption (7.1.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix fully mask keyboard input in metadata of session.
