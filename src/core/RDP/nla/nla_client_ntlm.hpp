@@ -313,17 +313,8 @@ public:
                 }
                 if (this->sspi_context_state == NTLM_STATE_NEGOTIATE) {
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
-                    this->NegotiateFlags |= (
-                          NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
-                        | NTLMSSP_NEGOTIATE_KEY_EXCH | NTLMSSP_NEGOTIATE_128 
-                        | NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                        | NTLMSSP_NEGOTIATE_NTLM | NTLMSSP_REQUEST_TARGET 
-                        | NTLMSSP_NEGOTIATE_UNICODE)
-                    | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_56
-                        |  NTLMSSP_NEGOTIATE_LM_KEY
-                        |  NTLMSSP_NEGOTIATE_OEM)
-                    | NTLMSSP_NEGOTIATE_SEAL
-                    | NTLMSSP_NEGOTIATE_VERSION;
+                    this->NegotiateFlags = set_negotiate_flags(this->NTLMv2, false, false, true)
+                        | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_LM_KEY|NTLMSSP_NEGOTIATE_OEM);
 
                     this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
                     this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
