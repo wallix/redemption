@@ -1,3 +1,9 @@
+redemption (7.2.23%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * 22115: Add log in siem/session log if connection to validator server fail
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 06 Aug 2019 16:27:09 +0200
+
 redemption (7.2.21%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * (RemoteApp) Fix 'Unknown client window' issue.
