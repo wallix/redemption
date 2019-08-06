@@ -157,15 +157,20 @@ struct ClipboardSideData
     std::vector<uint32_t> lock_id_list;
 
 private:
-    auto _find_lock_id_it(uint32_t id)
+    auto _find_lock_id_it(uint32_t id) const
     {
         return std::find(this->lock_id_list.begin(), this->lock_id_list.end(), id);
     }
 
 public:
+    bool has_lock_id(uint32_t id) const
+    {
+        return this->_find_lock_id_it(id) != this->lock_id_list.end();
+    }
+
     void push_lock_id(uint32_t id)
     {
-        if (this->_find_lock_id_it(id) == this->lock_id_list.end()) {
+        if (!this->has_lock_id(id)) {
             this->lock_id_list.push_back(id);
             for (auto& file : this->file_contents_list) {
                 if ((
@@ -211,12 +216,7 @@ public:
         bool has_clip_data_id, uint32_t clip_data_id, ICAPFileId validator_id,
         std::string const& filename, uint64_t filesize, uint64_t file_size_requested)
     {
-        bool active_lock = false;
-        if (has_clip_data_id) {
-            if (this->_find_lock_id_it(clip_data_id) != this->lock_id_list.end()) {
-                active_lock = true;
-            }
-        }
+        bool active_lock = (has_clip_data_id && this->has_lock_id(clip_data_id));
         this->file_contents_list.push_back({
             stream_id, file_group_id, has_clip_data_id
                 ? FileContent::Status::WaitDataWithId

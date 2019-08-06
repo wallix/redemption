@@ -600,15 +600,17 @@ private:
         }
         else if (file && file->is_file_size()) {
             if (!(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
-                // TODO
-                throw Error(ERR_RDP_PROTOCOL);
+                LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
+                    " Unsupported partial FILECONTENTS_SIZE packet");
+                throw Error(ERR_RDP_UNSUPPORTED);
             }
             check_throw(chunk, 8, "process_filecontents_response_pdu", ERR_RDP_DATA_TRUNCATED);
             this->file_descr_list[safe_int(file->file_group_id)].file_size = chunk.in_uint64_le();
             side_data.remove_file(file);
         }
         else {
-            // TODO
+            LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response_pdu:"
+                " Unknowns stream id %u", from_server.file_contents_stream_id);
             throw Error(ERR_RDP_PROTOCOL);
         }
 
@@ -626,10 +628,9 @@ private:
             file_contents_request_pdu.log(LOG_INFO);
         }
 
-        // TODO is validtor and not log
         if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
           != (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) {
-            // TODO
+            LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu: Unsupported partial packet");
             throw Error(ERR_RDP_PROTOCOL);
         }
 
@@ -653,32 +654,36 @@ private:
                 auto* file = side_data.find_continuation_stream_id(stream_id);
                 if (file) {
                     if (!file_contents_request_pdu.has_optional_clipDataId()) {
-                        // TODO
-                        throw Error(ERR_RDP_PROTOCOL);
+                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                            " Require clipDataId");
+                        throw Error(ERR_RDP_UNSUPPORTED);
                     }
                     if (file_contents_request_pdu.clipDataId() != file->file_data.clip_data_id) {
-                        // TODO
-                        throw Error(ERR_RDP_PROTOCOL);
+                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                            " Invalid clipDataId (%u != %u)", file_contents_request_pdu.clipDataId(),
+                            file->file_data.clip_data_id);
+                        throw Error(ERR_RDP_UNSUPPORTED);
                     }
                     if (file->is_file_size()) {
-                        // TODO
-                        throw Error(ERR_RDP_PROTOCOL);
+                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                            " is a FILECONTENTS_SIZE, expected FILECONTENTS_RANGE");
+                        throw Error(ERR_RDP_UNSUPPORTED);
                     }
                     if (file->file_data.file_offset != offset) {
-                        // TODO
-                        throw Error(ERR_RDP_PROTOCOL);
+                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                            " Unsupported random access for a FILECONTENTS_RANGE");
+                        throw Error(ERR_RDP_UNSUPPORTED);
                     }
                 }
                 else {
                     file = side_data.find_file_by_offset(lindex, offset);
-                    // TODO
                     if (!file) {
-                        // TODO validator error + log
-                        throw Error(ERR_ICAP_LOCAl_PROTOCOL);
+                        LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                            " Unsupported random access for a FILECONTENTS_RANGE");
+                        throw Error(ERR_RDP_UNSUPPORTED);
                     }
                     if (file_contents_request_pdu.has_optional_clipDataId()) {
-                        // TODO
-                        throw Error(ERR_RDP_PROTOCOL);
+                        file->file_data.clip_data_id = file_contents_request_pdu.clipDataId();
                     }
                     file->stream_id = stream_id;
                 }
@@ -686,11 +691,17 @@ private:
                 file->update_requested(file_contents_request_pdu.cbRequested());
             }
             else {
-                CliprdFileInfo const& desc = this->check_descr_index(safe_int(lindex));
-                LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
-                    "ClipboardVirtualChannel::icap_new_file");
+                std::size_t ifilegroup = safe_int(lindex);
+                if (ifilegroup >= this->file_descr_list.size()) {
+                    LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                        " Invalid lindex %u", lindex);
+                    throw Error(ERR_RDP_PROTOCOL);
+                }
+                CliprdFileInfo const& desc = this->file_descr_list[ifilegroup];
                 ICAPFileId validator_id{};
                 if (!target_name.empty()) {
+                    LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
+                        "ClipboardVirtualChannel::Validator::open_file");
                     validator_id = this->icap.icap_service->open_file(desc.file_name, target_name);
                 }
                 side_data.push_file_content_range(
@@ -706,18 +717,6 @@ private:
         }
 
         return true;
-    }
-
-    // TODO rename
-    CliprdFileInfo& check_descr_index(std::size_t i)
-    {
-        if (i < this->file_descr_list.size()) {
-            return this->file_descr_list[i];
-        }
-
-        LOG(LOG_ERR, "ClipboardVirtualChannel::check_descr_index(%zu): out of bounds index", i);
-        // TODO _VALIDATOR
-        throw Error(ERR_RDP_PROTOCOL);
     }
 
     bool process_format_data_response_pdu(uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header, bool is_from_remote_session)
