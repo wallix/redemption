@@ -198,8 +198,6 @@ public:
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
         /* receive server response and place in input buffer */
-        this->sspi_context_state = NTLM_STATE_NEGOTIATE;
-
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
 
         this->NegotiateFlags = set_negotiate_flags(this->NTLMv2, false, false, true)
@@ -223,13 +221,10 @@ public:
             this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
         }
 
-        this->sspi_context_state = NTLM_STATE_CHALLENGE;
-
         StaticOutStream<65535> out_stream;
         emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
         this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
         this->ts_request.negoTokens.assign(this->SavedNegotiateMessage.data(),this->SavedNegotiateMessage.data()+this->SavedNegotiateMessage.size());
-        this->sspi_context_state = NTLM_STATE_CHALLENGE;
 
         /* send authentication token to server */
         if (this->ts_request.negoTokens.size() > 0) {
@@ -247,6 +242,7 @@ public:
             this->ts_request.clientNonce.reset();
             this->ts_request.error_code = 0;
         }
+        this->sspi_context_state = NTLM_STATE_CHALLENGE;
     }
 
 
@@ -308,9 +304,6 @@ public:
 
                 auto status = SEC_E_OUT_OF_SEQUENCE;
 
-                if (this->sspi_context_state == NTLM_STATE_INITIAL) {
-                    this->sspi_context_state = NTLM_STATE_NEGOTIATE;
-                }
                 if (this->sspi_context_state == NTLM_STATE_NEGOTIATE) {
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
                     this->NegotiateFlags = set_negotiate_flags(this->NTLMv2, false, false, true)
@@ -332,12 +325,12 @@ public:
                         this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
                     }
 
-                    this->sspi_context_state = NTLM_STATE_CHALLENGE;
 
                     StaticOutStream<65535> out_stream;
                     emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
                     this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
                     this->ts_request.negoTokens.assign(this->SavedNegotiateMessage.data(),this->SavedNegotiateMessage.data()+this->SavedNegotiateMessage.size());
+
                     this->sspi_context_state = NTLM_STATE_CHALLENGE;
                     status = SEC_I_CONTINUE_NEEDED;
                 }
@@ -466,28 +459,25 @@ public:
                         this->RecvRc4Seal.set_key(this->ServerSealingKey);
                         
 
-                        this->NegotiateFlags = set_negotiate_flags(
+                        uint32_t flags = set_negotiate_flags(
                                             this->NTLMv2, 
                                             this->UseMIC, 
                                             this->SendWorkstationName, 
                                             this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
-                        this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+                        this->AUTHENTICATE_MESSAGE.negoFlags.flags = flags;
 
                         this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
                         this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                         this->version.ProductBuild        = 7601;
                         this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
                         this->AUTHENTICATE_MESSAGE.version = this->version;
 
-                        uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
-
-                        if (!(flag & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
+                        if (!(flags & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
                             // If flag is not set, encryted session key buffer is not send
                             this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.clear();
                         }
-                        if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+                        if (flags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
                             this->AUTHENTICATE_MESSAGE.Workstation.buffer = this->Workstation;
                         }
 
@@ -495,8 +485,6 @@ public:
                         this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
                         this->AUTHENTICATE_MESSAGE.UserName.buffer = this->identity_User;
 
-                        this->sspi_context_state = NTLM_STATE_FINAL;
-                                                             
                         StaticOutStream<65535> out_stream;
                         if (this->UseMIC) {
                             this->AUTHENTICATE_MESSAGE.ignore_mic = true;
@@ -520,6 +508,7 @@ public:
                         if (this->verbose) {
                             logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
                         }
+                        this->sspi_context_state = NTLM_STATE_FINAL;
                         status = SEC_I_COMPLETE_NEEDED;
                     }
                 }
