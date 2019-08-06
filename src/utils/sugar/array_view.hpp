@@ -39,25 +39,19 @@ namespace detail
     };
 
     template<std::size_t N, class R>
-    struct filter_dangerous_implicite_array_view<char[N], R>;
+    struct filter_dangerous_implicite_array_view<char[N], R> {};
 
     template<std::size_t N, class R>
-    struct filter_dangerous_implicite_array_view<uint8_t[N], R>;
+    struct filter_dangerous_implicite_array_view<uint8_t[N], R> {};
 
     template<std::size_t N, class R>
-    struct filter_dangerous_implicite_array_view<const char[N], R>;
+    struct filter_dangerous_implicite_array_view<const char[N], R> {};
 
     template<std::size_t N, class R>
-    struct filter_dangerous_implicite_array_view<const uint8_t[N], R>;
+    struct filter_dangerous_implicite_array_view<const uint8_t[N], R> {};
 
     template<class T, class R>
-    struct filter_rvalue_array_view;
-
-    template<class T, class R>
-    struct filter_rvalue_array_view<std::basic_string_view<T>, R>
-    {
-        using type = R;
-    };
+    struct filter_dangerous_implicite_array_view<T&, R> : filter_dangerous_implicite_array_view<T, R> {};
 }
 
 template<class T>
@@ -71,7 +65,9 @@ struct array_view
     using const_reference = T const &;
 
     constexpr array_view() = default;
+    constexpr array_view(array_view && other) = default;
     constexpr array_view(array_view const & other) = default;
+    array_view & operator = (array_view && other) = default;
     array_view & operator = (array_view const & other) = default;
 
     constexpr array_view(std::nullptr_t /*null*/) noexcept
@@ -88,19 +84,9 @@ struct array_view
     , sz(pright - p)
     {}
 
-    template<class U, class = typename detail::filter_dangerous_implicite_array_view<U, decltype(
-        *static_cast<type**>(nullptr) = utils::data(std::declval<U&>()),
-        *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&>())
-    )>::type>
-    constexpr array_view(U & x)
-    noexcept(noexcept((void(utils::data(x)), utils::size(x))))
-    : p(utils::data(x))
-    , sz(utils::size(x))
-    {}
-
-    template<class U, class = typename detail::filter_rvalue_array_view<std::remove_const_t<U>, decltype(
-        *static_cast<type**>(nullptr) = utils::data(std::declval<U&>()),
-        *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&>())
+    template<class U, class = typename detail::filter_dangerous_implicite_array_view<std::remove_const_t<U>, decltype(
+        *static_cast<type**>(nullptr) = utils::data(std::declval<U&&>()),
+        *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&&>())
     )>::type>
     constexpr array_view(U && x)
     noexcept(noexcept((void(utils::data(std::forward<U>(x))), utils::size(std::forward<U>(x)))))
