@@ -658,7 +658,7 @@ private:
     bool SendWorkstationName = true;
 public:
     std::vector<uint8_t> Workstation;
-    Array ServicePrincipalName;
+    std::vector<uint8_t> ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
 
     // bool SendSingleHostData;
@@ -670,9 +670,9 @@ public:
 private:
     NtlmVersion version;
 public:
-    Array SavedNegotiateMessage;
-    Array SavedChallengeMessage;
-    Array SavedAuthenticateMessage;
+    std::vector<uint8_t> SavedNegotiateMessage;
+    std::vector<uint8_t> SavedChallengeMessage;
+    std::vector<uint8_t> SavedAuthenticateMessage;
 
     uint8_t Timestamp[8]{};
 private:
@@ -1061,9 +1061,9 @@ public:
 
     void ntlm_compute_MIC() {
         SslHMAC_Md5 hmac_md5resp(make_array_view(this->ExportedSessionKey));
-        hmac_md5resp.update(this->SavedNegotiateMessage.av());
-        hmac_md5resp.update(this->SavedChallengeMessage.av());
-        hmac_md5resp.update(this->SavedAuthenticateMessage.av());
+        hmac_md5resp.update(this->SavedNegotiateMessage);
+        hmac_md5resp.update(this->SavedChallengeMessage);
+        hmac_md5resp.update(this->SavedAuthenticateMessage);
         hmac_md5resp.final(this->MessageIntegrityCheck);
     }
 
@@ -1482,26 +1482,23 @@ public:
         // CHECK UTF8 or UTF16 (should store in UTF16)
         if (!pszTargetName.empty()) {
             size_t host_len = UTF8Len(pszTargetName.data());
-            this->ServicePrincipalName.init(host_len * 2);
-            UTF8toUTF16(pszTargetName, this->ServicePrincipalName.get_data(), host_len * 2);
+            this->ServicePrincipalName = std::vector<uint8_t>(host_len * 2);
+            UTF8toUTF16(pszTargetName, this->ServicePrincipalName.data(), host_len * 2);
         }
         else {
-            this->ServicePrincipalName.init(0);
+            this->ServicePrincipalName.clear();
         }
     }
 
 
     // READ WRITE FUNCTIONS
-    SEC_STATUS write_negotiate(Array& output_buffer) {
+    SEC_STATUS write_negotiate(std::vector<uint8_t>& output_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Negotiate");
         this->ntlm_client_build_negotiate();
         StaticOutStream<65535> out_stream;
         emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
-        output_buffer.init(out_stream.get_offset());
-        output_buffer.copy(out_stream.get_bytes());
-
-        this->SavedNegotiateMessage.init(out_stream.get_offset());
-        this->SavedNegotiateMessage.copy(out_stream.get_bytes());
+        output_buffer.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
+        this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
     }
@@ -1521,23 +1518,20 @@ public:
         }
         this->NegotiateFlags = negoFlag;
 
-        this->SavedNegotiateMessage.init(in_stream.get_offset());
-        this->SavedNegotiateMessage.copy(in_stream.get_consumed_bytes());
+        this->SavedNegotiateMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
 
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS write_challenge(Array& output_buffer) {
+    SEC_STATUS write_challenge(std::vector<uint8_t>& output_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Challenge");
         this->ntlm_server_build_challenge();
         StaticOutStream<65535> out_stream;
         EmitNTLMChallengeMessage(out_stream, this->CHALLENGE_MESSAGE);
-        output_buffer.init(out_stream.get_offset());
-        output_buffer.copy(out_stream.get_bytes());
+        output_buffer.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
-        this->SavedChallengeMessage.init(out_stream.get_offset());
-        this->SavedChallengeMessage.copy(out_stream.get_bytes());
+        this->SavedChallengeMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -1547,14 +1541,13 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Challenge");
         InStream in_stream(input_buffer);
         RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
-        this->SavedChallengeMessage.init(in_stream.get_offset());
-        this->SavedChallengeMessage.copy(in_stream.get_consumed_bytes());
+        this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS write_authenticate(Array& output_buffer) {
+    SEC_STATUS write_authenticate(std::vector<uint8_t>& output_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Authenticate");
         auto password_av = this->identity.get_password_utf16_av();
         auto user_av = this->identity.get_user_utf16_av();
@@ -1568,8 +1561,7 @@ public:
             emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
-            this->SavedAuthenticateMessage.init(out_stream.get_offset());
-            this->SavedAuthenticateMessage.copy(out_stream.get_bytes());
+            this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
             this->ntlm_compute_MIC();
             memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
             // this->AUTHENTICATE_MESSAGE.has_mic = true;
@@ -1577,8 +1569,7 @@ public:
         out_stream.rewind();
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
         emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
-        output_buffer.init(out_stream.get_offset());
-        output_buffer.copy(out_stream.get_bytes());
+        output_buffer.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
         if (this->verbose) {
             logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
         }
@@ -1591,16 +1582,16 @@ public:
         recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
         if (this->AUTHENTICATE_MESSAGE.has_mic) {
             this->UseMIC = true;
-            this->SavedAuthenticateMessage.init(in_stream.get_offset());
+            this->SavedAuthenticateMessage = std::vector<uint8_t>(in_stream.get_offset());
             constexpr std::size_t null_data_sz = 16;
             uint8_t const null_data[null_data_sz]{0u};
             auto const p = in_stream.get_data();
             std::size_t offset = 0u;
-            memcpy(this->SavedAuthenticateMessage.get_data()+offset, p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset);
+            memcpy(this->SavedAuthenticateMessage.data()+offset, p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset);
             offset += this->AUTHENTICATE_MESSAGE.PayloadOffset;
-            memcpy(this->SavedAuthenticateMessage.get_data()+offset, null_data, null_data_sz);
+            memcpy(this->SavedAuthenticateMessage.data()+offset, null_data, null_data_sz);
             offset += null_data_sz;
-            memcpy(this->SavedAuthenticateMessage.get_data()+offset, p + offset, in_stream.get_offset() - offset);
+            memcpy(this->SavedAuthenticateMessage.data()+offset, p + offset, in_stream.get_offset() - offset);
         }
         
         this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer);
@@ -1649,7 +1640,7 @@ public:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
-        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+        const char * pszPrincipal, std::vector<uint8_t> * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
@@ -1670,7 +1661,7 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
+        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, std::vector<uint8_t>& output_buffer
     ) override
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
@@ -1711,7 +1702,7 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        array_view_const_u8 input_buffer, Array& output_buffer
+        array_view_const_u8 input_buffer, std::vector<uint8_t>& output_buffer
     ) override {
         LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcceptSecurityContext");
         if (!this->context) {
@@ -1770,7 +1761,7 @@ public:
                 return status;
             }
 
-            output_buffer.init(0);
+            output_buffer.clear();
 
             return status;
         }
@@ -1810,7 +1801,7 @@ private:
 public:
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) override {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -1818,8 +1809,8 @@ public:
 
         // data_out [signature][data_buffer]
 
-        data_out.init(data_in.size() + cbMaxSignature);
-        auto message_out = data_out.av().from_at(cbMaxSignature);
+        data_out = std::vector<uint8_t>(data_in.size() + cbMaxSignature);
+        array_view_u8 message_out = {data_out.data()+cbMaxSignature, data_out.size()-cbMaxSignature};
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         this->compute_hmac_md5(digest, *this->context->SendSigningKey, data_in, MessageSeqNo);
@@ -1829,14 +1820,14 @@ public:
         this->context->SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
 
         this->compute_signature(
-            data_out.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
+            data_out.data(), this->context->SendRc4Seal, digest, MessageSeqNo);
 
         return SEC_E_OK;
     }
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) override {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -1849,14 +1840,14 @@ public:
         // data_in [signature][data_buffer]
 
         auto data_buffer = data_in.from_at(cbMaxSignature);
-        data_out.init(data_buffer.size());
+        data_out = std::vector<uint8_t>(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */
         // this->context->confidentiality == true
-        this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
+        this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, *this->context->RecvSigningKey, data_out.av(), MessageSeqNo);
+        this->compute_hmac_md5(digest, *this->context->RecvSigningKey, data_out, MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->compute_signature(
@@ -1902,7 +1893,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     client_status = client_table.AcquireCredentialsHandle("NTLM", nullptr, &client_server_id);
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
-    Array output_buffer;
+    std::vector<uint8_t> output_buffer;
 
     // client first call, no input buffer, no context
     client_status = client_table.InitializeSecurityContext(
@@ -1914,13 +1905,13 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(client_status, SEC_I_CONTINUE_NEEDED);
 
     RED_CHECK_EQUAL(output_buffer.size(), 40);
-    // hexdump_c(output_buffer.get_data(), 40);
+    // hexdump_c(output_buffer.data(), 40);
 
-    Array input_buffer;
+    std::vector<uint8_t> input_buffer;
 
     // server first call, no context
     // got input buffer (output of client): Negotiate message
-    server_status = server_table.AcceptSecurityContext(output_buffer.av(), input_buffer);
+    server_status = server_table.AcceptSecurityContext(output_buffer, input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.size(), 120);
@@ -1930,7 +1921,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // got input buffer: challenge message
     client_status = client_table.InitializeSecurityContext(
         nullptr, // TargetName
-        input_buffer.av(), // input buffer desc
+        input_buffer, // input buffer desc
         output_buffer // output buffer desc
     );
 
@@ -1940,14 +1931,14 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // server second call, got context
     // got input buffer (ouput of client): authenticate message
-    server_status = server_table.AcceptSecurityContext(output_buffer.av(), input_buffer);
+    server_status = server_table.AcceptSecurityContext(output_buffer, input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.size(), 0);
 
     // ENCRYPT
     auto message = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!"_av;
-    Array Result;
+    std::vector<uint8_t> Result;
     server_status = server_table.EncryptMessage(cbytes_view(message), Result, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
@@ -1958,12 +1949,12 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
-    Array Result2;
-    client_status = client_table.DecryptMessage({Result.get_data(), Result.size()}, Result2, 0);
+    std::vector<uint8_t> Result2;
+    client_status = client_table.DecryptMessage({Result.data(), Result.size()}, Result2, 0);
 
     RED_CHECK_EQUAL(Result.size(), message.size() + cbMaxSignature);
-    RED_CHECK(0 != memcmp(Result.get_data(), message.data(), Result.size() - cbMaxSignature));
-    RED_CHECK_MEM(Result2.av(), message);
+    RED_CHECK(0 != memcmp(Result.data(), message.data(), Result.size() - cbMaxSignature));
+    RED_CHECK_MEM(Result2, message);
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 }
@@ -2133,7 +2124,7 @@ RED_AUTO_TEST_CASE(TestSetters)
     context.ntlm_SetContextServicePrincipalName(spn);
     RED_CHECK_EQUAL(context.ServicePrincipalName.size(), spn.size() * 2);
     // TODO TEST bad test
-    RED_CHECK(memcmp(spn.data(), context.ServicePrincipalName.get_data(), spn.size()+1));
+    RED_CHECK(memcmp(spn.data(), context.ServicePrincipalName.data(), spn.size()+1));
 
 }
 
@@ -2347,28 +2338,28 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     // send NEGOTIATE MESSAGE
     emitNTLMNegotiateMessage(out_client_to_server, client_context.NEGOTIATE_MESSAGE);
 
-    client_context.SavedNegotiateMessage.init(out_client_to_server.get_offset());
-    memcpy(client_context.SavedNegotiateMessage.get_data(),
+    client_context.SavedNegotiateMessage = std::vector<uint8_t>(out_client_to_server.get_offset());
+    memcpy(client_context.SavedNegotiateMessage.data(),
            out_client_to_server.get_data(), out_client_to_server.get_offset());
 
     InStream in_client_to_server(out_client_to_server.get_bytes());
     RecvNTLMNegotiateMessage(in_client_to_server, server_context.NEGOTIATE_MESSAGE);
-    server_context.SavedNegotiateMessage.init(in_client_to_server.get_offset());
-    memcpy(server_context.SavedNegotiateMessage.get_data(),
+    server_context.SavedNegotiateMessage = std::vector<uint8_t>(in_client_to_server.get_offset());
+    memcpy(server_context.SavedNegotiateMessage.data(),
            in_client_to_server.get_data(), in_client_to_server.get_offset());
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
     server_context.ntlm_server_build_challenge();
 
     // send CHALLENGE MESSAGE
     EmitNTLMChallengeMessage(out_server_to_client, server_context.CHALLENGE_MESSAGE);
-    server_context.SavedChallengeMessage.init(out_server_to_client.get_offset());
-    memcpy(server_context.SavedChallengeMessage.get_data(),
+    server_context.SavedChallengeMessage = std::vector<uint8_t>(out_server_to_client.get_offset());
+    memcpy(server_context.SavedChallengeMessage.data(),
            out_server_to_client.get_data(), out_server_to_client.get_offset());
 
     InStream in_server_to_client(out_server_to_client.get_bytes());
     RecvNTLMChallengeMessage(in_server_to_client, client_context.CHALLENGE_MESSAGE);
-    client_context.SavedChallengeMessage.init(in_server_to_client.get_offset());
-    memcpy(client_context.SavedChallengeMessage.get_data(),
+    client_context.SavedChallengeMessage = std::vector<uint8_t>(in_server_to_client.get_offset());
+    memcpy(client_context.SavedChallengeMessage.data(),
            in_server_to_client.get_data(), in_server_to_client.get_offset());
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
@@ -2384,8 +2375,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
         emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
         client_context.AUTHENTICATE_MESSAGE.ignore_mic = false;
 
-        client_context.SavedAuthenticateMessage.init(out_client_to_server.get_offset());
-        memcpy(client_context.SavedAuthenticateMessage.get_data(), out_client_to_server.get_data(),
+        client_context.SavedAuthenticateMessage = std::vector<uint8_t>(out_client_to_server.get_offset());
+        memcpy(client_context.SavedAuthenticateMessage.data(), out_client_to_server.get_data(),
                out_client_to_server.get_offset());
         client_context.ntlm_compute_MIC();
         memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
@@ -2397,8 +2388,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
         memset(client_to_server_buf +
                server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
-        server_context.SavedAuthenticateMessage.init(in_client_to_server.get_offset());
-        memcpy(server_context.SavedAuthenticateMessage.get_data(),
+        server_context.SavedAuthenticateMessage = std::vector<uint8_t>(in_client_to_server.get_offset());
+        memcpy(server_context.SavedAuthenticateMessage.data(),
                in_client_to_server.get_data(), in_client_to_server.get_offset());
     }
 
@@ -2429,27 +2420,27 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     NTLMContext context_read(true, rand, timeobj, true);
     SEC_STATUS status;
 
-    Array nego;
+    std::vector<uint8_t> nego;
     status = context_write.write_negotiate(nego);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
-    status = context_read.read_negotiate(nego.av());
+    status = context_read.read_negotiate(nego);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
 
-    Array chal;
+    std::vector<uint8_t> chal;
     status = context_write.write_challenge(chal);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
-    status = context_read.read_challenge(chal.av());
+    status = context_read.read_challenge(chal);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
 
-    Array auth;
+    std::vector<uint8_t> auth;
     status = context_write.write_authenticate(auth);
     RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
-    status = context_read.read_authenticate(auth.av());
+    status = context_read.read_authenticate(auth);
     RED_CHECK_EQUAL(status, SEC_E_LOGON_DENIED);
 }
 

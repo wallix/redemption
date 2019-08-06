@@ -38,67 +38,6 @@ namespace credssp {
 }
 
 
-// TODO: CGR. This array here should be replaced by a plain std::vector<uint8_t>
-
-class Array
-{
-    enum {
-        AUTOSIZE = 65536
-    };
-
-    BufMaker<AUTOSIZE> buf_maker;
-    array_view_u8 avbuf;
-
-public:
-    explicit Array(size_t size = AUTOSIZE)
-      : avbuf(this->buf_maker.dyn_array(size))
-    {}
-
-public:
-    Array(Array const &) = delete;
-    Array& operator=(Array const &) = delete;
-
-    size_t size() const {
-        return this->avbuf.size();
-    }
-
-    uint8_t * get_data() {
-        return this->avbuf.data();
-    }
-
-    uint8_t const * get_data() const {
-        return this->avbuf.data();
-    }
-
-    array_view_const_u8 av() const {
-        return this->avbuf;
-    }
-
-    array_view_u8 av() {
-        return this->avbuf;
-    }
-
-    void copy(Array const& other) {
-        this->init(other.size());
-        memcpy(this->get_data(), other.get_data(), this->size());
-    }
-
-    // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
-    void init(size_t v) {
-        this->avbuf = this->buf_maker.dyn_array(v);
-    }
-
-    void copy(const_bytes_view source) {
-        if (source.size() > this->size()){
-            this->avbuf = this->buf_maker.dyn_array(source.size());
-        }
-        if (!(source.data() == nullptr) && !(source.size() == 0)) {
-            memcpy(this->avbuf.data(), source.data(), source.size());
-        }
-    }
-};
-
-
 enum SecIdFlag {
     SEC_WINNT_AUTH_IDENTITY_ANSI = 0x1,
     SEC_WINNT_AUTH_IDENTITY_UNICODE = 0x2
@@ -426,30 +365,30 @@ struct SecurityFunctionTable
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
-                                                Array * pvLogonID,
+                                                std::vector<uint8_t> * pvLogonID,
                                                 SEC_WINNT_AUTH_IDENTITY const* pAuthData) = 0;
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     virtual SEC_STATUS InitializeSecurityContext(array_view_const_char pszTargetName,
                                                  array_view_const_u8 input_buffer,
-                                                 Array& output_buffer) = 0;
+                                                 std::vector<uint8_t>& output_buffer) = 0;
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     virtual SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer,
-                                             Array& output_buffer) = 0;
+                                             std::vector<uint8_t>& output_buffer) = 0;
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     virtual SEC_STATUS EncryptMessage(array_view_const_u8 data_in,
-                                      Array& data_out,
+                                      std::vector<uint8_t>& data_out,
                                       unsigned long messageSeqNo) = 0;
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
     virtual SEC_STATUS DecryptMessage(array_view_const_u8 data_in,
-                                      Array& data_out,
+                                      std::vector<uint8_t>& data_out,
                                       unsigned long messageSeqNo) = 0;
 };
 
@@ -457,7 +396,7 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
 {
     SEC_STATUS AcquireCredentialsHandle(
         const char * /*pszPrincipal*/,
-        Array * /*pvLogonID*/,
+        std::vector<uint8_t> * /*pvLogonID*/,
         SEC_WINNT_AUTH_IDENTITY const* /*pAuthData*/
     ) override
     {
@@ -467,7 +406,7 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
     SEC_STATUS InitializeSecurityContext(
         array_view_const_char /*pszTargetName*/,
         array_view_const_u8 /*input_buffer*/,
-        Array& /*output_buffer*/
+        std::vector<uint8_t>& /*output_buffer*/
     ) override
     {
         return SEC_E_UNSUPPORTED_FUNCTION;
@@ -475,14 +414,14 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
 
     SEC_STATUS AcceptSecurityContext(
         array_view_const_u8 /*input_buffer*/,
-        Array& /*output_buffer*/
+        std::vector<uint8_t>& /*output_buffer*/
     ) override
     {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     SEC_STATUS EncryptMessage(
-        array_view_const_u8 /*data_in*/, Array& /*data_out*/,
+        array_view_const_u8 /*data_in*/, std::vector<uint8_t>& /*data_out*/,
         unsigned long /*messageSeqNo*/
     ) override
     {
@@ -490,7 +429,7 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
     }
 
     SEC_STATUS DecryptMessage(
-        array_view_const_u8 /*data_in*/, Array& /*data_out*/,
+        array_view_const_u8 /*data_in*/, std::vector<uint8_t>& /*data_out*/,
         unsigned long /*messageSeqNo*/
     ) override
     {

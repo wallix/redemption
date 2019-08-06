@@ -123,13 +123,12 @@ public:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
-        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+        const char * pszPrincipal, std::vector<uint8_t> * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override {
         if (pszPrincipal && pvLogonID) {
             size_t length = strlen(pszPrincipal);
-            pvLogonID->init(length + 1);
-            pvLogonID->copy({pszPrincipal, length});
-            pvLogonID->get_data()[length] = 0;
+            pvLogonID->assign(pszPrincipal,pszPrincipal+length);
+            pvLogonID->push_back(0);
         }
         this->credentials = Krb5CredsPtr(new Krb5Creds);
 
@@ -177,7 +176,7 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
+        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, std::vector<uint8_t>& output_buffer
     ) override
     {
         OM_uint32 major_status, minor_status;
@@ -247,8 +246,7 @@ public:
         }
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
-        output_buffer.init(output_tok.length);
-        output_buffer.copy({static_cast<uint8_t const*>(output_tok.value), output_tok.length});
+        output_buffer.assign(static_cast<uint8_t const*>(output_tok.value), static_cast<uint8_t const*>(output_tok.value)+output_tok.length);
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 
@@ -264,7 +262,7 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        array_view_const_u8 input_buffer, Array& output_buffer
+        array_view_const_u8 input_buffer, std::vector<uint8_t>& output_buffer
     ) override
     {
         OM_uint32 major_status, minor_status;
@@ -332,8 +330,7 @@ public:
         }
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
-        output_buffer.init(output_tok.length);
-        output_buffer.copy({static_cast<const uint8_t*>(output_tok.value), output_tok.length});
+        output_buffer.assign(static_cast<const uint8_t*>(output_tok.value),static_cast<const uint8_t*>(output_tok.value)+ output_tok.length);
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 
@@ -347,7 +344,7 @@ public:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
@@ -379,8 +376,7 @@ public:
             return SEC_E_ENCRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
-        data_out.init(outbuf.length);
-        data_out.copy({static_cast<uint8_t const*>(outbuf.value), outbuf.length});
+        data_out.assign(static_cast<uint8_t const*>(outbuf.value),static_cast<uint8_t const*>(outbuf.value)+ outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
@@ -388,7 +384,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
 
         // OM_uint32 gss_unwrap
@@ -420,8 +416,7 @@ public:
             return SEC_E_DECRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
-        data_out.init(outbuf.length);
-        data_out.copy({static_cast<uint8_t const*>(outbuf.value), outbuf.length});
+        data_out.assign(static_cast<uint8_t const*>(outbuf.value), static_cast<uint8_t const*>(outbuf.value)+outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
         return SEC_E_OK;
     }

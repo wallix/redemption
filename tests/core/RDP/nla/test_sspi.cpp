@@ -23,52 +23,6 @@
 #include "core/RDP/nla/sspi.hpp"
 
 
-RED_AUTO_TEST_CASE(Test_Array)
-{
-    {
-        Array array;
-        RED_CHECK(array.get_data());
-        RED_CHECK_EQUAL(array.size(), 65536);
-
-        Array array2(42);
-        array.copy(array2);
-        RED_CHECK(array.get_data());
-        RED_CHECK_EQUAL(array.size(), 42);
-    }
-
-    {
-        Array array(42);
-        RED_CHECK(array.get_data());
-        RED_CHECK_EQUAL(array.size(), 42);
-    }
-
-    {
-        Array array(65536 + 1);
-        RED_CHECK(array.get_data());
-        RED_CHECK_EQUAL(array.size(), 65536 + 1);
-
-        array.init(42);
-        RED_CHECK(array.get_data());
-        RED_CHECK_EQUAL(array.size(), 42);
-    }
-
-    {
-        Array array;
-        array.get_data()[0] = 42;
-        array.get_data()[4] = 42;
-        RED_CHECK(array.get_data());
-        RED_CHECK_EQUAL(array.size(), 65536);
-        uint8_t source[] = {0,  1,  2,  3};
-        memcpy(array.get_data()+1, source, 3);
-        RED_CHECK(array.get_data());
-        RED_CHECK_EQUAL(array.size(), 65536);
-        RED_CHECK_EQUAL(array.get_data()[0], 42);
-        RED_CHECK_EQUAL(array.get_data()[1], 0);
-        RED_CHECK_EQUAL(array.get_data()[2], 1);
-        RED_CHECK_EQUAL(array.get_data()[3], 2);
-        RED_CHECK_EQUAL(array.get_data()[4], 42);
-    }
-}
 
 RED_AUTO_TEST_CASE(TestSecIdentity)
 {

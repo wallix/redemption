@@ -48,7 +48,7 @@ private:
     std::vector<uint8_t> PublicKey;
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
-    Array ServicePrincipalName;
+    std::vector<uint8_t> ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     
     struct Krb5Creds_deleter
@@ -67,13 +67,12 @@ private:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS sspi_AcquireCredentialsHandle(
-        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+        const char * pszPrincipal, std::vector<uint8_t> * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) {
         if (pszPrincipal && pvLogonID) {
             size_t length = strlen(pszPrincipal);
-            pvLogonID->init(length + 1);
-            pvLogonID->copy({pszPrincipal, length});
-            pvLogonID->get_data()[length] = 0;
+            pvLogonID->assign(pszPrincipal, pszPrincipal+length);
+            pvLogonID->push_back(0);
         }
         this->sspi_credentials = Krb5CredsPtr(new Krb5Creds);
 
@@ -250,7 +249,7 @@ private:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS sspi_DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) {
+    SEC_STATUS sspi_DecryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) {
         (void)MessageSeqNo;
 
         // OM_uint32 gss_unwrap
@@ -282,8 +281,7 @@ private:
             return SEC_E_DECRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
-        data_out.init(outbuf.length);
-        data_out.copy({static_cast<uint8_t const*>(outbuf.value), outbuf.length});
+        data_out.assign(static_cast<uint8_t const*>(outbuf.value),static_cast<uint8_t const*>(outbuf.value)+ outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
         return SEC_E_OK;
     }
@@ -376,9 +374,8 @@ private:
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
-        this->ServicePrincipalName.init(length + 1);
-        this->ServicePrincipalName.copy({pszTargetName, length});
-        this->ServicePrincipalName.get_data()[length] = 0;
+        this->ServicePrincipalName.assign(pszTargetName, pszTargetName+length);
+        this->ServicePrincipalName.push_back(0);
     }
 
     void credssp_generate_client_nonce() {
@@ -441,7 +438,7 @@ private:
     SEC_STATUS credssp_decrypt_public_key_echo() {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::decrypt_public_key_echo");
 
-        Array Buffer;
+        std::vector<uint8_t> Buffer;
 
         SEC_STATUS const status = this->sspi_DecryptMessage(
             this->ts_request.pubKeyAuth, Buffer, this->recv_seq_num++);
@@ -466,7 +463,7 @@ private:
             public_key = {this->ServerClientHash.data(), this->ServerClientHash.size()};
         }
 
-        array_view_u8 public_key2 = Buffer.av();
+        array_view_u8 public_key2 = Buffer;
 
         if (public_key2.size() != public_key.size()) {
             LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
@@ -508,7 +505,7 @@ private:
     struct ClientAuthenticateData
     {
         enum : uint8_t { Start, Loop, Final } state = Start;
-        Array input_buffer;
+        std::vector<uint8_t> input_buffer;
     };
     ClientAuthenticateData client_auth_data;
 
@@ -525,8 +522,8 @@ private:
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
         SEC_STATUS status = this->sspi_InitializeSecurityContext(
-            bytes_view(this->ServicePrincipalName.av()).as_chars(),
-            this->client_auth_data.input_buffer.av(), /*output*/this->ts_request.negoTokens);
+            bytes_view(this->ServicePrincipalName).as_chars(),
+            this->client_auth_data.input_buffer, /*output*/this->ts_request.negoTokens);
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
             (status != SEC_I_COMPLETE_NEEDED) &&
             (status != SEC_E_OK) &&
@@ -535,7 +532,7 @@ private:
             return Res::Err;
         }
 
-        this->client_auth_data.input_buffer.init(0);
+        this->client_auth_data.input_buffer.clear();
 
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
@@ -588,7 +585,7 @@ private:
         // hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
         // #endif
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
-        this->client_auth_data.input_buffer.copy(this->ts_request.negoTokens);
+        this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
 
         return Res::Ok;
     }
@@ -715,7 +712,7 @@ public:
             throw Error(ERR_CREDSSP_KERBEROS_INIT_FAILED);
         }
 
-        this->client_auth_data.input_buffer.init(0);
+        this->client_auth_data.input_buffer.clear();
 
         this->client_auth_data.state = ClientAuthenticateData::Loop;
         if (Res::Err == this->sm_credssp_client_authenticate_send()){
