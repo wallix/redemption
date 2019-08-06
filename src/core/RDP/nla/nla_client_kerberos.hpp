@@ -49,8 +49,135 @@ private:
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
     std::vector<uint8_t> ServicePrincipalName;
-    SEC_WINNT_AUTH_IDENTITY identity;
-    
+    struct SEC_WINNT_AUTH_IDENTITY
+    {
+        // kerberos only
+        //@{
+        char princname[256];
+        char princpass[256];
+        //@}
+        // ntlm only
+        //@{
+        private:
+        std::vector<uint8_t> User;
+        std::vector<uint8_t> Domain;
+        public:
+        std::vector<uint8_t> Password;
+        //@}
+
+        public:
+        SEC_WINNT_AUTH_IDENTITY()
+        {
+            this->princname[0] = 0;
+            this->princpass[0] = 0;
+        }
+
+        void user_init_copy(cbytes_view av)
+        {
+            this->User.assign(av.data(), av.data()+av.size());
+        }
+
+        void domain_init_copy(cbytes_view av)
+        {
+            this->Domain.assign(av.data(), av.data()+av.size());
+        }
+
+        bool is_empty_user_domain(){
+            return (this->User.size() == 0) && (this->Domain.size() == 0);
+        }
+
+        cbytes_view get_password_utf16_av() const
+        {
+            return this->Password;
+        }
+
+        cbytes_view get_user_utf16_av() const
+        {
+            return this->User;
+        }
+
+        cbytes_view get_domain_utf16_av() const
+        {
+            return this->Domain;
+        }
+
+        void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
+        {
+            UTF16toUTF8(this->Domain.data(), this->Domain.size(), buffer, buffer_len);
+        }
+
+        void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
+            UTF16toUTF8(this->User.data(), this->User.size(), buffer, buffer_len);
+        }
+
+
+        void SetUserFromUtf8(const uint8_t * user)
+        {
+            if (user) {
+                size_t user_len = UTF8Len(user);
+                this->User = std::vector<uint8_t>(user_len * 2);
+                UTF8toUTF16({user, strlen(char_ptr_cast(user))}, this->User.data(), user_len * 2);
+            }
+            else {
+                this->User.clear();
+            }
+        }
+
+        void SetDomainFromUtf8(const uint8_t * domain)
+        {
+            if (domain) {
+                size_t domain_len = UTF8Len(domain);
+                this->Domain = std::vector<uint8_t>(domain_len * 2);
+                UTF8toUTF16({domain, strlen(char_ptr_cast(domain))}, this->Domain.data(), domain_len * 2);
+            }
+            else {
+                this->Domain.clear();
+            }
+        }
+
+        void SetPasswordFromUtf8(const uint8_t * password)
+        {
+            if (password) {
+                size_t password_len = UTF8Len(password);
+                this->Password = std::vector<uint8_t>(password_len * 2);
+                UTF8toUTF16({password, strlen(char_ptr_cast(password))}, this->Password.data(), password_len * 2);
+            }
+            else {
+                this->Password.clear();
+            }
+        }
+
+        void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
+        {
+            auto copy = [](char (&arr)[256], uint8_t const* data){
+                if (data) {
+                    const char * p = char_ptr_cast(data);
+                    const size_t length = p ? strnlen(p, 255) : 0;
+                    memcpy(arr, data, length);
+                    arr[length] = 0;
+                }
+            };
+
+            copy(this->princname, user);
+            copy(this->princpass, pass);
+        }
+
+        void clear()
+        {
+            this->User.clear();
+            this->Domain.clear();
+            this->Password.clear();
+        }
+
+        void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
+        {
+            this->User.assign(user_utf16_av.data(),user_utf16_av.data()+user_utf16_av.size());
+            this->Domain.assign(domain_utf16_av.data(),domain_utf16_av.data()+domain_utf16_av.size());
+            this->Password.assign(password_utf16_av.data(),password_utf16_av.data()+password_utf16_av.size());
+        }
+
+    } identity;
+        
     struct Krb5Creds_deleter
     {
         void operator()(Krb5Creds* credentials) const

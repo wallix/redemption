@@ -19,14 +19,18 @@
 */
 
 #include "core/RDP/nla/kerberos/kerberos.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/genrandom.hpp"
+
+#include "core/RDP/nla/nla_server_kerberos.hpp"
 
 // TEST missing
 int main()
 {
-    Kerberos_SecurityFunctionTable table;
+    rdpCredsspServerKerberos::Kerberos_SecurityFunctionTable table;
     uint8_t name[] = "tartempion";
     uint8_t pass[] = "a";
-    SEC_WINNT_AUTH_IDENTITY id;
+    rdpCredsspServerKerberos::SEC_WINNT_AUTH_IDENTITY id;
     id.SetKrbAuthIdentity(name, pass);
 
     // SEC_STATUS status = table.FreeCredentialsHandle(&credentials);

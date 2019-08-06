@@ -18,43 +18,9 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "core/RDP/nla/sspi.hpp"
-
-
-
-RED_AUTO_TEST_CASE(TestSecIdentity)
+int main() 
 {
-    SEC_WINNT_AUTH_IDENTITY id;
-
-    id.SetUserFromUtf8(byte_ptr_cast("Ménélas"));
-    id.SetDomainFromUtf8(byte_ptr_cast("Sparte"));
-    id.SetPasswordFromUtf8(byte_ptr_cast("Hélène"));
-
-    RED_CHECK_MEM(id.get_user_utf16_av(), "M\0\xe9\0n\0\xe9\0l\0a\0s\0"_av);
-    RED_CHECK_MEM(id.get_domain_utf16_av(), "S\0p\0a\0r\0t\0e\0"_av);
-    RED_CHECK_MEM(id.get_password_utf16_av(), "H\0\xe9\0l\0\xe8\0n\0e\0"_av);
-
-
-    SEC_WINNT_AUTH_IDENTITY id2;
-
-    id2.CopyAuthIdentity(id.get_user_utf16_av()
-                        ,id.get_domain_utf16_av()
-                        ,id.get_password_utf16_av());
-
-    RED_CHECK_MEM(id.get_user_utf16_av(), "M\0\xe9\0n\0\xe9\0l\0a\0s\0"_av);
-    RED_CHECK_MEM(id.get_domain_utf16_av(), "S\0p\0a\0r\0t\0e\0"_av);
-    RED_CHECK_MEM(id.get_password_utf16_av(), "H\0\xe9\0l\0\xe8\0n\0e\0"_av);
-
-    id2.clear();
-    RED_CHECK(id2.is_empty_user_domain());
-    RED_CHECK_EQUAL(id2.get_password_utf16_av().size(), 0);
-
-    id.SetUserFromUtf8(byte_ptr_cast("Zeus"));
-    RED_CHECK_MEM(id.get_user_utf16_av(), "Z\0e\0u\0s\0"_av);
-    id.SetDomainFromUtf8(byte_ptr_cast("Olympe"));
-    RED_CHECK_MEM(id.get_domain_utf16_av(), "O\0l\0y\0m\0p\0e\0"_av);
-    id.SetPasswordFromUtf8(byte_ptr_cast("Athéna"));
-    RED_CHECK_MEM(id.get_password_utf16_av(), "A\0t\0h\0\xe9\0n\0a\0"_av);
 }
+
+
