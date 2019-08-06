@@ -188,6 +188,9 @@ private:
     std::size_t sz  = 0;
 };
 
+template<class T>
+array_view(T&&) -> array_view<std::remove_pointer_t<decltype(utils::data(std::declval<T&&>()))>>;
+
 
 template<class T>
 constexpr array_view<T> make_array_view(array_view<T> av) noexcept
