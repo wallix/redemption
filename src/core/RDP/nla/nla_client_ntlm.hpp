@@ -201,29 +201,14 @@ public:
         this->sspi_context_state = NTLM_STATE_NEGOTIATE;
 
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
-        this->NegotiateFlags |= (
-              NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
-            | NTLMSSP_NEGOTIATE_KEY_EXCH | NTLMSSP_NEGOTIATE_128 
-            | NTLMSSP_NEGOTIATE_SIGN | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-            | NTLMSSP_NEGOTIATE_NTLM | NTLMSSP_REQUEST_TARGET 
-            | NTLMSSP_NEGOTIATE_UNICODE)
-        | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_56
-            |  NTLMSSP_NEGOTIATE_VERSION
-            |  NTLMSSP_NEGOTIATE_LM_KEY
-            |  NTLMSSP_NEGOTIATE_OEM)
-        | (this->confidentiality) * NTLMSSP_NEGOTIATE_SEAL
-        | (this->SendVersionInfo) * NTLMSSP_NEGOTIATE_VERSION;
 
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-            // this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
-            // this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            // this->version.ProductBuild        = 2600;
-            // this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-            this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-            this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-            this->version.ProductBuild        = 7601;
-            this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-        }
+        this->NegotiateFlags = set_negotiate_flags(this->NTLMv2, false, false, true)
+            | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_LM_KEY|NTLMSSP_NEGOTIATE_OEM);
+
+        this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+        this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+        this->version.ProductBuild        = 7601;
+        this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
         this->NEGOTIATE_MESSAGE.version = this->version;
 
@@ -265,14 +250,11 @@ public:
     }
 
 
-    uint32_t set_negotiate_flags(bool ntlmv2, bool send_version_info, bool use_mic, bool send_workstation_name, bool confidentiality, bool negotiate_key_exchange)
+    uint32_t set_negotiate_flags(bool ntlmv2, bool use_mic, bool send_workstation_name, bool negotiate_key_exchange)
     {
         uint32_t flags = 0;
         if (ntlmv2) {
             flags |= NTLMSSP_NEGOTIATE_56;
-            if (send_version_info) {
-                flags |= NTLMSSP_NEGOTIATE_VERSION;
-            }
         }
 
         if (use_mic) {
@@ -281,9 +263,7 @@ public:
         if (send_workstation_name) {
             flags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
         }
-        if (confidentiality) {
-            flags |= NTLMSSP_NEGOTIATE_SEAL;
-        }
+        flags |= NTLMSSP_NEGOTIATE_SEAL;
         if (negotiate_key_exchange) {
             flags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
         }
@@ -293,7 +273,8 @@ public:
               | NTLMSSP_NEGOTIATE_NTLM
               | NTLMSSP_NEGOTIATE_SIGN
               | NTLMSSP_REQUEST_TARGET
-              | NTLMSSP_NEGOTIATE_UNICODE);
+              | NTLMSSP_NEGOTIATE_UNICODE
+              | NTLMSSP_NEGOTIATE_VERSION);
         return flags;
     }
 
@@ -339,18 +320,15 @@ public:
                         | NTLMSSP_NEGOTIATE_NTLM | NTLMSSP_REQUEST_TARGET 
                         | NTLMSSP_NEGOTIATE_UNICODE)
                     | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_56
-                        |  NTLMSSP_NEGOTIATE_VERSION
                         |  NTLMSSP_NEGOTIATE_LM_KEY
                         |  NTLMSSP_NEGOTIATE_OEM)
-                    | (this->confidentiality) * NTLMSSP_NEGOTIATE_SEAL
-                    | (this->SendVersionInfo) * NTLMSSP_NEGOTIATE_VERSION;
+                    | NTLMSSP_NEGOTIATE_SEAL
+                    | NTLMSSP_NEGOTIATE_VERSION;
 
-                    if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-                        this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-                        this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                        this->version.ProductBuild        = 7601;
-                        this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-                    }
+                    this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+                    this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+                    this->version.ProductBuild        = 7601;
+                    this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
                     this->NEGOTIATE_MESSAGE.version = this->version;
                     this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
@@ -499,20 +477,16 @@ public:
 
                         this->NegotiateFlags = set_negotiate_flags(
                                             this->NTLMv2, 
-                                            this->SendVersionInfo, 
                                             this->UseMIC, 
                                             this->SendWorkstationName, 
-                                            this->confidentiality, 
                                             this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
                         this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
-                        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
-                            this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-                            this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                            this->version.ProductBuild        = 7601;
-                            this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-                        }
+                        this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+                        this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+                        this->version.ProductBuild        = 7601;
+                        this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
                         this->AUTHENTICATE_MESSAGE.version = this->version;
 
