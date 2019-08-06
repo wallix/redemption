@@ -431,6 +431,19 @@ public:
             }
             if (!file) {
                 LOG(LOG_ERR, "ICapValidator::receive_response: invalid id %u", validator_id);
+                auto const info = key_qvalue_pairs({
+                    {"type", "FILE_VERIFICATION_ERROR"},
+                    {"status", "Invalid file id"}
+                });
+
+                ArcsightLogInfo arc_info;
+                arc_info.name = "FILE_SCAN_ERROR";
+                arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
+                arc_info.ApplicationProtocol = "rdp";
+                arc_info.message = "Invalid file id";
+
+                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                this->front.session_update("FILE_VERIFICATION=Invalid file id"_av);
                 continue;
             }
 
@@ -458,7 +471,7 @@ public:
                 : ArcsightLogInfo::Direction::SERVER_DST;
             arc_info.message = result_content;
 
-            this->report_message.log6(info, arc_info, session_reactor.get_current_time());
+            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
             std::string message = str_concat("FILE_VERIFICATION=",
                 file_data.file_name, '\x01', str_direction, '\x01', result_content);
             this->front.session_update(message);

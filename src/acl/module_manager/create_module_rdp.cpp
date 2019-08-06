@@ -345,14 +345,44 @@ void ModuleManager::create_mod_rdp(
                         return r;
                     }
                 };
+
+                struct CtxError
+                {
+                    ReportMessageApi & report_message;
+                    std::string socket_path;
+                    SessionReactor& session_reactor;
+                    FrontAPI& front;
+                };
+
+                CtxError ctx_error;
                 ICAPTransport trans;
                 // TODO wait result (add delay)
                 ICAPService service;
                 SessionReactor::TopFdPtr validator_event;
 
-                ICAP(unique_fd&& fd)
-                : trans(std::move(fd), ReportError([](Error err){
-                    LOG(LOG_INFO, "ICAPTransport: %s", err.errmsg());
+                ICAP(unique_fd&& fd, CtxError&& ctx_error)
+                : ctx_error(std::move(ctx_error))
+                , trans(std::move(fd), ReportError([this](Error err){
+                    auto* msg = err.errmsg();
+
+                    LOG(LOG_INFO, "ICAPTransport: %s", msg);
+                    auto const info = key_qvalue_pairs({
+                        {"type", "FILE_VERIFICATION_ERROR"},
+                        {"service", this->ctx_error.socket_path},
+                        {"status", msg}
+                    });
+
+                    ArcsightLogInfo arc_info;
+                    arc_info.name = "FILE_SCAN_ERROR";
+                    arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
+                    arc_info.ApplicationProtocol = "rdp";
+                    arc_info.message = msg;
+
+                    this->ctx_error.report_message.log6(
+                        info, arc_info, this->ctx_error.session_reactor.get_current_time());
+                    auto message = str_concat("FILE_VERIFICATION="_av, msg);
+                    this->ctx_error.front.session_update(message);
+
                     return err;
                 }))
                 , service(this->trans)
@@ -383,11 +413,16 @@ void ModuleManager::create_mod_rdp(
         int validator_fd = -1;
 
         if (enable_validator) {
-            unique_fd ufd = addr_connect(ini.get<cfg::file_verification::socket_path>().c_str());
+            auto const& socket_path = ini.get<cfg::file_verification::socket_path>();
+            unique_fd ufd = addr_connect(socket_path.c_str());
             if (ufd) {
                 validator_fd = ufd.fd();
                 fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
-                icap = std::make_unique<ModRDPWithMetrics::ICAP>(std::move(ufd));
+                icap = std::make_unique<ModRDPWithMetrics::ICAP>(
+                    std::move(ufd),
+                    ModRDPWithMetrics::ICAP::CtxError{
+                        report_message, socket_path, this->session_reactor, this->front
+                    });
                 icap->service.send_infos({
                     "server_ip"_av, this->ini.get<cfg::context::target_host>(),
                     "client_ip"_av, this->ini.get<cfg::globals::host>(),
@@ -397,6 +432,20 @@ void ModuleManager::create_mod_rdp(
             else {
                 enable_validator = false;
                 LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
+                auto const info = key_qvalue_pairs({
+                    {"type", "FILE_VERIFICATION_ERROR"},
+                    {"service", socket_path},
+                    {"status", "Unable to connect to ICAP server"}
+                });
+
+                ArcsightLogInfo arc_info;
+                arc_info.name = "FILE_SCAN_ERROR";
+                arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
+                arc_info.ApplicationProtocol = "rdp";
+                arc_info.message = "Unable to connect to ICAP server";
+
+                report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                this->front.session_update("FILE_VERIFICATION=Unable to connect to ICAP server"_av);
             }
         }
 
