@@ -22,7 +22,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "lib/files_validator_api.hpp"
-#include "mod/icap_files_service.hpp"
+#include "mod/file_validatior_service.hpp"
 
 #include "utils/sugar/algostring.hpp"
 
@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE_WF(testFileValid, wf)
     auto* validator = validator_open_fd_session(fd);
     RED_REQUIRE(validator);
 
-    using R = ICAPService::ResponseType;
+    using R = FileValidatorService::ResponseType;
 
     RED_CHECK(validator_get_response_type(validator) == underlying_cast(R::WaitingData));
 

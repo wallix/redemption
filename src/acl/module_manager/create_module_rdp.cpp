@@ -32,7 +32,7 @@
 #include "mod/rdp/parse_extra_orders.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "mod/icap_files_service.hpp"
+#include "mod/file_validatior_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
@@ -330,9 +330,9 @@ void ModuleManager::create_mod_rdp(
                 SessionReactor::TimerPtr metrics_timer;
             };
 
-            struct ICAP
+            struct FileValidator
             {
-                struct ICAPTransport : FileTransport
+                struct FileValidatorTransport : FileTransport
                 {
                     using FileTransport::FileTransport;
 
@@ -355,17 +355,17 @@ void ModuleManager::create_mod_rdp(
                 };
 
                 CtxError ctx_error;
-                ICAPTransport trans;
+                FileValidatorTransport trans;
                 // TODO wait result (add delay)
-                ICAPService service;
+                FileValidatorService service;
                 SessionReactor::TopFdPtr validator_event;
 
-                ICAP(unique_fd&& fd, CtxError&& ctx_error)
+                FileValidator(unique_fd&& fd, CtxError&& ctx_error)
                 : ctx_error(std::move(ctx_error))
                 , trans(std::move(fd), ReportError([this](Error err){
                     auto* msg = err.errmsg();
 
-                    LOG(LOG_INFO, "ICAPTransport: %s", msg);
+                    LOG(LOG_INFO, "FileValidatorTransport: %s", msg);
                     auto const info = key_qvalue_pairs({
                         {"type", "FILE_VERIFICATION_ERROR"},
                         {"service", this->ctx_error.socket_path},
@@ -388,7 +388,7 @@ void ModuleManager::create_mod_rdp(
                 , service(this->trans)
                 {}
 
-                ~ICAP()
+                ~FileValidator()
                 {
                     try {
                         this->service.send_close_session();
@@ -399,7 +399,7 @@ void ModuleManager::create_mod_rdp(
             };
 
             std::unique_ptr<ModMetrics> metrics;
-            std::unique_ptr<ICAP> icap;
+            std::unique_ptr<FileValidator> file_validator;
 
             using mod_rdp::mod_rdp;
         };
@@ -409,7 +409,7 @@ void ModuleManager::create_mod_rdp(
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
         std::unique_ptr<ModRDPWithMetrics::ModMetrics> metrics;
-        std::unique_ptr<ModRDPWithMetrics::ICAP> icap;
+        std::unique_ptr<ModRDPWithMetrics::FileValidator> file_validator;
         int validator_fd = -1;
 
         if (enable_validator) {
@@ -418,12 +418,12 @@ void ModuleManager::create_mod_rdp(
             if (ufd) {
                 validator_fd = ufd.fd();
                 fcntl(validator_fd, F_SETFL, fcntl(validator_fd, F_GETFL) & ~O_NONBLOCK);
-                icap = std::make_unique<ModRDPWithMetrics::ICAP>(
+                file_validator = std::make_unique<ModRDPWithMetrics::FileValidator>(
                     std::move(ufd),
-                    ModRDPWithMetrics::ICAP::CtxError{
+                    ModRDPWithMetrics::FileValidator::CtxError{
                         report_message, socket_path, this->session_reactor, this->front
                     });
-                icap->service.send_infos({
+                file_validator->service.send_infos({
                     "server_ip"_av, this->ini.get<cfg::context::target_host>(),
                     "client_ip"_av, this->ini.get<cfg::globals::host>(),
                     "auth_user"_av, this->ini.get<cfg::globals::auth_user>()
@@ -435,17 +435,17 @@ void ModuleManager::create_mod_rdp(
                 auto const info = key_qvalue_pairs({
                     {"type", "FILE_VERIFICATION_ERROR"},
                     {"service", socket_path},
-                    {"status", "Unable to connect to ICAP server"}
+                    {"status", "Unable to connect to FileValidator server"}
                 });
 
                 ArcsightLogInfo arc_info;
                 arc_info.name = "FILE_SCAN_ERROR";
                 arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
                 arc_info.ApplicationProtocol = "rdp";
-                arc_info.message = "Unable to connect to ICAP server";
+                arc_info.message = "Unable to connect to FileValidator server";
 
                 report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-                this->front.session_update("FILE_VERIFICATION=Unable to connect to ICAP server"_av);
+                this->front.session_update("FILE_VERIFICATION=Unable to connect to FileValidator server"_av);
             }
         }
 
@@ -495,12 +495,12 @@ void ModuleManager::create_mod_rdp(
             report_message,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,
-            enable_validator ? &icap->service : nullptr
+            enable_validator ? &file_validator->service : nullptr
         );
 
         if (enable_validator) {
-            new_mod->icap = std::move(icap);
-            new_mod->icap->validator_event = this->session_reactor.create_fd_event(validator_fd)
+            new_mod->file_validator = std::move(file_validator);
+            new_mod->file_validator->validator_event = this->session_reactor.create_fd_event(validator_fd)
             .set_timeout(std::chrono::milliseconds::max())
             .on_timeout(jln::always_ready([]{}))
             .on_exit(jln::propagate_exit())

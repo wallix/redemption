@@ -25,7 +25,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "mod/icap_files_service.hpp"
+#include "mod/file_validatior_service.hpp"
 #include "utils/stream.hpp"
 #include "system/ssl_sha256.hpp"
 
@@ -50,7 +50,6 @@ struct ClipboardSideData
 
         // TODO CLIPRDR
         StreamId stream_id;
-        // TODO ICAPFileId -> FileValidatorId
         FileGroupId file_group_id;
 
         // TODO type
@@ -70,7 +69,7 @@ struct ClipboardSideData
 
         struct FileData
         {
-            ICAPFileId validator_id;
+            FileValidatorId file_validator_id;
             uint32_t clip_data_id;
             bool active_lock;
 
@@ -213,7 +212,7 @@ public:
 
     void push_file_content_range(
         StreamId stream_id, FileGroupId file_group_id,
-        bool has_clip_data_id, uint32_t clip_data_id, ICAPFileId validator_id,
+        bool has_clip_data_id, uint32_t clip_data_id, FileValidatorId file_validator_id,
         std::string const& filename, uint64_t filesize, uint64_t file_size_requested)
     {
         bool active_lock = (has_clip_data_id && this->has_lock_id(clip_data_id));
@@ -222,7 +221,7 @@ public:
                 ? FileContent::Status::WaitDataWithId
                 : FileContent::Status::WaitData,
             FileContent::FileData{
-                validator_id, clip_data_id, active_lock, filename, filesize, 0,
+                file_validator_id, clip_data_id, active_lock, filename, filesize, 0,
                 std::min(file_size_requested, filesize), {}
             }
         });
@@ -279,10 +278,10 @@ public:
         return nullptr;
     }
 
-    FileContent* find_file_by_validator_id(ICAPFileId validator_id)
+    FileContent* find_file_by_file_validator_id(FileValidatorId file_validator_id)
     {
         for (auto& file : this->file_contents_list) {
-            if (file.file_data.validator_id == validator_id) {
+            if (file.file_data.file_validator_id == file_validator_id) {
                 return &file;
             }
         }

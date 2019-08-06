@@ -36,17 +36,17 @@
 #include "utils/log.hpp"
 
 
-enum class ICAPFileId : uint32_t;
+enum class FileValidatorId : uint32_t;
 
-namespace LocalICAPProtocol
+namespace LocalFileValidatorProtocol
 {
 
-inline void emit_file_id(OutStream& stream, ICAPFileId file_id) noexcept
+inline void emit_file_id(OutStream& stream, FileValidatorId file_id) noexcept
 {
     stream.out_uint32_be(safe_int(file_id));
 }
 
-inline ICAPFileId recv_file_id(InStream& stream) noexcept
+inline FileValidatorId recv_file_id(InStream& stream) noexcept
 {
     return safe_int(stream.in_uint32_be());
 }
@@ -85,7 +85,7 @@ enum class [[nodiscard]] ReceiveStatus : bool
     Ok,
 };
 
-struct ICAPHeader
+struct FileValidatorHeader
 {
     // This header starts every message receive from or emit to the local service.
 
@@ -100,9 +100,9 @@ struct ICAPHeader
     uint32_t msg_len;
 
 
-    ICAPHeader() = default;
+    FileValidatorHeader() = default;
 
-    ICAPHeader(MsgType msg_type, uint32_t msg_len) noexcept
+    FileValidatorHeader(MsgType msg_type, uint32_t msg_len) noexcept
     : msg_type(msg_type)
     , msg_len(msg_len)
     {}
@@ -127,16 +127,16 @@ struct ICAPHeader
 };
 
 
-struct ICAPResultHeader
+struct FileValidatorResultHeader
 {
     ValidationResult result = ValidationResult::Wait;
-    ICAPFileId file_id;
+    FileValidatorId file_id;
     uint32_t content_size;
 
     // ResultMessage
 
     // This message is send from the local service to sessions, it does NOT
-    // need an ICAPHeader so.
+    // need an FileValidatorHeader so.
 
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -197,14 +197,14 @@ struct ICAPResultHeader
     }
 };
 
-inline ICAPFileId send_open_file(
-    OutTransport trans, ICAPFileId file_id, std::string_view file_name, std::string_view target_name)
+inline FileValidatorId send_open_file(
+    OutTransport trans, FileValidatorId file_id, std::string_view file_name, std::string_view target_name)
 {
     file_name = std::string_view(file_name.data(), std::min(std::size_t(512), file_name.size()));
 
     StaticOutStream<1024> message;
 
-    ICAPHeader(MsgType::NewFile, 4u + 8u + file_name.size() + target_name.size())
+    FileValidatorHeader(MsgType::NewFile, 4u + 8u + file_name.size() + target_name.size())
     .emit(message);
 
     emit_file_id(message, file_id);
@@ -221,11 +221,11 @@ inline ICAPFileId send_open_file(
 }
 
 inline void send_header(
-    OutTransport trans, ICAPFileId file_id, MsgType msg_type, uint32_t pkt_len = 0)
+    OutTransport trans, FileValidatorId file_id, MsgType msg_type, uint32_t pkt_len = 0)
 {
     StaticOutStream<16> message;
 
-    ICAPHeader(msg_type, 4u + pkt_len)
+    FileValidatorHeader(msg_type, 4u + pkt_len)
     .emit(message);
 
     emit_file_id(message, file_id);
@@ -233,7 +233,7 @@ inline void send_header(
     trans.send(message.get_bytes());
 }
 
-inline void send_data_file(OutTransport trans, ICAPFileId file_id, const_bytes_view data)
+inline void send_data_file(OutTransport trans, FileValidatorId file_id, const_bytes_view data)
 {
     constexpr std::ptrdiff_t max_pkt_len = 0x0fff'ffff;
 
@@ -255,7 +255,7 @@ inline void send_infos(OutTransport trans, std::initializer_list<const_bytes_vie
     InfosMessage
 
     This message contains additionnal infos for the session.
-    It begins with an ICAPHeader its msg_type must be INFOS_FLAG.
+    It begins with an FileValidatorHeader its msg_type must be INFOS_FLAG.
 
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -292,7 +292,7 @@ inline void send_infos(OutTransport trans, std::initializer_list<const_bytes_vie
 
     StaticOutStream<8*1024> message;
 
-    ICAPHeader(MsgType::Infos, pkt_len).emit(message);
+    FileValidatorHeader(MsgType::Infos, pkt_len).emit(message);
     message.out_uint16_be(data_map.size() / 2);
 
     for (auto const& data : data_map) {
@@ -308,46 +308,46 @@ inline void send_infos(OutTransport trans, std::initializer_list<const_bytes_vie
     trans.send(message.get_bytes());
 }
 
-} // namespace LocalICAPProtocol
+} // namespace LocalFileValidatorProtocol
 
-struct ICAPService
+struct FileValidatorService
 {
-    ICAPService(Transport& trans) noexcept
+    FileValidatorService(Transport& trans) noexcept
     : trans(trans)
     {}
 
-    ICAPFileId open_file(std::string_view file_name, std::string_view target_name)
+    FileValidatorId open_file(std::string_view file_name, std::string_view target_name)
     {
-        return LocalICAPProtocol::send_open_file(this->trans, this->generate_id(), file_name, target_name);
+        return LocalFileValidatorProtocol::send_open_file(this->trans, this->generate_id(), file_name, target_name);
     }
 
-    void send_data(ICAPFileId file_id, const_bytes_view data)
+    void send_data(FileValidatorId file_id, const_bytes_view data)
     {
-        LocalICAPProtocol::send_data_file(this->trans, file_id, data);
+        LocalFileValidatorProtocol::send_data_file(this->trans, file_id, data);
     }
 
     /// data_map is a key value list
     void send_infos(std::initializer_list<const_bytes_view> data_map)
     {
-        LocalICAPProtocol::send_infos(this->trans, data_map);
+        LocalFileValidatorProtocol::send_infos(this->trans, data_map);
     }
 
-    void send_eof(ICAPFileId file_id)
+    void send_eof(FileValidatorId file_id)
     {
-        using namespace LocalICAPProtocol;
+        using namespace LocalFileValidatorProtocol;
         send_header(this->trans, file_id, MsgType::Eof);
     }
 
-    void send_abort(ICAPFileId file_id)
+    void send_abort(FileValidatorId file_id)
     {
-        using namespace LocalICAPProtocol;
+        using namespace LocalFileValidatorProtocol;
         send_header(this->trans, file_id, MsgType::AbortFile);
     }
 
     void send_close_session()
     {
-        using namespace LocalICAPProtocol;
-        send_header(this->trans, ICAPFileId(), MsgType::CloseSession);
+        using namespace LocalFileValidatorProtocol;
+        send_header(this->trans, FileValidatorId(), MsgType::CloseSession);
     }
 
     std::string const& get_content() const noexcept
@@ -355,12 +355,12 @@ struct ICAPService
         return this->content;
     }
 
-    ICAPFileId last_file_id() const noexcept
+    FileValidatorId last_file_id() const noexcept
     {
         return this->result_header.file_id;
     }
 
-    LocalICAPProtocol::ValidationResult last_result_flag() const noexcept
+    LocalFileValidatorProtocol::ValidationResult last_result_flag() const noexcept
     {
         return this->result_header.result;
     }
@@ -422,13 +422,13 @@ private:
             return shift_data(State::HasContent);
         };
 
-        using namespace LocalICAPProtocol;
+        using namespace LocalFileValidatorProtocol;
 
         if (this->state == State::ContinuationData) {
             return read_content();
         }
 
-        ICAPHeader header;
+        FileValidatorHeader header;
         if (header.recv(in_stream) != ReceiveStatus::Ok) {
             return State::WaitingData;
         }
@@ -444,7 +444,7 @@ private:
                 return read_content();
 
             default:
-                LOG(LOG_ERR, "ICAPService::receive_response: Unknown packet: msg_type=%d",
+                LOG(LOG_ERR, "FileValidatorService::receive_response: Unknown packet: msg_type=%d",
                     int(header.msg_type));
                 in_stream.in_skip_bytes(std::min<std::size_t>(
                     header.msg_len, in_stream.in_remain()));
@@ -452,14 +452,14 @@ private:
         }
     }
 
-    ICAPFileId generate_id() noexcept
+    FileValidatorId generate_id() noexcept
     {
         ++this->current_id;
-        return ICAPFileId(this->current_id);
+        return FileValidatorId(this->current_id);
     }
 
     Transport& trans;
-    LocalICAPProtocol::ICAPResultHeader result_header;
+    LocalFileValidatorProtocol::FileValidatorResultHeader result_header;
     std::string content;
     int32_t current_id = 0;
     State state = State::WaitingData;

@@ -144,7 +144,6 @@ public:
     }
 };
 
-class ICAPService;
 
 class ModuleManager : public MMIni
 {

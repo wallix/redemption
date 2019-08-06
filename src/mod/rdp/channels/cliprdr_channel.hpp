@@ -24,7 +24,6 @@
 #include "core/error.hpp"
 #include "core/front_api.hpp"
 #include "core/session_reactor.hpp"
-#include "mod/icap_files_service.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
@@ -70,7 +69,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
 
     SessionReactor& session_reactor;
 
-    ICAPService * icap;
+    FileValidatorService * file_validator;
 
     enum class Direction : bool
     {
@@ -86,13 +85,13 @@ public:
         SessionReactor& session_reactor,
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
-        ICAPService * icap_service)
+        FileValidatorService * file_validator_service)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
     , params([&]{
         auto p = params;
-        if (!icap_service) {
+        if (!file_validator_service) {
             p.validator_params.up_target_name.clear();
             p.validator_params.down_target_name.clear();
         }
@@ -101,7 +100,7 @@ public:
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , session_reactor(session_reactor)
-    , icap(icap_service)
+    , file_validator(file_validator_service)
     {}
 
     void empty_client_clipboard() {
@@ -348,46 +347,46 @@ public:
 
     void DLP_antivirus_check_channels_files()
     {
-        if (!this->icap) {
+        if (!this->file_validator) {
             return ;
         }
 
         auto receive_data = [this]{
             for (;;) {
-                switch (this->icap->receive_response()) {
-                    case ICAPService::ResponseType::WaitingData:
+                switch (this->file_validator->receive_response()) {
+                    case FileValidatorService::ResponseType::WaitingData:
                         return false;
-                    case ICAPService::ResponseType::HasContent:
+                    case FileValidatorService::ResponseType::HasContent:
                         return true;
-                    case ICAPService::ResponseType::Error:
+                    case FileValidatorService::ResponseType::Error:
                         ;
                 }
             }
         };
 
         while (receive_data()){
-            switch (this->icap->last_result_flag()) {
-                case LocalICAPProtocol::ValidationResult::Wait:
+            switch (this->file_validator->last_result_flag()) {
+                case LocalFileValidatorProtocol::ValidationResult::Wait:
                     return;
-                case LocalICAPProtocol::ValidationResult::IsAccepted:
+                case LocalFileValidatorProtocol::ValidationResult::IsAccepted:
                     if (!this->params.validator_params.log_if_accepted) {
                         continue;
                     }
                     [[fallthrough]];
-                case LocalICAPProtocol::ValidationResult::IsRejected:
-                case LocalICAPProtocol::ValidationResult::Error:
+                case LocalFileValidatorProtocol::ValidationResult::IsRejected:
+                case LocalFileValidatorProtocol::ValidationResult::Error:
                     ;
             }
 
-            auto validator_id = this->icap->last_file_id();
+            auto file_validator_id = this->file_validator->last_file_id();
             Direction direction = Direction::FileFromClient;
-            auto* file = this->clip_data.server_data.find_file_by_validator_id(validator_id);
+            auto* file = this->clip_data.server_data.find_file_by_file_validator_id(file_validator_id);
             if (!file) {
-                file = this->clip_data.client_data.find_file_by_validator_id(validator_id);
+                file = this->clip_data.client_data.find_file_by_file_validator_id(file_validator_id);
                 direction = Direction::FileFromServer;
             }
             if (!file) {
-                LOG(LOG_ERR, "ICapValidator::receive_response: invalid id %u", validator_id);
+                LOG(LOG_ERR, "FileValidatorValidator::receive_response: invalid id %u", file_validator_id);
                 auto const info = key_qvalue_pairs({
                     {"type", "FILE_VERIFICATION_ERROR"},
                     {"status", "Invalid file id"}
@@ -405,9 +404,9 @@ public:
             }
 
             auto& file_data = file->file_data;
-            file_data.validator_id = ICAPFileId();
+            file_data.file_validator_id = FileValidatorId();
 
-            auto& result_content = this->icap->get_content();
+            auto& result_content = this->file_validator->get_content();
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
             auto const info = key_qvalue_pairs({
@@ -532,8 +531,8 @@ private:
         auto* file = side_data.find_file_by_stream_id(from_server.file_contents_stream_id);
 
         if (in_header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
-            if (file && bool(file->file_data.validator_id) && file->is_file_range()) {
-                this->icap->send_eof(file->file_data.validator_id);
+            if (file && bool(file->file_data.file_validator_id) && file->is_file_range()) {
+                this->file_validator->send_eof(file->file_data.file_validator_id);
                 file->set_wait_validator();
             }
         }
@@ -541,14 +540,14 @@ private:
             auto& file_data = file->file_data;
             auto data_fragment = file->receive_data(chunk.remaining_bytes());
 
-            if (bool(file_data.validator_id)) {
-                this->icap->send_data(file_data.validator_id, data_fragment);
+            if (bool(file_data.file_validator_id)) {
+                this->file_validator->send_data(file_data.file_validator_id, data_fragment);
             }
 
             if ((flags & CHANNELS::CHANNEL_FLAG_LAST) && file_data.file_offset == file_data.file_size) {
                 this->log_file_info(file_data, from_remote_session);
-                if (bool(file_data.validator_id)) {
-                    this->icap->send_eof(file_data.validator_id);
+                if (bool(file_data.file_validator_id)) {
+                    this->file_validator->send_eof(file_data.file_validator_id);
                 }
                 else {
                     side_data.remove_file(file);
@@ -655,17 +654,17 @@ private:
                     throw Error(ERR_RDP_PROTOCOL);
                 }
                 CliprdFileInfo const& desc = this->file_descr_list[ifilegroup];
-                ICAPFileId validator_id{};
+                FileValidatorId file_validator_id{};
                 if (!target_name.empty()) {
                     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
                         "ClipboardVirtualChannel::Validator::open_file");
-                    validator_id = this->icap->open_file(desc.file_name, target_name);
+                    file_validator_id = this->file_validator->open_file(desc.file_name, target_name);
                 }
                 side_data.push_file_content_range(
                     stream_id, lindex,
                     file_contents_request_pdu.has_optional_clipDataId(),
                     file_contents_request_pdu.clipDataId(),
-                    validator_id, desc.file_name, desc.file_size,
+                    file_validator_id, desc.file_name, desc.file_size,
                     file_contents_request_pdu.cbRequested());
             }
         }

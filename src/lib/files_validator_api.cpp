@@ -19,7 +19,7 @@
 */
 
 #include "lib/files_validator_api.hpp"
-#include "mod/icap_files_service.hpp"
+#include "mod/file_validatior_service.hpp"
 #include "utils/c_interface.hpp"
 #include "utils/netutils.hpp"
 
@@ -88,9 +88,9 @@ struct ValidatorApi
     {}
 
     ValidatorTransport transport;
-    ICAPService icap{transport};
+    FileValidatorService file_validator{transport};
     bool wating_data = false;
-    ICAPService::ResponseType response_type = ICAPService::ResponseType::WaitingData;
+    FileValidatorService::ResponseType response_type = FileValidatorService::ResponseType::WaitingData;
 };
 
 
@@ -120,7 +120,7 @@ int validator_close_session(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    validator->icap.send_close_session();
+    validator->file_validator.send_close_session();
     CHECK_ERRNUM(validator);
     delete validator; /*NOLINT*/
     return 0;
@@ -144,7 +144,7 @@ ValidatorFileId validator_open_file(ValidatorApi* validator, char const* file_na
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    auto file_id = validator->icap.open_file(file_name, target_name);
+    auto file_id = validator->file_validator.open_file(file_name, target_name);
     CHECK_ERRNUM(validator);
     return safe_int(file_id);
 }
@@ -153,7 +153,7 @@ int validator_send_data(ValidatorApi* validator, ValidatorFileId id, char const*
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    validator->icap.send_data(ICAPFileId(id), {data, size});
+    validator->file_validator.send_data(FileValidatorId(id), {data, size});
     CHECK_ERRNUM(validator);
     return 0;
 }
@@ -162,7 +162,7 @@ int validator_end_of_file(ValidatorApi* validator, ValidatorFileId id) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    validator->icap.send_eof(ICAPFileId(id));
+    validator->file_validator.send_eof(FileValidatorId(id));
     CHECK_ERRNUM(validator);
     return 0;
 }
@@ -171,7 +171,7 @@ int validator_abort_file(ValidatorApi* validator, ValidatorFileId id) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    validator->icap.send_abort(ICAPFileId(id));
+    validator->file_validator.send_abort(FileValidatorId(id));
     CHECK_ERRNUM(validator);
     return 0;
 }
@@ -180,7 +180,7 @@ int validator_receive_response(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    validator->response_type = validator->icap.receive_response();
+    validator->response_type = validator->file_validator.receive_response();
     CHECK_ERRNUM(validator);
     return safe_int(validator->response_type);
 }
@@ -196,20 +196,20 @@ int validator_get_result_flag(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    return safe_int(validator->icap.last_result_flag());
+    return safe_int(validator->file_validator.last_result_flag());
 }
 
 char const* validator_get_content(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
-    return validator ? validator->icap.get_content().c_str() : nullptr;
+    return validator ? validator->file_validator.get_content().c_str() : nullptr;
 }
 
 ValidatorFileId validator_get_result_file_id(ValidatorApi* validator) noexcept
 {
     SCOPED_TRACE;
     CHECK_HANDLE(validator);
-    return safe_int(validator->icap.last_file_id());
+    return safe_int(validator->file_validator.last_file_id());
 }
 
 }

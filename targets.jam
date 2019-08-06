@@ -4282,8 +4282,8 @@ test-run tests/mod/rdp/test_rdp_params :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp_params.hpp
 ;
-test-run tests/mod/test_icap_files_service :
-  $(REDEMPTION_TEST_PATH)/mod/test_icap_files_service.cpp
+test-run tests/mod/test_file_validator_service :
+  $(REDEMPTION_TEST_PATH)/mod/test_file_validator_service.cpp
 :
   <library>src/core/error.o
   <library>src/utils/fileutils.o
@@ -4293,7 +4293,6 @@ test-run tests/mod/test_icap_files_service :
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/mod/icap_files_service.hpp
 ;
 test-run tests/mod/test_metrics_hmac :
   $(REDEMPTION_TEST_PATH)/mod/test_metrics_hmac.cpp
@@ -5844,7 +5843,7 @@ alias test_rdp_metrics : tests/mod/rdp/test_rdp_metrics ;
 alias test_rdp_negociation : tests/mod/rdp/test_rdp_negociation ;
 alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
 alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
-alias test_icap_files_service : tests/mod/test_icap_files_service ;
+alias test_file_validator_service : tests/mod/test_file_validator_service ;
 alias test_metrics_hmac : tests/mod/test_metrics_hmac ;
 alias test_mod_api : tests/mod/test_mod_api ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
@@ -6179,7 +6178,6 @@ alias test_rdp_metrics.coverage : tests/mod/rdp/test_rdp_metrics.coverage ;
 alias test_rdp_negociation.coverage : tests/mod/rdp/test_rdp_negociation.coverage ;
 alias test_rdp_orders.coverage : tests/mod/rdp/test_rdp_orders.coverage ;
 alias test_rdp_params.coverage : tests/mod/rdp/test_rdp_params.coverage ;
-alias test_icap_files_service.coverage : tests/mod/test_icap_files_service.coverage ;
 alias test_metrics_hmac.coverage : tests/mod/test_metrics_hmac.coverage ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
 alias test_hextile.coverage : tests/mod/vnc/encoder/test_hextile.coverage ;
@@ -6587,7 +6585,7 @@ alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp_params
 ;
 alias tests/mod.norec :
-  tests/mod/test_icap_files_service
+  tests/mod/test_file_validator_service
   tests/mod/test_metrics_hmac
   tests/mod/test_mod_api
 ;
