@@ -2740,7 +2740,7 @@ const auto save_stream_p = stream.get_current();
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_STATE) {
             // State(4)
-            ::check_throw(stream, 2, "NewOrExistingNotificationIcons (3)", ERR_RAIL_PDU_TRUNCATED);
+            ::check_throw(stream, 4, "NewOrExistingNotificationIcons (3)", ERR_RAIL_PDU_TRUNCATED);
             this->State = stream.in_uint32_le();
         }
 
@@ -3194,11 +3194,11 @@ public:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) {
             // NumWindowIds(1)
-            ::check_throw(stream, 4, "ActivelyMonitoredDesktop (1)", ERR_RAIL_PDU_TRUNCATED);
+            ::check_throw(stream, 1, "ActivelyMonitoredDesktop (1)", ERR_RAIL_PDU_TRUNCATED);
             this->NumWindowIds_ = stream.in_uint8();
 
             // WindowIds(variable)
-            ::check_throw(stream,  this->NumWindowIds_ * sizeof(uint32_t), "ActivelyMonitoredDesktop (2)", ERR_RAIL_PDU_TRUNCATED);
+            ::check_throw(stream, this->NumWindowIds_ * sizeof(uint32_t), "ActivelyMonitoredDesktop (2)", ERR_RAIL_PDU_TRUNCATED);
 
             for (uint16_t i = 0; i < this->NumWindowIds_; ++i) {
                 this->window_ids_[i] = stream.in_uint32_le();
