@@ -685,12 +685,9 @@ public:
 
             case ServerAuthenticateData::Final:
             {
-                LOG_IF(this->verbose, LOG_INFO, "ServerAuthenticateData::Final");
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
+                
                 this->ts_request.recv(in_stream);
-
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
-
                 if (this->ts_request.authInfo.size() < 1) {
                     LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);
@@ -719,6 +716,7 @@ public:
                 uint8_t expected_signature[16] = {};
                 uint8_t * signature = expected_signature;
                 uint8_t checksum[8];
+
                 /* RC4-encrypt first 8 bytes of digest */
                 this->RecvRc4Seal.crypt(8, digest.data(), checksum);
 

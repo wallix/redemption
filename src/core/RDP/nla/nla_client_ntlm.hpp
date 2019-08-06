@@ -52,7 +52,6 @@ private:
     std::vector<uint8_t> PublicKey;
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
-    std::vector<uint8_t> ServicePrincipalName;
     std::vector<uint8_t> identity_User;
     std::vector<uint8_t> identity_Domain;
     std::vector<uint8_t> identity_Password;
@@ -168,24 +167,10 @@ public:
         this->identity_Domain = ::UTF8toUTF16({domain,strlen(reinterpret_cast<char*>(domain))});
         this->identity_Password = ::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))});
 
-        if (hostname){
-            size_t length = strlen(char_ptr_cast(hostname));
-            this->ServicePrincipalName.assign(hostname, hostname + length);
-        }
-        else {
-            this->ServicePrincipalName.clear();
-        }
-        this->ServicePrincipalName.push_back(0);
+        size_t length_hostname = strlen(char_ptr_cast(hostname));
 
-        array_view_const_char spn = bytes_view(this->ServicePrincipalName).as_chars();
-        if (!spn.empty()) {
-            this->Workstation = ::UTF8toUTF16(spn);
-            this->SendWorkstationName = true;
-        }
-        else {
-            this->Workstation.clear();
-            this->SendWorkstationName = false;
-        }
+        this->Workstation = ::UTF8toUTF16({hostname, length_hostname});
+        this->SendWorkstationName = length_hostname != 0;
 
         this->client_auth_data_state = Start;
 
@@ -200,8 +185,6 @@ public:
 
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
        
-        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::AcquireCredentialsHandle");
-
         this->client_auth_data_state = Loop;
 
         /*
@@ -215,9 +198,8 @@ public:
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
         /* receive server response and place in input buffer */
-        LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
-
         this->sspi_context_state = NTLM_STATE_NEGOTIATE;
+
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
         this->NegotiateFlags |= (
               NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
@@ -282,6 +264,39 @@ public:
         }
     }
 
+
+    uint32_t set_negotiate_flags(bool ntlmv2, bool send_version_info, bool use_mic, bool send_workstation_name, bool confidentiality, bool negotiate_key_exchange)
+    {
+        uint32_t flags = 0;
+        if (ntlmv2) {
+            flags |= NTLMSSP_NEGOTIATE_56;
+            if (send_version_info) {
+                flags |= NTLMSSP_NEGOTIATE_VERSION;
+            }
+        }
+
+        if (use_mic) {
+            flags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+        }
+        if (send_workstation_name) {
+            flags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+        }
+        if (confidentiality) {
+            flags |= NTLMSSP_NEGOTIATE_SEAL;
+        }
+        if (negotiate_key_exchange) {
+            flags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+        }
+        flags |= (NTLMSSP_NEGOTIATE_128
+              | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
+              | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+              | NTLMSSP_NEGOTIATE_NTLM
+              | NTLMSSP_NEGOTIATE_SIGN
+              | NTLMSSP_REQUEST_TARGET
+              | NTLMSSP_NEGOTIATE_UNICODE);
+        return flags;
+    }
+
     credssp::State credssp_client_authenticate_next(InStream & in_stream, OutTransport transport)
     {
         switch (this->client_auth_data_state)
@@ -310,7 +325,6 @@ public:
                 //unsigned long const fContextReq
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-                LOG_IF(this->verbose, LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
                 auto status = SEC_E_OUT_OF_SEQUENCE;
 
                 if (this->sspi_context_state == NTLM_STATE_INITIAL) {
@@ -482,33 +496,14 @@ public:
                         this->SendRc4Seal.set_key(this->ClientSealingKey);
                         this->RecvRc4Seal.set_key(this->ServerSealingKey);
                         
-                        this->NegotiateFlags = 0;
-                        if (this->NTLMv2) {
-                            this->NegotiateFlags |= NTLMSSP_NEGOTIATE_56;
-                            if (this->SendVersionInfo) {
-                                this->NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
-                            }
-                        }
 
-                        if (this->UseMIC) {
-                            this->NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
-                        }
-                        if (this->SendWorkstationName) {
-                            this->NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
-                        }
-                        if (this->confidentiality) {
-                            this->NegotiateFlags |= NTLMSSP_NEGOTIATE_SEAL;
-                        }
-                        if (this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
-                            this->NegotiateFlags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-                        }
-                        this->NegotiateFlags |= (NTLMSSP_NEGOTIATE_128
-                                               | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
-                                               | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-                                               | NTLMSSP_NEGOTIATE_NTLM
-                                               | NTLMSSP_NEGOTIATE_SIGN
-                                               | NTLMSSP_REQUEST_TARGET
-                                               | NTLMSSP_NEGOTIATE_UNICODE);
+                        this->NegotiateFlags = set_negotiate_flags(
+                                            this->NTLMv2, 
+                                            this->SendVersionInfo, 
+                                            this->UseMIC, 
+                                            this->SendWorkstationName, 
+                                            this->confidentiality, 
+                                            this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
                         this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 

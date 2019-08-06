@@ -111,7 +111,8 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
     error_type checking_exception = NO_ERROR;
 
     // ensures the certificate directory exists
-    if (recursive_create_directory(certif_path, S_IRWXU|S_IRWXG, -1) != 0) {
+        LOG(LOG_INFO, "certificate directory is: '%s'", certif_path);
+        if (recursive_create_directory(certif_path, S_IRWXU|S_IRWXG, -1) != 0) {
         LOG(LOG_WARNING, "Failed to create certificate directory: %s ", certif_path);
         if (error_message) {
             str_assign(*error_message, "Failed to create certificate directory: \"", certif_path, "\"\n");
@@ -128,6 +129,7 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
     snprintf(filename, sizeof(filename) - 1, "%s/rdp,%s,%d,X509.pem",
         certif_path, ip_address, port);
     filename[sizeof(filename) - 1] = '\0';
+    LOG(LOG_INFO, "certificate file is: '%s'", filename);
 
     bool certificate_exists  = false;
     bool certificate_matches = false;
