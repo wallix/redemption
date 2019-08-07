@@ -543,14 +543,6 @@ public:
 
                 this->ts_request.recv(in_stream);
 
-                /* Verify Server Public Key Echo */
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::decrypt_public_key_echo");
-
-                unsigned long MessageSeqNo = this->recv_seq_num++;
-                std::vector<uint8_t> data_out;
-            
-                LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
-
                 if (this->ts_request.pubKeyAuth.size() < cbMaxSignature) {
                     if (this->ts_request.pubKeyAuth.size() == 0) {
                         // report_error
@@ -564,40 +556,30 @@ public:
                     return credssp::State::Err;
                 }
 
+                /* Verify Server Public Key Echo */
+                unsigned long MessageSeqNo = this->recv_seq_num++;
+                std::vector<uint8_t> data_out;
                 // data_in [signature][data_buffer]
 
-                array_view_const_u8 data_buffer = {this->ts_request.pubKeyAuth.data()+cbMaxSignature, this->ts_request.pubKeyAuth.size()-cbMaxSignature};
-                data_out.resize(data_buffer.size(), 0);
+                array_view_const_u8 pubkeyAuth_payload = {this->ts_request.pubKeyAuth.data()+cbMaxSignature, this->ts_request.pubKeyAuth.size()-cbMaxSignature};
+                array_view_const_u8 pubkeyAuth_signature = {this->ts_request.pubKeyAuth.data(),cbMaxSignature};
+                data_out.resize(pubkeyAuth_payload.size(), 0);
 
                 /* Decrypt message using with RC4, result overwrites original buffer */
                 // this->confidentiality == true
                 SslRC4 RecvRc4Seal {};
                 RecvRc4Seal.set_key(this->ServerSealingKey);
-                RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
+                RecvRc4Seal.crypt(pubkeyAuth_payload.size(), pubkeyAuth_payload.data(), data_out.data());
 
                 std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                 array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, seqno, data_out);
-
-                uint8_t expected_signature[16] = {};
-                this->sspi_compute_signature(expected_signature, RecvRc4Seal, digest.data(), MessageSeqNo);
+                std::array<uint8_t, 16> expected_signature;
+                this->sspi_compute_signature(expected_signature.data(), RecvRc4Seal, digest.data(), MessageSeqNo);
                     
-                if (memcmp(this->ts_request.pubKeyAuth.data(), expected_signature, 16) != 0) {
-                    /* signature verification failed! */
-                    LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
-                    LOG(LOG_ERR, "Expected Signature:");
-                    hexdump_c(expected_signature, 16);
-                    LOG(LOG_ERR, "Actual Signature:");
-                    hexdump_c(this->ts_request.pubKeyAuth.data(), 16);
-
-                    if (this->ts_request.pubKeyAuth.size() == 0) {
-                        // report_error
-                        this->extra_message = " ";
-                        this->extra_message.append(TR(trkeys::err_login_password, this->lang));
-                        LOG(LOG_INFO, "Provided login/password is probably incorrect.");
-                    }
-                    LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED");
-                    // return SEC_E_MESSAGE_ALTERED;
-                    LOG(LOG_ERR, "Could not verify public key echo!");
+                if (!are_buffer_equal(pubkeyAuth_signature, expected_signature)) {
+                    LOG(LOG_ERR, "public key echo signature verification failed, something nasty is going on!");
+                    LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
+                    LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
                     return credssp::State::Err;
                 }
 

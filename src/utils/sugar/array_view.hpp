@@ -35,25 +35,25 @@
 namespace detail
 {
     template<class T, class R>
-    struct filter_dangerous_implicite_array_view
+    struct filter_dangerous_implicit_array_view
     {
         using type = R;
     };
 
     template<std::size_t N, class R>
-    struct filter_dangerous_implicite_array_view<char[N], R> {};
+    struct filter_dangerous_implicit_array_view<char[N], R> {};
 
     template<std::size_t N, class R>
-    struct filter_dangerous_implicite_array_view<uint8_t[N], R> {};
+    struct filter_dangerous_implicit_array_view<uint8_t[N], R> {};
 
     template<std::size_t N, class R>
-    struct filter_dangerous_implicite_array_view<const char[N], R> {};
+    struct filter_dangerous_implicit_array_view<const char[N], R> {};
 
     template<std::size_t N, class R>
-    struct filter_dangerous_implicite_array_view<const uint8_t[N], R> {};
+    struct filter_dangerous_implicit_array_view<const uint8_t[N], R> {};
 
     template<class T, class R>
-    struct filter_dangerous_implicite_array_view<T&, R> : filter_dangerous_implicite_array_view<T, R> {};
+    struct filter_dangerous_implicit_array_view<T&, R> : filter_dangerous_implicit_array_view<T, R> {};
 }
 
 template<class T>
@@ -69,7 +69,6 @@ struct array_view
     constexpr array_view() = default;
     constexpr array_view(array_view && other) = default;
     constexpr array_view(array_view const & other) = default;
-//    constexpr array_view(array_view && other) = default;
     array_view & operator = (array_view && other) = default;
     array_view & operator = (array_view const & other) = default;
 
@@ -87,8 +86,7 @@ struct array_view
     , sz(pright - p)
     {}
 
-    template<class U, class = typename detail::filter_dangerous_implicite_array_view<U, decltype(
-//    template<class U, class = typename detail::filter_dangerous_implicite_array_view<std::remove_const_t<U>, decltype(
+    template<class U, class = typename detail::filter_dangerous_implicit_array_view<U, decltype(
         *static_cast<type**>(nullptr) = utils::data(std::declval<U&&>()),
         *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&&>())
     )>::type>
