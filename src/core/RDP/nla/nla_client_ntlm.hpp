@@ -585,48 +585,29 @@ public:
                     return credssp::State::Err;
                 }
 
-                const uint32_t version = this->ts_request.use_version;
-
-                
-                auto hash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
-                       make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH),
-                       {this->PublicKey.data(),this->PublicKey.size()});
-
-                array_view_u8 public_key = (version >= 5)?array_view_u8(hash):array_view_u8(this->PublicKey);
-
-                if (pubkeyAuth_encrypted_payload.size() != public_key.size()) {
-                    LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", 
-                        pubkeyAuth_encrypted_payload.size(), public_key.size());
-                    // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-
-                    LOG(LOG_ERR, "Could not verify public key echo!");
-                    return credssp::State::Err;
-                }
-
-                if (version < 5) {
-                    // if we are client and protocol is 2,3,4
-                    // then get the public key minus one
+                if (this->ts_request.use_version < 5) {
+                    // if we are client and protocol is 2,3,4, then get the public key minus one
                     ::ap_integer_decrement_le(pubkeyAuth_encrypted_payload);
+                    if (!are_buffer_equal(this->PublicKey, pubkeyAuth_encrypted_payload)){
+                        LOG(LOG_ERR, "Server's public key echo signature verification failed");
+                        LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature.get_bytes());
+                        LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
+                        return credssp::State::Err;
+                    }
                 }
-
-                if (memcmp(public_key.data(), pubkeyAuth_encrypted_payload.data(), public_key.size()) != 0) {
-                    LOG(LOG_ERR, "Could not verify server's public key echo");
-
-                    LOG(LOG_ERR, "Expected (length = %zu):", public_key.size());
-                    hexdump_c(public_key);
-
-                    LOG(LOG_ERR, "Actual (length = %zu):", public_key.size());
-                    hexdump_c(pubkeyAuth_encrypted_payload);
-
-                    // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-
-                    LOG(LOG_ERR, "Could not verify public key echo!");
-                    return credssp::State::Err;
+                else {
+                    auto hash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
+                           make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH),
+                           this->PublicKey);
+                    if (!are_buffer_equal(hash, pubkeyAuth_encrypted_payload)){
+                        LOG(LOG_ERR, "Server's public key echo signature verification failed");
+                        LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature.get_bytes());
+                        LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
+                        return credssp::State::Err;
+                    }
                 }
-
 
                 /* Send encrypted credentials */
-
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_ts_credentials");
                 if (this->restricted_admin_mode) {
                     LOG(LOG_INFO, "Restricted Admin Mode");
