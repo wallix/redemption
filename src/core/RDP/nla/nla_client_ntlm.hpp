@@ -68,7 +68,6 @@ private:
     const bool confidentiality = true;
 
     SslRC4 SendRc4Seal {};
-    SslRC4 RecvRc4Seal {};
 
     uint32_t NegotiateFlags = 0;
 
@@ -425,7 +424,6 @@ public:
                             "session key to server-to-client sealing key magic constant\0"_av);
 
                     this->SendRc4Seal.set_key(this->ClientSealingKey);
-                    this->RecvRc4Seal.set_key(this->ServerSealingKey);
                     
 
                     uint32_t flags = set_negotiate_flags(
@@ -614,14 +612,15 @@ public:
 
                 /* Decrypt message using with RC4, result overwrites original buffer */
                 // this->confidentiality == true
-                this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
+                SslRC4 RecvRc4Seal {};
+                RecvRc4Seal.set_key(this->ServerSealingKey);
+                RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.data());
 
                 std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                 array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, seqno, data_out);
 
                 uint8_t expected_signature[16] = {};
-                this->sspi_compute_signature(
-                    expected_signature, this->RecvRc4Seal, digest.data(), MessageSeqNo);
+                this->sspi_compute_signature(expected_signature, RecvRc4Seal, digest.data(), MessageSeqNo);
                     
                 if (memcmp(data_in.data(), expected_signature, 16) != 0) {
                     /* signature verification failed! */
