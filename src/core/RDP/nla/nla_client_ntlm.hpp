@@ -295,6 +295,7 @@ public:
 
                     this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
                 }
+
                 if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
                     
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
@@ -461,15 +462,6 @@ public:
                     status = SEC_I_COMPLETE_NEEDED;
                 }
 
-                if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
-                    (status != SEC_I_COMPLETE_NEEDED) &&
-                    (status != SEC_E_OK) &&
-                    (status != SEC_I_CONTINUE_NEEDED)) {
-                    LOG(LOG_ERR, "Initialize Security Context Error !");
-                    return credssp::State::Err;
-                }
-
-                SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
 
                 if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
                     (status == SEC_I_COMPLETE_NEEDED) ||
@@ -508,16 +500,7 @@ public:
                     this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
                     this->ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
-                    encrypted = SEC_E_OK;
-                    status = (status == SEC_I_COMPLETE_AND_CONTINUE)?SEC_I_CONTINUE_NEEDED:SEC_E_OK;
-                }
-
-                /* send authentication token to server */
-                if ((this->ts_request.negoTokens.size() > 0)||(encrypted == SEC_E_OK)) {
-                    // #ifdef WITH_DEBUG_CREDSSP
-                    //             LOG(LOG_ERR, "Sending Authentication Token");
-                    //             hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
-                    // #endif
+                    /* send authentication token to server */
                     if (this->ts_request.negoTokens.size() > 0){
                         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
                     }
@@ -526,14 +509,14 @@ public:
                     StaticOutStream<65536> ts_request_emit;
                     this->ts_request.emit(ts_request_emit);
                     transport.get_transport().send(ts_request_emit.get_bytes());
-                }
-
-                if (status != SEC_I_CONTINUE_NEEDED) {
-                    LOG_IF(this->verbose, LOG_INFO, "rdpCredssp Token loop: CONTINUE_NEEDED");
 
                     this->client_auth_data_state = Final;
+                    return credssp::State::Cont;
                 }
-                return credssp::State::Cont;
+                
+                LOG(LOG_ERR, "Initialize Security Context Error !");
+                return credssp::State::Err;
+
             }
             case Final:
             {
