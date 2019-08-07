@@ -146,7 +146,6 @@ public:
                Translation::language_t lang,
                const bool verbose = false)
         : ts_request(6) // Credssp Version 6 Supported
-        , SavedClientNonce()
         , timeobj(timeobj)
         , rand(rand)
         , restricted_admin_mode(restricted_admin_mode)
@@ -227,12 +226,6 @@ public:
             StaticOutStream<65536> ts_request_emit;
             this->ts_request.emit(ts_request_emit);
             transport.get_transport().send(ts_request_emit.get_bytes());
-
-            this->ts_request.negoTokens.clear();
-            this->ts_request.pubKeyAuth.clear();
-            this->ts_request.authInfo.clear();
-            this->ts_request.clientNonce.reset();
-            this->ts_request.error_code = 0;
         }
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
     }
@@ -492,10 +485,7 @@ public:
                         LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
                         this->rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
                         this->SavedClientNonce.initialized = true;
-                        LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp set client nonce");
-                        if (!this->ts_request.clientNonce.isset()) {
-                            this->ts_request.clientNonce = this->SavedClientNonce;
-                        }
+                        this->ts_request.clientNonce = this->SavedClientNonce;
                         
                         LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
                         SslSha256 sha256;
@@ -537,12 +527,6 @@ public:
                     StaticOutStream<65536> ts_request_emit;
                     this->ts_request.emit(ts_request_emit);
                     transport.get_transport().send(ts_request_emit.get_bytes());
-
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
-                    this->ts_request.error_code = 0;
                 }
 
                 if (status != SEC_I_CONTINUE_NEEDED) {
@@ -562,13 +546,12 @@ public:
                 /* Verify Server Public Key Echo */
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::decrypt_public_key_echo");
 
-                array_view_const_u8 data_in = this->ts_request.pubKeyAuth;
                 unsigned long MessageSeqNo = this->recv_seq_num++;
                 std::vector<uint8_t> data_out;
             
                 LOG_IF(this->verbose & 0x400, LOG_INFO, "NTLM_SSPI::DecryptMessage");
 
-                if (data_in.size() < cbMaxSignature) {
+                if (this->ts_request.pubKeyAuth.size() < cbMaxSignature) {
                     if (this->ts_request.pubKeyAuth.size() == 0) {
                         // report_error
                         this->extra_message = " ";
@@ -577,19 +560,13 @@ public:
                     }
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN");
                     // return SEC_E_INVALID_TOKEN;
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
-                    this->ts_request.error_code = 0;
-
                     LOG(LOG_ERR, "Could not verify public key echo!");
                     return credssp::State::Err;
                 }
 
                 // data_in [signature][data_buffer]
 
-                auto data_buffer = data_in.from_at(cbMaxSignature);
+                array_view_const_u8 data_buffer = {this->ts_request.pubKeyAuth.data()+cbMaxSignature, this->ts_request.pubKeyAuth.size()-cbMaxSignature};
                 data_out.resize(data_buffer.size(), 0);
 
                 /* Decrypt message using with RC4, result overwrites original buffer */
@@ -604,13 +581,13 @@ public:
                 uint8_t expected_signature[16] = {};
                 this->sspi_compute_signature(expected_signature, RecvRc4Seal, digest.data(), MessageSeqNo);
                     
-                if (memcmp(data_in.data(), expected_signature, 16) != 0) {
+                if (memcmp(this->ts_request.pubKeyAuth.data(), expected_signature, 16) != 0) {
                     /* signature verification failed! */
                     LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
                     LOG(LOG_ERR, "Expected Signature:");
                     hexdump_c(expected_signature, 16);
                     LOG(LOG_ERR, "Actual Signature:");
-                    hexdump_c(data_in.data(), 16);
+                    hexdump_c(this->ts_request.pubKeyAuth.data(), 16);
 
                     if (this->ts_request.pubKeyAuth.size() == 0) {
                         // report_error
@@ -620,12 +597,6 @@ public:
                     }
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_MESSAGE_ALTERED");
                     // return SEC_E_MESSAGE_ALTERED;
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
-                    this->ts_request.error_code = 0;
-
                     LOG(LOG_ERR, "Could not verify public key echo!");
                     return credssp::State::Err;
                 }
@@ -635,9 +606,6 @@ public:
                 array_view_const_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
                 if (version >= 5) {
                     LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp get client nonce");
-                    if (this->ts_request.clientNonce.isset()){
-                        this->SavedClientNonce = this->ts_request.clientNonce;
-                    }
                     LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (server->client)");
                     SslSha256 sha256;
                     uint8_t hash[SslSha256::DIGEST_LENGTH];
@@ -654,11 +622,6 @@ public:
                 if (public_key2.size() != public_key.size()) {
                     LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
                     // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
-                    this->ts_request.error_code = 0;
 
                     LOG(LOG_ERR, "Could not verify public key echo!");
                     return credssp::State::Err;
@@ -680,21 +643,11 @@ public:
                     hexdump_c(public_key2);
 
                     // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
-                    this->ts_request.error_code = 0;
 
                     LOG(LOG_ERR, "Could not verify public key echo!");
                     return credssp::State::Err;
                 }
 
-                this->ts_request.negoTokens.clear();
-                this->ts_request.pubKeyAuth.clear();
-                this->ts_request.authInfo.clear();
-                this->ts_request.clientNonce.reset();
-                this->ts_request.error_code = 0;
 
                 /* Send encrypted credentials */
 
@@ -721,16 +674,17 @@ public:
                     this->SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
                     this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
                     
-                    this->ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
 
                     StaticOutStream<65536> ts_request_emit;
-                    this->ts_request.emit(ts_request_emit);
-                    transport.get_transport().send(ts_request_emit.get_bytes());
+
                     this->ts_request.negoTokens.clear();
                     this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.authInfo.clear();
-                    this->ts_request.clientNonce.reset();
                     this->ts_request.error_code = 0;
+
+                    this->ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
+                    this->ts_request.clientNonce = this->SavedClientNonce;
+                    this->ts_request.emit(ts_request_emit);
+                    transport.get_transport().send(ts_request_emit.get_bytes());
                 }
                 this->client_auth_data_state = Start;
                 return credssp::State::Finish;
