@@ -573,9 +573,18 @@ public:
 
                 std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                 array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, seqno, data_out);
+                std::array<uint8_t, 8> checksum;
+                /* RC4-encrypt first 8 bytes of digest */
+
                 std::array<uint8_t, 16> expected_signature;
-                this->sspi_compute_signature(expected_signature.data(), RecvRc4Seal, digest.data(), MessageSeqNo);
-                    
+
+                RecvRc4Seal.crypt(checksum.size(), digest.data(), checksum.data());
+                uint32_t signature_version = 1;
+                /* Concatenate version, ciphertext and sequence number to build signature */
+                memcpy(expected_signature.data(), &signature_version, 4);
+                memcpy(&expected_signature.data()[4], checksum.data(), 8);
+                memcpy(&expected_signature.data()[12], &MessageSeqNo, 4);
+
                 if (!are_buffer_equal(pubkeyAuth_signature, expected_signature)) {
                     LOG(LOG_ERR, "public key echo signature verification failed, something nasty is going on!");
                     LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
