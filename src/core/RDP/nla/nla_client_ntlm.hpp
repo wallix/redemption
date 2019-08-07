@@ -108,8 +108,6 @@ private:
     bool restricted_admin_mode;
 
     const char * target_host;
-    std::string& extra_message;
-    Translation::language_t lang;
     const bool verbose;
 
     enum class Res : bool { Err, Ok };
@@ -141,16 +139,12 @@ public:
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
-               std::string& extra_message,
-               Translation::language_t lang,
                const bool verbose = false)
         : ts_request(6) // Credssp Version 6 Supported
         , timeobj(timeobj)
         , rand(rand)
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
-        , extra_message(extra_message)
-        , lang(lang)
         , verbose(verbose)
     {
         memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
@@ -508,12 +502,7 @@ public:
                 this->ts_request.recv(in_stream);
 
                 if (this->ts_request.pubKeyAuth.size() < cbMaxSignature) {
-                    if (this->ts_request.pubKeyAuth.size() == 0) {
-                        // report_error
-                        this->extra_message = " ";
-                        this->extra_message.append(TR(trkeys::err_login_password, this->lang));
-                        LOG(LOG_INFO, "Provided login/password is probably incorrect.");
-                    }
+                    // Provided Password is probably incorrect
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN");
                     // return SEC_E_INVALID_TOKEN;
                     LOG(LOG_ERR, "Could not verify public key echo!");
