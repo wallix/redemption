@@ -304,213 +304,181 @@ public:
 
                 auto status = SEC_E_OUT_OF_SEQUENCE;
 
-                if (this->sspi_context_state == NTLM_STATE_NEGOTIATE) {
-                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
-                    this->NegotiateFlags = set_negotiate_flags(this->NTLMv2, false, false, true)
-                        | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_LM_KEY|NTLMSSP_NEGOTIATE_OEM);
+                if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
+                    array_view_const_u8 input_buffer =  this->client_auth_data_input_buffer;
+                    
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
+                    InStream in_stream(input_buffer);
+                    RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
+                    this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
+
+                    this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
+                }
+                if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
+                    
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
+                    
+                    // client method
+                    // ntlmv2_compute_response_from_challenge generates :
+                    // - timestamp
+                    // - client challenge
+                    // - NtChallengeResponse
+                    // - LmChallengeResponse
+                    // all strings are in unicode utf16
+
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
+                    array_md4 md4password = ::Md4(this->identity_Password);
+                    auto userNameUppercase = ::UTF16_to_upper(this->identity_User);
+                    array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase, this->identity_Domain);
+
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
+
+                    array_md4 md4password_b = ::Md4(this->identity_Password);
+                    auto userNameUppercase_b = ::UTF16_to_upper(this->identity_User);
+                    array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b, this->identity_Domain);
+
+                    // struct NTLMv2_Client_Challenge = temp
+                    // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
+                    // Z(n) = { 0x00, ... , 0x00 } n times
+                    // ServerName = AvPairs received in Challenge message
+                    auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
+                    // BStream AvPairsStream;
+                    // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
+
+                    std::vector<uint8_t> temp;
+                    for (auto x: {1, 1, 0, 0, 0, 0, 0, 0}){
+                        temp.push_back(x);
+                    }
+
+                    // compute ClientChallenge (nonce(8))
+                    // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
+
+                    // compute ClientTimeStamp
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
+
+                    const timeval tv = this->timeobj.get_time();
+                    push_back_array(temp, out_uint32_le(tv.tv_usec));
+                    push_back_array(temp, out_uint32_le(tv.tv_sec));
+
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
+                    array_challenge ClientChallenge;
+                    this->rand.random(ClientChallenge.data(), 8);
+                    push_back_array(temp, {ClientChallenge.data(), 8});
+                    push_back_array(temp, out_uint32_le(0));
+                    push_back_array(temp, {AvPairsStream.data(), AvPairsStream.size()});
+                    push_back_array(temp, out_uint32_le(0));
+                    // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain), Concat(ServerChallenge, temp))
+
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
+
+                    array_challenge ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
+
+                    array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,temp);
+
+
+                    // NtChallengeResponse = Concat(NtProofStr, temp)
+
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtChallengeResponse");
+                    auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
+                    // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
+                    NtChallengeResponse.assign(NtProofStr.data(), NtProofStr.data()+NtProofStr.size());
+                    NtChallengeResponse.insert(std::end(NtChallengeResponse), temp.data(), temp.data() + temp.size());
+
+                    LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
+
+                    // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
+                    //                                         Concat(ServerChallenge, ClientChallenge))
+                    // LmChallengeResponse.ChallengeFromClient = ClientChallenge
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
+                    
+                    auto response = compute_LMv2_Response(ResponseKeyLM, ServerChallenge, ClientChallenge);
+                    this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
+                    push_back_array(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer, ClientChallenge);
+
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
+                    // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
+                    this->SessionBaseKey = ::HmacMd5(make_array_view(ResponseKeyNT), NtProofStr);
+
+                    // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
+                    // ExportedSessionKey = NONCE(16) (random 16bytes number)
+                    // KeyExchangeKey = SessionBaseKey
+                    // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
+
+                    // generate NONCE(16) exportedsessionkey
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Encrypt RandomSessionKey");
+                    LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
+                    this->rand.random(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
+                    this->EncryptedRandomSessionKey = ::Rc4Key(this->SessionBaseKey, this->ExportedSessionKey);
+
+                    auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
+                    AuthEncryptedRSK.assign(this->EncryptedRandomSessionKey.data(), this->EncryptedRandomSessionKey.data()+16);
+
+                    // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
+                    this->sspi_context_ClientSigningKey = ::Md5(this->ExportedSessionKey,
+                            "session key to client-to-server signing key magic constant\0"_av);
+                    this->ClientSealingKey = ::Md5(this->ExportedSessionKey,
+                            "session key to client-to-server sealing key magic constant\0"_av);
+                    this->sspi_context_ServerSigningKey = ::Md5(this->ExportedSessionKey,
+                            "session key to server-to-client signing key magic constant\0"_av);
+                    this->ServerSealingKey = ::Md5(this->ExportedSessionKey,
+                            "session key to server-to-client sealing key magic constant\0"_av);
+
+                    this->SendRc4Seal.set_key(this->ClientSealingKey);
+                    this->RecvRc4Seal.set_key(this->ServerSealingKey);
+                    
+
+                    uint32_t flags = set_negotiate_flags(
+                                        this->NTLMv2, 
+                                        this->UseMIC, 
+                                        this->SendWorkstationName, 
+                                        this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
+
+                    this->AUTHENTICATE_MESSAGE.negoFlags.flags = flags;
 
                     this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
                     this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                     this->version.ProductBuild        = 7601;
                     this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+                    this->AUTHENTICATE_MESSAGE.version = this->version;
 
-                    this->NEGOTIATE_MESSAGE.version = this->version;
-                    this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-
-                    if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-                        this->NEGOTIATE_MESSAGE.Workstation.buffer = this->Workstation;
+                    if (!(flags & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
+                        // If flag is not set, encryted session key buffer is not send
+                        this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.clear();
+                    }
+                    if (flags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+                        this->AUTHENTICATE_MESSAGE.Workstation.buffer = this->Workstation;
                     }
 
-                    if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
-                        this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
-                    }
-
+                    //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+                    this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
+                    this->AUTHENTICATE_MESSAGE.UserName.buffer = this->identity_User;
 
                     StaticOutStream<65535> out_stream;
-                    emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
-                    this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
-                    this->ts_request.negoTokens.assign(this->SavedNegotiateMessage.data(),this->SavedNegotiateMessage.data()+this->SavedNegotiateMessage.size());
-
-                    this->sspi_context_state = NTLM_STATE_CHALLENGE;
-                    status = SEC_I_CONTINUE_NEEDED;
-                }
-                else {
-                    if (this->sspi_context_state == NTLM_STATE_CHALLENGE) {
-                        array_view_const_u8 input_buffer =  this->client_auth_data_input_buffer;
-                        
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
-                        InStream in_stream(input_buffer);
-                        RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
-                        this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
-
-                        this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
-                    }
-                    if (this->sspi_context_state == NTLM_STATE_AUTHENTICATE) {
-                        
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
-                        
-                        // client method
-                        // ntlmv2_compute_response_from_challenge generates :
-                        // - timestamp
-                        // - client challenge
-                        // - NtChallengeResponse
-                        // - LmChallengeResponse
-                        // all strings are in unicode utf16
-
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
-                        array_md4 md4password = ::Md4(this->identity_Password);
-                        auto userNameUppercase = ::UTF16_to_upper(this->identity_User);
-                        array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase, this->identity_Domain);
-
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
-
-                        array_md4 md4password_b = ::Md4(this->identity_Password);
-                        auto userNameUppercase_b = ::UTF16_to_upper(this->identity_User);
-                        array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b, this->identity_Domain);
-
-                        // struct NTLMv2_Client_Challenge = temp
-                        // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
-                        // Z(n) = { 0x00, ... , 0x00 } n times
-                        // ServerName = AvPairs received in Challenge message
-                        auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
-                        // BStream AvPairsStream;
-                        // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
-
-                        std::vector<uint8_t> temp;
-                        for (auto x: {1, 1, 0, 0, 0, 0, 0, 0}){
-                            temp.push_back(x);
-                        }
-
-                        // compute ClientChallenge (nonce(8))
-                        // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-
-                        // compute ClientTimeStamp
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
-
-                        const timeval tv = this->timeobj.get_time();
-                        push_back_array(temp, out_uint32_le(tv.tv_usec));
-                        push_back_array(temp, out_uint32_le(tv.tv_sec));
-
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
-                        array_challenge ClientChallenge;
-                        this->rand.random(ClientChallenge.data(), 8);
-                        push_back_array(temp, {ClientChallenge.data(), 8});
-                        push_back_array(temp, out_uint32_le(0));
-                        push_back_array(temp, {AvPairsStream.data(), AvPairsStream.size()});
-                        push_back_array(temp, out_uint32_le(0));
-                        // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain), Concat(ServerChallenge, temp))
-
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
-
-                        array_challenge ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
-
-                        array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,temp);
-
-
-                        // NtChallengeResponse = Concat(NtProofStr, temp)
-
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtChallengeResponse");
-                        auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-                        // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
-                        NtChallengeResponse.assign(NtProofStr.data(), NtProofStr.data()+NtProofStr.size());
-                        NtChallengeResponse.insert(std::end(NtChallengeResponse), temp.data(), temp.data() + temp.size());
-
-                        LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
-
-                        // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
-                        //                                         Concat(ServerChallenge, ClientChallenge))
-                        // LmChallengeResponse.ChallengeFromClient = ClientChallenge
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
-                        
-                        auto response = compute_LMv2_Response(ResponseKeyLM, ServerChallenge, ClientChallenge);
-                        this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
-                        push_back_array(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer, ClientChallenge);
-
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
-                        // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
-                        this->SessionBaseKey = ::HmacMd5(make_array_view(ResponseKeyNT), NtProofStr);
-
-                        // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
-                        // ExportedSessionKey = NONCE(16) (random 16bytes number)
-                        // KeyExchangeKey = SessionBaseKey
-                        // EncryptedRandomSessionKey = RC4K(SessionBaseKey, NONCE(16))
-
-                        // generate NONCE(16) exportedsessionkey
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Encrypt RandomSessionKey");
-                        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Exported Session Key");
-                        this->rand.random(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
-                        this->EncryptedRandomSessionKey = ::Rc4Key(this->SessionBaseKey, this->ExportedSessionKey);
-
-                        auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-                        AuthEncryptedRSK.assign(this->EncryptedRandomSessionKey.data(), this->EncryptedRandomSessionKey.data()+16);
-
-                        // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
-                        this->sspi_context_ClientSigningKey = ::Md5(this->ExportedSessionKey,
-                                "session key to client-to-server signing key magic constant\0"_av);
-                        this->ClientSealingKey = ::Md5(this->ExportedSessionKey,
-                                "session key to client-to-server sealing key magic constant\0"_av);
-                        this->sspi_context_ServerSigningKey = ::Md5(this->ExportedSessionKey,
-                                "session key to server-to-client signing key magic constant\0"_av);
-                        this->ServerSealingKey = ::Md5(this->ExportedSessionKey,
-                                "session key to server-to-client sealing key magic constant\0"_av);
-
-                        this->SendRc4Seal.set_key(this->ClientSealingKey);
-                        this->RecvRc4Seal.set_key(this->ServerSealingKey);
-                        
-
-                        uint32_t flags = set_negotiate_flags(
-                                            this->NTLMv2, 
-                                            this->UseMIC, 
-                                            this->SendWorkstationName, 
-                                            this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
-
-                        this->AUTHENTICATE_MESSAGE.negoFlags.flags = flags;
-
-                        this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-                        this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-                        this->version.ProductBuild        = 7601;
-                        this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-                        this->AUTHENTICATE_MESSAGE.version = this->version;
-
-                        if (!(flags & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
-                            // If flag is not set, encryted session key buffer is not send
-                            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.clear();
-                        }
-                        if (flags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-                            this->AUTHENTICATE_MESSAGE.Workstation.buffer = this->Workstation;
-                        }
-
-                        //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-                        this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
-                        this->AUTHENTICATE_MESSAGE.UserName.buffer = this->identity_User;
-
-                        StaticOutStream<65535> out_stream;
-                        if (this->UseMIC) {
-                            this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-                            emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
-                            this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-
-                            this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
-
-                            this->MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey, 
-                                                                    this->SavedNegotiateMessage,
-                                                                    this->SavedChallengeMessage,
-                                                                    this->SavedAuthenticateMessage);
-
-                            memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck.data(), this->MessageIntegrityCheck.size());
-                        }
-                        out_stream.rewind();
-                        this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+                    if (this->UseMIC) {
+                        this->AUTHENTICATE_MESSAGE.ignore_mic = true;
                         emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
-                        auto out_stream_bytes = out_stream.get_bytes();
-                        this->ts_request.negoTokens.assign(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
-                        if (this->verbose) {
-                            logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
-                        }
-                        this->sspi_context_state = NTLM_STATE_FINAL;
-                        status = SEC_I_COMPLETE_NEEDED;
+                        this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+
+                        this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
+
+                        this->MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey, 
+                                                                this->SavedNegotiateMessage,
+                                                                this->SavedChallengeMessage,
+                                                                this->SavedAuthenticateMessage);
+
+                        memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck.data(), this->MessageIntegrityCheck.size());
                     }
+                    out_stream.rewind();
+                    this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+                    emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
+                    auto out_stream_bytes = out_stream.get_bytes();
+                    this->ts_request.negoTokens.assign(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
+                    if (this->verbose) {
+                        logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
+                    }
+                    this->sspi_context_state = NTLM_STATE_FINAL;
+                    status = SEC_I_COMPLETE_NEEDED;
                 }
 
                 if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
