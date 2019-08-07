@@ -600,33 +600,27 @@ struct FormatListReceive
                 : "Short Format Name"
         );
 
-        auto process = [&](uint32_t format_id, Cliprdr::Charset charset, const_bytes_view av_name){
-            auto&& format_name = format_name_inventory.push(format_id, charset, av_name);
-            auto&& utf8_name = format_name.utf8_name();
-
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "formatId=%s(%u) wszFormatName=\"%.*s\"",
-                RDPECLIP::get_FormatId_name(format_id),
-                format_id, int(utf8_name.size()), utf8_name.data());
-
-            if (format_name.utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8)) {
-                this->file_list_format_id = format_id;
-            }
-        };
-
         auto buf = chunk.remaining_bytes();
         InStream in_stream(buf.first(std::min<size_t>(in_header.dataLen(), buf.size())));
 
         Cliprdr::format_list_extract(
-            in_stream, Cliprdr::IsLongFormat(use_long_format),
-            Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES), overload{
-            [&](uint32_t format_id, Cliprdr::UnicodeName unicode_name) {
-                process(format_id, Cliprdr::Charset::Utf16, unicode_name.name);
-            },
-            [&](uint32_t format_id, Cliprdr::AsciiName ascii_name) {
-                process(format_id, Cliprdr::Charset::Ascii, ascii_name.name);
+            in_stream,
+            Cliprdr::IsLongFormat(use_long_format),
+            Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+            [&](uint32_t format_id, Cliprdr::CharsetFormatName name) {
+                auto&& format_name = format_name_inventory.push(format_id, name);
+                auto&& utf8_name = format_name.utf8_name();
+
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "formatId=%s(%u) wszFormatName=\"%.*s\"",
+                    RDPECLIP::get_FormatId_name(format_id),
+                    format_id, int(utf8_name.size()), utf8_name.data());
+
+                if (format_name.utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8)) {
+                    this->file_list_format_id = format_id;
+                }
             }
-        });
+        );
 
         chunk.in_skip_bytes(in_stream.get_offset());
 

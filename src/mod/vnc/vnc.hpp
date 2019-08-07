@@ -2605,13 +2605,21 @@ private:
                 //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
                 //  - Only if clipboard content formats list include "UNICODETEXT:
                 // send a request for it in that format
-                RDPECLIP::FormatListPDUEx format_list_pdu;
-                format_list_pdu.recv(chunk, this->client_use_long_format_names,
-                    (incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES));
+                bool contains_data_in_text_format = false;
+                bool contains_data_in_unicodetext_format = false;
+                Cliprdr::format_list_extract(
+                    chunk,
+                    Cliprdr::IsLongFormat(this->client_use_long_format_names),
+                    Cliprdr::IsAscii(incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+                    [&](uint32_t format_id, auto const& name) {
+                        contains_data_in_text_format |= (format_id == RDPECLIP::CF_TEXT);
+                        contains_data_in_unicodetext_format |= (format_id == RDPECLIP::CF_UNICODETEXT);
+                        if (bool(this->verbose & VNCVerbose::clipboard)) {
+                            Cliprdr::log_format_name("", format_id, name);
+                        }
+                    }
+                );
 
-                if (bool(this->verbose & VNCVerbose::clipboard)) {
-                    format_list_pdu.log(LOG_INFO);
-                }
 
                 //---- Beginning of clipboard PDU Header ----------------------------
 
@@ -2638,9 +2646,6 @@ private:
 
                 using std::chrono::microseconds;
                 constexpr microseconds MINIMUM_TIMEVAL(250000LL);
-
-                const bool contains_data_in_text_format        = FormatListPDUEx_contains_data_in_format(format_list_pdu, RDPECLIP::CF_TEXT);
-                const bool contains_data_in_unicodetext_format = FormatListPDUEx_contains_data_in_format(format_list_pdu, RDPECLIP::CF_UNICODETEXT);
 
                 if (this->enable_clipboard_up &&
                         (contains_data_in_text_format || contains_data_in_unicodetext_format)) {

@@ -241,14 +241,6 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
     switch (rp.msgType()) {
         case RDPECLIP::CB_FORMAT_LIST:
             {
-                RDPECLIP::CliprdrHeader clipboard_header;
-                clipboard_header.recv(stream);
-
-                RDPECLIP::FormatListPDUEx format_list_pdu;
-                const bool use_long_format_names = (this->client_use_long_format_names && this->server_use_long_format_names);
-                const bool in_ASCII_8            = (clipboard_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES);
-                format_list_pdu.recv(stream, use_long_format_names, in_ASCII_8);
-
                 RDPECLIP::FormatListResponsePDU pdu;
                 RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, pdu.size());
 

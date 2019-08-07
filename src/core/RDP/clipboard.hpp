@@ -74,15 +74,7 @@ namespace Cliprdr
         Utf16,
     };
 
-    struct FormatListExtractorData
-    {
-        uint32_t format_id;
-        Charset charset;
-        cbytes_view av_name;
-    };
-
     enum class IsLongFormat : bool;
-    // TODO Charset ?
     enum class IsAscii : bool;
 
     // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
@@ -95,78 +87,100 @@ namespace Cliprdr
     struct UnicodeName
     {
         explicit UnicodeName(const_bytes_view name) noexcept
-        : name(name)
+        : bytes(name)
         {}
 
-        const_bytes_view name;
+        const_bytes_view bytes;
     };
+
+    inline bool is_file_group_descriptor_w(UnicodeName const& unicode_name) noexcept
+    {
+        auto& name = format_name_constants::file_group_descriptor_w_utf16;
+        return unicode_name.bytes.size() == name.size()
+            && 0 == memcmp(name.data(), unicode_name.bytes.data(), name.size());
+    }
 
     struct AsciiName
     {
         explicit AsciiName(const_bytes_view name) noexcept
-        : name(name)
+        : bytes(name)
         {}
 
-        const_bytes_view name;
+        const_bytes_view bytes;
     };
 
-    template<class ProcessFormat>
-    bool format_list_extract_long_format(InStream& stream, ProcessFormat&& process_format)
+    inline bool is_file_group_descriptor_w(AsciiName const& ascii_name) noexcept
     {
-        if (stream.in_check_rem(min_long_format_name_data_length))
-        {
-            uint32_t format_id = stream.in_uint32_le();
+        auto& name = format_name_constants::file_group_descriptor_w_utf8;
+        return ascii_name.bytes.size() == name.size()
+            && 0 == memcmp(name.data(), ascii_name.bytes.data(), name.size());
+    }
 
-            auto name = stream.remaining_bytes();
+    struct LeftOrTrue
+    {
+        constexpr operator bool () const noexcept { return true; }
+    };
+
+    template<class T, class U>
+    T&& operator,(T&& x, LeftOrTrue const&) noexcept
+    {
+        return static_cast<T&&>(x);
+    }
+
+    template<class ProcessFormat>
+    bool format_list_extract_long_format(InStream& in_stream, ProcessFormat&& process_format)
+    {
+        if (in_stream.in_check_rem(min_long_format_name_data_length))
+        {
+            uint32_t format_id = in_stream.in_uint32_le();
+
+            auto name = in_stream.remaining_bytes();
             auto end_name_pos = UTF16ByteLen(name);
             auto end_format_pos = end_name_pos + 2;
 
-            if (!stream.in_check_rem(end_format_pos))
+            if (!in_stream.in_check_rem(end_format_pos))
             {
-                stream.rewind(stream.get_offset() - 4);
+                in_stream.rewind(in_stream.get_offset() - 4);
                 return false;
             }
 
-            stream.in_skip_bytes(end_format_pos);
-            process_format(format_id, UnicodeName(name.first(end_name_pos)));
+            in_stream.in_skip_bytes(end_format_pos);
 
-            return true;
+            return process_format(format_id, UnicodeName(name.first(end_name_pos))), LeftOrTrue{};
         }
 
         return false;
     }
 
     template<class ProcessFormat>
-    bool format_list_extract_ascii_format(InStream& stream, ProcessFormat&& process_format)
+    bool format_list_extract_ascii_format(InStream& in_stream, ProcessFormat&& process_format)
     {
-        if (stream.in_check_rem(short_format_name_data_length))
+        if (in_stream.in_check_rem(short_format_name_data_length))
         {
-            uint32_t format_id = stream.in_uint32_le();
+            uint32_t format_id = in_stream.in_uint32_le();
 
-            auto name = stream.remaining_bytes();
-            stream.in_skip_bytes(short_format_name_length);
+            auto name = in_stream.remaining_bytes();
+            in_stream.in_skip_bytes(short_format_name_length);
             name = name.first(strnlen(name.as_charp(), short_format_name_length));
-            process_format(format_id, AsciiName(name));
 
-            return true;
+            return process_format(format_id, AsciiName(name)), LeftOrTrue{};
         }
 
         return false;
     }
 
     template<class ProcessFormat>
-    bool format_list_extract_unicode_format(InStream& stream, ProcessFormat&& process_format)
+    bool format_list_extract_unicode_format(InStream& in_stream, ProcessFormat&& process_format)
     {
-        if (stream.in_check_rem(short_format_name_data_length))
+        if (in_stream.in_check_rem(short_format_name_data_length))
         {
-            uint32_t format_id = stream.in_uint32_le();
+            uint32_t format_id = in_stream.in_uint32_le();
 
-            auto name = stream.remaining_bytes();
-            stream.in_skip_bytes(short_format_name_length);
+            auto name = in_stream.remaining_bytes();
+            in_stream.in_skip_bytes(short_format_name_length);
             name = name.first(UTF16ByteLen(name.first(short_format_name_length)));
-            process_format(format_id, UnicodeName(name));
 
-            return true;
+            return process_format(format_id, UnicodeName(name)), LeftOrTrue{};
         }
 
         return false;
@@ -174,22 +188,22 @@ namespace Cliprdr
 
     template<class ProcessFormat>
     void format_list_extract(
-        InStream& stream, IsLongFormat is_long_format, IsAscii is_ascii,
+        InStream& in_stream, IsLongFormat is_long_format, IsAscii is_ascii,
         ProcessFormat&& process_format)
     {
         if (bool(is_long_format))
         {
-            while (format_list_extract_long_format(stream, process_format))
+            while (format_list_extract_long_format(in_stream, process_format))
                 ;
         }
         else if (bool(is_ascii))
         {
-            while (format_list_extract_ascii_format(stream, process_format))
+            while (format_list_extract_ascii_format(in_stream, process_format))
                 ;
         }
         else
         {
-            while (format_list_extract_unicode_format(stream, process_format))
+            while (format_list_extract_unicode_format(in_stream, process_format))
                 ;
         }
     }
@@ -230,7 +244,7 @@ namespace Cliprdr
         }
         else
         {
-            if (!out_stream.has_room(4 + short_format_name_length))
+            if (!out_stream.has_room(header_length + short_format_name_length))
             {
                 return false;
             }
@@ -258,14 +272,30 @@ namespace Cliprdr
         return true;
     }
 
+    struct CharsetFormatName
+    {
+        Charset charset;
+        const_bytes_view bytes;
+
+        CharsetFormatName(UnicodeName unicode_name) noexcept
+        : charset(Charset::Utf16)
+        , bytes(unicode_name.bytes)
+        {}
+
+        CharsetFormatName(AsciiName ascii_name) noexcept
+        : charset(Charset::Ascii)
+        , bytes(ascii_name.bytes)
+        {}
+    };
+
     struct FormatNameInventory
     {
         using FormatId = uint32_t;
         struct FormatName;
 
-        FormatName const& push(FormatId format_id, Charset charset, array_view_const_u8 av_name)
+        FormatName const& push(FormatId format_id, CharsetFormatName name)
         {
-            return this->formats.emplace_back(format_id, charset, av_name);
+            return this->formats.emplace_back(format_id, name);
         }
 
         FormatName const* find(FormatId format_id) const noexcept
@@ -292,19 +322,19 @@ namespace Cliprdr
             uint8_t len;
             uint8_t utf8_buffer[utf8_buffer_buf_len];
 
-            FormatName(FormatId format_id, Charset charset, array_view_const_u8 raw_name) noexcept
+            FormatName(FormatId format_id, CharsetFormatName name) noexcept
             : format_id(format_id)
-            , len(std::min(raw_name.size(), std::size(this->utf8_buffer)))
+            , len(std::min(name.bytes.size(), std::size(this->utf8_buffer)))
             {
-                if (charset == Charset::Ascii)
+                if (name.charset == Charset::Ascii)
                 {
-                    this->len = std::min(raw_name.size(), std::size(this->utf8_buffer));
-                    memcpy(this->utf8_buffer, raw_name.data(), this->len);
+                    this->len = std::min(name.bytes.size(), std::size(this->utf8_buffer));
+                    memcpy(this->utf8_buffer, name.bytes.data(), this->len);
                 }
                 else
                 {
                     this->len = UTF16toUTF8_buf(
-                        raw_name, make_array_view(this->utf8_buffer)).size();
+                        name.bytes, make_array_view(this->utf8_buffer)).size();
                 }
             }
 
@@ -414,6 +444,28 @@ inline static const char * get_FormatId_name(uint32_t FormatId) noexcept
     return get_FormatId_name_av(FormatId).data();
 }
 
+} // namespace RDPECLIP
+
+
+namespace Cliprdr
+{
+    inline void log_format_name(char const* prefix, uint32_t format_id, AsciiName ascii_name)
+    {
+        LOG(LOG_INFO, "%sFormatName{formatId=%s(%u) formatName=\"%.*s\"}",
+            prefix, RDPECLIP::get_FormatId_name(format_id), format_id,
+            int(ascii_name.bytes.size()), ascii_name.bytes.data());
+    }
+
+    inline void log_format_name(char const* prefix, uint32_t format_id, UnicodeName unicode_name)
+    {
+        char buf[256];
+        auto utf8_name = UTF16toUTF8_buf(unicode_name.bytes, make_array_view(buf));
+        log_format_name(prefix, format_id, AsciiName{utf8_name});
+    }
+} // namespace Cliprdr
+
+
+namespace RDPECLIP {
 // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
 // =========================================================
 
@@ -1296,11 +1348,11 @@ public:
             Cliprdr::IsAscii(in_ASCII_8), overload{
             [this](uint32_t format_id, Cliprdr::UnicodeName unicode_name) {
                 char buf[1024];
-                auto name = UTF16toUTF8_buf(unicode_name.name, make_array_view(buf)).as_chars();
+                auto name = UTF16toUTF8_buf(unicode_name.bytes, make_array_view(buf)).as_chars();
                 this->format_names.emplace_back(format_id, std::string(name.data(), name.size()));
             },
             [this](uint32_t format_id, Cliprdr::AsciiName ascii_name) {
-                auto name = ascii_name.name.as_chars();
+                auto name = ascii_name.bytes.as_chars();
                 this->format_names.emplace_back(format_id, std::string(name.data(), name.size()));
             }
         });
@@ -1336,27 +1388,23 @@ public:
 
     bool will_be_sent_in_ASCII_8(bool use_long_format_names) const
     {
-        if (!use_long_format_names) {
-            bool   all_format_names_are_ASCII_strings = true;
-            size_t max_format_name_len_in_char        = 0;
-            for (auto & format_name : this->format_names) {
-                if (!::is_ASCII_string(byte_ptr_cast(format_name.format_name().c_str()))) {
-                    all_format_names_are_ASCII_strings = false;
-                }
+        if (use_long_format_names) {
+            return false;
+        }
 
-                const size_t format_name_len_in_char = ::UTF8StrLenInChar(byte_ptr_cast(format_name.format_name().c_str()));
-                if (max_format_name_len_in_char < format_name_len_in_char) {
-                    max_format_name_len_in_char = format_name_len_in_char;
-                }
+        size_t max_format_name_len_in_char = 0;
+        for (auto & format_name : this->format_names) {
+            if (!::is_ASCII_string(byte_ptr_cast(format_name.format_name().c_str()))) {
+                return false;
             }
 
-            if (all_format_names_are_ASCII_strings &&
-                (max_format_name_len_in_char >= (32 /* formatName(32) */ / sizeof(uint16_t)))) {
-                return true;
+            const size_t format_name_len_in_char = ::UTF8StrLenInChar(byte_ptr_cast(format_name.format_name().c_str()));
+            if (max_format_name_len_in_char < format_name_len_in_char) {
+                max_format_name_len_in_char = format_name_len_in_char;
             }
         }
 
-        return false;
+        return (max_format_name_len_in_char >= (32 /* formatName(32) */ / sizeof(uint16_t)));
     }
 
 private:
@@ -1386,16 +1434,6 @@ public:
         LOG(level, "%s", buffer);
     }
 };  // FormatListPDUEx
-
-inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx & format_list_pdu, uint32_t formatId) {
-    for (FormatName const& format_name : format_list_pdu) {
-        if (format_name.formatId() == formatId) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 
 // TODO zstr_XXXXX
@@ -2656,9 +2694,14 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
             {
                 header.log();
 
-                FormatListPDUEx format_list_pdu;
-                format_list_pdu.recv(chunk, state.use_long_format_names, (header.msgFlags() & CB_ASCII_NAMES));
-                format_list_pdu.log(LOG_INFO);
+                Cliprdr::format_list_extract(
+                    chunk,
+                    Cliprdr::IsLongFormat(state.use_long_format_names),
+                    Cliprdr::IsAscii(header.msgFlags() & CB_ASCII_NAMES),
+                    [&](uint32_t format_id, auto const& name) {
+                        Cliprdr::log_format_name("", format_id, name);
+                    }
+                );
             }
                 break;
 

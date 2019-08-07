@@ -373,32 +373,31 @@ private:
         InStream& chunk, RDPECLIP::CliprdrHeader const& header,
         FieldIndex nb_copy_text, FieldIndex nb_copy_image, FieldIndex nb_copy_file)
     {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-        format_list_pdu.recv(chunk, this->use_long_format_names, (header.msgFlags() & RDPECLIP::CB_ASCII_NAMES));
-
-        for (RDPECLIP::FormatName const & format_name_local : format_list_pdu) {
-            format_name_local.log(LOG_INFO);
-
-            switch (uint32_t formatID = format_name_local.formatId()) {
-                case RDPECLIP::CF_TEXT:
-                case RDPECLIP::CF_LOCALE:
-                case RDPECLIP::CF_UNICODETEXT:
-                case RDPECLIP::CF_OEMTEXT:
-                    this->metrics.add_to_current_data(nb_copy_text, 1);
-                    return;
-                case RDPECLIP::CF_METAFILEPICT:
-                    this->metrics.add_to_current_data(nb_copy_image, 1);
-                    return;
-                default:
-                    // TODO string_view
-                    if (format_name_local.format_name() == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
-                        this->file_contents_format_ID = formatID;
-                        this->metrics.add_to_current_data(nb_copy_file, 1);
-                        return;
-                    }
-                    break;
+        Cliprdr::format_list_extract(
+            chunk,
+            Cliprdr::IsLongFormat(this->use_long_format_names),
+            Cliprdr::IsAscii(header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+            [&](uint32_t format_id, auto name) {
+                switch (format_id) {
+                    case RDPECLIP::CF_TEXT:
+                    case RDPECLIP::CF_LOCALE:
+                    case RDPECLIP::CF_UNICODETEXT:
+                    case RDPECLIP::CF_OEMTEXT:
+                        this->metrics.add_to_current_data(nb_copy_text, 1);
+                        return false;
+                    case RDPECLIP::CF_METAFILEPICT:
+                        this->metrics.add_to_current_data(nb_copy_image, 1);
+                        return false;
+                    default:
+                        if (Cliprdr::is_file_group_descriptor_w(name)) {
+                            this->file_contents_format_ID = format_id;
+                            this->metrics.add_to_current_data(nb_copy_file, 1);
+                            return false;
+                        }
+                }
+                return true;
             }
-        }
+        );
     }
 
     void process_format_data_request(
