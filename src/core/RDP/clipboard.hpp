@@ -28,6 +28,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/overload.hpp"
 
 #include <cinttypes>
 #include <sstream>
@@ -69,6 +70,7 @@ namespace Cliprdr
     enum class Charset : bool
     {
         Ascii,
+        // Unicode
         Utf16,
     };
 
@@ -90,60 +92,106 @@ namespace Cliprdr
     constexpr size_t short_format_name_length = 32;
     constexpr size_t short_format_name_data_length = short_format_name_length + 4;
 
-    constexpr size_t format_name_data_length[] = {
-        short_format_name_data_length,
-        min_long_format_name_data_length
+    struct UnicodeName
+    {
+        explicit UnicodeName(const_bytes_view name) noexcept
+        : name(name)
+        {}
+
+        const_bytes_view name;
     };
 
-    enum class ExtractResult : int8_t
+    struct AsciiName
     {
-        Ok,
-        WaitingData,
-        LongFormatNameTooLong,
+        explicit AsciiName(const_bytes_view name) noexcept
+        : name(name)
+        {}
+
+        const_bytes_view name;
     };
 
-    inline ExtractResult format_list_extract(
-        FormatListExtractorData& data, InStream& stream,
-        IsLongFormat is_long_format, IsAscii is_ascii) noexcept
+    template<class ProcessFormat>
+    bool format_list_extract_long_format(InStream& stream, ProcessFormat&& process_format)
     {
-        if (stream.in_remain() < format_name_data_length[int(is_long_format)])
+        if (stream.in_check_rem(min_long_format_name_data_length))
         {
-            return ExtractResult::WaitingData;
-        }
+            uint32_t format_id = stream.in_uint32_le();
 
-        data.format_id = stream.in_uint32_le();
+            auto name = stream.remaining_bytes();
+            auto end_name_pos = UTF16ByteLen(name);
+            auto end_format_pos = end_name_pos + 2;
 
-        if (bool(is_long_format))
-        {
-            data.charset = Charset::Utf16;
-            auto av = stream.remaining_bytes();
-            data.av_name = av.first(UTF16ByteLen(av));
-
-            if (data.av_name.size() == av.size())
+            if (!stream.in_check_rem(end_format_pos))
             {
-                return ExtractResult::LongFormatNameTooLong;
+                stream.rewind(stream.get_offset() - 4);
+                return false;
             }
 
-            stream.in_skip_bytes(data.av_name.size() + 2);
+            stream.in_skip_bytes(end_format_pos);
+            process_format(format_id, UnicodeName(name.first(end_name_pos)));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    template<class ProcessFormat>
+    bool format_list_extract_ascii_format(InStream& stream, ProcessFormat&& process_format)
+    {
+        if (stream.in_check_rem(short_format_name_data_length))
+        {
+            uint32_t format_id = stream.in_uint32_le();
+
+            auto name = stream.remaining_bytes();
+            stream.in_skip_bytes(short_format_name_length);
+            name = name.first(strnlen(name.as_charp(), short_format_name_length));
+            process_format(format_id, AsciiName(name));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    template<class ProcessFormat>
+    bool format_list_extract_unicode_format(InStream& stream, ProcessFormat&& process_format)
+    {
+        if (stream.in_check_rem(short_format_name_data_length))
+        {
+            uint32_t format_id = stream.in_uint32_le();
+
+            auto name = stream.remaining_bytes();
+            stream.in_skip_bytes(short_format_name_length);
+            name = name.first(UTF16ByteLen(name.first(short_format_name_length)));
+            process_format(format_id, UnicodeName(name));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    template<class ProcessFormat>
+    void format_list_extract(
+        InStream& stream, IsLongFormat is_long_format, IsAscii is_ascii,
+        ProcessFormat&& process_format)
+    {
+        if (bool(is_long_format))
+        {
+            while (format_list_extract_long_format(stream, process_format))
+                ;
+        }
+        else if (bool(is_ascii))
+        {
+            while (format_list_extract_ascii_format(stream, process_format))
+                ;
         }
         else
         {
-            auto av = stream.remaining_bytes();
-            if (bool(is_ascii))
-            {
-                data.charset = Charset::Ascii;
-                data.av_name = av.first(strnlen(av.as_charp(), short_format_name_length));
-            }
-            else
-            {
-                data.charset = Charset::Utf16;
-                data.av_name = av.first(UTF16ByteLen(av.first(short_format_name_length)));
-            }
-
-            stream.in_skip_bytes(short_format_name_length);
+            while (format_list_extract_unicode_format(stream, process_format))
+                ;
         }
-
-        return ExtractResult::Ok;
     }
 
     inline bool format_list_serialize(
@@ -1243,30 +1291,19 @@ public:
     {
         this->format_names.clear();
 
-        Cliprdr::ExtractResult r;
-
-        Cliprdr::FormatListExtractorData extracted_data;
-
-        while ((r = Cliprdr::format_list_extract(
-            extracted_data, in_stream,
-            Cliprdr::IsLongFormat(use_long_format_names),
-            Cliprdr::IsAscii(in_ASCII_8)
-        )) == Cliprdr::ExtractResult::Ok)
-        {
-            char buf[1024];
-            array_view_const_char name = extracted_data.av_name.as_chars();
-            switch (extracted_data.charset)
-            {
-                case Cliprdr::Charset::Ascii:;
-                    break;
-                case Cliprdr::Charset::Utf16:
-                    name = UTF16toUTF8_buf(name, make_array_view(buf)).as_chars();
-                    break;
+        Cliprdr::format_list_extract(
+            in_stream, Cliprdr::IsLongFormat(use_long_format_names),
+            Cliprdr::IsAscii(in_ASCII_8), overload{
+            [this](uint32_t format_id, Cliprdr::UnicodeName unicode_name) {
+                char buf[1024];
+                auto name = UTF16toUTF8_buf(unicode_name.name, make_array_view(buf)).as_chars();
+                this->format_names.emplace_back(format_id, std::string(name.data(), name.size()));
+            },
+            [this](uint32_t format_id, Cliprdr::AsciiName ascii_name) {
+                auto name = ascii_name.name.as_chars();
+                this->format_names.emplace_back(format_id, std::string(name.data(), name.size()));
             }
-            this->format_names.emplace_back(
-                extracted_data.format_id,
-                std::string(name.data(), name.size()));
-        }
+        });
     }
 
     void add_format_name(uint32_t formatId, const char * format_name = "") {
