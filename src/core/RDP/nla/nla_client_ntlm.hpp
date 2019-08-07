@@ -115,7 +115,7 @@ private:
 
     enum class Res : bool { Err, Ok };
 
-    enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
+    enum : uint8_t { Start, Loop, Final } client_auth_data_state = Loop;
     std::vector<uint8_t> client_auth_data_input_buffer;
 
     static void sspi_compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
@@ -138,6 +138,7 @@ public:
                uint8_t * pass,
                uint8_t * hostname,
                const char * target_host,
+               array_view_const_u8 public_key,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
@@ -167,21 +168,16 @@ public:
         this->Workstation = ::UTF8toUTF16({hostname, length_hostname});
         this->SendWorkstationName = length_hostname != 0;
 
-        this->client_auth_data_state = Start;
-
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::client_authenticate");
 
         // ============================================
         /* Get Public Key From TLS Layer and hostname */
         // ============================================
 
-        auto const key = transport.get_transport().get_public_key();
-        this->PublicKey.assign(key.data(), key.data()+key.size());
+        this->PublicKey.assign(public_key.data(), public_key.data()+public_key.size());
 
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
        
-        this->client_auth_data_state = Loop;
-
         /*
          * from tspkg.dll: 0x00000132
          * ISC_REQ_MUTUAL_AUTH
@@ -219,7 +215,8 @@ public:
         StaticOutStream<65535> out_stream;
         emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
         this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
-        this->ts_request.negoTokens.assign(this->SavedNegotiateMessage.data(),this->SavedNegotiateMessage.data()+this->SavedNegotiateMessage.size());
+
+        this->ts_request.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_bytes().size());
 
         /* send authentication token to server */
         if (this->ts_request.negoTokens.size() > 0) {
@@ -273,9 +270,6 @@ public:
     {
         switch (this->client_auth_data_state)
         {
-            case Start:
-                return credssp::State::Err;
-
             case Loop:
             {
                 this->ts_request.recv(in_stream);
@@ -718,10 +712,9 @@ public:
                     this->ts_credentials.emit(ts_credentials_send);
                     array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
                     unsigned long MessageSeqNo = this->send_seq_num++;
+
                     // data_out [signature][data_buffer]
-                    std::vector<uint8_t> data_out;
-                    data_out.resize(data_in.size() + cbMaxSignature, 0);
-                    
+                    std::vector<uint8_t> data_out(data_in.size() + cbMaxSignature, 0);
                     std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                     array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, data_in);
 
@@ -730,7 +723,6 @@ public:
                     
                     this->ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
 
-                    LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Credentials");
                     StaticOutStream<65536> ts_request_emit;
                     this->ts_request.emit(ts_request_emit);
                     transport.get_transport().send(ts_request_emit.get_bytes());
@@ -743,6 +735,8 @@ public:
                 this->client_auth_data_state = Start;
                 return credssp::State::Finish;
             }
+            default:
+                return credssp::State::Err;
         }
         return credssp::State::Err;
     }

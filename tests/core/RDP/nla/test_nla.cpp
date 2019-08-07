@@ -100,7 +100,9 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGTime timeobj;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    rdpCredsspClientNTLM credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, rand, timeobj, extra_message, lang);
+    rdpCredsspClientNTLM credssp(logtrans, user, domain, pass, host, "107.0.0.1", 
+                                logtrans.get_public_key(),
+                                false, rand, timeobj, extra_message, lang);
 
     credssp::State st = credssp::State::Cont;
     TpduBuffer buf;

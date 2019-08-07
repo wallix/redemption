@@ -415,6 +415,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 trans, this->user,
                 this->domain, this->current_password,
                 this->hostname, this->target_host,
+                trans.get_transport().get_public_key(),
                 this->restricted_admin_mode,
                 this->rand, this->timeobj, this->extra_message, this->lang,
                 bool(this->verbose & Verbose::credssp)
