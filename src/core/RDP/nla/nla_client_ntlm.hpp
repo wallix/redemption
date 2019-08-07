@@ -258,7 +258,7 @@ public:
         return flags;
     }
 
-    credssp::State credssp_client_authenticate_next(InStream & in_stream, OutTransport transport)
+    credssp::State credssp_client_authenticate_next(InStream & in_stream, StaticOutStream<65536> & ts_request_emit)
     {
         switch (this->client_auth_data_state)
         {
@@ -495,9 +495,7 @@ public:
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::send");
-                StaticOutStream<65536> ts_request_emit;
                 this->ts_request.emit(ts_request_emit);
-                transport.get_transport().send(ts_request_emit.get_bytes());
 
                 this->client_auth_data_state = Final;
                 return credssp::State::Cont;
@@ -598,9 +596,6 @@ public:
                     this->SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
                     this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
                     
-
-                    StaticOutStream<65536> ts_request_emit;
-
                     this->ts_request.negoTokens.clear();
                     this->ts_request.pubKeyAuth.clear();
                     this->ts_request.error_code = 0;
@@ -608,7 +603,6 @@ public:
                     this->ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
                     this->ts_request.clientNonce = this->SavedClientNonce;
                     this->ts_request.emit(ts_request_emit);
-                    transport.get_transport().send(ts_request_emit.get_bytes());
                 }
                 this->client_auth_data_state = Start;
                 return credssp::State::Finish;
