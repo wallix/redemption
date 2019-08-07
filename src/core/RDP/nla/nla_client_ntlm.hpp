@@ -51,7 +51,6 @@ private:
 
     std::vector<uint8_t> PublicKey;
     std::vector<uint8_t> ClientServerHash;
-    std::vector<uint8_t> ServerClientHash;
     std::vector<uint8_t> identity_User;
     std::vector<uint8_t> identity_Domain;
     std::vector<uint8_t> identity_Password;
@@ -558,60 +557,46 @@ public:
 
                 /* Verify Server Public Key Echo */
                 unsigned long MessageSeqNo = this->recv_seq_num++;
-                std::vector<uint8_t> data_out;
+                
                 // data_in [signature][data_buffer]
 
                 array_view_const_u8 pubkeyAuth_payload = {this->ts_request.pubKeyAuth.data()+cbMaxSignature, this->ts_request.pubKeyAuth.size()-cbMaxSignature};
                 array_view_const_u8 pubkeyAuth_signature = {this->ts_request.pubKeyAuth.data(),cbMaxSignature};
-                data_out.resize(pubkeyAuth_payload.size(), 0);
 
-                /* Decrypt message using with RC4, result overwrites original buffer */
-                // this->confidentiality == true
                 SslRC4 RecvRc4Seal {};
                 RecvRc4Seal.set_key(this->ServerSealingKey);
-                RecvRc4Seal.crypt(pubkeyAuth_payload.size(), pubkeyAuth_payload.data(), data_out.data());
-
+                // decrypt message using RC4
+                auto pubkeyAuth_encrypted_payload = Rc4CryptVector(RecvRc4Seal, pubkeyAuth_payload);
+               
                 std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-                array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, seqno, data_out);
-                std::array<uint8_t, 8> checksum;
-                /* RC4-encrypt first 8 bytes of digest */
-
-                std::array<uint8_t, 16> expected_signature;
-
-                RecvRc4Seal.crypt(checksum.size(), digest.data(), checksum.data());
-                uint32_t signature_version = 1;
+                array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, seqno, pubkeyAuth_encrypted_payload);
+                /* RC4-encrypt first 8 bytes of digest (digest is 16 bytes long)*/
+                auto checksum = Rc4Crypt<8>(RecvRc4Seal, digest);
                 /* Concatenate version, ciphertext and sequence number to build signature */
-                memcpy(expected_signature.data(), &signature_version, 4);
-                memcpy(&expected_signature.data()[4], checksum.data(), 8);
-                memcpy(&expected_signature.data()[12], &MessageSeqNo, 4);
+                StaticOutStream<16> expected_signature;
+                expected_signature.out_uint32_le(1); // version 1
+                expected_signature.out_copy_bytes(checksum);
+                expected_signature.out_uint32_le(MessageSeqNo);
 
-                if (!are_buffer_equal(pubkeyAuth_signature, expected_signature)) {
+                if (!are_buffer_equal(pubkeyAuth_signature, expected_signature.get_bytes())) {
                     LOG(LOG_ERR, "public key echo signature verification failed, something nasty is going on!");
-                    LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature);
+                    LOG(LOG_ERR, "Expected Signature:"); hexdump_c(expected_signature.get_bytes());
                     LOG(LOG_ERR, "Actual Signature:"); hexdump_c(pubkeyAuth_signature);
                     return credssp::State::Err;
                 }
 
                 const uint32_t version = this->ts_request.use_version;
 
-                array_view_const_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
-                if (version >= 5) {
-                    LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp get client nonce");
-                    LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (server->client)");
-                    SslSha256 sha256;
-                    uint8_t hash[SslSha256::DIGEST_LENGTH];
-                    sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-                    sha256.update(make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH));
-                    sha256.update({this->PublicKey.data(),this->PublicKey.size()});
-                    sha256.final(hash);
-                    this->ServerClientHash.assign(hash, hash + sizeof(hash));
-                    public_key = {this->ServerClientHash.data(), this->ServerClientHash.size()};
-                }
+                
+                auto hash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
+                       make_array_view(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH),
+                       {this->PublicKey.data(),this->PublicKey.size()});
 
-                array_view_u8 public_key2 = {data_out.data(), data_out.size()};
+                array_view_u8 public_key = (version >= 5)?array_view_u8(hash):array_view_u8(this->PublicKey);
 
-                if (public_key2.size() != public_key.size()) {
-                    LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
+                if (pubkeyAuth_encrypted_payload.size() != public_key.size()) {
+                    LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", 
+                        pubkeyAuth_encrypted_payload.size(), public_key.size());
                     // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
 
                     LOG(LOG_ERR, "Could not verify public key echo!");
@@ -621,17 +606,17 @@ public:
                 if (version < 5) {
                     // if we are client and protocol is 2,3,4
                     // then get the public key minus one
-                    ::ap_integer_decrement_le(public_key2);
+                    ::ap_integer_decrement_le(pubkeyAuth_encrypted_payload);
                 }
 
-                if (memcmp(public_key.data(), public_key2.data(), public_key.size()) != 0) {
+                if (memcmp(public_key.data(), pubkeyAuth_encrypted_payload.data(), public_key.size()) != 0) {
                     LOG(LOG_ERR, "Could not verify server's public key echo");
 
                     LOG(LOG_ERR, "Expected (length = %zu):", public_key.size());
                     hexdump_c(public_key);
 
                     LOG(LOG_ERR, "Actual (length = %zu):", public_key.size());
-                    hexdump_c(public_key2);
+                    hexdump_c(pubkeyAuth_encrypted_payload);
 
                     // return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
 

@@ -65,6 +65,20 @@ static inline array_md5 Rc4Key(array_view_const_u8 key, array_view_const_u8 plai
     return cyphertext;
 }
 
+static inline std::vector<uint8_t> Rc4CryptVector(SslRC4 &rc4, array_view_const_u8 plaintext)
+{
+    std::vector<uint8_t> cyphertext(plaintext.size());
+    rc4.crypt(plaintext.size(), plaintext.data(), cyphertext.data());
+    return cyphertext;
+}
+
+template<std::size_t N>
+static inline std::array<uint8_t, N> Rc4Crypt(SslRC4 &rc4, array_view_const_u8 plaintext)
+{
+    std::array<uint8_t, N> cyphertext;
+    rc4.crypt(N, plaintext.data(), cyphertext.data());
+    return cyphertext;
+}
 
 static inline array_md5 Md5(array_view_const_u8 data)
 {

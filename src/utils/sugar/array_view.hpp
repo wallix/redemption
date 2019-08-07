@@ -307,3 +307,10 @@ static inline bool are_buffer_equal(array_view_const_u8 a, array_view_const_u8 b
 {
     return a.size() == b.size() && (0 == memcmp(a.data(), b.data(), a.size()));
 }
+
+static inline std::pair<array_view_const_u8, array_view_const_u8> get_bytes_slice(array_view_const_u8 a, size_t n)
+{
+    return {{a.data(), n},{a.data()+n, a.size()-n}};
+}
+
+
