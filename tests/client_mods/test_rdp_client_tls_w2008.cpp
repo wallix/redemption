@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullReportMessage report_message;
     SessionReactor session_reactor;
 
-    const ChannelsAuthorizations channels_authorizations{};
+    const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
@@ -217,7 +217,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     NullReportMessage report_message;
     SessionReactor session_reactor;
 
-    const ChannelsAuthorizations channels_authorizations{};
+    const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
 
     auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,

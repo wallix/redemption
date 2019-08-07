@@ -25,88 +25,280 @@
 #include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
+#include "mod/file_validatior_service.hpp"
 #include "utils/stream.hpp"
 #include "system/ssl_sha256.hpp"
 
-#include <unordered_map>
 #include <vector>
-#include <strings.h>
-
-#define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
-
 
 
 struct ClipboardSideData
 {
-    struct file_contents_request_info
-    {
-        uint32_t lindex;
-        uint64_t position;
-        uint32_t cbRequested;
-        uint32_t clipDataId;
-        uint32_t offset;
-    };
-    using file_contents_request_info_inventory_type = std::unordered_map<uint32_t /*streamId*/, file_contents_request_info>;
-
-    struct file_info_type
-    {
-        std::string file_name;
-        uint64_t size;
-        uint64_t sequential_access_offset;
-        SslSha256 sha256;
-    };
-    using file_info_inventory_type = std::vector<file_info_type>;
-
-    using file_stream_data_inventory_type = std::unordered_map<uint32_t /*clipDataId*/, file_info_inventory_type>;
-
-    uint16_t message_type = 0;
+    uint16_t current_message_type = 0;
     bool use_long_format_names = false;
-    uint32_t clipDataId = 0;
     uint32_t file_list_format_id = 0;
-    uint32_t dataLen = 0;
-    uint32_t streamId = 0;
     StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
-    file_contents_request_info_inventory_type file_contents_request_info_inventory;
-    file_stream_data_inventory_type file_stream_data_inventory;
+    enum class StreamId : uint32_t;
+    enum class FileGroupId : uint32_t;
 
-    std::string provider_name;
+    StreamId file_contents_stream_id {};
 
-    uint32_t last_dwFlags = RDPECLIP::FILECONTENTS_SIZE;
+    struct FileContent
+    {
+        // if not stream_id then file_data has value
 
-    ClipboardSideData(std::string provider_name)
-      : provider_name(std::move(provider_name))
-    {}
+        // TODO CLIPRDR
+        StreamId stream_id;
+        FileGroupId file_group_id;
 
-    void set_file_contents_request_info_inventory(uint32_t lindex, uint64_t position, uint32_t cbRequested, uint32_t clipDataId, uint32_t offset, uint32_t streamID) {
-        this->file_contents_request_info_inventory[streamID] =
+        enum class Status : uint8_t
         {
-            lindex,
-            position,
-            cbRequested,
-            clipDataId,
-            offset
+            // WithId: file_data with optional clip_data_id
+            // WaitContinuation*: file transfered to several packet
+            WaitValidator,
+            WaitDataWithId,
+            WaitData,
+            WaitContinuationWithId,
+            WaitContinuation,
+            IsSize,
         };
+
+        Status status;
+
+        struct FileData
+        {
+            FileValidatorId file_validator_id;
+            uint32_t clip_data_id;
+            bool active_lock;
+
+            std::string file_name;
+            uint64_t file_size;
+            uint64_t file_offset;
+            uint64_t file_size_requested;
+
+            SslSha256_Delayed sha256;
+        };
+
+        FileData file_data;
+
+        bool is_file_range() const
+        {
+            return !is_file_size();
+        }
+
+        bool is_file_size() const
+        {
+            return this->status == Status::IsSize;
+        }
+
+        void set_wait_validator()
+        {
+            this->status = Status::WaitValidator;
+        }
+
+        bool is_wait_validator() const
+        {
+            return this->status == Status::WaitValidator;
+        }
+
+        const_bytes_view receive_data(const_bytes_view data)
+        {
+            assert(this->status == Status::WaitData || this->status == Status::WaitDataWithId);
+
+            if (data.size() >= this->file_data.file_size_requested) {
+                data = data.first(this->file_data.file_size_requested);
+            }
+
+            this->file_data.sha256.update(data);
+            this->file_data.file_offset += data.size();
+            this->file_data.file_size_requested -= data.size();
+
+            if (!this->file_data.file_size_requested) {
+                if (this->file_data.file_offset == this->file_data.file_size) {
+                    this->status = Status::WaitValidator;
+                }
+                else {
+                    if (this->status == Status::WaitData) {
+                        this->status = Status::WaitContinuation;
+                    }
+                    else if (this->status == Status::WaitDataWithId) {
+                        this->status = Status::WaitContinuationWithId;
+                    }
+                }
+            }
+
+            return data;
+        }
+
+        void update_requested(uint64_t file_size_requested)
+        {
+            assert(this->status == Status::WaitContinuation || this->status == Status::WaitContinuationWithId);
+
+            if (this->status == Status::WaitContinuation) {
+                this->status = Status::WaitData;
+            }
+            else if (this->status == Status::WaitContinuationWithId) {
+                this->status = Status::WaitDataWithId;
+            }
+            else {
+                assert(false);
+            }
+
+            uint64_t offset_end = this->file_data.file_offset + file_size_requested;
+            uint64_t size_after_requested = std::min(this->file_data.file_size, offset_end);
+            this->file_data.file_size_requested = size_after_requested - this->file_data.file_offset;
+        }
+    };
+
+    std::vector<FileContent> file_contents_list;
+    std::vector<uint32_t> lock_id_list;
+
+private:
+    auto _find_lock_id_it(uint32_t id) const
+    {
+        return std::find(this->lock_id_list.begin(), this->lock_id_list.end(), id);
     }
 
-    void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd) {
-        file_info_inventory_type & file_info_inventory =
-                this->file_stream_data_inventory[this->clipDataId];
-            file_info_inventory.push_back({ fd.fileName(), fd.file_size(), 0, SslSha256() });
+public:
+    bool has_lock_id(uint32_t id) const
+    {
+        return this->_find_lock_id_it(id) != this->lock_id_list.end();
+    }
+
+    void push_lock_id(uint32_t id)
+    {
+        if (!this->has_lock_id(id)) {
+            this->lock_id_list.push_back(id);
+            for (auto& file : this->file_contents_list) {
+                if ((
+                    file.status == FileContent::Status::WaitDataWithId
+                 || file.status == FileContent::Status::WaitContinuationWithId
+                ) && file.file_data.clip_data_id == id) {
+                    file.file_data.active_lock = true;
+                }
+            }
+        }
+    }
+
+    void remove_lock_id(uint32_t id)
+    {
+        auto pos = this->_find_lock_id_it(id);
+        if (pos != this->lock_id_list.end()) {
+            this->lock_id_list.erase(pos);
+            for (auto& file : this->file_contents_list) {
+                if ((
+                    (file.status == FileContent::Status::WaitDataWithId)
+                 || file.status == FileContent::Status::WaitContinuationWithId
+                ) && file.file_data.clip_data_id == id
+                ) {
+                    if (file.status == FileContent::Status::WaitDataWithId) {
+                        file.status = FileContent::Status::WaitData;
+                    }
+                    else {
+                        file.status = FileContent::Status::WaitContinuation;
+                    }
+                    file.file_data.active_lock = false;
+                }
+            }
+        }
+    }
+
+    void push_file_content_size(StreamId stream_id, FileGroupId file_group_id)
+    {
+        this->file_contents_list.push_back({stream_id, file_group_id, FileContent::Status::IsSize, {}});
+    }
+
+    void push_file_content_range(
+        StreamId stream_id, FileGroupId file_group_id,
+        bool has_clip_data_id, uint32_t clip_data_id, FileValidatorId file_validator_id,
+        std::string const& filename, uint64_t filesize, uint64_t file_size_requested)
+    {
+        bool active_lock = (has_clip_data_id && this->has_lock_id(clip_data_id));
+        this->file_contents_list.push_back({
+            stream_id, file_group_id, has_clip_data_id
+                ? FileContent::Status::WaitDataWithId
+                : FileContent::Status::WaitData,
+            FileContent::FileData{
+                file_validator_id, clip_data_id, active_lock, filename, filesize, 0,
+                std::min(file_size_requested, filesize), {}
+            }
+        });
+        this->file_contents_list.back().file_data.sha256.init();
+    }
+
+    void remove_file(FileContent* file)
+    {
+        assert(file);
+        auto n = std::size_t(file - this->file_contents_list.data());
+        if (n+1u != this->file_contents_list.size()) {
+            this->file_contents_list[n] = std::move(this->file_contents_list.back());
+        }
+        this->file_contents_list.pop_back();
+    }
+
+    FileContent* find_file_by_offset(FileGroupId file_group_id, uint64_t offset)
+    {
+        for (auto& file : this->file_contents_list) {
+            if (file.file_group_id == file_group_id
+             && file.file_data.file_offset == offset
+             && file.status == FileContent::Status::WaitContinuation
+            ) {
+                return &file;
+            }
+        }
+        return nullptr;
+    }
+
+    FileContent* find_file_by_stream_id(StreamId stream_id)
+    {
+        for (auto& file : this->file_contents_list) {
+            if (file.stream_id == stream_id && (
+                file.status == FileContent::Status::WaitDataWithId
+             || file.status == FileContent::Status::WaitData
+             || file.status == FileContent::Status::IsSize
+            )) {
+                return &file;
+            }
+        }
+        return nullptr;
+    }
+
+    FileContent* find_continuation_stream_id(StreamId stream_id)
+    {
+        for (auto& file : this->file_contents_list) {
+            if (file.stream_id == stream_id && file.file_data.active_lock && (
+                file.status == FileContent::Status::WaitContinuationWithId
+             || file.status == FileContent::Status::WaitDataWithId
+            )) {
+                return &file;
+            }
+        }
+        return nullptr;
+    }
+
+    FileContent* find_file_by_file_validator_id(FileValidatorId file_validator_id)
+    {
+        for (auto& file : this->file_contents_list) {
+            if (file.file_data.file_validator_id == file_validator_id) {
+                return &file;
+            }
+        }
+        return nullptr;
     }
 };
 
 struct ClipboardData
 {
-    ClipboardSideData server_data {"server"};
-    ClipboardSideData client_data {"client"};
+    ClipboardSideData server_data;
+    ClipboardSideData client_data;
 
     uint32_t requestedFormatId = 0;
 };
 
 struct ClipboardCapabilitiesReceive
 {
-    ClipboardCapabilitiesReceive(ClipboardSideData & clip_data, InStream& chunk, const RDPVerbose verbose)
+    ClipboardCapabilitiesReceive(ClipboardSideData& side_data, InStream& chunk, const RDPVerbose verbose)
     {
         // cCapabilitiesSets(2) +
         // pad1(2)
@@ -129,44 +321,8 @@ struct ClipboardCapabilitiesReceive
                     general_caps.log(LOG_INFO);
                 }
 
-                clip_data.use_long_format_names =
+                side_data.use_long_format_names =
                     bool(general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-            }
-        }
-    }
-};
-
-struct FilecontentsRequestReceive
-{
-    uint32_t dwFlags = 0;
-    uint32_t streamID = 0;
-    uint32_t lindex = 0;
-    uint32_t requested = 0;
-
-    FilecontentsRequestReceive(ClipboardSideData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen)
-    {
-        LOG(LOG_INFO, "dataLen=%u FileContentsRequestPDU::minimum_size()=%zu", dataLen, RDPECLIP::FileContentsRequestPDU::minimum_size());
-        if (dataLen >= RDPECLIP::FileContentsRequestPDU::minimum_size()) {
-            RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
-
-            file_contents_request_pdu.receive(chunk);
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                file_contents_request_pdu.log(LOG_INFO);
-            }
-
-            this->dwFlags  = file_contents_request_pdu.dwFlags();
-            clip_state.last_dwFlags = this->dwFlags;
-            this->streamID = file_contents_request_pdu.streamId();
-            this->lindex   = file_contents_request_pdu.lindex();
-            this->requested = file_contents_request_pdu.cbRequested();
-
-            if ((RDPECLIP::FILECONTENTS_RANGE == this->dwFlags) && file_contents_request_pdu.clipDataId()) {
-
-                clip_state.set_file_contents_request_info_inventory(
-                    file_contents_request_pdu.lindex(),
-                    file_contents_request_pdu.position(),
-                    file_contents_request_pdu.cbRequested(),
-                    file_contents_request_pdu.clipDataId(), 0, this->streamID);
             }
         }
     }
@@ -189,7 +345,7 @@ struct FilecontentsRequestSendBack
                 RDPECLIP::FileContentsResponseRange pdu(streamID);
                 RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
                                                 RDPECLIP::CB_RESPONSE_FAIL,
-                                                pdu.size());
+                                                pdu.packet_size());
                 header.emit(out_stream);
                 pdu.emit(out_stream);
             }
@@ -200,7 +356,7 @@ struct FilecontentsRequestSendBack
                 RDPECLIP::FileContentsResponseSize pdu(streamID, 0);
                 RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
                                                 RDPECLIP::CB_RESPONSE_FAIL,
-                                                pdu.size());
+                                                pdu.packet_size());
                 header.emit(out_stream);
                 pdu.emit(out_stream);
             }
@@ -217,14 +373,13 @@ struct FilecontentsRequestSendBack
 struct FormatDataRequestReceive
 {
     FormatDataRequestReceive(ClipboardData & clip_data, const RDPVerbose verbose, InStream& chunk) {
-        check_throw(chunk, 4, "CLIPRDR_FORMAT_DATA_REQUEST", ERR_RDP_DATA_TRUNCATED);
+        RDPECLIP::FormatDataRequestPDU pdu;
+        pdu.recv(chunk);
+        clip_data.requestedFormatId = pdu.requestedFormatId;
 
-        clip_data.requestedFormatId = chunk.in_uint32_le();
-
-        LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "requestedFormatId=%s(%u)",
-            RDPECLIP::get_FormatId_name(clip_data.requestedFormatId),
-            clip_data.requestedFormatId);
+        if (bool(verbose & RDPVerbose::cliprdr)) {
+            pdu.log();
+        }
     }
 };
 
@@ -247,12 +402,28 @@ struct FormatDataRequestSendBack
     }
 };
 
+struct CliprdFileInfo
+{
+    uint64_t file_size;
+    std::string file_name;
+};
+
 struct FormatDataResponseReceiveFileList
 {
-    std::vector<RDPECLIP::FileDescriptor> files_descriptors;
-
-    FormatDataResponseReceiveFileList(InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* direction)
+    FormatDataResponseReceiveFileList(std::vector<CliprdFileInfo>& files, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* direction)
     {
+        auto receive_file = [&](InStream& in_stream){
+            RDPECLIP::FileDescriptor fd;
+
+            fd.receive(in_stream);
+
+            if (bool(verbose & RDPVerbose::cliprdr)) {
+                fd.log(LOG_INFO);
+            }
+
+            files.push_back(CliprdFileInfo{fd.file_size(), std::move(fd.file_name)});
+        };
+
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
                 const uint32_t cItems = chunk.in_uint32_le();
@@ -265,53 +436,33 @@ struct FormatDataResponseReceiveFileList
                         file_list_format_id, direction, cItems);
                 }
             }
-        } else {
+        }
+        else if (file_descriptor_stream.get_offset()) {
+            const uint32_t complementary_data_length =
+                RDPECLIP::FileDescriptor::size() -
+                    file_descriptor_stream.get_offset();
 
-            if (file_descriptor_stream.get_offset()) {
-                const uint32_t complementary_data_length =
-                    RDPECLIP::FileDescriptor::size() -
-                        file_descriptor_stream.get_offset();
+            assert(chunk.in_remain() >= complementary_data_length);
 
-                assert(chunk.in_remain() >= complementary_data_length);
+            file_descriptor_stream.out_copy_bytes(chunk.get_current(),
+                complementary_data_length);
 
-                file_descriptor_stream.out_copy_bytes(chunk.get_current(),
-                    complementary_data_length);
+            chunk.in_skip_bytes(complementary_data_length);
 
-                chunk.in_skip_bytes(complementary_data_length);
+            InStream in_stream(file_descriptor_stream.get_bytes());
 
-                RDPECLIP::FileDescriptor fd;
+            receive_file(in_stream);
 
-                InStream in_stream(file_descriptor_stream.get_bytes());
-                fd.receive(in_stream);
-                if (bool(verbose & RDPVerbose::cliprdr)) {
-                    fd.log(LOG_INFO);
-                }
-
-                this->files_descriptors.push_back(std::move(fd));
-
-                file_descriptor_stream.rewind();
-            }
+            file_descriptor_stream.rewind();
         }
 
         while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
-            RDPECLIP::FileDescriptor fd;
-
-            fd.receive(chunk);
-
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                fd.log(LOG_INFO);
-            }
-
-            this->files_descriptors.push_back(std::move(fd));
+            receive_file(chunk);
         }
 
         if (chunk.in_remain()) {
             file_descriptor_stream.rewind();
-
-            file_descriptor_stream.out_copy_bytes(
-                chunk.get_current(), chunk.in_remain());
-
-            chunk.in_skip_bytes(chunk.in_remain());
+            file_descriptor_stream.out_copy_bytes(chunk.in_skip_bytes(chunk.in_remain()));
         }
     }
 };
@@ -428,266 +579,6 @@ struct ServerMonitorReadySendBack
     }
 };
 
-// TODO copy from /browser_client_JS/src/red_channels/clipboard.cpp
-namespace Cliprdr
-{
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-    // TODO string_literal<cs...>::view()
-    template<class C, C... cs>
-    constexpr std::array<uint8_t, sizeof...(cs) * 2> const operator "" _utf16()
-    {
-        std::array<uint8_t, sizeof...(cs) * 2> a{};
-        char s[] {cs...};
-        auto p = a.data();
-        for (char c : s)
-        {
-            p[0] = c;
-            p[1] = 0;
-            p += 2;
-        }
-        return a;
-    }
-    REDEMPTION_DIAGNOSTIC_POP
-
-    inline namespace format_name_constants
-    {
-        constexpr auto file_group_descriptor_w_utf8 = "FileGroupDescriptorW"_av;
-        constexpr auto file_group_descriptor_w_utf16 = "FileGroupDescriptorW"_utf16;
-
-        constexpr auto preferred_drop_effect_utf8 = "Preferred DropEffect"_av;
-        constexpr auto preferred_drop_effect_utf16 = "Preferred DropEffect"_av;
-    }
-
-    enum class Charset : bool
-    {
-        Ascii,
-        Utf16,
-    };
-
-    struct FormatListExtractorData
-    {
-        uint32_t format_id;
-        Charset charset;
-        cbytes_view av_name;
-    };
-
-    enum class IsLongFormat : bool;
-    // TODO Charset ?
-    enum class IsAscii : bool;
-
-    // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
-    constexpr size_t min_long_format_name_data_length = 6;
-
-    // formatId(4) + formatName(32)
-    constexpr size_t short_format_name_length = 32;
-    constexpr size_t short_format_name_data_length = short_format_name_length + 4;
-
-    constexpr size_t format_name_data_length[] = {
-        short_format_name_data_length,
-        min_long_format_name_data_length
-    };
-
-    enum class ExtractResult : int8_t
-    {
-        Ok,
-        WaitingData,
-        LongFormatNameTooLong,
-    };
-
-    inline ExtractResult format_list_extract(
-        FormatListExtractorData& data, InStream& stream,
-        IsLongFormat is_long_format, IsAscii is_ascii) noexcept
-    {
-        if (stream.in_remain() < format_name_data_length[int(is_long_format)])
-        {
-            return ExtractResult::WaitingData;
-        }
-
-        data.format_id = stream.in_uint32_le();
-
-        if (bool(is_long_format))
-        {
-            data.charset = Charset::Utf16;
-            auto av = stream.remaining_bytes();
-            data.av_name = av.first(UTF16ByteLen(av));
-
-            if (data.av_name.size() == av.size())
-            {
-                return ExtractResult::LongFormatNameTooLong;
-            }
-
-            stream.in_skip_bytes(data.av_name.size() + 2);
-        }
-        else
-        {
-            auto av = stream.remaining_bytes();
-            if (bool(is_ascii))
-            {
-                data.charset = Charset::Ascii;
-                data.av_name = av.first(strnlen(av.as_charp(), short_format_name_length));
-            }
-            else
-            {
-                data.charset = Charset::Utf16;
-                data.av_name = av.first(UTF16ByteLen(av.first(short_format_name_length)));
-            }
-
-            stream.in_skip_bytes(short_format_name_length);
-        }
-
-        return ExtractResult::Ok;
-    }
-
-    inline bool format_list_serialize(
-        OutStream& out_stream, cbytes_view name,
-        uint32_t id, IsLongFormat is_long_format, Charset charset)
-    {
-        constexpr size_t header_length = 4;
-
-        if (bool(is_long_format))
-        {
-            switch (charset)
-            {
-            case Charset::Ascii: {
-                if (!out_stream.has_room(header_length + name.size() * 2 + 2))
-                {
-                    return false;
-                }
-                out_stream.out_uint32_le(id);
-
-                auto data = out_stream.get_tailroom_bytes();
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(data.size() - 2u)));
-                out_stream.out_uint16_le(0);
-                break;
-            }
-            case Charset::Utf16: {
-                if (!out_stream.has_room(header_length + name.size() + 2))
-                {
-                    return false;
-                }
-                out_stream.out_uint32_le(id);
-                out_stream.out_copy_bytes(name);
-                out_stream.out_uint16_le(0);
-                break;
-            }
-            }
-        }
-        else
-        {
-            if (!out_stream.has_room(4 + short_format_name_length))
-            {
-                return false;
-            }
-
-            out_stream.out_uint32_le(id);
-
-            switch (charset)
-            {
-            case Charset::Ascii: {
-                auto data = out_stream.get_tailroom_bytes();
-                auto len = std::min(data.size(), short_format_name_length-2u);
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
-                char zero_data[short_format_name_length]{};
-                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
-                break;
-            }
-            case Charset::Utf16: {
-                auto len = std::min(name.size(), short_format_name_length-1u);
-                out_stream.out_copy_bytes(name);
-                char zero_data[short_format_name_length]{};
-                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
-                break;
-            }
-            }
-        }
-
-        return true;
-    }
-
-    struct FormatNameInventory
-    {
-        using FormatId = uint32_t;
-        struct FormatName;
-
-        FormatName const& push(FormatId format_id, Charset charset, array_view_const_u8 av_name)
-        {
-            return this->formats.emplace_back(format_id, charset, av_name);
-        }
-
-        FormatName const* find(FormatId format_id) const noexcept
-        {
-            for (auto const& format : this->formats) {
-                if (format.format_id == format_id) {
-                    return &format;
-                }
-            }
-            return nullptr;
-        }
-
-        void clear() noexcept
-        {
-            this->formats.clear();
-        }
-
-        struct FormatName
-        {
-            static constexpr size_t utf8_buffer_buf_len = 123;
-
-            uint32_t format_id;
-            // TODO static_vector<raw_buf_len>
-            uint8_t len;
-            uint8_t utf8_buffer[utf8_buffer_buf_len];
-
-            FormatName(FormatId format_id, Charset charset, array_view_const_u8 raw_name) noexcept
-            : format_id(format_id)
-            , len(std::min(raw_name.size(), std::size(this->utf8_buffer)))
-            {
-                if (charset == Charset::Ascii)
-                {
-                    this->len = std::min(raw_name.size(), std::size(this->utf8_buffer));
-                    memcpy(this->utf8_buffer, raw_name.data(), this->len);
-                }
-                else
-                {
-                    this->len = UTF16toUTF8_buf(
-                        raw_name, make_array_view(this->utf8_buffer)).size();
-                }
-            }
-
-            FormatName(FormatName const& other) noexcept
-            : format_id(other.format_id)
-            , len(other.len)
-            {
-                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
-            }
-
-            FormatName& operator=(FormatName const& other) noexcept
-            {
-                this->format_id = other.format_id;
-                this->len = other.len;
-                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
-                return *this;
-            }
-
-            const_bytes_view utf8_name() const noexcept
-            {
-                return {this->utf8_buffer, this->len};
-            }
-
-            bool utf8_name_equal(const_bytes_view utf8_name_compared) const noexcept
-            {
-                return utf8_name_compared.size() == this->len
-                    && 0 == strncasecmp(utf8_name_compared.as_charp(),
-                                        char_ptr_cast(this->utf8_buffer), this->len);
-            }
-        };
-
-    private:
-        std::vector<FormatName> formats;
-    };
-} // namespace Cliprdr
-
 
 struct FormatListReceive
 {
@@ -770,94 +661,5 @@ struct FormatListSendBack
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
             out_stream.get_bytes());
-    }
-};
-
-struct LockClipDataReceive
-{
-    LockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header)
-    {
-        if (header.dataLen() >= 4 /* clipDataId(4) */) {
-            // clipDataId(4)
-            check_throw(chunk, 4, "CLIPRDR_LOCK_CLIPDATA", ERR_RDP_DATA_TRUNCATED);
-
-            clip_receiver_side_data.clipDataId = chunk.in_uint32_le();
-
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_%s_message: "
-                    "clipDataId=%u", clip_sender_side_data.provider_name, clip_receiver_side_data.clipDataId);
-
-            clip_receiver_side_data.file_stream_data_inventory[clip_receiver_side_data.clipDataId] = ClipboardSideData::file_info_inventory_type();
-        }
-    }
-};
-
-struct UnlockClipDataReceive
-{
-    UnlockClipDataReceive(ClipboardSideData & clip_receiver_side_data, ClipboardSideData & clip_sender_side_data, InStream & chunk, const RDPVerbose verbose, const RDPECLIP::CliprdrHeader & header)
-    {
-         if (header.dataLen() >= 4 /* clipDataId(4) */) {
-            // clipDataId(4)
-            check_throw(chunk, 4, "CLIPRDR_UNLOCK_CLIPDATA", ERR_RDP_DATA_TRUNCATED);
-
-            uint32_t const clipDataId = chunk.in_uint32_le();
-
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "ClipboardVirtualChannel::process_%s_message: "
-                    "clipDataId=%u",clip_sender_side_data.provider_name, clipDataId);
-
-            clip_receiver_side_data.file_stream_data_inventory.erase(clipDataId);
-        }
-    }
-};
-
-struct FileContentsResponseReceive
-{
-    bool must_log_file_info_type = false;
-    ClipboardSideData::file_info_type file_info;
-
-    FileContentsResponseReceive(ClipboardSideData & clip_side_data, const RDPECLIP::CliprdrHeader & header, const uint32_t flags, InStream & chunk)
-    {
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-
-            clip_side_data.dataLen = header.dataLen();
-
-            if (clip_side_data.dataLen >= 4) {
-                clip_side_data.streamId = chunk.in_uint32_le();
-            }
-        }
-
-        auto it = clip_side_data.file_contents_request_info_inventory.find(clip_side_data.streamId);
-
-        if (clip_side_data.file_contents_request_info_inventory.end() != it)
-        {
-            ClipboardSideData::file_contents_request_info& file_contents_request = it->second;
-
-            ClipboardSideData::file_info_inventory_type& file_info_inventory =
-                clip_side_data.file_stream_data_inventory[
-                    file_contents_request.clipDataId];
-
-            this->file_info = file_info_inventory[file_contents_request.lindex];
-
-            uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
-
-            if (chunk.in_remain()) {
-                if (this->file_info.sequential_access_offset == file_contents_request_position_current) {
-
-                    uint32_t const length_ = std::min({
-                            static_cast<uint32_t>(chunk.in_remain()),
-                            static_cast<uint32_t>(this->file_info.size - this->file_info.sequential_access_offset),
-                            file_contents_request.cbRequested - file_contents_request.offset
-                        });
-
-                    this->file_info.sha256.update({ chunk.get_current(), length_ });
-
-                    file_contents_request.offset += length_;
-                    this->file_info.sequential_access_offset += length_;
-
-                    this->must_log_file_info_type = this->file_info.sequential_access_offset == this->file_info.size;
-                }
-            }
-        }
     }
 };

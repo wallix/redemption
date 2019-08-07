@@ -67,6 +67,7 @@ struct array_view
     using const_reference = T const &;
 
     constexpr array_view() = default;
+    constexpr array_view(array_view && other) = default;
     constexpr array_view(array_view const & other) = default;
     constexpr array_view(array_view && other) = default;
     array_view & operator = (array_view const & other) = default;
@@ -188,6 +189,9 @@ private:
     type * p        = nullptr;
     std::size_t sz  = 0;
 };
+
+template<class T>
+array_view(T&&) -> array_view<std::remove_pointer_t<decltype(utils::data(std::declval<T&&>()))>>;
 
 
 template<class T>

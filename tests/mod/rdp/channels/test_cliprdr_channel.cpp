@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     NullReportMessage report_message;
-    ICAPService * ipca_service = nullptr;
+    FileValidatorService * ipca_service = nullptr;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
@@ -138,7 +138,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     NullReportMessage report_message;
-    ICAPService * ipca_service = nullptr;
+    FileValidatorService * ipca_service = nullptr;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
@@ -191,7 +191,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     NullReportMessage report_message;
-    ICAPService * ipca_service = nullptr;
+    FileValidatorService * ipca_service = nullptr;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
@@ -406,7 +406,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
     ReportMessage report_message;
     BufTransport buf_trans;
-    ICAPService icap_service(buf_trans);
+    FileValidatorService file_validator_service(buf_trans);
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
@@ -424,7 +424,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, session_reactor,
         base_params,
-        clipboard_virtual_channel_params, &icap_service);
+        clipboard_virtual_channel_params, &file_validator_service);
 
     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -608,9 +608,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     StaticOutStream<256> out;
     auto status = "ok"_av;
 
-    using namespace LocalICAPProtocol;
-    ICAPHeader(MsgType::Result, 0/*len*/).emit(out);
-    ICAPResultHeader{ValidationType::IsAccepted, ICAPFileId(1),
+    using namespace LocalFileValidatorProtocol;
+    FileValidatorHeader(MsgType::Result, 0/*len*/).emit(out);
+    FileValidatorResultHeader{ValidationResult::IsAccepted, FileValidatorId(1),
         checked_int(status.size())}.emit(out);
     out.out_copy_bytes(status);
     auto av = out.get_bytes().as_chars();

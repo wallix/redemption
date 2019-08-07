@@ -29,7 +29,9 @@
 struct bytes_view : array_view<uint8_t>
 {
     bytes_view() = default;
+    bytes_view(bytes_view &&) = default;
     bytes_view(bytes_view const &) = default;
+    bytes_view & operator=(bytes_view &&) = default;
     bytes_view & operator=(bytes_view const &) = default;
 
 
@@ -86,7 +88,9 @@ struct bytes_view : array_view<uint8_t>
 struct const_bytes_view : array_view<const uint8_t>
 {
     const_bytes_view() = default;
+    const_bytes_view(const_bytes_view &&) = default;
     const_bytes_view(const_bytes_view const &) = default;
+    const_bytes_view & operator=(const_bytes_view &&) = default;
     const_bytes_view & operator=(const_bytes_view const &) = default;
 
 

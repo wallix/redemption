@@ -65,36 +65,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClipboardCapabilitiesReceive)
 
     InStream chunk(stream.get_bytes());
 
-    ClipboardSideData state("client");
+    ClipboardSideData state;
 
     ClipboardCapabilitiesReceive receiver(state, chunk, RDPVerbose::none);
 
     RED_CHECK(state.use_long_format_names);
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
-{
-    StaticOutStream<64> stream;
-
-    RDPECLIP::FileContentsRequestPDU file_contents_request_pdu(1, 2, RDPECLIP::FILECONTENTS_RANGE, 4, 0, 6, 7, true);
-
-    file_contents_request_pdu.emit(stream);
-
-    ClipboardSideData state("client");
-
-    InStream chunk(stream.get_bytes());
-
-    FilecontentsRequestReceive receiver(state, chunk, RDPVerbose::cliprdr, stream.get_offset());
-
-    RED_CHECK_EQUAL(receiver.dwFlags, RDPECLIP::FILECONTENTS_RANGE);
-    RED_REQUIRE_EQUAL(receiver.streamID, 1);
-
-    ClipboardSideData::file_contents_request_info & fcri = state.file_contents_request_info_inventory[receiver.streamID];
-
-    RED_CHECK_EQUAL(fcri.lindex, 2);
-    RED_CHECK_EQUAL(fcri.position, 4);
-    RED_CHECK_EQUAL(fcri.cbRequested, 6);
-    RED_CHECK_EQUAL(fcri.clipDataId, 7);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
@@ -105,20 +80,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
     FilecontentsRequestSendBack sender(RDPECLIP::FILECONTENTS_SIZE, streamID, &data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-
-    InStream stream(data_sender.streams[0].av());
-
-    RDPECLIP::CliprdrHeader header;
-    header.recv(stream);
-    RDPECLIP::FileContentsResponseSize pdu;
-    pdu.receive(stream);
-
-    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FILECONTENTS_RESPONSE);
-    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_FAIL);
-    RED_CHECK_EQUAL(header.dataLen(), 16);
-
-    RED_CHECK_EQUAL(pdu.streamID, 1);
-    RED_CHECK_EQUAL(pdu._size, 0);
+    RED_CHECK_MEM(data_sender.streams[0].av(),
+        "\x09\x00\x02\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00"
+        ""_av);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestReceive)
@@ -145,22 +110,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
     FormatDataRequestSendBack sender(&data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-
-    InStream stream(data_sender.streams[0].av());
-
-    RDPECLIP::CliprdrHeader header;
-    header.recv(stream);
-
-    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_DATA_RESPONSE);
-    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_FAIL);
-    RED_CHECK_EQUAL(header.dataLen(), 0);
+    RED_CHECK_MEM(data_sender.streams[0].av(), "\x05\x00\x02\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
 {
     {
     auto text = "text de test"_av;
-    uint32_t cItems = 0;
     uint8_t utf16text[50] = {0};
     size_t utf16size = ::UTF8toUTF16(text, utf16text, text.size() *2);
 
@@ -181,7 +137,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     clip_data.requestedFormatId = 0;
 
     RED_CHECK_EQUAL(receiver.data_to_dump, "text de test");
-    RED_CHECK_EQUAL(clip_data.client_data.file_stream_data_inventory.size(), cItems);
     }
 
     {
@@ -206,18 +161,15 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
     RDPVerbose verbose = RDPVerbose::none;
 
-    uint32_t clipDataId = 7;
     uint32_t requestedFormatId = 48025;
 
     ClipboardData clip_data;
     clip_data.requestedFormatId = requestedFormatId;
     clip_data.client_data.file_list_format_id = requestedFormatId;
-    uint64_t sequential_access_offset = 0;
-    clip_data.client_data.clipDataId = clipDataId;
-    std::vector<ClipboardSideData::file_info_type> file_info_type_init;
-    clip_data.client_data.file_stream_data_inventory[clipDataId] = file_info_type_init;
 
+    std::vector<CliprdFileInfo> files;
     FormatDataResponseReceiveFileList receiver(
+        files,
         stream,
         header,
         param_dont_log_data_into_syslog,
@@ -227,22 +179,16 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
         verbose,
         "server");
     clip_data.requestedFormatId = 0;
-    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
-        clip_data.client_data.update_file_contents_request_inventory(fd);
-    }
 
-    std::vector<ClipboardSideData::file_info_type> & file_info_type_vec = clip_data.client_data.file_stream_data_inventory[clip_data.client_data.clipDataId];
-    RED_REQUIRE_EQUAL(file_info_type_vec.size(), cItems);
+    RED_REQUIRE_EQUAL(files.size(), cItems);
 
-    ClipboardSideData::file_info_type & file_info_type_1 = file_info_type_vec[0];
-    RED_CHECK_EQUAL(file_info_type_1.size, 42);
+    CliprdFileInfo& file_info_type_1 = files[0];
+    RED_CHECK_EQUAL(file_info_type_1.file_size, 42);
     RED_CHECK_EQUAL(file_info_type_1.file_name, file_name_1);
-    RED_CHECK_EQUAL(file_info_type_1.sequential_access_offset, sequential_access_offset);
 
-    ClipboardSideData::file_info_type & file_info_type_2 = file_info_type_vec[1];
-    RED_CHECK_EQUAL(file_info_type_2.size, 84);
+    CliprdFileInfo& file_info_type_2 = files[1];
+    RED_CHECK_EQUAL(file_info_type_2.file_size, 84);
     RED_CHECK_EQUAL(file_info_type_2.file_name, file_name_2);
-    RED_CHECK_EQUAL(file_info_type_2.sequential_access_offset, sequential_access_offset);
     }
     {
     StaticOutStream<1600> pre_stream;
@@ -264,22 +210,19 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
 
     RDPVerbose verbose = RDPVerbose::none;
 
-    uint32_t clipDataId = 7;
     uint32_t requestedFormatId = 48025;
 
     ClipboardData clip_data;
     clip_data.requestedFormatId = requestedFormatId;
     clip_data.client_data.file_list_format_id = requestedFormatId;
-    uint64_t sequential_access_offset = 0;
-    clip_data.client_data.clipDataId = clipDataId;
-    std::vector<ClipboardSideData::file_info_type> file_info_type_init;
-    clip_data.client_data.file_stream_data_inventory[clipDataId] = file_info_type_init;
     size_t size_part_1 = 150;
     clip_data.client_data.file_descriptor_stream.rewind();
     clip_data.client_data.file_descriptor_stream.out_copy_bytes(pre_stream.get_data(), size_part_1);
     stream.in_skip_bytes(size_part_1);
 
+    std::vector<CliprdFileInfo> files;
     FormatDataResponseReceiveFileList receiver(
+        files,
         stream,
         header,
         param_dont_log_data_into_syslog,
@@ -289,22 +232,16 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
         verbose,
         "server");
     clip_data.requestedFormatId = 0;
-    for (RDPECLIP::FileDescriptor const& fd : receiver.files_descriptors) {
-        clip_data.client_data.update_file_contents_request_inventory(fd);
-    }
 
-    std::vector<ClipboardSideData::file_info_type> & file_info_type_vec = clip_data.client_data.file_stream_data_inventory[clip_data.client_data.clipDataId];
-    RED_REQUIRE_EQUAL(file_info_type_vec.size(), cItems);
+    RED_REQUIRE_EQUAL(files.size(), cItems);
 
-    ClipboardSideData::file_info_type & file_info_type_1 = file_info_type_vec[0];
-    RED_CHECK_EQUAL(file_info_type_1.size, 42);
+    CliprdFileInfo & file_info_type_1 = files[0];
+    RED_CHECK_EQUAL(file_info_type_1.file_size, 42);
     RED_CHECK_EQUAL(file_info_type_1.file_name, file_name_1);
-    RED_CHECK_EQUAL(file_info_type_1.sequential_access_offset, sequential_access_offset);
 
-    ClipboardSideData::file_info_type & file_info_type_2 = file_info_type_vec[1];
-    RED_CHECK_EQUAL(file_info_type_2.size, 84);
+    CliprdFileInfo & file_info_type_2 = files[1];
+    RED_CHECK_EQUAL(file_info_type_2.file_size, 84);
     RED_CHECK_EQUAL(file_info_type_2.file_name, file_name_2);
-    RED_CHECK_EQUAL(file_info_type_2.sequential_access_offset, sequential_access_offset);
     }
 }
 
@@ -345,102 +282,23 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
     FormatListSendBack sender(&data_sender);
 
     RED_REQUIRE_EQUAL(data_sender.index, 1);
-
-    InStream stream(data_sender.streams[0].av());
-
-    RDPECLIP::CliprdrHeader header;
-    header.recv(stream);
-
-    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
-    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_OK);
-    RED_CHECK_EQUAL(header.dataLen(), 0);
+    RED_CHECK_MEM(data_sender.streams[0].av(), "\x03\x00\x01\x00\x00\x00\x00\x00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
 
     FakeDataSender sender;
     const bool use_long_format_name = true;
-    const int cCapabilitiesSets = 1;
 
     ServerMonitorReadySendBack pdu(RDPVerbose::none, use_long_format_name, &sender);
 
     RED_REQUIRE_EQUAL(sender.index, 2);
-
-    {
-        InStream stream(sender.streams[0].av());
-
-        RDPECLIP::CliprdrHeader header;
-        header.recv(stream);
-        RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
-        clipboard_caps_pdu.recv(stream);
-        RDPECLIP::GeneralCapabilitySet general_cap_set;
-        general_cap_set.recv(stream);
-
-        RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_CLIP_CAPS);
-        RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE__NONE_);
-        RED_CHECK_EQUAL(header.dataLen(), clipboard_caps_pdu.size() + general_cap_set.size());
-
-        RED_CHECK_EQUAL(general_cap_set.capabilitySetType(), RDPECLIP::CB_CAPSTYPE_GENERAL);
-        RED_CHECK_EQUAL(general_cap_set.generalFlags(), RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-        RED_CHECK_EQUAL(general_cap_set.version(), RDPECLIP::CB_CAPS_VERSION_1);
-
-        RED_CHECK_EQUAL(clipboard_caps_pdu.cCapabilitiesSets(), cCapabilitiesSets);
-    }
-
-    {
-        InStream stream(sender.streams[1].av());
-
-        RDPECLIP::CliprdrHeader header;
-        header.recv(stream);
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-        format_list_pdu.recv(stream, true, true);
-
-        RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_LIST);
-        RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE__NONE_);
-        RED_CHECK_EQUAL(header.dataLen(), 6);
-
-        RED_CHECK_EQUAL(format_list_pdu.num_format_names(), 1);
-        RED_CHECK_EQUAL(format_list_pdu.format_name(0).format_name(), "");
-        RED_CHECK_EQUAL(format_list_pdu.format_name(0).formatId(), RDPECLIP::CF_TEXT);
-        RED_CHECK(not format_list_pdu.will_be_sent_in_ASCII_8(true));
-    }
-
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelLockClipDataReceive)
-{
-    ClipboardData state;
-    const uint32_t clipDataId = 1;
-    RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
-    StaticOutStream<64> stream;
-    pdu.emit(stream);
-
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
-
-    InStream chunk(stream.get_bytes());
-
-    LockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
-
-    RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.count(1), 1);
-}
-
-RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
-{
-    ClipboardData state;
-    const uint32_t clipDataId = 1;
-    state.client_data.file_stream_data_inventory[clipDataId] = ClipboardSideData::file_info_inventory_type();
-
-    RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
-    StaticOutStream<64> stream;
-    pdu.emit(stream);
-
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
-
-    InStream chunk(stream.get_bytes());
-
-    UnlockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
-
-    RED_CHECK(state.client_data.file_stream_data_inventory.empty());
+    RED_CHECK_MEM(sender.streams[0].av(),
+        "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00"
+        "\x01\x00\x00\x00\x02\x00\x00\x00"
+        ""_av);
+    RED_CHECK_MEM(sender.streams[1].av(),
+        "\x02\x00\x00\x00\x06\x00\x00\x00\x01\x00\x00\x00\x00\x00"_av);
 }
 
 // RED_AUTO_TEST_CASE(TestCliprdrChannelFileContentsResponseReceive)
@@ -475,7 +333,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
 //         5,
 //         SslSha256() });
 //
-//     ClipboardSideData::file_info_type & file_info = file_info_inventory[file_contents_request.lindex];
+//     CliprdFileInfo & file_info = file_info_inventory[file_contents_request.lindex];
 //
 //     RDPECLIP::FileContentsResponseRange pdu(streamID);
 //     StaticOutStream<64> stream;

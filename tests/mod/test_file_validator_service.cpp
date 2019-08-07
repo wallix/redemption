@@ -23,23 +23,23 @@
 #include "test_only/test_framework/file.hpp"
 #include "test_only/transport/test_transport.hpp"
 
-#include "mod/icap_files_service.hpp"
+#include "mod/file_validatior_service.hpp"
 #include "utils/sugar/algostring.hpp"
 
 
-RED_AUTO_TEST_CASE(icapSend)
+RED_AUTO_TEST_CASE(file_validatorSend)
 {
     BufTransport trans;
-    ICAPService icap{trans};
+    FileValidatorService file_validator{trans};
 
     auto filename = FIXTURES_PATH "/test_infile.txt";
     auto content = RED_REQUIRE_GET_FILE_CONTENTS(filename);
 
-    ICAPFileId id = icap.open_file(filename, "clamav");
-    RED_CHECK(id == ICAPFileId(1));
+    FileValidatorId id = file_validator.open_file(filename, "clamav");
+    RED_CHECK(id == FileValidatorId(1));
 
-    icap.send_data(id, content);
-    icap.send_eof(id);
+    file_validator.send_data(id, content);
+    file_validator.send_eof(id);
 
     const auto data_ref =
         "\x00\x00\x00\x00\x3b\x00\x00\x00\x01\x00\x00\x00\x29\x2e\x2f\x74" //....;.......)./t
@@ -51,15 +51,15 @@ RED_AUTO_TEST_CASE(icapSend)
         "\x21\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av;
     RED_CHECK_MEM(trans.data(), data_ref);
 
-    RED_CHECK(icap.open_file(filename, "clamav") == ICAPFileId(2));
+    RED_CHECK(file_validator.open_file(filename, "clamav") == FileValidatorId(2));
 }
 
-RED_AUTO_TEST_CASE(icapSendInfos)
+RED_AUTO_TEST_CASE(file_validatorSendInfos)
 {
     BufTransport trans;
-    ICAPService icap{trans};
+    FileValidatorService file_validator{trans};
 
-    icap.send_infos({
+    file_validator.send_infos({
         "key1"_av, "value1"_av,
         "key"_av, "v2"_av,
         "k3"_av, "value"_av,
@@ -75,16 +75,16 @@ RED_AUTO_TEST_CASE(icapSendInfos)
     RED_CHECK_MEM(trans.data(), data_ref);
 }
 
-RED_AUTO_TEST_CASE(icapReceive)
+RED_AUTO_TEST_CASE(file_validatorReceive)
 {
     BufTransport trans;
-    ICAPService icap{trans};
+    FileValidatorService file_validator{trans};
 
     auto setbuf = [&](cbytes_view data){
         trans.buf.assign(data.as_charp(), data.size());
     };
 
-    RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
+    RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
 
     // message 1
     {
@@ -96,16 +96,16 @@ RED_AUTO_TEST_CASE(icapReceive)
             ""_av;
         auto pos = response.size() / 2;
         setbuf(response.first(pos));
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
         setbuf(response.from_at(pos));
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
         setbuf("o"_av);
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
         setbuf("k"_av);
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasContent);
-        RED_CHECK(icap.last_file_id() == ICAPFileId(1));
-        RED_CHECK(icap.get_content() == "ok");
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::HasContent);
+        RED_CHECK(file_validator.last_file_id() == FileValidatorId(1));
+        RED_CHECK(file_validator.get_content() == "ok");
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
     }
 
     // message 2
@@ -117,10 +117,10 @@ RED_AUTO_TEST_CASE(icapReceive)
             "\x00\x00\x00\x02"      // size
             "ko"_av;
         setbuf(response);
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasContent);
-        RED_CHECK(icap.last_file_id() == ICAPFileId(4));
-        RED_CHECK(icap.get_content() == "ko");
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::HasContent);
+        RED_CHECK(file_validator.last_file_id() == FileValidatorId(4));
+        RED_CHECK(file_validator.get_content() == "ko");
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
     }
 
     // message 3
@@ -137,12 +137,12 @@ RED_AUTO_TEST_CASE(icapReceive)
             "\x00\x00\x00\x02"      // size
             "ko"_av;
         setbuf(response);
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasContent);
-        RED_CHECK(icap.last_file_id() == ICAPFileId(3));
-        RED_CHECK(icap.get_content() == "ok");
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::HasContent);
-        RED_CHECK(icap.last_file_id() == ICAPFileId(5));
-        RED_CHECK(icap.get_content() == "ko");
-        RED_CHECK(icap.receive_response() == ICAPService::ResponseType::WaitingData);
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::HasContent);
+        RED_CHECK(file_validator.last_file_id() == FileValidatorId(3));
+        RED_CHECK(file_validator.get_content() == "ok");
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::HasContent);
+        RED_CHECK(file_validator.last_file_id() == FileValidatorId(5));
+        RED_CHECK(file_validator.get_content() == "ko");
+        RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
     }
 }

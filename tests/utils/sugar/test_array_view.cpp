@@ -243,3 +243,6 @@ static_assert(not check_array_view_call<int>(cstr, 1));
 static_assert(not check_array_view_call<int>(p, 1));
 static_assert(check_array_view_call<int>(ints, 1));
 static_assert(not check_array_view_call<int>(rng, 1));
+
+// deduction guide
+static_assert(decltype(check_cstr_array_view_call(array_view{str}, 1)){true});

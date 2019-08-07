@@ -37,7 +37,7 @@ class Transport;
 class RedirectionInfo;
 class Random;
 class RDPMetrics;
-class ICAPService;
+class FileValidatorService;
 namespace gdi { class GraphicApi; }
 
 std::unique_ptr<mod_api> new_mod_rdp(
@@ -55,5 +55,5 @@ std::unique_ptr<mod_api> new_mod_rdp(
     ReportMessageApi& report_message,
     ModRdpVariables vars,
     RDPMetrics * metrics,
-    ICAPService * icap_service
+    FileValidatorService * file_validator_service
 );

@@ -34,6 +34,266 @@
 #include <vector>
 
 
+
+// TODO copy from /browser_client_JS/src/red_channels/clipboard.cpp
+namespace Cliprdr
+{
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+    // TODO string_literal<cs...>::view()
+    template<class C, C... cs>
+    constexpr std::array<uint8_t, sizeof...(cs) * 2> const operator "" _utf16()
+    {
+        std::array<uint8_t, sizeof...(cs) * 2> a{};
+        char s[] {cs...};
+        auto p = a.data();
+        for (char c : s)
+        {
+            p[0] = c;
+            p[1] = 0;
+            p += 2;
+        }
+        return a;
+    }
+    REDEMPTION_DIAGNOSTIC_POP
+
+    inline namespace format_name_constants
+    {
+        constexpr auto file_group_descriptor_w_utf8 = "FileGroupDescriptorW"_av;
+        constexpr auto file_group_descriptor_w_utf16 = "FileGroupDescriptorW"_utf16;
+
+        constexpr auto preferred_drop_effect_utf8 = "Preferred DropEffect"_av;
+        constexpr auto preferred_drop_effect_utf16 = "Preferred DropEffect"_av;
+    }
+
+    enum class Charset : bool
+    {
+        Ascii,
+        Utf16,
+    };
+
+    struct FormatListExtractorData
+    {
+        uint32_t format_id;
+        Charset charset;
+        cbytes_view av_name;
+    };
+
+    enum class IsLongFormat : bool;
+    // TODO Charset ?
+    enum class IsAscii : bool;
+
+    // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
+    constexpr size_t min_long_format_name_data_length = 6;
+
+    // formatId(4) + formatName(32)
+    constexpr size_t short_format_name_length = 32;
+    constexpr size_t short_format_name_data_length = short_format_name_length + 4;
+
+    constexpr size_t format_name_data_length[] = {
+        short_format_name_data_length,
+        min_long_format_name_data_length
+    };
+
+    enum class ExtractResult : int8_t
+    {
+        Ok,
+        WaitingData,
+        LongFormatNameTooLong,
+    };
+
+    inline ExtractResult format_list_extract(
+        FormatListExtractorData& data, InStream& stream,
+        IsLongFormat is_long_format, IsAscii is_ascii) noexcept
+    {
+        if (stream.in_remain() < format_name_data_length[int(is_long_format)])
+        {
+            return ExtractResult::WaitingData;
+        }
+
+        data.format_id = stream.in_uint32_le();
+
+        if (bool(is_long_format))
+        {
+            data.charset = Charset::Utf16;
+            auto av = stream.remaining_bytes();
+            data.av_name = av.first(UTF16ByteLen(av));
+
+            if (data.av_name.size() == av.size())
+            {
+                return ExtractResult::LongFormatNameTooLong;
+            }
+
+            stream.in_skip_bytes(data.av_name.size() + 2);
+        }
+        else
+        {
+            auto av = stream.remaining_bytes();
+            if (bool(is_ascii))
+            {
+                data.charset = Charset::Ascii;
+                data.av_name = av.first(strnlen(av.as_charp(), short_format_name_length));
+            }
+            else
+            {
+                data.charset = Charset::Utf16;
+                data.av_name = av.first(UTF16ByteLen(av.first(short_format_name_length)));
+            }
+
+            stream.in_skip_bytes(short_format_name_length);
+        }
+
+        return ExtractResult::Ok;
+    }
+
+    inline bool format_list_serialize(
+        OutStream& out_stream, cbytes_view name,
+        uint32_t id, IsLongFormat is_long_format, Charset charset)
+    {
+        constexpr size_t header_length = 4;
+
+        if (bool(is_long_format))
+        {
+            switch (charset)
+            {
+            case Charset::Ascii: {
+                if (!out_stream.has_room(header_length + name.size() * 2 + 2))
+                {
+                    return false;
+                }
+                out_stream.out_uint32_le(id);
+
+                auto data = out_stream.get_tailroom_bytes();
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(data.size() - 2u)));
+                out_stream.out_uint16_le(0);
+                break;
+            }
+            case Charset::Utf16: {
+                if (!out_stream.has_room(header_length + name.size() + 2))
+                {
+                    return false;
+                }
+                out_stream.out_uint32_le(id);
+                out_stream.out_copy_bytes(name);
+                out_stream.out_uint16_le(0);
+                break;
+            }
+            }
+        }
+        else
+        {
+            if (!out_stream.has_room(4 + short_format_name_length))
+            {
+                return false;
+            }
+
+            out_stream.out_uint32_le(id);
+
+            switch (charset)
+            {
+            case Charset::Ascii: {
+                auto data = out_stream.get_tailroom_bytes();
+                auto len = std::min(data.size(), short_format_name_length-2u);
+                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
+                out_stream.out_clear_bytes(short_format_name_length - len);
+                break;
+            }
+            case Charset::Utf16: {
+                auto len = std::min(name.size(), short_format_name_length-1u);
+                out_stream.out_copy_bytes(name);
+                out_stream.out_clear_bytes(short_format_name_length - len);
+                break;
+            }
+            }
+        }
+
+        return true;
+    }
+
+    struct FormatNameInventory
+    {
+        using FormatId = uint32_t;
+        struct FormatName;
+
+        FormatName const& push(FormatId format_id, Charset charset, array_view_const_u8 av_name)
+        {
+            return this->formats.emplace_back(format_id, charset, av_name);
+        }
+
+        FormatName const* find(FormatId format_id) const noexcept
+        {
+            for (auto const& format : this->formats) {
+                if (format.format_id == format_id) {
+                    return &format;
+                }
+            }
+            return nullptr;
+        }
+
+        void clear() noexcept
+        {
+            this->formats.clear();
+        }
+
+        struct FormatName
+        {
+            static constexpr size_t utf8_buffer_buf_len = 123;
+
+            uint32_t format_id;
+            // TODO static_vector<raw_buf_len>
+            uint8_t len;
+            uint8_t utf8_buffer[utf8_buffer_buf_len];
+
+            FormatName(FormatId format_id, Charset charset, array_view_const_u8 raw_name) noexcept
+            : format_id(format_id)
+            , len(std::min(raw_name.size(), std::size(this->utf8_buffer)))
+            {
+                if (charset == Charset::Ascii)
+                {
+                    this->len = std::min(raw_name.size(), std::size(this->utf8_buffer));
+                    memcpy(this->utf8_buffer, raw_name.data(), this->len);
+                }
+                else
+                {
+                    this->len = UTF16toUTF8_buf(
+                        raw_name, make_array_view(this->utf8_buffer)).size();
+                }
+            }
+
+            FormatName(FormatName const& other) noexcept
+            : format_id(other.format_id)
+            , len(other.len)
+            {
+                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
+            }
+
+            FormatName& operator=(FormatName const& other) noexcept
+            {
+                this->format_id = other.format_id;
+                this->len = other.len;
+                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
+                return *this;
+            }
+
+            const_bytes_view utf8_name() const noexcept
+            {
+                return {this->utf8_buffer, this->len};
+            }
+
+            bool utf8_name_equal(const_bytes_view utf8_name_compared) const noexcept
+            {
+                return utf8_name_compared.size() == this->len
+                    && 0 == strncasecmp(utf8_name_compared.as_charp(),
+                                        char_ptr_cast(this->utf8_buffer), this->len);
+            }
+        };
+
+    private:
+        std::vector<FormatName> formats;
+    };
+} // namespace Cliprdr
+
+
 namespace RDPECLIP {
 
 // Predefined Clipboard Formats (WinUser.h)
@@ -941,170 +1201,71 @@ public:
     auto begin() const { return this->format_names.begin(); }
     auto end() const { return this->format_names.end(); }
 
-    void emit(OutStream & stream, bool use_long_format_names) const {
+    void emit(OutStream & stream, bool use_long_format_names) const
+    {
         if (use_long_format_names) {
             for (auto & format_name : this->format_names) {
                 stream.out_uint32_le(format_name.formatId());
 
-                const size_t formatName_unicode_data_size =
-                    (format_name.format_name_length() + 1) * maximum_length_of_utf8_character_in_bytes;
+                auto data = stream.get_tailroom_bytes();
+                stream.out_skip_bytes(UTF8toUTF16(
+                    format_name.format_name(), data.first(data.size() - 2u)));
+                stream.out_uint16_le(0);
+            }
+        }
+        else if (!this->will_be_sent_in_ASCII_8(use_long_format_names)) {
+            // Unicode
+            for (auto & format_name : this->format_names) {
+                stream.out_uint32_le(format_name.formatId());
 
-                std::unique_ptr<uint8_t[]> formatName_unicode_data = std::make_unique<uint8_t[]>(
-                    formatName_unicode_data_size);
+                auto data = stream.get_tailroom_bytes();
+                data = data.first(std::min(Cliprdr::short_format_name_length-2u, data.size()));
 
-                const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                    format_name.format_name(),
-                    formatName_unicode_data.get(), formatName_unicode_data_size);
-                assert(size_of_formatName_unicode_data + 2 < formatName_unicode_data_size);
-
-                if (size_of_formatName_unicode_data < formatName_unicode_data_size) {
-                    ::memset(formatName_unicode_data.get() + size_of_formatName_unicode_data,
-                        0, formatName_unicode_data_size - size_of_formatName_unicode_data);
-                }
-
-                stream.out_copy_bytes(formatName_unicode_data.get(),
-                    size_of_formatName_unicode_data + 2);
+                data = stream.out_skip_bytes(UTF8toUTF16(format_name.format_name(), data));
+                stream.out_clear_bytes(Cliprdr::short_format_name_length - data.size());
             }
         }
         else {
-            bool   all_format_names_are_ASCII_strings = true;
-            size_t max_format_name_len_in_char        = 0;
+            // ASCII
             for (auto & format_name : this->format_names) {
-                if (!::is_ASCII_string(byte_ptr_cast(format_name.format_name().c_str()))) {
-                    all_format_names_are_ASCII_strings = false;
-                }
+                stream.out_uint32_le(format_name.formatId());
 
-                const size_t format_name_len_in_char = ::UTF8StrLenInChar(byte_ptr_cast(format_name.format_name().c_str()));
-                if (max_format_name_len_in_char < format_name_len_in_char) {
-                    max_format_name_len_in_char = format_name_len_in_char;
-                }
-            }
+                auto const& name = format_name.format_name();
+                auto len = std::min(name.size(), Cliprdr::short_format_name_length - 1u);
 
-            if (!all_format_names_are_ASCII_strings ||
-                (max_format_name_len_in_char < (32 /* formatName(32) */ / sizeof(uint16_t))))
-            {
-                // Unicode
-
-                for (auto & format_name : this->format_names) {
-                    stream.out_uint32_le(format_name.formatId());
-
-                    constexpr size_t formatName_unicode_data_size = 32; // formatName(32)
-
-                    uint8_t formatName_unicode_data[formatName_unicode_data_size];
-
-                    const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                        format_name.format_name(),
-                        formatName_unicode_data, formatName_unicode_data_size - sizeof(uint16_t));
-                    assert(size_of_formatName_unicode_data + 2 <= formatName_unicode_data_size);
-
-                    if (size_of_formatName_unicode_data < formatName_unicode_data_size) {
-                        ::memset(formatName_unicode_data + size_of_formatName_unicode_data,
-                            0, formatName_unicode_data_size - size_of_formatName_unicode_data);
-                    }
-
-                    stream.out_copy_bytes(formatName_unicode_data,
-                        formatName_unicode_data_size);
-                }
-            }
-            else {
-                // ASCII
-
-                for (auto & format_name : this->format_names) {
-                    stream.out_uint32_le(format_name.formatId());
-
-                    const size_t size_of_formatName_ASCII_data = std::min<size_t>(
-                            format_name.format_name_length(),
-                            32 /* formatName(32) */ - sizeof(uint8_t));
-
-                    stream.out_copy_bytes(format_name.format_name().c_str(),
-                        size_of_formatName_ASCII_data);
-
-                    stream.out_clear_bytes(32 /* formatName(32) */ - size_of_formatName_ASCII_data);
-                }
+                stream.out_copy_bytes({name.data(), len});
+                stream.out_clear_bytes(Cliprdr::short_format_name_length - len);
             }
         }
     }
 
-    void recv(InStream & stream, bool use_long_format_names, bool in_ASCII_8_) {
+    void recv(InStream & in_stream, bool use_long_format_names, bool in_ASCII_8)
+    {
         this->format_names.clear();
 
-        if (use_long_format_names) {
-            constexpr size_t min_long_format_name_data_length = 6;  // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
-            while (stream.in_remain() >= min_long_format_name_data_length) {
-                const uint32_t formatId = stream.in_uint32_le();
+        Cliprdr::ExtractResult r;
 
-                const size_t format_name_UTF16_length = ::UTF16StrLen(stream.get_current());
+        Cliprdr::FormatListExtractorData extracted_data;
 
-                const size_t formatName_UTF8_data_size =
-                    (format_name_UTF16_length + 1) * maximum_length_of_utf8_character_in_bytes;
-
-                std::string format_name(formatName_UTF8_data_size, 0);
-
-                const size_t size_of_formatName_UTF8_data = ::UTF16toUTF8(
-                    stream.get_current(), (format_name_UTF16_length + 1),
-                    byte_ptr_cast(format_name.data()), formatName_UTF8_data_size);
-
-                if (not (size_of_formatName_UTF8_data + 1 < formatName_UTF8_data_size)){
-                    LOG(LOG_WARNING, "utf16 to utf8 conversion failed in FormatListPDUEx::recv %lu %lu",
-                        size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
-                } else {
-                    format_name.resize(size_of_formatName_UTF8_data-1);
-                }
-
-                this->format_names.emplace_back(
-                        formatId,
-                        std::move(format_name)
-                    );
-
-                stream.in_skip_bytes((format_name_UTF16_length + 1) * sizeof(uint16_t));
+        while ((r = Cliprdr::format_list_extract(
+            extracted_data, in_stream,
+            Cliprdr::IsLongFormat(use_long_format_names),
+            Cliprdr::IsAscii(in_ASCII_8)
+        )) == Cliprdr::ExtractResult::Ok)
+        {
+            char buf[1024];
+            array_view_const_char name = extracted_data.av_name.as_chars();
+            switch (extracted_data.charset)
+            {
+                case Cliprdr::Charset::Ascii:;
+                    break;
+                case Cliprdr::Charset::Utf16:
+                    name = UTF16toUTF8_buf(name, make_array_view(buf)).as_chars();
+                    break;
             }
-        }
-        else {
-            constexpr size_t short_format_name_data_length = 36;  // formatId(4) + formatName(32)
-            if (in_ASCII_8_) {
-                while (stream.in_remain() >= short_format_name_data_length) {
-                    const uint32_t formatId = stream.in_uint32_le();
-
-                    this->format_names.emplace_back(
-                            formatId,
-                            char_ptr_cast(stream.get_current())
-                        );
-
-                    stream.in_skip_bytes(short_format_name_data_length - 4 /* formatId(4) */);
-                }
-            }
-            else {
-                while (stream.in_remain() >= short_format_name_data_length) {
-                    const uint32_t formatId = stream.in_uint32_le();
-
-                    const size_t format_name_UTF16_length = (32 /* formatName(32) */ / sizeof(uint16_t));
-
-                    const size_t formatName_UTF8_data_size =
-                        format_name_UTF16_length * maximum_length_of_utf8_character_in_bytes;
-
-                    std::string format_name(formatName_UTF8_data_size, 0);
-
-                    const size_t size_of_formatName_UTF8_data = ::UTF16toUTF8(
-                        stream.get_current(), format_name_UTF16_length,
-                        byte_ptr_cast(format_name.data()), formatName_UTF8_data_size);
-
-                    if (not (size_of_formatName_UTF8_data + 1 < formatName_UTF8_data_size)){
-                        LOG(LOG_WARNING, "utf16 to utf8 conversion failed in FormatListPDUEx::recv %lu %lu",
-                        size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
-                    }
-
-                    if (size_of_formatName_UTF8_data) {
-                        format_name.resize(size_of_formatName_UTF8_data-1);
-                    }
-
-                    this->format_names.emplace_back(
-                            formatId,
-                            std::move(format_name)
-                        );
-
-                    stream.in_skip_bytes(short_format_name_data_length - 4 /* formatId(4) */);
-                }
-            }
+            this->format_names.emplace_back(
+                extracted_data.format_id,
+                std::string(name.data(), name.size()));
         }
     }
 
@@ -1122,17 +1283,8 @@ public:
         if (use_long_format_names) {
             for (auto & format_name : this->format_names) {
                 sz += 4;    // formatId(4)
-
-                const size_t formatName_unicode_data_size =
-                    (format_name.format_name_length() + 1) * maximum_length_of_utf8_character_in_bytes;
-
-                std::unique_ptr<uint8_t[]> formatName_unicode_data = std::make_unique<uint8_t[]>(
-                    formatName_unicode_data_size);
-
-                const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                    format_name.format_name(),
-                    formatName_unicode_data.get(), formatName_unicode_data_size);
-                sz += (size_of_formatName_unicode_data + 2);    // wszFormatName (variable)
+                auto utf8_len = UTF8Len(format_name.format_name().data());
+                sz += utf8_len * 2 + 2; // wszFormatName (variable)
             }
         }
         else {
@@ -1145,7 +1297,8 @@ public:
         return sz;
     }
 
-    bool will_be_sent_in_ASCII_8(bool use_long_format_names) {
+    bool will_be_sent_in_ASCII_8(bool use_long_format_names) const
+    {
         if (!use_long_format_names) {
             bool   all_format_names_are_ASCII_strings = true;
             size_t max_format_name_len_in_char        = 0;
@@ -1278,23 +1431,21 @@ struct FormatListResponsePDU
 
 struct FormatDataRequestPDU
 {
-
     uint32_t requestedFormatId{0};
 
     FormatDataRequestPDU() = default;
 
     explicit FormatDataRequestPDU(uint32_t requestedFormatId)
-  :  requestedFormatId(requestedFormatId) {
-    }   // FormatDataRequestPDU(uint32_t requestedFormatId)
+    : requestedFormatId(requestedFormatId)
+    {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->requestedFormatId);
-    }   // void emit(OutStream & stream)
+    }
 
-    void recv(InStream & stream) {
-
-        // requestedFormatId(4)
-        ::check_throw(stream, 4, "FormatDataRequestPDU::recv truncated requestedFormatId", ERR_RDP_DATA_TRUNCATED);
+    void recv(InStream & stream)
+    {
+        ::check_throw(stream, 4, "FormatDataRequestPDU::recv", ERR_RDP_DATA_TRUNCATED);
 
         this->requestedFormatId = stream.in_uint32_le();
     }
@@ -1306,7 +1457,6 @@ struct FormatDataRequestPDU
     constexpr static size_t size() {
        return 4;                                            // requestedFormatId(4)
     }
-
 };  // struct FormatDataRequestPDU
 
 
@@ -1444,7 +1594,7 @@ public:
     }
 
     void receive(InStream& stream) {
-        ::check_throw(stream, this->minimum_size(), "FileContentsRequestPDUEx::recv: File Contents Request PDU", ERR_RDP_DATA_TRUNCATED);
+        ::check_throw(stream, this->minimum_size(), "FileContentsRequest", ERR_RDP_DATA_TRUNCATED);
 
         this->streamId_      = stream.in_uint32_le();
         this->lindex_        = stream.in_uint32_le();
@@ -1567,7 +1717,7 @@ public:
 struct FileContentsResponseSize
 {
    uint32_t streamID{0};
-   uint64_t _size{0};
+   uint64_t size{0};
 
 
    FileContentsResponseSize() = default;
@@ -1575,26 +1725,26 @@ struct FileContentsResponseSize
    // SIZE (16 bytes)
    explicit FileContentsResponseSize(const uint32_t streamID, const uint64_t size)
    : streamID(streamID)
-   , _size(size)
+   , size(size)
    {}
 
    void receive(InStream & stream) {
+       ::check_throw(stream, 12, "FileContentsResponseSize::receive", ERR_RDP_DATA_TRUNCATED);
        this->streamID = stream.in_uint32_le();
-        this->_size = stream.in_uint64_le();
+       this->size = stream.in_uint64_le();
    }
 
    void emit(OutStream & stream) const {
        stream.out_uint32_le(this->streamID);
-       stream.out_uint64_le(this->_size);
-       stream.out_uint32_le(0);
+       stream.out_uint64_le(this->size);
    }
 
    void log() const {
-       LOG(LOG_INFO, "     File Contents Response Size: streamID = 0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding - (4 byte) NOT USED", this->streamID, this->_size);
+       LOG(LOG_INFO, "     File Contents Response Size: streamID = 0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding - (4 byte) NOT USED", this->streamID, this->size);
    }
 
-    size_t size() {
-        return 16;                                          // streamID(4) + size(8)
+   size_t packet_size() {
+        return 12;                                          // streamID(4) + size(8)
    }
 };
 
@@ -1611,6 +1761,7 @@ struct FileContentsResponseRange
    {}
 
    void receive(InStream & stream) {
+       ::check_throw(stream, 4, "FileContentsResponseRange::receive", ERR_RDP_DATA_TRUNCATED);
        this->streamID = stream.in_uint32_le();
    }
 
@@ -1619,10 +1770,10 @@ struct FileContentsResponseRange
    }
 
    void log() const {
-       LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes)", this->streamID);
+       LOG(LOG_INFO, "     File Contents Response Range: streamID=0X%08x(4 bytes)", this->streamID);
    }
 
-   size_t size() {
+   size_t packet_size() {
         return 4;                                          // streamID(4)
    }
 };
@@ -2362,24 +2513,28 @@ public:
 
 struct LockClipboardDataPDU
 {
-    uint32_t streamDataID;
+    uint32_t clipDataId;
 
     explicit LockClipboardDataPDU() = default;
 
-    explicit LockClipboardDataPDU(uint32_t streamDataID)
-    : streamDataID(streamDataID)
+    explicit LockClipboardDataPDU(uint32_t clipDataId)
+    : clipDataId(clipDataId)
     {}
 
-    void emit(OutStream & stream) const {
-        stream.out_uint32_le(streamDataID);
+    void emit(OutStream & stream) const
+    {
+        stream.out_uint32_le(this->clipDataId);
     }
 
-    void recv(InStream & stream) {
-        streamDataID = stream.in_uint32_le();
+    void recv(InStream & stream)
+    {
+        check_throw(stream, 4, "LockClipboardDataPDU", ERR_RDPDR_PDU_TRUNCATED);
+        clipDataId = stream.in_uint32_le();
     }
 
-    void log() const {
-        LOG(LOG_INFO, "LockClipboardDataPDU: streamDataID=0x%08x(4 bytes)", this->streamDataID);
+    void log() const
+    {
+        LOG(LOG_INFO, "LockClipboardDataPDU: clipDataId=0x%08x(4 bytes)", this->clipDataId);
     }
 
 };
@@ -2407,27 +2562,28 @@ struct LockClipboardDataPDU
 
 struct UnlockClipboardDataPDU
 {
-    uint32_t streamDataID;
+    uint32_t clipDataId;
 
-     explicit UnlockClipboardDataPDU() = default;
+    explicit UnlockClipboardDataPDU() = default;
 
-    explicit UnlockClipboardDataPDU(uint32_t streamDataID)
-    : streamDataID(streamDataID)
+    explicit UnlockClipboardDataPDU(uint32_t clipDataId)
+    : clipDataId(clipDataId)
     {}
 
     void emit(OutStream & stream) const
     {
-        stream.out_uint32_le(this->streamDataID);
+        stream.out_uint32_le(this->clipDataId);
     }
 
     void recv(InStream & stream)
     {
-        streamDataID = stream.in_uint32_le();
+        check_throw(stream, 4, "LockClipboardDataPDU", ERR_RDPDR_PDU_TRUNCATED);
+        clipDataId = stream.in_uint32_le();
     }
 
     void log() const
     {
-        LOG(LOG_INFO, "UnlockClipboardDataPDU: streamDataID=0x%08x(4 bytes)", this->streamDataID);
+        LOG(LOG_INFO, "UnlockClipboardDataPDU: clipDataId=0x%08x(4 bytes)", this->clipDataId);
     }
 };
 

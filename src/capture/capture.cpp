@@ -1191,6 +1191,9 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (cstr_equal("FILE_VERIFICATION", order)) {
             line_with_3_var("filename"_av, "direction"_av, "status"_av);
         }
+        else if (cstr_equal("FILE_VERIFICATION_ERROR", order)) {
+            line_with_1_var("status"_av);
+        }
 
         else if (cstr_equal("GROUP_MEMBERSHIP", order)) {
             line_with_1_var("groups"_av);

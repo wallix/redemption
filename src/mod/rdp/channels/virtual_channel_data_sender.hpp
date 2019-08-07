@@ -93,6 +93,7 @@ public:
         return *this;
     }
 
+    // TODO add names function
     virtual void operator()(uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) = 0;
 };
 

@@ -159,7 +159,18 @@ private:
             pdu.log(LOG_INFO);
         }
 
-        if (this->param_rail_session_manager->is_client_only_window(pdu.WindowId())) {
+        bool is_client_only_window = true;
+        try
+        {
+            is_client_only_window = this->param_rail_session_manager->is_client_only_window(pdu.WindowId());
+        }
+        catch (Error const& e)
+        {
+            if (ERR_RAIL_NO_SUCH_WINDOW_EXIST != e.id) {
+                throw;
+            }
+        }
+        if (is_client_only_window) {
             return false;
         }
 

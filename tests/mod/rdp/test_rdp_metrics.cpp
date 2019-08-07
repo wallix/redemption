@@ -393,7 +393,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
     }
 
     {  // FILE CONTENT RESPONSE SIZE FROM CLIENT
-        expected_log_metrics += "2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 78 0 0 0 0 0 0 1 48 0 0 1 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
+        expected_log_metrics += "2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 74 0 0 0 0 0 0 1 48 0 0 1 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 16);
@@ -871,7 +871,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
     }
 
     {  // FILE CONTENT RESPONSE SIZE FROM CLIENT
-        expected_log_metrics += "2018-08-02 12:08:26 164d89c1a56957b752540093e178 0 0 0 0 0 0 48 0 0 1 42 0 0 0 132 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n";
+        expected_log_metrics += "2018-08-02 12:08:26 164d89c1a56957b752540093e178 0 0 0 0 0 0 48 0 0 1 42 0 0 0 128 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 16);
