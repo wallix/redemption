@@ -69,7 +69,8 @@ struct array_view
     constexpr array_view() = default;
     constexpr array_view(array_view && other) = default;
     constexpr array_view(array_view const & other) = default;
-    constexpr array_view(array_view && other) = default;
+//    constexpr array_view(array_view && other) = default;
+    array_view & operator = (array_view && other) = default;
     array_view & operator = (array_view const & other) = default;
 
     constexpr array_view(std::nullptr_t /*null*/) noexcept
@@ -87,6 +88,7 @@ struct array_view
     {}
 
     template<class U, class = typename detail::filter_dangerous_implicite_array_view<U, decltype(
+//    template<class U, class = typename detail::filter_dangerous_implicite_array_view<std::remove_const_t<U>, decltype(
         *static_cast<type**>(nullptr) = utils::data(std::declval<U&&>()),
         *static_cast<std::size_t*>(nullptr) = utils::size(std::declval<U&&>())
     )>::type>
