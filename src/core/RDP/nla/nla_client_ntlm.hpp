@@ -63,9 +63,6 @@ private:
     const bool NTLMv2 = true;
     bool UseMIC = true; // like NTLMv2
     NtlmState sspi_context_state = NTLM_STATE_INITIAL;
-    uint8_t MachineID[32];
-    const bool SendVersionInfo = true;
-    const bool confidentiality = true;
 
     SslRC4 SendRc4Seal {};
 
@@ -157,7 +154,6 @@ public:
         , lang(lang)
         , verbose(verbose)
     {
-        memset(this->MachineID, 0xAA, sizeof(this->MachineID));
         memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::Initialization");
@@ -527,14 +523,6 @@ public:
                     
                     this->SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
                     this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
-                    
-            //        /* Concatenate version, ciphertext and sequence number to build signature */
-            //        std::array<uint8_t,16> expected_signature{
-            //            1, 0, 0, 0, // Version
-            //            0, 0, 0, 0, 0, 0, 0, 0,
-            //            uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-            //        this->RecvRc4Seal.crypt(8, digest, signature.data()+4);
-
                     this->ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
                     encrypted = SEC_E_OK;
