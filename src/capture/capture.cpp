@@ -175,7 +175,7 @@ class PatternSearcher
                         this->beg += len;
                     }
                     pchar_len += len;
-                } while (pchar_len < utf8_char.size() + 1);
+                } while (pchar_len < utf8_char.size() + 1u);
             }
 
             for (uint8_t c : utf8_char) {
