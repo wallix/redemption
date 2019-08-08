@@ -852,7 +852,7 @@ struct ClientCLIPRDRChannel::FormatName
                     }
                 }
 
-                if (Cliprdr::is_file_group_descriptor_w(format_name)) {
+                if (Cliprdr::formats::file_group_descriptor_w.same_as(format_name)) {
                     this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                     return false;
                 }

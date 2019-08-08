@@ -29,6 +29,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/overload.hpp"
+#include "utils/string_c.hpp"
 
 #include <cinttypes>
 #include <sstream>
@@ -39,32 +40,42 @@
 // TODO copy from /browser_client_JS/src/red_channels/clipboard.cpp
 namespace Cliprdr
 {
+    template<std::size_t... I, class F>
+    constexpr decltype(auto) apply(std::integer_sequence<std::size_t, I...>, F&& f)
+    {
+        return static_cast<F&&>(f)(std::integral_constant<std::size_t, I>{}...);
+    }
+
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-    // TODO string_literal<cs...>::view()
     template<class C, C... cs>
-    constexpr std::array<uint8_t, sizeof...(cs) * 2> const operator "" _utf16()
+    constexpr array_view_const_char const operator "" _utf16_le() noexcept
     {
-        std::array<uint8_t, sizeof...(cs) * 2> a{};
-        char s[] {cs...};
-        auto p = a.data();
-        for (char c : s)
-        {
-            p[0] = c;
-            p[1] = 0;
-            p += 2;
-        }
-        return a;
+        constexpr auto unicode = [&]{
+            std::array<uint8_t, sizeof...(cs) * 2> a{};
+            char s[] {cs...};
+            auto p = a.data();
+            for (char c : s)
+            {
+                p[0] = c;
+                p[1] = 0;
+                p += 2;
+            }
+            return a;
+        }();
+
+        return apply(std::make_index_sequence<unicode.size()>{}, [&](auto... i){
+            return array_view_const_char{jln::string_c<unicode[i.value]...>::value, sizeof...(i)};
+        });
     }
     REDEMPTION_DIAGNOSTIC_POP
 
-    inline namespace format_name_constants
-    {
-        constexpr auto file_group_descriptor_w_utf8 = "FileGroupDescriptorW"_av;
-        constexpr auto file_group_descriptor_w_utf16 = "FileGroupDescriptorW"_utf16;
+    struct UnicodeName;
+    struct AsciiName;
 
-        constexpr auto preferred_drop_effect_utf8 = "Preferred DropEffect"_av;
-        constexpr auto preferred_drop_effect_utf16 = "Preferred DropEffect"_av;
+    inline bool bytes_equals(const_bytes_view a, const_bytes_view b) noexcept
+    {
+        return a.size() == b.size() && 0 == memcmp(a.data(), b.data(), a.size());
     }
 
     enum class Charset : bool
@@ -101,13 +112,6 @@ namespace Cliprdr
         const_bytes_view bytes;
     };
 
-    inline bool is_file_group_descriptor_w(UnicodeName const& unicode_name) noexcept
-    {
-        auto& name = format_name_constants::file_group_descriptor_w_utf16;
-        return unicode_name.bytes.size() == name.size()
-            && 0 == memcmp(name.data(), unicode_name.bytes.data(), name.size());
-    }
-
     struct AsciiName
     {
         explicit AsciiName(const_bytes_view name) noexcept
@@ -123,11 +127,30 @@ namespace Cliprdr
         const_bytes_view bytes;
     };
 
-    inline bool is_file_group_descriptor_w(AsciiName const& ascii_name) noexcept
+    inline namespace formats
     {
-        auto& name = format_name_constants::file_group_descriptor_w_utf8;
-        return ascii_name.bytes.size() == name.size()
-            && 0 == memcmp(name.data(), ascii_name.bytes.data(), name.size());
+        struct Names
+        {
+            array_view_const_char ascii_name;
+            array_view_const_char unicode_name;
+
+            bool same_as(UnicodeName const& unicode_name) const noexcept
+            {
+                return bytes_equals(this->unicode_name, unicode_name.bytes);
+            }
+
+            bool same_as(AsciiName const& ascii_name) const noexcept
+            {
+                return bytes_equals(this->ascii_name, ascii_name.bytes);
+            }
+        };
+
+#define DEF_NAME(var_name, format_name) \
+    inline constexpr Names var_name { format_name ""_av, format_name ""_utf16_le, };
+
+        DEF_NAME(file_group_descriptor_w, "FileGroupDescriptorW");
+        DEF_NAME(preferred_drop_effect, "Preferred DropEffect");
+#undef DEF_NAME
     }
 
     struct LeftOrTrue

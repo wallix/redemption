@@ -436,7 +436,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     };
 
     const auto use_long_format = Cliprdr::IsLongFormat(true);
-    const auto file_group = Cliprdr::format_name_constants::file_group_descriptor_w_utf8;
+    const auto file_group = Cliprdr::formats::file_group_descriptor_w.ascii_name;
     const auto file_group_id = 49262;
 
     RED_CHECK(report_message.messages.size() == 0);
@@ -519,7 +519,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             out.out_uint64_le(0);    // lastWriteTime
             out.out_uint32_le(0);    // file size high
             out.out_uint32_le(12);   // file size low
-            auto filename = "abc"_utf16;
+            auto filename = "abc"_utf16_le;
             out.out_copy_bytes(filename);
             out.out_clear_bytes(520u - filename.size());
         });

@@ -389,7 +389,7 @@ private:
                         this->metrics.add_to_current_data(nb_copy_image, 1);
                         return false;
                     default:
-                        if (Cliprdr::is_file_group_descriptor_w(name)) {
+                        if (Cliprdr::formats::file_group_descriptor_w.same_as(name)) {
                             this->file_contents_format_ID = format_id;
                             this->metrics.add_to_current_data(nb_copy_file, 1);
                             return false;

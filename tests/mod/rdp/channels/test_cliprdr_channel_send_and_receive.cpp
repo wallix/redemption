@@ -276,8 +276,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
     RED_REQUIRE(!!(format_name = format_name_inventory.find(RDPECLIP::CF_TEXT)));
     RED_CHECK_SMEM(format_name->utf8_name(), ""_av);
     RED_REQUIRE(!!(format_name = format_name_inventory.find(client_file_list_format_id)));
-    RED_CHECK_SMEM(format_name->utf8_name(), Cliprdr::file_group_descriptor_w_utf8);
-    RED_CHECK(format_name->utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8));
+    RED_CHECK_SMEM(format_name->utf8_name(), Cliprdr::formats::file_group_descriptor_w.ascii_name);
+    RED_CHECK(format_name->utf8_name_equal(Cliprdr::formats::file_group_descriptor_w.ascii_name));
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {

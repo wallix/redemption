@@ -608,7 +608,7 @@ struct FormatListReceive
                     RDPECLIP::get_FormatId_name(format_id),
                     format_id, int(utf8_name.size()), utf8_name.data());
 
-                if (format_name.utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8)) {
+                if (format_name.utf8_name_equal(Cliprdr::formats::file_group_descriptor_w.ascii_name)) {
                     this->file_list_format_id = format_id;
                 }
             }
