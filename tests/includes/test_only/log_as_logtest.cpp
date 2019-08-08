@@ -148,6 +148,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
         int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap); /*NOLINT*/
         RED_EM_ASM({console.log(UTF8ToString($0, $1));}, buffer, len);
 #else
+        std::printf("rdpproxy: "); /* works with tools/rdpproxy_color.awk */
         std::vprintf(format, ap); /*NOLINT*/
         std::puts("");
         std::fflush(stdout);

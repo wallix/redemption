@@ -17,18 +17,16 @@ msg=$esc'1m'
 
 sed -E "$@" -e '/^\x1b/n
 /^tests\//{
-  s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): error:? in "([^"]+)": check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\]$/'$file'\1'$reset': '$err'error'$reset' in "'$name'\2'$reset'": '$cat'check'$reset' '$code'\3'$op'\4'$code'\5'$reset' failed ['$value'\6'$op'\7'$value'\8'$reset']/;t
+  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): error:? in "([^"]+)": check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\]$/'$file'\1'$reset'('$line'\2'$reset'): '$err'error'$reset' in "'$name'\3'$reset'": '$cat'check'$reset' '$code'\4'$op'\5'$code'\6'$reset' failed ['$value'\7'$op'\8'$value'\9'$reset']/;t
 
-  s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): fatal error:? in "([^"]+)": critical check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\]$/'$file'\1'$reset': '$err'fatal error'$reset' in "'$name'\2'$reset'": '$cat'critical check'$reset' '$code'\3'$op'\4'$code'\5'$reset' failed ['$value'\6'$op'\7'$value'\8'$reset']/;t
+  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): fatal error:? in "([^"]+)": critical check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\]$/'$file'\1'$reset'('$line'\2'$reset'): '$err'fatal error'$reset' in "'$name'\3'$reset'": '$cat'critical check'$reset' '$code'\4'$op'\5'$code'\6'$reset' failed ['$value'\7'$op'\8'$value'\9'$reset']/;t
 
-  s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): (fatal )?error:? in "([^"]+)": (critical )?check (.*) has failed$/'$file'\1'$reset': '$err'\2error'$reset' in "'$name'\3'$reset'": '$cat'\4check'$reset' '$code'\5'$reset' has failed/;t
+  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): (fatal )?error:? in "([^"]+)": (critical )?check (.*) (has )?failed$/'$file'\1'$reset'('$line'\2'$reset'): '$err'\3error'$reset' in "'$name'\4'$reset'": '$cat'\5check'$reset' '$code'\6'$reset' \7failed/;t
 
-  s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): (fatal )?error:? in "([^"]+)": (critical )?check (.*) failed$/'$file'\1'$reset': '$err'\2error'$reset' in "'$name'\3'$reset'": '$cat'\4check'$reset' '$code'\5'$reset' failed/;t
+  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): (fatal )?error:? in "([^"]+)": (.*)$/'$file'\1'$reset'('$line'\2'$reset'): '$err'\3error'$reset' in "'$name'\4'$reset'": '$cat'\5'$reset'/;t
 
-  s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): (fatal )?error:? in "([^"]+)": (.*)$/'$file'\1'$reset': '$err'\2error'$reset' in "'$name'\3'$reset'": '$cat'\4'$reset'/;t
-
-  s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): last checkpoint$/'$file'\1'$reset': '$cat'last checkpoint'$reset'/;t
-  s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): last checkpoint: "([^"]+)" entry.$/'$file'\1'$reset': '$cat'last checkpoint'$reset': "'$name'\2'$reset'" entry/;t
+  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): last checkpoint$/'$file'\1'$reset'('$line'\2'$reset'): '$cat'last checkpoint'$reset'/;t
+  s/^(tests\/[^.]+\.[ch]pp)\(([0-9]+)\): last checkpoint: "([^"]+)" (test )?entry.?$/'$file'\1'$reset'('$line'\2'$reset'): '$cat'last checkpoint'$reset': "'$name'\3'$reset'" test entry/;t
 }
 s/^(src|tests|)(\/[^.]+\.[ch]p?p?:[0-9]+:[0-9]+): ([^:]+): (.*)/'$file'\1\2'$reset': '$err'\3'$reset': '$msg'\4'$reset'/;t
 s/^SUMMARY: (.*)/'$err'SUMMARY: '$msg'\1'$reset'/;t

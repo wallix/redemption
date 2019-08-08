@@ -254,16 +254,21 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
     StaticOutStream<1600> stream;
     uint32_t client_file_list_format_id = 49263;
 
-    RDPECLIP::FormatListPDUEx fl;
-    fl.add_format_name(RDPECLIP::CF_TEXT, "");
-    fl.add_format_name(client_file_list_format_id, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+    Cliprdr::FormatNameRef formats[]{
+        {RDPECLIP::CF_TEXT, {}},
+        {client_file_list_format_id, RDPECLIP::FILEGROUPDESCRIPTORW},
+    };
 
-    RDPECLIP::CliprdrHeader in_header(RDPECLIP::CB_FORMAT_LIST, RDPECLIP::CB_RESPONSE__NONE_, fl.size(use_long_format_name));
-    fl.emit(stream, use_long_format_name);
+    RED_CHECK(Cliprdr::format_list_serialize_with_header(
+        stream, Cliprdr::IsLongFormat(use_long_format_name),
+        std::begin(formats), std::end(formats)));
 
     InStream chunk(stream.get_bytes());
 
-    FormatListReceive received(use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::none);
+    RDPECLIP::CliprdrHeader in_header;
+    in_header.recv(chunk);
+
+    FormatListReceive received(use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::cliprdr);
 
     Cliprdr::FormatNameInventory::FormatName const* format_name;
 

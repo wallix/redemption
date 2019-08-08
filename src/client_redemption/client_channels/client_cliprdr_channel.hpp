@@ -25,7 +25,6 @@
 
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/RDP/clipboard.hpp"
-#include "utils/sugar/array_view.hpp"
 #include "gdi/screen_info.hpp"
 
 #include <unordered_map>
@@ -128,7 +127,8 @@ public:
     const uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags;
 
-    RDPECLIP::FormatListPDUEx format_list_pdu;
+    struct FormatName;
+    std::vector<FormatName> format_list;
 
     size_t last_header_data_len = 0;
 

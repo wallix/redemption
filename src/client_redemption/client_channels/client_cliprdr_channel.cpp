@@ -36,6 +36,15 @@
 #include <sys/types.h>
 
 
+struct ClientCLIPRDRChannel::FormatName
+{
+    uint32_t _format_id;
+    std::string _utf8_name;
+
+    uint32_t format_id() const noexcept { return this->_format_id; }
+    const_bytes_view utf8_name() const noexcept { return this->_utf8_name; }
+};
+
 // [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension
 //
 //
@@ -159,7 +168,7 @@
     }
 
     void ClientCLIPRDRChannel::add_format(uint32_t ID, const std::string & name) {
-        this->format_list_pdu.add_format_name(ID, name.c_str());
+        this->format_list.push_back(FormatName{ID, name});
         this->formats_map.emplace(ID, name);
     }
 
@@ -797,17 +806,10 @@
         }
 
         {
-            const bool use_long_format_names = this->server_use_long_format_names;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
             StaticOutStream<1600> out_stream;
-
-            header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+            Cliprdr::format_list_serialize_with_header(
+                out_stream, Cliprdr::IsLongFormat(this->server_use_long_format_names),
+                this->format_list.begin(), this->format_list.end());
 
             InStream chunk(out_stream.get_bytes());
 
@@ -841,8 +843,8 @@
             Cliprdr::IsLongFormat(this->server_use_long_format_names),
             Cliprdr::IsAscii(msgFlags & RDPECLIP::CB_ASCII_NAMES),
             [&](uint32_t format_id, auto format_name) {
-                for (RDPECLIP::FormatName const & format_name_ : this->format_list_pdu) {
-                    if (format_name_.formatId() == format_id) {
+                for (FormatName const & format_name_ : this->format_list) {
+                    if (format_name_.format_id() == format_id) {
                         this->_requestedFormatId = format_id;
                         this->_requestedFormatName = format_name.to_string();
                         formatID = format_id;
