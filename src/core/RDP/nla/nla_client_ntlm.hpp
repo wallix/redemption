@@ -68,7 +68,6 @@ private:
     uint32_t NegotiateFlags = 0;
 
     //int LmCompatibilityLevel;
-    bool SendWorkstationName = true;
     std::vector<uint8_t> Workstation;
 
     // bool SendSingleHostData;
@@ -90,7 +89,6 @@ private:
     array_md5 ClientSealingKey;
     array_md5 sspi_context_ServerSigningKey;
     array_md5 ServerSealingKey;
-    array_md5 MessageIntegrityCheck;
     // uint8_t NtProofStr[16];
 
     // GSS_Acquire_cred
@@ -112,7 +110,7 @@ private:
 
     enum class Res : bool { Err, Ok };
 
-    enum : uint8_t { Start, Loop, Final } client_auth_data_state = Loop;
+    enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
     std::vector<uint8_t> client_auth_data_input_buffer;
 
     static void sspi_compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
@@ -129,8 +127,7 @@ private:
     }
 
 public:
-    rdpCredsspClientNTLM(OutTransport transport,
-               uint8_t * user,
+    rdpCredsspClientNTLM(uint8_t * user,
                uint8_t * domain,
                uint8_t * pass,
                uint8_t * hostname,
@@ -141,45 +138,24 @@ public:
                TimeObj & timeobj,
                const bool verbose = false)
         : ts_request(6) // Credssp Version 6 Supported
+        , PublicKey(public_key.data(), public_key.data()+public_key.size())
+        , identity_User(::UTF8toUTF16({user,strlen(reinterpret_cast<char*>(user))}))
+        , identity_Domain(::UTF8toUTF16({domain,strlen(reinterpret_cast<char*>(domain))}))
+        , identity_Password(::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))}))
         , timeobj(timeobj)
         , rand(rand)
+        , Workstation(::UTF8toUTF16({hostname, strlen(char_ptr_cast(hostname))}))
         , restricted_admin_mode(restricted_admin_mode)
         , target_host(target_host)
         , verbose(verbose)
     {
-        memset(this->MessageIntegrityCheck.data(), 0x00, this->MessageIntegrityCheck.size());
+    }
 
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::Initialization");
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::set_credentials");
-        this->identity_User = ::UTF8toUTF16({user,strlen(reinterpret_cast<char*>(user))});
-        this->identity_Domain = ::UTF8toUTF16({domain,strlen(reinterpret_cast<char*>(domain))});
-        this->identity_Password = ::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))});
 
-        size_t length_hostname = strlen(char_ptr_cast(hostname));
-
-        this->Workstation = ::UTF8toUTF16({hostname, length_hostname});
-        this->SendWorkstationName = length_hostname != 0;
-
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::client_authenticate");
-
-        // ============================================
-        /* Get Public Key From TLS Layer and hostname */
-        // ============================================
-
-        this->PublicKey.assign(public_key.data(), public_key.data()+public_key.size());
-
+    credssp::State credssp_client_authenticate_start(StaticOutStream<65536> & ts_request_emit)
+    {
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
        
-        /*
-         * from tspkg.dll: 0x00000132
-         * ISC_REQ_MUTUAL_AUTH
-         * ISC_REQ_CONFIDENTIALITY
-         * ISC_REQ_USE_SESSION_KEY
-         * ISC_REQ_ALLOCATE_MEMORY
-         */
-        //unsigned long const fContextReq
-        //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
-
         /* receive server response and place in input buffer */
         LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
 
@@ -192,8 +168,6 @@ public:
         this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
         this->NEGOTIATE_MESSAGE.version = this->version;
-
-
         this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
         if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
@@ -215,42 +189,14 @@ public:
             if (this->ts_request.negoTokens.size() > 0){
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
             }
-
-            StaticOutStream<65536> ts_request_emit;
             this->ts_request.emit(ts_request_emit);
-            transport.get_transport().send(ts_request_emit.get_bytes());
         }
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
+
+        this->client_auth_data_state = Loop;
+        return credssp::State::Cont;
     }
 
-
-    uint32_t set_negotiate_flags(bool ntlmv2, bool use_mic, bool send_workstation_name, bool negotiate_key_exchange)
-    {
-        uint32_t flags = 0;
-        if (ntlmv2) {
-            flags |= NTLMSSP_NEGOTIATE_56;
-        }
-
-        if (use_mic) {
-            flags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
-        }
-        if (send_workstation_name) {
-            flags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
-        }
-        flags |= NTLMSSP_NEGOTIATE_SEAL;
-        if (negotiate_key_exchange) {
-            flags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
-        }
-        flags |= (NTLMSSP_NEGOTIATE_128
-              | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
-              | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
-              | NTLMSSP_NEGOTIATE_NTLM
-              | NTLMSSP_NEGOTIATE_SIGN
-              | NTLMSSP_REQUEST_TARGET
-              | NTLMSSP_NEGOTIATE_UNICODE
-              | NTLMSSP_NEGOTIATE_VERSION);
-        return flags;
-    }
 
     credssp::State credssp_client_authenticate_next(InStream & in_stream, StaticOutStream<65536> & ts_request_emit)
     {
@@ -401,7 +347,7 @@ public:
                 uint32_t flags = set_negotiate_flags(
                                     this->NTLMv2, 
                                     this->UseMIC, 
-                                    this->SendWorkstationName, 
+                                    this->Workstation.size() != 0, 
                                     this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
                 this->AUTHENTICATE_MESSAGE.negoFlags.flags = flags;
@@ -432,12 +378,12 @@ public:
 
                     this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
-                    this->MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey, 
+                    array_md5 MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey, 
                                                             this->SavedNegotiateMessage,
                                                             this->SavedChallengeMessage,
                                                             this->SavedAuthenticateMessage);
 
-                    memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck.data(), this->MessageIntegrityCheck.size());
+                    memcpy(this->AUTHENTICATE_MESSAGE.MIC, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
                 }
                 out_stream.rewind();
                 this->AUTHENTICATE_MESSAGE.ignore_mic = false;
@@ -601,5 +547,45 @@ public:
         }
         return credssp::State::Err;
     }
+    
+    uint32_t set_negotiate_flags(bool ntlmv2, bool use_mic, bool send_workstation_name, bool negotiate_key_exchange)
+    {
+        /*
+         * from tspkg.dll: 0x00000132
+         * ISC_REQ_MUTUAL_AUTH
+         * ISC_REQ_CONFIDENTIALITY
+         * ISC_REQ_USE_SESSION_KEY
+         * ISC_REQ_ALLOCATE_MEMORY
+         */
+        //unsigned long const fContextReq
+        //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
+
+        uint32_t flags = 0;
+        if (ntlmv2) {
+            flags |= NTLMSSP_NEGOTIATE_56;
+        }
+
+        if (use_mic) {
+            flags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+        }
+        if (send_workstation_name) {
+            flags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+        }
+        flags |= NTLMSSP_NEGOTIATE_SEAL;
+        if (negotiate_key_exchange) {
+            flags |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+        }
+        flags |= (NTLMSSP_NEGOTIATE_128
+              | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
+              | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+              | NTLMSSP_NEGOTIATE_NTLM
+              | NTLMSSP_NEGOTIATE_SIGN
+              | NTLMSSP_REQUEST_TARGET
+              | NTLMSSP_NEGOTIATE_UNICODE
+              | NTLMSSP_NEGOTIATE_VERSION);
+        return flags;
+    }
+
+    
 };
 

@@ -412,7 +412,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
     if (!this->krb) {
         try {
             this->credsspNTLM = std::make_unique<rdpCredsspClientNTLM>(
-                trans, this->user,
+                this->user,
                 this->domain, this->current_password,
                 this->hostname, this->target_host,
                 trans.get_transport().get_public_key(),
@@ -420,6 +420,9 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 this->rand, this->timeobj,
                 bool(this->verbose & Verbose::credssp)
             );
+            StaticOutStream<65536> ts_request_emit;
+            this->credsspNTLM->credssp_client_authenticate_start(ts_request_emit);
+            trans.send(ts_request_emit.get_bytes());
         }
         catch (const Error &){
             LOG(LOG_INFO, "NLA/CREDSSP NTLM Authentication Failed (1)");

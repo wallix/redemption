@@ -90,6 +90,8 @@ RED_AUTO_TEST_CASE(TestNlaclient)
         ""_av
         ;
 
+    RED_CHECK_EQUAL(0, 0);
+
     TestTransport logtrans(server, client);
     logtrans.set_public_key("1245789652325415"_av);
     uint8_t user[] = "Ulysse";
@@ -99,17 +101,20 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
-    rdpCredsspClientNTLM credssp(logtrans, user, domain, pass, host, "107.0.0.1", 
+    rdpCredsspClientNTLM credssp(user, domain, pass, host, "107.0.0.1", 
                                 logtrans.get_public_key(),
                                 false, rand, timeobj);
-
-    credssp::State st = credssp::State::Cont;
     TpduBuffer buf;
+
+    StaticOutStream<65536> ts_request_start;
+    credssp::State st = credssp.credssp_client_authenticate_start(ts_request_start);
+    logtrans.send(ts_request_start.get_bytes());
+
     while (credssp::State::Cont == st) {
         buf.load_data(logtrans);
         while (buf.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
-            InStream in_stream(buf.current_pdu_buffer());
             StaticOutStream<65536> ts_request_emit;
+            InStream in_stream(buf.current_pdu_buffer());
             st = credssp.credssp_client_authenticate_next(in_stream,  ts_request_emit);
             logtrans.send(ts_request_emit.get_bytes());
         }
@@ -215,14 +220,14 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             return PasswordCallback::Ok;
         }
     );
-
+    
     credssp::State st = credssp::State::Cont;
     TpduBuffer buf;
     while (credssp::State::Cont == st) {
         buf.load_data(logtrans);
         while (buf.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
-            InStream in_stream(buf.current_pdu_buffer());
             StaticOutStream<65536> out_stream;
+            InStream in_stream(buf.current_pdu_buffer());
             st = credssp.credssp_server_authenticate_next(in_stream, out_stream);
             logtrans.send(out_stream.get_bytes());
         }
