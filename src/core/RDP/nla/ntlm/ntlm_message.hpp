@@ -1248,10 +1248,12 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
         stream.out_copy_bytes(field->buffer);
     }
 
+    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Sent)");
+    hexdump_d(stream.get_bytes());
 }
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
-    LOG(LOG_INFO, "NTLM Message Authenticate Dump");
+    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
     hexdump_d(stream.remaining_bytes());
 
 
@@ -1765,11 +1767,14 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         // PAYLOAD
         stream.out_copy_bytes(self.TargetName.buffer);
         stream.out_copy_bytes(self.TargetInfo.buffer);
+        
+        LOG(LOG_INFO, "NTLM Message Challenge Dump (Sent)");
+        hexdump_d(stream.get_bytes());
 }
 
 inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & self)
 {
-    LOG(LOG_INFO, "NTLM Message Challenge Dump");
+    LOG(LOG_INFO, "NTLM Message Challenge Dump (Recv)");
     hexdump_d(stream.remaining_bytes());
 
     uint8_t const * pBegin = stream.get_current();
@@ -2024,11 +2029,14 @@ inline void emitNTLMNegotiateMessage(OutStream & stream)
     // PAYLOAD
     stream.out_copy_bytes(DomainName);
     stream.out_copy_bytes(Workstation);
+    
+    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Sent)");
+    hexdump_d(stream.get_bytes());
 }
 
 inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & self)
 {
-    LOG(LOG_INFO, "NTLM Message Negotiate Dump");
+    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Recv)");
     hexdump_c(stream.remaining_bytes());
     uint8_t const * pBegin = stream.get_current();
 
