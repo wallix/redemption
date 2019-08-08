@@ -45,7 +45,6 @@ private:
     int recv_seq_num = 0;
 
     TSCredentials ts_credentials;
-    TSRequest ts_request;
 
     ClientNonce SavedClientNonce;
 
@@ -73,7 +72,6 @@ private:
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
     NTLMChallengeMessage CHALLENGE_MESSAGE;
-    NTLMNegotiateMessage NEGOTIATE_MESSAGE;
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
     NtlmVersion version;
@@ -137,8 +135,7 @@ public:
                Random & rand,
                TimeObj & timeobj,
                const bool verbose = false)
-        : ts_request(6) // Credssp Version 6 Supported
-        , PublicKey(public_key.data(), public_key.data()+public_key.size())
+        : PublicKey(public_key.data(), public_key.data()+public_key.size())
         , identity_User(::UTF8toUTF16({user,strlen(reinterpret_cast<char*>(user))}))
         , identity_Domain(::UTF8toUTF16({domain,strlen(reinterpret_cast<char*>(domain))}))
         , identity_Password(::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))}))
@@ -155,44 +152,19 @@ public:
     credssp::State credssp_client_authenticate_start(StaticOutStream<65536> & ts_request_emit)
     {
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
-       
+              
         /* receive server response and place in input buffer */
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Negotiate");
-
-        this->NegotiateFlags = set_negotiate_flags(this->NTLMv2, false, false, true)
-            | (this->NTLMv2) * (NTLMSSP_NEGOTIATE_LM_KEY|NTLMSSP_NEGOTIATE_OEM);
-
-        this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-        this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-        this->version.ProductBuild        = 7601;
-        this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-
-        this->NEGOTIATE_MESSAGE.version = this->version;
-        this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
-            this->NEGOTIATE_MESSAGE.Workstation.buffer = this->Workstation;
-        }
-
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
-            this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
-        }
-
+        LOG_IF(this->verbose, LOG_INFO, "NTLM Send Negotiate");
         StaticOutStream<65535> out_stream;
-        emitNTLMNegotiateMessage(out_stream, this->NEGOTIATE_MESSAGE);
+        emitNTLMNegotiateMessage(out_stream);
         this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
 
-        this->ts_request.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_bytes().size());
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
+        TSRequest ts_request(6);
+        ts_request.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_bytes().size());
+        ts_request.emit(ts_request_emit);
 
-        /* send authentication token to server */
-        if (this->ts_request.negoTokens.size() > 0) {
-            if (this->ts_request.negoTokens.size() > 0){
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-            }
-            this->ts_request.emit(ts_request_emit);
-        }
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
-
         this->client_auth_data_state = Loop;
         return credssp::State::Cont;
     }
@@ -204,15 +176,16 @@ public:
         {
             case Loop:
             {
-                this->ts_request.recv(in_stream);
+                TSRequest ts_request(6);
+                ts_request.recv(in_stream);
 
                 // #ifdef WITH_DEBUG_CREDSSP
                 // LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
-                // hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
+                // hexdump_c(ts_request.negoTokens.pvBuffer, ts_request.negoTokens.cbBuffer);
                 // #endif
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
-                this->client_auth_data_input_buffer.assign(this->ts_request.negoTokens.data(),
-                                                           this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
+                this->client_auth_data_input_buffer.assign(ts_request.negoTokens.data(),
+                                                           ts_request.negoTokens.data()+ts_request.negoTokens.size());
                 /*
                  * from tspkg.dll: 0x00000132
                  * ISC_REQ_MUTUAL_AUTH
@@ -389,7 +362,7 @@ public:
                 this->AUTHENTICATE_MESSAGE.ignore_mic = false;
                 emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
                 auto out_stream_bytes = out_stream.get_bytes();
-                this->ts_request.negoTokens.assign(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
+                ts_request.negoTokens.assign(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
                 if (this->verbose) {
                     logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
                 }
@@ -398,14 +371,14 @@ public:
                 // have_pub_key_auth = true;
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_public_key_echo");
-                uint32_t version = this->ts_request.use_version;
+                uint32_t version = ts_request.use_version;
 
                 array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
                 if (version >= 5) {
                     LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
                     this->rand.random(this->SavedClientNonce.data, ClientNonce::CLIENT_NONCE_LENGTH);
                     this->SavedClientNonce.initialized = true;
-                    this->ts_request.clientNonce = this->SavedClientNonce;
+                    ts_request.clientNonce = this->SavedClientNonce;
                     
                     LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
                     SslSha256 sha256;
@@ -427,15 +400,15 @@ public:
                 
                 this->SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
                 this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
-                this->ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
+                ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
                 /* send authentication token to server */
-                if (this->ts_request.negoTokens.size() > 0){
+                if (ts_request.negoTokens.size() > 0){
                     LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::send");
-                this->ts_request.emit(ts_request_emit);
+                ts_request.emit(ts_request_emit);
 
                 this->client_auth_data_state = Final;
                 return credssp::State::Cont;
@@ -445,9 +418,10 @@ public:
                 /* Encrypted Public Key +1 */
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
-                this->ts_request.recv(in_stream);
+                TSRequest ts_request(6);
+                ts_request.recv(in_stream);
 
-                if (this->ts_request.pubKeyAuth.size() < cbMaxSignature) {
+                if (ts_request.pubKeyAuth.size() < cbMaxSignature) {
                     // Provided Password is probably incorrect
                     LOG(LOG_ERR, "DecryptMessage failure: SEC_E_INVALID_TOKEN");
                     // return SEC_E_INVALID_TOKEN;
@@ -460,8 +434,8 @@ public:
                 
                 // data_in [signature][data_buffer]
 
-                array_view_const_u8 pubkeyAuth_payload = {this->ts_request.pubKeyAuth.data()+cbMaxSignature, this->ts_request.pubKeyAuth.size()-cbMaxSignature};
-                array_view_const_u8 pubkeyAuth_signature = {this->ts_request.pubKeyAuth.data(),cbMaxSignature};
+                array_view_const_u8 pubkeyAuth_payload = {ts_request.pubKeyAuth.data()+cbMaxSignature, ts_request.pubKeyAuth.size()-cbMaxSignature};
+                array_view_const_u8 pubkeyAuth_signature = {ts_request.pubKeyAuth.data(),cbMaxSignature};
 
                 SslRC4 RecvRc4Seal {};
                 RecvRc4Seal.set_key(this->ServerSealingKey);
@@ -485,7 +459,7 @@ public:
                     return credssp::State::Err;
                 }
 
-                if (this->ts_request.use_version < 5) {
+                if (ts_request.use_version < 5) {
                     // if we are client and protocol is 2,3,4, then get the public key minus one
                     ::ap_integer_decrement_le(pubkeyAuth_encrypted_payload);
                     if (!are_buffer_equal(this->PublicKey, pubkeyAuth_encrypted_payload)){
@@ -531,13 +505,12 @@ public:
                     this->SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
                     this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
                     
-                    this->ts_request.negoTokens.clear();
-                    this->ts_request.pubKeyAuth.clear();
-                    this->ts_request.error_code = 0;
-
-                    this->ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
-                    this->ts_request.clientNonce = this->SavedClientNonce;
-                    this->ts_request.emit(ts_request_emit);
+                    ts_request.negoTokens.clear();
+                    ts_request.pubKeyAuth.clear();
+                    ts_request.error_code = 0;
+                    ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
+                    ts_request.clientNonce = this->SavedClientNonce;
+                    ts_request.emit(ts_request_emit);
                 }
                 this->client_auth_data_state = Start;
                 return credssp::State::Finish;
@@ -585,7 +558,5 @@ public:
               | NTLMSSP_NEGOTIATE_VERSION);
         return flags;
     }
-
-    
 };
 

@@ -1202,7 +1202,7 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
                             +8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION)
                             +16*self.has_mic;
 
-    stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
+    stream.out_copy_bytes("NTLMSSP\0"_av);
     stream.out_uint32_le(NtlmAuthenticate);
 
     auto l = {
@@ -1227,11 +1227,11 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 
     stream.out_uint32_le(self.negoFlags.flags);
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        stream.out_uint8(self.version.ProductMajorVersion);
-        stream.out_uint8(self.version.ProductMinorVersion);
-        stream.out_uint16_le(self.version.ProductBuild);
+        stream.out_uint8(WINDOWS_MAJOR_VERSION_6);
+        stream.out_uint8(WINDOWS_MINOR_VERSION_1);
+        stream.out_uint16_le(7601);
         stream.out_clear_bytes(3);
-        stream.out_uint8(self.version.NtlmRevisionCurrent);
+        stream.out_uint8(NTLMSSP_REVISION_W2K3);
     }
 
     if (self.has_mic) {
@@ -1251,7 +1251,7 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 }
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
-    LOG(LOG_INFO, "Message Authenticate Dump");
+    LOG(LOG_INFO, "NTLM Message Authenticate Dump");
     hexdump_d(stream.remaining_bytes());
 
 
@@ -1769,6 +1769,9 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
 
 inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & self)
 {
+    LOG(LOG_INFO, "NTLM Message Challenge Dump");
+    hexdump_d(stream.remaining_bytes());
+
     uint8_t const * pBegin = stream.get_current();
 
     constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
@@ -1974,42 +1977,59 @@ public:
     NTLMNegotiateMessage() {}
 };
 
-inline void emitNTLMNegotiateMessage(OutStream & stream, NTLMNegotiateMessage & self)
+inline void emitNTLMNegotiateMessage(OutStream & stream)
 {
-    stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
-    stream.out_uint32_le(NtlmNegotiate);
-    stream.out_uint32_le(self.negoFlags.flags);
+    std::vector<uint8_t> DomainName;
+    std::vector<uint8_t> Workstation;
 
-    uint32_t payloadOffset = 8+  // message signature 
+    stream.out_copy_bytes("NTLMSSP\0"_av);
+    stream.out_uint32_le(NtlmNegotiate);
+    stream.out_uint32_le(
+          NTLMSSP_NEGOTIATE_LM_KEY
+        | NTLMSSP_NEGOTIATE_OEM
+        | NTLMSSP_NEGOTIATE_56
+        | NTLMSSP_NEGOTIATE_SEAL
+        | NTLMSSP_NEGOTIATE_KEY_EXCH
+        | NTLMSSP_NEGOTIATE_128
+        | NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY
+        | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+        | NTLMSSP_NEGOTIATE_NTLM
+        | NTLMSSP_NEGOTIATE_SIGN
+        | NTLMSSP_REQUEST_TARGET
+        | NTLMSSP_NEGOTIATE_UNICODE
+        | NTLMSSP_NEGOTIATE_VERSION
+        );
+    const uint32_t payloadOffset = 8+  // message signature 
                              4+  // MessageType = Negociate
                              4+  // negoFlags
                              8+  // DomainName field header
                              8+  // Workstation field header
-                             8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION);
-    stream.out_uint16_le(self.DomainName.buffer.size());
-    stream.out_uint16_le(self.DomainName.buffer.size());
+                             8   // Negotiate Version
+                             ;
+    stream.out_uint16_le(DomainName.size());
+    stream.out_uint16_le(DomainName.size());
     stream.out_uint32_le(payloadOffset);
 
-    payloadOffset += self.DomainName.buffer.size();
-    stream.out_uint16_le(self.Workstation.buffer.size());
-    stream.out_uint16_le(self.Workstation.buffer.size());
-    stream.out_uint32_le(payloadOffset);
-    
-    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
-        stream.out_uint8(self.version.ProductMajorVersion);
-        stream.out_uint8(self.version.ProductMinorVersion);
-        stream.out_uint16_le(self.version.ProductBuild);
-        stream.out_clear_bytes(3);
-        stream.out_uint8(self.version.NtlmRevisionCurrent);
-    }
+    stream.out_uint16_le(Workstation.size());
+    stream.out_uint16_le(Workstation.size());
+    stream.out_uint32_le(payloadOffset + DomainName.size());
+
+    // Negotiate Version    
+    stream.out_uint8(WINDOWS_MAJOR_VERSION_6);
+    stream.out_uint8(WINDOWS_MINOR_VERSION_1);
+    stream.out_uint16_le(7601);
+    stream.out_clear_bytes(3);
+    stream.out_uint8(NTLMSSP_REVISION_W2K3);
 
     // PAYLOAD
-    stream.out_copy_bytes(self.DomainName.buffer);
-    stream.out_copy_bytes(self.Workstation.buffer);
+    stream.out_copy_bytes(DomainName);
+    stream.out_copy_bytes(Workstation);
 }
 
 inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & self)
 {
+    LOG(LOG_INFO, "NTLM Message Negotiate Dump");
+    hexdump_c(stream.remaining_bytes());
     uint8_t const * pBegin = stream.get_current();
 
     constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
