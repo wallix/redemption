@@ -476,8 +476,8 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
         Cliprdr::IsLongFormat is_long_format;
         Cliprdr::IsAscii is_ascii;
         array_view_const_char expected_result;
-        array_view<const Cliprdr::FormatNameRef> formats;
-        array_view<const Cliprdr::FormatNameRef> formats_ref {};
+        std::vector<Cliprdr::FormatNameRef> formats;
+        std::vector<Cliprdr::FormatNameRef> formats_ref {};
     };
 
     RED_TEST_CONTEXT_DATA(Data const& data,
@@ -488,7 +488,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             Cliprdr::IsLongFormat(true),
             Cliprdr::IsAscii(false),
             "\x02\x00\x00\x00\x06\x00\x00\x00"
-            "\x01\x00\x00\x00\x00\x00"_av, std::array{
+            "\x01\x00\x00\x00\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}},
             }},
         Data{"text + unicode",
@@ -496,7 +496,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             Cliprdr::IsAscii(false),
             "\x02\x00\x00\x00\x0c\x00\x00\x00"
             "\x01\x00\x00\x00\x00\x00"
-            "\x0d\x00\x00\x00\x00\x00"_av, std::array{
+            "\x0d\x00\x00\x00\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}},
                 Cliprdr::FormatNameRef{RDPECLIP::CF_UNICODETEXT, {}}
             }},
@@ -509,7 +509,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             "\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00\x65\x00" //e.G.r.o.u.p.D.e.
             "\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00\x72\x00" //s.c.r.i.p.t.o.r.
             "\x57\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00" //W...............
-            "\x03\x00\x00\x00\x00\x00"_av, std::array{
+            "\x03\x00\x00\x00\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{48026, "FileContents"_av},
                 Cliprdr::FormatNameRef{48025, "FileGroupDescriptorW"_av},
                 Cliprdr::FormatNameRef{RDPECLIP::CF_UNICODETEXT, {}},
@@ -520,7 +520,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             Cliprdr::IsLongFormat(true),
             Cliprdr::IsAscii(false),
             "\x02\x00\x00\x00\x0e\x00\x00\x00"
-            "\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00\x00\x00"_av, std::array{
+            "\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{32000, "Test"_av}
             }},
         Data{"user format 2",
@@ -528,7 +528,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             Cliprdr::IsAscii(false),
             "\x02\x00\x00\x00\x20\x00\x00\x00"
             "\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00""1\x00\x00\x00"
-            "\x01\x7D\x00\x00T\x00" "e\x00s\x00t\x00""2\x00\x00\x00"_av, std::array{
+            "\x01\x7D\x00\x00T\x00" "e\x00s\x00t\x00""2\x00\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{32000, "Test1"_av},
                 Cliprdr::FormatNameRef{32001, "Test2"_av}
             }},
@@ -539,7 +539,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             "\x02\x00\x00\x00\x24\x00\x00\x00"
             "\x00\x7D\x00\x00"
                "T\x00" "e\x00" "s\x00" "t\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::array{
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{32000, "Test"_av},
             }},
         Data{"test 6",
@@ -551,7 +551,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x01\x7D\x00\x00"
                "T\x00" "e\x00" "s\x00" "t\x00" "2\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::array{
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{32000, "Test1"_av},
                 Cliprdr::FormatNameRef{32001, "Test2"_av},
             }},
@@ -561,7 +561,7 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             "\x02\x00\x04\x00\x24\x00\x00\x00"
             "\x00\x7D\x00\x00"
             "RedemptionClipboard"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::array{
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{32000, "RedemptionClipboard"_av},
             }},
         Data{"test 8",
@@ -570,9 +570,9 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             "\x02\x00\x00\x00\x24\x00\x00\x00"
             "\x00\x7D\x00\x00"
             "R\x00" "\xe9\x00" "d\x00" "e\x00" "m\x00" "p\x00" "t\x00" "i\x00"
-            "o\x00" "n\x00" "C\x00" "l\x00" "i\x00" "p\x00" "b\x00" "\x00\x00"_av, std::array{
+            "o\x00" "n\x00" "C\x00" "l\x00" "i\x00" "p\x00" "b\x00" "\x00\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{32000, "RédemptionClipboard"_av},
-            }, std::array{
+            }, std::vector{
                 Cliprdr::FormatNameRef{32000, "RédemptionClipb"_av},
             }},
         Data{"test 9",
@@ -580,9 +580,9 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
             Cliprdr::IsAscii(true),
             "\x02\x00\x04\x00\x24\x00\x00\x00"
             "\x00\x7D\x00\x00"
-            "0123456789012345678901234567890\x00"_av, std::array{
+            "0123456789012345678901234567890\x00"_av, std::vector{
                 Cliprdr::FormatNameRef{32000, "0123456789012345678901234567890123456789"_av},
-            }, std::array{
+            }, std::vector{
                 Cliprdr::FormatNameRef{32000, "0123456789012345678901234567890"_av},
             }},
     }) {
