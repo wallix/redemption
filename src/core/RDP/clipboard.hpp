@@ -135,6 +135,42 @@ namespace Cliprdr
         constexpr operator bool () const noexcept { return true; }
     };
 
+    // [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
+    // ===========================================================
+
+    // The Format List PDU is sent by either the client or the server when its
+    //  local system clipboard is updated with new clipboard data. This PDU
+    //  contains the Clipboard Format ID and name pairs of the new Clipboard
+    //  Formats on the clipboard.
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                           clipHeader                          |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+    // |                   formatListData (variable)                   |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+    //  Clipboard PDU Header MUST be set to CB_FORMAT_LIST (0x0002), while the
+    //  msgFlags field MUST be set to 0x0000 or CB_ASCII_NAMES (0x0004) depending
+    //  on the type of data present in the formatListData field.
+
+    // formatListData (variable): An array consisting solely of either Short
+    //  Format Names or Long Format Names. The type of structure used in the
+    //  array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES
+    //  (0x00000002) flag in the generalFlags field of the General Capability Set
+    //  (section 2.2.2.1.1.1). Each array holds a list of the Clipboard Format ID
+    //  and name pairs available on the local system clipboard of the sender. If
+    //  Short Format Names are being used, and the embedded Clipboard Format
+    //  names are in ASCII 8 format, then the msgFlags field of the clipHeader
+    //  must contain the CB_ASCII_NAMES (0x0004) flag.
+
     template<class T, class U>
     T&& operator,(T&& x, LeftOrTrue const&) noexcept
     {
@@ -1168,81 +1204,6 @@ public:
         LOG(level, "ClientTemporaryDirectoryPDU: wszTempDir=\"%s\"", temp_dir);
     }
 };  // struct ClientTemporaryDirectoryPDU
-
-// [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
-// ===========================================================
-
-// The Format List PDU is sent by either the client or the server when its
-//  local system clipboard is updated with new clipboard data. This PDU
-//  contains the Clipboard Format ID and name pairs of the new Clipboard
-//  Formats on the clipboard.
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                           clipHeader                          |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                   formatListData (variable)                   |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
-//  Clipboard PDU Header MUST be set to CB_FORMAT_LIST (0x0002), while the
-//  msgFlags field MUST be set to 0x0000 or CB_ASCII_NAMES (0x0004) depending
-//  on the type of data present in the formatListData field.
-
-// formatListData (variable): An array consisting solely of either Short
-//  Format Names or Long Format Names. The type of structure used in the
-//  array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES
-//  (0x00000002) flag in the generalFlags field of the General Capability Set
-//  (section 2.2.2.1.1.1). Each array holds a list of the Clipboard Format ID
-//  and name pairs available on the local system clipboard of the sender. If
-//  Short Format Names are being used, and the embedded Clipboard Format
-//  names are in ASCII 8 format, then the msgFlags field of the clipHeader
-//  must contain the CB_ASCII_NAMES (0x0004) flag.
-
-class FormatName {
-    uint32_t    formatId_ = 0;
-    std::string format_name_;
-
-public:
-    explicit FormatName(uint32_t formatId, std::string format_name) noexcept
-    : formatId_(formatId)
-    , format_name_(std::move(format_name))
-    {}
-
-    uint32_t formatId() const { return this->formatId_; }
-
-    void formatId(uint32_t formatId) { this->formatId_ = formatId; }
-
-    std::string const& format_name() const { return this->format_name_; }
-
-    void format_name(const char * format_name) { this->format_name_ = format_name; }
-
-    size_t format_name_length() const { return this->format_name_.length(); }
-
-    size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length,
-            "{formatId=%s(%u) formatName=\"%s\"}",
-            get_FormatId_name(this->formatId_), this->formatId_, this->format_name_.c_str());
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        return length;
-    }
-
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
-};  // class FormatName
 
 
 // TODO zstr_XXXXX
