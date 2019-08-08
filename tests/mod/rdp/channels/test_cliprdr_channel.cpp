@@ -446,7 +446,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     };
 
     const auto use_long_format = Cliprdr::IsLongFormat(true);
-    const auto charset = Cliprdr::Charset::Ascii;
     const auto file_group = Cliprdr::format_name_constants::file_group_descriptor_w_utf8;
     const auto file_group_id = 49262;
 
@@ -478,12 +477,15 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     RED_CHECK_SMEM(front.msg, ""_av);
 
     {
-        Buffer buf;
-        auto av = buf.build(RDPECLIP::CB_FORMAT_LIST, 0, [&](OutStream& out){
-            Cliprdr::format_list_serialize(
-                out, file_group, file_group_id, use_long_format, charset);
-        });
-        process_client_message(av);
+        Cliprdr::FormatNameRef format{file_group_id, file_group};
+
+        StaticOutStream<1600> out;
+        Cliprdr::format_list_serialize_with_header(
+            out,
+            Cliprdr::IsLongFormat(use_long_format),
+            &format, &format+1);
+
+        process_client_message(out.get_bytes());
     }
     RED_REQUIRE(to_client_sender.total_in_stream == 1);
     RED_REQUIRE(to_server_sender.total_in_stream == 2);

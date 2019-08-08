@@ -90,6 +90,14 @@ namespace Cliprdr
         : bytes(name)
         {}
 
+        // TODO
+        std::string to_string() const
+        {
+            char buf[256];
+            auto utf8_name = UTF16toUTF8_buf(bytes, make_array_view(buf));
+            return std::string(utf8_name.as_charp(), utf8_name.size());
+        }
+
         const_bytes_view bytes;
     };
 
@@ -105,6 +113,12 @@ namespace Cliprdr
         explicit AsciiName(const_bytes_view name) noexcept
         : bytes(name)
         {}
+
+        // TODO
+        std::string to_string() const
+        {
+            return std::string(bytes.as_charp(), bytes.size());
+        }
 
         const_bytes_view bytes;
     };
@@ -206,70 +220,6 @@ namespace Cliprdr
             while (format_list_extract_unicode_format(in_stream, process_format))
                 ;
         }
-    }
-
-    inline bool format_list_serialize(
-        OutStream& out_stream, cbytes_view name,
-        uint32_t id, IsLongFormat is_long_format, Charset charset)
-    {
-        constexpr size_t header_length = 4;
-
-        if (bool(is_long_format))
-        {
-            switch (charset)
-            {
-            case Charset::Ascii: {
-                if (!out_stream.has_room(header_length + name.size() * 2 + 2))
-                {
-                    return false;
-                }
-                out_stream.out_uint32_le(id);
-
-                auto data = out_stream.get_tailroom_bytes();
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(data.size() - 2u)));
-                out_stream.out_uint16_le(0);
-                break;
-            }
-            case Charset::Utf16: {
-                if (!out_stream.has_room(header_length + name.size() + 2))
-                {
-                    return false;
-                }
-                out_stream.out_uint32_le(id);
-                out_stream.out_copy_bytes(name);
-                out_stream.out_uint16_le(0);
-                break;
-            }
-            }
-        }
-        else
-        {
-            if (!out_stream.has_room(header_length + short_format_name_length))
-            {
-                return false;
-            }
-
-            out_stream.out_uint32_le(id);
-
-            switch (charset)
-            {
-            case Charset::Ascii: {
-                auto data = out_stream.get_tailroom_bytes();
-                auto len = std::min(data.size(), short_format_name_length-2u);
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
-                out_stream.out_clear_bytes(short_format_name_length - len);
-                break;
-            }
-            case Charset::Utf16: {
-                auto len = std::min(name.size(), short_format_name_length-1u);
-                out_stream.out_copy_bytes(name);
-                out_stream.out_clear_bytes(short_format_name_length - len);
-                break;
-            }
-            }
-        }
-
-        return true;
     }
 
     struct CharsetFormatName
@@ -2840,3 +2790,112 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
 
 }   // namespace RDPECLIP
 
+namespace Cliprdr
+{
+    struct FormatNameRef
+    {
+        uint32_t _format_id;
+        const_bytes_view _utf8_bytes;
+
+        uint32_t format_id() const noexcept { return this->_format_id; }
+        const_bytes_view utf8_name() const noexcept { return this->_utf8_bytes; }
+    };
+
+
+    template<class Fw, class Senti>
+    bool will_be_sent_in_ASCII_8(Fw first, Senti const& end)
+    {
+        size_t max_format_name_len_in_char = 0;
+        for (; first != end; ++first) {
+            auto&& format = *first;
+
+            if (!::is_ASCII_string(format.utf8_name())) {
+                return false;
+            }
+
+            const size_t format_name_len_in_char = format.utf8_name().size();
+            if (max_format_name_len_in_char < format_name_len_in_char) {
+                max_format_name_len_in_char = format_name_len_in_char;
+            }
+        }
+
+        return (max_format_name_len_in_char >= (32 /* formatName(32) */ / sizeof(uint16_t)));
+    }
+
+    template<class Fw, class Senti>
+    bool format_list_serialize_with_header(
+        OutStream& out_stream, IsLongFormat is_long_format,
+        Fw first, Senti const& end)
+    {
+        if (!out_stream.has_room(RDPECLIP::CliprdrHeader::size()))
+        {
+            return false;
+        }
+
+        OutStream out_stream_header(out_stream.out_skip_bytes(RDPECLIP::CliprdrHeader::size()));
+        auto out_stream_start_pos = out_stream.get_offset();
+        auto ascii_flag = RDPECLIP::CB_RESPONSE__NONE_;
+
+        if (bool(is_long_format))
+        {
+            for (; out_stream.has_room(min_long_format_name_data_length) && first != end; ++first)
+            {
+                auto&& format = *first;
+
+                out_stream.out_uint32_le(format.format_id());
+
+                auto data = out_stream.get_tailroom_bytes();
+                auto len = UTF8toUTF16(format.utf8_name(), data);
+
+                if (len + 2 > data.size())
+                {
+                    out_stream.rewind(out_stream.get_offset() - 4u);
+                    break;
+                }
+
+                out_stream.out_skip_bytes(len);
+                out_stream.out_uint16_le(0);
+            }
+        }
+        else if (!will_be_sent_in_ASCII_8(first, end))
+        {
+            // Unicode
+            for (; out_stream.has_room(short_format_name_data_length) && first != end; ++first)
+            {
+                auto&& format = *first;
+
+                out_stream.out_uint32_le(format.format_id());
+
+                auto data = out_stream.get_tailroom_bytes();
+                data = data.first(std::min(Cliprdr::short_format_name_length - 2u, data.size()));
+
+                data = out_stream.out_skip_bytes(UTF8toUTF16(format.utf8_name(), data));
+                out_stream.out_clear_bytes(Cliprdr::short_format_name_length - data.size());
+            }
+        }
+        else
+        {
+            // ASCII
+            ascii_flag = RDPECLIP::CB_ASCII_NAMES;
+            for (; out_stream.has_room(short_format_name_data_length) && first != end; ++first)
+            {
+                auto&& format = *first;
+
+                out_stream.out_uint32_le(format.format_id());
+
+                auto const& name = format.utf8_name();
+                auto len = std::min(name.size(), Cliprdr::short_format_name_length - 1u);
+
+                out_stream.out_copy_bytes({name.data(), len});
+                out_stream.out_clear_bytes(Cliprdr::short_format_name_length - len);
+            }
+        }
+
+        RDPECLIP::CliprdrHeader(
+            RDPECLIP::CB_FORMAT_LIST, ascii_flag,
+            out_stream.get_offset() - out_stream_start_pos)
+        .emit(out_stream_header);
+
+        return (first == end);
+    }
+} // namespace Cliprdr

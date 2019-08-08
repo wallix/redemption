@@ -558,19 +558,11 @@ struct ServerMonitorReadySendBack
             "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
                 "Send Format List PDU.");
 
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
-
-        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-        RDPECLIP::CliprdrHeader list_clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-            format_list_pdu.size(use_long_format_names));
+        Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
 
         StaticOutStream<256> list_stream;
-
-        list_clipboard_header.emit(list_stream);
-        format_list_pdu.emit(list_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            list_stream, Cliprdr::IsLongFormat(use_long_format_names), &format, &format+1);
 
         sender->operator()(
             list_stream.get_offset(),
