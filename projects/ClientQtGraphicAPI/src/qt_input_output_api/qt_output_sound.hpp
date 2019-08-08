@@ -116,10 +116,10 @@ public:
         }
     }
 
-    void setData(const uint8_t * data, size_t size) override {
+    void setData(cbytes_view data) override {
         std::ofstream file(this->wave_file_to_write.c_str(), std::ios::app | std::ios::out| std::ios::binary);
         if (file) {
-            file.write(reinterpret_cast<const char *>(data), size);
+            file.write(data.as_charp(), data.size());
             file.close();
         }
     }

@@ -30,6 +30,7 @@
 #include "utils/log.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/image_data_view.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
@@ -129,7 +130,7 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
+    void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) override {
         std::string filePath(this->tmp_path + "/" + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);
@@ -137,7 +138,7 @@ public:
         std::ofstream oFile(filePath, std::ios::binary | std::ios::app);
 
         if(oFile.is_open()) {
-            oFile.write(reinterpret_cast<const char *>(data), data_len);
+            oFile.write(data.as_charp(), data.size());
             oFile.close();
         }
     }
