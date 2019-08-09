@@ -25,6 +25,119 @@
 
 #include "test_only/check_sig.hpp"
 
+
+RED_AUTO_TEST_CASE(TestBERInteger)
+{
+    StaticOutStream<2048> s;
+    int res;
+    uint32_t value;
+
+    res = BER::write_integer(s, 114178754);
+    RED_CHECK_EQUAL(res, 6);
+
+
+    InStream in_s(s.get_bytes());
+    res = BER::read_integer(in_s, value);
+    RED_CHECK(res);
+
+    RED_CHECK_EQUAL(value, 114178754);
+
+    s.rewind();
+
+    res = BER::write_integer(s, 1);
+    RED_CHECK_EQUAL(res, 3);
+
+    in_s = InStream(s.get_bytes());
+    res = BER::read_integer(in_s, value);
+    RED_CHECK(res);
+
+    RED_CHECK_EQUAL(value, 1);
+
+    s.rewind();
+
+    res = BER::write_integer(s, 52165);
+    RED_CHECK_EQUAL(res, 5);
+
+    in_s = InStream(s.get_bytes());
+    res = BER::read_integer(in_s, value);
+    RED_CHECK(res);
+
+    RED_CHECK_EQUAL(value, 52165);
+
+    s.rewind();
+
+    res = BER::write_integer(s, 0x0FFF);
+    RED_CHECK_EQUAL(res, 4);
+
+    in_s = InStream(s.get_bytes());
+    res = BER::read_integer(in_s, value);
+    RED_CHECK(res);
+
+    RED_CHECK_EQUAL(value, 0x0FFF);
+
+    s.rewind();
+}
+
+//RED_AUTO_TEST_CASE(TestBERBool)
+//{
+//    BStream s(2048);
+//    int res;
+//    bool value;
+//
+//    BER::write_bool(s, true);
+//    s.mark_end();
+//    s.rewind();
+//    res = BER::read_bool(s, value);
+//    RED_CHECK(res);
+//    RED_CHECK(value);
+//
+//    s.rewind();
+//
+//    BER::write_bool(s, false);
+//    s.mark_end();
+//    s.rewind();
+//    res = BER::read_bool(s, value);
+//    RED_CHECK(res);
+//    RED_CHECK(not value);
+//
+//    s.rewind();
+//
+//}
+
+RED_AUTO_TEST_CASE(TestBEROctetString)
+{
+    StaticOutStream<2048> s;
+    int res;
+    int value;
+    const uint8_t oct_str[] =
+        { 1, 2, 3, 4, 5, 6 , 7 };
+
+    BER::write_octet_string(s, oct_str, 7);
+    InStream in_s(s.get_bytes());
+    res = BER::read_octet_string_tag(in_s, value);
+    RED_CHECK(res);
+    RED_CHECK_EQUAL(value, 7);
+
+    s.rewind();
+}
+
+
+RED_AUTO_TEST_CASE(TestBERContextual)
+{
+    StaticOutStream<2048> s;
+    int res;
+    int value;
+    uint8_t tag = 0x06;
+
+    BER::write_contextual_tag(s, tag, 3, true);
+    InStream in_s(s.get_bytes());
+    res = BER::read_contextual_tag(in_s, tag, value, true);
+    RED_CHECK(res);
+    RED_CHECK_EQUAL(value, 3);
+
+    s.rewind();
+}
+
 RED_AUTO_TEST_CASE(TestTSRequest)
 {
 
