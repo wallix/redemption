@@ -845,7 +845,7 @@ private:
 
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
-            this->ts_request.recv(in_stream);
+            this->ts_request = recvTSRequest(in_stream, 6);
         }
 
         if (this->ts_request.negoTokens.size() < 1) {
@@ -912,7 +912,7 @@ private:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
         /* Receive encrypted credentials */
-        this->ts_request.recv(in_stream);
+        this->ts_request = recvTSRequest(in_stream, 6);
 
         SEC_STATUS status = this->credssp_decrypt_ts_credentials();
 

@@ -705,7 +705,7 @@ private:
 
     Res sm_credssp_client_authenticate_recv(InStream & in_stream)
     {
-        this->ts_request.recv(in_stream);
+        this->ts_request = recvTSRequest(in_stream, 6);
 
         // #ifdef WITH_DEBUG_CREDSSP
         // LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
@@ -722,7 +722,7 @@ private:
         /* Encrypted Public Key +1 */
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
-        this->ts_request.recv(in_stream);
+        this->ts_request = recvTSRequest(in_stream, 6);
 
         /* Verify Server Public Key Echo */
 

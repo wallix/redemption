@@ -154,8 +154,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     };
 
     InStream in_s(packet);
-    TSRequest ts_req(3);
-    ts_req.recv(in_s);
+    TSRequest ts_req = recvTSRequest(in_s, 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 
@@ -195,8 +194,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     };
 
     in_s = InStream(packet2);
-    TSRequest ts_req2(3);
-    ts_req2.recv(in_s);
+    TSRequest ts_req2 = recvTSRequest(in_s, 3);
 
     RED_CHECK_EQUAL(ts_req2.version, 3);
 
@@ -289,10 +287,9 @@ RED_AUTO_TEST_CASE(TestTSRequest)
         0x34, 0x4a, 0xe0, 0x03, 0xe5
     };
 
-    TSRequest ts_req3(3);
-
     in_s = InStream(packet3);
-    ts_req3.recv(in_s);
+
+    TSRequest ts_req3 = recvTSRequest(in_s, 3);
 
     RED_CHECK_EQUAL(ts_req3.version, 3);
 
@@ -351,8 +348,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     };
 
     in_s = InStream(packet4);
-    TSRequest ts_req4(3);
-    ts_req4.recv(in_s);
+    TSRequest ts_req4 = recvTSRequest(in_s, 3);
 
     RED_CHECK_EQUAL(ts_req4.version, 3);
 
@@ -402,8 +398,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 //    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
 
     in_s = InStream(packet5);
-    TSRequest ts_req5(3);
-    ts_req5.recv(in_s);
+    TSRequest ts_req5 = recvTSRequest(in_s, 3);
 
     RED_CHECK_EQUAL(ts_req5.version, 3);
 

@@ -277,8 +277,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     };
 
     InStream in_s(packet2);
-    TSRequest ts_req2(3);
-    ts_req2.recv(in_s);
+    TSRequest ts_req2 = recvTSRequest(in_s, 3);
 
     RED_CHECK_EQUAL(ts_req2.version, 3);
 
@@ -371,8 +370,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     };
 
     InStream in_s(packet);
-    TSRequest ts_req(3);
-    ts_req.recv(in_s);
+    TSRequest ts_req = recvTSRequest(in_s, 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 
@@ -621,8 +619,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     };
 
     InStream in_s(packet3);
-    TSRequest ts_req3(3);
-    ts_req3.recv(in_s);
+    TSRequest ts_req3 = recvTSRequest(in_s, 3);
 
     RED_CHECK_EQUAL(ts_req3.version, 3);
 

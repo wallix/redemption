@@ -915,90 +915,12 @@ struct TSRequest final {
         /* [5] clientNonce (OCTET STRING) */
         this->clientNonce.ber_write(this->version, stream);
     }
-
-    int recv(InStream & stream) {
-        int length;
-        uint32_t remote_version;
-
-        /* TSRequest */
-        if(!BER::read_sequence_tag(stream, length) ||
-           !BER::read_contextual_tag(stream, 0, length, true) ||
-           !BER::read_integer(stream, remote_version)) {
-            return -1;
-        }
-        LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u", remote_version);
-
-        if (remote_version < this->use_version) {
-            this->use_version = remote_version;
-        }
-        LOG(LOG_INFO, "Credssp TSCredentials::recv() Negotiated version %u", this->use_version);
-
-        /* [1] negoTokens (NegoData) */
-        if (BER::read_contextual_tag(stream, 1, length, true))        {
-            // LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS");
-
-            if (!BER::read_sequence_tag(stream, length) || /* SEQUENCE OF NegoDataItem */ /*NOLINT(misc-redundant-expression)*/
-                !BER::read_sequence_tag(stream, length) || /* NegoDataItem */
-                !BER::read_contextual_tag(stream, 0, length, true) || /* [0] negoToken */
-                !BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-                !stream.in_check_rem(length)) {
-                return -1;
-            }
-
-            this->negoTokens = std::vector<uint8_t>(length);
-            stream.in_copy_bytes(this->negoTokens.data(), length);
-        }
-
-        /* [2] authInfo (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 2, length, true)) {
-            // LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-
-            this->authInfo = std::vector<uint8_t>(length);
-            stream.in_copy_bytes(this->authInfo.data(), length);
-        }
-
-        /* [3] pubKeyAuth (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 3, length, true)) {
-            // LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-            this->pubKeyAuth = std::vector<uint8_t>(length);
-            stream.in_copy_bytes(this->pubKeyAuth.data(), length);
-        }
-        /* [4] errorCode (INTEGER) */
-        if (remote_version >= 3
-            && remote_version != 5
-            && BER::read_contextual_tag(stream, 4, length, true)) {
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
-            if (!BER::read_integer(stream, this->error_code)) {
-                return -1;
-            }
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() "
-                "ErrorCode = %x, Facility = %x, Code = %x",
-                this->error_code,
-                (this->error_code >> 16) & 0x7FF,
-                (this->error_code & 0xFFFF)
-            );
-        }
-        /* [5] clientNonce (OCTET STRING) */
-        if (this->clientNonce.ber_read(remote_version, length, stream) == -1){
-            return -1;
-        }
-        return 0;
-    }
-
 };
 
 
-inline TSRequest recvTSRequest(InStream & stream) 
+inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6) 
 {
-    TSRequest self;
+    TSRequest self(version);
     int length;
     uint32_t remote_version;
 
