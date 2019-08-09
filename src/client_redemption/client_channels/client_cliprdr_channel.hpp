@@ -79,8 +79,10 @@ public:
     };
     bool format_list_nego_done = false;
 
+    enum class CustomFormatName;
+
     uint32_t             _requestedFormatId = 0;
-    std::string          _requestedFormatName;
+    CustomFormatName     _requestedFormatName {};
     bool                 _waiting_for_data;
 
     timeval paste_data_request_time;

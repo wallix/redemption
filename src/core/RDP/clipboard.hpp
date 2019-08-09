@@ -26,10 +26,10 @@
 #include "core/channel_list.hpp"
 #include "core/error.hpp"
 #include "utils/stream.hpp"
+#include "utils/literals/utf16.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/overload.hpp"
-#include "utils/string_c.hpp"
 #include "utils/sugar/ranges.hpp"
 
 #include <cinttypes>
@@ -41,46 +41,6 @@
 // TODO copy from /browser_client_JS/src/red_channels/clipboard.cpp
 namespace Cliprdr
 {
-    template<std::size_t... I, class F>
-    constexpr decltype(auto) apply(std::integer_sequence<std::size_t, I...>, F&& f)
-    {
-        return static_cast<F&&>(f)(std::integral_constant<std::size_t, I>{}...);
-    }
-
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-    template<class C, C... cs>
-    constexpr array_view_const_char const operator "" _utf16_le() noexcept
-    {
-        constexpr auto unicode = [&]{
-            std::array<uint8_t, sizeof...(cs) * 2> a{};
-            char s[] {cs...};
-            auto p = a.data();
-            for (char c : s)
-            {
-                p[0] = c;
-                p[1] = 0;
-                p += 2;
-            }
-            return a;
-        }();
-
-        return apply(std::make_index_sequence<unicode.size()>{}, [&](auto... i){
-            return array_view_const_char{jln::string_c<unicode[i.value]...>::value, sizeof...(i)};
-        });
-    }
-    REDEMPTION_DIAGNOSTIC_POP
-
-    struct UnicodeName;
-    struct AsciiName;
-
-    enum class Charset : bool
-    {
-        Ascii,
-        // Unicode
-        Utf16,
-    };
-
     enum class IsLongFormat : bool;
     enum class IsAscii : bool;
 
@@ -93,7 +53,7 @@ namespace Cliprdr
 
     struct UnicodeName
     {
-        explicit UnicodeName(const_bytes_view name) noexcept
+        explicit constexpr UnicodeName(const_bytes_view name) noexcept
         : bytes(name)
         {}
 
@@ -102,7 +62,7 @@ namespace Cliprdr
 
     struct AsciiName
     {
-        explicit AsciiName(const_bytes_view name) noexcept
+        explicit constexpr AsciiName(const_bytes_view name) noexcept
         : bytes(name)
         {}
 
@@ -116,6 +76,9 @@ namespace Cliprdr
             array_view_const_char ascii_name;
             array_view_const_char unicode_name;
 
+            operator AsciiName () const noexcept { return AsciiName(this->ascii_name); }
+            operator UnicodeName () const noexcept { return UnicodeName(this->unicode_name); }
+
             bool same_as(UnicodeName const& unicode_name) const noexcept
             {
                 return ranges_equal(this->unicode_name, unicode_name.bytes);
@@ -127,18 +90,36 @@ namespace Cliprdr
             }
         };
 
-#define DEF_NAME(var_name, format_name) \
-    inline constexpr Names var_name { format_name ""_av, format_name ""_utf16_le, };
+#define REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(var_name, format_name) \
+    inline constexpr ::Cliprdr::formats::Names var_name { \
+        format_name ""_av, format_name ""_utf16_le};
 
-        DEF_NAME(file_group_descriptor_w, "FileGroupDescriptorW");
-        DEF_NAME(preferred_drop_effect, "Preferred DropEffect");
-#undef DEF_NAME
+        REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(file_group_descriptor_w, "FileGroupDescriptorW");
+        REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(preferred_drop_effect, "Preferred DropEffect");
+        REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(file_contents, "FileContents");
     }
 
+    /**
+     * Used for return true or left value
+     * \code
+        void foo();
+        return foo(), LeftOrTrue{}; // return true
+     * \endcode
+     * \code
+        int foo() { return 42; }
+        return foo(), LeftOrTrue{}; // return 42
+     * \endcode
+     */
     struct LeftOrTrue
     {
         constexpr operator bool () const noexcept { return true; }
     };
+
+    template<class T, class U>
+    T&& operator,(T&& x, LeftOrTrue const&) noexcept
+    {
+        return static_cast<T&&>(x);
+    }
 
     // [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
     // ===========================================================
@@ -175,12 +156,6 @@ namespace Cliprdr
     //  Short Format Names are being used, and the embedded Clipboard Format
     //  names are in ASCII 8 format, then the msgFlags field of the clipHeader
     //  must contain the CB_ASCII_NAMES (0x0004) flag.
-
-    template<class T, class U>
-    T&& operator,(T&& x, LeftOrTrue const&) noexcept
-    {
-        return static_cast<T&&>(x);
-    }
 
     template<class ProcessFormat>
     bool format_list_extract_long_format(InStream& in_stream, ProcessFormat&& process_format)
@@ -313,47 +288,29 @@ namespace Cliprdr
         uint8_t utf8_buffer_[utf8_buffer_buf_len];
     };
 
-    struct FormatNameInventory
+    struct FormatNameInventory : std::vector<FormatName>
     {
         using FormatId = FormatName::FormatId;
 
         FormatName const& push(FormatId format_id, UnicodeName unicode_name)
         {
-            return this->formats.emplace_back(format_id, unicode_name);
+            return this->emplace_back(format_id, unicode_name);
         }
 
         FormatName const& push(FormatId format_id, AsciiName ascii_name)
         {
-            return this->formats.emplace_back(format_id, ascii_name);
+            return this->emplace_back(format_id, ascii_name);
         }
 
         FormatName const* find(FormatId format_id) const noexcept
         {
-            for (auto const& format : this->formats) {
+            for (auto const& format : *this) {
                 if (format.format_id() == format_id) {
                     return &format;
                 }
             }
             return nullptr;
         }
-
-        void clear() noexcept
-        {
-            this->formats.clear();
-        }
-
-        auto begin() const
-        {
-            return this->formats.begin();
-        }
-
-        auto end() const
-        {
-            return this->formats.end();
-        }
-
-    private:
-        std::vector<FormatName> formats;
     };
 } // namespace Cliprdr
 
@@ -598,19 +555,6 @@ static inline const std::string msgFlags_to_string(uint16_t msgFlags) {
     }
 
     return stream.str();
-}
-
-// Short Format Name
-enum {
-    SF_TEXT_HTML = 1
-};
-
-inline static const char * get_format_short_name(uint16_t formatID) {
-    switch (formatID) {
-        case SF_TEXT_HTML: return "text/html";
-    }
-
-    return "<unknown>";
 }
 
 // dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in
@@ -1204,12 +1148,6 @@ public:
         LOG(level, "ClientTemporaryDirectoryPDU: wszTempDir=\"%s\"", temp_dir);
     }
 };  // struct ClientTemporaryDirectoryPDU
-
-
-// TODO zstr_XXXXX
-constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW\0");
-constexpr auto FILECONTENTS         = cstr_array_view("FileContents\0");
-constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect\0");
 
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)

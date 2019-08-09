@@ -692,10 +692,10 @@ void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
     config.rDPClipboardConfig.server_use_long_format_names = true;
     config.rDPClipboardConfig.cCapabilitiesSets = 1;
     config.rDPClipboardConfig.generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
-    config.rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-    config.rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
-    config.rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT, {});
-    config.rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT, {});
+    config.rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, Cliprdr::formats::file_group_descriptor_w);
+    config.rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, Cliprdr::formats::file_contents);
+    config.rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT);
+    config.rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT);
     config.rDPClipboardConfig.path = config.CB_TEMP_DIR;
 
     // Set RDP RDPDR config

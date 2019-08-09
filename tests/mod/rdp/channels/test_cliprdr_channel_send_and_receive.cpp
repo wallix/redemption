@@ -258,7 +258,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
         stream, Cliprdr::IsLongFormat(use_long_format_name),
         std::array{
             Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}},
-            Cliprdr::FormatNameRef{client_file_list_format_id, RDPECLIP::FILEGROUPDESCRIPTORW},
+            Cliprdr::FormatNameRef{client_file_list_format_id,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name},
         });
 
     InStream chunk(stream.get_bytes());

@@ -35,6 +35,17 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+enum class ClientCLIPRDRChannel::CustomFormatName
+{
+    None,
+    FileGroupDescriptor,
+    TextHtml,
+};
+
+namespace custom_formats
+{
+    REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(text_html, "text/html");
+}
 
 // [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension
 //
@@ -146,7 +157,7 @@
         }
 
         for (auto const& format : config.formats) {
-            this->add_format(format.ID, format.name);
+            this->add_format(format.format_id(), format.utf8_name());
         }
     }
 
@@ -334,7 +345,7 @@
                         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
                             "SERVER >> CB Channel: Format Data Response PDU");
 
-                        if(this->_requestedFormatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
+                        if(this->_requestedFormatName == CustomFormatName::FileGroupDescriptor) {
                             this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                         }
 
@@ -656,7 +667,7 @@
             break;
 
             default:
-                if (strcmp(this->_requestedFormatName.c_str(), RDPECLIP::get_format_short_name(RDPECLIP::SF_TEXT_HTML)) == 0) {
+                if (this->_requestedFormatName == CustomFormatName::TextHtml) {
                     this->send_to_clipboard_Buffer(chunk);
 
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -835,10 +846,14 @@
             Cliprdr::IsAscii(msgFlags & RDPECLIP::CB_ASCII_NAMES),
             [&](uint32_t format_id, auto format_name) {
                 if (auto* format_name_ = this->format_name_list.find(format_id)) {
-                    this->_requestedFormatId = format_id;
-                    auto utf8_name = format_name_->utf8_name();
-                    this->_requestedFormatName.assign(utf8_name.as_charp(), utf8_name.size());
+                    if (Cliprdr::formats::file_group_descriptor_w.same_as(format_name)) {
+                        this->_requestedFormatName = CustomFormatName::FileGroupDescriptor;
+                    }
+                    else if (custom_formats::text_html.same_as(format_name)) {
+                        this->_requestedFormatName = CustomFormatName::TextHtml;
+                    }
                     formatID = format_id;
+                    this->_requestedFormatId = format_id;
                     return false;
                 }
 

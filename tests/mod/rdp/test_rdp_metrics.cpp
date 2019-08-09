@@ -326,7 +326,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
             out_stream, Cliprdr::IsLongFormat(true),
-            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_server_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -641,7 +642,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
             out_stream, Cliprdr::IsLongFormat(true),
-            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -742,7 +744,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
             out_stream, Cliprdr::IsLongFormat(true),
-            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -760,7 +763,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
             out_stream, Cliprdr::IsLongFormat(true),
-            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -859,7 +863,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
             out_stream, Cliprdr::IsLongFormat(true),
-            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),

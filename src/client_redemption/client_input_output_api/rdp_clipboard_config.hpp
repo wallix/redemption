@@ -21,13 +21,10 @@
 #pragma once
 
 #include "core/RDP/clipboard.hpp"
-#include "utils/log.hpp"
-
-#include <vector>
 
 
-namespace ClientCLIPRDRConfig {
-
+namespace ClientCLIPRDRConfig
+{
 // Arbitrary format ID client redemption specifique must be superior to 0xbb00, else collision is a risk
 enum : uint32_t {
       CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
@@ -37,8 +34,8 @@ enum : uint32_t {
 }
 
 
-
-struct RDPClipboardConfig {
+struct RDPClipboardConfig
+{
     std::string path;
 
     // Arbitrary picture resolution ratio, a 40 value empirically keep native resolution.
@@ -50,23 +47,14 @@ struct RDPClipboardConfig {
     uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
 
+    Cliprdr::FormatNameInventory formats;
 
+    void add_format(uint32_t id, Cliprdr::AsciiName name)
+    {
+        this->formats.push(id, name);
+    }
 
-
-    struct ClipboardFormat {
-        uint32_t ID;
-        std::string name;
-
-        ClipboardFormat(const uint32_t ID, std::string name)
-          : ID(ID)
-          , name(std::move(name))
-          {}
-    };
-
-    std::vector<ClipboardFormat> formats;
-
-    void add_format(uint32_t ID, std::string name) {
-        this->formats.emplace_back(ID, std::move(name));
+    void add_format(RDPECLIP::CF cf) {
+        this->formats.push(cf, Cliprdr::AsciiName{{}});
     }
 };
-
