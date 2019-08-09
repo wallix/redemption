@@ -109,7 +109,6 @@ private:
     enum class Res : bool { Err, Ok };
 
     enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
-    std::vector<uint8_t> client_auth_data_input_buffer;
 
     static void sspi_compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
     {
@@ -178,13 +177,7 @@ public:
             {
                 TSRequest ts_request = recvTSRequest(in_stream, 6);
 
-                // #ifdef WITH_DEBUG_CREDSSP
-                // LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
-                // hexdump_c(ts_request.negoTokens.pvBuffer, ts_request.negoTokens.cbBuffer);
-                // #endif
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
-                this->client_auth_data_input_buffer.assign(ts_request.negoTokens.data(),
-                                                           ts_request.negoTokens.data()+ts_request.negoTokens.size());
                 /*
                  * from tspkg.dll: 0x00000132
                  * ISC_REQ_MUTUAL_AUTH
@@ -195,15 +188,12 @@ public:
                 //unsigned long const fContextReq
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-                array_view_const_u8 input_buffer =  this->client_auth_data_input_buffer;
-                
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
-                InStream in_stream(input_buffer);
+                InStream in_stream(ts_request.negoTokens);
                 RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
                 this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
 
                 this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
-
                 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
                 
