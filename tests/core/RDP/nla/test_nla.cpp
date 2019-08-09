@@ -218,20 +218,60 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             password_array = std::vector<uint8_t>(user_len * 2);
             UTF8toUTF16({pass.data(), strlen(char_ptr_cast(byte_ptr_cast(pass.data())))}, password_array.data(), user_len * 2);
             return PasswordCallback::Ok;
-        }
+        }, true
     );
     
     credssp::State st = credssp::State::Cont;
     TpduBuffer buf;
-    while (credssp::State::Cont == st) {
-        buf.load_data(logtrans);
-        while (buf.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
-            StaticOutStream<65536> out_stream;
-            InStream in_stream(buf.current_pdu_buffer());
-            st = credssp.credssp_server_authenticate_next(in_stream, out_stream);
-            logtrans.send(out_stream.get_bytes());
-        }
+    buf.load_data(logtrans);
+    RED_CHECK_EQUAL(true, buf.next(TpduBuffer::CREDSSP));
+    RED_CHECK_EQUAL(int(credssp::State::Cont), int(st));
+    // Recv negotiate, send challenge
+    {
+        StaticOutStream<65536> out_stream;
+        InStream in_stream(buf.current_pdu_buffer());
+        LOG(LOG_INFO, "Recv Negotiate");
+        hexdump_c(buf.current_pdu_buffer());
+        st = credssp.credssp_server_authenticate_next(in_stream, out_stream);
+        RED_CHECK_EQUAL(in_stream.in_remain(), 0);
+        RED_CHECK_EQUAL(buf.remaining(), 500);
+        RED_CHECK_EQUAL(out_stream.get_bytes().size(), 139);
+        logtrans.send(out_stream.get_bytes());
     }
+    RED_CHECK_EQUAL(true, buf.next(TpduBuffer::CREDSSP));
+    RED_CHECK_EQUAL(int(credssp::State::Cont), int(st));
+    // Recv authenticate + pubauthkey, send pubauthkey
+    {
+        StaticOutStream<65536> out_stream;
+        InStream in_stream(buf.current_pdu_buffer());
+        LOG(LOG_INFO, "Recv authenticate");
+        hexdump_c(buf.current_pdu_buffer());
+        st = credssp.credssp_server_authenticate_next(in_stream, out_stream);
+        RED_CHECK_EQUAL(in_stream.in_remain(), 0);
+        RED_CHECK_EQUAL(buf.remaining(), 443);
+        RED_CHECK_EQUAL(out_stream.get_bytes().size(), 43);
+        logtrans.send(out_stream.get_bytes());
+    }
+    RED_CHECK_EQUAL(true, buf.next(TpduBuffer::CREDSSP));
+    RED_CHECK_EQUAL(int(credssp::State::Cont), int(st));
+    // Recv ts_credential, -> finished
+    {
+        StaticOutStream<65536> out_stream;
+        InStream in_stream(buf.current_pdu_buffer());
+         LOG(LOG_INFO, "Recv ts_credential");
+       hexdump_c(buf.current_pdu_buffer());
+        RED_CHECK_EQUAL(buf.remaining(), 94);
+         LOG(LOG_INFO, "Calling credssp_server_authenticate_next");
+       st = credssp.credssp_server_authenticate_next(in_stream, out_stream);
+         LOG(LOG_INFO, "Call to credssp_server_authenticate_next done");
+        RED_CHECK_EQUAL(in_stream.in_remain(), 0);
+        RED_CHECK_EQUAL(buf.remaining(), 94);
+       RED_CHECK_EQUAL(out_stream.get_bytes().size(), 0);
+        logtrans.send(out_stream.get_bytes());
+    }
+    RED_CHECK_EQUAL(false, buf.next(TpduBuffer::CREDSSP));
+     LOG(LOG_INFO, "After the end");
+    hexdump_c(buf.current_pdu_buffer());
     RED_CHECK_EQUAL(0, buf.remaining());
-    RED_CHECK_EQUAL(static_cast<unsigned>(st), static_cast<unsigned>(credssp::State::Finish));
+    RED_CHECK_EQUAL(int(st), int(credssp::State::Finish));
 }

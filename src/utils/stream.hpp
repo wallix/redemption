@@ -234,6 +234,8 @@ public:
         return this->p.in_copy_bytes(v);
     }
 
+    // TODO: maybe we should remove this one and replace it by skip_bytes and external copy
+    // currently this function is inconsistent with others (returning void)
     void in_copy_bytes(byte_ptr v, size_t n) noexcept {
         return this->in_copy_bytes({v, n});
     }
@@ -248,6 +250,11 @@ public:
     const uint8_t *in_uint8p(unsigned int n) noexcept {
         assert(this->in_check_rem(n));
         return this->p.in_uint8p(n);
+    }
+
+    array_view_const_u8 view_bytes(unsigned int n) noexcept {
+        assert(this->in_check_rem(n));
+        return array_view_const_u8{this->get_current(), n};
     }
 
     array_view_const_u8 in_skip_bytes(unsigned int n) noexcept {

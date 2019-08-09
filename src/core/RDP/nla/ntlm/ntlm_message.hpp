@@ -461,54 +461,75 @@ inline void LogNtlmVersion(const NtlmVersion & self) {
 // | | | | | | | | | | | | | | | | | | | | | | | | | | | | |0| | | |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-// W (1 bit):  If set, requests 56-bit encryption. If the client sends
+enum {
+
+// NTLMSSP_NEGOTIATE_56: W (1 bit):  If set, requests 56-bit encryption. If the client sends
 //  NTLMSSP_NEGOTIATE_SEAL or NTLMSSP_NEGOTIATE_SIGN with NTLMSSP_NEGOTIATE_56
 //  to the server in the NEGOTIATE_MESSAGE, the server MUST return NTLMSSP_NEGOTIATE_56
 //  to the client in the CHALLENGE_MESSAGE. Otherwise it is ignored.
 //  If both NTLMSSP_NEGOTIATE_56 and NTLMSSP_NEGOTIATE_128 are requested and supported
 //  by the client and server, NTLMSSP_NEGOTIATE_56 and NTLMSSP_NEGOTIATE_128 will both
 //  be returned to the client.
-//  Clients and servers that set NTLMSSP_NEGOTIATE_SEAL SHOULD set  NTLMSSP_NEGOTIATE_56
-//  if it is supported. An alternate name for this field is  NTLMSSP_NEGOTIATE_56.
+//  Clients and servers that set NTLMSSP_NEGOTIATE_SEAL SHOULD set NTLMSSP_NEGOTIATE_56
+//  if it is supported.
 
-// V (1 bit):  If set, requests an explicit key exchange. This capability SHOULD
-// be used because it improves security for message integrity or confidentiality.
-// See sections 3.2.5.1.2, 3.2.5.2.1, and 3.2.5.2.2 for details. An alternate name
-// for this field is NTLMSSP_NEGOTIATE_KEY_EXCH.
+    NTLMSSP_NEGOTIATE_56 = 0x80000000, /* W   (0) */
 
-// U (1 bit):  If set, requests 128-bit session key negotiation. An alternate name
-//  for this field is NTLMSSP_NEGOTIATE_128. If the client sends NTLMSSP_NEGOTIATE_128
-//  to the server in the NEGOTIATE_MESSAGE, the server MUST return NTLMSSP_NEGOTIATE_128
-//  to the client in the CHALLENGE_MESSAGE only if the client sets NTLMSSP_NEGOTIATE_SEAL or
-//  NTLMSSP_NEGOTIATE_SIGN. Otherwise it is ignored. If both NTLMSSP_NEGOTIATE_56 and
-//  NTLMSSP_NEGOTIATE_128 are requested and supported by the client and server,
-//  NTLMSSP_NEGOTIATE_56 and NTLMSSP_NEGOTIATE_128 will both be returned to the client.
-//  Clients and servers that set NTLMSSP_NEGOTIATE_SEAL SHOULD set
-//  NTLMSSP_NEGOTIATE_128 if it is supported. An alternate name for this field is
-//  NTLMSSP_NEGOTIATE_128.
+// NTLMSSP_NEGOTIATE_KEY_EXCH: V (1 bit):  If set, requests an explicit key exchange. 
+// This capability SHOULD be used because it improves security for message integrity 
+// or confidentiality. See sections 3.2.5.1.2, 3.2.5.2.1, and 3.2.5.2.2 for details.
+
+    NTLMSSP_NEGOTIATE_KEY_EXCH = 0x40000000, /* V   (1) */
+
+// NTLMSSP_NEGOTIATE_128: U (1 bit):  If set, requests 128-bit session key negotiation.
+//  If the client sends NTLMSSP_NEGOTIATE_128 to the server in the NEGOTIATE_MESSAGE,
+//  the server MUST return NTLMSSP_NEGOTIATE_128 to the client in the CHALLENGE_MESSAGE
+//  only if the client sets NTLMSSP_NEGOTIATE_SEAL or NTLMSSP_NEGOTIATE_SIGN. Otherwise
+// it is ignored. If both NTLMSSP_NEGOTIATE_56 and NTLMSSP_NEGOTIATE_128 are requested
+// and supported by the client and server, NTLMSSP_NEGOTIATE_56 and NTLMSSP_NEGOTIATE_128
+// will both be returned to the client. Clients and servers that set NTLMSSP_NEGOTIATE_SEAL
+// SHOULD set NTLMSSP_NEGOTIATE_128 if it is supported.
+
+    NTLMSSP_NEGOTIATE_128 = 0x20000000, /* U   (2) */
 
 // r1 (1 bit):  This bit is unused and MUST be zero.
-// r2 (1 bit):  This bit is unused and MUST be zero.
-// r3 (1 bit):  This bit is unused and MUST be zero.
+    NTLMSSP_RESERVED1 = 0x10000000, /* r1  (3) */
 
-// T (1 bit):  If set, requests the protocol version number. The data corresponding
-//  to this flag is provided in the Version field of the NEGOTIATE_MESSAGE,
-//  the CHALLENGE_MESSAGE, and the AUTHENTICATE_MESSAGE.<22> An alternate name for
-//   this field is NTLMSSP_NEGOTIATE_VERSION.
+// r2 (1 bit):  This bit is unused and MUST be zero.
+    NTLMSSP_RESERVED2 = 0x08000000, /* r2  (4) */
+
+// r3 (1 bit):  This bit is unused and MUST be zero.
+    NTLMSSP_RESERVED3 = 0x04000000, /* r3  (5) */
+
+// NTLMSSP_NEGOTIATE_VERSION: T (1 bit):  If set, requests the protocol version 
+// number. The data corresponding to this flag is provided in the Version field
+// of the NEGOTIATE_MESSAGE, the CHALLENGE_MESSAGE, and the AUTHENTICATE_MESSAGE.<22>
+
+    NTLMSSP_NEGOTIATE_VERSION = 0x02000000, /* T   (6) */
 
 // r4 (1 bit):  This bit is unused and MUST be zero.
+
+    NTLMSSP_RESERVED4 = 0x01000000, /* r4  (7) */
 
 // S (1 bit):  If set, indicates that the TargetInfo fields in the CHALLENGE_MESSAGE
 //  (section 2.2.1.2) are populated. An alternate name for this field is
 //  NTLMSSP_NEGOTIATE_TARGET_INFO.
 
+    NTLMSSP_NEGOTIATE_TARGET_INFO = 0x00800000, /* S   (8) */
+
 // R (1 bit):  If set, requests the usage of the LMOWF (section 3.3).
 //  An alternate name for this field is NTLMSSP_REQUEST_NON_NT_SESSION_KEY.
 
+    NTLMSSP_REQUEST_NON_NT_SESSION_KEY = 0x00400000, /* R   (9) */
+
 // r5 (1 bit):  This bit is unused and MUST be zero.
+
+    NTLMSSP_RESERVED5 = 0x00200000, /* r5  (10) */
 
 // Q (1 bit):  If set, requests an identify level token. An alternate name for this
 //  field is NTLMSSP_NEGOTIATE_IDENTIFY.
+
+    NTLMSSP_NEGOTIATE_IDENTIFY = 0x00100000, /* Q   (11) */
 
 // P (1 bit):  If set, requests usage of the NTLM v2 session security.
 //  NTLM v2 session security is a misnomer because it is not NTLM v2. It is NTLM v1
@@ -522,7 +543,11 @@ inline void LogNtlmVersion(const NtlmVersion & self) {
 //  in order to be used. An alternate name for this field is
 //  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.
 
+    NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY = 0x00080000, /* P   (12) */
+
 // r6 (1 bit):  This bit is unused and MUST be zero.
+
+    NTLMSSP_RESERVED6 = 0x00040000, /* r6  (13) */
 
 // O (1 bit):  If set, TargetName MUST be a server name. The data corresponding to this flag is
 //  provided by the server in the TargetName field of the CHALLENGE_MESSAGE. If this bit is
@@ -530,11 +555,15 @@ inline void LogNtlmVersion(const NtlmVersion & self) {
 //  the NEGOTIATE_MESSAGE and the AUTHENTICATE_MESSAGE. An alternate name for this field
 //  is NTLMSSP_TARGET_TYPE_SERVER.
 
+    NTLMSSP_TARGET_TYPE_SERVER = 0x00020000, /* O   (14) */
+
 // N (1 bit):  If set, TargetName MUST be a domain name. The data corresponding to this flag is
 //  provided by the server in the TargetName field of the CHALLENGE_MESSAGE. If set, then
 //  NTLMSSP_TARGET_TYPE_SERVER MUST NOT be set. This flag MUST be ignored in the
 //  NEGOTIATE_MESSAGE and the AUTHENTICATE_MESSAGE. An alternate name for this field is
 //  NTLMSSP_TARGET_TYPE_DOMAIN.
+
+    NTLMSSP_TARGET_TYPE_DOMAIN = 0x00010000, /* N   (15) */
 
 // M (1 bit):  If set, requests the presence of a signature block on all messages.
 //  NTLMSSP_NEGOTIATE_ALWAYS_SIGN MUST be set in the NEGOTIATE_MESSAGE to the
@@ -542,26 +571,42 @@ inline void LogNtlmVersion(const NtlmVersion & self) {
 //  overridden by NTLMSSP_NEGOTIATE_SIGN and NTLMSSP_NEGOTIATE_SEAL, if they are
 //  supported. An alternate name for this field is NTLMSSP_NEGOTIATE_ALWAYS_SIGN.
 
+    NTLMSSP_NEGOTIATE_ALWAYS_SIGN = 0x00008000, /* M   (16) */
+
 // r7 (1 bit):  This bit is unused and MUST be zero.
+
+    NTLMSSP_RESERVED7 =  0x00004000, /* r7  (17) */
 
 // L (1 bit):  This flag indicates whether the Workstation field is present. If this flag is
 //  not set, the Workstation field MUST be ignored. If this flag is set, the length field of
 //  the Workstation field specifies whether the workstation name is nonempty or not.
 //  An alternate name for this field is NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED.
 
+    NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED = 0x00002000, /* L   (18) */
+
 // K (1 bit):  If set, the domain name is provided (section 2.2.1.1).<25> An alternate name for
 //  this field is NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED.
 
+    NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED = 0x00001000, /* K   (19) */
+
 // J (1 bit):  If set, the connection SHOULD be anonymous.<26>
 
+    NTLMSSP_NEGOTIATE_ANONYMOUS = 0x00000800, /* J   (20) */
+
 // r8 (1 bit):  This bit is unused and SHOULD be zero.<27>
+
+    NTLMSSP_RESERVED8 = 0x00000400, /* r8  (21) */
 
 // H (1 bit):  If set, requests usage of the NTLM v1 session security protocol.
 //  NTLMSSP_NEGOTIATE_NTLM MUST be set in the NEGOTIATE_MESSAGE to the server and the
 //  CHALLENGE_MESSAGE to the client. An alternate name for this field is
 //  NTLMSSP_NEGOTIATE_NTLM.
 
+    NTLMSSP_NEGOTIATE_NTLM = 0x00000200, /* H   (22) */
+
 // r9 (1 bit):  This bit is unused and MUST be zero.
+
+    NTLMSSP_RESERVED9 = 0x00000100, /* r9  (23) */
 
 // G (1 bit):  If set, requests LAN Manager (LM) session key computation.
 //  NTLMSSP_NEGOTIATE_LM_KEY and NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY
@@ -573,10 +618,14 @@ inline void LogNtlmVersion(const NtlmVersion & self) {
 //  from the client and the server to be used. An alternate name for this field is
 //  NTLMSSP_NEGOTIATE_LM_KEY.
 
+    NTLMSSP_NEGOTIATE_LM_KEY = 0x00000080, /* G   (24) */
+
 // F (1 bit):  If set, requests connectionless authentication. If NTLMSSP_NEGOTIATE_DATAGRAM is
 //  set, then NTLMSSP_NEGOTIATE_KEY_EXCH MUST always be set in the
 //  AUTHENTICATE_MESSAGE to the server and the CHALLENGE_MESSAGE to the client. An
 //  alternate name for this field is NTLMSSP_NEGOTIATE_DATAGRAM.
+
+    NTLMSSP_NEGOTIATE_DATAGRAM = 0x00000040, /* F   (25) */
 
 // E (1 bit):  If set, requests session key negotiation for message confidentiality.
 //  If the client sends NTLMSSP_NEGOTIATE_SEAL to the server in the NEGOTIATE_MESSAGE,
@@ -585,18 +634,28 @@ inline void LogNtlmVersion(const NtlmVersion & self) {
 //  and NTLMSSP_NEGOTIATE_128, if they are supported. An alternate name for this field is
 //  NTLMSSP_NEGOTIATE_SEAL.
 
+    NTLMSSP_NEGOTIATE_SEAL = 0x00000020, /* E   (26) */
+
 // D (1 bit):  If set, requests session key negotiation for message signatures.
 //  If the client sends NTLMSSP_NEGOTIATE_SIGN to the server in the NEGOTIATE_MESSAGE,
 //   the server MUST return NTLMSSP_NEGOTIATE_SIGN to the client in the CHALLENGE_MESSAGE.
 //   An alternate name for this field is NTLMSSP_NEGOTIATE_SIGN.
 
+    NTLMSSP_NEGOTIATE_SIGN = 0x00000010, /* D   (27) */
+
 // r10 (1 bit):  This bit is unused and MUST be zero.
+
+    NTLMSSP_RESERVED10 = 0x00000008, /* r10 (28) */
 
 // C (1 bit):  If set, a TargetName field of the CHALLENGE_MESSAGE (section 2.2.1.2) MUST be
 //  supplied. An alternate name for this field is NTLMSSP_REQUEST_TARGET.
 
+    NTLMSSP_REQUEST_TARGET = 0x00000004, /* C   (29) */
+
 // B (1 bit):  If set, requests OEM character set encoding. An alternate name for this field is
 //  NTLM_NEGOTIATE_OEM. See bit A for details.
+
+    NTLMSSP_NEGOTIATE_OEM = 0x00000002, /* B   (30) */
 
 // A (1 bit):  If set, requests Unicode character set encoding. An alternate name for this
 //  field is NTLMSSP_NEGOTIATE_UNICODE.
@@ -605,38 +664,8 @@ inline void LogNtlmVersion(const NtlmVersion & self) {
 //  - A==0 and B==1: The choice of character set encoding MUST be OEM.
 //  - A==0 and B==0: The protocol MUST return SEC_E_INVALID_TOKEN.
 
-#define NTLMSSP_NEGOTIATE_56                0x80000000 /* W   (0) */
-#define NTLMSSP_NEGOTIATE_KEY_EXCH          0x40000000 /* V   (1) */
-#define NTLMSSP_NEGOTIATE_128               0x20000000 /* U   (2) */
-#define NTLMSSP_RESERVED1                   0x10000000 /* r1  (3) */
-#define NTLMSSP_RESERVED2                   0x08000000 /* r2  (4) */
-#define NTLMSSP_RESERVED3                   0x04000000 /* r3  (5) */
-#define NTLMSSP_NEGOTIATE_VERSION           0x02000000 /* T   (6) */
-#define NTLMSSP_RESERVED4                   0x01000000 /* r4  (7) */
-#define NTLMSSP_NEGOTIATE_TARGET_INFO       0x00800000 /* S   (8) */
-#define NTLMSSP_REQUEST_NON_NT_SESSION_KEY  0x00400000 /* R   (9) */
-#define NTLMSSP_RESERVED5                   0x00200000 /* r5  (10) */
-#define NTLMSSP_NEGOTIATE_IDENTIFY          0x00100000 /* Q   (11) */
-#define NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY  0x00080000 /* P   (12) */
-#define NTLMSSP_RESERVED6                   0x00040000 /* r6  (13) */
-#define NTLMSSP_TARGET_TYPE_SERVER          0x00020000 /* O   (14) */
-#define NTLMSSP_TARGET_TYPE_DOMAIN          0x00010000 /* N   (15) */
-#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN       0x00008000 /* M   (16) */
-#define NTLMSSP_RESERVED7                   0x00004000 /* r7  (17) */
-#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED   0x00002000 /* L   (18) */
-#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED        0x00001000 /* K   (19) */
-#define NTLMSSP_NEGOTIATE_ANONYMOUS              0x00000800 /* J   (20) */
-#define NTLMSSP_RESERVED8                   0x00000400 /* r8  (21) */
-#define NTLMSSP_NEGOTIATE_NTLM              0x00000200 /* H   (22) */
-#define NTLMSSP_RESERVED9                   0x00000100 /* r9  (23) */
-#define NTLMSSP_NEGOTIATE_LM_KEY            0x00000080 /* G   (24) */
-#define NTLMSSP_NEGOTIATE_DATAGRAM          0x00000040 /* F   (25) */
-#define NTLMSSP_NEGOTIATE_SEAL              0x00000020 /* E   (26) */
-#define NTLMSSP_NEGOTIATE_SIGN              0x00000010 /* D   (27) */
-#define NTLMSSP_RESERVED10                  0x00000008 /* r10 (28) */
-#define NTLMSSP_REQUEST_TARGET              0x00000004 /* C   (29) */
-#define NTLMSSP_NEGOTIATE_OEM               0x00000002 /* B   (30) */
-#define NTLMSSP_NEGOTIATE_UNICODE           0x00000001 /* A   (31) */
+    NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
+};
 
 static const char* const NTLM_NEGOTIATE_STRINGS[] ={
     "NTLMSSP_NEGOTIATE_56",
@@ -1162,6 +1191,18 @@ struct NTLMAuthenticateMessage {
     }
 };
 
+inline void logNtlmFlags(uint32_t flags)
+{
+    LOG(LOG_INFO, "negotiateFlags \"0x%08X\"{", flags);
+
+    for (int i = 0; i < 32; i++) {
+        if ((flags >> (31-i)) & 1) {
+            const char* str = NTLM_NEGOTIATE_STRINGS[i];
+            LOG(LOG_INFO, "\t%s (%d),", str, (31-i));
+        }
+    }
+    LOG(LOG_INFO, "}");
+}
 
 inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
 
@@ -1180,16 +1221,7 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
     logNtlmField("Workstation", self.Workstation);
     logNtlmField("EncryptedRandomSessionKey", self.EncryptedRandomSessionKey);
     
-    LOG(LOG_INFO, "negotiateFlags \"0x%08X\"{", self.negoFlags.flags);
-
-    for (int i = 31; i >= 0; i--) {
-        if ((self.negoFlags.flags >> i) & 1) {
-            const char* str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
-            LOG(LOG_INFO, "\t%s (%d),", str, (31 - i));
-        }
-    }
-
-    LOG(LOG_INFO, "}");
+    logNtlmFlags(self.negoFlags.flags);
     
     LogNtlmVersion(self.version);
     LOG(LOG_DEBUG, "MIC");
@@ -1969,23 +2001,44 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
 //     is not present.
 
 
-
-class NTLMNegotiateMessage
+struct NTLMNegotiateMessage
 {
-public:
     NtlmNegotiateFlags negoFlags; /* 4 Bytes */
     NtlmField DomainName;         /* 8 Bytes */
     NtlmField Workstation;        /* 8 Bytes */
     NtlmVersion version;          /* 8 Bytes */
-
-public:
-    NTLMNegotiateMessage() {}
+    
+    std::vector<uint8_t> raw_bytes;
 };
 
-inline void emitNTLMNegotiateMessage(OutStream & stream)
+
+inline void logNTLMNegotiateMessage(const NTLMNegotiateMessage & message)
+{
+    LOG(LOG_INFO, "NTLMSSP: Negotiate");
+
+    logNtlmField("DomainName", message.DomainName);
+    logNtlmField("Workstation", message.Workstation);
+    
+    logNtlmFlags(message.negoFlags.flags);
+    
+    LogNtlmVersion(message.version);
+}
+
+inline std::vector<uint8_t> emitNTLMNegotiateMessage()
 {
     std::vector<uint8_t> DomainName;
     std::vector<uint8_t> Workstation;
+
+    const uint32_t payloadOffset = 8+  // message signature 
+                             4+  // MessageType = NtlmNegotiate
+                             4+  // negoFlags
+                             8+  // DomainName field header
+                             8+  // Workstation field header
+                             8   // Negotiate Version
+                             ;
+    std::vector<uint8_t> message(payloadOffset+DomainName.size()+Workstation.size());
+    
+    OutStream stream(message);
 
     stream.out_copy_bytes("NTLMSSP\0"_av);
     stream.out_uint32_le(NtlmNegotiate);
@@ -2004,13 +2057,6 @@ inline void emitNTLMNegotiateMessage(OutStream & stream)
         | NTLMSSP_NEGOTIATE_UNICODE
         | NTLMSSP_NEGOTIATE_VERSION
         );
-    const uint32_t payloadOffset = 8+  // message signature 
-                             4+  // MessageType = Negociate
-                             4+  // negoFlags
-                             8+  // DomainName field header
-                             8+  // Workstation field header
-                             8   // Negotiate Version
-                             ;
     stream.out_uint16_le(DomainName.size());
     stream.out_uint16_le(DomainName.size());
     stream.out_uint32_le(payloadOffset);
@@ -2032,38 +2078,53 @@ inline void emitNTLMNegotiateMessage(OutStream & stream)
     
     LOG(LOG_INFO, "NTLM Message Negotiate Dump (Sent)");
     hexdump_d(stream.get_bytes());
+    
+    return message;
 }
 
-inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & self)
+inline NTLMNegotiateMessage recvNTLMNegotiateMessage(cbytes_view av)
 {
+    InStream stream(av);
+    NTLMNegotiateMessage self;
+    self.raw_bytes.assign(av.begin(),av.end());
     LOG(LOG_INFO, "NTLM Message Negotiate Dump (Recv)");
     hexdump_c(stream.remaining_bytes());
     uint8_t const * pBegin = stream.get_current();
 
-    constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
-    uint8_t received_sig[sig_len];
-    stream.in_copy_bytes(received_sig, sig_len);
-    uint32_t type = stream.in_uint32_le();
+    auto signature = stream.view_bytes(sizeof(NTLM_MESSAGE_SIGNATURE));
+    stream.in_skip_bytes(signature.size());
+    // to check NTLM_MESSAGE_SIGNATURE
+    //    LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
 
-    if (type != NtlmNegotiate){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED NtlmNegotiate (0001) expected, got type: %u", type);
-    }
-    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
-    }
+    uint32_t type = stream.in_uint32_le();
+    (void)type;
+    // to check type == NtlmNegotiate
+    //    LOG(LOG_ERR, "INVALID MSG RECEIVED NtlmNegotiate (0001) expected, got type: %u", type);
 
     self.negoFlags.flags = stream.in_uint32_le();
     
     uint16_t DomainName_len = stream.in_uint16_le();
     uint16_t DomainName_maxlen = stream.in_uint16_le();
     (void)DomainName_maxlen; // ensure it's identical to len
+    // to check: DomainName_len == DomainName_maxlen
+    if (not (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED)) {
+        DomainName_maxlen = DomainName_len = 0;
+    }
     self.DomainName.bufferOffset = stream.in_uint32_le();
+    // to check: bufferOffset is inside stream, bufferOffset+len is inside stream
+
 
     uint16_t Workstation_len = stream.in_uint16_le();
     uint16_t Workstation_maxlen = stream.in_uint16_le();
     (void)Workstation_maxlen; // ensure it's identical to len
+    // to check: DomainName_len == DomainName_maxlen
+    if (not (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)) {
+        Workstation_maxlen = Workstation_len = 0;
+    }
     self.Workstation.bufferOffset = stream.in_uint32_le();
+    // to check: bufferOffset is inside stream, bufferOffset+len is inside stream
     
+
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
         self.version.ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
         self.version.ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
@@ -2073,17 +2134,23 @@ inline void RecvNTLMNegotiateMessage(InStream & stream, NTLMNegotiateMessage & s
     }
 
     // PAYLOAD
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED) {
+        self.DomainName.buffer.assign(pBegin + self.DomainName.bufferOffset, 
+                         pBegin + self.DomainName.bufferOffset + DomainName_len);
+    }
+
+    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
+        self.Workstation.buffer.assign(pBegin + self.Workstation.bufferOffset, 
+                             pBegin + self.Workstation.bufferOffset + Workstation_len);
+    }
+    // Consume Payload
     auto maxp = std::max(size_t(self.DomainName.bufferOffset + DomainName_len),
                          size_t(self.Workstation.bufferOffset + Workstation_len));
     
     if (pBegin + maxp > stream.get_current()) {
         stream.in_skip_bytes(pBegin + maxp - stream.get_current());
     }
-
-    self.DomainName.buffer.assign(pBegin + self.DomainName.bufferOffset, 
-                         pBegin + self.DomainName.bufferOffset + DomainName_len);
-    self.Workstation.buffer.assign(pBegin + self.Workstation.bufferOffset, 
-                         pBegin + self.Workstation.bufferOffset + Workstation_len);
+    return self;
 }
 
 

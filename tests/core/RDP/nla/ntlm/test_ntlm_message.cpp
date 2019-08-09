@@ -389,10 +389,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
 
     RED_CHECK_SIG_FROM(to_send, packet);
 
-    NTLMNegotiateMessage NegoMsg;
-
-    InStream nego({ts_req.negoTokens.data(), ts_req.negoTokens.size()});
-    RecvNTLMNegotiateMessage(nego, NegoMsg);
+    auto NegoMsg = recvNTLMNegotiateMessage(ts_req.negoTokens);
 
 
     RED_CHECK_EQUAL(NegoMsg.negoFlags.flags, 0xe20882b7);
@@ -1384,7 +1381,7 @@ public:
             negoFlag |= NTLMSSP_NEGOTIATE_TARGET_INFO;
         }
         if (this->SendWorkstationName) {
-            negoFlag |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+            negoFlag |= NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED;
         }
         if (this->confidentiality) {
             negoFlag |= NTLMSSP_NEGOTIATE_SEAL;
@@ -1447,11 +1444,11 @@ public:
             this->NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         }
 
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
             this->Workstation = this->NEGOTIATE_MESSAGE.Workstation.buffer;
         }
 
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED) {
             auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto domain_av = this->identity.get_domain_utf16_av();
             domain.assign(domain_av.data(), domain_av.data()+domain_av.size());
@@ -1532,11 +1529,11 @@ public:
             // If flag is not set, encryted session key buffer is not send
             this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.clear();
         }
-        if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+        if (flag & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
             this->AUTHENTICATE_MESSAGE.Workstation.buffer.assign(workstation.data(), workstation.data() + workstation.size());
         }
 
-        //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+        //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
         auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         domain.assign(userDomain.data(),userDomain.data()+userDomain.size());
 
@@ -1625,18 +1622,16 @@ public:
     SEC_STATUS write_negotiate(std::vector<uint8_t>& output_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Write Negotiate");
         this->ntlm_client_build_negotiate();
-        StaticOutStream<65535> out_stream;
-        emitNTLMNegotiateMessage(out_stream);
-        output_buffer.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
-        this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
+        auto negotiate = emitNTLMNegotiateMessage();
+        output_buffer = negotiate;
+        this->SavedNegotiateMessage = std::move(negotiate);
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
     }
 
     SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Negotiate");
-        InStream in_stream(input_buffer);
-        RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
+        this->NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(input_buffer);
 
         uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
         uint32_t const mask = NTLMSSP_REQUEST_TARGET
@@ -1647,8 +1642,7 @@ public:
             return SEC_E_INVALID_TOKEN;
         }
         this->NegotiateFlags = negoFlag;
-
-        this->SavedNegotiateMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
+        this->SavedNegotiateMessage = this->NEGOTIATE_MESSAGE.raw_bytes;
 
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
@@ -2127,10 +2121,9 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
         /* 0060 */ "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
         /* 0070 */ "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00"_av;
 
-    InStream s(nego_string);
-    RecvNTLMNegotiateMessage(s, context.NEGOTIATE_MESSAGE);
+    context.NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(nego_string);
 
-    s = InStream(challenge_string);
+    InStream s(challenge_string);
     RecvNTLMChallengeMessage(s, context.CHALLENGE_MESSAGE);
 
     const uint8_t password[] = {
@@ -2261,6 +2254,13 @@ RED_AUTO_TEST_CASE(TestSetters)
 }
 
 
+RED_AUTO_TEST_CASE(TestNtlmNewtest)
+{
+    RED_CHECK_EQUAL(1,1);
+}
+
+
+
 RED_AUTO_TEST_CASE(TestNtlmScenario)
 {
     LCGRandom rand(0);
@@ -2295,9 +2295,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     };
 
     // Initialization
-    uint8_t client_to_server_buf[65535];
-    InStream in_client_to_server(client_to_server_buf);
-    OutStream out_client_to_server(client_to_server_buf);
     uint8_t server_to_client_buf[65535];
     OutStream out_server_to_client(server_to_client_buf);
 
@@ -2314,8 +2311,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     }
 
     // send NEGOTIATE MESSAGE
-    emitNTLMNegotiateMessage(out_client_to_server);
-    RecvNTLMNegotiateMessage(in_client_to_server, server_context.NEGOTIATE_MESSAGE);
+    auto negotiate = emitNTLMNegotiateMessage();
+    server_context.NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(negotiate);
 
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
     uint32_t const negoFlag = server_context.NEGOTIATE_MESSAGE.negoFlags.flags;
@@ -2382,7 +2379,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
         client_context.NEGOTIATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
-    if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+    if (flag & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
         client_context.AUTHENTICATE_MESSAGE.Workstation.buffer.assign(workstation, workstation + sizeof(workstation));
     }
 
@@ -2398,9 +2395,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     client_context.AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
     // send AUTHENTICATE MESSAGE
-    out_client_to_server.rewind();
+    StaticOutStream<65535> out_client_to_server;
     emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
-    in_client_to_server.rewind();
+    InStream in_client_to_server(out_client_to_server.get_bytes());
     recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
 
     // SERVER PROCEED RESPONSE CHECKING
@@ -2459,8 +2456,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     };
 
     // Initialization
-    uint8_t client_to_server_buf[65535];
-    OutStream out_client_to_server(client_to_server_buf);
     uint8_t server_to_client_buf[65535];
     OutStream out_server_to_client(server_to_client_buf);
 
@@ -2468,17 +2463,14 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     client_context.ntlm_client_build_negotiate();
 
     // send NEGOTIATE MESSAGE
-    emitNTLMNegotiateMessage(out_client_to_server);
+    auto negotiate = emitNTLMNegotiateMessage();
 
-    client_context.SavedNegotiateMessage = std::vector<uint8_t>(out_client_to_server.get_offset());
-    memcpy(client_context.SavedNegotiateMessage.data(),
-           out_client_to_server.get_data(), out_client_to_server.get_offset());
+    client_context.SavedNegotiateMessage = negotiate;
 
-    InStream in_client_to_server(out_client_to_server.get_bytes());
-    RecvNTLMNegotiateMessage(in_client_to_server, server_context.NEGOTIATE_MESSAGE);
-    server_context.SavedNegotiateMessage = std::vector<uint8_t>(in_client_to_server.get_offset());
-    memcpy(server_context.SavedNegotiateMessage.data(),
-           in_client_to_server.get_data(), in_client_to_server.get_offset());
+    InStream in_client_to_server(negotiate);
+    server_context.NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(negotiate);
+    server_context.SavedNegotiateMessage = server_context.NEGOTIATE_MESSAGE.raw_bytes;
+
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
     server_context.ntlm_server_build_challenge();
 
@@ -2501,7 +2493,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
                                                   make_array_view(workstation));
 
     // send AUTHENTICATE MESSAGE
-    out_client_to_server.rewind();
+        uint8_t client_to_server_buf[65535];
+        OutStream out_client_to_server(client_to_server_buf);
     /*client_context.UseMIC*/ {
         client_context.AUTHENTICATE_MESSAGE.ignore_mic = true;
         emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
@@ -2547,8 +2540,8 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     LCGTime timeobj;
 
     NTLMContext context_write(false, rand, timeobj, true);
-    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
-    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED;
+    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
     NTLMContext context_read(true, rand, timeobj, true);
     SEC_STATUS status;
 

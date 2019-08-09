@@ -269,9 +269,7 @@ public:
                     this->state = NTLM_STATE_NEGOTIATE;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Negotiate");
-                    InStream in_stream(this->ts_request.negoTokens);
-                    
-                    RecvNTLMNegotiateMessage(in_stream, this->NEGOTIATE_MESSAGE);
+                    this->NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(this->ts_request.negoTokens);
                     uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
                     uint32_t const mask = NTLMSSP_REQUEST_TARGET
                                         | NTLMSSP_NEGOTIATE_NTLM
@@ -285,9 +283,7 @@ public:
                     }
 
                     this->NegotiateFlags = negoFlag;
-
-                    this->SavedNegotiateMessage.clear();
-                    push_back_array(this->SavedNegotiateMessage, in_stream.get_consumed_bytes());
+                    this->SavedNegotiateMessage = this->NEGOTIATE_MESSAGE.raw_bytes;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
                 
@@ -346,7 +342,6 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Read Authenticate");
                     InStream in_stream(this->ts_request.negoTokens);
                     recvNTLMAuthenticateMessage(in_stream, this->AUTHENTICATE_MESSAGE);
-
 
                     if (this->AUTHENTICATE_MESSAGE.has_mic) {
                         this->UseMIC = true;
@@ -686,7 +681,6 @@ public:
             case ServerAuthenticateData::Final:
             {
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
-                
                 this->ts_request.recv(in_stream);
                 if (this->ts_request.authInfo.size() < 1) {
                     LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");

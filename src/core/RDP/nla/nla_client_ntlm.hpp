@@ -155,14 +155,14 @@ public:
               
         /* receive server response and place in input buffer */
         LOG_IF(this->verbose, LOG_INFO, "NTLM Send Negotiate");
-        StaticOutStream<65535> out_stream;
-        emitNTLMNegotiateMessage(out_stream);
-        this->SavedNegotiateMessage.assign(out_stream.get_bytes().data(), out_stream.get_bytes().data()+out_stream.get_offset());
+        auto NegotiateMessageVector = emitNTLMNegotiateMessage();
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
         TSRequest ts_request(6);
-        ts_request.negoTokens.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_bytes().size());
+        ts_request.negoTokens = NegotiateMessageVector;
         ts_request.emit(ts_request_emit);
+
+        this->SavedNegotiateMessage = std::move(NegotiateMessageVector);
 
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
         this->client_auth_data_state = Loop;
@@ -335,11 +335,11 @@ public:
                     // If flag is not set, encryted session key buffer is not send
                     this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.clear();
                 }
-                if (flags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+                if (flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
                     this->AUTHENTICATE_MESSAGE.Workstation.buffer = this->Workstation;
                 }
 
-                //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+                //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
                 this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
                 this->AUTHENTICATE_MESSAGE.UserName.buffer = this->identity_User;
 
@@ -542,7 +542,7 @@ public:
             flags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
         }
         if (send_workstation_name) {
-            flags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+            flags |= NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED;
         }
         flags |= NTLMSSP_NEGOTIATE_SEAL;
         if (negotiate_key_exchange) {
