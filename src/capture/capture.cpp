@@ -1621,10 +1621,10 @@ public:
         }
     }
 
-    void set_row(std::size_t rownum, const uint8_t * data, size_t data_length)
+    void set_row(std::size_t rownum, const_bytes_view data)
     {
         for (gdi::GraphicApi & gd : this->gds){
-            gd.set_row(rownum, data, data_length);
+            gd.set_row(rownum, data);
         }
     }
 
@@ -2035,10 +2035,10 @@ Capture::RTDisplayResult Capture::set_rt_display(bool enable_rt_display)
         : Capture::RTDisplayResult::Unchanged;
 }
 
-void Capture::set_row(size_t rownum, const uint8_t * data, size_t data_length)
+void Capture::set_row(size_t rownum, const_bytes_view data)
 {
     if (this->capture_drawable) {
-        this->gd_drawable->set_row(rownum, data, data_length);
+        this->gd_drawable->set_row(rownum, data);
     }
 }
 

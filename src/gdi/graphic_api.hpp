@@ -22,6 +22,7 @@
 
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/noncopyable.hpp"
+#include "utils/sugar/bytes_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/rect.hpp"
 #include "cxx/cxx.hpp"
@@ -325,7 +326,7 @@ struct GraphicApi : private noncopyable
     virtual void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) = 0;
 
     // TODO berk, data within size
-    virtual void set_row(std::size_t rownum, const uint8_t * data, size_t data_length) { (void)rownum; (void)data; (void)data_length; }
+    virtual void set_row(std::size_t rownum, const_bytes_view data) { (void)rownum; (void)data; }
 };
 
 

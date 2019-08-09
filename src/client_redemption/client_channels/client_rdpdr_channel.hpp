@@ -114,7 +114,7 @@ public:
 
     virtual uint32_t get_volume_serial_number(int device) = 0;
 
-    virtual bool write_file(const char * file_to_write, const char * data, int data_len) = 0;
+    virtual bool write_file(const char * file_to_write, const_bytes_view data) = 0;
 
     virtual bool remove_file(const char * file_to_remove) = 0;
 

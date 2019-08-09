@@ -230,14 +230,12 @@ public:
         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
     }
 
-    void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) override {               // Paste image to client
-        QImage image(data,
-                     image_width,
-                     image_height,
-                     this->bpp_to_QFormat(bpp, false)
-                    );
+    // Paste image to client
+    void setClipboard_image(ConstImageDataView const& image) override {
+        QImage qtimage(image.data(), image.width(), image.height(),
+            this->bpp_to_QFormat(image.bits_per_pixel(), false));
 
-        QImage imageSwapped(image.rgbSwapped().mirrored(false, true));
+        QImage imageSwapped(qtimage.rgbSwapped().mirrored(false, true));
         //image.mirrored(false, true);
         this->_clipboard->setImage(imageSwapped, QClipboard::Clipboard);
     }
@@ -435,7 +433,8 @@ public Q_SLOTS:
         return {this->_items_list[index]->chunk, this->_items_list[index]->size};
     }
 
-    QImage::Format bpp_to_QFormat(BitsPerPixel bpp, bool alpha) {
+    static QImage::Format bpp_to_QFormat(BitsPerPixel bpp, bool alpha)
+    {
         QImage::Format format(QImage::Format_RGB16);
 
         if (alpha) {

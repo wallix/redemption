@@ -1456,9 +1456,9 @@ void Drawable::horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_
     }
 }
 
-void Drawable::set_row(size_t rownum, const uint8_t * data, size_t data_length)
+void Drawable::set_row(size_t rownum, const_bytes_view data)
 {
-    memcpy(this->impl_.row_data(rownum), data, std::min(this->rowsize(), data_length));
+    memcpy(this->impl_.row_data(rownum), data.data(), std::min(this->rowsize(), data.size()));
 }
 
 void Drawable::trace_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave)

@@ -49,7 +49,7 @@ public:
 
     //  set distant clipboard data
     virtual void setClipboard_text(std::string const& str) = 0;
-    virtual void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) = 0;
+    virtual void setClipboard_image(ConstImageDataView const& image) = 0;
     virtual void setClipboard_files(std::string const& name) = 0;
     virtual void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) = 0;
 

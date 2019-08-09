@@ -736,10 +736,14 @@ namespace custom_formats
     void ClientCLIPRDRChannel::send_imageBuffer_to_clipboard() {
 
         this->clientIOClipboardAPI->set_local_clipboard_stream(false);
-        this->clientIOClipboardAPI->setClipboard_image(this->_cb_buffers.data.get(),
-                                                       this->_cb_buffers.pic_width,
-                                                       this->_cb_buffers.pic_height,
-                                                       checked_int(this->_cb_buffers.pic_bpp));
+        this->clientIOClipboardAPI->setClipboard_image(ConstImageDataView(
+            this->_cb_buffers.data.get(),
+            this->_cb_buffers.pic_width,
+            this->_cb_buffers.pic_height,
+            this->_cb_buffers.pic_width,
+            BitsPerPixel(checked_int(this->_cb_buffers.pic_bpp)),
+            ConstImageDataView::Storage::BottomToTop
+        ));
         this->clientIOClipboardAPI->set_local_clipboard_stream(true);
 
         this->empty_buffer();
