@@ -174,6 +174,7 @@
     fv(ERR_NLA_AUTHENTICATION_FAILED, 23000)                        \
     f(ERR_CREDSSP_NTLM_INIT_FAILED)                                 \
     f(ERR_CREDSSP_KERBEROS_INIT_FAILED)                             \
+    f(ERR_CREDSSP_TS_REQUEST)                                       \
                                                                     \
     /* Persistent Disk Bitmap Cache. */                             \
     fv(ERR_PDBC_LOAD, 24100)                                        \

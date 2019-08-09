@@ -928,8 +928,7 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6)
     if(!BER::read_sequence_tag(stream, length) ||
        !BER::read_contextual_tag(stream, 0, length, true) ||
        !BER::read_integer(stream, remote_version)) {
-        // throw error
-        return self;
+        throw Error(ERR_CREDSSP_TS_REQUEST);
     }
     LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u", remote_version);
 
@@ -947,8 +946,7 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6)
             !BER::read_contextual_tag(stream, 0, length, true) || /* [0] negoToken */
             !BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
             !stream.in_check_rem(length)) {
-            // throw error
-            return self;
+            throw Error(ERR_CREDSSP_TS_REQUEST);
         }
 
         self.negoTokens = std::vector<uint8_t>(length);
@@ -960,8 +958,7 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6)
         // LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
         if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
            !stream.in_check_rem(length)) {
-            // throw error
-            return self;
+            throw Error(ERR_CREDSSP_TS_REQUEST);
         }
 
         self.authInfo = std::vector<uint8_t>(length);
@@ -973,8 +970,7 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6)
         // LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
         if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
            !stream.in_check_rem(length)) {
-            // throw error
-            return self;
+            throw Error(ERR_CREDSSP_TS_REQUEST);
         }
         self.pubKeyAuth = std::vector<uint8_t>(length);
         stream.in_copy_bytes(self.pubKeyAuth.data(), length);
@@ -985,8 +981,7 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6)
         && BER::read_contextual_tag(stream, 4, length, true)) {
         LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
         if (!BER::read_integer(stream, self.error_code)) {
-            // throw error
-            return self;
+            throw Error(ERR_CREDSSP_TS_REQUEST);
         }
         LOG(LOG_INFO, "Credssp TSCredentials::recv() "
             "ErrorCode = %x, Facility = %x, Code = %x",
@@ -997,8 +992,7 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6)
     }
     /* [5] clientNonce (OCTET STRING) */
     if (self.clientNonce.ber_read(remote_version, length, stream) == -1){
-        // throw error
-        return self;
+        throw Error(ERR_CREDSSP_TS_REQUEST);
     }
     // return 0;
     return self;
