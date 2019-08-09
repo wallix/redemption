@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "cxx/diagnostic.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/WMF/MetaFileFormat.hpp"
 #include "core/channel_list.hpp"
@@ -37,8 +38,6 @@
 #include <vector>
 
 
-
-// TODO copy from /browser_client_JS/src/red_channels/clipboard.cpp
 namespace Cliprdr
 {
     enum class IsLongFormat : bool;
@@ -90,9 +89,12 @@ namespace Cliprdr
             }
         };
 
-#define REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(var_name, format_name) \
-    inline constexpr ::Cliprdr::formats::Names var_name { \
-        format_name ""_av, format_name ""_utf16_le};
+#define REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(var_name, format_name)         \
+    REDEMPTION_DIAGNOSTIC_PUSH /* for emscripten */                       \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-variable-declarations") \
+    inline constexpr ::Cliprdr::formats::Names var_name {                 \
+        format_name ""_av, format_name ""_utf16_le};                      \
+    REDEMPTION_DIAGNOSTIC_POP
 
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(file_group_descriptor_w, "FileGroupDescriptorW");
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(preferred_drop_effect, "Preferred DropEffect");
@@ -2567,7 +2569,7 @@ namespace Cliprdr
         for (; first != end; ++first) {
             auto&& format = *first;
 
-            if (!::is_ASCII_string(format.utf8_name())) {
+            if (!is_ASCII_string(format.utf8_name())) {
                 return false;
             }
 
@@ -2578,6 +2580,66 @@ namespace Cliprdr
         }
 
         return (max_format_name_len_in_char >= (32 /* formatName(32) */ / sizeof(uint16_t)));
+    }
+
+    template<class Format>
+    bool format_list_serialize_long_format(OutStream& out_stream, Format const& format)
+    {
+        if (!out_stream.has_room(min_long_format_name_data_length)) {
+            return false;
+        }
+
+        out_stream.out_uint32_le(format.format_id());
+
+        auto data = out_stream.get_tailroom_bytes();
+        auto len = UTF8toUTF16(format.utf8_name(), data);
+
+        if (len + 2 > data.size())
+        {
+            out_stream.rewind(out_stream.get_offset() - 4u);
+            return false;
+        }
+
+        out_stream.out_skip_bytes(len);
+        out_stream.out_uint16_le(0);
+
+        return true;
+    }
+
+    template<class Format>
+    bool format_list_serialize_ascii_format(OutStream& out_stream, Format const& format)
+    {
+        if (!out_stream.has_room(short_format_name_data_length)) {
+            return false;
+        }
+
+        out_stream.out_uint32_le(format.format_id());
+
+        auto const& name = format.utf8_name();
+        auto len = std::min(name.size(), Cliprdr::short_format_name_length - 1u);
+
+        out_stream.out_copy_bytes({name.data(), len});
+        out_stream.out_clear_bytes(Cliprdr::short_format_name_length - len);
+
+        return true;
+    }
+
+    template<class Format>
+    bool format_list_serialize_unicode_format(OutStream& out_stream, Format const& format)
+    {
+        if (!out_stream.has_room(short_format_name_data_length)) {
+            return false;
+        }
+
+        out_stream.out_uint32_le(format.format_id());
+
+        auto data = out_stream.get_tailroom_bytes();
+        data = data.first(std::min(Cliprdr::short_format_name_length - 2u, data.size()));
+
+        data = out_stream.out_skip_bytes(UTF8toUTF16(format.utf8_name(), data));
+        out_stream.out_clear_bytes(Cliprdr::short_format_name_length - data.size());
+
+        return true;
     }
 
     template<class Fw, class Senti>
@@ -2596,56 +2658,24 @@ namespace Cliprdr
 
         if (bool(is_long_format))
         {
-            for (; out_stream.has_room(min_long_format_name_data_length) && first != end; ++first)
+            while (first != end && format_list_serialize_long_format(out_stream, *first))
             {
-                auto&& format = *first;
-
-                out_stream.out_uint32_le(format.format_id());
-
-                auto data = out_stream.get_tailroom_bytes();
-                auto len = UTF8toUTF16(format.utf8_name(), data);
-
-                if (len + 2 > data.size())
-                {
-                    out_stream.rewind(out_stream.get_offset() - 4u);
-                    break;
-                }
-
-                out_stream.out_skip_bytes(len);
-                out_stream.out_uint16_le(0);
+                ++first;
             }
         }
-        else if (!will_be_sent_in_ASCII_8(first, end))
+        else if (will_be_sent_in_ASCII_8(first, end))
         {
-            // Unicode
-            for (; out_stream.has_room(short_format_name_data_length) && first != end; ++first)
+            ascii_flag = RDPECLIP::CB_ASCII_NAMES;
+            while (first != end && format_list_serialize_ascii_format(out_stream, *first))
             {
-                auto&& format = *first;
-
-                out_stream.out_uint32_le(format.format_id());
-
-                auto data = out_stream.get_tailroom_bytes();
-                data = data.first(std::min(Cliprdr::short_format_name_length - 2u, data.size()));
-
-                data = out_stream.out_skip_bytes(UTF8toUTF16(format.utf8_name(), data));
-                out_stream.out_clear_bytes(Cliprdr::short_format_name_length - data.size());
+                ++first;
             }
         }
         else
         {
-            // ASCII
-            ascii_flag = RDPECLIP::CB_ASCII_NAMES;
-            for (; out_stream.has_room(short_format_name_data_length) && first != end; ++first)
+            while (first != end && format_list_serialize_unicode_format(out_stream, *first))
             {
-                auto&& format = *first;
-
-                out_stream.out_uint32_le(format.format_id());
-
-                auto const& name = format.utf8_name();
-                auto len = std::min(name.size(), Cliprdr::short_format_name_length - 1u);
-
-                out_stream.out_copy_bytes({name.data(), len});
-                out_stream.out_clear_bytes(Cliprdr::short_format_name_length - len);
+                ++first;
             }
         }
 
