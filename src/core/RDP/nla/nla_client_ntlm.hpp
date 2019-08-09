@@ -189,9 +189,8 @@ public:
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
-                InStream in_stream(ts_request.negoTokens);
-                RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
-                this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
+                this->CHALLENGE_MESSAGE = recvNTLMChallengeMessage(ts_request.negoTokens);
+                this->SavedChallengeMessage = this->CHALLENGE_MESSAGE.raw_bytes;
 
                 this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
                 

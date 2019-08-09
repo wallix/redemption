@@ -299,8 +299,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     hexdump_c(ts_req2.negoTokens.data(), ts_req2.negoTokens.size());
     // ChallengeMsg.recv(ts_req2.negoTokens);
 
-    InStream token({ts_req2.negoTokens.data(), ts_req2.negoTokens.size()});
-    RecvNTLMChallengeMessage(token, ChallengeMsg);
+    ChallengeMsg = recvNTLMChallengeMessage(ts_req2.negoTokens);
 
     RED_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
     //ChallengeMsg.negoFlags.log();
@@ -337,8 +336,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
-    InStream in_tosend(tosend.get_bytes());
-    RecvNTLMChallengeMessage(in_tosend, ChallengeMsgDuplicate);
+    ChallengeMsgDuplicate = recvNTLMChallengeMessage(tosend.get_bytes());
 
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
     // ChallengeMsgDuplicate.negoFlags.print();
@@ -1660,9 +1658,8 @@ public:
 
     SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Read Challenge");
-        InStream in_stream(input_buffer);
-        RecvNTLMChallengeMessage(in_stream, this->CHALLENGE_MESSAGE);
-        this->SavedChallengeMessage.assign(in_stream.get_consumed_bytes().data(),in_stream.get_consumed_bytes().data()+in_stream.get_offset());
+        this->CHALLENGE_MESSAGE = recvNTLMChallengeMessage(input_buffer);
+        this->SavedChallengeMessage = this->CHALLENGE_MESSAGE.raw_bytes;
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -2120,8 +2117,7 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
 
     context.NEGOTIATE_MESSAGE = recvNTLMNegotiateMessage(nego_string);
 
-    InStream s(challenge_string);
-    RecvNTLMChallengeMessage(s, context.CHALLENGE_MESSAGE);
+    context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(challenge_string);
 
     const uint8_t password[] = {
         // 0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
@@ -2292,9 +2288,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     };
 
     // Initialization
-    uint8_t server_to_client_buf[65535];
-    OutStream out_server_to_client(server_to_client_buf);
-
     bool result;
 
     // CLIENT BUILDS NEGOTIATE
@@ -2352,9 +2345,11 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     }
 
     // send CHALLENGE MESSAGE
+    uint8_t server_to_client_buf[65535];
+    OutStream out_server_to_client(server_to_client_buf);
+
     EmitNTLMChallengeMessage(out_server_to_client, server_context.CHALLENGE_MESSAGE);
-    InStream in_server_to_client(out_server_to_client.get_bytes());
-    RecvNTLMChallengeMessage(in_server_to_client, client_context.CHALLENGE_MESSAGE);
+    client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(out_server_to_client.get_bytes());
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
@@ -2453,8 +2448,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     };
 
     // Initialization
-    uint8_t server_to_client_buf[65535];
-    OutStream out_server_to_client(server_to_client_buf);
 
     // CLIENT BUILDS NEGOTIATE
     client_context.ntlm_client_build_negotiate();
@@ -2472,16 +2465,18 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     server_context.ntlm_server_build_challenge();
 
     // send CHALLENGE MESSAGE
+    uint8_t server_to_client_buf[65535];
+    OutStream out_server_to_client(server_to_client_buf);
+
     EmitNTLMChallengeMessage(out_server_to_client, server_context.CHALLENGE_MESSAGE);
     server_context.SavedChallengeMessage = std::vector<uint8_t>(out_server_to_client.get_offset());
     memcpy(server_context.SavedChallengeMessage.data(),
            out_server_to_client.get_data(), out_server_to_client.get_offset());
 
     InStream in_server_to_client(out_server_to_client.get_bytes());
-    RecvNTLMChallengeMessage(in_server_to_client, client_context.CHALLENGE_MESSAGE);
-    client_context.SavedChallengeMessage = std::vector<uint8_t>(in_server_to_client.get_offset());
-    memcpy(client_context.SavedChallengeMessage.data(),
-           in_server_to_client.get_data(), in_server_to_client.get_offset());
+    client_context.CHALLENGE_MESSAGE = recvNTLMChallengeMessage(out_server_to_client.get_bytes());
+    client_context.SavedChallengeMessage = client_context.CHALLENGE_MESSAGE.raw_bytes;
+
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
     client_context.ntlm_client_build_authenticate(make_array_view(password),

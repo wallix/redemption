@@ -1736,20 +1736,17 @@ struct NTLMv2_Response {
 //      irrespective of what character set was negotiated (section 2.2.2.1).
 
 
-class NTLMChallengeMessage
+struct NTLMChallengeMessage
 {
-friend void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & message);
-friend void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & self);
-
 public:
-    NtlmField TargetName;          /* 8 Bytes */
-    NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
+    NtlmField TargetName;               /* 8 Bytes */
+    NtlmNegotiateFlags negoFlags;       /* 4 Bytes */
     array_challenge serverChallenge;    /* 8 Bytes */
-    // uint64_t serverChallenge;
-    /* 8 Bytes reserved */
-    NtlmField TargetInfo;          /* 8 Bytes */
-    NtlmVersion version;           /* 8 Bytes */
-    NtlmAvPairList AvPairList; // used to build TargetInfo payload
+                                        /* 8 Bytes reserved */
+    NtlmField TargetInfo;               /* 8 Bytes */
+    NtlmVersion version;                /* 8 Bytes */
+    NtlmAvPairList AvPairList;          // used to build TargetInfo payload
+    std::vector<uint8_t> raw_bytes;
 };
 
 
@@ -1804,8 +1801,13 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         hexdump_d(stream.get_bytes());
 }
 
-inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & self)
+
+inline NTLMChallengeMessage recvNTLMChallengeMessage(cbytes_view av)
 {
+    InStream stream(av);
+    NTLMChallengeMessage self;
+    self.raw_bytes.assign(av.begin(),av.end());
+
     LOG(LOG_INFO, "NTLM Message Challenge Dump (Recv)");
     hexdump_d(stream.remaining_bytes());
 
@@ -1815,12 +1817,16 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
     uint8_t received_sig[sig_len];
     stream.in_copy_bytes(received_sig, sig_len);
     uint32_t type = stream.in_uint32_le();
-    if (type != NtlmChallenge){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
-    }
-    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
-        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
-    }
+    (void)type;
+
+    // Add Checks and throw Error if necessary
+
+//    if (type != NtlmChallenge){
+//        LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", type);
+//    }
+//    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
+//        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
+//    }
     
     uint16_t TargetName_len = stream.in_uint16_le();
     uint16_t TargetName_maxlen = stream.in_uint16_le();
@@ -1872,6 +1878,7 @@ inline void RecvNTLMChallengeMessage(InStream & stream, NTLMChallengeMessage & s
         auto v = in_stream.in_copy_bytes_as_vector(length);
         self.AvPairList.push_back({static_cast<NTLM_AV_ID>(id), v});
     }
+    return self;
 }
 
 // [MS-NLMP]
