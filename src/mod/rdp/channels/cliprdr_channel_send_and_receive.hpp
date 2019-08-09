@@ -558,11 +558,10 @@ struct ServerMonitorReadySendBack
             "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
                 "Send Format List PDU.");
 
-        Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
         StaticOutStream<256> list_stream;
         Cliprdr::format_list_serialize_with_header(
-            list_stream, Cliprdr::IsLongFormat(use_long_format_names), &format, &format+1);
+            list_stream, Cliprdr::IsLongFormat(use_long_format_names),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
         sender->operator()(
             list_stream.get_offset(),
@@ -599,7 +598,7 @@ struct FormatListReceive
             in_stream,
             Cliprdr::IsLongFormat(use_long_format),
             Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
-            [&](uint32_t format_id, Cliprdr::CharsetFormatName name) {
+            [&](uint32_t format_id, auto name) {
                 auto&& format_name = format_name_inventory.push(format_id, name);
                 auto&& utf8_name = format_name.utf8_name();
 
@@ -608,7 +607,7 @@ struct FormatListReceive
                     RDPECLIP::get_FormatId_name(format_id),
                     format_id, int(utf8_name.size()), utf8_name.data());
 
-                if (format_name.utf8_name_equal(Cliprdr::formats::file_group_descriptor_w.ascii_name)) {
+                if (ranges_equal(utf8_name, Cliprdr::formats::file_group_descriptor_w.ascii_name)) {
                     this->file_list_format_id = format_id;
                 }
             }

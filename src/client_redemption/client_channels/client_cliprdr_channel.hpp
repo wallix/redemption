@@ -127,8 +127,7 @@ public:
     const uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags;
 
-    struct FormatName;
-    std::vector<FormatName> format_list;
+    Cliprdr::FormatNameInventory format_name_list;
 
     size_t last_header_data_len = 0;
 
@@ -138,7 +137,7 @@ public:
     ~ClientCLIPRDRChannel();
 
 private:
-    void add_format(uint32_t ID, const std::string & name);
+    void add_format(uint32_t format_id, const_bytes_view name);
 
 public:
     void set_api(ClientIOClipboardAPI * clientIOClipboardAPI);

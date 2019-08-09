@@ -160,11 +160,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-    Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
     StaticOutStream<256> out_s;
     Cliprdr::format_list_serialize_with_header(
-        out_s, Cliprdr::IsLongFormat(true), &format, &format+1);
+        out_s, Cliprdr::IsLongFormat(true),
+        std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
     const size_t totalLength = out_s.get_offset();
 
@@ -467,13 +466,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     RED_CHECK_SMEM(front.msg, ""_av);
 
     {
-        Cliprdr::FormatNameRef format{file_group_id, file_group};
-
         StaticOutStream<1600> out;
         Cliprdr::format_list_serialize_with_header(
             out,
             Cliprdr::IsLongFormat(use_long_format),
-            &format, &format+1);
+            std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
 
         process_client_message(out.get_bytes());
     }

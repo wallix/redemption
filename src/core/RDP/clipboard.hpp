@@ -30,6 +30,7 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/overload.hpp"
 #include "utils/string_c.hpp"
+#include "utils/sugar/ranges.hpp"
 
 #include <cinttypes>
 #include <sstream>
@@ -73,11 +74,6 @@ namespace Cliprdr
     struct UnicodeName;
     struct AsciiName;
 
-    inline bool bytes_equals(const_bytes_view a, const_bytes_view b) noexcept
-    {
-        return a.size() == b.size() && 0 == memcmp(a.data(), b.data(), a.size());
-    }
-
     enum class Charset : bool
     {
         Ascii,
@@ -101,14 +97,6 @@ namespace Cliprdr
         : bytes(name)
         {}
 
-        // TODO
-        std::string to_string() const
-        {
-            char buf[256];
-            auto utf8_name = UTF16toUTF8_buf(bytes, make_array_view(buf));
-            return std::string(utf8_name.as_charp(), utf8_name.size());
-        }
-
         const_bytes_view bytes;
     };
 
@@ -117,12 +105,6 @@ namespace Cliprdr
         explicit AsciiName(const_bytes_view name) noexcept
         : bytes(name)
         {}
-
-        // TODO
-        std::string to_string() const
-        {
-            return std::string(bytes.as_charp(), bytes.size());
-        }
 
         const_bytes_view bytes;
     };
@@ -136,12 +118,12 @@ namespace Cliprdr
 
             bool same_as(UnicodeName const& unicode_name) const noexcept
             {
-                return bytes_equals(this->unicode_name, unicode_name.bytes);
+                return ranges_equal(this->unicode_name, unicode_name.bytes);
             }
 
             bool same_as(AsciiName const& ascii_name) const noexcept
             {
-                return bytes_equals(this->ascii_name, ascii_name.bytes);
+                return ranges_equal(this->ascii_name, ascii_name.bytes);
             }
         };
 
@@ -281,36 +263,74 @@ namespace Cliprdr
         }
     }
 
-    struct CharsetFormatName
+    struct FormatName
     {
-        Charset charset;
-        const_bytes_view bytes;
+        using FormatId = uint32_t;
 
-        CharsetFormatName(UnicodeName unicode_name) noexcept
-        : charset(Charset::Utf16)
-        , bytes(unicode_name.bytes)
+        FormatName(FormatId format_id, UnicodeName unicode_name) noexcept
+        : format_id_(format_id)
+        , len_(UTF16toUTF8_buf(unicode_name.bytes, make_array_view(this->utf8_buffer_)).size())
         {}
 
-        CharsetFormatName(AsciiName ascii_name) noexcept
-        : charset(Charset::Ascii)
-        , bytes(ascii_name.bytes)
-        {}
+        FormatName(FormatId format_id, AsciiName ascii_name) noexcept
+        : format_id_(format_id)
+        , len_(std::min(ascii_name.bytes.size(), std::size(this->utf8_buffer_)))
+        {
+            memcpy(this->utf8_buffer_, ascii_name.bytes.data(), this->len_);
+        }
+
+        FormatName(FormatName const& other) noexcept
+        : format_id_(other.format_id_)
+        , len_(other.len_)
+        {
+            memcpy(this->utf8_buffer_, other.utf8_buffer_, other.len_);
+        }
+
+        FormatName& operator=(FormatName const& other) noexcept
+        {
+            this->format_id_ = other.format_id_;
+            this->len_ = other.len_;
+            memcpy(this->utf8_buffer_, other.utf8_buffer_, other.len_);
+            return *this;
+        }
+
+        const_bytes_view utf8_name() const noexcept
+        {
+            return {this->utf8_buffer_, this->len_};
+        }
+
+        FormatId format_id() const noexcept
+        {
+            return this->format_id_;
+        }
+
+    private:
+        static constexpr size_t utf8_buffer_buf_len = 123;
+
+        FormatId format_id_;
+        // TODO static_vector<raw_buf_len>
+        uint8_t len_;
+        uint8_t utf8_buffer_[utf8_buffer_buf_len];
     };
 
     struct FormatNameInventory
     {
-        using FormatId = uint32_t;
-        struct FormatName;
+        using FormatId = FormatName::FormatId;
 
-        FormatName const& push(FormatId format_id, CharsetFormatName name)
+        FormatName const& push(FormatId format_id, UnicodeName unicode_name)
         {
-            return this->formats.emplace_back(format_id, name);
+            return this->formats.emplace_back(format_id, unicode_name);
+        }
+
+        FormatName const& push(FormatId format_id, AsciiName ascii_name)
+        {
+            return this->formats.emplace_back(format_id, ascii_name);
         }
 
         FormatName const* find(FormatId format_id) const noexcept
         {
             for (auto const& format : this->formats) {
-                if (format.format_id == format_id) {
+                if (format.format_id() == format_id) {
                     return &format;
                 }
             }
@@ -322,58 +342,15 @@ namespace Cliprdr
             this->formats.clear();
         }
 
-        struct FormatName
+        auto begin() const
         {
-            static constexpr size_t utf8_buffer_buf_len = 123;
+            return this->formats.begin();
+        }
 
-            uint32_t format_id;
-            // TODO static_vector<raw_buf_len>
-            uint8_t len;
-            uint8_t utf8_buffer[utf8_buffer_buf_len];
-
-            FormatName(FormatId format_id, CharsetFormatName name) noexcept
-            : format_id(format_id)
-            , len(std::min(name.bytes.size(), std::size(this->utf8_buffer)))
-            {
-                if (name.charset == Charset::Ascii)
-                {
-                    this->len = std::min(name.bytes.size(), std::size(this->utf8_buffer));
-                    memcpy(this->utf8_buffer, name.bytes.data(), this->len);
-                }
-                else
-                {
-                    this->len = UTF16toUTF8_buf(
-                        name.bytes, make_array_view(this->utf8_buffer)).size();
-                }
-            }
-
-            FormatName(FormatName const& other) noexcept
-            : format_id(other.format_id)
-            , len(other.len)
-            {
-                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
-            }
-
-            FormatName& operator=(FormatName const& other) noexcept
-            {
-                this->format_id = other.format_id;
-                this->len = other.len;
-                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
-                return *this;
-            }
-
-            const_bytes_view utf8_name() const noexcept
-            {
-                return {this->utf8_buffer, this->len};
-            }
-
-            bool utf8_name_equal(const_bytes_view utf8_name_compared) const noexcept
-            {
-                return utf8_name_compared.size() == this->len
-                    && 0 == strncasecmp(utf8_name_compared.as_charp(),
-                                        char_ptr_cast(this->utf8_buffer), this->len);
-            }
-        };
+        auto end() const
+        {
+            return this->formats.end();
+        }
 
     private:
         std::vector<FormatName> formats;

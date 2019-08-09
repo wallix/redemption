@@ -240,11 +240,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
         expected_log_metrics += "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 14 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{RDPECLIP::CF_METAFILEPICT, {}};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_METAFILEPICT, {}}});
 
         metrics.set_server_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -324,11 +323,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
         expected_log_metrics += "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{49562, RDPECLIP::FILEGROUPDESCRIPTORW};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
 
         metrics.set_server_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -426,11 +424,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
         expected_log_metrics += "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 14 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
         metrics.set_server_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -641,11 +638,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
     { // FORMAT LIST INITIALISATION
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{49562, RDPECLIP::FILEGROUPDESCRIPTORW};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -660,11 +656,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
         expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 68 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{RDPECLIP::CF_METAFILEPICT, {}};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_METAFILEPICT, {}}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -744,11 +739,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
     {  // FORMAT LIST INITIALISATION
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{49562, RDPECLIP::FILEGROUPDESCRIPTORW};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -763,11 +757,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
         expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{49562, RDPECLIP::FILEGROUPDESCRIPTORW};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -863,11 +856,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
     {  // FORMAT LIST INITIALISATION
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{49562, RDPECLIP::FILEGROUPDESCRIPTORW};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562, RDPECLIP::FILEGROUPDESCRIPTORW}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -882,11 +874,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
         expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 68 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
 
-        Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
         StaticOutStream<1600> out_stream;
         Cliprdr::format_list_serialize_with_header(
-            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),

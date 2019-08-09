@@ -248,15 +248,13 @@ public:
 
                     // Format List PDU.
                     {
-                        Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
                         StaticOutStream<256> out_s;
                         Cliprdr::format_list_serialize_with_header(
                             out_s,
                             Cliprdr::IsLongFormat(this->cliprdr_channel
                                 ? this->cliprdr_channel->use_long_format_names()
                                 : false),
-                            &format, &format+1);
+                            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
                         InStream in_s(out_s.get_bytes());
                         const size_t totalLength = out_s.get_offset();
@@ -404,15 +402,13 @@ public:
                 self.delay_wainting_clipboard_response = true;
 
                 {
-                    Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
                     StaticOutStream<256> out_s;
                     Cliprdr::format_list_serialize_with_header(
                         out_s,
                         Cliprdr::IsLongFormat(self.cliprdr_channel
                             ? self.cliprdr_channel->use_long_format_names()
                             : false),
-                        &format, &format+1);
+                        std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
                     InStream in_s(out_s.get_bytes());
                     const size_t totalLength = out_s.get_offset();
@@ -570,14 +566,12 @@ public:
                     current_chunk_pos, current_chunk_size);
                 this->current_client_format_list_pdu_flags  = flags;
 
-                Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
                 StaticOutStream<256> out_s;
                 Cliprdr::format_list_serialize_with_header(
                     out_s,
                     Cliprdr::IsLongFormat(this->cliprdr_channel
                                        && this->cliprdr_channel->use_long_format_names()),
-                    &format, &format+1);
+                    std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
                 const size_t totalLength = out_s.get_offset();
 
@@ -688,15 +682,13 @@ private:
             return;
         }
 
-        Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
         StaticOutStream<256> out_s;
         Cliprdr::format_list_serialize_with_header(
             out_s,
             Cliprdr::IsLongFormat(this->cliprdr_channel
                 ? this->cliprdr_channel->use_long_format_names()
                 : false),
-            &format, &format+1);
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
         InStream in_s(out_s.get_bytes());
         const size_t totalLength = out_s.get_offset();

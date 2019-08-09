@@ -813,9 +813,10 @@ private:
                 bool const log_current_activity = (
                     !this->params.log_only_relevant_clipboard_activities
                  || !format_name
-                 || (
-                     !format_name->utf8_name_equal(Cliprdr::formats::file_group_descriptor_w.ascii_name)
-                  && !format_name->utf8_name_equal(Cliprdr::formats::preferred_drop_effect.ascii_name)
+                 || (!ranges_equal(utf8_format,
+                        Cliprdr::formats::file_group_descriptor_w.ascii_name)
+                  && !ranges_equal(utf8_format,
+                        Cliprdr::formats::preferred_drop_effect.ascii_name)
                 ));
 
                 auto format = str_concat(utf8_format.as_chars(),

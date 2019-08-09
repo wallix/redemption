@@ -61,11 +61,10 @@ struct CopyPasteFront : FakeFront
         switch (rp.msgType()) {
             case RDPECLIP::CB_MONITOR_READY:
             {
-                Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
                 StaticOutStream<1600> out_s;
                 Cliprdr::format_list_serialize_with_header(
-                    out_s, Cliprdr::IsLongFormat(false), &format, &format+1);
+                    out_s, Cliprdr::IsLongFormat(false),
+                    std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
                 InStream in_s(out_s.get_bytes());
                 this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
@@ -102,11 +101,10 @@ struct CopyPasteFront : FakeFront
     void copy(const char * s) {
         this->str = s;
 
-        Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
         StaticOutStream<1600> out_s;
         Cliprdr::format_list_serialize_with_header(
-            out_s, Cliprdr::IsLongFormat(false), &format, &format+1);
+            out_s, Cliprdr::IsLongFormat(false),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
         InStream in_s(out_s.get_bytes());
         this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);

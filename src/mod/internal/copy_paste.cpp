@@ -171,14 +171,12 @@ void CopyPaste::copy(const char * s, size_t n)
     this->has_clipboard_ = true;
     this->clipboard_str_.assign(s, n);
 
-    Cliprdr::FormatNameRef format{RDPECLIP::CF_TEXT, {}};
-
     StaticOutStream<256> out_s;
     Cliprdr::format_list_serialize_with_header(
         out_s,
         Cliprdr::IsLongFormat(this->client_use_long_format_names
                            && this->server_use_long_format_names),
-        &format, &format+1);
+        std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
     const size_t totalLength = out_s.get_offset();
 

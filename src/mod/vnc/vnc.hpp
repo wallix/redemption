@@ -2419,16 +2419,15 @@ private:
                 "mod_vnc::lib_clip_data: Sending Format List PDU (%u) to client.",
                 RDPECLIP::CB_FORMAT_LIST);
 
-            // TODO: very suspicious: if data is utf8 encoded then it is not 16 bits unicode text
-            Cliprdr::FormatNameRef format{
-                this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()
-                    ? RDPECLIP::CF_UNICODETEXT
-                    : RDPECLIP::CF_TEXT,
-                {}};
-
             StaticOutStream<256> out_s;
             Cliprdr::format_list_serialize_with_header(
-                out_s, Cliprdr::IsLongFormat(false), &format, &format+1);
+                out_s, Cliprdr::IsLongFormat(false),
+                // TODO: very suspicious: if data is utf8 encoded then it is not 16 bits unicode text
+                std::array{Cliprdr::FormatNameRef{
+                    this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()
+                        ? RDPECLIP::CF_UNICODETEXT
+                        : RDPECLIP::CF_TEXT,
+                    {}}});
 
             const size_t totalLength = out_s.get_offset();
             this->send_to_front_channel(channel_names::cliprdr,
@@ -2709,15 +2708,14 @@ private:
                                 "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST(%u) (preventive)",
                                 RDPECLIP::CB_FORMAT_LIST);
 
-                            Cliprdr::FormatNameRef format{
-                                this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT
-                                    ? RDPECLIP::CF_UNICODETEXT
-                                    : RDPECLIP::CF_TEXT,
-                                {}};
-
                             StaticOutStream<256> out_s;
                             Cliprdr::format_list_serialize_with_header(
-                                out_s, Cliprdr::IsLongFormat(false), &format, &format+1);
+                                out_s, Cliprdr::IsLongFormat(false),
+                                std::array{Cliprdr::FormatNameRef{
+                                    this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT
+                                        ? RDPECLIP::CF_UNICODETEXT
+                                        : RDPECLIP::CF_TEXT,
+                                {}}});
 
                             const size_t totalLength = out_s.get_offset();
                             this->send_to_front_channel(channel_names::cliprdr,

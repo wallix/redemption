@@ -36,15 +36,6 @@
 #include <sys/types.h>
 
 
-struct ClientCLIPRDRChannel::FormatName
-{
-    uint32_t _format_id;
-    std::string _utf8_name;
-
-    uint32_t format_id() const noexcept { return this->_format_id; }
-    const_bytes_view utf8_name() const noexcept { return this->_utf8_name; }
-};
-
 // [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension
 //
 //
@@ -167,9 +158,9 @@ struct ClientCLIPRDRChannel::FormatName
         this->empty_buffer();
     }
 
-    void ClientCLIPRDRChannel::add_format(uint32_t ID, const std::string & name) {
-        this->format_list.push_back(FormatName{ID, name});
-        this->formats_map.emplace(ID, name);
+    void ClientCLIPRDRChannel::add_format(uint32_t format_id, const_bytes_view name) {
+        this->format_name_list.push(format_id, Cliprdr::AsciiName{name});
+        this->formats_map.emplace(format_id, std::string(name.as_charp(), name.size()));
     }
 
 // MS-RDPECLIP
@@ -809,7 +800,7 @@ struct ClientCLIPRDRChannel::FormatName
             StaticOutStream<1600> out_stream;
             Cliprdr::format_list_serialize_with_header(
                 out_stream, Cliprdr::IsLongFormat(this->server_use_long_format_names),
-                this->format_list.begin(), this->format_list.end());
+                this->format_name_list);
 
             InStream chunk(out_stream.get_bytes());
 
@@ -843,13 +834,12 @@ struct ClientCLIPRDRChannel::FormatName
             Cliprdr::IsLongFormat(this->server_use_long_format_names),
             Cliprdr::IsAscii(msgFlags & RDPECLIP::CB_ASCII_NAMES),
             [&](uint32_t format_id, auto format_name) {
-                for (FormatName const & format_name_ : this->format_list) {
-                    if (format_name_.format_id() == format_id) {
-                        this->_requestedFormatId = format_id;
-                        this->_requestedFormatName = format_name.to_string();
-                        formatID = format_id;
-                        return false;
-                    }
+                if (auto* format_name_ = this->format_name_list.find(format_id)) {
+                    this->_requestedFormatId = format_id;
+                    auto utf8_name = format_name_->utf8_name();
+                    this->_requestedFormatName.assign(utf8_name.as_charp(), utf8_name.size());
+                    formatID = format_id;
+                    return false;
                 }
 
                 if (Cliprdr::formats::file_group_descriptor_w.same_as(format_name)) {

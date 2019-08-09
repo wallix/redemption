@@ -254,14 +254,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
     StaticOutStream<1600> stream;
     uint32_t client_file_list_format_id = 49263;
 
-    Cliprdr::FormatNameRef formats[]{
-        {RDPECLIP::CF_TEXT, {}},
-        {client_file_list_format_id, RDPECLIP::FILEGROUPDESCRIPTORW},
-    };
-
-    RED_CHECK(Cliprdr::format_list_serialize_with_header(
+    Cliprdr::format_list_serialize_with_header(
         stream, Cliprdr::IsLongFormat(use_long_format_name),
-        std::begin(formats), std::end(formats)));
+        std::array{
+            Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}},
+            Cliprdr::FormatNameRef{client_file_list_format_id, RDPECLIP::FILEGROUPDESCRIPTORW},
+        });
 
     InStream chunk(stream.get_bytes());
 
@@ -270,14 +268,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive)
 
     FormatListReceive received(use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::cliprdr);
 
-    Cliprdr::FormatNameInventory::FormatName const* format_name;
+    Cliprdr::FormatName const* format_name;
 
     RED_CHECK(received.file_list_format_id == client_file_list_format_id);
     RED_REQUIRE(!!(format_name = format_name_inventory.find(RDPECLIP::CF_TEXT)));
     RED_CHECK_SMEM(format_name->utf8_name(), ""_av);
     RED_REQUIRE(!!(format_name = format_name_inventory.find(client_file_list_format_id)));
     RED_CHECK_SMEM(format_name->utf8_name(), Cliprdr::formats::file_group_descriptor_w.ascii_name);
-    RED_CHECK(format_name->utf8_name_equal(Cliprdr::formats::file_group_descriptor_w.ascii_name));
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {

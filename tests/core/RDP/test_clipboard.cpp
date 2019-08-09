@@ -604,7 +604,8 @@ RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
                 RED_TEST_CONTEXT("idx format: " << (it-format_ref.begin())) {
                     RED_REQUIRE((it != format_ref.end()));
                     RED_CHECK(format_id == it->format_id());
-                    RED_CHECK_SMEM(name.to_string(), it->utf8_name());
+                    Cliprdr::FormatName format_name(0, name);
+                    RED_CHECK_SMEM(format_name.utf8_name(), it->utf8_name());
                     ++it;
                 }
             });
