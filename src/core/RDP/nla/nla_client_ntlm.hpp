@@ -194,9 +194,8 @@ public:
 
                 this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
                 
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Write Authenticate");
+                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
                 
-                // client method
                 // ntlmv2_compute_response_from_challenge generates :
                 // - timestamp
                 // - client challenge
@@ -204,59 +203,47 @@ public:
                 // - LmChallengeResponse
                 // all strings are in unicode utf16
 
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
                 array_md4 md4password = ::Md4(this->identity_Password);
                 auto userNameUppercase = ::UTF16_to_upper(this->identity_User);
                 array_md5 ResponseKeyNT = ::HmacMd5(md4password,userNameUppercase, this->identity_Domain);
-
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient NTOWFv2");
 
                 array_md4 md4password_b = ::Md4(this->identity_Password);
                 auto userNameUppercase_b = ::UTF16_to_upper(this->identity_User);
                 array_md5 ResponseKeyLM = ::HmacMd5(md4password_b,userNameUppercase_b, this->identity_Domain);
 
-                // struct NTLMv2_Client_Challenge = temp
-                // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
-                // Z(n) = { 0x00, ... , 0x00 } n times
+                // NTLMv2_Client_Challenge = { 0x01, 0x01, Zero(6), Time, ClientChallenge, Zero(4), ServerName , Zero(4) }
+                // Zero(n) = { 0x00, ... , 0x00 } n times
                 // ServerName = AvPairs received in Challenge message
-                auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
-                // BStream AvPairsStream;
-                // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
 
                 std::vector<uint8_t> temp;
                 for (auto x: {1, 1, 0, 0, 0, 0, 0, 0}){
                     temp.push_back(x);
                 }
 
-                // compute ClientChallenge (nonce(8))
-                // /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-
-                // compute ClientTimeStamp
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");
 
+                // compute ClientTimeStamp
                 const timeval tv = this->timeobj.get_time();
                 push_back_array(temp, out_uint32_le(tv.tv_usec));
                 push_back_array(temp, out_uint32_le(tv.tv_sec));
 
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge");
+                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Generate Client Challenge nonce(8)");
+                // ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
                 array_challenge ClientChallenge;
                 this->rand.random(ClientChallenge.data(), 8);
                 push_back_array(temp, {ClientChallenge.data(), 8});
                 push_back_array(temp, out_uint32_le(0));
-                push_back_array(temp, {AvPairsStream.data(), AvPairsStream.size()});
+                push_back_array(temp, this->CHALLENGE_MESSAGE.TargetInfo.buffer);
                 push_back_array(temp, out_uint32_le(0));
                 // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain), Concat(ServerChallenge, temp))
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
 
                 array_challenge ServerChallenge = this->CHALLENGE_MESSAGE.serverChallenge;
-
                 array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,temp);
 
 
                 // NtChallengeResponse = Concat(NtProofStr, temp)
-
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtChallengeResponse");
                 auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
                 // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
@@ -304,7 +291,6 @@ public:
 
                 this->SendRc4Seal.set_key(this->ClientSealingKey);
                 
-
                 uint32_t flags = set_negotiate_flags(
                                     this->NTLMv2, 
                                     this->UseMIC, 
