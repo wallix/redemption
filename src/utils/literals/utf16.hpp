@@ -29,31 +29,22 @@ Author(s): Jonathan Poelen
 
 namespace detail
 {
-    template<std::size_t... I, class F>
-    constexpr decltype(auto) apply(std::integer_sequence<std::size_t, I...>, F&& f)
+    template<class C, C... cs, std::size_t... ints>
+    constexpr decltype(auto) utf16_le_impl(std::integer_sequence<std::size_t, ints...>)
     {
-        return static_cast<F&&>(f)(std::integral_constant<std::size_t, I>{}...);
+        constexpr C a[]{cs...};
+        return array_view<C const>{
+            jln::string_c<((ints&1) ? '\0' : a[ints/2])..., '\0'>::value,
+            sizeof...(ints)
+        };
     }
 }
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
 template<class C, C... cs>
-constexpr array_view_const_char const operator "" _utf16_le() noexcept
+constexpr array_view<C const> const operator "" _utf16_le() noexcept
 {
-    constexpr auto unicode = [&]{
-        std::array<uint8_t, sizeof...(cs) * 2> a{};
-        auto p = a.data();
-        for (char c : {cs...})
-        {
-            *p++ = c;
-            *p++ = 0;
-        }
-        return a;
-    }();
-
-    return detail::apply(std::make_index_sequence<unicode.size()>{}, [&](auto... i){
-        return array_view_const_char{jln::string_c<unicode[i.value]...>::value, sizeof...(i)};
-    });
+    return detail::utf16_le_impl<C, cs...>(std::make_index_sequence<sizeof...(cs) * 2>{});
 }
 REDEMPTION_DIAGNOSTIC_POP
