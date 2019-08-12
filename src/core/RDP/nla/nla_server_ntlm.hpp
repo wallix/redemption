@@ -62,6 +62,7 @@ class rdpCredsspServerNTLM final
     TSCredentials ts_credentials;
 
     TSRequest ts_request = {6}; // Credssp Version 6 Supported
+    uint32_t error_code = 0;
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
 
@@ -199,6 +200,7 @@ public:
         , set_password_cb(set_password_cb)
         , extra_message(extra_message)
         , lang(lang)
+        , error_code(0)
         , verbose(verbose)
     {
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
@@ -238,7 +240,7 @@ public:
 
                 if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
                     /* receive authentication token */
-                    this->ts_request = recvTSRequest(in_stream, 6);
+                    this->ts_request = recvTSRequest(in_stream, this->error_code, 6);
                 }
 
                 if (this->ts_request.negoTokens.size() < 1) {
@@ -659,13 +661,13 @@ public:
                     return credssp::State::Err;
                 }
 
-                emitTSRequest(out_stream, this->ts_request);
+                emitTSRequest(out_stream, this->ts_request, this->error_code);
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
                 this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.clear();
                 this->ts_request.authInfo.clear();
                 this->ts_request.clientNonce.reset();
-                this->ts_request.error_code = 0;
+                this->error_code = 0;
 
                 if (status != SEC_I_CONTINUE_NEEDED) {
                     if (status != SEC_E_OK) {
@@ -681,7 +683,7 @@ public:
             case ServerAuthenticateData::Final:
             {
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
-                this->ts_request = recvTSRequest(in_stream, 6);
+                this->ts_request = recvTSRequest(in_stream, this->error_code, 6);
                 if (this->ts_request.authInfo.size() < 1) {
                     LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);

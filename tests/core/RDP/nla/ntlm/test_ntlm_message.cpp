@@ -277,7 +277,8 @@ RED_AUTO_TEST_CASE(TestChallenge)
     };
 
     InStream in_s(packet2);
-    TSRequest ts_req2 = recvTSRequest(in_s, 3);
+    uint32_t error_code = 0;
+    TSRequest ts_req2 = recvTSRequest(in_s, error_code, 3);
 
     RED_CHECK_EQUAL(ts_req2.version, 3);
 
@@ -286,9 +287,11 @@ RED_AUTO_TEST_CASE(TestChallenge)
     RED_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
 
     StaticOutStream<65536> to_send2;
+    uint32_t error_code2= 0;
+
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0);
-    emitTSRequest(to_send2, ts_req2);
+    emitTSRequest(to_send2, ts_req2, error_code2);
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
@@ -368,7 +371,8 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     };
 
     InStream in_s(packet);
-    TSRequest ts_req = recvTSRequest(in_s, 3);
+    uint32_t error_code = 0;
+    TSRequest ts_req = recvTSRequest(in_s, error_code, 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 
@@ -379,7 +383,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     StaticOutStream<65536> to_send;
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0);
-    emitTSRequest(to_send, ts_req);
+    emitTSRequest(to_send, ts_req, error_code);
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
@@ -617,7 +621,8 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     };
 
     InStream in_s(packet3);
-    TSRequest ts_req3 = recvTSRequest(in_s, 3);
+    uint32_t error_code = 0;
+    TSRequest ts_req3 = recvTSRequest(in_s, error_code,3);
 
     RED_CHECK_EQUAL(ts_req3.version, 3);
 
@@ -626,9 +631,10 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     RED_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
 
     StaticOutStream<65536> to_send3;
+    uint32_t error_code3= 0;
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0);
-    emitTSRequest(to_send3, ts_req3);
+    emitTSRequest(to_send3, ts_req3, error_code3);
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 

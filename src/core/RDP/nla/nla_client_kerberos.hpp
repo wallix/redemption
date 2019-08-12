@@ -42,6 +42,7 @@ private:
 
     TSCredentials ts_credentials;
     TSRequest ts_request;
+        uint32_t error_code = 0;
 
     ClientNonce SavedClientNonce;
 
@@ -495,7 +496,7 @@ private:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
         StaticOutStream<65536> ts_request_emit;
-        emitTSRequest(ts_request_emit, this->ts_request);
+        emitTSRequest(ts_request_emit, this->ts_request, this->error_code);
         this->trans.send(ts_request_emit.get_bytes());
     }
 
@@ -624,7 +625,6 @@ private:
         this->ts_request.pubKeyAuth.clear();
         this->ts_request.authInfo.clear();
         this->ts_request.clientNonce.reset();
-        this->ts_request.error_code = 0;
     }
 
     enum class Res : bool { Err, Ok };
@@ -705,7 +705,7 @@ private:
 
     Res sm_credssp_client_authenticate_recv(InStream & in_stream)
     {
-        this->ts_request = recvTSRequest(in_stream, 6);
+        this->ts_request = recvTSRequest(in_stream, this->error_code, 6);
 
         // #ifdef WITH_DEBUG_CREDSSP
         // LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
@@ -722,7 +722,7 @@ private:
         /* Encrypted Public Key +1 */
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
-        this->ts_request = recvTSRequest(in_stream, 6);
+        this->ts_request = recvTSRequest(in_stream, this->error_code, 6);
 
         /* Verify Server Public Key Echo */
 

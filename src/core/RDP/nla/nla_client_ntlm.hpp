@@ -159,7 +159,8 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
         TSRequest ts_request(6);
         ts_request.negoTokens = NegotiateMessageVector;
-        emitTSRequest(ts_request_emit, ts_request);
+        uint32_t error_code = 0;
+        emitTSRequest(ts_request_emit, ts_request, error_code);
 
         this->SavedNegotiateMessage = std::move(NegotiateMessageVector);
 
@@ -175,7 +176,8 @@ public:
         {
             case Loop:
             {
-                TSRequest ts_request = recvTSRequest(in_stream, 6);
+                uint32_t error_code = 0;
+                TSRequest ts_request = recvTSRequest(in_stream, error_code);
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
                 /*
@@ -382,7 +384,7 @@ public:
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::send");
-                emitTSRequest(ts_request_emit, ts_request);
+                emitTSRequest(ts_request_emit, ts_request, error_code);
 
                 this->client_auth_data_state = Final;
                 return credssp::State::Cont;
@@ -392,7 +394,8 @@ public:
                 /* Encrypted Public Key +1 */
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
-                TSRequest ts_request = recvTSRequest(in_stream);
+                uint32_t error_code = 0;
+                TSRequest ts_request = recvTSRequest(in_stream, error_code);
 
                 if (ts_request.pubKeyAuth.size() < cbMaxSignature) {
                     // Provided Password is probably incorrect
@@ -480,10 +483,9 @@ public:
                     
                     ts_request.negoTokens.clear();
                     ts_request.pubKeyAuth.clear();
-                    ts_request.error_code = 0;
                     ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
                     ts_request.clientNonce = this->SavedClientNonce;
-                    emitTSRequest(ts_request_emit, ts_request);
+                    emitTSRequest(ts_request_emit, ts_request, error_code);
                 }
                 this->client_auth_data_state = Start;
                 return credssp::State::Finish;

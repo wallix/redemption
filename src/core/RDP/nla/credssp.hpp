@@ -822,12 +822,6 @@ struct ClientNonce {
 namespace CredSSP {
 
 
-    inline int sizeof_nego_token(int length) {
-        length = BER::sizeof_octet_string(length);
-        length += BER::sizeof_contextual_tag(length);
-        return length;
-    }
-
     inline int sizeof_auth_info(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
@@ -861,37 +855,24 @@ struct TSRequest final {
     std::vector<uint8_t> pubKeyAuth;
     // BStream pubKeyAuth;
     /* [4] errorCode (INTEGER OPTIONAL) */
-    uint32_t error_code{0};
+//    uint32_t error_code{0};
     /* [5] clientNonce (OCTET STRING OPTIONAL) */
     ClientNonce clientNonce;
 
-    TSRequest(uint32_t version = 6)
-        : version(version)
-        , use_version(this->version)
-        , error_code(0)
+    TSRequest(uint32_t version = 6): version(version), use_version(this->version)
+//    , error_code(0)
     {
-    }
-
-    int ber_sizeof(int length) {
-        length += BER::sizeof_integer(this->version);
-        length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->version));
-        if (this->version >= 3
-            && this->version != 5
-            && this->error_code != 0) {
-            length += BER::sizeof_integer(this->error_code);
-            length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->error_code));
-        }
-        return length;
     }
 };
 
 
 
-inline void emitTSRequest(OutStream & stream, TSRequest & self)
+inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_code)
 {
-    int nego_tokens_length = 0;
+    int nego_tokens_length = self.negoTokens.size();
     if (self.negoTokens.size() > 0){
-        nego_tokens_length = CredSSP::sizeof_nego_token(self.negoTokens.size());
+        nego_tokens_length = BER::sizeof_octet_string(nego_tokens_length);
+        nego_tokens_length += BER::sizeof_contextual_tag(nego_tokens_length);
         nego_tokens_length += BER::sizeof_sequence_tag(nego_tokens_length);
         nego_tokens_length += BER::sizeof_sequence_tag(nego_tokens_length);
         nego_tokens_length += BER::sizeof_contextual_tag(nego_tokens_length);
@@ -912,7 +893,7 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self)
     int client_nonce_length = self.clientNonce.ber_length(self.use_version);
 
     if ((self.version == 3 || self.version == 4 || self.version >= 6)
-    && self.error_code != 0) {
+    && error_code != 0) {
         nego_tokens_length = 0;
         pub_key_auth_length = 0;
         auth_info_length = 0;
@@ -924,9 +905,9 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self)
     ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(self.version));
     if (self.version >= 3
         && self.version != 5
-        && self.error_code != 0) {
-        ts_request_length += BER::sizeof_integer(self.error_code);
-        ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(self.error_code));
+        && error_code != 0) {
+        ts_request_length += BER::sizeof_integer(error_code);
+        ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(error_code));
     }
 
     /* TSRequest */
@@ -972,17 +953,18 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self)
     /* [4] errorCode (INTEGER) */
     if (self.version >= 3
         && self.version != 5
-        && self.error_code != 0) {
+        && error_code != 0) {
         LOG(LOG_INFO, "Credssp: TSCredentials::emit() errorCode");
-        BER::write_contextual_tag(stream, 0, BER::sizeof_integer(self.error_code), true);
-        BER::write_integer(stream, self.error_code);
+        BER::write_contextual_tag(stream, 0, BER::sizeof_integer(error_code), true);
+        BER::write_integer(stream, error_code);
     }
 
     /* [5] clientNonce (OCTET STRING) */
     self.clientNonce.ber_write(self.version, stream);
 }
 
-inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6) 
+// TODO: use exceptions instead of error_code for returning errors
+inline TSRequest recvTSRequest(InStream & stream, uint32_t & error_code, uint32_t version = 6) 
 {
     TSRequest self(version);
     int length;
@@ -1044,14 +1026,14 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6)
         && remote_version != 5
         && BER::read_contextual_tag(stream, 4, length, true)) {
         LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
-        if (!BER::read_integer(stream, self.error_code)) {
+        if (!BER::read_integer(stream, error_code)) {
             throw Error(ERR_CREDSSP_TS_REQUEST);
         }
         LOG(LOG_INFO, "Credssp TSCredentials::recv() "
             "ErrorCode = %x, Facility = %x, Code = %x",
-            self.error_code,
-            (self.error_code >> 16) & 0x7FF,
-            (self.error_code & 0xFFFF)
+            error_code,
+            (error_code >> 16) & 0x7FF,
+            (error_code & 0xFFFF)
         );
     }
     /* [5] clientNonce (OCTET STRING) */

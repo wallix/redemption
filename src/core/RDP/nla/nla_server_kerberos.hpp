@@ -42,6 +42,7 @@ class rdpCredsspServerKerberos final
     TSCredentials ts_credentials;
 
     TSRequest ts_request = {6}; // Credssp Version 6 Supported
+    uint32_t error_code = 0;
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
 
@@ -625,7 +626,6 @@ class rdpCredsspServerKerberos final
         this->ts_request.pubKeyAuth.clear();
         this->ts_request.authInfo.clear();
         this->ts_request.clientNonce.reset();
-        this->ts_request.error_code = 0;
     }
 
 public:
@@ -845,7 +845,7 @@ private:
 
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
-            this->ts_request = recvTSRequest(in_stream, 6);
+            this->ts_request = recvTSRequest(in_stream, this->error_code, 6);
         }
 
         if (this->ts_request.negoTokens.size() < 1) {
@@ -894,7 +894,8 @@ private:
             return Res::Err;
         }
 
-        emitTSRequest(out_stream, this->ts_request);
+        uint32_t error_code = 0;
+        emitTSRequest(out_stream, this->ts_request, error_code);
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {
@@ -912,7 +913,7 @@ private:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
         /* Receive encrypted credentials */
-        this->ts_request = recvTSRequest(in_stream, 6);
+        this->ts_request = recvTSRequest(in_stream, this->error_code, 6);
 
         SEC_STATUS status = this->credssp_decrypt_ts_credentials();
 

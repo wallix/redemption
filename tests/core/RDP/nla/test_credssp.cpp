@@ -154,7 +154,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     };
 
     InStream in_s(packet);
-    TSRequest ts_req = recvTSRequest(in_s, 3);
+    uint32_t error_code = 0;
+    TSRequest ts_req = recvTSRequest(in_s, error_code, 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 
@@ -164,7 +165,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send;
 
-    emitTSRequest(to_send, ts_req);
+    emitTSRequest(to_send, ts_req, error_code);
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
@@ -194,7 +195,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     };
 
     in_s = InStream(packet2);
-    TSRequest ts_req2 = recvTSRequest(in_s, 3);
+    uint32_t error_code2 = 0;
+    TSRequest ts_req2 = recvTSRequest(in_s, error_code2, 3);
 
     RED_CHECK_EQUAL(ts_req2.version, 3);
 
@@ -204,7 +206,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send2;
 
-    emitTSRequest(to_send2, ts_req2);
+    emitTSRequest(to_send2, ts_req2, error_code2);
     
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
@@ -288,8 +290,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     };
 
     in_s = InStream(packet3);
-
-    TSRequest ts_req3 = recvTSRequest(in_s, 3);
+    uint32_t error_code3 = 0;
+    TSRequest ts_req3 = recvTSRequest(in_s, error_code3, 3);
 
     RED_CHECK_EQUAL(ts_req3.version, 3);
 
@@ -299,7 +301,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send3;
 
-    emitTSRequest(to_send3, ts_req3);
+    emitTSRequest(to_send3, ts_req3, error_code3);
 
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
@@ -349,7 +351,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     };
 
     in_s = InStream(packet4);
-    TSRequest ts_req4 = recvTSRequest(in_s, 3);
+    uint32_t error_code4 = 0;
+    TSRequest ts_req4 = recvTSRequest(in_s, error_code4, 3);
 
     RED_CHECK_EQUAL(ts_req4.version, 3);
 
@@ -359,7 +362,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send4;
 
-    emitTSRequest(to_send4, ts_req4);
+    emitTSRequest(to_send4, ts_req4, error_code4);
 
     RED_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
 
@@ -399,7 +402,9 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 //    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
 
     in_s = InStream(packet5);
-    TSRequest ts_req5 = recvTSRequest(in_s, 3);
+    uint32_t error_code5 = 0;
+
+    TSRequest ts_req5 = recvTSRequest(in_s, error_code5, 3);
 
     RED_CHECK_EQUAL(ts_req5.version, 3);
 
@@ -409,7 +414,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     StaticOutStream<65536> to_send5;
 
-    emitTSRequest(to_send5, ts_req5);
+    emitTSRequest(to_send5, ts_req5, error_code5);
 
     RED_CHECK_EQUAL(to_send5.get_offset(), 0x5c);
 
