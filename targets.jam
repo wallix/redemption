@@ -4359,7 +4359,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -4376,7 +4375,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o

@@ -66,9 +66,7 @@
 #include "mod/vnc/encoder/rre.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
 #include "mod/vnc/newline_convert.hpp"
-#include "mod/vnc/vnc_params.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
-#include "configs/config.hpp"
 
 
 #ifndef __EMSCRIPTEN__
@@ -218,8 +216,6 @@ private:
     SessionReactor::GraphicFdPtr fd_event;
     SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
 
-    ModVncVariables vars;
-
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
 #endif
@@ -244,7 +240,6 @@ public:
            , bool server_is_apple
            , bool server_is_unix
            , ClientExecute* rail_client_execute
-           , ModVncVariables vars
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
            )
@@ -262,7 +257,6 @@ public:
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
-    , vars(vars)
     #ifndef __EMSCRIPTEN__
     , metrics(metrics)
     #endif
