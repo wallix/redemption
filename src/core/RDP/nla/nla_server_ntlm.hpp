@@ -200,7 +200,6 @@ public:
         , set_password_cb(set_password_cb)
         , extra_message(extra_message)
         , lang(lang)
-        , error_code(0)
         , verbose(verbose)
     {
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
