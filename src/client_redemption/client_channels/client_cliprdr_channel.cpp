@@ -44,7 +44,7 @@ enum class ClientCLIPRDRChannel::CustomFormatName
 
 namespace custom_formats
 {
-    REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(text_html, "text/html");
+    REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(text_html, "text/html")
 }
 
 // [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension
