@@ -159,7 +159,7 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
         TSRequest ts_request(6);
         ts_request.negoTokens = NegotiateMessageVector;
-        ts_request.emit(ts_request_emit);
+        emitTSRequest(ts_request_emit, ts_request);
 
         this->SavedNegotiateMessage = std::move(NegotiateMessageVector);
 
@@ -382,7 +382,7 @@ public:
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::send");
-                ts_request.emit(ts_request_emit);
+                emitTSRequest(ts_request_emit, ts_request);
 
                 this->client_auth_data_state = Final;
                 return credssp::State::Cont;
@@ -483,7 +483,7 @@ public:
                     ts_request.error_code = 0;
                     ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
                     ts_request.clientNonce = this->SavedClientNonce;
-                    ts_request.emit(ts_request_emit);
+                    emitTSRequest(ts_request_emit, ts_request);
                 }
                 this->client_auth_data_state = Start;
                 return credssp::State::Finish;

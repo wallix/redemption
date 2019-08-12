@@ -827,96 +827,99 @@ struct TSRequest final {
         }
         return length;
     }
-
-    void emit(OutStream & stream) /* TODO const*/ {
-        int nego_tokens_length = (this->negoTokens.size() > 0)
-            ? CredSSP::sizeof_nego_tokens(this->negoTokens.size())
-            : 0;
-        int pub_key_auth_length = (this->pubKeyAuth.size() > 0)
-            ? CredSSP::sizeof_pub_key_auth(this->pubKeyAuth.size())
-            : 0;
-        int auth_info_length = (this->authInfo.size() > 0)
-            ? CredSSP::sizeof_auth_info(this->authInfo.size())
-            : 0;
-
-        int client_nonce_length = this->clientNonce.ber_length(use_version);
-
-        if (this->version >= 3
-            && this->version != 5
-            && this->error_code != 0) {
-            nego_tokens_length = 0;
-            pub_key_auth_length = 0;
-            auth_info_length = 0;
-            client_nonce_length = 0;
-        }
-
-        int length = nego_tokens_length
-            + pub_key_auth_length
-            + auth_info_length
-            + client_nonce_length;
-        int ts_request_length = this->ber_sizeof(length);
-
-        /* TSRequest */
-        BER::write_sequence_tag(stream, ts_request_length);
-
-        /* [0] version */
-        BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->version), true);
-        BER::write_integer(stream, this->version);
-        LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u", this->version);
-
-        /* [1] negoTokens (NegoData) */
-        if (nego_tokens_length > 0) {
-            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() NegoToken");
-            length = nego_tokens_length;
-
-            int sequence_length   = BER::sizeof_sequence_octet_string(this->negoTokens.size());
-            int sequenceof_length = BER::sizeof_sequence(sequence_length);
-            int context_length    = BER::sizeof_sequence(sequenceof_length);
-
-            length -= BER::write_contextual_tag(stream, 1, context_length, true);
-            length -= BER::write_sequence_tag(stream, sequenceof_length);
-            length -= BER::write_sequence_tag(stream, sequence_length);
-            length -= BER::write_sequence_octet_string(stream, 0, this->negoTokens.data(), this->negoTokens.size());
-
-            assert(length == 0);
-            (void)length;
-        }
-
-        /* [2] authInfo (OCTET STRING) */
-        if (auth_info_length > 0) {
-            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
-            length = auth_info_length;
-            length -= BER::write_sequence_octet_string(stream, 2,
-                                                       this->authInfo.data(),
-                                                       this->authInfo.size());
-            assert(length == 0);
-            (void)length;
-        }
-
-        /* [3] pubKeyAuth (OCTET STRING) */
-        if (pub_key_auth_length > 0) {
-            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
-            length = pub_key_auth_length;
-            length -= BER::write_sequence_octet_string(stream, 3,
-                                                       this->pubKeyAuth.data(),
-                                                       this->pubKeyAuth.size());
-            assert(length == 0);
-            (void)length;
-        }
-        /* [4] errorCode (INTEGER) */
-        if (this->version >= 3
-            && this->version != 5
-            && this->error_code != 0) {
-            LOG(LOG_INFO, "Credssp: TSCredentials::emit() errorCode");
-            BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->error_code), true);
-            BER::write_integer(stream, this->error_code);
-        }
-
-        /* [5] clientNonce (OCTET STRING) */
-        this->clientNonce.ber_write(this->version, stream);
-    }
 };
 
+
+
+inline void emitTSRequest(OutStream & stream, TSRequest & self)
+{
+    
+    int nego_tokens_length = (self.negoTokens.size() > 0)
+        ? CredSSP::sizeof_nego_tokens(self.negoTokens.size())
+        : 0;
+    int pub_key_auth_length = (self.pubKeyAuth.size() > 0)
+        ? CredSSP::sizeof_pub_key_auth(self.pubKeyAuth.size())
+        : 0;
+    int auth_info_length = (self.authInfo.size() > 0)
+        ? CredSSP::sizeof_auth_info(self.authInfo.size())
+        : 0;
+
+    int client_nonce_length = self.clientNonce.ber_length(self.use_version);
+
+    if (self.version >= 3
+        && self.version != 5
+        && self.error_code != 0) {
+        nego_tokens_length = 0;
+        pub_key_auth_length = 0;
+        auth_info_length = 0;
+        client_nonce_length = 0;
+    }
+
+    int length = nego_tokens_length
+        + pub_key_auth_length
+        + auth_info_length
+        + client_nonce_length;
+    int ts_request_length = self.ber_sizeof(length);
+
+    /* TSRequest */
+    BER::write_sequence_tag(stream, ts_request_length);
+
+    /* [0] version */
+    BER::write_contextual_tag(stream, 0, BER::sizeof_integer(self.version), true);
+    BER::write_integer(stream, self.version);
+    LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u", self.version);
+
+    /* [1] negoTokens (NegoData) */
+    if (nego_tokens_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSCredentials::emit() NegoToken");
+        length = nego_tokens_length;
+
+        int sequence_length   = BER::sizeof_sequence_octet_string(self.negoTokens.size());
+        int sequenceof_length = BER::sizeof_sequence(sequence_length);
+        int context_length    = BER::sizeof_sequence(sequenceof_length);
+
+        length -= BER::write_contextual_tag(stream, 1, context_length, true);
+        length -= BER::write_sequence_tag(stream, sequenceof_length);
+        length -= BER::write_sequence_tag(stream, sequence_length);
+        length -= BER::write_sequence_octet_string(stream, 0, self.negoTokens.data(), self.negoTokens.size());
+
+        assert(length == 0);
+        (void)length;
+    }
+
+    /* [2] authInfo (OCTET STRING) */
+    if (auth_info_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
+        length = auth_info_length;
+        length -= BER::write_sequence_octet_string(stream, 2,
+                                                   self.authInfo.data(),
+                                                   self.authInfo.size());
+        assert(length == 0);
+        (void)length;
+    }
+
+    /* [3] pubKeyAuth (OCTET STRING) */
+    if (pub_key_auth_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
+        length = pub_key_auth_length;
+        length -= BER::write_sequence_octet_string(stream, 3,
+                                                   self.pubKeyAuth.data(),
+                                                   self.pubKeyAuth.size());
+        assert(length == 0);
+        (void)length;
+    }
+    /* [4] errorCode (INTEGER) */
+    if (self.version >= 3
+        && self.version != 5
+        && self.error_code != 0) {
+        LOG(LOG_INFO, "Credssp: TSCredentials::emit() errorCode");
+        BER::write_contextual_tag(stream, 0, BER::sizeof_integer(self.error_code), true);
+        BER::write_integer(stream, self.error_code);
+    }
+
+    /* [5] clientNonce (OCTET STRING) */
+    self.clientNonce.ber_write(self.version, stream);
+}
 
 inline TSRequest recvTSRequest(InStream & stream, uint32_t version = 6) 
 {

@@ -288,7 +288,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     StaticOutStream<65536> to_send2;
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0);
-    ts_req2.emit(to_send2);
+    emitTSRequest(to_send2, ts_req2);
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
@@ -379,7 +379,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     StaticOutStream<65536> to_send;
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0);
-    ts_req.emit(to_send);
+    emitTSRequest(to_send, ts_req);
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
@@ -628,7 +628,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     StaticOutStream<65536> to_send3;
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0);
-    ts_req3.emit(to_send3);
+    emitTSRequest(to_send3, ts_req3);
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 

@@ -894,7 +894,7 @@ private:
             return Res::Err;
         }
 
-        this->ts_request.emit(out_stream);
+        emitTSRequest(out_stream, this->ts_request);
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {
