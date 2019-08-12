@@ -919,7 +919,15 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self)
         client_nonce_length = 0;
     }
 
-    int ts_request_length = self.ber_sizeof(nego_tokens_length+pub_key_auth_length+auth_info_length+client_nonce_length);
+    int ts_request_length = nego_tokens_length+pub_key_auth_length+auth_info_length+client_nonce_length;
+    ts_request_length += BER::sizeof_integer(self.version);
+    ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(self.version));
+    if (self.version >= 3
+        && self.version != 5
+        && self.error_code != 0) {
+        ts_request_length += BER::sizeof_integer(self.error_code);
+        ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(self.error_code));
+    }
 
     /* TSRequest */
     BER::write_sequence_tag(stream, ts_request_length);
