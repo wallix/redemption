@@ -65,6 +65,13 @@ namespace BER {
     // ==========================
     //   LENGTH
     // ==========================
+    inline int _ber_sizeof_length(int length) {
+        return (length <= 0x7F)?1:(length <= 0xFF)?2:3;
+    }
+
+    // TODO: this function is too eager, it does two different things
+    // one is about reading a value on stream
+    // another is checking we have enough data to read following length
     inline bool read_length(InStream & s, int & length) {
         if (!s.in_check_rem(1)) {
             return false;
@@ -89,32 +96,19 @@ namespace BER {
     }
 
     inline int write_length(OutStream & s, int length) {
-        int res = 1;
-        if (length > 0xFF) {
-            s.out_uint8(0x82);
-            s.out_uint16_be(length);
-            res = 3;
-        }
-        else if (length > 0x7F) {
+        switch (_ber_sizeof_length(length)){
+        case 1:
+            s.out_uint8(length);
+            return 1;
+        case 2:
             s.out_uint8(0x81);
             s.out_uint8(length);
-            res = 2;
+            return 2;
+        default:
+            s.out_uint8(0x82);
+            s.out_uint16_be(length);
+            return 3;
         }
-        else {
-            s.out_uint8(length);
-        }
-        return res;
-    }
-
-    inline int _ber_sizeof_length(int length) {
-        int res = 1;
-        if (length > 0xFF) {
-            res = 3;
-        }
-        else if (length > 0x7F) {
-            res = 2;
-        }
-        return res;
     }
 
 
@@ -819,22 +813,6 @@ struct ClientNonce {
 // sufficient entropy during hash computation. This value is only used in version 5 
 // or higher of this protocol.
 
-namespace CredSSP {
-
-
-    inline int sizeof_auth_info(int length) {
-        length = BER::sizeof_octet_string(length);
-        length += BER::sizeof_contextual_tag(length);
-        return length;
-    }
-
-
-    inline int sizeof_octet_string_seq(int length) {
-        length = BER::sizeof_octet_string(length);
-        length += BER::sizeof_contextual_tag(length);
-        return length;
-    }
-}  // namespace CredSSP
 
 
 
@@ -1146,6 +1124,18 @@ struct TSPasswordCreds {
 
     }
 };
+
+
+namespace CredSSP {
+
+
+    inline int sizeof_octet_string_seq(int length) {
+        length = BER::sizeof_octet_string(length);
+        length += BER::sizeof_contextual_tag(length);
+        return length;
+    }
+}  // namespace CredSSP
+
 
 /* TSCspDataDetail ::= SEQUENCE {
  *     keySpec       [0] INTEGER,
