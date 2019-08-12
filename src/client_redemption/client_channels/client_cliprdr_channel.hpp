@@ -25,7 +25,6 @@
 
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/RDP/clipboard.hpp"
-#include "utils/sugar/array_view.hpp"
 #include "gdi/screen_info.hpp"
 
 #include <unordered_map>
@@ -50,7 +49,7 @@ public:
 
     //  set distant clipboard data
     virtual void setClipboard_text(std::string const& str) = 0;
-    virtual void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) = 0;
+    virtual void setClipboard_image(ConstImageDataView const& image) = 0;
     virtual void setClipboard_files(std::string const& name) = 0;
     virtual void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) = 0;
 
@@ -80,8 +79,10 @@ public:
     };
     bool format_list_nego_done = false;
 
+    enum class CustomFormatName;
+
     uint32_t             _requestedFormatId = 0;
-    std::string          _requestedFormatName;
+    CustomFormatName     _requestedFormatName {};
     bool                 _waiting_for_data;
 
     timeval paste_data_request_time;
@@ -128,7 +129,7 @@ public:
     const uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags;
 
-    RDPECLIP::FormatListPDUEx format_list_pdu;
+    Cliprdr::FormatNameInventory format_name_list;
 
     size_t last_header_data_len = 0;
 
@@ -138,7 +139,7 @@ public:
     ~ClientCLIPRDRChannel();
 
 private:
-    void add_format(uint32_t ID, const std::string & name);
+    void add_format(uint32_t format_id, const_bytes_view name);
 
 public:
     void set_api(ClientIOClipboardAPI * clientIOClipboardAPI);

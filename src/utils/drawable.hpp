@@ -24,6 +24,7 @@
 
 #include <memory>
 
+#include "utils/sugar/bytes_view.hpp"
 #include "utils/image_data_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/rect.hpp"
@@ -398,7 +399,7 @@ public:
 
     void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, Color color);
 
-    void set_row(size_t rownum, const uint8_t * data, size_t data_length);
+    void set_row(size_t rownum, const_bytes_view data);
 
     void trace_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);
     void clear_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);

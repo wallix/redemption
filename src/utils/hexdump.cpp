@@ -54,7 +54,9 @@ void hexdump_impl(
 
         line += std::sprintf(line, "%s", sep_value_chars);
         if (i < line_length){
-            line += std::sprintf(line, "%*c", static_cast<int>((line_length-i)*sep_len), ' ');
+            auto n = (line_length-i)*sep_len;
+            memcpy(line, spaces.data(), n);
+            line += n;
         }
         line += std::sprintf(line, "%s", prefix_chars);
 

@@ -160,21 +160,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
 
-
-    RDPECLIP::FormatListPDUEx format_list_pdu;
-    format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
-
-    const bool use_long_format_names = true;    // Malformation
-    const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-        RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-        format_list_pdu.size(use_long_format_names));
-
     StaticOutStream<256> out_s;
-
-    clipboard_header.emit(out_s);
-    format_list_pdu.emit(out_s, use_long_format_names);
+    Cliprdr::format_list_serialize_with_header(
+        out_s, Cliprdr::IsLongFormat(true),
+        std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
     const size_t totalLength = out_s.get_offset();
 
@@ -446,8 +435,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     };
 
     const auto use_long_format = Cliprdr::IsLongFormat(true);
-    const auto charset = Cliprdr::Charset::Ascii;
-    const auto file_group = Cliprdr::format_name_constants::file_group_descriptor_w_utf8;
+    const auto file_group = Cliprdr::formats::file_group_descriptor_w.ascii_name;
     const auto file_group_id = 49262;
 
     RED_CHECK(report_message.messages.size() == 0);
@@ -478,12 +466,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     RED_CHECK_SMEM(front.msg, ""_av);
 
     {
-        Buffer buf;
-        auto av = buf.build(RDPECLIP::CB_FORMAT_LIST, 0, [&](OutStream& out){
-            Cliprdr::format_list_serialize(
-                out, file_group, file_group_id, use_long_format, charset);
-        });
-        process_client_message(av);
+        StaticOutStream<1600> out;
+        Cliprdr::format_list_serialize_with_header(
+            out,
+            Cliprdr::IsLongFormat(use_long_format),
+            std::array{Cliprdr::FormatNameRef{file_group_id, file_group}});
+
+        process_client_message(out.get_bytes());
     }
     RED_REQUIRE(to_client_sender.total_in_stream == 1);
     RED_REQUIRE(to_server_sender.total_in_stream == 2);
@@ -527,7 +516,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             out.out_uint64_le(0);    // lastWriteTime
             out.out_uint32_le(0);    // file size high
             out.out_uint32_le(12);   // file size low
-            auto filename = "abc"_utf16;
+            auto filename = "abc"_utf16_le;
             out.out_copy_bytes(filename);
             out.out_clear_bytes(520u - filename.size());
         });

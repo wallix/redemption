@@ -31,8 +31,6 @@
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 
 
-
-
 class IODisk : public ClientIODiskAPI
 {
 
@@ -160,10 +158,10 @@ public:
         return strtol(char_ptr_cast(hd.serial_no), nullptr, 16);
     }
 
-    bool write_file(const char * file_to_write, const char * data, int data_len) override {
+    bool write_file(const char * file_to_write, const_bytes_view data) override {
         std::ofstream oFile(file_to_write, std::ios::out | std::ios::binary);
-        if (oFile.good()) {
-            oFile.write(data, data_len);
+        if (oFile) {
+            oFile.write(data.as_charp(), data.size());
             return true;
         }
         return false;

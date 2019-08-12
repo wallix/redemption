@@ -2419,25 +2419,15 @@ private:
                 "mod_vnc::lib_clip_data: Sending Format List PDU (%u) to client.",
                 RDPECLIP::CB_FORMAT_LIST);
 
-            // TODO: very suspicious: if data is utf8 encoded then it is not 16 bits unicode text
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(
-                    this->clipboard_data_ctx.clipboard_data_is_utf8_encoded() ?
-                        RDPECLIP::CF_UNICODETEXT :
-                        RDPECLIP::CF_TEXT
-                );
-
-            const bool use_long_format_names = false;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
             StaticOutStream<256> out_s;
-
-            clipboard_header.emit(out_s);
-            format_list_pdu.emit(out_s, use_long_format_names);
+            Cliprdr::format_list_serialize_with_header(
+                out_s, Cliprdr::IsLongFormat(false),
+                // TODO: very suspicious: if data is utf8 encoded then it is not 16 bits unicode text
+                std::array{Cliprdr::FormatNameRef{
+                    this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()
+                        ? RDPECLIP::CF_UNICODETEXT
+                        : RDPECLIP::CF_TEXT,
+                    {}}});
 
             const size_t totalLength = out_s.get_offset();
             this->send_to_front_channel(channel_names::cliprdr,
@@ -2605,13 +2595,21 @@ private:
                 //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
                 //  - Only if clipboard content formats list include "UNICODETEXT:
                 // send a request for it in that format
-                RDPECLIP::FormatListPDUEx format_list_pdu;
-                format_list_pdu.recv(chunk, this->client_use_long_format_names,
-                    (incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES));
+                bool contains_data_in_text_format = false;
+                bool contains_data_in_unicodetext_format = false;
+                Cliprdr::format_list_extract(
+                    chunk,
+                    Cliprdr::IsLongFormat(this->client_use_long_format_names),
+                    Cliprdr::IsAscii(incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+                    [&](uint32_t format_id, auto const& name) {
+                        contains_data_in_text_format |= (format_id == RDPECLIP::CF_TEXT);
+                        contains_data_in_unicodetext_format |= (format_id == RDPECLIP::CF_UNICODETEXT);
+                        if (bool(this->verbose & VNCVerbose::clipboard)) {
+                            Cliprdr::log_format_name("", format_id, name);
+                        }
+                    }
+                );
 
-                if (bool(this->verbose & VNCVerbose::clipboard)) {
-                    format_list_pdu.log(LOG_INFO);
-                }
 
                 //---- Beginning of clipboard PDU Header ----------------------------
 
@@ -2638,9 +2636,6 @@ private:
 
                 using std::chrono::microseconds;
                 constexpr microseconds MINIMUM_TIMEVAL(250000LL);
-
-                const bool contains_data_in_text_format        = FormatListPDUEx_contains_data_in_format(format_list_pdu, RDPECLIP::CF_TEXT);
-                const bool contains_data_in_unicodetext_format = FormatListPDUEx_contains_data_in_format(format_list_pdu, RDPECLIP::CF_UNICODETEXT);
 
                 if (this->enable_clipboard_up &&
                         (contains_data_in_text_format || contains_data_in_unicodetext_format)) {
@@ -2713,24 +2708,14 @@ private:
                                 "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST(%u) (preventive)",
                                 RDPECLIP::CB_FORMAT_LIST);
 
-                            RDPECLIP::FormatListPDUEx format_list_pdu;
-                            format_list_pdu.add_format_name(
-                                    (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) ?
-                                        RDPECLIP::CF_UNICODETEXT :
-                                        RDPECLIP::CF_TEXT
-                                );
-
-                            const bool use_long_format_names = false;
-                            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-                            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                                format_list_pdu.size(use_long_format_names));
-
                             StaticOutStream<256> out_s;
-
-                            clipboard_header.emit(out_s);
-                            format_list_pdu.emit(out_s, use_long_format_names);
+                            Cliprdr::format_list_serialize_with_header(
+                                out_s, Cliprdr::IsLongFormat(false),
+                                std::array{Cliprdr::FormatNameRef{
+                                    this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT
+                                        ? RDPECLIP::CF_UNICODETEXT
+                                        : RDPECLIP::CF_TEXT,
+                                {}}});
 
                             const size_t totalLength = out_s.get_offset();
                             this->send_to_front_channel(channel_names::cliprdr,

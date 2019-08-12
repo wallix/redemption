@@ -139,11 +139,9 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
     }
 
     if (this->writeData_to_wait) {
-        size_t length(chunk.in_remain());
-
-        this->writeData_to_wait -= length;
-        std::string file_to_write = this->paths.at(this->file_to_write_id);
-        this->impl_io_disk->write_file(file_to_write.c_str(), char_ptr_cast(chunk.get_current()), length);
+        this->writeData_to_wait -= chunk.in_remain();
+        std::string const& file_to_write = this->paths.at(this->file_to_write_id);
+        this->impl_io_disk->write_file(file_to_write.c_str(), chunk.remaining_bytes());
 
         return;
     }
@@ -1110,7 +1108,7 @@ void ClientRDPDRChannel::provess_iorequest_write(InStream & chunk, rdpdr::Device
 
     std::string file_to_write = this->paths.at(id);
 
-    if (this->impl_io_disk->write_file(file_to_write.c_str(), char_ptr_cast(dwr.WriteData), WriteDataLen ) ) {
+    if (this->impl_io_disk->write_file(file_to_write.c_str(), {dwr.WriteData, WriteDataLen})) {
         LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write);
         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
     }

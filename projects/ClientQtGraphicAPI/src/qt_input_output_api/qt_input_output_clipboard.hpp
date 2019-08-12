@@ -30,6 +30,7 @@
 #include "utils/log.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/image_data_view.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
@@ -129,7 +130,7 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
+    void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) override {
         std::string filePath(this->tmp_path + "/" + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);
@@ -137,7 +138,7 @@ public:
         std::ofstream oFile(filePath, std::ios::binary | std::ios::app);
 
         if(oFile.is_open()) {
-            oFile.write(reinterpret_cast<const char *>(data), data_len);
+            oFile.write(data.as_charp(), data.size());
             oFile.close();
         }
     }
@@ -229,14 +230,12 @@ public:
         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
     }
 
-    void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) override {               // Paste image to client
-        QImage image(data,
-                     image_width,
-                     image_height,
-                     this->bpp_to_QFormat(bpp, false)
-                    );
+    // Paste image to client
+    void setClipboard_image(ConstImageDataView const& image) override {
+        QImage qtimage(image.data(), image.width(), image.height(),
+            this->bpp_to_QFormat(image.bits_per_pixel(), false));
 
-        QImage imageSwapped(image.rgbSwapped().mirrored(false, true));
+        QImage imageSwapped(qtimage.rgbSwapped().mirrored(false, true));
         //image.mirrored(false, true);
         this->_clipboard->setImage(imageSwapped, QClipboard::Clipboard);
     }
@@ -434,7 +433,8 @@ public Q_SLOTS:
         return {this->_items_list[index]->chunk, this->_items_list[index]->size};
     }
 
-    QImage::Format bpp_to_QFormat(BitsPerPixel bpp, bool alpha) {
+    static QImage::Format bpp_to_QFormat(BitsPerPixel bpp, bool alpha)
+    {
         QImage::Format format(QImage::Format_RGB16);
 
         if (alpha) {

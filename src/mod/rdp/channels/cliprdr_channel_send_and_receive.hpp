@@ -558,19 +558,10 @@ struct ServerMonitorReadySendBack
             "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
                 "Send Format List PDU.");
 
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
-
-        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-        RDPECLIP::CliprdrHeader list_clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-            format_list_pdu.size(use_long_format_names));
-
         StaticOutStream<256> list_stream;
-
-        list_clipboard_header.emit(list_stream);
-        format_list_pdu.emit(list_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            list_stream, Cliprdr::IsLongFormat(use_long_format_names),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
         sender->operator()(
             list_stream.get_offset(),
@@ -600,39 +591,29 @@ struct FormatListReceive
                 : "Short Format Name"
         );
 
-        Cliprdr::FormatListExtractorData extracted_data;
-
         auto buf = chunk.remaining_bytes();
         InStream in_stream(buf.first(std::min<size_t>(in_header.dataLen(), buf.size())));
 
-        Cliprdr::ExtractResult r;
-
-        while ((r = Cliprdr::format_list_extract(
-            extracted_data, in_stream,
+        Cliprdr::format_list_extract(
+            in_stream,
             Cliprdr::IsLongFormat(use_long_format),
-            Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES))
-        ) == Cliprdr::ExtractResult::Ok)
-        {
-            auto&& format_name = format_name_inventory.push(
-                extracted_data.format_id, extracted_data.charset, extracted_data.av_name);
-            auto&& utf8_name = format_name.utf8_name();
+            Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+            [&](uint32_t format_id, auto name) {
+                auto&& format_name = format_name_inventory.push(format_id, name);
+                auto&& utf8_name = format_name.utf8_name();
 
-            LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-                "formatId=%s(%u) wszFormatName=\"%.*s\"",
-                RDPECLIP::get_FormatId_name(extracted_data.format_id),
-                extracted_data.format_id, int(utf8_name.size()), utf8_name.data());
+                LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
+                    "formatId=%s(%u) wszFormatName=\"%.*s\"",
+                    RDPECLIP::get_FormatId_name(format_id),
+                    format_id, int(utf8_name.size()), utf8_name.data());
 
-            if (format_name.utf8_name_equal(Cliprdr::file_group_descriptor_w_utf8)) {
-                this->file_list_format_id = extracted_data.format_id;
+                if (ranges_equal(utf8_name, Cliprdr::formats::file_group_descriptor_w.ascii_name)) {
+                    this->file_list_format_id = format_id;
+                }
             }
-        }
+        );
 
         chunk.in_skip_bytes(in_stream.get_offset());
-
-        if (r == Cliprdr::ExtractResult::LongFormatNameTooLong) {
-            LOG(LOG_ERR, "Truncated CLIPRDR_FORMAT_LIST (Long) FormatName");
-            throw Error(ERR_RDP_UNSUPPORTED);
-        }
 
         // some version of server add "\0\0\0\0" and total_len == chunk_size + 4
         LOG_IF(chunk.in_remain() != 4 && chunk.in_remain() != 0,

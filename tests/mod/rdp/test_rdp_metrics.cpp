@@ -239,20 +239,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
     {  // FORMAT LIST TEXT COPY ON SERVER
         expected_log_metrics += "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 14 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
+
         StaticOutStream<1600> out_stream;
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-        format_list_pdu.add_format_name(RDPECLIP::CF_METAFILEPICT);
-
-        const bool use_long_format_names = true;
-        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-            format_list_pdu.size(use_long_format_names));
-
-        clipboard_header.emit(out_stream);
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_METAFILEPICT, {}}});
 
         metrics.set_server_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -331,20 +322,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
     {  // FORMAT LIST FILE COPY ON SERVER
         expected_log_metrics += "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
+
         StaticOutStream<1600> out_stream;
-
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-
-            const bool use_long_format_names = true;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
-            clipboard_header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_server_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -441,20 +424,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
     {  // FORMAT LIST TEXT COPY ON SERVER
         expected_log_metrics += "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 14 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
+
         StaticOutStream<1600> out_stream;
-
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
-
-            const bool use_long_format_names = true;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
-            clipboard_header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
         metrics.set_server_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -664,20 +638,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
 
     { // FORMAT LIST INITIALISATION
         epoch += 5s;
+
         StaticOutStream<1600> out_stream;
-
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-
-            const bool use_long_format_names = true;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
-            clipboard_header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -691,20 +657,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
     {  // FORMAT LIST IMAGE COPY ON SERVER
         expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 68 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
+
         StaticOutStream<1600> out_stream;
-
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(RDPECLIP::CF_METAFILEPICT);
-
-            const bool use_long_format_names = true;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
-            clipboard_header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_METAFILEPICT, {}}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -783,20 +740,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
 
     {  // FORMAT LIST INITIALISATION
         epoch += 5s;
+
         StaticOutStream<1600> out_stream;
-
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-
-            const bool use_long_format_names = true;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
-            clipboard_header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -808,30 +757,22 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
     }
 
     {  // FORMAT LIST FILE COPY ON CLIENT
-            expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n";
-            epoch += 5s;
-            StaticOutStream<1600> out_stream;
+        expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n";
+        epoch += 5s;
 
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+        StaticOutStream<1600> out_stream;
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
-            const bool use_long_format_names = true;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+        metrics.set_client_cliprdr_metrics(
+            InStream(out_stream.get_bytes()),
+            out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                                            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                                            format_list_pdu.size(use_long_format_names));
+        m.log(epoch);
 
-            clipboard_header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
-
-            metrics.set_client_cliprdr_metrics(
-                InStream(out_stream.get_bytes()),
-                out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-
-            m.log(epoch);
-
-            RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
+        RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
 
     {  // FORMAT FILE DATA REQUEST PASTE ON CLIENT
@@ -918,20 +859,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
 
     {  // FORMAT LIST INITIALISATION
         epoch += 5s;
+
         StaticOutStream<1600> out_stream;
-
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-
-            const bool use_long_format_names = true;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
-            clipboard_header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{49562,
+                Cliprdr::formats::file_group_descriptor_w.ascii_name}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),
@@ -945,20 +878,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
     {  // FORMAT LIST TEXT COPY ON SERVER
         expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 68 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n";
         epoch += 5s;
+
         StaticOutStream<1600> out_stream;
-
-            RDPECLIP::FormatListPDUEx format_list_pdu;
-            format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
-
-            const bool use_long_format_names = true;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
-            clipboard_header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true),
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
         metrics.set_client_cliprdr_metrics(
             InStream(out_stream.get_bytes()),

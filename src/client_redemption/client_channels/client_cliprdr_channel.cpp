@@ -35,6 +35,17 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+enum class ClientCLIPRDRChannel::CustomFormatName
+{
+    None,
+    FileGroupDescriptor,
+    TextHtml,
+};
+
+namespace custom_formats
+{
+    REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(text_html, "text/html")
+}
 
 // [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension
 //
@@ -146,7 +157,7 @@
         }
 
         for (auto const& format : config.formats) {
-            this->add_format(format.ID, format.name);
+            this->add_format(format.format_id(), format.utf8_name());
         }
     }
 
@@ -158,9 +169,9 @@
         this->empty_buffer();
     }
 
-    void ClientCLIPRDRChannel::add_format(uint32_t ID, const std::string & name) {
-        this->format_list_pdu.add_format_name(ID, name.c_str());
-        this->formats_map.emplace(ID, name);
+    void ClientCLIPRDRChannel::add_format(uint32_t format_id, const_bytes_view name) {
+        this->format_name_list.push(format_id, Cliprdr::AsciiName{name});
+        this->formats_map.emplace(format_id, std::string(name.as_charp(), name.size()));
     }
 
 // MS-RDPECLIP
@@ -334,7 +345,7 @@
                         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
                             "SERVER >> CB Channel: Format Data Response PDU");
 
-                        if(this->_requestedFormatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
+                        if(this->_requestedFormatName == CustomFormatName::FileGroupDescriptor) {
                             this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                         }
 
@@ -656,7 +667,7 @@
             break;
 
             default:
-                if (strcmp(this->_requestedFormatName.c_str(), RDPECLIP::get_format_short_name(RDPECLIP::SF_TEXT_HTML)) == 0) {
+                if (this->_requestedFormatName == CustomFormatName::TextHtml) {
                     this->send_to_clipboard_Buffer(chunk);
 
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -725,10 +736,14 @@
     void ClientCLIPRDRChannel::send_imageBuffer_to_clipboard() {
 
         this->clientIOClipboardAPI->set_local_clipboard_stream(false);
-        this->clientIOClipboardAPI->setClipboard_image(this->_cb_buffers.data.get(),
-                                                       this->_cb_buffers.pic_width,
-                                                       this->_cb_buffers.pic_height,
-                                                       checked_int(this->_cb_buffers.pic_bpp));
+        this->clientIOClipboardAPI->setClipboard_image(ConstImageDataView(
+            this->_cb_buffers.data.get(),
+            this->_cb_buffers.pic_width,
+            this->_cb_buffers.pic_height,
+            this->_cb_buffers.pic_width,
+            BitsPerPixel(checked_int(this->_cb_buffers.pic_bpp)),
+            ConstImageDataView::Storage::BottomToTop
+        ));
         this->clientIOClipboardAPI->set_local_clipboard_stream(true);
 
         this->empty_buffer();
@@ -748,22 +763,14 @@
     }
 
     void ClientCLIPRDRChannel::send_FormatListPDU() {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
         auto const type_id = this->clientIOClipboardAPI->get_buffer_type_id();
+        // TODO should be this->formats_map.find(type_id)
         std::string const& format_name = this->formats_map[type_id];
-        format_list_pdu.add_format_name(type_id, format_name.c_str());
-
-        const bool use_long_format_names = true;
-        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-            format_list_pdu.size(use_long_format_names));
+        Cliprdr::FormatNameRef format{type_id, format_name};
 
         StaticOutStream<1600> out_stream;
-
-        clipboard_header.emit(out_stream);
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
 
         InStream chunk(out_stream.get_bytes());
 
@@ -805,17 +812,10 @@
         }
 
         {
-            const bool use_long_format_names = this->server_use_long_format_names;
-            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST,
-                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                format_list_pdu.size(use_long_format_names));
-
             StaticOutStream<1600> out_stream;
-
-            header.emit(out_stream);
-            format_list_pdu.emit(out_stream, use_long_format_names);
+            Cliprdr::format_list_serialize_with_header(
+                out_stream, Cliprdr::IsLongFormat(this->server_use_long_format_names),
+                this->format_name_list);
 
             InStream chunk(out_stream.get_bytes());
 
@@ -842,38 +842,33 @@
     }
 
     void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFlags) {
-        bool isSharedFormat = false;
         uint32_t formatID = 0;
 
-        RDPECLIP::FormatListPDUEx format_list_pdu_local;
-
-        format_list_pdu_local.recv(chunk, this->server_use_long_format_names, (msgFlags & RDPECLIP::CB_ASCII_NAMES));
-
-        for (RDPECLIP::FormatName const & format_name_local : format_list_pdu_local) {
-            if (isSharedFormat) {
-                break;
-            }
-
-            formatID = format_name_local.formatId();
-            std::string const& format_name = format_name_local.format_name();
-
-            for (RDPECLIP::FormatName const & format_name_ : this->format_list_pdu) {
-                if (isSharedFormat) {
-                    break;
+        Cliprdr::format_list_extract(
+            chunk,
+            Cliprdr::IsLongFormat(this->server_use_long_format_names),
+            Cliprdr::IsAscii(msgFlags & RDPECLIP::CB_ASCII_NAMES),
+            [&](uint32_t format_id, auto format_name) {
+                if (auto* format_name_ = this->format_name_list.find(format_id)) {
+                    if (Cliprdr::formats::file_group_descriptor_w.same_as(format_name)) {
+                        this->_requestedFormatName = CustomFormatName::FileGroupDescriptor;
+                    }
+                    else if (custom_formats::text_html.same_as(format_name)) {
+                        this->_requestedFormatName = CustomFormatName::TextHtml;
+                    }
+                    formatID = format_id;
+                    this->_requestedFormatId = format_id;
+                    return false;
                 }
 
-                if (format_name_.formatId() == formatID) {
-                    this->_requestedFormatId = formatID;
-                    this->_requestedFormatName = format_name;
-                    isSharedFormat = true;
+                if (Cliprdr::formats::file_group_descriptor_w.same_as(format_name)) {
+                    this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                    return false;
                 }
-            }
 
-            if ((format_name == RDPECLIP::FILEGROUPDESCRIPTORW.data()) && !isSharedFormat) {
-                this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                isSharedFormat = true;
+                return true;
             }
-        }
+        );
 
         StaticOutStream<256> out_stream;
         RDPECLIP::CliprdrHeader formatListResponsePDUHeader(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);

@@ -24,9 +24,11 @@ Author(s): Jonathan Poelen
 #include "red_emscripten/val.hpp"
 
 #include "utils/log.hpp"
+#include "utils/sugar/overload.hpp"
+
+#include "core/callback.hpp"
 
 #include "core/RDP/clipboard.hpp"
-#include "core/callback.hpp"
 
 
 namespace redjs::channels::clipboard
@@ -62,136 +64,6 @@ namespace
         }
 
         return av = av.first(first - av.begin());
-    }
-
-    cbytes_view utf16_av(uint8_t const* p)
-    {
-        return {p, UTF16StrLen(p) * 2};
-    }
-
-    struct FormatListExtractorData
-    {
-        uint32_t format_id;
-        Charset charset;
-        cbytes_view av_name;
-    };
-
-    enum class IsLongFormat : bool;
-    enum class IsAscii : bool;
-
-    // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
-    constexpr size_t min_long_format_name_data_length = 6;
-
-    // formatId(4) + formatName(32)
-    constexpr size_t short_format_name_length = 32;
-    constexpr size_t short_format_name_data_length = short_format_name_length + 4;
-
-    constexpr size_t format_name_data_length[] = {
-        short_format_name_data_length,
-        min_long_format_name_data_length
-    };
-
-    bool format_list_extract(
-        FormatListExtractorData& data, InStream& stream,
-        IsLongFormat is_long_format, IsAscii is_ascii)
-    {
-        if (stream.in_remain() < format_name_data_length[int(is_long_format)])
-        {
-            return false;
-        }
-
-        data.format_id = stream.in_uint32_le();
-
-        if (bool(is_long_format))
-        {
-            data.charset = Charset::Utf16;
-            data.av_name = utf16_av(stream.get_current());
-
-            stream.in_skip_bytes(data.av_name.size() + 2);
-        }
-        else if (bool(is_ascii))
-        {
-            data.charset = Charset::Ascii;
-            auto av = stream.remaining_bytes();
-            data.av_name = av.first(strnlen(av.as_charp(), short_format_name_length));
-
-            stream.in_skip_bytes(short_format_name_length);
-        }
-        else
-        {
-            data.charset = Charset::Utf16;
-            data.av_name = quick_utf16_av(stream.remaining_bytes().first(short_format_name_length));
-
-            stream.in_skip_bytes(short_format_name_length);
-        }
-
-        return true;
-    }
-
-    bool format_list_serialize(
-        OutStream& out_stream, cbytes_view name,
-        uint32_t id, IsLongFormat is_long_format, Charset charset)
-    {
-        constexpr size_t header_length = 4;
-
-        if (bool(is_long_format))
-        {
-            switch (charset)
-            {
-            case Charset::Ascii: {
-                if (!out_stream.has_room(header_length + name.size() * 2 + 2))
-                {
-                    return false;
-                }
-                out_stream.out_uint32_le(id);
-
-                auto data = out_stream.get_tailroom_bytes();
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(data.size() - 2u)));
-                out_stream.out_uint16_le(0);
-                break;
-            }
-            case Charset::Utf16: {
-                if (!out_stream.has_room(header_length + name.size() + 2))
-                {
-                    return false;
-                }
-                out_stream.out_uint32_le(id);
-                out_stream.out_copy_bytes(name);
-                out_stream.out_uint16_le(0);
-                break;
-            }
-            }
-        }
-        else
-        {
-            if (!out_stream.has_room(4 + short_format_name_length))
-            {
-                return false;
-            }
-
-            out_stream.out_uint32_le(id);
-
-            switch (charset)
-            {
-            case Charset::Ascii: {
-                auto data = out_stream.get_tailroom_bytes();
-                auto len = std::min(data.size(), std::size_t(short_format_name_length-2u));
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
-                char zero_data[short_format_name_length]{};
-                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
-                break;
-            }
-            case Charset::Utf16: {
-                auto len = std::min(name.size(), std::size_t(short_format_name_length-1u));
-                out_stream.out_copy_bytes(name);
-                char zero_data[short_format_name_length]{};
-                out_stream.out_copy_bytes(zero_data, short_format_name_length - len);
-                break;
-            }
-            }
-        }
-
-        return true;
     }
 
     namespace constants
@@ -401,13 +273,69 @@ void ClipboardChannel::process_filecontents_request(InStream& chunk)
         stream_id, type, lindex, npos_low, npos_high, cb_requested);
 }
 
+namespace
+{
+    struct Utf8AsUtf16
+    {
+        const_bytes_view _utf8_bytes;
+        std::size_t size() const noexcept { return _utf8_bytes.size(); }
+        uint8_t const* data() const noexcept { return _utf8_bytes.data(); }
+    };
+
+    // This is a hack
+    struct FormatNameUtf8AsUtf16
+    {
+        uint32_t _format_id;
+        Utf8AsUtf16 _bytes;
+
+        uint32_t format_id() const noexcept { return this->_format_id; }
+        Utf8AsUtf16 utf8_name() const noexcept { return this->_bytes; }
+    };
+
+    std::size_t UTF8toUTF16(Utf8AsUtf16 const& utf16, bytes_view target) noexcept
+    {
+        auto len = std::min(utf16._utf8_bytes.size(), target.size());
+        len = len - (len & 1u);
+        memcpy(target.as_charp(), utf16._utf8_bytes.data(), len);
+        return len;
+    }
+
+    bool is_ASCII_string(Utf8AsUtf16 const&) noexcept
+    {
+        return false;
+    }
+}
+
 unsigned ClipboardChannel::add_format(bytes_view data, uint32_t format_id, Charset charset, cbytes_view name)
 {
+    Cliprdr::FormatNameRef format{format_id, name};
     OutStream out_stream(data);
-    format_list_serialize(
-        out_stream, name, format_id,
-        IsLongFormat(this->format_list.use_long_format_names),
-        charset);
+
+    switch (charset)
+    {
+        case Charset::Ascii:
+            if (this->format_list.use_long_format_names)
+            {
+                Cliprdr::format_list_serialize_long_format(out_stream, format);
+            }
+            else
+            {
+                Cliprdr::format_list_serialize_ascii_format(out_stream, format);
+            }
+            break;
+
+        case Charset::Utf16:
+            if (this->format_list.use_long_format_names)
+            {
+                Cliprdr::format_list_serialize_long_format(out_stream,
+                    FormatNameUtf8AsUtf16{format_id, {name}});
+            }
+            else
+            {
+                Cliprdr::format_list_serialize_unicode_format(out_stream, format);
+            }
+    }
+
     return out_stream.get_offset();
 }
 
@@ -415,16 +343,22 @@ void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_v
 {
     StaticOutStream<128> out_stream;
 
-    out_stream.out_uint16_le(RDPECLIP::CB_FORMAT_LIST);
-    out_stream.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
-    out_stream.out_skip_bytes(4);
+    switch (charset)
+    {
+        case Charset::Ascii:
+            Cliprdr::format_list_serialize_with_header(
+                out_stream,
+                Cliprdr::IsLongFormat(this->format_list.use_long_format_names),
+                std::array<FormatNameUtf8AsUtf16, 1>{{{format_id, {name}}}});
+            break;
 
-    format_list_serialize(
-        out_stream, name, format_id,
-        IsLongFormat(this->format_list.use_long_format_names),
-        charset);
+        case Charset::Utf16:
+            Cliprdr::format_list_serialize_with_header(
+                out_stream,
+                Cliprdr::IsLongFormat(this->format_list.use_long_format_names),
+                std::array<Cliprdr::FormatNameRef, 1>{{{format_id, name}}});
+    }
 
-    out_stream.stream_at(4).out_uint32_le(out_stream.get_offset() - 8);
     this->send_data(out_stream.get_bytes());
 }
 
@@ -628,63 +562,59 @@ void ClipboardChannel::process_format_data_response(cbytes_view data, uint32_t c
 
 void ClipboardChannel::process_format_list(InStream& chunk, uint32_t channel_flags)
 {
-    FormatListExtractorData extracted_data;
-    BufArrayMaker<256> buf;
-
     emval_call(this->callbacks, "receiveFormatStart");
 
-    while (format_list_extract(
-        extracted_data, chunk,
-        IsLongFormat(this->format_list.use_long_format_names),
-        IsAscii(channel_flags & RDPECLIP::CB_ASCII_NAMES)))
-    {
-        cbytes_view name = extracted_data.av_name;
-        bool is_utf8 = true;
+    Cliprdr::format_list_extract(
+        chunk,
+        Cliprdr::IsLongFormat(this->format_list.use_long_format_names),
+        Cliprdr::IsAscii(channel_flags & RDPECLIP::CB_ASCII_NAMES),
+        [&](uint32_t format_id, auto name){
+            auto av_name = name.bytes;
+            bool is_utf8 = true;
 
-        if (name.size())
-        {
-            switch (extracted_data.charset)
+            if (av_name.empty())
             {
-            case Charset::Ascii: break;
-            case Charset::Utf16: is_utf8 = false; break;
+                switch (format_id)
+                {
+                case RDPECLIP::CF_TEXT:            av_name = "text"_av; break;
+                case RDPECLIP::CF_BITMAP:          av_name = "bitmap"_av; break;
+                case RDPECLIP::CF_METAFILEPICT:    av_name = "metafilepict"_av; break;
+                case RDPECLIP::CF_SYLK:            av_name = "sylk"_av; break;
+                case RDPECLIP::CF_DIF:             av_name = "dif"_av; break;
+                case RDPECLIP::CF_TIFF:            av_name = "tiff"_av; break;
+                case RDPECLIP::CF_OEMTEXT:         av_name = "oemtext"_av; break;
+                case RDPECLIP::CF_DIB:             av_name = "dib"_av; break;
+                case RDPECLIP::CF_PALETTE:         av_name = "palette"_av; break;
+                case RDPECLIP::CF_PENDATA:         av_name = "pendata"_av; break;
+                case RDPECLIP::CF_RIFF:            av_name = "riff"_av; break;
+                case RDPECLIP::CF_WAVE:            av_name = "wave"_av; break;
+                case RDPECLIP::CF_UNICODETEXT:     av_name = "unicodetext"_av; break;
+                case RDPECLIP::CF_ENHMETAFILE:     av_name = "enhmetafile"_av; break;
+                case RDPECLIP::CF_HDROP:           av_name = "hdrop"_av; break;
+                case RDPECLIP::CF_LOCALE:          av_name = "locale"_av; break;
+                case RDPECLIP::CF_DIBV5:           av_name = "dibv5"_av; break;
+                case RDPECLIP::CF_OWNERDISPLAY:    av_name = "ownerdisplay"_av; break;
+                case RDPECLIP::CF_DSPTEXT:         av_name = "dsptext"_av; break;
+                case RDPECLIP::CF_DSPBITMAP:       av_name = "dspbitmap"_av; break;
+                case RDPECLIP::CF_DSPMETAFILEPICT: av_name = "dspmetafilepict"_av; break;
+                case RDPECLIP::CF_DSPENHMETAFILE:  av_name = "dspenhmetafile"_av; break;
+                case RDPECLIP::CF_PRIVATEFIRST:    av_name = "privatefirst"_av; break;
+                case RDPECLIP::CF_PRIVATELAST:     av_name = "privatelast"_av; break;
+                case RDPECLIP::CF_GDIOBJFIRST:     av_name = "gdiobjfirst"_av; break;
+                case RDPECLIP::CF_GDIOBJLAST:      av_name = "gdiobjlast"_av; break;
+                }
             }
-        }
-        else
-        {
-            switch (extracted_data.format_id)
-            {
-            case RDPECLIP::CF_TEXT:            name = "text"_av; break;
-            case RDPECLIP::CF_BITMAP:          name = "bitmap"_av; break;
-            case RDPECLIP::CF_METAFILEPICT:    name = "metafilepict"_av; break;
-            case RDPECLIP::CF_SYLK:            name = "sylk"_av; break;
-            case RDPECLIP::CF_DIF:             name = "dif"_av; break;
-            case RDPECLIP::CF_TIFF:            name = "tiff"_av; break;
-            case RDPECLIP::CF_OEMTEXT:         name = "oemtext"_av; break;
-            case RDPECLIP::CF_DIB:             name = "dib"_av; break;
-            case RDPECLIP::CF_PALETTE:         name = "palette"_av; break;
-            case RDPECLIP::CF_PENDATA:         name = "pendata"_av; break;
-            case RDPECLIP::CF_RIFF:            name = "riff"_av; break;
-            case RDPECLIP::CF_WAVE:            name = "wave"_av; break;
-            case RDPECLIP::CF_UNICODETEXT:     name = "unicodetext"_av; break;
-            case RDPECLIP::CF_ENHMETAFILE:     name = "enhmetafile"_av; break;
-            case RDPECLIP::CF_HDROP:           name = "hdrop"_av; break;
-            case RDPECLIP::CF_LOCALE:          name = "locale"_av; break;
-            case RDPECLIP::CF_DIBV5:           name = "dibv5"_av; break;
-            case RDPECLIP::CF_OWNERDISPLAY:    name = "ownerdisplay"_av; break;
-            case RDPECLIP::CF_DSPTEXT:         name = "dsptext"_av; break;
-            case RDPECLIP::CF_DSPBITMAP:       name = "dspbitmap"_av; break;
-            case RDPECLIP::CF_DSPMETAFILEPICT: name = "dspmetafilepict"_av; break;
-            case RDPECLIP::CF_DSPENHMETAFILE:  name = "dspenhmetafile"_av; break;
-            case RDPECLIP::CF_PRIVATEFIRST:    name = "privatefirst"_av; break;
-            case RDPECLIP::CF_PRIVATELAST:     name = "privatelast"_av; break;
-            case RDPECLIP::CF_GDIOBJFIRST:     name = "gdiobjfirst"_av; break;
-            case RDPECLIP::CF_GDIOBJLAST:      name = "gdiobjlast"_av; break;
+            else {
+                is_utf8 = overload{
+                    [](Cliprdr::AsciiName const&) { return true; },
+                    [&](Cliprdr::UnicodeName const&) { return false; },
+                }(name);
             }
-        }
 
-        emval_call(this->callbacks, "receiveFormat",
-            name.data(), name.size(), extracted_data.format_id, is_utf8);
-    }
+            emval_call(this->callbacks, "receiveFormat",
+                av_name.data(), av_name.size(), format_id, is_utf8);
+        }
+    );
 
     this->send_format_list_response_ok();
 

@@ -171,20 +171,12 @@ void CopyPaste::copy(const char * s, size_t n)
     this->has_clipboard_ = true;
     this->clipboard_str_.assign(s, n);
 
-    RDPECLIP::FormatListPDUEx format_list_pdu;
-    format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
-
-    const bool use_long_format_names = (this->client_use_long_format_names && this->server_use_long_format_names);
-    const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-        RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-        format_list_pdu.size(use_long_format_names));
-
     StaticOutStream<256> out_s;
-
-    clipboard_header.emit(out_s);
-    format_list_pdu.emit(out_s, use_long_format_names);
+    Cliprdr::format_list_serialize_with_header(
+        out_s,
+        Cliprdr::IsLongFormat(this->client_use_long_format_names
+                           && this->server_use_long_format_names),
+        std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
     const size_t totalLength = out_s.get_offset();
 
@@ -241,14 +233,6 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
     switch (rp.msgType()) {
         case RDPECLIP::CB_FORMAT_LIST:
             {
-                RDPECLIP::CliprdrHeader clipboard_header;
-                clipboard_header.recv(stream);
-
-                RDPECLIP::FormatListPDUEx format_list_pdu;
-                const bool use_long_format_names = (this->client_use_long_format_names && this->server_use_long_format_names);
-                const bool in_ASCII_8            = (clipboard_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES);
-                format_list_pdu.recv(stream, use_long_format_names, in_ASCII_8);
-
                 RDPECLIP::FormatListResponsePDU pdu;
                 RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, pdu.size());
 

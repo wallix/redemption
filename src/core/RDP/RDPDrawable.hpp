@@ -137,9 +137,9 @@ public:
     }
     //@}
 
-    void set_row(size_t rownum, const uint8_t * data, size_t data_length) override
+    void set_row(size_t rownum, const_bytes_view  data) override
     {
-        this->drawable.set_row(rownum, data, data_length);
+        this->drawable.set_row(rownum, data);
     }
 
     void draw(RDPColCache   const & /*cmd*/) override;

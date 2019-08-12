@@ -4938,6 +4938,11 @@ test-run tests/utils/crypto/test_ssl_sign :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/crypto/ssl_sign.hpp
 ;
+test-run tests/utils/literals/test_utf16 :
+  $(REDEMPTION_TEST_PATH)/utils/literals/test_utf16.cpp
+:
+  <covfile>src/utils/literals/utf16.hpp
+;
 test-run tests/utils/sugar/numerics/test_safe_conversions :
   $(REDEMPTION_TEST_PATH)/utils/sugar/numerics/test_safe_conversions.cpp
 :
@@ -5836,6 +5841,7 @@ alias test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct ;
 alias test_ssl_sha256_direct : tests/utils/crypto/test_ssl_sha256_direct ;
 alias test_ssl_sha512_direct : tests/utils/crypto/test_ssl_sha512_direct ;
 alias test_ssl_sign : tests/utils/crypto/test_ssl_sign ;
+alias test_utf16 : tests/utils/literals/test_utf16 ;
 alias test_safe_conversions : tests/utils/sugar/numerics/test_safe_conversions ;
 alias test_algostring : tests/utils/sugar/test_algostring ;
 alias test_array_view : tests/utils/sugar/test_array_view ;
@@ -6160,6 +6166,7 @@ alias test_ssl_sha1_direct.coverage : tests/utils/crypto/test_ssl_sha1_direct.co
 alias test_ssl_sha256_direct.coverage : tests/utils/crypto/test_ssl_sha256_direct.coverage ;
 alias test_ssl_sha512_direct.coverage : tests/utils/crypto/test_ssl_sha512_direct.coverage ;
 alias test_ssl_sign.coverage : tests/utils/crypto/test_ssl_sign.coverage ;
+alias test_utf16.coverage : tests/utils/literals/test_utf16.coverage ;
 alias test_safe_conversions.coverage : tests/utils/sugar/numerics/test_safe_conversions.coverage ;
 alias test_algostring.coverage : tests/utils/sugar/test_algostring.coverage ;
 alias test_array_view.coverage : tests/utils/sugar/test_array_view.coverage ;
@@ -6588,6 +6595,9 @@ alias tests/utils/crypto.norec :
   tests/utils/crypto/test_ssl_sha512_direct
   tests/utils/crypto/test_ssl_sign
 ;
+alias tests/utils/literals.norec :
+  tests/utils/literals/test_utf16
+;
 alias tests/utils/sugar/numerics.norec :
   tests/utils/sugar/numerics/test_safe_conversions
 ;
@@ -6847,9 +6857,13 @@ alias tests/utils/crypto :
 ;
 alias tests/utils :
   tests/utils/crypto
+  tests/utils/literals
   tests/utils/sugar
   tests/utils.norec
   tests/utils/winpr
+;
+alias tests/utils/literals :
+  tests/utils/literals.norec
 ;
 alias tests/utils/sugar/numerics :
   tests/utils/sugar/numerics.norec
@@ -6905,6 +6919,7 @@ explicit
   tests/transport.norec
   tests/transport/ws.norec
   tests/utils/crypto.norec
+  tests/utils/literals.norec
   tests/utils/sugar/numerics.norec
   tests/utils/sugar.norec
   tests/utils.norec
@@ -6960,6 +6975,7 @@ explicit
   tests/transport/ws
   tests/utils/crypto
   tests/utils
+  tests/utils/literals
   tests/utils/sugar/numerics
   tests/utils/sugar
   tests/utils/winpr

@@ -444,7 +444,7 @@ void set_rows_from_image_chunk(
         }
 
         for (gdi::GraphicApi * gd : graphic_consumers){
-            gd->set_row(k, tmp, rowsize);
+            gd->set_row(k, {tmp, rowsize});
         }
     }
     png_read_end(png.ppng, png.pinfo);

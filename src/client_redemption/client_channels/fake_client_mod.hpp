@@ -142,11 +142,8 @@ public:
         return {this->_chunk.get(), this->_cliboard_data_length};
     }
 
-    void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) override {
-        (void) data;
-        (void) image_width;
-        (void) image_height;
-        (void) bpp;
+    void setClipboard_image(ConstImageDataView const& image) override {
+        (void)image;
     }
 
     void setClipboard_files(std::string const& /*name*/) override {}
@@ -182,7 +179,8 @@ public:
 };
 
 
-class FakeClientOutPutSound : public ClientOutputSoundAPI {
+class FakeClientOutPutSound : public ClientOutputSoundAPI
+{
 
 public:
     void init(size_t raw_total_size) override { (void)raw_total_size; }
@@ -191,7 +189,8 @@ public:
 };
 
 
-class FakeClientOutputGraphic : public ClientRemoteAppGraphicAPI {
+class FakeClientOutputGraphic : public ClientRemoteAppGraphicAPI
+{
 
 public:
     FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientRemoteAppGraphicAPI(controller, config, 0, 0) {}
@@ -375,10 +374,9 @@ public:
         return 0;
     }
 
-    bool write_file(const char * file_to_write, const char * data, int data_len) override {
+    bool write_file(const char * file_to_write, const_bytes_view data) override {
         (void)file_to_write;
         (void)data;
-        (void)data_len;
 
         return true;
     }

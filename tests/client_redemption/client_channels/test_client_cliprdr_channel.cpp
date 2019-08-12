@@ -25,6 +25,13 @@
 
 #include <string>
 
+static void init_formats(RDPClipboardConfig& conf)
+{
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, Cliprdr::formats::file_group_descriptor_w);
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, Cliprdr::formats::file_contents);
+    conf.add_format(RDPECLIP::CF_TEXT);
+    conf.add_format(RDPECLIP::CF_METAFILEPICT);
+}
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 {
@@ -36,10 +43,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
-    conf.add_format(RDPECLIP::CF_TEXT, {});
-    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
+    init_formats(conf);
     ClientCLIPRDRChannel channel(to_verbose_flags(0x0), &callback, conf);
     channel.set_api(&clip_io);
     channel.server_use_long_format_names = false;
@@ -122,10 +126,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
-    conf.add_format(RDPECLIP::CF_TEXT, {});
-    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
+    init_formats(conf);
 
     ClientCLIPRDRChannel channel(RDPVerbose::cliprdr, &callback, conf);
     channel.set_api(&clip_io);
@@ -228,10 +229,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
-    conf.add_format(RDPECLIP::CF_TEXT, {});
-    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
+    init_formats(conf);
     ClientCLIPRDRChannel channel(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &callback, conf);
     channel.set_api(&clip_io);
 
@@ -323,10 +321,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     FakeClientIOClipboard clip_io;
     clip_io.resize_chunk(sizeof(clip_data_total));
     RDPClipboardConfig conf;
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
-    conf.add_format(RDPECLIP::CF_TEXT, {});
-    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
+    init_formats(conf);
     ClientCLIPRDRChannel channel(RDPVerbose::cliprdr, &callback, conf);
     channel.set_api(&clip_io);
 
@@ -336,9 +331,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     out_FormatListPDU.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
     out_FormatListPDU.out_uint32_le(46);
     out_FormatListPDU.out_uint32_le(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
-    uint8_t file_groupe_descr_data[50] = {0};
-    size_t file_groupe_descr_size = ::UTF8toUTF16(RDPECLIP::FILEGROUPDESCRIPTORW, file_groupe_descr_data, RDPECLIP::FILEGROUPDESCRIPTORW.size() *2);
-    out_FormatListPDU.out_copy_bytes(file_groupe_descr_data, file_groupe_descr_size+2);
+    out_FormatListPDU.out_copy_bytes(Cliprdr::formats::file_group_descriptor_w.ascii_name);
+    out_FormatListPDU.out_uint16_le(0);
     //out_FormatListPDU.out_uint16_le(0);
     InStream chunk_FormatListPDU(out_FormatListPDU.get_bytes());
     channel.receive(chunk_FormatListPDU, flag_channel);
@@ -517,10 +511,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
-    conf.add_format(RDPECLIP::CF_TEXT, {});
-    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
+    init_formats(conf);
     ClientCLIPRDRChannel channel(to_verbose_flags(0x0), &callback, conf);
     channel.set_api(&clip_io);
 

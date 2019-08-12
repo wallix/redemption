@@ -21,66 +21,26 @@
 
 #pragma once
 
+#include "cxx/diagnostic.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/WMF/MetaFileFormat.hpp"
 #include "core/channel_list.hpp"
 #include "core/error.hpp"
 #include "utils/stream.hpp"
+#include "utils/literals/utf16.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/overload.hpp"
+#include "utils/sugar/ranges.hpp"
 
 #include <cinttypes>
 #include <sstream>
 #include <vector>
 
 
-
-// TODO copy from /browser_client_JS/src/red_channels/clipboard.cpp
 namespace Cliprdr
 {
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-    // TODO string_literal<cs...>::view()
-    template<class C, C... cs>
-    constexpr std::array<uint8_t, sizeof...(cs) * 2> const operator "" _utf16()
-    {
-        std::array<uint8_t, sizeof...(cs) * 2> a{};
-        char s[] {cs...};
-        auto p = a.data();
-        for (char c : s)
-        {
-            p[0] = c;
-            p[1] = 0;
-            p += 2;
-        }
-        return a;
-    }
-    REDEMPTION_DIAGNOSTIC_POP
-
-    inline namespace format_name_constants
-    {
-        constexpr auto file_group_descriptor_w_utf8 = "FileGroupDescriptorW"_av;
-        constexpr auto file_group_descriptor_w_utf16 = "FileGroupDescriptorW"_utf16;
-
-        constexpr auto preferred_drop_effect_utf8 = "Preferred DropEffect"_av;
-        constexpr auto preferred_drop_effect_utf16 = "Preferred DropEffect"_av;
-    }
-
-    enum class Charset : bool
-    {
-        Ascii,
-        Utf16,
-    };
-
-    struct FormatListExtractorData
-    {
-        uint32_t format_id;
-        Charset charset;
-        cbytes_view av_name;
-    };
-
     enum class IsLongFormat : bool;
-    // TODO Charset ?
     enum class IsAscii : bool;
 
     // formatId(4) + wszFormatName(variable, min = "\x00\x00" => 2)
@@ -90,206 +50,269 @@ namespace Cliprdr
     constexpr size_t short_format_name_length = 32;
     constexpr size_t short_format_name_data_length = short_format_name_length + 4;
 
-    constexpr size_t format_name_data_length[] = {
-        short_format_name_data_length,
-        min_long_format_name_data_length
+    struct UnicodeName
+    {
+        explicit constexpr UnicodeName(const_bytes_view name) noexcept
+        : bytes(name)
+        {}
+
+        const_bytes_view bytes;
     };
 
-    enum class ExtractResult : int8_t
+    struct AsciiName
     {
-        Ok,
-        WaitingData,
-        LongFormatNameTooLong,
+        explicit constexpr AsciiName(const_bytes_view name) noexcept
+        : bytes(name)
+        {}
+
+        const_bytes_view bytes;
     };
 
-    inline ExtractResult format_list_extract(
-        FormatListExtractorData& data, InStream& stream,
-        IsLongFormat is_long_format, IsAscii is_ascii) noexcept
+    inline namespace formats
     {
-        if (stream.in_remain() < format_name_data_length[int(is_long_format)])
+        struct Names
         {
-            return ExtractResult::WaitingData;
-        }
+            array_view_const_char ascii_name;
+            array_view_const_char unicode_name;
 
-        data.format_id = stream.in_uint32_le();
+            operator AsciiName () const noexcept { return AsciiName(this->ascii_name); }
+            operator UnicodeName () const noexcept { return UnicodeName(this->unicode_name); }
 
-        if (bool(is_long_format))
-        {
-            data.charset = Charset::Utf16;
-            auto av = stream.remaining_bytes();
-            data.av_name = av.first(UTF16ByteLen(av));
-
-            if (data.av_name.size() == av.size())
+            bool same_as(UnicodeName const& unicode_name) const noexcept
             {
-                return ExtractResult::LongFormatNameTooLong;
+                return ranges_equal(this->unicode_name, unicode_name.bytes);
             }
 
-            stream.in_skip_bytes(data.av_name.size() + 2);
-        }
-        else
-        {
-            auto av = stream.remaining_bytes();
-            if (bool(is_ascii))
+            bool same_as(AsciiName const& ascii_name) const noexcept
             {
-                data.charset = Charset::Ascii;
-                data.av_name = av.first(strnlen(av.as_charp(), short_format_name_length));
+                return ranges_equal(this->ascii_name, ascii_name.bytes);
             }
-            else
-            {
-                data.charset = Charset::Utf16;
-                data.av_name = av.first(UTF16ByteLen(av.first(short_format_name_length)));
-            }
+        };
 
-            stream.in_skip_bytes(short_format_name_length);
-        }
+#define REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(var_name, format_name)         \
+    REDEMPTION_DIAGNOSTIC_PUSH /* for emscripten */                       \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-variable-declarations") \
+    inline constexpr ::Cliprdr::formats::Names var_name {                 \
+        format_name ""_av, format_name ""_utf16_le};                      \
+    REDEMPTION_DIAGNOSTIC_POP
 
-        return ExtractResult::Ok;
+        REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(file_group_descriptor_w, "FileGroupDescriptorW")
+        REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(preferred_drop_effect, "Preferred DropEffect")
+        REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(file_contents, "FileContents")
     }
 
-    inline bool format_list_serialize(
-        OutStream& out_stream, cbytes_view name,
-        uint32_t id, IsLongFormat is_long_format, Charset charset)
+    /**
+     * Used for return true or left value
+     * \code
+        void foo();
+        return foo(), LeftOrTrue{}; // return true
+     * \endcode
+     * \code
+        int foo() { return 42; }
+        return foo(), LeftOrTrue{}; // return 42
+     * \endcode
+     */
+    struct LeftOrTrue
     {
-        constexpr size_t header_length = 4;
+        constexpr operator bool () const noexcept { return true; }
+    };
 
-        if (bool(is_long_format))
-        {
-            switch (charset)
-            {
-            case Charset::Ascii: {
-                if (!out_stream.has_room(header_length + name.size() * 2 + 2))
-                {
-                    return false;
-                }
-                out_stream.out_uint32_le(id);
+    template<class T, class U>
+    T&& operator,(T&& x, LeftOrTrue const&) noexcept
+    {
+        return static_cast<T&&>(x);
+    }
 
-                auto data = out_stream.get_tailroom_bytes();
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(data.size() - 2u)));
-                out_stream.out_uint16_le(0);
-                break;
-            }
-            case Charset::Utf16: {
-                if (!out_stream.has_room(header_length + name.size() + 2))
-                {
-                    return false;
-                }
-                out_stream.out_uint32_le(id);
-                out_stream.out_copy_bytes(name);
-                out_stream.out_uint16_le(0);
-                break;
-            }
-            }
-        }
-        else
+    // [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
+    // ===========================================================
+
+    // The Format List PDU is sent by either the client or the server when its
+    //  local system clipboard is updated with new clipboard data. This PDU
+    //  contains the Clipboard Format ID and name pairs of the new Clipboard
+    //  Formats on the clipboard.
+
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+    // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                           clipHeader                          |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+    // |                   formatListData (variable)                   |
+    // +---------------------------------------------------------------+
+    // |                              ...                              |
+    // +---------------------------------------------------------------+
+
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+    //  Clipboard PDU Header MUST be set to CB_FORMAT_LIST (0x0002), while the
+    //  msgFlags field MUST be set to 0x0000 or CB_ASCII_NAMES (0x0004) depending
+    //  on the type of data present in the formatListData field.
+
+    // formatListData (variable): An array consisting solely of either Short
+    //  Format Names or Long Format Names. The type of structure used in the
+    //  array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES
+    //  (0x00000002) flag in the generalFlags field of the General Capability Set
+    //  (section 2.2.2.1.1.1). Each array holds a list of the Clipboard Format ID
+    //  and name pairs available on the local system clipboard of the sender. If
+    //  Short Format Names are being used, and the embedded Clipboard Format
+    //  names are in ASCII 8 format, then the msgFlags field of the clipHeader
+    //  must contain the CB_ASCII_NAMES (0x0004) flag.
+
+    template<class ProcessFormat>
+    bool format_list_extract_long_format(InStream& in_stream, ProcessFormat&& process_format)
+    {
+        if (in_stream.in_check_rem(min_long_format_name_data_length))
         {
-            if (!out_stream.has_room(4 + short_format_name_length))
+            uint32_t format_id = in_stream.in_uint32_le();
+
+            auto name = in_stream.remaining_bytes();
+            auto end_name_pos = UTF16ByteLen(name);
+            auto end_format_pos = end_name_pos + 2;
+
+            if (!in_stream.in_check_rem(end_format_pos))
             {
+                in_stream.rewind(in_stream.get_offset() - 4);
                 return false;
             }
 
-            out_stream.out_uint32_le(id);
+            in_stream.in_skip_bytes(end_format_pos);
 
-            switch (charset)
-            {
-            case Charset::Ascii: {
-                auto data = out_stream.get_tailroom_bytes();
-                auto len = std::min(data.size(), short_format_name_length-2u);
-                out_stream.out_skip_bytes(UTF8toUTF16(name, data.first(len)));
-                out_stream.out_clear_bytes(short_format_name_length - len);
-                break;
-            }
-            case Charset::Utf16: {
-                auto len = std::min(name.size(), short_format_name_length-1u);
-                out_stream.out_copy_bytes(name);
-                out_stream.out_clear_bytes(short_format_name_length - len);
-                break;
-            }
-            }
+            return process_format(format_id, UnicodeName(name.first(end_name_pos))), LeftOrTrue{};
         }
 
-        return true;
+        return false;
     }
 
-    struct FormatNameInventory
+    template<class ProcessFormat>
+    bool format_list_extract_ascii_format(InStream& in_stream, ProcessFormat&& process_format)
+    {
+        if (in_stream.in_check_rem(short_format_name_data_length))
+        {
+            uint32_t format_id = in_stream.in_uint32_le();
+
+            auto name = in_stream.remaining_bytes();
+            in_stream.in_skip_bytes(short_format_name_length);
+            name = name.first(strnlen(name.as_charp(), short_format_name_length));
+
+            return process_format(format_id, AsciiName(name)), LeftOrTrue{};
+        }
+
+        return false;
+    }
+
+    template<class ProcessFormat>
+    bool format_list_extract_unicode_format(InStream& in_stream, ProcessFormat&& process_format)
+    {
+        if (in_stream.in_check_rem(short_format_name_data_length))
+        {
+            uint32_t format_id = in_stream.in_uint32_le();
+
+            auto name = in_stream.remaining_bytes();
+            in_stream.in_skip_bytes(short_format_name_length);
+            name = name.first(UTF16ByteLen(name.first(short_format_name_length)));
+
+            return process_format(format_id, UnicodeName(name)), LeftOrTrue{};
+        }
+
+        return false;
+    }
+
+    template<class ProcessFormat>
+    void format_list_extract(
+        InStream& in_stream, IsLongFormat is_long_format, IsAscii is_ascii,
+        ProcessFormat&& process_format)
+    {
+        if (bool(is_long_format))
+        {
+            while (format_list_extract_long_format(in_stream, process_format))
+                ;
+        }
+        else if (bool(is_ascii))
+        {
+            while (format_list_extract_ascii_format(in_stream, process_format))
+                ;
+        }
+        else
+        {
+            while (format_list_extract_unicode_format(in_stream, process_format))
+                ;
+        }
+    }
+
+    struct FormatName
     {
         using FormatId = uint32_t;
-        struct FormatName;
 
-        FormatName const& push(FormatId format_id, Charset charset, array_view_const_u8 av_name)
+        FormatName(FormatId format_id, UnicodeName unicode_name) noexcept
+        : format_id_(format_id)
+        , len_(UTF16toUTF8_buf(unicode_name.bytes, make_array_view(this->utf8_buffer_)).size())
+        {}
+
+        FormatName(FormatId format_id, AsciiName ascii_name) noexcept
+        : format_id_(format_id)
+        , len_(std::min(ascii_name.bytes.size(), std::size(this->utf8_buffer_)))
         {
-            return this->formats.emplace_back(format_id, charset, av_name);
+            memcpy(this->utf8_buffer_, ascii_name.bytes.data(), this->len_);
+        }
+
+        FormatName(FormatName const& other) noexcept
+        : format_id_(other.format_id_)
+        , len_(other.len_)
+        {
+            memcpy(this->utf8_buffer_, other.utf8_buffer_, other.len_);
+        }
+
+        FormatName& operator=(FormatName const& other) noexcept
+        {
+            this->format_id_ = other.format_id_;
+            this->len_ = other.len_;
+            memcpy(this->utf8_buffer_, other.utf8_buffer_, other.len_);
+            return *this;
+        }
+
+        const_bytes_view utf8_name() const noexcept
+        {
+            return {this->utf8_buffer_, this->len_};
+        }
+
+        FormatId format_id() const noexcept
+        {
+            return this->format_id_;
+        }
+
+    private:
+        static constexpr size_t utf8_buffer_buf_len = 123;
+
+        FormatId format_id_;
+        // TODO static_vector<raw_buf_len>
+        uint8_t len_;
+        uint8_t utf8_buffer_[utf8_buffer_buf_len];
+    };
+
+    struct FormatNameInventory : std::vector<FormatName>
+    {
+        using FormatId = FormatName::FormatId;
+
+        FormatName const& push(FormatId format_id, UnicodeName unicode_name)
+        {
+            return this->emplace_back(format_id, unicode_name);
+        }
+
+        FormatName const& push(FormatId format_id, AsciiName ascii_name)
+        {
+            return this->emplace_back(format_id, ascii_name);
         }
 
         FormatName const* find(FormatId format_id) const noexcept
         {
-            for (auto const& format : this->formats) {
-                if (format.format_id == format_id) {
+            for (auto const& format : *this) {
+                if (format.format_id() == format_id) {
                     return &format;
                 }
             }
             return nullptr;
         }
-
-        void clear() noexcept
-        {
-            this->formats.clear();
-        }
-
-        struct FormatName
-        {
-            static constexpr size_t utf8_buffer_buf_len = 123;
-
-            uint32_t format_id;
-            // TODO static_vector<raw_buf_len>
-            uint8_t len;
-            uint8_t utf8_buffer[utf8_buffer_buf_len];
-
-            FormatName(FormatId format_id, Charset charset, array_view_const_u8 raw_name) noexcept
-            : format_id(format_id)
-            , len(std::min(raw_name.size(), std::size(this->utf8_buffer)))
-            {
-                if (charset == Charset::Ascii)
-                {
-                    this->len = std::min(raw_name.size(), std::size(this->utf8_buffer));
-                    memcpy(this->utf8_buffer, raw_name.data(), this->len);
-                }
-                else
-                {
-                    this->len = UTF16toUTF8_buf(
-                        raw_name, make_array_view(this->utf8_buffer)).size();
-                }
-            }
-
-            FormatName(FormatName const& other) noexcept
-            : format_id(other.format_id)
-            , len(other.len)
-            {
-                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
-            }
-
-            FormatName& operator=(FormatName const& other) noexcept
-            {
-                this->format_id = other.format_id;
-                this->len = other.len;
-                memcpy(this->utf8_buffer, other.utf8_buffer, other.len);
-                return *this;
-            }
-
-            const_bytes_view utf8_name() const noexcept
-            {
-                return {this->utf8_buffer, this->len};
-            }
-
-            bool utf8_name_equal(const_bytes_view utf8_name_compared) const noexcept
-            {
-                return utf8_name_compared.size() == this->len
-                    && 0 == strncasecmp(utf8_name_compared.as_charp(),
-                                        char_ptr_cast(this->utf8_buffer), this->len);
-            }
-        };
-
-    private:
-        std::vector<FormatName> formats;
     };
 } // namespace Cliprdr
 
@@ -366,6 +389,28 @@ inline static const char * get_FormatId_name(uint32_t FormatId) noexcept
     return get_FormatId_name_av(FormatId).data();
 }
 
+} // namespace RDPECLIP
+
+
+namespace Cliprdr
+{
+    inline void log_format_name(char const* prefix, uint32_t format_id, AsciiName ascii_name)
+    {
+        LOG(LOG_INFO, "%sFormatName{formatId=%s(%u) formatName=\"%.*s\"}",
+            prefix, RDPECLIP::get_FormatId_name(format_id), format_id,
+            int(ascii_name.bytes.size()), ascii_name.bytes.data());
+    }
+
+    inline void log_format_name(char const* prefix, uint32_t format_id, UnicodeName unicode_name)
+    {
+        char buf[256];
+        auto utf8_name = UTF16toUTF8_buf(unicode_name.bytes, make_array_view(buf));
+        log_format_name(prefix, format_id, AsciiName{utf8_name});
+    }
+} // namespace Cliprdr
+
+
+namespace RDPECLIP {
 // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
 // =========================================================
 
@@ -512,19 +557,6 @@ static inline const std::string msgFlags_to_string(uint16_t msgFlags) {
     }
 
     return stream.str();
-}
-
-// Short Format Name
-enum {
-    SF_TEXT_HTML = 1
-};
-
-inline static const char * get_format_short_name(uint16_t formatID) {
-    switch (formatID) {
-        case SF_TEXT_HTML: return "text/html";
-    }
-
-    return "<unknown>";
 }
 
 // dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in
@@ -1118,253 +1150,6 @@ public:
         LOG(level, "ClientTemporaryDirectoryPDU: wszTempDir=\"%s\"", temp_dir);
     }
 };  // struct ClientTemporaryDirectoryPDU
-
-// [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
-// ===========================================================
-
-// The Format List PDU is sent by either the client or the server when its
-//  local system clipboard is updated with new clipboard data. This PDU
-//  contains the Clipboard Format ID and name pairs of the new Clipboard
-//  Formats on the clipboard.
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                           clipHeader                          |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-// |                   formatListData (variable)                   |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
-//  Clipboard PDU Header MUST be set to CB_FORMAT_LIST (0x0002), while the
-//  msgFlags field MUST be set to 0x0000 or CB_ASCII_NAMES (0x0004) depending
-//  on the type of data present in the formatListData field.
-
-// formatListData (variable): An array consisting solely of either Short
-//  Format Names or Long Format Names. The type of structure used in the
-//  array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES
-//  (0x00000002) flag in the generalFlags field of the General Capability Set
-//  (section 2.2.2.1.1.1). Each array holds a list of the Clipboard Format ID
-//  and name pairs available on the local system clipboard of the sender. If
-//  Short Format Names are being used, and the embedded Clipboard Format
-//  names are in ASCII 8 format, then the msgFlags field of the clipHeader
-//  must contain the CB_ASCII_NAMES (0x0004) flag.
-
-class FormatName {
-    uint32_t    formatId_ = 0;
-    std::string format_name_;
-
-public:
-    explicit FormatName(uint32_t formatId, std::string format_name) noexcept
-    : formatId_(formatId)
-    , format_name_(std::move(format_name))
-    {}
-
-    uint32_t formatId() const { return this->formatId_; }
-
-    void formatId(uint32_t formatId) { this->formatId_ = formatId; }
-
-    std::string const& format_name() const { return this->format_name_; }
-
-    void format_name(const char * format_name) { this->format_name_ = format_name; }
-
-    size_t format_name_length() const { return this->format_name_.length(); }
-
-    size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length,
-            "{formatId=%s(%u) formatName=\"%s\"}",
-            get_FormatId_name(this->formatId_), this->formatId_, this->format_name_.c_str());
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        return length;
-    }
-
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
-};  // class FormatName
-
-class FormatListPDUEx {
-    std::vector<FormatName> format_names;
-
-public:
-    auto begin() const { return this->format_names.begin(); }
-    auto end() const { return this->format_names.end(); }
-
-    void emit(OutStream & stream, bool use_long_format_names) const
-    {
-        if (use_long_format_names) {
-            for (auto & format_name : this->format_names) {
-                stream.out_uint32_le(format_name.formatId());
-
-                auto data = stream.get_tailroom_bytes();
-                stream.out_skip_bytes(UTF8toUTF16(
-                    format_name.format_name(), data.first(data.size() - 2u)));
-                stream.out_uint16_le(0);
-            }
-        }
-        else if (!this->will_be_sent_in_ASCII_8(use_long_format_names)) {
-            // Unicode
-            for (auto & format_name : this->format_names) {
-                stream.out_uint32_le(format_name.formatId());
-
-                auto data = stream.get_tailroom_bytes();
-                data = data.first(std::min(Cliprdr::short_format_name_length-2u, data.size()));
-
-                data = stream.out_skip_bytes(UTF8toUTF16(format_name.format_name(), data));
-                stream.out_clear_bytes(Cliprdr::short_format_name_length - data.size());
-            }
-        }
-        else {
-            // ASCII
-            for (auto & format_name : this->format_names) {
-                stream.out_uint32_le(format_name.formatId());
-
-                auto const& name = format_name.format_name();
-                auto len = std::min(name.size(), Cliprdr::short_format_name_length - 1u);
-
-                stream.out_copy_bytes({name.data(), len});
-                stream.out_clear_bytes(Cliprdr::short_format_name_length - len);
-            }
-        }
-    }
-
-    void recv(InStream & in_stream, bool use_long_format_names, bool in_ASCII_8)
-    {
-        this->format_names.clear();
-
-        Cliprdr::ExtractResult r;
-
-        Cliprdr::FormatListExtractorData extracted_data;
-
-        while ((r = Cliprdr::format_list_extract(
-            extracted_data, in_stream,
-            Cliprdr::IsLongFormat(use_long_format_names),
-            Cliprdr::IsAscii(in_ASCII_8)
-        )) == Cliprdr::ExtractResult::Ok)
-        {
-            char buf[1024];
-            array_view_const_char name = extracted_data.av_name.as_chars();
-            switch (extracted_data.charset)
-            {
-                case Cliprdr::Charset::Ascii:;
-                    break;
-                case Cliprdr::Charset::Utf16:
-                    name = UTF16toUTF8_buf(name, make_array_view(buf)).as_chars();
-                    break;
-            }
-            this->format_names.emplace_back(
-                extracted_data.format_id,
-                std::string(name.data(), name.size()));
-        }
-    }
-
-    void add_format_name(uint32_t formatId, const char * format_name = "") {
-        this->format_names.emplace_back(formatId, format_name);
-    }
-
-    size_t num_format_names() const { return this->format_names.size(); }
-
-    FormatName const & format_name(size_t idx_format_name) const { return this->format_names[idx_format_name]; }
-
-    size_t size(bool use_long_format_names) const {
-        size_t sz = 0;
-
-        if (use_long_format_names) {
-            for (auto & format_name : this->format_names) {
-                sz += 4;    // formatId(4)
-                auto utf8_len = UTF8Len(format_name.format_name().data());
-                sz += utf8_len * 2 + 2; // wszFormatName (variable)
-            }
-        }
-        else {
-            sz = this->format_names.size() * (
-                      4     // formatId(4)
-                    + 32    // formatName(32)
-                );
-        }
-
-        return sz;
-    }
-
-    bool will_be_sent_in_ASCII_8(bool use_long_format_names) const
-    {
-        if (!use_long_format_names) {
-            bool   all_format_names_are_ASCII_strings = true;
-            size_t max_format_name_len_in_char        = 0;
-            for (auto & format_name : this->format_names) {
-                if (!::is_ASCII_string(byte_ptr_cast(format_name.format_name().c_str()))) {
-                    all_format_names_are_ASCII_strings = false;
-                }
-
-                const size_t format_name_len_in_char = ::UTF8StrLenInChar(byte_ptr_cast(format_name.format_name().c_str()));
-                if (max_format_name_len_in_char < format_name_len_in_char) {
-                    max_format_name_len_in_char = format_name_len_in_char;
-                }
-            }
-
-            if (all_format_names_are_ASCII_strings &&
-                (max_format_name_len_in_char >= (32 /* formatName(32) */ / sizeof(uint16_t)))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length,
-            "FormatListPDU:");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        for (auto & format_name : this->format_names) {
-            size_t result = ::snprintf(buffer + length, size - length, " ");
-            length += ((result < size - length) ? result : (size - length - 1));
-
-            result = format_name.str(buffer + length, size - length);
-            length += ((result < size - length) ? result : (size - length - 1));
-        }
-
-        return length;
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
-};  // FormatListPDUEx
-
-inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx & format_list_pdu, uint32_t formatId) {
-    for (FormatName const& format_name : format_list_pdu) {
-        if (format_name.formatId() == formatId) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-// TODO zstr_XXXXX
-constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW\0");
-constexpr auto FILECONTENTS         = cstr_array_view("FileContents\0");
-constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect\0");
 
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
@@ -2619,9 +2404,14 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
             {
                 header.log();
 
-                FormatListPDUEx format_list_pdu;
-                format_list_pdu.recv(chunk, state.use_long_format_names, (header.msgFlags() & CB_ASCII_NAMES));
-                format_list_pdu.log(LOG_INFO);
+                Cliprdr::format_list_extract(
+                    chunk,
+                    Cliprdr::IsLongFormat(state.use_long_format_names),
+                    Cliprdr::IsAscii(header.msgFlags() & CB_ASCII_NAMES),
+                    [&](uint32_t format_id, auto const& name) {
+                        Cliprdr::log_format_name("", format_id, name);
+                    }
+                );
             }
                 break;
 
@@ -2760,3 +2550,151 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
 
 }   // namespace RDPECLIP
 
+namespace Cliprdr
+{
+    struct FormatNameRef
+    {
+        uint32_t _format_id;
+        const_bytes_view _utf8_bytes;
+
+        uint32_t format_id() const noexcept { return this->_format_id; }
+        const_bytes_view utf8_name() const noexcept { return this->_utf8_bytes; }
+    };
+
+
+    template<class Fw, class Senti>
+    bool will_be_sent_in_ASCII_8(Fw first, Senti const& end)
+    {
+        size_t max_format_name_len_in_char = 0;
+        for (; first != end; ++first) {
+            auto&& format = *first;
+
+            if (!is_ASCII_string(format.utf8_name())) {
+                return false;
+            }
+
+            const size_t format_name_len_in_char = format.utf8_name().size();
+            if (max_format_name_len_in_char < format_name_len_in_char) {
+                max_format_name_len_in_char = format_name_len_in_char;
+            }
+        }
+
+        return (max_format_name_len_in_char >= (32 /* formatName(32) */ / sizeof(uint16_t)));
+    }
+
+    template<class Format>
+    bool format_list_serialize_long_format(OutStream& out_stream, Format const& format)
+    {
+        if (!out_stream.has_room(min_long_format_name_data_length)) {
+            return false;
+        }
+
+        out_stream.out_uint32_le(format.format_id());
+
+        auto data = out_stream.get_tailroom_bytes();
+        auto len = UTF8toUTF16(format.utf8_name(), data);
+
+        if (len + 2 > data.size())
+        {
+            out_stream.rewind(out_stream.get_offset() - 4u);
+            return false;
+        }
+
+        out_stream.out_skip_bytes(len);
+        out_stream.out_uint16_le(0);
+
+        return true;
+    }
+
+    template<class Format>
+    bool format_list_serialize_ascii_format(OutStream& out_stream, Format const& format)
+    {
+        if (!out_stream.has_room(short_format_name_data_length)) {
+            return false;
+        }
+
+        out_stream.out_uint32_le(format.format_id());
+
+        auto const& name = format.utf8_name();
+        auto len = std::min(name.size(), Cliprdr::short_format_name_length - 1u);
+
+        out_stream.out_copy_bytes({name.data(), len});
+        out_stream.out_clear_bytes(Cliprdr::short_format_name_length - len);
+
+        return true;
+    }
+
+    template<class Format>
+    bool format_list_serialize_unicode_format(OutStream& out_stream, Format const& format)
+    {
+        if (!out_stream.has_room(short_format_name_data_length)) {
+            return false;
+        }
+
+        out_stream.out_uint32_le(format.format_id());
+
+        auto data = out_stream.get_tailroom_bytes();
+        data = data.first(std::min(Cliprdr::short_format_name_length - 2u, data.size()));
+
+        data = out_stream.out_skip_bytes(UTF8toUTF16(format.utf8_name(), data));
+        out_stream.out_clear_bytes(Cliprdr::short_format_name_length - data.size());
+
+        return true;
+    }
+
+    template<class Fw, class Senti>
+    bool format_list_serialize_with_header(
+        OutStream& out_stream, IsLongFormat is_long_format,
+        Fw first, Senti const& end)
+    {
+        if (!out_stream.has_room(RDPECLIP::CliprdrHeader::size()))
+        {
+            return false;
+        }
+
+        OutStream out_stream_header(out_stream.out_skip_bytes(RDPECLIP::CliprdrHeader::size()));
+        auto out_stream_start_pos = out_stream.get_offset();
+        auto ascii_flag = RDPECLIP::CB_RESPONSE__NONE_;
+
+        if (bool(is_long_format))
+        {
+            while (first != end && format_list_serialize_long_format(out_stream, *first))
+            {
+                ++first;
+            }
+        }
+        else if (will_be_sent_in_ASCII_8(first, end))
+        {
+            ascii_flag = RDPECLIP::CB_ASCII_NAMES;
+            while (first != end && format_list_serialize_ascii_format(out_stream, *first))
+            {
+                ++first;
+            }
+        }
+        else
+        {
+            while (first != end && format_list_serialize_unicode_format(out_stream, *first))
+            {
+                ++first;
+            }
+        }
+
+        RDPECLIP::CliprdrHeader(
+            RDPECLIP::CB_FORMAT_LIST, ascii_flag,
+            out_stream.get_offset() - out_stream_start_pos)
+        .emit(out_stream_header);
+
+        return (first == end);
+    }
+
+    template<class Formats>
+    bool format_list_serialize_with_header(
+        OutStream& out_stream, IsLongFormat is_long_format,
+        Formats const& formats)
+    {
+        using std::begin;
+        using std::end;
+        return format_list_serialize_with_header(
+            out_stream, is_long_format, begin(formats), end(formats));
+    }
+} // namespace Cliprdr

@@ -383,41 +383,6 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 }
 
 
-RED_AUTO_TEST_CASE(TestFormatListPDU)
-{
-    RDPECLIP::FormatListPDUEx format_list_pdu;
-    format_list_pdu.add_format_name(48026, "FileContents");
-    format_list_pdu.add_format_name(48025, "FileGroupDescriptorW");
-    format_list_pdu.add_format_name(RDPECLIP::CF_UNICODETEXT);
-    format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
-    format_list_pdu.add_format_name(RDPECLIP::CF_METAFILEPICT);
-
-    const bool use_long_format_names = true;
-    const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-        RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-        format_list_pdu.size(use_long_format_names));
-
-    // Init stream format list PDU long name
-    StaticOutStream<1024> out_stream;
-
-    clipboard_header.emit(out_stream);
-    format_list_pdu.emit(out_stream, use_long_format_names);
-
-    auto exp_data =
-        "\x02\x00\x00\x00\x5e\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00" //....^.......F.i.
-        "\x6c\x00\x65\x00\x43\x00\x6f\x00\x6e\x00\x74\x00\x65\x00\x6e\x00" //l.e.C.o.n.t.e.n.
-        "\x74\x00\x73\x00\x00\x00\x99\xbb\x00\x00\x46\x00\x69\x00\x6c\x00" //t.s.......F.i.l.
-        "\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00\x65\x00" //e.G.r.o.u.p.D.e.
-        "\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00\x72\x00" //s.c.r.i.p.t.o.r.
-        "\x57\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00" //W...............
-        "\x03\x00\x00\x00\x00\x00"_av;
-
-    RED_CHECK_MEM(out_stream.get_bytes(), exp_data);
-}
-
-
 RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeEmit)
 {
     // inData
@@ -504,536 +469,146 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeRecv)
     RED_CHECK_EQUAL(fileContentsRequest.position(), size);
 }
 
-RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
+RED_AUTO_TEST_CASE(TestFormatList_extract_serialize)
 {
-    const bool use_long_format_names = true;
+    struct Data{
+        char const* name;
+        Cliprdr::IsLongFormat is_long_format;
+        Cliprdr::IsAscii is_ascii;
+        array_view_const_char expected_result;
+        std::vector<Cliprdr::FormatNameRef> formats;
+        std::vector<Cliprdr::FormatNameRef> formats_ref {};
+    };
 
-    {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
+    RED_TEST_CONTEXT_DATA(Data const& data,
+        "TestName: " << data.name <<
+        "  UseLongFormat: " << bool(data.is_long_format) <<
+        "  IsAscii: " << bool(data.is_ascii), {
+        Data{"text1",
+            Cliprdr::IsLongFormat(true),
+            Cliprdr::IsAscii(false),
+            "\x02\x00\x00\x00\x06\x00\x00\x00"
+            "\x01\x00\x00\x00\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}},
+            }},
+        Data{"text + unicode",
+            Cliprdr::IsLongFormat(true),
+            Cliprdr::IsAscii(false),
+            "\x02\x00\x00\x00\x0c\x00\x00\x00"
+            "\x01\x00\x00\x00\x00\x00"
+            "\x0d\x00\x00\x00\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}},
+                Cliprdr::FormatNameRef{RDPECLIP::CF_UNICODETEXT, {}}
+            }},
+        Data{"5 formats",
+            Cliprdr::IsLongFormat(true),
+            Cliprdr::IsAscii(false),
+            "\x02\x00\x00\x00\x5e\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00" //....^.......F.i.
+            "\x6c\x00\x65\x00\x43\x00\x6f\x00\x6e\x00\x74\x00\x65\x00\x6e\x00" //l.e.C.o.n.t.e.n.
+            "\x74\x00\x73\x00\x00\x00\x99\xbb\x00\x00\x46\x00\x69\x00\x6c\x00" //t.s.......F.i.l.
+            "\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00\x65\x00" //e.G.r.o.u.p.D.e.
+            "\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00\x72\x00" //s.c.r.i.p.t.o.r.
+            "\x57\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00" //W...............
+            "\x03\x00\x00\x00\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{48026, "FileContents"_av},
+                Cliprdr::FormatNameRef{48025, "FileGroupDescriptorW"_av},
+                Cliprdr::FormatNameRef{RDPECLIP::CF_UNICODETEXT, {}},
+                Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}},
+                Cliprdr::FormatNameRef{RDPECLIP::CF_METAFILEPICT, {}},
+            }},
+        Data{"user format 1",
+            Cliprdr::IsLongFormat(true),
+            Cliprdr::IsAscii(false),
+            "\x02\x00\x00\x00\x0e\x00\x00\x00"
+            "\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{32000, "Test"_av}
+            }},
+        Data{"user format 2",
+            Cliprdr::IsLongFormat(true),
+            Cliprdr::IsAscii(false),
+            "\x02\x00\x00\x00\x20\x00\x00\x00"
+            "\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00""1\x00\x00\x00"
+            "\x01\x7D\x00\x00T\x00" "e\x00s\x00t\x00""2\x00\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{32000, "Test1"_av},
+                Cliprdr::FormatNameRef{32001, "Test2"_av}
+            }},
 
-        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT, "");
-
-        RED_CHECK_EQUAL(6, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
+        Data{"test 5",
+            Cliprdr::IsLongFormat(false),
+            Cliprdr::IsAscii(false),
+            "\x02\x00\x00\x00\x24\x00\x00\x00"
+            "\x00\x7D\x00\x00"
+               "T\x00" "e\x00" "s\x00" "t\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{32000, "Test"_av},
+            }},
+        Data{"test 6",
+            Cliprdr::IsLongFormat(false),
+            Cliprdr::IsAscii(false),
+            "\x02\x00\x00\x00\x48\x00\x00\x00"
+            "\x00\x7D\x00\x00"
+               "T\x00" "e\x00" "s\x00" "t\x00" "1\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            "\x01\x7D\x00\x00"
+               "T\x00" "e\x00" "s\x00" "t\x00" "2\x00\x00\x00\x00\x00\x00\x00"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{32000, "Test1"_av},
+                Cliprdr::FormatNameRef{32001, "Test2"_av},
+            }},
+        Data{"test 7",
+            Cliprdr::IsLongFormat(false),
+            Cliprdr::IsAscii(true),
+            "\x02\x00\x04\x00\x24\x00\x00\x00"
+            "\x00\x7D\x00\x00"
+            "RedemptionClipboard"
+            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{32000, "RedemptionClipboard"_av},
+            }},
+        Data{"test 8",
+            Cliprdr::IsLongFormat(false),
+            Cliprdr::IsAscii(false),
+            "\x02\x00\x00\x00\x24\x00\x00\x00"
+            "\x00\x7D\x00\x00"
+            "R\x00" "\xe9\x00" "d\x00" "e\x00" "m\x00" "p\x00" "t\x00" "i\x00"
+            "o\x00" "n\x00" "C\x00" "l\x00" "i\x00" "p\x00" "b\x00" "\x00\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{32000, "RédemptionClipboard"_av},
+            }, std::vector{
+                Cliprdr::FormatNameRef{32000, "RédemptionClipb"_av},
+            }},
+        Data{"test 9",
+            Cliprdr::IsLongFormat(false),
+            Cliprdr::IsAscii(true),
+            "\x02\x00\x04\x00\x24\x00\x00\x00"
+            "\x00\x7D\x00\x00"
+            "0123456789012345678901234567890\x00"_av, std::vector{
+                Cliprdr::FormatNameRef{32000, "0123456789012345678901234567890123456789"_av},
+            }, std::vector{
+                Cliprdr::FormatNameRef{32000, "0123456789012345678901234567890"_av},
+            }},
+    }) {
         StaticOutStream<512> out_stream;
-
-        format_list_pdu.emit(out_stream, use_long_format_names);
-
-        RED_CHECK_MEM("\x01\x00\x00\x00\x00\x00"_av, out_stream.get_bytes());
-    }
-
-    {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT, "");
-        format_list_pdu.add_format_name(RDPECLIP::CF_UNICODETEXT, "");
-
-        RED_CHECK_EQUAL(12, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        StaticOutStream<512> out_stream;
-
-        format_list_pdu.emit(out_stream, use_long_format_names);
-
-        RED_CHECK_MEM("\x01\x00\x00\x00\x00\x00\x0d\x00\x00\x00\x00\x00"_av, out_stream.get_bytes());
-    }
-
-    {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.add_format_name(32000, "Test");
-
-        RED_CHECK_EQUAL(14, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        StaticOutStream<512> out_stream;
-
-        format_list_pdu.emit(out_stream, use_long_format_names);
-
-        RED_CHECK_MEM("\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00\x00\x00"_av, out_stream.get_bytes());
-    }
-}
-
-RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_LongFormatName)
-{
-    const bool use_long_format_names = true;
-
-    {
-        auto data = cstr_array_view("\x01\x00\x00\x00\x00\x00");
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        const bool in_ASCII_8 = false;
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(6, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
-        RED_CHECK_EQUAL(1, format_name_it->formatId());
-        RED_CHECK_EQUAL("", format_name_it->format_name());
-    }
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00\x00\x00"
-                "\x0d\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        const bool in_ASCII_8 = false;
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(12, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
-
-        RED_CHECK_EQUAL(RDPECLIP::CF_TEXT, format_name_it[0].formatId());
-        RED_CHECK_EQUAL("", format_name_it[0].format_name());
-
-        RED_CHECK_EQUAL(RDPECLIP::CF_UNICODETEXT, format_name_it[1].formatId());
-        RED_CHECK_EQUAL("", format_name_it[1].format_name());
-    }
-
-    {
-        auto data = cstr_array_view("\x01\x00\x00\x00" "T\x00" "e\x00" "s\x00" "t\x00" "\x00\x00");
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        const bool in_ASCII_8 = false;
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(14, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
-        RED_CHECK_EQUAL(1, format_name_it->formatId());
-        RED_CHECK_EQUAL("Test", format_name_it->format_name());
-    }
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00" "T\x00" "e\x00" "s\x00" "t\x00" "1\x00" "\x00\x00"
-                "\x02\x00\x00\x00" "T\x00" "e\x00" "s\x00" "t\x00" "2\x00" "\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        const bool in_ASCII_8 = false;
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(32, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
-
-        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
-        RED_CHECK_EQUAL("Test1", format_name_it[0].format_name());
-
-        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
-        RED_CHECK_EQUAL("Test2", format_name_it[1].format_name());
-    }
-}
-
-RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
-{
-    const bool use_long_format_names_false = false;
-
-    {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.add_format_name(32000, "Test");
-
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
-
-        StaticOutStream<512> out_stream;
-
-        format_list_pdu.emit(out_stream, use_long_format_names_false);
-
-        auto exp_data = cstr_array_view(
-                "\x00\x7D\x00\x00"
-                "T\x00" "e\x00" "s\x00" "t\x00"
-                                                "\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
-    }
-
-    {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.add_format_name(32000, "Test1");
-        format_list_pdu.add_format_name(32001, "Test2");
-
-        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names_false));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
-
-        StaticOutStream<512> out_stream;
-
-        format_list_pdu.emit(out_stream, use_long_format_names_false);
-
-        auto exp_data = cstr_array_view(
-                "\x00\x7D\x00\x00"
-                "T\x00" "e\x00" "s\x00" "t\x00" "1\x00"
-                                                        "\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-                "\x01\x7D\x00\x00"
-                "T\x00" "e\x00" "s\x00" "t\x00" "2\x00"
-                                                        "\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
-    }
-
-    {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.add_format_name(32000, "RedemptionClipboard");
-
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
-
-        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
-
-        StaticOutStream<512> out_stream;
-
-        format_list_pdu.emit(out_stream, use_long_format_names_false);
-
-        auto exp_data = cstr_array_view(
-                "\x00\x7D\x00\x00"
-                "RedemptionClipboard"
-                            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
-    }
-
-    {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.add_format_name(32000, "RédemptionClipboard");
-
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
-
-        StaticOutStream<512> out_stream;
-
-        format_list_pdu.emit(out_stream, use_long_format_names_false);
-
-        auto exp_data = cstr_array_view(
-                "\x00\x7D\x00\x00"
-                "R\x00"
-                        "\xe9\x00"  // 'é'
-                                "d\x00" "e\x00" "m\x00" "p\x00" "t\x00" "i\x00"
-                "o\x00" "n\x00" "C\x00" "l\x00" "i\x00" "p\x00" "b\x00" "\x00\x00"
-            );
-
-        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
-    }
-
-    {
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.add_format_name(32000, "0123456789012345678901234567890123456789");
-
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
-
-        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
-
-        StaticOutStream<512> out_stream;
-
-        format_list_pdu.emit(out_stream, use_long_format_names_false);
-
-        auto exp_data = cstr_array_view(
-                "\x00\x7D\x00\x00"
-                "0123456789012345678901234567890"
-                                                                            "\x00"
-            );
-
-        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
-    }
-}
-
-RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_ASCII)
-{
-    const bool use_long_format_names = false;
-    const bool in_ASCII_8            = true;
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
-        RED_CHECK_EQUAL(1, format_name_it->formatId());
-        RED_CHECK_EQUAL("", format_name_it->format_name());
-    }
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x02\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
-
-        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
-        RED_CHECK_EQUAL("", format_name_it[0].format_name());
-
-        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
-        RED_CHECK_EQUAL("", format_name_it[1].format_name());
-    }
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00"
-                "Test"
-                                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
-        RED_CHECK_EQUAL(1, format_name_it->formatId());
-        RED_CHECK_EQUAL("Test", format_name_it->format_name());
-    }
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00"
-                "Test1"
-                                    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-                "\x02\x00\x00\x00"
-                "Test2"
-                                    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
-
-        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
-        RED_CHECK_EQUAL("Test1", format_name_it[0].format_name());
-
-        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
-        RED_CHECK_EQUAL("Test2", format_name_it[1].format_name());
-    }
-}
-
-RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_Unicode)
-{
-    const bool use_long_format_names = false;
-    const bool in_ASCII_8            = false;
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
-        RED_CHECK_EQUAL(1, format_name_it->formatId());
-        RED_CHECK_EQUAL("", format_name_it->format_name());
-    }
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x02\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
-
-        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
-        RED_CHECK_EQUAL("", format_name_it[0].format_name());
-
-        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
-        RED_CHECK_EQUAL("", format_name_it[1].format_name());
-    }
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00"
-                "T\x00" "e\x00" "s\x00" "t\x00"
-                                                "\x00\x00\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
-        RED_CHECK_EQUAL(1, format_name_it->formatId());
-        RED_CHECK_EQUAL("Test", format_name_it->format_name());
-    }
-
-    {
-        auto data = cstr_array_view(
-                "\x01\x00\x00\x00"
-                "T\x00" "e\x00" "s\x00" "t\x00" "1\x00"
-                                                        "\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-
-                "\x02\x00\x00\x00"
-                "T\x00" "e\x00" "s\x00" "t\x00" "2\x00"
-                                                        "\x00\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            );
-
-        InStream in_stream(data);
-
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        format_list_pdu.recv(in_stream, use_long_format_names, in_ASCII_8);
-
-        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names));
-
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
-
-        auto format_name_it = format_list_pdu.begin();
-        auto format_name_end = format_list_pdu.end();
-
-        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
-
-        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
-        RED_CHECK_EQUAL("Test1", format_name_it[0].format_name());
-
-        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
-        RED_CHECK_EQUAL("Test2", format_name_it[1].format_name());
+        Cliprdr::format_list_serialize_with_header(
+            out_stream, data.is_long_format, data.formats);
+
+        InStream in_stream(out_stream.get_bytes());
+        RDPECLIP::CliprdrHeader header;
+        header.recv(in_stream);
+        RED_CHECK(bool(header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) == bool(data.is_ascii));
+
+        RED_CHECK_MEM(data.expected_result, out_stream.get_bytes());
+
+        auto format_ref = data.formats_ref.empty() ? data.formats : data.formats_ref;
+        auto it = format_ref.begin();
+        Cliprdr::format_list_extract(in_stream, data.is_long_format, data.is_ascii,
+            [&](uint32_t format_id, auto name){
+                RED_TEST_CONTEXT("idx format: " << (it-format_ref.begin())) {
+                    RED_REQUIRE((it != format_ref.end()));
+                    RED_CHECK(format_id == it->format_id());
+                    Cliprdr::FormatName format_name(0, name);
+                    RED_CHECK_SMEM(format_name.utf8_name(), it->utf8_name());
+                    ++it;
+                }
+            });
+        RED_CHECK((it == format_ref.end()));
     }
 }
