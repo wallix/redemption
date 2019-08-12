@@ -750,25 +750,79 @@ struct ClientNonce {
     }
 };
 
+// 2.2.1 TSRequest
+// ===============
+
+// The TSRequest structure is the top-most structure used by the CredSSP client and 
+// CredSSP server. It contains the SPNEGO tokens and MAY<6> contain Kerberos/NTLM 
+// messages that are passed between the client and server, and either the public 
+// key authentication messages that are used to bind to the TLS session or the 
+// client credentials that are delegated to the server. The TSRequest message is 
+// always sent over the TLS-encrypted channel between the client and server in a 
+// CredSSP Protocol exchange (see step 1 in section 3.1.5).
+
+//     TSRequest ::= SEQUENCE {
+//             version    [0] INTEGER,
+//             negoTokens [1] NegoData  OPTIONAL,
+//             authInfo   [2] OCTET STRING OPTIONAL,
+//             pubKeyAuth [3] OCTET STRING OPTIONAL,
+//             errorCode  [4] INTEGER OPTIONAL,
+//             clientNonce [5] OCTET STRING OPTIONAL
+//     }
+
+// version: This field specifies the supported version of the CredSSP Protocol. 
+// Valid values for this field are 2, 3, 4, 5, and 6.<7> If the version received is 
+// greater than the implementation understands, treat the peer as one that is 
+// compatible with the version of the CredSSP Protocol that the implementation 
+// understands.
+
+// negoTokens: A NegoData structure, as defined in section 2.2.1.1, that contains 
+// the SPNEGO tokens or Kerberos/NTLM messages that are passed between the client 
+// and server.
+
+// * NegoData ::= SEQUENCE OF NegoDataItem
+// *
+// * NegoDataItem ::= SEQUENCE {
+// *     negoToken [0] OCTET STRING
+// * }
+
+// authInfo: A TSCredentials structure, as defined in section 2.2.1.2, that 
+// contains the user's credentials that are delegated to the server. The authInfo 
+// field MUST be encrypted under the encryption key that is negotiated under the 
+// SPNEGO package. The authInfo field carries the message signature and then the 
+// encrypted data.
+
+// * TSCredentials ::= SEQUENCE {
+// *     credType    [0] INTEGER,
+// *     credentials [1] OCTET STRING
+// * }
+
+
+// pubKeyAuth: This field is used to assure that the public key that is used by the 
+// server during the TLS handshake belongs to the target server and not to a 
+// man-in-the-middle. This TLS session-binding is specified in section 3.1.5. After 
+// the client completes the SPNEGO phase of the CredSSP Protocol, it uses 
+// GSS_WrapEx() for the negotiated protocol to encrypt the server's public key. 
+// With version 4 or lower, the pubKeyAuth field carries the message signature and 
+// then the encrypted public key to the server. In response, the server uses the 
+// pubKeyAuth field to transmit to the client a modified version of the public key 
+// (as specified in section 3.1.5) that is encrypted under the encryption key that 
+// is negotiated under SPNEGO. In version 5 or higher, this field stores a computed 
+// hash of the public key.<8>
+
+// errorCode: If the negotiated protocol version is 3, 4, or 6, and the SPNEGO 
+// exchange fails on the server, this field SHOULD<9> be used to send the NTSTATUS 
+// failure code ([MS-ERREF] section 2.3) to the client so that it knows what failed 
+// and be able to display a descriptive error to the user.
+
+// clientNonce: A 32-byte array of cryptographically random bytes used to provide 
+// sufficient entropy during hash computation. This value is only used in version 5 
+// or higher of this protocol.
 
 namespace CredSSP {
 
 
     inline int sizeof_nego_token(int length) {
-        length = BER::sizeof_octet_string(length);
-        length += BER::sizeof_contextual_tag(length);
-        return length;
-    }
-
-    inline int sizeof_nego_tokens(int length) {
-        length = sizeof_nego_token(length);
-        length += BER::sizeof_sequence_tag(length);
-        length += BER::sizeof_sequence_tag(length);
-        length += BER::sizeof_contextual_tag(length);
-        return length;
-    }
-
-    inline int sizeof_pub_key_auth(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
         return length;
@@ -787,6 +841,8 @@ namespace CredSSP {
         return length;
     }
 }  // namespace CredSSP
+
+
 
 struct TSRequest final {
     /* TSRequest */
@@ -833,33 +889,37 @@ struct TSRequest final {
 
 inline void emitTSRequest(OutStream & stream, TSRequest & self)
 {
-    
-    int nego_tokens_length = (self.negoTokens.size() > 0)
-        ? CredSSP::sizeof_nego_tokens(self.negoTokens.size())
-        : 0;
-    int pub_key_auth_length = (self.pubKeyAuth.size() > 0)
-        ? CredSSP::sizeof_pub_key_auth(self.pubKeyAuth.size())
-        : 0;
-    int auth_info_length = (self.authInfo.size() > 0)
-        ? CredSSP::sizeof_auth_info(self.authInfo.size())
-        : 0;
+    int nego_tokens_length = 0;
+    if (self.negoTokens.size() > 0){
+        nego_tokens_length = CredSSP::sizeof_nego_token(self.negoTokens.size());
+        nego_tokens_length += BER::sizeof_sequence_tag(nego_tokens_length);
+        nego_tokens_length += BER::sizeof_sequence_tag(nego_tokens_length);
+        nego_tokens_length += BER::sizeof_contextual_tag(nego_tokens_length);
+    }
+
+    int pub_key_auth_length = 0;
+    if (self.pubKeyAuth.size() > 0){
+        pub_key_auth_length = BER::sizeof_octet_string(self.pubKeyAuth.size());
+        pub_key_auth_length += BER::sizeof_contextual_tag(pub_key_auth_length);
+    }
+
+    int auth_info_length = 0;
+    if (self.authInfo.size() > 0){
+        auth_info_length = BER::sizeof_octet_string(self.authInfo.size());
+        auth_info_length += BER::sizeof_contextual_tag(auth_info_length);
+    }
 
     int client_nonce_length = self.clientNonce.ber_length(self.use_version);
 
-    if (self.version >= 3
-        && self.version != 5
-        && self.error_code != 0) {
+    if ((self.version == 3 || self.version == 4 || self.version >= 6)
+    && self.error_code != 0) {
         nego_tokens_length = 0;
         pub_key_auth_length = 0;
         auth_info_length = 0;
         client_nonce_length = 0;
     }
 
-    int length = nego_tokens_length
-        + pub_key_auth_length
-        + auth_info_length
-        + client_nonce_length;
-    int ts_request_length = self.ber_sizeof(length);
+    int ts_request_length = self.ber_sizeof(nego_tokens_length+pub_key_auth_length+auth_info_length+client_nonce_length);
 
     /* TSRequest */
     BER::write_sequence_tag(stream, ts_request_length);
@@ -872,7 +932,7 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self)
     /* [1] negoTokens (NegoData) */
     if (nego_tokens_length > 0) {
         // LOG(LOG_INFO, "Credssp: TSCredentials::emit() NegoToken");
-        length = nego_tokens_length;
+        int length = nego_tokens_length;
 
         int sequence_length   = BER::sizeof_sequence_octet_string(self.negoTokens.size());
         int sequenceof_length = BER::sizeof_sequence(sequence_length);
@@ -882,31 +942,24 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self)
         length -= BER::write_sequence_tag(stream, sequenceof_length);
         length -= BER::write_sequence_tag(stream, sequence_length);
         length -= BER::write_sequence_octet_string(stream, 0, self.negoTokens.data(), self.negoTokens.size());
-
-        assert(length == 0);
-        (void)length;
     }
 
     /* [2] authInfo (OCTET STRING) */
     if (auth_info_length > 0) {
         // LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
-        length = auth_info_length;
+        int length = auth_info_length;
         length -= BER::write_sequence_octet_string(stream, 2,
                                                    self.authInfo.data(),
                                                    self.authInfo.size());
-        assert(length == 0);
-        (void)length;
     }
 
     /* [3] pubKeyAuth (OCTET STRING) */
     if (pub_key_auth_length > 0) {
         // LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
-        length = pub_key_auth_length;
+        int length = pub_key_auth_length;
         length -= BER::write_sequence_octet_string(stream, 3,
                                                    self.pubKeyAuth.data(),
                                                    self.pubKeyAuth.size());
-        assert(length == 0);
-        (void)length;
     }
     /* [4] errorCode (INTEGER) */
     if (self.version >= 3
