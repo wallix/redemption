@@ -963,6 +963,20 @@ struct TSRequest final {
 };
 
 
+inline void emitNegoTokens(OutStream & stream, const_bytes_view negoTokens)
+{
+    if (negoTokens.size() > 0) {
+        int sequence_length   = BER::sizeof_sequence_octet_string(negoTokens.size());
+        int sequenceof_length = BER::sizeof_sequence(sequence_length);
+        int context_length    = BER::sizeof_sequence(sequenceof_length);
+
+        BER::write_contextual_tag(stream, 1, context_length, true);
+        BER::write_sequence_tag(stream, sequenceof_length);
+        BER::write_sequence_tag(stream, sequence_length);
+        BER::write_sequence_octet_string(stream, 0, negoTokens.data(), negoTokens.size());
+    }
+}
+
 
 inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_code)
 {
@@ -1028,19 +1042,7 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
     LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u", self.version);
 
     /* [1] negoTokens (NegoData) */
-    if (nego_tokens_length > 0) {
-        // LOG(LOG_INFO, "Credssp: TSCredentials::emit() NegoToken");
-        int length = nego_tokens_length;
-
-        int sequence_length   = BER::sizeof_sequence_octet_string(self.negoTokens.size());
-        int sequenceof_length = BER::sizeof_sequence(sequence_length);
-        int context_length    = BER::sizeof_sequence(sequenceof_length);
-
-        length -= BER::write_contextual_tag(stream, 1, context_length, true);
-        length -= BER::write_sequence_tag(stream, sequenceof_length);
-        length -= BER::write_sequence_tag(stream, sequence_length);
-        length -= BER::write_sequence_octet_string(stream, 0, self.negoTokens.data(), self.negoTokens.size());
-    }
+    emitNegoTokens(stream, self.negoTokens);
 
     /* [2] authInfo (OCTET STRING) */
     if (auth_info_length > 0) {
