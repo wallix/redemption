@@ -162,17 +162,36 @@ namespace BER {
     //   CONTEXTUAL TAG
     // ==========================
     inline bool read_contextual_tag(InStream & s, uint8_t tag, int & length, bool pc) {
-        uint8_t byte;
         if (!s.in_check_rem(1)) {
             return false;
         }
-        byte = s.peek_uint8();
+        uint8_t tag_byte = s.peek_uint8();
         // LOG(LOG_INFO, "read_contextual_tag read: %x", byte);
-        if (byte != (CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag))) { /*NOLINT*/
+        if (tag_byte != (CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag))) { /*NOLINT*/
             return false;
         }
         s.in_skip_bytes(1);
-        return read_length(s, length);
+        // read length
+        if (!s.in_check_rem(1)) {
+            return false;
+        }
+        uint8_t byte = s.in_uint8();
+        if (byte & 0x80) {
+            if (!s.in_check_rem(byte & 0x7F)) {
+                return false;
+            }
+            if (byte == 0x81) {
+                length = s.in_uint8();
+                return true;
+            }
+            if (byte == 0x82) {
+                length = s.in_uint16_be();
+                return true;
+            }
+            return false;
+        }
+        length = byte;
+        return true;
     }
 
     inline int write_contextual_tag(OutStream & s, uint8_t tag, int length, bool pc) {
@@ -201,18 +220,35 @@ namespace BER {
     //   SEQUENCE TAG
     // ==========================
     inline bool read_sequence_tag(InStream & s, int & length) {
-        uint8_t byte;
         if (!s.in_check_rem(1)) {
             return false;
         }
-        byte = s.in_uint8();
+        uint8_t tag_byte = s.in_uint8();
 
-        if (byte != (CLASS_UNIV | PC_CONSTRUCT | TAG_SEQUENCE_OF)) { /*NOLINT*/
+        if (tag_byte != (CLASS_UNIV | PC_CONSTRUCT | TAG_SEQUENCE_OF)) { /*NOLINT*/
             return false;
         }
-
-        return read_length(s, length);
-
+        // read length
+        if (!s.in_check_rem(1)) {
+            return false;
+        }
+        uint8_t byte = s.in_uint8();
+        if (byte & 0x80) {
+            if (!s.in_check_rem(byte & 0x7F)) {
+                return false;
+            }
+            if (byte == 0x81) {
+                length = s.in_uint8();
+                return true;
+            }
+            if (byte == 0x82) {
+                length = s.in_uint16_be();
+                return true;
+            }
+            return false;
+        }
+        length = byte;
+        return true;
     }
 
     inline int write_sequence_tag(OutStream & s, int length) {
@@ -311,8 +347,30 @@ namespace BER {
 
 
     inline bool read_octet_string_tag(InStream & s, int & length) {
-        return read_universal_tag(s, TAG_OCTET_STRING, false)
-            && read_length(s, length);
+        if (read_universal_tag(s, TAG_OCTET_STRING, false) == 0) {
+            return false;
+        }
+        // read length
+        if (!s.in_check_rem(1)) {
+            return false;
+        }
+        uint8_t byte = s.in_uint8();
+        if (byte & 0x80) {
+            if (!s.in_check_rem(byte & 0x7F)) {
+                return false;
+            }
+            if (byte == 0x81) {
+                length = s.in_uint8();
+                return true;
+            }
+            if (byte == 0x82) {
+                length = s.in_uint16_be();
+                return true;
+            }
+            return false;
+        }
+        length = byte;
+        return true;
     }
 
     inline int write_octet_string_tag(OutStream & s, int length) {
@@ -398,16 +456,39 @@ namespace BER {
     //   INTEGER
     // ==========================
     inline bool read_integer(InStream & s, uint32_t & value) {
+        if (!read_universal_tag(s, TAG_INTEGER, false)){
+            return false;
+        }            
         int length;
-        if (!read_universal_tag(s, TAG_INTEGER, false) ||
-            !read_length(s, length) ||
-            !s.in_check_rem(1)) {
+        // read length
+        if (!s.in_check_rem(1)) {
+            return false;
+        }
+        uint8_t byte = s.in_uint8();
+        if (byte & 0x80) {
+            if (!s.in_check_rem(byte & 0x7F)) {
+                return false;
+            }
+            switch (byte){
+            case 0x81:
+                length = s.in_uint8();
+                break;
+            case 0x82:
+                length = s.in_uint16_be();
+                break;
+            default:
+                return false;
+            }
+        }
+        else {
+            length = byte;
+        }
+        if (!s.in_check_rem(1)) {
             return false;
         }
         // if (value == nullptr) {
         //     s.in_skip_bytes(length);
         // }
-
         if (length == 1) {
             value = s.in_uint8();
         }
