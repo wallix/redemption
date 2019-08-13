@@ -966,9 +966,9 @@ struct TSRequest final {
 inline void emitNegoTokens(OutStream & stream, const_bytes_view negoTokens)
 {
     if (negoTokens.size() > 0) {
-        int sequence_length   = BER::sizeof_sequence_octet_string(negoTokens.size());
-        int sequenceof_length = BER::sizeof_sequence(sequence_length);
-        int context_length    = BER::sizeof_sequence(sequenceof_length);
+        int sequence_length   = BER::sizeof_contextual_tag(BER::sizeof_octet_string(negoTokens.size())) + BER::sizeof_octet_string(negoTokens.size());
+        int sequenceof_length = 1 + BER::_ber_sizeof_length(sequence_length) + sequence_length;
+        int context_length    = 1 + BER::_ber_sizeof_length(sequenceof_length) + sequenceof_length;
 
         BER::write_contextual_tag(stream, 1, context_length, true);
         BER::write_sequence_tag(stream, sequenceof_length);
