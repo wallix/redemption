@@ -95,23 +95,6 @@ namespace BER {
         return true;
     }
 
-    inline int write_length(OutStream & s, int length) {
-        switch (_ber_sizeof_length(length)){
-        case 1:
-            s.out_uint8(length);
-            return 1;
-        case 2:
-            s.out_uint8(0x81);
-            s.out_uint8(length);
-            return 2;
-        default:
-            s.out_uint8(0x82);
-            s.out_uint16_be(length);
-            return 3;
-        }
-    }
-
-
     // ==========================
     //   UNIVERSAL TAG
     // ==========================
@@ -194,7 +177,20 @@ namespace BER {
 
     inline int write_contextual_tag(OutStream & s, uint8_t tag, int length, bool pc) {
         s.out_uint8(CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag)); /*NOLINT*/
-        return 1 + write_length(s, length);
+        switch (_ber_sizeof_length(length)){
+        case 1:
+            s.out_uint8(length);
+            return 2;
+        case 2:
+            s.out_uint8(0x81);
+            s.out_uint8(length);
+            return 3;
+        default:
+            break;
+        }
+        s.out_uint8(0x82);
+        s.out_uint16_be(length);
+        return 4;
     }
 
     inline int sizeof_contextual_tag(int length) {
@@ -221,7 +217,20 @@ namespace BER {
 
     inline int write_sequence_tag(OutStream & s, int length) {
         s.out_uint8(CLASS_UNIV | PC_CONSTRUCT | (TAG_MASK & TAG_SEQUENCE)); /*NOLINT*/
-        return 1 + write_length(s, length);
+        switch (_ber_sizeof_length(length)){
+        case 1:
+            s.out_uint8(length);
+            return 2;
+        case 2:
+            s.out_uint8(0x81);
+            s.out_uint8(length);
+            return 3;
+        default:
+            break;
+        }
+        s.out_uint8(0x82);
+        s.out_uint16_be(length);
+        return 4;
     }
 
     inline int sizeof_sequence(int length) {
@@ -279,7 +288,22 @@ namespace BER {
     inline int write_octet_string(OutStream & s, const uint8_t * oct_str, int length) {
         int size = 0;
         size += write_universal_tag(s, TAG_OCTET_STRING, false);
-        size += write_length(s, length);
+        switch (_ber_sizeof_length(length)){
+        case 1:
+            s.out_uint8(length);
+            size += 1;
+            break;
+        case 2:
+            s.out_uint8(0x81);
+            s.out_uint8(length);
+            size += 2;
+            break;
+        default:
+            s.out_uint8(0x82);
+            s.out_uint16_be(length);
+            size += 4;
+            break;
+        }
         s.out_copy_bytes(oct_str, length);
         size += length;
         return size;
@@ -293,7 +317,19 @@ namespace BER {
 
     inline int write_octet_string_tag(OutStream & s, int length) {
         write_universal_tag(s, TAG_OCTET_STRING, false);
-        write_length(s, length);
+        switch (_ber_sizeof_length(length)){
+        case 1:
+            s.out_uint8(length);
+            break;
+        case 2:
+            s.out_uint8(0x81);
+            s.out_uint8(length);
+            break;
+        default:
+            s.out_uint8(0x82);
+            s.out_uint16_be(length);
+            break;
+        }
         return 1 + _ber_sizeof_length(length);
     }
 
@@ -396,26 +432,26 @@ namespace BER {
     {
         if (value <  0x80) {
             write_universal_tag(s, TAG_INTEGER, false);
-            write_length(s, 1);
+            s.out_uint8(1); // length
             s.out_uint8(value);
             return 3;
         }
         if (value <  0x8000) {
             write_universal_tag(s, TAG_INTEGER, false);
-            write_length(s, 2);
+            s.out_uint8(2); // length
             s.out_uint16_be(value);
             return 4;
         }
         if (value <  0x800000) {
             write_universal_tag(s, TAG_INTEGER, false);
-            write_length(s, 3);
+            s.out_uint8(3); // length
             s.out_uint8(value >> 16);
             s.out_uint16_be(value & 0xFFFF);
             return 5;
         }
         if (value <  0x80000000) {
             write_universal_tag(s, TAG_INTEGER, false);
-            write_length(s, 4);
+            s.out_uint8(4); // length
             s.out_uint32_be(value);
             return 6;
         }
