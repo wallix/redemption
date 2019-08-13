@@ -966,17 +966,19 @@ struct TSRequest final {
 
 inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_code)
 {
+    uint32_t version_length = 3;
+
     if ((self.version == 3 || self.version == 4 || self.version >= 6)
     && error_code != 0) {
-        int ts_request_length = BER::sizeof_integer(self.version);
-        ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(self.version));
+        int ts_request_length = 3;
+        ts_request_length += BER::sizeof_contextual_tag(version_length);
         ts_request_length += BER::sizeof_integer(error_code);
         ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(error_code));
 
         /* TSRequest */
         BER::write_sequence_tag(stream, ts_request_length);
         /* [0] version */
-        BER::write_contextual_tag(stream, 0, BER::sizeof_integer(self.version), true);
+        BER::write_contextual_tag(stream, 0, version_length, true);
         BER::write_integer(stream, self.version);
         LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u", self.version);
 
