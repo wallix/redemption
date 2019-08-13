@@ -962,25 +962,64 @@ struct TSRequest final {
     }
 };
 
-
-inline void emitNegoTokens(OutStream & stream, const_bytes_view negoTokens)
+inline void backward_push_ber_len(std::vector<uint8_t> & v, uint32_t len)
 {
-    if (negoTokens.size() > 0) {
-    
-        auto header_len = [](int length){return (length <= 0x7F)?2:(length <= 0xFF)?3:4;};
-    
-        int octet_string_length = header_len(negoTokens.size()) + negoTokens.size();
-        int sequence_length     = header_len(octet_string_length) + octet_string_length;
-        int sequenceof_length   = header_len(sequence_length)     + sequence_length;
-        int context_length      = header_len(sequenceof_length)   + sequenceof_length;
-
-        BER::write_contextual_tag(stream, 1, context_length, true);
-        BER::write_sequence_tag(stream, sequenceof_length);
-        BER::write_sequence_tag(stream, sequence_length);
-        BER::write_sequence_octet_string(stream, 0, negoTokens.data(), negoTokens.size());
+    v.push_back(uint8_t(len));
+    if (len > 0xFF){
+        v.push_back(uint8_t(len >> 8));
+        v.push_back(0x82);
+    } else if (len > 0x7F){
+        v.push_back(0x81);
     }
 }
 
+inline void backward_push_octet_string_header(std::vector<uint8_t> & v, uint32_t payload_size, uint8_t tag)
+{
+   backward_push_ber_len(v, payload_size + v.size());
+   v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | BER::TAG_OCTET_STRING);
+   backward_push_ber_len(v, payload_size + v.size());
+   v.push_back(BER::CLASS_CTXT | BER::PC_CONSTRUCT | tag);
+}
+
+
+inline std::vector<uint8_t> emitNegoTokensHeaders(uint32_t payload_size)
+{
+    std::vector<uint8_t> head;
+
+    if (payload_size > 0) {
+        backward_push_octet_string_header(head, payload_size, 0);
+        backward_push_ber_len(head, payload_size + head.size());
+        head.push_back(BER::CLASS_UNIV | BER::PC_CONSTRUCT | BER::TAG_SEQUENCE);
+        backward_push_ber_len(head, payload_size + head.size());
+        head.push_back(BER::CLASS_UNIV | BER::PC_CONSTRUCT | BER::TAG_SEQUENCE);
+        backward_push_ber_len(head, payload_size + head.size());
+        head.push_back(BER::CLASS_CTXT | BER::PC_CONSTRUCT | 1);
+        std::reverse(head.begin(), head.end());
+    }
+    return head;
+}
+
+inline std::vector<uint8_t> emitAuthInfoHeaders(uint32_t payload_size)
+{
+    std::vector<uint8_t> head;
+
+    if (payload_size > 0) {
+        backward_push_octet_string_header(head, payload_size, 2);
+        std::reverse(head.begin(), head.end());
+    }
+    return head;
+}
+
+inline std::vector<uint8_t> emitPubkeyAuthHeaders(uint32_t payload_size)
+{
+    std::vector<uint8_t> head;
+
+    if (payload_size > 0) {
+        backward_push_octet_string_header(head, payload_size, 3);
+        std::reverse(head.begin(), head.end());
+    }
+    return head;
+}
 
 inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_code)
 {
@@ -1046,25 +1085,20 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
     LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u", self.version);
 
     /* [1] negoTokens (NegoData) */
-    emitNegoTokens(stream, self.negoTokens);
+    auto ber_nego_tokens_header = emitNegoTokensHeaders(self.negoTokens.size());
+    stream.out_copy_bytes(ber_nego_tokens_header);
+    stream.out_copy_bytes(self.negoTokens);
 
     /* [2] authInfo (OCTET STRING) */
-    if (auth_info_length > 0) {
-        // LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
-        int length = auth_info_length;
-        length -= BER::write_sequence_octet_string(stream, 2,
-                                                   self.authInfo.data(),
-                                                   self.authInfo.size());
-    }
+    auto ber_auth_info_header = emitAuthInfoHeaders(self.authInfo.size());
+    stream.out_copy_bytes(ber_auth_info_header);
+    stream.out_copy_bytes(self.authInfo);
 
     /* [3] pubKeyAuth (OCTET STRING) */
-    if (pub_key_auth_length > 0) {
-        // LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
-        int length = pub_key_auth_length;
-        length -= BER::write_sequence_octet_string(stream, 3,
-                                                   self.pubKeyAuth.data(),
-                                                   self.pubKeyAuth.size());
-    }
+    auto ber_pub_key_auth_header = emitPubkeyAuthHeaders(self.pubKeyAuth.size());
+    stream.out_copy_bytes(ber_pub_key_auth_header);
+    stream.out_copy_bytes(self.pubKeyAuth);
+    
     /* [4] errorCode (INTEGER) */
     /* [5] clientNonce (OCTET STRING) */
     self.clientNonce.ber_write(self.version, stream);
