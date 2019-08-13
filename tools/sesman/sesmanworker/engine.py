@@ -1020,7 +1020,7 @@ class Engine(object):
     def get_effective_target(self, selected_target):
         application = selected_target['application_cn']
         try:
-            if application:
+            if application and not self.is_shadow_session(selected_target):
                 effective_target = self.wabengine.get_effective_target(
                     selected_target
                 )
@@ -1057,6 +1057,15 @@ class Engine(object):
         # Logger().info("Engine get_app_params: "
         #               "service_login=%s effective_target=%s" %
         #               (service_login, effective_target))
+        if self.is_shadow_session(selected_target):
+            from collections import namedtuple
+            status, infos = self.check_target(selected_target)
+            AppParams = namedtuple('AppParams',
+                                   ['program', 'params', 'workingdir'])
+            token = infos.get("shadow_token", {})
+            app_params = AppParams("", None, token.get("shadow_id"))
+            Logger().info("Engine get_app_params shadow done")
+            return app_params
         try:
             app_params = self.wabengine.get_app_params(
                 selected_target,
@@ -1178,6 +1187,9 @@ class Engine(object):
 
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         Logger().debug("**** CALL wabengine START SESSION ")
+        if self.is_shadow_session(auth):
+            from datetime import datetime
+            return "shadow_sid", datetime.now()
         try:
             self.session_id, self.start_time = self.wabengine.start_session(
                 auth,
@@ -1358,6 +1370,8 @@ class Engine(object):
         return (kill_patterns, notify_patterns)
 
     def get_restrictions(self, auth, proxytype):
+        if self.is_shadow_session(auth):
+            return None, None
         if proxytype == "RDP":
             separator = u"\x01"
             matchproto = lambda x: x == u"RDP"
@@ -1583,6 +1597,8 @@ class Engine(object):
         target = selected_target or self.target_right
         if not target:
             return None
+        if self.is_shadow_session(target):
+            return u'-'
         return target['deconnection_time']
 
     def get_server_pubkey_options(self, selected_target=None):
@@ -1621,6 +1637,15 @@ class Engine(object):
         return conn_opts
 
     def get_physical_target_info(self, physical_target):
+        if self.is_shadow_session(physical_target):
+            status, infos = self.check_target(physical_target)
+            token = infos.get("shadow_token", {})
+            return PhysicalTarget(
+                device_host=token.get('shadow_ip'),
+                account_login=physical_target.get('account_login'),
+                service_port=token.get('shadow_port'),
+                device_id=physical_target.get('device_uid')
+            )
         port = physical_target['service_port']
         if isinstance(port, basestring):
             port = int(port)
@@ -1701,6 +1726,10 @@ class Engine(object):
             def get_trace_encryption_key(self, name, flag):
                 return self.proxy.get_trace_encryption_key(name, flag)
         return crypto_methods(self.wabengine)
+
+    def is_shadow_session(self, selected_target=None):
+        target = selected_target or self.target_right
+        return target.get('is_shadow') is True
 
 
 # Information Structs

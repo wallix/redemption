@@ -1219,7 +1219,7 @@ class Sesman():
             r = []
             try:
                 Logger().info(u"Start Select ...")
-                timeout = None if status != APPROVAL_PENDING else 10
+                timeout = None if status != APPROVAL_PENDING else 5
                 r, w, x = select([self.proxy_conx], [], [], timeout)
             except Exception as e:
                 if DEBUG:
@@ -1836,19 +1836,25 @@ class Sesman():
                                     self.engine.update_session(**update_args)
                                     self.shared["rd_shadow_available"] = 'False'
 
-                                if self.shared.get("rd_shadow_invitation_id"):
+                                if self.shared.get("rd_shadow_invitation_error_code"):
                                     update_args = {}
+                                    shadow_token = {
+                                        "shadow_id":
+                                        self.shared.get("rd_shadow_invitation_id"),
+                                        "shadow_ip":
+                                        self.shared.get("rd_shadow_invitation_addr"),
+                                        "shadow_port":
+                                        self.shared.get("rd_shadow_invitation_port"),
+                                    }
                                     update_args["shadow_userdata"] = self.shared.get("rd_shadow_userdata")
-                                    update_args["shadow_errcode"] = int(self.shared.get("rd_shadow_invitation_error_code"))
+                                    update_args["shadow_errcode"] = self.shared.get("rd_shadow_invitation_error_code")
                                     update_args["shadow_errmsg"] = self.shared.get("rd_shadow_invitation_error_message")
-                                    update_args["shadow_id"] = self.shared.get("rd_shadow_invitation_id")
-                                    update_args["shadow_ip"] = self.shared.get("rd_shadow_invitation_addr")
-                                    update_args["shadow_port"] = self.shared.get("rd_shadow_invitation_port")
+                                    update_args["shadow_token"] = shadow_token
                                     self.engine.update_session(**update_args)
                                     self.shared["rd_shadow_available"] = 'False'
 
                                     self.shared["rd_shadow_userdata"] = None
-                                    self.shared["rd_shadow_invitation_error_code"] = None
+                                    self.shared["rd_shadow_invitation_error_code"] = 0
                                     self.shared["rd_shadow_invitation_error_message"] = None
                                     self.shared["rd_shadow_invitation_id"] = None
                                     self.shared["rd_shadow_invitation_addr"] = None
@@ -2224,7 +2230,7 @@ class Sesman():
             Logger().debug("sending rd_shadow_type=%s" % res)
             self.send_data({
                   u'rd_shadow_type': res
-                , u'rd_shadow_userdata' : u'0'})
+                , u'rd_shadow_userdata' : userdata})
 
     def parse_app(self, value):
         acc_name, sep, app_name = value.rpartition('@')
