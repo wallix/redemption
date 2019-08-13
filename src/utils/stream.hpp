@@ -186,6 +186,13 @@ public:
         return this->p.in_uint32_be();
     }
 
+    uint32_t in_uint24_be() noexcept {
+        assert(this->in_check_rem(3));
+        uint32_t value = (this->in_uint8() << 16);
+        value += this->in_uint16_be();
+        return value;
+    }
+
     int32_t in_sint32_le() noexcept {
         return this->p.in_sint32_le();
     }

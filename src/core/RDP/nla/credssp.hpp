@@ -30,6 +30,37 @@
 #include "utils/stream.hpp"
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
 
+// BER Encoding Cheat Sheet
+// ========================
+
+// BER INTEGER
+// -----------
+// Only the 4 first patterns are canonical,
+// next 4 are using non packed integer length encoding (pretty inefficient)
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 01 XX] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 02 HH LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 03 HH MM LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 04 HH MM LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 01 XX] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 02 HH LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 03 HH MM LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 81 04 HH MM LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 01 XX] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 02 HH LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 03 HH MM LL] 
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER] [ 82 00 04 HH MM LL] 
+
+// BER OCTET STRING
+// ----------------
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ ll ] [ XX .. XX ]
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 81 LL ] [ XX .. XX]  
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 82 LH LL ] [ XX .. XX]  
+// [CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING] [ 83 LH LM LL ] [ XX .. XX]  
+// ll = length of string <= 127
+// LL = length of string <= 255
+// LHLL = length of string <= 65535
+// LHLMLL = length of string 24 bits (unlikely, in credssp context it's probably an error)
+
 namespace BER {
     enum CLASS {
         CLASS_MASK = 0xC0,
@@ -67,23 +98,6 @@ namespace BER {
     // ==========================
     inline int _ber_sizeof_length(int length) {
         return (length <= 0x7F)?1:(length <= 0xFF)?2:3;
-    }
-
-    // ==========================
-    //   UNIVERSAL TAG
-    // ==========================
-    inline bool read_universal_tag(InStream & s, uint8_t tag, bool pc) {
-        uint8_t byte;
-        if (!s.in_check_rem(1)) {
-            return false;
-        }
-        byte = s.in_uint8();
-        return byte == (CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag)); /*NOLINT*/
-    }
-
-    inline int write_universal_tag(OutStream & s, uint8_t tag, bool pc) {
-        s.out_uint8(CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag)); /*NOLINT*/
-        return 1;
     }
 
     // ==========================
@@ -272,7 +286,7 @@ namespace BER {
     //}
 
     //void write_enumerated(OutStream & s, uint8_t enumerated, uint8_t count) {
-    //    write_universal_tag(s, TAG_ENUMERATED, false);
+    //    s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_ENUMERATED));
     //    write_length(s, 1);
     //    s.out_uint8(enumerated);
     //}
@@ -297,7 +311,8 @@ namespace BER {
     // ==========================
     inline int write_octet_string(OutStream & s, const uint8_t * oct_str, int length) {
         int size = 0;
-        size += write_universal_tag(s, TAG_OCTET_STRING, false);
+        s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_OCTET_STRING));
+        size += 1;
         switch (_ber_sizeof_length(length)){
         case 1:
             s.out_uint8(length);
@@ -311,7 +326,7 @@ namespace BER {
         default:
             s.out_uint8(0x82);
             s.out_uint16_be(length);
-            size += 4;
+            size += 3;
             break;
         }
         s.out_copy_bytes(oct_str, length);
@@ -321,7 +336,11 @@ namespace BER {
 
 
     inline bool read_octet_string_tag(InStream & s, int & length) {
-        if (read_universal_tag(s, TAG_OCTET_STRING, false) == 0) {
+        if (!s.in_check_rem(1)) {
+            return false;
+        }
+        uint8_t tag_byte = s.in_uint8();
+        if  (tag_byte != (CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_OCTET_STRING))){
             return false;
         }
         // read length
@@ -348,7 +367,7 @@ namespace BER {
     }
 
     inline int write_octet_string_tag(OutStream & s, int length) {
-        write_universal_tag(s, TAG_OCTET_STRING, false);
+        s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_OCTET_STRING));
         switch (_ber_sizeof_length(length)){
         case 1:
             s.out_uint8(length);
@@ -375,8 +394,28 @@ namespace BER {
 
     inline int write_sequence_octet_string(OutStream & stream, uint8_t context,
                                         const uint8_t * value, int length) {
-        return write_contextual_tag(stream, context, sizeof_octet_string(length), true)
-            + write_octet_string(stream, value, length);
+        auto size = write_contextual_tag(stream, context, sizeof_octet_string(length), true);
+        stream.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_OCTET_STRING));
+        size += 1;
+        switch (_ber_sizeof_length(length)){
+        case 1:
+            stream.out_uint8(length);
+            size += 1;
+            break;
+        case 2:
+            stream.out_uint8(0x81);
+            stream.out_uint8(length);
+            size += 2;
+            break;
+        default:
+            stream.out_uint8(0x82);
+            stream.out_uint16_be(length);
+            size += 3;
+            break;
+        }
+        stream.out_copy_bytes(value, length);
+        size += length;
+        return size;
     }
 
     // ==========================
@@ -384,7 +423,8 @@ namespace BER {
     // ==========================
     //int write_general_string(OutStream & s, const uint8_t * oct_str, int length) {
     //    int size = 0;
-    //    size += write_universal_tag(s, TAG_GENERAL_STRING, false);
+    //    s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_GENERAL_STRING));
+    //    size += 1;
     //    size += write_length(s, length);
     //    s.out_copy_bytes(oct_str, length);
     //    size += length;
@@ -395,7 +435,7 @@ namespace BER {
     //        && read_length(s, length);
     //}
     //int write_general_string_tag(OutStream & s, int length) {
-    //    write_universal_tag(s, TAG_GENERAL_STRING, false);
+    //    s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_GENERAL_STRING));
     //    write_length(s, length);
     //    return 1 + _ber_sizeof_length(length);
     //}
@@ -421,7 +461,7 @@ namespace BER {
     //}
 
     //void write_bool(OutStream & s, bool value) {
-    //    write_universal_tag(s, TAG_BOOLEAN, false);
+    //    s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_BOOLEAN));
     //    write_length(s, 1);
     //    s.out_uint8(value ? 0xFF : 0);
     //}
@@ -429,55 +469,65 @@ namespace BER {
     // ==========================
     //   INTEGER
     // ==========================
+    
     inline bool read_integer(InStream & s, uint32_t & value) {
-        if (!read_universal_tag(s, TAG_INTEGER, false)){
+        if (!s.in_check_rem(1)) {
             return false;
-        }            
-        int length;
-        // read length
+        }
+        uint8_t tag_byte = s.in_uint8();
+        if  (tag_byte != (CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_INTEGER))){
+            return false;
+        }
+        // read length of following value
         if (!s.in_check_rem(1)) {
             return false;
         }
         uint8_t byte = s.in_uint8();
-        if (byte & 0x80) {
-            if (!s.in_check_rem(byte & 0x7F)) {
-                return false;
-            }
-            switch (byte){
-            case 0x81:
-                length = s.in_uint8();
-                break;
-            case 0x82:
-                length = s.in_uint16_be();
-                break;
-            default:
-                return false;
-            }
-        }
-        else {
-            length = byte;
-        }
-        if (!s.in_check_rem(1)) {
+        switch (byte) {
+        case 0:
             return false;
+        case 0x82:
+            if (!s.in_check_rem(2)) {
+                return false;
+            }
+            byte = s.in_uint16_be();
+            break;
+        case 0x81:
+            if (!s.in_check_rem(1)) {
+                return false;
+            }
+            byte = s.in_uint8();
+            break;
+        default:
+            break;
         }
-        // if (value == nullptr) {
-        //     s.in_skip_bytes(length);
-        // }
-        if (length == 1) {
-            value = s.in_uint8();
-        }
-        else if (length == 2) {
-            value = s.in_uint16_be();
-        }
-        else if (length == 3) {
-            uint8_t byte = s.in_uint8();
-            value = s.in_uint16_be();
-            value += (byte << 16);
-        }
-        else if (length == 4) {
+        // Now bytes contains length of integer value
+        switch (byte) {
+        case 4:
+            if (!s.in_check_rem(4)) {
+                return false;
+            }
             value = s.in_uint32_be();
-        }
-        else {
+            break;
+        case 3:
+            if (!s.in_check_rem(3)) {
+                return false;
+            }
+            value = s.in_uint24_be();
+            break;
+        case 2:
+            if (!s.in_check_rem(2)) {
+                return false;
+            }
+            value = s.in_uint16_be();
+            break;
+        case 1:
+            if (!s.in_check_rem(1)) {
+                return false;
+            }
+            value = s.in_uint8();
+            break;
+        default:
             return false;
         }
         return true;
@@ -485,32 +535,28 @@ namespace BER {
 
     inline int write_integer(OutStream & s, uint32_t value)
     {
+        s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_INTEGER));
         if (value <  0x80) {
-            write_universal_tag(s, TAG_INTEGER, false);
             s.out_uint8(1); // length
             s.out_uint8(value);
             return 3;
         }
         if (value <  0x8000) {
-            write_universal_tag(s, TAG_INTEGER, false);
             s.out_uint8(2); // length
             s.out_uint16_be(value);
             return 4;
         }
         if (value <  0x800000) {
-            write_universal_tag(s, TAG_INTEGER, false);
             s.out_uint8(3); // length
             s.out_uint8(value >> 16);
             s.out_uint16_be(value & 0xFFFF);
             return 5;
         }
         if (value <  0x80000000) {
-            write_universal_tag(s, TAG_INTEGER, false);
             s.out_uint8(4); // length
             s.out_uint32_be(value);
             return 6;
         }
-
         return 0;
     }
 
@@ -529,12 +575,6 @@ namespace BER {
         }
         return 0;
     }
-
-    //bool read_integer_length(InStream & s, int & length)
-    //{
-    //    return read_universal_tag(s, TAG_INTEGER, false)
-    //        && read_length(s, length);
-    //}
 } // namespace BER
 
 
