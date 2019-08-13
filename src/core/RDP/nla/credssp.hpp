@@ -69,32 +69,6 @@ namespace BER {
         return (length <= 0x7F)?1:(length <= 0xFF)?2:3;
     }
 
-    // TODO: this function is too eager, it does two different things
-    // one is about reading a value on stream
-    // another is checking we have enough data to read following length
-    inline bool read_length(InStream & s, int & length) {
-        if (!s.in_check_rem(1)) {
-            return false;
-        }
-        uint8_t byte = s.in_uint8();
-        if (byte & 0x80) {
-            if (!s.in_check_rem(byte & 0x7F)) {
-                return false;
-            }
-            if (byte == 0x81) {
-                length = s.in_uint8();
-                return true;
-            }
-            if (byte == 0x82) {
-                length = s.in_uint16_be();
-                return true;
-            }
-            return false;
-        }
-        length = byte;
-        return true;
-    }
-
     // ==========================
     //   UNIVERSAL TAG
     // ==========================
