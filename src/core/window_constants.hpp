@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "utils/sugar/array_view.hpp"
+
 enum {
     WS_DISABLED = 0x08000000L,
     WS_ICONIC   = 0x20000000L,  // The window is initially minimized. Same as the WS_MINIMIZE style.
@@ -41,11 +43,12 @@ enum {
 };
 
 
-inline const char * button_state_to_string(int state) {
+inline array_view_const_char button_state_to_string(int state) noexcept
+{
     switch (state) {
-        case BST_UNCHECKED:     return "unchecked";
-        case BST_CHECKED:       return "checked";
-        case BST_INDETERMINATE: return "indeterminate";
-        default:                return "unavailable";
+        case BST_UNCHECKED:     return "unchecked"_av;
+        case BST_CHECKED:       return "checked"_av;
+        case BST_INDETERMINATE: return "indeterminate"_av;
+        default:                return "unavailable"_av;
     }
 }

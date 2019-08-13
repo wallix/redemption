@@ -365,23 +365,13 @@ void ModuleManager::create_mod_rdp(
                 , trans(std::move(fd), ReportError([this](Error err){
                     auto* msg = err.errmsg();
 
-                    LOG(LOG_INFO, "FileValidatorTransport: %s", msg);
-                    auto const info = key_qvalue_pairs({
-                        {"type", "FILE_VERIFICATION_ERROR"},
-                        {"service", this->ctx_error.socket_path},
-                        {"status", msg}
+                    this->ctx_error.report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->ctx_error.session_reactor.get_current_time(), {
+                        KVLog::siem("service"_av, this->ctx_error.socket_path),
+                        KVLog::arcsight("app"_av, "rdp"_av),
+                        KVLog::all("status"_av, {msg, strlen(msg)}),
                     });
 
-                    ArcsightLogInfo arc_info;
-                    arc_info.name = "FILE_SCAN_ERROR";
-                    arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
-                    arc_info.ApplicationProtocol = "rdp";
-                    arc_info.message = msg;
-
-                    this->ctx_error.report_message.log6(
-                        info, arc_info, this->ctx_error.session_reactor.get_current_time());
-                    auto message = str_concat("FILE_VERIFICATION="_av, msg);
-                    this->ctx_error.front.session_update(message);
+                    this->ctx_error.front.session_update(str_concat("FILE_VERIFICATION="_av, msg));
 
                     return err;
                 }))
@@ -432,20 +422,10 @@ void ModuleManager::create_mod_rdp(
             else {
                 enable_validator = false;
                 LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
-                auto const info = key_qvalue_pairs({
-                    {"type", "FILE_VERIFICATION_ERROR"},
-                    {"service", socket_path},
-                    {"status", "Unable to connect to FileValidator server"}
+                report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
+                    KVLog::siem("service"_av, socket_path),
+                    KVLog::all("status"_av, "Unable to connect to FileValidator server"_av),
                 });
-
-                ArcsightLogInfo arc_info;
-                arc_info.name = "FILE_SCAN_ERROR";
-                arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
-                arc_info.ApplicationProtocol = "rdp";
-                arc_info.message = "Unable to connect to FileValidator server";
-
-                report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-                this->front.session_update("FILE_VERIFICATION=Unable to connect to FileValidator server"_av);
             }
         }
 
@@ -560,12 +540,10 @@ void ModuleManager::create_mod_rdp(
         report_message.update_inactivity_timeout();
     }
     catch (...) {
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SESSION_CREATION";
-        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_CREATION;
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.WallixBastionStatus = "FAIL";
-        report_message.log6("type=\"SESSION_CREATION_FAILED\"", arc_info, this->session_reactor.get_current_time());
+        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {
+            KVLog::arcsight("app"_av, "rdp"_av),
+            KVLog::arcsight("WallixBastionStatus"_av, "FAIL"_av),
+        });
 
         throw;
     }

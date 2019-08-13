@@ -363,16 +363,6 @@ struct Buffer
     }
 };
 
-struct ReportMessage : NullReportMessage
-{
-    std::vector<std::string> messages;
-
-    void log6(const std::string & info, const ArcsightLogInfo & /*asl_info*/, const timeval /*time*/) override
-    {
-        messages.emplace_back(info);
-    }
-};
-
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
@@ -386,6 +376,37 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             msg.insert(msg.end(), message.begin(), message.end());
         }
     } front(screen_info);
+
+    struct ReportMessage : NullReportMessage
+    {
+        std::vector<std::string> messages;
+
+        void log6(LogId id, const timeval /*time*/, KVList kv_list) override
+        {
+            kv_pair_ values[10]{
+                {"type"_av, log_id_string_map[int(id)]},
+                {""_av, ""_av},
+                {""_av, ""_av},
+                {""_av, ""_av},
+                {""_av, ""_av},
+                {""_av, ""_av},
+                {""_av, ""_av},
+                {""_av, ""_av},
+                {""_av, ""_av},
+                {""_av, ""_av},
+            };
+            auto* p = values + 1;
+            for (auto& kv : kv_list) {
+                if (kv.categories.test(LogCategory::Siem)) {
+                    p->key = kv.key;
+                    p->value = kv.value;
+                    ++p;
+                }
+            }
+
+            messages.emplace_back(key_qvalue_pairs({values, p}));
+        }
+    };
 
     SessionReactor session_reactor;
     timeval time_test;

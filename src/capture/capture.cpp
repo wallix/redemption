@@ -574,16 +574,9 @@ public:
             }
             this->hidden_masked_char_count = 0;
 
-            this->formatted_message.assign("KBD_INPUT", {
-                {"data", this->kbd_stream.get_bytes().as_chars()}
+            this->report_message.log6(LogId::KBD_INPUT, tvtime(), {
+                KVLog::all("data"_av, this->kbd_stream.get_bytes().as_chars()),
             });
-
-            ArcsightLogInfo arc_info;
-            arc_info.name = "KBD_INPUT";
-            arc_info.signatureID = ArcsightLogInfo::ID::KBD_INPUT;
-            arc_info.message = this->formatted_message.str();
-
-            this->report_message.log6(this->formatted_message.str(), arc_info, tvtime());
 
             this->kbd_stream.rewind();
         }
@@ -1557,21 +1550,16 @@ public:
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;
 
-            auto title = this->title_extractor.get().extract_title();
+            array_view_const_char title = this->title_extractor.get().extract_title();
 
             if (title.data()/* && title.size()*/) {
                 notify_title_changed.notify_title_changed(now, title);
                 if (&this->title_extractor.get() != &this->agent_title_extractor
                  && this->report_message)
                 {
-                    this->formatted_message.assign("TITLE_BAR", {{"data", title}});
-
-                    ArcsightLogInfo arc_info;
-                    arc_info.name = "TITLE_BAR";
-                    arc_info.signatureID = ArcsightLogInfo::ID::TITLE_BAR;
-                    arc_info.message = this->formatted_message.str();
-
-                    this->report_message->log6(this->formatted_message.str(), arc_info, tvtime());
+                    this->report_message->log6(LogId::TITLE_BAR, tvtime(), {
+                        KVLog::all("data"_av, title),
+                    });
                 }
             }
 

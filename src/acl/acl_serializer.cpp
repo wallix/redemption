@@ -283,9 +283,31 @@ void AclSerializer::update_inactivity_timeout()
     }
 }
 
-void AclSerializer::log6(
-    const std::string & info, const ArcsightLogInfo & asl_info, const timeval time)
+void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
 {
+    kv_pair_ values[10]{
+        {"type"_av, log_id_string_map[int(id)]},
+        {""_av, ""_av},
+        {""_av, ""_av},
+        {""_av, ""_av},
+        {""_av, ""_av},
+        {""_av, ""_av},
+        {""_av, ""_av},
+        {""_av, ""_av},
+        {""_av, ""_av},
+        {""_av, ""_av},
+    };
+    auto* p = values + 1;
+    for (auto& kv : kv_list) {
+        if (kv.categories.test(LogCategory::Siem)) {
+            p->key = kv.key;
+            p->value = kv.value;
+            ++p;
+        }
+    }
+
+    auto info = key_qvalue_pairs({values, p});
+
     time_t const time_now = time.tv_sec;
     this->log_file.write_line(time_now, info);
 
@@ -322,6 +344,9 @@ void AclSerializer::log6(
         auto const& account       = this->ini.get<cfg::globals::target_user>();
         auto const& session_id    = this->ini.get<cfg::context::session_id>();
         auto const& host          = this->ini.get<cfg::globals::host>();
+
+        ArcsightLogInfo asl_info;
+        asl_info.direction_flag = ArcsightLogInfo::Direction(int(kv_list.direction));
 
         std::string arcsight_message;
         arcsight_format(arcsight_message, asl_info,

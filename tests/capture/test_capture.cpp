@@ -1850,15 +1850,40 @@ RED_AUTO_TEST_CASE(TestReload)
     }
 }
 
+struct ReportMessage : NullReportMessage
+{
+    std::string s;
+
+    void log6(LogId id, const timeval /*time*/, KVList kv_list) override
+    {
+        kv_pair_ values[10]{
+            {"type"_av, log_id_string_map[int(id)]},
+            {""_av, ""_av},
+            {""_av, ""_av},
+            {""_av, ""_av},
+            {""_av, ""_av},
+            {""_av, ""_av},
+            {""_av, ""_av},
+            {""_av, ""_av},
+            {""_av, ""_av},
+            {""_av, ""_av},
+        };
+        auto* p = values + 1;
+        for (auto& kv : kv_list) {
+            if (kv.categories.test(LogCategory::Siem)) {
+                p->key = kv.key;
+                p->value = kv.value;
+                ++p;
+            }
+        }
+
+        s += key_qvalue_pairs({values, p});
+    }
+};
+
 RED_AUTO_TEST_CASE(TestKbdCapture)
 {
-    struct : NullReportMessage {
-        std::string s;
-
-        void log6(const std::string &info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
-            s += info;
-        }
-    } report_message;
+    ReportMessage report_message;
 
     timeval const time = {0, 0};
     Capture::SessionLogKbd kbd_capture(report_message);
@@ -1906,13 +1931,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
 RED_AUTO_TEST_CASE(TestKbdCapture2)
 {
-    struct : NullReportMessage {
-        std::string s;
-
-        void log6(const std::string &info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
-            s += info;
-        }
-    } report_message;
+    ReportMessage report_message;
 
     timeval const now = {0, 0};
     Capture::SessionLogKbd kbd_capture(report_message);

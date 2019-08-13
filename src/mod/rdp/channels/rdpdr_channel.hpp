@@ -1467,14 +1467,13 @@ public:
                                     { "device_type", device_type_name }
                                 });
 
-                            ArcsightLogInfo arc_info;
-                            arc_info.name = "DRIVE_REDIRECTION_USE";
-                            arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_USE;
-                            arc_info.ApplicationProtocol = "rdp";
-                            arc_info.message = info;
-                            arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                            this->report_message.log6(
+                                LogId::DRIVE_REDIRECTION_USE,
+                                this->session_reactor.get_current_time(), {{
+                                KVLog::all("device_name"_av, device_name),
+                                KVLog::all("device_type"_av, device_type_name),
+                                KVLog::arcsight("app"_av, "rdp"_av),
+                            }, LogDirection::ServerSrc});
 
                             if (!this->param_dont_log_data_into_syslog) {
                                 LOG(LOG_INFO, "%s", info);
@@ -1575,15 +1574,14 @@ public:
                                             { "sha256", digest_s }
                                         });
 
-                                    ArcsightLogInfo arc_info;
-                                    arc_info.name = "DRIVE_REDIRECTION_READ_EX";
-                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_READ_EX;
-                                    arc_info.ApplicationProtocol = "rdp";
-                                    arc_info.filePath = file_path;
-                                    arc_info.fileSize = target_iter->end_of_file;
-                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    this->report_message.log6(
+                                        LogId::DRIVE_REDIRECTION_READ_EX,
+                                        this->session_reactor.get_current_time(), {{
+                                        KVLog::all("file_name"_av, file_path),
+                                        KVLog::all("size"_av, file_size_str),
+                                        KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
+                                        KVLog::arcsight("app"_av, "rdp"_av),
+                                    }, LogDirection::ServerSrc});
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1606,14 +1604,12 @@ public:
                                             { "file_name", file_path }
                                         });
 
-                                    ArcsightLogInfo arc_info;
-                                    arc_info.name = "DRIVE_REDIRECTION_READ";
-                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_READ;
-                                    arc_info.ApplicationProtocol = "rdp";
-                                    arc_info.filePath = file_path;
-                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    this->report_message.log6(
+                                        LogId::DRIVE_REDIRECTION_READ,
+                                        this->session_reactor.get_current_time(), {{
+                                        KVLog::all("file_name"_av, file_path),
+                                        KVLog::arcsight("app"_av, "rdp"_av),
+                                    }, LogDirection::ServerSrc});
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1650,15 +1646,14 @@ public:
                                             { "sha256", digest_s }
                                         });
 
-                                    ArcsightLogInfo arc_info;
-                                    arc_info.name = "DRIVE_REDIRECTION_WRITE_EX";
-                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_WRITE_EX;
-                                    arc_info.ApplicationProtocol = "rdp";
-                                    arc_info.filePath = file_path;
-                                    arc_info.fileSize = target_iter->end_of_file;
-                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                    this->report_message.log6(info, arc_info, tvtime());
+                                    this->report_message.log6(
+                                        LogId::DRIVE_REDIRECTION_WRITE_EX,
+                                        this->session_reactor.get_current_time(), {{
+                                        KVLog::all("file_name"_av, file_path),
+                                        KVLog::all("size"_av, file_size_str),
+                                        KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
+                                        KVLog::arcsight("app"_av, "rdp"_av),
+                                    }, LogDirection::ServerDst});
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1681,14 +1676,12 @@ public:
                                             { "file_name", file_path },
                                         });
 
-                                    ArcsightLogInfo arc_info;
-                                    arc_info.name = "DRIVE_REDIRECTION_WRITE";
-                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_WRITE;
-                                    arc_info.ApplicationProtocol = "rdp";
-                                    arc_info.filePath = file_path;
-                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                    this->report_message.log6(
+                                        LogId::DRIVE_REDIRECTION_WRITE,
+                                        this->session_reactor.get_current_time(), {{
+                                        KVLog::all("file_name"_av, file_path),
+                                        KVLog::arcsight("app"_av, "rdp"_av),
+                                    }, LogDirection::ServerDst});
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1810,14 +1803,12 @@ public:
                                         { "file_name", file_path },
                                     });
 
-                                ArcsightLogInfo arc_info;
-                                arc_info.name = "DRIVE_REDIRECTION_DELETE";
-                                arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_DELETE;
-                                arc_info.ApplicationProtocol = "rdp";
-                                arc_info.filePath = file_path;
-                                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                this->report_message.log6(
+                                    LogId::DRIVE_REDIRECTION_DELETE,
+                                    this->session_reactor.get_current_time(), {{
+                                    KVLog::all("file_name"_av, file_path),
+                                    KVLog::arcsight("app"_av, "rdp"_av),
+                                }, LogDirection::ServerDst});
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
@@ -1848,15 +1839,13 @@ public:
                                         { "new_file_name", file_path },
                                     });
 
-                                ArcsightLogInfo arc_info;
-                                arc_info.name = "DRIVE_REDIRECTION_RENAME";
-                                arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_RENAME;
-                                arc_info.ApplicationProtocol = "rdp";
-                                arc_info.filePath = file_path;
-                                arc_info.oldFilePath = target_iter->file_path;
-                                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                                this->report_message.log6(
+                                    LogId::DRIVE_REDIRECTION_RENAME,
+                                    this->session_reactor.get_current_time(), {{
+                                    KVLog::all("oldFilePath"_av, target_iter->file_path),
+                                    KVLog::all("filePath"_av, file_path),
+                                    KVLog::arcsight("app"_av, "rdp"_av),
+                                }, LogDirection::ServerDst});
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);

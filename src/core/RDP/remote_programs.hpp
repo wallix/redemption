@@ -971,6 +971,7 @@ public:
 
     void RawResult(uint32_t RawResult_) { this->RawResult_ = RawResult_; }
 
+    // TODO std::string const&
     const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
 
     void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }

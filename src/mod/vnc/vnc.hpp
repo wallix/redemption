@@ -787,13 +787,11 @@ public:
         // set almost null cursor, this is the little dot cursor
         drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SESSION_ESTABLISHED";
-        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_ESTABLISHED;
-        arc_info.ApplicationProtocol = "vnc";
-        arc_info.WallixBastionStatus = "SUCCESS";
-
-        this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, this->session_reactor.get_current_time());
+        this->report_message.log6(
+            LogId::SESSION_ESTABLISHED,
+            this->session_reactor.get_current_time(), {{
+            KVLog::arcsight("app"_av, "vnc"_av),
+        }, LogDirection::ServerSrc});
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -3062,13 +3060,12 @@ public:
             {"duration", extra},
             });
 
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SESSION_DISCONNECTION";
-        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_DISCONNECTION;
-        arc_info.ApplicationProtocol = "vnc";
-        arc_info.endTime = seconds;
-
-        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+        this->report_message.log6(
+            LogId::SESSION_DISCONNECTION,
+            this->session_reactor.get_current_time(), {
+            KVLog::all("duration"_av, {extra, strlen(extra)}),
+            KVLog::arcsight("app"_av, "rdp"_av),
+        });
     }
 
     Dimension get_dim() const override

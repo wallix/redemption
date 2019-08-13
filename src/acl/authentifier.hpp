@@ -39,7 +39,27 @@ class Authentifier : public AuthApi, public ReportMessageApi
 {
     struct LogParam
     {
-        std::string info;
+        LogId id;
+        struct KV
+        {
+            KVLog::Categories categories;
+            std::string key;
+            std::string value;
+        };
+        std::vector<KV> kv_list;
+
+        LogParam(LogId id, KVList list)
+        : id(id)
+        {
+            kv_list.reserve(list.size());
+            for (auto const& kv : list) {
+                this->kv_list.emplace_back(KV{
+                    kv.categories,
+                    std::string(kv.key.data(), kv.key.size()),
+                    std::string(kv.value.data(), kv.value.size()),
+                });
+            }
+        }
     };
 
     bool session_log_is_open = false;
@@ -107,14 +127,14 @@ public:
         }
     }
 
-    void log6(const std::string & info, const ArcsightLogInfo & asl_info, const timeval time) override
+    void log6(LogId id, const timeval time, KVList kv_list) override
     {
         // TODO: should we delay logs sent to SIEM ?
         if (this->acl_serial && this->session_log_is_open) {
-            this->acl_serial->log6(info, asl_info, time);
+            this->acl_serial->log6(id, time, kv_list);
         }
         else {
-            this->buffered_log_params.push_back({info});
+            this->buffered_log_params.emplace_back(id, kv_list);
         }
     }
 
@@ -140,12 +160,19 @@ public:
             this->acl_serial->start_session_log();
             this->session_log_is_open = true;
 
-            for (LogParam const & log_param : this->buffered_log_params) {
-                ArcsightLogInfo asl_info;
-                this->acl_serial->log6(log_param.info, asl_info, tvtime());
+            if (!this->buffered_log_params.empty()) {
+                std::vector<KVLog> v;
+                for (LogParam const & log_param : this->buffered_log_params) {
+                    v.reserve(log_param.kv_list.size());
+                    for (auto const& kv : log_param.kv_list) {
+                        v.emplace_back(KVLog{kv.categories, kv.key, kv.value});
+                    }
+                    this->acl_serial->log6(log_param.id, tvtime(), {v});
+                    v.clear();
+                }
+                this->buffered_log_params.clear();
+                this->buffered_log_params.shrink_to_fit();
             }
-            this->buffered_log_params.clear();
-            this->buffered_log_params.shrink_to_fit();
         }
     }
 

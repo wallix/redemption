@@ -198,22 +198,19 @@ void MatchFinder::report(
 {
     char message[4096];
 
-    snprintf(message, sizeof(message), "$%s:%s|%s",
-        ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
+    auto cat = (conf_regex == ConfigureRegexes::OCR) ? "ocr"_av : "kbd"_av;
+    snprintf(message, sizeof(message), "$%s:%s|%s", cat.data(), pattern, data);
     utils::back(message) = '\0';
 
-    auto pattern_detection_type = (is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED");
-    auto info = key_qvalue_pairs({
-        {"type", pattern_detection_type},
-        {"pattern", message},
+    report_message.log6(is_pattern_kill
+        ? LogId::KILL_PATTERN_DETECTED
+        : LogId::NOTIFY_PATTERN_DETECTED
+    , tvtime(), {
+        KVLog::siem("pattern"_av, std::string_view{message}),
+        KVLog::arcsight("category"_av, cat),
+        KVLog::arcsight("pattern"_av, std::string_view{pattern}),
+        KVLog::arcsight("match"_av, std::string_view{data}),
     });
-
-    ArcsightLogInfo arc_info;
-    arc_info.name = pattern_detection_type;
-    arc_info.signatureID = ArcsightLogInfo::ID::MATCH_FINDER;
-    arc_info.message = info;
-
-    report_message.log6(info, arc_info, tvtime());
 
     report_message.report(
         (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),
