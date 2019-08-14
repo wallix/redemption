@@ -1861,9 +1861,11 @@ struct TSCredentials
         size += BER::write_sequence_tag(ts_credentials, innerSize);
 
         /* [0] credType (INTEGER) */
-        size += BER::write_contextual_tag(ts_credentials, 0, BER::sizeof_integer(this->credType), true);
-        size += BER::write_integer(ts_credentials, this->credType);
-
+        auto ber_credtype_field = BER::mkSmallIntegerField(this->credType, 0);
+        
+        ts_credentials.out_copy_bytes(ber_credtype_field);
+        size += ber_credtype_field.size();
+        
         /* [1] credentials (OCTET STRING) */
 
         if (this->credType == 2){
