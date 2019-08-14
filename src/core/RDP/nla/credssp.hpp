@@ -518,30 +518,16 @@ namespace BER {
             + sizeof_octet_string(length);
     }
 
-    inline int write_sequence_octet_string(OutStream & stream, uint8_t context,
-                                        const uint8_t * value, int length) {
-        auto size = write_contextual_tag(stream, context, sizeof_octet_string(length), true);
-        stream.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_OCTET_STRING));
-        size += 1;
-        switch (_ber_sizeof_length(length)){
-        case 1:
-            stream.out_uint8(length);
-            size += 1;
-            break;
-        case 2:
-            stream.out_uint8(0x81);
-            stream.out_uint8(length);
-            size += 2;
-            break;
-        default:
-            stream.out_uint8(0x82);
-            stream.out_uint16_be(length);
-            size += 3;
-            break;
-        }
+    inline int write_sequence_octet_string(OutStream & stream, uint8_t tag,
+                                        const uint8_t * value, int length)
+    {
+        std::vector<uint8_t> v;
+        backward_push_octet_string_field_header(v, length);
+        backward_push_tagged_field_header(v, length + v.size(), tag);
+        std::reverse(v.begin(), v.end());
+        stream.out_copy_bytes(v);
         stream.out_copy_bytes(value, length);
-        size += length;
-        return size;
+        return length + v.size();
     }
 
     // ==========================
@@ -960,14 +946,6 @@ struct ClientNonce {
         return (use_version >= 5 && this->initialized)
             ? sizeof_client_nonce(CLIENT_NONCE_LENGTH)
             : 0;
-    }
-
-    void ber_write(int version, OutStream & stream)
-    {
-        if (version >= 5 && this->initialized) {
-            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() clientNonce");
-            BER::write_sequence_octet_string(stream, 5, this->data, CLIENT_NONCE_LENGTH);
-        }
     }
 
     int ber_read(int version, int & length, InStream & stream)
@@ -1438,14 +1416,10 @@ struct TSCspDataDetail {
                     uint8_t * containerName, size_t containerName_length,
                     uint8_t * cspName, size_t cspName_length)
         : keySpec(keySpec)
-        ,
-         cardName_length(cardName_length)
-        ,
-         readerName_length(readerName_length)
-        ,
-         containerName_length(containerName_length)
-        ,
-         cspName_length(cspName_length)
+        , cardName_length(cardName_length)
+        , readerName_length(readerName_length)
+        , containerName_length(containerName_length)
+        , cspName_length(cspName_length)
     {
         this->cardName_length = (cardName_length < sizeof(this->cardName))
             ? cardName_length
@@ -1603,6 +1577,69 @@ struct TSCspDataDetail {
 
     }
 };
+
+inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
+{
+    int length = 0;
+    int size = 0;
+    int innerSize = self.ber_sizeof();
+
+    // /* TSCspDataDetail (SEQUENCE) */
+
+    size += BER::write_sequence_tag(stream, innerSize);
+
+    /* [0] keySpec */
+    size += BER::write_contextual_tag(stream, 0, BER::sizeof_integer(self.keySpec), true);
+    size += BER::write_integer(stream, self.keySpec);
+
+    /* [1] cardName (OCTET STRING OPTIONAL) */
+    if (self.cardName_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
+        length = CredSSP::sizeof_octet_string_seq(self.cardName_length);
+        size += length;
+        length -= BER::write_sequence_octet_string(stream, 1,
+                                                   self.cardName,
+                                                   self.cardName_length);
+        assert(length == 0);
+        (void)length;
+    }
+    /* [2] readerName (OCTET STRING OPTIONAL) */
+    if (self.readerName_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
+        length = CredSSP::sizeof_octet_string_seq(self.readerName_length);
+        size += length;
+        length -= BER::write_sequence_octet_string(stream, 2,
+                                                   self.readerName,
+                                                   self.readerName_length);
+        assert(length == 0);
+        (void)length;
+    }
+    /* [3] containerName (OCTET STRING OPTIONAL) */
+    if (self.containerName_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() containerName");
+        length = CredSSP::sizeof_octet_string_seq(self.containerName_length);
+        size += length;
+        length -= BER::write_sequence_octet_string(stream, 3,
+                                                   self.containerName,
+                                                   self.containerName_length);
+        assert(length == 0);
+        (void)length;
+    }
+    /* [4] cspName (OCTET STRING OPTIONAL) */
+    if (self.cspName_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
+        length = CredSSP::sizeof_octet_string_seq(self.cspName_length);
+        size += length;
+        length -= BER::write_sequence_octet_string(stream, 4,
+                                                   self.cspName,
+                                                   self.cspName_length);
+        assert(length == 0);
+        (void)length;
+    }
+    return size;
+}
+
+
 /*
  * TSSmartCardCreds ::= SEQUENCE {
  *     pin        [0] OCTET STRING,
@@ -1830,9 +1867,8 @@ struct TSCredentials
     }
 
     int ber_sizeof() const {
-        int size = 0;
-        size += BER::sizeof_integer(this->credType);
-        size += BER::sizeof_contextual_tag(BER::sizeof_integer(this->credType));
+        auto ber_credtype_field = BER::mkSmallIntegerField(this->credType, 0);
+        int size = ber_credtype_field.size();
 
         if (this->credType == 2){
             size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->smartcardCreds.ber_sizeof()));
@@ -1845,7 +1881,6 @@ struct TSCredentials
 
             size += BER::sizeof_sequence_octet_string(result.size());
         }
-
         return size;
     }
 
@@ -1868,16 +1903,16 @@ struct TSCredentials
         
         /* [1] credentials (OCTET STRING) */
 
-        if (this->credType == 2){
-            credsSize = BER::sizeof_sequence(this->smartcardCreds.ber_sizeof());
-        }
-        else {
+        if (this->credType == 1){
             auto result = emitTSPasswordCreds(
                 {this->passCreds.domainName, this->passCreds.domainName_length},
                 {this->passCreds.userName, this->passCreds.userName_length},
                 {this->passCreds.password, this->passCreds.password_length});
 
             credsSize = result.size();
+        }
+        else {
+            credsSize = BER::sizeof_sequence(this->smartcardCreds.ber_sizeof());
         }
 
         size += BER::write_contextual_tag(ts_credentials, 1, BER::sizeof_octet_string(credsSize), true);
