@@ -398,6 +398,9 @@ public:
             auto& file_data = file->file_data;
             file_data.file_validator_id = FileValidatorId();
 
+            char file_size[128];
+            std::snprintf(file_size, std::size(file_size), "%lu", file_data.file_size);
+
             auto& result_content = this->file_validator->get_content();
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
@@ -406,7 +409,7 @@ public:
                 KVLog::siem("file_name"_av, file_data.file_name),
                 KVLog::all("status"_av, result_content),
                 KVLog::arcsight("fname"_av, file_data.file_name),
-                KVLog::arcsight("fsize"_av, file_data.file_size),
+                KVLog::arcsight("fsize"_av, {file_size, strlen(file_size)}),
             });
 
             this->front.session_update(str_concat("FILE_VERIFICATION=",
@@ -823,9 +826,10 @@ private:
                 }
 
                 LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
-                    "type=%s format=%s size=%s sha256=%s%s%s",
-                    type, format, size_str,
-                    data_to_dump.empty() ? "" : " partial_data", data_to_dump.c_str());
+                    "type=%s format=%s size=%s %s%s",
+                    type.data(), format, size_str,
+                    data_to_dump.empty() ? "" : " partial_data",
+                    data_to_dump.c_str());
 
                 if (!this->params.dont_log_data_into_wrm) {
                     auto info = data_to_dump.empty()

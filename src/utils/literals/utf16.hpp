@@ -33,10 +33,7 @@ namespace detail
     constexpr decltype(auto) utf16_le_impl(std::integer_sequence<std::size_t, ints...>)
     {
         constexpr C a[]{cs...};
-        return array_view<C const>{
-            jln::string_c<((ints&1) ? '\0' : a[ints/2])..., '\0'>::value,
-            sizeof...(ints)
-        };
+        return jln::string_c<((ints&1) ? '\0' : a[ints/2])..., '\0'>::av();
     }
 }
 

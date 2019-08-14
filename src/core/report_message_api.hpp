@@ -27,9 +27,8 @@
 
 #include <sys/time.h> // timeval
 
-// TODO other .h
 #define X_LOG_ID(f)                                   \
-    f(FOREGROUND_WINDOW_CHANGED)                                 \
+    f(FOREGROUND_WINDOW_CHANGED)                      \
     f(BUTTON_CLICKED)                                 \
     f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION)    \
     f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX) \
@@ -103,6 +102,8 @@ constexpr inline array_view_const_char log_id_string_map[]{
 #undef f
 };
 
+#undef X_LOG_ID
+
 enum class LogCategory : uint8_t
 {
     Siem,
@@ -120,23 +121,23 @@ struct KVLog
 {
     using Categories = utils::flags_t<LogCategory>;
 
+    Categories categories;
     array_view_const_char key;
     array_view_const_char value;
-    Categories categories;
 
     static KVLog siem(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{key, value, LogCategory::Siem};
+        return KVLog{LogCategory::Siem, key, value};
     }
 
     static KVLog arcsight(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{key, value, LogCategory::Arcsight};
+        return KVLog{LogCategory::Arcsight, key, value};
     }
 
     static KVLog all(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{key, value, Categories{} | LogCategory::Arcsight | LogCategory::Siem};
+        return KVLog{Categories{} | LogCategory::Arcsight | LogCategory::Siem, key, value};
     }
 };
 

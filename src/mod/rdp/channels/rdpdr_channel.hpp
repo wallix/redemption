@@ -1456,10 +1456,7 @@ public:
                             this->device_redirection_manager.get_device_type(
                                 this->client_device_io_response.DeviceId());
                         if (rdpdr::RDPDR_DTYP_FILESYSTEM != device_type) {
-                            auto device_name = (p_device_name)
-                              ? make_array_view(*p_device_name)
-                              : array_view_const_char();
-
+                            auto device_name = (p_device_name) ? *p_device_name : ""_av;
                             auto device_type_name = rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(device_type);
 
                             this->report_message.log6(
@@ -1471,7 +1468,7 @@ public:
 
                             LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
                                 "type=DRIVE_REDIRECTION_USE device_name=%s device_type=%s",
-                                device_name, device_type_name);
+                                device_name.data(), device_type_name.data());
 
                             if (!this->param_dont_log_data_into_wrm) {
                                 std::string message = str_concat(

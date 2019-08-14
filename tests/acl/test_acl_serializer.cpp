@@ -395,7 +395,6 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
         acl.log6(LogId::CONNECTION_FAILED, time, {
             KVLog::arcsight("app"_av, "xup"_av),
-            KVLog::direction(LogDirection::ServerDst),
             KVLog::arcsight("WallixBastionStatus"_av, "FAIL"_av),
         });
 
