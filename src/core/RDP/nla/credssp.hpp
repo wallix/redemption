@@ -1838,7 +1838,12 @@ struct TSCredentials
             size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->smartcardCreds.ber_sizeof()));
         }
         else {
-            size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->passCreds.ber_sizeof()));
+            auto result = emitTSPasswordCreds(
+                {this->passCreds.domainName, this->passCreds.domainName_length},
+                {this->passCreds.userName, this->passCreds.userName_length},
+                {this->passCreds.password, this->passCreds.password_length});
+
+            size += BER::sizeof_sequence_octet_string(result.size());
         }
 
         return size;
@@ -1865,7 +1870,12 @@ struct TSCredentials
             credsSize = BER::sizeof_sequence(this->smartcardCreds.ber_sizeof());
         }
         else {
-            credsSize = BER::sizeof_sequence(this->passCreds.ber_sizeof());
+            auto result = emitTSPasswordCreds(
+                {this->passCreds.domainName, this->passCreds.domainName_length},
+                {this->passCreds.userName, this->passCreds.userName_length},
+                {this->passCreds.password, this->passCreds.password_length});
+
+            credsSize = result.size();
         }
 
         size += BER::write_contextual_tag(ts_credentials, 1, BER::sizeof_octet_string(credsSize), true);
