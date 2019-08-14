@@ -1833,11 +1833,14 @@ struct TSCredentials
         int size = 0;
         size += BER::sizeof_integer(this->credType);
         size += BER::sizeof_contextual_tag(BER::sizeof_integer(this->credType));
-        if (this->credType == 2) {
+
+        if (this->credType == 2){
             size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->smartcardCreds.ber_sizeof()));
-        } else {
+        }
+        else {
             size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->passCreds.ber_sizeof()));
         }
+
         return size;
     }
 
@@ -1858,9 +1861,12 @@ struct TSCredentials
 
         /* [1] credentials (OCTET STRING) */
 
-        credsSize = (this->credType == 2) ?
-            BER::sizeof_sequence(this->smartcardCreds.ber_sizeof()) :
-            BER::sizeof_sequence(this->passCreds.ber_sizeof());
+        if (this->credType == 2){
+            credsSize = BER::sizeof_sequence(this->smartcardCreds.ber_sizeof());
+        }
+        else {
+            credsSize = BER::sizeof_sequence(this->passCreds.ber_sizeof());
+        }
 
         size += BER::write_contextual_tag(ts_credentials, 1, BER::sizeof_octet_string(credsSize), true);
         size += BER::write_octet_string_tag(ts_credentials, credsSize);
