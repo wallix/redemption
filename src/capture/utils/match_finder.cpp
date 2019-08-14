@@ -198,8 +198,8 @@ void MatchFinder::report(
 {
     char message[4096];
 
-    auto cat = (conf_regex == ConfigureRegexes::OCR) ? "ocr"_av : "kbd"_av;
-    snprintf(message, sizeof(message), "$%s:%s|%s", cat.data(), pattern, data);
+    snprintf(message, sizeof(message), "$%s:%s|%s",
+        ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
     utils::back(message) = '\0';
 
     report_message.log6(is_pattern_kill

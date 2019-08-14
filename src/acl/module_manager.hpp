@@ -1112,7 +1112,6 @@ private:
 
             report_message.log6(LogId::CONNECTION_FAILED, this->session_reactor.get_current_time(), {
                 KVLog::arcsight("app"_av, {protocol, strlen(protocol)}),
-                KVLog::direction(LogDirection::ServerDst)
             });
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));

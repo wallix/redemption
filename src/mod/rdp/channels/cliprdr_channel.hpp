@@ -389,7 +389,7 @@ public:
                 LOG(LOG_ERR, "FileValidatorValidator::receive_response: invalid id %u", file_validator_id);
                 this->report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
                     KVLog::arcsight("app"_av, "rdp"_av),
-                    KVLog::status_msg("status"_av, "Invalid file id"_av),
+                    KVLog::all("status"_av, "Invalid file id"_av),
                 });
                 this->front.session_update("FILE_VERIFICATION=Invalid file id"_av);
                 continue;
@@ -404,13 +404,9 @@ public:
             this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
                 KVLog::siem("direction"_av, str_direction),
                 KVLog::siem("file_name"_av, file_data.file_name),
-                KVLog::arcsight("app"_av, "rdp"_av),
-                KVLog::status_msg("status"_av, result_content),
+                KVLog::all("status"_av, result_content),
                 KVLog::arcsight("fname"_av, file_data.file_name),
                 KVLog::arcsight("fsize"_av, file_data.file_size),
-                KVLog::direction((direction == Direction::FileFromServer)
-                    ? LogDirection::ServerSrc
-                    : LogDirection::ServerDst),
             });
 
             this->front.session_update(str_concat("FILE_VERIFICATION=",
@@ -755,14 +751,10 @@ private:
             : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
             this->session_reactor.get_current_time(), {
             KVLog::siem("file_name"_av, file_data.file_name),
-            KVLog::siem("filesize"_av, {file_size, strlen(file_size)}),
-            KVLog::arcsight("app"_av, "rdp"_av),
+            KVLog::siem("file_size"_av, {file_size, strlen(file_size)}),
             KVLog::arcsight("fname"_av, file_data.file_name),
             KVLog::arcsight("fsize"_av, {file_size, strlen(file_size)}),
             KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
-            KVLog::direction(from_remote_session
-                ? LogDirection::ServerSrc
-                : LogDirection::ServerDst),
         });
 
         LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
@@ -816,10 +808,6 @@ private:
                             this->session_reactor.get_current_time(), {
                             KVLog::all("format"_av, format),
                             KVLog::all("size"_av, size_str),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(is_from_remote_session
-                                ? LogDirection::ServerSrc
-                                : LogDirection::ServerDst),
                             });
                     }
                     else {
@@ -830,10 +818,6 @@ private:
                             KVLog::all("format"_av, format),
                             KVLog::all("size"_av, size_str),
                             KVLog::all("partial_data"_av, data_to_dump),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(is_from_remote_session
-                                ? LogDirection::ServerSrc
-                                : LogDirection::ServerDst),
                             });
                     }
                 }

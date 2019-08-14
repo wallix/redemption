@@ -77,7 +77,7 @@ struct ArcsightLogInfo
 
     enum class Direction : uint8_t
     {
-        NONE
+        NONE,
         SERVER_DST,
         SERVER_SRC,
     };

@@ -29,6 +29,7 @@
 
 // TODO other .h
 #define X_LOG_ID(f)                                   \
+    f(FOREGROUND_WINDOW_CHANGED)                                 \
     f(BUTTON_CLICKED)                                 \
     f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION)    \
     f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX) \
@@ -109,13 +110,6 @@ enum class LogCategory : uint8_t
     COUNT,
 };
 
-enum class LogDirection
-{
-    None,
-    ServerDst,
-    ServerSrc,
-};
-
 template<>
 struct utils::enum_as_flag<LogCategory>
 {
@@ -126,55 +120,23 @@ struct KVLog
 {
     using Categories = utils::flags_t<LogCategory>;
 
-    enum class Type : uint8_t
-    {
-        Array,
-        UInt64,
-        Time,
-        Direction,
-    };
-
-    union Variant
-    {
-        array_view_const_char array;
-        time_t time;
-        uint64_t u64;
-        LogDirection direction;
-    };
-
     array_view_const_char key;
-    Variant value;
+    array_view_const_char value;
     Categories categories;
-    Type type;
 
     static KVLog siem(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{key, {value}, LogCategory::Siem, Type::Array};
+        return KVLog{key, value, LogCategory::Siem};
     }
 
     static KVLog arcsight(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{key, {value}, LogCategory::Arcsight, Type::Array};
-    }
-
-    static KVLog arcsight(array_view_const_char key, uint64_t value) noexcept
-    {
-        return KVLog{key, {.u64 = value}, LogCategory::Arcsight, Type::UInt64};
-    }
-
-    static KVLog direction(LogDirection direction) noexcept
-    {
-        return KVLog{{}, {.direction = direction}, LogCategory::Arcsight, Type::Direction};
+        return KVLog{key, value, LogCategory::Arcsight};
     }
 
     static KVLog all(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{key, {value}, Categories{} | LogCategory::Arcsight | LogCategory::Siem, Type::Array};
-    }
-
-    static KVLog status_msg(array_view_const_char key, array_view_const_char value) noexcept
-    {
-        return KVLog{key, {value}, Categories{} | LogCategory::Arcsight | LogCategory::Siem, Type::Array};
+        return KVLog{key, value, Categories{} | LogCategory::Arcsight | LogCategory::Siem};
     }
 };
 

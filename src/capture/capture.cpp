@@ -1298,7 +1298,7 @@ private:
 
 public:
     void title_changed(time_t rawtime, array_view_const_char title) {
-        this->formatted_message.assign("TITLE_BAR", {{"source", "OCR"}, {"data", title}});
+        this->formatted_message.assign("TITLE_BAR", {{"data", title}});
         this->send_data(rawtime, this->formatted_message.av(), '+');
     }
 
@@ -1558,7 +1558,8 @@ public:
                  && this->report_message)
                 {
                     this->report_message->log6(LogId::TITLE_BAR, tvtime(), {
-                        KVLog::all("data"_av, title),
+                        KVLog::all("source"_av, "OCR"_av),
+                        KVLog::all("window"_av, title),
                     });
                 }
             }

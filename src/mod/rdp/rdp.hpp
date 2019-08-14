@@ -2849,10 +2849,9 @@ public:
 
                             if (!this->deactivation_reactivation_in_progress) {
                                 this->report_message.log6(
-                                    LogId::SESSION_ESTABLISHED,
+                                    LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
                                     this->session_reactor.get_current_time(), {
                                     KVLog::arcsight("app"_av, "rdp"_av),
-                                    KVLog::direction(LogDirection::ServerSrc),
                                 });
                             }
 

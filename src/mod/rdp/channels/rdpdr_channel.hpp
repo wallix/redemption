@@ -1467,8 +1467,6 @@ public:
                                 this->session_reactor.get_current_time(), {
                                 KVLog::all("device_name"_av, device_name),
                                 KVLog::all("device_type"_av, device_type_name),
-                                KVLog::arcsight("app"_av, "rdp"_av),
-                                KVLog::direction(LogDirection::ServerDst),
                             });
 
                             LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1569,8 +1567,6 @@ public:
                                         KVLog::all("file_name"_av, file_path),
                                         KVLog::all("size"_av, file_size_str),
                                         KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
-                                        KVLog::arcsight("app"_av, "rdp"_av),
-                                        KVLog::direction(LogDirection::ServerDst),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1594,8 +1590,6 @@ public:
                                         LogId::DRIVE_REDIRECTION_READ,
                                         this->session_reactor.get_current_time(), {
                                         KVLog::all("file_name"_av, file_path),
-                                        KVLog::arcsight("app"_av, "rdp"_av),
-                                        KVLog::direction(LogDirection::ServerDst),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1632,8 +1626,6 @@ public:
                                         KVLog::all("file_name"_av, file_path),
                                         KVLog::all("size"_av, file_size_str),
                                         KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
-                                        KVLog::arcsight("app"_av, "rdp"_av),
-                                        KVLog::direction(LogDirection::ServerDst),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1657,8 +1649,6 @@ public:
                                         LogId::DRIVE_REDIRECTION_WRITE,
                                         this->session_reactor.get_current_time(), {
                                         KVLog::all("file_name"_av, file_path),
-                                        KVLog::arcsight("app"_av, "rdp"_av),
-                                        KVLog::direction(LogDirection::ServerDst),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1779,8 +1769,6 @@ public:
                                     LogId::DRIVE_REDIRECTION_DELETE,
                                     this->session_reactor.get_current_time(), {
                                     KVLog::all("file_name"_av, file_path),
-                                    KVLog::arcsight("app"_av, "rdp"_av),
-                                    KVLog::direction(LogDirection::ServerDst),
                                 });
 
                                 LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1810,8 +1798,6 @@ public:
                                     this->session_reactor.get_current_time(), {
                                     KVLog::all("old_file_name"_av, target_iter->file_path),
                                     KVLog::all("new_file_name"_av, file_path),
-                                    KVLog::arcsight("app"_av, "rdp"_av),
-                                    KVLog::direction(LogDirection::ServerDst),
                                 });
 
                                 LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,

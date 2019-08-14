@@ -49,7 +49,7 @@ namespace
         report_message.log6(LogId::FILE_VERIFICATION_SERVER_ERROR, session_reactor.get_current_time(), {
             KVLog::siem("service"_av, socket_path),
             KVLog::arcsight("app"_av, "rdp"_av),
-            KVLog::status_msg("msg"_av, msg),
+            KVLog::all("msg"_av, msg),
         });
 
         front.session_update(str_concat("FILE_VERIFICATION_SERVER_ERROR="_av, msg));

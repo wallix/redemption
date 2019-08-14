@@ -172,8 +172,6 @@ void RdpNegociation::RDPServerNotifier::server_access_allowed()
         this->report_message.log6(LogId::CERTIFICATE_CHECK_SUCCESS, tvtime(), {
             KVLog::all("description"_av, "Connexion to server allowed"_av),
             KVLog::arcsight("app"_av, "rdp"_av),
-            KVLog::arcsight("WallixBastionStatus"_av, "SUCCESS"_av),
-            KVLog::direction(LogDirection::ServerSrc),
         });
 
         auto message = "CERTIFICATE_CHECK_SUCCESS=Connexion to server allowed"_av;
@@ -188,7 +186,6 @@ void RdpNegociation::RDPServerNotifier::server_cert_create()
         this->report_message.log6(LogId::SERVER_CERTIFICATE_NEW, tvtime(), {
             KVLog::all("description"_av, "New X.509 certificate created"_av),
             KVLog::arcsight("app"_av, "rdp"_av),
-            KVLog::direction(LogDirection::ServerSrc),
         });
 
         auto message = "SERVER_CERTIFICATE_NEW=New X.509 certificate created"_av;
@@ -203,8 +200,6 @@ void RdpNegociation::RDPServerNotifier::server_cert_success()
         this->report_message.log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS, tvtime(), {
             KVLog::all("description"_av, "X.509 server certificate match"_av),
             KVLog::arcsight("app"_av, "rdp"_av),
-            KVLog::arcsight("WallixBastionStatus"_av, "SUCCESS"_av),
-            KVLog::direction(LogDirection::ServerSrc),
         });
 
         auto message = "SERVER_CERTIFICATE_MATCH_SUCCESS=X.509 server certificate match"_av;
@@ -219,8 +214,6 @@ void RdpNegociation::RDPServerNotifier::server_cert_failure()
         this->report_message.log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE, tvtime(), {
             KVLog::all("description"_av, "X.509 server certificate match failure"_av),
             KVLog::arcsight("app"_av, "rdp"_av),
-            KVLog::arcsight("WallixBastionStatus"_av, "FAILURE"_av),
-            KVLog::direction(LogDirection::ServerSrc),
         });
 
         auto message = "SERVER_CERTIFICATE_MATCH_FAILURE=X.509 server certificate match failure"_av;
@@ -236,8 +229,6 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
         this->report_message.log6(LogId::SERVER_CERTIFICATE_ERROR, tvtime(), {
             KVLog::all("description"_av, error),
             KVLog::arcsight("app"_av, "rdp"_av),
-            KVLog::arcsight("WallixBastionStatus"_av, "FAILURE"_av),
-            KVLog::direction(LogDirection::ServerSrc),
         });
 
         auto message = str_concat("SERVER_CERTIFICATE_ERROR="_av, error);

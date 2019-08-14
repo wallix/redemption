@@ -967,7 +967,6 @@ public:
         else if (!::strcasecmp(order_.c_str(), "SESSION_ENDING_IN_PROGRESS")) {
             this->log6(LogId::SESSION_ENDING_IN_PROGRESS, {
                 KVLog::arcsight("app"_av, "rdp"_av),
-                KVLog::direction(LogDirection::ServerSrc),
             });
 
             this->session_probe_ending_in_progress = true;
@@ -993,8 +992,6 @@ public:
                             KVLog::all("end_time"_av,        parameters_[4]),
                             KVLog::all("renew_time"_av,      parameters_[5]),
                             KVLog::all("flags"_av,           parameters_[6]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                             });
                     }
                     else {
@@ -1005,8 +1002,6 @@ public:
                     this->log6(
                         LogId::PASSWORD_TEXT_BOX_GET_FOCUS, {
                         KVLog::all("status"_av, parameters_[0]),
-                        KVLog::arcsight("app"_av, "rdp"_av),
-                        KVLog::direction(LogDirection::ServerSrc),
                     });
 
                     if (parameters_.size() == 1) {
@@ -1021,8 +1016,6 @@ public:
                     this->log6(
                         LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS, {
                         KVLog::all("status"_av, parameters_[0]),
-                        KVLog::arcsight("app"_av, "rdp"_av),
-                        KVLog::direction(LogDirection::ServerSrc),
                     });
 
                     if (parameters_.size() == 1) {
@@ -1038,8 +1031,6 @@ public:
                         this->log6(
                             LogId::UAC_PROMPT_BECOME_VISIBLE, {
                             KVLog::all("status"_av, parameters_[0]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
 
                         this->front.set_consent_ui_visible(!::strcasecmp(parameters_[0].c_str(), "yes"));
@@ -1054,8 +1045,6 @@ public:
                             LogId::INPUT_LANGUAGE, {
                             KVLog::all("identifier"_av,   parameters_[0]),
                             KVLog::all("display_name"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
 
                         this->front.set_keylayout(
@@ -1073,8 +1062,6 @@ public:
                                 ? LogId::NEW_PROCESS
                                 : LogId::COMPLETED_PROCESS, {
                             KVLog::all("command_line"_av, parameters_[0]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1086,8 +1073,6 @@ public:
                         this->log6(LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
                             KVLog::all("application_name"_av, parameters_[0]),
                             KVLog::all("raw_result"_av,       parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
 
                         LOG(LOG_ERR,
@@ -1109,8 +1094,6 @@ public:
                             KVLog::all("application_name"_av,   parameters_[0]),
                             KVLog::all("raw_result"_av,         parameters_[1]),
                             KVLog::all("raw_result_message"_av, parameters_[2]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
 
                         LOG(LOG_ERR,
@@ -1131,8 +1114,6 @@ public:
                             LogId::OUTBOUND_CONNECTION_BLOCKED, {
                             KVLog::all("rule"_av,             parameters_[0]),
                             KVLog::all("application_name"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1144,8 +1125,6 @@ public:
                         this->log6(LogId::OUTBOUND_CONNECTION_DETECTED, {
                             KVLog::all("rule"_av,             parameters_[0]),
                             KVLog::all("application_name"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
 
                         char message[4096];
@@ -1187,8 +1166,6 @@ public:
                                 KVLog::all("app_cmd_line"_av, parameters_[2]),
                                 KVLog::all("dst_addr"_av,     parameters_[3]),
                                 KVLog::all("dst_port"_av,     parameters_[4]),
-                                KVLog::arcsight("app"_av, "rdp"_av),
-                                KVLog::direction(LogDirection::ServerSrc),
                             });
 
                             {
@@ -1248,8 +1225,6 @@ public:
                                 KVLog::all("rule"_av,         description),
                                 KVLog::all("app_name"_av,     parameters_[1]),
                                 KVLog::all("app_cmd_line"_av, parameters_[2]),
-                                KVLog::arcsight("app"_av, "rdp"_av),
-                                KVLog::direction(LogDirection::ServerSrc),
                             });
 
                             {
@@ -1288,12 +1263,18 @@ public:
                     }
                 }
                 else if (!::strcasecmp(order_.c_str(), "FOREGROUND_WINDOW_CHANGED")) {
-                    if ((parameters_.size() == 2) || (parameters_.size() == 3)) {
+                    if (parameters_.size() >= 1) {
                         this->log6(LogId::TITLE_BAR, {
                             KVLog::all("source"_av, "Probe"_av),
                             KVLog::all("window"_av, parameters_[0]),
-                            KVLog::all("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
+                        });
+                    }
+                    if ((parameters_.size() == 2) || (parameters_.size() == 3)) {
+                        this->log6(LogId::FOREGROUND_WINDOW_CHANGED, {
+                            KVLog::all("text"_av,         parameters_[0]),
+                            KVLog::all("class_name"_av,   parameters_[1]),
+                            KVLog::all("command_line"_av, (parameters_.size() == 2)
+                                ? array_view_const_char{} : parameters_[2]),
                         });
                     }
                     else {
@@ -1305,8 +1286,6 @@ public:
                         this->log6(LogId::BUTTON_CLICKED, {
                             KVLog::all("window"_av, parameters_[0]),
                             KVLog::all("button"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1320,8 +1299,6 @@ public:
                             KVLog::all("checkbox"_av, parameters_[1]),
                             KVLog::all("state"_av,
                                 ::button_state_to_string(::atoi(parameters_[2].c_str()))),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1334,8 +1311,6 @@ public:
                         this->log6(LogId::EDIT_CHANGED, {
                             KVLog::all("window"_av, parameters_[0]),
                             KVLog::all("edit"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1348,8 +1323,6 @@ public:
                         this->log6(LogId::WEB_ATTEMPT_TO_PRINT, {
                             KVLog::all("url"_av,   parameters_[0]),
                             KVLog::all("title"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1361,8 +1334,6 @@ public:
                         this->log6(LogId::WEB_BEFORE_NAVIGATE, {
                             KVLog::all("url"_av,  parameters_[0]),
                             KVLog::all("post"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1374,8 +1345,6 @@ public:
                         this->log6(LogId::WEB_DOCUMENT_COMPLETE, {
                             KVLog::all("url"_av,   parameters_[0]),
                             KVLog::all("title"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1389,8 +1358,6 @@ public:
                             KVLog::all("title"_av,        parameters_[1]),
                             KVLog::all("code"_av,         parameters_[2]),
                             KVLog::all("display_name"_av, parameters_[3]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1401,8 +1368,6 @@ public:
                     if (parameters_.size() == 1) {
                         this->log6(LogId::WEB_NAVIGATION, {
                             KVLog::all("url"_av,   parameters_[0]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1414,8 +1379,6 @@ public:
                         this->log6(LogId::WEB_PRIVACY_IMPACTED, {
                             KVLog::all("url"_av,      parameters_[0]),
                             KVLog::all("impacted"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1428,8 +1391,6 @@ public:
                             LogId::WEB_ENCRYPTION_LEVEL_CHANGED, {
                             KVLog::all("identifier"_av,   parameters_[0]),
                             KVLog::all("display_name"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1440,8 +1401,6 @@ public:
                     if (parameters_.size() == 1) {
                         this->log6(LogId::WEB_THIRD_PARTY_URL_BLOCKED, {
                             KVLog::all("url"_av,   parameters_[0]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
                         });
                     }
                     else {
@@ -1452,10 +1411,7 @@ public:
                 else if (!::strcasecmp(order_.c_str(), "GROUP_MEMBERSHIP")) {
                     if (parameters_.size() == 1) {
                         this->log6(LogId::GROUP_MEMBERSHIP, {
-                            KVLog::all("url"_av,    parameters_[0]),
-                            KVLog::all("groups"_av, parameters_[1]),
-                            KVLog::arcsight("app"_av, "rdp"_av),
-                            KVLog::direction(LogDirection::ServerSrc),
+                            KVLog::all("groups"_av, parameters_[0]),
                         });
                     }
                     else {
