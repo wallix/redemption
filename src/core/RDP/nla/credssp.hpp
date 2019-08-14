@@ -836,14 +836,6 @@ struct ClientNonce {
             : 0;
     }
 
-    void ber_write(int version, OutStream & stream)
-    {
-        if (version >= 5 && this->initialized) {
-            // LOG(LOG_INFO, "Credssp: TSCredentials::emit() clientNonce");
-            BER::write_sequence_octet_string(stream, 5, this->data, CLIENT_NONCE_LENGTH);
-        }
-    }
-
     int ber_read(int version, int & length, InStream & stream)
     {
         if (version >= 5 && BER::read_contextual_tag(stream, 5, length, true)) {
@@ -973,12 +965,48 @@ inline void backward_push_ber_len(std::vector<uint8_t> & v, uint32_t len)
     }
 }
 
-inline void backward_push_octet_string_header(std::vector<uint8_t> & v, uint32_t payload_size, uint8_t tag)
+inline void backward_push_octet_string_field_header(std::vector<uint8_t> & v, uint32_t payload_size, uint8_t tag)
 {
    backward_push_ber_len(v, payload_size + v.size());
    v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | BER::TAG_OCTET_STRING);
    backward_push_ber_len(v, payload_size + v.size());
    v.push_back(BER::CLASS_CTXT | BER::PC_CONSTRUCT | tag);
+}
+
+inline void backward_push_sequence_tag_field_header(std::vector<uint8_t> & v, uint32_t payload_size)
+{
+    backward_push_ber_len(v, payload_size);
+    v.push_back(BER::CLASS_UNIV | BER::PC_CONSTRUCT | BER::TAG_SEQUENCE);
+}
+
+
+inline void backward_push_integer_field(std::vector<uint8_t> & v, uint32_t value, uint8_t tag)
+{
+    if (value < 0x80) {
+        v.push_back(value);
+        v.push_back(1); // length
+    }
+    else if (value <  0x8000) {
+        v.push_back(value);
+        v.push_back(value >> 8);
+        v.push_back(2); // length
+    }
+    else if (value <  0x800000) {
+        v.push_back(value);
+        v.push_back(value >> 8);
+        v.push_back(value >> 16);
+        v.push_back(3); // length
+    }
+    else {
+        v.push_back(value);
+        v.push_back(value >> 8);
+        v.push_back(value >> 16);
+        v.push_back(value >> 24);
+        v.push_back(4); // length
+    }
+    v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | (BER::TAG_MASK & BER::TAG_INTEGER));
+    backward_push_ber_len(v, v.size());
+    v.push_back(BER::CLASS_CTXT | BER::PC_CONSTRUCT | tag);
 }
 
 
@@ -987,7 +1015,7 @@ inline std::vector<uint8_t> emitNegoTokensHeaders(uint32_t payload_size)
     std::vector<uint8_t> head;
 
     if (payload_size > 0) {
-        backward_push_octet_string_header(head, payload_size, 0);
+        backward_push_octet_string_field_header(head, payload_size, 0);
         backward_push_ber_len(head, payload_size + head.size());
         head.push_back(BER::CLASS_UNIV | BER::PC_CONSTRUCT | BER::TAG_SEQUENCE);
         backward_push_ber_len(head, payload_size + head.size());
@@ -999,27 +1027,42 @@ inline std::vector<uint8_t> emitNegoTokensHeaders(uint32_t payload_size)
     return head;
 }
 
-inline std::vector<uint8_t> emitAuthInfoHeaders(uint32_t payload_size)
+inline std::vector<uint8_t> emitOctetStringField(uint32_t payload_size, uint8_t tag)
 {
     std::vector<uint8_t> head;
 
     if (payload_size > 0) {
-        backward_push_octet_string_header(head, payload_size, 2);
+        backward_push_octet_string_field_header(head, payload_size, tag);
         std::reverse(head.begin(), head.end());
     }
     return head;
+}
+
+inline std::vector<uint8_t> emitVersionField(uint32_t value)
+{
+    std::vector<uint8_t> field;
+    backward_push_integer_field(field, value, 0);
+    std::reverse(field.begin(), field.end());
+    return field;
+}
+
+
+inline std::vector<uint8_t> emitAuthInfoHeaders(uint32_t payload_size)
+{
+    return emitOctetStringField(payload_size, 2);
 }
 
 inline std::vector<uint8_t> emitPubkeyAuthHeaders(uint32_t payload_size)
 {
-    std::vector<uint8_t> head;
-
-    if (payload_size > 0) {
-        backward_push_octet_string_header(head, payload_size, 3);
-        std::reverse(head.begin(), head.end());
-    }
-    return head;
+    return emitOctetStringField(payload_size, 3);
 }
+
+inline std::vector<uint8_t> emitNonceHeaders(uint32_t payload_size)
+{
+    return emitOctetStringField(payload_size, 5);
+
+}
+
 
 inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_code)
 {
@@ -1050,58 +1093,46 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
         return;
     }
 
-    int nego_tokens_length = self.negoTokens.size();
-    if (self.negoTokens.size() > 0){
-        nego_tokens_length = BER::sizeof_octet_string(nego_tokens_length);
-        nego_tokens_length += BER::sizeof_contextual_tag(nego_tokens_length);
-        nego_tokens_length += BER::sizeof_sequence_tag(nego_tokens_length);
-        nego_tokens_length += BER::sizeof_sequence_tag(nego_tokens_length);
-        nego_tokens_length += BER::sizeof_contextual_tag(nego_tokens_length);
-    }
-
-    int pub_key_auth_length = 0;
-    if (self.pubKeyAuth.size() > 0){
-        pub_key_auth_length = BER::sizeof_octet_string(self.pubKeyAuth.size());
-        pub_key_auth_length += BER::sizeof_contextual_tag(pub_key_auth_length);
-    }
-
-    int auth_info_length = 0;
-    if (self.authInfo.size() > 0){
-        auth_info_length = BER::sizeof_octet_string(self.authInfo.size());
-        auth_info_length += BER::sizeof_contextual_tag(auth_info_length);
-    }
-    
-    int client_nonce_length = self.clientNonce.ber_length(self.use_version);
-    int ts_request_length = nego_tokens_length+pub_key_auth_length+auth_info_length+client_nonce_length;
-    ts_request_length += BER::sizeof_integer(self.version);
-    ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(self.version));
+    /* [0] version */
+    auto ber_version_field = emitVersionField(self.version);
+    /* [1] negoTokens (NegoData) */
+    auto ber_nego_tokens_header = emitNegoTokensHeaders(self.negoTokens.size());
+    /* [2] authInfo (OCTET STRING) */
+    auto ber_auth_info_header = emitAuthInfoHeaders(self.authInfo.size());
+    /* [3] pubKeyAuth (OCTET STRING) */
+    auto ber_pub_key_auth_header = emitPubkeyAuthHeaders(self.pubKeyAuth.size());
+    /* [5] clientNonce (OCTET STRING) */
+    auto ber_nonce_header = emitNonceHeaders(sizeof(self.clientNonce.data));
 
     /* TSRequest */
+    size_t ts_request_length = ber_version_field.size()
+          + ber_nego_tokens_header.size()
+          + self.negoTokens.size()
+          + ber_auth_info_header.size()
+          + self.authInfo.size()
+          + ber_pub_key_auth_header.size()
+          + self.pubKeyAuth.size()
+          + (self.version >= 5 && self.clientNonce.initialized)*ber_nonce_header.size();
+
     BER::write_sequence_tag(stream, ts_request_length);
 
     /* [0] version */
-    BER::write_contextual_tag(stream, 0, BER::sizeof_integer(self.version), true);
-    BER::write_integer(stream, self.version);
-    LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u", self.version);
-
+    stream.out_copy_bytes(ber_version_field);
     /* [1] negoTokens (NegoData) */
-    auto ber_nego_tokens_header = emitNegoTokensHeaders(self.negoTokens.size());
     stream.out_copy_bytes(ber_nego_tokens_header);
     stream.out_copy_bytes(self.negoTokens);
-
     /* [2] authInfo (OCTET STRING) */
-    auto ber_auth_info_header = emitAuthInfoHeaders(self.authInfo.size());
     stream.out_copy_bytes(ber_auth_info_header);
     stream.out_copy_bytes(self.authInfo);
-
     /* [3] pubKeyAuth (OCTET STRING) */
-    auto ber_pub_key_auth_header = emitPubkeyAuthHeaders(self.pubKeyAuth.size());
     stream.out_copy_bytes(ber_pub_key_auth_header);
     stream.out_copy_bytes(self.pubKeyAuth);
-    
     /* [4] errorCode (INTEGER) */
     /* [5] clientNonce (OCTET STRING) */
-    self.clientNonce.ber_write(self.version, stream);
+    if (self.version >= 5 && self.clientNonce.initialized){
+        stream.out_copy_bytes(ber_nonce_header);
+        stream.out_copy_bytes({self.clientNonce.data, sizeof(self.clientNonce.data)});
+    }
 }
 
 // TODO: use exceptions instead of error_code for returning errors
