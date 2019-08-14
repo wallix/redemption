@@ -965,12 +965,16 @@ inline void backward_push_ber_len(std::vector<uint8_t> & v, uint32_t len)
     }
 }
 
-inline void backward_push_octet_string_field_header(std::vector<uint8_t> & v, uint32_t payload_size, uint8_t tag)
+inline void backward_push_tagged_field_header(std::vector<uint8_t> & v, uint32_t payload_size, uint8_t tag)
 {
-   backward_push_ber_len(v, payload_size + v.size());
-   v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | BER::TAG_OCTET_STRING);
-   backward_push_ber_len(v, payload_size + v.size());
+   backward_push_ber_len(v, payload_size);
    v.push_back(BER::CLASS_CTXT | BER::PC_CONSTRUCT | tag);
+}
+
+inline void backward_push_octet_string_field_header(std::vector<uint8_t> & v, uint32_t payload_size)
+{
+   backward_push_ber_len(v, payload_size);
+   v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | BER::TAG_OCTET_STRING);
 }
 
 inline void backward_push_sequence_tag_field_header(std::vector<uint8_t> & v, uint32_t payload_size)
@@ -980,7 +984,16 @@ inline void backward_push_sequence_tag_field_header(std::vector<uint8_t> & v, ui
 }
 
 
-inline void backward_push_integer_field(std::vector<uint8_t> & v, uint32_t value, uint8_t tag)
+// for values < 0x80
+inline void backward_push_small_integer_field(std::vector<uint8_t> & v, uint8_t value)
+{
+    v.push_back(value);
+    v.push_back(1); // length
+    v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | (BER::TAG_MASK & BER::TAG_INTEGER));
+}
+
+
+inline void backward_push_integer_field(std::vector<uint8_t> & v, uint32_t value)
 {
     if (value < 0x80) {
         v.push_back(value);
@@ -1005,8 +1018,6 @@ inline void backward_push_integer_field(std::vector<uint8_t> & v, uint32_t value
         v.push_back(4); // length
     }
     v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | (BER::TAG_MASK & BER::TAG_INTEGER));
-    backward_push_ber_len(v, v.size());
-    v.push_back(BER::CLASS_CTXT | BER::PC_CONSTRUCT | tag);
 }
 
 
@@ -1015,13 +1026,11 @@ inline std::vector<uint8_t> emitNegoTokensHeaders(uint32_t payload_size)
     std::vector<uint8_t> head;
 
     if (payload_size > 0) {
-        backward_push_octet_string_field_header(head, payload_size, 0);
-        backward_push_ber_len(head, payload_size + head.size());
-        head.push_back(BER::CLASS_UNIV | BER::PC_CONSTRUCT | BER::TAG_SEQUENCE);
-        backward_push_ber_len(head, payload_size + head.size());
-        head.push_back(BER::CLASS_UNIV | BER::PC_CONSTRUCT | BER::TAG_SEQUENCE);
-        backward_push_ber_len(head, payload_size + head.size());
-        head.push_back(BER::CLASS_CTXT | BER::PC_CONSTRUCT | 1);
+        backward_push_octet_string_field_header(head, payload_size);
+        backward_push_tagged_field_header(head, payload_size + head.size(), 0);
+        backward_push_sequence_tag_field_header(head, payload_size + head.size());
+        backward_push_sequence_tag_field_header(head, payload_size + head.size());
+        backward_push_tagged_field_header(head, payload_size + head.size(), 1);
         std::reverse(head.begin(), head.end());
     }
     return head;
@@ -1032,37 +1041,39 @@ inline std::vector<uint8_t> emitOctetStringField(uint32_t payload_size, uint8_t 
     std::vector<uint8_t> head;
 
     if (payload_size > 0) {
-        backward_push_octet_string_field_header(head, payload_size, tag);
+        backward_push_octet_string_field_header(head, payload_size);
+        backward_push_tagged_field_header(head, payload_size + head.size(), tag);
+
         std::reverse(head.begin(), head.end());
     }
     return head;
 }
 
-inline std::vector<uint8_t> emitVersionField(uint32_t value)
+inline std::vector<uint8_t> emitSmallIntegerField(uint8_t value, uint8_t tag)
 {
     std::vector<uint8_t> field;
-    backward_push_integer_field(field, value, 0);
+    backward_push_small_integer_field(field, value);
+    backward_push_tagged_field_header(field, field.size(), tag);
     std::reverse(field.begin(), field.end());
     return field;
 }
 
-
-inline std::vector<uint8_t> emitAuthInfoHeaders(uint32_t payload_size)
+inline std::vector<uint8_t> emitIntegerField(uint32_t value, uint8_t tag)
 {
-    return emitOctetStringField(payload_size, 2);
+    std::vector<uint8_t> field;
+    backward_push_integer_field(field, value);
+    backward_push_tagged_field_header(field, field.size(), tag);
+    std::reverse(field.begin(), field.end());
+    return field;
 }
 
-inline std::vector<uint8_t> emitPubkeyAuthHeaders(uint32_t payload_size)
+inline std::vector<uint8_t> emitTSRequestSequenceHeader(uint32_t payload_size)
 {
-    return emitOctetStringField(payload_size, 3);
+    std::vector<uint8_t> head;
+    backward_push_sequence_tag_field_header(head, payload_size);
+    std::reverse(head.begin(), head.end());
+    return head;
 }
-
-inline std::vector<uint8_t> emitNonceHeaders(uint32_t payload_size)
-{
-    return emitOctetStringField(payload_size, 5);
-
-}
-
 
 inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_code)
 {
@@ -1094,15 +1105,15 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
     }
 
     /* [0] version */
-    auto ber_version_field = emitVersionField(self.version);
+    auto ber_version_field = emitSmallIntegerField(self.version, 0);
     /* [1] negoTokens (NegoData) */
     auto ber_nego_tokens_header = emitNegoTokensHeaders(self.negoTokens.size());
     /* [2] authInfo (OCTET STRING) */
-    auto ber_auth_info_header = emitAuthInfoHeaders(self.authInfo.size());
+    auto ber_auth_info_header = emitOctetStringField(self.authInfo.size(), 2);
     /* [3] pubKeyAuth (OCTET STRING) */
-    auto ber_pub_key_auth_header = emitPubkeyAuthHeaders(self.pubKeyAuth.size());
+    auto ber_pub_key_auth_header = emitOctetStringField(self.pubKeyAuth.size(), 3);
     /* [5] clientNonce (OCTET STRING) */
-    auto ber_nonce_header = emitNonceHeaders(sizeof(self.clientNonce.data));
+    auto ber_nonce_header = emitOctetStringField(sizeof(self.clientNonce.data), 5);
 
     /* TSRequest */
     size_t ts_request_length = ber_version_field.size()
@@ -1114,8 +1125,10 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
           + self.pubKeyAuth.size()
           + (self.version >= 5 && self.clientNonce.initialized)*ber_nonce_header.size();
 
-    BER::write_sequence_tag(stream, ts_request_length);
+    auto ber_ts_request_header = emitTSRequestSequenceHeader(ts_request_length);
 
+    /* TSRequest */
+    stream.out_copy_bytes(ber_ts_request_header);
     /* [0] version */
     stream.out_copy_bytes(ber_version_field);
     /* [1] negoTokens (NegoData) */
