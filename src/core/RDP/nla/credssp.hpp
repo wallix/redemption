@@ -155,7 +155,7 @@ namespace BER {
     }
 
 
-    inline std::vector<uint8_t> mkNegoTokensHeader(uint32_t payload_size)
+    inline std::vector<uint8_t> mkOptionalNegoTokensHeader(uint32_t payload_size)
     {
         std::vector<uint8_t> head;
 
@@ -170,16 +170,21 @@ namespace BER {
         return head;
     }
 
-    inline std::vector<uint8_t> mkOctetStringFieldHeader(uint32_t payload_size, uint8_t tag)
+    inline std::vector<uint8_t> mkMandatoryOctetStringFieldHeader(uint32_t payload_size, uint8_t tag)
     {
         std::vector<uint8_t> head;
-
-        if (payload_size > 0) {
-            backward_push_octet_string_field_header(head, payload_size);
-            backward_push_tagged_field_header(head, payload_size + head.size(), tag);
-            std::reverse(head.begin(), head.end());
-        }
+        backward_push_octet_string_field_header(head, payload_size);
+        backward_push_tagged_field_header(head, payload_size + head.size(), tag);
+        std::reverse(head.begin(), head.end());
         return head;
+    }
+
+    inline std::vector<uint8_t> mkOptionalOctetStringFieldHeader(uint32_t payload_size, uint8_t tag)
+    {
+        if (payload_size > 0) {
+            return mkMandatoryOctetStringFieldHeader(payload_size, tag);
+        }
+        return {};
     }
 
     inline std::vector<uint8_t> mkSmallIntegerField(uint8_t value, uint8_t tag)
@@ -1101,9 +1106,9 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
 
         /* TSRequest */
         stream.out_copy_bytes(ber_ts_request_header);
-        /* [0] version */
+        // version    [0] INTEGER,
         stream.out_copy_bytes(ber_version_field);
-        /* [4] error_code */
+        // errorCode  [4] INTEGER OPTIONAL
         stream.out_copy_bytes(ber_error_code_field);
 
         auto * end = stream.get_current();
@@ -1122,16 +1127,16 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
         return;
     }
     
-    /* [0] version */
+    // version    [0] INTEGER,
     auto ber_version_field = BER::mkSmallIntegerField(self.version, 0);
-    /* [1] negoTokens (NegoData) */
-    auto ber_nego_tokens_header = BER::mkNegoTokensHeader(self.negoTokens.size());
-    /* [2] authInfo (OCTET STRING) */
-    auto ber_auth_info_header = BER::mkOctetStringFieldHeader(self.authInfo.size(), 2);
-    /* [3] pubKeyAuth (OCTET STRING) */
-    auto ber_pub_key_auth_header = BER::mkOctetStringFieldHeader(self.pubKeyAuth.size(), 3);
-    /* [5] clientNonce (OCTET STRING) */
-    auto ber_nonce_header = BER::mkOctetStringFieldHeader(sizeof(self.clientNonce.data), 5);
+    // negoTokens [1] NegoData OPTIONAL
+    auto ber_nego_tokens_header = BER::mkOptionalNegoTokensHeader(self.negoTokens.size());
+    // authInfo   [2] OCTET STRING OPTIONAL
+    auto ber_auth_info_header = BER::mkOptionalOctetStringFieldHeader(self.authInfo.size(), 2);
+    // pubKeyAuth [3] OCTET STRING OPTIONAL
+    auto ber_pub_key_auth_header = BER::mkOptionalOctetStringFieldHeader(self.pubKeyAuth.size(), 3);
+    // clientNonce[5] OCTET STRING OPTIONAL
+    auto ber_nonce_header = BER::mkOptionalOctetStringFieldHeader(sizeof(self.clientNonce.data), 5);
 
     /* TSRequest */
     size_t ts_request_length = ber_version_field.size()
@@ -1148,19 +1153,19 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
 
     /* TSRequest */
     stream.out_copy_bytes(ber_ts_request_header);
-    /* [0] version */
+    // version    [0] INTEGER,
     stream.out_copy_bytes(ber_version_field);
-    /* [1] negoTokens (NegoData) */
+    // negoTokens [1] NegoData OPTIONAL
     stream.out_copy_bytes(ber_nego_tokens_header);
     stream.out_copy_bytes(self.negoTokens);
-    /* [2] authInfo (OCTET STRING) */
+    // authInfo   [2] OCTET STRING OPTIONAL
     stream.out_copy_bytes(ber_auth_info_header);
     stream.out_copy_bytes(self.authInfo);
-    /* [3] pubKeyAuth (OCTET STRING) */
+    // pubKeyAuth [3] OCTET STRING OPTIONAL
     stream.out_copy_bytes(ber_pub_key_auth_header);
     stream.out_copy_bytes(self.pubKeyAuth);
-    /* [4] errorCode (INTEGER) */
-    /* [5] clientNonce (OCTET STRING) */
+    // errorCode  [4] INTEGER OPTIONAL
+    // clientNonce[5] OCTET STRING OPTIONAL
     if (self.version >= 5 && self.clientNonce.initialized){
         stream.out_copy_bytes(ber_nonce_header);
         stream.out_copy_bytes({self.clientNonce.data, sizeof(self.clientNonce.data)});
@@ -1323,20 +1328,47 @@ struct TSPasswordCreds {
         int innerSize = this->ber_sizeof();
 
         // /* TSPasswordCreds (SEQUENCE) */
-
+        auto * begin = stream.get_current();
         size += BER::write_sequence_tag(stream, innerSize);
+        auto * end = stream.get_current();
+        LOG(LOG_INFO, "TSPasswordCreds(old) ts_password_creds_header ----------");
+        hexdump_c({begin,size_t(end-begin)});
+        
 
         // /* [0] domainName (OCTET STRING) */
+        {
+        auto * begin = stream.get_current();
         size += BER::write_sequence_octet_string(stream, 0, this->domainName,
                                                  this->domainName_length);
+        auto * end = stream.get_current();
+        LOG(LOG_INFO, "TSPasswordCreds(old) domain name header ----------------------");
+        hexdump_c({begin,size_t(end-begin)});
+        }
 
         // /* [1] userName (OCTET STRING) */
+        {
+        auto * begin = stream.get_current();
         size += BER::write_sequence_octet_string(stream, 1, this->userName,
                                                  this->userName_length);
+        auto * end = stream.get_current();
+        LOG(LOG_INFO, "TSPasswordCreds(old) user name header ------------------------");
+        hexdump_c({begin,size_t(end-begin)});
+        }
 
         // /* [2] password (OCTET STRING) */
+        {
+        auto * begin = stream.get_current();
         size += BER::write_sequence_octet_string(stream, 2, this->password,
                                                  this->password_length);
+        auto * end = stream.get_current();
+        LOG(LOG_INFO, "TSPasswordCreds(old) password header -------------------------");
+        hexdump_c({begin,size_t(end-begin)});
+        }
+
+        end = stream.get_current();
+        LOG(LOG_INFO, "TSPasswordCreds(old) full dump -------------------------");
+        hexdump_c({begin,size_t(end-begin)});
+        LOG(LOG_INFO, "TSPasswordCreds(old) DONE ------------------------------");
         return size;
     }
 
@@ -1377,11 +1409,11 @@ inline size_t emitTSPasswordCreds(OutStream & stream, const TSPasswordCreds & se
     auto * begin = stream.get_current();
 
     // [0] domainName (OCTET STRING)
-    auto ber_domain_name_header = BER::mkOctetStringFieldHeader(self.domainName_length, 0);
+    auto ber_domain_name_header = BER::mkMandatoryOctetStringFieldHeader(self.domainName_length, 0);
     // [1] userName (OCTET STRING)
-    auto ber_user_name_header = BER::mkOctetStringFieldHeader(self.userName_length, 1);
+    auto ber_user_name_header = BER::mkMandatoryOctetStringFieldHeader(self.userName_length, 1);
     // [2] password (OCTET STRING)
-    auto ber_password_header = BER::mkOctetStringFieldHeader(self.password_length, 2);
+    auto ber_password_header = BER::mkMandatoryOctetStringFieldHeader(self.password_length, 2);
 
     // TSPasswordCreds (SEQUENCE)
     size_t ts_password_creds_length = ber_domain_name_header.size()+self.domainName_length
@@ -1407,15 +1439,18 @@ inline size_t emitTSPasswordCreds(OutStream & stream, const TSPasswordCreds & se
     LOG(LOG_INFO, "TSPasswordCreds hexdump ---------------------------");
     LOG(LOG_INFO, "TSPasswordCreds ts_password_creds_header ----------");
     hexdump_c(ber_ts_password_creds_header);
-    LOG(LOG_INFO, "TSRequest domain name header ----------------------");
-    hexdump_c(ber_password_header);
-    LOG(LOG_INFO, "TSRequest user name header ------------------------");
+    LOG(LOG_INFO, "TSPasswordCreds domain name header ----------------------");
+    hexdump_c(ber_domain_name_header);
+    hexdump_c({self.domainName, self.domainName_length});
+    LOG(LOG_INFO, "TSPasswordCreds user name header ------------------------");
     hexdump_c(ber_user_name_header);
-    LOG(LOG_INFO, "TSRequest password header -------------------------");
+    hexdump_c({self.userName, self.userName_length});
+    LOG(LOG_INFO, "TSPasswordCreds password header -------------------------");
     hexdump_c(ber_password_header);
-    LOG(LOG_INFO, "TSRequest full dump--------------------------------");
+    hexdump_c({self.password, self.password_length});
+    LOG(LOG_INFO, "TSPasswordCreds full dump--------------------------------");
     hexdump_c({begin, size_t(end-begin)});
-    LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
+    LOG(LOG_INFO, "TSPasswordCreds hexdump -DONE----------------------------");
     
     return size_t(end-begin);
 }
@@ -1890,9 +1925,18 @@ struct TSCredentials
         size += BER::write_octet_string_tag(ts_credentials, credsSize);
 
         if (this->credType == 1){
-//            auto pass_cred_size = emitTSPasswordCreds(ts_credentials, this->passCreds);
-            auto passcred_size = this->passCreds.emit(ts_credentials);
-            size += passcred_size;
+            StaticOutStream<20000> stream;
+            auto pass_cred_size = emitTSPasswordCreds(ts_credentials, this->passCreds);
+            auto * begin = stream.get_current();
+            auto passcred_size = this->passCreds.emit(stream);
+            auto * end = stream.get_current();
+            LOG(LOG_INFO, "TSPasswordCreds hexdump (old)----------------------");
+            LOG(LOG_INFO, "TSRequest full dump--------------------------------");
+            hexdump_c({begin, size_t(end-begin)});
+            LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
+
+//            exit(0);
+            size += pass_cred_size;
         }
         else {
             size += this->smartcardCreds.emit(ts_credentials);
