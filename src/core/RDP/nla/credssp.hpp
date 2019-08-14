@@ -89,6 +89,127 @@ namespace BER {
         TAG_GENERAL_STRING    = 0x1B
     };
 
+
+    inline void backward_push_ber_len(std::vector<uint8_t> & v, uint32_t len)
+    {
+        v.push_back(uint8_t(len));
+        if (len > 0xFF){
+            v.push_back(uint8_t(len >> 8));
+            v.push_back(0x82);
+        } else if (len > 0x7F){
+            v.push_back(0x81);
+        }
+    }
+
+    inline void backward_push_tagged_field_header(std::vector<uint8_t> & v, uint32_t payload_size, uint8_t tag)
+    {
+       backward_push_ber_len(v, payload_size);
+       v.push_back(CLASS_CTXT|PC_CONSTRUCT|tag);
+    }
+
+    inline void backward_push_octet_string_field_header(std::vector<uint8_t> & v, uint32_t payload_size)
+    {
+       backward_push_ber_len(v, payload_size);
+       v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING);
+    }
+
+    inline void backward_push_sequence_tag_field_header(std::vector<uint8_t> & v, uint32_t payload_size)
+    {
+        backward_push_ber_len(v, payload_size);
+        v.push_back(CLASS_UNIV|PC_CONSTRUCT|TAG_SEQUENCE);
+    }
+
+    // for values < 0x80
+    inline void backward_push_small_integer_field(std::vector<uint8_t> & v, uint8_t value)
+    {
+        v.push_back(value);
+        v.push_back(1); // length
+        v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER);
+    }
+
+    inline void backward_push_integer_field(std::vector<uint8_t> & v, uint32_t value)
+    {
+        if (value < 0x80) {
+            v.push_back(value);
+            v.push_back(1); // length
+        }
+        else if (value <  0x8000) {
+            v.push_back(value);
+            v.push_back(value >> 8);
+            v.push_back(2); // length
+        }
+        else if (value <  0x800000) {
+            v.push_back(value);
+            v.push_back(value >> 8);
+            v.push_back(value >> 16);
+            v.push_back(3); // length
+        }
+        else {
+            v.push_back(value);
+            v.push_back(value >> 8);
+            v.push_back(value >> 16);
+            v.push_back(value >> 24);
+            v.push_back(4); // length
+        }
+        v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER);
+    }
+
+
+    inline std::vector<uint8_t> mkNegoTokensHeader(uint32_t payload_size)
+    {
+        std::vector<uint8_t> head;
+
+        if (payload_size > 0) {
+            backward_push_octet_string_field_header(head, payload_size);
+            backward_push_tagged_field_header(head, payload_size + head.size(), 0);
+            backward_push_sequence_tag_field_header(head, payload_size + head.size());
+            backward_push_sequence_tag_field_header(head, payload_size + head.size());
+            backward_push_tagged_field_header(head, payload_size + head.size(), 1);
+            std::reverse(head.begin(), head.end());
+        }
+        return head;
+    }
+
+    inline std::vector<uint8_t> mkOctetStringFieldHeader(uint32_t payload_size, uint8_t tag)
+    {
+        std::vector<uint8_t> head;
+
+        if (payload_size > 0) {
+            backward_push_octet_string_field_header(head, payload_size);
+            backward_push_tagged_field_header(head, payload_size + head.size(), tag);
+            std::reverse(head.begin(), head.end());
+        }
+        return head;
+    }
+
+    inline std::vector<uint8_t> mkSmallIntegerField(uint8_t value, uint8_t tag)
+    {
+        std::vector<uint8_t> field;
+        backward_push_small_integer_field(field, value);
+        backward_push_tagged_field_header(field, field.size(), tag);
+        std::reverse(field.begin(), field.end());
+        return field;
+    }
+
+    inline std::vector<uint8_t> mkIntegerField(uint32_t value, uint8_t tag)
+    {
+        std::vector<uint8_t> field;
+        backward_push_integer_field(field, value);
+        backward_push_tagged_field_header(field, field.size(), tag);
+        std::reverse(field.begin(), field.end());
+        return field;
+    }
+
+    inline std::vector<uint8_t> mkTSRequestSequenceHeader(uint32_t payload_size)
+    {
+        std::vector<uint8_t> head;
+        backward_push_sequence_tag_field_header(head, payload_size);
+        std::reverse(head.begin(), head.end());
+        return head;
+    }
+
+    // TO trash after cleanup until end of namespace
+
     inline PC ber_pc(bool _pc) {
         return (_pc ? PC_CONSTRUCT : PC_PRIMITIVE);
     }
@@ -962,166 +1083,55 @@ struct TSRequest final {
     }
 };
 
-inline void backward_push_ber_len(std::vector<uint8_t> & v, uint32_t len)
-{
-    v.push_back(uint8_t(len));
-    if (len > 0xFF){
-        v.push_back(uint8_t(len >> 8));
-        v.push_back(0x82);
-    } else if (len > 0x7F){
-        v.push_back(0x81);
-    }
-}
-
-inline void backward_push_tagged_field_header(std::vector<uint8_t> & v, uint32_t payload_size, uint8_t tag)
-{
-   backward_push_ber_len(v, payload_size);
-   v.push_back(BER::CLASS_CTXT | BER::PC_CONSTRUCT | tag);
-}
-
-inline void backward_push_octet_string_field_header(std::vector<uint8_t> & v, uint32_t payload_size)
-{
-   backward_push_ber_len(v, payload_size);
-   v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | BER::TAG_OCTET_STRING);
-}
-
-inline void backward_push_sequence_tag_field_header(std::vector<uint8_t> & v, uint32_t payload_size)
-{
-    backward_push_ber_len(v, payload_size);
-    v.push_back(BER::CLASS_UNIV | BER::PC_CONSTRUCT | BER::TAG_SEQUENCE);
-}
-
-
-// for values < 0x80
-inline void backward_push_small_integer_field(std::vector<uint8_t> & v, uint8_t value)
-{
-    v.push_back(value);
-    v.push_back(1); // length
-    v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | (BER::TAG_MASK & BER::TAG_INTEGER));
-}
-
-inline void backward_push_integer_field(std::vector<uint8_t> & v, uint32_t value)
-{
-    if (value < 0x80) {
-        v.push_back(value);
-        v.push_back(1); // length
-    }
-    else if (value <  0x8000) {
-        v.push_back(value);
-        v.push_back(value >> 8);
-        v.push_back(2); // length
-    }
-    else if (value <  0x800000) {
-        v.push_back(value);
-        v.push_back(value >> 8);
-        v.push_back(value >> 16);
-        v.push_back(3); // length
-    }
-    else {
-        v.push_back(value);
-        v.push_back(value >> 8);
-        v.push_back(value >> 16);
-        v.push_back(value >> 24);
-        v.push_back(4); // length
-    }
-    v.push_back(BER::CLASS_UNIV | BER::PC_PRIMITIVE | (BER::TAG_MASK & BER::TAG_INTEGER));
-}
-
-
-inline std::vector<uint8_t> ber_NegoTokensHeader(uint32_t payload_size)
-{
-    std::vector<uint8_t> head;
-
-    if (payload_size > 0) {
-        backward_push_octet_string_field_header(head, payload_size);
-        backward_push_tagged_field_header(head, payload_size + head.size(), 0);
-        backward_push_sequence_tag_field_header(head, payload_size + head.size());
-        backward_push_sequence_tag_field_header(head, payload_size + head.size());
-        backward_push_tagged_field_header(head, payload_size + head.size(), 1);
-        std::reverse(head.begin(), head.end());
-    }
-    return head;
-}
-
-inline std::vector<uint8_t> ber_OctetStringField(uint32_t payload_size, uint8_t tag)
-{
-    std::vector<uint8_t> head;
-
-    if (payload_size > 0) {
-        backward_push_octet_string_field_header(head, payload_size);
-        backward_push_tagged_field_header(head, payload_size + head.size(), tag);
-        std::reverse(head.begin(), head.end());
-    }
-    return head;
-}
-
-inline std::vector<uint8_t> ber_SmallIntegerField(uint8_t value, uint8_t tag)
-{
-    std::vector<uint8_t> field;
-    backward_push_small_integer_field(field, value);
-    backward_push_tagged_field_header(field, field.size(), tag);
-    std::reverse(field.begin(), field.end());
-    return field;
-}
-
-inline std::vector<uint8_t> ber_IntegerField(uint32_t value, uint8_t tag)
-{
-    std::vector<uint8_t> field;
-    backward_push_integer_field(field, value);
-    backward_push_tagged_field_header(field, field.size(), tag);
-    std::reverse(field.begin(), field.end());
-    return field;
-}
-
-inline std::vector<uint8_t> ber_TSRequestSequenceHeader(uint32_t payload_size)
-{
-    std::vector<uint8_t> head;
-    backward_push_sequence_tag_field_header(head, payload_size);
-    std::reverse(head.begin(), head.end());
-    return head;
-}
 
 inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_code)
 {
-    uint32_t version_length = 3;
+    auto * begin = stream.get_current();
 
     if ((self.version == 3 || self.version == 4 || self.version >= 6)
     && error_code != 0) {
-        int ts_request_length = 3;
-        ts_request_length += BER::sizeof_contextual_tag(version_length);
-        ts_request_length += BER::sizeof_integer(error_code);
-        ts_request_length += BER::sizeof_contextual_tag(BER::sizeof_integer(error_code));
+        /* [0] version */
+        auto ber_version_field = BER::mkSmallIntegerField(self.version, 0);
+        /* [4] errorCode (INTEGER) */
+        auto ber_error_code_field = BER::mkIntegerField(error_code, 4);
 
         /* TSRequest */
-        BER::write_sequence_tag(stream, ts_request_length);
-        /* [0] version */
-        BER::write_contextual_tag(stream, 0, version_length, true);
-        BER::write_integer(stream, self.version);
-        LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u", self.version);
+        size_t ts_request_length = ber_version_field.size()+ber_error_code_field.size();
+        auto ber_ts_request_header = BER::mkTSRequestSequenceHeader(ts_request_length);
 
-        /* [1] negoTokens (NegoData) */
-        /* [2] authInfo (OCTET STRING) */
-        /* [3] pubKeyAuth (OCTET STRING) */
-        /* [4] errorCode (INTEGER) */
-        LOG(LOG_INFO, "Credssp: TSCredentials::emit() errorCode");
-        BER::write_contextual_tag(stream, 0, BER::sizeof_integer(error_code), true);
-        BER::write_integer(stream, error_code);
-        /* [5] clientNonce (OCTET STRING) */
+        /* TSRequest */
+        stream.out_copy_bytes(ber_ts_request_header);
+        /* [0] version */
+        stream.out_copy_bytes(ber_version_field);
+        /* [4] error_code */
+        stream.out_copy_bytes(ber_error_code_field);
+
+        auto * end = stream.get_current();
+
+        LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
+        LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
+        hexdump_c(ber_ts_request_header);
+        LOG(LOG_INFO, "TSRequest version_field ---------------------------");
+        hexdump_c(ber_version_field);
+        LOG(LOG_INFO, "TSRequest error_code field ------------------------");
+        hexdump_c(ber_error_code_field);
+        LOG(LOG_INFO, "TSRequest full dump--------------------------------");
+        hexdump_c({begin, size_t(end-begin)});
+        LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
+
         return;
     }
     
-    auto * begin = stream.get_current();
-
     /* [0] version */
-    auto ber_version_field = ber_SmallIntegerField(self.version, 0);
+    auto ber_version_field = BER::mkSmallIntegerField(self.version, 0);
     /* [1] negoTokens (NegoData) */
-    auto ber_nego_tokens_header = ber_NegoTokensHeader(self.negoTokens.size());
+    auto ber_nego_tokens_header = BER::mkNegoTokensHeader(self.negoTokens.size());
     /* [2] authInfo (OCTET STRING) */
-    auto ber_auth_info_header = ber_OctetStringField(self.authInfo.size(), 2);
+    auto ber_auth_info_header = BER::mkOctetStringFieldHeader(self.authInfo.size(), 2);
     /* [3] pubKeyAuth (OCTET STRING) */
-    auto ber_pub_key_auth_header = ber_OctetStringField(self.pubKeyAuth.size(), 3);
+    auto ber_pub_key_auth_header = BER::mkOctetStringFieldHeader(self.pubKeyAuth.size(), 3);
     /* [5] clientNonce (OCTET STRING) */
-    auto ber_nonce_header = ber_OctetStringField(sizeof(self.clientNonce.data), 5);
+    auto ber_nonce_header = BER::mkOctetStringFieldHeader(sizeof(self.clientNonce.data), 5);
 
     /* TSRequest */
     size_t ts_request_length = ber_version_field.size()
@@ -1134,7 +1144,7 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
           + (self.version >= 5 && self.clientNonce.initialized)
             *(ber_nonce_header.size()+sizeof(self.clientNonce.data));
 
-    auto ber_ts_request_header = ber_TSRequestSequenceHeader(ts_request_length);
+    auto ber_ts_request_header = BER::mkTSRequestSequenceHeader(ts_request_length);
 
     /* TSRequest */
     stream.out_copy_bytes(ber_ts_request_header);
@@ -1307,7 +1317,7 @@ struct TSPasswordCreds {
         length += BER::sizeof_sequence_octet_string(password_length);
         return length;
     }
-
+    
     int emit(OutStream & stream) const {
         int size = 0;
         int innerSize = this->ber_sizeof();
@@ -1329,7 +1339,6 @@ struct TSPasswordCreds {
                                                  this->password_length);
         return size;
     }
-
 
     void recv(InStream & stream) {
         int length = 0;
@@ -1359,6 +1368,58 @@ struct TSPasswordCreds {
 
     }
 };
+
+
+// emitTSPasswordCreds
+
+inline size_t emitTSPasswordCreds(OutStream & stream, const TSPasswordCreds & self)
+{
+    auto * begin = stream.get_current();
+
+    // [0] domainName (OCTET STRING)
+    auto ber_domain_name_header = BER::mkOctetStringFieldHeader(self.domainName_length, 0);
+    // [1] userName (OCTET STRING)
+    auto ber_user_name_header = BER::mkOctetStringFieldHeader(self.userName_length, 1);
+    // [2] password (OCTET STRING)
+    auto ber_password_header = BER::mkOctetStringFieldHeader(self.password_length, 2);
+
+    // TSPasswordCreds (SEQUENCE)
+    size_t ts_password_creds_length = ber_domain_name_header.size()+self.domainName_length
+                             + ber_user_name_header.size()+self.userName_length
+                             + ber_password_header.size()+self.password_length;
+
+    auto ber_ts_password_creds_header = BER::mkTSRequestSequenceHeader(ts_password_creds_length);
+
+    // TSPasswordCreds (SEQUENCE)
+    stream.out_copy_bytes(ber_ts_password_creds_header);
+    // [0] domainName (OCTET STRING)
+    stream.out_copy_bytes(ber_domain_name_header);
+    stream.out_copy_bytes(self.domainName, self.domainName_length);
+    // [1] userName (OCTET STRING)
+    stream.out_copy_bytes(ber_user_name_header);
+    stream.out_copy_bytes(self.userName, self.userName_length);
+    // [2] password (OCTET STRING)
+    stream.out_copy_bytes(ber_password_header);
+    stream.out_copy_bytes(self.password, self.password_length);
+
+    auto * end = stream.get_current();
+    
+    LOG(LOG_INFO, "TSPasswordCreds hexdump ---------------------------");
+    LOG(LOG_INFO, "TSPasswordCreds ts_password_creds_header ----------");
+    hexdump_c(ber_ts_password_creds_header);
+    LOG(LOG_INFO, "TSRequest domain name header ----------------------");
+    hexdump_c(ber_password_header);
+    LOG(LOG_INFO, "TSRequest user name header ------------------------");
+    hexdump_c(ber_user_name_header);
+    LOG(LOG_INFO, "TSRequest password header -------------------------");
+    hexdump_c(ber_password_header);
+    LOG(LOG_INFO, "TSRequest full dump--------------------------------");
+    hexdump_c({begin, size_t(end-begin)});
+    LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
+    
+    return size_t(end-begin);
+}
+
 
 
 namespace CredSSP {
@@ -1827,9 +1888,15 @@ struct TSCredentials
 
         size += BER::write_contextual_tag(ts_credentials, 1, BER::sizeof_octet_string(credsSize), true);
         size += BER::write_octet_string_tag(ts_credentials, credsSize);
-        size += (this->credType == 1) ?
-            this->passCreds.emit(ts_credentials) :
-            this->smartcardCreds.emit(ts_credentials);
+
+        if (this->credType == 1){
+//            auto pass_cred_size = emitTSPasswordCreds(ts_credentials, this->passCreds);
+            auto passcred_size = this->passCreds.emit(ts_credentials);
+            size += passcred_size;
+        }
+        else {
+            size += this->smartcardCreds.emit(ts_credentials);
+        }
 
         return size;
     }
