@@ -1461,23 +1461,19 @@ public:
                               : array_view_const_char();
 
                             auto device_type_name = rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(device_type);
-                            auto info = key_qvalue_pairs({
-                                    { "type", "DRIVE_REDIRECTION_USE" },
-                                    { "device_name", device_name },
-                                    { "device_type", device_type_name }
-                                });
 
                             this->report_message.log6(
                                 LogId::DRIVE_REDIRECTION_USE,
-                                this->session_reactor.get_current_time(), {{
+                                this->session_reactor.get_current_time(), {
                                 KVLog::all("device_name"_av, device_name),
                                 KVLog::all("device_type"_av, device_type_name),
                                 KVLog::arcsight("app"_av, "rdp"_av),
-                            }, LogDirection::ServerSrc});
+                                KVLog::direction(LogDirection::ServerDst),
+                            });
 
-                            if (!this->param_dont_log_data_into_syslog) {
-                                LOG(LOG_INFO, "%s", info);
-                            }
+                            LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                "type=DRIVE_REDIRECTION_USE device_name=%s device_type=%s",
+                                device_name, device_type_name);
 
                             if (!this->param_dont_log_data_into_wrm) {
                                 std::string message = str_concat(
@@ -1567,25 +1563,20 @@ public:
                                         target_iter->end_of_file, digest_s);
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
-                                    auto const info = key_qvalue_pairs({
-                                            { "type", "DRIVE_REDIRECTION_READ_EX" },
-                                            { "file_name", file_path },
-                                            { "size", file_size_str },
-                                            { "sha256", digest_s }
-                                        });
-
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_READ_EX,
-                                        this->session_reactor.get_current_time(), {{
+                                        this->session_reactor.get_current_time(), {
                                         KVLog::all("file_name"_av, file_path),
                                         KVLog::all("size"_av, file_size_str),
                                         KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
                                         KVLog::arcsight("app"_av, "rdp"_av),
-                                    }, LogDirection::ServerSrc});
+                                        KVLog::direction(LogDirection::ServerDst),
+                                    });
 
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                        "type=DRIVE_REDIRECTION_READ_EX file_name=%s"
+                                        "size=%s sha256=%s",
+                                        file_path, file_size_str, digest_s);
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message = str_concat(
@@ -1599,21 +1590,16 @@ public:
                                     }
                                 }
                                 else {
-                                    auto const info = key_qvalue_pairs({
-                                            { "type", "DRIVE_REDIRECTION_READ" },
-                                            { "file_name", file_path }
-                                        });
-
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_READ,
-                                        this->session_reactor.get_current_time(), {{
+                                        this->session_reactor.get_current_time(), {
                                         KVLog::all("file_name"_av, file_path),
                                         KVLog::arcsight("app"_av, "rdp"_av),
-                                    }, LogDirection::ServerSrc});
+                                        KVLog::direction(LogDirection::ServerDst),
+                                    });
 
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                        "type=DRIVE_REDIRECTION_READ file_name=%s", file_path);
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message = str_concat(
@@ -1639,25 +1625,21 @@ public:
                                         digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
-                                    auto const info = key_qvalue_pairs({
-                                            { "type", "DRIVE_REDIRECTION_WRITE_EX" },
-                                            { "file_name", file_path },
-                                            { "size", file_size_str },
-                                            { "sha256", digest_s }
-                                        });
 
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE_EX,
-                                        this->session_reactor.get_current_time(), {{
+                                        this->session_reactor.get_current_time(), {
                                         KVLog::all("file_name"_av, file_path),
                                         KVLog::all("size"_av, file_size_str),
                                         KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
                                         KVLog::arcsight("app"_av, "rdp"_av),
-                                    }, LogDirection::ServerDst});
+                                        KVLog::direction(LogDirection::ServerDst),
+                                    });
 
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                        "type=DRIVE_REDIRECTION_WRITE_EX file_name=%s"
+                                        "size=%s sha256=%s",
+                                        file_path, file_size_str, digest_s);
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message = str_concat(
@@ -1671,21 +1653,16 @@ public:
                                     }
                                 }
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                    auto info = key_qvalue_pairs({
-                                            { "type", "DRIVE_REDIRECTION_WRITE" },
-                                            { "file_name", file_path },
-                                        });
-
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE,
-                                        this->session_reactor.get_current_time(), {{
+                                        this->session_reactor.get_current_time(), {
                                         KVLog::all("file_name"_av, file_path),
                                         KVLog::arcsight("app"_av, "rdp"_av),
-                                    }, LogDirection::ServerDst});
+                                        KVLog::direction(LogDirection::ServerDst),
+                                    });
 
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                        "type=DRIVE_REDIRECTION_WRITE file_name=%s", file_path);
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message = str_concat(
@@ -1798,21 +1775,16 @@ public:
                         case rdpdr::FileDispositionInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                auto info = key_qvalue_pairs({
-                                        { "type", "DRIVE_REDIRECTION_DELETE" },
-                                        { "file_name", file_path },
-                                    });
-
                                 this->report_message.log6(
                                     LogId::DRIVE_REDIRECTION_DELETE,
-                                    this->session_reactor.get_current_time(), {{
+                                    this->session_reactor.get_current_time(), {
                                     KVLog::all("file_name"_av, file_path),
                                     KVLog::arcsight("app"_av, "rdp"_av),
-                                }, LogDirection::ServerDst});
+                                    KVLog::direction(LogDirection::ServerDst),
+                                });
 
-                                if (!this->param_dont_log_data_into_syslog) {
-                                    LOG(LOG_INFO, "%s", info);
-                                }
+                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                    "type=DRIVE_REDIRECTION_DELETE file_name=%s", file_path);
                             }
                             else {
                                 LOG(LOG_WARNING,
@@ -1833,23 +1805,18 @@ public:
                         case rdpdr::FileRenameInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                auto info = key_qvalue_pairs({
-                                        { "type", "DRIVE_REDIRECTION_RENAME" },
-                                        { "old_file_name", target_iter->file_path },
-                                        { "new_file_name", file_path },
-                                    });
-
                                 this->report_message.log6(
                                     LogId::DRIVE_REDIRECTION_RENAME,
-                                    this->session_reactor.get_current_time(), {{
-                                    KVLog::all("oldFilePath"_av, target_iter->file_path),
-                                    KVLog::all("filePath"_av, file_path),
+                                    this->session_reactor.get_current_time(), {
+                                    KVLog::all("old_file_name"_av, target_iter->file_path),
+                                    KVLog::all("new_file_name"_av, file_path),
                                     KVLog::arcsight("app"_av, "rdp"_av),
-                                }, LogDirection::ServerDst});
+                                    KVLog::direction(LogDirection::ServerDst),
+                                });
 
-                                if (!this->param_dont_log_data_into_syslog) {
-                                    LOG(LOG_INFO, "%s", info);
-                                }
+                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                    "type=DRIVE_REDIRECTION_RENAME old_file_name=%s new_file_name=%s",
+                                    target_iter->file_path, file_path);
                             }
                             else {
                                 LOG(LOG_WARNING,

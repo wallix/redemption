@@ -388,9 +388,8 @@ public:
             if (!file) {
                 LOG(LOG_ERR, "FileValidatorValidator::receive_response: invalid id %u", file_validator_id);
                 this->report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
-                    KVLog::siem("status"_av, "Invalid file id"_av),
                     KVLog::arcsight("app"_av, "rdp"_av),
-                    KVLog::arcsight("msg"_av, "Invalid file id"_av),
+                    KVLog::status_msg("status"_av, "Invalid file id"_av),
                 });
                 this->front.session_update("FILE_VERIFICATION=Invalid file id"_av);
                 continue;
@@ -402,19 +401,16 @@ public:
             auto& result_content = this->file_validator->get_content();
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
-            char file_size[128];
-            std::snprintf(file_size, std::size(file_size), "%lu", file_data.file_size);
-            this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {{
+            this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
                 KVLog::siem("direction"_av, str_direction),
-                KVLog::siem("filename"_av, file_data.file_name),
-                KVLog::siem("status"_av, result_content),
+                KVLog::siem("file_name"_av, file_data.file_name),
                 KVLog::arcsight("app"_av, "rdp"_av),
-                KVLog::arcsight("msg"_av, result_content),
+                KVLog::status_msg("status"_av, result_content),
                 KVLog::arcsight("fname"_av, file_data.file_name),
-                KVLog::arcsight("fsize"_av, {file_size, strlen(file_size)}),
-            }, (direction == Direction::FileFromServer)
-                ? LogDirection::ServerSrc
-                : LogDirection::ServerDst
+                KVLog::arcsight("fsize"_av, file_data.file_size),
+                KVLog::direction((direction == Direction::FileFromServer)
+                    ? LogDirection::ServerSrc
+                    : LogDirection::ServerDst),
             });
 
             this->front.session_update(str_concat("FILE_VERIFICATION=",
@@ -730,7 +726,7 @@ private:
         return true;
     }
 
-    void log_file_info(ClipboardSideData::FileContent::FileData& file_info, bool from_remote_session)
+    void log_file_info(ClipboardSideData::FileContent::FileData& file_data, bool from_remote_session)
     {
         const char* type = (
                   from_remote_session
@@ -740,7 +736,7 @@ private:
 
         uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
 
-        file_info.sha256.final(digest);
+        file_data.sha256.final(digest);
 
         char digest_s[128];
         snprintf(digest_s, sizeof(digest_s),
@@ -752,34 +748,30 @@ private:
             digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
 
         char file_size[128];
-        std::snprintf(file_size, std::size(file_size), "%lu", file_info.file_size);
-        auto str_direction = from_remote_session ? "UP"_av : "DOWN"_av;
+        std::snprintf(file_size, std::size(file_size), "%lu", file_data.file_size);
 
         this->report_message.log6(from_remote_session
             ? LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION
-            : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION, this->session_reactor.get_current_time(), {{
-            KVLog::siem("direction"_av, str_direction),
-            KVLog::siem("filename"_av, file_info.file_name),
+            : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
+            this->session_reactor.get_current_time(), {
+            KVLog::siem("file_name"_av, file_data.file_name),
             KVLog::siem("filesize"_av, {file_size, strlen(file_size)}),
-            KVLog::siem("sha256"_av, {digest_s, strlen(digest_s)}),
             KVLog::arcsight("app"_av, "rdp"_av),
-            KVLog::arcsight("fname"_av, file_info.file_name),
+            KVLog::arcsight("fname"_av, file_data.file_name),
             KVLog::arcsight("fsize"_av, {file_size, strlen(file_size)}),
-        }, from_remote_session ? LogDirection::ServerSrc : LogDirection::ServerDst});
+            KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
+            KVLog::direction(from_remote_session
+                ? LogDirection::ServerSrc
+                : LogDirection::ServerDst),
+        });
 
-        if (!this->params.dont_log_data_into_syslog) {
-            auto const info = key_qvalue_pairs({
-                {"type", type},
-                {"file_name", file_info.file_name},
-                {"size", file_size},
-                {"sha256", digest_s}
-            });
-            LOG(LOG_INFO, "%s", info);
-        }
+        LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
+            "type=%s file_name=%s size=%s sha256=%s",
+            type, file_data.file_name, file_size, digest_s);
 
         if (!this->params.dont_log_data_into_wrm) {
             std::string message = str_concat(
-                type, '=', file_info.file_name, '\x01', file_size, '\x01', digest_s);
+                type, '=', file_data.file_name, '\x01', file_size, '\x01', digest_s);
             this->front.session_update(message);
         }
     }
@@ -821,54 +813,40 @@ private:
                         this->report_message.log6(is_from_remote_session
                             ? LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION
                             : LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION,
-                            this->session_reactor.get_current_time(), {{
+                            this->session_reactor.get_current_time(), {
                             KVLog::all("format"_av, format),
                             KVLog::all("size"_av, size_str),
                             KVLog::arcsight("app"_av, "rdp"_av),
-                        }, is_from_remote_session ? LogDirection::ServerSrc : LogDirection::ServerDst});
-
+                            KVLog::direction(is_from_remote_session
+                                ? LogDirection::ServerSrc
+                                : LogDirection::ServerDst),
+                            });
                     }
                     else {
                         this->report_message.log6(is_from_remote_session
                             ? LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX
                             : LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX,
-                            this->session_reactor.get_current_time(), {{
+                            this->session_reactor.get_current_time(), {
                             KVLog::all("format"_av, format),
                             KVLog::all("size"_av, size_str),
                             KVLog::all("partial_data"_av, data_to_dump),
                             KVLog::arcsight("app"_av, "rdp"_av),
-                        }, is_from_remote_session ? LogDirection::ServerSrc : LogDirection::ServerDst});
+                            KVLog::direction(is_from_remote_session
+                                ? LogDirection::ServerSrc
+                                : LogDirection::ServerDst),
+                            });
                     }
                 }
 
-                std::string info;
-                ::key_qvalue_pairs(
-                        info,
-                        {
-                            { "type", type },
-                            { "format", format },
-                            { "size", size_str }
-                        }
-                    );
-                if (!data_to_dump.empty()) {
-                    ::key_qvalue_pairs(
-                        info,
-                        {
-                            { "partial_data", data_to_dump }
-                        }
-                    );
-                }
-
-                if (!this->params.dont_log_data_into_syslog) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
+                    "type=%s format=%s size=%s sha256=%s%s%s",
+                    type, format, size_str,
+                    data_to_dump.empty() ? "" : " partial_data", data_to_dump.c_str());
 
                 if (!this->params.dont_log_data_into_wrm) {
-                    str_assign(info, type, '=', format, '\x01', size_str);
-                    if (!data_to_dump.empty()) {
-                        str_append(info, '\x01', data_to_dump);
-                    }
-
+                    auto info = data_to_dump.empty()
+                        ? str_concat(type, '=', format, '\x01', size_str)
+                        : str_concat(type, '=', format, '\x01', size_str, '\x01', data_to_dump);
                     this->front.session_update(info);
                 }
             }

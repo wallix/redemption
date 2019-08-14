@@ -1110,10 +1110,10 @@ private:
                 this->ini.get<cfg::context::target_port>(),
                 error_message);
 
-            report_message.log6(LogId::CONNECTION_FAILED, this->session_reactor.get_current_time(), {{
+            report_message.log6(LogId::CONNECTION_FAILED, this->session_reactor.get_current_time(), {
                 KVLog::arcsight("app"_av, {protocol, strlen(protocol)}),
-                KVLog::arcsight("WallixBastionStatus"_av, "FAIL"_av),
-            }, LogDirection::ServerDst});
+                KVLog::direction(LogDirection::ServerDst)
+            });
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
 

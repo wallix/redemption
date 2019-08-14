@@ -36,6 +36,7 @@
 #include "utils/log.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/stream.hpp"
+#include "std17/charconv.hpp"
 
 #include <cstdio>
 
@@ -285,6 +286,9 @@ void AclSerializer::update_inactivity_timeout()
 
 void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
 {
+    char buffer[4096];
+    char* pbuf = buffer;
+
     kv_pair_ values[10]{
         {"type"_av, log_id_string_map[int(id)]},
         {""_av, ""_av},
@@ -301,7 +305,24 @@ void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
     for (auto& kv : kv_list) {
         if (kv.categories.test(LogCategory::Siem)) {
             p->key = kv.key;
-            p->value = kv.value;
+            switch (kv.type) {
+                case KVLog::Type::Array:
+                    p->value = kv.value.array;
+                    break;
+                case KVLog::Type::UInt64:
+                    p->value = array_view_const_char(pbuf,
+                        std::to_chars(pbuf, std::end(buffer), kv.value.u64).ptr);
+                    pbuf += p->value.size();
+                    break;
+                case KVLog::Type::Time:
+                    p->value = array_view_const_char(pbuf,
+                        std::to_chars(pbuf, std::end(buffer), kv.value.time).ptr);
+                    pbuf += p->value.size();
+                    break;
+                case KVLog::Type::Direction:
+                    assert(!"direction type with SIEM log");
+                    break;
+            }
             ++p;
         }
     }

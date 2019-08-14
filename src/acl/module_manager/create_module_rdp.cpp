@@ -37,6 +37,24 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
 
+namespace
+{
+    void file_verification_error(
+        FrontAPI& front,
+        SessionReactor& session_reactor,
+        ReportMessageApi& report_message,
+        array_view_const_char socket_path,
+        array_view_const_char msg)
+    {
+        report_message.log6(LogId::FILE_VERIFICATION_SERVER_ERROR, session_reactor.get_current_time(), {
+            KVLog::siem("service"_av, socket_path),
+            KVLog::arcsight("app"_av, "rdp"_av),
+            KVLog::status_msg("msg"_av, msg),
+        });
+
+        front.session_update(str_concat("FILE_VERIFICATION_SERVER_ERROR="_av, msg));
+    }
+}
 
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -364,15 +382,13 @@ void ModuleManager::create_mod_rdp(
                 : ctx_error(std::move(ctx_error))
                 , trans(std::move(fd), ReportError([this](Error err){
                     auto* msg = err.errmsg();
-
-                    this->ctx_error.report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->ctx_error.session_reactor.get_current_time(), {
-                        KVLog::siem("service"_av, this->ctx_error.socket_path),
-                        KVLog::arcsight("app"_av, "rdp"_av),
-                        KVLog::all("status"_av, {msg, strlen(msg)}),
-                    });
-
-                    this->ctx_error.front.session_update(str_concat("FILE_VERIFICATION="_av, msg));
-
+                    file_verification_error(
+                        this->ctx_error.front,
+                        this->ctx_error.session_reactor,
+                        this->ctx_error.report_message,
+                        this->ctx_error.socket_path,
+                        {msg, strlen(msg)}
+                    );
                     return err;
                 }))
                 , service(this->trans)
@@ -422,10 +438,10 @@ void ModuleManager::create_mod_rdp(
             else {
                 enable_validator = false;
                 LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
-                report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
-                    KVLog::siem("service"_av, socket_path),
-                    KVLog::all("status"_av, "Unable to connect to FileValidator server"_av),
-                });
+                file_verification_error(
+                    front, session_reactor, report_message, socket_path,
+                    "Unable to connect to FileValidator server"_av
+                );
             }
         }
 
@@ -542,7 +558,6 @@ void ModuleManager::create_mod_rdp(
     catch (...) {
         report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {
             KVLog::arcsight("app"_av, "rdp"_av),
-            KVLog::arcsight("WallixBastionStatus"_av, "FAIL"_av),
         });
 
         throw;

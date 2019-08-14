@@ -169,11 +169,12 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
 void RdpNegociation::RDPServerNotifier::server_access_allowed()
 {
     if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-        this->report_message.log6(LogId::CERTIFICATE_CHECK_SUCCESS, tvtime(), {{
+        this->report_message.log6(LogId::CERTIFICATE_CHECK_SUCCESS, tvtime(), {
             KVLog::all("description"_av, "Connexion to server allowed"_av),
             KVLog::arcsight("app"_av, "rdp"_av),
             KVLog::arcsight("WallixBastionStatus"_av, "SUCCESS"_av),
-        }, LogDirection::ServerSrc});
+            KVLog::direction(LogDirection::ServerSrc),
+        });
 
         auto message = "CERTIFICATE_CHECK_SUCCESS=Connexion to server allowed"_av;
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
@@ -184,10 +185,11 @@ void RdpNegociation::RDPServerNotifier::server_access_allowed()
 void RdpNegociation::RDPServerNotifier::server_cert_create()
 {
     if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-        this->report_message.log6(LogId::SERVER_CERTIFICATE_NEW, tvtime(), {{
+        this->report_message.log6(LogId::SERVER_CERTIFICATE_NEW, tvtime(), {
             KVLog::all("description"_av, "New X.509 certificate created"_av),
             KVLog::arcsight("app"_av, "rdp"_av),
-        }, LogDirection::ServerSrc});
+            KVLog::direction(LogDirection::ServerSrc),
+        });
 
         auto message = "SERVER_CERTIFICATE_NEW=New X.509 certificate created"_av;
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
@@ -198,11 +200,12 @@ void RdpNegociation::RDPServerNotifier::server_cert_create()
 void RdpNegociation::RDPServerNotifier::server_cert_success()
 {
     if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-        this->report_message.log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS, tvtime(), {{
+        this->report_message.log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS, tvtime(), {
             KVLog::all("description"_av, "X.509 server certificate match"_av),
             KVLog::arcsight("app"_av, "rdp"_av),
             KVLog::arcsight("WallixBastionStatus"_av, "SUCCESS"_av),
-        }, LogDirection::ServerSrc});
+            KVLog::direction(LogDirection::ServerSrc),
+        });
 
         auto message = "SERVER_CERTIFICATE_MATCH_SUCCESS=X.509 server certificate match"_av;
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
@@ -213,11 +216,12 @@ void RdpNegociation::RDPServerNotifier::server_cert_success()
 void RdpNegociation::RDPServerNotifier::server_cert_failure()
 {
     if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-        this->report_message.log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE, tvtime(), {{
+        this->report_message.log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE, tvtime(), {
             KVLog::all("description"_av, "X.509 server certificate match failure"_av),
             KVLog::arcsight("app"_av, "rdp"_av),
             KVLog::arcsight("WallixBastionStatus"_av, "FAILURE"_av),
-        }, LogDirection::ServerSrc});
+            KVLog::direction(LogDirection::ServerSrc),
+        });
 
         auto message = "SERVER_CERTIFICATE_MATCH_FAILURE=X.509 server certificate match failure"_av;
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
@@ -229,11 +233,12 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
 {
     if (is_syslog_notification_enabled(this->server_cert_error_message)) {
         auto error = str_concat("X.509 server certificate internal error: ", str_error);
-        this->report_message.log6(LogId::SERVER_CERTIFICATE_ERROR, tvtime(), {{
+        this->report_message.log6(LogId::SERVER_CERTIFICATE_ERROR, tvtime(), {
             KVLog::all("description"_av, error),
             KVLog::arcsight("app"_av, "rdp"_av),
             KVLog::arcsight("WallixBastionStatus"_av, "FAILURE"_av),
-        }, LogDirection::ServerSrc});
+            KVLog::direction(LogDirection::ServerSrc),
+        });
 
         auto message = str_concat("SERVER_CERTIFICATE_ERROR="_av, error);
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());

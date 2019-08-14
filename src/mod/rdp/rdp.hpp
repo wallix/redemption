@@ -2850,9 +2850,10 @@ public:
                             if (!this->deactivation_reactivation_in_progress) {
                                 this->report_message.log6(
                                     LogId::SESSION_ESTABLISHED,
-                                    this->session_reactor.get_current_time(), {{
+                                    this->session_reactor.get_current_time(), {
                                     KVLog::arcsight("app"_av, "rdp"_av),
-                                }, LogDirection::ServerSrc});
+                                    KVLog::direction(LogDirection::ServerSrc),
+                                });
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -5625,25 +5626,21 @@ private:
             uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->session_time_start.count();
             this->session_time_start = std::chrono::seconds::zero();
 
-            char extra[1024];
-            snprintf(extra, sizeof(extra), "%d:%02d:%02d",
+            char duration_str[1024];
+            snprintf(duration_str, sizeof(duration_str), "%d:%02d:%02d",
                 int(seconds / 3600),
                 int((seconds % 3600) / 60),
                 int(seconds % 60));
 
-            auto info = key_qvalue_pairs({
-                {"type", "SESSION_DISCONNECTION"},
-                {"duration", extra},
-                });
-
             this->report_message.log6(
                 LogId::SESSION_DISCONNECTION,
                 this->session_reactor.get_current_time(), {
-                KVLog::all("duration"_av, {extra, strlen(extra)}),
+                KVLog::all("duration"_av, {duration_str, strlen(duration_str)}),
                 KVLog::arcsight("app"_av, "rdp"_av),
             });
 
-            LOG_IF(enable_verbose, LOG_INFO, "%s", info);
+            LOG_IF(enable_verbose, LOG_INFO,
+                "type=SESSION_DISCONNECTION duration=%s", duration_str);
         }
     }
 

@@ -788,10 +788,10 @@ public:
         drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
         this->report_message.log6(
-            LogId::SESSION_ESTABLISHED,
-            this->session_reactor.get_current_time(), {{
+            LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
+            this->session_reactor.get_current_time(), {
             KVLog::arcsight("app"_av, "vnc"_av),
-        }, LogDirection::ServerSrc});
+        });
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -3049,23 +3049,21 @@ public:
         uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->beginning;
         LOG(LOG_INFO, "Client disconnect from VNC module");
 
-        char extra[1024];
-        snprintf(extra, sizeof(extra), "%02d:%02d:%02d",
+        char duration_str[1024];
+        snprintf(duration_str, sizeof(duration_str), "%02d:%02d:%02d",
             int(seconds / 3600),
             int((seconds % 3600) / 60),
             int(seconds % 60));
 
-        auto info = key_qvalue_pairs({
-            {"type", "SESSION_DISCONNECTION"},
-            {"duration", extra},
-            });
-
         this->report_message.log6(
             LogId::SESSION_DISCONNECTION,
             this->session_reactor.get_current_time(), {
-            KVLog::all("duration"_av, {extra, strlen(extra)}),
-            KVLog::arcsight("app"_av, "rdp"_av),
+            KVLog::all("duration"_av, {duration_str, strlen(duration_str)}),
+            KVLog::arcsight("app"_av, "vnc"_av),
         });
+
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+            "type=SESSION_DISCONNECTION duration=%s", duration_str);
     }
 
     Dimension get_dim() const override

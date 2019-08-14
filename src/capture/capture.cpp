@@ -1298,7 +1298,7 @@ private:
 
 public:
     void title_changed(time_t rawtime, array_view_const_char title) {
-        this->formatted_message.assign("TITLE_BAR", {{"data", title}});
+        this->formatted_message.assign("TITLE_BAR", {{"source", "OCR"}, {"data", title}});
         this->send_data(rawtime, this->formatted_message.av(), '+');
     }
 

@@ -393,67 +393,14 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     {
         tu::log_buffered logbuf;
 
-        acl.log6(LogId::CONNECTION_FAILED, time, {{
+        acl.log6(LogId::CONNECTION_FAILED, time, {
             KVLog::arcsight("app"_av, "xup"_av),
-        }, LogDirection::ServerDst});
+            KVLog::direction(LogDirection::ServerDst),
+            KVLog::arcsight("WallixBastionStatus"_av, "FAIL"_av),
+        });
 
 
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|CONNECTION|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral suser=admin duser=user1 src=10.10.13.12 dst= app=xup WallixBastionStatus=FAIL\n");
-
-        RED_CHECK_SMEM(logbuf.buf(), expected6);
-    }
-
-    // CERTIFICATE
-    {
-        tu::log_buffered logbuf;
-
-        acl.log6(LogId::CERTIFICATE_CHECK_SUCCESS, time, {{
-            KVLog::arcsight("app"_av, "rdp"_av),
-        }, LogDirection::ServerSrc});
-
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CERTIFICATE_CHECK_SUCCESS\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|CERTIFICATE_CHECK|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral suser=user1 duser=admin src= dst=10.10.13.12 app=rdp WallixBastionStatus=SUCCESS msg=Connexion to server allowed\n");
-
-        RED_CHECK_SMEM(logbuf.buf(), expected6);
-    }
-
-    // SESSION_DISCONNECTION
-    {
-        tu::log_buffered logbuf;
-
-        acl.log6(LogId::SESSION_DISCONNECTION, time, {
-            KVLog::all("duration"_av, "906"_av),
-            KVLog::arcsight("app"_av, "rdp"_av),
-        });
-
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"SESSION_DISCONNECTION\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|SESSION_DISCONNECTION|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp msg=duration:906\n");
-
-        RED_CHECK_SMEM(logbuf.buf(), expected6);
-    }
-
-    // SESSION_ESTABLISHED
-    {
-        tu::log_buffered logbuf;
-
-        acl.log6(LogId::SESSION_ESTABLISHED, time, {
-            KVLog::arcsight("app"_av, "rdp"_av),
-        });
-
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|SESSION_ESTABLISHED|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp WallixBastionStatus=SUCCESS\n");
-
-        RED_CHECK_SMEM(logbuf.buf(), expected6);
-    }
-
-    // DRIVE_REDIRECTION_USE
-    {
-        tu::log_buffered logbuf;
-
-        acl.log6(LogId::DRIVE_REDIRECTION_USE, time, {
-            KVLog::all("device_name"_av, "winxp"_av),
-            KVLog::all("device_type"_av, "win_server"_av),
-            KVLog::arcsight("app"_av, "rdp"_av),
-        });
-
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_USE\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|0|DRIVE_REDIRECTION_USE|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=rdp msg=device_name:winxp device_type\\=win_server\n");
 
         RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
