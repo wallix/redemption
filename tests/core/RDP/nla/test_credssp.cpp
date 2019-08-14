@@ -721,6 +721,28 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
 // /* 0080 */ "\x9c\x80\x8f\xce\xa1\x39\x63\xda\xd1"                             // .....9c..
 // TSRequest hexdump -DONE----------------------------
 
+// TSPasswordCreds hexdump ---------------------------
+// TSPasswordCreds ts_password_creds_header ----------
+// TSPasswordCreds domain name header ----------------------
+// /* 0000 */ "\xa0\x02\x04\x00"                                                 // ....
+// TSPasswordCreds user name header ------------------------
+// /* 0000 */ "\xa1\x36\x04\x34"                                                 // .6.4
+// /* 0000 */ "\x41\x00\x64\x00\x6d\x00\x69\x00\x6e\x00\x69\x00\x73\x00\x74\x00" // A.d.m.i.n.i.s.t.
+// /* 0010 */ "\x72\x00\x61\x00\x74\x00\x6f\x00\x72\x00\x40\x00\x70\x00\x72\x00" // r.a.t.o.r.@.p.r.
+// /* 0020 */ "\x6f\x00\x78\x00\x79\x00\x6b\x00\x64\x00\x63\x00\x2e\x00\x6c\x00" // o.x.y.k.d.c...l.
+// /* 0030 */ "\x61\x00\x62\x00"                                                 // a.b.
+// TSPasswordCreds password header -------------------------
+// /* 0000 */ "\xa2\x1c\x04\x1a"                                                 // ....
+// /* 0000 */ "\x53\x00\x65\x00\x63\x00\x75\x00\x72\x00\x65\x00\x4c\x00\x69\x00" // S.e.c.u.r.e.L.i.
+// /* 0010 */ "\x6e\x00\x75\x00\x78\x00\x21\x00\x32\x00"                         // n.u.x.!.2.
+// TSPasswordCreds full dump--------------------------------
+// /* 0000 */ "\x30\x5a\xa0\x02\x04\x00\xa1\x36\x04\x34\x41\x00\x64\x00\x6d\x00" // 0Z.....6.4A.d.m.
+// /* 0010 */ "\x69\x00\x6e\x00\x69\x00\x73\x00\x74\x00\x72\x00\x61\x00\x74\x00" // i.n.i.s.t.r.a.t.
+// /* 0020 */ "\x6f\x00\x72\x00\x40\x00\x70\x00\x72\x00\x6f\x00\x78\x00\x79\x00" // o.r.@.p.r.o.x.y.
+// /* 0030 */ "\x6b\x00\x64\x00\x63\x00\x2e\x00\x6c\x00\x61\x00\x62\x00\xa2\x1c" // k.d.c...l.a.b...
+// /* 0040 */ "\x04\x1a\x53\x00\x65\x00\x63\x00\x75\x00\x72\x00\x65\x00\x4c\x00" // ..S.e.c.u.r.e.L.
+// /* 0050 */ "\x69\x00\x6e\x00\x75\x00\x78\x00\x21\x00\x32\x00"                 // i.n.u.x.!.2.
+// TSPasswordCreds hexdump -DONE----------------------------
 
 
 

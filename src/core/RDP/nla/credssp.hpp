@@ -1322,55 +1322,6 @@ struct TSPasswordCreds {
         length += BER::sizeof_sequence_octet_string(password_length);
         return length;
     }
-    
-    int emit(OutStream & stream) const {
-        int size = 0;
-        int innerSize = this->ber_sizeof();
-
-        // /* TSPasswordCreds (SEQUENCE) */
-        auto * begin = stream.get_current();
-        size += BER::write_sequence_tag(stream, innerSize);
-        auto * end = stream.get_current();
-        LOG(LOG_INFO, "TSPasswordCreds(old) ts_password_creds_header ----------");
-        hexdump_c({begin,size_t(end-begin)});
-        
-
-        // /* [0] domainName (OCTET STRING) */
-        {
-        auto * begin = stream.get_current();
-        size += BER::write_sequence_octet_string(stream, 0, this->domainName,
-                                                 this->domainName_length);
-        auto * end = stream.get_current();
-        LOG(LOG_INFO, "TSPasswordCreds(old) domain name header ----------------------");
-        hexdump_c({begin,size_t(end-begin)});
-        }
-
-        // /* [1] userName (OCTET STRING) */
-        {
-        auto * begin = stream.get_current();
-        size += BER::write_sequence_octet_string(stream, 1, this->userName,
-                                                 this->userName_length);
-        auto * end = stream.get_current();
-        LOG(LOG_INFO, "TSPasswordCreds(old) user name header ------------------------");
-        hexdump_c({begin,size_t(end-begin)});
-        }
-
-        // /* [2] password (OCTET STRING) */
-        {
-        auto * begin = stream.get_current();
-        size += BER::write_sequence_octet_string(stream, 2, this->password,
-                                                 this->password_length);
-        auto * end = stream.get_current();
-        LOG(LOG_INFO, "TSPasswordCreds(old) password header -------------------------");
-        hexdump_c({begin,size_t(end-begin)});
-        }
-
-        end = stream.get_current();
-        LOG(LOG_INFO, "TSPasswordCreds(old) full dump -------------------------");
-        hexdump_c({begin,size_t(end-begin)});
-        LOG(LOG_INFO, "TSPasswordCreds(old) DONE ------------------------------");
-        return size;
-    }
 
     void recv(InStream & stream) {
         int length = 0;
@@ -1402,57 +1353,47 @@ struct TSPasswordCreds {
 };
 
 
-// emitTSPasswordCreds
-
-inline size_t emitTSPasswordCreds(OutStream & stream, const TSPasswordCreds & self)
+inline std::vector<uint8_t> emitTSPasswordCreds(cbytes_view domain, cbytes_view user, cbytes_view password)
 {
-    auto * begin = stream.get_current();
-
     // [0] domainName (OCTET STRING)
-    auto ber_domain_name_header = BER::mkMandatoryOctetStringFieldHeader(self.domainName_length, 0);
+    auto ber_domain_name_header = BER::mkMandatoryOctetStringFieldHeader(domain.size(), 0);
     // [1] userName (OCTET STRING)
-    auto ber_user_name_header = BER::mkMandatoryOctetStringFieldHeader(self.userName_length, 1);
+    auto ber_user_name_header = BER::mkMandatoryOctetStringFieldHeader(user.size(), 1);
     // [2] password (OCTET STRING)
-    auto ber_password_header = BER::mkMandatoryOctetStringFieldHeader(self.password_length, 2);
+    auto ber_password_header = BER::mkMandatoryOctetStringFieldHeader(password.size(), 2);
 
     // TSPasswordCreds (SEQUENCE)
-    size_t ts_password_creds_length = ber_domain_name_header.size()+self.domainName_length
-                             + ber_user_name_header.size()+self.userName_length
-                             + ber_password_header.size()+self.password_length;
+    size_t ts_password_creds_length = ber_domain_name_header.size()+ domain.size()
+                             + ber_user_name_header.size()+user.size()
+                             + ber_password_header.size()+password.size();
 
     auto ber_ts_password_creds_header = BER::mkTSRequestSequenceHeader(ts_password_creds_length);
 
-    // TSPasswordCreds (SEQUENCE)
-    stream.out_copy_bytes(ber_ts_password_creds_header);
-    // [0] domainName (OCTET STRING)
-    stream.out_copy_bytes(ber_domain_name_header);
-    stream.out_copy_bytes(self.domainName, self.domainName_length);
-    // [1] userName (OCTET STRING)
-    stream.out_copy_bytes(ber_user_name_header);
-    stream.out_copy_bytes(self.userName, self.userName_length);
-    // [2] password (OCTET STRING)
-    stream.out_copy_bytes(ber_password_header);
-    stream.out_copy_bytes(self.password, self.password_length);
+    std::vector<uint8_t> result = std::move(ber_ts_password_creds_header);
+    result.insert(result.end(), ber_domain_name_header.begin(), ber_domain_name_header.end());
+    result.insert(result.end(), domain.data(), domain.data()+domain.size());
+    result.insert(result.end(), ber_user_name_header.begin(), ber_user_name_header.end());
+    result.insert(result.end(), user.data(), user.data()+user.size());
+    result.insert(result.end(), ber_password_header.begin(), ber_password_header.end());
+    result.insert(result.end(), password.data(), password.data()+password.size());
 
-    auto * end = stream.get_current();
-    
     LOG(LOG_INFO, "TSPasswordCreds hexdump ---------------------------");
     LOG(LOG_INFO, "TSPasswordCreds ts_password_creds_header ----------");
     hexdump_c(ber_ts_password_creds_header);
     LOG(LOG_INFO, "TSPasswordCreds domain name header ----------------------");
     hexdump_c(ber_domain_name_header);
-    hexdump_c({self.domainName, self.domainName_length});
+    hexdump_c(domain);
     LOG(LOG_INFO, "TSPasswordCreds user name header ------------------------");
     hexdump_c(ber_user_name_header);
-    hexdump_c({self.userName, self.userName_length});
+    hexdump_c(user);
     LOG(LOG_INFO, "TSPasswordCreds password header -------------------------");
     hexdump_c(ber_password_header);
-    hexdump_c({self.password, self.password_length});
+    hexdump_c(password);
     LOG(LOG_INFO, "TSPasswordCreds full dump--------------------------------");
-    hexdump_c({begin, size_t(end-begin)});
+    hexdump_c(result);
     LOG(LOG_INFO, "TSPasswordCreds hexdump -DONE----------------------------");
-    
-    return size_t(end-begin);
+
+    return result;
 }
 
 
@@ -1926,17 +1867,12 @@ struct TSCredentials
 
         if (this->credType == 1){
             StaticOutStream<20000> stream;
-            auto pass_cred_size = emitTSPasswordCreds(ts_credentials, this->passCreds);
-            auto * begin = stream.get_current();
-            auto passcred_size = this->passCreds.emit(stream);
-            auto * end = stream.get_current();
-            LOG(LOG_INFO, "TSPasswordCreds hexdump (old)----------------------");
-            LOG(LOG_INFO, "TSRequest full dump--------------------------------");
-            hexdump_c({begin, size_t(end-begin)});
-            LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
-
-//            exit(0);
-            size += pass_cred_size;
+            auto result = emitTSPasswordCreds(
+                {this->passCreds.domainName, this->passCreds.domainName_length},
+                {this->passCreds.userName, this->passCreds.userName_length},
+                {this->passCreds.password, this->passCreds.password_length});
+            ts_credentials.out_copy_bytes(result);
+            size += result.size();
         }
         else {
             size += this->smartcardCreds.emit(ts_credentials);
