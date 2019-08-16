@@ -1393,8 +1393,7 @@ namespace CredSSP {
  */
 struct TSCspDataDetail {
     uint32_t keySpec{0};
-    uint8_t cardName[256]{};
-    size_t cardName_length{0};
+    std::vector<uint8_t> cardName = [](){decltype(cardName) v; v.reserve(256); return v;}();
     uint8_t readerName[256]{};
     size_t readerName_length{0};
     uint8_t containerName[256]{};
@@ -1406,21 +1405,16 @@ struct TSCspDataDetail {
 
     = default;
 
-    TSCspDataDetail(uint32_t keySpec, uint8_t * cardName, size_t cardName_length,
+    TSCspDataDetail(uint32_t keySpec, cbytes_view cardName,
                     uint8_t * readerName, size_t readerName_length,
                     uint8_t * containerName, size_t containerName_length,
                     uint8_t * cspName, size_t cspName_length)
         : keySpec(keySpec)
-        , cardName_length(cardName_length)
+        , cardName(cardName.data(), cardName.data()+cardName.size())
         , readerName_length(readerName_length)
         , containerName_length(containerName_length)
         , cspName_length(cspName_length)
     {
-        this->cardName_length = (cardName_length < sizeof(this->cardName))
-            ? cardName_length
-            : sizeof(this->cardName);
-        memcpy(this->cardName, cardName, this->cardName_length);
-
         this->readerName_length = (readerName_length < sizeof(this->readerName))
             ? readerName_length
             : sizeof(this->readerName);
@@ -1442,8 +1436,7 @@ struct TSCspDataDetail {
         int length = 0;
         length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->keySpec));
         length += BER::sizeof_integer(this->keySpec);
-        length += (this->cardName_length > 0) ?
-            CredSSP::sizeof_octet_string_seq(this->cardName_length) : 0;
+        length += (this->cardName.size() > 0) ? CredSSP::sizeof_octet_string_seq(this->cardName.size()) : 0;
         length += (this->readerName_length > 0) ?
             CredSSP::sizeof_octet_string_seq(this->readerName_length) : 0;
         length += (this->containerName_length > 0) ?
@@ -1471,16 +1464,12 @@ struct TSCspDataDetail {
 
 
         /* [1] cardName (OCTET STRING OPTIONAL) */
-        if (this->cardName_length > 0) {
+        if (this->cardName.size() > 0) {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
-            length = CredSSP::sizeof_octet_string_seq(this->cardName_length);
-            size += length;
-            auto v = BER::write_sequence_octet_string(1, this->cardName_length);
+            size += CredSSP::sizeof_octet_string_seq(this->cardName.size());
+            auto v = BER::write_sequence_octet_string(1, this->cardName.size());
             stream.out_copy_bytes(v);
-            stream.out_copy_bytes(this->cardName, this->cardName_length);
-            length -= this->cardName_length + v.size();
-            assert(length == 0);
-            (void)length;
+            stream.out_copy_bytes(this->cardName);
         }
         /* [2] readerName (OCTET STRING OPTIONAL) */
         if (this->readerName_length > 0) {
@@ -1545,8 +1534,8 @@ struct TSCspDataDetail {
                 return -1;
             }
 
-            this->cardName_length = length;
-            stream.in_copy_bytes(this->cardName, length);
+            this->cardName.resize(length);
+            stream.in_copy_bytes(this->cardName);
         }
         /* [2] readerName (OCTET STRING OPTIONAL) */
         if (BER::read_contextual_tag(stream, 2, length, true)) {
@@ -1605,17 +1594,12 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
 
 
     /* [1] cardName (OCTET STRING OPTIONAL) */
-    if (self.cardName_length > 0) {
+    if (self.cardName.size() > 0) {
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
-        length = CredSSP::sizeof_octet_string_seq(self.cardName_length);
-        size += length;
-        auto v = BER::write_sequence_octet_string(1, self.cardName_length);
+        size += CredSSP::sizeof_octet_string_seq(self.cardName.size());
+        auto v = BER::write_sequence_octet_string(1, self.cardName.size());
         stream.out_copy_bytes(v);
-        stream.out_copy_bytes(self.cardName, self.cardName_length);
-        length -= self.cardName_length + v.size();
-                                                   
-        assert(length == 0);
-        (void)length;
+        stream.out_copy_bytes(self.cardName);
     }
     /* [2] readerName (OCTET STRING OPTIONAL) */
     if (self.readerName_length > 0) {
@@ -1700,11 +1684,11 @@ struct TSSmartCardCreds {
         memcpy(this->domainHint, domainHint, this->domainHint_length);
     }
 
-    void set_cspdatadetail(uint32_t keySpec, uint8_t * cardName, size_t cardName_length,
+    void set_cspdatadetail(uint32_t keySpec, cbytes_view cardName,
                            uint8_t * readerName, size_t readerName_length,
                            uint8_t * containerName, size_t containerName_length,
                            uint8_t * cspName, size_t cspName_length) {
-        this->cspData = TSCspDataDetail(keySpec, cardName, cardName_length,
+        this->cspData = TSCspDataDetail(keySpec, cardName,
                            readerName, readerName_length,
                            containerName, containerName_length,
                            cspName, cspName_length);
@@ -1853,7 +1837,7 @@ struct TSCredentials
     TSCredentials(uint8_t * pin, size_t pin_length,
                   uint8_t * userHint, size_t userHint_length,
                   uint8_t * domainHint, size_t domainHint_length,
-                  uint32_t keySpec, uint8_t * cardName, size_t cardName_length,
+                  uint32_t keySpec, cbytes_view cardName,
                   uint8_t * readerName, size_t readerName_length,
                   uint8_t * containerName, size_t containerName_length,
                   uint8_t * cspName, size_t cspName_length)
@@ -1862,7 +1846,7 @@ struct TSCredentials
                          userHint, userHint_length,
                          domainHint, domainHint_length)
     {
-        this->smartcardCreds.set_cspdatadetail(keySpec, cardName, cardName_length,
+        this->smartcardCreds.set_cspdatadetail(keySpec, cardName,
                                                readerName, readerName_length,
                                                containerName, containerName_length,
                                                cspName, cspName_length);
@@ -1872,7 +1856,7 @@ struct TSCredentials
     void set_smartcard(uint8_t * pin, size_t pin_length,
                        uint8_t * userHint, size_t userHint_length,
                        uint8_t * domainHint, size_t domainHint_length,
-                       uint32_t keySpec, uint8_t * cardName, size_t cardName_length,
+                       uint32_t keySpec, cbytes_view cardName,
                        uint8_t * readerName, size_t readerName_length,
                        uint8_t * containerName, size_t containerName_length,
                        uint8_t * cspName, size_t cspName_length) {
@@ -1880,7 +1864,7 @@ struct TSCredentials
         this->smartcardCreds = TSSmartCardCreds(pin, pin_length,
                                                 userHint, userHint_length,
                                                 domainHint, domainHint_length);
-        this->smartcardCreds.set_cspdatadetail(keySpec, cardName, cardName_length,
+        this->smartcardCreds.set_cspdatadetail(keySpec, cardName,
                                                readerName, readerName_length,
                                                containerName, containerName_length,
                                                cspName, cspName_length);
