@@ -1560,65 +1560,6 @@ struct TSSmartCardCreds {
         return length;
     }
 
-    int emit(OutStream & stream) const {
-        int size = 0;
-        int length;
-        int innerSize = this->ber_sizeof();
-        int cspDataSize = 0;
-
-        /* TSCredentials (SEQUENCE) */
-        auto sequence_header = BER::mkSequenceHeader(innerSize);
-        stream.out_copy_bytes(sequence_header);
-        size += sequence_header.size();
-
-        /* [0] pin (OCTET STRING) */
-        auto ber_sequence_octet_string_header = BER::mkMandatoryOctetStringFieldHeader(this->pin_length, 0);
-
-        stream.out_copy_bytes(ber_sequence_octet_string_header);
-        stream.out_copy_bytes(this->pin, this->pin_length);
-        size += this->pin_length + ber_sequence_octet_string_header.size();
-
-        /* [1] cspData (OCTET STRING) */
-
-        cspDataSize = BER::sizeof_sequence(this->cspData.ber_sizeof());
-        auto v = BER::mkContextualFieldHeader(cspDataSize, 1);
-        stream.out_copy_bytes(v);
-        size += v.size();
-        size += emitTSCspDataDetail(stream, this->cspData);
-
-        /* [2] userHint (OCTET STRING OPTIONAL) */
-        if (this->userHint_length > 0) {
-            // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() userHint");
-            length = CredSSP::sizeof_octet_string_seq(this->userHint_length);
-            size += length;
-            auto v = BER::mkMandatoryOctetStringFieldHeader(this->userHint_length, 2);
-                                                       
-            stream.out_copy_bytes(v);
-            stream.out_copy_bytes(this->userHint, this->userHint_length);
-            length -= this->userHint_length + v.size();
-                                                       
-            assert(length == 0);
-            (void)length;
-        }
-
-        /* [3] domainHint (OCTET STRING OPTIONAL) */
-        if (this->domainHint_length > 0) {
-            // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() domainHint");
-            length = CredSSP::sizeof_octet_string_seq(this->domainHint_length);
-            size += length;
-            auto v = BER::mkMandatoryOctetStringFieldHeader(this->domainHint_length, 3);
-                                                       
-            stream.out_copy_bytes(v);
-            stream.out_copy_bytes(this->domainHint, this->domainHint_length);
-            length -= this->domainHint_length + v.size();
-                                                       
-            assert(length == 0);
-            (void)length;
-        }
-
-        return size;
-    }
-
     int recv(InStream & stream) {
         int length = 0;
         /* TSSmartCardCreds (SEQUENCE) */
@@ -1664,6 +1605,65 @@ struct TSSmartCardCreds {
 };
 
 
+inline int emitTSSmartCardCreds(OutStream & stream, const TSSmartCardCreds & self)
+{
+    int size = 0;
+    int length;
+    int innerSize = self.ber_sizeof();
+    int cspDataSize = 0;
+
+    /* TSCredentials (SEQUENCE) */
+    auto sequence_header = BER::mkSequenceHeader(innerSize);
+    stream.out_copy_bytes(sequence_header);
+    size += sequence_header.size();
+
+    /* [0] pin (OCTET STRING) */
+    auto ber_sequence_octet_string_header = BER::mkMandatoryOctetStringFieldHeader(self.pin_length, 0);
+
+    stream.out_copy_bytes(ber_sequence_octet_string_header);
+    stream.out_copy_bytes(self.pin, self.pin_length);
+    size += self.pin_length + ber_sequence_octet_string_header.size();
+
+    /* [1] cspData (OCTET STRING) */
+
+    cspDataSize = BER::sizeof_sequence(self.cspData.ber_sizeof());
+    auto v = BER::mkContextualFieldHeader(cspDataSize, 1);
+    stream.out_copy_bytes(v);
+    size += v.size();
+    size += emitTSCspDataDetail(stream, self.cspData);
+
+    /* [2] userHint (OCTET STRING OPTIONAL) */
+    if (self.userHint_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() userHint");
+        length = CredSSP::sizeof_octet_string_seq(self.userHint_length);
+        size += length;
+        auto v = BER::mkMandatoryOctetStringFieldHeader(self.userHint_length, 2);
+                                                   
+        stream.out_copy_bytes(v);
+        stream.out_copy_bytes(self.userHint, self.userHint_length);
+        length -= self.userHint_length + v.size();
+                                                   
+        assert(length == 0);
+        (void)length;
+    }
+
+    /* [3] domainHint (OCTET STRING OPTIONAL) */
+    if (self.domainHint_length > 0) {
+        // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() domainHint");
+        length = CredSSP::sizeof_octet_string_seq(self.domainHint_length);
+        size += length;
+        auto v = BER::mkMandatoryOctetStringFieldHeader(self.domainHint_length, 3);
+                                                   
+        stream.out_copy_bytes(v);
+        stream.out_copy_bytes(self.domainHint, self.domainHint_length);
+        length -= self.domainHint_length + v.size();
+                                                   
+        assert(length == 0);
+        (void)length;
+    }
+
+    return size;
+}
 
 
 /*
@@ -1799,7 +1799,7 @@ struct TSCredentials
             size += result.size();
         }
         else {
-            size += this->smartcardCreds.emit(stream);
+            size += emitTSSmartCardCreds(stream, this->smartcardCreds);
         }
 
         return size;
