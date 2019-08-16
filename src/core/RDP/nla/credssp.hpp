@@ -316,13 +316,6 @@ namespace BER {
         return true;
     }
 
-    inline int write_contextual_tag(OutStream & s, uint8_t tag, int length) 
-    {
-        auto v = mkContextualFieldHeader(length, tag);
-        s.out_copy_bytes(v);
-        return v.size();
-    }
-
     inline int sizeof_contextual_tag(int length) {
         return 1 + _ber_sizeof_length(length);
     }
