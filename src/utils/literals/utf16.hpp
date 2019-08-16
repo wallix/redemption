@@ -23,17 +23,24 @@ Author(s): Jonathan Poelen
 #include <utility>
 
 #include "cxx/diagnostic.hpp"
-#include "utils/string_c.hpp"
 #include "utils/sugar/array_view.hpp"
 
 
 namespace detail
 {
+    template<char... cs>
+    struct utf16_le_literal
+    {
+        static constexpr char const value[sizeof...(cs)+2]{cs..., '\0', '\0'};
+
+        static constexpr array_view_const_char av() noexcept { return {value, sizeof...(cs)}; }
+    };
+
     template<class C, C... cs, std::size_t... ints>
     constexpr decltype(auto) utf16_le_impl(std::integer_sequence<std::size_t, ints...>)
     {
         constexpr C a[]{cs...};
-        return jln::string_c<((ints&1) ? '\0' : a[ints/2])..., '\0'>::av();
+        return utf16_le_literal<((ints&1) ? '\0' : a[ints/2])...>::av();
     }
 }
 
@@ -42,6 +49,7 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
 template<class C, C... cs>
 constexpr array_view<C const> const operator "" _utf16_le() noexcept
 {
+    static_assert(((cs >= 0 && cs <= 127) && ...), "only ascii char are supported");
     return detail::utf16_le_impl<C, cs...>(std::make_index_sequence<sizeof...(cs) * 2>{});
 }
 REDEMPTION_DIAGNOSTIC_POP
