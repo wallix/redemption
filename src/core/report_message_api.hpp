@@ -28,7 +28,6 @@
 #include <sys/time.h> // timeval
 
 #define X_LOG_ID(f)                                   \
-    f(FOREGROUND_WINDOW_CHANGED)                      \
     f(BUTTON_CLICKED)                                 \
     f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION)    \
     f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX) \
@@ -52,6 +51,7 @@
     f(FILE_VERIFICATION)                              \
     f(FILE_VERIFICATION_ERROR)                        \
     f(FILE_VERIFICATION_SERVER_ERROR)                 \
+    f(FOREGROUND_WINDOW_CHANGED)                      \
     f(GROUP_MEMBERSHIP)                               \
     f(INPUT_LANGUAGE)                                 \
     f(KBD_INPUT)                                      \
@@ -102,7 +102,10 @@ constexpr inline array_view_const_char log_id_string_map[]{
 #undef f
 };
 
-#undef X_LOG_ID
+#ifndef NOT_UNDEF_X_LOG_ID
+# undef X_LOG_ID
+#endif
+
 
 enum class LogCategory : uint8_t
 {

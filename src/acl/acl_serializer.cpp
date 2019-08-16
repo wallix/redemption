@@ -21,6 +21,8 @@
   Updating context dictionnary from incoming acl traffic
 */
 
+#define NOT_UNDEF_X_LOG_ID 1
+
 #include "acl/acl_serializer.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/mm_api.hpp"
@@ -428,16 +430,23 @@ namespace
         return buffer;
     }
 
-    inline array_view_const_char log_format_set_info(std::string& buffer, KVList kv_list)
+    constexpr inline array_view_const_char log_id_string_type_map[]{
+    #define f(x) "type=\"" #x "\""_av,
+        X_LOG_ID(f)
+    #undef f
+    };
+
+    inline array_view_const_char log_format_set_info(std::string& buffer, LogId id, KVList kv_list)
     {
-        buffer.clear();
+        auto type = log_id_string_type_map[int(id)];
+        buffer.assign(type.begin(), type.end());
         kv_list_to_string(
             buffer, kv_list, LogCategory::Siem,
             "=\"", '"', table_formats::siem_table);
-        return array_view_const_char(buffer).from_at(1);
+        return buffer;
     }
 
-    inline std::string& log_format_set_siem(
+    inline void log_format_set_siem(
         std::string& buffer,
         array_view_const_char session_type,
         array_view_const_char user,
@@ -456,25 +465,23 @@ namespace
         };
 
         if (session_type.empty()) {
-            buffer += "[Neutral] ";
+            buffer += "[Neutral Session] ";
         }
         else {
             buffer += '[';
             buffer.append(session_type.data(), session_type.size());
-            buffer += "] ";
+            buffer += " Session] ";
         }
-        append("session_id",    session_id);
+        append("session_id=\"", session_id);
         append("client_ip=\"",  host);
         append("target_ip=\"",  target_ip);
         append("user=\"",       user);
         append("device=\"",     device);
         append("service=\"",    service);
         append("account=\"",    account);
-        buffer.pop_back();
-        return buffer;
     }
 
-    inline std::string& log_format_set_arcsight(
+    inline void log_format_set_arcsight(
         std::string& buffer,
         LogId id,
         std::time_t time,
@@ -501,7 +508,7 @@ namespace
             " WallixBastionSession_id=", session_id,
             " WallixBastionSessionType=", session_type.empty() ? "Neutral"_av : session_type
         );
-        return kv_list_to_string(
+        kv_list_to_string(
             buffer, kv_list, LogCategory::Arcsight,
             '=', "", table_formats::arcsight_table);
     }
@@ -510,8 +517,10 @@ namespace
 void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
 {
     std::string buffer_info;
+    buffer_info.reserve(kv_list.size() * 50 + 30);
+
     time_t const time_now = time.tv_sec;
-    this->log_file.write_line(time_now, log_format_set_info(buffer_info, kv_list));
+    this->log_file.write_line(time_now, log_format_set_info(buffer_info, id, kv_list));
 
     auto target_ip = [this]{
         char c = this->ini.get<cfg::context::target_host>()[0];
