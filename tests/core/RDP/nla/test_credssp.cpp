@@ -129,13 +129,13 @@ RED_AUTO_TEST_CASE(TestBERContextual)
     int value;
     uint8_t tag = 0x06;
 
-    BER::write_contextual_tag(s, tag, 3, true);
+    auto v = BER::mkContextualFieldHeader(3, tag);
+    s.out_copy_bytes(v);
+
     InStream in_s(s.get_bytes());
     res = BER::read_contextual_tag(in_s, tag, value, true);
     RED_CHECK(res);
     RED_CHECK_EQUAL(value, 3);
-
-    s.rewind();
 }
 
 RED_AUTO_TEST_CASE(TestTSRequest)

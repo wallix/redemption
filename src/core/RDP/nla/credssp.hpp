@@ -170,6 +170,15 @@ namespace BER {
         return head;
     }
 
+    inline std::vector<uint8_t> mkContextualFieldHeader(uint32_t payload_size, uint8_t tag)
+    {
+        std::vector<uint8_t> head;
+        backward_push_tagged_field_header(head, payload_size, tag);
+        std::reverse(head.begin(), head.end());
+        return head;
+    }
+
+
     inline std::vector<uint8_t> mkMandatoryOctetStringFieldHeader(uint32_t payload_size, uint8_t tag)
     {
         std::vector<uint8_t> head;
@@ -308,22 +317,11 @@ namespace BER {
         return true;
     }
 
-    inline int write_contextual_tag(OutStream & s, uint8_t tag, int length, bool pc) {
-        s.out_uint8(CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag)); /*NOLINT*/
-        switch (_ber_sizeof_length(length)){
-        case 1:
-            s.out_uint8(length);
-            return 2;
-        case 2:
-            s.out_uint8(0x81);
-            s.out_uint8(length);
-            return 3;
-        default:
-            break;
-        }
-        s.out_uint8(0x82);
-        s.out_uint16_be(length);
-        return 4;
+    inline int write_contextual_tag(OutStream & s, uint8_t tag, int length) 
+    {
+        auto v = mkContextualFieldHeader(length, tag);
+        s.out_copy_bytes(v);
+        return v.size();
     }
 
     inline int sizeof_contextual_tag(int length) {
@@ -1465,8 +1463,12 @@ struct TSCspDataDetail {
         size += BER::write_sequence_tag(stream, innerSize);
 
         /* [0] keySpec */
-        size += BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->keySpec), true);
-        size += BER::write_integer(stream, this->keySpec);
+        {
+            auto v = BER::mkIntegerField(this->keySpec, 0);
+            stream.out_copy_bytes(v);
+            size += v.size();
+        }
+
 
         /* [1] cardName (OCTET STRING OPTIONAL) */
         if (this->cardName_length > 0) {
@@ -1595,8 +1597,12 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
     size += BER::write_sequence_tag(stream, innerSize);
 
     /* [0] keySpec */
-    size += BER::write_contextual_tag(stream, 0, BER::sizeof_integer(self.keySpec), true);
-    size += BER::write_integer(stream, self.keySpec);
+    {
+        auto v = BER::mkIntegerField(self.keySpec, 0);
+        stream.out_copy_bytes(v);
+        size += v.size();
+    }
+
 
     /* [1] cardName (OCTET STRING OPTIONAL) */
     if (self.cardName_length > 0) {
@@ -1726,16 +1732,18 @@ struct TSSmartCardCreds {
         size += BER::write_sequence_tag(stream, innerSize);
 
         /* [0] pin (OCTET STRING) */
-        auto v= BER::write_sequence_octet_string(0, this->pin_length);
+        auto ber_sequence_octet_string_header = BER::write_sequence_octet_string(0, this->pin_length);
 
-        stream.out_copy_bytes(v);
+        stream.out_copy_bytes(ber_sequence_octet_string_header);
         stream.out_copy_bytes(this->pin, this->pin_length);
-        size += this->pin_length + v.size();
+        size += this->pin_length + ber_sequence_octet_string_header.size();
 
         /* [1] cspData (OCTET STRING) */
 
         cspDataSize = BER::sizeof_sequence(this->cspData.ber_sizeof());
-        size += BER::write_contextual_tag(stream, 1, cspDataSize, true);
+        auto v = BER::mkContextualFieldHeader(cspDataSize, 1);
+        stream.out_copy_bytes(v);
+        size += v.size();
         size += this->cspData.emit(stream);
 
         /* [2] userHint (OCTET STRING OPTIONAL) */
@@ -1938,7 +1946,10 @@ struct TSCredentials
             credsSize = BER::sizeof_sequence(this->smartcardCreds.ber_sizeof());
         }
 
-        size += BER::write_contextual_tag(ts_credentials, 1, BER::sizeof_octet_string(credsSize), true);
+        auto v = BER::mkContextualFieldHeader(BER::sizeof_octet_string(credsSize), 1);
+        ts_credentials.out_copy_bytes(v);
+        size += v.size();
+
         size += BER::write_octet_string_tag(ts_credentials, credsSize);
 
         if (this->credType == 1){
