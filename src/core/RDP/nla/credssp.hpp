@@ -1028,9 +1028,9 @@ struct TSRequest final {
 };
 
 
-inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_code)
+inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
 {
-    auto * begin = stream.get_current();
+//    auto * begin = stream.get_current();
 
     if ((self.version == 3 || self.version == 4 || self.version >= 6)
     && error_code != 0) {
@@ -1043,14 +1043,16 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
         size_t ts_request_length = ber_version_field.size()+ber_error_code_field.size();
         auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
 
-        /* TSRequest */
-        stream.out_copy_bytes(ber_ts_request_header);
-        // version    [0] INTEGER,
-        stream.out_copy_bytes(ber_version_field);
-        // errorCode  [4] INTEGER OPTIONAL
-        stream.out_copy_bytes(ber_error_code_field);
+//        /* TSRequest */
+//        stream.out_copy_bytes(ber_ts_request_header);
+//        // version    [0] INTEGER,
+//        stream.out_copy_bytes(ber_version_field);
+//        // errorCode  [4] INTEGER OPTIONAL
+//        stream.out_copy_bytes(ber_error_code_field);
 
-        auto * end = stream.get_current();
+        std::vector<uint8_t> result = std::move(ber_ts_request_header);
+        result << ber_version_field 
+               << ber_error_code_field;
 
         LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
         LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
@@ -1060,10 +1062,10 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
         LOG(LOG_INFO, "TSRequest error_code field ------------------------");
         hexdump_c(ber_error_code_field);
         LOG(LOG_INFO, "TSRequest full dump--------------------------------");
-        hexdump_c({begin, size_t(end-begin)});
+        hexdump_c(result);
         LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
 
-        return;
+        return result;
     }
     
     // version    [0] INTEGER,
@@ -1090,26 +1092,39 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
 
     auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
 
-    /* TSRequest */
-    stream.out_copy_bytes(ber_ts_request_header);
-    // version    [0] INTEGER,
-    stream.out_copy_bytes(ber_version_field);
-    // negoTokens [1] NegoData OPTIONAL
-    stream.out_copy_bytes(ber_nego_tokens_header);
-    stream.out_copy_bytes(self.negoTokens);
-    // authInfo   [2] OCTET STRING OPTIONAL
-    stream.out_copy_bytes(ber_auth_info_header);
-    stream.out_copy_bytes(self.authInfo);
-    // pubKeyAuth [3] OCTET STRING OPTIONAL
-    stream.out_copy_bytes(ber_pub_key_auth_header);
-    stream.out_copy_bytes(self.pubKeyAuth);
-    // errorCode  [4] INTEGER OPTIONAL
-    // clientNonce[5] OCTET STRING OPTIONAL
+    std::vector<uint8_t> result = std::move(ber_ts_request_header);
+    result << ber_version_field 
+           << ber_nego_tokens_header << self.negoTokens
+           << ber_auth_info_header << self.authInfo
+           << ber_pub_key_auth_header << self.pubKeyAuth;
+
     if (self.version >= 5 && self.clientNonce.initialized){
-        stream.out_copy_bytes(ber_nonce_header);
-        stream.out_copy_bytes({self.clientNonce.data, sizeof(self.clientNonce.data)});
+        result << ber_nonce_header << cbytes_view({self.clientNonce.data, sizeof(self.clientNonce.data)});
+//        stream.out_copy_bytes(ber_nonce_header);
+//        stream.out_copy_bytes({self.clientNonce.data, sizeof(self.clientNonce.data)});
     }
-    auto * end = stream.get_current();
+           
+    
+//    /* TSRequest */
+//    stream.out_copy_bytes(ber_ts_request_header);
+//    // version    [0] INTEGER,
+//    stream.out_copy_bytes(ber_version_field);
+//    // negoTokens [1] NegoData OPTIONAL
+//    stream.out_copy_bytes(ber_nego_tokens_header);
+//    stream.out_copy_bytes(self.negoTokens);
+//    // authInfo   [2] OCTET STRING OPTIONAL
+//    stream.out_copy_bytes(ber_auth_info_header);
+//    stream.out_copy_bytes(self.authInfo);
+//    // pubKeyAuth [3] OCTET STRING OPTIONAL
+//    stream.out_copy_bytes(ber_pub_key_auth_header);
+//    stream.out_copy_bytes(self.pubKeyAuth);
+//    // errorCode  [4] INTEGER OPTIONAL
+//    // clientNonce[5] OCTET STRING OPTIONAL
+//    if (self.version >= 5 && self.clientNonce.initialized){
+//        stream.out_copy_bytes(ber_nonce_header);
+//        stream.out_copy_bytes({self.clientNonce.data, sizeof(self.clientNonce.data)});
+//    }
+//    auto * end = stream.get_current();
     
     LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
     LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
@@ -1127,9 +1142,10 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
         hexdump_c(ber_nonce_header);
     }
     LOG(LOG_INFO, "TSRequest full dump--------------------------------");
-    hexdump_c({begin, size_t(end-begin)});
+//    hexdump_c({begin, size_t(end-begin)});
+    hexdump_c(result);
     LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
-
+    return result;
 }
 
 // TODO: use exceptions instead of error_code for returning errors
@@ -1309,12 +1325,15 @@ inline std::vector<uint8_t> emitTSPasswordCreds(cbytes_view domain, cbytes_view 
     auto ber_ts_password_creds_header = BER::mkSequenceHeader(ts_password_creds_length);
 
     std::vector<uint8_t> result = std::move(ber_ts_password_creds_header);
-    result.insert(result.end(), ber_domain_name_header.begin(), ber_domain_name_header.end());
-    result.insert(result.end(), domain.data(), domain.data()+domain.size());
-    result.insert(result.end(), ber_user_name_header.begin(), ber_user_name_header.end());
-    result.insert(result.end(), user.data(), user.data()+user.size());
-    result.insert(result.end(), ber_password_header.begin(), ber_password_header.end());
-    result.insert(result.end(), password.data(), password.data()+password.size());
+    result << ber_domain_name_header << domain 
+           << ber_user_name_header << user
+           << ber_password_header << password;
+//    result.insert(result.end(), ber_domain_name_header.begin(), ber_domain_name_header.end());
+//    result.insert(result.end(), domain.data(), domain.data()+domain.size());
+//    result.insert(result.end(), ber_user_name_header.begin(), ber_user_name_header.end());
+//    result.insert(result.end(), user.data(), user.data()+user.size());
+//    result.insert(result.end(), ber_password_header.begin(), ber_password_header.end());
+//    result.insert(result.end(), password.data(), password.data()+password.size());
 
     LOG(LOG_INFO, "TSPasswordCreds hexdump ---------------------------");
     LOG(LOG_INFO, "TSPasswordCreds ts_password_creds_header ----------");
@@ -1450,56 +1469,46 @@ struct TSCspDataDetail {
 
 inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
 {
-    int size = 0;
-    int innerSize = self.ber_sizeof();
+    auto ber_keySpec_Field = BER::mkIntegerField(self.keySpec, 0);
+    auto ber_cardName_Header = BER::mkOptionalOctetStringFieldHeader(self.cardName.size(), 1);
+    auto ber_readerName_Header = BER::mkOptionalOctetStringFieldHeader(self.readerName.size(), 2);
+    auto ber_containerName_Header = BER::mkOptionalOctetStringFieldHeader(self.containerName.size(), 3);
+    auto ber_cspName_Header = BER::mkOptionalOctetStringFieldHeader(self.cspName.size(), 4);
 
-    // /* TSCspDataDetail (SEQUENCE) */
+    int innerSize = ber_keySpec_Field.size()
+                  + ber_cardName_Header.size() + self.cardName.size()
+                  + ber_readerName_Header.size() + self.readerName.size()
+                  + ber_containerName_Header.size() + self.containerName.size()
+                  + ber_cspName_Header.size() + self.cspName.size();
 
     auto sequence_header = BER::mkSequenceHeader(innerSize);
-    stream.out_copy_bytes(sequence_header);
-    size += sequence_header.size();
+    int size = sequence_header.size() + innerSize;
 
+    std::vector<uint8_t> result;
+
+    // TSCspDataDetail (SEQUENCE)
+    stream.out_copy_bytes(sequence_header);
 
     /* [0] keySpec */
-    {
-        auto v = BER::mkIntegerField(self.keySpec, 0);
-        stream.out_copy_bytes(v);
-        size += v.size();
-    }
-
+    stream.out_copy_bytes(ber_keySpec_Field);
 
     /* [1] cardName (OCTET STRING OPTIONAL) */
-    if (self.cardName.size() > 0) {
-        // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
-        auto ber_cardName_Header = BER::mkMandatoryOctetStringFieldHeader(self.cardName.size(), 1);
-        stream.out_copy_bytes(ber_cardName_Header);
-        stream.out_copy_bytes(self.cardName);
-        size += self.cardName.size() + ber_cardName_Header.size();
-    }
+    stream.out_copy_bytes(ber_cardName_Header);
+    stream.out_copy_bytes(self.cardName);
+
     /* [2] readerName (OCTET STRING OPTIONAL) */
-    if (self.readerName.size() > 0) {
-        // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
-        auto ber_readerName_Header = BER::mkMandatoryOctetStringFieldHeader(self.readerName.size(), 2);
-        stream.out_copy_bytes(ber_readerName_Header);
-        stream.out_copy_bytes(self.readerName);
-        size += self.readerName.size() + ber_readerName_Header.size();
-    }
+    stream.out_copy_bytes(ber_readerName_Header);
+    stream.out_copy_bytes(self.readerName);
+ 
     /* [3] containerName (OCTET STRING OPTIONAL) */
-    if (self.containerName.size() > 0) {
-        // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() containerName");
-        auto ber_containerName_Header = BER::mkMandatoryOctetStringFieldHeader(self.containerName.size(), 3);
-        stream.out_copy_bytes(ber_containerName_Header);
-        stream.out_copy_bytes(self.containerName);
-        size += self.containerName.size() + ber_containerName_Header.size();
-    }
+    stream.out_copy_bytes(ber_containerName_Header);
+    stream.out_copy_bytes(self.containerName);
+ 
     /* [4] cspName (OCTET STRING OPTIONAL) */
-    if (self.cspName.size() > 0) {
-        // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
-        auto ber_cspName_Header = BER::mkMandatoryOctetStringFieldHeader(self.cspName.size(), 4);
-        stream.out_copy_bytes(ber_cspName_Header);
-        stream.out_copy_bytes(self.cspName);
-        size += self.cspName.size() + ber_cspName_Header.size();
-    }
+    // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
+    stream.out_copy_bytes(ber_cspName_Header);
+    stream.out_copy_bytes(self.cspName);
+
     return size;
 }
 

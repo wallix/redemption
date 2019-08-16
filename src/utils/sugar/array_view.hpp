@@ -26,6 +26,7 @@
 #include <cassert>
 #include <string_view>
 #include <string.h>
+#include <vector>
 
 #include "utils/sugar/array.hpp"
 #include "utils/sugar/byte_ptr.hpp"
@@ -313,4 +314,11 @@ static inline std::pair<array_view_const_u8, array_view_const_u8> get_bytes_slic
     return {{a.data(), n},{a.data()+n, a.size()-n}};
 }
 
+
+
+static inline std::vector<uint8_t> & operator<<(std::vector<uint8_t> & v, array_view_const_u8 a)
+{
+    v.insert(v.end(), a.begin(), a.end());
+    return v;
+}
 

@@ -895,7 +895,9 @@ private:
         }
 
         uint32_t error_code = 0;
-        emitTSRequest(out_stream, this->ts_request, error_code);
+        auto v = emitTSRequest(this->ts_request, error_code);
+        out_stream.out_copy_bytes(v);
+
         this->credssp_buffer_free();
 
         if (status != SEC_I_CONTINUE_NEEDED) {

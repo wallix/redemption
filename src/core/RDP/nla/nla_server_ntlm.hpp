@@ -660,7 +660,9 @@ public:
                     return credssp::State::Err;
                 }
 
-                emitTSRequest(out_stream, this->ts_request, this->error_code);
+                auto v = emitTSRequest(this->ts_request, this->error_code);
+                out_stream.out_copy_bytes(v);
+
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
                 this->ts_request.negoTokens.clear();
                 this->ts_request.pubKeyAuth.clear();
