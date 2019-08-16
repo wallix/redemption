@@ -178,7 +178,6 @@ namespace BER {
         return head;
     }
 
-
     inline std::vector<uint8_t> mkMandatoryOctetStringFieldHeader(uint32_t payload_size, uint8_t tag)
     {
         std::vector<uint8_t> head;
@@ -516,14 +515,6 @@ namespace BER {
             + sizeof_octet_string(length);
     }
 
-    inline std::vector<uint8_t> write_sequence_octet_string(uint8_t tag, int length)
-    {
-        std::vector<uint8_t> v;
-        backward_push_octet_string_field_header(v, length);
-        backward_push_tagged_field_header(v, length + v.size(), tag);
-        std::reverse(v.begin(), v.end());
-        return v;
-    }
 
     // ==========================
     //   GENERAL STRING
@@ -1467,7 +1458,7 @@ struct TSCspDataDetail {
         if (this->cardName.size() > 0) {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
             size += CredSSP::sizeof_octet_string_seq(this->cardName.size());
-            auto v = BER::write_sequence_octet_string(1, this->cardName.size());
+            auto v = BER::mkMandatoryOctetStringFieldHeader(this->cardName.size(), 1);
             stream.out_copy_bytes(v);
             stream.out_copy_bytes(this->cardName);
         }
@@ -1476,7 +1467,7 @@ struct TSCspDataDetail {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
             length = CredSSP::sizeof_octet_string_seq(this->readerName_length);
             size += length;
-            auto v = BER::write_sequence_octet_string(2, this->readerName_length);
+            auto v = BER::mkMandatoryOctetStringFieldHeader(this->readerName_length, 2);
             stream.out_copy_bytes(v);
             stream.out_copy_bytes(this->readerName, this->readerName_length);
             length -= this->readerName_length + v.size();
@@ -1489,7 +1480,7 @@ struct TSCspDataDetail {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() containerName");
             length = CredSSP::sizeof_octet_string_seq(this->containerName_length);
             size += length;
-            auto v = BER::write_sequence_octet_string(3, this->containerName_length);
+            auto v = BER::mkMandatoryOctetStringFieldHeader(this->containerName_length, 3);
             stream.out_copy_bytes(v);
             stream.out_copy_bytes(this->containerName, this->containerName_length);
             length -= containerName_length + v.size();
@@ -1502,7 +1493,7 @@ struct TSCspDataDetail {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
             length = CredSSP::sizeof_octet_string_seq(this->cspName_length);
             size += length;
-            auto v = BER::write_sequence_octet_string(4, this->cspName_length);
+            auto v = BER::mkMandatoryOctetStringFieldHeader(this->cspName_length, 4);
 
             stream.out_copy_bytes(v);
             stream.out_copy_bytes(this->cspName, this->cspName_length);
@@ -1597,7 +1588,7 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
     if (self.cardName.size() > 0) {
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
         size += CredSSP::sizeof_octet_string_seq(self.cardName.size());
-        auto v = BER::write_sequence_octet_string(1, self.cardName.size());
+        auto v = BER::mkMandatoryOctetStringFieldHeader(self.cardName.size(), 1);
         stream.out_copy_bytes(v);
         stream.out_copy_bytes(self.cardName);
     }
@@ -1606,7 +1597,7 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
         length = CredSSP::sizeof_octet_string_seq(self.readerName_length);
         size += length;
-        auto v = BER::write_sequence_octet_string(2, self.readerName_length);
+        auto v = BER::mkMandatoryOctetStringFieldHeader(self.readerName_length, 2);
         stream.out_copy_bytes(v);
         stream.out_copy_bytes(self.readerName, self.readerName_length);
         length -= self.readerName_length + v.size();
@@ -1619,7 +1610,7 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() containerName");
         length = CredSSP::sizeof_octet_string_seq(self.containerName_length);
         size += length;
-        auto v = BER::write_sequence_octet_string(3, self.containerName_length);
+        auto v = BER::mkMandatoryOctetStringFieldHeader(self.containerName_length, 3);
         stream.out_copy_bytes(v);
         stream.out_copy_bytes(self.containerName, self.containerName_length);
         length -=self.containerName_length + v.size();
@@ -1632,7 +1623,7 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
         length = CredSSP::sizeof_octet_string_seq(self.cspName_length);
         size += length;
-        auto v = BER::write_sequence_octet_string(4, self.cspName_length);
+        auto v = BER::mkMandatoryOctetStringFieldHeader(self.cspName_length, 4);
         stream.out_copy_bytes(v);
         stream.out_copy_bytes(self.cspName, self.cspName_length);
         length -= self.cspName_length + v.size();
@@ -1716,7 +1707,7 @@ struct TSSmartCardCreds {
         size += BER::write_sequence_tag(stream, innerSize);
 
         /* [0] pin (OCTET STRING) */
-        auto ber_sequence_octet_string_header = BER::write_sequence_octet_string(0, this->pin_length);
+        auto ber_sequence_octet_string_header = BER::mkMandatoryOctetStringFieldHeader(this->pin_length, 0);
 
         stream.out_copy_bytes(ber_sequence_octet_string_header);
         stream.out_copy_bytes(this->pin, this->pin_length);
@@ -1735,7 +1726,7 @@ struct TSSmartCardCreds {
             // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() userHint");
             length = CredSSP::sizeof_octet_string_seq(this->userHint_length);
             size += length;
-            auto v = BER::write_sequence_octet_string(2, this->userHint_length);
+            auto v = BER::mkMandatoryOctetStringFieldHeader(this->userHint_length, 2);
                                                        
             stream.out_copy_bytes(v);
             stream.out_copy_bytes(this->userHint, this->userHint_length);
@@ -1750,7 +1741,7 @@ struct TSSmartCardCreds {
             // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() domainHint");
             length = CredSSP::sizeof_octet_string_seq(this->domainHint_length);
             size += length;
-            auto v = BER::write_sequence_octet_string(3, this->domainHint_length);
+            auto v = BER::mkMandatoryOctetStringFieldHeader(this->domainHint_length, 3);
                                                        
             stream.out_copy_bytes(v);
             stream.out_copy_bytes(this->domainHint, this->domainHint_length);
