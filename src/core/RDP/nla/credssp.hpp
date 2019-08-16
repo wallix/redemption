@@ -213,7 +213,7 @@ namespace BER {
         return field;
     }
 
-    inline std::vector<uint8_t> mkTSRequestSequenceHeader(uint32_t payload_size)
+    inline std::vector<uint8_t> mkSequenceHeader(uint32_t payload_size)
     {
         std::vector<uint8_t> head;
         backward_push_sequence_tag_field_header(head, payload_size);
@@ -353,24 +353,6 @@ namespace BER {
         }
         length = byte;
         return true;
-    }
-
-    inline int write_sequence_tag(OutStream & s, int length) {
-        s.out_uint8(CLASS_UNIV | PC_CONSTRUCT | (TAG_MASK & TAG_SEQUENCE)); /*NOLINT*/
-        switch (_ber_sizeof_length(length)){
-        case 1:
-            s.out_uint8(length);
-            return 2;
-        case 2:
-            s.out_uint8(0x81);
-            s.out_uint8(length);
-            return 3;
-        default:
-            break;
-        }
-        s.out_uint8(0x82);
-        s.out_uint16_be(length);
-        return 4;
     }
 
     inline int sizeof_sequence(int length) {
@@ -1059,7 +1041,7 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
 
         /* TSRequest */
         size_t ts_request_length = ber_version_field.size()+ber_error_code_field.size();
-        auto ber_ts_request_header = BER::mkTSRequestSequenceHeader(ts_request_length);
+        auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
 
         /* TSRequest */
         stream.out_copy_bytes(ber_ts_request_header);
@@ -1106,7 +1088,7 @@ inline void emitTSRequest(OutStream & stream, TSRequest & self, uint32_t error_c
           + (self.version >= 5 && self.clientNonce.initialized)
             *(ber_nonce_header.size()+sizeof(self.clientNonce.data));
 
-    auto ber_ts_request_header = BER::mkTSRequestSequenceHeader(ts_request_length);
+    auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
 
     /* TSRequest */
     stream.out_copy_bytes(ber_ts_request_header);
@@ -1324,7 +1306,7 @@ inline std::vector<uint8_t> emitTSPasswordCreds(cbytes_view domain, cbytes_view 
                              + ber_user_name_header.size()+user.size()
                              + ber_password_header.size()+password.size();
 
-    auto ber_ts_password_creds_header = BER::mkTSRequestSequenceHeader(ts_password_creds_length);
+    auto ber_ts_password_creds_header = BER::mkSequenceHeader(ts_password_creds_length);
 
     std::vector<uint8_t> result = std::move(ber_ts_password_creds_header);
     result.insert(result.end(), ber_domain_name_header.begin(), ber_domain_name_header.end());
@@ -1437,7 +1419,9 @@ struct TSCspDataDetail {
 
         // /* TSCspDataDetail (SEQUENCE) */
 
-        size += BER::write_sequence_tag(stream, innerSize);
+        auto sequence_header = BER::mkSequenceHeader(innerSize);
+        stream.out_copy_bytes(sequence_header);
+        size += sequence_header.size();
 
         /* [0] keySpec */
         {
@@ -1567,7 +1551,10 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
 
     // /* TSCspDataDetail (SEQUENCE) */
 
-    size += BER::write_sequence_tag(stream, innerSize);
+    auto sequence_header = BER::mkSequenceHeader(innerSize);
+    stream.out_copy_bytes(sequence_header);
+    size += sequence_header.size();
+
 
     /* [0] keySpec */
     {
@@ -1697,7 +1684,9 @@ struct TSSmartCardCreds {
         int cspDataSize = 0;
 
         /* TSCredentials (SEQUENCE) */
-        size += BER::write_sequence_tag(stream, innerSize);
+        auto sequence_header = BER::mkSequenceHeader(innerSize);
+        stream.out_copy_bytes(sequence_header);
+        size += sequence_header.size();
 
         /* [0] pin (OCTET STRING) */
         auto ber_sequence_octet_string_header = BER::mkMandatoryOctetStringFieldHeader(this->pin_length, 0);
@@ -1883,21 +1872,23 @@ struct TSCredentials
         return size;
     }
 
-    int emit(OutStream & ts_credentials) const {
-        // ts_credentials is the authInfo Stream field of TSRequest before it is sent
-        // ts_credentials will not be encrypted and should be encrypted after calling emit
+    int emit(OutStream & stream) const {
+        // stream is the authInfo Stream field of TSRequest before it is sent
+        // stream will not be encrypted and should be encrypted after calling emit
         int size = 0;
 
         int innerSize = this->ber_sizeof();
         int credsSize;
 
         /* TSCredentials (SEQUENCE) */
-        size += BER::write_sequence_tag(ts_credentials, innerSize);
+        auto sequence_header = BER::mkSequenceHeader(innerSize);
+        stream.out_copy_bytes(sequence_header);
+        size += sequence_header.size();
 
         /* [0] credType (INTEGER) */
         auto ber_credtype_field = BER::mkSmallIntegerField(this->credType, 0);
         
-        ts_credentials.out_copy_bytes(ber_credtype_field);
+        stream.out_copy_bytes(ber_credtype_field);
         size += ber_credtype_field.size();
         
         /* [1] credentials (OCTET STRING) */
@@ -1915,48 +1906,47 @@ struct TSCredentials
         }
 
         auto v = BER::mkContextualFieldHeader(BER::sizeof_octet_string(credsSize), 1);
-        ts_credentials.out_copy_bytes(v);
+        stream.out_copy_bytes(v);
         size += v.size();
 
-        size += BER::write_octet_string_tag(ts_credentials, credsSize);
+        size += BER::write_octet_string_tag(stream, credsSize);
 
         if (this->credType == 1){
-            StaticOutStream<20000> stream;
             auto result = emitTSPasswordCreds(
                 {this->passCreds.domainName, this->passCreds.domainName_length},
                 {this->passCreds.userName, this->passCreds.userName_length},
                 {this->passCreds.password, this->passCreds.password_length});
-            ts_credentials.out_copy_bytes(result);
+            stream.out_copy_bytes(result);
             size += result.size();
         }
         else {
-            size += this->smartcardCreds.emit(ts_credentials);
+            size += this->smartcardCreds.emit(stream);
         }
 
         return size;
     }
 
 
-    void recv(InStream & ts_credentials) {
-        // ts_credentials is decrypted and should be decrypted before calling recv
+    void recv(InStream & stream) {
+        // stream is decrypted and should be decrypted before calling recv
         int length;
         int creds_length;
 
         /* TSCredentials (SEQUENCE) */
-        BER::read_sequence_tag(ts_credentials, length);
+        BER::read_sequence_tag(stream, length);
 
         /* [0] credType (INTEGER) */
-        BER::read_contextual_tag(ts_credentials, 0, length, true);
-        BER::read_integer(ts_credentials, this->credType);
+        BER::read_contextual_tag(stream, 0, length, true);
+        BER::read_integer(stream, this->credType);
 
         /* [1] credentials (OCTET STRING) */
-        BER::read_contextual_tag(ts_credentials, 1, length, true);
-        BER::read_octet_string_tag(ts_credentials, creds_length);
+        BER::read_contextual_tag(stream, 1, length, true);
+        BER::read_octet_string_tag(stream, creds_length);
 
         if (this->credType == 2) {
-            this->smartcardCreds.recv(ts_credentials);
+            this->smartcardCreds.recv(stream);
         } else {
-            this->passCreds.recv(ts_credentials);
+            this->passCreds.recv(stream);
         }
     }
 };
