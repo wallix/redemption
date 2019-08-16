@@ -1575,15 +1575,10 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
     /* [2] readerName (OCTET STRING OPTIONAL) */
     if (self.readerName_length > 0) {
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
-        length = CredSSP::sizeof_octet_string_seq(self.readerName_length);
-        size += length;
         auto v = BER::mkMandatoryOctetStringFieldHeader(self.readerName_length, 2);
         stream.out_copy_bytes(v);
         stream.out_copy_bytes(self.readerName, self.readerName_length);
-        length -= self.readerName_length + v.size();
-
-        assert(length == 0);
-        (void)length;
+        size += self.readerName_length + v.size();
     }
     /* [3] containerName (OCTET STRING OPTIONAL) */
     if (self.containerName_length > 0) {
