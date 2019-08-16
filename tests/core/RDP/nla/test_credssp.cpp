@@ -491,8 +491,9 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     TSCredentials ts_cred(pin, sizeof(pin),
                           userHint, sizeof(userHint),
                           domainHint, sizeof(domainHint),
-                          keySpec, {cardName, sizeof(cardName)},
-                          readerName, sizeof(readerName),
+                          keySpec, 
+                          {cardName, sizeof(cardName)},
+                          {readerName, sizeof(readerName)},
                           containerName, sizeof(containerName),
                           cspName, sizeof(cspName));
 
@@ -523,19 +524,12 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec, keySpec);
     
     RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cardName, cbytes_view({cardName, sizeof(cardName)}));
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.readerName, cbytes_view({readerName, sizeof(readerName)}));
 
-    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.readerName_length,
-                      sizeof(readerName));
-    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.containerName_length,
-                      sizeof(containerName));
-    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cspName_length,
-                      sizeof(cspName));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.readerName),
-                      char_ptr_cast(readerName));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.containerName),
-                      char_ptr_cast(containerName));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.cspName),
-                      char_ptr_cast(cspName));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.containerName_length, sizeof(containerName));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cspName_length, sizeof(cspName));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.containerName), char_ptr_cast(containerName));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.cspName), char_ptr_cast(cspName));
 
 }
 
