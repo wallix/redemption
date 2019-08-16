@@ -40,6 +40,7 @@
 #include "utils/stream.hpp"
 #include "utils/string_c.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 
 #include <string>
 #include <algorithm>
@@ -361,16 +362,6 @@ namespace
 
     namespace table_formats
     {
-        constexpr auto siem()
-        {
-            std::array<char, 256> t{};
-            t[int('"')] = '"';
-            t[int('\\')] = '\\';
-            t[int('\n')] = 'n';
-            t[int('\r')] = 'r';
-            return t;
-        }
-
         constexpr auto arcsight()
         {
             std::array<char, 256> t{};
@@ -381,33 +372,8 @@ namespace
             return t;
         }
 
-        constexpr inline auto siem_table = siem();
         constexpr inline auto arcsight_table = arcsight();
-    }
-
-    inline void escaped_qvalue(
-        std::string& escaped_subject,
-        array_view_const_char subject,
-        std::array<char, 256> const& escaped_table)
-    {
-        auto escaped = [&](char c){
-            // char -> uchar because char(128) must be negative
-            using uchar = unsigned char;
-            return escaped_table[unsigned(uchar(c))];
-        };
-
-        auto first = subject.begin();
-        auto last = subject.end();
-
-        decltype(first) p;
-        while ((p = std::find_if(first, last, escaped)) != last) {
-            escaped_subject.append(first, p);
-            escaped_subject += '\\';
-            escaped_subject += escaped(*p);
-            first = p + 1;
-        }
-
-        escaped_subject.append(first, last);
+        constexpr inline auto& siem_table = qvalue_table_formats::log_table;
     }
 
     template<class Prefix, class Suffix>

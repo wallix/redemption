@@ -362,7 +362,6 @@ public:
     }
 
 private:
-    KeyQvalueFormatter message;
     bool test_pattern(
         ZStrUtf8Char const& utf8_char,
         PatternSearcher & searcher, bool is_pattern_kill
@@ -562,10 +561,6 @@ public:
         }
     }
 
-private:
-    KeyQvalueFormatter formatted_message;
-
-public:
     void flush() {
         if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
             if (this->hidden_masked_char_count) {
@@ -1515,9 +1510,7 @@ class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CapturePro
 
     NotifyTitleChanged & notify_title_changed;
 
-    KeyQvalueFormatter formatted_message;
     ReportMessageApi * report_message;
-
 public:
     explicit TitleCaptureImpl(
         const timeval & now,
