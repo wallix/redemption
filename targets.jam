@@ -193,7 +193,6 @@ exe rdpproxy :
   <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -472,7 +471,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -510,7 +508,6 @@ test-run tests/acl/test_authentifier :
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -2509,7 +2506,6 @@ test-run tests/core/test_mainloop :
   <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2647,7 +2643,6 @@ test-run tests/core/test_session :
   <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -5091,13 +5086,6 @@ test-run tests/utils/sugar/test_update_lock :
 :
   <covfile>src/utils/sugar/update_lock.hpp
 ;
-test-run tests/utils/test_arcsight_format :
-  $(REDEMPTION_TEST_PATH)/utils/test_arcsight_format.cpp
-:
-  <library>src/utils/arcsight_format.o
-  <covfile>src/utils/arcsight_format.cpp
-  <covfile>src/utils/arcsight_format.hpp
-;
 test-run tests/utils/test_asynchronous_task_manager :
   $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
 :
@@ -5589,7 +5577,6 @@ obj src/transport/replay_transport.o : $(REDEMPTION_SRC_PATH)/transport/replay_t
 obj src/transport/snappy_compression_transport.o : $(REDEMPTION_SRC_PATH)/transport/snappy_compression_transport.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
 obj src/transport/ws_transport.o : $(REDEMPTION_SRC_PATH)/transport/ws_transport.cpp ;
-obj src/utils/arcsight_format.o : $(REDEMPTION_SRC_PATH)/utils/arcsight_format.cpp ;
 obj src/utils/base64.o : $(REDEMPTION_SRC_PATH)/utils/base64.cpp ;
 obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
@@ -5918,7 +5905,6 @@ alias test_splitter : tests/utils/sugar/test_splitter ;
 alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
 alias test_update_lock : tests/utils/sugar/test_update_lock ;
-alias test_arcsight_format : tests/utils/test_arcsight_format ;
 alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_base64 : tests/utils/test_base64 ;
 alias test_bitfu : tests/utils/test_bitfu ;
@@ -6249,7 +6235,6 @@ alias test_splitter.coverage : tests/utils/sugar/test_splitter.coverage ;
 alias test_static_vector.coverage : tests/utils/sugar/test_static_vector.coverage ;
 alias test_unique_fd.coverage : tests/utils/sugar/test_unique_fd.coverage ;
 alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
-alias test_arcsight_format.coverage : tests/utils/test_arcsight_format.coverage ;
 alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
 alias test_base64.coverage : tests/utils/test_base64.coverage ;
 alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
@@ -6690,7 +6675,6 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_update_lock
 ;
 alias tests/utils.norec :
-  tests/utils/test_arcsight_format
   tests/utils/test_asynchronous_task_manager
   tests/utils/test_base64
   tests/utils/test_bitfu

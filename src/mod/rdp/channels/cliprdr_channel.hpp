@@ -28,7 +28,6 @@
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"

@@ -35,7 +35,6 @@
 #include "core/window_constants.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-#include "utils/arcsight.hpp"
 #include "utils/log.hpp"
 #include "utils/recording_progress.hpp"
 

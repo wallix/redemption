@@ -22,7 +22,6 @@
 #include "capture/utils/match_finder.hpp"
 #include "core/report_message_api.hpp"
 #include "regex/regex.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/splitter.hpp"

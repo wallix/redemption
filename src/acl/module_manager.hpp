@@ -54,7 +54,6 @@
 
 #include "transport/socket_transport.hpp"
 
-#include "utils/arcsight.hpp"
 #include "utils/load_theme.hpp"
 #include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"

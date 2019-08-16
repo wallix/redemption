@@ -27,7 +27,6 @@
 #include "acl/acl_serializer.hpp"
 #include "configs/config.hpp"
 #include "main/version.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/genfstat.hpp"
 #include "transport/file_transport.hpp"
 #include "transport/mwrm_reader.hpp"
@@ -396,10 +395,11 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
         tu::log_buffered logbuf;
 
         acl.log6(LogId::CONNECTION_FAILED, time, {
+            KVLog::all("msg"_av, "long long\nmessage=|x\\y\"z"_av),
             KVLog::arcsight("app"_av, "xup"_av),
         });
 
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\"\nJan 01 1970 00:00:10 host message CEF:1|Wallix|Bastion|" VERSION "|11|CONNECTION_FAILED|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral app=xup\n");
+        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\"\nJan 01 1970 00:00:10 host message CEF:1|Wallix|Bastion|" VERSION "|11|CONNECTION_FAILED|5|WallixBastionUser=admin WallixBastionAccount=user1 WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionSession_id= WallixBastionSessionType=Neutral msg=long long\\nmessage\\=|x\\\\y\"z app=xup\n");
 
         RED_CHECK_SMEM(logbuf.buf(), expected6);
     }
@@ -424,7 +424,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     RED_CHECK_FILE_CONTENTS(logfile,
         "1970-01-01 01:00:00 type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"
-        "1970-01-01 01:00:10 type=\"CONNECTION_FAILED\"\n"
+        "1970-01-01 01:00:10 type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\"\n"
         "1970-01-01 01:50:33 type=\"DRIVE_REDIRECTION_RENAME\"\n"_av);
 }
 

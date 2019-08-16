@@ -47,7 +47,6 @@ class RedirectionInfo;
 class ReportMessageApi;
 class TimeObj;
 class Transport;
-class ArcsightLogInfo;
 namespace CHANNELS
 {
     class ChannelDefArray;

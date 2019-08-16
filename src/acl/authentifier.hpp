@@ -28,7 +28,6 @@
 #include "acl/auth_api.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "configs/config.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
 

@@ -34,7 +34,6 @@
 #include "core/report_message_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "core/channels_authorizations.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
