@@ -383,28 +383,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
         void log6(LogId id, const timeval /*time*/, KVList kv_list) override
         {
-            kv_pair_ values[10]{
-                {"type"_av, log_id_string_map[int(id)]},
-                {""_av, ""_av},
-                {""_av, ""_av},
-                {""_av, ""_av},
-                {""_av, ""_av},
-                {""_av, ""_av},
-                {""_av, ""_av},
-                {""_av, ""_av},
-                {""_av, ""_av},
-                {""_av, ""_av},
-            };
-            auto* p = values + 1;
+            std::string s = detail::log_id_string_map[int(id)].data();
             for (auto& kv : kv_list) {
-                if (kv.categories.test(LogCategory::Siem)) {
-                    p->key = kv.key;
-                    p->value = kv.value;
-                    ++p;
-                }
+                str_append(s, ' ', kv.key, '=', kv.value);
             }
-
-            messages.emplace_back(key_qvalue_pairs({values, p}));
+            messages.emplace_back(std::move(s));
         }
     };
 
@@ -587,7 +570,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_REQUIRE(report_message.messages.size() == 1);
     RED_CHECK_SMEM(report_message.messages[0],
-        R"x(type="CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" format="<unknown>(0)" size="596")x"_av);
+        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=<unknown>(0) size=596"_av);
     RED_CHECK(buf_trans.buf.size() == 0);
     RED_CHECK_SMEM(front.msg, "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION=<unknown>(0)\x01""596"_av);
 

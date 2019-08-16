@@ -96,33 +96,36 @@ enum class LogId
 #undef f
 };
 
-constexpr inline array_view_const_char log_id_string_map[]{
-#define f(x) #x ""_av,
-    X_LOG_ID(f)
-#undef f
-};
+namespace detail
+{
+    constexpr inline array_view_const_char log_id_string_map[]{
+        #define f(x) #x ""_av,
+        X_LOG_ID(f)
+        #undef f
+    };
+
+    enum class KVLogCategory : uint8_t
+    {
+        Siem,
+        Arcsight,
+        COUNT,
+    };
+}
 
 #ifndef NOT_UNDEF_X_LOG_ID
 # undef X_LOG_ID
 #endif
 
-
-enum class LogCategory : uint8_t
-{
-    Siem,
-    Arcsight,
-    COUNT,
-};
-
 template<>
-struct utils::enum_as_flag<LogCategory>
+struct utils::enum_as_flag<detail::KVLogCategory>
 {
-    static constexpr std::size_t max = unsigned(LogCategory::COUNT);
+    static constexpr std::size_t max = unsigned(detail::KVLogCategory::COUNT);
 };
 
 struct KVLog
 {
-    using Categories = utils::flags_t<LogCategory>;
+    using Category = detail::KVLogCategory;
+    using Categories = utils::flags_t<Category>;
 
     Categories categories;
     array_view_const_char key;
@@ -130,17 +133,17 @@ struct KVLog
 
     static KVLog siem(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{LogCategory::Siem, key, value};
+        return KVLog{Category::Siem, key, value};
     }
 
     static KVLog arcsight(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{LogCategory::Arcsight, key, value};
+        return KVLog{Category::Arcsight, key, value};
     }
 
     static KVLog all(array_view_const_char key, array_view_const_char value) noexcept
     {
-        return KVLog{Categories{} | LogCategory::Arcsight | LogCategory::Siem, key, value};
+        return KVLog{Categories{} | Category::Arcsight | Category::Siem, key, value};
     }
 };
 

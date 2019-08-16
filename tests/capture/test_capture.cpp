@@ -1856,28 +1856,10 @@ struct ReportMessage : NullReportMessage
 
     void log6(LogId id, const timeval /*time*/, KVList kv_list) override
     {
-        kv_pair_ values[10]{
-            {"type"_av, log_id_string_map[int(id)]},
-            {""_av, ""_av},
-            {""_av, ""_av},
-            {""_av, ""_av},
-            {""_av, ""_av},
-            {""_av, ""_av},
-            {""_av, ""_av},
-            {""_av, ""_av},
-            {""_av, ""_av},
-            {""_av, ""_av},
-        };
-        auto* p = values + 1;
+        s += detail::log_id_string_map[int(id)].data();
         for (auto& kv : kv_list) {
-            if (kv.categories.test(LogCategory::Siem)) {
-                p->key = kv.key;
-                p->value = kv.value;
-                ++p;
-            }
+            str_append(s, ' ', kv.key, '=', kv.value);
         }
-
-        s += key_qvalue_pairs({values, p});
     }
 };
 
@@ -1893,8 +1875,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
         // flush report buffer then empty buffer
         kbd_capture.flush();
 
-        RED_CHECK_EQUAL(report_message.s.size(), 25);
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"a\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
     }
 
     kbd_capture.enable_kbd_input_mask(true);
@@ -1918,8 +1899,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
         kbd_capture.enable_kbd_input_mask(true);
 
-        RED_CHECK_EQUAL(report_message.s.size(), 25);
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"a\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
         report_message.s.clear();
 
         kbd_capture.kbd_input(time, 'a');
@@ -1951,7 +1931,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
 
         kbd_capture.possible_active_window_change();
 
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"toto\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=toto", report_message.s);
     }
 }
 

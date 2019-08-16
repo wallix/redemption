@@ -126,11 +126,10 @@ private:
 
         if (REDEMPTION_UNLIKELY(bool(this->verbose & RDPVerbose::sesprobe))) {
             std::string msg;
-            str_append(msg, "type="_av, log_id_string_map[unsigned(id)], ' ');
             for (auto const& kv : kv_list) {
                 str_append(msg, kv.key, '=', kv.value, ' ');
             }
-            LOG(LOG_INFO, "%s", msg);
+            LOG(LOG_INFO, "type=%s %s", msg, detail::log_id_string_map[unsigned(id)].data());
         }
     }
 

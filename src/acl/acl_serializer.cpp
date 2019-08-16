@@ -413,7 +413,7 @@ namespace
     template<class Prefix, class Suffix>
     inline std::string& kv_list_to_string(
         std::string& buffer, KVList kv_list,
-        LogCategory cat,
+        KVLog::Category cat,
         Prefix prefix, Suffix suffix,
         std::array<char, 256> const& escaped_table)
     {
@@ -441,7 +441,7 @@ namespace
         auto type = log_id_string_type_map[int(id)];
         buffer.assign(type.begin(), type.end());
         kv_list_to_string(
-            buffer, kv_list, LogCategory::Siem,
+            buffer, kv_list, KVLog::Category::Siem,
             "=\"", '"', table_formats::siem_table);
         return buffer;
     }
@@ -493,13 +493,13 @@ namespace
         array_view_const_char target_ip,
         KVList kv_list)
     {
-        static_assert(std::size(ints_s) >= std::size(log_id_string_map));
+        static_assert(std::size(ints_s) >= std::size(detail::log_id_string_map));
         buffer.clear();
         str_append(buffer,
             from_gmtime(time).sv(),
             " host message CEF:1|Wallix|Bastion|" VERSION "|",
             ints_s[unsigned(id)], '|',
-            log_id_string_map[unsigned(id)], "|"
+            detail::log_id_string_map[unsigned(id)], "|"
             "5" /*TODO severity*/
             "|WallixBastionUser=", user,
             " WallixBastionAccount=", account,
@@ -509,7 +509,7 @@ namespace
             " WallixBastionSessionType=", session_type.empty() ? "Neutral"_av : session_type
         );
         kv_list_to_string(
-            buffer, kv_list, LogCategory::Arcsight,
+            buffer, kv_list, KVLog::Category::Arcsight,
             '=', "", table_formats::arcsight_table);
     }
 }
