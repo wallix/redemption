@@ -983,7 +983,7 @@ public:
                         this->log6(
                             !::strcasecmp(order_.c_str(), "KERBEROS_TICKET_CREATION")
                                 ? LogId::KERBEROS_TICKET_CREATION
-                                : LogId::KERBEROS_TICKET_CREATION, {
+                                : LogId::KERBEROS_TICKET_DELETION, {
                             KVLog::all("encryption_type"_av, parameters_[0]),
                             KVLog::all("client_name"_av,     parameters_[1]),
                             KVLog::all("server_name"_av,     parameters_[2]),
@@ -991,7 +991,7 @@ public:
                             KVLog::all("end_time"_av,        parameters_[4]),
                             KVLog::all("renew_time"_av,      parameters_[5]),
                             KVLog::all("flags"_av,           parameters_[6]),
-                            });
+                        });
                     }
                     else {
                         message_format_invalid = true;
