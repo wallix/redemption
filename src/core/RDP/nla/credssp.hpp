@@ -518,16 +518,13 @@ namespace BER {
             + sizeof_octet_string(length);
     }
 
-    inline int write_sequence_octet_string(OutStream & stream, uint8_t tag,
-                                        const uint8_t * value, int length)
+    inline std::vector<uint8_t> write_sequence_octet_string(uint8_t tag, int length)
     {
         std::vector<uint8_t> v;
         backward_push_octet_string_field_header(v, length);
         backward_push_tagged_field_header(v, length + v.size(), tag);
         std::reverse(v.begin(), v.end());
-        stream.out_copy_bytes(v);
-        stream.out_copy_bytes(value, length);
-        return length + v.size();
+        return v;
     }
 
     // ==========================
@@ -1476,9 +1473,10 @@ struct TSCspDataDetail {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
             length = CredSSP::sizeof_octet_string_seq(this->cardName_length);
             size += length;
-            length -= BER::write_sequence_octet_string(stream, 1,
-                                                       this->cardName,
-                                                       this->cardName_length);
+            auto v = BER::write_sequence_octet_string(1, this->cardName_length);
+            stream.out_copy_bytes(v);
+            stream.out_copy_bytes(this->cardName, this->cardName_length);
+            length -= this->cardName_length + v.size();
             assert(length == 0);
             (void)length;
         }
@@ -1487,9 +1485,11 @@ struct TSCspDataDetail {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
             length = CredSSP::sizeof_octet_string_seq(this->readerName_length);
             size += length;
-            length -= BER::write_sequence_octet_string(stream, 2,
-                                                       this->readerName,
-                                                       this->readerName_length);
+            auto v = BER::write_sequence_octet_string(2, this->readerName_length);
+            stream.out_copy_bytes(v);
+            stream.out_copy_bytes(this->readerName, this->readerName_length);
+            length -= this->readerName_length + v.size();
+                                                       
             assert(length == 0);
             (void)length;
         }
@@ -1498,9 +1498,11 @@ struct TSCspDataDetail {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() containerName");
             length = CredSSP::sizeof_octet_string_seq(this->containerName_length);
             size += length;
-            length -= BER::write_sequence_octet_string(stream, 3,
-                                                       this->containerName,
-                                                       this->containerName_length);
+            auto v = BER::write_sequence_octet_string(3, this->containerName_length);
+            stream.out_copy_bytes(v);
+            stream.out_copy_bytes(this->containerName, this->containerName_length);
+            length -= containerName_length + v.size();
+                                                       
             assert(length == 0);
             (void)length;
         }
@@ -1509,9 +1511,13 @@ struct TSCspDataDetail {
             // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
             length = CredSSP::sizeof_octet_string_seq(this->cspName_length);
             size += length;
-            length -= BER::write_sequence_octet_string(stream, 4,
-                                                       this->cspName,
-                                                       this->cspName_length);
+            auto v = BER::write_sequence_octet_string(4, this->cspName_length);
+
+            stream.out_copy_bytes(v);
+            stream.out_copy_bytes(this->cspName, this->cspName_length);
+            length -= this->cspName_length + v.size();
+                                                       
+                                                       
             assert(length == 0);
             (void)length;
         }
@@ -1597,9 +1603,11 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cardName");
         length = CredSSP::sizeof_octet_string_seq(self.cardName_length);
         size += length;
-        length -= BER::write_sequence_octet_string(stream, 1,
-                                                   self.cardName,
-                                                   self.cardName_length);
+        auto v = BER::write_sequence_octet_string(1, self.cardName_length);
+        stream.out_copy_bytes(v);
+        stream.out_copy_bytes(self.cardName, self.cardName_length);
+        length -= self.cardName_length + v.size();
+                                                   
         assert(length == 0);
         (void)length;
     }
@@ -1608,9 +1616,11 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() readerName");
         length = CredSSP::sizeof_octet_string_seq(self.readerName_length);
         size += length;
-        length -= BER::write_sequence_octet_string(stream, 2,
-                                                   self.readerName,
-                                                   self.readerName_length);
+        auto v = BER::write_sequence_octet_string(2, self.readerName_length);
+        stream.out_copy_bytes(v);
+        stream.out_copy_bytes(self.readerName, self.readerName_length);
+        length -= self.readerName_length + v.size();
+
         assert(length == 0);
         (void)length;
     }
@@ -1619,9 +1629,11 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() containerName");
         length = CredSSP::sizeof_octet_string_seq(self.containerName_length);
         size += length;
-        length -= BER::write_sequence_octet_string(stream, 3,
-                                                   self.containerName,
-                                                   self.containerName_length);
+        auto v = BER::write_sequence_octet_string(3, self.containerName_length);
+        stream.out_copy_bytes(v);
+        stream.out_copy_bytes(self.containerName, self.containerName_length);
+        length -=self.containerName_length + v.size();
+
         assert(length == 0);
         (void)length;
     }
@@ -1630,9 +1642,11 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
         // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
         length = CredSSP::sizeof_octet_string_seq(self.cspName_length);
         size += length;
-        length -= BER::write_sequence_octet_string(stream, 4,
-                                                   self.cspName,
-                                                   self.cspName_length);
+        auto v = BER::write_sequence_octet_string(4, self.cspName_length);
+        stream.out_copy_bytes(v);
+        stream.out_copy_bytes(self.cspName, self.cspName_length);
+        length -= self.cspName_length + v.size();
+                                                   
         assert(length == 0);
         (void)length;
     }
@@ -1712,8 +1726,11 @@ struct TSSmartCardCreds {
         size += BER::write_sequence_tag(stream, innerSize);
 
         /* [0] pin (OCTET STRING) */
-        size += BER::write_sequence_octet_string(stream, 0, this->pin,
-                                         this->pin_length);
+        auto v= BER::write_sequence_octet_string(0, this->pin_length);
+
+        stream.out_copy_bytes(v);
+        stream.out_copy_bytes(this->pin, this->pin_length);
+        size += this->pin_length + v.size();
 
         /* [1] cspData (OCTET STRING) */
 
@@ -1726,9 +1743,12 @@ struct TSSmartCardCreds {
             // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() userHint");
             length = CredSSP::sizeof_octet_string_seq(this->userHint_length);
             size += length;
-            length -= BER::write_sequence_octet_string(stream, 2,
-                                                       this->userHint,
-                                                       this->userHint_length);
+            auto v = BER::write_sequence_octet_string(2, this->userHint_length);
+                                                       
+            stream.out_copy_bytes(v);
+            stream.out_copy_bytes(this->userHint, this->userHint_length);
+            length -= this->userHint_length + v.size();
+                                                       
             assert(length == 0);
             (void)length;
         }
@@ -1738,9 +1758,12 @@ struct TSSmartCardCreds {
             // LOG(LOG_INFO, "Credssp: TSSmartCard::emit() domainHint");
             length = CredSSP::sizeof_octet_string_seq(this->domainHint_length);
             size += length;
-            length -= BER::write_sequence_octet_string(stream, 3,
-                                                       this->domainHint,
-                                                       this->domainHint_length);
+            auto v = BER::write_sequence_octet_string(3, this->domainHint_length);
+                                                       
+            stream.out_copy_bytes(v);
+            stream.out_copy_bytes(this->domainHint, this->domainHint_length);
+            length -= this->domainHint_length + v.size();
+                                                       
             assert(length == 0);
             (void)length;
         }
