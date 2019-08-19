@@ -5,7 +5,7 @@
 
 A RDP (Remote Desktop Protocol) proxy.
 
-(A RDP client in `projects/ClientQtGraphicAPI`)
+(A RDP client in `projects/ClientQtGraphicAPI`, a RDP web client in `projects/jsclient`)
 
 Support of:
 

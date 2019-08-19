@@ -125,7 +125,7 @@ find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
 
 
 # jsclient (emscripten)
-cd projects/browser_client_JS
+cd projects/jsclient
 source ~/emsdk-master/emsdk_set_env.sh
 rm -rf bin
 version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
