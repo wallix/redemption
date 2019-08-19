@@ -261,6 +261,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #max_color_depth = 24
 
+# Enable front remoteFx
+# value: 0 or 1
+#_advanced
+#front_remotefx = 1
+
 # Persistent Disk Bitmap Cache on the front side.
 # value: 0 or 1
 #_advanced
@@ -289,7 +294,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Enables support of the remoteFX codec.
 # value: 0 or 1
 #_advanced
-#remotefx = 1
+#remotefx = 0
 
 # value: 0 or 1
 #enable_suppress_output = 1

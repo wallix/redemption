@@ -824,7 +824,9 @@ namespace
 
     public:
         Reader(Transport & trans, Verbose verbose)
-        : trans(trans)
+        : p(nullptr)
+    	, e(nullptr)
+        , trans(trans)
         , verbose(verbose)
         {
             this->safe_read_packet();
@@ -992,6 +994,7 @@ void AclSerializer::in_items()
             LOG(LOG_WARNING, "Unexpected receving '%s' - '%.*s'",
                 sauthid, int(val.size()), val.data());
         }
+
     }
 }
 

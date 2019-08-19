@@ -31,12 +31,14 @@
 /** @brief a surface content update */
 class RDPSurfaceContent {
 public:
-	RDPSurfaceContent(uint16_t width, uint16_t height, uint16_t stride, const Rect &rect, const SubRegion &region)
+	RDPSurfaceContent(uint16_t width, uint16_t height, uint16_t stride, const Rect &rect,
+			const SubRegion &region, array_view_const_u8 content)
 	: stride(stride)
 	, width(width)
 	, data(new uint8_t[stride * height * 4]())
 	, rect(rect)
 	, region(region)
+	, encodedContent(content)
 	{
 	}
 
@@ -50,14 +52,21 @@ public:
 	uint8_t *data;
 	Rect rect;
 	const SubRegion &region;
+	array_view_const_u8 encodedContent;
 };
 
 /** @brief a SetSurface command */
 class RDPSetSurfaceCommand {
 public:
+	/** @brief flags */
     enum {
     	EX_COMPRESSED_BITMAP_HEADER_PRESENT = 0x1
     };
+
+    typedef enum {
+    	SETSURFACE_CODEC_UNKNOWN,
+    	SETSURFACE_CODEC_REMOTEFX
+    } SetSurfaceCodec;
 
 	void recv(InStream & stream) {
 		// 2.2.9.2.1 Set Surface Bits Command (TS_SURFCMD_SET_SURF_BITS)
@@ -130,13 +139,39 @@ public:
 
             ::check_throw(stream, 24, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand EX_COMPRESSED_BITMAP_HEADER_PRESENT", ERR_RDP_DATA_TRUNCATED);
 
-			/*uint32_t highUniqueId = */stream.in_uint32_le();
-			/*uint32_t lowUniqueId = */ stream.in_uint32_le();
-			/*uint64_t tmMilliseconds = */stream.in_uint64_le();
-			/*uint64_t tmSeconds = */stream.in_uint64_le();
+			highUniqueId = stream.in_uint32_le();
+			lowUniqueId = stream.in_uint32_le();
+			tmMilliseconds = stream.in_uint64_le();
+			tmSeconds = stream.in_uint64_le();
 		}
 
 		::check_throw(stream, bitmapDataLength, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand bitmapDataLength", ERR_RDP_DATA_TRUNCATED);
+
+		bitmapData = stream.get_data();
+	}
+
+	void emit(OutStream & stream) const {
+		stream.out_uint16_le(destRect.left());
+		stream.out_uint16_le(destRect.top());
+		stream.out_uint16_le(destRect.right());
+		stream.out_uint16_le(destRect.bottom());
+
+		stream.out_uint8(bpp);
+		stream.out_uint8(flags);
+		stream.out_uint8(0); /* reserved */
+		stream.out_uint8(this->codecId);
+		stream.out_uint16_le(width);
+		stream.out_uint16_le(height);
+		stream.out_uint32_le(bitmapDataLength);
+
+		if (flags & EX_COMPRESSED_BITMAP_HEADER_PRESENT) {
+			stream.out_uint32_le(highUniqueId);
+			stream.out_uint32_le(lowUniqueId);
+			stream.out_uint64_le(tmMilliseconds);
+			stream.out_uint64_le(tmSeconds);
+		}
+
+		stream.out_copy_bytes(bitmapData, bitmapDataLength);
 	}
 
 	void log(int level, const RDPSurfaceContent &/*content*/) const {
@@ -151,11 +186,14 @@ public:
 	uint16_t width, height;
 
 	uint32_t bitmapDataLength;
+	const uint8_t *bitmapData;
 
 	uint32_t highUniqueId;
 	uint32_t lowUniqueId;
 	uint64_t tmMilliseconds;
 	uint64_t tmSeconds;
+
+	SetSurfaceCodec codec{SETSURFACE_CODEC_UNKNOWN};
 };
 
 

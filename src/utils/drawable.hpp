@@ -137,6 +137,14 @@ struct DrawableTraitColor24
             return {p[0], p[1], p[2]};
         }
     };
+
+    struct fromColor32
+    {
+        color_t operator()(const uint8_t * p) const
+        {
+            return {p[0], p[1], p[2]};
+        }
+    };
 };
 
 template<DepthColor BppIn>

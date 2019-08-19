@@ -84,8 +84,11 @@ void TS_RFX_SYNC::recv(InStream & stream) {
     }
 }
 
-void TS_RFX_SYNC::send(OutStream & /*stream*/) {
-	/* TODO: implement me */
+void TS_RFX_SYNC::send(OutStream & stream) {
+	stream.out_uint16_le(WBT_SYNC);
+	stream.out_uint32_le(12);
+	stream.out_uint32_le(WF_MAGIC);
+	stream.out_uint16_le(WF_VERSION_1_0);
 }
 
 //TS_RFX_CODEC_VERSIONS
@@ -124,8 +127,13 @@ void TS_RFX_CODEC_VERSIONS::recv(InStream & stream) {
     }
 }
 
-void TS_RFX_CODEC_VERSIONS::send(OutStream & /*stream*/) {
-	/* TODO: implement me */
+void TS_RFX_CODEC_VERSIONS::send(OutStream & stream) {
+	stream.out_uint16_le(WBT_CODEC_VERSION);
+	stream.out_uint32_le(10);
+
+	stream.out_uint8(numCodecs);
+	stream.out_uint8(codecId);
+	stream.out_uint16_le(version);
 }
 
 //
@@ -147,8 +155,9 @@ void TS_RFX_CODEC_CHANNELT::recv(InStream & stream) {
 	channelId = stream.in_uint8();
 }
 
-void TS_RFX_CODEC_CHANNELT::send(OutStream & /*stream*/) {
-	/* TODO: implement me */
+void TS_RFX_CODEC_CHANNELT::send(OutStream & stream) {
+	stream.out_uint8(codecId);
+	stream.out_uint8(channelId);
 }
 
 // 2.2.2.2.4 TS_RFX_CONTEXT
@@ -204,8 +213,15 @@ void TS_RFX_CONTEXT::recv(InStream & stream) {
 	properties = stream.in_uint16_le();
 }
 
-void TS_RFX_CONTEXT::send(OutStream & /*stream*/) {
-	/* TODO: implement me */
+void TS_RFX_CONTEXT::send(OutStream & stream) {
+	stream.out_uint16_le(WBT_CONTEXT);
+	stream.out_uint32_le(13);
+
+	TS_RFX_CODEC_CHANNELT::send(stream);
+
+	stream.out_uint8(ctxId);
+	stream.out_uint16_le(tileSize);
+	stream.out_uint16_le(properties);
 }
 
 // 2.2.2.1.3 TS_RFX_CHANNELT
@@ -232,8 +248,10 @@ void TS_RFX_CHANNELT::recv(InStream & stream) {
     height = stream.in_uint16_le();
 }
 
-void TS_RFX_CHANNELT::send(OutStream & /*stream*/) {
-	/* TODO: implement me */
+void TS_RFX_CHANNELT::send(OutStream & stream) {
+	stream.out_uint8(channelId);
+	stream.out_uint16_le(width);
+	stream.out_uint16_le(height);
 }
 
 // 2.2.2.2.3 TS_RFX_CHANNELS
@@ -265,8 +283,20 @@ void TS_RFX_CHANNELS::recv(InStream & stream) {
     }
 }
 
-void TS_RFX_CHANNELS::send(OutStream & /*stream*/) {
-	/* TODO: implement me */
+void TS_RFX_CHANNELS::setChannel(uint8_t channelId, uint16_t width, uint16_t height) {
+	channels = new TS_RFX_CHANNELT[1]();
+	channels->channelId = channelId;
+	channels->width = width;
+	channels->height = height;
+}
+
+void TS_RFX_CHANNELS::send(OutStream & stream) {
+	stream.out_uint16_le(WBT_CHANNELS);
+	stream.out_uint16_le(6 + numChannels * 6);
+
+	stream.out_uint8(numChannels); /* numChannels (1 byte) */
+	for (int i = 0; i < numChannels; i++)
+		channels[i].send(stream);
 }
 
 //
@@ -631,6 +661,8 @@ void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, co
 
     ::check_throw(stream, 12, "TS_RFX_TILESET::recv invalid TS_RFX_TILESET", ERR_MCS_PDU_TRUNCATED);
 
+    const uint8_t *tilesetStream = stream.get_current();
+
     subType = stream.in_uint16_le();
     if (subType != CBT_TILESET) {
 		LOG(LOG_ERR, "expecting subType=CBT_TILESET in TS_RFX_TILESET");
@@ -684,7 +716,8 @@ void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, co
 
     uint16_t width = roundTo(cmd.width, 64);
     uint16_t height = roundTo(cmd.height, 64);
-    RDPSurfaceContent content(width, height, width * 4, cmd.destRect, region);
+    RDPSurfaceContent content(width, height, width * 4, cmd.destRect, region,
+    		array_view_const_u8(tilesetStream, 12 + numQuant * 5 + tileDataSize));
     for (int i = 0; i < numTiles; i++)
     	tiles[i].draw(cmd, *this, content);
 
@@ -810,5 +843,45 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 			throw Error(ERR_MCS_PDU_TRUNCATED);
 		}
 	}
+}
+
+
+RfxEncoder::RfxEncoder()
+	: initialized(false)
+	, frameCounter(0)
+{
+
+}
+
+void RfxEncoder::sendInitSequence() {
+	StaticOutStream<2000> initSeq;
+
+	TS_RFX_SYNC sync;
+	sync.send(initSeq);
+
+	TS_RFX_CONTEXT context;
+	context.send(initSeq);
+
+	TS_RFX_CODEC_VERSIONS versions;
+	versions.send(initSeq);
+
+	TS_RFX_CHANNELS channels;
+	channels.setChannel(0, 0, 0);
+	channels.send(initSeq);
+}
+
+void RfxEncoder::sendFrame() {
+	if (!this->initialized) {
+		this->sendInitSequence();
+		this->initialized = true;
+	}
+
+	TS_RFX_FRAME_BEGIN frameBegin;
+	frameBegin.frameIdx = ++frameCounter;
+	// frameBegin.send()
+
+
+	TS_RFX_FRAME_END frameEnd;
+	//frameEnd.send()
 }
 

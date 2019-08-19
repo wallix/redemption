@@ -276,6 +276,10 @@ private:
                 }
             }
 
+            void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &/*content*/) override {
+            	GraphicsUpdatePDU::send_set_surface_command(cmd);
+            }
+
             void set_palette(const BGRPalette& /*unused*/) override {
             }
 
@@ -2879,7 +2883,7 @@ private:
                     send_multifrag_caps = true;
                 }
 
-                if (this->ini.get<cfg::client::remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
+                if (this->ini.get<cfg::client::front_remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
                 	BitmapCodecCaps bitmap_codec_caps(false);
 
                 	bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
@@ -4160,7 +4164,21 @@ protected:
         }
     }
 
-    void draw_impl(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & content) {
+    void draw_impl(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) {
+#if 0 // no server-side remoteFx for now
+    	if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
+    		if (!content.encodedContent.empty()) {
+    			LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): should build a rfx frame");
+    			RDPSetSurfaceCommand newCmd = cmd;
+    			newCmd.codecId = this->client_info.bitmap_codec_caps.bitmapCodecArray[0].codecID;
+    			this->graphics_update->draw(newCmd, content);
+    		}
+
+    		return;
+    	}
+#endif
+
+    	/* fallback, transcode to bitmapUpdates */
     	for (const Rect & rect1 : content.region.rects) {
     		Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
 

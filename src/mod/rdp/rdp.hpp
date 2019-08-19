@@ -2507,57 +2507,61 @@ public:
 
         while (stream.in_check_rem(2)) {
             ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
-            unsigned expected = 2;
 
-            uint16_t cmdType = stream.in_uint16_le();
+			unsigned expected = 2;
 
-            switch(cmdType) {
-            case CMDTYPE_SET_SURFACE_BITS:
-            case CMDTYPE_STREAM_SURFACE_BITS: {
-                RDPSetSurfaceCommand setSurface;
+			uint16_t cmdType = stream.in_uint16_le();
 
-                setSurface.recv(stream);
+			switch(cmdType) {
+			case CMDTYPE_SET_SURFACE_BITS:
+			case CMDTYPE_STREAM_SURFACE_BITS: {
+				RDPSetSurfaceCommand setSurface;
 
-                if (setSurface.codecId == this->remoteFx_codec_id) {
-                    InStream remoteFxStream({stream.get_current(), setSurface.bitmapDataLength});
-                    this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
-                }
-                else {
-                    LOG(LOG_INFO, "unknown codecId=%u", setSurface.codecId);
-                }
-                stream.in_skip_bytes(setSurface.bitmapDataLength);
-                break;
-            }
-            case CMDTYPE_FRAME_MARKER: {
-                // 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
-                // The Frame Marker Command is used to group multiple surface commands so that these commands
-                // can be processed and presented to the user as a single entity, a frame.
-                //
-                // cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
-                //         CMDTYPE_FRAME_MARKER (0x0004).
-                // frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
-                // +------------------------------+-------------------------------------+
-                // |             Value            |         Meaning                     |
-                // +------------------------------+-------------------------------------+
-                // | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
-                // |            0x0000            |                                     |
-                // +------------------------------+-------------------------------------+
-                // | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
-                // |             0x0001           | frame.                              |
-                // +------------------------------+-------------------------------------+
-                //
-                // frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
-                //
-                enum {
-                    SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
-                    SURFACECMD_FRAMEACTION_END = 0x0001
-                };
+				setSurface.recv(stream);
 
-                expected = 6;
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
+				if (setSurface.codecId == this->remoteFx_codec_id) {
+					setSurface.codec = RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX;
+
+					InStream remoteFxStream(cbytes_view(stream.get_current(), setSurface.bitmapDataLength));
+					this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
+				}
+				else {
+					LOG(LOG_INFO, "unknown codecId=%u", setSurface.codecId);
+				}
+				stream.in_skip_bytes(setSurface.bitmapDataLength);
+				break;
+			}
+
+			case CMDTYPE_FRAME_MARKER: {
+				// 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
+				// The Frame Marker Command is used to group multiple surface commands so that these commands
+				// can be processed and presented to the user as a single entity, a frame.
+				//
+				// cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
+				//         CMDTYPE_FRAME_MARKER (0x0004).
+				// frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
+				// +------------------------------+-------------------------------------+
+				// |             Value            |         Meaning                     |
+				// +------------------------------+-------------------------------------+
+				// | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
+				// |            0x0000            |                                     |
+				// +------------------------------+-------------------------------------+
+				// | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
+				// |             0x0001           | frame.                              |
+				// +------------------------------+-------------------------------------+
+				//
+				// frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
+				//
+				enum {
+					SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
+					SURFACECMD_FRAMEACTION_END = 0x0001
+				};
+
+				expected = 6;
+				if (!stream.in_check_rem(expected)) {
+					LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
+					throw Error(ERR_RDP_DATA_TRUNCATED);
+				}
 
                 uint16_t frameAction = stream.in_uint16_le();
                 uint32_t frameId = stream.in_uint32_le();
@@ -3585,7 +3589,6 @@ public:
                 }
 
                 BitmapCodecCaps bitmap_codec_caps(true);
-
                 if (this->enable_remotefx && this->haveRemoteFx) {
                     /**
                      * for remoteFx we need:
