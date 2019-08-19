@@ -1089,7 +1089,7 @@ public:
                 else if (!::strcasecmp(order_.c_str(), "STARTUP_APPLICATION_FAIL_TO_RUN_2")) {
                     if (parameters_.size() == 3) {
                         this->log6(
-                            LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
+                            LogId::STARTUP_APPLICATION_FAIL_TO_RUN_2, {
                             KVLog::all("application_name"_av,   parameters_[0]),
                             KVLog::all("raw_result"_av,         parameters_[1]),
                             KVLog::all("raw_result_message"_av, parameters_[2]),

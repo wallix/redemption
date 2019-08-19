@@ -1,3 +1,4 @@
+#!lua
 re = require're'
 
 typemap = {
