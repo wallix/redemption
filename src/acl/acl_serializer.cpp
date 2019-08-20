@@ -1056,7 +1056,7 @@ namespace
                 auto n = std::min<std::size_t>(av.size(), this->buf_len - this->buf.sz);
                 memcpy(this->buf.data + this->buf.sz, av.data(), n);
                 this->buf.sz += n;
-                av = av.from_at(n);
+                av = av.from_offset(n);
                 if (!av.empty()) {
                     this->new_buffer();
                 }

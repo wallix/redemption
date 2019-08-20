@@ -291,7 +291,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     big_stream.out_copy_bytes(key1.first(key2_splitted_len));
     big_stream.out_uint16_be(0);
     big_stream.out_uint16_be(key2.size() - key2_splitted_len + 5);
-    big_stream.out_copy_bytes(key2.from_at(key2_splitted_len));
+    big_stream.out_copy_bytes(key2.from_offset(key2_splitted_len));
     big_stream.out_copy_bytes("\n!xy\n"_av);
 
     RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());

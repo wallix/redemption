@@ -2591,7 +2591,7 @@ namespace Cliprdr
 
         out_stream.out_uint32_le(format.format_id());
 
-        auto data = out_stream.get_tailroom_bytes();
+        auto data = out_stream.get_tail();
         auto len = UTF8toUTF16(format.utf8_name(), data);
 
         if (len + 2 > data.size())
@@ -2633,7 +2633,7 @@ namespace Cliprdr
 
         out_stream.out_uint32_le(format.format_id());
 
-        auto data = out_stream.get_tailroom_bytes();
+        auto data = out_stream.get_tail();
         data = data.first(std::min(Cliprdr::short_format_name_length - 2u, data.size()));
 
         data = out_stream.out_skip_bytes(UTF8toUTF16(format.utf8_name(), data));

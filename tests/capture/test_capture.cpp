@@ -2102,7 +2102,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     uint16_t chunk_count = stream.in_uint16_le();
     (void)chunk_count;
 
-    GeneratorTransport in_png_trans(source_png.from_at(8));
+    GeneratorTransport in_png_trans(source_png.from_offset(8));
 
     RDPDrawable d(20, 10);
     gdi::GraphicApi * gdi = &d;

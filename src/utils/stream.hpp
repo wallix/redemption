@@ -408,7 +408,7 @@ public:
         return  this->end - this->p;
     }
 
-    bytes_view get_tailroom_bytes() const noexcept {
+    bytes_view get_tail() const noexcept {
         return {this->get_current(), this->tailroom()};
     }
 

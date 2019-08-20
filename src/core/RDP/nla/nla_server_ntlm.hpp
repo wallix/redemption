@@ -344,7 +344,7 @@ protected:
             size_t temp_size = AuthNtResponse.size() - 16;
             // LOG(LOG_INFO, "tmp size = %u", temp_size);
             uint8_t NtProofStr_from_msg[16] = {};
-            InStream in_AuthNtResponse(AuthNtResponse.ostream.get_tailroom_bytes());
+            InStream in_AuthNtResponse(AuthNtResponse.ostream.get_tail());
             in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
 
             auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
@@ -381,7 +381,7 @@ protected:
                 return false;
             }
             uint8_t response[16] = {};
-            InStream in_AuthLmResponse(AuthLmResponse.ostream.get_tailroom_bytes());
+            InStream in_AuthLmResponse(AuthLmResponse.ostream.get_tail());
             in_AuthLmResponse.in_copy_bytes(response, 16);
             in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
             AuthLmResponse.ostream.rewind();
@@ -405,7 +405,7 @@ protected:
             auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
             auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
             uint8_t NtProofStr[16] = {};
-            InStream(AuthNtResponse.ostream.get_tailroom_bytes())
+            InStream(AuthNtResponse.ostream.get_tail())
                 .in_copy_bytes(NtProofStr, 16);
             AuthNtResponse.ostream.rewind();
             uint8_t ResponseKeyNT[16] = {};
@@ -737,7 +737,7 @@ public:
         // data_out [signature][data_buffer]
 
         data_out.init(data_in.size() + cbMaxSignature);
-        auto message_out = data_out.av().from_at(cbMaxSignature);
+        auto message_out = data_out.av().from_offset(cbMaxSignature);
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         this->compute_hmac_md5(digest, this->ntlm_context.ServerSigningKey, data_in, MessageSeqNo);
         // this->ntlm_context.confidentiality == true
@@ -758,7 +758,7 @@ public:
 
         // data_in [signature][data_buffer]
 
-        auto data_buffer = data_in.from_at(cbMaxSignature);
+        auto data_buffer = data_in.from_offset(cbMaxSignature);
         data_out.init(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */

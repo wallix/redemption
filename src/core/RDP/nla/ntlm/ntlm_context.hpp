@@ -567,7 +567,7 @@ public:
         size_t temp_size = AuthNtResponse.size() - 16;
         // LOG(LOG_INFO, "tmp size = %u", temp_size);
         uint8_t NtProofStr_from_msg[16] = {};
-        InStream in_AuthNtResponse(AuthNtResponse.ostream.get_tailroom_bytes());
+        InStream in_AuthNtResponse(AuthNtResponse.ostream.get_tail());
         in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
 
         auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
@@ -604,7 +604,7 @@ public:
             return false;
         }
         uint8_t response[16] = {};
-        InStream in_AuthLmResponse(AuthLmResponse.ostream.get_tailroom_bytes());
+        InStream in_AuthLmResponse(AuthLmResponse.ostream.get_tail());
         in_AuthLmResponse.in_copy_bytes(response, 16);
         in_AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
         AuthLmResponse.ostream.rewind();
@@ -628,7 +628,7 @@ public:
         auto & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         auto & UserName = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         uint8_t NtProofStr[16] = {};
-        InStream(AuthNtResponse.ostream.get_tailroom_bytes())
+        InStream(AuthNtResponse.ostream.get_tail())
             .in_copy_bytes(NtProofStr, 16);
         AuthNtResponse.ostream.rewind();
         uint8_t ResponseKeyNT[16] = {};

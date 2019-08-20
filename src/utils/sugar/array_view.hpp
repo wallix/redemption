@@ -155,7 +155,7 @@ struct array_view
     }
 
     [[nodiscard]]
-    constexpr array_view from_at(std::size_t offset) noexcept
+    constexpr array_view from_offset(std::size_t offset) noexcept
     {
         assert(offset <= this->size());
         return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
@@ -169,7 +169,7 @@ struct array_view
     }
 
     [[nodiscard]]
-    constexpr array_view<T const> from_at(std::size_t offset) const noexcept
+    constexpr array_view<T const> from_offset(std::size_t offset) const noexcept
     {
         assert(offset <= this->size());
         return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};

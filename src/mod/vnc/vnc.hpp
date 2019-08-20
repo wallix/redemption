@@ -2807,7 +2807,7 @@ private:
                     // [ .................... out_stream .................... ]
                     // [ [ ... header_stream(8) ... ] [ ... data_stream ... ] ]
                     OutStream out_stream(uninit_buf_av);
-                    OutStream data_stream(uninit_buf_av.from_at(header_size));
+                    OutStream data_stream(uninit_buf_av.from_offset(header_size));
 
                     if (this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                         size_t utf16_data_length = UTF8toUTF16_CrLf(
