@@ -5,7 +5,7 @@
 
 A RDP (Remote Desktop Protocol) proxy.
 
-(A RDP client in `projects/ClientQtGraphicAPI`)
+(A RDP client in `projects/ClientQtGraphicAPI`, a RDP web client in `projects/jsclient`)
 
 Support of:
 
@@ -16,9 +16,9 @@ Support of:
 <!-- toc -->
 1. [Dependencies](#dependencies)
     1. [FFmpeg:](#ffmpeg)
-        1. [Ubuntu:](#ubuntu)
-        2. [Other distros:](#other-distros)
-        3. [Note:](#note)
+        1. [Ubuntu / Debian](#ubuntu--debian)
+        2. [Other distros](#other-distros)
+        3. [Note](#note)
 2. [Compilation](#compilation)
     1. [Special runtime variables (shell variable)](#special-runtime-variables-shell-variable)
     2. [Setting build variables](#setting-build-variables)
@@ -43,14 +43,14 @@ To compile ReDemPtion you need the following packages:
 - zlib1g-dev
 - libssl-dev
 - libkrb5-dev
-- libgssglue-dev (unnecessary since Ubuntu 17.10)
+- libgssglue-dev (unnecessary since Ubuntu 17.10 and Debian 10)
 - libsnappy-dev
-- libpng-dev
+- libpng-dev (libpng12-dev (< Debian 10))
 - libffmpeg-dev (see below)
-- g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
+- g++ >= 8.0 or clang++ >= 5.0 or other C++17 compiler
 
 ```sh
-apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng12-dev
+apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng-dev
 ```
 
 Submodule ($ `git submodule update --init`):
@@ -58,9 +58,10 @@ Submodule ($ `git submodule update --init`):
 - https://github.com/wallix/ppocr
 
 
-## FFmpeg:
+## FFmpeg
 
-### Ubuntu:
+### Ubuntu / Debian
+
 - libavcodec-dev
 - libavformat-dev
 - libavutil-dev
@@ -78,7 +79,8 @@ apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-
 <!-- - libavutil-ffmpeg54 -->
 <!-- - libswscale-ffmpeg3 -->
 
-### Other distros:
+### Other distros
+
 - https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
 
 And set the [build variables](#setting-build-variables) (optionally)

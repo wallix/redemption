@@ -363,16 +363,6 @@ struct Buffer
     }
 };
 
-struct ReportMessage : NullReportMessage
-{
-    std::vector<std::string> messages;
-
-    void log6(const std::string & info, const ArcsightLogInfo & /*asl_info*/, const timeval /*time*/) override
-    {
-        messages.emplace_back(info);
-    }
-};
-
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
@@ -386,6 +376,20 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             msg.insert(msg.end(), message.begin(), message.end());
         }
     } front(screen_info);
+
+    struct ReportMessage : NullReportMessage
+    {
+        std::vector<std::string> messages;
+
+        void log6(LogId id, const timeval /*time*/, KVList kv_list) override
+        {
+            std::string s = detail::log_id_string_map[int(id)].data();
+            for (auto& kv : kv_list) {
+                str_append(s, ' ', kv.key, '=', kv.value);
+            }
+            messages.emplace_back(std::move(s));
+        }
+    };
 
     SessionReactor session_reactor;
     timeval time_test;
@@ -566,7 +570,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_REQUIRE(report_message.messages.size() == 1);
     RED_CHECK_SMEM(report_message.messages[0],
-        R"x(type="CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" format="<unknown>(0)" size="596")x"_av);
+        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=<unknown>(0) size=596"_av);
     RED_CHECK(buf_trans.buf.size() == 0);
     RED_CHECK_SMEM(front.msg, "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION=<unknown>(0)\x01""596"_av);
 
@@ -606,5 +610,5 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     buf_trans.buf.assign(av.data(), av.size());
 
     clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-    RED_CHECK_SMEM(front.msg, "FILE_VERIFICATION=abc\x01UP\x01ok"_av);
+    RED_CHECK_SMEM(front.msg, "FILE_VERIFICATION=UP\x01""abc\x01ok"_av);
 }

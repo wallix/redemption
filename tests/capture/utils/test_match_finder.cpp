@@ -152,10 +152,14 @@ RED_AUTO_TEST_CASE(report_notify)
         bool has_log = false;
         bool has_report = false;
 
-        void log6(const std::string & info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
-            RED_CHECK_EQUAL(info, "type=\"NOTIFY_PATTERN_DETECTED\" pattern=\"$kbd:c| cacao\"");
+        void log6(LogId id, const timeval /*time*/, KVList kv_list) override {
+            RED_CHECK(id == LogId::NOTIFY_PATTERN_DETECTED);
+            RED_REQUIRE(kv_list.size() > 0);
+            RED_CHECK_SMEM(kv_list[0].key, "pattern"_av);
+            RED_CHECK_SMEM(kv_list[0].value, "$kbd:c| cacao"_av);
             this->has_log = true;
         }
+
         void report(const char* reason, const char* message) override {
             RED_CHECK_EQUAL(reason, "FINDPATTERN_NOTIFY");
             RED_CHECK_EQUAL(message, "$kbd:c| cacao");
@@ -172,10 +176,15 @@ RED_AUTO_TEST_CASE(report_kill)
     struct : NullReportMessage {
         bool has_log = false;
         bool has_report = false;
-        void log6(const std::string & info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
-            RED_CHECK_EQUAL(info, "type=\"KILL_PATTERN_DETECTED\" pattern=\"$ocr:c| cacao\"");
+
+        void log6(LogId id, const timeval /*time*/, KVList kv_list) override {
+            RED_CHECK(id == LogId::KILL_PATTERN_DETECTED);
+            RED_REQUIRE(kv_list.size() > 0);
+            RED_CHECK_SMEM(kv_list[0].key, "pattern"_av);
+            RED_CHECK_SMEM(kv_list[0].value, "$ocr:c| cacao"_av);
             this->has_log = true;
         }
+
         void report(const char* reason, const char* message) override {
             RED_CHECK_EQUAL(reason, "FINDPATTERN_KILL");
             RED_CHECK_EQUAL(message, "$ocr:c| cacao");

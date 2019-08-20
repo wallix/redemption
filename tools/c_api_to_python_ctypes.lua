@@ -1,3 +1,4 @@
+#!lua
 re = require're'
 
 typemap = {
@@ -36,7 +37,10 @@ end
 defs={
     using=function(t)
         typemap[t[1]] = c2py(t[2])
-        end,
+    end,
+    typedef=function(t)
+        typemap[t[2]] = c2py(t[1])
+    end,
     func=function(t)
         local types = {}
         for _k,p in ipairs(t[3]) do
@@ -52,6 +56,7 @@ defs={
 
 -- http://www.inf.puc-rio.br/~roberto/lpeg/re.html
 
+-- TODO pointer to function
 local p = [=[
 
 pattern     <- (S (function / using / endexpr))+
@@ -59,6 +64,7 @@ function    <- "REDEMPTION_LIB_EXPORT" ws {| type {id} '(' S params S ')' |} -> 
 params      <- {| (param (',' S)?)* |}
 param       <- S type S id S
 using       <- "using " {| {id} S '=' S type |} -> using
+typedef     <- "typedef " {| type ws {id} |} -> typedef
 id          <- [_a-zA-Z0-9]+
 type        <- {| ('const' ws)? {id} (ws 'const')? S {'*'?} S |}
 endexpr     <- comment1 / comment2 / [^;]+ ';'? / ';'

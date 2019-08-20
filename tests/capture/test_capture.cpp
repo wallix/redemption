@@ -1850,15 +1850,22 @@ RED_AUTO_TEST_CASE(TestReload)
     }
 }
 
+struct ReportMessage : NullReportMessage
+{
+    std::string s;
+
+    void log6(LogId id, const timeval /*time*/, KVList kv_list) override
+    {
+        s += detail::log_id_string_map[int(id)].data();
+        for (auto& kv : kv_list) {
+            str_append(s, ' ', kv.key, '=', kv.value);
+        }
+    }
+};
+
 RED_AUTO_TEST_CASE(TestKbdCapture)
 {
-    struct : NullReportMessage {
-        std::string s;
-
-        void log6(const std::string &info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
-            s += info;
-        }
-    } report_message;
+    ReportMessage report_message;
 
     timeval const time = {0, 0};
     Capture::SessionLogKbd kbd_capture(report_message);
@@ -1868,8 +1875,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
         // flush report buffer then empty buffer
         kbd_capture.flush();
 
-        RED_CHECK_EQUAL(report_message.s.size(), 25);
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"a\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
     }
 
     kbd_capture.enable_kbd_input_mask(true);
@@ -1893,8 +1899,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
         kbd_capture.enable_kbd_input_mask(true);
 
-        RED_CHECK_EQUAL(report_message.s.size(), 25);
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"a\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
         report_message.s.clear();
 
         kbd_capture.kbd_input(time, 'a');
@@ -1906,13 +1911,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
 RED_AUTO_TEST_CASE(TestKbdCapture2)
 {
-    struct : NullReportMessage {
-        std::string s;
-
-        void log6(const std::string &info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
-            s += info;
-        }
-    } report_message;
+    ReportMessage report_message;
 
     timeval const now = {0, 0};
     Capture::SessionLogKbd kbd_capture(report_message);
@@ -1932,7 +1931,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
 
         kbd_capture.possible_active_window_change();
 
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"toto\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=toto", report_message.s);
     }
 }
 
@@ -2103,7 +2102,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     uint16_t chunk_count = stream.in_uint16_le();
     (void)chunk_count;
 
-    GeneratorTransport in_png_trans(source_png.from_at(8));
+    GeneratorTransport in_png_trans(source_png.from_offset(8));
 
     RDPDrawable d(20, 10);
     gdi::GraphicApi * gdi = &d;

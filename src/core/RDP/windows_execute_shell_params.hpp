@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <string>
+
 struct WindowsExecuteShellParams {
     uint16_t    flags = 0;
     std::string exe_or_file;

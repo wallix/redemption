@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(file_validatorReceive)
         auto pos = response.size() / 2;
         setbuf(response.first(pos));
         RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
-        setbuf(response.from_at(pos));
+        setbuf(response.from_offset(pos));
         RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
         setbuf("o"_av);
         RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);

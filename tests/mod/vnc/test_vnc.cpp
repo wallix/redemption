@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 */
 
-#include "mod/vnc/vnc_params.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "test_only/transport/test_transport.hpp"
 

@@ -222,6 +222,10 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 #_advanced
 max_color_depth = option(8, 15, 16, 24, 32, default=24)
 
+# Enable front remoteFx
+#_advanced
+front_remotefx = boolean(default=True)
+
 # Persistent Disk Bitmap Cache on the front side.
 #_advanced
 persistent_disk_bitmap_cache = boolean(default=True)
@@ -244,7 +248,7 @@ fast_path = boolean(default=True)
 
 # Enables support of the remoteFX codec.
 #_advanced
-remotefx = boolean(default=True)
+remotefx = boolean(default=False)
 
 enable_suppress_output = boolean(default=True)
 

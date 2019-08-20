@@ -54,7 +54,6 @@
 
 #include "transport/socket_transport.hpp"
 
-#include "utils/arcsight.hpp"
 #include "utils/load_theme.hpp"
 #include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -1110,13 +1109,7 @@ private:
                 this->ini.get<cfg::context::target_port>(),
                 error_message);
 
-            ArcsightLogInfo arc_info;
-            arc_info.name = "CONNECTION";
-            arc_info.signatureID = ArcsightLogInfo::ID::CONNECTION;
-            arc_info.ApplicationProtocol = protocol;
-            arc_info.WallixBastionStatus = "FAIL";
-            arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info, this->session_reactor.get_current_time());
+            report_message.log6(LogId::CONNECTION_FAILED, this->session_reactor.get_current_time(), {});
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
 

@@ -33,7 +33,6 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "utils/crypto/ssl_lib.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 
 #include <functional> // std::reference_wrapper
 #include <memory>
@@ -48,7 +47,6 @@ class RedirectionInfo;
 class ReportMessageApi;
 class TimeObj;
 class Transport;
-class ArcsightLogInfo;
 namespace CHANNELS
 {
     class ChannelDefArray;
@@ -107,11 +105,8 @@ private:
         const ServerNotification server_cert_error_message;
 
         const RDPVerbose verbose;
-        KeyQvalueFormatter message;
         FrontAPI& front;
         ReportMessageApi& report_message;
-
-        void log6_server_cert(charp_or_string type, charp_or_string description, const ArcsightLogInfo & arc_info);
     };
 
 private:

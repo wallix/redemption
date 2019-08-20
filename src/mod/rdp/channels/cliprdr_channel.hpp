@@ -28,9 +28,7 @@
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/difftimeval.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -387,19 +385,16 @@ public:
             }
             if (!file) {
                 LOG(LOG_ERR, "FileValidatorValidator::receive_response: invalid id %u", file_validator_id);
-                auto const info = key_qvalue_pairs({
-                    {"type", "FILE_VERIFICATION_ERROR"},
-                    {"status", "Invalid file id"}
+                auto& target_name = (direction == Direction::FileFromClient)
+                    ? this->params.validator_params.up_target_name
+                    : this->params.validator_params.down_target_name;
+                this->report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
+                    KVLog("icap_service"_av, target_name),
+                    KVLog("status"_av, "Invalid file id"_av),
                 });
-
-                ArcsightLogInfo arc_info;
-                arc_info.name = "FILE_SCAN_ERROR";
-                arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
-                arc_info.ApplicationProtocol = "rdp";
-                arc_info.message = "Invalid file id";
-
-                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-                this->front.session_update("FILE_VERIFICATION=Invalid file id"_av);
+                this->front.session_update(str_concat(
+                    "FILE_VERIFICATION_ERROR=", target_name, "\x01Invalid file id"_av
+                ));
                 continue;
             }
 
@@ -409,28 +404,14 @@ public:
             auto& result_content = this->file_validator->get_content();
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
-            auto const info = key_qvalue_pairs({
-                {"type", "FILE_VERIFICATION" },
-                {"direction", str_direction},
-                {"filename", file_data.file_name},
-                {"status", result_content}
+            this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
+                KVLog("direction"_av, str_direction),
+                KVLog("file_name"_av, file_data.file_name),
+                KVLog("status"_av, result_content),
             });
 
-            ArcsightLogInfo arc_info;
-            arc_info.name = "FILE_SCAN_RESULT";
-            arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
-            arc_info.ApplicationProtocol = "rdp";
-            arc_info.fileName = file_data.file_name;
-            arc_info.fileSize = file_data.file_size;
-            arc_info.direction_flag = (direction == Direction::FileFromServer)
-                ? ArcsightLogInfo::Direction::SERVER_SRC
-                : ArcsightLogInfo::Direction::SERVER_DST;
-            arc_info.message = result_content;
-
-            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-            std::string message = str_concat("FILE_VERIFICATION=",
-                file_data.file_name, '\x01', str_direction, '\x01', result_content);
-            this->front.session_update(message);
+            this->front.session_update(str_concat("FILE_VERIFICATION=",
+                str_direction, '\x01', file_data.file_name, '\x01', result_content));
 
             if (file->is_wait_validator()) {
                 if (direction == Direction::FileFromClient) {
@@ -742,7 +723,7 @@ private:
         return true;
     }
 
-    void log_file_info(ClipboardSideData::FileContent::FileData& file_info, bool from_remote_session)
+    void log_file_info(ClipboardSideData::FileContent::FileData& file_data, bool from_remote_session)
     {
         const char* type = (
                   from_remote_session
@@ -752,7 +733,7 @@ private:
 
         uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
 
-        file_info.sha256.final(digest);
+        file_data.sha256.final(digest);
 
         char digest_s[128];
         snprintf(digest_s, sizeof(digest_s),
@@ -763,31 +744,25 @@ private:
             digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
             digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
 
-        auto const file_size_str = std::to_string(file_info.file_size);
+        char file_size[128];
+        std::snprintf(file_size, std::size(file_size), "%lu", file_data.file_size);
 
-        auto const info = key_qvalue_pairs({
-                { "type", type },
-                { "file_name", file_info.file_name},
-                { "size", file_size_str },
-                { "sha256", digest_s }
-            });
+        this->report_message.log6(from_remote_session
+            ? LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION
+            : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
+            this->session_reactor.get_current_time(), {
+            KVLog("file_name"_av, file_data.file_name),
+            KVLog("size"_av, {file_size, strlen(file_size)}),
+            KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
+        });
 
-        ArcsightLogInfo arc_info;
-        arc_info.name = type;
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.fileName = file_info.file_name;
-        arc_info.fileSize = file_info.file_size;
-        arc_info.direction_flag = from_remote_session ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
-
-        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-        if (!this->params.dont_log_data_into_syslog) {
-            LOG(LOG_INFO, "%s", info);
-        }
+        LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
+            "type=%s file_name=%s size=%s sha256=%s",
+            type, file_data.file_name, file_size, digest_s);
 
         if (!this->params.dont_log_data_into_wrm) {
             std::string message = str_concat(
-                type, '=', file_info.file_name, '\x01', file_size_str, '\x01', digest_s);
+                type, '=', file_data.file_name, '\x01', file_size, '\x01', digest_s);
             this->front.session_update(message);
         }
     }
@@ -824,45 +799,38 @@ private:
 
                 auto const size_str = std::to_string(in_header.dataLen());
 
-                std::string info;
-                ::key_qvalue_pairs(
-                        info,
-                        {
-                            { "type", type },
-                            { "format", format },
-                            { "size", size_str }
-                        }
-                    );
-                if (!data_to_dump.empty()) {
-                    ::key_qvalue_pairs(
-                        info,
-                        {
-                            { "partial_data", data_to_dump }
-                        }
-                    );
-                }
-
-                ArcsightLogInfo arc_info;
-                arc_info.name = data_to_dump.empty() ? "CB_COPYING_PASTING_DATA" : "CB_COPYING_PASTING_DATA_EX";
-                arc_info.signatureID = data_to_dump.empty() ? ArcsightLogInfo::ID::CB_COPYING_PASTING_DATA : ArcsightLogInfo::ID::CB_COPYING_PASTING_DATA_EX;
-                arc_info.ApplicationProtocol = "rdp";
-                arc_info.message = info;
-                arc_info.direction_flag = is_from_remote_session ? ArcsightLogInfo::Direction::SERVER_SRC : ArcsightLogInfo::Direction::SERVER_DST;
-
                 if (log_current_activity) {
-                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                    if (data_to_dump.empty()) {
+                        this->report_message.log6(is_from_remote_session
+                            ? LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION
+                            : LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION,
+                            this->session_reactor.get_current_time(), {
+                            KVLog("format"_av, format),
+                            KVLog("size"_av, size_str),
+                            });
+                    }
+                    else {
+                        this->report_message.log6(is_from_remote_session
+                            ? LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX
+                            : LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX,
+                            this->session_reactor.get_current_time(), {
+                            KVLog("format"_av, format),
+                            KVLog("size"_av, size_str),
+                            KVLog("partial_data"_av, data_to_dump),
+                            });
+                    }
                 }
 
-                if (!this->params.dont_log_data_into_syslog) {
-                    LOG(LOG_INFO, "%s", info);
-                }
+                LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
+                    "type=%s format=%s size=%s %s%s",
+                    type.data(), format, size_str,
+                    data_to_dump.empty() ? "" : " partial_data",
+                    data_to_dump.c_str());
 
                 if (!this->params.dont_log_data_into_wrm) {
-                    str_assign(info, type, '=', format, '\x01', size_str);
-                    if (!data_to_dump.empty()) {
-                        str_append(info, '\x01', data_to_dump);
-                    }
-
+                    auto info = data_to_dump.empty()
+                        ? str_concat(type, '=', format, '\x01', size_str)
+                        : str_concat(type, '=', format, '\x01', size_str, '\x01', data_to_dump);
                     this->front.session_update(info);
                 }
             }

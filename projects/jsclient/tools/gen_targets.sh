@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd "$(dirname "$0")/../../.."
-d=projects/browser_client_JS
+d=projects/jsclient
 
 disable_sources=''
 for f in \

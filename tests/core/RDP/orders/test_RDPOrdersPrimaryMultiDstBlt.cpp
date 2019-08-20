@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_multidstblt);
         RED_CHECK_MEM(
-            out_stream.get_bytes().from_at(1),
-            out_stream2.get_bytes().from_at(1));
+            out_stream.get_bytes().from_offset(1),
+            out_stream2.get_bytes().from_offset(1));
     }
 }

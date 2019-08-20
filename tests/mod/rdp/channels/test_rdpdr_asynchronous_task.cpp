@@ -47,8 +47,6 @@ public:
 
 RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 {
-    uint32_t verbose = 1;
-
     int fd = ::open(FIXTURES_PATH "/rfc959.txt", O_RDONLY);
     RED_CHECK_NE(fd, -1);
     unique_fd ufd{fd};
@@ -67,7 +65,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     RdpdrDriveReadTask rdpdr_drive_read_task(
         fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
-        test_to_server_sender, to_verbose_flags(verbose));
+        test_to_server_sender, to_verbose_flags(0));
 
     bool run_task = true;
     SessionReactor session_reactor;
@@ -89,8 +87,6 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
 RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 {
-    uint32_t verbose = 1;
-
     auto contents = RED_REQUIRE_GET_FILE_CONTENTS(FIXTURES_PATH "/sample.bmp");
     RED_CHECK_EQUAL(1974u, contents.size());
 
@@ -105,7 +101,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast(contents.data()),
-        contents.size(), test_to_server_sender, to_verbose_flags(verbose));
+        contents.size(), test_to_server_sender, to_verbose_flags(0));
 
     bool run_task = true;
     SessionReactor session_reactor;

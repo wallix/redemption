@@ -120,6 +120,19 @@ private:
         return ms.count();
     }
 
+    void log6(LogId id, KVList kv_list)
+    {
+        this->report_message.log6(id, this->session_reactor.get_current_time(), kv_list);
+
+        if (REDEMPTION_UNLIKELY(bool(this->verbose & RDPVerbose::sesprobe))) {
+            std::string msg;
+            for (auto const& kv : kv_list) {
+                str_append(msg, kv.key, '=', kv.value, ' ');
+            }
+            LOG(LOG_INFO, "type=%s %s", msg, detail::log_id_string_map[unsigned(id)].data());
+        }
+    }
+
 public:
 
     struct Params
@@ -951,19 +964,7 @@ public:
             }
         }
         else if (!::strcasecmp(order_.c_str(), "SESSION_ENDING_IN_PROGRESS")) {
-            auto info = key_qvalue_pairs({
-                {"type", "SESSION_ENDING_IN_PROGRESS"},
-            });
-
-            ArcsightLogInfo arc_info;
-            arc_info.name = "SESSION_ENDING_IN_PROGRESS";
-            arc_info.signatureID = ArcsightLogInfo::ID::SESSION_ENDING_IN_PROGRESS;
-            arc_info.ApplicationProtocol = "rdp";
-            arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+            this->log6(LogId::SESSION_ENDING_IN_PROGRESS, {});
 
             this->session_probe_ending_in_progress = true;
         }
@@ -977,48 +978,28 @@ public:
                 if (!::strcasecmp(order_.c_str(), "KERBEROS_TICKET_CREATION") ||
                     !::strcasecmp(order_.c_str(), "KERBEROS_TICKET_DELETION")) {
                     if (parameters_.size() == 7) {
-                        auto info = key_qvalue_pairs({
-                                { "type",            order_         },
-                                { "encryption_type", parameters_[0] },
-                                { "client_name",     parameters_[1] },
-                                { "server_name",     parameters_[2] },
-                                { "start_time",      parameters_[3] },
-                                { "end_time",        parameters_[4] },
-                                { "renew_time",      parameters_[5] },
-                                { "flags",           parameters_[6] }
-                            });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = order_;
-                        arc_info.signatureID = ArcsightLogInfo::ID::KERBEROS_TICKET;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                        this->log6(
+                            !::strcasecmp(order_.c_str(), "KERBEROS_TICKET_CREATION")
+                                ? LogId::KERBEROS_TICKET_CREATION
+                                : LogId::KERBEROS_TICKET_DELETION, {
+                            KVLog("encryption_type"_av, parameters_[0]),
+                            KVLog("client_name"_av,     parameters_[1]),
+                            KVLog("server_name"_av,     parameters_[2]),
+                            KVLog("start_time"_av,      parameters_[3]),
+                            KVLog("end_time"_av,        parameters_[4]),
+                            KVLog("renew_time"_av,      parameters_[5]),
+                            KVLog("flags"_av,           parameters_[6]),
+                        });
                     }
                     else {
                         message_format_invalid = true;
                     }
                 }
                 else if (!::strcasecmp(order_.c_str(), "PASSWORD_TEXT_BOX_GET_FOCUS")) {
-                    auto info = key_qvalue_pairs({
-                        {"type",   "PASSWORD_TEXT_BOX_GET_FOCUS"},
-                        {"status", parameters_[0]},
+                    this->log6(
+                        LogId::PASSWORD_TEXT_BOX_GET_FOCUS, {
+                        KVLog("status"_av, parameters_[0]),
                     });
-
-                    ArcsightLogInfo arc_info;
-                    arc_info.name = "PASSWORD_TEXT_BOX_GET_FOCUS";
-                    arc_info.signatureID = ArcsightLogInfo::ID::PASSWORD_TEXT_BOX_GET_FOCUS;
-                    arc_info.WallixBastionStatus = parameters_[0];
-                    arc_info.ApplicationProtocol = "rdp";
-                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                     if (parameters_.size() == 1) {
                         this->front.set_focus_on_password_textbox(
@@ -1029,21 +1010,10 @@ public:
                     }
                 }
                 else if (!::strcasecmp(order_.c_str(), "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS")) {
-                    auto info = key_qvalue_pairs({
-                        {"type",   "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS"},
-                        {"status", parameters_[0]},
+                    this->log6(
+                        LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS, {
+                        KVLog("status"_av, parameters_[0]),
                     });
-
-                    ArcsightLogInfo arc_info;
-                    arc_info.name = "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS";
-                    arc_info.signatureID = ArcsightLogInfo::ID::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS;
-                    arc_info.WallixBastionStatus = parameters_[0];
-                    arc_info.ApplicationProtocol = "rdp";
-                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                     if (parameters_.size() == 1) {
                         this->front.set_focus_on_unidentified_input_field(
@@ -1055,21 +1025,10 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "UAC_PROMPT_BECOME_VISIBLE")) {
                     if (parameters_.size() == 1) {
-                        auto info = key_qvalue_pairs({
-                            {"type",   "UAC_PROMPT_BECOME_VISIBLE"},
-                            {"status", parameters_[0]},
+                        this->log6(
+                            LogId::UAC_PROMPT_BECOME_VISIBLE, {
+                            KVLog("status"_av, parameters_[0]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "UAC_PROMPT_BECOME_VISIBLE";
-                        arc_info.signatureID = ArcsightLogInfo::ID::UAC_PROMPT_BECOME_VISIBLE;
-                        arc_info.WallixBastionStatus = parameters_[0];
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                         this->front.set_consent_ui_visible(!::strcasecmp(parameters_[0].c_str(), "yes"));
                     }
@@ -1079,22 +1038,11 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "INPUT_LANGUAGE")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",         "INPUT_LANGUAGE"},
-                            {"identifier",   parameters_[0]},
-                            {"display_name", parameters_[1]},
+                        this->log6(
+                            LogId::INPUT_LANGUAGE, {
+                            KVLog("identifier"_av,   parameters_[0]),
+                            KVLog("display_name"_av, parameters_[1]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "INPUT_LANGUAGE";
-                        arc_info.signatureID = ArcsightLogInfo::ID::INPUT_LANGUAGE;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                         this->front.set_keylayout(
                             ::strtol(parameters_[0].c_str(), nullptr, 16));
@@ -1106,21 +1054,12 @@ public:
                 else if (!::strcasecmp(order_.c_str(), "NEW_PROCESS") ||
                          !::strcasecmp(order_.c_str(), "COMPLETED_PROCESS")) {
                     if (parameters_.size() == 1) {
-                        auto info = key_qvalue_pairs({
-                            {"type",         order_.c_str()},
-                            {"command_line", parameters_[0]},
+                        this->log6(
+                            !::strcasecmp(order_.c_str(), "NEW_PROCESS")
+                                ? LogId::NEW_PROCESS
+                                : LogId::COMPLETED_PROCESS, {
+                            KVLog("command_line"_av, parameters_[0]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = order_;
-                        arc_info.signatureID = ArcsightLogInfo::ID::PROCESS;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1128,26 +1067,15 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "STARTUP_APPLICATION_FAIL_TO_RUN")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",             "STARTUP_APPLICATION_FAIL_TO_RUN"},
-                            {"application_name", parameters_[0]},
-                            {"raw_result",       parameters_[1]},
+                        this->log6(LogId::STARTUP_APPLICATION_FAIL_TO_RUN, {
+                            KVLog("application_name"_av, parameters_[0]),
+                            KVLog("raw_result"_av,       parameters_[1]),
                         });
 
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "STARTUP_APPLICATION";
-                        arc_info.signatureID = ArcsightLogInfo::ID::STARTUP_APPLICATION;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.WallixBastionStatus = "FAIL_TO_RUN";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
-
                         LOG(LOG_ERR,
-                            "Session Probe failed to run startup application: %s", info);
+                            "Session Probe failed to run startup application: "
+                            "app_name=%s  raw_result=%s",
+                            parameters_[0], parameters_[1]);
 
                         this->report_message.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
@@ -1158,27 +1086,17 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "STARTUP_APPLICATION_FAIL_TO_RUN_2")) {
                     if (parameters_.size() == 3) {
-                        auto info = key_qvalue_pairs({
-                            {"type",               "STARTUP_APPLICATION_FAIL_TO_RUN"},
-                            {"application_name",   parameters_[0]},
-                            {"raw_result",         parameters_[1]},
-                            {"raw_result_message", parameters_[2]},
+                        this->log6(
+                            LogId::STARTUP_APPLICATION_FAIL_TO_RUN_2, {
+                            KVLog("application_name"_av,   parameters_[0]),
+                            KVLog("raw_result"_av,         parameters_[1]),
+                            KVLog("raw_result_message"_av, parameters_[2]),
                         });
 
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "STARTUP_APPLICATION";
-                        arc_info.signatureID = ArcsightLogInfo::ID::STARTUP_APPLICATION;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.WallixBastionStatus = "FAIL_TO_RUN";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
-
                         LOG(LOG_ERR,
-                            "Session Probe failed to run startup application: %s", info);
+                            "Session Probe failed to run startup application: "
+                            "app_name=%s  raw_result=%s  raw_result_message=%s",
+                            parameters_[0], parameters_[1], parameters_[2]);
 
                         this->report_message.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
@@ -1189,22 +1107,11 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "OUTBOUND_CONNECTION_BLOCKED")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",             "OUTBOUND_CONNECTION_BLOCKED"},
-                            {"rule",             parameters_[0]},
-                            {"application_name", parameters_[1]},
+                        this->log6(
+                            LogId::OUTBOUND_CONNECTION_BLOCKED, {
+                            KVLog("rule"_av,             parameters_[0]),
+                            KVLog("application_name"_av, parameters_[1]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "OUTBOUND_CONNECTION_BLOCKED";
-                        arc_info.signatureID = ArcsightLogInfo::ID::OUTBOUND_CONNECTION;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1212,22 +1119,10 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "OUTBOUND_CONNECTION_DETECTED")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",             "OUTBOUND_CONNECTION_DETECTED"},
-                            {"rule",             parameters_[0]},
-                            {"application_name", parameters_[1]}
-                            });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "OUTBOUND_CONNECTION_DETECTED";
-                        arc_info.signatureID = ArcsightLogInfo::ID::OUTBOUND_CONNECTION;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                        this->log6(LogId::OUTBOUND_CONNECTION_DETECTED, {
+                            KVLog("rule"_av,             parameters_[0]),
+                            KVLog("application_name"_av, parameters_[1]),
+                        });
 
                         char message[4096];
 
@@ -1259,23 +1154,16 @@ public:
                                 description);
 
                         if (result) {
-                            auto info = key_qvalue_pairs({
-                                {"type",         order_.c_str()},
-                                {"rule",         description},
-                                {"app_name",     parameters_[1]},
-                                {"app_cmd_line", parameters_[2]},
-                                {"dst_addr",     parameters_[3]},
-                                {"dst_port",     parameters_[4]},
-                                });
-
-                            ArcsightLogInfo arc_info;
-                            arc_info.name = order_;
-                            arc_info.signatureID = ArcsightLogInfo::ID::OUTBOUND_CONNECTION;
-                            arc_info.message = info;
-                            arc_info.ApplicationProtocol = "rdp";
-                            arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                            this->log6(
+                                deny
+                                    ? LogId::OUTBOUND_CONNECTION_BLOCKED_2
+                                    : LogId::OUTBOUND_CONNECTION_DETECTED_2, {
+                                KVLog("rule"_av,         description),
+                                KVLog("app_name"_av,     parameters_[1]),
+                                KVLog("app_cmd_line"_av, parameters_[2]),
+                                KVLog("dst_addr"_av,     parameters_[3]),
+                                KVLog("dst_port"_av,     parameters_[4]),
+                            });
 
                             {
                                 char message[4096];
@@ -1289,8 +1177,6 @@ public:
                                     (deny ? "FINDCONNECTION_DENY" : "FINDCONNECTION_NOTIFY"),
                                     message);
                             }
-
-                            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                             if (deny) {
                                 if (::strtoul(parameters_[5].c_str(), nullptr, 10)) {
@@ -1331,21 +1217,12 @@ public:
                                 type, pattern, description);
 
                         if (result) {
-                            auto info = key_qvalue_pairs({
-                                {"type",         order_.c_str()},
-                                {"rule",         description},
-                                {"app_name",     parameters_[1]},
-                                {"app_cmd_line", parameters_[2]},
-                                });
-
-                            ArcsightLogInfo arc_info;
-                            arc_info.name = order_;
-                            arc_info.signatureID = ArcsightLogInfo::ID::PROCESS;
-                            arc_info.message = info;
-                            arc_info.ApplicationProtocol = "rdp";
-                            arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+                            this->log6(
+                                deny ? LogId::PROCESS_BLOCKED : LogId::PROCESS_DETECTED, {
+                                KVLog("rule"_av,         description),
+                                KVLog("app_name"_av,     parameters_[1]),
+                                KVLog("app_cmd_line"_av, parameters_[2]),
+                            });
 
                             {
                                 char message[4096];
@@ -1358,8 +1235,6 @@ public:
                                     (deny ? "FINDPROCESS_DENY" : "FINDPROCESS_NOTIFY"),
                                     message);
                             }
-
-                            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
 
                             if (deny) {
                                 if (::strtoul(parameters_[3].c_str(), nullptr, 10)) {
@@ -1385,23 +1260,19 @@ public:
                     }
                 }
                 else if (!::strcasecmp(order_.c_str(), "FOREGROUND_WINDOW_CHANGED")) {
+                    if (parameters_.size() >= 1) {
+                        this->log6(LogId::TITLE_BAR, {
+                            KVLog("source"_av, "Probe"_av),
+                            KVLog("window"_av, parameters_[0]),
+                        });
+                    }
                     if ((parameters_.size() == 2) || (parameters_.size() == 3)) {
-                        auto info = key_qvalue_pairs({
-                            {"type",   "TITLE_BAR"},
-                            {"source", "Probe"},
-                            {"window", parameters_[0]},
-                            });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = order_;
-                        arc_info.signatureID = ArcsightLogInfo::ID::FOREGROUND_WINDOW_CHANGED;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
+                        this->log6(LogId::FOREGROUND_WINDOW_CHANGED, {
+                            KVLog("text"_av,         parameters_[0]),
+                            KVLog("class_name"_av,   parameters_[1]),
+                            KVLog("command_line"_av, (parameters_.size() == 2)
+                                ? array_view_const_char{} : parameters_[2]),
+                        });
                     }
                     else {
                         message_format_invalid = true;
@@ -1409,22 +1280,10 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "BUTTON_CLICKED")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",    "BUTTON_CLICKED"},
-                            {"windows", parameters_[0]},
-                            {"button",  parameters_[1]},
+                        this->log6(LogId::BUTTON_CLICKED, {
+                            KVLog("window"_av, parameters_[0]),
+                            KVLog("button"_av, parameters_[1]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = order_;
-                        arc_info.signatureID = ArcsightLogInfo::ID::BUTTON_CLICKED;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1432,23 +1291,12 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "CHECKBOX_CLICKED")) {
                     if (parameters_.size() == 3) {
-                        auto info = key_qvalue_pairs({
-                            {"type",     "CHECKBOX_CLICKED"},
-                            {"windows",  parameters_[0]},
-                            {"checkbox", parameters_[1]},
-                            {"state",    ::button_state_to_string(::atoi(parameters_[2].c_str()))}
+                        this->log6(LogId::CHECKBOX_CLICKED, {
+                            KVLog("window"_av, parameters_[0]),
+                            KVLog("checkbox"_av, parameters_[1]),
+                            KVLog("state"_av,
+                                ::button_state_to_string(::atoi(parameters_[2].c_str()))),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = order_;
-                        arc_info.signatureID = ArcsightLogInfo::ID::CHECKBOX_CLICKED;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1457,22 +1305,10 @@ public:
 
                 else if (!::strcasecmp(order_.c_str(), "EDIT_CHANGED")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",    "EDIT_CHANGED"},
-                            {"windows", parameters_[0]},
-                            {"edit",    parameters_[1]},
+                        this->log6(LogId::EDIT_CHANGED, {
+                            KVLog("window"_av, parameters_[0]),
+                            KVLog("edit"_av, parameters_[1]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "EDIT_CHANGED";
-                        arc_info.signatureID = ArcsightLogInfo::ID::EDIT_CHANGED;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1481,22 +1317,10 @@ public:
 
                 else if (!::strcasecmp(order_.c_str(), "WEB_ATTEMPT_TO_PRINT")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",  "WEB_ATTEMPT_TO_PRINT"},
-                            {"url",   parameters_[0]},
-                            {"title", parameters_[1]},
+                        this->log6(LogId::WEB_ATTEMPT_TO_PRINT, {
+                            KVLog("url"_av,   parameters_[0]),
+                            KVLog("title"_av, parameters_[1]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "WEB_ATTEMPT_TO_PRINT";
-                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_ATTEMPT_TO_PRINT;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1504,22 +1328,10 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "WEB_BEFORE_NAVIGATE")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type", "WEB_BEFORE_NAVIGATE"},
-                            {"url",  parameters_[0]},
-                            {"post", parameters_[1]},
+                        this->log6(LogId::WEB_BEFORE_NAVIGATE, {
+                            KVLog("url"_av,  parameters_[0]),
+                            KVLog("post"_av, parameters_[1]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "WEB_BEFORE_NAVIGATE";
-                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_BEFORE_NAVIGATE;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1527,22 +1339,10 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "WEB_DOCUMENT_COMPLETE")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",  "WEB_DOCUMENT_COMPLETE"},
-                            {"url",   parameters_[0]},
-                            {"title", parameters_[1]},
+                        this->log6(LogId::WEB_DOCUMENT_COMPLETE, {
+                            KVLog("url"_av,   parameters_[0]),
+                            KVLog("title"_av, parameters_[1]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "WEB_DOCUMENT_COMPLETE";
-                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_DOCUMENT_COMPLETE;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1550,24 +1350,12 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "WEB_NAVIGATE_ERROR")) {
                     if (parameters_.size() == 4) {
-                        auto info = key_qvalue_pairs({
-                            {"type",         "WEB_NAVIGATE_ERROR"},
-                            {"url",          parameters_[0]},
-                            {"title",        parameters_[1]},
-                            {"code",         parameters_[2]},
-                            {"display_name", parameters_[3]},
+                        this->log6(LogId::WEB_NAVIGATE_ERROR, {
+                            KVLog("url"_av,          parameters_[0]),
+                            KVLog("title"_av,        parameters_[1]),
+                            KVLog("code"_av,         parameters_[2]),
+                            KVLog("display_name"_av, parameters_[3]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "WEB_NAVIGATE_ERROR";
-                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_NAVIGATE_ERROR;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1575,21 +1363,9 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "WEB_NAVIGATION")) {
                     if (parameters_.size() == 1) {
-                        auto info = key_qvalue_pairs({
-                            {"type", "WEB_NAVIGATION"},
-                            {"url",  parameters_[0]},
+                        this->log6(LogId::WEB_NAVIGATION, {
+                            KVLog("url"_av,   parameters_[0]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "WEB_NAVIGATION";
-                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_NAVIGATION;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1597,21 +1373,9 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "WEB_PRIVACY_IMPACTED")) {
                     if (parameters_.size() == 1) {
-                        auto info = key_qvalue_pairs({
-                            {"type",     "WEB_PRIVACY_IMPACTED"},
-                            {"impacted", parameters_[0]},
+                        this->log6(LogId::WEB_PRIVACY_IMPACTED, {
+                            KVLog("impacted"_av, parameters_[0]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "WEB_PRIVACY_IMPACTED";
-                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_PRIVACY_IMPACTED;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1619,22 +1383,11 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "WEB_ENCRYPTION_LEVEL_CHANGED")) {
                     if (parameters_.size() == 2) {
-                        auto info = key_qvalue_pairs({
-                            {"type",         "WEB_ENCRYPTION_LEVEL_CHANGED"},
-                            {"identifier",   parameters_[0]},
-                            {"display_name", parameters_[1]},
+                        this->log6(
+                            LogId::WEB_ENCRYPTION_LEVEL_CHANGED, {
+                            KVLog("identifier"_av,   parameters_[0]),
+                            KVLog("display_name"_av, parameters_[1]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "WEB_ENCRYPTION_LEVEL_CHANGED";
-                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_ENCRYPTION_LEVEL_CHANGED;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1642,21 +1395,9 @@ public:
                 }
                 else if (!::strcasecmp(order_.c_str(), "WEB_THIRD_PARTY_URL_BLOCKED")) {
                     if (parameters_.size() == 1) {
-                        auto info = key_qvalue_pairs({
-                            {"type", "WEB_THIRD_PARTY_URL_BLOCKED"},
-                            {"url",  parameters_[0]},
+                        this->log6(LogId::WEB_THIRD_PARTY_URL_BLOCKED, {
+                            KVLog("url"_av,   parameters_[0]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "WEB_THIRD_PARTY_URL_BLOCKED";
-                        arc_info.signatureID = ArcsightLogInfo::ID::WEB_THIRD_PARTY_URL_BLOCKED;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
@@ -1665,27 +1406,14 @@ public:
 
                 else if (!::strcasecmp(order_.c_str(), "GROUP_MEMBERSHIP")) {
                     if (parameters_.size() == 1) {
-                        auto info = key_qvalue_pairs({
-                            {"type", "GROUP_MEMBERSHIP"},
-                            {"groups",  parameters_[0]},
+                        this->log6(LogId::GROUP_MEMBERSHIP, {
+                            KVLog("groups"_av, parameters_[0]),
                         });
-
-                        ArcsightLogInfo arc_info;
-                        arc_info.name = "GROUP_MEMBERSHIP";
-                        arc_info.signatureID = ArcsightLogInfo::ID::GROUP_MEMBERSHIP;
-                        arc_info.message = info;
-                        arc_info.ApplicationProtocol = "rdp";
-                        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "%s", info);
                     }
                     else {
                         message_format_invalid = true;
                     }
                 }
-
 
                 else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_SUPPORTED")) {
                     if (parameters_.size() == 1) {

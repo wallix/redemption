@@ -35,7 +35,6 @@
 #include "core/window_constants.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-#include "utils/arcsight.hpp"
 #include "utils/log.hpp"
 #include "utils/recording_progress.hpp"
 
@@ -363,7 +362,6 @@ public:
     }
 
 private:
-    KeyQvalueFormatter message;
     bool test_pattern(
         ZStrUtf8Char const& utf8_char,
         PatternSearcher & searcher, bool is_pattern_kill
@@ -563,10 +561,6 @@ public:
         }
     }
 
-private:
-    KeyQvalueFormatter formatted_message;
-
-public:
     void flush() {
         if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
             if (this->hidden_masked_char_count) {
@@ -574,16 +568,9 @@ public:
             }
             this->hidden_masked_char_count = 0;
 
-            this->formatted_message.assign("KBD_INPUT", {
-                {"data", this->kbd_stream.get_bytes().as_chars()}
+            this->report_message.log6(LogId::KBD_INPUT, tvtime(), {
+                KVLog("data"_av, this->kbd_stream.get_bytes().as_chars()),
             });
-
-            ArcsightLogInfo arc_info;
-            arc_info.name = "KBD_INPUT";
-            arc_info.signatureID = ArcsightLogInfo::ID::KBD_INPUT;
-            arc_info.message = this->formatted_message.str();
-
-            this->report_message.log6(this->formatted_message.str(), arc_info, tvtime());
 
             this->kbd_stream.rewind();
         }
@@ -1189,10 +1176,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             line_with_2_var("identifier"_av, "display_name"_av);
         }
         else if (cstr_equal("FILE_VERIFICATION", order)) {
-            line_with_3_var("filename"_av, "direction"_av, "status"_av);
+            line_with_3_var("direction"_av, "filename"_av, "status"_av);
         }
         else if (cstr_equal("FILE_VERIFICATION_ERROR", order)) {
-            line_with_1_var("status"_av);
+            line_with_2_var("icap_service"_av, "status"_av);
         }
 
         else if (cstr_equal("GROUP_MEMBERSHIP", order)) {
@@ -1523,9 +1510,7 @@ class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CapturePro
 
     NotifyTitleChanged & notify_title_changed;
 
-    KeyQvalueFormatter formatted_message;
     ReportMessageApi * report_message;
-
 public:
     explicit TitleCaptureImpl(
         const timeval & now,
@@ -1557,21 +1542,17 @@ public:
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;
 
-            auto title = this->title_extractor.get().extract_title();
+            array_view_const_char title = this->title_extractor.get().extract_title();
 
             if (title.data()/* && title.size()*/) {
                 notify_title_changed.notify_title_changed(now, title);
                 if (&this->title_extractor.get() != &this->agent_title_extractor
                  && this->report_message)
                 {
-                    this->formatted_message.assign("TITLE_BAR", {{"data", title}});
-
-                    ArcsightLogInfo arc_info;
-                    arc_info.name = "TITLE_BAR";
-                    arc_info.signatureID = ArcsightLogInfo::ID::TITLE_BAR;
-                    arc_info.message = this->formatted_message.str();
-
-                    this->report_message->log6(this->formatted_message.str(), arc_info, tvtime());
+                    this->report_message->log6(LogId::TITLE_BAR, tvtime(), {
+                        KVLog("source"_av, "OCR"_av),
+                        KVLog("window"_av, title),
+                    });
                 }
             }
 
@@ -2252,6 +2233,7 @@ void Capture::draw(RDPBitmapData       const & cmd, Bitmap const & bmp) { this->
 void Capture::draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) { this->draw_impl(cmd, clip, bmp);}
 void Capture::draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) { this->draw_impl(cmd, clip, color_ctx, bmp); }
 void Capture::draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+void Capture::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) { this->draw_impl(cmd, content); }
 
 void Capture::draw(const RDP::RAIL::WindowIcon                     & cmd) { this->draw_impl(cmd); }
 void Capture::draw(const RDP::RAIL::CachedIcon                     & cmd) { this->draw_impl(cmd); }

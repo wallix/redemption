@@ -52,45 +52,40 @@ struct kv_pair_
 
 using kv_pair = const kv_pair_;
 
-
-inline void escaped_key_qvalue(std::string & escaped_subject, array_view_const_char subject)
+namespace qvalue_table_formats
 {
-    struct EscapedTable
+    constexpr auto log()
     {
-        constexpr EscapedTable() noexcept
-          : t{}
-        {
-            t[int('\\')] = '\\';
-            t[int('"')] = '"';
-            t[int('\n')] = 'n';
-            t[int('\r')] = 'r';
-        }
+        std::array<char, 256> t{};
+        t[int('"')] = '"';
+        t[int('\\')] = '\\';
+        t[int('\n')] = 'n';
+        t[int('\r')] = 'r';
+        return t;
+    }
 
-        char operator[](char c) const
-        {
-            // char -> uchar because char(128) must be negative
-            using uchar = unsigned char;
-            return this->t[unsigned(uchar(c))];
-        }
+    constexpr inline auto log_table = log();
+}
 
-    private:
-        char t[256];
-    };
-
-    constexpr EscapedTable escaped_table;
-
-    auto pred = [&](char c){
-        return bool(escaped_table[c]);
+inline void escaped_qvalue(
+    std::string& escaped_subject,
+    array_view_const_char subject,
+    std::array<char, 256> const& escaped_table)
+{
+    auto escaped = [&](char c){
+        // char -> uchar because char(128) must be negative
+        using uchar = unsigned char;
+        return escaped_table[unsigned(uchar(c))];
     };
 
     auto first = subject.begin();
     auto last = subject.end();
 
     decltype(first) p;
-    while ((p = std::find_if(first, last, pred)) != last) {
+    while ((p = std::find_if(first, last, escaped)) != last) {
         escaped_subject.append(first, p);
         escaped_subject += '\\';
-        escaped_subject += escaped_table[*p];
+        escaped_subject += escaped(*p);
         first = p + 1;
     }
 
@@ -107,7 +102,7 @@ inline std::string key_qvalue_pairs(std::string & buffer, array_view<kv_pair> pa
     for (auto p: pairs){
         buffer.append(p.key.data(), p.key.size());
         buffer += "=\"";
-        escaped_key_qvalue(buffer, p.value);
+        escaped_qvalue(buffer, p.value, qvalue_table_formats::log_table);
         buffer += "\" ";
     }
     buffer.pop_back();
@@ -150,7 +145,7 @@ struct KeyQvalueFormatter
             this->buf += ' ';
             this->buf.append(kv.key.data(), kv.key.size());
             this->buf += "=\"";
-            escaped_key_qvalue(this->buf, kv.value);
+            escaped_qvalue(this->buf, kv.value, qvalue_table_formats::log_table);
             this->buf += '"';
         }
         return this->av();

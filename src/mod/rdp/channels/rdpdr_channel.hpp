@@ -28,8 +28,6 @@
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "system/ssl_sha256.hpp"
-#include "utils/arcsight.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 #include "core/file_system_virtual_channel_params.hpp"
@@ -1456,29 +1454,19 @@ public:
                             this->device_redirection_manager.get_device_type(
                                 this->client_device_io_response.DeviceId());
                         if (rdpdr::RDPDR_DTYP_FILESYSTEM != device_type) {
-                            auto device_name = (p_device_name)
-                              ? make_array_view(*p_device_name)
-                              : array_view_const_char();
-
+                            auto device_name = (p_device_name) ? *p_device_name : ""_av;
                             auto device_type_name = rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(device_type);
-                            auto info = key_qvalue_pairs({
-                                    { "type", "DRIVE_REDIRECTION_USE" },
-                                    { "device_name", device_name },
-                                    { "device_type", device_type_name }
-                                });
 
-                            ArcsightLogInfo arc_info;
-                            arc_info.name = "DRIVE_REDIRECTION_USE";
-                            arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_USE;
-                            arc_info.ApplicationProtocol = "rdp";
-                            arc_info.message = info;
-                            arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
+                            this->report_message.log6(
+                                LogId::DRIVE_REDIRECTION_USE,
+                                this->session_reactor.get_current_time(), {
+                                KVLog("device_name"_av, device_name),
+                                KVLog("device_type"_av, device_type_name),
+                            });
 
-                            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                            if (!this->param_dont_log_data_into_syslog) {
-                                LOG(LOG_INFO, "%s", info);
-                            }
+                            LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                "type=DRIVE_REDIRECTION_USE device_name=%s device_type=%s",
+                                device_name.data(), device_type_name.data());
 
                             if (!this->param_dont_log_data_into_wrm) {
                                 std::string message = str_concat(
@@ -1568,26 +1556,18 @@ public:
                                         target_iter->end_of_file, digest_s);
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
-                                    auto const info = key_qvalue_pairs({
-                                            { "type", "DRIVE_REDIRECTION_READ_EX" },
-                                            { "file_name", file_path },
-                                            { "size", file_size_str },
-                                            { "sha256", digest_s }
-                                        });
+                                    this->report_message.log6(
+                                        LogId::DRIVE_REDIRECTION_READ_EX,
+                                        this->session_reactor.get_current_time(), {
+                                        KVLog("file_name"_av, file_path),
+                                        KVLog("size"_av, file_size_str),
+                                        KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
+                                    });
 
-                                    ArcsightLogInfo arc_info;
-                                    arc_info.name = "DRIVE_REDIRECTION_READ_EX";
-                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_READ_EX;
-                                    arc_info.ApplicationProtocol = "rdp";
-                                    arc_info.filePath = file_path;
-                                    arc_info.fileSize = target_iter->end_of_file;
-                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                        "type=DRIVE_REDIRECTION_READ_EX file_name=%s"
+                                        "size=%s sha256=%s",
+                                        file_path, file_size_str, digest_s);
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message = str_concat(
@@ -1601,23 +1581,14 @@ public:
                                     }
                                 }
                                 else {
-                                    auto const info = key_qvalue_pairs({
-                                            { "type", "DRIVE_REDIRECTION_READ" },
-                                            { "file_name", file_path }
-                                        });
+                                    this->report_message.log6(
+                                        LogId::DRIVE_REDIRECTION_READ,
+                                        this->session_reactor.get_current_time(), {
+                                        KVLog("file_name"_av, file_path),
+                                    });
 
-                                    ArcsightLogInfo arc_info;
-                                    arc_info.name = "DRIVE_REDIRECTION_READ";
-                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_READ;
-                                    arc_info.ApplicationProtocol = "rdp";
-                                    arc_info.filePath = file_path;
-                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                        "type=DRIVE_REDIRECTION_READ file_name=%s", file_path);
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message = str_concat(
@@ -1643,26 +1614,19 @@ public:
                                         digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
-                                    auto const info = key_qvalue_pairs({
-                                            { "type", "DRIVE_REDIRECTION_WRITE_EX" },
-                                            { "file_name", file_path },
-                                            { "size", file_size_str },
-                                            { "sha256", digest_s }
-                                        });
 
-                                    ArcsightLogInfo arc_info;
-                                    arc_info.name = "DRIVE_REDIRECTION_WRITE_EX";
-                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_WRITE_EX;
-                                    arc_info.ApplicationProtocol = "rdp";
-                                    arc_info.filePath = file_path;
-                                    arc_info.fileSize = target_iter->end_of_file;
-                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
+                                    this->report_message.log6(
+                                        LogId::DRIVE_REDIRECTION_WRITE_EX,
+                                        this->session_reactor.get_current_time(), {
+                                        KVLog("file_name"_av, file_path),
+                                        KVLog("size"_av, file_size_str),
+                                        KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
+                                    });
 
-                                    this->report_message.log6(info, arc_info, tvtime());
-
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                        "type=DRIVE_REDIRECTION_WRITE_EX file_name=%s"
+                                        "size=%s sha256=%s",
+                                        file_path, file_size_str, digest_s);
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message = str_concat(
@@ -1676,23 +1640,14 @@ public:
                                     }
                                 }
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                    auto info = key_qvalue_pairs({
-                                            { "type", "DRIVE_REDIRECTION_WRITE" },
-                                            { "file_name", file_path },
-                                        });
+                                    this->report_message.log6(
+                                        LogId::DRIVE_REDIRECTION_WRITE,
+                                        this->session_reactor.get_current_time(), {
+                                        KVLog("file_name"_av, file_path),
+                                    });
 
-                                    ArcsightLogInfo arc_info;
-                                    arc_info.name = "DRIVE_REDIRECTION_WRITE";
-                                    arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_WRITE;
-                                    arc_info.ApplicationProtocol = "rdp";
-                                    arc_info.filePath = file_path;
-                                    arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                                    LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                        "type=DRIVE_REDIRECTION_WRITE file_name=%s", file_path);
 
                                     if (!this->param_dont_log_data_into_wrm) {
                                         std::string message = str_concat(
@@ -1805,23 +1760,14 @@ public:
                         case rdpdr::FileDispositionInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                auto info = key_qvalue_pairs({
-                                        { "type", "DRIVE_REDIRECTION_DELETE" },
-                                        { "file_name", file_path },
-                                    });
+                                this->report_message.log6(
+                                    LogId::DRIVE_REDIRECTION_DELETE,
+                                    this->session_reactor.get_current_time(), {
+                                    KVLog("file_name"_av, file_path),
+                                });
 
-                                ArcsightLogInfo arc_info;
-                                arc_info.name = "DRIVE_REDIRECTION_DELETE";
-                                arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_DELETE;
-                                arc_info.ApplicationProtocol = "rdp";
-                                arc_info.filePath = file_path;
-                                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                                if (!this->param_dont_log_data_into_syslog) {
-                                    LOG(LOG_INFO, "%s", info);
-                                }
+                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                    "type=DRIVE_REDIRECTION_DELETE file_name=%s", file_path);
                             }
                             else {
                                 LOG(LOG_WARNING,
@@ -1842,25 +1788,16 @@ public:
                         case rdpdr::FileRenameInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                auto info = key_qvalue_pairs({
-                                        { "type", "DRIVE_REDIRECTION_RENAME" },
-                                        { "old_file_name", target_iter->file_path },
-                                        { "new_file_name", file_path },
-                                    });
+                                this->report_message.log6(
+                                    LogId::DRIVE_REDIRECTION_RENAME,
+                                    this->session_reactor.get_current_time(), {
+                                    KVLog("old_file_name"_av, target_iter->file_path),
+                                    KVLog("new_file_name"_av, file_path),
+                                });
 
-                                ArcsightLogInfo arc_info;
-                                arc_info.name = "DRIVE_REDIRECTION_RENAME";
-                                arc_info.signatureID = ArcsightLogInfo::ID::DRIVE_REDIRECTION_RENAME;
-                                arc_info.ApplicationProtocol = "rdp";
-                                arc_info.filePath = file_path;
-                                arc_info.oldFilePath = target_iter->file_path;
-                                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_DST;
-
-                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                                if (!this->param_dont_log_data_into_syslog) {
-                                    LOG(LOG_INFO, "%s", info);
-                                }
+                                LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
+                                    "type=DRIVE_REDIRECTION_RENAME old_file_name=%s new_file_name=%s",
+                                    target_iter->file_path, file_path);
                             }
                             else {
                                 LOG(LOG_WARNING,

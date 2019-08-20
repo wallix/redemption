@@ -81,6 +81,7 @@ namespace cfg {
         struct disable_tsk_switch_shortcuts;
         struct rdp_compression;
         struct max_color_depth;
+        struct front_remotefx;
         struct persistent_disk_bitmap_cache;
         struct cache_waiting_list;
         struct persist_bitmap_cache_on_disk;

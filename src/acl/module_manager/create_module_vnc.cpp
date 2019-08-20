@@ -117,7 +117,6 @@ void ModuleManager::create_mod_vnc(
             ini.get<cfg::mod_vnc::server_is_apple>(),
             ini.get<cfg::mod_vnc::server_unix_alt>(),
             (client_info.remote_program ? &rail_client_execute : nullptr),
-            ini,
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
             enable_metrics ? &metrics->protocol_metrics : nullptr
         );
@@ -174,12 +173,7 @@ void ModuleManager::create_mod_vnc(
         }
     }
     catch (...) {
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SESSION_CREATION";
-        arc_info.ApplicationProtocol = "vnc";
-        arc_info.WallixBastionStatus = "FAIL";
-        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_CREATION;
-        report_message.log6("type=\"SESSION_CREATION_FAILED\"", arc_info, this->session_reactor.get_current_time());
+        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
 
         throw;
     }
