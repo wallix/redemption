@@ -22,7 +22,6 @@
 
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/flags.hpp"
 #include <string>
 
 #include <sys/time.h> // timeval
@@ -104,48 +103,21 @@ namespace detail
         X_LOG_ID(f)
         #undef f
     };
-
-    enum class KVLogCategory : uint8_t
-    {
-        Siem,
-        Arcsight,
-        COUNT,
-    };
 }
 
 #ifndef NOT_UNDEF_X_LOG_ID
 # undef X_LOG_ID
 #endif
 
-template<>
-struct utils::enum_as_flag<detail::KVLogCategory>
-{
-    static constexpr std::size_t max = unsigned(detail::KVLogCategory::COUNT);
-};
-
 struct KVLog
 {
-    using Category = detail::KVLogCategory;
-    using Categories = utils::flags_t<Category>;
-
-    Categories categories;
     array_view_const_char key;
     array_view_const_char value;
 
-    static KVLog siem(array_view_const_char key, array_view_const_char value) noexcept
-    {
-        return KVLog{Category::Siem, key, value};
-    }
-
-    static KVLog arcsight(array_view_const_char key, array_view_const_char value) noexcept
-    {
-        return KVLog{Category::Arcsight, key, value};
-    }
-
-    static KVLog all(array_view_const_char key, array_view_const_char value) noexcept
-    {
-        return KVLog{Categories{} | Category::Arcsight | Category::Siem, key, value};
-    }
+    KVLog(array_view_const_char key, array_view_const_char value) noexcept
+    : key(key)
+    , value(value)
+    {}
 };
 
 struct KVList : array_view<KVLog const>

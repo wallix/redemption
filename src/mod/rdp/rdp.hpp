@@ -5633,7 +5633,7 @@ private:
             this->report_message.log6(
                 LogId::SESSION_DISCONNECTION,
                 this->session_reactor.get_current_time(), {
-                KVLog::all("duration"_av, {duration_str, strlen(duration_str)}),
+                KVLog("duration"_av, {duration_str, strlen(duration_str)}),
             });
 
             LOG_IF(enable_verbose, LOG_INFO,

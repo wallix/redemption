@@ -1460,8 +1460,8 @@ public:
                             this->report_message.log6(
                                 LogId::DRIVE_REDIRECTION_USE,
                                 this->session_reactor.get_current_time(), {
-                                KVLog::all("device_name"_av, device_name),
-                                KVLog::all("device_type"_av, device_type_name),
+                                KVLog("device_name"_av, device_name),
+                                KVLog("device_type"_av, device_type_name),
                             });
 
                             LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1559,9 +1559,9 @@ public:
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_READ_EX,
                                         this->session_reactor.get_current_time(), {
-                                        KVLog::all("file_name"_av, file_path),
-                                        KVLog::all("size"_av, file_size_str),
-                                        KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
+                                        KVLog("file_name"_av, file_path),
+                                        KVLog("size"_av, file_size_str),
+                                        KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1584,7 +1584,7 @@ public:
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_READ,
                                         this->session_reactor.get_current_time(), {
-                                        KVLog::all("file_name"_av, file_path),
+                                        KVLog("file_name"_av, file_path),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1618,9 +1618,9 @@ public:
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE_EX,
                                         this->session_reactor.get_current_time(), {
-                                        KVLog::all("file_name"_av, file_path),
-                                        KVLog::all("size"_av, file_size_str),
-                                        KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
+                                        KVLog("file_name"_av, file_path),
+                                        KVLog("size"_av, file_size_str),
+                                        KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1643,7 +1643,7 @@ public:
                                     this->report_message.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE,
                                         this->session_reactor.get_current_time(), {
-                                        KVLog::all("file_name"_av, file_path),
+                                        KVLog("file_name"_av, file_path),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1763,7 +1763,7 @@ public:
                                 this->report_message.log6(
                                     LogId::DRIVE_REDIRECTION_DELETE,
                                     this->session_reactor.get_current_time(), {
-                                    KVLog::all("file_name"_av, file_path),
+                                    KVLog("file_name"_av, file_path),
                                 });
 
                                 LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1791,8 +1791,8 @@ public:
                                 this->report_message.log6(
                                     LogId::DRIVE_REDIRECTION_RENAME,
                                     this->session_reactor.get_current_time(), {
-                                    KVLog::all("old_file_name"_av, target_iter->file_path),
-                                    KVLog::all("new_file_name"_av, file_path),
+                                    KVLog("old_file_name"_av, target_iter->file_path),
+                                    KVLog("new_file_name"_av, file_path),
                                 });
 
                                 LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,

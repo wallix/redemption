@@ -569,7 +569,7 @@ public:
             this->hidden_masked_char_count = 0;
 
             this->report_message.log6(LogId::KBD_INPUT, tvtime(), {
-                KVLog::all("data"_av, this->kbd_stream.get_bytes().as_chars()),
+                KVLog("data"_av, this->kbd_stream.get_bytes().as_chars()),
             });
 
             this->kbd_stream.rewind();
@@ -1550,8 +1550,8 @@ public:
                  && this->report_message)
                 {
                     this->report_message->log6(LogId::TITLE_BAR, tvtime(), {
-                        KVLog::all("source"_av, "OCR"_av),
-                        KVLog::all("window"_av, title),
+                        KVLog("source"_av, "OCR"_av),
+                        KVLog("window"_av, title),
                     });
                 }
             }

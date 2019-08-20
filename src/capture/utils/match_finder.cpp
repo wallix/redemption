@@ -204,7 +204,7 @@ void MatchFinder::report(
         ? LogId::KILL_PATTERN_DETECTED
         : LogId::NOTIFY_PATTERN_DETECTED
     , tvtime(), {
-        KVLog::all("pattern"_av, std::string_view{message}),
+        KVLog("pattern"_av, std::string_view{message}),
     });
 
     report_message.report(

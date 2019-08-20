@@ -735,7 +735,7 @@ public:
              || this->client_execute.exe_or_file != serpdu.ExeOrFile()
             ) {
                 this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, tvtime(), {
-                    KVLog::all("exe_or_file"_av, {serpdu.ExeOrFile(), strlen(serpdu.ExeOrFile())}),
+                    KVLog("exe_or_file"_av, {serpdu.ExeOrFile(), strlen(serpdu.ExeOrFile())}),
                 });
             }
         }

@@ -41,7 +41,6 @@ class Authentifier : public AuthApi, public ReportMessageApi
         LogId id;
         struct KV
         {
-            KVLog::Categories categories;
             std::string key;
             std::string value;
         };
@@ -53,7 +52,6 @@ class Authentifier : public AuthApi, public ReportMessageApi
             kv_list.reserve(list.size());
             for (auto const& kv : list) {
                 this->kv_list.emplace_back(KV{
-                    kv.categories,
                     std::string(kv.key.data(), kv.key.size()),
                     std::string(kv.value.data(), kv.value.size()),
                 });
@@ -164,7 +162,7 @@ public:
                 for (LogParam const & log_param : this->buffered_log_params) {
                     v.reserve(log_param.kv_list.size());
                     for (auto const& kv : log_param.kv_list) {
-                        v.emplace_back(KVLog{kv.categories, kv.key, kv.value});
+                        v.emplace_back(KVLog{kv.key, kv.value});
                     }
                     this->acl_serial->log6(log_param.id, tvtime(), {v});
                     v.clear();

@@ -379,18 +379,15 @@ namespace
     template<class Prefix, class Suffix>
     inline std::string& kv_list_to_string(
         std::string& buffer, KVList kv_list,
-        KVLog::Category cat,
         Prefix prefix, Suffix suffix,
         std::array<char, 256> const& escaped_table)
     {
         for (auto& kv : kv_list) {
-            if (kv.categories.test(cat)) {
-                buffer += ' ';
-                buffer.append(kv.key.data(), kv.key.size());
-                buffer += prefix;
-                escaped_qvalue(buffer, kv.value, escaped_table);
-                buffer += suffix;
-            }
+            buffer += ' ';
+            buffer.append(kv.key.data(), kv.key.size());
+            buffer += prefix;
+            escaped_qvalue(buffer, kv.value, escaped_table);
+            buffer += suffix;
         }
 
         return buffer;
@@ -406,9 +403,7 @@ namespace
     {
         auto type = log_id_string_type_map[int(id)];
         buffer.assign(type.begin(), type.end());
-        kv_list_to_string(
-            buffer, kv_list, KVLog::Category::Siem,
-            "=\"", '"', table_formats::siem_table);
+        kv_list_to_string(buffer, kv_list, "=\"", '"', table_formats::siem_table);
         return buffer;
     }
 
@@ -478,9 +473,7 @@ namespace
             " WallixBastionService=", service,
             " WallixBastionAccount=", account
         );
-        kv_list_to_string(
-            buffer, kv_list, KVLog::Category::Arcsight,
-            '=', "", table_formats::arcsight_table);
+        kv_list_to_string(buffer, kv_list, '=', "", table_formats::arcsight_table);
     }
 }
 

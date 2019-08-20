@@ -386,7 +386,7 @@ public:
             if (!file) {
                 LOG(LOG_ERR, "FileValidatorValidator::receive_response: invalid id %u", file_validator_id);
                 this->report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
-                    KVLog::all("status"_av, "Invalid file id"_av),
+                    KVLog("status"_av, "Invalid file id"_av),
                 });
                 this->front.session_update("FILE_VERIFICATION=Invalid file id"_av);
                 continue;
@@ -402,10 +402,10 @@ public:
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
             this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
-                KVLog::all("direction"_av, str_direction),
-                KVLog::all("file_name"_av, file_data.file_name),
-                KVLog::all("size"_av, {file_size, strlen(file_size)}),
-                KVLog::all("status"_av, result_content),
+                KVLog("direction"_av, str_direction),
+                KVLog("file_name"_av, file_data.file_name),
+                KVLog("size"_av, {file_size, strlen(file_size)}),
+                KVLog("status"_av, result_content),
             });
 
             this->front.session_update(str_concat("FILE_VERIFICATION=",
@@ -749,9 +749,9 @@ private:
             ? LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION
             : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
             this->session_reactor.get_current_time(), {
-            KVLog::all("file_name"_av, file_data.file_name),
-            KVLog::all("size"_av, {file_size, strlen(file_size)}),
-            KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
+            KVLog("file_name"_av, file_data.file_name),
+            KVLog("size"_av, {file_size, strlen(file_size)}),
+            KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
         });
 
         LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
@@ -803,8 +803,8 @@ private:
                             ? LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION
                             : LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION,
                             this->session_reactor.get_current_time(), {
-                            KVLog::all("format"_av, format),
-                            KVLog::all("size"_av, size_str),
+                            KVLog("format"_av, format),
+                            KVLog("size"_av, size_str),
                             });
                     }
                     else {
@@ -812,9 +812,9 @@ private:
                             ? LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX
                             : LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX,
                             this->session_reactor.get_current_time(), {
-                            KVLog::all("format"_av, format),
-                            KVLog::all("size"_av, size_str),
-                            KVLog::all("partial_data"_av, data_to_dump),
+                            KVLog("format"_av, format),
+                            KVLog("size"_av, size_str),
+                            KVLog("partial_data"_av, data_to_dump),
                             });
                     }
                 }

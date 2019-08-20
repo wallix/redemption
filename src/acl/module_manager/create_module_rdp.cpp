@@ -47,8 +47,8 @@ namespace
         array_view_const_char msg)
     {
         report_message.log6(LogId::FILE_VERIFICATION_SERVER_ERROR, session_reactor.get_current_time(), {
-            KVLog::all("service"_av, socket_path),
-            KVLog::all("msg"_av, msg),
+            KVLog("service"_av, socket_path),
+            KVLog("msg"_av, msg),
         });
 
         front.session_update(str_concat("FILE_VERIFICATION_SERVER_ERROR="_av, msg));
