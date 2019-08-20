@@ -29,11 +29,11 @@ do
     end
 
     local logid = P'LogId::'
-    local kvlog = P'KVLog::'
+    local kvlog = P'KVLog'
     local WithinBalanced = ((1 - S'()') + V'Balanced')^0 * ')'
     local Balanced = '(' * WithinBalanced
     local LogId = logid * C((R('az','AZ','09') + '_')^1)
-    local KVArgs = kvlog * Ct(C(R('az','AZ','09')^1) * '("' * C((1-P'"')^1)) * WithinBalanced
+    local KVArgs = kvlog * '("' * C((1-P'"')^1) * WithinBalanced
 
     Log6 = P{
         Ct(Ct( Until('log6') * Cp * '('
@@ -78,13 +78,8 @@ for _,fname in ipairs(arg) do
 
         local iline = 1
         for _,t in pairs(r) do
-            st = {}
-            for _,kvlog in pairs(t[3]) do
-                st[#st+1] = kvlog[1]
-                st[#st+1] = kvlog[2]
-            end
             iline = lower_bound(poslines, t[1], iline, #poslines+1)
-            strkvlog = table.concat(st, ' ')
+            strkvlog = table.concat(t[3], ' ')
             for _,id in pairs(t[2]) do
                 logs[#logs+1] = {fname, iline, id, strkvlog}
             end
