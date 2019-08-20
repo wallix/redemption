@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "utils/log.hpp"
 #include "mod/metrics.hpp"
 
 

@@ -104,21 +104,6 @@ inline timeval to_timeval(std::chrono::microseconds const& usec)
     return tv;
 }
 
-// Returns the beginning of the timeslice of width seconds containing timeval
-// origin of intervals is midnight 1 jan 1970
-inline timeval timeslice(timeval const & a, std::chrono::seconds const& seconds)
-{
-    timeval tv;
-    tv.tv_sec = a.tv_sec - a.tv_sec % seconds.count();
-    tv.tv_usec = 0;
-    return tv;
-}
-
-inline bool is_midnight(timeval const & a)
-{
-    return (a.tv_sec % std::chrono::seconds(24h).count()) == 0;
-}
-
 inline timeval operator+(timeval const & a, std::chrono::seconds const& seconds)
 {
     timeval result = a;

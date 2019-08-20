@@ -22,6 +22,7 @@
 #include "test_only/test_framework/file.hpp"
 
 #include "utils/fileutils.hpp"
+#include "utils/timeval_ops.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "mod/vnc/vnc_metrics.hpp"

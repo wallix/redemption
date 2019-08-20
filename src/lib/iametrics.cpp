@@ -22,6 +22,9 @@
 #include "main/version.hpp"
 #include "lib/iametrics.hpp"
 #include "mod/metrics.hpp"
+#include "utils/sugar/array_view.hpp"
+
+#include <cstring>
 
 
 enum class ErrValue : int
