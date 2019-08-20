@@ -76,6 +76,7 @@
     f(SESSION_ENDING_IN_PROGRESS)                     \
     f(SESSION_ESTABLISHED_SUCCESSFULLY)               \
     f(STARTUP_APPLICATION_FAIL_TO_RUN)                \
+    f(STARTUP_APPLICATION_FAIL_TO_RUN_2)              \
     f(TITLE_BAR)                                      \
     f(UAC_PROMPT_BECOME_VISIBLE)                      \
     f(UNIDENTIFIED_INPUT_FIELD_GET_FOCUS)             \
