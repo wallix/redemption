@@ -20,6 +20,7 @@
 */
 
 #include "capture/utils/match_finder.hpp"
+#include "core/log_id.hpp"
 #include "core/report_message_api.hpp"
 #include "regex/regex.hpp"
 #include "utils/log.hpp"

@@ -24,6 +24,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 
+#include "core/log_id.hpp"
 #include "acl/acl_serializer.hpp"
 #include "configs/config.hpp"
 #include "main/version.hpp"

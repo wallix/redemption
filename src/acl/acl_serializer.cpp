@@ -27,6 +27,7 @@
 #include "acl/auth_api.hpp"
 #include "acl/mm_api.hpp"
 #include "configs/config.hpp"
+#include "core/log_id.hpp"
 #include "core/date_dir_from_filename.hpp"
 #include "core/report_message_api.hpp"
 #include "core/set_server_redirection_target.hpp"

@@ -24,6 +24,7 @@
 #include "acl/auth_api.hpp"
 #include "gdi/screen_functions.hpp"
 #include "core/error.hpp"
+#include "core/log_id.hpp"
 #include "core/front_api.hpp"
 #include "core/session_reactor.hpp"
 #include "core/window_constants.hpp"

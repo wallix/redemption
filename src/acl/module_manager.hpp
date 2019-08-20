@@ -29,6 +29,7 @@
 #include "acl/module_manager/mm_ini.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "configs/config.hpp"
+#include "core/log_id.hpp"
 #include "core/session_reactor.hpp"
 #include "front/front.hpp"
 #include "gdi/protected_graphics.hpp"

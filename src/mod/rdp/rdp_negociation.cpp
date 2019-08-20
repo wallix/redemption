@@ -24,6 +24,7 @@
 
 #include "mod/rdp/rdp_negociation.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
+#include "core/log_id.hpp"
 #include "core/app_path.hpp"
 #include "core/RDP/autoreconnect.hpp"
 #include "core/RDP/lic.hpp"

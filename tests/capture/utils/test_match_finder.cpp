@@ -22,11 +22,12 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
+#include "core/log_id.hpp"
 #include "core/report_message_api.hpp"
 #include "capture/utils/match_finder.hpp"
 
-constexpr bool verbosity = true;
+
+constexpr bool verbosity = false;
 
 RED_AUTO_TEST_CASE(configure_regexes)
 {

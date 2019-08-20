@@ -24,6 +24,7 @@
 #include "core/error.hpp"
 #include "core/front_api.hpp"
 #include "core/session_reactor.hpp"
+#include "core/log_id.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"

@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 
+#include "core/log_id.hpp"
 #include "core/buf64k.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"

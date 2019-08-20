@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/log_id.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
 #include "core/session_reactor.hpp"
