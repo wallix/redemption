@@ -20,7 +20,7 @@ git submodule update --init
 # luarocks --local install lpeg
 # lua >= 5.0
 eval `luarocks path`
-find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/siem_export.lua '{}' '+'
+find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/check_log6.lua '{}' '+'
 
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
