@@ -1376,8 +1376,7 @@ public:
                 else if (!::strcasecmp(order_.c_str(), "WEB_PRIVACY_IMPACTED")) {
                     if (parameters_.size() == 1) {
                         this->log6(LogId::WEB_PRIVACY_IMPACTED, {
-                            KVLog::all("url"_av,      parameters_[0]),
-                            KVLog::all("impacted"_av, parameters_[1]),
+                            KVLog::all("impacted"_av, parameters_[0]),
                         });
                     }
                     else {
