@@ -62,6 +62,12 @@ function lower_bound(t, value, ibegin, iend)
     return ibegin
 end
 
+local show_log = false
+if arg[1] == '-v' then
+    show_log = true
+    table.remove(arg, 1)
+end
+
 
 logs = {}
 for _,fname in ipairs(arg) do
@@ -87,21 +93,21 @@ for _,fname in ipairs(arg) do
 end
 
 if #logs == 0 then
-    print('0 log6 found')
-    print('Usage: check_log6.lua src/**/*.{h,c}pp')
-    os.exit(1)
+    print('log6(...) not found')
+    print('Usage: check_log6.lua [-v] src/**/*.{h,c}pp')
+    return 1
 end
 
-table.sort(logs, function(a, b)
-    return a[3] < b[3]
-end)
-
--- for _,v in ipairs(logs) do
---     print(v[2],v[3],v[4])
--- end
+table.sort(logs, function(a, b) return a[3] < b[3] end)
 
 function printlog(info)
-    print(string.format('  %s:%d:\n    %s  %s', info[1], info[2], info[3], info[4]))
+    print(string.format('%s:%d:\n  %s  %s', info[1], info[2], info[3], info[4]))
+end
+
+if show_log then
+    for _,v in ipairs(logs) do
+        printlog(v)
+    end
 end
 
 previouslog = logs[1]
@@ -117,7 +123,4 @@ for i=2,#logs do
     previouslog = log
 end
 
-if errcode > 255 then
-  errcode = 255
-end
-os.exit(errcode)
+os.exit(math.min(errcode, 255))

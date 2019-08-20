@@ -787,9 +787,9 @@ public:
 
         this->report_message.log6(
             LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-            this->session_reactor.get_current_time(), {
-            KVLog::arcsight("app"_av, "vnc"_av),
-        });
+            this->session_reactor.get_current_time(),
+            {}
+        );
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -3057,7 +3057,6 @@ public:
             LogId::SESSION_DISCONNECTION,
             this->session_reactor.get_current_time(), {
             KVLog::all("duration"_av, {duration_str, strlen(duration_str)}),
-            KVLog::arcsight("app"_av, "vnc"_av),
         });
 
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,

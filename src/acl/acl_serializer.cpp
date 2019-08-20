@@ -457,6 +457,8 @@ namespace
         array_view_const_char session_id,
         array_view_const_char host,
         array_view_const_char target_ip,
+        array_view_const_char device,
+        array_view_const_char service,
         KVList kv_list)
     {
         static_assert(std::size(ints_s) >= std::size(detail::log_id_string_map));
@@ -467,12 +469,14 @@ namespace
             ints_s[unsigned(id)], '|',
             detail::log_id_string_map[unsigned(id)], "|"
             "5" /*TODO severity*/
-            "|WallixBastionUser=", user,
-            " WallixBastionAccount=", account,
+            "|WallixBastionSessionType=", session_type.empty() ? "Neutral"_av : session_type,
+            " WallixBastionSessionId=", session_id,
             " WallixBastionHost=", host,
             " WallixBastionTargetIP=", target_ip,
-            " WallixBastionSession_id=", session_id,
-            " WallixBastionSessionType=", session_type.empty() ? "Neutral"_av : session_type
+            " WallixBastionUser=", user,
+            " WallixBastionDevice=", device,
+            " WallixBastionService=", service,
+            " WallixBastionAccount=", account
         );
         kv_list_to_string(
             buffer, kv_list, KVLog::Category::Arcsight,
@@ -522,6 +526,8 @@ void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
             this->ini.get<cfg::context::session_id>(),
             this->ini.get<cfg::globals::host>(),
             target_ip(),
+            this->ini.get<cfg::globals::target_device>(),
+            this->ini.get<cfg::context::target_service>(),
             kv_list);
 
         LOG_SIEM("%s", buffer_info);

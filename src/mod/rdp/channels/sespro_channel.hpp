@@ -964,9 +964,7 @@ public:
             }
         }
         else if (!::strcasecmp(order_.c_str(), "SESSION_ENDING_IN_PROGRESS")) {
-            this->log6(LogId::SESSION_ENDING_IN_PROGRESS, {
-                KVLog::arcsight("app"_av, "rdp"_av),
-            });
+            this->log6(LogId::SESSION_ENDING_IN_PROGRESS, {});
 
             this->session_probe_ending_in_progress = true;
         }

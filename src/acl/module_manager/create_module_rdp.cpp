@@ -47,8 +47,7 @@ namespace
         array_view_const_char msg)
     {
         report_message.log6(LogId::FILE_VERIFICATION_SERVER_ERROR, session_reactor.get_current_time(), {
-            KVLog::siem("service"_av, socket_path),
-            KVLog::arcsight("app"_av, "rdp"_av),
+            KVLog::all("service"_av, socket_path),
             KVLog::all("msg"_av, msg),
         });
 
@@ -556,9 +555,7 @@ void ModuleManager::create_mod_rdp(
         report_message.update_inactivity_timeout();
     }
     catch (...) {
-        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {
-            KVLog::arcsight("app"_av, "rdp"_av),
-        });
+        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
 
         throw;
     }

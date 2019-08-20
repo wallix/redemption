@@ -386,7 +386,6 @@ public:
             if (!file) {
                 LOG(LOG_ERR, "FileValidatorValidator::receive_response: invalid id %u", file_validator_id);
                 this->report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
-                    KVLog::arcsight("app"_av, "rdp"_av),
                     KVLog::all("status"_av, "Invalid file id"_av),
                 });
                 this->front.session_update("FILE_VERIFICATION=Invalid file id"_av);
@@ -403,11 +402,10 @@ public:
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
 
             this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
-                KVLog::siem("direction"_av, str_direction),
-                KVLog::siem("file_name"_av, file_data.file_name),
+                KVLog::all("direction"_av, str_direction),
+                KVLog::all("file_name"_av, file_data.file_name),
+                KVLog::all("size"_av, {file_size, strlen(file_size)}),
                 KVLog::all("status"_av, result_content),
-                KVLog::arcsight("fname"_av, file_data.file_name),
-                KVLog::arcsight("fsize"_av, {file_size, strlen(file_size)}),
             });
 
             this->front.session_update(str_concat("FILE_VERIFICATION=",
@@ -751,10 +749,8 @@ private:
             ? LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION
             : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
             this->session_reactor.get_current_time(), {
-            KVLog::siem("file_name"_av, file_data.file_name),
-            KVLog::siem("file_size"_av, {file_size, strlen(file_size)}),
-            KVLog::arcsight("fname"_av, file_data.file_name),
-            KVLog::arcsight("fsize"_av, {file_size, strlen(file_size)}),
+            KVLog::all("file_name"_av, file_data.file_name),
+            KVLog::all("size"_av, {file_size, strlen(file_size)}),
             KVLog::all("sha256"_av, {digest_s, strlen(digest_s)}),
         });
 

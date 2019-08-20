@@ -173,9 +173,7 @@ void ModuleManager::create_mod_vnc(
         }
     }
     catch (...) {
-        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {
-            KVLog::arcsight("app"_av, "vnc"_av),
-        });
+        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
 
         throw;
     }

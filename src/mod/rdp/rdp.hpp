@@ -2852,9 +2852,7 @@ public:
                             if (!this->deactivation_reactivation_in_progress) {
                                 this->report_message.log6(
                                     LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-                                    this->session_reactor.get_current_time(), {
-                                    KVLog::arcsight("app"_av, "rdp"_av),
-                                });
+                                    this->session_reactor.get_current_time(), {});
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -5636,7 +5634,6 @@ private:
                 LogId::SESSION_DISCONNECTION,
                 this->session_reactor.get_current_time(), {
                 KVLog::all("duration"_av, {duration_str, strlen(duration_str)}),
-                KVLog::arcsight("app"_av, "rdp"_av),
             });
 
             LOG_IF(enable_verbose, LOG_INFO,
