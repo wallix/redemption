@@ -10,7 +10,7 @@ function readall(fname)
     return s
 end
 
-local log6, NewLinePos
+local Log6, LogIds, NewLinePos
 
 do
     local lpeg = require'lpeg'
@@ -29,10 +29,11 @@ do
     end
 
     local logid = P'LogId::'
+    local idname = C((R('az','AZ','09') + '_')^1)
     local kvlog = P'KVLog'
     local WithinBalanced = ((1 - S'()') + V'Balanced')^0 * ')'
     local Balanced = '(' * WithinBalanced
-    local LogId = logid * C((R('az','AZ','09') + '_')^1)
+    local LogId = logid * idname
     local KVArgs = kvlog * '("' * C((1-P'"')^1) * WithinBalanced
 
     Log6 = P{
@@ -44,7 +45,11 @@ do
     }
 
     NewLinePos = Ct(Until('\n' * Cp)^0 * Cp)
+
+    local xid = P'  f('
+    LogIds = Ct(Until(xid * idname, xid)^0)
 end
+
 
 function lower_bound(t, value, ibegin, iend)
     local count, i = iend-ibegin
@@ -68,6 +73,14 @@ if arg[1] == '-v' then
     table.remove(arg, 1)
 end
 
+
+ids = {}
+i = 0
+for _,v in ipairs(LogIds:match(readall('src/core/log_id.hpp'))) do
+    ids[v] = 0
+    i = i + 1
+end
+assert(i > 10) -- random number
 
 logs = {}
 for _,fname in ipairs(arg) do
@@ -107,8 +120,10 @@ end
 
 previouslog = logs[1]
 errcode = 0
+ids[previouslog[3]] = 1
 for i=2,#logs do
     log = logs[i]
+    ids[log[3]] = 1
     if previouslog[3] == log[3] and previouslog[4] ~= log[4] then
         print('log6 differ:')
         printlog(previouslog)
@@ -116,6 +131,13 @@ for i=2,#logs do
         errcode = errcode + 1
     end
     previouslog = log
+end
+
+for k,v in pairs(ids) do
+    if v ~= 1 then
+        print(k .. ' not used')
+        errcode = errcode + 1
+    end
 end
 
 os.exit(math.min(errcode, 255))
