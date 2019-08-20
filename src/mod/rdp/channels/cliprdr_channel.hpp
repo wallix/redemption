@@ -385,18 +385,21 @@ public:
             }
             if (!file) {
                 LOG(LOG_ERR, "FileValidatorValidator::receive_response: invalid id %u", file_validator_id);
+                auto& target_name = (direction == Direction::FileFromClient)
+                    ? this->params.validator_params.up_target_name
+                    : this->params.validator_params.down_target_name;
                 this->report_message.log6(LogId::FILE_VERIFICATION_ERROR, this->session_reactor.get_current_time(), {
+                    KVLog("icap_service"_av, target_name),
                     KVLog("status"_av, "Invalid file id"_av),
                 });
-                this->front.session_update("FILE_VERIFICATION=Invalid file id"_av);
+                this->front.session_update(str_concat(
+                    "FILE_VERIFICATION_ERROR=", target_name, "\x01Invalid file id"_av
+                ));
                 continue;
             }
 
             auto& file_data = file->file_data;
             file_data.file_validator_id = FileValidatorId();
-
-            char file_size[128];
-            std::snprintf(file_size, std::size(file_size), "%lu", file_data.file_size);
 
             auto& result_content = this->file_validator->get_content();
             auto str_direction = (direction == Direction::FileFromClient) ? "UP"_av : "DOWN"_av;
@@ -404,12 +407,11 @@ public:
             this->report_message.log6(LogId::FILE_VERIFICATION, this->session_reactor.get_current_time(), {
                 KVLog("direction"_av, str_direction),
                 KVLog("file_name"_av, file_data.file_name),
-                KVLog("size"_av, {file_size, strlen(file_size)}),
                 KVLog("status"_av, result_content),
             });
 
             this->front.session_update(str_concat("FILE_VERIFICATION=",
-                file_data.file_name, '\x01', str_direction, '\x01', result_content));
+                str_direction, '\x01', file_data.file_name, '\x01', result_content));
 
             if (file->is_wait_validator()) {
                 if (direction == Direction::FileFromClient) {

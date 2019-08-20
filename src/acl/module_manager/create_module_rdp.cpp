@@ -43,15 +43,23 @@ namespace
         FrontAPI& front,
         SessionReactor& session_reactor,
         ReportMessageApi& report_message,
-        array_view_const_char socket_path,
+        array_view_const_char up_target_name,
+        array_view_const_char down_target_name,
         array_view_const_char msg)
     {
-        report_message.log6(LogId::FILE_VERIFICATION_SERVER_ERROR, session_reactor.get_current_time(), {
-            KVLog("service"_av, socket_path),
-            KVLog("msg"_av, msg),
-        });
+        for (auto&& service : {up_target_name, down_target_name}) {
+            if (not service.empty()) {
+                report_message.log6(
+                    LogId::FILE_VERIFICATION_ERROR,
+                    session_reactor.get_current_time(), {
+                        KVLog("icap_service"_av, service),
+                        KVLog("status"_av, msg),
+                    });
 
-        front.session_update(str_concat("FILE_VERIFICATION_SERVER_ERROR="_av, msg));
+                front.session_update(str_concat(
+                    "FILE_VERIFICATION_ERROR="_av, service, '\x01', msg));
+            }
+        }
     }
 }
 
@@ -366,7 +374,8 @@ void ModuleManager::create_mod_rdp(
                 struct CtxError
                 {
                     ReportMessageApi & report_message;
-                    std::string socket_path;
+                    std::string up_target_name;
+                    std::string down_target_name;
                     SessionReactor& session_reactor;
                     FrontAPI& front;
                 };
@@ -385,7 +394,8 @@ void ModuleManager::create_mod_rdp(
                         this->ctx_error.front,
                         this->ctx_error.session_reactor,
                         this->ctx_error.report_message,
-                        this->ctx_error.socket_path,
+                        this->ctx_error.up_target_name,
+                        this->ctx_error.down_target_name,
                         {msg, strlen(msg)}
                     );
                     return err;
@@ -426,7 +436,10 @@ void ModuleManager::create_mod_rdp(
                 file_validator = std::make_unique<ModRDPWithMetrics::FileValidator>(
                     std::move(ufd),
                     ModRDPWithMetrics::FileValidator::CtxError{
-                        report_message, socket_path, this->session_reactor, this->front
+                        report_message,
+                        mod_rdp_params.validator_params.up_target_name,
+                        mod_rdp_params.validator_params.down_target_name,
+                        this->session_reactor, this->front
                     });
                 file_validator->service.send_infos({
                     "server_ip"_av, this->ini.get<cfg::context::target_host>(),
@@ -438,8 +451,10 @@ void ModuleManager::create_mod_rdp(
                 enable_validator = false;
                 LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
                 file_verification_error(
-                    front, session_reactor, report_message, socket_path,
-                    "Unable to connect to FileValidator server"_av
+                    front, session_reactor, report_message,
+                    mod_rdp_params.validator_params.up_target_name,
+                    mod_rdp_params.validator_params.down_target_name,
+                    "Unable to connect to FileValidator service"_av
                 );
             }
         }

@@ -49,7 +49,6 @@
     f(EDIT_CHANGED)                                   \
     f(FILE_VERIFICATION)                              \
     f(FILE_VERIFICATION_ERROR)                        \
-    f(FILE_VERIFICATION_SERVER_ERROR)                 \
     f(FOREGROUND_WINDOW_CHANGED)                      \
     f(GROUP_MEMBERSHIP)                               \
     f(INPUT_LANGUAGE)                                 \

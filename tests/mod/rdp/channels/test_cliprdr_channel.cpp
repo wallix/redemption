@@ -610,5 +610,5 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     buf_trans.buf.assign(av.data(), av.size());
 
     clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-    RED_CHECK_SMEM(front.msg, "FILE_VERIFICATION=abc\x01UP\x01ok"_av);
+    RED_CHECK_SMEM(front.msg, "FILE_VERIFICATION=UP\x01""abc\x01ok"_av);
 }
