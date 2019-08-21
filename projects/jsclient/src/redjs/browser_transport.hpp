@@ -44,7 +44,7 @@ struct BrowserTransport : Transport
 
     void add_in_buffer(std::string data);
 
-    const_bytes_view get_out_buffer() const noexcept;
+    bytes_view get_out_buffer() const noexcept;
 
     void clear_out_buffer() noexcept;
 

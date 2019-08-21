@@ -33,7 +33,7 @@ class SslRC4_direct
 public:
     SslRC4_direct() = default;
 
-    void set_key(const_bytes_view key)
+    void set_key(bytes_view key)
     {
         this->RC4_set_key(key.size(), key.data());
     }

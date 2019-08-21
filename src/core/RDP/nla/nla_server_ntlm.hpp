@@ -52,7 +52,7 @@ class rdpCredsspServerNTLM final
     array_view_u8 public_key;
 
     private:
-    std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb;
+    std::function<PasswordCallback(bytes_view,bytes_view,Array&)> set_password_cb;
     std::string& extra_message;
     Translation::language_t lang;
     const bool verbose;
@@ -703,7 +703,7 @@ private:
     /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
     static void compute_hmac_md5(
         uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-        const_bytes_view data_buffer, uint32_t SeqNo)
+        bytes_view data_buffer, uint32_t SeqNo)
     {
         // TODO signing_key by array reference
         SslHMAC_Md5 hmac_md5({signing_key, 16});
@@ -792,7 +792,7 @@ public:
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
-               std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb,
+               std::function<PasswordCallback(bytes_view,bytes_view,Array&)> set_password_cb,
                const bool verbose = false)
         : public_key(key)
         , set_password_cb(set_password_cb)

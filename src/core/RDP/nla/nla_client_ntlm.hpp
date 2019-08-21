@@ -135,7 +135,7 @@ class rdpCredsspClientNTLM
         /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
         static void compute_hmac_md5(
             uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-            const_bytes_view data_buffer, uint32_t SeqNo)
+            bytes_view data_buffer, uint32_t SeqNo)
         {
             // TODO signing_key by array reference
             SslHMAC_Md5 hmac_md5({signing_key, 16});
@@ -520,7 +520,7 @@ public:
 
         /* receive server response and place in input buffer */
         SEC_STATUS status1 = this->table.InitializeSecurityContext(
-            bytes_view(this->ServicePrincipalName.av()).as_chars(),
+            writable_bytes_view(this->ServicePrincipalName.av()).as_chars(),
             this->client_auth_data.input_buffer.av(),
             /*output*/this->ts_request.negoTokens);
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
@@ -602,7 +602,7 @@ public:
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
                 SEC_STATUS status = this->table.InitializeSecurityContext(
-                    bytes_view(this->ServicePrincipalName.av()).as_chars(),
+                    writable_bytes_view(this->ServicePrincipalName.av()).as_chars(),
                     this->client_auth_data.input_buffer.av(),
                     /*output*/this->ts_request.negoTokens);
 

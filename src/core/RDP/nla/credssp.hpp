@@ -891,7 +891,7 @@ struct TSCredentials
 //        this->passCreds = TSPasswordCreds(domain, domain_length, user, user_length, pass, pass_length);
 //    }
 
-    void set_credentials_from_av(cbytes_view domain_av, cbytes_view user_av, cbytes_view password_av) {
+    void set_credentials_from_av(bytes_view domain_av, bytes_view user_av, bytes_view password_av) {
         this->passCreds = TSPasswordCreds(domain_av.data(), domain_av.size(),
                                           user_av.data(), user_av.size(),
                                           password_av.data(), password_av.size());

@@ -42,7 +42,7 @@ RecorderFile::~RecorderFile()
     }
 }
 
-void RecorderFile::write_packet(PacketType type, const_bytes_view buffer)
+void RecorderFile::write_packet(PacketType type, bytes_view buffer)
 {
     auto delta = to_ms(this->timeobj.get_time()) - this->start_time;
 
@@ -64,7 +64,7 @@ RecorderTransport::RecorderTransport(Transport& trans, TimeObj& timeobj, char co
 }
 
 
-void RecorderTransport::add_info(bytes_view info)
+void RecorderTransport::add_info(writable_bytes_view info)
 {
     this->out.write_packet(RecorderFile::PacketType::Info, info);
 }

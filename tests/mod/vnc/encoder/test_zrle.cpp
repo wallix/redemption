@@ -6593,7 +6593,7 @@ class BlockRead
 public:
     BlockRead(uint8_t const buffer[], size_t buffer_size) : pbuff(buffer), buffer_size(buffer_size), pos(0) {}
 
-    size_t operator()(byte_ptr buffer, size_t len)
+    size_t operator()(writable_byte_ptr buffer, size_t len)
     {
         if (this->pos < this->buffer_size){
             const size_t available = this->buffer_size - this->pos;

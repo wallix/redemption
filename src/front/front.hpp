@@ -1246,7 +1246,7 @@ public:
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel
-                        , const_bytes_view chunk_data
+                        , bytes_view chunk_data
                         , std::size_t total_length
                         , int flags) override {
         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
@@ -2909,7 +2909,7 @@ private:
                 ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             },
-            [this](StreamSize<0>, OutStream &, const_bytes_view packet) {
+            [this](StreamSize<0>, OutStream &, bytes_view packet) {
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_demand_active: Sec clear payload to send:");
                     hexdump_d(packet);

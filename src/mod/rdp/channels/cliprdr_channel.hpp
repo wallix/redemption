@@ -128,7 +128,7 @@ public:
 
 public:
     void process_client_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data) override
+        uint32_t flags, bytes_view chunk_data) override
     {
         this->log_process_message(total_length, flags, chunk_data, Direction::FileFromClient);
 
@@ -232,7 +232,7 @@ public:
     }   // process_server_format_data_request_pdu
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data,
+        uint32_t flags, bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override
     {
         (void)out_asynchronous_task;
@@ -427,7 +427,7 @@ public:
 
 private:
     void log_process_message(
-        uint32_t total_length, uint32_t flags, const_bytes_view chunk_data, Direction direction)
+        uint32_t total_length, uint32_t flags, bytes_view chunk_data, Direction direction)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_%s_message: "

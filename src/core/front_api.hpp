@@ -40,7 +40,7 @@ public:
     virtual bool must_be_stop_capture() = 0;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, const_bytes_view chunk_data
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
                                 , std::size_t total_length, int flags) = 0;
 
     enum class ResizeResult {

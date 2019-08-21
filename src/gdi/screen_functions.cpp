@@ -38,7 +38,7 @@ void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension const& dim)
     Rect const r(0, 0, dim.w, dim.h);
     RDPPatBlt cmd(
         r, 0xA0, color_encode(BLACK, BitsPerPixel{24}), color_encode(WHITE, BitsPerPixel{24}),
-        RDPBrush(0, 0, 3, 0xaa, cbyte_ptr("\x55\xaa\x55\xaa\x55\xaa\x55"))
+        RDPBrush(0, 0, 3, 0xaa, byte_ptr("\x55\xaa\x55\xaa\x55\xaa\x55"))
     );
     drawable.begin_update();
     drawable.draw(cmd, r, gdi::ColorCtx::depth24());

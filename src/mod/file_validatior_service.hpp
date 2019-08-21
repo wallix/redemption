@@ -233,7 +233,7 @@ inline void send_header(
     trans.send(message.get_bytes());
 }
 
-inline void send_data_file(OutTransport trans, FileValidatorId file_id, const_bytes_view data)
+inline void send_data_file(OutTransport trans, FileValidatorId file_id, bytes_view data)
 {
     constexpr std::ptrdiff_t max_pkt_len = 0x0fff'ffff;
 
@@ -249,7 +249,7 @@ inline void send_data_file(OutTransport trans, FileValidatorId file_id, const_by
 }
 
 /// data_map is a key value list
-inline void send_infos(OutTransport trans, std::initializer_list<const_bytes_view> data_map)
+inline void send_infos(OutTransport trans, std::initializer_list<bytes_view> data_map)
 {
     /*
     InfosMessage
@@ -321,13 +321,13 @@ struct FileValidatorService
         return LocalFileValidatorProtocol::send_open_file(this->trans, this->generate_id(), file_name, target_name);
     }
 
-    void send_data(FileValidatorId file_id, const_bytes_view data)
+    void send_data(FileValidatorId file_id, bytes_view data)
     {
         LocalFileValidatorProtocol::send_data_file(this->trans, file_id, data);
     }
 
     /// data_map is a key value list
-    void send_infos(std::initializer_list<const_bytes_view> data_map)
+    void send_infos(std::initializer_list<bytes_view> data_map)
     {
         LocalFileValidatorProtocol::send_infos(this->trans, data_map);
     }

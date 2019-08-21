@@ -35,14 +35,21 @@ int main()
     char const * cs = ca;
     uint8_t const * cus = cua;
 
-    byte_ptr bs{s};
-    const_byte_ptr cbs{cs};
-    buffer_view ba;
-    const_buffer_view cba;
+    writable_byte_ptr bs{s};
+    byte_ptr cbs{cs};
+    writable_buffer_view ba;
+    buffer_view cba;
     array_view_char av{s, 1};
     array_view_u8 uav{us, 1};
     array_view_const_char cav{cs, 1};
     array_view_const_u8 cuav{cus, 1};
+
+    writable_buffer_view{bs, 1};
+    writable_buffer_view{a};
+    writable_buffer_view{ua};
+    writable_buffer_view{av};
+    writable_buffer_view{uav};
+    writable_buffer_view{ba};
 
     buffer_view{bs, 1};
     buffer_view{a};
@@ -51,19 +58,18 @@ int main()
     buffer_view{uav};
     buffer_view{ba};
 
-    const_buffer_view{bs, 1};
-    const_buffer_view{a};
-    const_buffer_view{ua};
-    const_buffer_view{av};
-    const_buffer_view{uav};
-    const_buffer_view{ba};
+    buffer_view{cbs, 1};
+    buffer_view{ca};
+    buffer_view{cua};
+    buffer_view{cav};
+    buffer_view{cuav};
+    buffer_view{cba};
 
-    const_buffer_view{cbs, 1};
-    const_buffer_view{ca};
-    const_buffer_view{cua};
-    const_buffer_view{cav};
-    const_buffer_view{cuav};
-    const_buffer_view{cba};
+    writable_buffer_view{} = a;
+    writable_buffer_view{} = ua;
+    writable_buffer_view{} = av;
+    writable_buffer_view{} = uav;
+    writable_buffer_view{} = ba;
 
     buffer_view{} = a;
     buffer_view{} = ua;
@@ -71,21 +77,21 @@ int main()
     buffer_view{} = uav;
     buffer_view{} = ba;
 
-    const_buffer_view{} = a;
-    const_buffer_view{} = ua;
-    const_buffer_view{} = av;
-    const_buffer_view{} = uav;
-    const_buffer_view{} = ba;
-
-    const_buffer_view{} = ca;
-    const_buffer_view{} = cua;
-    const_buffer_view{} = cav;
-    const_buffer_view{} = cuav;
-    const_buffer_view{} = cba;
+    buffer_view{} = ca;
+    buffer_view{} = cua;
+    buffer_view{} = cav;
+    buffer_view{} = cuav;
+    buffer_view{} = cba;
 
     array_view_u8{} = ba;
     array_view_const_u8{} = ba;
     array_view_const_u8{} = cba;
+
+    [](writable_buffer_view){}(a);
+    [](writable_buffer_view){}(ua);
+    [](writable_buffer_view){}(av);
+    [](writable_buffer_view){}(uav);
+    [](writable_buffer_view){}(ba);
 
     [](buffer_view){}(a);
     [](buffer_view){}(ua);
@@ -93,15 +99,9 @@ int main()
     [](buffer_view){}(uav);
     [](buffer_view){}(ba);
 
-    [](const_buffer_view){}(a);
-    [](const_buffer_view){}(ua);
-    [](const_buffer_view){}(av);
-    [](const_buffer_view){}(uav);
-    [](const_buffer_view){}(ba);
-
-    [](const_buffer_view){}(ca);
-    [](const_buffer_view){}(cua);
-    [](const_buffer_view){}(cav);
-    [](const_buffer_view){}(cuav);
-    [](const_buffer_view){}(cba);
+    [](buffer_view){}(ca);
+    [](buffer_view){}(cua);
+    [](buffer_view){}(cav);
+    [](buffer_view){}(cuav);
+    [](buffer_view){}(cba);
 }

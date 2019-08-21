@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestJsChannel)
 {
     init_js_channel();
 
-    auto vec = [](cbytes_view av) { return std::vector<uint8_t>(av.begin(), av.end()); };
+    auto vec = [](bytes_view av) { return std::vector<uint8_t>(av.begin(), av.end()); };
     auto chan_flags1 = CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST;
     auto chan_flags2 = CHANNELS::CHANNEL_FLAG_FIRST;
 

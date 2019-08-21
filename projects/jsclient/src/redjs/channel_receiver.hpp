@@ -32,13 +32,13 @@ namespace redjs
 
 struct ChannelReceiver
 {
-    using receiver_type = std::function<void(cbytes_view data, int channel_flags)>;
+    using receiver_type = std::function<void(bytes_view data, int channel_flags)>;
 
     ChannelReceiver(CHANNELS::ChannelNameId name_id, receiver_type receiver);
 
     CHANNELS::ChannelNameId name() const noexcept { return this->name_id; }
 
-    void operator()(cbytes_view data, int channel_flags);
+    void operator()(bytes_view data, int channel_flags);
 
 private:
     CHANNELS::ChannelNameId name_id;

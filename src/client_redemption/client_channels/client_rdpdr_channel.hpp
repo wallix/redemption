@@ -106,7 +106,7 @@ public:
     virtual FileStatvfs get_file_statvfs(const char * file_to_request) = 0;
 
     virtual void read_data(
-        std::string const& file_to_tread, int offset, bytes_view data) = 0;
+        std::string const& file_to_tread, int offset, writable_bytes_view data) = 0;
 
     virtual bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) = 0;
 
@@ -114,7 +114,7 @@ public:
 
     virtual uint32_t get_volume_serial_number(int device) = 0;
 
-    virtual bool write_file(const char * file_to_write, const_bytes_view data) = 0;
+    virtual bool write_file(const char * file_to_write, bytes_view data) = 0;
 
     virtual bool remove_file(const char * file_to_remove) = 0;
 

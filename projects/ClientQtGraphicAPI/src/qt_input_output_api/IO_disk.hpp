@@ -106,7 +106,7 @@ public:
         return fileStatvfs;
     }
 
-    void read_data(std::string const& file_to_tread, int offset, bytes_view data) override {
+    void read_data(std::string const& file_to_tread, int offset, writable_bytes_view data) override {
 
         std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
         if(inFile.is_open()) {
@@ -158,7 +158,7 @@ public:
         return strtol(char_ptr_cast(hd.serial_no), nullptr, 16);
     }
 
-    bool write_file(const char * file_to_write, const_bytes_view data) override {
+    bool write_file(const char * file_to_write, bytes_view data) override {
         std::ofstream oFile(file_to_write, std::ios::out | std::ios::binary);
         if (oFile) {
             oFile.write(data.as_charp(), data.size());

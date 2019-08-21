@@ -258,7 +258,7 @@ struct LogonInfoVersion1_Recv {
 
 struct LogonInfoVersion1_Send
 {
-    // TODO std::string_view / array_view_const_char / bytes_view
+    // TODO std::string_view / array_view_const_char / writable_bytes_view
     LogonInfoVersion1_Send(OutStream & stream, const uint8_t * Domain,
         const uint8_t * UserName, uint32_t sessionId)
     {

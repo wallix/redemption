@@ -92,8 +92,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
     {
         char const* name;
         ClipboardVirtualChannelParams cb_params;
-        const_bytes_view indata;
-        const_bytes_view outdata;
+        bytes_view indata;
+        bytes_view outdata;
     };
 
     #define F(name) D{#name,           \
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 class NullSender : public VirtualChannelDataSender
 {
 public:
-    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, const_bytes_view /*chunk_data*/) override {}
+    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, bytes_view /*chunk_data*/) override {}
 };
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
@@ -331,7 +331,7 @@ public:
 
     explicit TestResponseSender() = default;
 
-    void operator()(uint32_t /*total_length*/, uint32_t /*flags*/, const_bytes_view chunk_data)
+    void operator()(uint32_t /*total_length*/, uint32_t /*flags*/, bytes_view chunk_data)
             override
     {
         if (this->total_in_stream < 10) {
@@ -340,7 +340,7 @@ public:
         }
     }
 
-    const_bytes_view bytes(std::size_t i) const noexcept
+    bytes_view bytes(std::size_t i) const noexcept
     {
         return streams[i].get_bytes();
     }
@@ -352,7 +352,7 @@ struct Buffer
     StaticOutStream<1600> out;
 
     template<class F>
-    const_bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
+    bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
     {
         using namespace RDPECLIP;
         array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
@@ -421,7 +421,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-    auto process_server_message = [&](cbytes_view av){
+    auto process_server_message = [&](bytes_view av){
         auto flags
           = CHANNELS::CHANNEL_FLAG_FIRST
           | CHANNELS::CHANNEL_FLAG_LAST
@@ -430,7 +430,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             av.size(), flags, av, out_asynchronous_task);
     };
 
-    auto process_client_message = [&](cbytes_view av){
+    auto process_client_message = [&](bytes_view av){
         auto flags
           = CHANNELS::CHANNEL_FLAG_FIRST
           | CHANNELS::CHANNEL_FLAG_LAST

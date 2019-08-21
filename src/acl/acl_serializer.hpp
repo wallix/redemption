@@ -114,7 +114,7 @@ public:
 
     void open(
         std::string const& log_path, std::string const& hash_path,
-        int groupid, const_bytes_view derivator);
+        int groupid, bytes_view derivator);
 
     void close();
 

@@ -236,7 +236,7 @@ namespace redemption_unit_test__
     struct xarray
     {
         size_t & res;
-        const_bytes_view sig;
+        bytes_view sig;
 
         std::size_t size() const noexcept
         {
@@ -251,7 +251,7 @@ namespace redemption_unit_test__
     struct xsarray
     {
         size_t & res;
-        const_bytes_view sig;
+        bytes_view sig;
 
         std::size_t size() const noexcept
         {
@@ -266,7 +266,7 @@ namespace redemption_unit_test__
     struct xrarray
     {
         size_t & res;
-        const_bytes_view sig;
+        bytes_view sig;
 
         std::size_t size() const noexcept
         {
@@ -302,7 +302,7 @@ namespace redemption_unit_test__
 } // namespace redemption_unit_test__
 
 
-std::ostream& operator<<(std::ostream& out, const_bytes_view const& av);
+std::ostream& operator<<(std::ostream& out, bytes_view const& av);
 
 std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e);
 

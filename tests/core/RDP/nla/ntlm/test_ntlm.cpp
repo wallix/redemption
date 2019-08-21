@@ -38,13 +38,13 @@ private:
     TimeObj & timeobj;
     std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
     std::unique_ptr<NTLMContext> context;
-    std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)>& set_password_cb;
+    std::function<PasswordCallback(bytes_view,bytes_view,Array&)>& set_password_cb;
     bool verbose;
 
 public:
     explicit Ntlm_SecurityFunctionTable(
         Random & rand, TimeObj & timeobj,
-        std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> & set_password_cb,
+        std::function<PasswordCallback(bytes_view,bytes_view,Array&)> & set_password_cb,
         bool verbose = false
     )
         : rand(rand)
@@ -191,7 +191,7 @@ private:
     /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
     static void compute_hmac_md5(
         uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-        const_bytes_view data_buffer, uint32_t SeqNo)
+        bytes_view data_buffer, uint32_t SeqNo)
     {
         // TODO signing_key by array reference
         SslHMAC_Md5 hmac_md5({signing_key, 16});
@@ -293,8 +293,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
     LCGTime timeobj;
 
 
-    std::function<PasswordCallback(cbytes_view,cbytes_view,Array&)> set_password_cb
-      = [](cbytes_view,cbytes_view,Array&){ return PasswordCallback::Ok; };
+    std::function<PasswordCallback(bytes_view,bytes_view,Array&)> set_password_cb
+      = [](bytes_view,bytes_view,Array&){ return PasswordCallback::Ok; };
 
     Ntlm_SecurityFunctionTable server_table(rand, timeobj, set_password_cb);
     Ntlm_SecurityFunctionTable client_table(rand, timeobj, set_password_cb);
@@ -357,7 +357,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // ENCRYPT
     auto message = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!"_av;
     Array Result;
-    server_status = server_table.EncryptMessage(const_bytes_view(message), Result, 0);
+    server_status = server_table.EncryptMessage(bytes_view(message), Result, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
     const unsigned cbMaxSignature = 16u;

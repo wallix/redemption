@@ -407,7 +407,7 @@ public:
 
     void horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_t endx, uint8_t rop, Color color);
 
-    void set_row(size_t rownum, const_bytes_view data);
+    void set_row(size_t rownum, bytes_view data);
 
     void trace_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);
     void clear_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);

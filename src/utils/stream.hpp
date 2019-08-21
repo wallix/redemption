@@ -54,7 +54,7 @@ class InStream
     Parse p;
 
 public:
-    explicit InStream(const_buffer_view buf) noexcept
+    explicit InStream(buffer_view buf) noexcept
     : begin(buf.begin())
     , end(buf.end())
     , p(this->begin)
@@ -74,11 +74,11 @@ public:
         return InStream(*this);
     }
 
-    const_bytes_view get_bytes() const noexcept {
+    bytes_view get_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
     }
 
-    const_bytes_view remaining_bytes() const noexcept {
+    bytes_view remaining_bytes() const noexcept {
         return {this->get_current(), this->in_remain()};
     }
 
@@ -229,12 +229,12 @@ public:
         return this->p.in_bytes_be(nb);
     }
 
-    void in_copy_bytes(bytes_view v) noexcept {
+    void in_copy_bytes(writable_bytes_view v) noexcept {
         assert(this->in_check_rem(v.size()));
         return this->p.in_copy_bytes(v);
     }
 
-    void in_copy_bytes(byte_ptr v, size_t n) noexcept {
+    void in_copy_bytes(writable_byte_ptr v, size_t n) noexcept {
         return this->in_copy_bytes({v, n});
     }
 
@@ -391,7 +391,7 @@ class OutStream
     uint8_t * p = nullptr;
 
 public:
-    explicit OutStream(buffer_view buf) noexcept
+    explicit OutStream(writable_buffer_view buf) noexcept
     : begin(buf.begin())
     , end(buf.end())
     , p(this->begin)
@@ -408,7 +408,7 @@ public:
         return  this->end - this->p;
     }
 
-    bytes_view get_tail() const noexcept {
+    writable_bytes_view get_tail() const noexcept {
         return {this->get_current(), this->tailroom()};
     }
 
@@ -416,7 +416,7 @@ public:
         return  n <= this->tailroom();
     }
 
-    bytes_view get_bytes() const noexcept {
+    writable_bytes_view get_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
     }
 
@@ -758,13 +758,13 @@ public:
         this->p = this->begin + offset;
     }
 
-    void out_copy_bytes(cbytes_view data) noexcept {
+    void out_copy_bytes(bytes_view data) noexcept {
         assert(this->has_room(data.size()));
         memcpy(this->p, data.data(), data.size());
         this->p += data.size();
     }
 
-    void out_copy_bytes(cbyte_ptr v, size_t n) noexcept {
+    void out_copy_bytes(byte_ptr v, size_t n) noexcept {
         this->out_copy_bytes({v, n});
     }
 
@@ -862,8 +862,8 @@ struct OutReservedStreamHelper
     , stream({this->buf, buf_len - reserved_leading_space})
     {}
 
-    bytes_view get_packet() const noexcept {
-        return bytes_view{this->buf, std::size_t(this->stream.get_current() - this->buf)};
+    writable_bytes_view get_packet() const noexcept {
+        return writable_bytes_view{this->buf, std::size_t(this->stream.get_current() - this->buf)};
     }
 
     std::size_t get_reserved_leading_space() const noexcept {
@@ -874,7 +874,7 @@ struct OutReservedStreamHelper
         return this->stream;
     }
 
-    bytes_view copy_to_head(OutStream const & stream) noexcept {
+    writable_bytes_view copy_to_head(OutStream const & stream) noexcept {
         assert(stream.get_offset() <= this->reserved_leading_space);
         this->buf -= stream.get_offset();
         this->reserved_leading_space -= stream.get_offset();
@@ -883,7 +883,7 @@ struct OutReservedStreamHelper
         return get_packet();
     }
 
-    bytes_view copy_to_head(OutStream const & stream1, OutStream const & stream2) noexcept {
+    writable_bytes_view copy_to_head(OutStream const & stream1, OutStream const & stream2) noexcept {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
@@ -897,7 +897,7 @@ struct OutReservedStreamHelper
         return get_packet();
     }
 
-    bytes_view copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) noexcept {
+    writable_bytes_view copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) noexcept {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
@@ -1092,7 +1092,7 @@ namespace details_ {
 
     template<class StreamSz, class Writer>
     void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, Writer & writer, unsigned /*unused*/)
-    { writer(sz, ostream, bytes_view(buf, used_buf_sz)); }
+    { writer(sz, ostream, writable_bytes_view(buf, used_buf_sz)); }
 
 
     template<class StreamSz, class Writer>

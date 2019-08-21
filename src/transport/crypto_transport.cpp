@@ -167,7 +167,7 @@ const InCryptoTransport::HASH InCryptoTransport::fhash(const char * pathname)
     return fhash;
 }
 
-void InCryptoTransport::open(const char * const pathname, const_bytes_view derivator)
+void InCryptoTransport::open(const char * const pathname, bytes_view derivator)
 {
     if (this->is_open()){
         throw Error(ERR_TRANSPORT_READ_FAILED);
@@ -523,7 +523,7 @@ void ocrypto::flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     this->pos = 0;
 }
 
-void ocrypto::update_hmac(const_bytes_view buf)
+void ocrypto::update_hmac(bytes_view buf)
 {
     if (this->cctx.get_with_checksum()){
         this->hm.update(buf);
@@ -543,7 +543,7 @@ ocrypto::ocrypto(CryptoContext & cctx, Random & rnd)
 
 ocrypto::~ocrypto() = default;
 
-ocrypto::Result ocrypto::open(const_bytes_view derivator)
+ocrypto::Result ocrypto::open(bytes_view derivator)
 {
     this->file_size = 0;
     this->pos = 0;
@@ -619,7 +619,7 @@ ocrypto::Result ocrypto::close(
 
 }
 
-ocrypto::Result ocrypto::write(const_bytes_view data)
+ocrypto::Result ocrypto::write(bytes_view data)
 {
     if (!this->cctx.get_with_encryption()) {
         this->update_hmac(data);
@@ -715,7 +715,7 @@ bool OutCryptoTransport::is_open() const
     return this->out_file.is_open();
 }
 
-void OutCryptoTransport::open(const char * const finalname, const char * const hash_filename, int groupid, const_bytes_view derivator)
+void OutCryptoTransport::open(const char * const finalname, const char * const hash_filename, int groupid, bytes_view derivator)
 {
     // This should avoid double open, we do not want that
     if (this->is_open()){
@@ -800,7 +800,7 @@ void OutCryptoTransport::close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t
 namespace
 {
     void send_data(
-        cbyte_ptr data_, size_t len,
+        byte_ptr data_, size_t len,
         ocrypto & encrypter, OutFileTransport & out_file)
     {
         const uint8_t * data = data_.as_u8p();
@@ -886,7 +886,7 @@ void OutCryptoTransport::do_send(const uint8_t * data, size_t len)
 
 
 EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
-    InCryptoTransport & in, const char * filename, const_bytes_view derivator, Error * err)
+    InCryptoTransport & in, const char * filename, bytes_view derivator, Error * err)
 {
     try {
         if (derivator.data()) {
@@ -924,7 +924,7 @@ EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
 }
 
 EncryptionSchemeTypeResult get_encryption_scheme_type(
-    CryptoContext & cctx, const char * filename, const_bytes_view derivator, Error * err)
+    CryptoContext & cctx, const char * filename, bytes_view derivator, Error * err)
 {
     Fstat fstat;
     InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);

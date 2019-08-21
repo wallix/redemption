@@ -1462,7 +1462,7 @@ void Drawable::horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_
     }
 }
 
-void Drawable::set_row(size_t rownum, const_bytes_view data)
+void Drawable::set_row(size_t rownum, bytes_view data)
 {
     memcpy(this->impl_.row_data(rownum), data.data(), std::min(this->rowsize(), data.size()));
 }

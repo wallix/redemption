@@ -416,7 +416,7 @@ private:
         );
     }
 
-    void copy_bytes(const_bytes_view bytes) {
+    void copy_bytes(bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }
@@ -501,7 +501,7 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
 
     int hidden_masked_char_count = 0;
 
-    void copy_bytes(const_bytes_view bytes) {
+    void copy_bytes(bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }
@@ -1369,7 +1369,7 @@ private:
         );
     }
 
-    void copy_bytes(const_bytes_view bytes) {
+    void copy_bytes(bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->send_kbd();
         }
@@ -1603,7 +1603,7 @@ public:
         }
     }
 
-    void set_row(std::size_t rownum, const_bytes_view data)
+    void set_row(std::size_t rownum, bytes_view data)
     {
         for (gdi::GraphicApi & gd : this->gds){
             gd.set_row(rownum, data);
@@ -2017,7 +2017,7 @@ Capture::RTDisplayResult Capture::set_rt_display(bool enable_rt_display)
         : Capture::RTDisplayResult::Unchanged;
 }
 
-void Capture::set_row(size_t rownum, const_bytes_view data)
+void Capture::set_row(size_t rownum, bytes_view data)
 {
     if (this->capture_drawable) {
         this->gd_drawable->set_row(rownum, data);

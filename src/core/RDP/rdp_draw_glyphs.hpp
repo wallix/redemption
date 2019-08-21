@@ -274,7 +274,7 @@ template<class SetPoint>
 void rdp_draw_glyphs(
     SetPoint&& set_point,
     uint8_t (&fragment_cache)[MAXIMUM_NUMBER_OF_FRAGMENT_CACHE_ENTRIES][1 /* size */ + MAXIMUM_SIZE_OF_FRAGMENT_CACHE_ENTRIE],
-    const_bytes_view data,
+    bytes_view data,
     bool has_delta_bytes, uint16_t ui_charinc,
     uint16_t & draw_pos_ref, int16_t offset_y,
     int16_t bmp_pos_x, int16_t bmp_pos_y, Rect clip,

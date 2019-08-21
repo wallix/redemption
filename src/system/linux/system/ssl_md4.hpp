@@ -40,7 +40,7 @@ public:
         MD4_Init(&this->md4);
     }
 
-    void update(const_bytes_view data)
+    void update(bytes_view data)
     {
         MD4_Update(&this->md4, data.as_u8p(), data.size());
     }

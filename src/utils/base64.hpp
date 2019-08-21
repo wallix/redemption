@@ -27,4 +27,4 @@ constexpr std::size_t base64_encode_size(size_t data_n)
     return 4 * ((data_n + 2) / 3);
 }
 
-bytes_view base64_encode(const_bytes_view data, bytes_view output) noexcept;
+writable_bytes_view base64_encode(bytes_view data, writable_bytes_view output) noexcept;

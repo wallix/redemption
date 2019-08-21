@@ -35,7 +35,7 @@ struct DataChan : DataChan_tuple
 {
     using DataChan_tuple::tuple;
 
-    DataChan(cbytes_view av, size_t total_len, uint32_t channel_flags)
+    DataChan(bytes_view av, size_t total_len, uint32_t channel_flags)
     : DataChan(
         channel_names::cliprdr,
         {av.begin(), av.end()},
@@ -90,7 +90,7 @@ constexpr int first_last_channel_flags
     | CHANNELS::CHANNEL_FLAG_FIRST
 ;
 
-void clip_raw_receive(cbytes_view data, int channel_flags = first_last_show_proto_channel_flags)
+void clip_raw_receive(bytes_view data, int channel_flags = first_last_show_proto_channel_flags)
 {
     clip->receive(data, channel_flags);
 }
@@ -101,7 +101,7 @@ struct Serializer
 {
     StaticOutStream<65536> out_stream;
 
-    Serializer(uint16_t msgType, uint16_t msgFlags, cbytes_view data, Padding padding_data)
+    Serializer(uint16_t msgType, uint16_t msgFlags, bytes_view data, Padding padding_data)
     {
         RDPECLIP::CliprdrHeader header(msgType, msgFlags, data.size());
         header.emit(out_stream);
@@ -112,7 +112,7 @@ struct Serializer
         }
     }
 
-    operator cbytes_view () const
+    operator bytes_view () const
     {
         return out_stream.get_bytes();
     }
@@ -120,7 +120,7 @@ struct Serializer
 
 void clip_receive(
     uint16_t msgType, uint16_t msgFlags,
-    cbytes_view data = {},
+    bytes_view data = {},
     Padding padding_data = Padding{},
     uint32_t channel_flags = first_last_show_proto_channel_flags)
 {
@@ -129,7 +129,7 @@ void clip_receive(
 
 DataChan data_chan(
     uint16_t msgType, uint16_t msgFlags,
-    cbytes_view data = {},
+    bytes_view data = {},
     Padding padding_data = Padding{},
     std::size_t len = ~0u, uint32_t channel_flags = first_last_show_proto_channel_flags)
 {

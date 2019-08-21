@@ -39,7 +39,7 @@ const CHANNELS::ChannelDefArray & FrontWrapper::get_channel_list() const
 }
 
 void FrontWrapper::send_to_channel(
-    const CHANNELS::ChannelDef & channel_def, const_bytes_view chunk_data,
+    const CHANNELS::ChannelDef & channel_def, bytes_view chunk_data,
     std::size_t total_length, int flags)
 {
     return d->front.send_to_channel(channel_def, chunk_data, total_length, flags);

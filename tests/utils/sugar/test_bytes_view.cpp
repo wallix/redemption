@@ -55,56 +55,63 @@ RED_AUTO_TEST_CASE(TestBytesT)
 
     using voidp = void const *;
 
+    writable_byte_ptr{a};
+    writable_byte_ptr{s};
+    writable_byte_ptr{us};
+
     byte_ptr{a};
     byte_ptr{s};
     byte_ptr{us};
+    byte_ptr{ca};
+    byte_ptr{cs};
+    byte_ptr{cus};
+    byte_ptr{writable_byte_ptr{a}};
 
-    const_byte_ptr{a};
-    const_byte_ptr{s};
-    const_byte_ptr{us};
-    const_byte_ptr{ca};
-    const_byte_ptr{cs};
-    const_byte_ptr{cus};
-    const_byte_ptr{byte_ptr{a}};
+    RED_CHECK_EQUAL(voidp(writable_byte_ptr(a).as_charp()), voidp(a));
+    RED_CHECK_EQUAL(voidp(writable_byte_ptr(ua).as_charp()), voidp(ua));
+    RED_CHECK_EQUAL(voidp(writable_byte_ptr(s).as_charp()), voidp(s));
+    RED_CHECK_EQUAL(voidp(writable_byte_ptr(us).as_charp()), voidp(us));
+
+    RED_CHECK_EQUAL(voidp(writable_byte_ptr(a).as_charp()), voidp(writable_byte_ptr(a).as_u8p()));
+
+    RED_CHECK(bool(writable_byte_ptr(a)));
+    RED_CHECK(!bool(writable_byte_ptr{}));
+
 
     RED_CHECK_EQUAL(voidp(byte_ptr(a).as_charp()), voidp(a));
     RED_CHECK_EQUAL(voidp(byte_ptr(ua).as_charp()), voidp(ua));
     RED_CHECK_EQUAL(voidp(byte_ptr(s).as_charp()), voidp(s));
     RED_CHECK_EQUAL(voidp(byte_ptr(us).as_charp()), voidp(us));
 
+    RED_CHECK_EQUAL(voidp(byte_ptr(ca).as_charp()), voidp(ca));
+    RED_CHECK_EQUAL(voidp(byte_ptr(cua).as_charp()), voidp(cus));
+    RED_CHECK_EQUAL(voidp(byte_ptr(cs).as_charp()), voidp(cs));
+    RED_CHECK_EQUAL(voidp(byte_ptr(cus).as_charp()), voidp(cus));
+
     RED_CHECK_EQUAL(voidp(byte_ptr(a).as_charp()), voidp(byte_ptr(a).as_u8p()));
 
     RED_CHECK(bool(byte_ptr(a)));
     RED_CHECK(!bool(byte_ptr{}));
 
+    bytes_view{uv};
 
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(a).as_charp()), voidp(a));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(ua).as_charp()), voidp(ua));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(s).as_charp()), voidp(s));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(us).as_charp()), voidp(us));
-
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(ca).as_charp()), voidp(ca));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(cua).as_charp()), voidp(cus));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(cs).as_charp()), voidp(cs));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(cus).as_charp()), voidp(cus));
-
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(a).as_charp()), voidp(const_byte_ptr(a).as_u8p()));
-
-    RED_CHECK(bool(const_byte_ptr(a)));
-    RED_CHECK(!bool(const_byte_ptr{}));
-
-    const_bytes_view{uv};
-
-    byte_ptr bs{s};
-    const_byte_ptr cbs{cs};
-    bytes_view ba;
-    const_bytes_view cba;
+    writable_byte_ptr bs{s};
+    byte_ptr cbs{cs};
+    writable_bytes_view ba;
+    bytes_view cba;
     array_view_char av{s, 1};
     array_view_u8 uav{us, 1};
     array_view_const_char cav{cs, 1};
     array_view_const_u8 cuav{cus, 1};
 
     std::false_type no;
+
+    writable_bytes_view{bs, 1};
+    is_callable<writable_bytes_view>(a) = no;
+    is_callable<writable_bytes_view>(ua) = no;
+    writable_bytes_view{av};
+    writable_bytes_view{uav};
+    writable_bytes_view{ba};
 
     bytes_view{bs, 1};
     is_callable<bytes_view>(a) = no;
@@ -113,19 +120,18 @@ RED_AUTO_TEST_CASE(TestBytesT)
     bytes_view{uav};
     bytes_view{ba};
 
-    const_bytes_view{bs, 1};
-    is_callable<const_bytes_view>(a) = no;
-    is_callable<const_bytes_view>(ua) = no;
-    const_bytes_view{av};
-    const_bytes_view{uav};
-    const_bytes_view{ba};
+    bytes_view{cbs, 1};
+    is_callable<bytes_view>(ca) = no;
+    is_callable<bytes_view>(cua) = no;
+    bytes_view{cav};
+    bytes_view{cuav};
+    bytes_view{cba};
 
-    const_bytes_view{cbs, 1};
-    is_callable<const_bytes_view>(ca) = no;
-    is_callable<const_bytes_view>(cua) = no;
-    const_bytes_view{cav};
-    const_bytes_view{cuav};
-    const_bytes_view{cba};
+    std::is_assignable<writable_bytes_view, decltype(a)>::type{} = no;
+    std::is_assignable<writable_bytes_view, decltype(ua)>::type{} = no;
+    writable_bytes_view{} = av;
+    writable_bytes_view{} = uav;
+    writable_bytes_view{} = ba;
 
     std::is_assignable<bytes_view, decltype(a)>::type{} = no;
     std::is_assignable<bytes_view, decltype(ua)>::type{} = no;
@@ -133,31 +139,25 @@ RED_AUTO_TEST_CASE(TestBytesT)
     bytes_view{} = uav;
     bytes_view{} = ba;
 
-    std::is_assignable<const_bytes_view, decltype(a)>::type{} = no;
-    std::is_assignable<const_bytes_view, decltype(ua)>::type{} = no;
-    const_bytes_view{} = av;
-    const_bytes_view{} = uav;
-    const_bytes_view{} = ba;
-
-    std::is_assignable<const_bytes_view, decltype(ca)>::type{} = no;
-    std::is_assignable<const_bytes_view, decltype(cua)>::type{} = no;
-    const_bytes_view{} = cav;
-    const_bytes_view{} = cuav;
-    const_bytes_view{} = cba;
+    std::is_assignable<bytes_view, decltype(ca)>::type{} = no;
+    std::is_assignable<bytes_view, decltype(cua)>::type{} = no;
+    bytes_view{} = cav;
+    bytes_view{} = cuav;
+    bytes_view{} = cba;
 
     array_view_u8{} = ba;
     array_view_const_u8{} = ba;
     array_view_const_u8{} = cba;
 
+    [](writable_bytes_view){}(av);
+    [](writable_bytes_view){}(uav);
+    [](writable_bytes_view){}(ba);
+
     [](bytes_view){}(av);
     [](bytes_view){}(uav);
     [](bytes_view){}(ba);
 
-    [](const_bytes_view){}(av);
-    [](const_bytes_view){}(uav);
-    [](const_bytes_view){}(ba);
-
-    [](const_bytes_view){}(cav);
-    [](const_bytes_view){}(cuav);
-    [](const_bytes_view){}(cba);
+    [](bytes_view){}(cav);
+    [](bytes_view){}(cuav);
+    [](bytes_view){}(cba);
 }

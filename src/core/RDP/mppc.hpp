@@ -434,7 +434,7 @@ protected:
 public:
     virtual ~rdp_mppc_dec() = default;
 
-    virtual cbytes_view decompress(cbytes_view cbuf, int ctype) = 0;
+    virtual bytes_view decompress(bytes_view cbuf, int ctype) = 0;
 };
 
 
@@ -480,7 +480,7 @@ public:
     rdp_mppc_unified_dec() = default;
     ~rdp_mppc_unified_dec() override;
 
-    cbytes_view decompress(cbytes_view cbuf, int ctype) override;
+    bytes_view decompress(bytes_view cbuf, int ctype) override;
 };
 
 std::unique_ptr<rdp_mppc_enc>

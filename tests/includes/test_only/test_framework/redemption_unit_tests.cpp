@@ -50,7 +50,7 @@ namespace redemption_unit_test__
 
     namespace
     {
-        bool xarray_cmp(size_t& res, cbytes_view sig, cbytes_view other_sig) noexcept
+        bool xarray_cmp(size_t& res, bytes_view sig, bytes_view other_sig) noexcept
         {
             res = std::mismatch(
                 sig.begin(), sig.end(),
@@ -201,7 +201,7 @@ void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::ope
     }
 }
 
-std::ostream& operator<<(std::ostream& out, const_bytes_view const& av)
+std::ostream& operator<<(std::ostream& out, bytes_view const& av)
 {
     size_t r = av.size();
     return out << redemption_unit_test__::xarray{r, av};

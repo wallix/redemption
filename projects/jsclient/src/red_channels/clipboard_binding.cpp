@@ -38,7 +38,7 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             return new clipboard::ClipboardChannel(*pcb, std::move(callbacks), RDPVerbose(verbose));
         })
         .function_ptr("getChannelReceiver", [](clipboard::ClipboardChannel& clip) {
-            auto receiver = [&clip](cbytes_view data, int channel_flags){
+            auto receiver = [&clip](bytes_view data, int channel_flags){
                 clip.receive(data, channel_flags);
             };
             return redjs::ChannelReceiver(channel_names::cliprdr, receiver);

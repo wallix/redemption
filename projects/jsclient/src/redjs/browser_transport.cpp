@@ -87,7 +87,7 @@ void BrowserTransport::add_in_buffer(std::string data)
     this->in_buffers.emplace_back(std::move(data));
 }
 
-const_bytes_view BrowserTransport::get_out_buffer() const noexcept
+bytes_view BrowserTransport::get_out_buffer() const noexcept
 {
     return this->out_buffers;
 }

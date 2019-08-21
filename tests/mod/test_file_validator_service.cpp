@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(file_validatorReceive)
     BufTransport trans;
     FileValidatorService file_validator{trans};
 
-    auto setbuf = [&](cbytes_view data){
+    auto setbuf = [&](bytes_view data){
         trans.buf.assign(data.as_charp(), data.size());
     };
 

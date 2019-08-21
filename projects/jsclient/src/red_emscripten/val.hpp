@@ -29,7 +29,7 @@ Author(s): Jonathan Poelen
 
 namespace redjs
 {
-    inline emscripten::val emval_from_view(const_bytes_view av)
+    inline emscripten::val emval_from_view(bytes_view av)
     {
         return emscripten::val(emscripten::typed_memory_view(av.size(), av.data()));
     }

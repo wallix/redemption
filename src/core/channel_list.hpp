@@ -365,7 +365,7 @@ namespace CHANNELS {
 
         void send_to_server( ServerTransportContext & stc,
                              uint16_t channelId, uint32_t length, uint32_t flags
-                           , const_bytes_view chunk) {
+                           , bytes_view chunk) {
             this->send_<false, MCS::SendDataRequest_Send>(
                 stc.trans, stc.encrypt, stc.negociation_result.encryptionLevel,
                 stc.negociation_result.userid, channelId, length, flags, chunk
@@ -374,7 +374,7 @@ namespace CHANNELS {
 
         void send_to_client( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-                           , const_bytes_view chunk) {
+                           , bytes_view chunk) {
             this->send_<true, MCS::SendDataIndication_Send>(
                 trans, crypt_context, encryptionLevel,
                 userId, channelId, length, flags, chunk
@@ -386,7 +386,7 @@ namespace CHANNELS {
         void send_(
           OutTransport trans, CryptContext & crypt_context, int encryptionLevel
         , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-        , const_bytes_view chunk) {
+        , bytes_view chunk) {
             write_packets(
                 trans,
                 [&](StreamSize<65536-1024>, OutStream & stream) {

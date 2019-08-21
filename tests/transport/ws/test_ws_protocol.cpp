@@ -25,7 +25,7 @@
 
 #include "transport/ws/ws_protocol.hpp"
 
-inline std::string av2str(const_bytes_view av)
+inline std::string av2str(bytes_view av)
 {
     return std::string(av.as_charp(), av.size());
 }

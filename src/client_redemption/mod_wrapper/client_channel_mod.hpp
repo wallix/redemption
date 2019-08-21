@@ -46,7 +46,7 @@ public:
         }
     }
 
-    void process_client_channel_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  const_bytes_view data, uint32_t flags){
+    void process_client_channel_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  bytes_view data, uint32_t flags){
 
         // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Dat
 

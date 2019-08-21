@@ -60,14 +60,14 @@ struct js_to_tuple<void(Ts...)>
     using type = std::tuple<Ts...>;
 };
 
-void print_bytes(std::ostream& out, cbytes_view v);
+void print_bytes(std::ostream& out, bytes_view v);
 
 template<class T>
 struct WVector
 {
     std::vector<T> v;
 
-    WVector(cbytes_view av)
+    WVector(bytes_view av)
     : v(av.begin(), av.end())
     {}
 
@@ -199,7 +199,7 @@ struct WVector
         });});                                          \
     }
 
-inline void print_bytes(std::ostream& out, cbytes_view v)
+inline void print_bytes(std::ostream& out, bytes_view v)
 {
     out << "\"";
     char const* s = "0123456789abcdef";

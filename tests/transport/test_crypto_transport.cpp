@@ -49,7 +49,7 @@ namespace
         ));
     }
 
-    ssize_t write_file(WorkingFile const& wf, const_bytes_view data)
+    ssize_t write_file(WorkingFile const& wf, bytes_view data)
     {
         int fd = open(wf, O_CREAT|O_TRUNC|O_WRONLY, S_IRWXU);
         auto res = write(fd, data.data(), data.size());

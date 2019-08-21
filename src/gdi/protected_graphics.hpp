@@ -85,7 +85,7 @@ public:
         this->get_graphic_proxy().sync();
     }
 
-    void set_row(std::size_t rownum, const_bytes_view data) override {
+    void set_row(std::size_t rownum, bytes_view data) override {
         this->get_graphic_proxy().set_row(rownum, data);
     }
 

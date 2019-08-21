@@ -56,7 +56,7 @@ namespace redemption_unit_test__
 {
     using SigArray = uint8_t[SslSha1::DIGEST_LENGTH];
 
-    inline void compute_av_sig(SigArray& sig, const_bytes_view av)
+    inline void compute_av_sig(SigArray& sig, bytes_view av)
     {
         SslSha1 sha1;
         sha1.update(av);
@@ -95,7 +95,7 @@ namespace redemption_unit_test__
         }
         else
         {
-            const_bytes_view ar = obj;
+            bytes_view ar = obj;
             ::redemption_unit_test__::compute_av_sig2(sig, ar.data(), 1, ar.size());
         }
     }

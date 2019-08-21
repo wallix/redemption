@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
     rdpCredsspServerNTLM credssp(
         front_public_key_av, rand, timeobj, extra_message, lang,
-        [&](cbytes_view user_av, cbytes_view domain_av, Array & password_array){
+        [&](bytes_view user_av, bytes_view domain_av, Array & password_array){
             std::vector<uint8_t> vec;
             vec.resize(user.size() * 2);
             UTF8toUTF16(user, vec.data(), vec.size());

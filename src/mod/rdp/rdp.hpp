@@ -526,7 +526,7 @@ private:
             {}
 
             void operator()(uint32_t total_length, uint32_t flags,
-                const_bytes_view chunk_data) override
+                bytes_view chunk_data) override
             {
                 if (this->verbose) {
                     const bool send              = true;
@@ -601,7 +601,7 @@ private:
             , verbose(verbose)
             {}
 
-            void operator()(uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) override
+            void operator()(uint32_t total_length, uint32_t flags, bytes_view chunk_data) override
             {
                 if (this->show_protocol) {
                     flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
@@ -656,7 +656,7 @@ private:
             }
 
             void operator()(
-                uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) override
+                uint32_t total_length, uint32_t flags, bytes_view chunk_data) override
             {
                 this->asynchronous_tasks.add(
                     std::make_unique<RdpdrSendClientMessageTask>(
@@ -1486,7 +1486,7 @@ public:
 
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
-        const_bytes_view chunk, size_t length, uint32_t flags,
+        bytes_view chunk, size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
 #ifndef __EMSCRIPTEN__
@@ -2523,7 +2523,7 @@ public:
 				if (setSurface.codecId == this->remoteFx_codec_id) {
 					setSurface.codec = RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX;
 
-					InStream remoteFxStream(cbytes_view(stream.get_current(), setSurface.bitmapDataLength));
+					InStream remoteFxStream(bytes_view(stream.get_current(), setSurface.bitmapDataLength));
 					this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
 				}
 				else {
@@ -5910,7 +5910,7 @@ private:
 
                 channel_data_size = stream.tailroom();
             },
-            [&](StreamSize<256>, OutStream & fastpath_header, bytes_view packet) {
+            [&](StreamSize<256>, OutStream & fastpath_header, writable_bytes_view packet) {
                 FastPath::ClientInputEventPDU_Send out_cie(
                     fastpath_header, packet.data(), packet.size(), 1,
                     this->encrypt, this->negociation_result.encryptionLevel,

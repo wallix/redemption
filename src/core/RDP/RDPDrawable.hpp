@@ -137,7 +137,7 @@ public:
     }
     //@}
 
-    void set_row(size_t rownum, const_bytes_view  data) override
+    void set_row(size_t rownum, bytes_view  data) override
     {
         this->drawable.set_row(rownum, data);
     }

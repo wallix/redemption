@@ -51,7 +51,7 @@ struct CopyPasteFront : FakeFront
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef& channel, const_bytes_view chunk_data,
+        const CHANNELS::ChannelDef& channel, bytes_view chunk_data,
         std::size_t /*total_length*/, int /*flags*/) override {
         RED_REQUIRE(channel.name == channel_names::cliprdr);
 

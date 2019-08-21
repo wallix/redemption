@@ -74,7 +74,7 @@ rdp_mppc_unified_dec::~rdp_mppc_unified_dec()
     delete this->mppc_dec;
 }
 
-cbytes_view rdp_mppc_unified_dec::decompress(cbytes_view cbuf, int ctype)
+bytes_view rdp_mppc_unified_dec::decompress(bytes_view cbuf, int ctype)
 {
     if (!this->mppc_dec) {
         const int type = ctype & 0x0f;

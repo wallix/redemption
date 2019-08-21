@@ -20,7 +20,7 @@ Author(s): Jonathan Poelen
 
 #include "utils/base64.hpp"
 
-bytes_view base64_encode(const_bytes_view data, bytes_view output) noexcept
+writable_bytes_view base64_encode(bytes_view data, writable_bytes_view output) noexcept
 {
     char const* encoding_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     using size_t = std::size_t;

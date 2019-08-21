@@ -29,7 +29,7 @@
 // TODO copy of test_transport::hexdump
 struct xxhexdump
 {
-    const_bytes_view sig;
+    bytes_view sig;
 
     std::size_t size() const
     {

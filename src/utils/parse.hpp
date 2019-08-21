@@ -136,7 +136,7 @@ public:
         return res;
     }
 
-    void in_copy_bytes(bytes_view v) noexcept {
+    void in_copy_bytes(writable_bytes_view v) noexcept {
         memcpy(v.data(), this->p, v.size());
         this->p += v.size();
     }

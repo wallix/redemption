@@ -148,7 +148,7 @@ public:
 
     void setClipboard_files(std::string const& /*name*/) override {}
 
-    void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) override {
+    void write_clipboard_temp_file(std::string const& fileName, bytes_view data) override {
         this->fileName = fileName;
         size_t data_end = std::min(this->offset + data.size(), this->size);
         for (size_t i = this->offset; i < data_end; i++) {
@@ -184,7 +184,7 @@ class FakeClientOutPutSound : public ClientOutputSoundAPI
 
 public:
     void init(size_t raw_total_size) override { (void)raw_total_size; }
-    void setData(cbytes_view data) override { (void)data; }
+    void setData(bytes_view data) override { (void)data; }
     void play() override {}
 };
 
@@ -352,7 +352,7 @@ public:
         return FileStatvfs{};
     }
 
-    void read_data(std::string const& file_to_tread, int offset, bytes_view data) override {
+    void read_data(std::string const& file_to_tread, int offset, writable_bytes_view data) override {
         (void)file_to_tread;
         (void)offset;
         (void)data;
@@ -374,7 +374,7 @@ public:
         return 0;
     }
 
-    bool write_file(const char * file_to_write, const_bytes_view data) override {
+    bool write_file(const char * file_to_write, bytes_view data) override {
         (void)file_to_write;
         (void)data;
 

@@ -102,7 +102,7 @@ struct ClipboardSideData
             return this->status == Status::WaitValidator;
         }
 
-        const_bytes_view receive_data(const_bytes_view data)
+        bytes_view receive_data(bytes_view data)
         {
             assert(this->status == Status::WaitData || this->status == Status::WaitDataWithId);
 

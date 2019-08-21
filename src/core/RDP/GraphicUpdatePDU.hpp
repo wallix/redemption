@@ -64,7 +64,7 @@ void send_data_indication_ex( Transport & trans
     write_packets(
         trans,
         data_writer...,
-        [&](StreamSize<256>, OutStream & security_header, bytes_view packet) {
+        [&](StreamSize<256>, OutStream & security_header, writable_bytes_view packet) {
             SEC::Sec_Send sec(security_header, packet, 0, encrypt, encryptionLevel);
         },
         [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
@@ -222,7 +222,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
         if (compression_support)
         	fragmentMax = std::min(fragmentMax, mppc_enc->get_max_data_block_size() - 20);
 
-        cbytes_view fullPacket = data_common.get_packet();
+        bytes_view fullPacket = data_common.get_packet();
         fragmentId = 0;
         do {
         	uint8_t compressionFlags = 0;

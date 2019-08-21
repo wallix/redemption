@@ -37,7 +37,7 @@ class NegoServer
 public:
     NegoServer(array_view_u8 key, std::string const& user, std::string const& password, uint64_t verbosity)
     : credssp(key, rand, timeobj, extra_message, Translation::EN,
-        [&](cbytes_view user_av, cbytes_view domain_av, Array & password_array){
+        [&](bytes_view user_av, bytes_view domain_av, Array & password_array){
             LOG(LOG_INFO, "NTLM Check identity");
 
             auto [username, domain] = extract_user_domain(user.c_str());

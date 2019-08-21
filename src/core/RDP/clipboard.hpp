@@ -52,20 +52,20 @@ namespace Cliprdr
 
     struct UnicodeName
     {
-        explicit constexpr UnicodeName(const_bytes_view name) noexcept
+        explicit constexpr UnicodeName(bytes_view name) noexcept
         : bytes(name)
         {}
 
-        const_bytes_view bytes;
+        bytes_view bytes;
     };
 
     struct AsciiName
     {
-        explicit constexpr AsciiName(const_bytes_view name) noexcept
+        explicit constexpr AsciiName(bytes_view name) noexcept
         : bytes(name)
         {}
 
-        const_bytes_view bytes;
+        bytes_view bytes;
     };
 
     inline namespace formats
@@ -271,7 +271,7 @@ namespace Cliprdr
             return *this;
         }
 
-        const_bytes_view utf8_name() const noexcept
+        bytes_view utf8_name() const noexcept
         {
             return {this->utf8_buffer_, this->len_};
         }
@@ -2555,10 +2555,10 @@ namespace Cliprdr
     struct FormatNameRef
     {
         uint32_t _format_id;
-        const_bytes_view _utf8_bytes;
+        bytes_view _utf8_bytes;
 
         uint32_t format_id() const noexcept { return this->_format_id; }
-        const_bytes_view utf8_name() const noexcept { return this->_utf8_bytes; }
+        bytes_view utf8_name() const noexcept { return this->_utf8_bytes; }
     };
 
 

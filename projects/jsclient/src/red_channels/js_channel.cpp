@@ -25,13 +25,13 @@ Author(s): Jonathan Poelen
 #include "core/callback.hpp"
 #include "utils/stream.hpp"
 
-void redjs::channels::JsChannel::receive(cbytes_view data, int flags)
+void redjs::channels::JsChannel::receive(bytes_view data, int flags)
 {
     redjs::emval_call(this->js_handler, "receiveData", data.data(), data.size(), flags);
 }
 
 void redjs::channels::JsChannel::send_data(
-    cbytes_view data, uint32_t total_data_len, uint32_t channel_flags)
+    bytes_view data, uint32_t total_data_len, uint32_t channel_flags)
 {
     InStream in_stream(data);
     this->cb.send_to_mod_channel(

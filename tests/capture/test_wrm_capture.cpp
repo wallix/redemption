@@ -295,7 +295,7 @@ int wrmcapture_write_meta_file(
     mwrm_buf.write_line(filename, stat, start_sec, stop_sec, false, dummy_hash, dummy_hash);
 
     auto buf = mwrm_buf.buffer();
-    ssize_t res = writer.write(cbyte_ptr(buf.data()), buf.size());
+    ssize_t res = writer.write(byte_ptr(buf.data()), buf.size());
     if (res < static_cast<ssize_t>(buf.size())) {
         return res < 0 ? res : 1;
     }
@@ -312,7 +312,7 @@ RED_AUTO_TEST_CASE(TestWriteFilename)
         MwrmWriterBuf::HashArray dummy_hash;
         mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
         auto buf = mwrm_buf.buffer();
-        return std::string{cbyte_ptr(buf.data()), buf.size()};
+        return std::string{byte_ptr(buf.data()), buf.size()};
     };
 
 #define TEST_WRITE_FILENAME(origin_filename, wrote_filename)    \

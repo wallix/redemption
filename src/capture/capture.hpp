@@ -92,7 +92,7 @@ public:
 
     RTDisplayResult set_rt_display(bool enable_rt_display);
 
-    void set_row(size_t rownum, const_bytes_view data) override;
+    void set_row(size_t rownum, bytes_view data) override;
 
     void sync() override;
 

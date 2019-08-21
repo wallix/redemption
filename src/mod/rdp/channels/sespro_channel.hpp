@@ -389,7 +389,7 @@ private:
 
 public:
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data,
+        uint32_t flags, bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask>& out_asynchronous_task) override
     {
         (void)out_asynchronous_task;

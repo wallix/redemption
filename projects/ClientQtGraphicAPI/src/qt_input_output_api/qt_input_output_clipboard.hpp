@@ -130,7 +130,7 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) override {
+    void write_clipboard_temp_file(std::string const& fileName, bytes_view data) override {
         std::string filePath(this->tmp_path + "/" + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);

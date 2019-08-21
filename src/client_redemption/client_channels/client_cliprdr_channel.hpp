@@ -51,7 +51,7 @@ public:
     virtual void setClipboard_text(std::string const& str) = 0;
     virtual void setClipboard_image(ConstImageDataView const& image) = 0;
     virtual void setClipboard_files(std::string const& name) = 0;
-    virtual void write_clipboard_temp_file(std::string const& fileName, cbytes_view data) = 0;
+    virtual void write_clipboard_temp_file(std::string const& fileName, bytes_view data) = 0;
 
     //  get local clipboard data
     virtual uint16_t get_buffer_type_id() = 0;
@@ -139,7 +139,7 @@ public:
     ~ClientCLIPRDRChannel();
 
 private:
-    void add_format(uint32_t format_id, const_bytes_view name);
+    void add_format(uint32_t format_id, bytes_view name);
 
 public:
     void set_api(ClientIOClipboardAPI * clientIOClipboardAPI);

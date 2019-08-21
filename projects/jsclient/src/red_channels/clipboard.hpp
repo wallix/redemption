@@ -69,7 +69,7 @@ struct ClipboardChannel
     ClipboardChannel(Callback& cb, emscripten::val&& callbacks, RDPVerbose verbose);
     ~ClipboardChannel();
 
-    void receive(cbytes_view data, int flags);
+    void receive(bytes_view data, int flags);
 
     void send_file_contents_request(
         uint32_t request_type,
@@ -77,18 +77,18 @@ struct ClipboardChannel
         uint32_t pos_low, uint32_t pos_high);
 
     void send_request_format(uint32_t format_id, CustomFormat custom_cf);
-    void send_format(uint32_t format_id, Charset charset, cbytes_view name);
-    unsigned add_format(bytes_view data, uint32_t format_id, Charset charset, cbytes_view name);
+    void send_format(uint32_t format_id, Charset charset, bytes_view name);
+    unsigned add_format(writable_bytes_view data, uint32_t format_id, Charset charset, bytes_view name);
     void send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags);
-    void send_data(cbytes_view data, uint32_t total_data_len, uint32_t channel_flags);
-    void send_data(cbytes_view av);
+    void send_data(bytes_view data, uint32_t total_data_len, uint32_t channel_flags);
+    void send_data(bytes_view av);
 
 private:
     void process_filecontents_request(InStream& chunk);
     void process_format_data_request(InStream& chunk);
     void process_capabilities(InStream& chunk);
     void process_monitor_ready();
-    void process_format_data_response(cbytes_view data, uint32_t channel_flags, uint32_t data_len);
+    void process_format_data_response(bytes_view data, uint32_t channel_flags, uint32_t data_len);
     void process_format_list(InStream& chunk, uint32_t channel_flags);
     void send_format_list_response_ok();
 
@@ -97,11 +97,11 @@ private:
         std::array<uint8_t, 592> data;
         std::size_t size = 0;
 
-        void set(cbytes_view av);
+        void set(bytes_view av);
 
-        void add(cbytes_view av);
+        void add(bytes_view av);
 
-        cbytes_view as_bytes() const;
+        bytes_view as_bytes() const;
 
         void clear()
         {

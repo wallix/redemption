@@ -27,7 +27,7 @@
 
 struct BlockTransport : Transport
 {
-    BlockTransport(cbytes_view data, std::size_t n_by_bloc)
+    BlockTransport(bytes_view data, std::size_t n_by_bloc)
       : data(data)
       , n_by_bloc(n_by_bloc)
     {}
@@ -49,7 +49,7 @@ struct BlockTransport : Transport
     }
 
 private:
-    cbytes_view data;
+    bytes_view data;
     std::size_t n_by_bloc;
 };
 

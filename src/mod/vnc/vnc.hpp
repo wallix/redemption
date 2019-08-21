@@ -941,7 +941,7 @@ public:
     }
 
 protected:
-    void rdp_input_clip_data(bytes_view data)
+    void rdp_input_clip_data(writable_bytes_view data)
     {
         auto client_cut_text = [this](char * str) {
             ::in_place_windows_to_linux_newline_convert(str);
@@ -1416,7 +1416,7 @@ private:
                 // sec result
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
                     if (status) {
                         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "vnc password ok");
                     }
@@ -1450,7 +1450,7 @@ private:
             {
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
                     if (status) {
                         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "MS LOGON password ok");
                     }

@@ -40,7 +40,7 @@ EMSCRIPTEN_BINDINGS(channel_js_channel)
             return new JsChannel{*pcb, std::move(callbacks), CHANNELS::ChannelNameId{id_name}};
         })
         .function_ptr("getChannelReceiver", [](JsChannel& jschannel) {
-            auto receiver = [&jschannel](cbytes_view data, int channel_flags){
+            auto receiver = [&jschannel](bytes_view data, int channel_flags){
                 jschannel.receive(data, channel_flags);
             };
             return redjs::ChannelReceiver(jschannel.channel_name_id, receiver);

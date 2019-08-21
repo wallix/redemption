@@ -25,7 +25,7 @@
 
 /// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
-    OutStream & out, const_bytes_view utf8_string,
+    OutStream & out, bytes_view utf8_string,
     const size_t maximum_length_in_bytes,
     const size_t offset_of_data_length
 ) noexcept {
@@ -40,7 +40,7 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
 
 /// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
-    OutStream & out, const_bytes_view utf8_string,
+    OutStream & out, bytes_view utf8_string,
     const size_t maximum_length_in_bytes
 ) noexcept {
     const size_t offset_of_data_length = out.get_offset();

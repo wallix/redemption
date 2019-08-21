@@ -30,7 +30,7 @@ redjs::ChannelReceiver::ChannelReceiver(CHANNELS::ChannelNameId name_id, receive
     assert(bool(receiver));
 }
 
-void redjs::ChannelReceiver::operator()(cbytes_view data, int channel_flags)
+void redjs::ChannelReceiver::operator()(bytes_view data, int channel_flags)
 {
     this->do_receive(data, channel_flags);
 }

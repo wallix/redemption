@@ -87,7 +87,7 @@ public:
         this->avbuf = this->buf_maker.dyn_array(v);
     }
 
-    void copy(const_bytes_view source) {
+    void copy(bytes_view source) {
         if (source.size() > this->size()){
             this->avbuf = this->buf_maker.dyn_array(source.size());
         }
@@ -96,7 +96,7 @@ public:
         }
     }
 
-    void copy(const_bytes_view source, uint32_t offset) {
+    void copy(bytes_view source, uint32_t offset) {
         assert(this->size() >= source.size() + offset);
         if (!source.empty()) {
             memcpy(this->avbuf.data() + offset, source.data(), source.size());
@@ -136,13 +136,13 @@ struct SEC_WINNT_AUTH_IDENTITY
         this->princpass[0] = 0;
     }
 
-    void user_init_copy(cbytes_view av)
+    void user_init_copy(bytes_view av)
     {
         this->User.init(av.size());
         this->User.copy(av);
     }
 
-    void domain_init_copy(cbytes_view av)
+    void domain_init_copy(bytes_view av)
     {
         this->Domain.init(av.size());
         this->Domain.copy(av);
@@ -152,30 +152,30 @@ struct SEC_WINNT_AUTH_IDENTITY
         return (this->User.size() == 0) && (this->Domain.size() == 0);
     }
 
-    cbytes_view get_password_utf16_av() const
+    bytes_view get_password_utf16_av() const
     {
-        cbytes_view av{this->Password.get_data(), this->Password.size()};
+        bytes_view av{this->Password.get_data(), this->Password.size()};
         return av;
     }
 
-    cbytes_view get_user_utf16_av() const
+    bytes_view get_user_utf16_av() const
     {
-        cbytes_view av{this->User.get_data(), this->User.size()};
+        bytes_view av{this->User.get_data(), this->User.size()};
         return av;
     }
 
-    cbytes_view get_domain_utf16_av() const
+    bytes_view get_domain_utf16_av() const
     {
-        cbytes_view av{this->Domain.get_data(), this->Domain.size()};
+        bytes_view av{this->Domain.get_data(), this->Domain.size()};
         return av;
     }
 
-    void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
+    void copy_to_utf8_domain(writable_byte_ptr buffer, size_t buffer_len)
     {
         UTF16toUTF8(this->Domain.get_data(), this->Domain.size(), buffer, buffer_len);
     }
 
-    void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
+    void copy_to_utf8_user(writable_byte_ptr buffer, size_t buffer_len) {
         UTF16toUTF8(this->User.get_data(), this->User.size(), buffer, buffer_len);
     }
 
@@ -217,7 +217,7 @@ struct SEC_WINNT_AUTH_IDENTITY
         this->Password.init(0);
     }
 
-    void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
+    void CopyAuthIdentity(bytes_view user_utf16_av, bytes_view domain_utf16_av, bytes_view password_utf16_av)
     {
         this->User.copy(user_utf16_av);
         this->Domain.copy(domain_utf16_av);

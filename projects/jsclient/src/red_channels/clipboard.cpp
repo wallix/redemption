@@ -42,7 +42,7 @@ namespace
       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
     ;
 
-    cbytes_view quick_utf16_av(cbytes_view av)
+    bytes_view quick_utf16_av(bytes_view av)
     {
         auto first = av.begin();
         auto count = av.size() / 2;
@@ -168,7 +168,7 @@ void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat cust
     this->send_data(out_stream.get_bytes());
 }
 
-void ClipboardChannel::receive(cbytes_view data, int channel_flags)
+void ClipboardChannel::receive(bytes_view data, int channel_flags)
 {
     if (this->wating_for_data)
     {
@@ -277,7 +277,7 @@ namespace
 {
     struct Utf8AsUtf16
     {
-        const_bytes_view _utf8_bytes;
+        bytes_view _utf8_bytes;
         std::size_t size() const noexcept { return _utf8_bytes.size(); }
         uint8_t const* data() const noexcept { return _utf8_bytes.data(); }
     };
@@ -292,7 +292,7 @@ namespace
         Utf8AsUtf16 utf8_name() const noexcept { return this->_bytes; }
     };
 
-    std::size_t UTF8toUTF16(Utf8AsUtf16 const& utf16, bytes_view target) noexcept
+    std::size_t UTF8toUTF16(Utf8AsUtf16 const& utf16, writable_bytes_view target) noexcept
     {
         auto len = std::min(utf16._utf8_bytes.size(), target.size());
         len = len - (len & 1u);
@@ -306,7 +306,7 @@ namespace
     }
 }
 
-unsigned ClipboardChannel::add_format(bytes_view data, uint32_t format_id, Charset charset, cbytes_view name)
+unsigned ClipboardChannel::add_format(writable_bytes_view data, uint32_t format_id, Charset charset, bytes_view name)
 {
     Cliprdr::FormatNameRef format{format_id, name};
     OutStream out_stream(data);
@@ -339,7 +339,7 @@ unsigned ClipboardChannel::add_format(bytes_view data, uint32_t format_id, Chars
     return out_stream.get_offset();
 }
 
-void ClipboardChannel::send_format(uint32_t format_id, Charset charset, cbytes_view name)
+void ClipboardChannel::send_format(uint32_t format_id, Charset charset, bytes_view name)
 {
     StaticOutStream<128> out_stream;
 
@@ -373,7 +373,7 @@ void ClipboardChannel::send_header(uint16_t type, uint16_t flags, uint32_t total
         channel_flags | CHANNELS::CHANNEL_FLAG_FIRST);
 }
 
-void ClipboardChannel::send_data(cbytes_view data, uint32_t total_data_len, uint32_t channel_flags)
+void ClipboardChannel::send_data(bytes_view data, uint32_t total_data_len, uint32_t channel_flags)
 {
     InStream in_stream(data);
     this->cb.send_to_mod_channel(
@@ -384,12 +384,12 @@ void ClipboardChannel::send_data(cbytes_view data, uint32_t total_data_len, uint
     );
 }
 
-void ClipboardChannel::send_data(cbytes_view av)
+void ClipboardChannel::send_data(bytes_view av)
 {
     this->send_data(av, av.size(), first_last_channel_flags);
 }
 
-void ClipboardChannel::process_format_data_response(cbytes_view data, uint32_t channel_flags, uint32_t data_len)
+void ClipboardChannel::process_format_data_response(bytes_view data, uint32_t channel_flags, uint32_t data_len)
 {
     const bool is_first_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_FIRST);
     const bool is_last_packet = (channel_flags & CHANNELS::CHANNEL_FLAG_LAST);
@@ -402,7 +402,7 @@ void ClipboardChannel::process_format_data_response(cbytes_view data, uint32_t c
 
     this->wating_for_data = !(channel_flags & CHANNELS::CHANNEL_FLAG_LAST);
 
-    auto send_data = [&](char const* fname, cbytes_view data, auto const&... args){
+    auto send_data = [&](char const* fname, bytes_view data, auto const&... args){
         emval_call(this->callbacks, fname, data.data(), data.size(), args...);
     };
 
@@ -410,8 +410,8 @@ void ClipboardChannel::process_format_data_response(cbytes_view data, uint32_t c
         emval_call(this->callbacks, fname, args...);
     };
 
-    auto remove_last_char = [](cbytes_view data, std::size_t strip_n) {
-        return data.size() >= strip_n ? data.first(data.size() - strip_n) : cbytes_view{};
+    auto remove_last_char = [](bytes_view data, std::size_t strip_n) {
+        return data.size() >= strip_n ? data.first(data.size() - strip_n) : bytes_view{};
     };
 
     if (data.size() > this->data_len)
@@ -423,7 +423,7 @@ void ClipboardChannel::process_format_data_response(cbytes_view data, uint32_t c
     switch (this->custom_cf)
     {
     case CustomFormat::None: {
-        auto receive_data = [&](cbytes_view av, int flags){
+        auto receive_data = [&](bytes_view av, int flags){
             if (!av.empty())
             {
                 send_data("receiveData", av, this->requested_format_id, flags);
@@ -687,21 +687,21 @@ void ClipboardChannel::process_monitor_ready()
 }
 
 
-void ClipboardChannel::ResponseBuffer::set(cbytes_view av)
+void ClipboardChannel::ResponseBuffer::set(bytes_view av)
 {
     assert(av.size() <= this->data.size());
     memcpy(this->data.data(), av.data(), av.size());
     this->size = av.size();
 }
 
-void ClipboardChannel::ResponseBuffer::add(cbytes_view av)
+void ClipboardChannel::ResponseBuffer::add(bytes_view av)
 {
     assert(av.size() + this->size <= this->data.size());
     memcpy(this->data.data() + this->size, av.data(), av.size());
     this->size += av.size();
 }
 
-cbytes_view ClipboardChannel::ResponseBuffer::as_bytes() const
+bytes_view ClipboardChannel::ResponseBuffer::as_bytes() const
 {
     return {this->data.data(), this->size};
 }

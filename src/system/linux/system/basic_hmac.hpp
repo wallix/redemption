@@ -59,7 +59,7 @@ class basic_HMAC
     HMACWrap hmac;
 
 public:
-    basic_HMAC(const_bytes_view key)
+    basic_HMAC(bytes_view key)
     {
         this->hmac.init();
         int res = HMAC_Init_ex(this->hmac, key.as_u8p(), key.size(), evp(), nullptr);
@@ -73,7 +73,7 @@ public:
         this->hmac.deinit();
     }
 
-    void update(const_bytes_view data)
+    void update(bytes_view data)
     {
         int res = HMAC_Update(this->hmac, data.as_u8p(), data.size());
         if (res == 0) {
@@ -101,7 +101,7 @@ class DelayedHMAC
 public:
     DelayedHMAC() = default;
 
-    void init(const_bytes_view key)
+    void init(bytes_view key)
     {
         if (this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
@@ -121,7 +121,7 @@ public:
         }
     }
 
-    void update(const_bytes_view data)
+    void update(bytes_view data)
     {
         if (!this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);

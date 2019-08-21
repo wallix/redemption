@@ -168,7 +168,7 @@ struct RdpClient
             [&]() -> gdi::GraphicApi& { return gd; });
     }
 
-    const_bytes_view get_sending_data_view() const
+    bytes_view get_sending_data_view() const
     {
         return browser_trans.get_out_buffer();
     }

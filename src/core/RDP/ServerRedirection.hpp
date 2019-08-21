@@ -287,7 +287,7 @@ struct ServerRedirectionPDU {
 
     ServerRedirectionPDU() = default;
 
-    uint32_t recv_field_process(InStream & stream, bytes_view field) {
+    uint32_t recv_field_process(InStream & stream, writable_bytes_view field) {
         uint32_t field_length = stream.in_uint32_le();
         if (field_length > field.size()) {
             ::check_throw(stream, field_length, "ServerRedirectionPDU::recv_field_process", ERR_RDP_DATA_TRUNCATED);

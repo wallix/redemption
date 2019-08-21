@@ -152,7 +152,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             : device_announces(device_announces) {}
 
             void operator()(uint32_t total_length, uint32_t flags,
-                const_bytes_view chunk_data) override
+                bytes_view chunk_data) override
             {
                 assert((flags & CHANNELS::CHANNEL_FLAG_FIRST) ||
                           bool(this->device_announce_data));
@@ -840,7 +840,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     {
         void operator()(
             uint32_t /*total_length*/, uint32_t /*flags*/,
-            const_bytes_view /*chunk_data*/) override
+            bytes_view /*chunk_data*/) override
         {}
     };
     NullVirtualChannelDataSender null_virtual_channel_data_sender;
@@ -1860,7 +1860,7 @@ public:
     }   // process_client_drive_io_response
 
     void process_client_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data) override
+        uint32_t flags, bytes_view chunk_data) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
             "FileSystemVirtualChannel::process_client_message:"
@@ -2733,7 +2733,7 @@ public:
     }   // process_server_drive_io_request
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data,
+        uint32_t flags, bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
             override
     {

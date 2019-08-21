@@ -43,7 +43,7 @@ public:
     {}
 
     void process_client_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data) override
+        uint32_t flags, bytes_view chunk_data) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
             "DynamicChannelVirtualChannel::process_client_message: "
@@ -104,7 +104,7 @@ public:
     }   // process_client_message
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data,
+        uint32_t flags, bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & /*out_asynchronous_task*/) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,

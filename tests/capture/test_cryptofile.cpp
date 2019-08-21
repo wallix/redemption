@@ -64,7 +64,7 @@ namespace {
 
     int trace_key_cb(uint8_t const * base, int len, uint8_t * /*buffer*/, unsigned /*oldscheme*/)
     {
-        g_trace_key_ob.key.assign(const_byte_ptr(base), len);
+        g_trace_key_ob.key.assign(byte_ptr(base), len);
         g_trace_key_ob.visited = true;
         return 0;
     }
