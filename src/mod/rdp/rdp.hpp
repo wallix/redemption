@@ -78,6 +78,7 @@
 
 #include "core/session_reactor.hpp"
 
+#include "core/log_id.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/client_info.hpp"
