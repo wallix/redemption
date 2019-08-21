@@ -40,7 +40,7 @@ void ModuleManager::create_mod_vnc(
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
     unique_fd client_sck = this->connect_to_target_host(
-        report_message, trkeys::authentification_vnc_fail, "VNC");
+        report_message, trkeys::authentification_vnc_fail);
 
     try {
         const char * const name = "VNC Target";

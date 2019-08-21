@@ -881,6 +881,7 @@ void RfxEncoder::sendFrame() {
 	// frameBegin.send()
 
 
+	[[maybe_unused]]
 	TS_RFX_FRAME_END frameEnd;
 	//frameEnd.send()
 }

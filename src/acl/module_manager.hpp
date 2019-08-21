@@ -1042,7 +1042,7 @@ public:
             LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'");
 
             unique_fd client_sck = this->connect_to_target_host(
-                report_message, trkeys::authentification_x_fail, "XUP");
+                report_message, trkeys::authentification_x_fail);
 
             this->set_mod(new ModWithSocket<xup_mod>(
                 *this,
@@ -1100,9 +1100,9 @@ public:
     }
 
 private:
-    unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail, char const * protocol)
+    unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
     {
-        auto throw_error = [this, &protocol, &report_message](char const* error_message, int id) {
+        auto throw_error = [this, &report_message](char const* error_message, int id) {
             LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
                 R"(target="%s" host="%s" port="%u" reason="%s")",
                 this->ini.get<cfg::globals::target_user>(),

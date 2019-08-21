@@ -4164,7 +4164,7 @@ protected:
         }
     }
 
-    void draw_impl(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) {
+    void draw_impl(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & content) {
 #if 0 // no server-side remoteFx for now
     	if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
     		if (!content.encodedContent.empty()) {
