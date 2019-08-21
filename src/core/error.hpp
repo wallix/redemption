@@ -24,6 +24,7 @@
 #pragma once
 
 #include "utils/translation.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #define EACH_ERROR(f, fv)                                           \
     fv(NO_ERROR, 0)                                                 \
@@ -227,10 +228,10 @@ public:
     Error() = delete;
     explicit Error(error_type id, int errnum = 0) noexcept;
 
-    const char * errmsg(bool with_id = true) const noexcept;
+    zstring_view errmsg(bool with_id = true) const noexcept;
 };
 
-const char* local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) noexcept;
+zstring_view local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) noexcept;
 
 #ifndef NOT_UNDEF_EACH_ERROR
 # undef EACH_ERROR

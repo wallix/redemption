@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 
 #include "cxx/diagnostic.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 namespace jln
 {
@@ -31,7 +32,7 @@ namespace jln
         static constexpr char const value[sizeof...(cs)+1]{cs..., '\0'};
 
         static constexpr char const* c_str() noexcept { return value; }
-        static constexpr array_view_const_char av() noexcept { return {value, sizeof...(cs)}; }
+        static constexpr zstring_view zstring() noexcept { return zstring_view{value, sizeof...(cs)}; }
     };
 
     namespace literals

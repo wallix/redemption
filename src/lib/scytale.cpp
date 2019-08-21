@@ -99,7 +99,8 @@ struct RedCryptoErrorContext
     char const * message() noexcept
     {
         if (this->error.errnum) {
-            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s", this->error.errmsg(), this->error.errnum, strerror(this->error.errnum));
+            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s",
+                this->error.errmsg().c_str(), this->error.errnum, strerror(this->error.errnum));
             this->msg[sizeof(this->msg)-1] = 0;
             return this->msg;
         }

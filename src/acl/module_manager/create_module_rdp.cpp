@@ -389,14 +389,13 @@ void ModuleManager::create_mod_rdp(
                 FileValidator(unique_fd&& fd, CtxError&& ctx_error)
                 : ctx_error(std::move(ctx_error))
                 , trans(std::move(fd), ReportError([this](Error err){
-                    auto* msg = err.errmsg();
                     file_verification_error(
                         this->ctx_error.front,
                         this->ctx_error.session_reactor,
                         this->ctx_error.report_message,
                         this->ctx_error.up_target_name,
                         this->ctx_error.down_target_name,
-                        {msg, strlen(msg)}
+                        err.errmsg()
                     );
                     return err;
                 }))

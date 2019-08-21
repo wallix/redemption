@@ -23,16 +23,17 @@
 
 #include "configs/autogen/enums.hpp" // Language
 #include "cxx/diagnostic.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include <cstdio>
 
 namespace trkeys
 {
-    struct TrKey { const char * translations[2]; };
+    struct TrKey { zstring_view translations[2]; };
 
 #define TR_PROTECTED_KV(name, en, fr) \
     constexpr struct TrKey##_##name   \
-    { const char * translations[2]; } name{{en, fr}}
+    { zstring_view translations[2]; } name{{en ""_zv, fr ""_zv}}
 
     TR_PROTECTED_KV(password, "Password", "Mot de passe");
 
@@ -57,7 +58,7 @@ namespace trkeys
     };                                               \
     constexpr TrKeyFmt<TrKeyFmt##_##name> name{{en, fr}}
 
-#define TR_KV(name, en, fr) constexpr TrKey name{{en, fr}}
+#define TR_KV(name, en, fr) constexpr TrKey name{{en ""_zv, fr ""_zv}}
     TR_KV(login, "Login", "Login");
     TR_KV(diagnostic, "Diagnostic", "Diagnostic");
     TR_KV(connection_closed, "Connection closed", "Connexion fermée");
@@ -391,9 +392,9 @@ public:
     }
 
     // implementation in config.cpp
-    const char * translate(trkeys::TrKey_password k) const;
+    zstring_view translate(trkeys::TrKey_password k) const;
 
-    const char * translate(trkeys::TrKey k) const
+    zstring_view translate(trkeys::TrKey k) const
     {
         return k.translations[this->lang];
     }
@@ -411,13 +412,13 @@ public:
 
 #define TRANSLATIONCONF Translation::getInstance()
 
-inline const char * TR(trkeys::TrKey_password k, Translation::language_t lang)
+inline zstring_view TR(trkeys::TrKey_password k, Translation::language_t lang)
 {
     TRANSLATIONCONF.set_lang(lang);
     return TRANSLATIONCONF.translate(k);
 }
 
-inline const char * TR(trkeys::TrKey k, Translation::language_t lang)
+inline zstring_view TR(trkeys::TrKey k, Translation::language_t lang)
 {
     TRANSLATIONCONF.set_lang(lang);
     return TRANSLATIONCONF.translate(k);
@@ -448,12 +449,12 @@ struct Translator
       : lang(language(ini))
     {}
 
-    char const * operator()(trkeys::TrKey_password const & k) const
+    zstring_view operator()(trkeys::TrKey_password const & k) const
     {
         return TR(k, this->lang);
     }
 
-    char const * operator()(trkeys::TrKey const & k) const
+    zstring_view operator()(trkeys::TrKey const & k) const
     {
         return TR(k, this->lang);
     }
