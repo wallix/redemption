@@ -719,11 +719,9 @@ RED_AUTO_TEST_CASE(TestMemblt4)
     	0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F, 0x2F
     };
 
-    const uint8_t *d = gd.data();
     RED_CHECK(memcmp(gd.data(), expected, sizeof(expected)) == 0);
     // uncomment to see result in png file
     //dump_png24("./test_memblt4_", gd);
-
 }
 
 //RED_AUTO_TEST_CASE(test_BitArray2D)
