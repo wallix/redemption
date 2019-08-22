@@ -115,7 +115,15 @@ namespace redemption_unit_test__
     {
         out << e.prefix_message;
         std::apply([&](auto const& x, auto const&... xs){
-            auto print = [&](auto const& y){ out << ", " << y; };
+            auto print = [&](auto const& y){
+                if constexpr (std::is_same_v<decltype(y),array_view<const char> const&>) {
+                    out << ", ";
+                    out.write(y.data(), y.size());
+                }
+                else {
+                    out << ", " << y;
+                }
+            };
             out << x;
             (print(xs), ...);
         }, e.t);

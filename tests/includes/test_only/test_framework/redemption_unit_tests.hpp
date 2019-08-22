@@ -146,13 +146,13 @@ namespace redemption_unit_test__
 
 # include "impl/redemption_unit_tests_impl.hpp"
 
-# define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref)
-# define RED_CHECK_SMEM(mem, memref) RED_TEST_SMEM(CHECK, mem, memref)
-# define RED_CHECK_RMEM(mem, memref) RED_TEST_RMEM(CHECK, mem, memref)
+# define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'a')
+# define RED_CHECK_SMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'S')
+# define RED_CHECK_RMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'h')
 
-# define RED_REQUIRE_MEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref)
-# define RED_REQUIRE_SMEM(mem, memref) RED_TEST_SMEM(REQUIRE, mem, memref)
-# define RED_REQUIRE_RMEM(mem, memref) RED_TEST_RMEM(REQUIRE, mem, memref)
+# define RED_REQUIRE_MEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'a')
+# define RED_REQUIRE_SMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'S')
+# define RED_REQUIRE_RMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'h')
 
 /// CHECK
 //@{
@@ -194,89 +194,32 @@ namespace redemption_unit_test__
         );                                    \
     }(a, b)
 
-# define RED_TEST_MEM(lvl, mem, memref)                             \
-    [](auto const& x_mem__, auto const& x_memref__){                \
-        size_t res__ = 0;                                           \
-        ::redemption_unit_test__::xarray rng1__{res__, x_mem__};    \
-        ::redemption_unit_test__::xarray rng2__{res__, x_memref__}; \
-        RED_TEST_CONTEXT(#mem " == " #memref)                       \
-        {                                                           \
-            RED_##lvl(rng1__.size() == rng2__.size());              \
-            RED_##lvl(rng1__ == rng2__);                            \
-        }                                                           \
-    }(mem, memref)
-
-# define RED_TEST_SMEM(lvl, mem, memref)                             \
-    [](auto const& x_mem__, auto const& x_memref__){                 \
-        size_t res__ = 0;                                            \
-        ::redemption_unit_test__::xsarray rng1__{res__, x_mem__};    \
-        ::redemption_unit_test__::xsarray rng2__{res__, x_memref__}; \
-        RED_TEST_CONTEXT(#mem " == " #memref)                        \
-        {                                                            \
-            RED_##lvl(rng1__.size() == rng2__.size());               \
-            RED_##lvl(rng1__ == rng2__);                             \
-        }                                                            \
-    }(mem, memref)
-
-# define RED_TEST_RMEM(lvl, mem, memref)                             \
-    [](auto const& x_mem__, auto const& x_memref__){                 \
-        size_t res__ = 0;                                            \
-        ::redemption_unit_test__::xrarray rng1__{res__, x_mem__};    \
-        ::redemption_unit_test__::xrarray rng2__{res__, x_memref__}; \
-        RED_TEST_CONTEXT(#mem " == " #memref)                        \
-        {                                                            \
-            RED_##lvl(rng1__.size() == rng2__.size());               \
-            RED_##lvl(rng1__ == rng2__);                             \
-        }                                                            \
+# define RED_TEST_MEM(lvl, mem, memref, c)           \
+    [](bytes_view x_mem__, bytes_view x_memref__){   \
+        size_t pos__ = 0;                            \
+        RED_##lvl##_MESSAGE(                         \
+            ::redemption_unit_test__::compare_bytes( \
+                pos__, x_mem__, x_memref__),         \
+            RED_TEST_STRING_##lvl " "                \
+            #mem " == " #memref " has failed "       \
+            << (::redemption_unit_test__::Put2Mem{   \
+                pos__, x_mem__, x_memref__, c}));    \
     }(mem, memref)
 
 
 namespace redemption_unit_test__
 {
-    struct xarray
+    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
+
+    struct Put2Mem
     {
-        size_t & res;
-        bytes_view sig;
+        size_t & pos;
+        bytes_view lhs;
+        bytes_view rhs;
+        char pattern;
 
-        std::size_t size() const noexcept
-        {
-            return sig.size();
-        }
-
-        bool operator == (xarray const & other) const noexcept;
+        friend std::ostream & operator<<(std::ostream & out, Put2Mem const & x);
     };
-
-    std::ostream & operator<<(std::ostream & out, xarray const & x);
-
-    struct xsarray
-    {
-        size_t & res;
-        bytes_view sig;
-
-        std::size_t size() const noexcept
-        {
-            return sig.size();
-        }
-
-        bool operator == (xsarray const & other) const noexcept;
-    };
-
-    std::ostream & operator<<(std::ostream & out, xsarray const & x);
-
-    struct xrarray
-    {
-        size_t & res;
-        bytes_view sig;
-
-        std::size_t size() const noexcept
-        {
-            return sig.size();
-        }
-
-        bool operator == (xrarray const & other) const noexcept;
-    };
-
-    std::ostream & operator<<(std::ostream & out, xrarray const & x);
 
     struct Enum
     {
@@ -300,9 +243,6 @@ namespace redemption_unit_test__
         bool is_signed;
     };
 } // namespace redemption_unit_test__
-
-
-std::ostream& operator<<(std::ostream& out, bytes_view const& av);
 
 std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e);
 

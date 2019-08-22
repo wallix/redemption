@@ -48,34 +48,90 @@ namespace redemption_unit_test__
     //     return boost::unit_test::results_reporter::get_stream();
     // }
 
+    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept
+    {
+        pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
+        return pos == a.size() && a.size() == b.size();
+    }
+
     namespace
     {
-        bool xarray_cmp(size_t& res, bytes_view sig, bytes_view other_sig) noexcept
+        constexpr uint8_t utf8_byte_size_table[] {
+            // 0xxx x[xxx]
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            // 10xx x[xxx]  invalid value
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            // 110x x[xxx]
+            2, 2, 2, 2,
+            // 1110 x[xxx]
+            3, 3,
+            // 1111 0[xxx]
+            4,
+            // 1111 1[xxx]  invalid value
+            0,
+        };
+
+        using N0 = std::integral_constant<std::size_t, 0>;
+        using N1 = std::integral_constant<std::size_t, 1>;
+        using N2 = std::integral_constant<std::size_t, 2>;
+        using N3 = std::integral_constant<std::size_t, 3>;
+        using N4 = std::integral_constant<std::size_t, 4>;
+
+        template<class Size, class F>
+        void utf8_char_process(byte_ptr v, Size size, F&& f)
         {
-            res = std::mismatch(
-                sig.begin(), sig.end(),
-                other_sig.begin(), other_sig.end()
-            ).first - sig.begin();
-            return res == sig.size() && sig.size() == other_sig.size();
+            switch (utf8_byte_size_table[v[0] >> 3]) {
+                case 0: return f(N0{});
+                case 1: return f(N1{});
+                case 2: return size >= 2 && (v[1] >> 6) == 0b10 ? f(N2{}) : f(N1{});
+                case 3:
+                    if (size < 3 || (v[2] >> 6) != 0b10) {
+                        return f(N0{});
+                    }
+                    switch (v[0] & 0b1111) {
+                        case 0: return (v[1] >> 5) == 0b101 ? f(N3{}) : f(N0{});
+                        case 0b1101: return (v[1] >> 5) == 0b100 ? f(N3{}) : f(N0{});
+                        default: return (v[1] >> 6) == 0b10 ? f(N3{}) : f(N0{});
+                    }
+                case 4:
+                    if (size < 4 || (v[2] >> 6) != 0b10 || (v[3] >> 6) != 0b10) {
+                        return f(N0{});
+                    }
+                    switch (v[0] & 0b111) {
+                        case 0: return (v[1] >> 4) != 0b1000 ? f(N4{}) : f(N0{});
+                        case 0b001:
+                        case 0b010:
+                        case 0b011: return (v[1] >> 6) != 0b10 ? f(N4{}) : f(N0{});
+                        case 0b100: return (v[1] >> 4) != 0b1000 ? f(N4{}) : f(N0{});
+                    }
+            }
         }
     }
 
-    bool xarray::operator == (xarray const & other) const noexcept
+    static void put_char(std::ostream& out, unsigned c, char const* newline = "\\n")
     {
-        return xarray_cmp(this->res, this->sig, other.sig);
+        if (c >= 0x23 && c <= 127) {
+            out << char(c);
+        }
+        else {
+            char const * hex_table = "0123456789abcdef";
+            switch (c) {
+                case ' ':
+                case '!': out << char(c); break;
+                case '"': out << "\\\""; break;
+                case 'b': out << "\\b"; break;
+                case 't': out << "\\t"; break;
+                case 'n': out << newline; break;
+                default: out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+            }
+        }
     }
 
-    bool xsarray::operator == (xsarray const & other) const noexcept
-    {
-        return xarray_cmp(this->res, this->sig, other.sig);
-    }
-
-    bool xrarray::operator == (xrarray const & other) const noexcept
-    {
-        return xarray_cmp(this->res, this->sig, other.sig);
-    }
-
-    std::ostream & operator<<(std::ostream & out, xarray const & x)
+    static std::ostream& put_dump_bytes(size_t pos, std::ostream& out, bytes_view x)
     {
         if (x.size() == 0){
             return out << "\"\"\n";
@@ -85,20 +141,20 @@ namespace redemption_unit_test__
         size_t split = 16;
         uint8_t tmpbuf[16];
         size_t i = 0;
-        for (unsigned c : x.sig) {
+        for (unsigned c : x) {
             if (q%split == 0){
-                if (x.sig.size()>split){
+                if (x.size()>split){
                     out << "\n\"";
                 }
                 else {
                     out << "\"";
                 }
             }
-            if (q++ == x.res){ out << "\x1b[31m";}
+            if (q++ == pos){ out << "\x1b[31m";}
             out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
             tmpbuf[i++] = c;
             if (q%split == 0){
-                if (x.sig.size()>split) {
+                if (x.size()>split) {
                     out << "\" //";
                     for (size_t v = 0 ; v < i ; v++){
                         if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] < 127)) {
@@ -117,7 +173,7 @@ namespace redemption_unit_test__
             }
         }
         if (q%split != 0){
-            if (x.sig.size()>split) {
+            if (x.size()>split) {
                 out << "\" //";
                 for (size_t v = 0 ; v < i ; v++){
                     if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] <= 127)) {
@@ -136,39 +192,152 @@ namespace redemption_unit_test__
         return out << "\x1b[0m";
     }
 
-    std::ostream & operator<<(std::ostream & out, xsarray const & x)
+    static void put_utf8_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
     {
-        out << "\"";
-        char const * hex_table = "0123456789abcdef";
-        size_t q = 0;
-        for (unsigned c : x.sig) {
-            if (q++ == x.res){
-                out << "\x1b[31m";
+        auto print = [&](bytes_view x, bool is_markable){
+            auto* p = x.as_u8p();
+            auto* end = p + x.size();
+
+            auto algo0 = [&](auto f0){
+                return [&](std::size_t n){
+                    if (n == 0) {
+                        f0();
+                        ++p;
+                        out << char(*p);
+                    }
+                    else if (n == 1) {
+                        put_char(out, *p, newline);
+                        ++p;
+                    }
+                    else {
+                        out.write(char_ptr_cast(p), n);
+                        p += n;
+                    }
+                };
+            };
+
+            while (p + 4 < end) {
+                utf8_char_process(p, end-p, algo0([]{}));
             }
 
-            if (c >= 0x20 && c <= 127) {
-                out << char(c);
+            bool is_marked = false;
+
+            while (p != end) {
+                utf8_char_process(p, end-p, algo0([&]{
+                    if (is_markable && utf8_byte_size_table[*p >> 3] != 0) {
+                        out << "\x1b[31m";
+                        is_marked = true;
+                    }
+                }));
             }
-            else {
-                out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+
+            if (is_markable && !is_marked) {
+                out << "\x1b[31m";
             }
+        };
+
+        print(v.first(pos), pos != v.size());
+        if (pos != v.size()) {
+            out << "\x1b[31m";
+            print(v.from_offset(pos), false);
+            out << "\x1b[0m";
         }
-        return out << "\"";
     }
 
-    std::ostream & operator<<(std::ostream & out, xrarray const & x)
+    static void put_utf8_bytes2(size_t pos, std::ostream& out, bytes_view v)
+    {
+        put_utf8_bytes(pos, out, v, "\n");
+    }
+
+    static void put_ascii_bytes(size_t pos, std::ostream& out, bytes_view v, char const* newline = "\\n")
+    {
+        auto print = [&](bytes_view x){
+            for (uint8_t c : x) {
+                if (c >= 0x23 && c <= 127) {
+                    out << char(c);
+                }
+                else {
+                    put_char(out, c, newline);
+                }
+            }
+        };
+
+        print(v.first(pos));
+        if (pos != v.size()) {
+            out << "\x1b[31m";
+            print(v.from_offset(pos));
+            out << "\x1b[0m";
+        }
+    }
+
+    static void put_ascii_bytes2(size_t pos, std::ostream& out, bytes_view v)
+    {
+        put_ascii_bytes(pos, out, v, "\n");
+    }
+
+    static void put_hex_bytes(size_t pos, std::ostream& out, bytes_view v)
+    {
+        char const * hex_table = "0123456789abcdef";
+        auto print = [&](bytes_view x){
+            for (uint8_t c : x) {
+                out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+            }
+        };
+
+        print(v.first(pos));
+        if (pos != v.size()) {
+            out << "\x1b[31m";
+            print(v.from_offset(pos));
+            out << "\x1b[0m";
+        }
+    }
+
+    static void put_auto_bytes(size_t pos, std::ostream& out, bytes_view v)
+    {
+        auto n = std::min(int(v.size()), 36);
+        auto* p = v.as_u8p();
+        auto* end = p + n;
+        int count_invalid = 0;
+        while (p < end) {
+            utf8_char_process(p, end-p, [&](std::size_t n){
+                if (n == 0) {
+                    ++count_invalid;
+                    ++p;
+                }
+                else {
+                    p += n;
+                }
+            });
+        }
+
+        if (count_invalid > n / 6) {
+            put_ascii_bytes(pos, out, v);
+        }
+        else {
+            put_utf8_bytes(pos, out, v);
+        }
+    }
+
+    std::ostream & operator<<(std::ostream & out, Put2Mem const & x)
     {
         out << "\"";
-        char const * hex_table = "0123456789abcdef";
-        size_t q = 0;
-        for (unsigned c : x.sig) {
-            if (q++ == x.res){
-                out << "\x1b[31m";
-            }
-
-            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+        switch (x.pattern) {
+            #define CASE(c, print) case c: \
+                print(x.pos, out, x.lhs);  \
+                out << "\" != \"";         \
+                print(x.pos, out, x.rhs);  \
+                break
+            CASE('c', put_ascii_bytes);
+            CASE('C', put_ascii_bytes2);
+            CASE('s', put_utf8_bytes);
+            CASE('S', put_utf8_bytes2);
+            CASE('h', put_hex_bytes);
+            CASE('d', put_dump_bytes);
+            default:
+            CASE('a', put_auto_bytes);
+            #undef CASE
         }
-        return out << "\"";
+        return out << "\"]";
     }
 
     namespace
@@ -199,12 +368,6 @@ void RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>::ope
         out << x.value << "+-" << x.variant << (x.is_percent ? "%" : "")
             << " [" << x.left << ", " << x.right << "]";
     }
-}
-
-std::ostream& operator<<(std::ostream& out, bytes_view const& av)
-{
-    size_t r = av.size();
-    return out << redemption_unit_test__::xarray{r, av};
 }
 
 std::ostream& operator<<(std::ostream& out, redemption_unit_test__::Enum const& e)
