@@ -2637,9 +2637,9 @@ public:
 
         this->update_keyboard_input_mask_state();
 
-        if (!started) {
-            this->session_update("Front::session_probe_started: Probe.Status=Unknown"_av);
-        }
+        this->session_update(started
+            ? "Probe.Status=Ready"_av
+            : "Probe.Status=Unknown"_av);
     }
 
     void set_keylayout(int LCID) override {

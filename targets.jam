@@ -730,6 +730,7 @@ test-run tests/capture/test_capture :
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o

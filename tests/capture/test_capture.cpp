@@ -32,6 +32,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
+#include "utils/bitmap_from_file.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
@@ -40,41 +41,33 @@
 
 namespace
 {
-    template<class F>
-    void test_capture_context(
-        char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
-        WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
-        F f, KbdLogParams kbd_log_params = KbdLogParams())
+    struct TestCaptureContext
     {
         // Timestamps are applied only when flushing
         timeval now{1000, 0};
 
-        LCGRandom rnd(0);
+        LCGRandom rnd{0};
         FakeFstat fstat;
         CryptoContext cctx;
-        cctx.set_trace_type(TraceType::localfile);
-
-        const char * record_tmp_path = record_wd.dirname();
-        const char * record_path = record_tmp_path;
-        const char * hash_path = hash_wd.dirname();
         const int groupid = 0;
 
-        const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        const bool capture_png = bool(capture_flags & CaptureFlags::png);
+        bool capture_wrm;
+        bool capture_png;
 
-        const bool capture_pattern_checker = false;
-        const bool capture_ocr = false;
-        const bool capture_video = false;
-        const bool capture_video_full = false;
-        const bool capture_meta = false;
-        const bool capture_kbd = kbd_log_params.wrm_keyboard_log;
+        bool capture_pattern_checker = false;
+        bool capture_ocr = false;
+        bool capture_video = false;
+        bool capture_video_full = false;
+        bool capture_meta = false;
+        bool capture_kbd;
 
 
-        MetaParams meta_params;
-        VideoParams video_params;
+        MetaParams meta_params {};
+        VideoParams video_params {};
         PatternParams pattern_params {}; // reading with capture_kbd = true
-        FullVideoParams full_video_params;
-        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params {};
+        SequencedVideoParams sequenced_video_params {};
+        KbdLogParams kbd_log_params {};
         OcrParams const ocr_params {
             OcrVersion::v1, ocr::locale::LocaleId::latin,
             false, 0, std::chrono::seconds::zero(), 0};
@@ -82,9 +75,29 @@ namespace
         PngParams const png_params = {
             0, 0, std::chrono::milliseconds{60}, 100, 0, false, false, true};
 
-        DrawableParams const drawable_params{cx, cy, nullptr};
+        const char * record_tmp_path;
+        const char * record_path;
+        const char * hash_path;
 
-        WrmParams const wrm_params{
+        DrawableParams const drawable_params;
+
+        WrmParams const wrm_params;
+
+        CaptureParams capture_params;
+
+        TestCaptureContext(
+            char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
+            WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
+            KbdLogParams kbd_log_params = KbdLogParams())
+        : capture_wrm(bool(capture_flags & CaptureFlags::wrm))
+        , capture_png(bool(capture_flags & CaptureFlags::png))
+        , capture_kbd(kbd_log_params.wrm_keyboard_log)
+        , kbd_log_params(kbd_log_params)
+        , record_tmp_path(record_wd.dirname())
+        , record_path(record_tmp_path)
+        , hash_path(hash_wd.dirname())
+        , drawable_params{cx, cy, nullptr}
+        , wrm_params{
             BitsPerPixel{24},
             false,
             cctx,
@@ -95,9 +108,8 @@ namespace
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
             0
-        };
-
-        CaptureParams capture_params{
+        }
+        , capture_params{
             now,
             basename,
             record_tmp_path,
@@ -106,22 +118,39 @@ namespace
             nullptr,
             SmartVideoCropping::disable,
             0
-        };
+        }
+        {
+            cctx.set_trace_type(TraceType::localfile);
+        }
 
-        Capture capture(
-            capture_params, drawable_params,
-            capture_wrm, wrm_params,
-            capture_png, png_params,
-            capture_pattern_checker, pattern_params,
-            capture_ocr, ocr_params,
-            capture_video, sequenced_video_params,
-            capture_video_full, full_video_params,
-            capture_meta, meta_params,
-            capture_kbd, kbd_log_params,
-            video_params, nullptr, Rect()
-        );
+        template<class F>
+        void run(F&& f)
+        {
+            Capture capture(
+                capture_params, drawable_params,
+                capture_wrm, wrm_params,
+                capture_png, png_params,
+                capture_pattern_checker, pattern_params,
+                capture_ocr, ocr_params,
+                capture_video, sequenced_video_params,
+                capture_video_full, full_video_params,
+                capture_meta, meta_params,
+                capture_kbd, kbd_log_params,
+                video_params, nullptr, Rect()
+            );
 
-        f(capture, Rect{0, 0, cx, cy});
+            f(capture, Rect(0, 0, drawable_params.width, drawable_params.height));
+        }
+    };
+
+    template<class F>
+    void test_capture_context(
+        char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
+        WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
+        F&& f, KbdLogParams kbd_log_params = KbdLogParams())
+    {
+        TestCaptureContext{basename, capture_flags, cx, cy, record_wd, hash_wd, kbd_log_params}
+          .run(f);
     }
 
     void capture_draw_color1(timeval& now, Capture& capture, Rect scr, uint16_t cy)
@@ -2123,6 +2152,77 @@ RED_AUTO_TEST_CASE(TestPatternSearcher)
     searcher.test_uchar(ZStrUtf8Char('a'), report); RED_CHECK(!check);
     // #15241: Pattern detection crash
     searcher.test_uchar(ZStrUtf8Char('e'), report); RED_CHECK(check);
+}
+
+
+RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
+    TestCaptureContext ctx_cap("title_extractor", CaptureFlags{}, 800, 600, record_wd, hash_wd);
+    ctx_cap.capture_meta = true;
+    ctx_cap.capture_ocr = true;
+
+    ctx_cap.run([&](Capture& capture, Rect scr){
+        timeval now{1000, 0};
+        now.tv_sec += 100;
+
+        auto draw_img = [&](char const* filename){
+            Bitmap img;
+            RED_CHECK((img = bitmap_from_file(filename)).is_valid());
+            capture.draw(
+                RDPMemBlt(0, Rect(0, 0, img.cx(), img.cy()), 0xCC, 0, 0, 0),
+                scr, img);
+        };
+
+        // gestionnaire de serveur
+        draw_img(FIXTURES_PATH "/m-21288-2.bmp");
+        capture.periodic_snapshot(now, 0, 0, false);
+
+        now.tv_sec += 100;
+        capture.session_update(now, "Probe.Status=Unknown"_av);
+        capture.periodic_snapshot(now, 0, 0, false);
+
+        now.tv_sec += 100;
+        capture.session_update(now, "Probe.Status=Ready"_av);
+        capture.session_update(now, "FOREGROUND_WINDOW_CHANGED=a\x01t\x01u"_av);
+
+        // qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes
+        draw_img(FIXTURES_PATH "/win2008capture10.bmp");
+        capture.periodic_snapshot(now, 0, 0, false);
+        now.tv_sec += 100;
+        capture.session_update(now, "FOREGROUND_WINDOW_CHANGED=b\x01x\x01y"_av);
+        capture.periodic_snapshot(now, 0, 0, false);
+
+        now.tv_sec += 100;
+        // disable sespro
+        capture.session_update(now, "Probe.Status=Unknown"_av);
+        // not TITLE_BAR extractor with OCR
+        capture.session_update(now, "FOREGROUND_WINDOW_CHANGED=c\x01t\x01v"_av);
+        capture.periodic_snapshot(now, 0, 0, false);
+
+        now.tv_sec += 100;
+        // Gestionnaire de licences TS
+        draw_img(FIXTURES_PATH "/win2008capture.bmp");
+        capture.periodic_snapshot(now, 0, 0, false);
+    });
+
+    auto meta_content =
+        R"(1970-01-01 01:18:20 + type="TITLE_BAR" data="Gestionnaire de serveur")" "\n"
+        R"(1970-01-01 01:21:40 - type="FOREGROUND_WINDOW_CHANGED" windows="a" class="t" command_line="u")" "\n"
+        R"(1970-01-01 01:21:40 + type="TITLE_BAR" data="a")" "\n"
+        R"(1970-01-01 01:23:20 - type="FOREGROUND_WINDOW_CHANGED" windows="b" class="x" command_line="y")" "\n"
+        R"(1970-01-01 01:23:20 + type="TITLE_BAR" data="b")" "\n"
+        R"(1970-01-01 01:25:00 - type="FOREGROUND_WINDOW_CHANGED" windows="c" class="t" command_line="v")" "\n"
+        R"(1970-01-01 01:25:00 + type="TITLE_BAR" data="qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes")" "\n"
+        R"(1970-01-01 01:26:40 + type="TITLE_BAR" data="Gestionnaire de licences TS")" "\n"
+        ""_av;
+
+    RED_CHECK_FILE_CONTENTS(record_wd.add_file("title_extractor.meta"), meta_content);
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 }
 
 extern "C" {

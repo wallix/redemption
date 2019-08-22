@@ -269,6 +269,24 @@ public:
     }
 };
 
+void update_enable_probe(bool& enable_probe, array_view_const_char message)
+{
+    auto first_sespro_message = "INPUT_LANGUAGE="_av;
+    if (strcmp(message.data(), "Probe.Status=Unknown") == 0) {
+        enable_probe = false;
+    }
+    else if (strcmp(message.data(), "Probe.Status=Ready") == 0
+        || (message.size() >= first_sespro_message.size()
+            && strncmp(
+                message.first(first_sespro_message.size()).data(),
+                first_sespro_message.data(),
+                first_sespro_message.size()
+              ) == 0)
+    ) {
+        enable_probe = true;
+    }
+}
+
 } // anonymous namespace
 
 namespace
@@ -578,7 +596,7 @@ public:
     }
 
     void session_update(const timeval& /*now*/, array_view_const_char message) override {
-        this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
+        update_enable_probe(this->is_probe_enabled_session, message);
     }
 
     void possible_active_window_change() override {
@@ -1298,7 +1316,7 @@ public:
     }
 
     void session_update(const timeval& now, array_view_const_char message) override {
-        this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
+        update_enable_probe(this->is_probe_enabled_session, message);
         agent_data_extractor(this->formatted_message, message, this->meta_params);
         if (!this->formatted_message.av().empty()) {
             this->send_line(now.tv_sec, this->formatted_message.av());
@@ -1501,6 +1519,7 @@ public:
 
 class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
+    bool enable_probe = false;
     OcrTitleExtractorBuilder ocr_title_extractor_builder;
     AgentTitleExtractor agent_title_extractor;
 
@@ -1564,7 +1583,7 @@ public:
     }
 
     void session_update(timeval const & /*now*/, array_view_const_char message) override {
-        bool const enable_probe = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
+        update_enable_probe(this->enable_probe, message);
         if (enable_probe) {
             this->title_extractor = this->agent_title_extractor;
             this->agent_title_extractor.session_update(message);
@@ -1572,7 +1591,6 @@ public:
         else {
             this->title_extractor = this->ocr_title_extractor_builder.get_title_extractor();
         }
-
     }
 
     void possible_active_window_change() override {}
@@ -2170,7 +2188,7 @@ Rect Capture::get_join_visibility_rect() const
 
             if (
                 // Window is not IME icon.
-                0 != strcasecmp(window.title_info.c_str(), "CiceroUIWndFrame-TF_FloatingLangBar_WndTitle") &&
+                0 != strcmp(window.title_info.c_str(), "CiceroUIWndFrame-TF_FloatingLangBar_WndTitle") &&
                 ((((window.style & WS_DISABLED) || (window.style & WS_SYSMENU) || (window.style & WS_VISIBLE)) &&
                     !(window.style & WS_ICONIC) &&
                     (window.show_state != SW_FORCEMINIMIZE) &&
