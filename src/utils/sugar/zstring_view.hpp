@@ -20,6 +20,7 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
+#include "utils/sugar/array_view.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 #include <cstddef>
 #include <string>
@@ -38,15 +39,24 @@ struct zstring_view
     constexpr zstring_view(std::nullptr_t) noexcept
     {}
 
-    explicit zstring_view(std::string && s) noexcept = delete;
+    explicit zstring_view(char const* s) noexcept = delete;
 
-    explicit zstring_view(std::string const& s) noexcept
-    : zstring_view(s.c_str(), s.size())
+    zstring_view(std::string const& s) noexcept
+    : s(s.c_str())
+    , len(s.size())
     {}
 
-    constexpr explicit zstring_view(char const* s, std::size_t n) noexcept
+    class is_zero_terminated {};
+
+    constexpr zstring_view(is_zero_terminated const&, char const* s, std::size_t n) noexcept
     : s(s)
     , len(n)
+    {
+        assert(s[len] == 0);
+    }
+
+    constexpr zstring_view(is_zero_terminated const&, array_view_const_char str) noexcept
+    : zstring_view(is_zero_terminated{}, str.data(), str.size())
     {}
 
     constexpr char const* c_str() const noexcept { return data(); }
@@ -175,7 +185,7 @@ inline constexpr bool operator>=(zstring_view const& lhs, char const* rhs) noexc
 
 constexpr zstring_view operator "" _zv(char const * s, std::size_t len) noexcept
 {
-    return zstring_view{s, len};
+    return {zstring_view::is_zero_terminated{}, s, len};
 }
 
 REDEMPTION_OSTREAM(out, zstring_view const& str)

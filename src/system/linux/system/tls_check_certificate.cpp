@@ -118,7 +118,7 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
         }
         bad_certificate_path = true;
 
-        server_notifier.server_cert_error(strerror(errno));
+        server_notifier.server_cert_status(ServerNotifier::Status::CertError, strerror(errno));
         checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE;
     }
 
@@ -142,7 +142,7 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
                 if (error_message) {
                     str_assign(*error_message, "Failed to open stored certificate: \"", filename, "\"\n");
                 }
-                server_notifier.server_cert_error(strerror(errno));
+                server_notifier.server_cert_status(ServerNotifier::Status::CertError, strerror(errno));
                 checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE;
             }
             break;
@@ -154,7 +154,7 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
                 }
 
                 if (ensure_server_certificate_exists) {
-                    server_notifier.server_cert_failure();
+                    server_notifier.server_cert_status(ServerNotifier::Status::CertFailure);
                     checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_MISSED;
                 }
             }
@@ -173,7 +173,7 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
                 }
                 certificate_matches = false;
 
-                server_notifier.server_cert_error(strerror(errno));
+                server_notifier.server_cert_status(ServerNotifier::Status::CertError, strerror(errno));
                 checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED;
             }
             else  {
@@ -231,12 +231,12 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
                     certificate_matches = false;
 
                     if (ensure_server_certificate_match) {
-                        server_notifier.server_cert_failure();
+                        server_notifier.server_cert_status(ServerNotifier::Status::CertFailure);
                         checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED;
                     }
                 }
                 else {
-                    server_notifier.server_cert_success();
+                    server_notifier.server_cert_status(ServerNotifier::Status::CertSuccess);
                 }
 
                 X509_free(px509Existing);
@@ -255,14 +255,14 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
                 PEM_write_X509(fp.get(), px509);
                 fp.close();
                 LOG(LOG_INFO, "Dumped X509 peer certificate");
-                server_notifier.server_cert_create();
+                server_notifier.server_cert_status(ServerNotifier::Status::CertCreate);
             }
             else {
                 LOG(LOG_WARNING, "Failed to dump X509 peer certificate");
             }
         }
 
-        server_notifier.server_access_allowed();
+        server_notifier.server_cert_status(ServerNotifier::Status::AccessAllowed);
 
         // SSL_get_verify_result();
 

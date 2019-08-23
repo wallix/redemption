@@ -476,7 +476,7 @@ public:
             }
         };
 
-        DispatchReportMessage report_message;
+        DispatchReportMessage dispatch_report_message;
 
     public:
         FileSystemVirtualChannel channel;
@@ -495,12 +495,12 @@ public:
             const char * proxy_managed_drive_prefix,
             const BaseVirtualChannel::Params & base_params,
             const FileSystemVirtualChannelParams& params)
-        : report_message(base_params.report_message, front, dont_log_data_into_wrm)
+        : dispatch_report_message(base_params.report_message, front, dont_log_data_into_wrm)
         , channel(
             session_reactor, to_client_sender_, to_server_sender_,
             file_system_drive_manager, channel_filter_on, channel_files_directory,
             client_name, random_number, proxy_managed_drive_prefix,
-            BaseVirtualChannel::Params(this->report_message, base_params.verbose),
+            BaseVirtualChannel::Params(this->dispatch_report_message, base_params.verbose),
             params)
         {}
     };
@@ -558,7 +558,7 @@ public:
             }
         };
 
-        DispatchReportMessage report_message;
+        DispatchReportMessage dispatch_report_message;
 
     public:
         SessionProbeVirtualChannel channel;
@@ -574,11 +574,11 @@ public:
             Random & gen,
             const BaseVirtualChannel::Params & base_params,
             const SessionProbeVirtualChannel::Params& params)
-        : report_message(base_params.report_message, front)
+        : dispatch_report_message(base_params.report_message, front)
         , channel(
             session_reactor, to_server_sender_, front, mod, rdp,
             authentifier, file_system_virtual_channel, gen,
-            BaseVirtualChannel::Params(this->report_message, base_params.verbose),
+            BaseVirtualChannel::Params(this->dispatch_report_message, base_params.verbose),
             params)
         {}
     };

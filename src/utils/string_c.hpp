@@ -32,7 +32,8 @@ namespace jln
         static constexpr char const value[sizeof...(cs)+1]{cs..., '\0'};
 
         static constexpr char const* c_str() noexcept { return value; }
-        static constexpr zstring_view zstring() noexcept { return zstring_view{value, sizeof...(cs)}; }
+        static constexpr zstring_view zstring() noexcept
+        { return {zstring_view::is_zero_terminated{}, value, sizeof...(cs)}; }
     };
 
     namespace literals

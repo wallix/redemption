@@ -41,6 +41,7 @@
 #include "utils/sugar/multisz.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include "utils/difftimeval.hpp"
 
@@ -130,22 +131,11 @@ RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name,
 }
 
 
-namespace
-{
-    bool is_syslog_notification_enabled(ServerNotification server_notification) noexcept
-    {
-        return ((server_notification & ServerNotification::syslog)
-            == ServerNotification::syslog);
-    }
-}
-
-
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(
-    FrontAPI& front,
     ReportMessageApi& report_message,
     bool server_cert_store,
     ServerCertCheck server_cert_check,
-    std::unique_ptr<char[]> certif_path,
+    std::unique_ptr<char[]>&& certif_path,
     ServerNotification server_access_allowed_message,
     ServerNotification server_cert_create_message,
     ServerNotification server_cert_success_message,
@@ -156,79 +146,53 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
 : server_cert_check(server_cert_check)
 , certif_path(std::move(certif_path))
 , server_cert_store(server_cert_store)
-, server_access_allowed_message(server_access_allowed_message)
-, server_cert_create_message(server_cert_create_message)
-, server_cert_success_message(server_cert_success_message)
-, server_cert_failure_message(server_cert_failure_message)
-, server_cert_error_message(server_cert_error_message)
+, server_status_messages([&]{
+    std::array<ServerNotification, 5> a;
+    a[underlying_cast(Status::AccessAllowed)] = server_access_allowed_message;
+    a[underlying_cast(Status::CertCreate)] = server_cert_create_message;
+    a[underlying_cast(Status::CertSuccess)] = server_cert_success_message;
+    a[underlying_cast(Status::CertFailure)] = server_cert_failure_message;
+    a[underlying_cast(Status::CertError)] = server_cert_error_message;
+    return a;
+}())
 , verbose(verbose)
-, front(front)
 , report_message(report_message)
 {}
 
-void RdpNegociation::RDPServerNotifier::server_access_allowed()
+void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::string_view error_msg)
 {
-    if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-        this->report_message.log6(LogId::CERTIFICATE_CHECK_SUCCESS, tvtime(), {
-            KVLog("description"_av, "Connexion to server allowed"_av),
-        });
+    auto notification_type = this->server_status_messages[underlying_cast(status)];
+    if (bool(notification_type & ServerNotification::syslog)) {
+        auto send_msg = [&](LogId id, zstring_view message){
+            this->report_message.log6(id, tvtime(), {
+                KVLog("description"_av, message),
+            });
+            LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message);
+        };
 
-        auto message = "CERTIFICATE_CHECK_SUCCESS=Connexion to server allowed"_av;
-        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
-        this->front.session_update(message);
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::server_cert_create()
-{
-    if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-        this->report_message.log6(LogId::SERVER_CERTIFICATE_NEW, tvtime(), {
-            KVLog("description"_av, "New X.509 certificate created"_av),
-        });
-
-        auto message = "SERVER_CERTIFICATE_NEW=New X.509 certificate created"_av;
-        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
-        this->front.session_update(message);
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::server_cert_success()
-{
-    if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-        this->report_message.log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS, tvtime(), {
-            KVLog("description"_av, "X.509 server certificate match"_av),
-        });
-
-        auto message = "SERVER_CERTIFICATE_MATCH_SUCCESS=X.509 server certificate match"_av;
-        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
-        this->front.session_update(message);
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::server_cert_failure()
-{
-    if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-        this->report_message.log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE, tvtime(), {
-            KVLog("description"_av, "X.509 server certificate match failure"_av),
-        });
-
-        auto message = "SERVER_CERTIFICATE_MATCH_FAILURE=X.509 server certificate match failure"_av;
-        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
-        this->front.session_update(message);
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error)
-{
-    if (is_syslog_notification_enabled(this->server_cert_error_message)) {
-        auto error = str_concat("X.509 server certificate internal error: ", str_error);
-        this->report_message.log6(LogId::SERVER_CERTIFICATE_ERROR, tvtime(), {
-            KVLog("description"_av, error),
-        });
-
-        auto message = str_concat("SERVER_CERTIFICATE_ERROR="_av, error);
-        LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message.data());
-        this->front.session_update(message);
+        switch (status)
+        {
+            case Status::AccessAllowed:
+                send_msg(LogId::CERTIFICATE_CHECK_SUCCESS,
+                    "Connexion to server allowed"_zv);
+                break;
+            case Status::CertCreate:
+                send_msg(LogId::SERVER_CERTIFICATE_NEW,
+                    "New X.509 certificate created"_zv);
+                break;
+            case Status::CertSuccess:
+                send_msg(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS,
+                    "X.509 server certificate match"_zv);
+                break;
+            case Status::CertFailure:
+                send_msg(LogId::SERVER_CERTIFICATE_MATCH_FAILURE,
+                    "X.509 server certificate match failure"_zv);
+                break;
+            case Status::CertError:
+                send_msg(LogId::SERVER_CERTIFICATE_ERROR,
+                    str_concat("X.509 server certificate internal error: "_zv, error_msg));
+                break;
+        }
     }
 }
 
@@ -306,7 +270,6 @@ RdpNegociation::RdpNegociation(
     , gen(gen)
     , verbose(mod_rdp_params.verbose /*| (RDPVerbose::security|RDPVerbose::basic_trace)*/)
     , server_notifier(
-        front,
         report_message,
         mod_rdp_params.server_cert_store,
         mod_rdp_params.server_cert_check,

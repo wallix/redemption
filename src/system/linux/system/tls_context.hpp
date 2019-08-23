@@ -281,7 +281,7 @@ public:
         X509 * px509 = SSL_get_peer_certificate(this->allocated_ssl);
         if (!px509) {
             LOG(LOG_WARNING, "SSL_get_peer_certificate() failed");
-            server_notifier.server_cert_error(strerror(errno));
+            server_notifier.server_cert_status(ServerNotifier::Status::CertError, strerror(errno));
             return Transport::TlsResult::Fail;
         }
 
