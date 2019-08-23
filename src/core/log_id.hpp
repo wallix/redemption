@@ -21,72 +21,98 @@
 #pragma once
 
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/flags.hpp"
 
-#define X_LOG_ID(f)                                   \
-    f(BUTTON_CLICKED)                                 \
-    f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION)    \
-    f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX) \
-    f(CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION)      \
-    f(CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX)   \
-    f(CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION)    \
-    f(CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION)      \
-    f(CERTIFICATE_CHECK_SUCCESS)                      \
-    f(CHECKBOX_CLICKED)                               \
-    f(CLIENT_EXECUTE_REMOTEAPP)                       \
-    f(COMPLETED_PROCESS)                              \
-    f(CONNECTION_FAILED)                              \
-    f(DRIVE_REDIRECTION_DELETE)                       \
-    f(DRIVE_REDIRECTION_READ)                         \
-    f(DRIVE_REDIRECTION_READ_EX)                      \
-    f(DRIVE_REDIRECTION_RENAME)                       \
-    f(DRIVE_REDIRECTION_USE)                          \
-    f(DRIVE_REDIRECTION_WRITE)                        \
-    f(DRIVE_REDIRECTION_WRITE_EX)                     \
-    f(EDIT_CHANGED)                                   \
-    f(FILE_VERIFICATION)                              \
-    f(FILE_VERIFICATION_ERROR)                        \
-    f(FOREGROUND_WINDOW_CHANGED)                      \
-    f(GROUP_MEMBERSHIP)                               \
-    f(INPUT_LANGUAGE)                                 \
-    f(KBD_INPUT)                                      \
-    f(KERBEROS_TICKET_CREATION)                       \
-    f(KERBEROS_TICKET_DELETION)                       \
-    f(KILL_PATTERN_DETECTED)                          \
-    f(NEW_PROCESS)                                    \
-    f(NOTIFY_PATTERN_DETECTED)                        \
-    f(OUTBOUND_CONNECTION_BLOCKED)                    \
-    f(OUTBOUND_CONNECTION_BLOCKED_2)                  \
-    f(OUTBOUND_CONNECTION_DETECTED)                   \
-    f(OUTBOUND_CONNECTION_DETECTED_2)                 \
-    f(PASSWORD_TEXT_BOX_GET_FOCUS)                    \
-    f(PROCESS_BLOCKED)                                \
-    f(PROCESS_DETECTED)                               \
-    f(SERVER_CERTIFICATE_ERROR)                       \
-    f(SERVER_CERTIFICATE_MATCH_FAILURE)               \
-    f(SERVER_CERTIFICATE_MATCH_SUCCESS)               \
-    f(SERVER_CERTIFICATE_NEW)                         \
-    f(SESSION_CREATION_FAILED)                        \
-    f(SESSION_DISCONNECTION)                          \
-    f(SESSION_ENDING_IN_PROGRESS)                     \
-    f(SESSION_ESTABLISHED_SUCCESSFULLY)               \
-    f(STARTUP_APPLICATION_FAIL_TO_RUN)                \
-    f(STARTUP_APPLICATION_FAIL_TO_RUN_2)              \
-    f(TITLE_BAR)                                      \
-    f(UAC_PROMPT_BECOME_VISIBLE)                      \
-    f(UNIDENTIFIED_INPUT_FIELD_GET_FOCUS)             \
-    f(WEB_ATTEMPT_TO_PRINT)                           \
-    f(WEB_BEFORE_NAVIGATE)                            \
-    f(WEB_DOCUMENT_COMPLETE)                          \
-    f(WEB_ENCRYPTION_LEVEL_CHANGED)                   \
-    f(WEB_NAVIGATE_ERROR)                             \
-    f(WEB_NAVIGATION)                                 \
-    f(WEB_PRIVACY_IMPACTED)                           \
-    f(WEB_THIRD_PARTY_URL_BLOCKED)
+enum class LogCategoryId
+{
+    None,
+    Clipboard,
+    Widget,
+    Drive,
+    FileVerification,
+    ServerCertificate,
+    TitleBar,
+    Web,
+    PatternDetected,
+    OutboundConnection,
+    Application,
+    SessionProbe,
+    Kbd,
+    Protocol,
+    count,
+};
+
+template<>
+struct utils::enum_as_flag<LogCategoryId>
+{
+    static const std::size_t max = std::size_t(LogCategoryId::count);
+};
+
+#define X_LOG_ID(f)                                              \
+    f(BUTTON_CLICKED, Widget)                                    \
+    f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION, Clipboard)    \
+    f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX, Clipboard) \
+    f(CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION, Clipboard)      \
+    f(CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX, Clipboard)   \
+    f(CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION, Clipboard)    \
+    f(CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION, Clipboard)      \
+    f(CERTIFICATE_CHECK_SUCCESS, ServerCertificate)              \
+    f(CHECKBOX_CLICKED, Widget)                                  \
+    f(CLIENT_EXECUTE_REMOTEAPP, Protocol)                        \
+    f(COMPLETED_PROCESS, Application)                            \
+    f(CONNECTION_FAILED, Protocol)                               \
+    f(DRIVE_REDIRECTION_DELETE, Drive)                           \
+    f(DRIVE_REDIRECTION_READ, Drive)                             \
+    f(DRIVE_REDIRECTION_READ_EX, Drive)                          \
+    f(DRIVE_REDIRECTION_RENAME, Drive)                           \
+    f(DRIVE_REDIRECTION_USE, Drive)                              \
+    f(DRIVE_REDIRECTION_WRITE, Drive)                            \
+    f(DRIVE_REDIRECTION_WRITE_EX, Drive)                         \
+    f(EDIT_CHANGED, Widget)                                      \
+    f(FILE_VERIFICATION, FileVerification)                       \
+    f(FILE_VERIFICATION_ERROR, FileVerification)                 \
+    f(FOREGROUND_WINDOW_CHANGED, TitleBar)                       \
+    f(GROUP_MEMBERSHIP, SessionProbe)                            \
+    f(INPUT_LANGUAGE, Kbd)                                       \
+    f(KBD_INPUT, Kbd)                                            \
+    f(KERBEROS_TICKET_CREATION, Application)                     \
+    f(KERBEROS_TICKET_DELETION, Application)                     \
+    f(KILL_PATTERN_DETECTED, PatternDetected)                    \
+    f(NEW_PROCESS, Application)                                  \
+    f(NOTIFY_PATTERN_DETECTED, PatternDetected)                  \
+    f(OUTBOUND_CONNECTION_BLOCKED, OutboundConnection)           \
+    f(OUTBOUND_CONNECTION_BLOCKED_2, OutboundConnection)         \
+    f(OUTBOUND_CONNECTION_DETECTED, OutboundConnection)          \
+    f(OUTBOUND_CONNECTION_DETECTED_2, OutboundConnection)        \
+    f(PASSWORD_TEXT_BOX_GET_FOCUS, Widget)                       \
+    f(PROCESS_BLOCKED, Application)                              \
+    f(PROCESS_DETECTED, Application)                             \
+    f(SERVER_CERTIFICATE_ERROR, ServerCertificate)               \
+    f(SERVER_CERTIFICATE_MATCH_FAILURE, ServerCertificate)       \
+    f(SERVER_CERTIFICATE_MATCH_SUCCESS, ServerCertificate)       \
+    f(SERVER_CERTIFICATE_NEW, ServerCertificate)                 \
+    f(SESSION_CREATION_FAILED, SessionProbe)                     \
+    f(SESSION_DISCONNECTION, SessionProbe)                       \
+    f(SESSION_ENDING_IN_PROGRESS, SessionProbe)                  \
+    f(SESSION_ESTABLISHED_SUCCESSFULLY, SessionProbe)            \
+    f(STARTUP_APPLICATION_FAIL_TO_RUN, Application)              \
+    f(STARTUP_APPLICATION_FAIL_TO_RUN_2, Application)            \
+    f(TITLE_BAR, TitleBar)                                       \
+    f(UAC_PROMPT_BECOME_VISIBLE, Widget)                         \
+    f(UNIDENTIFIED_INPUT_FIELD_GET_FOCUS, Widget)                \
+    f(WEB_ATTEMPT_TO_PRINT, Web)                                 \
+    f(WEB_BEFORE_NAVIGATE, Web)                                  \
+    f(WEB_DOCUMENT_COMPLETE, Web)                                \
+    f(WEB_ENCRYPTION_LEVEL_CHANGED, Web)                         \
+    f(WEB_NAVIGATE_ERROR, Web)                                   \
+    f(WEB_NAVIGATION, Web)                                       \
+    f(WEB_PRIVACY_IMPACTED, Web)                                 \
+    f(WEB_THIRD_PARTY_URL_BLOCKED, Web)
 
 
 enum class LogId
 {
-#define f(x) x,
+#define f(x, cat) x,
     X_LOG_ID(f)
 #undef f
 };
@@ -96,7 +122,13 @@ namespace detail
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
     constexpr inline array_view_const_char log_id_string_map[]{
-        #define f(x) #x ""_av,
+        #define f(x, cat) #x ""_av,
+        X_LOG_ID(f)
+        #undef f
+    };
+
+    constexpr inline LogCategoryId log_id_category_map[]{
+        #define f(x, cat) LogCategoryId::cat,
         X_LOG_ID(f)
         #undef f
     };

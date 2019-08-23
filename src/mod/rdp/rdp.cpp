@@ -59,49 +59,6 @@ namespace
 
     struct PrivateRdpNegociation
     {
-        struct DispatchReportMessage final : ReportMessageApi
-        {
-            ReportMessageApi& report_message;
-            FrontAPI& front;
-
-            DispatchReportMessage(ReportMessageApi& report_message, FrontAPI& front) noexcept
-            : report_message(report_message)
-            , front(front)
-            {}
-
-            void report(const char * reason, const char * message) override
-            {
-                this->report_message.report(reason, message);
-            }
-
-            void log6(LogId id, const timeval time, KVList kv_list) override
-            {
-                this->report_message.log6(id, time, kv_list);
-
-                std::string s;
-                auto& str_id = detail::log_id_string_map[underlying_cast(id)];
-                s.insert(s.end(), str_id.begin(), str_id.end());
-                for (auto const& kv : kv_list) {
-                    s += '\x01';
-                    s.insert(s.end(), kv.value.begin(), kv.value.end());
-                }
-
-                this->front.session_update(s);
-            }
-
-            void update_inactivity_timeout() override
-            {
-                this->report_message.update_inactivity_timeout();
-            }
-
-            time_t get_inactivity_timeout() override
-            {
-                return this->report_message.get_inactivity_timeout();
-            }
-        };
-
-        DispatchReportMessage dispatch_report_message;
-
         RdpNegociation rdp_negociation;
         SessionReactor::GraphicEventPtr graphic_event;
         const std::chrono::seconds open_session_timeout;
@@ -114,31 +71,8 @@ namespace
         explicit PrivateRdpNegociation(
             std::chrono::seconds open_session_timeout,
             char const* program, char const* directory,
-            // rdp_negociation
-            std::reference_wrapper<const ChannelsAuthorizations> channels_authorizations,
-            CHANNELS::ChannelDefArray& mod_channel_list,
-            const CHANNELS::ChannelNameId auth_channel,
-            const CHANNELS::ChannelNameId checkout_channel,
-            CryptContext& decrypt,
-            CryptContext& encrypt,
-            const RdpLogonInfo& logon_info,
-            bool enable_auth_channel,
-            Transport& trans,
-            FrontAPI& front,
-            const ClientInfo& info,
-            RedirectionInfo& redir_info,
-            Random& gen,
-            TimeObj& timeobj,
-            const ModRDPParams& mod_rdp_params,
-            ReportMessageApi& report_message,
-            bool has_managed_drive,
-            bool convert_remoteapp_to_desktop)
-        : dispatch_report_message(report_message, front)
-        , rdp_negociation(
-            channels_authorizations, mod_channel_list, auth_channel, checkout_channel,
-            decrypt, encrypt, logon_info, enable_auth_channel, trans, front, info,
-            redir_info, gen, timeobj, mod_rdp_params, this->dispatch_report_message,
-            has_managed_drive, convert_remoteapp_to_desktop)
+            Ts&&... xs)
+        : rdp_negociation(static_cast<Ts&&>(xs)...)
         , open_session_timeout(open_session_timeout)
         {
             this->rdp_negociation.set_program(program, directory);

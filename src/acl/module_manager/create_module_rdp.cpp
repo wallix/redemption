@@ -182,9 +182,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.vc_params.session_shadowing_support = ini.get<cfg::mod_rdp::session_shadowing_support>();
 
     mod_rdp_params.clipboard_params.disable_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
-    mod_rdp_params.clipboard_params.disable_log_wrm           = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
     mod_rdp_params.file_system_params.disable_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
-    mod_rdp_params.file_system_params.disable_log_wrm         = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
     mod_rdp_params.session_probe_params.vc_params.extra_system_processes =
         ExtraSystemProcesses(
             ini.get<cfg::context::session_probe_extra_system_processes>().c_str());
@@ -319,8 +317,17 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>();
 
-
     try {
+        using LogCategoryFlags = utils::flags_t<LogCategoryId>;
+
+        LogCategoryFlags dont_log_category;
+        if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
+            dont_log_category |= LogCategoryId::Drive;
+        }
+        if (bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm)) {
+            dont_log_category |= LogCategoryId::Clipboard;
+        }
+
         const char * const name = "RDP Target";
 
         Rect const adjusted_client_execute_rect =
@@ -345,7 +352,56 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-        struct ModRDPWithMetrics : public mod_rdp
+        struct DispatchReportMessage : ReportMessageApi
+        {
+            ReportMessageApi& report_message;
+            FrontAPI& front;
+            LogCategoryFlags dont_log;
+
+            DispatchReportMessage(
+                ReportMessageApi & report_message, FrontAPI& front,
+                LogCategoryFlags dont_log) noexcept
+            : report_message(report_message)
+            , front(front)
+            , dont_log(dont_log)
+            {}
+
+            void report(const char * reason, const char * message) override
+            {
+                this->report_message.report(reason, message);
+            }
+
+            void log6(LogId id, const timeval time, KVList kv_list) override
+            {
+                this->report_message.log6(id, time, kv_list);
+
+                if (dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
+                    return ;
+                }
+
+                std::string s;
+                auto& str_id = detail::log_id_string_map[underlying_cast(id)];
+                s.insert(s.end(), str_id.begin(), str_id.end());
+                for (auto const& kv : kv_list) {
+                    s += '\x01';
+                    s.insert(s.end(), kv.value.begin(), kv.value.end());
+                }
+
+                this->front.session_update(s);
+            }
+
+            void update_inactivity_timeout() override
+            {
+                this->report_message.update_inactivity_timeout();
+            }
+
+            time_t get_inactivity_timeout() override
+            {
+                return this->report_message.get_inactivity_timeout();
+            }
+        };
+
+        struct ModRDPWithMetrics : public DispatchReportMessage, mod_rdp
         {
             struct ModMetrics : Metrics
             {
@@ -415,7 +471,30 @@ void ModuleManager::create_mod_rdp(
             std::unique_ptr<ModMetrics> metrics;
             std::unique_ptr<FileValidator> file_validator;
 
-            using mod_rdp::mod_rdp;
+            explicit ModRDPWithMetrics(
+                Transport & trans,
+                SessionReactor& session_reactor,
+                gdi::GraphicApi & gd,
+                FrontAPI & front,
+                const ClientInfo & info,
+                RedirectionInfo & redir_info,
+                Random & gen,
+                TimeObj & timeobj,
+                ChannelsAuthorizations channels_authorizations,
+                const ModRDPParams & mod_rdp_params,
+                AuthApi & authentifier,
+                ReportMessageApi & report_message,
+                LogCategoryFlags dont_log_category,
+                ModRdpVariables vars,
+                RDPMetrics * metrics,
+                FileValidatorService * file_validator_service)
+            : DispatchReportMessage(report_message, front, dont_log_category)
+            , mod_rdp(
+                trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
+                channels_authorizations, mod_rdp_params, authentifier,
+                static_cast<DispatchReportMessage&>(*this), vars,
+                metrics, file_validator_service)
+            {}
         };
 
         bool enable_validator = ini.get<cfg::file_verification::enable_up>() || ini.get<cfg::file_verification::enable_down>();
@@ -502,6 +581,7 @@ void ModuleManager::create_mod_rdp(
             mod_rdp_params,
             authentifier,
             report_message,
+            dont_log_category,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,
             enable_validator ? &file_validator->service : nullptr

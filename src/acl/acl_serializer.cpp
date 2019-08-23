@@ -395,7 +395,7 @@ namespace
     }
 
     constexpr inline array_view_const_char log_id_string_type_map[]{
-    #define f(x) "type=\"" #x "\""_av,
+    #define f(x, cat) "type=\"" #x "\""_av,
         X_LOG_ID(f)
     #undef f
     };
