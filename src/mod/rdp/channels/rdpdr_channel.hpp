@@ -22,7 +22,6 @@
 #pragma once
 
 #include "core/log_id.hpp"
-#include "core/front_api.hpp"
 #include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
 #include "core/session_reactor.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
@@ -106,7 +105,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     const uint32_t    param_random_number;                  // For ClientId.
 
     const bool        param_dont_log_data_into_syslog;
-    const bool        param_dont_log_data_into_wrm;
 
     const char* const param_proxy_managed_drive_prefix;
 
@@ -684,7 +682,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             (void)flags;
 
             // DeviceCount(4)
-            ::check_throw(chunk, 4, "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove (1)", ERR_RDP_DATA_TRUNCATED);
+            ::check_throw(chunk, 4,  "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_drive_device_list_remove (1)", ERR_RDP_DATA_TRUNCATED);
 
             const uint32_t DeviceCount = chunk.in_uint32_le();
 
@@ -810,8 +808,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         }
     } device_redirection_manager;
 
-    FrontAPI& front;
-
     SessionProbeLauncher* drive_redirection_initialize_notifier = nullptr;
 
     SessionProbeLauncher* session_probe_device_announce_responded_notifier = nullptr;
@@ -854,7 +850,6 @@ public:
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FileSystemDriveManager& file_system_drive_manager,
-        FrontAPI& front,
         const bool channel_filter_on,
         std::string channel_files_directory,
         const char * client_name,
@@ -873,7 +868,6 @@ public:
     , param_file_system_write_authorized(params.file_system_write_authorized)
     , param_random_number(random_number)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
-    , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , param_proxy_managed_drive_prefix(proxy_managed_drive_prefix)
     , device_redirection_manager(
           *this,
@@ -888,7 +882,6 @@ public:
           params.smart_card_authorized,
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           base_params.verbose)
-    , front(front)
     , session_reactor(session_reactor)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
@@ -1468,16 +1461,6 @@ public:
                             LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
                                 "type=DRIVE_REDIRECTION_USE device_name=%s device_type=%s",
                                 device_name.data(), device_type_name.data());
-
-                            if (!this->param_dont_log_data_into_wrm) {
-                                std::string message = str_concat(
-                                    "DRIVE_REDIRECTION_USE=",
-                                    device_name,
-                                    '\x01', rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(
-                                    device_type)
-                                );
-                                this->front.session_update(message);
-                            }
                         }
                     }
 
@@ -1569,17 +1552,6 @@ public:
                                         "type=DRIVE_REDIRECTION_READ_EX file_name=%s"
                                         "size=%s sha256=%s",
                                         file_path, file_size_str, digest_s);
-
-                                    if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message = str_concat(
-                                            "DRIVE_REDIRECTION_READ_EX=",
-                                            file_path,
-                                            '\x01',
-                                            file_size_str,
-                                            '\x01',
-                                            digest_s);
-                                        this->front.session_update(message);
-                                    }
                                 }
                                 else {
                                     this->report_message.log6(
@@ -1590,13 +1562,6 @@ public:
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
                                         "type=DRIVE_REDIRECTION_READ file_name=%s", file_path);
-
-                                    if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message = str_concat(
-                                            "DRIVE_REDIRECTION_READ=",
-                                            file_path);
-                                        this->front.session_update(message);
-                                    }
                                 }
                             }
                             else if (target_iter->for_writing) {
@@ -1628,17 +1593,6 @@ public:
                                         "type=DRIVE_REDIRECTION_WRITE_EX file_name=%s"
                                         "size=%s sha256=%s",
                                         file_path, file_size_str, digest_s);
-
-                                    if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message = str_concat(
-                                            "DRIVE_REDIRECTION_WRITE_EX=",
-                                            file_path,
-                                            '\x01',
-                                            file_size_str,
-                                            '\x01',
-                                            digest_s);
-                                        this->front.session_update(message);
-                                    }
                                 }
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     this->report_message.log6(
@@ -1649,13 +1603,6 @@ public:
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
                                         "type=DRIVE_REDIRECTION_WRITE file_name=%s", file_path);
-
-                                    if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message = str_concat(
-                                            "DRIVE_REDIRECTION_WRITE=",
-                                            file_path);
-                                        this->front.session_update(message);
-                                    }
                                 }
                             }
                         }
@@ -1776,13 +1723,6 @@ public:
                                         "Target not found! (4)");
                                 assert(false);
                             }
-
-                            if (!this->param_dont_log_data_into_wrm) {
-                                std::string message = str_concat(
-                                    "DRIVE_REDIRECTION_DELETE=",
-                                    file_path);
-                                this->front.session_update(message);
-                            }
                         }
                         break;
 
@@ -1805,15 +1745,6 @@ public:
                                     "FileSystemVirtualChannel::process_client_drive_io_response: "
                                         "Target not found! (5)");
                                 assert(false);
-                            }
-
-                            if (!this->param_dont_log_data_into_wrm) {
-                                std::string message = str_concat(
-                                    "DRIVE_REDIRECTION_RENAME=",
-                                    target_iter->file_path,
-                                    '\x01',
-                                    file_path);
-                                this->front.session_update(message);
                             }
                         }
                         break;

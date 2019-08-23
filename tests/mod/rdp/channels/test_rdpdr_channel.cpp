@@ -28,7 +28,6 @@
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
 #include "./test_channel.hpp"
-#include "test_only/front/fake_front.hpp"
 
 namespace
 {
@@ -159,8 +158,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     {
         WorkingDirectory wd(d.name);
 
-        ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-        FakeFront front(screen_info);
         RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
         NullReportMessage report_message;
@@ -189,7 +186,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         SessionReactor session_reactor;
         FileSystemVirtualChannel file_system_virtual_channel(
             session_reactor, &to_client_sender, &to_server_sender,
-            file_system_drive_manager, front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);
+            file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);
 
         RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 

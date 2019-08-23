@@ -426,7 +426,86 @@ public:
     std::unique_ptr<VirtualChannelDataSender>     file_system_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     file_system_to_server_sender;
 
-    std::unique_ptr<FileSystemVirtualChannel>     file_system_virtual_channel;
+
+    class PrivateFileSystemVirtualChannel
+    {
+        struct DispatchReportMessage final : ReportMessageApi
+        {
+            ReportMessageApi& report_message;
+            FrontAPI& front;
+            bool dont_log_data_into_wrm;
+
+            DispatchReportMessage(ReportMessageApi & report_message, FrontAPI& front, bool dont_log_data_into_wrm) noexcept
+            : report_message(report_message)
+            , front(front)
+            , dont_log_data_into_wrm(dont_log_data_into_wrm)
+            {}
+
+            void report(const char * reason, const char * message) override
+            {
+                this->report_message.report(reason, message);
+            }
+
+            void log6(LogId id, const timeval time, KVList kv_list) override
+            {
+                this->report_message.log6(id, time, kv_list);
+
+                if (this->dont_log_data_into_wrm) {
+                    return ;
+                }
+
+                std::string s;
+                auto& str_id = detail::log_id_string_map[underlying_cast(id)];
+                s.insert(s.end(), str_id.begin(), str_id.end());
+                for (auto const& kv : kv_list) {
+                    s += '\x01';
+                    s.insert(s.end(), kv.value.begin(), kv.value.end());
+                }
+
+                this->front.session_update(s);
+            }
+
+            void update_inactivity_timeout() override
+            {
+                this->report_message.update_inactivity_timeout();
+            }
+
+            time_t get_inactivity_timeout() override
+            {
+                return this->report_message.get_inactivity_timeout();
+            }
+        };
+
+        DispatchReportMessage report_message;
+
+    public:
+        FileSystemVirtualChannel channel;
+
+        explicit PrivateFileSystemVirtualChannel(
+            SessionReactor& session_reactor,
+            VirtualChannelDataSender* to_client_sender_,
+            VirtualChannelDataSender* to_server_sender_,
+            FileSystemDriveManager& file_system_drive_manager,
+            FrontAPI& front,
+            bool dont_log_data_into_wrm,
+            const bool channel_filter_on,
+            std::string channel_files_directory,
+            const char * client_name,
+            uint32_t random_number,
+            const char * proxy_managed_drive_prefix,
+            const BaseVirtualChannel::Params & base_params,
+            const FileSystemVirtualChannelParams& params)
+        : report_message(base_params.report_message, front, dont_log_data_into_wrm)
+        , channel(
+            session_reactor, to_client_sender_, to_server_sender_,
+            file_system_drive_manager, channel_filter_on, channel_files_directory,
+            client_name, random_number, proxy_managed_drive_prefix,
+            BaseVirtualChannel::Params(this->report_message, base_params.verbose),
+            params)
+        {}
+    };
+
+    std::unique_ptr<PrivateFileSystemVirtualChannel>     file_system_virtual_channel;
 
     std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_server_sender;
@@ -858,14 +937,14 @@ private:
         fsvc_params.serial_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
         fsvc_params.smart_card_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
         fsvc_params.dont_log_data_into_syslog = this->file_system.disable_log_syslog;
-        fsvc_params.dont_log_data_into_wrm = this->file_system.disable_log_wrm;
 
-        this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
+        this->file_system_virtual_channel =  std::make_unique<PrivateFileSystemVirtualChannel>(
                 asynchronous_tasks.session_reactor,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
                 this->drive.file_system_drive_manager,
                 front,
+                this->file_system.disable_log_wrm,
                 false,
                 "",
                 client_name,
@@ -875,7 +954,7 @@ private:
                 fsvc_params);
         if (this->file_system_to_server_sender) {
             if (this->session_probe.enable_session_probe || this->drive.use_application_driver) {
-                this->file_system_virtual_channel->enable_session_probe_drive();
+                this->file_system_virtual_channel->channel.enable_session_probe_drive();
             }
         }
     }
@@ -901,7 +980,7 @@ public:
             this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
         }
 
-        FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
+        FileSystemVirtualChannel& file_system_virtual_channel = this->file_system_virtual_channel->channel;
 
         BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
 
@@ -1059,7 +1138,7 @@ public:
                 this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
             }
 
-            FileSystemVirtualChannel& rdpdr_channel = *this->file_system_virtual_channel;
+            FileSystemVirtualChannel& rdpdr_channel = this->file_system_virtual_channel->channel;
 
             rdpdr_channel.disable_session_probe_drive();
         }
@@ -1271,7 +1350,7 @@ public:
             this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
         }
 
-        FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
+        FileSystemVirtualChannel& channel = this->file_system_virtual_channel->channel;
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
         channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
@@ -1606,7 +1685,7 @@ public:
             this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
         }
 
-        FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
+        FileSystemVirtualChannel& channel = this->file_system_virtual_channel->channel;
 
         channel.process_client_message(length, flags, chunk.remaining_bytes());
     }
@@ -1778,7 +1857,7 @@ public:
                 this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
             }
 
-            FileSystemVirtualChannel& fsvc = *this->file_system_virtual_channel;
+            FileSystemVirtualChannel& fsvc = this->file_system_virtual_channel->channel;
 
             fsvc.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
 
