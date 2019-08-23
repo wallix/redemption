@@ -165,8 +165,7 @@ struct WrmPlayer
 
             case WrmChunkType::TIMESTAMP:
             {
-                timeval now;
-                this->in_stream.in_timeval_from_uint64le_usec(now);
+                timeval now = this->in_stream.in_timeval_from_uint64le_usec();
 
                 if (this->in_stream.in_remain() >= 4)
                 {
@@ -326,8 +325,7 @@ struct WrmPlayer
 
             case WrmChunkType::SESSION_UPDATE:
             {
-                timeval now;
-                this->in_stream.in_timeval_from_uint64le_usec(now);
+                timeval now = this->in_stream.in_timeval_from_uint64le_usec();
                 this->in_stream.in_skip_bytes(this->in_stream.in_uint16_le());
                 this->_update_time(now);
                 break;

@@ -206,8 +206,8 @@ public:
         const uint64_t movie_usec_hi = this->in_uint32_le();
         const uint64_t movie_usec = (movie_usec_hi * 0x100000000LL + movie_usec_lo);
         return timeval{
-            static_cast<uint32_t>(movie_usec / 1000000LL),
-            static_cast<uint32_t>(movie_usec % 1000000LL)
+            static_cast<time_t>(movie_usec / 1000000LL),
+            static_cast<suseconds_t>(movie_usec % 1000000LL)
         };
     }
 
