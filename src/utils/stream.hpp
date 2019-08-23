@@ -200,13 +200,15 @@ public:
 
     // ---------------------------------------------------------------------------
 
-    void in_timeval_from_uint64le_usec(timeval & tv) noexcept
+    timeval in_timeval_from_uint64le_usec() noexcept
     {
         const uint64_t movie_usec_lo = this->in_uint32_le();
         const uint64_t movie_usec_hi = this->in_uint32_le();
         const uint64_t movie_usec = (movie_usec_hi * 0x100000000LL + movie_usec_lo);
-        tv.tv_usec = static_cast<uint32_t>(movie_usec % 1000000LL);
-        tv.tv_sec = static_cast<uint32_t>(movie_usec / 1000000LL);
+        return timeval{
+            static_cast<uint32_t>(movie_usec / 1000000LL),
+            static_cast<uint32_t>(movie_usec % 1000000LL)
+        };
     }
 
     uint64_t in_uint64_le() noexcept {

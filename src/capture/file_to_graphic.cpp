@@ -465,7 +465,7 @@ void FileToGraphic::interpret_order()
     {
         auto * const p = this->stream.get_current();
 
-        this->stream.in_timeval_from_uint64le_usec(this->record_now);
+        this->record_now = this->stream.in_timeval_from_uint64le_usec();
 
         for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
             obj->external_time(this->record_now);
@@ -758,7 +758,7 @@ void FileToGraphic::interpret_order()
         this->trans = this->trans_source;
     break;
     case WrmChunkType::SESSION_UPDATE:
-        this->stream.in_timeval_from_uint64le_usec(this->record_now);
+        this->record_now = this->stream.in_timeval_from_uint64le_usec();
 
         for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
             obj->external_time(this->record_now);

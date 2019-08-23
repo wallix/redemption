@@ -250,8 +250,7 @@ public:
 
         case WrmChunkType::TIMESTAMP:
             {
-                timeval record_now;
-                stream.in_timeval_from_uint64le_usec(record_now);
+                timeval record_now = stream.in_timeval_from_uint64le_usec();
                 this->trans_target.timestamp(record_now);
             }
             REDEMPTION_CXX_FALLTHROUGH;
