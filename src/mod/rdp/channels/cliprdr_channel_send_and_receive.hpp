@@ -25,7 +25,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "mod/file_validatior_service.hpp"
+#include "mod/file_validator_service.hpp"
 #include "utils/stream.hpp"
 #include "system/ssl_sha256.hpp"
 

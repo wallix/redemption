@@ -4308,6 +4308,7 @@ test-run tests/mod/test_file_validator_service :
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/file_validator_service.hpp
 ;
 test-run tests/mod/test_metrics_hmac :
   $(REDEMPTION_TEST_PATH)/mod/test_metrics_hmac.cpp
@@ -6187,6 +6188,7 @@ alias test_rdp_metrics.coverage : tests/mod/rdp/test_rdp_metrics.coverage ;
 alias test_rdp_negociation.coverage : tests/mod/rdp/test_rdp_negociation.coverage ;
 alias test_rdp_orders.coverage : tests/mod/rdp/test_rdp_orders.coverage ;
 alias test_rdp_params.coverage : tests/mod/rdp/test_rdp_params.coverage ;
+alias test_file_validator_service.coverage : tests/mod/test_file_validator_service.coverage ;
 alias test_metrics_hmac.coverage : tests/mod/test_metrics_hmac.coverage ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
 alias test_hextile.coverage : tests/mod/vnc/encoder/test_hextile.coverage ;

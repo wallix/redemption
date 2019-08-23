@@ -92,7 +92,7 @@ struct FileValidatorService;
 # include "mod/rdp/windowing_api.hpp"
 #else
 # include "mod/rdp/rdp_metrics.hpp"
-# include "mod/file_validatior_service.hpp"
+# include "mod/file_validator_service.hpp"
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
 # include "mod/rdp/channels/rail_session_manager.hpp"
 # include "mod/rdp/channels/rail_channel.hpp"
@@ -125,7 +125,6 @@ struct FileValidatorService;
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 
 #include <cstdlib>
 #include <deque>

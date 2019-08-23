@@ -22,7 +22,7 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "lib/files_validator_api.hpp"
-#include "mod/file_validatior_service.hpp"
+#include "mod/file_validator_service.hpp"
 
 #include "utils/sugar/algostring.hpp"
 

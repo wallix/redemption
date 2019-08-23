@@ -33,7 +33,7 @@
 #include "mod/rdp/parse_extra_orders.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "mod/file_validatior_service.hpp"
+#include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
