@@ -27,6 +27,7 @@
 #include "core/channels_authorizations.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
+#include "acl/dispatch_report_message.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/metrics_hmac.hpp"
 #include "mod/rdp/parse_extra_orders.hpp"
@@ -318,7 +319,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>();
 
     try {
-        using LogCategoryFlags = utils::flags_t<LogCategoryId>;
+        using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
 
         LogCategoryFlags dont_log_category;
         if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
@@ -352,55 +353,6 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-        struct DispatchReportMessage : ReportMessageApi
-        {
-            ReportMessageApi& report_message;
-            FrontAPI& front;
-            LogCategoryFlags dont_log;
-
-            DispatchReportMessage(
-                ReportMessageApi & report_message, FrontAPI& front,
-                LogCategoryFlags dont_log) noexcept
-            : report_message(report_message)
-            , front(front)
-            , dont_log(dont_log)
-            {}
-
-            void report(const char * reason, const char * message) override
-            {
-                this->report_message.report(reason, message);
-            }
-
-            void log6(LogId id, const timeval time, KVList kv_list) override
-            {
-                this->report_message.log6(id, time, kv_list);
-
-                if (dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
-                    return ;
-                }
-
-                std::string s;
-                auto& str_id = detail::log_id_string_map[underlying_cast(id)];
-                s.insert(s.end(), str_id.begin(), str_id.end());
-                for (auto const& kv : kv_list) {
-                    s += '\x01';
-                    s.insert(s.end(), kv.value.begin(), kv.value.end());
-                }
-
-                this->front.session_update(s);
-            }
-
-            void update_inactivity_timeout() override
-            {
-                this->report_message.update_inactivity_timeout();
-            }
-
-            time_t get_inactivity_timeout() override
-            {
-                return this->report_message.get_inactivity_timeout();
-            }
-        };
-
         struct ModRDPWithMetrics : public DispatchReportMessage, mod_rdp
         {
             struct ModMetrics : Metrics
@@ -410,6 +362,7 @@ void ModuleManager::create_mod_rdp(
                 RDPMetrics protocol_metrics{*this};
                 SessionReactor::TimerPtr metrics_timer;
             };
+
 
             struct FileValidator
             {
