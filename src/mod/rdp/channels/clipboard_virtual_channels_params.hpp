@@ -29,7 +29,6 @@ struct ClipboardVirtualChannelParams
     bool clipboard_up_authorized   = false;
     bool clipboard_file_authorized = false;
     bool dont_log_data_into_syslog = false;
-    bool dont_log_data_into_wrm    = false;
     bool log_only_relevant_clipboard_activities = false;
 
     ValidatorParams validator_params;

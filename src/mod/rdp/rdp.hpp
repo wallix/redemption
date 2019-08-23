@@ -125,6 +125,7 @@ struct FileValidatorService;
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 
 #include <cstdlib>
 #include <deque>
@@ -197,7 +198,6 @@ public:
     RDPMetrics * metrics;
 
 private:
-    ReportMessageApi & report_message;
     Random & gen;
 
 public:
@@ -348,7 +348,80 @@ public:
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
 
-    std::unique_ptr<ClipboardVirtualChannel>      clipboard_virtual_channel;
+    class PrivateClipboardVirtualChannel
+    {
+        struct DispatchReportMessage final : ReportMessageApi
+        {
+            ReportMessageApi& report_message;
+            FrontAPI& front;
+            bool dont_log_data_into_wrm;
+
+            DispatchReportMessage(ReportMessageApi & report_message, FrontAPI& front, bool dont_log_data_into_wrm) noexcept
+            : report_message(report_message)
+            , front(front)
+            , dont_log_data_into_wrm(dont_log_data_into_wrm)
+            {}
+
+            void report(const char * reason, const char * message) override
+            {
+                this->report_message.report(reason, message);
+            }
+
+            void log6(LogId id, const timeval time, KVList kv_list) override
+            {
+                this->report_message.log6(id, time, kv_list);
+
+                if (this->dont_log_data_into_wrm
+                && (id != LogId::FILE_VERIFICATION_ERROR && id != LogId::FILE_VERIFICATION)
+                ) {
+                    return ;
+                }
+
+                std::string s;
+                auto& str_id = detail::log_id_string_map[underlying_cast(id)];
+                s.insert(s.end(), str_id.begin(), str_id.end());
+                for (auto const& kv : kv_list) {
+                    s += '\x01';
+                    s.insert(s.end(), kv.value.begin(), kv.value.end());
+                }
+
+                this->front.session_update(s);
+            }
+
+            void update_inactivity_timeout() override
+            {
+                this->report_message.update_inactivity_timeout();
+            }
+
+            time_t get_inactivity_timeout() override
+            {
+                return this->report_message.get_inactivity_timeout();
+            }
+        };
+
+        DispatchReportMessage report_message;
+
+    public:
+        ClipboardVirtualChannel channel;
+
+        explicit PrivateClipboardVirtualChannel(
+            VirtualChannelDataSender* to_client_sender_,
+            VirtualChannelDataSender* to_server_sender_,
+            FrontAPI& front,
+            bool dont_log_data_into_wrm,
+            SessionReactor& session_reactor,
+            const BaseVirtualChannel::Params & base_params,
+            const ClipboardVirtualChannelParams & params,
+            FileValidatorService * file_validator_service)
+        : report_message(base_params.report_message, front, dont_log_data_into_wrm)
+        , channel(
+            to_client_sender_, to_server_sender_, session_reactor,
+            BaseVirtualChannel::Params(this->report_message, base_params.verbose),
+            params, file_validator_service)
+        {}
+    };
+
+    std::unique_ptr<PrivateClipboardVirtualChannel>      clipboard_virtual_channel;
 
     std::unique_ptr<VirtualChannelDataSender>     file_system_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     file_system_to_server_sender;
@@ -363,7 +436,74 @@ public:
     std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
 
 public:
-    std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
+    class PrivateSessionProbeVirtualChannel
+    {
+        struct DispatchReportMessage final : ReportMessageApi
+        {
+            ReportMessageApi& report_message;
+            FrontAPI& front;
+
+            DispatchReportMessage(ReportMessageApi & report_message, FrontAPI& front) noexcept
+            : report_message(report_message)
+            , front(front)
+            {}
+
+            void report(const char * reason, const char * message) override
+            {
+                this->report_message.report(reason, message);
+            }
+
+            void log6(LogId id, const timeval time, KVList kv_list) override
+            {
+                this->report_message.log6(id, time, kv_list);
+
+                std::string s;
+                auto& str_id = detail::log_id_string_map[underlying_cast(id)];
+                s.insert(s.end(), str_id.begin(), str_id.end());
+                for (auto const& kv : kv_list) {
+                    s += '\x01';
+                    s.insert(s.end(), kv.value.begin(), kv.value.end());
+                }
+
+                this->front.session_update(s);
+            }
+
+            void update_inactivity_timeout() override
+            {
+                this->report_message.update_inactivity_timeout();
+            }
+
+            time_t get_inactivity_timeout() override
+            {
+                return this->report_message.get_inactivity_timeout();
+            }
+        };
+
+        DispatchReportMessage report_message;
+
+    public:
+        SessionProbeVirtualChannel channel;
+
+        explicit PrivateSessionProbeVirtualChannel(
+            SessionReactor& session_reactor,
+            VirtualChannelDataSender* to_server_sender_,
+            FrontAPI& front,
+            mod_api& mod,
+            rdp_api& rdp,
+            AuthApi& authentifier,
+            FileSystemVirtualChannel& file_system_virtual_channel,
+            Random & gen,
+            const BaseVirtualChannel::Params & base_params,
+            const SessionProbeVirtualChannel::Params& params)
+        : report_message(base_params.report_message, front)
+        , channel(
+            session_reactor, to_server_sender_, front, mod, rdp,
+            authentifier, file_system_virtual_channel, gen,
+            BaseVirtualChannel::Params(this->report_message, base_params.verbose),
+            params)
+        {}
+    };
+    std::unique_ptr<PrivateSessionProbeVirtualChannel> session_probe_virtual_channel;
 
 private:
     std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_client_sender;
@@ -375,6 +515,8 @@ public:
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
 private:
+    ReportMessageApi& report_message;
+
     RDPECLIP::CliprdrLogState cliprdrLogStatus;
     rdpdr::RdpDrStatus rdpdrLogStatus;
 
@@ -405,13 +547,13 @@ public:
         }())
     , checkout_channel(mod_rdp_params.checkout_channel)
     , metrics(metrics)
-    , report_message(report_message)
     , gen(gen)
     , session_probe(mod_rdp_params.session_probe_params)
     , remote_app(mod_rdp_params.remote_app_params)
     , clipboard(mod_rdp_params.clipboard_params)
     , file_system(mod_rdp_params.file_system_params)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
+    , report_message(report_message)
     , verbose(verbose)
     , session_reactor(session_reactor)
     , file_validator_service(file_validator_service)
@@ -419,7 +561,7 @@ public:
     {}
 
     void DLP_antivirus_check_channels_files() {
-        this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
+        this->clipboard_virtual_channel->channel.DLP_antivirus_check_channels_files();
     }
 
     void init_remote_program_and_session_probe(
@@ -558,14 +700,14 @@ private:
         cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
         cvc_params.clipboard_file_authorized = this->channels_authorizations.cliprdr_file_is_authorized();
         cvc_params.dont_log_data_into_syslog = this->clipboard.disable_log_syslog;
-        cvc_params.dont_log_data_into_wrm    = this->clipboard.disable_log_wrm;
         cvc_params.log_only_relevant_clipboard_activities = this->clipboard.log_only_relevant_activities;
         cvc_params.validator_params = this->validator_params;
 
-        this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
+        this->clipboard_virtual_channel = std::make_unique<PrivateClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
             front,
+            this->clipboard.disable_log_wrm,
             this->session_reactor,
             base_params,
             std::move(cvc_params),
@@ -777,7 +919,7 @@ public:
         sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && monitor_count);
         sp_vc_params.show_maximized = !this->remote_app.enable_remote_program;
 
-        this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
+        this->session_probe_virtual_channel = std::make_unique<PrivateSessionProbeVirtualChannel>(
             this->session_reactor,
             this->session_probe_to_server_sender.get(),
             front,
@@ -859,7 +1001,7 @@ public:
             this->create_clipboard_virtual_channel(front, stc, file_validator_service);
         }
 
-        ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
+        ClipboardVirtualChannel& channel = this->clipboard_virtual_channel->channel;
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             InStream clone = stream.clone();
@@ -991,7 +1133,7 @@ public:
                     client_name);
         }
 
-        SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
+        SessionProbeVirtualChannel& channel = this->session_probe_virtual_channel->channel;
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -1046,7 +1188,7 @@ public:
         if (!this->clipboard_virtual_channel) {
             this->create_clipboard_virtual_channel(front, stc, this->file_validator_service);
         }
-        ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
+        ClipboardVirtualChannel& channel = this->clipboard_virtual_channel->channel;
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             InStream clone = chunk.clone();
@@ -1629,7 +1771,7 @@ public:
             if (!this->clipboard_virtual_channel) {
                 this->create_clipboard_virtual_channel(front, stc, file_validator_service);
             }
-            ClipboardVirtualChannel& cvc = *this->clipboard_virtual_channel;
+            ClipboardVirtualChannel& cvc = this->clipboard_virtual_channel->channel;
             cvc.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
 
             if (!this->file_system_virtual_channel) {
@@ -1654,10 +1796,10 @@ public:
                     client_name);
             }
 
-            this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
-            this->session_probe_virtual_channel->start_launch_timeout_timer();
+            this->session_probe_virtual_channel->channel.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
+            this->session_probe_virtual_channel->channel.start_launch_timeout_timer();
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
-            this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
+            this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(&this->session_probe_virtual_channel->channel);
 
             if (this->remote_app.enable_remote_program) {
 
@@ -1666,7 +1808,7 @@ public:
                 }
 
                 RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
-                rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
+                rpvc.set_session_probe_virtual_channel(&this->session_probe_virtual_channel->channel);
                 rpvc.set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
                 this->session_probe.session_probe_launcher->set_remote_programs_virtual_channel(&rpvc);
             }
@@ -1685,7 +1827,7 @@ public:
                     client_name);
             }
 
-            this->session_probe_virtual_channel->start_launch_timeout_timer();
+            this->session_probe_virtual_channel->channel.start_launch_timeout_timer();
 
             if (this->remote_app.enable_remote_program) {
                 if (!this->remote_programs_virtual_channel) {
@@ -1693,7 +1835,7 @@ public:
                 }
 
                 RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
-                rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
+                rpvc.set_session_probe_virtual_channel(&this->session_probe_virtual_channel->channel);
             }
         }
     }
@@ -2119,7 +2261,7 @@ public:
 
                     if (!(this->channels.session_probe.session_probe_launcher
                        && this->channels.session_probe.session_probe_launcher->is_keyboard_sequences_started())
-                     || this->channels.session_probe_virtual_channel->has_been_launched()
+                     || this->channels.session_probe_virtual_channel->channel.has_been_launched()
                     ) {
                         LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
                         this->first_scancode = false;
@@ -2249,7 +2391,7 @@ public:
     void create_shadow_session(const char * userdata, const char * type) override {
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe_virtual_channel) {
-            this->channels.session_probe_virtual_channel->create_shadow_session(userdata, type);
+            this->channels.session_probe_virtual_channel->channel.create_shadow_session(userdata, type);
         }
 #else
         (void)userdata;
@@ -2642,7 +2784,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
             if ((!this->channels.session_probe_virtual_channel
-                || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
+                || !this->channels.session_probe_virtual_channel->channel.is_disconnection_reconnection_required())
              && !this->remote_apps_not_enabled) {
                 this->authentifier.disconnect_target();
             }
@@ -3202,7 +3344,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe_virtual_channel
-                &&  this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required()) {
+                &&  this->channels.session_probe_virtual_channel->channel.is_disconnection_reconnection_required()) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
 #endif
@@ -4748,7 +4890,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe_virtual_channel) {
-            this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
+            this->channels.session_probe_virtual_channel->channel.start_launch_timeout_timer();
         }
 #endif
 
@@ -4814,7 +4956,7 @@ public:
             }
 
             if (this->channels.session_probe_virtual_channel) {
-                this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
+                this->channels.session_probe_virtual_channel->channel.start_launch_timeout_timer();
             }
 #endif
         }

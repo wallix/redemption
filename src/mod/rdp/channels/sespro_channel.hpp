@@ -970,8 +970,6 @@ public:
             this->session_probe_ending_in_progress = true;
         }
         else {
-            this->front.session_update({this->server_message.c_str(), this->server_message.size()});
-
             bool message_format_invalid = false;
 
             if (!parameters_.empty()) {

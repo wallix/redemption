@@ -22,7 +22,6 @@
 #pragma once
 
 #include "core/error.hpp"
-#include "core/front_api.hpp"
 #include "core/session_reactor.hpp"
 #include "core/log_id.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
@@ -56,8 +55,6 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
 
     const ClipboardVirtualChannelParams params;
 
-    FrontAPI& front;
-
     SessionProbeLauncher* clipboard_monitor_ready_notifier = nullptr;
     SessionProbeLauncher* clipboard_initialize_notifier    = nullptr;
     SessionProbeLauncher* format_list_notifier             = nullptr;
@@ -80,7 +77,6 @@ public:
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        FrontAPI& front,
         SessionReactor& session_reactor,
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
@@ -96,7 +92,6 @@ public:
         }
         return p;
     }())
-    , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , session_reactor(session_reactor)
     , file_validator(file_validator_service)
@@ -393,9 +388,6 @@ public:
                     KVLog("icap_service"_av, target_name),
                     KVLog("status"_av, "Invalid file id"_av),
                 });
-                this->front.session_update(str_concat(
-                    "FILE_VERIFICATION_ERROR=", target_name, "\x01Invalid file id"_av
-                ));
                 continue;
             }
 
@@ -410,9 +402,6 @@ public:
                 KVLog("file_name"_av, file_data.file_name),
                 KVLog("status"_av, result_content),
             });
-
-            this->front.session_update(str_concat("FILE_VERIFICATION=",
-                str_direction, '\x01', file_data.file_name, '\x01', result_content));
 
             if (file->is_wait_validator()) {
                 if (direction == Direction::FileFromClient) {
@@ -760,12 +749,6 @@ private:
         LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,
             "type=%s file_name=%s size=%s sha256=%s",
             type, file_data.file_name, file_size, digest_s);
-
-        if (!this->params.dont_log_data_into_wrm) {
-            std::string message = str_concat(
-                type, '=', file_data.file_name, '\x01', file_size, '\x01', digest_s);
-            this->front.session_update(message);
-        }
     }
 
     void log_siem_info(uint32_t flags, const RDPECLIP::CliprdrHeader & in_header, const uint32_t requestedFormatId, const std::string & data_to_dump, const bool is_from_remote_session) {
@@ -827,13 +810,6 @@ private:
                     type.data(), format, size_str,
                     data_to_dump.empty() ? "" : " partial_data",
                     data_to_dump.c_str());
-
-                if (!this->params.dont_log_data_into_wrm) {
-                    auto info = data_to_dump.empty()
-                        ? str_concat(type, '=', format, '\x01', size_str)
-                        : str_concat(type, '=', format, '\x01', size_str, '\x01', data_to_dump);
-                    this->front.session_update(info);
-                }
             }
         }
     }
