@@ -32,6 +32,8 @@ struct KVLog
     array_view_const_char key;
     array_view_const_char value;
 
+    KVLog() = default;
+
     KVLog(array_view_const_char key, array_view_const_char value) noexcept
     : key(key)
     , value(value)

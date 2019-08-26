@@ -122,7 +122,6 @@ public:
 
     void external_time(timeval const & now) override;
 
-    void old_session_update(timeval now, array_view_const_char message) override;
     void session_update(timeval now, LogId id, KVList message) override;
 
     void possible_active_window_change() override;

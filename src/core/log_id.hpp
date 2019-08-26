@@ -49,6 +49,8 @@ struct utils::enum_as_flag<LogCategoryId>
     static const std::size_t max = std::size_t(LogCategoryId::count);
 };
 
+using LogCategoryFlags = utils::flags_t<LogCategoryId>;
+
 #define X_LOG_ID(f)                                              \
     f(BUTTON_CLICKED, Widget)                                    \
     f(CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION, Clipboard)    \
@@ -117,6 +119,16 @@ enum class LogId : unsigned
 #define f(x, cat) x,
     X_LOG_ID(f)
 #undef f
+};
+
+inline bool is_valid_log_id(unsigned id)
+{
+    switch (id) {
+#define f(x, cat) case unsigned(LogId::x): return true;
+    X_LOG_ID(f)
+#undef f
+    }
+    return false;
 };
 
 namespace detail

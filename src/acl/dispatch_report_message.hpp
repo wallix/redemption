@@ -28,7 +28,7 @@ Author(s): Jonathan Poelen
 class DispatchReportMessage : public ReportMessageApi
 {
 public:
-    using LogCategoryFlags = utils::flags_t<LogCategoryId>;
+    using LogCategoryFlags = ::LogCategoryFlags;
 
     DispatchReportMessage(
         ReportMessageApi & report_message, FrontAPI& front,

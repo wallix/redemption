@@ -444,26 +444,6 @@ protected:
     }
 
 public:
-    void old_session_update(timeval now, array_view_const_char message) override {
-        this->timer = now;
-        this->last_sent_timer = this->timer;
-
-        if (this->keyboard_buffer_32.get_offset()) {
-            this->send_timestamp_chunk();
-        }
-
-        uint16_t message_length = message.size() + 1;       // Null-terminator is included.
-
-        StaticOutStream<16> payload;
-        payload.out_timeval_to_uint64le_usec(now);
-        payload.out_uint16_le(message_length);
-
-        send_wrm_chunk(this->trans, WrmChunkType::OLD_SESSION_UPDATE, payload.get_offset() + message_length, 1);
-        this->trans.send(payload.get_bytes());
-        this->trans.send(message.data(), message.size());
-        this->trans.send("\0", 1);
-    }
-
     void session_update(timeval now, LogId id, KVList kv_list) override {
         this->timer = now;
         this->last_sent_timer = this->timer;
@@ -606,9 +586,6 @@ public:
     }
 
     // CAPTURE PROBE API
-    void old_session_update(timeval now, array_view_const_char message) override {
-        this->graphic_to_file.old_session_update(now, message);
-    }
     void session_update(timeval now, LogId id, KVList kv_list) override {
         this->graphic_to_file.session_update(now, id, kv_list);
     }

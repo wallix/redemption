@@ -19,6 +19,7 @@
 *              Meng Tan, Clément Moroldo
 */
 
+#include "core/log_id.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
@@ -26,6 +27,7 @@
 #include "gdi/resize_api.hpp"
 
 #include "capture/file_to_graphic.hpp"
+#include "capture/agent_data_extractor.hpp"
 #include "capture/save_state_chunk.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
@@ -754,49 +756,41 @@ void FileToGraphic::interpret_order()
         this->trans = this->trans_source;
     break;
     case WrmChunkType::OLD_SESSION_UPDATE:
-    case WrmChunkType::SESSION_UPDATE:
+    case WrmChunkType::SESSION_UPDATE: {
         this->record_now = this->stream.in_timeval_from_uint64le_usec();
 
         for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
             obj->external_time(this->record_now);
         }
 
-        {
-            uint16_t message_length = this->stream.in_uint16_le();
-            bytes_view message = this->stream.in_skip_bytes(message_length);
+        uint16_t message_length = this->stream.in_uint16_le();
+        bytes_view message = this->stream.in_skip_bytes(message_length);
 
-            if (this->capture_probe_consumers.empty()) {
-                // nothing
-            }
-            else if (this->chunk_type == WrmChunkType::OLD_SESSION_UPDATE) {
+        if (this->capture_probe_consumers.empty()) {
+            // nothing
+        }
+        else if (this->chunk_type == WrmChunkType::OLD_SESSION_UPDATE) {
+            AgentDataExtractor extractor;
+            KVList kvlist = extractor.extract_list(message.as_chars());
+            if (!kvlist.empty()) {
                 for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
-                    // Null-terminator is included
-                    cap_probe->old_session_update(this->record_now, message.as_chars());
+                    cap_probe->session_update(this->record_now, extractor.log_id(), kvlist);
                 }
             }
-            else {
-                KVLog kvlogs[]{
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                    KVLog{""_av, ""_av},
-                };
+        }
+        else {
+            InStream in(message);
+
+            auto log_id = in.in_uint32_le();
+
+            if (is_valid_log_id(safe_int(log_id))) {
+                KVLog kvlogs[12];
                 auto* pkv = kvlogs;
 
-                InStream in(message);
-
-                auto log_id = LogId(in.in_uint32_le());
                 auto nbkv = in.in_uint8();
                 assert(nbkv < std::size(kvlogs));
                 nbkv = std::min(uint8_t(std::size(kvlogs)), nbkv);
+
                 for (unsigned i = 0; i < nbkv; ++i) {
                     auto klen = in.in_uint8();
                     auto vlen = in.in_uint16_le();
@@ -806,8 +800,12 @@ void FileToGraphic::interpret_order()
                 }
 
                 for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
-                    cap_probe->session_update(this->record_now, log_id, {{kvlogs, pkv}});
+                    cap_probe->session_update(this->record_now, LogId(log_id), {{kvlogs, pkv}});
                 }
+            }
+            else {
+                LOG(LOG_WARNING, "FileToGraphic::interpret_order(): "
+                    "Invalid LogId %" PRIu32, log_id);
             }
         }
 
@@ -826,6 +824,7 @@ void FileToGraphic::interpret_order()
 
             this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
         }
+    }
     break;
     case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:
         for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
