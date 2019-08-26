@@ -133,6 +133,22 @@ for i=2,#logs do
     previouslog = log
 end
 
+-- add not extracted id
+for _,id in ipairs({
+    "CERTIFICATE_CHECK_SUCCESS",
+    "SERVER_CERTIFICATE_NEW",
+    "SERVER_CERTIFICATE_MATCH_SUCCESS",
+    "SERVER_CERTIFICATE_MATCH_FAILURE",
+    "SERVER_CERTIFICATE_ERROR",
+}) do
+    if ids[id] ~= 0 then
+        print(id .. ' is already used, please update script')
+        errcode = errcode + 1
+    else
+        ids[id] = 1
+    end
+end
+
 for k,v in pairs(ids) do
     if v ~= 1 then
         print(k .. ' not used')
