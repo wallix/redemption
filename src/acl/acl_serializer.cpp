@@ -21,11 +21,10 @@
   Updating context dictionnary from incoming acl traffic
 */
 
-#define NOT_UNDEF_X_LOG_ID 1
-
 #include "acl/acl_serializer.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/mm_api.hpp"
+#include "acl/kv_list_to_string.hpp"
 #include "configs/config.hpp"
 #include "core/log_id.hpp"
 #include "core/date_dir_from_filename.hpp"
@@ -375,37 +374,6 @@ namespace
 
         constexpr inline auto arcsight_table = arcsight();
         constexpr inline auto& siem_table = qvalue_table_formats::log_table;
-    }
-
-    template<class Prefix, class Suffix>
-    inline std::string& kv_list_to_string(
-        std::string& buffer, KVList kv_list,
-        Prefix prefix, Suffix suffix,
-        std::array<char, 256> const& escaped_table)
-    {
-        for (auto& kv : kv_list) {
-            buffer += ' ';
-            buffer.append(kv.key.data(), kv.key.size());
-            buffer += prefix;
-            escaped_qvalue(buffer, kv.value, escaped_table);
-            buffer += suffix;
-        }
-
-        return buffer;
-    }
-
-    constexpr inline array_view_const_char log_id_string_type_map[]{
-    #define f(x, cat) "type=\"" #x "\""_av,
-        X_LOG_ID(f)
-    #undef f
-    };
-
-    inline array_view_const_char log_format_set_info(std::string& buffer, LogId id, KVList kv_list)
-    {
-        auto type = log_id_string_type_map[int(id)];
-        buffer.assign(type.begin(), type.end());
-        kv_list_to_string(buffer, kv_list, "=\"", '"', table_formats::siem_table);
-        return buffer;
     }
 
     inline void log_format_set_siem(

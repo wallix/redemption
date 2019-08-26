@@ -43,7 +43,7 @@ public:
     }
 
     void session_update(array_view_const_char message) {
-        constexpr auto prefix_window_changed = cstr_array_view("FOREGROUND_WINDOW_CHANGED=");
+        constexpr auto prefix_window_changed = "FOREGROUND_WINDOW_CHANGED="_av;
         if (prefix_window_changed.size() < message.size()
          && std::equal(prefix_window_changed.begin(), prefix_window_changed.end(), message.begin())) {
             auto begin_title = message.begin() + prefix_window_changed.size();
@@ -53,6 +53,15 @@ public:
                 this->has_title = true;
                 //LOG(LOG_INFO, "AgentExtractor::session_update: agent_data=\"%s\"", begin_title);
             }
+        }
+    }
+
+    void session_update(LogId id, KVList kv_list)
+    {
+        if (id == LogId::FOREGROUND_WINDOW_CHANGED && kv_list.size() > 0) {
+            auto title = kv_list[0].value;
+            this->title.assign(title.begin(), title.end());
+            this->has_title = true;
         }
     }
 };

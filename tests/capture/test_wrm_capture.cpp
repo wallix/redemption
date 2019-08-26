@@ -24,6 +24,8 @@
 #include "test_only/test_framework/file.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
+#include "core/log_id.hpp"
+#include "acl/kv_list_to_string.hpp"
 #include "capture/file_to_graphic.hpp"
 #include "capture/wrm_capture.hpp"
 #include "core/app_path.hpp"
@@ -535,7 +537,11 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         wrm.kbd_input(now, 'g');
         wrm.kbd_input(now, '\r');
 
-        wrm.session_update(now, cstr_array_view("FOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE"));
+        wrm.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
+            KVLog("windows"_av, "WINDOW"_av),
+            KVLog("class"_av, "CLASS"_av),
+            KVLog("command_line"_av, "COMMAND_LINE"_av),
+        });
 
         wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
     }
@@ -564,9 +570,16 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
         }
 
-        void session_update(timeval const & /*now*/, array_view_const_char message) override
+        void old_session_update(timeval /*now*/, array_view_const_char message) override
         {
             output.append(message.data(), message.size());
+        }
+
+        void session_update(timeval /*now*/, LogId id, KVList kv_list) override
+        {
+            std::string buf;
+            log_format_set_info(buf, id, kv_list);
+            output += buf;
         }
 
         void possible_active_window_change() override {}
@@ -592,9 +605,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         player.interpret_order();
     }
 
-    RED_CHECK_SMEM(output, "ipconfig\rFOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE\x00"_av);
+    RED_CHECK_SMEM(output, "ipconfig\rtype=\"FOREGROUND_WINDOW_CHANGED\" windows=\"WINDOW\" class=\"CLASS\" command_line=\"COMMAND_LINE\""_av);
 
-    RED_TEST_FILE_SIZE(first_file, 292);
+    RED_TEST_FILE_SIZE(first_file, 303);
     RED_TEST_FILE_SIZE(record_wd.add_file("capture_kbd_input.mwrm"), 75 + record_wd.dirname().size());
     RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 50);
     RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input.mwrm"), 44);

@@ -25,7 +25,7 @@
 
 #include <sys/time.h> // timeval
 
-enum class LogId;
+enum class LogId : unsigned;
 
 struct KVLog
 {

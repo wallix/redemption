@@ -2670,7 +2670,7 @@ public:
 
     void session_update(array_view_const_char message) override {
         if (this->capture) {
-            this->capture->session_update(this->session_reactor.get_current_time(), message);
+            this->capture->old_session_update(this->session_reactor.get_current_time(), message);
         }
     }
 

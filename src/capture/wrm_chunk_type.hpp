@@ -37,7 +37,8 @@ enum class WrmChunkType : uint16_t
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
     SAVE_STATE          = 0x1002,   // 4098
     RESET_CHUNK         = 0x1003,   // 4099
-    SESSION_UPDATE      = 0x1004,
+    OLD_SESSION_UPDATE  = 0x1004,
+    SESSION_UPDATE      = 0x1005,
 
     POSSIBLE_ACTIVE_WINDOW_CHANGE = 0x2000,
     IMAGE_FRAME_RECT              = 0x2001,

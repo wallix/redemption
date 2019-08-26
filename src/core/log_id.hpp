@@ -36,7 +36,8 @@ enum class LogCategoryId
     PatternDetected,
     OutboundConnection,
     Application,
-    SessionProbe,
+    Session,
+    Probe,
     Kbd,
     Protocol,
     count,
@@ -72,7 +73,7 @@ struct utils::enum_as_flag<LogCategoryId>
     f(FILE_VERIFICATION, FileVerification)                       \
     f(FILE_VERIFICATION_ERROR, FileVerification)                 \
     f(FOREGROUND_WINDOW_CHANGED, TitleBar)                       \
-    f(GROUP_MEMBERSHIP, SessionProbe)                            \
+    f(GROUP_MEMBERSHIP, Probe)                                   \
     f(INPUT_LANGUAGE, Kbd)                                       \
     f(KBD_INPUT, Kbd)                                            \
     f(KERBEROS_TICKET_CREATION, Application)                     \
@@ -87,14 +88,15 @@ struct utils::enum_as_flag<LogCategoryId>
     f(PASSWORD_TEXT_BOX_GET_FOCUS, Widget)                       \
     f(PROCESS_BLOCKED, Application)                              \
     f(PROCESS_DETECTED, Application)                             \
+    f(PROBE_STATUS, Probe)                                       \
     f(SERVER_CERTIFICATE_ERROR, ServerCertificate)               \
     f(SERVER_CERTIFICATE_MATCH_FAILURE, ServerCertificate)       \
     f(SERVER_CERTIFICATE_MATCH_SUCCESS, ServerCertificate)       \
     f(SERVER_CERTIFICATE_NEW, ServerCertificate)                 \
-    f(SESSION_CREATION_FAILED, SessionProbe)                     \
-    f(SESSION_DISCONNECTION, SessionProbe)                       \
-    f(SESSION_ENDING_IN_PROGRESS, SessionProbe)                  \
-    f(SESSION_ESTABLISHED_SUCCESSFULLY, SessionProbe)            \
+    f(SESSION_CREATION_FAILED, Session)                          \
+    f(SESSION_DISCONNECTION, Session)                            \
+    f(SESSION_ENDING_IN_PROGRESS, Probe)                         \
+    f(SESSION_ESTABLISHED_SUCCESSFULLY, Session)                 \
     f(STARTUP_APPLICATION_FAIL_TO_RUN, Application)              \
     f(STARTUP_APPLICATION_FAIL_TO_RUN_2, Application)            \
     f(TITLE_BAR, TitleBar)                                       \
@@ -110,7 +112,7 @@ struct utils::enum_as_flag<LogCategoryId>
     f(WEB_THIRD_PARTY_URL_BLOCKED, Web)
 
 
-enum class LogId
+enum class LogId : unsigned
 {
 #define f(x, cat) x,
     X_LOG_ID(f)
@@ -135,6 +137,6 @@ namespace detail
     REDEMPTION_DIAGNOSTIC_POP
 }
 
-#ifndef NOT_UNDEF_X_LOG_ID
-# undef X_LOG_ID
-#endif
+// #ifndef NOT_UNDEF_X_LOG_ID
+// # undef X_LOG_ID
+// #endif

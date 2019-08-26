@@ -273,10 +273,6 @@ void FileToGraphic::interpret_order()
     this->total_orders_count++;
     auto const & palette = BGRPalette::classic_332();
 
-    // if (this->chunk_type != WrmChunkType::SESSION_UPDATE && this->chunk_type != WrmChunkType::TIMESTAMP) {
-    //     return;
-    // }
-
     ReceiveOrder receive_order{*this};
 
     switch (this->chunk_type)
@@ -757,6 +753,7 @@ void FileToGraphic::interpret_order()
 
         this->trans = this->trans_source;
     break;
+    case WrmChunkType::OLD_SESSION_UPDATE:
     case WrmChunkType::SESSION_UPDATE:
         this->record_now = this->stream.in_timeval_from_uint64le_usec();
 
@@ -766,13 +763,51 @@ void FileToGraphic::interpret_order()
 
         {
             uint16_t message_length = this->stream.in_uint16_le();
+            bytes_view message = this->stream.in_skip_bytes(message_length);
 
-            const char * message =  ::char_ptr_cast(this->stream.get_current()); // Null-terminator is included.
+            if (this->capture_probe_consumers.empty()) {
+                // nothing
+            }
+            else if (this->chunk_type == WrmChunkType::OLD_SESSION_UPDATE) {
+                for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
+                    // Null-terminator is included
+                    cap_probe->old_session_update(this->record_now, message.as_chars());
+                }
+            }
+            else {
+                KVLog kvlogs[]{
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                    KVLog{""_av, ""_av},
+                };
+                auto* pkv = kvlogs;
 
-            this->stream.in_skip_bytes(message_length);
+                InStream in(message);
 
-            for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
-                cap_probe->session_update(this->record_now, {message, message_length});
+                auto log_id = LogId(in.in_uint32_le());
+                auto nbkv = in.in_uint8();
+                assert(nbkv < std::size(kvlogs));
+                nbkv = std::min(uint8_t(std::size(kvlogs)), nbkv);
+                for (unsigned i = 0; i < nbkv; ++i) {
+                    auto klen = in.in_uint8();
+                    auto vlen = in.in_uint16_le();
+                    auto key = in.in_skip_bytes(klen);
+                    auto value = in.in_skip_bytes(vlen);
+                    *pkv++ = KVLog(key.as_chars(), value.as_chars());
+                }
+
+                for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
+                    cap_probe->session_update(this->record_now, log_id, {{kvlogs, pkv}});
+                }
             }
         }
 

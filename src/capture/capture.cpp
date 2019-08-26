@@ -31,6 +31,8 @@
 #include <cerrno>
 #include <cassert>
 
+#include "acl/kv_list_to_string.hpp"
+
 #include "core/error.hpp"
 #include "core/log_id.hpp"
 #include "core/window_constants.hpp"
@@ -269,22 +271,46 @@ public:
     }
 };
 
-void update_enable_probe(bool& enable_probe, array_view_const_char message)
+bool update_enable_probe(bool& enable_probe, array_view_const_char message)
 {
-    auto first_sespro_message = "INPUT_LANGUAGE="_av;
     if (strcmp(message.data(), "Probe.Status=Unknown") == 0) {
         enable_probe = false;
+        return true;
     }
-    else if (strcmp(message.data(), "Probe.Status=Ready") == 0
-        || (message.size() >= first_sespro_message.size()
-            && strncmp(
-                message.first(first_sespro_message.size()).data(),
-                first_sespro_message.data(),
-                first_sespro_message.size()
-              ) == 0)
-    ) {
+
+    if (strcmp(message.data(), "Probe.Status=Ready") == 0){
         enable_probe = true;
+        return true;
     }
+
+    auto first_sespro_message = "INPUT_LANGUAGE="_av;
+    if (message.size() >= first_sespro_message.size() && strncmp(
+        message.first(first_sespro_message.size()).data(),
+        first_sespro_message.data(),
+        first_sespro_message.size()
+    ) == 0) {
+        enable_probe = true;
+        return true;
+    }
+
+    return false;
+}
+
+bool update_enable_probe(bool& enable_probe, LogId id, KVList kv_list)
+{
+    if (id == LogId::INPUT_LANGUAGE) {
+        enable_probe = true;
+        return false;
+    }
+
+    if (id == LogId::PROBE_STATUS && kv_list.size() >= 1) {
+        auto ready = "Ready"_av;
+        auto status = kv_list[0].value;
+        enable_probe = std::equal(ready.begin(), ready.end(), status.begin(), status.end());
+        return true;
+    }
+
+    return false;
 }
 
 } // anonymous namespace
@@ -595,8 +621,12 @@ public:
         }
     }
 
-    void session_update(const timeval& /*now*/, array_view_const_char message) override {
+    void old_session_update(timeval /*now*/, array_view_const_char message) override {
         update_enable_probe(this->is_probe_enabled_session, message);
+    }
+
+    void session_update(timeval /*now*/, LogId id, KVList kv_list) override {
+        update_enable_probe(this->is_probe_enabled_session, id, kv_list);
     }
 
     void possible_active_window_change() override {
@@ -1308,6 +1338,7 @@ public:
 
 private:
     KeyQvalueFormatter formatted_message;
+    std::string str_formatted_message;
 
 public:
     void title_changed(time_t rawtime, array_view_const_char title) {
@@ -1315,11 +1346,19 @@ public:
         this->send_data(rawtime, this->formatted_message.av(), '+');
     }
 
-    void session_update(const timeval& now, array_view_const_char message) override {
-        update_enable_probe(this->is_probe_enabled_session, message);
-        agent_data_extractor(this->formatted_message, message, this->meta_params);
-        if (!this->formatted_message.av().empty()) {
-            this->send_line(now.tv_sec, this->formatted_message.av());
+    void old_session_update(timeval now, array_view_const_char message) override {
+        if (!update_enable_probe(this->is_probe_enabled_session, message)) {
+            agent_data_extractor(this->formatted_message, message, this->meta_params);
+            if (!this->formatted_message.av().empty()) {
+                this->send_line(now.tv_sec, this->formatted_message.av());
+            }
+        }
+    }
+
+    void session_update(timeval now, LogId id, KVList kv_list) override {
+        if (!update_enable_probe(this->is_probe_enabled_session, id, kv_list)) {
+            log_format_set_info(this->str_formatted_message, id, kv_list);
+            this->send_line(now.tv_sec, this->str_formatted_message);
         }
     }
 
@@ -1448,6 +1487,7 @@ private:
 class Capture::SessionLogAgent : public gdi::CaptureProbeApi
 {
     KeyQvalueFormatter line;
+    std::string str_line;
     SessionMeta & session_meta;
 
     MetaParams meta_params;
@@ -1458,10 +1498,17 @@ public:
     , meta_params(meta_params)
     {}
 
-    void session_update(const timeval& now, array_view_const_char message) override {
+    void old_session_update(timeval now, array_view_const_char message) override {
         agent_data_extractor(this->line, message, this->meta_params);
         if (!this->line.str().empty()) {
             this->session_meta.send_line(now.tv_sec, this->line.av());
+        }
+    }
+
+    void session_update(timeval now, LogId id, KVList kv_list) override {
+        if (id != LogId::PROBE_STATUS) {
+            log_format_set_info(this->str_line, id, kv_list);
+            this->session_meta.send_line(now.tv_sec, this->str_line);
         }
     }
 
@@ -1582,11 +1629,22 @@ public:
         return this->usec_ocr_interval - diff;
     }
 
-    void session_update(timeval const & /*now*/, array_view_const_char message) override {
+    void old_session_update(timeval /*now*/, array_view_const_char message) override {
         update_enable_probe(this->enable_probe, message);
         if (enable_probe) {
             this->title_extractor = this->agent_title_extractor;
             this->agent_title_extractor.session_update(message);
+        }
+        else {
+            this->title_extractor = this->ocr_title_extractor_builder.get_title_extractor();
+        }
+    }
+
+    void session_update(timeval /*now*/, LogId id, KVList kv_list) override {
+        update_enable_probe(this->enable_probe, id, kv_list);
+        if (enable_probe) {
+            this->title_extractor = this->agent_title_extractor;
+            this->agent_title_extractor.session_update(id, kv_list);
         }
         else {
             this->title_extractor = this->ocr_title_extractor_builder.get_title_extractor();
@@ -2443,10 +2501,17 @@ void Capture::external_time(timeval const & now)
     }
 }
 
-void Capture::session_update(const timeval & now, array_view_const_char message)
+void Capture::old_session_update(timeval now, array_view_const_char message)
 {
     for (gdi::CaptureProbeApi & cap_prob : this->probes) {
-        cap_prob.session_update(now, message);
+        cap_prob.old_session_update(now, message);
+    }
+}
+
+void Capture::session_update(timeval now, LogId id, KVList kv_list)
+{
+    for (gdi::CaptureProbeApi & cap_prob : this->probes) {
+        cap_prob.session_update(now, id, kv_list);
     }
 }
 

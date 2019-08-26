@@ -444,7 +444,7 @@ protected:
     }
 
 public:
-    void session_update(timeval const & now, array_view_const_char message) override {
+    void old_session_update(timeval now, array_view_const_char message) override {
         this->timer = now;
         this->last_sent_timer = this->timer;
 
@@ -458,10 +458,44 @@ public:
         payload.out_timeval_to_uint64le_usec(now);
         payload.out_uint16_le(message_length);
 
-        send_wrm_chunk(this->trans, WrmChunkType::SESSION_UPDATE, payload.get_offset() + message_length, 1);
+        send_wrm_chunk(this->trans, WrmChunkType::OLD_SESSION_UPDATE, payload.get_offset() + message_length, 1);
         this->trans.send(payload.get_bytes());
         this->trans.send(message.data(), message.size());
         this->trans.send("\0", 1);
+    }
+
+    void session_update(timeval now, LogId id, KVList kv_list) override {
+        this->timer = now;
+        this->last_sent_timer = this->timer;
+
+        if (this->keyboard_buffer_32.get_offset()) {
+            this->send_timestamp_chunk();
+        }
+
+        StaticOutStream<1024*16> out_stream;
+        out_stream.out_timeval_to_uint64le_usec(now);
+        OutStream kvheader(out_stream.out_skip_bytes(2 + 4 + 1));
+
+        uint8_t kv_len = checked_int(kv_list.size());
+
+        for (auto& kv : kv_list.first(kv_len)) {
+            if (not out_stream.has_room(1 + 2 + kv.key.size() + kv.value.size())) {
+                LOG(LOG_ERR, "WrmCapture::session_update(): message truncated");
+                kv_len = uint8_t(&kv - kv_list.begin());
+                break;
+            }
+            out_stream.out_uint8(checked_int(kv.key.size()));
+            out_stream.out_uint16_le(checked_int(kv.value.size()));
+            out_stream.out_copy_bytes(kv.key);
+            out_stream.out_copy_bytes(kv.value);
+        }
+
+        kvheader.out_uint16_le(out_stream.get_offset() - 8 - 2);
+        kvheader.out_uint32_le(safe_int(id));
+        kvheader.out_uint8(kv_len);
+
+        send_wrm_chunk(this->trans, WrmChunkType::SESSION_UPDATE, out_stream.get_offset(), 1);
+        this->trans.send(out_stream.get_bytes());
     }
 
     void possible_active_window_change() override {
@@ -572,8 +606,11 @@ public:
     }
 
     // CAPTURE PROBE API
-    void session_update(timeval const & now, array_view_const_char message) override {
-        this->graphic_to_file.session_update(now, message);
+    void old_session_update(timeval now, array_view_const_char message) override {
+        this->graphic_to_file.old_session_update(now, message);
+    }
+    void session_update(timeval now, LogId id, KVList kv_list) override {
+        this->graphic_to_file.session_update(now, id, kv_list);
     }
     void possible_active_window_change() override { this->graphic_to_file.possible_active_window_change(); }
 

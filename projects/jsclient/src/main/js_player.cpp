@@ -323,6 +323,7 @@ struct WrmPlayer
                 // TODO
                 break;
 
+            case WrmChunkType::OLD_SESSION_UPDATE:
             case WrmChunkType::SESSION_UPDATE:
             {
                 timeval now = this->in_stream.in_timeval_from_uint64le_usec();

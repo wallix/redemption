@@ -504,7 +504,8 @@ void ClipboardChannel::process_format_data_response(bytes_view data, uint32_t ch
             auto last_write_time_low = in_stream.in_uint32_le();
             auto size_high = in_stream.in_uint32_le();
             auto size_low = in_stream.in_uint32_le();
-            auto name = quick_utf16_av(in_stream.in_bytes(constants::filename_attribute_size));
+            auto name = quick_utf16_av(in_stream.remaining_bytes()
+                .first(constants::filename_attribute_size));
             send_data("receiveFileName", name, file_attrs, flags, size_low, size_high, last_write_time_low, last_write_time_high);
         };
 
@@ -512,7 +513,7 @@ void ClipboardChannel::process_format_data_response(bytes_view data, uint32_t ch
             && in_stream.in_remain() + this->response_buffer.size >= constants::file_packet_size)
         {
             auto nbcopy = constants::file_packet_size - this->response_buffer.size;
-            this->response_buffer.add(in_stream.in_bytes(nbcopy));
+            this->response_buffer.add(in_stream.remaining_bytes().first(nbcopy));
 
             InStream in_stream(this->response_buffer.as_bytes());
             extract_file(in_stream);
@@ -548,7 +549,7 @@ void ClipboardChannel::process_format_data_response(bytes_view data, uint32_t ch
 
         if (is_first_packet)
         {
-            this->response_buffer.set(in_stream.in_bytes(4));
+            this->response_buffer.set(in_stream.remaining_bytes().first(4));
         }
 
         uint32_t stream_id = Parse(this->response_buffer.data.data()).in_uint32_le();

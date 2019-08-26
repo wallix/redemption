@@ -245,17 +245,9 @@ public:
         return this->p.in_uint8p(n);
     }
 
-    array_view_const_u8 in_skip_bytes(unsigned int n) noexcept {
+    bytes_view in_skip_bytes(unsigned int n) noexcept {
         assert(this->in_check_rem(n));
-        array_view_const_u8 ret(this->get_current(), n);
-        this->p.in_skip_bytes(n);
-        return ret;
-    }
-
-    [[nodiscard]]
-    array_view_const_u8 in_bytes(unsigned int n) noexcept {
-        assert(this->in_check_rem(n));
-        array_view_const_u8 ret(this->get_current(), n);
+        bytes_view ret(this->get_current(), n);
         this->p.in_skip_bytes(n);
         return ret;
     }

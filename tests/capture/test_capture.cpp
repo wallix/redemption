@@ -524,7 +524,10 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
         now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah\\2"));
-        meta.session_update(now, cstr_array_view("INPUT_LANGUAGE=fr\x01xy\\z"));
+        meta.session_update(now, LogId::INPUT_LANGUAGE, {
+            KVLog("identifier"_av, "fr"_av),
+            KVLog("display_name"_av, "xy\\z"_av),
+        });
         now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, false);
     }
@@ -599,9 +602,18 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
 
         meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
 
-        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, ""_av),
+            KVLog("button"_av, "Démarrer"_av),
+        });
+        now.tv_sec += 1;
 
-        meta.session_update(now, {"CHECKBOX_CLICKED=User Properties\x01" "User cannot change password\x01" "1", 62}); now.tv_sec += 1;
+        meta.session_update(now, LogId::CHECKBOX_CLICKED, {
+            KVLog("windows"_av, "User Properties"_av),
+            KVLog("checkbox"_av, "User cannot change password"_av),
+            KVLog("state"_av, "checked"_av),
+        });
+        now.tv_sec += 1;
 
         meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
@@ -649,7 +661,11 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
 
         send_kbd();
 
-        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, ""_av),
+            KVLog("button"_av, "Démarrer"_av),
+        });
+        now.tv_sec += 1;
 
         send_kbd(); now.tv_sec += 1;
 
@@ -691,7 +707,11 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 
         meta.kbd_input(now, 'B');
 
-        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, ""_av),
+            KVLog("button"_av, "Démarrer"_av),
+        });
+        now.tv_sec += 1;
 
         meta.kbd_input(now, 'C'); now.tv_sec += 1;
 
@@ -783,8 +803,16 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
         Capture::SessionMeta meta = make_session_meta(now, trans);
         Capture::SessionLogAgent log_agent(meta, make_meta_params());
 
-        log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
-        log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
+        meta.session_update(now, LogId::NEW_PROCESS, {
+            KVLog("command_line"_av, "abc"_av),
+        });
+        now.tv_sec += 1;
+
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, "de"_av),
+            KVLog("button"_av, "fg"_av),
+        });
+        now.tv_sec += 1;
     }
 
     RED_CHECK_EQ(
@@ -811,7 +839,11 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 
         meta.kbd_input(now, 'B');
 
-        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, ""_av),
+            KVLog("button"_av, "Démarrer"_av),
+        });
+        now.tv_sec += 1;
 
         meta.kbd_input(now, 'C'); now.tv_sec += 1;
 
@@ -869,10 +901,14 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, 0x08); now.tv_sec += 1;
         meta.kbd_input(now, 'V'); now.tv_sec += 1;
 
-        meta.session_update(now, cstr_array_view("BUTTON_CLICKED=\"Connexion Bureau à distance\"\x01" "&Connexion")); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, "\"Connexion Bureau à distance\""_av),
+            KVLog("button"_av, "&Connexion"_av),
+        });
+        now.tv_sec += 1;
     }
 
-    RED_CHECK_EQ(
+    RED_CHECK_SMEM(
         trans.buf,
         "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
         "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
@@ -891,6 +927,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         "1970-01-01 01:17:14 + type=\"TITLE_BAR\" data=\"Blah6\"\n"
         "1970-01-01 01:17:28 - type=\"BUTTON_CLICKED\" windows=\"\\\"Connexion Bureau à distance\\\"\" button=\"&Connexion\"\n"
         "1970-01-01 01:17:28 - type=\"KBD_INPUT\" data=\"QRT/U/V\"\n"
+        ""_av
     );
 }
 
@@ -1948,7 +1985,10 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
     {
         kbd_capture.kbd_input(now, 't');
 
-        kbd_capture.session_update(now, cstr_array_view("INPUT_LANGUAGE=fr\x01xy\\z"));
+        kbd_capture.session_update(now, LogId::INPUT_LANGUAGE, {
+            KVLog("identifier"_av, "fr"_av),
+            KVLog("display_name"_av, "xy\\z"_av),
+        });
 
         RED_CHECK_EQUAL(report_message.s.size(), 0);
 
@@ -2181,25 +2221,43 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
         capture.periodic_snapshot(now, 0, 0, false);
 
         now.tv_sec += 100;
-        capture.session_update(now, "Probe.Status=Unknown"_av);
+        capture.session_update(now, LogId::PROBE_STATUS, {
+            KVLog("status"_av, "Unknown"_av),
+        });
         capture.periodic_snapshot(now, 0, 0, false);
 
         now.tv_sec += 100;
-        capture.session_update(now, "Probe.Status=Ready"_av);
-        capture.session_update(now, "FOREGROUND_WINDOW_CHANGED=a\x01t\x01u"_av);
+        capture.session_update(now, LogId::PROBE_STATUS, {
+            KVLog("status"_av, "Ready"_av),
+        });
+        capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
+            KVLog("windows"_av, "a"_av),
+            KVLog("class"_av, "t"_av),
+            KVLog("command_line"_av, "u"_av),
+        });
 
         // qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes
         draw_img(FIXTURES_PATH "/win2008capture10.bmp");
         capture.periodic_snapshot(now, 0, 0, false);
         now.tv_sec += 100;
-        capture.session_update(now, "FOREGROUND_WINDOW_CHANGED=b\x01x\x01y"_av);
+        capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
+            KVLog("windows"_av, "b"_av),
+            KVLog("class"_av, "x"_av),
+            KVLog("command_line"_av, "y"_av),
+        });
         capture.periodic_snapshot(now, 0, 0, false);
 
         now.tv_sec += 100;
         // disable sespro
-        capture.session_update(now, "Probe.Status=Unknown"_av);
+        capture.session_update(now, LogId::PROBE_STATUS, {
+            KVLog("status"_av, "Unknown"_av),
+        });
         // not TITLE_BAR extractor with OCR
-        capture.session_update(now, "FOREGROUND_WINDOW_CHANGED=c\x01t\x01v"_av);
+        capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
+            KVLog("windows"_av, "c"_av),
+            KVLog("class"_av, "t"_av),
+            KVLog("command_line"_av, "v"_av),
+        });
         capture.periodic_snapshot(now, 0, 0, false);
 
         now.tv_sec += 100;
@@ -2277,28 +2335,42 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         bool ignore_frame_in_timeval = true;
         capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
 
-        capture.session_update(now, cstr_array_view("NEW_PROCESS=def")); now.tv_sec++;
+        capture.session_update(now, LogId::NEW_PROCESS, {
+            KVLog("command_line"_av, "def"_av),
+        });
+        now.tv_sec++;
 
-        capture.session_update(now, cstr_array_view("COMPLETED_PROCESS=def")); now.tv_sec++;
+        capture.session_update(now, LogId::COMPLETED_PROCESS, {
+            KVLog("command_line"_av, "def"_av),
+        });
+        now.tv_sec++;
 
         capture.kbd_input(now, 'W');
         capture.kbd_input(now, 'a');
-        capture.kbd_input(now, 'l'); now.tv_sec++;
+        capture.kbd_input(now, 'l');
+        now.tv_sec++;
 
-        capture.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec++;
+        capture.session_update(now, LogId::NEW_PROCESS, {
+            KVLog("command_line"_av, "abc"_av),
+        });
+        now.tv_sec++;
 
         capture.kbd_input(now, 'l');
         capture.kbd_input(now, 'i');
-        capture.kbd_input(now, 'x'); now.tv_sec++;
+        capture.kbd_input(now, 'x');
+        now.tv_sec++;
 
-        capture.session_update(now, cstr_array_view("COMPLETED_PROCESS=abc")); now.tv_sec++;
+        capture.session_update(now, LogId::COMPLETED_PROCESS, {
+            KVLog("command_line"_av, "abc"_av),
+        });
+        now.tv_sec++;
     }, kbd_log_params);
 
     auto mwrm_file = record_wd.add_file("test_capture.mwrm");
 
     RED_TEST_FILE_SIZE(mwrm_file, 124 + record_wd.dirname().size() * 2);
     RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.wrm"), 166);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.wrm"), 907);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.wrm"), 923);
 
     RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
     RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
