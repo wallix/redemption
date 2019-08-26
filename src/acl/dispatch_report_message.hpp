@@ -24,8 +24,6 @@ Author(s): Jonathan Poelen
 #include "core/report_message_api.hpp"
 #include "core/front_api.hpp"
 
-#include <string>
-
 
 class DispatchReportMessage : public ReportMessageApi
 {
@@ -53,15 +51,7 @@ public:
             return ;
         }
 
-        std::string s;
-        auto& str_id = detail::log_id_string_map[underlying_cast(id)];
-        s.insert(s.end(), str_id.begin(), str_id.end());
-        for (auto const& kv : kv_list) {
-            s += '\x01';
-            s.insert(s.end(), kv.value.begin(), kv.value.end());
-        }
-
-        this->front.session_update(s);
+        this->front.session_update(id, kv_list);
     }
 
     void update_inactivity_timeout() override

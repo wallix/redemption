@@ -40,9 +40,9 @@ RED_AUTO_TEST_CASE(TestDispatchReportMessage)
     struct : FakeFront {
         using FakeFront::FakeFront;
 
-        void session_update(array_view_const_char message) override
+        void session_update(LogId id, KVList /*kv_list*/) override
         {
-            push(s, message);
+            push(s, detail::log_id_string_map[underlying_cast(id)]);
         }
 
         std::string s;

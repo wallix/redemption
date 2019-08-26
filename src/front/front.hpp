@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "core/log_id.hpp"
 #include "capture/capture.hpp"
 #include "capture/params_from_ini.hpp"
 #include "capture/capture_params.hpp"
@@ -2637,9 +2638,9 @@ public:
 
         this->update_keyboard_input_mask_state();
 
-        this->session_update(started
-            ? "Probe.Status=Ready"_av
-            : "Probe.Status=Unknown"_av);
+        this->session_update(LogId::PROBE_STATUS, {
+            KVLog("status"_av, started ? "Ready"_av : "Unknown"_av),
+        });
     }
 
     void set_keylayout(int LCID) override {
@@ -2668,9 +2669,9 @@ public:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(array_view_const_char message) override {
+    void session_update(LogId id, KVList kv_list) override {
         if (this->capture) {
-            this->capture->old_session_update(this->session_reactor.get_current_time(), message);
+            this->capture->session_update(this->session_reactor.get_current_time(), id, kv_list);
         }
     }
 
