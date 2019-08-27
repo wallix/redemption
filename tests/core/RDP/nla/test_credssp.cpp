@@ -469,7 +469,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
 RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
 {
 
-    uint8_t pin[] = "3615";
+    std::vector<uint8_t> pin = {'3', '6', '1', '5', 0};
     std::vector<uint8_t> userHint = {'a', 'k', 'a', 0};
     uint8_t domainHint[] = "grandparc";
 
@@ -479,7 +479,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     uint8_t cspName[] = "what";
     uint32_t keySpec = 32;
 
-    TSCredentials ts_cred(pin, sizeof(pin), userHint,
+    TSCredentials ts_cred(pin, userHint,
                           domainHint, sizeof(domainHint),
                           keySpec, 
                           {cardName, sizeof(cardName)},
@@ -499,12 +499,9 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     ts_cred_received.recv(in_s);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 2);
-    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.pin_length,
-                      sizeof(pin));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.pin, pin);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.userHint, userHint);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.domainHint_length, sizeof(domainHint));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.pin),
-                      char_ptr_cast(pin));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.domainHint),
                       char_ptr_cast(domainHint));
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec, keySpec);
