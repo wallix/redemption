@@ -30,7 +30,6 @@
 
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
 
-#include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/nla/nla_server_ntlm.hpp"

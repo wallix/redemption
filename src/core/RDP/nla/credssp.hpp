@@ -1692,9 +1692,7 @@ struct TSCredentials
 
     TSCredentials(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length)
         : credType(1)
-        , passCreds(domain, domain_length,
-                    user, user_length,
-                    pass, pass_length)
+        , passCreds(domain, domain_length, user, user_length, pass, pass_length)
     {
 
     }
@@ -1760,61 +1758,6 @@ struct TSCredentials
         return size;
     }
 
-    int emit(OutStream & stream) const {
-        // stream is the authInfo Stream field of TSRequest before it is sent
-        // stream will not be encrypted and should be encrypted after calling emit
-        int size = 0;
-
-        int innerSize = this->ber_sizeof();
-        int credsSize;
-
-        /* TSCredentials (SEQUENCE) */
-        auto sequence_header = BER::mkSequenceHeader(innerSize);
-        stream.out_copy_bytes(sequence_header);
-        size += sequence_header.size();
-
-        /* [0] credType (INTEGER) */
-        auto ber_credtype_field = BER::mkSmallIntegerField(this->credType, 0);
-        
-        stream.out_copy_bytes(ber_credtype_field);
-        size += ber_credtype_field.size();
-        
-        /* [1] credentials (OCTET STRING) */
-
-        if (this->credType == 1){
-            auto result = emitTSPasswordCreds(
-                {this->passCreds.domainName, this->passCreds.domainName_length},
-                {this->passCreds.userName, this->passCreds.userName_length},
-                {this->passCreds.password, this->passCreds.password_length});
-
-            credsSize = result.size();
-        }
-        else {
-            credsSize = BER::sizeof_sequence(this->smartcardCreds.ber_sizeof());
-        }
-
-        auto v = BER::mkContextualFieldHeader(BER::sizeof_octet_string(credsSize), 1);
-        stream.out_copy_bytes(v);
-        size += v.size();
-
-        size += BER::write_octet_string_tag(stream, credsSize);
-
-        if (this->credType == 1){
-            auto result = emitTSPasswordCreds(
-                {this->passCreds.domainName, this->passCreds.domainName_length},
-                {this->passCreds.userName, this->passCreds.userName_length},
-                {this->passCreds.password, this->passCreds.password_length});
-            stream.out_copy_bytes(result);
-            size += result.size();
-        }
-        else {
-            size += emitTSSmartCardCreds(stream, this->smartcardCreds);
-        }
-
-        return size;
-    }
-
-
     void recv(InStream & stream) {
         // stream is decrypted and should be decrypted before calling recv
         int length;
@@ -1838,6 +1781,60 @@ struct TSCredentials
         }
     }
 };
+
+inline int emitTSCredentials(OutStream & stream, const TSCredentials & self ) 
+{
+    // stream is the authInfo Stream field of TSRequest before it is sent
+    // stream will not be encrypted and should be encrypted after calling emit
+    int size = 0;
+
+    int innerSize = self.ber_sizeof();
+    int credsSize;
+
+    /* TSCredentials (SEQUENCE) */
+    auto sequence_header = BER::mkSequenceHeader(innerSize);
+    stream.out_copy_bytes(sequence_header);
+    size += sequence_header.size();
+
+    /* [0] credType (INTEGER) */
+    auto ber_credtype_field = BER::mkSmallIntegerField(self.credType, 0);
+    
+    stream.out_copy_bytes(ber_credtype_field);
+    size += ber_credtype_field.size();
+    
+    /* [1] credentials (OCTET STRING) */
+
+    if (self.credType == 1){
+        auto result = emitTSPasswordCreds(
+            {self.passCreds.domainName, self.passCreds.domainName_length},
+            {self.passCreds.userName, self.passCreds.userName_length},
+            {self.passCreds.password, self.passCreds.password_length});
+
+        credsSize = result.size();
+    }
+    else {
+        credsSize = BER::sizeof_sequence(self.smartcardCreds.ber_sizeof());
+    }
+
+    auto v = BER::mkContextualFieldHeader(BER::sizeof_octet_string(credsSize), 1);
+    stream.out_copy_bytes(v);
+    size += v.size();
+
+    size += BER::write_octet_string_tag(stream, credsSize);
+
+    if (self.credType == 1){
+        auto result = emitTSPasswordCreds(
+            {self.passCreds.domainName, self.passCreds.domainName_length},
+            {self.passCreds.userName, self.passCreds.userName_length},
+            {self.passCreds.password, self.passCreds.password_length});
+        stream.out_copy_bytes(result);
+        size += result.size();
+    }
+    else {
+        size += emitTSSmartCardCreds(stream, self.smartcardCreds);
+    }
+    return size;
+}
 
 
 // struct TSCspDataDetail : public TSCredentials {

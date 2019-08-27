@@ -22,8 +22,7 @@
 #pragma once
 
 #include <functional>
-
-#include "core/RDP/nla/sspi.hpp"
+    
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"

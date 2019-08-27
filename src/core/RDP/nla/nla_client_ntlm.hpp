@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
@@ -473,7 +472,7 @@ public:
 
                 {
                     StaticOutStream<65536> ts_credentials_send;
-                    this->ts_credentials.emit(ts_credentials_send);
+                    emitTSCredentials(ts_credentials_send, this->ts_credentials);
                     array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
                     unsigned long MessageSeqNo = this->send_seq_num++;
 

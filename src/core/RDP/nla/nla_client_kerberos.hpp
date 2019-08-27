@@ -23,7 +23,6 @@
 
 #ifndef __EMSCRIPTEN__
 
-#include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
@@ -763,7 +762,7 @@ private:
         this->credssp_encode_ts_credentials();
 
         StaticOutStream<65536> ts_credentials_send;
-        this->ts_credentials.emit(ts_credentials_send);
+        emitTSCredentials(ts_credentials_send, this->ts_credentials);
 
         return this->sspi_EncryptMessage(
             {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
