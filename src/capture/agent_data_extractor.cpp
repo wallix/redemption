@@ -352,11 +352,12 @@ bool AgentDataExtractor::extract_list(Av data)
             case LogId::SESSION_ENDING_IN_PROGRESS:
             case LogId::SESSION_ESTABLISHED_SUCCESSFULLY:
                 return false;
+            // unknown old id (or invalid id in old format)
+            default:
+                LOG(LOG_WARNING,
+                    "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
+                    int(data.size()), data.data());
         }
-
-        LOG(LOG_WARNING,
-            "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
-            int(data.size()), data.data());
     }
 
     return false;
