@@ -1649,21 +1649,6 @@ struct TSCredentials
         this->passCreds = TSPasswordCreds(domain_av, user_av, password_av);
     }
 
-    int ber_sizeof() const {
-        auto ber_credtype_field = BER::mkSmallIntegerField(this->credType, 0);
-        int size = ber_credtype_field.size();
-
-        if (this->credType == 2){
-            auto result = emitTSSmartCardCreds(this->smartcardCreds);
-            size += BER::sizeof_sequence_octet_string(result.size());
-        }
-        else {
-            auto result = emitTSPasswordCreds(this->passCreds.domainName, this->passCreds.userName, this->passCreds.password);
-            size += BER::sizeof_sequence_octet_string(result.size());
-        }
-        return size;
-    }
-
     void recv(InStream & stream) {
         // stream is decrypted and should be decrypted before calling recv
         int length;
@@ -1690,10 +1675,6 @@ struct TSCredentials
 
 inline int emitTSCredentials(OutStream & stream, const TSCredentials & self ) 
 {
-    // stream is the authInfo Stream field of TSRequest before it is sent
-    // stream will not be encrypted and should be encrypted after calling emit
-    int size = 0;
-
     /* [0] credType (INTEGER) */
     auto ber_credtype_field = BER::mkSmallIntegerField(self.credType, 0);
 
@@ -1705,24 +1686,23 @@ inline int emitTSCredentials(OutStream & stream, const TSCredentials & self )
     else {
         ber_credentials = emitTSSmartCardCreds(self.smartcardCreds);
     }
-    auto ber_credentials_octet_string_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
+    auto ber_credentials_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
 
     /* TSCredentials (SEQUENCE) */
     auto sequence_header = BER::mkSequenceHeader(ber_credtype_field.size() 
-                         + ber_credentials_octet_string_header.size()
+                         + ber_credentials_header.size()
                          + ber_credentials.size());
 
     stream.out_copy_bytes(sequence_header);
     stream.out_copy_bytes(ber_credtype_field);
-    stream.out_copy_bytes(ber_credentials_octet_string_header);
+    stream.out_copy_bytes(ber_credentials_header);
     stream.out_copy_bytes(ber_credentials);
 
-    size += sequence_header.size();
-    size += ber_credtype_field.size();
-    size += ber_credentials_octet_string_header.size();
-    size += ber_credentials.size();
+    return sequence_header.size()
+            + ber_credtype_field.size()
+            + ber_credentials_header.size()
+            + ber_credentials.size();
 
-    return size;
 }
 
 
