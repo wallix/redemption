@@ -1560,10 +1560,10 @@ struct TSSmartCardCreds {
 };
 
 
-inline int emitTSSmartCardCreds(OutStream & stream, const TSSmartCardCreds & self)
+inline std::vector<uint8_t> emitTSSmartCardCreds(const TSSmartCardCreds & self)
 {
     // [0] pin (OCTET STRING)
-    auto ber_sequence_octet_string_header = BER::mkMandatoryOctetStringFieldHeader(self.pin.size(), 0);
+    auto ber_pin_header = BER::mkMandatoryOctetStringFieldHeader(self.pin.size(), 0);
 
     // [1] cspData (TSCspDataDetail)
     auto ber_TSCspDataDetail = emitTSCspDataDetail(self.cspData);
@@ -1575,26 +1575,20 @@ inline int emitTSSmartCardCreds(OutStream & stream, const TSSmartCardCreds & sel
     /* [3] domainHint (OCTET STRING OPTIONAL) */
     auto ber_domainHint_header = BER::mkOptionalOctetStringFieldHeader(self.domainHint.size(), 3);
 
-    int innerSize = self.pin.size() + ber_sequence_octet_string_header.size()
+    int innerSize = ber_pin_header.size() + self.pin.size()
                   + ber_CspDataDetail_header.size() + ber_TSCspDataDetail.size()
                   + ber_userHint_header.size() + self.userHint.size()
                   + ber_domainHint_header.size() + self.domainHint.size()
                   ;
 
     /* TSCredentials (SEQUENCE) */
-    auto sequence_header = BER::mkSequenceHeader(innerSize);
-    stream.out_copy_bytes(sequence_header);
+    std::vector<uint8_t> result = std::move(BER::mkSequenceHeader(innerSize));
+    result << ber_pin_header           << self.pin
+           << ber_CspDataDetail_header << ber_TSCspDataDetail
+           << ber_userHint_header      << self.userHint
+           << ber_domainHint_header    << self.domainHint;
 
-    stream.out_copy_bytes(ber_sequence_octet_string_header);
-    stream.out_copy_bytes(self.pin);
-    stream.out_copy_bytes(ber_CspDataDetail_header);
-    stream.out_copy_bytes(ber_TSCspDataDetail);
-    stream.out_copy_bytes(ber_userHint_header);
-    stream.out_copy_bytes(self.userHint);
-    stream.out_copy_bytes(ber_domainHint_header);
-    stream.out_copy_bytes(self.domainHint);
-
-    return sequence_header.size() + innerSize;
+    return result;
 }
 
 
@@ -1728,14 +1722,15 @@ inline int emitTSCredentials(OutStream & stream, const TSCredentials & self )
 
     size += BER::write_octet_string_tag(stream, credsSize);
 
+    std::vector<uint8_t> result;
     if (self.credType == 1){
-        auto result = emitTSPasswordCreds(self.passCreds.domainName, self.passCreds.userName, self.passCreds.password);
-        stream.out_copy_bytes(result);
-        size += result.size();
+        result = emitTSPasswordCreds(self.passCreds.domainName, self.passCreds.userName, self.passCreds.password);
     }
     else {
-        size += emitTSSmartCardCreds(stream, self.smartcardCreds);
+        result = emitTSSmartCardCreds(self.smartcardCreds);
     }
+    stream.out_copy_bytes(result);
+    size += result.size();
     return size;
 }
 
