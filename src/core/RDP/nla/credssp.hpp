@@ -862,12 +862,6 @@ struct ClientNonce {
     bool initialized = false;
     uint8_t data[CLIENT_NONCE_LENGTH] = {};
 
-    static inline int sizeof_client_nonce(int length) {
-        length = BER::sizeof_octet_string(length);
-        length += BER::sizeof_contextual_tag(length);
-        return length;
-    }
-
     ClientNonce() {}
 
     bool isset() {
@@ -1070,31 +1064,7 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
 
     if (self.version >= 5 && self.clientNonce.initialized){
         result << ber_nonce_header << bytes_view({self.clientNonce.data, sizeof(self.clientNonce.data)});
-//        stream.out_copy_bytes(ber_nonce_header);
-//        stream.out_copy_bytes({self.clientNonce.data, sizeof(self.clientNonce.data)});
     }
-           
-    
-//    /* TSRequest */
-//    stream.out_copy_bytes(ber_ts_request_header);
-//    // version    [0] INTEGER,
-//    stream.out_copy_bytes(ber_version_field);
-//    // negoTokens [1] NegoData OPTIONAL
-//    stream.out_copy_bytes(ber_nego_tokens_header);
-//    stream.out_copy_bytes(self.negoTokens);
-//    // authInfo   [2] OCTET STRING OPTIONAL
-//    stream.out_copy_bytes(ber_auth_info_header);
-//    stream.out_copy_bytes(self.authInfo);
-//    // pubKeyAuth [3] OCTET STRING OPTIONAL
-//    stream.out_copy_bytes(ber_pub_key_auth_header);
-//    stream.out_copy_bytes(self.pubKeyAuth);
-//    // errorCode  [4] INTEGER OPTIONAL
-//    // clientNonce[5] OCTET STRING OPTIONAL
-//    if (self.version >= 5 && self.clientNonce.initialized){
-//        stream.out_copy_bytes(ber_nonce_header);
-//        stream.out_copy_bytes({self.clientNonce.data, sizeof(self.clientNonce.data)});
-//    }
-//    auto * end = stream.get_current();
     
     LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
     LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
@@ -1301,12 +1271,6 @@ inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view us
 
 namespace CredSSP {
 
-
-    inline int sizeof_octet_string_seq(int length) {
-        length = BER::sizeof_octet_string(length);
-        length += BER::sizeof_contextual_tag(length);
-        return length;
-    }
 }  // namespace CredSSP
 
 
