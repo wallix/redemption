@@ -1575,19 +1575,21 @@ inline std::vector<uint8_t> emitTSSmartCardCreds(const TSSmartCardCreds & self)
     /* [3] domainHint (OCTET STRING OPTIONAL) */
     auto ber_domainHint_header = BER::mkOptionalOctetStringFieldHeader(self.domainHint.size(), 3);
 
-    int innerSize = ber_pin_header.size() + self.pin.size()
+    /* TSCredentials (SEQUENCE) */
+    int ts_smartcards_creds_length = ber_pin_header.size() + self.pin.size()
                   + ber_CspDataDetail_header.size() + ber_TSCspDataDetail.size()
                   + ber_userHint_header.size() + self.userHint.size()
                   + ber_domainHint_header.size() + self.domainHint.size()
                   ;
 
-    /* TSCredentials (SEQUENCE) */
-    std::vector<uint8_t> result = std::move(BER::mkSequenceHeader(innerSize));
+    auto ber_ts_smartcards_creds_header = BER::mkSequenceHeader(ts_smartcards_creds_length);
+    
+    std::vector<uint8_t> result = std::move(ber_ts_smartcards_creds_header);
     result << ber_pin_header           << self.pin
            << ber_CspDataDetail_header << ber_TSCspDataDetail
            << ber_userHint_header      << self.userHint
            << ber_domainHint_header    << self.domainHint;
-
+           
     return result;
 }
 
@@ -1652,7 +1654,8 @@ struct TSCredentials
         int size = ber_credtype_field.size();
 
         if (this->credType == 2){
-            size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->smartcardCreds.ber_sizeof()));
+            auto result = emitTSSmartCardCreds(this->smartcardCreds);
+            size += BER::sizeof_sequence_octet_string(result.size());
         }
         else {
             auto result = emitTSPasswordCreds(this->passCreds.domainName, this->passCreds.userName, this->passCreds.password);
@@ -1691,19 +1694,9 @@ inline int emitTSCredentials(OutStream & stream, const TSCredentials & self )
     // stream will not be encrypted and should be encrypted after calling emit
     int size = 0;
 
-    int innerSize = self.ber_sizeof();
-
-    /* TSCredentials (SEQUENCE) */
-    auto sequence_header = BER::mkSequenceHeader(innerSize);
-    stream.out_copy_bytes(sequence_header);
-    size += sequence_header.size();
-
     /* [0] credType (INTEGER) */
     auto ber_credtype_field = BER::mkSmallIntegerField(self.credType, 0);
-    
-    stream.out_copy_bytes(ber_credtype_field);
-    size += ber_credtype_field.size();
-    
+
     /* [1] credentials (OCTET STRING) */
     std::vector<uint8_t> ber_credentials;
     if (self.credType == 1){
@@ -1712,14 +1705,23 @@ inline int emitTSCredentials(OutStream & stream, const TSCredentials & self )
     else {
         ber_credentials = emitTSSmartCardCreds(self.smartcardCreds);
     }
+    auto ber_credentials_octet_string_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
 
-    auto v = BER::mkContextualFieldHeader(BER::sizeof_octet_string(ber_credentials.size()), 1);
-    stream.out_copy_bytes(v);
-    size += v.size();
-    size += BER::write_octet_string_tag(stream, ber_credentials.size());
+    /* TSCredentials (SEQUENCE) */
+    auto sequence_header = BER::mkSequenceHeader(ber_credtype_field.size() 
+                         + ber_credentials_octet_string_header.size()
+                         + ber_credentials.size());
 
+    stream.out_copy_bytes(sequence_header);
+    stream.out_copy_bytes(ber_credtype_field);
+    stream.out_copy_bytes(ber_credentials_octet_string_header);
     stream.out_copy_bytes(ber_credentials);
+
+    size += sequence_header.size();
+    size += ber_credtype_field.size();
+    size += ber_credentials_octet_string_header.size();
     size += ber_credentials.size();
+
     return size;
 }
 
