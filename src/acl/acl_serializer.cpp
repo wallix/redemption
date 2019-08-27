@@ -24,7 +24,6 @@
 #include "acl/acl_serializer.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/mm_api.hpp"
-#include "acl/kv_list_to_string.hpp"
 #include "configs/config.hpp"
 #include "core/log_id.hpp"
 #include "core/date_dir_from_filename.hpp"

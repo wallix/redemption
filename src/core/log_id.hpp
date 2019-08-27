@@ -148,7 +148,3 @@ namespace detail
     };
     REDEMPTION_DIAGNOSTIC_POP
 }
-
-// #ifndef NOT_UNDEF_X_LOG_ID
-// # undef X_LOG_ID
-// #endif

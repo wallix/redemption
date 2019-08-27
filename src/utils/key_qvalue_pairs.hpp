@@ -20,37 +20,13 @@
 
 #pragma once
 
+#include "core/log_id.hpp"
+#include "core/report_message_api.hpp"
 #include "utils/sugar/array_view.hpp"
 
 #include <string>
+#include <algorithm>
 
-#include <cstring>
-
-
-struct charp_or_string
-{
-    const array_view_const_char data;
-
-    charp_or_string(const char * const data)
-        : data(data, strlen(data)){}
-    charp_or_string(const array_view_const_char data)
-        : data(data) {}
-    charp_or_string(const std::string & data)
-        : data(data) {}
-};
-
-struct kv_pair_
-{
-    array_view_const_char key;
-    array_view_const_char value;
-
-    template<class T, class U> kv_pair_(T const & key, U const & value)
-        : key{charp_or_string(key).data}
-        , value{charp_or_string(value).data}
-    {}
-};
-
-using kv_pair = const kv_pair_;
 
 namespace qvalue_table_formats
 {
@@ -92,90 +68,33 @@ inline void escaped_qvalue(
     escaped_subject.append(first, last);
 }
 
-// Precondition: input array view should never be empty
-// internal pointers should never be nullptr
-inline std::string key_qvalue_pairs(std::string & buffer, array_view<kv_pair> pairs)
+template<class Prefix, class Suffix>
+inline std::string& kv_list_to_string(
+    std::string& buffer, KVList kv_list,
+    Prefix prefix, Suffix suffix,
+    std::array<char, 256> const& escaped_table)
 {
-    if (!buffer.empty()) {
-        buffer += " ";
+    for (auto& kv : kv_list) {
+        buffer += ' ';
+        buffer.append(kv.key.data(), kv.key.size());
+        buffer += prefix;
+        escaped_qvalue(buffer, kv.value, escaped_table);
+        buffer += suffix;
     }
-    for (auto p: pairs){
-        buffer.append(p.key.data(), p.key.size());
-        buffer += "=\"";
-        escaped_qvalue(buffer, p.value, qvalue_table_formats::log_table);
-        buffer += "\" ";
-    }
-    buffer.pop_back();
+
     return buffer;
 }
 
-inline std::string key_qvalue_pairs(std::string & buffer, std::initializer_list<kv_pair> pairs)
-{
-    return key_qvalue_pairs(buffer, array_view<kv_pair>{pairs.begin(), pairs.end()});
-}
-
-inline std::string key_qvalue_pairs(array_view<kv_pair> pairs)
-{
-    std::string buffer;
-    // Ensure string is large enough for our use, to avoid useless internal resize
-    size_t maj = 0;
-    for (auto const& p : pairs) {
-        maj += p.key.size() + p.value.size() + 8;
-    }
-    // reserve some space for 8 quoted chars inside value
-    // if there is more string is on it's own and will spend slightly more time
-    buffer.reserve(maj+8);
-    return key_qvalue_pairs(buffer, pairs);
-}
-
-inline std::string key_qvalue_pairs(std::initializer_list<kv_pair> pairs)
-{
-    return key_qvalue_pairs(array_view<kv_pair>{pairs.begin(), pairs.end()});
-}
-
-
-struct KeyQvalueFormatter
-{
-    array_view_const_char assign(charp_or_string type, array_view<kv_pair> pairs)
-    {
-        this->buf = "type=\"";
-        this->buf.append(type.data.data(), type.data.size());
-        this->buf += '\"';
-        for (auto const& kv : pairs) {
-            this->buf += ' ';
-            this->buf.append(kv.key.data(), kv.key.size());
-            this->buf += "=\"";
-            escaped_qvalue(this->buf, kv.value, qvalue_table_formats::log_table);
-            this->buf += '"';
-        }
-        return this->av();
-    }
-
-    array_view_const_char assign(charp_or_string type, std::initializer_list<kv_pair> pairs)
-    {
-        return this->assign(type, array_view<kv_pair>{pairs.begin(), pairs.end()});
-    }
-
-    array_view_const_char av() const noexcept
-    {
-        return this->buf;
-    }
-
-    void clear()
-    {
-        this->buf.clear();
-    }
-
-    std::string const & str() const noexcept
-    {
-        return this->buf;
-    }
-
-    explicit KeyQvalueFormatter()
-    {
-        this->buf.reserve(64);
-    }
-
-private:
-    std::string buf;
+constexpr inline array_view_const_char log_id_string_type_map[]{
+    #define f(x, cat) "type=\"" #x "\""_av,
+    X_LOG_ID(f)
+    #undef f
 };
+
+inline array_view_const_char log_format_set_info(std::string& buffer, LogId id, KVList kv_list)
+{
+    auto type = log_id_string_type_map[int(id)];
+    buffer.assign(type.begin(), type.end());
+    kv_list_to_string(buffer, kv_list, "=\"", '"', qvalue_table_formats::log_table);
+    return buffer;
+}

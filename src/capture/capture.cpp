@@ -31,8 +31,6 @@
 #include <cerrno>
 #include <cassert>
 
-#include "acl/kv_list_to_string.hpp"
-
 #include "core/error.hpp"
 #include "core/log_id.hpp"
 #include "core/window_constants.hpp"
@@ -917,9 +915,9 @@ bool is_logable_kvlist(LogId id, KVList kv_list, MetaParams meta_params)
                         ) {
                             return false;
                         }
+                        break;
                     default:;
                 }
-
             }
         }
         break;
