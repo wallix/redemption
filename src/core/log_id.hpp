@@ -129,7 +129,7 @@ inline bool is_valid_log_id(unsigned id)
 #undef f
     }
     return false;
-};
+}
 
 namespace detail
 {
