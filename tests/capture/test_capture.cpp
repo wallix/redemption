@@ -2406,10 +2406,10 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     ::unlink(filename);
 
     filename = out_wrm_trans.seqgen()->get(0);
-    RED_CHECK_EQUAL(490454, ::filesize(filename));
+    RED_CHECK_EQUAL(490437, ::filesize(filename));
     ::unlink(filename);
     filename = out_wrm_trans.seqgen()->get(1);
-    RED_CHECK_EQUAL(1008253, ::filesize(filename));
+    RED_CHECK_EQUAL(1008139, ::filesize(filename));
     ::unlink(filename);
     filename = out_wrm_trans.seqgen()->get(2);
     RED_CHECK_EQUAL(195756, ::filesize(filename));
