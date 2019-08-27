@@ -467,11 +467,6 @@ namespace BER {
     inline int sizeof_octet_string(int length) {
         return 1 + _ber_sizeof_length(length) + length;
     }
-    inline int sizeof_sequence_octet_string(int length) {
-        return sizeof_contextual_tag(sizeof_octet_string(length))
-            + sizeof_octet_string(length);
-    }
-
 
     // ==========================
     //   GENERAL STRING
@@ -882,13 +877,6 @@ struct ClientNonce {
     void reset()
     {
         this->initialized = false;
-    }
-
-    int ber_length(int use_version)
-    {
-        return (use_version >= 5 && this->initialized)
-            ? sizeof_client_nonce(CLIENT_NONCE_LENGTH)
-            : 0;
     }
 
     int ber_read(int version, int & length, InStream & stream)
