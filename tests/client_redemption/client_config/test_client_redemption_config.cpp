@@ -121,7 +121,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK(config.rDPRemoteAppConfig.full_cmd_line == "C:\\Windows\\system32\\notepad.exe "sv);
 
     // CLIPRDR
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.arbitrary_scale, 40);
+    RED_CHECK(int(config.rDPClipboardConfig.arbitrary_scale) == 40);
     RED_CHECK(config.rDPClipboardConfig.server_use_long_format_names);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.cCapabilitiesSets, 1);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.generalFlags, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);
@@ -297,7 +297,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.rDPRemoteAppConfig.full_cmd_line, "C:\\Windows\\system32\\notepad.exe "sv);
 
     // CLIPRDR
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.arbitrary_scale, 40);
+    RED_CHECK(int(config.rDPClipboardConfig.arbitrary_scale) == 40);
     RED_CHECK(config.rDPClipboardConfig.server_use_long_format_names);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.cCapabilitiesSets, 1);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.generalFlags, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);

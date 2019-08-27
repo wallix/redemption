@@ -53,12 +53,12 @@ Author(s): Jonathan Poelen
 #  define RED_CHECK_NO_THROW(...) BOOST_CHECK_NO_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_CHECK_THROW(...) BOOST_CHECK_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_CHECK_EXCEPTION(...) BOOST_CHECK_EXCEPTION(__VA_ARGS__) /*NOLINT*/
-#  define RED_CHECK_EQUAL(a, b) BOOST_CHECK((a == b)) /*NOLINT*/
-#  define RED_CHECK_NE(a, b) BOOST_CHECK((a != b)) /*NOLINT*/
-#  define RED_CHECK_LT(a, b) BOOST_CHECK((a < b)) /*NOLINT*/
-#  define RED_CHECK_LE(a, b) BOOST_CHECK((a <= b)) /*NOLINT*/
-#  define RED_CHECK_GT(a, b) BOOST_CHECK((a > b)) /*NOLINT*/
-#  define RED_CHECK_GE(a, b) BOOST_CHECK((a >= b)) /*NOLINT*/
+#  define RED_CHECK_EQUAL(a, b) BOOST_CHECK(((a) == (b))) /*NOLINT*/
+#  define RED_CHECK_NE(a, b) BOOST_CHECK(((a) != (b))) /*NOLINT*/
+#  define RED_CHECK_LT(a, b) BOOST_CHECK(((a) < (b))) /*NOLINT*/
+#  define RED_CHECK_LE(a, b) BOOST_CHECK(((a) <= (b))) /*NOLINT*/
+#  define RED_CHECK_GT(a, b) BOOST_CHECK(((a) > (b))) /*NOLINT*/
+#  define RED_CHECK_GE(a, b) BOOST_CHECK(((a) >= (b))) /*NOLINT*/
 #  define RED_CHECK(...) BOOST_CHECK((__VA_ARGS__)) /*NOLINT*/
 #  define RED_CHECK_MESSAGE(x, ...) BOOST_CHECK_MESSAGE((x), __VA_ARGS__) /*NOLINT*/
 #  define RED_CHECK_EQUAL_COLLECTIONS(...) BOOST_CHECK(std::equal(__VA_ARGS__)) /*NOLINT*/
@@ -67,12 +67,12 @@ Author(s): Jonathan Poelen
 #  define RED_REQUIRE_NO_THROW(...) BOOST_REQUIRE_NO_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_THROW(...) BOOST_REQUIRE_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_EXCEPTION(...) BOOST_REQUIRE_EXCEPTION(__VA_ARGS__) /*NOLINT*/
-#  define RED_REQUIRE_EQUAL(a, b) BOOST_REQUIRE((a == b)) /*NOLINT*/
-#  define RED_REQUIRE_NE(a, b) BOOST_REQUIRE((a != b)) /*NOLINT*/
-#  define RED_REQUIRE_LT(a, b) BOOST_REQUIRE((a < b)) /*NOLINT*/
-#  define RED_REQUIRE_LE(a, b) BOOST_REQUIRE((a <= b)) /*NOLINT*/
-#  define RED_REQUIRE_GT(a, b) BOOST_REQUIRE((a > b)) /*NOLINT*/
-#  define RED_REQUIRE_GE(a, b) BOOST_REQUIRE((a >= b)) /*NOLINT*/
+#  define RED_REQUIRE_EQUAL(a, b) BOOST_REQUIRE(((a) == (b))) /*NOLINT*/
+#  define RED_REQUIRE_NE(a, b) BOOST_REQUIRE(((a) != (b))) /*NOLINT*/
+#  define RED_REQUIRE_LT(a, b) BOOST_REQUIRE(((a) < (b))) /*NOLINT*/
+#  define RED_REQUIRE_LE(a, b) BOOST_REQUIRE(((a) <= (b))) /*NOLINT*/
+#  define RED_REQUIRE_GT(a, b) BOOST_REQUIRE(((a) > (b))) /*NOLINT*/
+#  define RED_REQUIRE_GE(a, b) BOOST_REQUIRE(((a) >= (b))) /*NOLINT*/
 #  define RED_REQUIRE(...) BOOST_REQUIRE((__VA_ARGS__)) /*NOLINT*/
 #  define RED_REQUIRE_MESSAGE(x, ...) BOOST_REQUIRE_MESSAGE((x), __VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_EQUAL_COLLECTIONS(...) BOOST_REQUIRE(std::equal(__VA_ARGS__)) /*NOLINT*/
@@ -93,12 +93,12 @@ Author(s): Jonathan Poelen
 #  define RED_CHECK_NO_THROW(...) BOOST_CHECK_NO_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_CHECK_THROW(...) BOOST_CHECK_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_CHECK_EXCEPTION(...) BOOST_CHECK_EXCEPTION(__VA_ARGS__) /*NOLINT*/
-#  define RED_CHECK_EQUAL(...) BOOST_CHECK_EQUAL(__VA_ARGS__) /*NOLINT*/
-#  define RED_CHECK_NE(...) BOOST_CHECK_NE(__VA_ARGS__) /*NOLINT*/
-#  define RED_CHECK_LT(...) BOOST_CHECK_LT(__VA_ARGS__) /*NOLINT*/
-#  define RED_CHECK_LE(...) BOOST_CHECK_LE(__VA_ARGS__) /*NOLINT*/
-#  define RED_CHECK_GT(...) BOOST_CHECK_GT(__VA_ARGS__) /*NOLINT*/
-#  define RED_CHECK_GE(...) BOOST_CHECK_GE(__VA_ARGS__) /*NOLINT*/
+#  define RED_CHECK_EQUAL(a, b) BOOST_CHECK((a) == (b)) /*NOLINT*/
+#  define RED_CHECK_NE(a, b) BOOST_CHECK((a) != (b)) /*NOLINT*/
+#  define RED_CHECK_LT(a, b) BOOST_CHECK((a) < (b)) /*NOLINT*/
+#  define RED_CHECK_LE(a, b) BOOST_CHECK((a) >= (b)) /*NOLINT*/
+#  define RED_CHECK_GT(a, b) BOOST_CHECK((a) > (b)) /*NOLINT*/
+#  define RED_CHECK_GE(a, b) BOOST_CHECK((a) >= (b)) /*NOLINT*/
 #  define RED_CHECK(...) BOOST_CHECK(__VA_ARGS__) /*NOLINT*/
 #  define RED_CHECK_MESSAGE(...) BOOST_CHECK_MESSAGE(__VA_ARGS__) /*NOLINT*/
 #  define RED_CHECK_EQUAL_COLLECTIONS(...) BOOST_CHECK_EQUAL_COLLECTIONS(__VA_ARGS__) /*NOLINT*/
@@ -108,12 +108,12 @@ Author(s): Jonathan Poelen
 #  define RED_REQUIRE_NO_THROW(...) BOOST_REQUIRE_NO_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_THROW(...) BOOST_REQUIRE_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_EXCEPTION(...) BOOST_REQUIRE_EXCEPTION(__VA_ARGS__) /*NOLINT*/
-#  define RED_REQUIRE_EQUAL(...) BOOST_REQUIRE_EQUAL(__VA_ARGS__) /*NOLINT*/
-#  define RED_REQUIRE_NE(...) BOOST_REQUIRE_NE(__VA_ARGS__) /*NOLINT*/
-#  define RED_REQUIRE_LT(...) BOOST_REQUIRE_LT(__VA_ARGS__) /*NOLINT*/
-#  define RED_REQUIRE_LE(...) BOOST_REQUIRE_LE(__VA_ARGS__) /*NOLINT*/
-#  define RED_REQUIRE_GT(...) BOOST_REQUIRE_GT(__VA_ARGS__) /*NOLINT*/
-#  define RED_REQUIRE_GE(...) BOOST_REQUIRE_GE(__VA_ARGS__) /*NOLINT*/
+#  define RED_REQUIRE_EQUAL(a, b) BOOST_REQUIRE((a) == (b)) /*NOLINT*/
+#  define RED_REQUIRE_NE(a, b) BOOST_REQUIRE((a) == (b)) /*NOLINT*/
+#  define RED_REQUIRE_LT(a, b) BOOST_REQUIRE((a) < (b)) /*NOLINT*/
+#  define RED_REQUIRE_LE(a, b) BOOST_REQUIRE((a) <= (b)) /*NOLINT*/
+#  define RED_REQUIRE_GT(a, b) BOOST_REQUIRE((a) > (b)) /*NOLINT*/
+#  define RED_REQUIRE_GE(a, b) BOOST_REQUIRE((a) >= (b)) /*NOLINT*/
 #  define RED_REQUIRE(...) BOOST_REQUIRE(__VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_MESSAGE(...) BOOST_REQUIRE_MESSAGE(__VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_EQUAL_COLLECTIONS(...) BOOST_REQUIRE_EQUAL_COLLECTIONS(__VA_ARGS__) /*NOLINT*/

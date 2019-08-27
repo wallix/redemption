@@ -154,7 +154,7 @@ RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
         RED_CHECK_NE(qhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
         RED_CHECK_NE(fhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
 
-        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error");
+        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error"sv);
 
         scytale_writer_delete(handle);
     }

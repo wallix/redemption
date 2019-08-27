@@ -111,13 +111,13 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFilePic)
 {
     // recv_metaFilePic
 
-    int height=73;
+    unsigned height = 73;
     uint16_t negative_height16 = 0xFFFF - height + 1;
     uint32_t negative_height32 = 0xFFFFFFFF - height + 1;
-    int width=220;
-    int bpp=24;
-    int data_lenght = height * width * 3;
-    const double ARBITRARY_SCALE = 40;
+    unsigned width = 220;
+    unsigned bpp = 24;
+    unsigned data_lenght = height * width * 3;
+    const unsigned ARBITRARY_SCALE = 40;
     const auto metafilepic_out_data =
 //         // header
 //         "\x05\x00" // msgType  : 5 = CB_FORMAT_DATA_RESPONSE

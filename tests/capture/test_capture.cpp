@@ -1880,7 +1880,7 @@ RED_AUTO_TEST_CASE(TestReload)
     {
         char const* name;
         array_view_const_char data;
-        int file_len;
+        unsigned file_len;
         time_t time;
     };
 

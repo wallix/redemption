@@ -322,7 +322,7 @@ RED_AUTO_TEST_CASE(TestStream_sint32)
     {
         auto tmp = "\xFE\xFD\xFC\xFF"_av;
         InStream ss_min_val(tmp);
-        RED_CHECK_EQUAL(0xFFFCFDFE, ss_min_val.in_sint32_le());
+        RED_CHECK_EQUAL(int32_t(0xFFFCFDFEll), ss_min_val.in_sint32_le());
         StaticOutStream<4> fs_min_val;
         fs_min_val.out_sint32_le(0xFFFCFDFE);
         RED_CHECK_MEM(fs_min_val.get_bytes(), tmp);

@@ -325,8 +325,8 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     StaticOutStream<65536> s;
 
     int emited = ts_cred.emit(s);
-    RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
-    RED_CHECK_EQUAL(s.get_offset(), emited);
+    RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2u);
+    RED_CHECK_EQUAL(s.get_offset(), size_t(emited));
 
     TSCredentials ts_cred_received;
 
@@ -385,8 +385,8 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     StaticOutStream<65536> s;
 
     int emited = ts_cred.emit(s);
-    RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
-    RED_CHECK_EQUAL(s.get_offset(), emited);
+    RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2u);
+    RED_CHECK_EQUAL(s.get_offset(), size_t(emited));
 
     TSCredentials ts_cred_received;
 
