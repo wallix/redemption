@@ -87,7 +87,7 @@ class rdp_mppc_enc_hash_table_manager
 
     T hash_table[MAX_HASH_TABLE_ELEMENT]= {};
 
-public:    
+public:
     using hash_type = uint16_t;
 
 private:
@@ -95,7 +95,7 @@ private:
         hash_type hash;
         T         hash_offset;
     } undo_buffer[MAX_UNDO_ELEMENT] = {};
-    
+
     size_t undo_index = 0;
 
 public:

@@ -45,7 +45,7 @@ class basic_HMAC_direct
     Ssl context;
 
 public:
-    basic_HMAC_direct(const_bytes_view key)
+    basic_HMAC_direct(bytes_view key)
     {
         uint8_t digest[Ssl::DIGEST_LENGTH];
         if (key.size() > pad_length) {
@@ -67,7 +67,7 @@ public:
         context.update(make_array_view(k_ipad));
     }
 
-    void update(const_bytes_view data)
+    void update(bytes_view data)
     {
         context.update(data);
     }
@@ -103,7 +103,7 @@ class DelayedHMAC_direct
 public:
     DelayedHMAC_direct() = default;
 
-    void init(const_bytes_view data)
+    void init(bytes_view data)
     {
         this->init(data.as_u8p(), data.size());
     }
@@ -131,7 +131,7 @@ public:
         context.update(make_array_view(k_ipad));
     }
 
-    void update(const_bytes_view data)
+    void update(bytes_view data)
     {
         context.update(data);
     }

@@ -69,7 +69,7 @@ public:
 
     void send_to_channel(
         const CHANNELS::ChannelDef & /*channel*/,
-        const_bytes_view /*chunk_data*/,
+        bytes_view /*chunk_data*/,
         std::size_t /*total_length*/,
         int  /*flags*/) override
     {

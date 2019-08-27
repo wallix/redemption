@@ -26,7 +26,6 @@
 #include "core/RDP/clipboard.hpp"
 
 #include "./test_channel.hpp"
-#include "test_only/front/fake_front.hpp"
 
 namespace
 {
@@ -81,8 +80,6 @@ namespace
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
     NullReportMessage report_message;
     FileValidatorService * ipca_service = nullptr;
 
@@ -92,8 +89,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
     {
         char const* name;
         ClipboardVirtualChannelParams cb_params;
-        const_bytes_view indata;
-        const_bytes_view outdata;
+        bytes_view indata;
+        bytes_view outdata;
     };
 
     #define F(name) D{#name,           \
@@ -117,7 +114,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         SessionReactor session_reactor;
 
         ClipboardVirtualChannel clipboard_virtual_channel(
-            &to_client_sender, &to_server_sender, front,session_reactor,
+            &to_client_sender, &to_server_sender, session_reactor,
             base_params, d.cb_params, ipca_service);
 
         RED_CHECK_EXCEPTION_ERROR_ID(
@@ -130,13 +127,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 class NullSender : public VirtualChannelDataSender
 {
 public:
-    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, const_bytes_view /*chunk_data*/) override {}
+    virtual void operator() (uint32_t /*total_length*/, uint32_t /*flags*/, bytes_view /*chunk_data*/) override {}
 };
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
     NullReportMessage report_message;
     FileValidatorService * ipca_service = nullptr;
 
@@ -153,9 +148,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     SessionReactor session_reactor;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, session_reactor,
-        base_params,
-        clipboard_virtual_channel_params, ipca_service);
+        &to_client_sender, &to_server_sender, session_reactor,
+        base_params, clipboard_virtual_channel_params, ipca_service);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -177,8 +171,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
     NullReportMessage report_message;
     FileValidatorService * ipca_service = nullptr;
 
@@ -195,9 +187,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     SessionReactor session_reactor;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, session_reactor,
-        base_params,
-        clipboard_virtual_channel_params, ipca_service);
+        &to_client_sender, &to_server_sender, session_reactor,
+        base_params, clipboard_virtual_channel_params, ipca_service);
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
 // Recv done on channel (28) n bytes
@@ -331,7 +322,7 @@ public:
 
     explicit TestResponseSender() = default;
 
-    void operator()(uint32_t /*total_length*/, uint32_t /*flags*/, const_bytes_view chunk_data)
+    void operator()(uint32_t /*total_length*/, uint32_t /*flags*/, bytes_view chunk_data)
             override
     {
         if (this->total_in_stream < 10) {
@@ -340,7 +331,7 @@ public:
         }
     }
 
-    const_bytes_view bytes(std::size_t i) const noexcept
+    bytes_view bytes(std::size_t i) const noexcept
     {
         return streams[i].get_bytes();
     }
@@ -352,7 +343,7 @@ struct Buffer
     StaticOutStream<1600> out;
 
     template<class F>
-    const_bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
+    bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
     {
         using namespace RDPECLIP;
         array_view_u8 av = out.out_skip_bytes(CliprdrHeader::size());
@@ -363,29 +354,21 @@ struct Buffer
     }
 };
 
-struct ReportMessage : NullReportMessage
-{
-    std::vector<std::string> messages;
-
-    void log6(const std::string & info, const ArcsightLogInfo & /*asl_info*/, const timeval /*time*/) override
-    {
-        messages.emplace_back(info);
-    }
-};
-
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    struct Front : FakeFront
+    struct ReportMessage : NullReportMessage
     {
-        using FakeFront::FakeFront;
-        std::string msg;
+        std::vector<std::string> messages;
 
-        void session_update(array_view_const_char message) override
+        void log6(LogId id, const timeval /*time*/, KVList kv_list) override
         {
-            msg.insert(msg.end(), message.begin(), message.end());
+            std::string s = detail::log_id_string_map[int(id)].data();
+            for (auto& kv : kv_list) {
+                str_append(s, ' ', kv.key, '=', kv.value);
+            }
+            messages.emplace_back(std::move(s));
         }
-    } front(screen_info);
+    };
 
     SessionReactor session_reactor;
     timeval time_test;
@@ -411,13 +394,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     TestResponseSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, session_reactor,
-        base_params,
-        clipboard_virtual_channel_params, &file_validator_service);
+        &to_client_sender, &to_server_sender, session_reactor,
+        base_params, clipboard_virtual_channel_params, &file_validator_service);
 
     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-    auto process_server_message = [&](cbytes_view av){
+    auto process_server_message = [&](bytes_view av){
         auto flags
           = CHANNELS::CHANNEL_FLAG_FIRST
           | CHANNELS::CHANNEL_FLAG_LAST
@@ -426,7 +408,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
             av.size(), flags, av, out_asynchronous_task);
     };
 
-    auto process_client_message = [&](cbytes_view av){
+    auto process_client_message = [&](bytes_view av){
         auto flags
           = CHANNELS::CHANNEL_FLAG_FIRST
           | CHANNELS::CHANNEL_FLAG_LAST
@@ -440,7 +422,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
 
     RED_CHECK(report_message.messages.size() == 0);
     RED_CHECK(buf_trans.buf.size() == 0);
-    RED_CHECK_SMEM(front.msg, ""_av);
 
     {
         using namespace RDPECLIP;
@@ -463,7 +444,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_CHECK(report_message.messages.size() == 0);
     RED_CHECK(buf_trans.buf.size() == 0);
-    RED_CHECK_SMEM(front.msg, ""_av);
 
     {
         StaticOutStream<1600> out;
@@ -484,7 +464,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_CHECK(report_message.messages.size() == 0);
     RED_CHECK(buf_trans.buf.size() == 0);
-    RED_CHECK_SMEM(front.msg, ""_av);
 
     // skip format list response
 
@@ -502,7 +481,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_CHECK(report_message.messages.size() == 0);
     RED_CHECK(buf_trans.buf.size() == 0);
-    RED_CHECK_SMEM(front.msg, ""_av);
 
     {
         using namespace Cliprdr;
@@ -566,9 +544,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
         ""_av);
     RED_REQUIRE(report_message.messages.size() == 1);
     RED_CHECK_SMEM(report_message.messages[0],
-        R"x(type="CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" format="<unknown>(0)" size="596")x"_av);
+        "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION format=<unknown>(0) size=596"_av);
     RED_CHECK(buf_trans.buf.size() == 0);
-    RED_CHECK_SMEM(front.msg, "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION=<unknown>(0)\x01""596"_av);
 
     {
         using namespace RDPECLIP;
@@ -590,9 +567,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     RED_CHECK_SMEM(buf_trans.buf,
         "\x00\x00\x00\x00\x11\x00\x00\x00\x01\x00\x00\x00\x03""abc\x00\x00\x00\x02""up"
         ""_av);
-    RED_CHECK_SMEM(front.msg, "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION=<unknown>(0)\x01""596"_av);
 
-    front.msg.clear();
     buf_trans.buf.clear();
     StaticOutStream<256> out;
     auto status = "ok"_av;
@@ -606,5 +581,4 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterDataFile)
     buf_trans.buf.assign(av.data(), av.size());
 
     clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-    RED_CHECK_SMEM(front.msg, "FILE_VERIFICATION=abc\x01UP\x01ok"_av);
 }

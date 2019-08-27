@@ -36,8 +36,8 @@ enum {
 
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
-std::size_t UTF8Len(const_byte_ptr source) noexcept;
-std::size_t UTF16ByteLen(const_bytes_view source) noexcept;
+std::size_t UTF8Len(byte_ptr source) noexcept;
+std::size_t UTF16ByteLen(bytes_view source) noexcept;
 
 // TODO deprecated
 std::size_t UTF16StrLen(const uint8_t * utf16_s) noexcept;
@@ -65,19 +65,19 @@ void UTF8RemoveOneAtPos(uint8_t * source, std::size_t len) noexcept;
 bool UTF8InsertOneAtPos(uint8_t * source, std::size_t len, const uint32_t to_insert_char, std::size_t max_source) noexcept;
 
 // UTF8toUTF16 never writes the trailing zero
-std::size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len) noexcept;
-std::size_t UTF8toUTF16(const_bytes_view source, bytes_view target) noexcept;
+std::size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept;
+std::size_t UTF8toUTF16(bytes_view source, writable_bytes_view target) noexcept;
 //std::size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, std::size_t t_len);
-std::vector<uint8_t> UTF8toUTF16(const_bytes_view source) noexcept;
+std::vector<uint8_t> UTF8toUTF16(bytes_view source) noexcept;
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
-std::size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, std::size_t t_len) noexcept;
+std::size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, std::size_t t_len) noexcept;
 
 
 class UTF8toUnicodeIterator
 {
 public:
-    explicit UTF8toUnicodeIterator(const_byte_ptr str) noexcept;
+    explicit UTF8toUnicodeIterator(byte_ptr str) noexcept;
 
     UTF8toUnicodeIterator & operator++() noexcept;
 
@@ -97,7 +97,7 @@ private:
 
 
 // convert UTF16 input to UTF8 returns a new vector containing encoded data
-inline std::vector<uint8_t> encode_UTF16_to_UTF8(const_bytes_view utf16_source) noexcept
+inline std::vector<uint8_t> encode_UTF16_to_UTF8(bytes_view utf16_source) noexcept
 {
     // TODO: Fix that, it does not handle invalid UTF16 encodings.
     // TODO: Also, we should do something for multiwords UTF16 codes
@@ -135,7 +135,7 @@ inline std::vector<uint8_t> encode_UTF16_to_UTF8(const_bytes_view utf16_source) 
 std::size_t UTF16toUTF8(const uint8_t * utf16_source, std::size_t utf16_len, uint8_t * utf8_target, std::size_t target_len) noexcept;
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
-bytes_view UTF16toUTF8_buf(const_bytes_view utf16_source, bytes_view utf8_target) noexcept;
+writable_bytes_view UTF16toUTF8_buf(bytes_view utf16_source, writable_bytes_view utf8_target) noexcept;
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
@@ -160,14 +160,14 @@ size_t UTF8CharNbBytes(const uint8_t * source) noexcept;
 
 bool is_utf8_string(uint8_t const * s, int length = -1) noexcept;
 
-bool is_ASCII_string(const_bytes_view source) noexcept;
-bool is_ASCII_string(const_byte_ptr source) noexcept;
+bool is_ASCII_string(bytes_view source) noexcept;
+bool is_ASCII_string(byte_ptr source) noexcept;
 
-std::size_t UTF8StrLenInChar(const_byte_ptr source) noexcept;
+std::size_t UTF8StrLenInChar(byte_ptr source) noexcept;
 
 std::size_t UTF16toLatin1(const uint8_t * utf16_source_, std::size_t utf16_len, uint8_t * latin1_target, std::size_t latin1_len) noexcept;
 
-std::size_t Latin1toUTF16(const_bytes_view latin1_source,
+std::size_t Latin1toUTF16(bytes_view latin1_source,
         uint8_t * utf16_target, std::size_t utf16_len) noexcept;
 
 std::size_t Latin1toUTF8(

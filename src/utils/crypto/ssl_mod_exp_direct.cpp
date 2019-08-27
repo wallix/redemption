@@ -43,17 +43,17 @@ REDEMPTION_DIAGNOSTIC_POP
  * \pre  \a out_len >= \a modulus_size
  * \return  the length of the big-endian number placed at out. ~size_t{} if error
  */
-bytes_view mod_exp_direct(
-    bytes_view out,
-    const_bytes_view inr,
-    const_bytes_view modulus,
-    const_bytes_view exponent
+writable_bytes_view mod_exp_direct(
+    writable_bytes_view out,
+    bytes_view inr,
+    bytes_view modulus,
+    bytes_view exponent
 ) {
     assert(out.size() >= modulus.size());
 
     using int_type = boost::multiprecision::cpp_int;
 
-    auto b256_to_bigint = [](const_bytes_view s) {
+    auto b256_to_bigint = [](bytes_view s) {
         int_type i;
         boost::multiprecision::import_bits(i, s.begin(), s.end());
         return i;

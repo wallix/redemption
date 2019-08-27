@@ -25,6 +25,7 @@
 #include "core/error.hpp"
 #include "core/RDP/rlgr.hpp"
 #include "gdi/graphic_api.hpp"
+#include "core/RDP/capabilities/bitmapcodecs.hpp"
 
 
 enum {
@@ -50,6 +51,10 @@ enum {
 	CT_TILE_64X64 = 0x0040,
 };
 
+enum {
+	COL_CONV_ICT = 0x01,
+	SCALAR_QUANTIZATION = 0x01
+};
 
 /** @brief a TS_RFX_RECT */
 struct TS_RFX_RECT {
@@ -73,7 +78,7 @@ struct TS_RFX_SYNC {
 struct TS_RFX_CODEC_VERSIONS {
 	uint8_t numCodecs{1};
 	uint8_t codecId{1};
-	uint16_t version{0x100};
+	uint16_t version{WF_VERSION_1_0};
 
 	void recv(InStream & stream);
 	void send(OutStream & stream);
@@ -93,7 +98,7 @@ struct TS_RFX_CODEC_CHANNELT {
 struct TS_RFX_CONTEXT : TS_RFX_CODEC_CHANNELT {
 	uint8_t ctxId{0};
 	uint16_t tileSize{CT_TILE_64X64};
-	uint16_t properties{0};
+	uint16_t properties{(COL_CONV_ICT << 3) | (CLW_XFORM_DWT_53_A << 5) | (CLW_ENTROPY_RLGR3 << 9) | (SCALAR_QUANTIZATION << 13)};
 
 	void recv(InStream & stream);
 	void send(OutStream & stream);
@@ -115,6 +120,7 @@ struct TS_RFX_CHANNELS {
 
 	~TS_RFX_CHANNELS();
 
+	void setChannel(uint8_t channelId, uint16_t width, uint16_t height);
 	void recv(InStream & stream);
 	void send(OutStream & stream);
 };
@@ -239,4 +245,15 @@ protected:
 	TS_RFX_REGION currentRegion;
 };
 
+/** @brief an encoder for the remorteFx codec */
+class RfxEncoder {
+public:
+	RfxEncoder();
 
+	void sendFrame();
+protected:
+	void sendInitSequence();
+protected:
+	bool initialized;
+	uint32_t frameCounter;
+};

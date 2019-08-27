@@ -207,7 +207,6 @@ int main(int argc, char** argv)
               , false
               , false          /*remove_server_alt_state_for_char*/
               , nullptr
-              , ini
               , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace
               , nullptr);
         }) ? 1 : 0;

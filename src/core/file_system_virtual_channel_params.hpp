@@ -31,7 +31,6 @@ struct FileSystemVirtualChannelParams {
     bool smart_card_authorized        = false;
 
     bool dont_log_data_into_syslog    = false;
-    bool dont_log_data_into_wrm       = false;
 
     explicit FileSystemVirtualChannelParams() = default;
 };

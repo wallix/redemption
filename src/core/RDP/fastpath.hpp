@@ -238,7 +238,7 @@ namespace FastPath {
         }())
         , payload([&stream, this](){
             InStream istream((0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED))
-                                ? cbytes_view{this->decrypted_payload.get(), stream.in_remain()}
+                                ? bytes_view{this->decrypted_payload.get(), stream.in_remain()}
                                 : stream.remaining_bytes()
                             );
             // Consumes everything remaining in stream after decrypting was done

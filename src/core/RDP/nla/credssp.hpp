@@ -1099,7 +1099,7 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
            << ber_pub_key_auth_header << self.pubKeyAuth;
 
     if (self.version >= 5 && self.clientNonce.initialized){
-        result << ber_nonce_header << cbytes_view({self.clientNonce.data, sizeof(self.clientNonce.data)});
+        result << ber_nonce_header << bytes_view({self.clientNonce.data, sizeof(self.clientNonce.data)});
 //        stream.out_copy_bytes(ber_nonce_header);
 //        stream.out_copy_bytes({self.clientNonce.data, sizeof(self.clientNonce.data)});
     }
@@ -1308,7 +1308,7 @@ struct TSPasswordCreds {
 };
 
 
-inline std::vector<uint8_t> emitTSPasswordCreds(cbytes_view domain, cbytes_view user, cbytes_view password)
+inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view user, bytes_view password)
 {
     // [0] domainName (OCTET STRING)
     auto ber_domain_name_header = BER::mkMandatoryOctetStringFieldHeader(domain.size(), 0);
@@ -1387,7 +1387,7 @@ struct TSCspDataDetail {
 
     = default;
 
-    TSCspDataDetail(uint32_t keySpec, cbytes_view cardName, cbytes_view readerName, cbytes_view containerName, cbytes_view cspName)
+    TSCspDataDetail(uint32_t keySpec, bytes_view cardName, bytes_view readerName, bytes_view containerName, bytes_view cspName)
         : keySpec(keySpec)
         , cardName(cardName.data(), cardName.data()+cardName.size())
         , readerName(readerName.data(), readerName.data()+readerName.size())
@@ -1553,7 +1553,7 @@ struct TSSmartCardCreds {
         memcpy(this->domainHint, domainHint, this->domainHint_length);
     }
 
-    void set_cspdatadetail(uint32_t keySpec, cbytes_view cardName, cbytes_view readerName, cbytes_view containerName, cbytes_view cspName) {
+    void set_cspdatadetail(uint32_t keySpec, bytes_view cardName, bytes_view readerName, bytes_view containerName, bytes_view cspName) {
         this->cspData = TSCspDataDetail(keySpec, cardName, readerName, containerName, cspName);
     }
 
@@ -1703,10 +1703,10 @@ struct TSCredentials
                   uint8_t * userHint, size_t userHint_length,
                   uint8_t * domainHint, size_t domainHint_length,
                   uint32_t keySpec, 
-                  cbytes_view cardName,
-                  cbytes_view readerName,
-                  cbytes_view containerName,
-                  cbytes_view cspName)
+                  bytes_view cardName,
+                  bytes_view readerName,
+                  bytes_view containerName,
+                  bytes_view cspName)
         : credType(2)
         , smartcardCreds(pin, pin_length,
                          userHint, userHint_length,
@@ -1720,10 +1720,10 @@ struct TSCredentials
                        uint8_t * userHint, size_t userHint_length,
                        uint8_t * domainHint, size_t domainHint_length,
                        uint32_t keySpec, 
-                       cbytes_view cardName,
-                       cbytes_view readerName,
-                       cbytes_view containerName,
-                       cbytes_view cspName) {
+                       bytes_view cardName,
+                       bytes_view readerName,
+                       bytes_view containerName,
+                       bytes_view cspName) {
         this->credType = 2;
         this->smartcardCreds = TSSmartCardCreds(pin, pin_length,
                                                 userHint, userHint_length,
@@ -1736,7 +1736,7 @@ struct TSCredentials
 //        this->passCreds = TSPasswordCreds(domain, domain_length, user, user_length, pass, pass_length);
 //    }
 
-    void set_credentials_from_av(cbytes_view domain_av, cbytes_view user_av, cbytes_view password_av) {
+    void set_credentials_from_av(bytes_view domain_av, bytes_view user_av, bytes_view password_av) {
         this->passCreds = TSPasswordCreds(domain_av.data(), domain_av.size(),
                                           user_av.data(), user_av.size(),
                                           password_av.data(), password_av.size());

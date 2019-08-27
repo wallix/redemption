@@ -528,10 +528,10 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
                       char_ptr_cast(domainHint));
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec, keySpec);
     
-    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cardName, cbytes_view({cardName, sizeof(cardName)}));
-    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.readerName, cbytes_view({readerName, sizeof(readerName)}));
-    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.containerName, cbytes_view({containerName, sizeof(containerName)}));
-    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cspName, cbytes_view({cspName, sizeof(cspName)}));
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cardName, bytes_view({cardName, sizeof(cardName)}));
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.readerName, bytes_view({readerName, sizeof(readerName)}));
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.containerName, bytes_view({containerName, sizeof(containerName)}));
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cspName, bytes_view({cspName, sizeof(cspName)}));
 }
 
 // Traffic Captured on WIN2012

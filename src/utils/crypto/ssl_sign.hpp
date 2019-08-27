@@ -32,10 +32,10 @@
 class Sign
 {
     SslSha1 sha1;
-    const const_bytes_view key;
+    const bytes_view key;
 
 public:
-    Sign(const_bytes_view key)
+    Sign(bytes_view key)
         : key(key)
     {
         this->sha1.update(this->key);
@@ -49,7 +49,7 @@ public:
         sha1.update(make_array_view(sha1const));
     }
 
-    void update(const_bytes_view data) {
+    void update(bytes_view data) {
         this->sha1.update(data);
     }
 

@@ -105,12 +105,12 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
     RED_CHECK_MEM(out_s.get_bytes(), payload.first(2));
-    RED_CHECK_MEM(out_payload.get_bytes(), payload.from_at(2));
+    RED_CHECK_MEM(out_payload.get_bytes(), payload.from_offset(2));
 }
 
 struct mppc_dec_error : rdp_mppc_dec
 {
-    cbytes_view decompress(cbytes_view /*cbuf*/, int /*ctype*/) override
+    bytes_view decompress(bytes_view /*cbuf*/, int /*ctype*/) override
     {
         RED_ERROR("rdp_mppc_dec::decompress is called");
         return {};
@@ -196,7 +196,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
     RED_CHECK_MEM(out_s.get_bytes(), payload.first(2));
-    RED_CHECK_MEM(out_payload.get_bytes(), payload.from_at(2));
+    RED_CHECK_MEM(out_payload.get_bytes(), payload.from_offset(2));
 }
 
 RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
@@ -350,7 +350,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
         );
 
     RED_CHECK_MEM(SvrUpdPDU_s.get_bytes(), payload.first(2)); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-    RED_CHECK_MEM(out_s.get_bytes(), payload.from_at(2)); // Fast-Path Update (TS_FP_UPDATE)
+    RED_CHECK_MEM(out_s.get_bytes(), payload.from_offset(2)); // Fast-Path Update (TS_FP_UPDATE)
 
     RED_CHECK_EQUAL(0, in_su.payload.in_remain());
 }

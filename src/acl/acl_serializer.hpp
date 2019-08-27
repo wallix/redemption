@@ -114,7 +114,7 @@ public:
 
     void open(
         std::string const& log_path, std::string const& hash_path,
-        int groupid, const_bytes_view derivator);
+        int groupid, bytes_view derivator);
 
     void close();
 
@@ -168,9 +168,7 @@ public:
 
     void update_inactivity_timeout() override;
 
-    void log6(
-        const std::string & info, const ArcsightLogInfo & asl_info,
-        const timeval time) override;
+    void log6(LogId id, const timeval time, KVList kv_list) override;
 
     void start_session_log();
 

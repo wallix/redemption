@@ -31,7 +31,7 @@ struct WsTransport::D
 {
     static auto sender(WsTransport& t)
     {
-        return [&t](const_bytes_view data) {
+        return [&t](bytes_view data) {
             t.SocketTransport::do_send(data.data(), data.size());
         };
     }

@@ -78,37 +78,37 @@ void hexdump_impl(
 } // namespace
 
 
-void hexdump(const_byte_ptr data, size_t size)
+void hexdump(byte_ptr data, size_t size)
 {
     // %.4x %x %x ... %c%c..
     hexdump_impl(data.as_u8p(), size, "", " ", "", " ", " ", "");
 }
 
-void hexdump(const_bytes_view data)
+void hexdump(bytes_view data)
 {
     hexdump(data.as_u8p(), data.size());
 }
 
 
-void hexdump_d(const_byte_ptr data, size_t size)
+void hexdump_d(byte_ptr data, size_t size)
 {
     // /* %.4x */ 0x%x 0x%x ... // %c%c..
     hexdump_impl(data.as_u8p(), size, "/* ", " */ ", "0x", ", ", "", " // ");
 }
 
-void hexdump_d(const_bytes_view data)
+void hexdump_d(bytes_view data)
 {
     hexdump_d(data.as_u8p(), data.size());
 }
 
 
-void hexdump_c(const_byte_ptr data, size_t size)
+void hexdump_c(byte_ptr data, size_t size)
 {
     // /* %.4x */ "\x%x\x%x ..." // %c%c..
     hexdump_impl(data.as_u8p(), size, "/* ", " */ \"", "\\x", "", "\"", " // ");
 }
 
-void hexdump_c(const_bytes_view data)
+void hexdump_c(bytes_view data)
 {
     hexdump_c(data.as_u8p(), data.size());
 }

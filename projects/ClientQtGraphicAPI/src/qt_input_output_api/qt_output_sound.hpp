@@ -116,7 +116,7 @@ public:
         }
     }
 
-    void setData(cbytes_view data) override {
+    void setData(bytes_view data) override {
         std::ofstream file(this->wave_file_to_write.c_str(), std::ios::app | std::ios::out| std::ios::binary);
         if (file) {
             file.write(data.as_charp(), data.size());

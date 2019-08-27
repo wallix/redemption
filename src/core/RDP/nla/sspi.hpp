@@ -21,10 +21,3 @@
 
 #pragma once
 
-
-
-// using SEC_GET_KEY_FN = void (*)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
-// using HANDLE = void*;
-// using PHANDLE = void*;
-// using LPHANDLE = void*;
-

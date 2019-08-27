@@ -65,12 +65,12 @@ struct SEC_WINNT_AUTH_IDENTITY
         this->princpass[0] = 0;
     }
 
-    void user_init_copy(cbytes_view av)
+    void user_init_copy(bytes_view av)
     {
         this->User.assign(av.data(), av.data()+av.size());
     }
 
-    void domain_init_copy(cbytes_view av)
+    void domain_init_copy(bytes_view av)
     {
         this->Domain.assign(av.data(), av.data()+av.size());
     }
@@ -79,30 +79,20 @@ struct SEC_WINNT_AUTH_IDENTITY
         return (this->User.size() == 0) && (this->Domain.size() == 0);
     }
 
-    cbytes_view get_password_utf16_av() const
+    bytes_view get_password_utf16_av() const
     {
         return this->Password;
     }
 
-    cbytes_view get_user_utf16_av() const
+    bytes_view get_user_utf16_av() const
     {
         return this->User;
     }
 
-    cbytes_view get_domain_utf16_av() const
+    bytes_view get_domain_utf16_av() const
     {
         return this->Domain;
     }
-
-    void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
-    {
-        UTF16toUTF8(this->Domain.data(), this->Domain.size(), buffer, buffer_len);
-    }
-
-    void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
-        UTF16toUTF8(this->User.data(), this->User.size(), buffer, buffer_len);
-    }
-
 
     void SetUserFromUtf8(const uint8_t * user)
     {
@@ -162,7 +152,7 @@ struct SEC_WINNT_AUTH_IDENTITY
         this->Password.clear();
     }
 
-    void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
+    void CopyAuthIdentity(bytes_view user_utf16_av, bytes_view domain_utf16_av, bytes_view password_utf16_av)
     {
         this->User.assign(user_utf16_av.data(),user_utf16_av.data()+user_utf16_av.size());
         this->Domain.assign(domain_utf16_av.data(),domain_utf16_av.data()+domain_utf16_av.size());
@@ -183,7 +173,7 @@ RED_AUTO_TEST_CASE(TestAvPair)
 
     auto tartempion = "NomDeDomaine\0"_av;
 
-    auto NtlmAddToAvPairList = [](NTLM_AV_ID avId, cbytes_view data, NtlmAvPairList & list) -> void
+    auto NtlmAddToAvPairList = [](NTLM_AV_ID avId, bytes_view data, NtlmAvPairList & list) -> void
     {
         for (auto & avp: list) {
             if (avp.id == avId){
@@ -1748,13 +1738,13 @@ private:
     TimeObj & timeobj;
     std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
     std::unique_ptr<NTLMContext> context;
-    std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)>& set_password_cb;
+    std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)>& set_password_cb;
     bool verbose;
 
 public:
     explicit Ntlm_SecurityFunctionTable(
         Random & rand, TimeObj & timeobj,
-        std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)> & set_password_cb,
+        std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> & set_password_cb,
         bool verbose = false
     )
         : rand(rand)
@@ -1901,7 +1891,7 @@ private:
     /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
     static void compute_hmac_md5(
         uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-        const_bytes_view data_buffer, uint32_t SeqNo)
+        bytes_view data_buffer, uint32_t SeqNo)
     {
         // TODO signing_key by array reference
         SslHMAC_Md5 hmac_md5({signing_key, 16});
@@ -1956,7 +1946,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) 
+    SEC_STATUS DecryptMessage(buffer_view data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) 
     {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
@@ -1969,7 +1959,7 @@ public:
 
         // data_in [signature][data_buffer]
 
-        auto data_buffer = data_in.from_at(cbMaxSignature);
+        auto data_buffer = data_in.from_offset(cbMaxSignature);
         data_out = std::vector<uint8_t>(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */
@@ -2005,8 +1995,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
     LCGTime timeobj;
 
 
-    std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)> set_password_cb
-      = [](cbytes_view,cbytes_view,std::vector<uint8_t>&){ return PasswordCallback::Ok; };
+    std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb
+      = [](bytes_view,bytes_view,std::vector<uint8_t>&){ return PasswordCallback::Ok; };
 
     Ntlm_SecurityFunctionTable server_table(rand, timeobj, set_password_cb);
     Ntlm_SecurityFunctionTable client_table(rand, timeobj, set_password_cb);
@@ -2069,7 +2059,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // ENCRYPT
     auto message = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!"_av;
     std::vector<uint8_t> Result;
-    server_status = server_table.EncryptMessage(cbytes_view(message), Result, 0);
+    server_status = server_table.EncryptMessage(bytes_view(message), Result, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
     const unsigned cbMaxSignature = 16u;
@@ -2335,7 +2325,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     uint8_t win7[] =  {0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00};
     uint8_t upwin7[] = {0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00};
     
-    auto clone_av_to_vector = [](cbytes_view data) -> std::vector<uint8_t> {
+    auto clone_av_to_vector = [](bytes_view data) -> std::vector<uint8_t> {
         return std::vector<uint8_t>(data.data(), data.data()+data.size());
     };
 

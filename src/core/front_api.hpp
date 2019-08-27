@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "core/report_message_api.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -40,7 +41,7 @@ public:
     virtual bool must_be_stop_capture() = 0;
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, const_bytes_view chunk_data
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
                                 , std::size_t total_length, int flags) = 0;
 
     enum class ResizeResult {
@@ -64,7 +65,7 @@ public:
     virtual void set_focus_on_password_textbox(bool /*unused*/) {}
     virtual void set_focus_on_unidentified_input_field(bool /*unused*/) {}
     virtual void set_consent_ui_visible(bool /*unused*/) {}
-    virtual void session_update(array_view_const_char message) { (void)message; }
+    virtual void session_update(LogId id, KVList kv_list) { (void)id; (void)kv_list; }
 
     ////////////////////////////////
     // RemoteApp.

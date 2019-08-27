@@ -694,7 +694,7 @@ struct BitmapCodec
         out.out_uint8(this->codecID);
         out.out_uint16_le(this->codecPropertiesLength);
 
-        //const_byte_ptr props = out.get_current();
+        //byte_ptr props = out.get_current();
         this->codecProperties.emit(out);
 
         //LOG(LOG_ERR, "codecProperties:");

@@ -22,7 +22,6 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
-#include "mod/vnc/vnc_params.hpp"
 
 #include <memory>
 
@@ -48,9 +47,8 @@ std::unique_ptr<mod_api> new_mod_vnc(
     const char * encodings,
     ReportMessageApi& report_message,
     bool server_is_apple,
-    bool send_alt_ksym, 
+    bool send_alt_ksym,
     ClientExecute* rail_client_execute,
-    ModVncVariables vars,
     VNCVerbose verbose,
     VNCMetrics * metrics
 );

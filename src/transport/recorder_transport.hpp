@@ -55,7 +55,7 @@ public:
 
     ~RecorderFile();
 
-    void write_packet(PacketType type, const_bytes_view buffer);
+    void write_packet(PacketType type, bytes_view buffer);
 
 protected:
     TimeObj& timeobj;
@@ -73,7 +73,7 @@ public:
 
     explicit RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename);
 
-    void add_info(bytes_view info);
+    void add_info(writable_bytes_view info);
 
     TlsResult enable_client_tls(ServerNotifier & server_notifier) override;
 

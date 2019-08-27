@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "core/log_id.hpp"
 #include "capture/capture.hpp"
 #include "capture/params_from_ini.hpp"
 #include "capture/capture_params.hpp"
@@ -274,6 +275,10 @@ private:
 
                     GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
                 }
+            }
+
+            void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &/*content*/) override {
+            	GraphicsUpdatePDU::send_set_surface_command(cmd);
             }
 
             void set_palette(const BGRPalette& /*unused*/) override {
@@ -1242,7 +1247,7 @@ public:
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel
-                        , const_bytes_view chunk_data
+                        , bytes_view chunk_data
                         , std::size_t total_length
                         , int flags) override {
         LOG_IF(bool(this->verbose & Verbose::channel), LOG_INFO,
@@ -2633,9 +2638,9 @@ public:
 
         this->update_keyboard_input_mask_state();
 
-        if (!started) {
-            this->session_update("Front::session_probe_started: Probe.Status=Unknown"_av);
-        }
+        this->session_update(LogId::PROBE_STATUS, {
+            KVLog("status"_av, started ? "Ready"_av : "Unknown"_av),
+        });
     }
 
     void set_keylayout(int LCID) override {
@@ -2664,9 +2669,9 @@ public:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(array_view_const_char message) override {
+    void session_update(LogId id, KVList kv_list) override {
         if (this->capture) {
-            this->capture->session_update(this->session_reactor.get_current_time(), message);
+            this->capture->session_update(this->session_reactor.get_current_time(), id, kv_list);
         }
     }
 
@@ -2879,7 +2884,7 @@ private:
                     send_multifrag_caps = true;
                 }
 
-                if (this->ini.get<cfg::client::remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
+                if (this->ini.get<cfg::client::front_remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
                 	BitmapCodecCaps bitmap_codec_caps(false);
 
                 	bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
@@ -2905,7 +2910,7 @@ private:
                 ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             },
-            [this](StreamSize<0>, OutStream &, const_bytes_view packet) {
+            [this](StreamSize<0>, OutStream &, bytes_view packet) {
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_demand_active: Sec clear payload to send:");
                     hexdump_d(packet);
@@ -4161,6 +4166,20 @@ protected:
     }
 
     void draw_impl(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & content) {
+#if 0 // no server-side remoteFx for now
+    	if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
+    		if (!content.encodedContent.empty()) {
+    			LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): should build a rfx frame");
+    			RDPSetSurfaceCommand newCmd = cmd;
+    			newCmd.codecId = this->client_info.bitmap_codec_caps.bitmapCodecArray[0].codecID;
+    			this->graphics_update->draw(newCmd, content);
+    		}
+
+    		return;
+    	}
+#endif
+
+    	/* fallback, transcode to bitmapUpdates */
     	for (const Rect & rect1 : content.region.rects) {
     		Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
 

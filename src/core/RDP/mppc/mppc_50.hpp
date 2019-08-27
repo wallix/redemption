@@ -436,7 +436,7 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec
         this->history_ptr = history_ptr;
     }   // decompress_50
 
-    cbytes_view decompress(cbytes_view cbuf, int ctype) override
+    bytes_view decompress(bytes_view cbuf, int ctype) override
     {
         uint32_t roff   = 0;
         uint32_t rlen   = 0;

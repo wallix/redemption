@@ -31,7 +31,7 @@ struct FakeDataSender : VirtualChannelDataSender
         uint8_t data[1600] = {0};
         size_t size = 0;
 
-        const_bytes_view av() const noexcept
+        bytes_view av() const noexcept
         {
             return {data, size};
         }
@@ -42,7 +42,7 @@ struct FakeDataSender : VirtualChannelDataSender
 
     void operator()(
         uint32_t /*total_length*/, uint32_t /*flags*/,
-        const_bytes_view chunk_data) override
+        bytes_view chunk_data) override
     {
         RED_REQUIRE(this->index < this->streams.size());
         RED_REQUIRE(chunk_data.size() < std::size(streams[this->index].data));

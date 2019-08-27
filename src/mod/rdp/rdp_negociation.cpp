@@ -24,6 +24,7 @@
 
 #include "mod/rdp/rdp_negociation.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
+#include "core/log_id.hpp"
 #include "core/app_path.hpp"
 #include "core/RDP/autoreconnect.hpp"
 #include "core/RDP/lic.hpp"
@@ -34,13 +35,13 @@
 #include "core/report_message_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "core/channels_authorizations.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/multisz.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include "utils/difftimeval.hpp"
 
@@ -130,22 +131,11 @@ RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name,
 }
 
 
-namespace
-{
-    bool is_syslog_notification_enabled(ServerNotification server_notification) noexcept
-    {
-        return ((server_notification & ServerNotification::syslog)
-            == ServerNotification::syslog);
-    }
-}
-
-
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(
-    FrontAPI& front,
     ReportMessageApi& report_message,
     bool server_cert_store,
     ServerCertCheck server_cert_check,
-    std::unique_ptr<char[]> certif_path,
+    std::unique_ptr<char[]>&& certif_path,
     ServerNotification server_access_allowed_message,
     ServerNotification server_cert_create_message,
     ServerNotification server_cert_success_message,
@@ -156,104 +146,53 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
 : server_cert_check(server_cert_check)
 , certif_path(std::move(certif_path))
 , server_cert_store(server_cert_store)
-, server_access_allowed_message(server_access_allowed_message)
-, server_cert_create_message(server_cert_create_message)
-, server_cert_success_message(server_cert_success_message)
-, server_cert_failure_message(server_cert_failure_message)
-, server_cert_error_message(server_cert_error_message)
+, server_status_messages([&]{
+    std::array<ServerNotification, 5> a;
+    a[underlying_cast(Status::AccessAllowed)] = server_access_allowed_message;
+    a[underlying_cast(Status::CertCreate)] = server_cert_create_message;
+    a[underlying_cast(Status::CertSuccess)] = server_cert_success_message;
+    a[underlying_cast(Status::CertFailure)] = server_cert_failure_message;
+    a[underlying_cast(Status::CertError)] = server_cert_error_message;
+    return a;
+}())
 , verbose(verbose)
-, front(front)
 , report_message(report_message)
 {}
 
-void RdpNegociation::RDPServerNotifier::server_access_allowed()
+void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::string_view error_msg)
 {
-    if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-        ArcsightLogInfo arc_info;
-        arc_info.name = "CERTIFICATE_CHECK";
-        arc_info.signatureID = ArcsightLogInfo::ID::CERTIFICATE_CHECK;
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.WallixBastionStatus = "SUCCESS";
-        arc_info.message = "Connexion to server allowed";
-        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
+    auto notification_type = this->server_status_messages[underlying_cast(status)];
+    if (bool(notification_type & ServerNotification::syslog)) {
+        auto log6 = [&](LogId id, zstring_view message){
+            this->report_message.log6(id, tvtime(), {
+                KVLog("description"_av, message),
+            });
+            LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message);
+        };
 
-        this->log6_server_cert(
-            "CERTIFICATE_CHECK_SUCCESS",
-            "Connexion to server allowed",
-            arc_info
-        );
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::server_cert_create()
-{
-    if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SERVER_CERTIFICATE_NEW";
-        arc_info.signatureID = ArcsightLogInfo::ID::SERVER_CERTIFICATE_NEW;
-        arc_info.ApplicationProtocol = "rdp";
-        //arc_info.WallixBastionStatus = "";
-        arc_info.message = "New X.509 certificate created";
-        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-        this->log6_server_cert(
-            "SERVER_CERTIFICATE_NEW",
-            "New X.509 certificate created",
-            arc_info
-        );
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::server_cert_success()
-{
-    if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SERVER_CERTIFICATE_MATCH";
-        arc_info.signatureID = ArcsightLogInfo::ID::SERVER_CERTIFICATE_MATCH;
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.WallixBastionStatus = "SUCCESS";
-        arc_info.message = "X.509 server certificate match";
-        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-        this->log6_server_cert(
-            "SERVER_CERTIFICATE_MATCH_SUCCESS",
-            "X.509 server certificate match",
-            arc_info
-        );
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::server_cert_failure()
-{
-    if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SERVER_CERTIFICATE_MATCH";
-        arc_info.signatureID = ArcsightLogInfo::ID::SERVER_CERTIFICATE_MATCH;
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.WallixBastionStatus = "FAILURE";
-        arc_info.message = "X.509 server certificate match failure";
-        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-        this->log6_server_cert(
-            "SERVER_CERTIFICATE_MATCH_FAILURE",
-            "X.509 server certificate match failure",
-            arc_info
-        );
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error)
-{
-    if (is_syslog_notification_enabled(this->server_cert_error_message)) {
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SERVER_CERTIFICATE";
-        arc_info.signatureID = ArcsightLogInfo::ID::SERVER_CERTIFICATE;
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.WallixBastionStatus = "ERROR";
-        arc_info.message = str_concat("X.509 server certificate internal error: ", str_error);
-        arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-        this->log6_server_cert("SERVER_CERTIFICATE_ERROR", arc_info.message, arc_info);
+        switch (status)
+        {
+            case Status::AccessAllowed:
+                log6(LogId::CERTIFICATE_CHECK_SUCCESS,
+                    "Connexion to server allowed"_zv);
+                break;
+            case Status::CertCreate:
+                log6(LogId::SERVER_CERTIFICATE_NEW,
+                    "New X.509 certificate created"_zv);
+                break;
+            case Status::CertSuccess:
+                log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS,
+                    "X.509 server certificate match"_zv);
+                break;
+            case Status::CertFailure:
+                log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE,
+                    "X.509 server certificate match failure"_zv);
+                break;
+            case Status::CertError:
+                log6(LogId::SERVER_CERTIFICATE_ERROR,
+                    str_concat("X.509 server certificate internal error: "_zv, error_msg));
+                break;
+        }
     }
 }
 
@@ -285,20 +224,6 @@ CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(
       ? CertificateResult::valid
       : CertificateResult::invalid;
 }
-
-void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, charp_or_string description, const ArcsightLogInfo & arc_info)
-{
-    this->message.assign(type.data, {{"description", description.data}});
-
-    // TODO system time
-    this->report_message.log6(this->message.str(), arc_info, tvtime());
-
-    LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", this->message.str());
-
-    std::string message = str_concat(type.data, '=', description.data);
-    this->front.session_update(message);
-}
-
 
 RdpNegociation::RdpNegociation(
     std::reference_wrapper<const ChannelsAuthorizations> channels_authorizations,
@@ -345,7 +270,6 @@ RdpNegociation::RdpNegociation(
     , gen(gen)
     , verbose(mod_rdp_params.verbose /*| (RDPVerbose::security|RDPVerbose::basic_trace)*/)
     , server_notifier(
-        front,
         report_message,
         mod_rdp_params.server_cert_store,
         mod_rdp_params.server_cert_check,

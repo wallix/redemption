@@ -318,10 +318,10 @@ public:
                                 Translator tr(language(ini));
                                 switch (rt_status) {
                                     case Capture::RTDisplayResult::Enabled:
-                                        mm.osd_message(tr(trkeys::enable_rt_display), true);
+                                        mm.osd_message(tr(trkeys::enable_rt_display).to_string(), true);
                                         break;
                                     case Capture::RTDisplayResult::Disabled:
-                                        mm.osd_message(tr(trkeys::disable_rt_display), true);
+                                        mm.osd_message(tr(trkeys::disable_rt_display).to_string(), true);
                                         break;
                                     case Capture::RTDisplayResult::Unchanged:
                                         break;

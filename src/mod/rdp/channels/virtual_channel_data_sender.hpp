@@ -26,7 +26,7 @@
 inline void msgdump_impl(
     bool from_or_to_client,
     uint32_t total_length, uint32_t flags,
-    const_bytes_view chunk_data)
+    bytes_view chunk_data)
 {
     const unsigned dest = (from_or_to_client
                             ? 0  // Client
@@ -46,7 +46,7 @@ inline void msgdump_impl(
 }
 
 inline static void msgdump_c(bool send, bool from_or_to_client,
-    uint32_t total_length, uint32_t flags, const_bytes_view chunk_data)
+    uint32_t total_length, uint32_t flags, bytes_view chunk_data)
 {
     if (send) {
         LOG(LOG_INFO, "Sending on channel (%zu) n bytes", chunk_data.size());
@@ -64,7 +64,7 @@ inline static void msgdump_c(bool send, bool from_or_to_client,
 }
 
 inline static void msgdump_d(bool send, bool from_or_to_client,
-    uint32_t total_length, uint32_t flags, const_bytes_view chunk_data)
+    uint32_t total_length, uint32_t flags, bytes_view chunk_data)
 {
     if (send) {
         LOG(LOG_INFO, "Sending on channel (%u) n bytes", total_length);
@@ -94,6 +94,6 @@ public:
     }
 
     // TODO add names function
-    virtual void operator()(uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) = 0;
+    virtual void operator()(uint32_t total_length, uint32_t flags, bytes_view chunk_data) = 0;
 };
 

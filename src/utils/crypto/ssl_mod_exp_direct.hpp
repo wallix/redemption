@@ -30,9 +30,9 @@
  * \pre  \a out.size() >= \a modulus.size()
  * \return  the length of the big-endian number placed at out. ~size_t{} if error
  */
-bytes_view mod_exp_direct(
-    bytes_view out,
-    const_bytes_view inr,
-    const_bytes_view modulus,
-    const_bytes_view exponent
+writable_bytes_view mod_exp_direct(
+    writable_bytes_view out,
+    bytes_view inr,
+    bytes_view modulus,
+    bytes_view exponent
 );

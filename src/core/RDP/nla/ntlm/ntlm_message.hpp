@@ -89,7 +89,7 @@ static inline array_md5 Md5(array_view_const_u8 data)
     return result;
 }
 
-static inline array_md5 Md5(array_view_const_u8 data1, const_bytes_view data2)
+static inline array_md5 Md5(array_view_const_u8 data1, bytes_view data2)
 {
     array_md5 result;
     SslMd5 md5;
@@ -131,7 +131,7 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
 }
 
 using array_sha256 = std::array<uint8_t, SslSha256::DIGEST_LENGTH>;
-static inline array_sha256 Sha256(const_bytes_view data1, array_view_const_u8 data2, array_view_const_u8 data3)
+static inline array_sha256 Sha256(bytes_view data1, array_view_const_u8 data2, array_view_const_u8 data3)
 {
     array_sha256 result;
     SslSha256 sha256;
@@ -1802,7 +1802,7 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
 }
 
 
-inline NTLMChallengeMessage recvNTLMChallengeMessage(cbytes_view av)
+inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
 {
     InStream stream(av);
     NTLMChallengeMessage self;
@@ -2089,7 +2089,7 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
     return message;
 }
 
-inline NTLMNegotiateMessage recvNTLMNegotiateMessage(cbytes_view av)
+inline NTLMNegotiateMessage recvNTLMNegotiateMessage(bytes_view av)
 {
     InStream stream(av);
     NTLMNegotiateMessage self;

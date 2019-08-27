@@ -70,7 +70,8 @@ namespace
         template<class... Ts>
         explicit PrivateRdpNegociation(
             std::chrono::seconds open_session_timeout,
-            char const* program, char const* directory, Ts&&... xs)
+            char const* program, char const* directory,
+            Ts&&... xs)
         : rdp_negociation(static_cast<Ts&&>(xs)...)
         , open_session_timeout(open_session_timeout)
         {

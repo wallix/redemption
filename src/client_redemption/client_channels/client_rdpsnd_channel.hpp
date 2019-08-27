@@ -41,7 +41,7 @@ public:
     uint32_t bit_per_sec = 0;
 
     virtual void init(size_t raw_total_size) = 0;
-    virtual void setData(cbytes_view data) = 0;
+    virtual void setData(bytes_view data) = 0;
     virtual void play() = 0;
 
     virtual ~ClientOutputSoundAPI() = default;

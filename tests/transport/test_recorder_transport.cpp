@@ -158,7 +158,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
                     RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
                     RED_CHECK_EQ(3, trans.partial_read(av));
                     RED_CHECK_MEM(in.first(3), make_array_view(buf, 3));
-                    in = in.from_at(3);
+                    in = in.from_offset(3);
                     break;
                 case Pck::DataOut: trans.send(m.s); break;
                 case Pck::ServerCert: trans.enable_server_tls("", "", 0); break;
@@ -195,7 +195,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
                     RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
                     RED_CHECK_EQ(3, trans.partial_read(av));
                     RED_CHECK_MEM(in.first(3), make_array_view(buf, 3));
-                    in = in.from_at(3);
+                    in = in.from_offset(3);
                     break;
                 case Pck::DataOut: trans.send(m.s); break;
                 case Pck::ServerCert: trans.enable_server_tls("", "", 0); break;

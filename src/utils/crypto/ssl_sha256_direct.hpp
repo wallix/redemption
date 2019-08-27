@@ -37,7 +37,7 @@ public:
         this->sha256_init();
     }
 
-    void update(const_bytes_view data) noexcept
+    void update(bytes_view data) noexcept
     {
         this->sha256_update(data.as_u8p(), data.size());
     }

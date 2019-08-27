@@ -198,7 +198,7 @@ struct RefreshRectPDU {
                 sctrl_header.out_copy_bytes(this->buffer_stream.get_data(),
                                             this->buffer_stream.get_offset());
             },
-            [this](StreamSize<256>, OutStream & sec_header, bytes_view pkt) {
+            [this](StreamSize<256>, OutStream & sec_header, writable_bytes_view pkt) {
                 SEC::Sec_Send sec(sec_header,
                                   pkt,
                                   0,

@@ -25,12 +25,12 @@
 
 class BlockWrap
 {
-    const_bytes_view & t;
+    bytes_view & t;
     size_t pos;
 public:
-    BlockWrap(const_bytes_view & t) : t(t), pos(0) {}
+    BlockWrap(bytes_view & t) : t(t), pos(0) {}
 
-    size_t operator()(byte_ptr buffer, size_t len)
+    size_t operator()(writable_byte_ptr buffer, size_t len)
     {
         const size_t available = this->t.size() - this->pos;
         if (len >= available){
@@ -707,7 +707,7 @@ RED_AUTO_TEST_CASE(TestHextile)
 /* 3e0 */ "\x5a\xcb\x5a\x01\xaa\x52\x4d\x6b\x0c\x5b\xf3\x9c\xf7\xbd\xbb\xd6"
 /* 03f0 */"\xba\xd6\x75\xad\xcf\x7b\x4d\x6b\x4d\x6b\x4d\x6b\x4d\x63\x4d\x63"
     };
-    const_bytes_view datas[1] = {
+    bytes_view datas[1] = {
          make_array_view(tile),
     };
     BlockWrap bw(datas[0]);

@@ -326,31 +326,37 @@ namespace
         template<class Op, class... Col>
         void mem_blt(Rect rect, const ConstImageDataView & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
         {
-            // TODO implements with ConstImageDataView::Storage::TopToBottom
-            assert(bmp.storage_type() == ConstImageDataView::Storage::BottomToTop && "other is unimplemented");
-
             P dest = dimpl.first_pixel(rect);
-            cP src = bmp.data(srcx, bmp.height() - srcy - 1);
+            const int startY = (bmp.storage_type() == ConstImageDataView::Storage::BottomToTop)
+            		? bmp.height() - srcy - 1
+            		: srcy;
+            cP src = bmp.data(srcx, startY);
             const size_t n = rect.cx * dimpl.nbbytes_color();
             const uint8_t bmp_bpp = safe_int(bmp.bits_per_pixel());
             const size_t bmp_line_size = bmp.line_size();
+            const int bmp_line_delta = (bmp.storage_type() == ConstImageDataView::Storage::BottomToTop)
+                    	? -bmp_line_size
+                    	: bmp_line_size;
 
             if (bmp_bpp == dimpl.bpp()) {
                 const size_t line_size = dimpl.rowsize();
-                for (cP ep = dest + line_size * rect.cy; dest < ep; dest += line_size, src -= bmp_line_size) {
+                for (cP ep = dest + line_size * rect.cy; dest < ep; dest += line_size, src += bmp_line_delta) {
                     this->copy(dest, src, n, op, c...);
                 }
             }
             else {
+            	bool upToBottom = (bmp.storage_type() == ConstImageDataView::Storage::TopToBottom);
                 switch (bmp_bpp) {
                     case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, typename traits::fromColor8{bmp.palette()}, c...); break;
+                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor8{bmp.palette()}, c...); break;
                     case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, typename traits::fromColor15{}, c...); break;
+                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor15{}, c...); break;
                     case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, typename traits::fromColor16{}, c...); break;
+                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor16{}, c...); break;
                     case 24: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, typename traits::fromColor24{}, c...); break;
+                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor24{}, c...); break;
+                    case 32: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
+                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor32{}, c...); break;
                     default: ;
                 }
             }
@@ -359,15 +365,15 @@ namespace
     private:
         template<class Op, class ToColor, class... Col>
         void spe_mem_blt(
-            P dest, cP src, u16 cx, u16 cy, size_t bmp_Bpp, size_t bmp_line_size, Op op, ToColor to_color, Col... c)
+            P dest, cP src, u16 cx, u16 cy, size_t bmp_Bpp, size_t bmp_line_size, Op op, bool upToBottom, ToColor to_color, Col... c)
         {
             const size_t line_size = dimpl.rowsize();
             const size_t destn = cx * dimpl.nbbytes_color();
             const size_t srcn = cx * bmp_Bpp;
             const size_t inc_line = line_size - destn;
-            const size_t inc_bmp_line = bmp_line_size + srcn;
+            const int inc_bmp_line = upToBottom ? (bmp_line_size - srcn) : -(bmp_line_size + srcn);
 
-            for (cP ep = dest + line_size * cy; dest < ep; dest += inc_line, src -= inc_bmp_line) {
+            for (cP ep = dest + line_size * cy; dest < ep; dest += inc_line, src += inc_bmp_line) {
                 const cP dest_e = dest + destn;
                 while (dest != dest_e) {
                     dest = traits::assign(dest, to_color(src), c..., op);
@@ -1456,7 +1462,7 @@ void Drawable::horizontal_line(uint8_t mix_mode, uint16_t x, uint16_t y, uint16_
     }
 }
 
-void Drawable::set_row(size_t rownum, const_bytes_view data)
+void Drawable::set_row(size_t rownum, bytes_view data)
 {
     memcpy(this->impl_.row_data(rownum), data.data(), std::min(this->rowsize(), data.size()));
 }

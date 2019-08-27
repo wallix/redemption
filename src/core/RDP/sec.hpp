@@ -694,7 +694,7 @@ enum {
 
     struct SecExchangePacket_Send
     {
-        SecExchangePacket_Send(OutStream & stream, cbytes_view client_encrypted_key){
+        SecExchangePacket_Send(OutStream & stream, bytes_view client_encrypted_key){
             stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
             stream.out_uint32_le(client_encrypted_key.size() + 8);
             stream.out_copy_bytes(client_encrypted_key);
@@ -839,7 +839,7 @@ enum {
 
     struct Sec_Send
     {
-        Sec_Send(OutStream & stream, bytes_view data, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
+        Sec_Send(OutStream & stream, writable_bytes_view data, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
             flags |= encryptionLevel?SEC_ENCRYPT:0;
             if (flags) {
                 stream.out_uint32_le(flags);
@@ -860,7 +860,7 @@ enum {
         CryptContext & encrypt;
         int encryption_level;
 
-        void operator()(StreamSize<256> /*unused*/, OutStream & sec_header, bytes_view packet) const {
+        void operator()(StreamSize<256> /*unused*/, OutStream & sec_header, writable_bytes_view packet) const {
             SEC::Sec_Send sec(sec_header, packet, this->flags, this->encrypt, this->encryption_level);
             (void)sec;
         }

@@ -16,6 +16,12 @@ set -e
 git clean -f
 git submodule update --init
 
+# apt install lua luarocks
+# luarocks --local install lpeg
+# lua >= 5.0
+eval `luarocks path`
+find src \( -name '*.hpp' -or -name '*.cpp' \) -exec lua ./tools/check_log6.lua '{}' '+'
+
 #These following packages MUST be installed. See README of redemption project
 #aptitude install build-essential bjam boost-build libboost-program-options-dev libboost-test-dev libssl-dev locales cmake
 
@@ -119,7 +125,7 @@ find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
 
 
 # jsclient (emscripten)
-cd projects/browser_client_JS
+cd projects/jsclient
 source ~/emsdk-master/emsdk_set_env.sh
 rm -rf bin
 version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')

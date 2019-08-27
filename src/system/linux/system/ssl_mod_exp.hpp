@@ -33,11 +33,11 @@
  * \pre  \a out.size() >= \a modulus.size()
  * \return  the length of the big-endian number placed at out. ~size_t{} if error
  */
-static inline bytes_view mod_exp(
-    bytes_view out,
-    const_bytes_view inr,
-    const_bytes_view modulus,
-    const_bytes_view exponent
+static inline writable_bytes_view mod_exp(
+    writable_bytes_view out,
+    bytes_view inr,
+    bytes_view modulus,
+    bytes_view exponent
 ) {
     assert(out.size() >= modulus.size());
 
@@ -47,7 +47,7 @@ static inline bytes_view mod_exp(
           : bn(BN_new())
         {}
 
-        Bignum_base(const_bytes_view data)
+        Bignum_base(bytes_view data)
           : bn(BN_new())
         {
             BN_bin2bn(data.data(), data.size(), this->bn);

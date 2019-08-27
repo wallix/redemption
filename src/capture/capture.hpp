@@ -92,7 +92,7 @@ public:
 
     RTDisplayResult set_rt_display(bool enable_rt_display);
 
-    void set_row(size_t rownum, const_bytes_view data) override;
+    void set_row(size_t rownum, bytes_view data) override;
 
     void sync() override;
 
@@ -122,7 +122,7 @@ public:
 
     void external_time(timeval const & now) override;
 
-    void session_update(const timeval & now, array_view_const_char message) override;
+    void session_update(timeval now, LogId id, KVList message) override;
 
     void possible_active_window_change() override;
 
@@ -146,7 +146,7 @@ public:
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override;
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override;
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override;
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override;
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override;

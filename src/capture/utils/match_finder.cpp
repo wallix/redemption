@@ -20,14 +20,13 @@
 */
 
 #include "capture/utils/match_finder.hpp"
+#include "core/log_id.hpp"
 #include "core/report_message_api.hpp"
 #include "regex/regex.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "utils/pattutils.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 #include "utils/difftimeval.hpp"
 
 
@@ -202,18 +201,12 @@ void MatchFinder::report(
         ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
     utils::back(message) = '\0';
 
-    auto pattern_detection_type = (is_pattern_kill ? "KILL_PATTERN_DETECTED" : "NOTIFY_PATTERN_DETECTED");
-    auto info = key_qvalue_pairs({
-        {"type", pattern_detection_type},
-        {"pattern", message},
+    report_message.log6(is_pattern_kill
+        ? LogId::KILL_PATTERN_DETECTED
+        : LogId::NOTIFY_PATTERN_DETECTED
+    , tvtime(), {
+        KVLog("pattern"_av, std::string_view{message}),
     });
-
-    ArcsightLogInfo arc_info;
-    arc_info.name = pattern_detection_type;
-    arc_info.signatureID = ArcsightLogInfo::ID::MATCH_FINDER;
-    arc_info.message = info;
-
-    report_message.log6(info, arc_info, tvtime());
 
     report_message.report(
         (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),

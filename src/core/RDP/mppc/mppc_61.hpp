@@ -218,7 +218,7 @@ private:
     }
 
 public:
-    cbytes_view decompress(cbytes_view compressed_data, int compressionFlags) override
+    bytes_view decompress(bytes_view compressed_data, int compressionFlags) override
     {
         (void)compressionFlags;
         //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
@@ -311,7 +311,7 @@ public:
             current_output_offset += remaining_bytes;
         }
 
-        cbytes_view res{this->historyBuffer + this->historyOffset, current_output_offset};
+        bytes_view res{this->historyBuffer + this->historyOffset, current_output_offset};
 
         this->historyOffset += current_output_offset;
         //LOG(LOG_INFO, "uncompressed_data_size=%d historyOffset=%d", uncompressed_data_size, this->historyOffset);

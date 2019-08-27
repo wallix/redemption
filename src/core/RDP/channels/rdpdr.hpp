@@ -579,17 +579,17 @@ static const char * get_DeviceType_name(RDPDR_DTYP DeviceType) noexcept
 //  set to zero. See [MS-RDPESC] for details about the smart card device
 //  type.
 
-inline static const char * DeviceAnnounceHeader_get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
+inline static array_view_const_char DeviceAnnounceHeader_get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
     switch (DeviceType) {
-        case RDPDR_DTYP_SERIAL:     return "Serial port";
-        case RDPDR_DTYP_PARALLEL:   return "Parallel port";
-        case RDPDR_DTYP_PRINT:      return "Printer";
-        case RDPDR_DTYP_FILESYSTEM: return "File system";
-        case RDPDR_DTYP_SMARTCARD:  return "Smart card";
+        case RDPDR_DTYP_SERIAL:     return "Serial port"_av;
+        case RDPDR_DTYP_PARALLEL:   return "Parallel port"_av;
+        case RDPDR_DTYP_PRINT:      return "Printer"_av;
+        case RDPDR_DTYP_FILESYSTEM: return "File system"_av;
+        case RDPDR_DTYP_SMARTCARD:  return "Smart card"_av;
         case RDPDR_DTYP_UNSPECIFIED: break;
     }
 
-    return "<unknown>";
+    return "<unknown>"_av;
 }
 
 class DeviceAnnounceHeader_Recv {
@@ -2082,7 +2082,7 @@ public:
     void receive(InStream & stream, erref::NTSTATUS IoStatus) {
 
         // FileId(4) + Information(1)
-        ::check_throw(stream, 4 + (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? 1 : 0),  
+        ::check_throw(stream, 4 + (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? 1 : 0),
             "RDPDR::DeviceCreateResponse",
             ERR_RDPDR_PDU_TRUNCATED);
 
@@ -2936,7 +2936,7 @@ public:
 
     void receive(InStream & stream, uint32_t version) {
         // osType(4) + osVersion(4) + protocolMajorVersion(2)
-        // + protocolMinorVersion(2) + ioCode1(4) + ioCode2(4) 
+        // + protocolMinorVersion(2) + ioCode1(4) + ioCode2(4)
         // + extendedPDU(4) + extraFlags1(4) + extraFlags2(4)
         // + (optional) SpecialTypeDeviceCap(4)
         ::check_throw(stream, 32 + ((version == GENERAL_CAPABILITY_VERSION_02) ? 4 : 0),
@@ -3181,7 +3181,7 @@ public:
     uint32_t FsInformationClass_ = 0;
 
     struct { uint8_t const * p; std::size_t sz; } query_buffer
-      = {cbyte_ptr("").as_u8p(), 0u};
+      = {byte_ptr("").as_u8p(), 0u};
 
 public:
     explicit ServerDriveQueryInformationRequest(uint32_t FsInformationClass)

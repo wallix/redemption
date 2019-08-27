@@ -32,6 +32,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
+#include "utils/bitmap_from_file.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
@@ -40,41 +41,33 @@
 
 namespace
 {
-    template<class F>
-    void test_capture_context(
-        char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
-        WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
-        F f, KbdLogParams kbd_log_params = KbdLogParams())
+    struct TestCaptureContext
     {
         // Timestamps are applied only when flushing
         timeval now{1000, 0};
 
-        LCGRandom rnd(0);
+        LCGRandom rnd{0};
         FakeFstat fstat;
         CryptoContext cctx;
-        cctx.set_trace_type(TraceType::localfile);
-
-        const char * record_tmp_path = record_wd.dirname();
-        const char * record_path = record_tmp_path;
-        const char * hash_path = hash_wd.dirname();
         const int groupid = 0;
 
-        const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        const bool capture_png = bool(capture_flags & CaptureFlags::png);
+        bool capture_wrm;
+        bool capture_png;
 
-        const bool capture_pattern_checker = false;
-        const bool capture_ocr = false;
-        const bool capture_video = false;
-        const bool capture_video_full = false;
-        const bool capture_meta = false;
-        const bool capture_kbd = kbd_log_params.wrm_keyboard_log;
+        bool capture_pattern_checker = false;
+        bool capture_ocr = false;
+        bool capture_video = false;
+        bool capture_video_full = false;
+        bool capture_meta = false;
+        bool capture_kbd;
 
 
-        MetaParams meta_params;
-        VideoParams video_params;
+        MetaParams meta_params {};
+        VideoParams video_params {};
         PatternParams pattern_params {}; // reading with capture_kbd = true
-        FullVideoParams full_video_params;
-        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params {};
+        SequencedVideoParams sequenced_video_params {};
+        KbdLogParams kbd_log_params {};
         OcrParams const ocr_params {
             OcrVersion::v1, ocr::locale::LocaleId::latin,
             false, 0, std::chrono::seconds::zero(), 0};
@@ -82,9 +75,29 @@ namespace
         PngParams const png_params = {
             0, 0, std::chrono::milliseconds{60}, 100, 0, false, false, true};
 
-        DrawableParams const drawable_params{cx, cy, nullptr};
+        const char * record_tmp_path;
+        const char * record_path;
+        const char * hash_path;
 
-        WrmParams const wrm_params{
+        DrawableParams const drawable_params;
+
+        WrmParams const wrm_params;
+
+        CaptureParams capture_params;
+
+        TestCaptureContext(
+            char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
+            WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
+            KbdLogParams kbd_log_params = KbdLogParams())
+        : capture_wrm(bool(capture_flags & CaptureFlags::wrm))
+        , capture_png(bool(capture_flags & CaptureFlags::png))
+        , capture_kbd(kbd_log_params.wrm_keyboard_log)
+        , kbd_log_params(kbd_log_params)
+        , record_tmp_path(record_wd.dirname())
+        , record_path(record_tmp_path)
+        , hash_path(hash_wd.dirname())
+        , drawable_params{cx, cy, nullptr}
+        , wrm_params{
             BitsPerPixel{24},
             false,
             cctx,
@@ -95,9 +108,8 @@ namespace
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
             0
-        };
-
-        CaptureParams capture_params{
+        }
+        , capture_params{
             now,
             basename,
             record_tmp_path,
@@ -106,22 +118,39 @@ namespace
             nullptr,
             SmartVideoCropping::disable,
             0
-        };
+        }
+        {
+            cctx.set_trace_type(TraceType::localfile);
+        }
 
-        Capture capture(
-            capture_params, drawable_params,
-            capture_wrm, wrm_params,
-            capture_png, png_params,
-            capture_pattern_checker, pattern_params,
-            capture_ocr, ocr_params,
-            capture_video, sequenced_video_params,
-            capture_video_full, full_video_params,
-            capture_meta, meta_params,
-            capture_kbd, kbd_log_params,
-            video_params, nullptr, Rect()
-        );
+        template<class F>
+        void run(F&& f)
+        {
+            Capture capture(
+                capture_params, drawable_params,
+                capture_wrm, wrm_params,
+                capture_png, png_params,
+                capture_pattern_checker, pattern_params,
+                capture_ocr, ocr_params,
+                capture_video, sequenced_video_params,
+                capture_video_full, full_video_params,
+                capture_meta, meta_params,
+                capture_kbd, kbd_log_params,
+                video_params, nullptr, Rect()
+            );
 
-        f(capture, Rect{0, 0, cx, cy});
+            f(capture, Rect(0, 0, drawable_params.width, drawable_params.height));
+        }
+    };
+
+    template<class F>
+    void test_capture_context(
+        char const* basename, CaptureFlags capture_flags, uint16_t cx, uint16_t cy,
+        WorkingDirectory& record_wd, WorkingDirectory& hash_wd,
+        F&& f, KbdLogParams kbd_log_params = KbdLogParams())
+    {
+        TestCaptureContext{basename, capture_flags, cx, cy, record_wd, hash_wd, kbd_log_params}
+          .run(f);
     }
 
     void capture_draw_color1(timeval& now, Capture& capture, Rect scr, uint16_t cy)
@@ -495,7 +524,10 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
         now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah\\2"));
-        meta.session_update(now, cstr_array_view("INPUT_LANGUAGE=fr\x01xy\\z"));
+        meta.session_update(now, LogId::INPUT_LANGUAGE, {
+            KVLog("identifier"_av, "fr"_av),
+            KVLog("display_name"_av, "xy\\z"_av),
+        });
         now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, false);
     }
@@ -570,9 +602,18 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
 
         meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
 
-        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, ""_av),
+            KVLog("button"_av, "Démarrer"_av),
+        });
+        now.tv_sec += 1;
 
-        meta.session_update(now, {"CHECKBOX_CLICKED=User Properties\x01" "User cannot change password\x01" "1", 62}); now.tv_sec += 1;
+        meta.session_update(now, LogId::CHECKBOX_CLICKED, {
+            KVLog("windows"_av, "User Properties"_av),
+            KVLog("checkbox"_av, "User cannot change password"_av),
+            KVLog("state"_av, "checked"_av),
+        });
+        now.tv_sec += 1;
 
         meta.periodic_snapshot(now, 0, 0, false);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
@@ -620,7 +661,11 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
 
         send_kbd();
 
-        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, ""_av),
+            KVLog("button"_av, "Démarrer"_av),
+        });
+        now.tv_sec += 1;
 
         send_kbd(); now.tv_sec += 1;
 
@@ -662,7 +707,11 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 
         meta.kbd_input(now, 'B');
 
-        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, ""_av),
+            KVLog("button"_av, "Démarrer"_av),
+        });
+        now.tv_sec += 1;
 
         meta.kbd_input(now, 'C'); now.tv_sec += 1;
 
@@ -754,8 +803,16 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
         Capture::SessionMeta meta = make_session_meta(now, trans);
         Capture::SessionLogAgent log_agent(meta, make_meta_params());
 
-        log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
-        log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
+        meta.session_update(now, LogId::NEW_PROCESS, {
+            KVLog("command_line"_av, "abc"_av),
+        });
+        now.tv_sec += 1;
+
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, "de"_av),
+            KVLog("button"_av, "fg"_av),
+        });
+        now.tv_sec += 1;
     }
 
     RED_CHECK_EQ(
@@ -782,7 +839,11 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 
         meta.kbd_input(now, 'B');
 
-        meta.session_update(now, {"BUTTON_CLICKED=\x01" "Démarrer", 25}); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, ""_av),
+            KVLog("button"_av, "Démarrer"_av),
+        });
+        now.tv_sec += 1;
 
         meta.kbd_input(now, 'C'); now.tv_sec += 1;
 
@@ -840,10 +901,14 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, 0x08); now.tv_sec += 1;
         meta.kbd_input(now, 'V'); now.tv_sec += 1;
 
-        meta.session_update(now, cstr_array_view("BUTTON_CLICKED=\"Connexion Bureau à distance\"\x01" "&Connexion")); now.tv_sec += 1;
+        meta.session_update(now, LogId::BUTTON_CLICKED, {
+            KVLog("windows"_av, "\"Connexion Bureau à distance\""_av),
+            KVLog("button"_av, "&Connexion"_av),
+        });
+        now.tv_sec += 1;
     }
 
-    RED_CHECK_EQ(
+    RED_CHECK_SMEM(
         trans.buf,
         "1970-01-01 01:16:41 + type=\"TITLE_BAR\" data=\"Blah1\"\n"
         "1970-01-01 01:16:42 - type=\"BUTTON_CLICKED\" windows=\"\" button=\"Démarrer\"\n"
@@ -862,6 +927,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         "1970-01-01 01:17:14 + type=\"TITLE_BAR\" data=\"Blah6\"\n"
         "1970-01-01 01:17:28 - type=\"BUTTON_CLICKED\" windows=\"\\\"Connexion Bureau à distance\\\"\" button=\"&Connexion\"\n"
         "1970-01-01 01:17:28 - type=\"KBD_INPUT\" data=\"QRT/U/V\"\n"
+        ""_av
     );
 }
 
@@ -1850,15 +1916,22 @@ RED_AUTO_TEST_CASE(TestReload)
     }
 }
 
+struct ReportMessage : NullReportMessage
+{
+    std::string s;
+
+    void log6(LogId id, const timeval /*time*/, KVList kv_list) override
+    {
+        s += detail::log_id_string_map[int(id)].data();
+        for (auto& kv : kv_list) {
+            str_append(s, ' ', kv.key, '=', kv.value);
+        }
+    }
+};
+
 RED_AUTO_TEST_CASE(TestKbdCapture)
 {
-    struct : NullReportMessage {
-        std::string s;
-
-        void log6(const std::string &info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
-            s += info;
-        }
-    } report_message;
+    ReportMessage report_message;
 
     timeval const time = {0, 0};
     Capture::SessionLogKbd kbd_capture(report_message);
@@ -1868,8 +1941,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
         // flush report buffer then empty buffer
         kbd_capture.flush();
 
-        RED_CHECK_EQUAL(report_message.s.size(), 25);
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"a\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
     }
 
     kbd_capture.enable_kbd_input_mask(true);
@@ -1893,8 +1965,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
         kbd_capture.enable_kbd_input_mask(true);
 
-        RED_CHECK_EQUAL(report_message.s.size(), 25);
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"a\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=a", report_message.s);
         report_message.s.clear();
 
         kbd_capture.kbd_input(time, 'a');
@@ -1906,13 +1977,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 
 RED_AUTO_TEST_CASE(TestKbdCapture2)
 {
-    struct : NullReportMessage {
-        std::string s;
-
-        void log6(const std::string &info, const ArcsightLogInfo &  /*unused*/, const timeval  /*unused*/) override {
-            s += info;
-        }
-    } report_message;
+    ReportMessage report_message;
 
     timeval const now = {0, 0};
     Capture::SessionLogKbd kbd_capture(report_message);
@@ -1920,7 +1985,10 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
     {
         kbd_capture.kbd_input(now, 't');
 
-        kbd_capture.session_update(now, cstr_array_view("INPUT_LANGUAGE=fr\x01xy\\z"));
+        kbd_capture.session_update(now, LogId::INPUT_LANGUAGE, {
+            KVLog("identifier"_av, "fr"_av),
+            KVLog("display_name"_av, "xy\\z"_av),
+        });
 
         RED_CHECK_EQUAL(report_message.s.size(), 0);
 
@@ -1932,7 +2000,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
 
         kbd_capture.possible_active_window_change();
 
-        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"toto\"", report_message.s);
+        RED_CHECK_EQUAL("KBD_INPUT data=toto", report_message.s);
     }
 }
 
@@ -2103,7 +2171,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     uint16_t chunk_count = stream.in_uint16_le();
     (void)chunk_count;
 
-    GeneratorTransport in_png_trans(source_png.from_at(8));
+    GeneratorTransport in_png_trans(source_png.from_offset(8));
 
     RDPDrawable d(20, 10);
     gdi::GraphicApi * gdi = &d;
@@ -2124,6 +2192,95 @@ RED_AUTO_TEST_CASE(TestPatternSearcher)
     searcher.test_uchar(ZStrUtf8Char('a'), report); RED_CHECK(!check);
     // #15241: Pattern detection crash
     searcher.test_uchar(ZStrUtf8Char('e'), report); RED_CHECK(check);
+}
+
+
+RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
+{
+    WorkingDirectory hash_wd("hash");
+    WorkingDirectory record_wd("record");
+
+    TestCaptureContext ctx_cap("title_extractor", CaptureFlags{}, 800, 600, record_wd, hash_wd);
+    ctx_cap.capture_meta = true;
+    ctx_cap.capture_ocr = true;
+
+    ctx_cap.run([&](Capture& capture, Rect scr){
+        timeval now{1000, 0};
+        now.tv_sec += 100;
+
+        auto draw_img = [&](char const* filename){
+            Bitmap img;
+            RED_CHECK((img = bitmap_from_file(filename)).is_valid());
+            capture.draw(
+                RDPMemBlt(0, Rect(0, 0, img.cx(), img.cy()), 0xCC, 0, 0, 0),
+                scr, img);
+        };
+
+        // gestionnaire de serveur
+        draw_img(FIXTURES_PATH "/m-21288-2.bmp");
+        capture.periodic_snapshot(now, 0, 0, false);
+
+        now.tv_sec += 100;
+        capture.session_update(now, LogId::PROBE_STATUS, {
+            KVLog("status"_av, "Unknown"_av),
+        });
+        capture.periodic_snapshot(now, 0, 0, false);
+
+        now.tv_sec += 100;
+        capture.session_update(now, LogId::PROBE_STATUS, {
+            KVLog("status"_av, "Ready"_av),
+        });
+        capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
+            KVLog("windows"_av, "a"_av),
+            KVLog("class"_av, "t"_av),
+            KVLog("command_line"_av, "u"_av),
+        });
+
+        // qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes
+        draw_img(FIXTURES_PATH "/win2008capture10.bmp");
+        capture.periodic_snapshot(now, 0, 0, false);
+        now.tv_sec += 100;
+        capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
+            KVLog("windows"_av, "b"_av),
+            KVLog("class"_av, "x"_av),
+            KVLog("command_line"_av, "y"_av),
+        });
+        capture.periodic_snapshot(now, 0, 0, false);
+
+        now.tv_sec += 100;
+        // disable sespro
+        capture.session_update(now, LogId::PROBE_STATUS, {
+            KVLog("status"_av, "Unknown"_av),
+        });
+        // not TITLE_BAR extractor with OCR
+        capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
+            KVLog("windows"_av, "c"_av),
+            KVLog("class"_av, "t"_av),
+            KVLog("command_line"_av, "v"_av),
+        });
+        capture.periodic_snapshot(now, 0, 0, false);
+
+        now.tv_sec += 100;
+        // Gestionnaire de licences TS
+        draw_img(FIXTURES_PATH "/win2008capture.bmp");
+        capture.periodic_snapshot(now, 0, 0, false);
+    });
+
+    auto meta_content =
+        R"(1970-01-01 01:18:20 + type="TITLE_BAR" data="Gestionnaire de serveur")" "\n"
+        R"(1970-01-01 01:21:40 - type="FOREGROUND_WINDOW_CHANGED" windows="a" class="t" command_line="u")" "\n"
+        R"(1970-01-01 01:21:40 + type="TITLE_BAR" data="a")" "\n"
+        R"(1970-01-01 01:23:20 - type="FOREGROUND_WINDOW_CHANGED" windows="b" class="x" command_line="y")" "\n"
+        R"(1970-01-01 01:23:20 + type="TITLE_BAR" data="b")" "\n"
+        R"(1970-01-01 01:25:00 - type="FOREGROUND_WINDOW_CHANGED" windows="c" class="t" command_line="v")" "\n"
+        R"(1970-01-01 01:25:00 + type="TITLE_BAR" data="qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes")" "\n"
+        R"(1970-01-01 01:26:40 + type="TITLE_BAR" data="Gestionnaire de licences TS")" "\n"
+        ""_av;
+
+    RED_CHECK_FILE_CONTENTS(record_wd.add_file("title_extractor.meta"), meta_content);
+
+    RED_CHECK_WORKSPACE(hash_wd);
+    RED_CHECK_WORKSPACE(record_wd);
 }
 
 extern "C" {
@@ -2178,28 +2335,42 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         bool ignore_frame_in_timeval = true;
         capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
 
-        capture.session_update(now, cstr_array_view("NEW_PROCESS=def")); now.tv_sec++;
+        capture.session_update(now, LogId::NEW_PROCESS, {
+            KVLog("command_line"_av, "def"_av),
+        });
+        now.tv_sec++;
 
-        capture.session_update(now, cstr_array_view("COMPLETED_PROCESS=def")); now.tv_sec++;
+        capture.session_update(now, LogId::COMPLETED_PROCESS, {
+            KVLog("command_line"_av, "def"_av),
+        });
+        now.tv_sec++;
 
         capture.kbd_input(now, 'W');
         capture.kbd_input(now, 'a');
-        capture.kbd_input(now, 'l'); now.tv_sec++;
+        capture.kbd_input(now, 'l');
+        now.tv_sec++;
 
-        capture.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec++;
+        capture.session_update(now, LogId::NEW_PROCESS, {
+            KVLog("command_line"_av, "abc"_av),
+        });
+        now.tv_sec++;
 
         capture.kbd_input(now, 'l');
         capture.kbd_input(now, 'i');
-        capture.kbd_input(now, 'x'); now.tv_sec++;
+        capture.kbd_input(now, 'x');
+        now.tv_sec++;
 
-        capture.session_update(now, cstr_array_view("COMPLETED_PROCESS=abc")); now.tv_sec++;
+        capture.session_update(now, LogId::COMPLETED_PROCESS, {
+            KVLog("command_line"_av, "abc"_av),
+        });
+        now.tv_sec++;
     }, kbd_log_params);
 
     auto mwrm_file = record_wd.add_file("test_capture.mwrm");
 
     RED_TEST_FILE_SIZE(mwrm_file, 124 + record_wd.dirname().size() * 2);
     RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.wrm"), 166);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.wrm"), 907);
+    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.wrm"), 923);
 
     RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
     RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);

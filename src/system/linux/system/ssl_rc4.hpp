@@ -40,7 +40,7 @@ class SslRC4
 public:
     SslRC4() = default;
 
-    void set_key(const_bytes_view key)
+    void set_key(bytes_view key)
     {
         RC4_set_key(&this->rc4, key.size(), key.data());
     }

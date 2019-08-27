@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
-                               , to_verbose_flags(511)
+                               , to_verbose_flags(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
     mod_rdp_params.enable_tls                      = true;

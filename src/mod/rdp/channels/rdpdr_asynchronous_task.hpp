@@ -290,7 +290,7 @@ public:
     RdpdrSendClientMessageTask(
         size_t total_length,
         uint32_t flags,
-        const_bytes_view chunked_data,
+        bytes_view chunked_data,
         VirtualChannelDataSender & to_server_sender,
         RDPVerbose verbose)
     : total_length(total_length)

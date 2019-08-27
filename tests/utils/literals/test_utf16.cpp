@@ -35,5 +35,6 @@ int main()
     // s[6] -> out of bounds of array_view
     c<0>{}   = c<s.data()[6]>{};
     c<0>{}   = c<s.data()[7]>{};
+    c<6>{}   = c<s.size()>{};
     // s.data()[8] -> out of bounds of char*
 }

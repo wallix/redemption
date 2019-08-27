@@ -33,7 +33,7 @@
 
 struct GeneratorTransport : Transport
 {
-    GeneratorTransport(cbytes_view buffer);
+    GeneratorTransport(bytes_view buffer);
 
     ~GeneratorTransport();
 
@@ -91,7 +91,7 @@ private:
 
 struct CheckTransport : Transport
 {
-    CheckTransport(const_buffer_view buffer);
+    CheckTransport(buffer_view buffer);
 
     size_t remaining()
     {
@@ -119,7 +119,7 @@ private:
 
 struct TestTransport : public Transport
 {
-    TestTransport(cbytes_view indata, cbytes_view outdata);
+    TestTransport(bytes_view indata, bytes_view outdata);
 
     size_t remaining()
     {
@@ -132,7 +132,7 @@ struct TestTransport : public Transport
         this->gen.disable_remaining_error();
     }
 
-    void set_public_key(const_bytes_view key);
+    void set_public_key(bytes_view key);
 
     array_view_const_u8 get_public_key() const override;
 

@@ -590,7 +590,7 @@ public:
         this->history_ptr = history_ptr;
     }   // decompress_60
 
-    cbytes_view decompress(cbytes_view cbuf, int ctype) override
+    bytes_view decompress(bytes_view cbuf, int ctype) override
     {
         uint32_t roff   = 0;
         uint32_t rlen   = 0;

@@ -33,10 +33,10 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "utils/crypto/ssl_lib.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 
 #include <functional> // std::reference_wrapper
 #include <memory>
+#include <array>
 
 class ChannelsAuthorizations;
 class ClientInfo;
@@ -48,7 +48,6 @@ class RedirectionInfo;
 class ReportMessageApi;
 class TimeObj;
 class Transport;
-class ArcsightLogInfo;
 namespace CHANNELS
 {
     class ChannelDefArray;
@@ -72,11 +71,10 @@ private:
     {
     public:
         explicit RDPServerNotifier(
-            FrontAPI& front,
             ReportMessageApi& report_message,
             bool server_cert_store,
             ServerCertCheck server_cert_check,
-            std::unique_ptr<char[]> certif_path,
+            std::unique_ptr<char[]>&& certif_path,
             ServerNotification server_access_allowed_message,
             ServerNotification server_cert_create_message,
             ServerNotification server_cert_success_message,
@@ -85,11 +83,7 @@ private:
             RDPVerbose verbose
         ) noexcept;
 
-        void server_access_allowed() override;
-        void server_cert_create() override;
-        void server_cert_success() override;
-        void server_cert_failure() override;
-        void server_cert_error(const char * str_error) override;
+        void server_cert_status(Status status, std::string_view error_msg = {}) override;
 
         CertificateResult server_cert_callback(X509& certificate, std::string* error_message, const char* ip_address, int port) override;
 
@@ -100,18 +94,10 @@ private:
         const ServerCertCheck server_cert_check;
         std::unique_ptr<char[]> certif_path;
         const bool server_cert_store;
-        const ServerNotification server_access_allowed_message;
-        const ServerNotification server_cert_create_message;
-        const ServerNotification server_cert_success_message;
-        const ServerNotification server_cert_failure_message;
-        const ServerNotification server_cert_error_message;
+        const std::array<ServerNotification, 5> server_status_messages;
 
         const RDPVerbose verbose;
-        KeyQvalueFormatter message;
-        FrontAPI& front;
         ReportMessageApi& report_message;
-
-        void log6_server_cert(charp_or_string type, charp_or_string description, const ArcsightLogInfo & arc_info);
     };
 
 private:

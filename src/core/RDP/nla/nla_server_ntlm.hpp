@@ -71,7 +71,7 @@ class rdpCredsspServerNTLM final
     array_view_u8 public_key;
 
     private:
-    std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)> set_password_cb;
+    std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb;
     std::string& extra_message;
     Translation::language_t lang;
     const bool verbose;
@@ -192,7 +192,7 @@ public:
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
-               std::function<PasswordCallback(cbytes_view,cbytes_view,std::vector<uint8_t>&)> set_password_cb,
+               std::function<PasswordCallback(bytes_view,bytes_view,std::vector<uint8_t>&)> set_password_cb,
                const bool verbose = false)
         : timeobj(timeobj)
         , rand(rand)

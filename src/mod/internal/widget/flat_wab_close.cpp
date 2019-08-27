@@ -34,7 +34,7 @@ FlatWabClose::FlatWabClose(
     bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
     Translation::language_t lang, bool back_selector)
 : WidgetParent(drawable, parent, notifier)
-, connection_closed_label(drawable, *this, nullptr, TR(trkeys::connection_closed, lang),
+, connection_closed_label(drawable, *this, nullptr, TR(trkeys::connection_closed, lang).to_sv(),
                             -13, theme.global.fgcolor,
                             theme.global.bgcolor, font)
 , separator(drawable, *this, this, -12,
@@ -79,13 +79,13 @@ FlatWabClose::FlatWabClose(
     this->add_widget(&this->img);
 
     char label[255];
-    snprintf(label, sizeof(label), "%s:", TR(trkeys::username, lang));
+    snprintf(label, sizeof(label), "%s:", TR(trkeys::username, lang).c_str());
     this->username_label.set_text(label);
-    snprintf(label, sizeof(label), "%s:", TR(trkeys::target, lang));
+    snprintf(label, sizeof(label), "%s:", TR(trkeys::target, lang).c_str());
     this->target_label.set_text(label);
-    snprintf(label, sizeof(label), "%s:", TR(trkeys::diagnostic, lang));
+    snprintf(label, sizeof(label), "%s:", TR(trkeys::diagnostic, lang).c_str());
     this->diagnostic_label.set_text(label);
-    snprintf(label, sizeof(label), "%s:", TR(trkeys::timeleft, lang));
+    snprintf(label, sizeof(label), "%s:", TR(trkeys::timeleft, lang).c_str());
     this->timeleft_label.set_text(label);
 
     this->add_widget(&this->connection_closed_label);
@@ -281,12 +281,15 @@ void FlatWabClose::refresh_timeleft(long tl)
     }
     if (this->prev_time != tl) {
         char buff[256];
-        snprintf(buff, sizeof(buff), "%ld %s%s %s. ",
-                    tl,
-                    seconds?TR(trkeys::second, this->lang):TR(trkeys::minute, this->lang),
-                    (tl <= 1)?"":"s",
-                    TR(trkeys::before_closing, this->lang)
-                    );
+        snprintf(
+            buff, sizeof(buff), "%ld %s%s %s. ",
+            tl,
+            seconds
+                ? TR(trkeys::second, this->lang).c_str()
+                : TR(trkeys::minute, this->lang).c_str(),
+            (tl <= 1) ? "" : "s",
+            TR(trkeys::before_closing, this->lang).c_str()
+        );
 
         Rect old = this->timeleft_value.get_rect();
         this->drawable.begin_update();

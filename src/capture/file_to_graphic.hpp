@@ -119,6 +119,8 @@ private:
             return static_cast<std::size_t>(this->last - this->arr);
         }
 
+        bool empty() const noexcept { return this->last == this->arr; }
+
     private:
         T * arr[N];
         T * * last = arr;

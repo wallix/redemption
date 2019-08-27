@@ -40,7 +40,7 @@ public:
         this->sha512_init();
     }
 
-    void update(const_bytes_view data) noexcept
+    void update(bytes_view data) noexcept
     {
         this->sha512_update(data.as_u8p(), data.size());
     }

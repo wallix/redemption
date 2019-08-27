@@ -50,7 +50,7 @@ public:
         this->ctx.count[1] = 0;
     }
 
-    void update(const_bytes_view data) noexcept
+    void update(bytes_view data) noexcept
     {
         uint32_t i;
 
@@ -73,7 +73,7 @@ public:
             i = 0;
         }
 
-        auto data_remaining = data.from_at(i);
+        auto data_remaining = data.from_offset(i);
         memcpy(&this->ctx.buffer[j], data_remaining.data(), data_remaining.size());
     }
 

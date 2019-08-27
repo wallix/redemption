@@ -25,7 +25,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "mod/file_validatior_service.hpp"
+#include "mod/file_validator_service.hpp"
 #include "utils/stream.hpp"
 #include "system/ssl_sha256.hpp"
 
@@ -102,7 +102,7 @@ struct ClipboardSideData
             return this->status == Status::WaitValidator;
         }
 
-        const_bytes_view receive_data(const_bytes_view data)
+        bytes_view receive_data(bytes_view data)
         {
             assert(this->status == Status::WaitData || this->status == Status::WaitDataWithId);
 

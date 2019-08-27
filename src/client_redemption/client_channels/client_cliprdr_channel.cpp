@@ -169,7 +169,7 @@ namespace custom_formats
         this->empty_buffer();
     }
 
-    void ClientCLIPRDRChannel::add_format(uint32_t format_id, const_bytes_view name) {
+    void ClientCLIPRDRChannel::add_format(uint32_t format_id, bytes_view name) {
         this->format_name_list.push(format_id, Cliprdr::AsciiName{name});
         this->formats_map.emplace(format_id, std::string(name.as_charp(), name.size()));
     }

@@ -28,6 +28,7 @@
   struct X509 {};
 #endif
 
+#include <string_view>
 #include <string>
 
 enum class CertificateResult { wait, valid, invalid, };
@@ -36,23 +37,30 @@ enum class CertificateResult { wait, valid, invalid, };
 class ServerNotifier
 {
 public:
-    virtual void server_access_allowed() = 0;
-    virtual void server_cert_create() = 0;
-    virtual void server_cert_success() = 0;
-    virtual void server_cert_failure() = 0;
-    virtual void server_cert_error(const char * str_error) = 0;
+    enum class Status
+    {
+        AccessAllowed,
+        CertCreate,
+        CertSuccess,
+        CertFailure,
+        CertError,
+    };
+
+    virtual void server_cert_status(Status status, std::string_view error_msg = {}) = 0;
 
     virtual CertificateResult server_cert_callback(X509& certificate, std::string* error_message, const char* ip_address, int port) = 0;
 
     virtual ~ServerNotifier() = default;
 };
 
-class NullServerNotifier : public ServerNotifier {
+class NullServerNotifier : public ServerNotifier
+{
 public:
-    void server_access_allowed() override {}
-    void server_cert_create() override {}
-    void server_cert_success() override {}
-    void server_cert_failure() override {}
+    void server_cert_status(Status status, std::string_view error_msg = {}) override
+    {
+        (void)status;
+        (void)error_msg;
+    }
 
     CertificateResult server_cert_callback(X509& certificate, std::string* error_message, const char* ip_address, int port) override
     {
@@ -62,7 +70,4 @@ public:
         (void)error_message;
         return CertificateResult::valid;
     }
-
-    // TODO used array_view ?
-    void server_cert_error(const char * str_error) override { (void)str_error; }
 };

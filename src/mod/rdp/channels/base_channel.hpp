@@ -91,7 +91,7 @@ protected:
 
 public:
     virtual void process_client_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data
+        uint32_t flags, bytes_view chunk_data
     ) {
         (void)total_length;
         (void)flags;
@@ -99,12 +99,12 @@ public:
     }
 
     virtual void process_server_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data,
+        uint32_t flags, bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
 
 public:
     void send_message_to_client(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data)
+        uint32_t flags, bytes_view chunk_data)
     {
         if (this->to_client_sender)
         {
@@ -113,7 +113,7 @@ public:
     }
 
     void send_message_to_server(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data)
+        uint32_t flags, bytes_view chunk_data)
     {
         if (this->to_server_sender)
         {

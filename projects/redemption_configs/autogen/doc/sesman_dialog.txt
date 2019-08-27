@@ -38,6 +38,8 @@ cfg::session_log::keyboard_input_masking_level <- keyboard_input_masking_level  
 cfg::client::keyboard_layout -> keyboard_layout   [unsigned int]
 cfg::client::disable_tsk_switch_shortcuts <- disable_tsk_switch_shortcuts   [bool]
     If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences.
+cfg::client::remotefx <- remotefx   [bool]
+    Enables support of the remoteFX codec.
 
 cfg::mod_rdp::enable_nla <- enable_nla   [bool]
     NLA authentication in secondary target.

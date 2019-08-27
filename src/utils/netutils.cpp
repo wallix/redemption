@@ -324,7 +324,7 @@ struct LineBuffer
 
 // return 0 if found, -1 not found or error
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
-                       bytes_view transparent_dest, uint32_t verbose)
+                       writable_bytes_view transparent_dest, uint32_t verbose)
 {
     LineBuffer line(fd);
     //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"

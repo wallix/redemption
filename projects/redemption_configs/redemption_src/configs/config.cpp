@@ -80,21 +80,21 @@ Translation::language_t language(Inifile const & ini)
         ini.template get<cfg::translation::language>());
 }
 
-const char * Translation::translate(trkeys::TrKey_password k) const
+zstring_view Translation::translate(trkeys::TrKey_password k) const
 {
     if (this->ini) {
         switch (this->lang) {
             case Translation::EN: {
                 auto & s = this->ini->template get<cfg::translation::password_en>();
                 if (!s.empty()) {
-                    return s.c_str();
+                    return zstring_view(s);
                 }
             }
             break;
             case Translation::FR: {
                 auto & s = this->ini->template get<cfg::translation::password_fr>();
                 if (!s.empty()) {
-                    return s.c_str();
+                    return zstring_view(s);
                 }
             }
             break;

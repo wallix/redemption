@@ -326,7 +326,7 @@ struct GraphicApi : private noncopyable
     virtual void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) = 0;
 
     // TODO berk, data within size
-    virtual void set_row(std::size_t rownum, const_bytes_view data) { (void)rownum; (void)data; }
+    virtual void set_row(std::size_t rownum, bytes_view data) { (void)rownum; (void)data; }
 };
 
 

@@ -17,6 +17,7 @@ exe headlessclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -41,6 +42,7 @@ exe headlessclient :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
@@ -103,6 +105,7 @@ exe rdpproxy :
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -171,6 +174,7 @@ exe rdpproxy :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
@@ -193,7 +197,6 @@ exe rdpproxy :
   <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -282,6 +285,7 @@ exe rdpclient :
   <library>src/keyboard/keymapsym.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
@@ -358,6 +362,7 @@ lib libredrec :
   <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -410,6 +415,7 @@ lib libiametrics :
   src/lib/iametrics.cpp.lib.o
 :
   <library>log.o
+  <library>src/mod/metrics.o
   <library>src/utils/fileutils.o
   <library>src/utils/strutils.o
   $(LIB_DEPENDENCIES)
@@ -472,7 +478,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -510,7 +515,6 @@ test-run tests/acl/test_authentifier :
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -522,6 +526,26 @@ test-run tests/acl/test_authentifier :
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/authentifier.hpp
+;
+test-run tests/acl/test_dispatch_report_message :
+  $(REDEMPTION_TEST_PATH)/acl/test_dispatch_report_message.cpp
+:
+  <library>crypto
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/front/fake_front.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/acl/dispatch_report_message.hpp
 ;
 test-run tests/acl/test_mm_api :
   $(REDEMPTION_TEST_PATH)/acl/test_mm_api.cpp
@@ -545,6 +569,7 @@ test-run tests/acl/test_module_manager :
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -609,6 +634,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
@@ -706,6 +732,7 @@ test-run tests/capture/test_capture :
   <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -728,6 +755,7 @@ test-run tests/capture/test_capture :
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
@@ -824,6 +852,7 @@ test-run tests/capture/test_wrm_capture :
   <library>crypto
   <library>png
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
@@ -888,6 +917,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
@@ -964,6 +994,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
@@ -1017,6 +1048,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
@@ -1049,6 +1081,7 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>crypto
   <library>png
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -1088,6 +1121,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>crypto
   <library>png
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -1127,6 +1161,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>crypto
   <library>png
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -1166,6 +1201,7 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>crypto
   <library>png
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -1204,6 +1240,7 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>crypto
   <library>png
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
@@ -1659,7 +1696,6 @@ test-run tests/core/RDP/mppc/test_mppc_61 :
 test-run tests/core/RDP/nla/asn1/test_ber :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/asn1/test_ber.cpp
 :
-  <library>src/utils/utf.o
   <covfile>src/core/RDP/nla/asn1/ber.hpp
 ;
 test-run tests/core/RDP/nla/kerberos/test_credentials :
@@ -1671,9 +1707,12 @@ test-run tests/core/RDP/nla/kerberos/test_credentials :
 test-run tests/core/RDP/nla/kerberos/test_kerberos :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_kerberos.cpp
 :
+  <library>crypto
   <library>gssapi_krb5
   <library>krb5
+  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -1721,10 +1760,6 @@ test-run tests/core/RDP/nla/test_nla :
 test-run tests/core/RDP/nla/test_sspi :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_sspi.cpp
 :
-  <library>src/core/error.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/nla/sspi.hpp
 ;
 test-run tests/core/RDP/orders/test_AlternateSecondaryWindowing :
@@ -2158,6 +2193,7 @@ test-run tests/core/RDP/test_remotefx :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/hexdump.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -2365,6 +2401,7 @@ test-run tests/core/test_mainloop :
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -2432,6 +2469,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
@@ -2454,7 +2492,6 @@ test-run tests/core/test_mainloop :
   <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2504,6 +2541,7 @@ test-run tests/core/test_session :
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -2570,6 +2608,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/parse_extra_orders.o
   <library>src/mod/rdp/rdp.o
@@ -2592,7 +2631,6 @@ test-run tests/core/test_session :
   <library>src/transport/snappy_compression_transport.o
   <library>src/transport/socket_transport.o
   <library>src/transport/ws_transport.o
-  <library>src/utils/arcsight_format.o
   <library>src/utils/base64.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2671,6 +2709,7 @@ test-run tests/front/test_front :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
@@ -2770,6 +2809,7 @@ test-run tests/lib/test_do_recorder :
   <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -2826,6 +2866,7 @@ test-run tests/lib/test_iametrics :
   $(REDEMPTION_TEST_PATH)/lib/test_iametrics.cpp
 :
   <library>src/lib/iametrics.o
+  <library>src/mod/metrics.o
   <library>src/utils/fileutils.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
@@ -3120,6 +3161,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>crypto
   <library>png
   <library>snappy
+  <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3909,19 +3951,11 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
 :
   <library>crypto
-  <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/front/fake_front.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
@@ -3968,23 +4002,15 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
-  <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/gdi/graphic_api.o
   <library>src/transport/file_transport.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/front/fake_front.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4124,6 +4150,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
@@ -4157,6 +4184,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/mod/metrics.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4238,6 +4266,7 @@ test-run tests/mod/test_file_validator_service :
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/file_validator_service.hpp
 ;
 test-run tests/mod/test_metrics_hmac :
   $(REDEMPTION_TEST_PATH)/mod/test_metrics_hmac.cpp
@@ -4304,7 +4333,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -4313,6 +4341,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapsym.o
+  <library>src/mod/metrics.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -4321,7 +4350,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/mod/vnc/encoder/zrle.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4340,6 +4368,7 @@ test-run tests/mod/vnc/test_vnc_metrics :
 :
   <library>crypto
   <library>src/core/error.o
+  <library>src/mod/metrics.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -5038,13 +5067,6 @@ test-run tests/utils/sugar/test_update_lock :
 :
   <covfile>src/utils/sugar/update_lock.hpp
 ;
-test-run tests/utils/test_arcsight_format :
-  $(REDEMPTION_TEST_PATH)/utils/test_arcsight_format.cpp
-:
-  <library>src/utils/arcsight_format.o
-  <covfile>src/utils/arcsight_format.cpp
-  <covfile>src/utils/arcsight_format.hpp
-;
 test-run tests/utils/test_asynchronous_task_manager :
   $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
 :
@@ -5363,11 +5385,6 @@ test-run tests/utils/test_strutils :
   <covfile>src/utils/strutils.cpp
   <covfile>src/utils/strutils.hpp
 ;
-test-run tests/utils/test_texttime :
-  $(REDEMPTION_TEST_PATH)/utils/test_texttime.cpp
-:
-  <covfile>src/utils/texttime.hpp
-;
 test-run tests/utils/test_timeval_ops :
   $(REDEMPTION_TEST_PATH)/utils/test_timeval_ops.cpp
 :
@@ -5425,6 +5442,7 @@ obj src/acl/acl_serializer.o : $(REDEMPTION_SRC_PATH)/acl/acl_serializer.cpp ;
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
+obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(FFMPEG_CXXFLAGS) <define>ZLIB_CONST ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
@@ -5509,6 +5527,7 @@ obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
+obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/parse_extra_orders.o : $(REDEMPTION_SRC_PATH)/mod/rdp/parse_extra_orders.cpp ;
@@ -5536,7 +5555,6 @@ obj src/transport/replay_transport.o : $(REDEMPTION_SRC_PATH)/transport/replay_t
 obj src/transport/snappy_compression_transport.o : $(REDEMPTION_SRC_PATH)/transport/snappy_compression_transport.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
 obj src/transport/ws_transport.o : $(REDEMPTION_SRC_PATH)/transport/ws_transport.cpp ;
-obj src/utils/arcsight_format.o : $(REDEMPTION_SRC_PATH)/utils/arcsight_format.cpp ;
 obj src/utils/base64.o : $(REDEMPTION_SRC_PATH)/utils/base64.cpp ;
 obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
@@ -5569,6 +5587,7 @@ obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
 alias test_authentifier : tests/acl/test_authentifier ;
+alias test_dispatch_report_message : tests/acl/test_dispatch_report_message ;
 alias test_mm_api : tests/acl/test_mm_api ;
 alias test_module_manager : tests/acl/test_module_manager ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
@@ -5860,7 +5879,6 @@ alias test_splitter : tests/utils/sugar/test_splitter ;
 alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
 alias test_update_lock : tests/utils/sugar/test_update_lock ;
-alias test_arcsight_format : tests/utils/test_arcsight_format ;
 alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_base64 : tests/utils/test_base64 ;
 alias test_bitfu : tests/utils/test_bitfu ;
@@ -5902,7 +5920,6 @@ alias test_region : tests/utils/test_region ;
 alias test_rle : tests/utils/test_rle ;
 alias test_stream : tests/utils/test_stream ;
 alias test_strutils : tests/utils/test_strutils ;
-alias test_texttime : tests/utils/test_texttime ;
 alias test_timeval_ops : tests/utils/test_timeval_ops ;
 alias test_translation : tests/utils/test_translation ;
 alias test_utf : tests/utils/test_utf ;
@@ -5914,6 +5931,7 @@ if $(ENABLE_COVERAGE) = "on"
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_authentifier.coverage : tests/acl/test_authentifier.coverage ;
+alias test_dispatch_report_message.coverage : tests/acl/test_dispatch_report_message.coverage ;
 alias test_mm_api.coverage : tests/acl/test_mm_api.coverage ;
 alias test_module_manager.coverage : tests/acl/test_module_manager.coverage ;
 alias test_latin_to_cyrillic.coverage : tests/capture/ocr/locale/test_latin_to_cyrillic.coverage ;
@@ -6118,6 +6136,7 @@ alias test_rdp_metrics.coverage : tests/mod/rdp/test_rdp_metrics.coverage ;
 alias test_rdp_negociation.coverage : tests/mod/rdp/test_rdp_negociation.coverage ;
 alias test_rdp_orders.coverage : tests/mod/rdp/test_rdp_orders.coverage ;
 alias test_rdp_params.coverage : tests/mod/rdp/test_rdp_params.coverage ;
+alias test_file_validator_service.coverage : tests/mod/test_file_validator_service.coverage ;
 alias test_metrics_hmac.coverage : tests/mod/test_metrics_hmac.coverage ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
 alias test_hextile.coverage : tests/mod/vnc/encoder/test_hextile.coverage ;
@@ -6185,7 +6204,6 @@ alias test_splitter.coverage : tests/utils/sugar/test_splitter.coverage ;
 alias test_static_vector.coverage : tests/utils/sugar/test_static_vector.coverage ;
 alias test_unique_fd.coverage : tests/utils/sugar/test_unique_fd.coverage ;
 alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
-alias test_arcsight_format.coverage : tests/utils/test_arcsight_format.coverage ;
 alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
 alias test_base64.coverage : tests/utils/test_base64.coverage ;
 alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
@@ -6226,7 +6244,6 @@ alias test_region.coverage : tests/utils/test_region.coverage ;
 alias test_rle.coverage : tests/utils/test_rle.coverage ;
 alias test_stream.coverage : tests/utils/test_stream.coverage ;
 alias test_strutils.coverage : tests/utils/test_strutils.coverage ;
-alias test_texttime.coverage : tests/utils/test_texttime.coverage ;
 alias test_timeval_ops.coverage : tests/utils/test_timeval_ops.coverage ;
 alias test_translation.coverage : tests/utils/test_translation.coverage ;
 alias test_utf.coverage : tests/utils/test_utf.coverage ;
@@ -6238,6 +6255,7 @@ alias tests/acl.norec :
   tests/acl/test_acl_serializer
   tests/acl/test_auth_api
   tests/acl/test_authentifier
+  tests/acl/test_dispatch_report_message
   tests/acl/test_mm_api
   tests/acl/test_module_manager
 ;
@@ -6621,7 +6639,6 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_update_lock
 ;
 alias tests/utils.norec :
-  tests/utils/test_arcsight_format
   tests/utils/test_asynchronous_task_manager
   tests/utils/test_base64
   tests/utils/test_bitfu
@@ -6663,7 +6680,6 @@ alias tests/utils.norec :
   tests/utils/test_rle
   tests/utils/test_stream
   tests/utils/test_strutils
-  tests/utils/test_texttime
   tests/utils/test_timeval_ops
   tests/utils/test_translation
   tests/utils/test_utf

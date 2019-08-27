@@ -114,77 +114,77 @@ Error::Error(error_type id, int errnum) noexcept
 #endif
 }
 
-const char * Error::errmsg(bool with_id) const noexcept
+zstring_view Error::errmsg(bool with_id) const noexcept
 {
     switch(this->id) {
     case NO_ERROR:
-        return "No error";
+        return "No error"_zv;
     case ERR_SESSION_UNKNOWN_BACKEND:
-        return "Unknown Backend";
+        return "Unknown Backend"_zv;
     case ERR_NLA_AUTHENTICATION_FAILED:
-        return "NLA Authentication Failed";
+        return "NLA Authentication Failed"_zv;
     case ERR_TRANSPORT_OPEN_FAILED:
-        return "Open file failed";
+        return "Open file failed"_zv;
     case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
-        return "TLS certificate changed";
+        return "TLS certificate changed"_zv;
     case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
-        return "TLS certificate missed";
+        return "TLS certificate missed"_zv;
     case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
-        return "TLS certificate corrupted";
+        return "TLS certificate corrupted"_zv;
     case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
-        return "TLS certificate is inaccessible";
+        return "TLS certificate is inaccessible"_zv;
     case ERR_VNC_CONNECTION_ERROR:
-        return "VNC connection error.";
+        return "VNC connection error."_zv;
 
     case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
-        return "Unsupported client display monitor layout";
+        return "Unsupported client display monitor layout"_zv;
 
     case ERR_LIC:
-        return "An error occurred during the licensing protocol";
+        return "An error occurred during the licensing protocol"_zv;
 
     case ERR_RAIL_CLIENT_EXECUTE:
-        return "The RemoteApp program did not start on the remote computer";
+        return "The RemoteApp program did not start on the remote computer"_zv;
 
     case ERR_RAIL_STARTING_PROGRAM:
-        return "Cannot start the RemoteApp program";
+        return "Cannot start the RemoteApp program"_zv;
 
     case ERR_RAIL_UNAUTHORIZED_PROGRAM:
-        return "The RemoteApp program is not in the list of authorized programs";
+        return "The RemoteApp program is not in the list of authorized programs"_zv;
 
     case ERR_RDP_OPEN_SESSION_TIMEOUT:
-        return "Logon timer expired";
+        return "Logon timer expired"_zv;
 
     case ERR_RDP_SERVER_REDIR:
-        return "The computer that you are trying to connect to is redirecting you to another computer.";
+        return "The computer that you are trying to connect to is redirecting you to another computer."_zv;
 
     default:
-        #define MAKE_CASE_V(e, x) case e:                     \
-            return with_id                                    \
-                ? "Exception " #e " no: " RED_PP_STRINGIFY(x) \
-                : "Exception " #e;
+        #define MAKE_CASE_V(e, x) case e:                           \
+            return with_id                                          \
+                ? "Exception " #e " no: " RED_PP_STRINGIFY(x) ""_zv \
+                : "Exception " #e ""_zv;
 #if __cplusplus >= REDEMPTION_CXX_STD_17
         using namespace jln::literals;
-        #define MAKE_CASE(e) case e:                         \
-            return with_id                                   \
-                ? jln::string_c_concat_t<                    \
-                    decltype("Exception " #e " no: "_c),     \
-                    jln::ull_to_string_c_t<int(e)>>::c_str() \
-                : "Exception " #e;
+        #define MAKE_CASE(e) case e:                           \
+            return with_id                                     \
+                ? jln::string_c_concat_t<                      \
+                    decltype("Exception " #e " no: "_c),       \
+                    jln::ull_to_string_c_t<int(e)>>::zstring() \
+                : "Exception " #e ""_zv;
 #else
         #define MAKE_CASE(e) case e:                               \
             static ErrorCbuf<sizeof(#e)> buf_##e(#e, unsigned(e)); \
-            return with_id ? buf_##e.buf : "Exception " #e;
+            return with_id ? buf_##e.buf : "Exception " #e ""_zv;
 #endif
         switch (this->id) {
             EACH_ERROR(MAKE_CASE, MAKE_CASE_V)
         }
         #undef MAKE_CASE
         #undef MAKE_CASE_V
-        return "Unknown Error";
+        return "Unknown Error"_zv;
     }
 }
 
-const char* local_err_msg(const Error& error, Translation::language_t lang, bool with_id) noexcept
+zstring_view local_err_msg(const Error& error, Translation::language_t lang, bool with_id) noexcept
 {
     switch (error.id) {
     case ERR_SESSION_UNKNOWN_BACKEND:

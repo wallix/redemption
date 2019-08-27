@@ -68,12 +68,12 @@ struct File
         return std::ferror(f);
     }
 
-    bytes_view read(bytes_view buffer) noexcept
+    writable_bytes_view read(writable_bytes_view buffer) noexcept
     {
         return {buffer.data(), std::fread(buffer.data(), 1, buffer.size(), f)};
     }
 
-    size_t write(const_bytes_view buffer) noexcept
+    size_t write(bytes_view buffer) noexcept
     {
         return std::fwrite(buffer.data(), 1, buffer.size(), f);
     }

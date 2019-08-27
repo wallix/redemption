@@ -24,20 +24,30 @@
 #include "acl/acl_serializer.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/mm_api.hpp"
+#include "acl/kv_list_to_string.hpp"
 #include "configs/config.hpp"
+#include "core/log_id.hpp"
 #include "core/date_dir_from_filename.hpp"
+#include "core/report_message_api.hpp"
 #include "core/set_server_redirection_target.hpp"
+#include "main/version.hpp"
 #include "mod/rdp/rdp_api.hpp"
-#include "utils/arcsight.hpp"
-#include "utils/arcsight_format.hpp"
+#include "std17/charconv.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/get_printable_password.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/stream.hpp"
+#include "utils/string_c.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 
+#include <string>
+#include <algorithm>
+
+#include <ctime>
 #include <cstdio>
+#include <cassert>
 
 
 KeepAlive::KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose)
@@ -169,7 +179,7 @@ SessionLogFile::~SessionLogFile()
 
 void SessionLogFile::open(
     std::string const& log_path, std::string const& hash_path,
-    int groupid, const_bytes_view derivator)
+    int groupid, bytes_view derivator)
 {
     assert(!this->ct.is_open());
     this->ct.open(log_path.c_str(), hash_path.c_str(), groupid, derivator);
@@ -283,51 +293,206 @@ void AclSerializer::update_inactivity_timeout()
     }
 }
 
-void AclSerializer::log6(
-    const std::string & info, const ArcsightLogInfo & asl_info, const timeval time)
+namespace
 {
-    time_t const time_now = time.tv_sec;
-    this->log_file.write_line(time_now, info);
+    template<std::size_t N>
+    struct StringBuf
+    {
+        std::string_view sv() const noexcept
+        {
+            return {buf, len};
+        }
 
-    auto isdigit = [](char c) { return '0' <= c && '9' <= c; };
+        std::size_t capacity() noexcept
+        {
+            return N;
+        }
+
+        char* data() noexcept
+        {
+            return buf;
+        }
+
+        void setsize(std::size_t n) noexcept
+        {
+            len = n;
+        }
+
+    private:
+        char buf[N];
+        std::size_t len;
+    };
+
+    StringBuf<64> from_gmtime(std::time_t time) noexcept
+    {
+        StringBuf<64> buf;
+
+        struct tm t;
+        gmtime_r(&time, &t);
+
+        constexpr char const* months[]{
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        };
+
+        // MMM(text) dd yyyy hh:mm:ss
+        int len = snprintf(buf.data(), buf.capacity(), "%s %02d %04d %02d:%02d:%02d",
+            months[t.tm_mon], t.tm_mday, 1900 + t.tm_year, t.tm_hour, t.tm_min, t.tm_sec);
+        assert(len > 0);
+        buf.setsize(len);
+
+        return buf;
+    }
+
+    constexpr inline array_view_const_char ints_s[]{
+        "0"_av, "1"_av, "2"_av, "3"_av, "4"_av, "5"_av, "6"_av, "7"_av, "8"_av, "9"_av,
+        "10"_av, "11"_av, "12"_av, "13"_av, "14"_av, "15"_av, "16"_av, "17"_av, "18"_av,
+        "19"_av, "20"_av, "21"_av, "22"_av, "23"_av, "24"_av, "25"_av, "26"_av, "27"_av,
+        "28"_av, "29"_av, "30"_av, "31"_av, "32"_av, "33"_av, "34"_av, "35"_av, "36"_av,
+        "37"_av, "38"_av, "39"_av, "40"_av, "41"_av, "42"_av, "43"_av, "44"_av, "45"_av,
+        "46"_av, "47"_av, "48"_av, "49"_av, "50"_av, "51"_av, "52"_av, "53"_av, "54"_av,
+        "55"_av, "56"_av, "57"_av, "58"_av, "59"_av, "60"_av, "61"_av, "62"_av, "63"_av,
+        "64"_av, "65"_av, "66"_av, "67"_av, "68"_av, "69"_av, "70"_av, "71"_av, "72"_av,
+        "73"_av, "74"_av, "75"_av, "76"_av, "77"_av, "78"_av, "79"_av, "80"_av, "81"_av,
+        "82"_av, "83"_av, "84"_av, "85"_av, "86"_av, "87"_av, "88"_av, "89"_av, "90"_av,
+        "91"_av, "92"_av, "93"_av, "94"_av, "95"_av, "96"_av, "97"_av, "98"_av, "99"_av,
+        "100"_av, "101"_av, "102"_av, "103"_av, "104"_av, "105"_av, "106"_av, "107"_av,
+        "108"_av, "109"_av, "110"_av, "111"_av, "112"_av, "113"_av, "114"_av, "115"_av,
+        "116"_av, "117"_av, "118"_av, "119"_av, "120"_av,
+    };
+
+    namespace table_formats
+    {
+        constexpr auto arcsight()
+        {
+            std::array<char, 256> t{};
+            t[int('=')] = '=';
+            t[int('\\')] = '\\';
+            t[int('\n')] = 'n';
+            t[int('\r')] = 'r';
+            return t;
+        }
+
+        constexpr inline auto arcsight_table = arcsight();
+        constexpr inline auto& siem_table = qvalue_table_formats::log_table;
+    }
+
+    inline void log_format_set_siem(
+        std::string& buffer,
+        array_view_const_char session_type,
+        array_view_const_char user,
+        array_view_const_char account,
+        array_view_const_char session_id,
+        array_view_const_char host,
+        array_view_const_char target_ip,
+        array_view_const_char device,
+        array_view_const_char service)
+    {
+        buffer.clear();
+        auto append = [&](auto* key, array_view_const_char value){
+            buffer += key;
+            escaped_qvalue(buffer, value, table_formats::siem_table);
+            buffer += "\" ";
+        };
+
+        if (session_type.empty()) {
+            buffer += "[Neutral Session] ";
+        }
+        else {
+            buffer += '[';
+            buffer.append(session_type.data(), session_type.size());
+            buffer += " Session] ";
+        }
+        append("session_id=\"", session_id);
+        append("client_ip=\"",  host);
+        append("target_ip=\"",  target_ip);
+        append("user=\"",       user);
+        append("device=\"",     device);
+        append("service=\"",    service);
+        append("account=\"",    account);
+    }
+
+    inline void log_format_set_arcsight(
+        std::string& buffer,
+        LogId id,
+        std::time_t time,
+        array_view_const_char session_type,
+        array_view_const_char user,
+        array_view_const_char account,
+        array_view_const_char session_id,
+        array_view_const_char host,
+        array_view_const_char target_ip,
+        array_view_const_char device,
+        array_view_const_char service,
+        KVList kv_list)
+    {
+        static_assert(std::size(ints_s) >= std::size(detail::log_id_string_map));
+        buffer.clear();
+        str_append(buffer,
+            from_gmtime(time).sv(),
+            " host message CEF:1|Wallix|Bastion|" VERSION "|",
+            ints_s[unsigned(id)], '|',
+            detail::log_id_string_map[unsigned(id)], "|"
+            "5" /*TODO severity*/
+            "|WallixBastionSessionType=", session_type.empty() ? "Neutral"_av : session_type,
+            " WallixBastionSessionId=", session_id,
+            " WallixBastionHost=", host,
+            " WallixBastionTargetIP=", target_ip,
+            " WallixBastionUser=", user,
+            " WallixBastionDevice=", device,
+            " WallixBastionService=", service,
+            " WallixBastionAccount=", account
+        );
+        kv_list_to_string(buffer, kv_list, '=', "", table_formats::arcsight_table);
+    }
+}
+
+void AclSerializer::log6(LogId id, const timeval time, KVList kv_list)
+{
+    std::string buffer_info;
+    buffer_info.reserve(kv_list.size() * 50 + 30);
+
+    time_t const time_now = time.tv_sec;
+    this->log_file.write_line(time_now, log_format_set_info(buffer_info, id, kv_list));
+
+    auto target_ip = [this]{
+        char c = this->ini.get<cfg::context::target_host>()[0];
+        using av = array_view_const_char;
+        return ('0' <= c && '9' <= c)
+            ? av(this->ini.get<cfg::context::target_host>())
+            : av(this->ini.get<cfg::context::ip_target>());
+    };
 
     /* Log to SIEM (redirected syslog) */
     if (this->ini.get<cfg::session_log::enable_session_log>()) {
-        auto const& target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
-            ? this->ini.get<cfg::context::target_host>()
-            : this->ini.get<cfg::context::ip_target>());
+        std::string buffer;
+        log_format_set_siem(
+            buffer,
+            this->session_type,
+            this->ini.get<cfg::globals::auth_user>(),
+            this->ini.get<cfg::globals::target_user>(),
+            this->ini.get<cfg::context::session_id>(),
+            this->ini.get<cfg::globals::host>(),
+            target_ip(),
+            this->ini.get<cfg::globals::target_device>(),
+            this->ini.get<cfg::context::target_service>());
 
-        auto session_info = key_qvalue_pairs({
-            {"session_id", this->ini.get<cfg::context::session_id>()},
-            {"client_ip",  this->ini.get<cfg::globals::host>()},
-            {"target_ip",  target_ip},
-            {"user",       this->ini.get<cfg::globals::auth_user>()},
-            {"device",     this->ini.get<cfg::globals::target_device>()},
-            {"service",    this->ini.get<cfg::context::target_service>()},
-            {"account",    this->ini.get<cfg::globals::target_user>()},
-        });
-
-        LOG_SIEM(
-            "[%s Session] %s %s"
-            , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
-            , session_info.c_str()
-            , info.c_str());
+        LOG_SIEM("%s%s", buffer.c_str(), buffer_info.c_str());
     }
 
     if (this->ini.get<cfg::session_log::enable_arcsight_log>()) {
-        auto const& target_ip     = (isdigit(this->ini.get<cfg::context::target_host>()[0])
-            ? this->ini.get<cfg::context::target_host>()
-            : this->ini.get<cfg::context::ip_target>());
-        auto const& user          = this->ini.get<cfg::globals::auth_user>();
-        auto const& account       = this->ini.get<cfg::globals::target_user>();
-        auto const& session_id    = this->ini.get<cfg::context::session_id>();
-        auto const& host          = this->ini.get<cfg::globals::host>();
+        log_format_set_arcsight(
+            buffer_info, id, time_now,
+            this->session_type,
+            this->ini.get<cfg::globals::auth_user>(),
+            this->ini.get<cfg::globals::target_user>(),
+            this->ini.get<cfg::context::session_id>(),
+            this->ini.get<cfg::globals::host>(),
+            target_ip(),
+            this->ini.get<cfg::globals::target_device>(),
+            this->ini.get<cfg::context::target_service>(),
+            kv_list);
 
-        std::string arcsight_message;
-        arcsight_format(arcsight_message, asl_info,
-            time.tv_sec, user, account, host, target_ip, session_id, this->session_type);
-
-        LOG_SIEM("%s", arcsight_message);
+        LOG_SIEM("%s", buffer_info);
     }
 }
 
@@ -627,7 +792,9 @@ namespace
 
     public:
         Reader(Transport & trans, Verbose verbose)
-        : trans(trans)
+        : p(nullptr)
+    	, e(nullptr)
+        , trans(trans)
         , verbose(verbose)
         {
             this->safe_read_packet();
@@ -795,6 +962,7 @@ void AclSerializer::in_items()
             LOG(LOG_WARNING, "Unexpected receving '%s' - '%.*s'",
                 sauthid, int(val.size()), val.data());
         }
+
     }
 }
 
@@ -857,7 +1025,7 @@ namespace
                 auto n = std::min<std::size_t>(av.size(), this->buf_len - this->buf.sz);
                 memcpy(this->buf.data + this->buf.sz, av.data(), n);
                 this->buf.sz += n;
-                av = av.from_at(n);
+                av = av.from_offset(n);
                 if (!av.empty()) {
                     this->new_buffer();
                 }

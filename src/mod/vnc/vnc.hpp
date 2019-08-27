@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 
+#include "core/log_id.hpp"
 #include "core/buf64k.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -46,11 +47,9 @@
 #include "main/version.hpp"
 #include "RAIL/client_execute.hpp"
 #include "mod/mod_api.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/diffiehellman.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/d3des.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/update_lock.hpp"
@@ -66,9 +65,7 @@
 #include "mod/vnc/encoder/rre.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
 #include "mod/vnc/newline_convert.hpp"
-#include "mod/vnc/vnc_params.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
-#include "configs/config.hpp"
 
 
 #ifndef __EMSCRIPTEN__
@@ -218,8 +215,6 @@ private:
     SessionReactor::GraphicFdPtr fd_event;
     SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
 
-    ModVncVariables vars;
-
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
 #endif
@@ -244,7 +239,6 @@ public:
            , bool server_is_apple
            , bool server_is_unix
            , ClientExecute* rail_client_execute
-           , ModVncVariables vars
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
            )
@@ -262,7 +256,6 @@ public:
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
-    , vars(vars)
     #ifndef __EMSCRIPTEN__
     , metrics(metrics)
     #endif
@@ -793,13 +786,11 @@ public:
         // set almost null cursor, this is the little dot cursor
         drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SESSION_ESTABLISHED";
-        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_ESTABLISHED;
-        arc_info.ApplicationProtocol = "vnc";
-        arc_info.WallixBastionStatus = "SUCCESS";
-
-        this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, this->session_reactor.get_current_time());
+        this->report_message.log6(
+            LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
+            this->session_reactor.get_current_time(),
+            {}
+        );
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -950,7 +941,7 @@ public:
     }
 
 protected:
-    void rdp_input_clip_data(bytes_view data)
+    void rdp_input_clip_data(writable_bytes_view data)
     {
         auto client_cut_text = [this](char * str) {
             ::in_place_windows_to_linux_newline_convert(str);
@@ -1425,7 +1416,7 @@ private:
                 // sec result
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
                     if (status) {
                         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "vnc password ok");
                     }
@@ -1459,7 +1450,7 @@ private:
             {
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
                     if (status) {
                         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "MS LOGON password ok");
                     }
@@ -2817,7 +2808,7 @@ private:
                     // [ .................... out_stream .................... ]
                     // [ [ ... header_stream(8) ... ] [ ... data_stream ... ] ]
                     OutStream out_stream(uninit_buf_av);
-                    OutStream data_stream(uninit_buf_av.from_at(header_size));
+                    OutStream data_stream(uninit_buf_av.from_offset(header_size));
 
                     if (this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                         size_t utf16_data_length = UTF8toUTF16_CrLf(
@@ -3057,24 +3048,20 @@ public:
         uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->beginning;
         LOG(LOG_INFO, "Client disconnect from VNC module");
 
-        char extra[1024];
-        snprintf(extra, sizeof(extra), "%02d:%02d:%02d",
+        char duration_str[1024];
+        snprintf(duration_str, sizeof(duration_str), "%02d:%02d:%02d",
             int(seconds / 3600),
             int((seconds % 3600) / 60),
             int(seconds % 60));
 
-        auto info = key_qvalue_pairs({
-            {"type", "SESSION_DISCONNECTION"},
-            {"duration", extra},
-            });
+        this->report_message.log6(
+            LogId::SESSION_DISCONNECTION,
+            this->session_reactor.get_current_time(), {
+            KVLog("duration"_av, {duration_str, strlen(duration_str)}),
+        });
 
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SESSION_DISCONNECTION";
-        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_DISCONNECTION;
-        arc_info.ApplicationProtocol = "vnc";
-        arc_info.endTime = seconds;
-
-        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+            "type=SESSION_DISCONNECTION duration=%s", duration_str);
     }
 
     Dimension get_dim() const override

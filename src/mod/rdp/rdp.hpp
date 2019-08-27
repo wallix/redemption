@@ -78,6 +78,7 @@
 
 #include "core/session_reactor.hpp"
 
+#include "core/log_id.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/client_info.hpp"
@@ -91,7 +92,7 @@ struct FileValidatorService;
 # include "mod/rdp/windowing_api.hpp"
 #else
 # include "mod/rdp/rdp_metrics.hpp"
-# include "mod/file_validatior_service.hpp"
+# include "mod/file_validator_service.hpp"
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
 # include "mod/rdp/channels/rail_session_manager.hpp"
 # include "mod/rdp/channels/rail_channel.hpp"
@@ -119,9 +120,7 @@ struct FileValidatorService;
 #include "mod/rdp/server_transport_context.hpp"
 
 #include "core/channels_authorizations.hpp"
-#include "utils/arcsight.hpp"
 #include "utils/genrandom.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
@@ -129,6 +128,7 @@ struct FileValidatorService;
 
 #include <cstdlib>
 #include <deque>
+#include <bitset>
 
 
 #ifndef __EMSCRIPTEN__
@@ -198,7 +198,6 @@ public:
     RDPMetrics * metrics;
 
 private:
-    ReportMessageApi & report_message;
     Random & gen;
 
 public:
@@ -274,12 +273,10 @@ private:
     struct Clipboard
     {
         const bool disable_log_syslog;
-        const bool disable_log_wrm;
         const bool log_only_relevant_activities;
 
         Clipboard(ModRDPParams::ClipboardParams const& clipboard_params)
         : disable_log_syslog(clipboard_params.disable_log_syslog)
-        , disable_log_wrm(clipboard_params.disable_log_wrm)
         , log_only_relevant_activities(clipboard_params.log_only_relevant_activities)
         {}
     } clipboard;
@@ -287,14 +284,12 @@ private:
     struct FileSystem
     {
         const bool disable_log_syslog;
-        const bool disable_log_wrm;
         const bool bogus_ios_rdpdr_virtual_channel;
 
         const bool enable_rdpdr_data_analysis;
 
         FileSystem(ModRDPParams::FileSystemParams const& file_system_params)
         : disable_log_syslog(file_system_params.disable_log_syslog)
-        , disable_log_wrm(file_system_params.disable_log_wrm)
         , bogus_ios_rdpdr_virtual_channel(file_system_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(file_system_params.enable_rdpdr_data_analysis)
         {}
@@ -376,6 +371,8 @@ public:
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
 private:
+    ReportMessageApi& report_message;
+
     RDPECLIP::CliprdrLogState cliprdrLogStatus;
     rdpdr::RdpDrStatus rdpdrLogStatus;
 
@@ -406,13 +403,13 @@ public:
         }())
     , checkout_channel(mod_rdp_params.checkout_channel)
     , metrics(metrics)
-    , report_message(report_message)
     , gen(gen)
     , session_probe(mod_rdp_params.session_probe_params)
     , remote_app(mod_rdp_params.remote_app_params)
     , clipboard(mod_rdp_params.clipboard_params)
     , file_system(mod_rdp_params.file_system_params)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
+    , report_message(report_message)
     , verbose(verbose)
     , session_reactor(session_reactor)
     , file_validator_service(file_validator_service)
@@ -527,7 +524,7 @@ private:
             {}
 
             void operator()(uint32_t total_length, uint32_t flags,
-                const_bytes_view chunk_data) override
+                bytes_view chunk_data) override
             {
                 if (this->verbose) {
                     const bool send              = true;
@@ -559,14 +556,12 @@ private:
         cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
         cvc_params.clipboard_file_authorized = this->channels_authorizations.cliprdr_file_is_authorized();
         cvc_params.dont_log_data_into_syslog = this->clipboard.disable_log_syslog;
-        cvc_params.dont_log_data_into_wrm    = this->clipboard.disable_log_wrm;
         cvc_params.log_only_relevant_clipboard_activities = this->clipboard.log_only_relevant_activities;
         cvc_params.validator_params = this->validator_params;
 
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
-            front,
             this->session_reactor,
             base_params,
             std::move(cvc_params),
@@ -602,7 +597,7 @@ private:
             , verbose(verbose)
             {}
 
-            void operator()(uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) override
+            void operator()(uint32_t total_length, uint32_t flags, bytes_view chunk_data) override
             {
                 if (this->show_protocol) {
                     flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
@@ -657,7 +652,7 @@ private:
             }
 
             void operator()(
-                uint32_t total_length, uint32_t flags, const_bytes_view chunk_data) override
+                uint32_t total_length, uint32_t flags, bytes_view chunk_data) override
             {
                 this->asynchronous_tasks.add(
                     std::make_unique<RdpdrSendClientMessageTask>(
@@ -717,14 +712,12 @@ private:
         fsvc_params.serial_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
         fsvc_params.smart_card_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
         fsvc_params.dont_log_data_into_syslog = this->file_system.disable_log_syslog;
-        fsvc_params.dont_log_data_into_wrm = this->file_system.disable_log_wrm;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.session_reactor,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
                 this->drive.file_system_drive_manager,
-                front,
                 false,
                 "",
                 client_name,
@@ -1487,7 +1480,7 @@ public:
 
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
-        const_bytes_view chunk, size_t length, uint32_t flags,
+        bytes_view chunk, size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
 #ifndef __EMSCRIPTEN__
@@ -2509,57 +2502,61 @@ public:
 
         while (stream.in_check_rem(2)) {
             ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
-            unsigned expected = 2;
 
-            uint16_t cmdType = stream.in_uint16_le();
+			unsigned expected = 2;
 
-            switch(cmdType) {
-            case CMDTYPE_SET_SURFACE_BITS:
-            case CMDTYPE_STREAM_SURFACE_BITS: {
-                RDPSetSurfaceCommand setSurface;
+			uint16_t cmdType = stream.in_uint16_le();
 
-                setSurface.recv(stream);
+			switch(cmdType) {
+			case CMDTYPE_SET_SURFACE_BITS:
+			case CMDTYPE_STREAM_SURFACE_BITS: {
+				RDPSetSurfaceCommand setSurface;
 
-                if (setSurface.codecId == this->remoteFx_codec_id) {
-                    InStream remoteFxStream({stream.get_current(), setSurface.bitmapDataLength});
-                    this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
-                }
-                else {
-                    LOG(LOG_INFO, "unknown codecId=%u", setSurface.codecId);
-                }
-                stream.in_skip_bytes(setSurface.bitmapDataLength);
-                break;
-            }
-            case CMDTYPE_FRAME_MARKER: {
-                // 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
-                // The Frame Marker Command is used to group multiple surface commands so that these commands
-                // can be processed and presented to the user as a single entity, a frame.
-                //
-                // cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
-                //         CMDTYPE_FRAME_MARKER (0x0004).
-                // frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
-                // +------------------------------+-------------------------------------+
-                // |             Value            |         Meaning                     |
-                // +------------------------------+-------------------------------------+
-                // | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
-                // |            0x0000            |                                     |
-                // +------------------------------+-------------------------------------+
-                // | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
-                // |             0x0001           | frame.                              |
-                // +------------------------------+-------------------------------------+
-                //
-                // frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
-                //
-                enum {
-                    SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
-                    SURFACECMD_FRAMEACTION_END = 0x0001
-                };
+				setSurface.recv(stream);
 
-                expected = 6;
-                if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
+				if (setSurface.codecId == this->remoteFx_codec_id) {
+					setSurface.codec = RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX;
+
+					InStream remoteFxStream(bytes_view(stream.get_current(), setSurface.bitmapDataLength));
+					this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
+				}
+				else {
+					LOG(LOG_INFO, "unknown codecId=%u", setSurface.codecId);
+				}
+				stream.in_skip_bytes(setSurface.bitmapDataLength);
+				break;
+			}
+
+			case CMDTYPE_FRAME_MARKER: {
+				// 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
+				// The Frame Marker Command is used to group multiple surface commands so that these commands
+				// can be processed and presented to the user as a single entity, a frame.
+				//
+				// cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
+				//         CMDTYPE_FRAME_MARKER (0x0004).
+				// frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
+				// +------------------------------+-------------------------------------+
+				// |             Value            |         Meaning                     |
+				// +------------------------------+-------------------------------------+
+				// | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
+				// |            0x0000            |                                     |
+				// +------------------------------+-------------------------------------+
+				// | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
+				// |             0x0001           | frame.                              |
+				// +------------------------------+-------------------------------------+
+				//
+				// frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
+				//
+				enum {
+					SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
+					SURFACECMD_FRAMEACTION_END = 0x0001
+				};
+
+				expected = 6;
+				if (!stream.in_check_rem(expected)) {
+					LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
+					throw Error(ERR_RDP_DATA_TRUNCATED);
+				}
 
                 uint16_t frameAction = stream.in_uint16_le();
                 uint32_t frameId = stream.in_uint32_le();
@@ -2848,15 +2845,9 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-
-                                ArcsightLogInfo arc_info;
-                                arc_info.name = "SESSION_ESTABLISHED";
-                                arc_info.signatureID = ArcsightLogInfo::ID::SESSION_ESTABLISHED;
-                                arc_info.ApplicationProtocol = "rdp";
-                                arc_info.WallixBastionStatus = "SUCCESS";
-                                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                                this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, this->session_reactor.get_current_time());
+                                this->report_message.log6(
+                                    LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
+                                    this->session_reactor.get_current_time(), {});
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -3591,7 +3582,6 @@ public:
                 }
 
                 BitmapCodecCaps bitmap_codec_caps(true);
-
                 if (this->enable_remotefx && this->haveRemoteFx) {
                     /**
                      * for remoteFx we need:
@@ -5629,26 +5619,20 @@ private:
             uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->session_time_start.count();
             this->session_time_start = std::chrono::seconds::zero();
 
-            char extra[1024];
-            snprintf(extra, sizeof(extra), "%d:%02d:%02d",
+            char duration_str[1024];
+            snprintf(duration_str, sizeof(duration_str), "%d:%02d:%02d",
                 int(seconds / 3600),
                 int((seconds % 3600) / 60),
                 int(seconds % 60));
 
-            auto info = key_qvalue_pairs({
-                {"type", "SESSION_DISCONNECTION"},
-                {"duration", extra},
-                });
+            this->report_message.log6(
+                LogId::SESSION_DISCONNECTION,
+                this->session_reactor.get_current_time(), {
+                KVLog("duration"_av, {duration_str, strlen(duration_str)}),
+            });
 
-            ArcsightLogInfo arc_info;
-            arc_info.name = "SESSION_DISCONNECTION";
-            arc_info.signatureID = ArcsightLogInfo::ID::SESSION_DISCONNECTION;
-            arc_info.ApplicationProtocol = "rdp";
-            arc_info.endTime = seconds;
-
-            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-            LOG_IF(enable_verbose, LOG_INFO, "%s", info);
+            LOG_IF(enable_verbose, LOG_INFO,
+                "type=SESSION_DISCONNECTION duration=%s", duration_str);
         }
     }
 
@@ -5920,7 +5904,7 @@ private:
 
                 channel_data_size = stream.tailroom();
             },
-            [&](StreamSize<256>, OutStream & fastpath_header, bytes_view packet) {
+            [&](StreamSize<256>, OutStream & fastpath_header, writable_bytes_view packet) {
                 FastPath::ClientInputEventPDU_Send out_cie(
                     fastpath_header, packet.data(), packet.size(), 1,
                     this->encrypt, this->negociation_result.encryptionLevel,

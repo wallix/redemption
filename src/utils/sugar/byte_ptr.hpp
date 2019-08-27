@@ -25,15 +25,15 @@
 #include <cstddef>
 
 
-struct byte_ptr
+struct writable_byte_ptr
 {
-    byte_ptr() = default;
+    writable_byte_ptr() = default;
 
-    byte_ptr(char * data) noexcept
+    writable_byte_ptr(char * data) noexcept
     : data_(byte_ptr_cast(data))
     {}
 
-    constexpr byte_ptr(uint8_t * data) noexcept
+    constexpr writable_byte_ptr(uint8_t * data) noexcept
     : data_(data)
     {}
 
@@ -52,19 +52,19 @@ private:
     uint8_t * data_ = nullptr;
 };
 
-struct const_byte_ptr
+struct byte_ptr
 {
-    constexpr const_byte_ptr() = default;
+    constexpr byte_ptr() = default;
 
-    const_byte_ptr(char const * data) noexcept
+    byte_ptr(char const * data) noexcept
     : data_(byte_ptr_cast(data))
     {}
 
-    constexpr const_byte_ptr(uint8_t const * data) noexcept
+    constexpr byte_ptr(uint8_t const * data) noexcept
     : data_(data)
     {}
 
-    constexpr const_byte_ptr(byte_ptr bytes) noexcept
+    constexpr byte_ptr(writable_byte_ptr bytes) noexcept
     : data_(bytes)
     {}
 
@@ -81,5 +81,3 @@ struct const_byte_ptr
 private:
     uint8_t const * data_ = nullptr;
 };
-
-using cbyte_ptr = const_byte_ptr;

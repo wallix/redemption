@@ -484,7 +484,7 @@ private:
 
 public:
     void process_client_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data) override
+        uint32_t flags, bytes_view chunk_data) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
             "RemoteProgramsVirtualChannel::process_client_message: "
@@ -731,22 +731,12 @@ public:
                 serpdu.RawResult());
         }
         else {
-            if (!this->session_probe_channel ||
-                this->client_execute.exe_or_file != serpdu.ExeOrFile()) {
-
-                auto info = key_qvalue_pairs({
-                    {"type", "CLIENT_EXECUTE_REMOTEAPP"},
-                    {"exe_or_file", serpdu.ExeOrFile()},
-                    });
-
-                ArcsightLogInfo arc_info;
-                arc_info.name = "CLIENT_EXECUTE_REMOTEAPP";
-                arc_info.signatureID = ArcsightLogInfo::ID::CLIENT_EXECUTE_REMOTEAPP;
-                arc_info.ApplicationProtocol = "rdp";
-                arc_info.filePath = serpdu.ExeOrFile();
-                arc_info.direction_flag = ArcsightLogInfo::Direction::SERVER_SRC;
-
-                this->report_message.log6(info, arc_info, tvtime());
+            if (!this->session_probe_channel
+             || this->client_execute.exe_or_file != serpdu.ExeOrFile()
+            ) {
+                this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, tvtime(), {
+                    KVLog("exe_or_file"_av, {serpdu.ExeOrFile(), strlen(serpdu.ExeOrFile())}),
+                });
             }
         }
 
@@ -1152,7 +1142,7 @@ public:
     }
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, const_bytes_view chunk_data,
+        uint32_t flags, bytes_view chunk_data,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override
     {
         (void)out_asynchronous_task;

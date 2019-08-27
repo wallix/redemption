@@ -222,6 +222,7 @@ public:
                 std::vector<uint8_t> temp;
                 for (auto x: {1, 1, 0, 0, 0, 0, 0, 0}){
                     temp.push_back(x);
+
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient TimeStamp");

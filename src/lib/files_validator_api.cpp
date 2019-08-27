@@ -19,7 +19,7 @@
 */
 
 #include "lib/files_validator_api.hpp"
-#include "mod/file_validatior_service.hpp"
+#include "mod/file_validator_service.hpp"
 #include "utils/c_interface.hpp"
 #include "utils/netutils.hpp"
 

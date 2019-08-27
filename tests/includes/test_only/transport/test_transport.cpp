@@ -49,7 +49,7 @@ namespace
 
     struct hexdump
     {
-        const_bytes_view sig;
+        bytes_view sig;
     };
 
     struct hexdump_trailing
@@ -58,7 +58,7 @@ namespace
         uint8_t const * p;
         std::size_t len;
 
-        const_bytes_view sig() const
+        bytes_view sig() const
         {
             return {this->p, this->len};
         }
@@ -132,7 +132,7 @@ namespace
 } // anonymous namespace
 } // namespace test_transport
 
-GeneratorTransport::GeneratorTransport(cbytes_view buffer)
+GeneratorTransport::GeneratorTransport(bytes_view buffer)
 : data(new(std::nothrow) uint8_t[buffer.size()])
 , len(buffer.size())
 {
@@ -243,7 +243,7 @@ bool BufSequenceTransport::next()
 }
 
 
-CheckTransport::CheckTransport(const_buffer_view buffer)
+CheckTransport::CheckTransport(buffer_view buffer)
 : data(new(std::nothrow) uint8_t[buffer.size()])
 , len(buffer.size())
 {
@@ -322,12 +322,12 @@ void CheckTransport::do_send(const uint8_t * const data, size_t len)
 }
 
 
-TestTransport::TestTransport(cbytes_view indata, cbytes_view outdata)
+TestTransport::TestTransport(bytes_view indata, bytes_view outdata)
 : check(outdata)
 , gen(indata)
 {}
 
-void TestTransport::set_public_key(const_bytes_view key)
+void TestTransport::set_public_key(bytes_view key)
 {
     this->public_key.reset(new uint8_t[key.size()]);
     this->public_key_length = key.size();

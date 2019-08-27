@@ -23,7 +23,7 @@
 #include "test_only/test_framework/file.hpp"
 #include "test_only/transport/test_transport.hpp"
 
-#include "mod/file_validatior_service.hpp"
+#include "mod/file_validator_service.hpp"
 #include "utils/sugar/algostring.hpp"
 
 
@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(file_validatorReceive)
     BufTransport trans;
     FileValidatorService file_validator{trans};
 
-    auto setbuf = [&](cbytes_view data){
+    auto setbuf = [&](bytes_view data){
         trans.buf.assign(data.as_charp(), data.size());
     };
 
@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(file_validatorReceive)
         auto pos = response.size() / 2;
         setbuf(response.first(pos));
         RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
-        setbuf(response.from_at(pos));
+        setbuf(response.from_offset(pos));
         RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);
         setbuf("o"_av);
         RED_CHECK(file_validator.receive_response() == FileValidatorService::ResponseType::WaitingData);

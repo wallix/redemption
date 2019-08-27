@@ -27,16 +27,42 @@
 #include "core/channels_authorizations.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
+#include "acl/dispatch_report_message.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/metrics_hmac.hpp"
 #include "mod/rdp/parse_extra_orders.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "mod/file_validatior_service.hpp"
+#include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/netutils.hpp"
 
+namespace
+{
+    void file_verification_error(
+        FrontAPI& front,
+        SessionReactor& session_reactor,
+        ReportMessageApi& report_message,
+        array_view_const_char up_target_name,
+        array_view_const_char down_target_name,
+        array_view_const_char msg)
+    {
+        auto log6 = [&](LogId id, KVList kv_list){
+            report_message.log6(id, session_reactor.get_current_time(), kv_list);
+            front.session_update(id, kv_list);
+        };
+
+        for (auto&& service : {up_target_name, down_target_name}) {
+            if (not service.empty()) {
+                log6(LogId::FILE_VERIFICATION_ERROR, {
+                    KVLog("icap_service"_av, service),
+                    KVLog("status"_av, msg),
+                });
+            }
+        }
+    }
+}
 
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -63,7 +89,7 @@ void ModuleManager::create_mod_rdp(
     //}
 
     unique_fd client_sck = this->connect_to_target_host(
-        report_message, trkeys::authentification_rdp_fail, "RDP");
+        report_message, trkeys::authentification_rdp_fail);
 
     // BEGIN READ PROXY_OPT
     if (ini.get<cfg::globals::enable_wab_integration>()) {
@@ -157,9 +183,7 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_params.vc_params.session_shadowing_support = ini.get<cfg::mod_rdp::session_shadowing_support>();
 
     mod_rdp_params.clipboard_params.disable_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
-    mod_rdp_params.clipboard_params.disable_log_wrm           = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
     mod_rdp_params.file_system_params.disable_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
-    mod_rdp_params.file_system_params.disable_log_wrm         = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm);
     mod_rdp_params.session_probe_params.vc_params.extra_system_processes =
         ExtraSystemProcesses(
             ini.get<cfg::context::session_probe_extra_system_processes>().c_str());
@@ -292,10 +316,19 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.validator_params.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
     mod_rdp_params.validator_params.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
 
-    mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>() && client_info.bitmap_codec_caps.haveRemoteFxCodec;
-
+    mod_rdp_params.enable_remotefx = ini.get<cfg::client::remotefx>();
 
     try {
+        using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
+
+        LogCategoryFlags dont_log_category;
+        if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
+            dont_log_category |= LogCategoryId::Drive;
+        }
+        if (bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm)) {
+            dont_log_category |= LogCategoryId::Clipboard;
+        }
+
         const char * const name = "RDP Target";
 
         Rect const adjusted_client_execute_rect =
@@ -320,7 +353,7 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-        struct ModRDPWithMetrics : public mod_rdp
+        struct ModRDPWithMetrics : public DispatchReportMessage, mod_rdp
         {
             struct ModMetrics : Metrics
             {
@@ -329,6 +362,7 @@ void ModuleManager::create_mod_rdp(
                 RDPMetrics protocol_metrics{*this};
                 SessionReactor::TimerPtr metrics_timer;
             };
+
 
             struct FileValidator
             {
@@ -349,7 +383,8 @@ void ModuleManager::create_mod_rdp(
                 struct CtxError
                 {
                     ReportMessageApi & report_message;
-                    std::string socket_path;
+                    std::string up_target_name;
+                    std::string down_target_name;
                     SessionReactor& session_reactor;
                     FrontAPI& front;
                 };
@@ -363,26 +398,14 @@ void ModuleManager::create_mod_rdp(
                 FileValidator(unique_fd&& fd, CtxError&& ctx_error)
                 : ctx_error(std::move(ctx_error))
                 , trans(std::move(fd), ReportError([this](Error err){
-                    auto* msg = err.errmsg();
-
-                    LOG(LOG_INFO, "FileValidatorTransport: %s", msg);
-                    auto const info = key_qvalue_pairs({
-                        {"type", "FILE_VERIFICATION_ERROR"},
-                        {"service", this->ctx_error.socket_path},
-                        {"status", msg}
-                    });
-
-                    ArcsightLogInfo arc_info;
-                    arc_info.name = "FILE_SCAN_ERROR";
-                    arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
-                    arc_info.ApplicationProtocol = "rdp";
-                    arc_info.message = msg;
-
-                    this->ctx_error.report_message.log6(
-                        info, arc_info, this->ctx_error.session_reactor.get_current_time());
-                    auto message = str_concat("FILE_VERIFICATION="_av, msg);
-                    this->ctx_error.front.session_update(message);
-
+                    file_verification_error(
+                        this->ctx_error.front,
+                        this->ctx_error.session_reactor,
+                        this->ctx_error.report_message,
+                        this->ctx_error.up_target_name,
+                        this->ctx_error.down_target_name,
+                        err.errmsg()
+                    );
                     return err;
                 }))
                 , service(this->trans)
@@ -401,7 +424,30 @@ void ModuleManager::create_mod_rdp(
             std::unique_ptr<ModMetrics> metrics;
             std::unique_ptr<FileValidator> file_validator;
 
-            using mod_rdp::mod_rdp;
+            explicit ModRDPWithMetrics(
+                Transport & trans,
+                SessionReactor& session_reactor,
+                gdi::GraphicApi & gd,
+                FrontAPI & front,
+                const ClientInfo & info,
+                RedirectionInfo & redir_info,
+                Random & gen,
+                TimeObj & timeobj,
+                ChannelsAuthorizations channels_authorizations,
+                const ModRDPParams & mod_rdp_params,
+                AuthApi & authentifier,
+                ReportMessageApi & report_message,
+                LogCategoryFlags dont_log_category,
+                ModRdpVariables vars,
+                RDPMetrics * metrics,
+                FileValidatorService * file_validator_service)
+            : DispatchReportMessage(report_message, front, dont_log_category)
+            , mod_rdp(
+                trans, session_reactor, gd, front, info, redir_info, gen, timeobj,
+                channels_authorizations, mod_rdp_params, authentifier,
+                static_cast<DispatchReportMessage&>(*this), vars,
+                metrics, file_validator_service)
+            {}
         };
 
         bool enable_validator = ini.get<cfg::file_verification::enable_up>() || ini.get<cfg::file_verification::enable_down>();
@@ -421,7 +467,10 @@ void ModuleManager::create_mod_rdp(
                 file_validator = std::make_unique<ModRDPWithMetrics::FileValidator>(
                     std::move(ufd),
                     ModRDPWithMetrics::FileValidator::CtxError{
-                        report_message, socket_path, this->session_reactor, this->front
+                        report_message,
+                        mod_rdp_params.validator_params.up_target_name,
+                        mod_rdp_params.validator_params.down_target_name,
+                        this->session_reactor, this->front
                     });
                 file_validator->service.send_infos({
                     "server_ip"_av, this->ini.get<cfg::context::target_host>(),
@@ -432,20 +481,12 @@ void ModuleManager::create_mod_rdp(
             else {
                 enable_validator = false;
                 LOG(LOG_WARNING, "Error, can't connect to validator, file validation disable");
-                auto const info = key_qvalue_pairs({
-                    {"type", "FILE_VERIFICATION_ERROR"},
-                    {"service", socket_path},
-                    {"status", "Unable to connect to FileValidator server"}
-                });
-
-                ArcsightLogInfo arc_info;
-                arc_info.name = "FILE_SCAN_ERROR";
-                arc_info.signatureID = ArcsightLogInfo::ID::FILE_SCAN_RESULT;
-                arc_info.ApplicationProtocol = "rdp";
-                arc_info.message = "Unable to connect to FileValidator server";
-
-                report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-                this->front.session_update("FILE_VERIFICATION=Unable to connect to FileValidator server"_av);
+                file_verification_error(
+                    front, session_reactor, report_message,
+                    mod_rdp_params.validator_params.up_target_name,
+                    mod_rdp_params.validator_params.down_target_name,
+                    "Unable to connect to FileValidator service"_av
+                );
             }
         }
 
@@ -493,6 +534,7 @@ void ModuleManager::create_mod_rdp(
             mod_rdp_params,
             authentifier,
             report_message,
+            dont_log_category,
             ini,
             enable_metrics ? &metrics->protocol_metrics : nullptr,
             enable_validator ? &file_validator->service : nullptr
@@ -560,12 +602,7 @@ void ModuleManager::create_mod_rdp(
         report_message.update_inactivity_timeout();
     }
     catch (...) {
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SESSION_CREATION";
-        arc_info.signatureID = ArcsightLogInfo::ID::SESSION_CREATION;
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.WallixBastionStatus = "FAIL";
-        report_message.log6("type=\"SESSION_CREATION_FAILED\"", arc_info, this->session_reactor.get_current_time());
+        report_message.log6(LogId::SESSION_CREATION_FAILED, this->session_reactor.get_current_time(), {});
 
         throw;
     }

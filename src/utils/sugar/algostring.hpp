@@ -62,17 +62,17 @@ auto trim(R & r, Pred pred = Pred()) -> range<decltype(r.begin())> {
 
 namespace detail
 {
-    inline array_view_const_char to_string_view_or_char(array_view_const_char av) noexcept
+    inline array_view_const_char to_string_view_or_char(array_view_const_char av, int) noexcept
     {
         return av;
     }
 
-    inline array_view_const_char to_string_view_or_char(char const* s) noexcept
+    inline array_view_const_char to_string_view_or_char(char const* s, char) noexcept
     {
         return {s, ::strlen(s)};
     }
 
-    inline char to_string_view_or_char(char c) noexcept
+    inline char to_string_view_or_char(char c, int) noexcept
     {
         return c;
     }
@@ -114,15 +114,15 @@ template<class String, class... Strings>
 [[nodiscard]] std::string str_concat(String&& str, Strings const&... strs)
 {
     std::string s;
-    detail::str_concat_view(s, detail::to_string_view_or_char(str),
-                               detail::to_string_view_or_char(strs)...);
+    detail::str_concat_view(s, detail::to_string_view_or_char(str, 1),
+                               detail::to_string_view_or_char(strs, 1)...);
     return s;
 }
 
 template<class... Strings>
 [[nodiscard]] std::string str_concat(std::string&& str, Strings const&... strs)
 {
-    detail::str_concat_view(str, detail::to_string_view_or_char(strs)...);
+    detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
     return std::move(str);
 }
 
@@ -130,7 +130,7 @@ template<class... Strings>
 template<class... Strings>
 void str_append(std::string& str, Strings const&... strs)
 {
-    detail::str_concat_view(str, detail::to_string_view_or_char(strs)...);
+    detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
 }
 
 
@@ -138,5 +138,5 @@ template<class... Strings>
 void str_assign(std::string& str, Strings const&... strs)
 {
     str.clear();
-    detail::str_concat_view(str, detail::to_string_view_or_char(strs)...);
+    detail::str_concat_view(str, detail::to_string_view_or_char(strs, 1)...);
 }

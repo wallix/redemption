@@ -23,11 +23,11 @@
 
 #include "utils/crypto/ssl_mod_exp_direct.hpp"
 
-static inline bytes_view mod_exp(
-    bytes_view out,
-    const_bytes_view inr,
-    const_bytes_view modulus,
-    const_bytes_view exponent
+static inline writable_bytes_view mod_exp(
+    writable_bytes_view out,
+    bytes_view inr,
+    bytes_view modulus,
+    bytes_view exponent
 ) {
     return mod_exp_direct(out, inr, modulus, exponent);
 }

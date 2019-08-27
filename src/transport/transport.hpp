@@ -84,7 +84,7 @@ public:
     /// recv_boom read len bytes into buffer or throw an Error
     /// if EOF is encountered at that point it's also an error and
     /// it throws Error(ERR_TRANSPORT_NO_MORE_DATA)
-    bytes_view recv_boom(byte_ptr buffer, size_t len)
+    writable_bytes_view recv_boom(writable_byte_ptr buffer, size_t len)
     {
         if (Read::Eof == this->atomic_read(buffer, len)) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
@@ -92,7 +92,7 @@ public:
         return {buffer, len};
     }
 
-    bytes_view recv_boom(bytes_view buffer)
+    writable_bytes_view recv_boom(writable_bytes_view buffer)
     {
         if (Read::Eof == this->atomic_read(buffer.as_u8p(), buffer.size())) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
@@ -105,37 +105,37 @@ public:
     /// or false if nothing was read (End of File reached at block frontier)
     /// if an exception is thrown buffer is dirty and may have been modified.
     REDEMPTION_CXX_NODISCARD
-    Read atomic_read(byte_ptr buffer, size_t len)
+    Read atomic_read(writable_byte_ptr buffer, size_t len)
     {
         return this->do_atomic_read(buffer.as_u8p(), len);
     }
 
     REDEMPTION_CXX_NODISCARD
-    Read atomic_read(bytes_view buffer)
+    Read atomic_read(writable_bytes_view buffer)
     {
         return this->do_atomic_read(buffer.as_u8p(), buffer.size());
     }
 
-    // TODO returns bytes_view
+    // TODO returns writable_bytes_view
     REDEMPTION_CXX_NODISCARD
-    size_t partial_read(byte_ptr buffer, size_t len)
+    size_t partial_read(writable_byte_ptr buffer, size_t len)
     {
         return this->do_partial_read(buffer.as_u8p(), len);
     }
 
-    // TODO returns bytes_view
+    // TODO returns writable_bytes_view
     REDEMPTION_CXX_NODISCARD
-    size_t partial_read(bytes_view buffer)
+    size_t partial_read(writable_bytes_view buffer)
     {
         return this->do_partial_read(buffer.as_u8p(), buffer.size());
     }
 
-    void send(cbyte_ptr buffer, size_t len)
+    void send(byte_ptr buffer, size_t len)
     {
         this->do_send(buffer.as_u8p(), len);
     }
 
-    void send(cbytes_view buffer)
+    void send(bytes_view buffer)
     {
         this->do_send(buffer.as_u8p(), buffer.size());
     }
@@ -220,14 +220,14 @@ struct InTransport
       : t(t)
     {}
 
-    void recv_boom(byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
-    void recv_boom(bytes_view buffer) { this->t.recv_boom(buffer); }
+    void recv_boom(writable_byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
+    void recv_boom(writable_bytes_view buffer) { this->t.recv_boom(buffer); }
 
     REDEMPTION_CXX_NODISCARD
-    Transport::Read atomic_read(byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
+    Transport::Read atomic_read(writable_byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
 
     REDEMPTION_CXX_NODISCARD
-    size_t partial_read(byte_ptr buffer, size_t len) { return this->t.partial_read(buffer, len); }
+    size_t partial_read(writable_byte_ptr buffer, size_t len) { return this->t.partial_read(buffer, len); }
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 
@@ -261,8 +261,8 @@ struct OutTransport
       : t(t)
     {}
 
-    void send(cbyte_ptr buffer, size_t len) { this->t.send(buffer, len); }
-    void send(cbytes_view buffer) { this->t.send(buffer); }
+    void send(byte_ptr buffer, size_t len) { this->t.send(buffer, len); }
+    void send(bytes_view buffer) { this->t.send(buffer); }
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 

@@ -82,12 +82,12 @@ class rdpCredsspServerKerberos final
             this->princpass[0] = 0;
         }
 
-        void user_init_copy(cbytes_view av)
+        void user_init_copy(bytes_view av)
         {
             this->User.assign(av.data(), av.data()+av.size());
         }
 
-        void domain_init_copy(cbytes_view av)
+        void domain_init_copy(bytes_view av)
         {
             this->Domain.assign(av.data(), av.data()+av.size());
         }
@@ -96,30 +96,20 @@ class rdpCredsspServerKerberos final
             return (this->User.size() == 0) && (this->Domain.size() == 0);
         }
 
-        cbytes_view get_password_utf16_av() const
+        bytes_view get_password_utf16_av() const
         {
             return this->Password;
         }
 
-        cbytes_view get_user_utf16_av() const
+        bytes_view get_user_utf16_av() const
         {
             return this->User;
         }
 
-        cbytes_view get_domain_utf16_av() const
+        bytes_view get_domain_utf16_av() const
         {
             return this->Domain;
         }
-
-        void copy_to_utf8_domain(byte_ptr buffer, size_t buffer_len)
-        {
-            UTF16toUTF8(this->Domain.data(), this->Domain.size(), buffer, buffer_len);
-        }
-
-        void copy_to_utf8_user(byte_ptr buffer, size_t buffer_len) {
-            UTF16toUTF8(this->User.data(), this->User.size(), buffer, buffer_len);
-        }
-
 
         void SetUserFromUtf8(const uint8_t * user)
         {
@@ -179,7 +169,7 @@ class rdpCredsspServerKerberos final
             this->Password.clear();
         }
 
-        void CopyAuthIdentity(cbytes_view user_utf16_av, cbytes_view domain_utf16_av, cbytes_view password_utf16_av)
+        void CopyAuthIdentity(bytes_view user_utf16_av, bytes_view domain_utf16_av, bytes_view password_utf16_av)
         {
             this->User.assign(user_utf16_av.data(),user_utf16_av.data()+user_utf16_av.size());
             this->Domain.assign(domain_utf16_av.data(),domain_utf16_av.data()+domain_utf16_av.size());

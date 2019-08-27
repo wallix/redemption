@@ -48,7 +48,7 @@ extract_user_domain(char const* target_user)
 }
 
 static std::pair<std::vector<uint8_t>, std::vector<uint8_t>>
-extract_user_domain(cbytes_view target_user)
+extract_user_domain(bytes_view target_user)
 {
     std::vector<uint8_t> username;
     std::vector<uint8_t> domain;

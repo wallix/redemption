@@ -55,7 +55,7 @@ public:
 
     const CHANNELS::ChannelDefArray & get_channel_list() const override;
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, const_bytes_view chunk_data
+    void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data
                         , std::size_t total_length, int flags) override;
 
     ResizeResult server_resize(ScreenInfo screen_server) override;
@@ -69,7 +69,7 @@ public:
     void set_focus_on_password_textbox(bool /*unused*/) override;
     void set_focus_on_unidentified_input_field(bool /*unused*/) override;
     void set_consent_ui_visible(bool /*unused*/) override;
-    void session_update(array_view_const_char message) override;
+    void session_update(LogId id, KVList kv_list) override;
     void send_savesessioninfo() override;
     int get_keylayout() const override;
 

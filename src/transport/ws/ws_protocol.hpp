@@ -137,7 +137,7 @@ struct ProtocolParseClientResult
         UnsupportedPartialData,
     };
     State state;
-    bytes_view data;
+    writable_bytes_view data;
 };
 
 /*
@@ -166,14 +166,14 @@ struct ProtocolParseClientResult
     maximal header size = 16 (fin + opcode + payload_len + extended_payload + extended_payload_continuastion)
     minimal supported header size = 8 ( 6bits isn't supported because maximal packet to RDP is equal to 16bits)
 */
-inline ProtocolParseClientResult ws_protocol_parse_client(bytes_view data) noexcept
+inline ProtocolParseClientResult ws_protocol_parse_client(writable_bytes_view data) noexcept
 {
     if (data.size() < 8) {
         return {
             (data.size() > 0 && (data[0] & 0xF) == WsHeader::OpCode::Close)
              ? ProtocolParseClientResult::State::Close
              : ProtocolParseClientResult::State::UnsupportedPartialHeader,
-            bytes_view{}
+            writable_bytes_view{}
         };
     }
 
@@ -183,7 +183,7 @@ inline ProtocolParseClientResult ws_protocol_parse_client(bytes_view data) noexc
     uint8_t const length_field = data[1] & (~0x80);
 
     if (opcode == WsHeader::OpCode::Close) {
-        return {ProtocolParseClientResult::State::Close, bytes_view{}};
+        return {ProtocolParseClientResult::State::Close, writable_bytes_view{}};
     }
 
     assert(opcode == WsHeader::Binary);
@@ -204,7 +204,7 @@ inline ProtocolParseClientResult ws_protocol_parse_client(bytes_view data) noexc
         pos += 2;
     }
     else /*if(length_field == 127u)*/ { // msglen is 64bit!
-        return {ProtocolParseClientResult::State::Unsupported64BitsPayloadLen, bytes_view{}};
+        return {ProtocolParseClientResult::State::Unsupported64BitsPayloadLen, writable_bytes_view{}};
         // static_assert(sizeof(size_t) < sizeof(uint64_t));
         // payload_length = (
         //     (uint64_t(data[2]) << 56) |
@@ -228,7 +228,7 @@ inline ProtocolParseClientResult ws_protocol_parse_client(bytes_view data) noexc
     pos += 4;
 
     if(data.size() - pos < payload_length) {
-        return {ProtocolParseClientResult::State::UnsupportedPartialData, bytes_view{}};
+        return {ProtocolParseClientResult::State::UnsupportedPartialData, writable_bytes_view{}};
     }
 
     auto first = data.begin() + pos;

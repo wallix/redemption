@@ -45,24 +45,24 @@ FlatForm::FlatForm(
     : WidgetParent(drawable, parent, notifier, group_id)
     , warning_msg(drawable, *this, nullptr, "", group_id,
                     theme.global.error_color, theme.global.bgcolor, font)
-    , duration_label(drawable, *this, nullptr, TR(trkeys::duration, lang),
+    , duration_label(drawable, *this, nullptr, TR(trkeys::duration, lang).to_sv(),
                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
     , duration_edit(drawable, *this, this,
                     nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, font, -1, 1, 1)
-    , duration_format(drawable, *this, nullptr, TR(trkeys::note_duration_format, lang),
+    , duration_format(drawable, *this, nullptr, TR(trkeys::note_duration_format, lang).to_sv(),
                         group_id, theme.global.fgcolor, theme.global.bgcolor, font)
-    , ticket_label(drawable, *this, nullptr, TR(trkeys::ticket, lang),
+    , ticket_label(drawable, *this, nullptr, TR(trkeys::ticket, lang).to_sv(),
                     group_id, theme.global.fgcolor, theme.global.bgcolor, font)
     , ticket_edit(drawable, *this, this,
                     nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, font, -1, 1, 1)
-    , comment_label(drawable, *this, nullptr, TR(trkeys::comment, lang),
+    , comment_label(drawable, *this, nullptr, TR(trkeys::comment, lang).to_sv(),
                     group_id, theme.global.fgcolor, theme.global.bgcolor, font)
     , comment_edit(drawable, *this, this,
                     nullptr, group_id, theme.edit.fgcolor, theme.edit.bgcolor,
                     theme.edit.focus_color, font, -1, 1, 1)
-    , notes(drawable, *this, nullptr, TR(trkeys::note_required, lang),
+    , notes(drawable, *this, nullptr, TR(trkeys::note_required, lang).to_sv(),
             group_id, theme.global.fgcolor, theme.global.bgcolor, font)
     , confirm(drawable, *this, this, TR(trkeys::confirm, lang), group_id,
                 theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color, 2, font,
@@ -92,13 +92,13 @@ FlatForm::FlatForm(
         this->add_widget(&this->comment_edit);
     }
     if (this->flags & DURATION_MANDATORY) {
-        this->duration_label.set_text(TR(trkeys::duration_r, lang));
+        this->duration_label.set_text(TR(trkeys::duration_r, lang).to_sv());
     }
     if (this->flags & TICKET_MANDATORY) {
-        this->ticket_label.set_text(TR(trkeys::ticket_r, lang));
+        this->ticket_label.set_text(TR(trkeys::ticket_r, lang).to_sv());
     }
     if (this->flags & COMMENT_MANDATORY) {
-        this->comment_label.set_text(TR(trkeys::comment_r, lang));
+        this->comment_label.set_text(TR(trkeys::comment_r, lang).to_sv());
     }
 
     if (this->flags & (COMMENT_MANDATORY | TICKET_MANDATORY | DURATION_MANDATORY)) {
@@ -223,10 +223,24 @@ void FlatForm::notify(Widget* widget, NotifyApi::notify_event_t event)
     }
 }
 
+namespace
+{
+    template<class T>
+    T const& to_ctype(T const& x)
+    {
+        return x;
+    }
+
+    char const* to_ctype(zstring_view const& str)
+    {
+        return str.c_str();
+    }
+}
+
 template<class T, class... Ts>
 void FlatForm::set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs)
 {
-    tr.fmt(this->warning_buffer, sizeof(this->warning_buffer), k, xs...);
+    tr.fmt(this->warning_buffer, sizeof(this->warning_buffer), k, to_ctype(xs)...);
     this->warning_msg.set_text(this->warning_buffer);
 }
 

@@ -40,7 +40,7 @@ public:
         MD5_Init(&this->md5);
     }
 
-    void update(const_bytes_view data)
+    void update(bytes_view data)
     {
         MD5_Update(&this->md5, data.as_u8p(), data.size());
     }

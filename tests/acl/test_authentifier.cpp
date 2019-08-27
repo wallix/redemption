@@ -53,7 +53,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
     ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
-    ini.set<cfg::debug::auth>(255);
 
     SessionReactor session_reactor;
     MMIni mm(session_reactor, ini);
@@ -155,7 +154,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
     ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
-    ini.set<cfg::debug::auth>(255);
 
     SessionReactor session_reactor;
     MMIni mm(session_reactor, ini);
@@ -224,7 +222,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     init_keys(cctx);
 
     TestTransport acl_trans(indata, outdata);
-    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(0));
     Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;
@@ -290,7 +288,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
     Inifile ini;
     ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
     ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{240}); // = 8*30 = 240secs inactivity>
-    ini.set<cfg::debug::auth>(255);
     SessionReactor session_reactor;
     MMIni mm(session_reactor, ini);
 
@@ -362,7 +359,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
     init_keys(cctx);
 
     TestTransport acl_trans(indata, outdata);
-    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(ini.get<cfg::debug::auth>()));
+    AclSerializer acl_serial(ini, 10010, acl_trans, cctx, rnd, fstat, to_verbose_flags(0));
     Authentifier sesman(ini, cctx, Authentifier::Verbose(0));
     sesman.set_acl_serial(&acl_serial);
     signal = BACK_EVENT_NEXT;

@@ -99,7 +99,8 @@ struct RedCryptoErrorContext
     char const * message() noexcept
     {
         if (this->error.errnum) {
-            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s", this->error.errmsg(), this->error.errnum, strerror(this->error.errnum));
+            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s",
+                this->error.errmsg().c_str(), this->error.errnum, strerror(this->error.errnum));
             this->msg[sizeof(this->msg)-1] = 0;
             return this->msg;
         }
@@ -386,7 +387,7 @@ int scytale_reader_open_with_auto_detect_encryption_scheme(
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    const_bytes_view const derivator_array{derivator, strlen(derivator)};
+    bytes_view const derivator_array{derivator, strlen(derivator)};
     Error out_error{NO_ERROR};
     CHECK_NOTHROW(
         auto const r = open_if_possible_and_get_encryption_scheme_type(
