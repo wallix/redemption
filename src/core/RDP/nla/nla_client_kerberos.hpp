@@ -762,7 +762,8 @@ private:
         this->credssp_encode_ts_credentials();
 
         StaticOutStream<65536> ts_credentials_send;
-        emitTSCredentials(ts_credentials_send, this->ts_credentials);
+        auto result = emitTSCredentials(this->ts_credentials);
+        ts_credentials_send.out_copy_bytes(result);
 
         return this->sspi_EncryptMessage(
             {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},

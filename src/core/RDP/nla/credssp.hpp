@@ -1673,7 +1673,7 @@ struct TSCredentials
     }
 };
 
-inline int emitTSCredentials(OutStream & stream, const TSCredentials & self ) 
+inline std::vector<uint8_t> emitTSCredentials(const TSCredentials & self ) 
 {
     /* [0] credType (INTEGER) */
     auto ber_credtype_field = BER::mkSmallIntegerField(self.credType, 0);
@@ -1693,16 +1693,11 @@ inline int emitTSCredentials(OutStream & stream, const TSCredentials & self )
                          + ber_credentials_header.size()
                          + ber_credentials.size());
 
-    stream.out_copy_bytes(sequence_header);
-    stream.out_copy_bytes(ber_credtype_field);
-    stream.out_copy_bytes(ber_credentials_header);
-    stream.out_copy_bytes(ber_credentials);
+    std::vector<uint8_t> result = std::move(sequence_header);
+    result << ber_credtype_field
+           << ber_credentials_header << ber_credentials;
 
-    return sequence_header.size()
-            + ber_credtype_field.size()
-            + ber_credentials_header.size()
-            + ber_credentials.size();
-
+    return result;
 }
 
 
