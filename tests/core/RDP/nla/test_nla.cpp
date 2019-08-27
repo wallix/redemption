@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
-    rdpCredsspClientNTLM credssp(user, domain, pass, host, "107.0.0.1", 
+    rdpCredsspClientNTLM credssp(user, domain, pass, host, "107.0.0.1",
                                 logtrans.get_public_key(),
                                 false, rand, timeobj);
     TpduBuffer buf;
@@ -220,7 +220,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             return PasswordCallback::Ok;
         }, true
     );
-    
+
     credssp::State st = credssp::State::Cont;
     TpduBuffer buf;
     buf.load_data(logtrans);
@@ -270,8 +270,6 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         logtrans.send(out_stream.get_bytes());
     }
     RED_CHECK_EQUAL(false, buf.next(TpduBuffer::CREDSSP));
-     LOG(LOG_INFO, "After the end");
-    hexdump_c(buf.current_pdu_buffer());
     RED_CHECK_EQUAL(0, buf.remaining());
     RED_CHECK_EQUAL(int(st), int(credssp::State::Finish));
 }

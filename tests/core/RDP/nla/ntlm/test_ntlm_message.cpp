@@ -187,7 +187,7 @@ RED_AUTO_TEST_CASE(TestAvPair)
 
     RED_CHECK_EQUAL(listAvPair.size(), 1);
     packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.size()+1);
-    for (auto & avp: listAvPair) { packet_length += avp.data.size(); }    
+    for (auto & avp: listAvPair) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, 21);
 
     StaticOutStream<65535> stream;
@@ -199,11 +199,11 @@ RED_AUTO_TEST_CASE(TestAvPair)
     }
     stream.out_uint16_le(MsvAvEOL);
     stream.out_uint16_le(0);
-    
+
     packet_length = (sizeof(NTLM_AV_ID) + sizeof(uint16_t)) * (listAvPair.size()+1);
     for (auto & avp: listAvPair) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, stream.get_offset());
-    
+
     LOG(LOG_INFO, "Av Pair List : %zu elements {", listAvPair.size());
     for (auto & avp: listAvPair) {
         LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
@@ -1404,7 +1404,7 @@ public:
             this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
             this->version.ProductBuild        = 7601;
             this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-            
+
         }
 
         this->NegotiateFlags = negoFlag;
@@ -1456,7 +1456,7 @@ public:
         if (!this->server) {
             return;
         }
-        
+
         uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
         uint32_t const mask = NTLMSSP_REQUEST_TARGET
                             | NTLMSSP_NEGOTIATE_NTLM
@@ -1466,14 +1466,14 @@ public:
             LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
         }
         this->NegotiateFlags = negoFlag;
-        
+
         this->ntlm_generate_server_challenge();
         this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
         this->ntlm_generate_timestamp();
 
         std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
         std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
-        
+
         auto & list = this->CHALLENGE_MESSAGE.AvPairList;
         list.push_back({MsvAvNbComputerName, upwin7});
         list.push_back({MsvAvNbDomainName, upwin7});
@@ -1710,7 +1710,7 @@ public:
             offset += null_data_sz;
             memcpy(this->SavedAuthenticateMessage.data()+offset, p + offset, in_stream.get_offset() - offset);
         }
-        
+
         this->identity.user_init_copy(this->AUTHENTICATE_MESSAGE.UserName.buffer);
         this->identity.domain_init_copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer);
 
@@ -1718,7 +1718,7 @@ public:
             LOG(LOG_ERR, "ANONYMOUS User not allowed");
             return SEC_E_LOGON_DENIED;
         }
-        
+
         return SEC_I_CONTINUE_NEEDED;
     }
 
@@ -1918,7 +1918,7 @@ private:
 public:
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo) 
+    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, std::vector<uint8_t>& data_out, unsigned long MessageSeqNo)
     {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
