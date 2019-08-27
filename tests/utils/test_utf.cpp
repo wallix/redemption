@@ -27,6 +27,10 @@
 
 #include "utils/utf.hpp"
 #include "utils/sugar/cast.hpp"
+#include <string_view>
+#include <cstring>
+
+using namespace std::string_view_literals;
 
 
 RED_AUTO_TEST_CASE(TestUTF8Len_2)
@@ -248,8 +252,7 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF8LCopy)
         Data{1, 0, 0}
     }) {
         uint8_t dest[11] = {};
-        int res = UTF8ToUTF8LCopy(dest, data.dest_len, source);
-        RED_CHECK_EQUAL(data.utf_len, res);
+        RED_CHECK_EQUAL(data.utf_len, UTF8ToUTF8LCopy(dest, data.dest_len, source));
         RED_CHECK_EQUAL(data.byte_len, strlen(char_ptr_cast(dest)));
     }
 }
@@ -294,7 +297,7 @@ RED_AUTO_TEST_CASE(TestUTF16ToLatin1) {
         UTF16toLatin1(utf16_src, number_of_characters * 2, latin1_dst, sizeof(latin1_dst)),
         number_of_characters);
 
-    RED_CHECK_EQ(char_ptr_cast(latin1_dst), "trap\xe9zo\xef" "dal");
+    RED_CHECK(char_ptr_cast(latin1_dst) == "trap\xe9zo\xef" "dal"sv);
 }
 
 RED_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
@@ -309,7 +312,7 @@ RED_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
 
     RED_CHECK_EQUAL(x, number_of_characters);
 
-    RED_CHECK_EQ(char_ptr_cast(latin1_dst), "100 \x80");
+    RED_CHECK(char_ptr_cast(latin1_dst) == "100 \x80"sv);
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF16)
@@ -337,7 +340,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16)
         UTF16toUTF8(utf16_dst, utf16_chars_count + 2, utf8_dst, sizeof(utf8_dst)),
         number_of_characters + 1 + 2 /* 'é' => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
 
-    RED_CHECK_EQ(char_ptr_cast(utf8_dst), "trapézoïdal");
+    RED_CHECK(char_ptr_cast(utf8_dst) == "trapézoïdal"sv);
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF16_1) {
@@ -461,15 +464,15 @@ RED_AUTO_TEST_CASE(TestUTF16ToUTF8)
         uint8_t u16_1[]{'a', 0, 'b', 0, 'c', 0, 0, 0};
         uint8_t dest[32]{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
 
-        RED_CHECK_EQ(UTF16toUTF8(u16_1, 4, dest, sizeof(dest)), 4u);
-        RED_CHECK_EQ(char_ptr_cast(dest), "abc");
+        RED_CHECK(UTF16toUTF8(u16_1, 4, dest, sizeof(dest)) == 4u);
+        RED_CHECK(char_ptr_cast(dest) == "abc"sv);
     }
     {
         uint16_t u16_2[]{'a', 'b', 'c', 0};
         uint8_t dest[32]{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
 
-        RED_CHECK_EQ(UTF16toUTF8(u16_2, 4, dest, sizeof(dest)), 4u);
-        RED_CHECK_EQ(char_ptr_cast(dest), "abc");
+        RED_CHECK(UTF16toUTF8(u16_2, 4, dest, sizeof(dest)) == 4u);
+        RED_CHECK(char_ptr_cast(dest) == "abc"sv);
     }
 }
 

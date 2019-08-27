@@ -22,6 +22,10 @@
 
 
 #include "core/RDP/remote_programs.hpp"
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 /*
 RED_AUTO_TEST_CASE(TestRAILPDUHeader)
@@ -112,7 +116,7 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
         RED_CHECK_EQUAL(high_contrast_system_information_structure.Flags(),
             0x10101010);
         RED_CHECK_EQUAL(high_contrast_system_information_structure.ColorScheme(),
-            "ColorScheme");
+            "ColorScheme"sv);
     }
 }
 
@@ -154,7 +158,7 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure2)
 
     RED_CHECK_EQUAL(high_contrast_system_information_structure.Flags(), 0x7f);
     RED_CHECK_EQUAL(high_contrast_system_information_structure.ColorScheme(),
-        "High Contrast Black");
+        "High Contrast Black"sv);
 }
 
 
@@ -195,5 +199,5 @@ RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure4)
     RED_CHECK_EQUAL(high_contrast_system_information_structure.Flags(),
         0x7e);
     RED_CHECK_EQUAL(high_contrast_system_information_structure.ColorScheme(),
-        "");
+        ""sv);
 }

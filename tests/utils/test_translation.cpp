@@ -23,6 +23,10 @@
 
 #include "configs/config.hpp"
 #include "utils/translation.hpp"
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 RED_AUTO_TEST_CASE(TestTranslation)
 {
@@ -32,7 +36,7 @@ RED_AUTO_TEST_CASE(TestTranslation)
         constexpr std::size_t n = 128;
         char s[n]{};
         TR_fmt(s, n, trkeys::fmt_field_required, lang, "'XY'");
-        RED_CHECK_EQUAL(s, "Error: 'XY' field is required.");
+        RED_CHECK(s == "Error: 'XY' field is required."sv);
     }
 
     RED_CHECK_EQUAL(TR(trkeys::login, lang),             "Login");

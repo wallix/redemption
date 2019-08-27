@@ -35,9 +35,21 @@ namespace redemption_unit_test__
 {
     struct AnyType
     {
-        template<class T>
-        operator T ();
+        template<class T> operator T () const;
+        template<class T> bool operator == (T const&) const;
+        template<class T> bool operator != (T const&) const;
+        template<class T> bool operator < (T const&) const;
+        template<class T> bool operator > (T const&) const;
+        template<class T> bool operator <= (T const&) const;
+        template<class T> bool operator >= (T const&) const;
     };
+
+    template<class T> bool operator == (T const&, AnyType const&);
+    template<class T> bool operator != (T const&, AnyType const&);
+    template<class T> bool operator < (T const&, AnyType const&);
+    template<class T> bool operator > (T const&, AnyType const&);
+    template<class T> bool operator <= (T const&, AnyType const&);
+    template<class T> bool operator >= (T const&, AnyType const&);
 }
 
 #define RED_BIND_DATA_TEST_CASE(test_name, dataset, ...) \

@@ -23,12 +23,16 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/channel_names.hpp"
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 RED_AUTO_TEST_CASE(TestChannelName)
 {
     RED_TEST(CHANNELS::ChannelNameId("ABc") == CHANNELS::ChannelNameId("abc"));
     RED_TEST(CHANNELS::ChannelNameId("ABc") != CHANNELS::ChannelNameId("abcdef"));
-    RED_CHECK_EQ(CHANNELS::ChannelNameId("abcdefg").c_str(), "abcdefg");
-    RED_CHECK_EQ(CHANNELS::ChannelNameId("aBC").c_str(), "abc");
-    RED_CHECK_EQ(channel_names::rdpdr.c_str(), "rdpdr");
+    RED_CHECK_EQ(CHANNELS::ChannelNameId("abcdefg").c_str(), "abcdefg"sv);
+    RED_CHECK_EQ(CHANNELS::ChannelNameId("aBC").c_str(), "abc"sv);
+    RED_CHECK_EQ(channel_names::rdpdr.c_str(), "rdpdr"sv);
 }

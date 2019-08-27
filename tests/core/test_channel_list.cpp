@@ -21,8 +21,11 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "core/channel_list.hpp"
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 RED_AUTO_TEST_CASE(TestChannelDefArray)
 {
@@ -31,8 +34,8 @@ RED_AUTO_TEST_CASE(TestChannelDefArray)
     channels.push_back({CHANNELS::ChannelNameId("def"), 0, 1});
     CHANNELS::ChannelDef const * channel = channels.get_by_id(1);
     RED_REQUIRE(channel);
-    RED_CHECK_EQ(channel->name.c_str(), "def");
+    RED_CHECK_EQ(channel->name.c_str(), "def"sv);
     channel = channels.get_by_name(CHANNELS::ChannelNameId("abc"));
     RED_REQUIRE(channel);
-    RED_CHECK_EQ(channel->name.c_str(), "abc");
+    RED_CHECK_EQ(channel->name.c_str(), "abc"sv);
 }

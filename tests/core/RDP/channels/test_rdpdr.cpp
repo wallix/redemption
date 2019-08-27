@@ -21,6 +21,10 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/channels/rdpdr.hpp"
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)
 {
@@ -395,7 +399,7 @@ RED_AUTO_TEST_CASE(DeviceAnnounceHeader_Recv)
 
         RED_CHECK_EQUAL(pdu.DeviceType(), 0x00000020);
         RED_CHECK_EQUAL(pdu.DeviceId(), 01);
-        RED_CHECK_EQUAL(pdu.PreferredDosName(), "SCARD");
+        RED_CHECK_EQUAL(pdu.PreferredDosName(), "SCARD"sv);
         RED_CHECK_EQUAL(pdu.DeviceDataLength(), 0);
 //        RED_CHECK_EQUAL(pdu.DeviceData(), nullptr);
     }

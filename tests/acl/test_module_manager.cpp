@@ -99,22 +99,22 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning)
     std::string       message;
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1000);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1010);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1030);
-    RED_CHECK_EQ(message.c_str(), "5 minutes before closing");
+    RED_CHECK_EQ(message, "5 minutes before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1060);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1270);
-    RED_CHECK_EQ(message.c_str(), "1 minute before closing");
+    RED_CHECK_EQ(message, "1 minute before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1300);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 }
 
 RED_AUTO_TEST_CASE(TestEndSessionWarning1)
@@ -123,37 +123,37 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning1)
     std::string       message;
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 1030);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 1060);
-    RED_CHECK_EQ(message.c_str(), "30 minutes before closing");
+    RED_CHECK_EQ(message, "30 minutes before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2230);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2260);
-    RED_CHECK_EQ(message.c_str(), "10 minutes before closing");
+    RED_CHECK_EQ(message, "10 minutes before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2530);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2560);
-    RED_CHECK_EQ(message.c_str(), "5 minutes before closing");
+    RED_CHECK_EQ(message, "5 minutes before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2770);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2800);
-    RED_CHECK_EQ(message.c_str(), "1 minute before closing");
+    RED_CHECK_EQ(message, "1 minute before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2830);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2860);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 2860, 2890);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 }
 
 RED_AUTO_TEST_CASE(TestEndSessionWarning2)
@@ -162,10 +162,10 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning2)
     std::string       message;
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 0, 330, 331);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 0, 330, 340);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 }
 
 RED_AUTO_TEST_CASE(TestEndSessionWarning3)
@@ -174,13 +174,13 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning3)
     std::string       message;
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1330);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1331);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1330, 1340);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 }
 
 RED_AUTO_TEST_CASE(TestEndSessionWarning4)
@@ -189,31 +189,31 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning4)
     std::string       message;
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1000);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1020);
-    RED_CHECK_EQ(message.c_str(), "10 minutes before closing");
+    RED_CHECK_EQ(message, "10 minutes before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1290);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1320);
-    RED_CHECK_EQ(message.c_str(), "5 minutes before closing");
+    RED_CHECK_EQ(message, "5 minutes before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1530);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1560);
-    RED_CHECK_EQ(message.c_str(), "1 minute before closing");
+    RED_CHECK_EQ(message, "1 minute before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1590);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1620);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1620, 1650);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 }
 
 RED_AUTO_TEST_CASE(TestEndSessionWarning5)
@@ -222,16 +222,16 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning5)
     std::string       message;
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1000);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1010);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1030);
-    RED_CHECK_EQ(message.c_str(), "1 minute before closing");
+    RED_CHECK_EQ(message, "1 minute before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1060);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 }
 
 RED_AUTO_TEST_CASE(TestEndSessionWarning6)
@@ -240,28 +240,28 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning6)
     std::string       message;
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1000);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1010);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1030);
-    RED_CHECK_EQ(message.c_str(), "1 minute before closing");
+    RED_CHECK_EQ(message, "1 minute before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1060);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.initialize();
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1000);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1010);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1030);
-    RED_CHECK_EQ(message.c_str(), "1 minute before closing");
+    RED_CHECK_EQ(message, "1 minute before closing");
 
     end_session_warning.update_osd_state(message, Translation::language_t::EN, 1000, 1090, 1060);
-    RED_CHECK_EQ(message.c_str(), "");
+    RED_CHECK_EQ(message, "");
 }

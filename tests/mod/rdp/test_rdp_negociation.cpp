@@ -26,30 +26,33 @@
 #include "mod/rdp/rdp_negociation.hpp"
 
 #include <array>
+#include <string_view>
+
+using namespace std::string_view_literals;
 
 
 RED_BIND_DATA_TEST_CASE(TestRdpLogonInfo, (std::array{
-    std::array{"mer", "mollusque@rocher", "", "mollusque@rocher"},
-    std::array{"sable", "coquillage\\crustacé@plageabandonnée",
-               "", "coquillage\\crustacé@plageabandonnée"},
-    std::array{"what", "tounicoti\\tournicoton", "tounicoti", "tournicoton"},
-    std::array{"ohnon", "zigouigoui", "", "zigouigoui"}
+    std::array{"mer"sv, "mollusque@rocher"sv, ""sv, "mollusque@rocher"sv},
+    std::array{"sable"sv, "coquillage\\crustacé@plageabandonnée"sv,
+               ""sv, "coquillage\\crustacé@plageabandonnée"sv},
+    std::array{"what"sv, "tounicoti\\tournicoton"sv, "tounicoti"sv, "tournicoton"sv},
+    std::array{"ohnon"sv, "zigouigoui"sv, ""sv, "zigouigoui"sv}
 }), hostname, target_user, domain, username)
 {
-    RdpLogonInfo logon_info(hostname, false, target_user, false);
-    RED_CHECK_EQUAL(logon_info.domain(), domain);
-    RED_CHECK_EQUAL(logon_info.username(), username);
+    RdpLogonInfo logon_info(hostname.data(), false, target_user.data(), false);
+    RED_CHECK(logon_info.domain() == domain);
+    RED_CHECK(logon_info.username() == username);
 }
 
 RED_BIND_DATA_TEST_CASE(TestRdpLogonInfoLegacy, (std::array{
-    std::array{"mer", "mollusque@rocher", "rocher", "mollusque"},
-    std::array{"sable", "coquillage\\crustacé@plageabandonnée",
-               "coquillage", "crustacé@plageabandonnée"},
-    std::array{"what", "tounicoti\\tournicoton", "tounicoti", "tournicoton"},
-    std::array{"ohnon", "zigouigoui", "", "zigouigoui"}
+    std::array{"mer"sv, "mollusque@rocher"sv, "rocher"sv, "mollusque"sv},
+    std::array{"sable"sv, "coquillage\\crustacé@plageabandonnée"sv,
+               "coquillage"sv, "crustacé@plageabandonnée"sv},
+    std::array{"what"sv, "tounicoti\\tournicoton"sv, "tounicoti"sv, "tournicoton"sv},
+    std::array{"ohnon"sv, "zigouigoui"sv, ""sv, "zigouigoui"sv}
 }), hostname, target_user, domain, username)
 {
-    RdpLogonInfo logon_info(hostname, false, target_user, true);
-    RED_CHECK_EQUAL(logon_info.domain(), domain);
-    RED_CHECK_EQUAL(logon_info.username(), username);
+    RdpLogonInfo logon_info(hostname.data(), false, target_user.data(), true);
+    RED_CHECK(logon_info.domain() == domain);
+    RED_CHECK(logon_info.username() == username);
 }

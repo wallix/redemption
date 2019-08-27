@@ -338,11 +338,11 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     RED_CHECK_EQUAL(ts_cred_received.passCreds.userName_length,   sizeof(user));
     RED_CHECK_EQUAL(ts_cred_received.passCreds.password_length,   sizeof(pass));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.domainName),
-                      char_ptr_cast(domain));
+                    std::string_view(char_ptr_cast(domain)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.userName),
-                      char_ptr_cast(user));
+                    std::string_view(char_ptr_cast(user)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.password),
-                      char_ptr_cast(pass));
+                    std::string_view(char_ptr_cast(pass)));
 
 
 
@@ -354,11 +354,11 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
                             {user2, sizeof(user2)},
                             {pass2, sizeof(pass2)});
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.domainName),
-                      char_ptr_cast(domain2));
+                    std::string_view(char_ptr_cast(domain2)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.userName),
-                      char_ptr_cast(user2));
+                    std::string_view(char_ptr_cast(user2)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.password),
-                      char_ptr_cast(pass2));
+                    std::string_view(char_ptr_cast(pass2)));
 }
 
 RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
@@ -401,11 +401,11 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.domainHint_length,
                       sizeof(domainHint));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.pin),
-                      char_ptr_cast(pin));
+                    std::string_view(char_ptr_cast(pin)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.userHint),
-                      char_ptr_cast(userHint));
+                    std::string_view(char_ptr_cast(userHint)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.domainHint),
-                      char_ptr_cast(domainHint));
+                    std::string_view(char_ptr_cast(domainHint)));
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec,
                       keySpec);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cardName_length,
@@ -417,12 +417,11 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cspName_length,
                       sizeof(cspName));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.cardName),
-                      char_ptr_cast(cardName));
+                    std::string_view(char_ptr_cast(cardName)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.readerName),
-                      char_ptr_cast(readerName));
+                    std::string_view(char_ptr_cast(readerName)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.containerName),
-                      char_ptr_cast(containerName));
+                    std::string_view(char_ptr_cast(containerName)));
     RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.cspName),
-                      char_ptr_cast(cspName));
-
+                    std::string_view(char_ptr_cast(cspName)));
 }

@@ -35,12 +35,6 @@
 
 
 namespace {
-    template<class... Str>
-    std::array<char const *, sizeof...(Str)>
-    make_array(Str... str) {
-        return {{str...}};
-    }
-
     void draw_bitmap(Drawable & drawable, char const * bitmap_filename) {
         Bitmap bmp = bitmap_from_file(bitmap_filename);
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
@@ -60,19 +54,13 @@ RED_AUTO_TEST_CASE(TestNewOCR4)
     OcrTitleFilter filter;
     std::vector<OcrTitle> out_titles;
 
-    {
-        draw_bitmap(drawable, FIXTURES_PATH "/win2012capture1.png");
-        extractor.extract_titles(drawable, out_titles);
+    draw_bitmap(drawable, FIXTURES_PATH "/win2012capture1.png");
+    extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "a b c d e f g h ij k l m n o p q r s t u v w xyz - Bloc-notes"
-        );
-        RED_CHECK_EQUAL(out_titles.size(), expected.size());
+    auto expected = "a b c d e f g h ij k l m n o p q r s t u v w xyz - Bloc-notes"_av;
+    RED_CHECK_EQUAL(out_titles.size(), 1);
 
-        auto idx_best = filter.extract_best_title(out_titles);
-        RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
-
-        out_titles.clear();
-    }
+    auto idx_best = filter.extract_best_title(out_titles);
+    RED_CHECK_EQUAL(idx_best, 0);
+    RED_CHECK_SMEM_AA(expected, filter.get_title());
 }

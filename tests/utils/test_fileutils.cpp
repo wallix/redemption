@@ -29,6 +29,9 @@
 
 #include <cstring>
 #include <unistd.h> // for getgid
+#include <string_view>
+
+using namespace std::string_view_literals;
 
 
 RED_AUTO_TEST_CASE(TestBasename)
@@ -41,21 +44,21 @@ RED_AUTO_TEST_CASE(TestBasename)
     struct Data
     {
         char const* filename;
-        array_view_const_char basename;
+        std::string_view basename;
     };
     RED_TEST_CONTEXT_DATA(Data const& data, data.filename, {
         //  Below expected behavior from the unix man pages
-        Data{"/usr/lib",  "lib"_av},
-        Data{"/usr/lib/", ""_av},
-        Data{"/usr/",     ""_av},
-        Data{"/usr",      "usr"_av},
-        Data{"usr",       "usr"_av},
-        Data{"/",         ""_av},
-        Data{".",         "."_av},
-        Data{"..",        ".."_av}
+        Data{"/usr/lib",  "lib"},
+        Data{"/usr/lib/", ""},
+        Data{"/usr/",     ""},
+        Data{"/usr",      "usr"},
+        Data{"usr",       "usr"},
+        Data{"/",         ""},
+        Data{".",         "."},
+        Data{"..",        ".."}
     })
     {
-        RED_CHECK_EQ(basename(data.filename), data.basename.data());
+        RED_CHECK(basename(data.filename) == data.basename);
         size_t len = 0;
         char const * base = basename_len(data.filename, len);
         RED_CHECK_SMEM(make_array_view(base, len), data.basename);
@@ -68,9 +71,9 @@ RED_AUTO_TEST_CASE(CanonicalPath)
     struct Data
     {
         char const* filename;
-        char const* path;
-        char const* basename;
-        char const* extension;
+        std::string_view path;
+        std::string_view basename;
+        std::string_view extension;
     };
     // check that function that splits a path between canonical parts has expected behavior
     // Parts are:
@@ -95,9 +98,9 @@ RED_AUTO_TEST_CASE(CanonicalPath)
         char extension[128] = "no extension";
 
         canonical_path(data.filename, path, 4096, basename, 4096, extension, 128);
-        RED_CHECK_EQUAL(data.path, path);
-        RED_CHECK_EQUAL(data.basename, basename);
-        RED_CHECK_EQUAL(data.extension, extension);
+        RED_CHECK(data.path == path);
+        RED_CHECK(data.basename == basename);
+        RED_CHECK(data.extension == extension);
     }
 }
 
@@ -106,9 +109,9 @@ RED_AUTO_TEST_CASE(TestParsePath)
     struct Data
     {
         char const* filename;
-        char const* directory;
-        char const* basename;
-        char const* extension;
+        std::string_view directory;
+        std::string_view basename;
+        std::string_view extension;
     };
     RED_TEST_CONTEXT_DATA(Data const& data, data.filename, {
         Data{"/etc/rdpproxy/rdpproxy.ini",  "/etc/rdpproxy/",   "rdpproxy",     ".ini"},
@@ -132,9 +135,9 @@ RED_AUTO_TEST_CASE(TestParsePath)
         std::string basename = "yyy";
         std::string extension = "zzz";
         ParsePath(data.filename, directory, basename, extension);
-        RED_CHECK_EQUAL(data.directory, directory);
-        RED_CHECK_EQUAL(data.basename,  basename);
-        RED_CHECK_EQUAL(data.extension, extension);
+        RED_CHECK(data.directory == directory);
+        RED_CHECK(data.basename == basename);
+        RED_CHECK(data.extension == extension);
     }
 }
 
@@ -142,7 +145,7 @@ RED_AUTO_TEST_CASE(TestMakePath)
 {
     struct Data
     {
-        char const* filename;
+        std::string_view filename;
         char const* directory;
         char const* basename;
         char const* extension;
@@ -156,7 +159,7 @@ RED_AUTO_TEST_CASE(TestMakePath)
     {
         std::string fullpath;
         MakePath(fullpath, data.directory, data.basename, data.extension);
-        RED_CHECK_EQUAL(data.filename, fullpath);
+        RED_CHECK(data.filename == fullpath);
     }
 }
 

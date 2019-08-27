@@ -32,9 +32,10 @@
 #include "utils/sugar/algostring.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 
-#include <sys/ioctl.h>
-#include <sys/statvfs.h>
-#include <linux/hdreg.h>
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 RED_TEST_DELEGATE_PRINT_ENUM(RDPVerbose);
 
@@ -69,22 +70,22 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.rdp_height, 600);
     RED_CHECK(not config.is_full_capturing);
     RED_CHECK(not config.is_full_replaying);
-    RED_CHECK_EQUAL(config.full_capture_file_name, "");
+    RED_CHECK(config.full_capture_file_name == ""sv);
     RED_CHECK(not config.is_replaying);
     RED_CHECK(not config.is_loading_replay_mod);
     RED_CHECK(not config.connected);
-    RED_CHECK_EQUAL(config._movie_name, "");
-    RED_CHECK_EQUAL(config._movie_dir, "");
-    RED_CHECK_EQUAL(config._movie_full_path, "");
+    RED_CHECK(config._movie_name == ""sv);
+    RED_CHECK(config._movie_dir == ""sv);
+    RED_CHECK(config._movie_full_path == ""sv);
     RED_CHECK_EQUAL(config.connection_info_cmd_complete, ClientRedemptionConfig::PORT_GOT);
-    RED_CHECK_EQUAL(config.user_name, "");
-    RED_CHECK_EQUAL(config.user_password, "");
-    RED_CHECK_EQUAL(config.target_IP, "");
+    RED_CHECK(config.user_name == ""sv);
+    RED_CHECK(config.user_password == ""sv);
+    RED_CHECK(config.target_IP == ""sv);
     RED_CHECK_EQUAL(config.port, 3389);
     RED_CHECK_EQUAL(config.mod_state, ClientRedemptionConfig::MOD_RDP);
 
     // WINDOW DATA
-    RED_CHECK_EQUAL(config.WINDOWS_CONF, "/DATA/config/windows_config.config");
+    RED_CHECK(config.WINDOWS_CONF == "/DATA/config/windows_config.config"sv);
     RED_CHECK_EQUAL(config.windowsData.form_x, 0);
     RED_CHECK_EQUAL(config.windowsData.form_y, 0);
     RED_CHECK_EQUAL(config.windowsData.screen_x, 0);
@@ -97,13 +98,13 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.userProfils.size(), 1);
 
     // PATH
-    RED_CHECK_EQUAL(config.MAIN_DIR, "");
-    RED_CHECK_EQUAL(config.DATA_DIR, "/DATA");
-    RED_CHECK_EQUAL(config.REPLAY_DIR, "/DATA/replay");
-    RED_CHECK_EQUAL(config.CB_TEMP_DIR, "/DATA/clipboard_temp");
-    RED_CHECK_EQUAL(config.DATA_CONF_DIR, "/DATA/config");
-    RED_CHECK_EQUAL(config.SOUND_TEMP_DIR, "/DATA/sound_temp");
-    RED_CHECK_EQUAL(config.SHARE_DIR, "/home");
+    RED_CHECK(config.MAIN_DIR == ""sv);
+    RED_CHECK(config.DATA_DIR == "/DATA"sv);
+    RED_CHECK(config.REPLAY_DIR == "/DATA/replay"sv);
+    RED_CHECK(config.CB_TEMP_DIR == "/DATA/clipboard_temp"sv);
+    RED_CHECK(config.DATA_CONF_DIR == "/DATA/config"sv);
+    RED_CHECK(config.SOUND_TEMP_DIR == "/DATA/sound_temp"sv);
+    RED_CHECK(config.SHARE_DIR == "/home"sv);
 
     // CLIENT INFO
     RED_CHECK_EQUAL(config.info.screen_info.width, 800);
@@ -114,10 +115,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{24});
 
     // REMOTE APP
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "C:\\Windows\\system32\\notepad.exe");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "C:\\Users\\user1");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, "");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.full_cmd_line, "C:\\Windows\\system32\\notepad.exe ");
+    RED_CHECK(config.rDPRemoteAppConfig.source_of_ExeOrFile == "C:\\Windows\\system32\\notepad.exe"sv);
+    RED_CHECK(config.rDPRemoteAppConfig.source_of_WorkingDir == "C:\\Users\\user1"sv);
+    RED_CHECK(config.rDPRemoteAppConfig.source_of_Arguments == ""sv);
+    RED_CHECK(config.rDPRemoteAppConfig.full_cmd_line == "C:\\Windows\\system32\\notepad.exe "sv);
 
     // CLIPRDR
     RED_CHECK_EQUAL(config.rDPClipboardConfig.arbitrary_scale, 40);
@@ -140,12 +141,12 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].format_id(), RDPECLIP::CF_METAFILEPICT);
     RED_CHECK_SMEM(config.rDPClipboardConfig.formats[3].utf8_name(), ""_av);
 
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp");
+    RED_CHECK(config.rDPClipboardConfig.path == "/DATA/clipboard_temp"sv);
 
     // RED_CHECK_EQUAL(config.
     RED_CHECK(config.rDPDiskConfig.enable_drive_type);
     RED_CHECK(config.rDPDiskConfig.enable_printer_type);
-    RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].name, "home");
+    RED_CHECK(config.rDPDiskConfig.device_list[0].name == "home"sv);
     RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].type, rdpdr::RDPDR_DTYP_FILESYSTEM);
 
     // RDPSND
@@ -168,7 +169,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 
     // VNC
     RED_CHECK(not config.modVNCParamsData.is_apple);
-    RED_CHECK_EQUAL(config.modVNCParamsData.vnc_encodings, "5,16,0,1,-239");
+    RED_CHECK(config.modVNCParamsData.vnc_encodings == "5,16,0,1,-239"sv);
     RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, 0x040C);
     RED_CHECK_EQUAL(config.modVNCParamsData.width, 800);
     RED_CHECK_EQUAL(config.modVNCParamsData.height, 600);
@@ -245,17 +246,17 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.rdp_height, 900);
     RED_CHECK(not config.is_full_capturing);
     RED_CHECK(not config.is_full_replaying);
-    RED_CHECK_EQUAL(config.full_capture_file_name, "");
+    RED_CHECK_EQUAL(config.full_capture_file_name, ""sv);
     RED_CHECK(not config.is_replaying);
     RED_CHECK(not config.is_loading_replay_mod);
     RED_CHECK(not config.connected);
-    RED_CHECK_EQUAL(config._movie_name, "");
-    RED_CHECK_EQUAL(config._movie_dir, "");
-    RED_CHECK_EQUAL(config._movie_full_path, "");
+    RED_CHECK_EQUAL(config._movie_name, ""sv);
+    RED_CHECK_EQUAL(config._movie_dir, ""sv);
+    RED_CHECK_EQUAL(config._movie_full_path, ""sv);
     RED_CHECK_EQUAL(config.connection_info_cmd_complete, ClientRedemptionConfig::COMMAND_VALID);
-    RED_CHECK_EQUAL(config.user_name, "user");
-    RED_CHECK_EQUAL(config.user_password, "password");
-    RED_CHECK_EQUAL(config.target_IP, "10.10.13.12");
+    RED_CHECK_EQUAL(config.user_name, "user"sv);
+    RED_CHECK_EQUAL(config.user_password, "password"sv);
+    RED_CHECK_EQUAL(config.target_IP, "10.10.13.12"sv);
     RED_CHECK_EQUAL(config.port, 1793);
     RED_CHECK_EQUAL(config.mod_state, ClientRedemptionConfig::MOD_RDP);
 
@@ -273,13 +274,13 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.userProfils.size(), 1);
 
     // PATH
-    RED_CHECK_EQUAL(config.MAIN_DIR, "");
-    RED_CHECK_EQUAL(config.DATA_DIR, "/DATA");
-    RED_CHECK_EQUAL(config.REPLAY_DIR, "/DATA/replay");
-    RED_CHECK_EQUAL(config.CB_TEMP_DIR, "/DATA/clipboard_temp");
-    RED_CHECK_EQUAL(config.DATA_CONF_DIR, "/DATA/config");
-    RED_CHECK_EQUAL(config.SOUND_TEMP_DIR, "/DATA/sound_temp");
-    RED_CHECK_EQUAL(config.SHARE_DIR, "/home");
+    RED_CHECK_EQUAL(config.MAIN_DIR, ""sv);
+    RED_CHECK_EQUAL(config.DATA_DIR, "/DATA"sv);
+    RED_CHECK_EQUAL(config.REPLAY_DIR, "/DATA/replay"sv);
+    RED_CHECK_EQUAL(config.CB_TEMP_DIR, "/DATA/clipboard_temp"sv);
+    RED_CHECK_EQUAL(config.DATA_CONF_DIR, "/DATA/config"sv);
+    RED_CHECK_EQUAL(config.SOUND_TEMP_DIR, "/DATA/sound_temp"sv);
+    RED_CHECK_EQUAL(config.SHARE_DIR, "/home"sv);
 
     // CLIENT INFO
     RED_CHECK_EQUAL(config.info.screen_info.width, 800);
@@ -290,10 +291,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{24});
 
     // REMOTE APP
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "C:\\Windows\\system32\\notepad.exe");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "C:\\Users\\user1");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, "");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.full_cmd_line, "C:\\Windows\\system32\\notepad.exe ");
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "C:\\Windows\\system32\\notepad.exe"sv);
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "C:\\Users\\user1"sv);
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, ""sv);
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.full_cmd_line, "C:\\Windows\\system32\\notepad.exe "sv);
 
     // CLIPRDR
     RED_CHECK_EQUAL(config.rDPClipboardConfig.arbitrary_scale, 40);
@@ -316,12 +317,12 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].format_id(), RDPECLIP::CF_METAFILEPICT);
     RED_CHECK_SMEM(config.rDPClipboardConfig.formats[3].utf8_name(), ""_av);
 
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp");
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp"sv);
 
     // RED_CHECK_EQUAL(config.
     RED_CHECK(config.rDPDiskConfig.enable_drive_type);
     RED_CHECK(config.rDPDiskConfig.enable_printer_type);
-    RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].name, "home");
+    RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].name, "home"sv);
     RED_CHECK_EQUAL(config.rDPDiskConfig.device_list[0].type, rdpdr::RDPDR_DTYP_FILESYSTEM);
 
     // RDPSND
@@ -344,7 +345,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     // VNC
     RED_CHECK(not config.modVNCParamsData.is_apple);
-    RED_CHECK_EQUAL(config.modVNCParamsData.vnc_encodings, "5,16,0,1,-239");
+    RED_CHECK_EQUAL(config.modVNCParamsData.vnc_encodings, "5,16,0,1,-239"sv);
     RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, 0x040C);
     RED_CHECK_EQUAL(config.modVNCParamsData.width, 800);
     RED_CHECK_EQUAL(config.modVNCParamsData.height, 600);
@@ -391,24 +392,24 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.rdp_height, 600);
     RED_CHECK(not config.is_full_capturing);
     RED_CHECK(not config.is_full_replaying);
-    RED_CHECK_EQUAL(config.full_capture_file_name, "");
+    RED_CHECK_EQUAL(config.full_capture_file_name, ""sv);
     RED_CHECK(not config.is_replaying);
     RED_CHECK(not config.is_loading_replay_mod);
     RED_CHECK(not config.connected);
-    RED_CHECK_EQUAL(config._movie_name, "");
-    RED_CHECK_EQUAL(config._movie_dir, "");
-    RED_CHECK_EQUAL(config._movie_full_path, "");
+    RED_CHECK_EQUAL(config._movie_name, ""sv);
+    RED_CHECK_EQUAL(config._movie_dir, ""sv);
+    RED_CHECK_EQUAL(config._movie_full_path, ""sv);
     RED_CHECK_EQUAL(config.connection_info_cmd_complete, ClientRedemptionConfig::PORT_GOT);
-    RED_CHECK_EQUAL(config.user_name, "");
-    RED_CHECK_EQUAL(config.user_password, "");
-    RED_CHECK_EQUAL(config.target_IP, "");
+    RED_CHECK_EQUAL(config.user_name, ""sv);
+    RED_CHECK_EQUAL(config.user_password, ""sv);
+    RED_CHECK_EQUAL(config.target_IP, ""sv);
     RED_CHECK_EQUAL(config.port, 3389);
     RED_CHECK_EQUAL(config.mod_state, ClientRedemptionConfig::MOD_RDP_REMOTE_APP);
 
      // REMOTE APP
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "cmd_to_launch");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "cmd_dir");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, "cmd_args");
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "cmd_to_launch"sv);
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "cmd_dir"sv);
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, "cmd_args"sv);
     }
 
     {
@@ -494,10 +495,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
         std::string line;
 
         RED_CHECK(ClientConfig::read_line(fd_read.fd(), line));
-        RED_CHECK_EQUAL(line, "hello");
+        RED_CHECK_EQUAL(line, "hello"sv);
 
         RED_CHECK(not ClientConfig::read_line(fd_read.fd(), line));
-        RED_CHECK_EQUAL(line, "world");
+        RED_CHECK_EQUAL(line, "world"sv);
     }
 
     RED_CHECK_WORKSPACE(wd.add_files({
@@ -579,10 +580,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     RED_CHECK(config.info.console_session);
     RED_CHECK_EQUAL(config.info.brush_cache_code , 2);
     RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{16});
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "C:\\Windows\\system32\\eclipse.exe");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "C:\\Users\\user2");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, "-h");
-    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.full_cmd_line, "C:\\Windows\\system32\\eclipse.exe -h");
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "C:\\Windows\\system32\\eclipse.exe"sv);
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "C:\\Users\\user2"sv);
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, "-h"sv);
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.full_cmd_line, "C:\\Windows\\system32\\eclipse.exe -h"sv);
     RED_CHECK(config.is_recording);
     RED_CHECK(config.is_spanning);
     RED_CHECK(not config.enable_shared_clipboard);
@@ -592,7 +593,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     RED_CHECK(not config.modRDPParamsData.enable_shared_virtual_disk);
     RED_CHECK(config.modRDPParamsData.enable_shared_remoteapp);
     RED_CHECK_EQUAL(config.info.rdp5_performanceflags, 4);
-    RED_CHECK_EQUAL(config.SHARE_DIR, "/home/test");
+    RED_CHECK_EQUAL(config.SHARE_DIR, "/home/test"sv);
     RED_CHECK_EQUAL(config.mod_state, 2);
 
     RED_CHECK_WORKSPACE(wd.add_files({
@@ -785,19 +786,19 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
     RED_CHECK(config._save_password_account);
     RED_REQUIRE_EQUAL(config._accountData.size(), 2);
 
-    RED_CHECK_EQUAL(config._accountData[0].title, "10.10.45.55 - user1");
-    RED_CHECK_EQUAL(config._accountData[0].IP, "10.10.45.55");
-    RED_CHECK_EQUAL(config._accountData[0].name, "user1");
-    RED_CHECK_EQUAL(config._accountData[0].pwd, "mdp");
+    RED_CHECK_EQUAL(config._accountData[0].title, "10.10.45.55 - user1"sv);
+    RED_CHECK_EQUAL(config._accountData[0].IP, "10.10.45.55"sv);
+    RED_CHECK_EQUAL(config._accountData[0].name, "user1"sv);
+    RED_CHECK_EQUAL(config._accountData[0].pwd, "mdp"sv);
     RED_CHECK_EQUAL(config._accountData[0].port, 3389);
     RED_CHECK_EQUAL(config._accountData[0].options_profil, 0);
     RED_CHECK_EQUAL(config._accountData[0].index, 0);
     RED_CHECK_EQUAL(config._accountData[0].protocol, 1);
 
-    RED_CHECK_EQUAL(config._accountData[1].title, "10.10.45.87 - measure");
-    RED_CHECK_EQUAL(config._accountData[1].IP, "10.10.45.87");
-    RED_CHECK_EQUAL(config._accountData[1].name, "measure");
-    RED_CHECK_EQUAL(config._accountData[1].pwd, "mdp_");
+    RED_CHECK_EQUAL(config._accountData[1].title, "10.10.45.87 - measure"sv);
+    RED_CHECK_EQUAL(config._accountData[1].IP, "10.10.45.87"sv);
+    RED_CHECK_EQUAL(config._accountData[1].name, "measure"sv);
+    RED_CHECK_EQUAL(config._accountData[1].pwd, "mdp_"sv);
     RED_CHECK_EQUAL(config._accountData[1].port, 3389);
     RED_CHECK_EQUAL(config._accountData[1].options_profil, 0);
     RED_CHECK_EQUAL(config._accountData[1].index, 1);

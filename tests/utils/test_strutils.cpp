@@ -20,8 +20,11 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "utils/strutils.hpp"
+#include <string_view>
+#include <cstring>
+
+using namespace std::string_view_literals;
 
 
 inline bool ends_with(char const * s1, char const * s2) {
@@ -74,14 +77,14 @@ RED_AUTO_TEST_CASE(Teststrlcpy)
 {
     using utils::strlcpy;
     char dest[10]{};
-    RED_CHECK_EQ(0u, strlcpy(dest, "", 0));
-    RED_CHECK_EQ(0u, strlcpy(dest, "", 1));
-    RED_CHECK_EQ(1u, strlcpy(dest, "a"_av, 0));
-    RED_CHECK_EQ(dest[0], '\0');
-    RED_CHECK_EQ(1u, strlcpy(dest, "a"_av, 2));
-    RED_CHECK_EQ(dest, "a");
-    RED_CHECK_EQ(7u, strlcpy(dest, "abcdefg"_av, 5));
-    RED_CHECK_EQ(dest[4], 0);
+    RED_CHECK(0u == strlcpy(dest, "", 0));
+    RED_CHECK(0u == strlcpy(dest, "", 1));
+    RED_CHECK(1u == strlcpy(dest, "a"_av, 0));
+    RED_CHECK(dest[0] == '\0');
+    RED_CHECK(1u == strlcpy(dest, "a"_av, 2));
+    RED_CHECK(dest == "a"sv);
+    RED_CHECK(7u == strlcpy(dest, "abcdefg"_av, 5));
+    RED_CHECK(dest[4] == 0);
 }
 
 RED_AUTO_TEST_CASE(Teststrbcpy)

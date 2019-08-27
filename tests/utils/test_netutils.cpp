@@ -26,6 +26,9 @@
 
 #include <cstdlib>
 #include <unistd.h>
+#include <string_view>
+
+using namespace std::string_view_literals;
 
 
 RED_AUTO_TEST_CASE(ParseIpConntrack)
@@ -104,17 +107,17 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
     {
         WorkingFile wf(d.name);
         int fd = ::open(wf.c_str(), O_RDWR|O_CREAT, 0777);
-        RED_CHECK_EQUAL(d.data.size(), write(fd, d.data.data(), d.data.size()));
-        RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+        RED_CHECK(d.data.size() == write(fd, d.data.data(), d.data.size()));
+        RED_CHECK(0 == lseek(fd, 0, SEEK_SET));
         char transparent_target[256] = {};
 
-        RED_CHECK_EQUAL(0, parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, make_array_view(transparent_target)));
-        RED_CHECK_EQUAL(transparent_target, "10.10.46.78");
+        RED_CHECK(0 == parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, make_array_view(transparent_target)));
+        RED_CHECK(transparent_target == "10.10.46.78"sv);
 
-        RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+        RED_CHECK(0 == lseek(fd, 0, SEEK_SET));
         transparent_target[0] = 0;
-        RED_CHECK_EQUAL(-1, parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, make_array_view(transparent_target)));
-        RED_CHECK_EQUAL(transparent_target, "");
+        RED_CHECK(-1 == parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, make_array_view(transparent_target)));
+        RED_CHECK(transparent_target == ""sv);
 
         close(fd);
     }

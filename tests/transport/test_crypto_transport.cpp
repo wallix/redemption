@@ -30,6 +30,10 @@
 #include "test_only/test_framework/working_directory.hpp"
 
 #include <snappy.h> // for SNAPPY_VERSION
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 namespace
 {
@@ -983,10 +987,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         RED_CHECK(ct.is_encrypted());
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
-        RED_CHECK_EQ(hash_buf,
+        RED_CHECK(hash_buf ==
             "v2\n\n\nencrypted.txt 0 0 0 0 0 0 0 0"
             " 04521650db48e670363c68a9cddbeb60f92583bc0d2e093ff2c9375da69d7af0"
-            " a87c5179e2cc2ce3516440c0b0bda899cc46ac423f220f6450bbbb7c45b81cc4\n");
+            " a87c5179e2cc2ce3516440c0b0bda899cc46ac423f220f6450bbbb7c45b81cc4\n"sv);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1054,10 +1058,10 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
-        RED_CHECK_EQ(hash_buf,
+        RED_CHECK(hash_buf ==
             "v2\n\n\nencrypted.txt 0 0 0 0 0 0 0 0"
             " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5"
-            " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5\n");
+            " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5\n"sv);
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1249,7 +1253,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
         ct.close();
-        RED_CHECK_EQ(hash_buf, "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0\n");
+        RED_CHECK(hash_buf == "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0\n"sv);
     }
     RED_CHECK_MEM_AA(buffer, original_contents);
 
@@ -1308,16 +1312,16 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         ct.close();
 
         #if SNAPPY_VERSION < (1<<16|1<<8|4)
-            RED_CHECK_EQ(hash_buf,
+            RED_CHECK(hash_buf ==
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
                 " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
-                " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n");
+                " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n"sv);
         #else
-            RED_CHECK_EQ(hash_buf,
+            RED_CHECK(hash_buf ==
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
                 " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
                 " f5b6a73d68ac7405d988bbb60a88afd59b72a47bab2e03068573e7510451e801"
-                "\n");
+                "\n"sv);
         #endif
     }
 
