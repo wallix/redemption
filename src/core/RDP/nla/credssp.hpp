@@ -1251,15 +1251,6 @@ struct TSPasswordCreds {
     {
     }
 
-    int ber_sizeof() const {
-        int length = 0;
-        // TO COMPLETE
-        length += BER::sizeof_sequence_octet_string(domainName.size());
-        length += BER::sizeof_sequence_octet_string(userName.size());
-        length += BER::sizeof_sequence_octet_string(password.size());
-        return length;
-    }
-
     void recv(InStream & stream) {
         int length = 0;
         /* TSPasswordCreds (SEQUENCE) */
@@ -1449,12 +1440,21 @@ struct TSCspDataDetail {
     }
 };
 
-inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
+inline std::vector<uint8_t> emitTSCspDataDetail(const TSCspDataDetail & self)
 {
+    // [0] keySpec
     auto ber_keySpec_Field = BER::mkIntegerField(self.keySpec, 0);
+
+    // [1] cardName (OCTET STRING OPTIONAL)
     auto ber_cardName_Header = BER::mkOptionalOctetStringFieldHeader(self.cardName.size(), 1);
+
+    // [2] readerName (OCTET STRING OPTIONAL)
     auto ber_readerName_Header = BER::mkOptionalOctetStringFieldHeader(self.readerName.size(), 2);
+
+    // [3] containerName (OCTET STRING OPTIONAL)
     auto ber_containerName_Header = BER::mkOptionalOctetStringFieldHeader(self.containerName.size(), 3);
+
+    // [4] cspName (OCTET STRING OPTIONAL)
     auto ber_cspName_Header = BER::mkOptionalOctetStringFieldHeader(self.cspName.size(), 4);
 
     int innerSize = ber_keySpec_Field.size()
@@ -1463,35 +1463,17 @@ inline int emitTSCspDataDetail(OutStream & stream, const TSCspDataDetail & self)
                   + ber_containerName_Header.size() + self.containerName.size()
                   + ber_cspName_Header.size() + self.cspName.size();
 
-    auto sequence_header = BER::mkSequenceHeader(innerSize);
-    int size = sequence_header.size() + innerSize;
-
-    std::vector<uint8_t> result;
-
     // TSCspDataDetail (SEQUENCE)
-    stream.out_copy_bytes(sequence_header);
+    auto sequence_header = BER::mkSequenceHeader(innerSize);
 
-    /* [0] keySpec */
-    stream.out_copy_bytes(ber_keySpec_Field);
+    std::vector<uint8_t> result = std::move(sequence_header);
+    result << ber_keySpec_Field
+           << ber_cardName_Header      << self.cardName 
+           << ber_readerName_Header    << self.readerName
+           << ber_containerName_Header << self.containerName
+           << ber_cspName_Header << self.cspName;
 
-    /* [1] cardName (OCTET STRING OPTIONAL) */
-    stream.out_copy_bytes(ber_cardName_Header);
-    stream.out_copy_bytes(self.cardName);
-
-    /* [2] readerName (OCTET STRING OPTIONAL) */
-    stream.out_copy_bytes(ber_readerName_Header);
-    stream.out_copy_bytes(self.readerName);
- 
-    /* [3] containerName (OCTET STRING OPTIONAL) */
-    stream.out_copy_bytes(ber_containerName_Header);
-    stream.out_copy_bytes(self.containerName);
- 
-    /* [4] cspName (OCTET STRING OPTIONAL) */
-    // LOG(LOG_INFO, "Credssp: TSCspDataDetail::emit() cspName");
-    stream.out_copy_bytes(ber_cspName_Header);
-    stream.out_copy_bytes(self.cspName);
-
-    return size;
+    return result;
 }
 
 
@@ -1601,7 +1583,6 @@ inline int emitTSSmartCardCreds(OutStream & stream, const TSSmartCardCreds & sel
     int size = 0;
     int length;
     int innerSize = self.ber_sizeof();
-    int cspDataSize = 0;
 
     /* TSCredentials (SEQUENCE) */
     auto sequence_header = BER::mkSequenceHeader(innerSize);
@@ -1616,12 +1597,14 @@ inline int emitTSSmartCardCreds(OutStream & stream, const TSSmartCardCreds & sel
     size += self.pin_length + ber_sequence_octet_string_header.size();
 
     /* [1] cspData (OCTET STRING) */
+    auto ber_TSCspDataDetail = emitTSCspDataDetail(self.cspData);
 
-    cspDataSize = BER::sizeof_sequence(self.cspData.ber_sizeof());
-    auto v = BER::mkContextualFieldHeader(cspDataSize, 1);
+    auto v = BER::mkContextualFieldHeader(ber_TSCspDataDetail.size(), 1);
     stream.out_copy_bytes(v);
     size += v.size();
-    size += emitTSCspDataDetail(stream, self.cspData);
+
+    stream.out_copy_bytes(ber_TSCspDataDetail);
+    size += ber_TSCspDataDetail.size();
 
     /* [2] userHint (OCTET STRING OPTIONAL) */
     if (self.userHint_length > 0) {
