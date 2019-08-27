@@ -464,24 +464,6 @@ namespace BER {
         return true;
     }
 
-    inline int write_octet_string_tag(OutStream & s, int length) {
-        s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_OCTET_STRING));
-        switch (_ber_sizeof_length(length)){
-        case 1:
-            s.out_uint8(length);
-            break;
-        case 2:
-            s.out_uint8(0x81);
-            s.out_uint8(length);
-            break;
-        default:
-            s.out_uint8(0x82);
-            s.out_uint16_be(length);
-            break;
-        }
-        return 1 + _ber_sizeof_length(length);
-    }
-
     inline int sizeof_octet_string(int length) {
         return 1 + _ber_sizeof_length(length) + length;
     }
@@ -1369,17 +1351,6 @@ struct TSCspDataDetail {
     {
     }
 
-    int ber_sizeof() const {
-        int length = 0;
-        length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->keySpec));
-        length += BER::sizeof_integer(this->keySpec);
-        length += (this->cardName.size() > 0) ? CredSSP::sizeof_octet_string_seq(this->cardName.size()) : 0;
-        length += (this->readerName.size() > 0) ? CredSSP::sizeof_octet_string_seq(this->readerName.size()) : 0;
-        length += (this->containerName.size() > 0) ? CredSSP::sizeof_octet_string_seq(this->containerName.size()) : 0;
-        length += (this->cspName.size() > 0) ? CredSSP::sizeof_octet_string_seq(this->cspName.size()) : 0;
-        return length;
-    }
-
     int recv(InStream & stream) {
         int length = 0;
         /* TSCspDataDetail ::= SEQUENCE */
@@ -1503,16 +1474,6 @@ struct TSSmartCardCreds {
 
     void set_cspdatadetail(uint32_t keySpec, bytes_view cardName, bytes_view readerName, bytes_view containerName, bytes_view cspName) {
         this->cspData = TSCspDataDetail(keySpec, cardName, readerName, containerName, cspName);
-    }
-
-    int ber_sizeof() const {
-        int length = 0;
-        length += CredSSP::sizeof_octet_string_seq(this->pin.size());
-        length += BER::sizeof_contextual_tag(BER::sizeof_sequence(this->cspData.ber_sizeof()));
-        length += BER::sizeof_sequence(this->cspData.ber_sizeof());
-        length += (this->userHint.size() > 0) ? CredSSP::sizeof_octet_string_seq(this->userHint.size()) : 0;
-        length += (this->domainHint.size() > 0) ? CredSSP::sizeof_octet_string_seq(this->domainHint.size()) : 0;
-        return length;
     }
 
     int recv(InStream & stream) {
