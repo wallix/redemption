@@ -1238,43 +1238,25 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t & error_code, uint32_
  * }
  */
 struct TSPasswordCreds {
-    uint8_t domainName[256];
-    size_t domainName_length{0};
-    uint8_t userName[256];
-    size_t userName_length{0};
-    uint8_t password[256];
-    size_t password_length{0};
+    std::vector<uint8_t> domainName;
+    std::vector<uint8_t> userName;
+    std::vector<uint8_t> password;
 
     TSPasswordCreds() = default;
 
-    TSPasswordCreds(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length) {
-        this->domainName_length = (domain_length < sizeof(this->domainName))
-            ? domain_length
-            : sizeof(this->domainName);
-        memcpy(this->domainName, domain, this->domainName_length);
-
-        this->userName_length = (user_length < sizeof(this->userName))
-            ? user_length
-            : sizeof(this->userName);
-        memcpy(this->userName, user, this->userName_length);
-
-        this->password_length = (pass_length < sizeof(this->password))
-            ? pass_length
-            : sizeof(this->password);
-        memcpy(this->password, pass, this->password_length);
+    TSPasswordCreds(bytes_view domain, bytes_view user, bytes_view pass)
+      : domainName(domain.data(), domain.data()+domain.size())
+      , userName(user.data(), user.data()+user.size())
+      , password(pass.data(), pass.data()+pass.size())
+    {
     }
-
-    // TSPasswordCreds(InStream & stream) {
-    //     this->recv(stream);
-    // }
-
 
     int ber_sizeof() const {
         int length = 0;
         // TO COMPLETE
-        length += BER::sizeof_sequence_octet_string(domainName_length);
-        length += BER::sizeof_sequence_octet_string(userName_length);
-        length += BER::sizeof_sequence_octet_string(password_length);
+        length += BER::sizeof_sequence_octet_string(domainName.size());
+        length += BER::sizeof_sequence_octet_string(userName.size());
+        length += BER::sizeof_sequence_octet_string(password.size());
         return length;
     }
 
@@ -1287,22 +1269,22 @@ struct TSPasswordCreds {
         BER::read_contextual_tag(stream, 0, length, true);
         BER::read_octet_string_tag(stream, length);
 
-        this->domainName_length = length;
-        stream.in_copy_bytes(this->domainName, length);
+        this->domainName.resize(length);
+        stream.in_copy_bytes(this->domainName.data(), this->domainName.size());
 
         /* [1] userName (OCTET STRING) */
         BER::read_contextual_tag(stream, 1, length, true);
         BER::read_octet_string_tag(stream, length);
 
-        this->userName_length = length;
-        stream.in_copy_bytes(this->userName, length);
+        this->userName.resize(length);
+        stream.in_copy_bytes(this->userName.data(), this->userName.size());
 
         /* [2] password (OCTET STRING) */
         BER::read_contextual_tag(stream, 2, length, true);
         BER::read_octet_string_tag(stream, length);
 
-        this->password_length = length;
-        stream.in_copy_bytes(this->password, length);
+        this->password.resize(length);
+        stream.in_copy_bytes(this->password.data(), this->password.size());
 
     }
 };
@@ -1690,9 +1672,9 @@ struct TSCredentials
 
     TSCredentials() = default;
 
-    TSCredentials(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length)
+    TSCredentials(bytes_view domain, bytes_view user, bytes_view pass)
         : credType(1)
-        , passCreds(domain, domain_length, user, user_length, pass, pass_length)
+        , passCreds(domain, user, pass)
     {
 
     }
@@ -1735,9 +1717,7 @@ struct TSCredentials
 //    }
 
     void set_credentials_from_av(bytes_view domain_av, bytes_view user_av, bytes_view password_av) {
-        this->passCreds = TSPasswordCreds(domain_av.data(), domain_av.size(),
-                                          user_av.data(), user_av.size(),
-                                          password_av.data(), password_av.size());
+        this->passCreds = TSPasswordCreds(domain_av, user_av, password_av);
     }
 
     int ber_sizeof() const {
@@ -1748,11 +1728,7 @@ struct TSCredentials
             size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->smartcardCreds.ber_sizeof()));
         }
         else {
-            auto result = emitTSPasswordCreds(
-                {this->passCreds.domainName, this->passCreds.domainName_length},
-                {this->passCreds.userName, this->passCreds.userName_length},
-                {this->passCreds.password, this->passCreds.password_length});
-
+            auto result = emitTSPasswordCreds(this->passCreds.domainName, this->passCreds.userName, this->passCreds.password);
             size += BER::sizeof_sequence_octet_string(result.size());
         }
         return size;
@@ -1805,10 +1781,7 @@ inline int emitTSCredentials(OutStream & stream, const TSCredentials & self )
     /* [1] credentials (OCTET STRING) */
 
     if (self.credType == 1){
-        auto result = emitTSPasswordCreds(
-            {self.passCreds.domainName, self.passCreds.domainName_length},
-            {self.passCreds.userName, self.passCreds.userName_length},
-            {self.passCreds.password, self.passCreds.password_length});
+        auto result = emitTSPasswordCreds(self.passCreds.domainName, self.passCreds.userName, self.passCreds.password);
 
         credsSize = result.size();
     }
@@ -1823,10 +1796,7 @@ inline int emitTSCredentials(OutStream & stream, const TSCredentials & self )
     size += BER::write_octet_string_tag(stream, credsSize);
 
     if (self.credType == 1){
-        auto result = emitTSPasswordCreds(
-            {self.passCreds.domainName, self.passCreds.domainName_length},
-            {self.passCreds.userName, self.passCreds.userName_length},
-            {self.passCreds.password, self.passCreds.password_length});
+        auto result = emitTSPasswordCreds(self.passCreds.domainName, self.passCreds.userName, self.passCreds.password);
         stream.out_copy_bytes(result);
         size += result.size();
     }

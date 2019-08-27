@@ -432,14 +432,12 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
 {
 
-    uint8_t domain[] = "flatland";
-    uint8_t user[] = "square";
-    uint8_t pass[] = "hypercube";
+    std::vector<uint8_t> domain = {'f', 'l', 'a', 't', 'l', 'a', 'n', 'd', 0};
+    std::vector<uint8_t> user = { 's', 'q', 'u', 'a', 'r', 'e', 0};
+    std::vector<uint8_t> pass = {'h', 'y', 'p', 'e', 'r', 'c', 'u', 'b', 'e', 0};
 
 
-    TSCredentials ts_cred(domain, sizeof(domain),
-                          user,   sizeof(user),
-                          pass,   sizeof(pass));
+    TSCredentials ts_cred(domain, user, pass);
 
     StaticOutStream<65536> s;
 
@@ -453,31 +451,19 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     ts_cred_received.recv(in_s);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 1);
-    RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName_length, sizeof(domain));
-    RED_CHECK_EQUAL(ts_cred_received.passCreds.userName_length,   sizeof(user));
-    RED_CHECK_EQUAL(ts_cred_received.passCreds.password_length,   sizeof(pass));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.domainName),
-                      char_ptr_cast(domain));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.userName),
-                      char_ptr_cast(user));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.password),
-                      char_ptr_cast(pass));
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName, domain);
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.userName, user);
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.password, pass);
 
 
+    std::vector<uint8_t> domain2 = {'s','o','m','e','w','h','e','r','e', 0};
+    std::vector<uint8_t> user2 = {'s', 'o', 'm', 'e', 'o', 'n', 'e', 0};
+    std::vector<uint8_t> pass2 = {'s', 'o', 'm', 'e', 'p', 'a', 's', 's', 0};
 
-    uint8_t domain2[] = "somewhere";
-    uint8_t user2[] = "someone";
-    uint8_t pass2[] = "somepass";
-
-    ts_cred.set_credentials_from_av({domain2, sizeof(domain2)},
-                            {user2, sizeof(user2)},
-                            {pass2, sizeof(pass2)});
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.domainName),
-                      char_ptr_cast(domain2));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.userName),
-                      char_ptr_cast(user2));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.password),
-                      char_ptr_cast(pass2));
+    ts_cred.set_credentials_from_av(domain2, user2, pass2);
+    RED_CHECK_EQUAL(ts_cred.passCreds.domainName, domain2);
+    RED_CHECK_EQUAL(ts_cred.passCreds.userName,user2);
+    RED_CHECK_EQUAL(ts_cred.passCreds.password,pass2);
 }
 
 RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
