@@ -688,39 +688,6 @@ test-run tests/capture/ocr/locale/test_latin_to_cyrillic :
   <covfile>src/capture/ocr/locale/latin_to_cyrillic.cpp
   <covfile>src/capture/ocr/locale/latin_to_cyrillic.hpp
 ;
-test-run tests/capture/test_bogus_ocr :
-  $(REDEMPTION_TEST_PATH)/capture/test_bogus_ocr.cpp
-:
-  <library>crypto
-  <library>png
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/core/error.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/capture/test_bogus_ppocr :
-  $(REDEMPTION_TEST_PATH)/capture/test_bogus_ppocr.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>ppocr
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/core/error.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
 test-run tests/capture/test_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_capture.cpp
 :
@@ -5653,8 +5620,6 @@ alias test_dispatch_report_message : tests/acl/test_dispatch_report_message ;
 alias test_mm_api : tests/acl/test_mm_api ;
 alias test_module_manager : tests/acl/test_module_manager ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
-alias test_bogus_ocr : tests/capture/test_bogus_ocr ;
-alias test_bogus_ppocr : tests/capture/test_bogus_ppocr ;
 alias test_capture : tests/capture/test_capture ;
 alias test_cryptofile : tests/capture/test_cryptofile ;
 alias test_ocr : tests/capture/test_ocr ;
@@ -6338,8 +6303,6 @@ alias tests/capture/ocr/locale.norec :
   tests/capture/ocr/locale/test_latin_to_cyrillic
 ;
 alias tests/capture.norec :
-  tests/capture/test_bogus_ocr
-  tests/capture/test_bogus_ppocr
   tests/capture/test_capture
   tests/capture/test_cryptofile
   tests/capture/test_ocr
