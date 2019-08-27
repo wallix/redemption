@@ -1577,22 +1577,18 @@ inline int emitTSSmartCardCreds(OutStream & stream, const TSSmartCardCreds & sel
     stream.out_copy_bytes(sequence_header);
     size += sequence_header.size();
 
-    /* [0] pin (OCTET STRING) */
+    // [0] pin (OCTET STRING)
     auto ber_sequence_octet_string_header = BER::mkMandatoryOctetStringFieldHeader(self.pin.size(), 0);
-
     stream.out_copy_bytes(ber_sequence_octet_string_header);
     stream.out_copy_bytes(self.pin);
     size += self.pin.size() + ber_sequence_octet_string_header.size();
 
-    /* [1] cspData (OCTET STRING) */
+    // [1] cspData (TSCspDataDetail)
     auto ber_TSCspDataDetail = emitTSCspDataDetail(self.cspData);
-
-    auto v = BER::mkContextualFieldHeader(ber_TSCspDataDetail.size(), 1);
-    stream.out_copy_bytes(v);
-    size += v.size();
-
+    auto ber_CspDataDetail_header = BER::mkContextualFieldHeader(ber_TSCspDataDetail.size(), 1);
+    stream.out_copy_bytes(ber_CspDataDetail_header);
     stream.out_copy_bytes(ber_TSCspDataDetail);
-    size += ber_TSCspDataDetail.size();
+    size += ber_CspDataDetail_header.size() + ber_TSCspDataDetail.size();
 
     /* [2] userHint (OCTET STRING OPTIONAL) */
     auto ber_userHint_header = BER::mkOptionalOctetStringFieldHeader(self.userHint.size(), 2);
