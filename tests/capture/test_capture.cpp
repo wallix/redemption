@@ -2057,8 +2057,8 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     graphic_to_file.sync();
 
     RED_TEST(out_wrm_trans.size() == 3);
-    RED_TEST(out_wrm_trans[0].size() == 490454);
-    RED_TEST(out_wrm_trans[1].size() == 1008253);
+    RED_TEST(out_wrm_trans[0].size() == 490437);
+    RED_TEST(out_wrm_trans[1].size() == 1008139);
     RED_TEST(out_wrm_trans[2].size() == 195756);
 }
 
