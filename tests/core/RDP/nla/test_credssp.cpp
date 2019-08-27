@@ -471,7 +471,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
 
     std::vector<uint8_t> pin = {'3', '6', '1', '5', 0};
     std::vector<uint8_t> userHint = {'a', 'k', 'a', 0};
-    uint8_t domainHint[] = "grandparc";
+    std::vector<uint8_t> domainHint = {'g', 'r', 'a', 'n', 'd', 'p', 'a', 'r', 'c', 0};
 
     uint8_t cardName[] = "passepartout";
     uint8_t readerName[] = "acrobat";
@@ -479,8 +479,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     uint8_t cspName[] = "what";
     uint32_t keySpec = 32;
 
-    TSCredentials ts_cred(pin, userHint,
-                          domainHint, sizeof(domainHint),
+    TSCredentials ts_cred(pin, userHint, domainHint,
                           keySpec, 
                           {cardName, sizeof(cardName)},
                           {readerName, sizeof(readerName)},
@@ -501,9 +500,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     RED_CHECK_EQUAL(ts_cred_received.credType, 2);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.pin, pin);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.userHint, userHint);
-    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.domainHint_length, sizeof(domainHint));
-    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.domainHint),
-                      char_ptr_cast(domainHint));
+    RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.domainHint, domainHint);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec, keySpec);
     
     RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cardName, bytes_view({cardName, sizeof(cardName)}));
