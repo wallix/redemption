@@ -27,14 +27,22 @@ Author(s): Jonathan Poelen
 
 struct AgentDataExtractor
 {
-    KVList extract_list(array_view_const_char data);
+    bool extract_list(array_view_const_char data);
+
+    KVList kvlist() const noexcept
+    {
+        return KVList{{this->kvlogs.data(), this->kvlogs_end}};
+    }
 
     LogId log_id() const noexcept
     {
         return this->id;
     }
 
+    static bool relevant_log_id(LogId id) noexcept;
+
 private:
     std::array<KVLog, 7> kvlogs;
+    KVLog* kvlogs_end;
     LogId id;
 };

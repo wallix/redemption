@@ -35,14 +35,9 @@ namespace
 {
     using Av = array_view_const_char;
 
-    template<std::size_t N>
-    inline bool cstr_equal(char const (&s1)[N], array_view_const_char s2) {
-        return N - 1 == s2.size() && std::equal(s1, s1 + N - 1, begin(s2));
-    }
-
     using Pair = std::pair<std::string_view, LogId>;
 
-    auto pair_compare()
+    auto pair_comparator()
     {
         return [](auto& pair1, auto& pair2){
             auto a = pair1.first;
@@ -63,13 +58,13 @@ namespace
         };
         REDEMPTION_DIAGNOSTIC_POP
 
-        std::sort(begin(pairs), end(pairs), pair_compare());
+        std::sort(begin(pairs), end(pairs), pair_comparator());
 
         return pairs;
     }();
 }
 
-KVList AgentDataExtractor::extract_list(Av data)
+bool AgentDataExtractor::extract_list(Av data)
 {
     auto find = [](Av const & s, char c) {
         auto p = std::find(begin(s), end(s), c);
@@ -81,7 +76,8 @@ KVList AgentDataExtractor::extract_list(Av data)
     auto kv_list = [&](auto ...kv){
         auto* p = this->kvlogs.data();
         ((*p++ = kv), ...);
-        return KVList{{this->kvlogs.data(), p}};
+        this->kvlogs_end = p;
+        return true;
     };
 
 
@@ -104,7 +100,7 @@ KVList AgentDataExtractor::extract_list(Av data)
                     KVLog(var2, right(parameters, subitem_separator))
                 );
             }
-            return KVList{};
+            return false;
         };
         auto line_with_3_var = [&](Av var1, Av var2, Av var3) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
@@ -118,7 +114,7 @@ KVList AgentDataExtractor::extract_list(Av data)
                     );
                 }
             }
-            return KVList{};
+            return false;
         };
         auto line_with_4_var = [&](Av var1, Av var2, Av var3, Av var4) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
@@ -139,7 +135,7 @@ KVList AgentDataExtractor::extract_list(Av data)
                     }
                 }
             }
-            return KVList{};
+            return false;
         };
         auto line_with_5_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
@@ -165,7 +161,7 @@ KVList AgentDataExtractor::extract_list(Av data)
                     }
                 }
             }
-            return KVList{};
+            return false;
         };
         auto line_with_7_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5, Av var6, Av var7) {
             if (auto const subitem_separator = find(parameters, '\x01')) {
@@ -201,12 +197,12 @@ KVList AgentDataExtractor::extract_list(Av data)
                     }
                 }
             }
-            return KVList{};
+            return false;
         };
 
         std::string_view order_sv{order.data(), data.size()};
         auto it = std::lower_bound(begin(sorted_log_id_string), end(sorted_log_id_string),
-            Pair{order_sv, LogId()}, pair_compare());
+            Pair{order_sv, LogId()}, pair_comparator());
 
         if (it == end(sorted_log_id_string) || it->first != order_sv) {
             LOG(LOG_WARNING,
@@ -339,6 +335,23 @@ KVList AgentDataExtractor::extract_list(Av data)
                 return line_with_2_var("icap_service"_av, "status"_av);
             case LogId::GROUP_MEMBERSHIP:
                 return line_with_1_var("groups"_av);
+            case LogId::PROBE_STATUS:
+                return line_with_1_var("status"_av);
+            case LogId::KILL_PATTERN_DETECTED:
+            case LogId::NOTIFY_PATTERN_DETECTED:
+                return line_with_1_var("pattern"_av);
+            case LogId::SESSION_DISCONNECTION:
+                return line_with_1_var("duration"_av);
+            // extracted by OCR / FOREGROUND_WINDOW_CHANGED
+            case LogId::TITLE_BAR:
+            // re-extracted
+            case LogId::KBD_INPUT:
+            // useless (?)
+            case LogId::CONNECTION_FAILED:
+            case LogId::SESSION_CREATION_FAILED:
+            case LogId::SESSION_ENDING_IN_PROGRESS:
+            case LogId::SESSION_ESTABLISHED_SUCCESSFULLY:
+                return false;
         }
 
         LOG(LOG_WARNING,
@@ -346,5 +359,78 @@ KVList AgentDataExtractor::extract_list(Av data)
             int(data.size()), data.data());
     }
 
-    return {};
+    return false;
+}
+
+bool AgentDataExtractor::relevant_log_id(LogId id) noexcept
+{
+    switch (id) {
+        // extracted by OCR / FOREGROUND_WINDOW_CHANGED
+        case LogId::TITLE_BAR:
+        // re-extracted
+        case LogId::KBD_INPUT:
+        // useless (?)
+        case LogId::CONNECTION_FAILED:
+        case LogId::SESSION_CREATION_FAILED:
+        case LogId::SESSION_ENDING_IN_PROGRESS:
+        case LogId::SESSION_ESTABLISHED_SUCCESSFULLY:
+            return false;
+
+        case LogId::PASSWORD_TEXT_BOX_GET_FOCUS:
+        case LogId::UAC_PROMPT_BECOME_VISIBLE:
+        case LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS:
+        case LogId::INPUT_LANGUAGE:
+        case LogId::NEW_PROCESS:
+        case LogId::COMPLETED_PROCESS:
+        case LogId::OUTBOUND_CONNECTION_BLOCKED:
+        case LogId::OUTBOUND_CONNECTION_DETECTED:
+        case LogId::FOREGROUND_WINDOW_CHANGED:
+        case LogId::BUTTON_CLICKED:
+        case LogId::CHECKBOX_CLICKED:
+        case LogId::EDIT_CHANGED:
+        case LogId::DRIVE_REDIRECTION_USE:
+        case LogId::DRIVE_REDIRECTION_READ:
+        case LogId::DRIVE_REDIRECTION_WRITE:
+        case LogId::DRIVE_REDIRECTION_DELETE:
+        case LogId::DRIVE_REDIRECTION_READ_EX:
+        case LogId::DRIVE_REDIRECTION_WRITE_EX:
+        case LogId::DRIVE_REDIRECTION_RENAME:
+        case LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION:
+        case LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION:
+        case LogId::CLIENT_EXECUTE_REMOTEAPP:
+        case LogId::CERTIFICATE_CHECK_SUCCESS:
+        case LogId::SERVER_CERTIFICATE_NEW:
+        case LogId::SERVER_CERTIFICATE_MATCH_SUCCESS:
+        case LogId::SERVER_CERTIFICATE_MATCH_FAILURE:
+        case LogId::SERVER_CERTIFICATE_ERROR:
+        case LogId::OUTBOUND_CONNECTION_BLOCKED_2:
+        case LogId::OUTBOUND_CONNECTION_DETECTED_2:
+        case LogId::STARTUP_APPLICATION_FAIL_TO_RUN:
+        case LogId::STARTUP_APPLICATION_FAIL_TO_RUN_2:
+        case LogId::PROCESS_BLOCKED:
+        case LogId::PROCESS_DETECTED:
+        case LogId::KERBEROS_TICKET_CREATION:
+        case LogId::KERBEROS_TICKET_DELETION:
+        case LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION:
+        case LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION:
+        case LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX:
+        case LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX:
+        case LogId::WEB_ATTEMPT_TO_PRINT:
+        case LogId::WEB_DOCUMENT_COMPLETE:
+        case LogId::WEB_BEFORE_NAVIGATE:
+        case LogId::WEB_NAVIGATE_ERROR:
+        case LogId::WEB_NAVIGATION:
+        case LogId::WEB_THIRD_PARTY_URL_BLOCKED:
+        case LogId::WEB_PRIVACY_IMPACTED:
+        case LogId::WEB_ENCRYPTION_LEVEL_CHANGED:
+        case LogId::FILE_VERIFICATION:
+        case LogId::FILE_VERIFICATION_ERROR:
+        case LogId::GROUP_MEMBERSHIP:
+        case LogId::PROBE_STATUS:
+        case LogId::KILL_PATTERN_DETECTED:
+        case LogId::NOTIFY_PATTERN_DETECTED:
+        case LogId::SESSION_DISCONNECTION:
+            ;
+    }
+    return true;
 }

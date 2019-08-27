@@ -140,6 +140,7 @@ for _,id in ipairs({
     "SERVER_CERTIFICATE_MATCH_SUCCESS",
     "SERVER_CERTIFICATE_MATCH_FAILURE",
     "SERVER_CERTIFICATE_ERROR",
+    "PROBE_STATUS",
 }) do
     if ids[id] ~= 0 then
         print(id .. ' is already used, please update script')
