@@ -1268,12 +1268,6 @@ inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view us
 }
 
 
-
-namespace CredSSP {
-
-}  // namespace CredSSP
-
-
 /* TSCspDataDetail ::= SEQUENCE {
  *     keySpec       [0] INTEGER,
  *     cardName      [1] OCTET STRING OPTIONAL,
