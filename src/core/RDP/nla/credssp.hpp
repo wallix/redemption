@@ -1279,10 +1279,10 @@ inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view us
  */
 struct TSCspDataDetail {
     uint32_t keySpec{0};
-    std::vector<uint8_t> cardName = [](){std::vector<uint8_t> v; v.reserve(256); return v;}();
-    std::vector<uint8_t> readerName = [](){std::vector<uint8_t> v; v.reserve(256); return v;}();
-    std::vector<uint8_t> containerName = [](){std::vector<uint8_t> v; v.reserve(256); return v;}();
-    std::vector<uint8_t> cspName = [](){std::vector<uint8_t> v; v.reserve(256); return v;}();
+    std::vector<uint8_t> cardName;
+    std::vector<uint8_t> readerName;
+    std::vector<uint8_t> containerName;
+    std::vector<uint8_t> cspName;
 
     TSCspDataDetail()
 
@@ -1411,15 +1411,13 @@ struct TSSmartCardCreds {
 
     TSSmartCardCreds() = default;
 
-    TSSmartCardCreds(bytes_view pin, bytes_view userHint, bytes_view domainHint)
+    TSSmartCardCreds(bytes_view pin, bytes_view userHint, bytes_view domainHint, 
+                     uint32_t keySpec, bytes_view cardName, bytes_view readerName, bytes_view containerName, bytes_view cspName)
+        : pin(pin.data(), pin.data() + pin.size())
+        , cspData(keySpec, cardName, readerName, containerName, cspName)
+        , userHint(userHint.data(), userHint.data() + userHint.size())
+        , domainHint(domainHint.data(), domainHint.data() + domainHint.size())
     {
-        this->pin.assign(pin.data(), pin.data() + pin.size());
-        this->userHint.assign(userHint.data(), userHint.data() + userHint.size());
-        this->domainHint.assign(domainHint.data(), domainHint.data() + domainHint.size());
-    }
-
-    void set_cspdatadetail(uint32_t keySpec, bytes_view cardName, bytes_view readerName, bytes_view containerName, bytes_view cspName) {
-        this->cspData = TSCspDataDetail(keySpec, cardName, readerName, containerName, cspName);
     }
 
     int recv(InStream & stream) {
@@ -1530,22 +1528,9 @@ struct TSCredentials
                   bytes_view containerName,
                   bytes_view cspName)
         : credType(2)
-        , smartcardCreds(pin, userHint, domainHint)
+        , smartcardCreds(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName)
     {
-        this->smartcardCreds.set_cspdatadetail(keySpec, cardName, readerName, containerName, cspName);
-
     }
-
-//    void set_smartcard(buffer_view pin, buffer_view userHint, buffer_view domainHint,
-//                       uint32_t keySpec, 
-//                       bytes_view cardName,
-//                       bytes_view readerName,
-//                       bytes_view containerName,
-//                       bytes_view cspName) {
-//        this->credType = 2;
-//        this->smartcardCreds = TSSmartCardCreds(pin, userHint, domainHint);
-//        this->smartcardCreds.set_cspdatadetail(keySpec, cardName, readerName, containerName, cspName);
-//    }
 
     void set_credentials_from_av(bytes_view domain_av, bytes_view user_av, bytes_view password_av) {
         this->passCreds = TSPasswordCreds(domain_av, user_av, password_av);
