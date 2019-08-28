@@ -942,44 +942,6 @@ struct TSRequest final {
 
 inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
 {
-//    auto * begin = stream.get_current();
-
-    if ((self.version == 3 || self.version == 4 || self.version >= 6)
-    && error_code != 0) {
-        /* [0] version */
-        auto ber_version_field = BER::mkSmallIntegerField(self.version, 0);
-        /* [4] errorCode (INTEGER) */
-        auto ber_error_code_field = BER::mkIntegerField(error_code, 4);
-
-        /* TSRequest */
-        size_t ts_request_length = ber_version_field.size()+ber_error_code_field.size();
-        auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
-
-//        /* TSRequest */
-//        stream.out_copy_bytes(ber_ts_request_header);
-//        // version    [0] INTEGER,
-//        stream.out_copy_bytes(ber_version_field);
-//        // errorCode  [4] INTEGER OPTIONAL
-//        stream.out_copy_bytes(ber_error_code_field);
-
-        std::vector<uint8_t> result = std::move(ber_ts_request_header);
-        result << ber_version_field 
-               << ber_error_code_field;
-
-        LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
-        LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
-        hexdump_c(ber_ts_request_header);
-        LOG(LOG_INFO, "TSRequest version_field ---------------------------");
-        hexdump_c(ber_version_field);
-        LOG(LOG_INFO, "TSRequest error_code field ------------------------");
-        hexdump_c(ber_error_code_field);
-        LOG(LOG_INFO, "TSRequest full dump--------------------------------");
-        hexdump_c(result);
-        LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
-
-        return result;
-    }
-    
     // version    [0] INTEGER,
     auto ber_version_field = BER::mkSmallIntegerField(self.version, 0);
     // negoTokens [1] NegoData OPTIONAL
@@ -988,6 +950,11 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
     auto ber_auth_info_header = BER::mkOptionalOctetStringFieldHeader(self.authInfo.size(), 2);
     // pubKeyAuth [3] OCTET STRING OPTIONAL
     auto ber_pub_key_auth_header = BER::mkOptionalOctetStringFieldHeader(self.pubKeyAuth.size(), 3);
+    // [4] errorCode (INTEGER)
+    std::vector<uint8_t> ber_error_code_field;
+    if ((self.version == 3 || self.version == 4 || self.version >= 6) && error_code != 0) {
+        ber_error_code_field = BER::mkIntegerField(error_code, 4);
+    }
     // clientNonce[5] OCTET STRING OPTIONAL
     auto ber_nonce_header = BER::mkOptionalOctetStringFieldHeader(sizeof(self.clientNonce.data), 5);
 
@@ -999,6 +966,7 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
           + self.authInfo.size()
           + ber_pub_key_auth_header.size()
           + self.pubKeyAuth.size()
+          + ber_error_code_field.size()
           + (self.version >= 5 && self.clientNonce.initialized)
             *(ber_nonce_header.size()+sizeof(self.clientNonce.data));
 
@@ -1008,7 +976,8 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
     result << ber_version_field 
            << ber_nego_tokens_header << self.negoTokens
            << ber_auth_info_header << self.authInfo
-           << ber_pub_key_auth_header << self.pubKeyAuth;
+           << ber_pub_key_auth_header << self.pubKeyAuth
+           << ber_error_code_field;
 
     if (self.version >= 5 && self.clientNonce.initialized){
         result << ber_nonce_header << bytes_view({self.clientNonce.data, sizeof(self.clientNonce.data)});
@@ -1025,6 +994,8 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
     hexdump_c(ber_auth_info_header);
     LOG(LOG_INFO, "TSRequest pub_key_auth_header ---------------------");
     hexdump_c(ber_pub_key_auth_header);
+    LOG(LOG_INFO, "TSRequest error_code field ------------------------");
+    hexdump_c(ber_error_code_field);
     LOG(LOG_INFO, "TSRequest nonce -----------------------------------");
     if (self.version >= 5 && self.clientNonce.initialized){
         hexdump_c(ber_nonce_header);
