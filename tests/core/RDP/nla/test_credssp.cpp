@@ -377,7 +377,7 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
     InStream in_s(packet);
     uint32_t error_code = 0;
 
-    TSRequest ts_req = recvTSRequest(in_s, error_code, 3);
+    TSRequest ts_req = recvTSRequestBV(make_array_view(packet), error_code, 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 

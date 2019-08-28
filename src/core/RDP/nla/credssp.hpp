@@ -1169,6 +1169,86 @@ inline TSRequest recvTSRequest(InStream & stream, uint32_t & error_code, uint32_
     return self;
 }
 
+inline TSRequest recvTSRequestBV(bytes_view data, uint32_t & error_code, uint32_t version = 6) 
+{
+    InStream stream(data);
+    TSRequest self(version);
+    int length;
+    uint32_t remote_version;
+
+    /* TSRequest */
+    if(!BER::read_sequence_tag(stream, length) ||
+       !BER::read_contextual_tag(stream, 0, length, true) ||
+       !BER::read_integer(stream, remote_version)) {
+        throw Error(ERR_CREDSSP_TS_REQUEST);
+    }
+    LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u", remote_version);
+
+    if (remote_version < self.use_version) {
+        self.use_version = remote_version;
+    }
+    LOG(LOG_INFO, "Credssp TSCredentials::recv() Negotiated version %u", self.use_version);
+
+    /* [1] negoTokens (NegoData) */
+    if (BER::read_contextual_tag(stream, 1, length, true))        {
+        // LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS");
+
+        if (!BER::read_sequence_tag(stream, length) || /* SEQUENCE OF NegoDataItem */ /*NOLINT(misc-redundant-expression)*/
+            !BER::read_sequence_tag(stream, length) || /* NegoDataItem */
+            !BER::read_contextual_tag(stream, 0, length, true) || /* [0] negoToken */
+            !BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+            !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+
+        self.negoTokens = std::vector<uint8_t>(length);
+        stream.in_copy_bytes(self.negoTokens.data(), length);
+    }
+
+    /* [2] authInfo (OCTET STRING) */
+    if (BER::read_contextual_tag(stream, 2, length, true)) {
+        // LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
+        if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+           !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+
+        self.authInfo = std::vector<uint8_t>(length);
+        stream.in_copy_bytes(self.authInfo.data(), length);
+    }
+
+    /* [3] pubKeyAuth (OCTET STRING) */
+    if (BER::read_contextual_tag(stream, 3, length, true)) {
+        // LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
+        if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+           !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+        self.pubKeyAuth = std::vector<uint8_t>(length);
+        stream.in_copy_bytes(self.pubKeyAuth.data(), length);
+    }
+    /* [4] errorCode (INTEGER) */
+    if (remote_version >= 3
+        && remote_version != 5
+        && BER::read_contextual_tag(stream, 4, length, true)) {
+        LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
+        if (!BER::read_integer(stream, error_code)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+        LOG(LOG_INFO, "Credssp TSCredentials::recv() "
+            "ErrorCode = %x, Facility = %x, Code = %x",
+            error_code,
+            (error_code >> 16) & 0x7FF,
+            (error_code & 0xFFFF)
+        );
+    }
+    /* [5] clientNonce (OCTET STRING) */
+    if (self.clientNonce.ber_read(remote_version, length, stream) == -1){
+        throw Error(ERR_CREDSSP_TS_REQUEST);
+    }
+    // return 0;
+    return self;
+}
 
 /*
  * TSPasswordCreds ::= SEQUENCE {
