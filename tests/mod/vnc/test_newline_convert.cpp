@@ -27,98 +27,50 @@ using namespace std::string_view_literals;
 
 RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter0)
 {
-    {
-        char s[] = "toto";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "toto"sv);
-    }
+    char rawbuf[32];
+    auto buf = make_array_view(rawbuf);
 
-    {
-        char s[] = "\r\ntoto";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\ntoto"sv);
-    }
-
-    {
-        char s[] = "toto\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "toto\n"sv);
-    }
-
-    {
-        char s[] = "to\r\nto";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "to\nto"sv);
-    }
-
-    {
-        char s[] = "\r\nto\r\nto";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\nto\nto"sv);
-    }
-
-    {
-        char s[] = "to\r\nto\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "to\nto\n"sv);
-    }
-
-    {
-        char s[] = "\r\nto\r\nto\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\nto\nto\n"sv);
-    }
-
-    {
-        char s[] = "to\r\nto\r\n!";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "to\nto\n!"sv);
-    }
-
-    {
-        char s[] = "\r\nto\r\nto\r\n!";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\nto\nto\n!"sv);
-    }
-
-    {
-        char s[] = "\r\n\r\nto\r\n\r\nto\r\n\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\n\nto\n\nto\n\n"sv);
-    }
+#define TEST(s, r) {                                                                      \
+    std::string in = s;                                                                   \
+    std::string in2 = s;                                                                  \
+    auto expected = r ""_av;                                                              \
+    auto minilen = std::min(expected.size(), size_t(4));                                  \
+    RED_CHECK_MEM(windows_to_linux_newline_convert(in, buf), expected);                   \
+    RED_CHECK_MEM(windows_to_linux_newline_convert(in, buf.first(4)),                     \
+        expected.first(minilen));                                                         \
+    RED_CHECK_MEM(windows_to_linux_newline_convert(in, in), expected);                    \
+    RED_CHECK_MEM(windows_to_linux_newline_convert(in2, array_view(in2.data(), minilen)), \
+        expected.first(minilen));                                                         \
 }
 
-RED_AUTO_TEST_CASE(TestInPlaceWindowsToLinuxNewLineConverter1)
-{
-    {
-        char s[] = "";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == ""sv);
-    }
+    TEST("", "");
+    TEST("\r\r", "\r\r");
+    TEST("\n\n", "\n\n");
+    TEST("\r\r\r\r", "\r\r\r\r");
+    TEST("\n\n\n\n", "\n\n\n\n");
+    TEST("\n\n\r\n", "\n\n\n");
+    TEST("\n\r\n\n", "\n\n\n");
+    TEST("\r\r\n\r", "\r\n\r");
+    TEST("\r\n\r\r", "\n\r\r");
+    TEST("\r \n", "\r \n");
+    TEST("\r\r \n", "\r\r \n");
+    TEST("\n \r", "\n \r");
+    TEST("\n\n \r", "\n\n \r");
+    TEST("\r\n", "\n");
+    TEST("\r\n\r\n", "\n\n");
+    TEST("\r\r\n", "\r\n");
+    TEST("\n\r\n", "\n\n");
+    TEST("\r\ntoto", "\ntoto");
+    TEST("\r\nto\r\nto", "\nto\nto");
+    TEST("\r\nto\r\nto\r\n", "\nto\nto\n");
+    TEST("\r\nto\r\nto\r\n!", "\nto\nto\n!");
+    TEST("toto", "toto");
+    TEST("toto\r\n", "toto\n");
+    TEST("to\r\nto", "to\nto");
+    TEST("to\r\nto\r\n", "to\nto\n");
+    TEST("to\r\nto\r\n!", "to\nto\n!");
 
-    {
-        char s[] = "\r\r";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\r\r"sv);
-    }
-
-    {
-        char s[] = "\n\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\n\n"sv);
-    }
-
-    {
-        char s[] = "\r \n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\r \n"sv);
-    }
-
-    {
-        char s[] = "\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\n"sv);
-    }
-
-    {
-        char s[] = "\r\n\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\n\n"sv);
-    }
-
-    {
-        char s[] = "\r\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\r\n"sv);
-    }
-
-    {
-        char s[] = "\n\r\n";
-        RED_CHECK(in_place_windows_to_linux_newline_convert(s) == "\n\n"sv);
-    }
+#undef TEST
 }
 
 //RED_AUTO_TEST_CASE(TestInPlaceLinuxToWindowsNewLineConverter0)

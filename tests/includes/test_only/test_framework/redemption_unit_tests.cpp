@@ -123,9 +123,10 @@ namespace redemption_unit_test__
                 case ' ':
                 case '!': out << char(c); break;
                 case '"': out << "\\\""; break;
-                case 'b': out << "\\b"; break;
-                case 't': out << "\\t"; break;
-                case 'n': out << newline; break;
+                case '\b': out << "\\b"; break;
+                case '\t': out << "\\t"; break;
+                case '\r': out << "\\r"; break;
+                case '\n': out << newline; break;
                 default: out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
             }
         }

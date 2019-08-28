@@ -20,40 +20,59 @@
 
 #pragma once
 
+#include "utils/sugar/array_view.hpp"
 #include "core/error.hpp"
 #include "utils/log.hpp"
 
+#include <utility>
 #include <cstring>
 #include <cassert>
 
 
-inline static char * in_place_windows_to_linux_newline_convert(char * s)
+inline array_view_char windows_to_linux_newline_convert(
+    array_view_const_char source, array_view_char destination) noexcept
 {
-    char * src, * dest;
+    auto p = destination.begin();
+    auto first = source.begin();
 
-    assert(s);
-
-    src = dest = s;
-
-    char * p;
-    while ((p = strstr(src, "\r\n"))) {
-        const size_t n = p - src;
-
-        if ((dest != src) && n) {
-            memmove(dest, src, n);
+    if (p == first) {
+        auto last = first + std::min(destination.size(), source.size());
+        while (first != last && (*first != '\r' || (first+1 != last && first[1] != '\n'))) {
+            ++first;
         }
-
-        dest += n;
-        src  =  p + 2;
-
-        *dest = '\n';
-
-        dest++;
+        p += first - source.begin();
     }
 
-    memmove(dest, src, strlen(src) + 1);
+    auto last = source.end();
+    if (destination.size() < source.size()) {
+        last -= source.size() - destination.size();
+        while (first != last) {
+            if (*first == '\r') {
+                if (*(first+1) == '\n') {
+                    ++last;
+                    ++first;
+                    if (last == source.end()) {
+                        *p++ = *first++;
+                        break;
+                    }
+                }
+            }
+            *p++ = *first++;
+        }
+    }
 
-    return s;
+    if (p != destination.end()) {
+        while (first != last) {
+            if (*first == '\r') {
+                if (first+1 != last && *(first+1) == '\n') {
+                    ++first;
+                }
+            }
+            *p++ = *first++;
+        }
+    }
+
+    return {destination.data(), p};
 }
 
 inline static size_t linux_to_windows_newline_convert(char const * s,
