@@ -474,18 +474,14 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     std::vector<uint8_t> userHint = {'a', 'k', 'a', 0};
     std::vector<uint8_t> domainHint = {'g', 'r', 'a', 'n', 'd', 'p', 'a', 'r', 'c', 0};
 
-    uint8_t cardName[] = "passepartout";
-    uint8_t readerName[] = "acrobat";
-    uint8_t containerName[] = "docker";
-    uint8_t cspName[] = "what";
+    std::vector<uint8_t> cardName = {'p', 'a', 's', 's', 'e', 'p', 'a', 'r', 't', 'o', 'u', 't', 0};
+    std::vector<uint8_t> readerName = {'a', 'c', 'r', 'o', 'b', 'a', 't', 0};
+    std::vector<uint8_t> containerName = {'d', 'o', 'c', 'k', 'e', 'r', 0};
+    std::vector<uint8_t> cspName = {'w', 'h', 'a', 't', 0};
     uint32_t keySpec = 32;
 
     TSCredentials ts_cred(pin, userHint, domainHint,
-                          keySpec, 
-                          {cardName, sizeof(cardName)},
-                          {readerName, sizeof(readerName)},
-                          {containerName, sizeof(containerName)},
-                          {cspName, sizeof(cspName)});
+                          keySpec, cardName, readerName, containerName, cspName);
 
     auto r = emitTSCredentialsSmartCard(ts_cred);
     RED_CHECK_EQUAL(r.size(), r[1]+2);
@@ -501,10 +497,10 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.domainHint, domainHint);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec, keySpec);
     
-    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cardName, bytes_view({cardName, sizeof(cardName)}));
-    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.readerName, bytes_view({readerName, sizeof(readerName)}));
-    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.containerName, bytes_view({containerName, sizeof(containerName)}));
-    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cspName, bytes_view({cspName, sizeof(cspName)}));
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cardName, cardName);
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.readerName, readerName);
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.containerName, containerName);
+    RED_CHECK_SMEM(ts_cred_received.smartcardCreds.cspData.cspName, cspName);
 }
 
 // Traffic Captured on WIN2012
