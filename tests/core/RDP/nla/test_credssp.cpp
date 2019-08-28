@@ -133,7 +133,7 @@ RED_AUTO_TEST_CASE(TestBERContextual)
     s.out_copy_bytes(v);
 
     InStream in_s(s.get_bytes());
-    res = BER::read_contextual_tag(in_s, tag, value, true);
+    res = BER::read_contextual_tag(in_s, tag, value);
     RED_CHECK(res);
     RED_CHECK_EQUAL(value, 3);
 }
