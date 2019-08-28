@@ -256,7 +256,7 @@ bool RdpNego::recv_next_data(TpduBuffer& tpdubuf, Transport& trans, ServerNotifi
             }
 
             while (this->state == State::Credssp && tpdubuf.next(TpduBuffer::CREDSSP)) {
-                this->state = this->recv_credssp(trans, InStream(tpdubuf.current_pdu_buffer()));
+                this->state = this->recv_credssp(trans, tpdubuf.current_pdu_buffer());
             }
 
             while (this->state == State::Negociate && tpdubuf.next(TpduBuffer::PDU)) {
@@ -434,13 +434,13 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
     return State::Credssp;
 }
 
-RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
+RdpNego::State RdpNego::recv_credssp(OutTransport trans, bytes_view data)
 {
     LOG_IF(bool(this->verbose & Verbose::negotiation), LOG_INFO, "RdpNego::recv_credssp");
 
     if (this->krb) {
         #ifndef __EMSCRIPTEN__
-        switch (this->credsspKerberos->credssp_client_authenticate_next(stream))
+        switch (this->credsspKerberos->credssp_client_authenticate_next(data))
         {
             case credssp::State::Cont:
                 break;
@@ -458,7 +458,7 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
     }
     else {
         StaticOutStream<65536> ts_request_emit;
-        switch (this->credsspNTLM->credssp_client_authenticate_next(stream, ts_request_emit))
+        switch (this->credsspNTLM->credssp_client_authenticate_next(data, ts_request_emit))
         {
             case credssp::State::Cont:
                 trans.send(ts_request_emit.get_bytes());

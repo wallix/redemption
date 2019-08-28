@@ -86,8 +86,7 @@ public:
     {
         credssp::State st = credssp::State::Cont;
         while (buffer.next(TpduBuffer::CREDSSP) && credssp::State::Cont == st) {
-            InStream in_stream(buffer.current_pdu_buffer());
-            st = this->credssp.credssp_server_authenticate_next(in_stream, out_stream);
+            st = this->credssp.credssp_server_authenticate_next(buffer.current_pdu_buffer(), out_stream);
         }
         return st;
     }

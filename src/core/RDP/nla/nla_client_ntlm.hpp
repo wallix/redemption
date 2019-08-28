@@ -171,14 +171,14 @@ public:
     }
 
 
-    credssp::State credssp_client_authenticate_next(InStream & in_stream, StaticOutStream<65536> & ts_request_emit)
+    credssp::State credssp_client_authenticate_next(bytes_view in_data, StaticOutStream<65536> & ts_request_emit)
     {
         switch (this->client_auth_data_state)
         {
             case Loop:
             {
                 uint32_t error_code = 0;
-                TSRequest ts_request = recvTSRequest(in_stream, error_code);
+                TSRequest ts_request = recvTSRequest(in_data, error_code);
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
                 /*
@@ -398,7 +398,7 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
                 uint32_t error_code = 0;
-                TSRequest ts_request = recvTSRequest(in_stream, error_code);
+                TSRequest ts_request = recvTSRequest(in_data, error_code);
 
                 if (ts_request.pubKeyAuth.size() < cbMaxSignature) {
                     // Provided Password is probably incorrect

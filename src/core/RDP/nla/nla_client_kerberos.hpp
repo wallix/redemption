@@ -693,26 +693,12 @@ private:
         return Res::Ok;
     }
 
-    Res sm_credssp_client_authenticate_recv(InStream & in_stream)
-    {
-        this->ts_request = recvTSRequest(in_stream, this->error_code, 6);
-
-        // #ifdef WITH_DEBUG_CREDSSP
-        // LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
-        // hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
-        // #endif
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
-        this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
-
-        return Res::Ok;
-    }
-
-    Res sm_credssp_client_authenticate_stop(InStream & in_stream)
+    Res sm_credssp_client_authenticate_stop(bytes_view in_data)
     {
         /* Encrypted Public Key +1 */
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
-        this->ts_request = recvTSRequest(in_stream, this->error_code, 6);
+        this->ts_request = recvTSRequest(in_data, this->error_code, 6);
 
         /* Verify Server Public Key Echo */
 
@@ -848,20 +834,24 @@ public:
         unsetenv("KRB5CCNAME");
     }
 
-    credssp::State credssp_client_authenticate_next(InStream & in_stream)
+    credssp::State credssp_client_authenticate_next(bytes_view in_data)
     {
         switch (this->client_auth_data.state)
         {
             case ClientAuthenticateData::Start:
                 return credssp::State::Err;
             case ClientAuthenticateData::Loop:
-                if (Res::Err == this->sm_credssp_client_authenticate_recv(in_stream)
-                 || Res::Err == this->sm_credssp_client_authenticate_send()) {
+            
+                this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
+                this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
+            
+                if (Res::Err == this->sm_credssp_client_authenticate_send()) {
                     return credssp::State::Err;
                 }
                 return credssp::State::Cont;
             case ClientAuthenticateData::Final:
-                if (Res::Err == this->sm_credssp_client_authenticate_stop(in_stream)) {
+                if (Res::Err == this->sm_credssp_client_authenticate_stop(in_data)) {
                     return credssp::State::Err;
                 }
                 this->client_auth_data.state = ClientAuthenticateData::Start;

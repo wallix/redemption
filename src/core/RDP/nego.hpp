@@ -136,5 +136,5 @@ private:
 
     State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier);
 
-    State recv_credssp(OutTransport trans, InStream stream);
+    State recv_credssp(OutTransport trans, bytes_view in_data);
 };
