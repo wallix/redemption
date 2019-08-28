@@ -301,7 +301,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     // ===== PUBKEYAUTH =====
     {
-        constexpr static uint8_t packet4[] = {
+        constexpr static uint8_t packet[] = {
             0x30, 0x82, 0x01, 0x2b, 0xa0, 0x03, 0x02, 0x01,
             0x03, 0xa3, 0x82, 0x01, 0x22, 0x04, 0x82, 0x01,
             0x1e, 0x01, 0x00, 0x00, 0x00, 0xc9, 0x88, 0xfc,
@@ -342,18 +342,18 @@ RED_AUTO_TEST_CASE(TestTSRequest)
             0xac, 0xc0, 0xfd, 0x1b, 0xb5, 0xa2, 0xd3
         };
 
-        InStream in_s(packet4);
-        uint32_t error_code4 = 0;
-        TSRequest ts_req4 = recvTSRequest(in_s, error_code4, 3);
+        InStream in_s(packet);
+        uint32_t error_code = 0;
+        TSRequest ts_req = recvTSRequest(in_s, error_code, 3);
 
-        RED_CHECK_EQUAL(ts_req4.version, 3);
-        RED_CHECK_EQUAL(ts_req4.negoTokens.size(), 0);
-        RED_CHECK_EQUAL(ts_req4.authInfo.size(), 0);
-        RED_CHECK_EQUAL(ts_req4.pubKeyAuth.size(), 0x11e);
+        RED_CHECK_EQUAL(ts_req.version, 3);
+        RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0);
+        RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
+        RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
 
-        auto v4 = emitTSRequest(ts_req4, error_code4);
-        RED_CHECK_EQUAL(v4.size(), 0x12b + 4);
-        RED_CHECK_SIG_FROM(v4, packet4);
+        auto v = emitTSRequest(ts_req, error_code);
+        RED_CHECK_EQUAL(v.size(), 0x12b + 4);
+        RED_CHECK_SIG_FROM(v, packet);
     }
 
     // ===== AUTHINFO =====
