@@ -416,14 +416,10 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     RED_CHECK_EQUAL(ts_req5.authInfo.size(), 0x51);
     RED_CHECK_EQUAL(ts_req5.pubKeyAuth.size(), 0);
 
-    StaticOutStream<65536> to_send5;
-
     auto v5 = emitTSRequest(ts_req5, error_code5);
-    to_send5.out_copy_bytes(v5);
 
-    RED_CHECK_EQUAL(to_send5.get_offset(), 0x5c);
-
-    RED_CHECK_SIG_FROM(to_send5, packet5);
+    RED_CHECK_EQUAL(v5.size(), 0x5c);
+    RED_CHECK_SIG_FROM(v5, packet5);
 
     // RED_CHECK_MEM(to_send5.get_bytes(), packet5);
 }
@@ -436,19 +432,12 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     std::vector<uint8_t> user = { 's', 'q', 'u', 'a', 'r', 'e', 0};
     std::vector<uint8_t> pass = {'h', 'y', 'p', 'e', 'r', 'c', 'u', 'b', 'e', 0};
 
-
-    TSCredentials ts_cred(domain, user, pass);
-
-    StaticOutStream<65536> s;
-
-    auto r = emitTSCredentialsPassword(ts_cred.passCreds.domainName, ts_cred.passCreds.userName, ts_cred.passCreds.password);
-    s.out_copy_bytes(r);
-    RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
-    RED_CHECK_EQUAL(s.get_offset(), r.size());
+    auto r = emitTSCredentialsPassword(domain, user, pass);
+    RED_CHECK_EQUAL(r.size(), r[1]+2);
 
     TSCredentials ts_cred_received;
 
-    InStream in_s(s.get_bytes());
+    InStream in_s(r);
     ts_cred_received.recv(in_s);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 1);
@@ -461,10 +450,10 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     std::vector<uint8_t> user2 = {'s', 'o', 'm', 'e', 'o', 'n', 'e', 0};
     std::vector<uint8_t> pass2 = {'s', 'o', 'm', 'e', 'p', 'a', 's', 's', 0};
 
-    ts_cred.set_credentials_from_av(domain2, user2, pass2);
-    RED_CHECK_EQUAL(ts_cred.passCreds.domainName, domain2);
-    RED_CHECK_EQUAL(ts_cred.passCreds.userName,user2);
-    RED_CHECK_EQUAL(ts_cred.passCreds.password,pass2);
+    ts_cred_received.set_credentials_from_av(domain2, user2, pass2);
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName, domain2);
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.userName,user2);
+    RED_CHECK_EQUAL(ts_cred_received.passCreds.password,pass2);
 }
 
 RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
