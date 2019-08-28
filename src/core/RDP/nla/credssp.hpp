@@ -1536,20 +1536,15 @@ struct TSCredentials
 
     }
 
-    void set_smartcard(buffer_view pin, buffer_view userHint, buffer_view domainHint,
-                       uint32_t keySpec, 
-                       bytes_view cardName,
-                       bytes_view readerName,
-                       bytes_view containerName,
-                       bytes_view cspName) {
-        this->credType = 2;
-        this->smartcardCreds = TSSmartCardCreds(pin, userHint, domainHint);
-        this->smartcardCreds.set_cspdatadetail(keySpec, cardName, readerName, containerName, cspName);
-    }
-
-//    void set_credentials(const uint8_t * domain, int domain_length, const uint8_t * user,
-//                         int user_length, const uint8_t * pass, int pass_length) {
-//        this->passCreds = TSPasswordCreds(domain, domain_length, user, user_length, pass, pass_length);
+//    void set_smartcard(buffer_view pin, buffer_view userHint, buffer_view domainHint,
+//                       uint32_t keySpec, 
+//                       bytes_view cardName,
+//                       bytes_view readerName,
+//                       bytes_view containerName,
+//                       bytes_view cspName) {
+//        this->credType = 2;
+//        this->smartcardCreds = TSSmartCardCreds(pin, userHint, domainHint);
+//        this->smartcardCreds.set_cspdatadetail(keySpec, cardName, readerName, containerName, cspName);
 //    }
 
     void set_credentials_from_av(bytes_view domain_av, bytes_view user_av, bytes_view password_av) {
@@ -1580,32 +1575,42 @@ struct TSCredentials
     }
 };
 
-inline std::vector<uint8_t> emitTSCredentials(const TSCredentials & self ) 
+inline std::vector<uint8_t> emitTSCredentialsPassword(const TSCredentials & self) 
 {
-    /* [0] credType (INTEGER) */
-    auto ber_credtype_field = BER::mkSmallIntegerField(self.credType, 0);
+    // [0] credType (INTEGER) : 1 means password
+    auto ber_credtype_field = BER::mkSmallIntegerField(1, 0);
 
-    /* [1] credentials (OCTET STRING) */
-    std::vector<uint8_t> ber_credentials;
-    if (self.credType == 1){
-        ber_credentials = emitTSPasswordCreds(self.passCreds.domainName, self.passCreds.userName, self.passCreds.password);
-    }
-    else {
-        ber_credentials = emitTSSmartCardCreds(self.smartcardCreds);
-    }
+    // [1] credentials (OCTET STRING)
+    std::vector<uint8_t> ber_credentials = emitTSPasswordCreds(self.passCreds.domainName, self.passCreds.userName, self.passCreds.password);
     auto ber_credentials_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
 
-    /* TSCredentials (SEQUENCE) */
-    auto sequence_header = BER::mkSequenceHeader(ber_credtype_field.size() 
-                         + ber_credentials_header.size()
-                         + ber_credentials.size());
+    // TSCredentials (SEQUENCE)
+    auto inner_size = ber_credtype_field.size() + ber_credentials_header.size() + ber_credentials.size();
+    auto sequence_header = BER::mkSequenceHeader(inner_size);
 
     std::vector<uint8_t> result = std::move(sequence_header);
     result << ber_credtype_field
            << ber_credentials_header << ber_credentials;
-
     return result;
 }
 
+inline std::vector<uint8_t> emitTSCredentialsSmartCard(const TSCredentials & self) 
+{
+    // [0] credType (INTEGER): 2 means SmartCard
+    auto ber_credtype_field = BER::mkSmallIntegerField(2, 0);
+
+    // [1] credentials (OCTET STRING)
+    std::vector<uint8_t> ber_credentials = emitTSSmartCardCreds(self.smartcardCreds);
+    auto ber_credentials_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
+
+    // TSCredentials (SEQUENCE)
+    auto inner_size = ber_credtype_field.size() + ber_credentials_header.size() + ber_credentials.size();
+    auto sequence_header = BER::mkSequenceHeader(inner_size);
+
+    std::vector<uint8_t> result = std::move(sequence_header);
+    result << ber_credtype_field
+           << ber_credentials_header << ber_credentials;
+    return result;
+}
 
 

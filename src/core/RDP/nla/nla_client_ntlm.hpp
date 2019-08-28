@@ -472,7 +472,13 @@ public:
 
                 {
                     StaticOutStream<65536> ts_credentials_send;
-                    auto result = emitTSCredentials(this->ts_credentials);
+                    std::vector<uint8_t> result;
+                    if (this->ts_credentials.credType == 1){
+                        result = emitTSCredentialsPassword(this->ts_credentials);
+                    }
+                    else {
+                        result = emitTSCredentialsSmartCard(this->ts_credentials);
+                    }
                     ts_credentials_send.out_copy_bytes(result);
                     array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
                     unsigned long MessageSeqNo = this->send_seq_num++;

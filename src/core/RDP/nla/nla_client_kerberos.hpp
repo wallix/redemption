@@ -762,7 +762,13 @@ private:
         this->credssp_encode_ts_credentials();
 
         StaticOutStream<65536> ts_credentials_send;
-        auto result = emitTSCredentials(this->ts_credentials);
+        std::vector<uint8_t> result;
+        if (this->ts_credentials.credType == 1){
+            result = emitTSCredentialsPassword(this->ts_credentials);
+        }
+        else {
+            result = emitTSCredentialsSmartCard(this->ts_credentials);
+        }
         ts_credentials_send.out_copy_bytes(result);
 
         return this->sspi_EncryptMessage(
