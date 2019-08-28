@@ -109,7 +109,7 @@ Author(s): Jonathan Poelen
 #  define RED_REQUIRE_THROW(...) BOOST_REQUIRE_THROW(__VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_EXCEPTION(...) BOOST_REQUIRE_EXCEPTION(__VA_ARGS__) /*NOLINT*/
 #  define RED_REQUIRE_EQUAL(a, b) BOOST_REQUIRE((a) == (b)) /*NOLINT*/
-#  define RED_REQUIRE_NE(a, b) BOOST_REQUIRE((a) == (b)) /*NOLINT*/
+#  define RED_REQUIRE_NE(a, b) BOOST_REQUIRE((a) != (b)) /*NOLINT*/
 #  define RED_REQUIRE_LT(a, b) BOOST_REQUIRE((a) < (b)) /*NOLINT*/
 #  define RED_REQUIRE_LE(a, b) BOOST_REQUIRE((a) <= (b)) /*NOLINT*/
 #  define RED_REQUIRE_GT(a, b) BOOST_REQUIRE((a) > (b)) /*NOLINT*/
