@@ -487,16 +487,12 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
                           {containerName, sizeof(containerName)},
                           {cspName, sizeof(cspName)});
 
-    StaticOutStream<65536> s;
-
     auto r = emitTSCredentialsSmartCard(ts_cred);
-    s.out_copy_bytes(r);
-    RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
-    RED_CHECK_EQUAL(s.get_offset(), r.size());
+    RED_CHECK_EQUAL(r.size(), r[1]+2);
 
     TSCredentials ts_cred_received;
 
-    InStream in_s(s.get_bytes());
+    InStream in_s(r);
     ts_cred_received.recv(in_s);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 2);
