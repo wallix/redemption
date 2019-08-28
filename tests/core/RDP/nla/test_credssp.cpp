@@ -200,19 +200,13 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     TSRequest ts_req2 = recvTSRequest(in_s, error_code2, 3);
 
     RED_CHECK_EQUAL(ts_req2.version, 3);
-
     RED_CHECK_EQUAL(ts_req2.negoTokens.size(), 0x80);
     RED_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
 
-    StaticOutStream<65536> to_send2;
-
     auto v2 = emitTSRequest(ts_req2, error_code2);
-    to_send2.out_copy_bytes(v2);
-
-    RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
-
-    RED_CHECK_SIG_FROM(to_send2, packet2);
+    RED_CHECK_EQUAL(v2.size(), 0x94 + 3);
+    RED_CHECK_SIG_FROM(v2, packet2);
 
     // ===== NTLMSSP_AUTH =====
     constexpr static uint8_t packet3[] = {
@@ -296,20 +290,13 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     TSRequest ts_req3 = recvTSRequest(in_s, error_code3, 3);
 
     RED_CHECK_EQUAL(ts_req3.version, 3);
-
     RED_CHECK_EQUAL(ts_req3.negoTokens.size(), 0x102);
     RED_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
 
-    StaticOutStream<65536> to_send3;
-
     auto v3 = emitTSRequest(ts_req3, error_code3);
-    to_send3.out_copy_bytes(v3);
-
-
-    RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
-
-    RED_CHECK_SIG_FROM(to_send3, packet3);
+    RED_CHECK_EQUAL(v3.size(), 0x241 + 4);
+    RED_CHECK_SIG_FROM(v3, packet3);
 
     // ===== PUBKEYAUTH =====
     constexpr static uint8_t packet4[] = {
@@ -358,19 +345,13 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     TSRequest ts_req4 = recvTSRequest(in_s, error_code4, 3);
 
     RED_CHECK_EQUAL(ts_req4.version, 3);
-
     RED_CHECK_EQUAL(ts_req4.negoTokens.size(), 0);
     RED_CHECK_EQUAL(ts_req4.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req4.pubKeyAuth.size(), 0x11e);
 
-    StaticOutStream<65536> to_send4;
-
     auto v4 = emitTSRequest(ts_req4, error_code4);
-    to_send4.out_copy_bytes(v4);
-
-    RED_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
-
-    RED_CHECK_SIG_FROM(to_send4, packet4);
+    RED_CHECK_EQUAL(v4.size(), 0x12b + 4);
+    RED_CHECK_SIG_FROM(v4, packet4);
 
     // ===== AUTHINFO =====
     constexpr static uint8_t packet5[] = {
@@ -387,24 +368,6 @@ RED_AUTO_TEST_CASE(TestTSRequest)
         0x2a, 0x13, 0x52, 0xa6, 0x52, 0x75, 0x50, 0x8d,
         0x3e, 0xe9, 0x6b, 0x57
     };
-//    "\x30\x08\xa0\x03\x02\x01\x03\xa2\x53\x04\x51\x01"
-//    "\x00\x00\x00\xb3\x2c\x3b\xa1\x36\xf6\x55\x71\x01"
-//    "\x00\x00\x00\xa8\x85\x7d\x11\xef\x92\xa0\xd6\xff"
-//    "\xee\xa1\xae\x6d\xc5\x2e\x4e\x65\x50\x28\x93\x75"
-//    "\x30\xe1\xc3\x37\xeb\xac\x1f\xdd\xf3\xe0\x92\xf6"
-//    "\x21\xbc\x8f\xa8\xd4\xe0\x5a\xa6\xff\xda\x09\x50"
-//    "\x24\x0d\x8f\x8f\xf4\x92\xfe\x49\x2a\x13\x52\xa6"
-//    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
-//
-//    "\x30\x5a\xa0\x03\x02\x01\x03\xa2\x53\x04\x51\x01"
-//    "\x00\x00\x00\xb3\x2c\x3b\xa1\x36\xf6\x55\x71\x01"
-//    "\x00\x00\x00\xa8\x85\x7d\x11\xef\x92\xa0\xd6\xff"
-//    "\xee\xa1\xae\x6d\xc5\x2e\x4e\x65\x50\x28\x93\x75"
-//    "\x30\xe1\xc3\x37\xeb\xac\x1f\xdd\xf3\xe0\x92\xf6"
-//    "\x21\xbc\x8f\xa8\xd4\xe0\x5a\xa6\xff\xda\x09\x50"
-//    "\x24\x0d\x8f\x8f\xf4\x92\xfe\x49\x2a\x13\x52\xa6"
-//    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
-
     in_s = InStream(packet5);
     uint32_t error_code5 = 0;
 
