@@ -771,10 +771,10 @@ void FileToGraphic::interpret_order()
         }
         else if (this->chunk_type == WrmChunkType::OLD_SESSION_UPDATE) {
             AgentDataExtractor extractor;
-            KVList kvlist = extractor.extract_list(message.as_chars());
-            if (!kvlist.empty()) {
+            if (extractor.extract_list(message.as_chars())) {
                 for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
-                    cap_probe->session_update(this->record_now, extractor.log_id(), kvlist);
+                    cap_probe->session_update(this->record_now,
+                        extractor.log_id(), extractor.kvlist());
                 }
             }
         }
@@ -783,7 +783,9 @@ void FileToGraphic::interpret_order()
 
             auto log_id = in.in_uint32_le();
 
-            if (is_valid_log_id(safe_int(log_id))) {
+            if (is_valid_log_id(safe_int(log_id))
+             && AgentDataExtractor::relevant_log_id(LogId(log_id))
+            ) {
                 KVLog kvlogs[12];
                 auto* pkv = kvlogs;
 

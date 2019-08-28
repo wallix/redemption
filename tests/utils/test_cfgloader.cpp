@@ -25,6 +25,10 @@
 #include "utils/cfgloader.hpp"
 
 #include <sstream>
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 
 RED_AUTO_TEST_CASE(TestCfgloader)
@@ -37,69 +41,69 @@ RED_AUTO_TEST_CASE(TestCfgloader)
             switch (i++)
             {
                 case 0:
-                    RED_CHECK_EQ(section, "abc");
-                    RED_CHECK_EQ(key, "abc");
-                    RED_CHECK_EQ(value, "abc");
+                    RED_CHECK(section == "abc"sv);
+                    RED_CHECK(key == "abc"sv);
+                    RED_CHECK(value == "abc"sv);
                     break;
                 case 1:
-                    RED_CHECK_EQ(section, "abc");
-                    RED_CHECK_EQ(key, "vv");
-                    RED_CHECK_EQ(value, "plop");
+                    RED_CHECK(section == "abc"sv);
+                    RED_CHECK(key == "vv"sv);
+                    RED_CHECK(value == "plop"sv);
                     break;
                 case 2:
-                    RED_CHECK_EQ(section, "s");
-                    RED_CHECK_EQ(key, "aaa");
-                    RED_CHECK_EQ(value, "bbb");
+                    RED_CHECK(section == "s"sv);
+                    RED_CHECK(key == "aaa"sv);
+                    RED_CHECK(value == "bbb"sv);
                     break;
                 case 3:
-                    RED_CHECK_EQ(section, "ss");
-                    RED_CHECK_EQ(key, "bbb");
-                    RED_CHECK_EQ(value, "aaa");
+                    RED_CHECK(section == "ss"sv);
+                    RED_CHECK(key == "bbb"sv);
+                    RED_CHECK(value == "aaa"sv);
                     break;
                 case 4:
-                    RED_CHECK_EQ(section, "ss");
-                    RED_CHECK_EQ(key, "val2");
-                    RED_CHECK_EQ(value, "1");
+                    RED_CHECK(section == "ss"sv);
+                    RED_CHECK(key == "val2"sv);
+                    RED_CHECK(value == "1"sv);
                     break;
                 case 5:
-                    RED_CHECK_EQ(section, "a  a");
-                    RED_CHECK_EQ(key, "v");
-                    RED_CHECK_EQ(value, "1");
+                    RED_CHECK(section == "a  a"sv);
+                    RED_CHECK(key == "v"sv);
+                    RED_CHECK(value == "1"sv);
                     break;
                 case 6:
-                    RED_CHECK_EQ(section, "a  a");
-                    RED_CHECK_EQ(key, "mac");
-                    RED_CHECK_EQ(value, "2");
+                    RED_CHECK(section == "a  a"sv);
+                    RED_CHECK(key == "mac"sv);
+                    RED_CHECK(value == "2"sv);
                     break;
                 case 7:
-                    RED_CHECK_EQ(section, "a  a");
-                    RED_CHECK_EQ(key, "mac");
-                    RED_CHECK_EQ(value, "3");
+                    RED_CHECK(section == "a  a"sv);
+                    RED_CHECK(key == "mac"sv);
+                    RED_CHECK(value == "3"sv);
                     break;
                 case 8:
-                    RED_CHECK_EQ(section, "a  a");
-                    RED_CHECK_EQ(key, "mac");
-                    RED_CHECK_EQ(value, "4");
+                    RED_CHECK(section == "a  a"sv);
+                    RED_CHECK(key == "mac"sv);
+                    RED_CHECK(value == "4"sv);
                     break;
                 case 9:
-                    RED_CHECK_EQ(section, "a  a");
-                    RED_CHECK_EQ(key, "window");
-                    RED_CHECK_EQ(value, "5");
+                    RED_CHECK(section == "a  a"sv);
+                    RED_CHECK(key == "window"sv);
+                    RED_CHECK(value == "5"sv);
                     break;
                 case 10:
-                    RED_CHECK_EQ(section, "a  a");
-                    RED_CHECK_EQ(key, "window");
-                    RED_CHECK_EQ(value, "6");
+                    RED_CHECK(section == "a  a"sv);
+                    RED_CHECK(key == "window"sv);
+                    RED_CHECK(value == "6"sv);
                     break;
                 case 11:
-                    RED_CHECK_EQ(section, "a  a");
-                    RED_CHECK_EQ(key, "window");
-                    RED_CHECK_EQ(value, "7");
+                    RED_CHECK(section == "a  a"sv);
+                    RED_CHECK(key == "window"sv);
+                    RED_CHECK(value == "7"sv);
                     break;
                 case 12:
-                    RED_CHECK_EQ(section, "a  a");
-                    RED_CHECK_EQ(key, "v3");
-                    RED_CHECK_EQ(value, "x");
+                    RED_CHECK(section == "a  a"sv);
+                    RED_CHECK(key == "v3"sv);
+                    RED_CHECK(value == "x"sv);
                     break;
                 default:
                     RED_FAIL(i-1);

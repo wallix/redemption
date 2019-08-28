@@ -29,6 +29,11 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+#include <string_view>
+
+using namespace std::string_view_literals;
+
+
 RED_AUTO_TEST_CASE(TraceWidgetPassword)
 {
     TestGraphic drawable(800, 600);
@@ -562,7 +567,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    RED_CHECK_EQUAL("aurélie", wpassword.get_text());
+    RED_CHECK("aurélie"sv == wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -600,7 +605,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     // drawable.save_to_png("password-edit2-e5.png");
     RED_CHECK_SIG(drawable, "\x8f\x3c\xea\x45\x08\xd1\x31\x33\x7a\x74\x20\x30\xdf\xb7\xbd\xe6\x49\xc7\x53\xfd");
 
-    RED_CHECK_EQUAL("aurlie", wpassword.get_text());
+    RED_CHECK("aurlie"sv == wpassword.get_text());
 }
 
 RED_AUTO_TEST_CASE(DataWidgetPassword2)
@@ -640,7 +645,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    RED_CHECK_EQUAL("aurélie", wpassword.get_text());
+    RED_CHECK("aurélie"sv == wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -686,7 +691,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     // drawable.save_to_png("password-edit3-e6.png");
     RED_CHECK_SIG(drawable, "\x8f\x3c\xea\x45\x08\xd1\x31\x33\x7a\x74\x20\x30\xdf\xb7\xbd\xe6\x49\xc7\x53\xfd");
 
-    RED_CHECK_EQUAL("aurlie", wpassword.get_text());
+    RED_CHECK("aurlie"sv == wpassword.get_text());
 }
 
 RED_AUTO_TEST_CASE(DataWidgetPassword3)
@@ -726,7 +731,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    RED_CHECK_EQUAL("aurélie", wpassword.get_text());
+    RED_CHECK("aurélie"sv == wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -787,5 +792,5 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    RED_CHECK_EQUAL("aurézlie", wpassword.get_text());
+    RED_CHECK("aurézlie"sv == wpassword.get_text());
 }

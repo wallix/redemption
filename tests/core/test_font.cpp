@@ -26,6 +26,9 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/font.hpp"
+#include <string_view>
+
+using namespace std::string_view_literals;
 
 
 RED_AUTO_TEST_CASE(TestCreateFontChar)
@@ -57,7 +60,7 @@ RED_AUTO_TEST_CASE(TestCreateFont)
     Font f(FIXTURES_PATH "/Lato-Light_16.rbf");
     RED_CHECK(f.is_loaded());
 
-    RED_CHECK_EQUAL("Lato", f.name());
+    RED_CHECK_EQUAL("Lato"sv, f.name());
     RED_CHECK_EQUAL(1, f.style());
     RED_CHECK_EQUAL(16, f.size());
 

@@ -24,64 +24,24 @@
 
 #include "utils/key_qvalue_pairs.hpp"
 
+#include <vector>
 
-RED_AUTO_TEST_CASE(Test_KVPairs1)
-{
-    kv_pair pairs[] = {{"type", "INPUT"}};
-    RED_CHECK_EQUAL("type=\"INPUT\"", key_qvalue_pairs(pairs));
-}
 
-RED_AUTO_TEST_CASE(Test_KVPairs1av)
+RED_AUTO_TEST_CASE(TestQValue)
 {
-    kv_pair pairs[] = {{cstr_array_view("type"), make_array_view("INPUT!BEURK", 5)}};
-    RED_CHECK_EQUAL("type=\"INPUT\"", key_qvalue_pairs(pairs));
-}
+    auto to_string = [s = std::string{}](KVList kv_list) mutable -> std::string const& {
+        log_format_set_info(s, LogId::INPUT_LANGUAGE, kv_list);
+        return s;
+    };
 
-RED_AUTO_TEST_CASE(Test_KVPairs1quote)
-{
-    kv_pair pairs[] = {{"type", "INPUT"}};
-    RED_CHECK_EQUAL("type=\"INPUT\"", key_qvalue_pairs(pairs));
-}
-
-RED_AUTO_TEST_CASE(Test_KVPairs1quote_bis)
-{
-    kv_pair pairs[] = {{"type", "IN\"PUT"}};
-    RED_CHECK_EQUAL("type=\"IN\\\"PUT\"", key_qvalue_pairs(pairs));
-}
-
-RED_AUTO_TEST_CASE(Test_KVPairs2)
-{
-    kv_pair pairs[] = {{"type", "INPUT"}, {"data", "xxxyyy"}};
-    RED_CHECK_EQUAL("type=\"INPUT\" data=\"xxxyyy\"", key_qvalue_pairs(pairs));
-}
-
-RED_AUTO_TEST_CASE(Test_KVPairs3)
-{
-    kv_pair pairs[] = {{"type", "INPUT"}, {"data", "xxxyyy"}, {"field", "data"}};
-    RED_CHECK_EQUAL("type=\"INPUT\" data=\"xxxyyy\" field=\"data\"", key_qvalue_pairs(pairs));
-}
-
-RED_AUTO_TEST_CASE(Test_KVPairs4)
-{
-    kv_pair pairs[] = {{"type", "a\\b\"c \r\n"}};
-    RED_CHECK_EQUAL("type=\"a\\\\b\\\"c \\r\\n\"", key_qvalue_pairs(pairs));
-}
-
-RED_AUTO_TEST_CASE(Test_KVPairs5)
-{
-    kv_pair pairs[] = {{"type", "\xf5"}};
-    RED_CHECK_EQUAL("type=\"\xf5\"", key_qvalue_pairs(pairs));
-}
-
-RED_AUTO_TEST_CASE(Test_KVPairs_noarray)
-{
-    kv_pair pairs[] = {{"type", "INPUT"}, {"data", "xxxyyy"}, {"field", "data"}};
-    RED_CHECK_EQUAL("type=\"INPUT\" data=\"xxxyyy\" field=\"data\"", key_qvalue_pairs(pairs));
-}
-
-RED_AUTO_TEST_CASE(Test_KeyQvalueFormatter)
-{
-    KeyQvalueFormatter message;
-    message.assign("INPUT", {{"data", "xxxyyy"}, {"field", "data"}});
-    RED_CHECK_EQUAL("type=\"INPUT\" data=\"xxxyyy\" field=\"data\"", message.str());
+    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\"", to_string({}));
+    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\" data=\"xxx\\\"yyy\" field=\"data\"",
+        to_string({
+            KVLog{"data"_av, "xxx\"yyy"_av},
+            KVLog{"field"_av, "data"_av},
+        }));
+    RED_CHECK_EQUAL("type=\"INPUT_LANGUAGE\" data=\"a\\\\b\\\"c \\r\\n\"",
+        to_string({
+            KVLog{"data"_av, "a\\b\"c \r\n"_av},
+        }));
 }

@@ -24,6 +24,9 @@
 
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
+#include <string_view>
+
+using namespace std::string_view_literals;
 
 
 extern "C" {
@@ -86,10 +89,10 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
 
         RED_CHECK_EQ(scytale_writer_close(handle), 0);
 
-        RED_CHECK_EQ(scytale_writer_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
-        RED_CHECK_EQ(scytale_writer_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+        RED_CHECK_EQ(scytale_writer_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
+        RED_CHECK_EQ(scytale_writer_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
 
-        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error");
+        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error"sv);
 
         scytale_writer_delete(handle);
     }
@@ -111,13 +114,13 @@ RED_AUTO_TEST_CASE_WD(Testscytale, wd)
         RED_CHECK_MEM(writable_bytes_view(buf, 31), "We write, and again, and so on."_av);
         RED_CHECK_EQ(scytale_reader_close(handle), 0);
 
-        RED_CHECK_EQ(scytale_reader_error_message(handle), "No error");
+        RED_CHECK_EQ(scytale_reader_error_message(handle), "No error"sv);
 
         RED_CHECK_EQ(scytale_reader_qhash(handle, finalname), 0);
         RED_CHECK_EQ(scytale_reader_fhash(handle, finalname), 0);
 
-        RED_CHECK_EQ(scytale_reader_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
-        RED_CHECK_EQ(scytale_reader_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+        RED_CHECK_EQ(scytale_reader_qhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
+        RED_CHECK_EQ(scytale_reader_fhashhex(handle), "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
 
         scytale_reader_delete(handle);
     }
@@ -148,10 +151,10 @@ RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
 
         memcpy(qhash, scytale_writer_qhashhex(handle), sizeof(qhash));
         memcpy(fhash, scytale_writer_fhashhex(handle), sizeof(fhash));
-        RED_CHECK_NE(qhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
-        RED_CHECK_NE(fhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5");
+        RED_CHECK_NE(qhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
+        RED_CHECK_NE(fhash, "2ACC1E2CBFFE64030D50EAE7845A9DCE6EC4E84AC2435F6C0F7F16F87B0180F5"sv);
 
-        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error");
+        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error"sv);
 
         scytale_writer_delete(handle);
     }
@@ -179,7 +182,7 @@ RED_AUTO_TEST_CASE_WD(TestscytaleWriteUseRandom, wd)
         RED_CHECK_NE(qhash2, qhash);
         RED_CHECK_NE(fhash2, fhash);
 
-        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error");
+        RED_CHECK_EQ(scytale_writer_error_message(handle), "No error"sv);
 
         scytale_writer_delete(handle);
     }
@@ -234,27 +237,27 @@ RED_AUTO_TEST_CASE(TestscytaleError)
 {
     auto handle_w = scytale_writer_new(1, 1, "/", &hmac_fn, &trace_fn, false, false);
     RED_CHECK_EQ(scytale_writer_open(handle_w, "/", "/", 0), -1);
-    RED_CHECK_NE(scytale_writer_error_message(handle_w), "No error");
+    RED_CHECK_NE(scytale_writer_error_message(handle_w), "No error"sv);
 
     auto handle_r = scytale_reader_new("/", &hmac_fn, &trace_fn, 0, 0);
     RED_CHECK_EQ(scytale_reader_open(handle_r, "/", "/"), -1);
-    RED_CHECK_NE(scytale_reader_error_message(handle_r), "No error");
+    RED_CHECK_NE(scytale_reader_error_message(handle_r), "No error"sv);
 
     RED_CHECK_EQ(scytale_reader_qhash(handle_r, "/"), -1);
     RED_CHECK_EQ(scytale_reader_fhash(handle_r, "/"), -1);
-    RED_CHECK_NE(scytale_reader_error_message(handle_r), "No error");
+    RED_CHECK_NE(scytale_reader_error_message(handle_r), "No error"sv);
 
     scytale_writer_delete(handle_w);
     scytale_reader_delete(handle_r);
 
     RED_CHECK_EQ(scytale_writer_write(nullptr, bytes("We write, "), 10), -1);
     RED_CHECK_EQ(scytale_writer_close(nullptr), -1);
-    RED_CHECK_NE(scytale_writer_error_message(nullptr), "No error");
+    RED_CHECK_NE(scytale_writer_error_message(nullptr), "No error"sv);
 
     uint8_t buf[12];
     RED_CHECK_EQ(scytale_reader_read(nullptr, buf, 10), -1);
     RED_CHECK_EQ(scytale_reader_close(nullptr), -1);
-    RED_CHECK_NE(scytale_reader_error_message(nullptr), "No error");
+    RED_CHECK_NE(scytale_reader_error_message(nullptr), "No error"sv);
 }
 
 RED_AUTO_TEST_CASE(TestscytaleKeyDerivation2)
@@ -264,12 +267,12 @@ RED_AUTO_TEST_CASE(TestscytaleKeyDerivation2)
     RED_CHECK_NE(handle, nullptr);
     const char * derivator = "toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm";
     const char * result = scytale_key_derivate(handle, bytes(derivator), std::strlen(derivator));
-    RED_CHECK_EQ(result, "C5CC4737881CD6ABA89843CE239201E8D63783325DC5E0391D90165265B2F648");
+    RED_CHECK_EQ(result, "C5CC4737881CD6ABA89843CE239201E8D63783325DC5E0391D90165265B2F648"sv);
 
     // .log behave as .mwrm for historical reasons
     const char * derivator2 = "toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.log";
     const char * r2 = scytale_key_derivate(handle, bytes(derivator2), std::strlen(derivator2));
-    RED_CHECK_EQ(r2, "C5CC4737881CD6ABA89843CE239201E8D63783325DC5E0391D90165265B2F648");
+    RED_CHECK_EQ(r2, "C5CC4737881CD6ABA89843CE239201E8D63783325DC5E0391D90165265B2F648"sv);
 
     scytale_key_delete(handle);
 }
@@ -281,7 +284,7 @@ RED_AUTO_TEST_CASE(TestscytaleKeyDerivation)
     RED_CHECK_NE(handle, nullptr);
     const char * derivator = "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560-000000.wrm";
     const char * result = scytale_key_derivate(handle, bytes(derivator), std::strlen(derivator));
-    RED_CHECK_EQ(result, "CABD9CEE0BF786EC31532C954BD15F8B3426AC3C8B96FB4C77B57156EA5B6A89");
+    RED_CHECK_EQ(result, "CABD9CEE0BF786EC31532C954BD15F8B3426AC3C8B96FB4C77B57156EA5B6A89"sv);
     scytale_key_delete(handle);
 }
 
@@ -303,7 +306,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
         auto line = scytale_meta_reader_get_line(meta_handle);
-        RED_CHECK_EQ(line->filename, "/var/wab/recorded/rdp/toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm");
+        RED_CHECK_EQ(line->filename, "/var/wab/recorded/rdp/toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm"sv);
         RED_CHECK_EQ(line->size, 181826);
         RED_CHECK_EQ(line->mode, 33056);
         RED_CHECK_EQ(line->uid, 1001);
@@ -341,7 +344,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
         auto line = scytale_meta_reader_get_line(meta_handle);
-        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample0.wrm");
+        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample0.wrm"sv);
         RED_CHECK_EQ(line->size, 0);
         RED_CHECK_EQ(line->mode, 0);
         RED_CHECK_EQ(line->uid, 0);
@@ -356,7 +359,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
         line = scytale_meta_reader_get_line(meta_handle);
-        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample1.wrm");
+        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample1.wrm"sv);
         RED_CHECK_EQ(line->size, 0);
         RED_CHECK_EQ(line->mode, 0);
         RED_CHECK_EQ(line->uid, 0);
@@ -371,7 +374,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
         line = scytale_meta_reader_get_line(meta_handle);
-        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample2.wrm");
+        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample2.wrm"sv);
         RED_CHECK_EQ(line->size, 0);
         RED_CHECK_EQ(line->mode, 0);
         RED_CHECK_EQ(line->uid, 0);

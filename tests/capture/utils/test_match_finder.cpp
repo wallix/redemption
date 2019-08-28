@@ -25,6 +25,10 @@
 #include "core/log_id.hpp"
 #include "core/report_message_api.hpp"
 #include "capture/utils/match_finder.hpp"
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 
 constexpr bool verbosity = false;
@@ -162,8 +166,8 @@ RED_AUTO_TEST_CASE(report_notify)
         }
 
         void report(const char* reason, const char* message) override {
-            RED_CHECK_EQUAL(reason, "FINDPATTERN_NOTIFY");
-            RED_CHECK_EQUAL(message, "$kbd:c| cacao");
+            RED_CHECK(reason == "FINDPATTERN_NOTIFY"sv);
+            RED_CHECK(message == "$kbd:c| cacao"sv);
             this->has_report = true;
         }
     } report_message;
@@ -187,8 +191,8 @@ RED_AUTO_TEST_CASE(report_kill)
         }
 
         void report(const char* reason, const char* message) override {
-            RED_CHECK_EQUAL(reason, "FINDPATTERN_KILL");
-            RED_CHECK_EQUAL(message, "$ocr:c| cacao");
+            RED_CHECK(reason == "FINDPATTERN_KILL"sv);
+            RED_CHECK(message == "$ocr:c| cacao"sv);
             this->has_report = true;
         }
     } report_message;

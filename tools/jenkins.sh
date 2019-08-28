@@ -88,13 +88,13 @@ dirdiff=$(diff <(echo "$beforerun") <(rootlist)) || {
 }
 
 # debug with coverage
-build -q $toolset_gcc debug -scoverage=on covbin=gcov-7
+build -q $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
 
 #bjam -a -q toolset=clang-6.0 -sNO_FFMPEG=1 san
 # multi-thread
-build -q $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools
-build -q $toolset_clang -sNO_FFMPEG=1 san $big_mem
-build -q $toolset_clang -sNO_FFMPEG=1 san -j2
+build -q $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
+build -q $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
+build -q $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
 
 # cppcheck
 # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null

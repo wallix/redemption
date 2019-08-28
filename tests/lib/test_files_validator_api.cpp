@@ -31,6 +31,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 
 RED_AUTO_TEST_CASE_WF(testFileValid, wf)
@@ -58,7 +62,7 @@ RED_AUTO_TEST_CASE_WF(testFileValid, wf)
     RED_CHECK(validator_receive_response(validator) == underlying_cast(R::Error));
 
     RED_CHECK(validator_receive_response(validator) == underlying_cast(R::HasContent));
-    RED_CHECK(validator_get_content(validator) == "ok");
+    RED_CHECK(validator_get_content(validator) == "ok"sv);
     RED_CHECK(validator_get_response_type(validator) == underlying_cast(R::HasContent));
     RED_CHECK(validator_get_result_file_id(validator) == 8);
     RED_CHECK(validator_get_result_flag(validator) == 1);

@@ -326,7 +326,6 @@ public:
 
 		this->qt_graphic.painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
 	}
-
 };
 
 
@@ -338,7 +337,7 @@ int main(int argc, char** argv)
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = to_verbose_flags(0x0); //RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;   
+    RDPVerbose verbose = to_verbose_flags(0x0); //RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, const_cast<const char**>(argv), config);
 

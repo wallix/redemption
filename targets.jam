@@ -688,39 +688,6 @@ test-run tests/capture/ocr/locale/test_latin_to_cyrillic :
   <covfile>src/capture/ocr/locale/latin_to_cyrillic.cpp
   <covfile>src/capture/ocr/locale/latin_to_cyrillic.hpp
 ;
-test-run tests/capture/test_bogus_ocr :
-  $(REDEMPTION_TEST_PATH)/capture/test_bogus_ocr.cpp
-:
-  <library>crypto
-  <library>png
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/core/error.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run tests/capture/test_bogus_ppocr :
-  $(REDEMPTION_TEST_PATH)/capture/test_bogus_ppocr.cpp
-:
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>ppocr
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/core/error.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/drawable.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
 test-run tests/capture/test_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_capture.cpp
 :
@@ -2382,6 +2349,11 @@ test-run tests/core/test_listen :
   $(REDEMPTION_TEST_PATH)/core/test_listen.cpp
 :
   <covfile>src/core/listen.hpp
+;
+test-run tests/core/test_log_id :
+  $(REDEMPTION_TEST_PATH)/core/test_log_id.cpp
+:
+  <covfile>src/core/log_id.hpp
 ;
 test-run tests/core/test_mainloop :
   $(REDEMPTION_TEST_PATH)/core/test_mainloop.cpp
@@ -5591,8 +5563,6 @@ alias test_dispatch_report_message : tests/acl/test_dispatch_report_message ;
 alias test_mm_api : tests/acl/test_mm_api ;
 alias test_module_manager : tests/acl/test_module_manager ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
-alias test_bogus_ocr : tests/capture/test_bogus_ocr ;
-alias test_bogus_ppocr : tests/capture/test_bogus_ppocr ;
 alias test_capture : tests/capture/test_capture ;
 alias test_cryptofile : tests/capture/test_cryptofile ;
 alias test_ocr : tests/capture/test_ocr ;
@@ -5738,6 +5708,7 @@ alias test_font : tests/core/test_font ;
 alias test_front_api : tests/core/test_front_api ;
 alias test_glyph_to_24_bitmap : tests/core/test_glyph_to_24_bitmap ;
 alias test_listen : tests/core/test_listen ;
+alias test_log_id : tests/core/test_log_id ;
 alias test_mainloop : tests/core/test_mainloop ;
 alias test_server_notifier_api : tests/core/test_server_notifier_api ;
 alias test_session : tests/core/test_session ;
@@ -6071,6 +6042,7 @@ alias test_font.coverage : tests/core/test_font.coverage ;
 alias test_front_api.coverage : tests/core/test_front_api.coverage ;
 alias test_glyph_to_24_bitmap.coverage : tests/core/test_glyph_to_24_bitmap.coverage ;
 alias test_listen.coverage : tests/core/test_listen.coverage ;
+alias test_log_id.coverage : tests/core/test_log_id.coverage ;
 alias test_mainloop.coverage : tests/core/test_mainloop.coverage ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
 alias test_session.coverage : tests/core/test_session.coverage ;
@@ -6263,8 +6235,6 @@ alias tests/capture/ocr/locale.norec :
   tests/capture/ocr/locale/test_latin_to_cyrillic
 ;
 alias tests/capture.norec :
-  tests/capture/test_bogus_ocr
-  tests/capture/test_bogus_ppocr
   tests/capture/test_capture
   tests/capture/test_cryptofile
   tests/capture/test_ocr
@@ -6450,6 +6420,7 @@ alias tests/core.norec :
   tests/core/test_front_api
   tests/core/test_glyph_to_24_bitmap
   tests/core/test_listen
+  tests/core/test_log_id
   tests/core/test_mainloop
   tests/core/test_server_notifier_api
   tests/core/test_session

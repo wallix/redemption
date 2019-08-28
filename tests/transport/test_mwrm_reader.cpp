@@ -20,12 +20,15 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "utils/genfstat.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "transport/crypto_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
+
+#include <string_view>
+
+using namespace std::string_view_literals;
 
 
 extern "C" {
@@ -124,10 +127,10 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV1)
 
     MetaLine meta_line;
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Ok);
-    RED_CHECK_EQUAL(meta_line.filename,
+    RED_CHECK(meta_line.filename ==
         "/var/wab/recorded/rdp/"
         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
-        "wab-5-0-0.yourdomain,7681-000000.wrm");
+        "wab-5-0-0.yourdomain,7681-000000.wrm"sv);
     RED_CHECK_EQUAL(meta_line.size, 0);
     RED_CHECK_EQUAL(meta_line.mode, 0);
     RED_CHECK_EQUAL(meta_line.uid, 0);
@@ -150,25 +153,25 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2)
     MwrmReader reader(fd);
 
     reader.read_meta_headers();
-    RED_CHECK_EQUAL(reader.get_header().version, WrmVersion::v2);
+    RED_CHECK(reader.get_header().version == WrmVersion::v2);
     RED_CHECK(!reader.get_header().has_checksum);
 
     MetaLine meta_line;
-    RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Ok);
-    RED_CHECK_EQUAL(meta_line.filename,
+    RED_CHECK(reader.read_meta_line(meta_line) == Transport::Read::Ok);
+    RED_CHECK(meta_line.filename ==
         "/var/wab/recorded/rdp/"
         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
-        "wab-5-0-0.yourdomain,7681-000000.wrm");
-    RED_CHECK_EQUAL(meta_line.size, 181826);
-    RED_CHECK_EQUAL(meta_line.mode, 33056);
-    RED_CHECK_EQUAL(meta_line.uid, 1001);
-    RED_CHECK_EQUAL(meta_line.gid, 1001);
-    RED_CHECK_EQUAL(meta_line.dev, 65030);
-    RED_CHECK_EQUAL(meta_line.ino, 81);
-    RED_CHECK_EQUAL(meta_line.mtime, 1455816421);
-    RED_CHECK_EQUAL(meta_line.ctime, 1455816421);
-    RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
+        "wab-5-0-0.yourdomain,7681-000000.wrm"sv);
+    RED_CHECK(meta_line.size == 181826);
+    RED_CHECK(meta_line.mode == 33056);
+    RED_CHECK(meta_line.uid == 1001);
+    RED_CHECK(meta_line.gid == 1001);
+    RED_CHECK(meta_line.dev == 65030);
+    RED_CHECK(meta_line.ino == 81);
+    RED_CHECK(meta_line.mtime == 1455816421);
+    RED_CHECK(meta_line.ctime == 1455816421);
+    RED_CHECK(meta_line.start_time == 1455815820);
+    RED_CHECK(meta_line.stop_time == 1455816422);
     RED_CHECK(not meta_line.with_hash);
 }
 
@@ -181,22 +184,22 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     MwrmReader reader(fd);
 
     reader.read_meta_headers();
-    RED_CHECK_EQUAL(reader.get_header().version, WrmVersion::v2);
+    RED_CHECK(reader.get_header().version == WrmVersion::v2);
     RED_CHECK(reader.get_header().has_checksum);
 
     MetaLine meta_line;
-    RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Ok);
-    RED_CHECK_EQUAL(meta_line.filename, "./tests/fixtures/sample0.wrm");
-    RED_CHECK_EQUAL(meta_line.size, 1);
-    RED_CHECK_EQUAL(meta_line.mode, 2);
-    RED_CHECK_EQUAL(meta_line.uid, 3);
-    RED_CHECK_EQUAL(meta_line.gid, 4);
-    RED_CHECK_EQUAL(meta_line.dev, 5);
-    RED_CHECK_EQUAL(meta_line.ino, 6);
-    RED_CHECK_EQUAL(meta_line.mtime, 7);
-    RED_CHECK_EQUAL(meta_line.ctime, 8);
-    RED_CHECK_EQUAL(meta_line.start_time, 1352304810);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1352304870);
+    RED_CHECK(reader.read_meta_line(meta_line) == Transport::Read::Ok);
+    RED_CHECK(meta_line.filename == "./tests/fixtures/sample0.wrm"sv);
+    RED_CHECK(meta_line.size == 1);
+    RED_CHECK(meta_line.mode == 2);
+    RED_CHECK(meta_line.uid == 3);
+    RED_CHECK(meta_line.gid == 4);
+    RED_CHECK(meta_line.dev == 5);
+    RED_CHECK(meta_line.ino == 6);
+    RED_CHECK(meta_line.mtime == 7);
+    RED_CHECK(meta_line.ctime == 8);
+    RED_CHECK(meta_line.start_time == 1352304810);
+    RED_CHECK(meta_line.stop_time == 1352304870);
     RED_CHECK(meta_line.with_hash);
     RED_CHECK_MEM_AA(
         meta_line.hash1,
@@ -249,26 +252,26 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
     MwrmReader reader(fd);
 
     RED_REQUIRE_NO_THROW(reader.read_meta_headers());
-    RED_CHECK_EQUAL(reader.get_header().version, WrmVersion::v1);
+    RED_CHECK(reader.get_header().version == WrmVersion::v1);
     RED_CHECK(!reader.get_header().has_checksum);
 
     MetaLine meta_line;
-    RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Ok);
+    RED_CHECK(reader.read_meta_line(meta_line) == Transport::Read::Ok);
 
-    RED_CHECK_EQUAL(meta_line.filename,
+    RED_CHECK(meta_line.filename ==
         "/var/wab/recorded/rdp/"
         "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
-        "-192304,wab-4-2-4.yourdomain,5560-000000.wrm");
-    RED_CHECK_EQUAL(meta_line.size, 0);
-    RED_CHECK_EQUAL(meta_line.mode, 0);
-    RED_CHECK_EQUAL(meta_line.uid, 0);
-    RED_CHECK_EQUAL(meta_line.gid, 0);
-    RED_CHECK_EQUAL(meta_line.dev, 0);
-    RED_CHECK_EQUAL(meta_line.ino, 0);
-    RED_CHECK_EQUAL(meta_line.mtime, 0);
-    RED_CHECK_EQUAL(meta_line.ctime, 0);
-    RED_CHECK_EQUAL(meta_line.start_time, 1477416187);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1477416298);
+        "-192304,wab-4-2-4.yourdomain,5560-000000.wrm"sv);
+    RED_CHECK(meta_line.size == 0);
+    RED_CHECK(meta_line.mode == 0);
+    RED_CHECK(meta_line.uid == 0);
+    RED_CHECK(meta_line.gid == 0);
+    RED_CHECK(meta_line.dev == 0);
+    RED_CHECK(meta_line.ino == 0);
+    RED_CHECK(meta_line.mtime == 0);
+    RED_CHECK(meta_line.ctime == 0);
+    RED_CHECK(meta_line.start_time == 1477416187);
+    RED_CHECK(meta_line.stop_time == 1477416298);
     RED_CHECK(meta_line.with_hash);
     RED_CHECK_MEM_AA(meta_line.hash1,
       "\x32\xd7\xbb\xef\x41\xa7\xc1\x53\x47\xc9\xe8\xab\xc1\xec\xe0\x3b"
@@ -300,26 +303,26 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     MwrmReader reader(fd);
 
     reader.read_meta_headers();
-    RED_CHECK_EQUAL(reader.get_header().version, WrmVersion::v2);
+    RED_CHECK(reader.get_header().version == WrmVersion::v2);
     RED_CHECK(reader.get_header().has_checksum);
 
     MetaLine meta_line;
-    RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Ok);
+    RED_CHECK(reader.read_meta_line(meta_line) == Transport::Read::Ok);
 
-    RED_CHECK_EQUAL(meta_line.filename,
+    RED_CHECK(meta_line.filename ==
         "/var/wab/recorded/rdp"
         "/toto@10.10.43.13,Administrateur@QA@cible,"
-        "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm");
-    RED_CHECK_EQUAL(meta_line.size, 163032);
-    RED_CHECK_EQUAL(meta_line.mode, 33056);
-    RED_CHECK_EQUAL(meta_line.uid, 1001);
-    RED_CHECK_EQUAL(meta_line.gid, 1001);
-    RED_CHECK_EQUAL(meta_line.dev, 65030);
-    RED_CHECK_EQUAL(meta_line.ino, 89);
-    RED_CHECK_EQUAL(meta_line.mtime, 1455816632);
-    RED_CHECK_EQUAL(meta_line.ctime, 1455816632);
-    RED_CHECK_EQUAL(meta_line.start_time, 1455816611);
-    RED_CHECK_EQUAL(meta_line.stop_time, 1455816633);
+        "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm"sv);
+    RED_CHECK(meta_line.size == 163032);
+    RED_CHECK(meta_line.mode == 33056);
+    RED_CHECK(meta_line.uid == 1001);
+    RED_CHECK(meta_line.gid == 1001);
+    RED_CHECK(meta_line.dev == 65030);
+    RED_CHECK(meta_line.ino == 89);
+    RED_CHECK(meta_line.mtime == 1455816632);
+    RED_CHECK(meta_line.ctime == 1455816632);
+    RED_CHECK(meta_line.start_time == 1455816611);
+    RED_CHECK(meta_line.stop_time == 1455816633);
     RED_CHECK(meta_line.with_hash);
     RED_CHECK_MEM_AA(meta_line.hash1,
       "\x05\x6c\x10\xb7\xbd\x80\xa8\x72\x87\x33\x6d\xee\x6e\x43\x1d\x81"
@@ -342,23 +345,23 @@ RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
     MetaLine meta_line;
     reader.set_header({WrmVersion::v2, false});
     reader.read_meta_hash_line(meta_line);
-    RED_CHECK_EQUAL(meta_line.filename,
-        "cgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm");
-    RED_CHECK_EQUAL(meta_line.size, 222);
-    RED_CHECK_EQUAL(meta_line.mode, 33056);
-    RED_CHECK_EQUAL(meta_line.uid, 1001);
-    RED_CHECK_EQUAL(meta_line.gid, 1001);
-    RED_CHECK_EQUAL(meta_line.dev, 65030);
-    RED_CHECK_EQUAL(meta_line.ino, 28);
-    RED_CHECK_EQUAL(meta_line.mtime, 1504107644);
-    RED_CHECK_EQUAL(meta_line.ctime, 1504107644);
+    RED_CHECK(meta_line.filename ==
+        "cgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm"sv);
+    RED_CHECK(meta_line.size == 222);
+    RED_CHECK(meta_line.mode == 33056);
+    RED_CHECK(meta_line.uid == 1001);
+    RED_CHECK(meta_line.gid == 1001);
+    RED_CHECK(meta_line.dev == 65030);
+    RED_CHECK(meta_line.ino == 28);
+    RED_CHECK(meta_line.mtime == 1504107644);
+    RED_CHECK(meta_line.ctime == 1504107644);
     RED_CHECK(not meta_line.with_hash);
 
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
 
     MwrmWriterBuf writer;
     writer.write_hash_file(meta_line);
-    RED_CHECK_EQUAL(writer.c_str(), data.data());
+    RED_CHECK_MEM(writer.buffer(), data);
 }
 
 RED_AUTO_TEST_CASE(ReadHashV1)
@@ -373,7 +376,7 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         MetaLine meta_line;
         reader.set_header({WrmVersion::v1, true});
         reader.read_meta_hash_line(meta_line);
-        RED_CHECK_EQUAL(meta_line.filename, "file_xyz");
+        RED_CHECK(meta_line.filename == "file_xyz"sv);
         RED_CHECK(meta_line.with_hash);
         RED_CHECK_MEM_AA(meta_line.hash1,
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
@@ -382,7 +385,7 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"_av);
 
-        RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
+        RED_CHECK(reader.read_meta_line(meta_line) == Transport::Read::Eof);
     }
     {
         auto data = "file_xyz  0\n000000000000000000000000000000000000000000000000000000000000\n"_av;
@@ -394,7 +397,7 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         MetaLine meta_line;
         reader.set_header({WrmVersion::v1, false});
         reader.read_meta_hash_line(meta_line);
-        RED_CHECK_EQUAL(meta_line.filename, "file_xyz");
+        RED_CHECK(meta_line.filename == "file_xyz"sv);
         RED_CHECK(meta_line.with_hash);
         RED_CHECK_MEM_AA(meta_line.hash1,
         " \x30\n\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
@@ -403,6 +406,6 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30"
         "\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30\n"_av);
 
-        RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
+        RED_CHECK(reader.read_meta_line(meta_line) == Transport::Read::Eof);
     }
 }

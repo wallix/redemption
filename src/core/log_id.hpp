@@ -129,7 +129,7 @@ inline bool is_valid_log_id(unsigned id)
 #undef f
     }
     return false;
-};
+}
 
 namespace detail
 {
@@ -148,7 +148,3 @@ namespace detail
     };
     REDEMPTION_DIAGNOSTIC_POP
 }
-
-// #ifndef NOT_UNDEF_X_LOG_ID
-// # undef X_LOG_ID
-// #endif

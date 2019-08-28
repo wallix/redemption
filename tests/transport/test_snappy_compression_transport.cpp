@@ -20,9 +20,13 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "transport/snappy_compression_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
+
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 RED_AUTO_TEST_CASE(TestSnappyCompressionTransport)
 {
@@ -44,12 +48,12 @@ RED_AUTO_TEST_CASE(TestSnappyCompressionTransport)
         char   in_data[128] = { 0 };
 
         RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 21));
-        RED_CHECK_EQUAL(in_data, "azert" "azert" "azert" "azert");
+        RED_CHECK(in_data == "azert" "azert" "azert" "azert"sv);
 
         RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 31));
-        RED_CHECK_EQUAL(in_data, "wallix" "wallix" "wallix" "wallix" "wallix");
+        RED_CHECK(in_data == "wallix" "wallix" "wallix" "wallix" "wallix"sv);
 
         RED_CHECK_NO_THROW(in_trans.recv_boom(in_data, 65));
-        RED_CHECK_EQUAL(in_data, "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF");
+        RED_CHECK(in_data == "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF" "0123456789ABCDEF"sv);
     }
 }

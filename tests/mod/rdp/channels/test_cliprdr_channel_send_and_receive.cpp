@@ -38,7 +38,7 @@ struct FakeDataSender : VirtualChannelDataSender
     };
 
     std::array<PDUData, 2> streams;
-    int index = 0;
+    unsigned index = 0;
 
     void operator()(
         uint32_t /*total_length*/, uint32_t /*flags*/,

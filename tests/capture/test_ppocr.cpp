@@ -534,3 +534,24 @@ RED_DATA_TEST_CASE(TestNewOCRRussian, (std::array{
     RED_CHECK_EQUAL(idx_best, 0);
     RED_CHECK_SMEM(expected[idx_best], filter.get_title());
 }
+
+RED_AUTO_TEST_CASE(TestBogusOCR)
+{
+    Drawable drawable(800, 600);
+
+    using ocr::locale::LocaleId;
+    PpOcrTitlesExtractor extractor(ocr_constants, true, 100, LocaleId{LocaleId::latin});
+
+    OcrTitleFilter filter;
+    std::vector<OcrTitle> out_titles;
+
+    draw_bitmap(drawable, FIXTURES_PATH "/win2012capture1.png");
+    extractor.extract_titles(drawable, out_titles);
+
+    auto expected = "a b c d e f g h ij k l m n o p q r s t u v w xyz - Bloc-notes"_av;
+    RED_CHECK_EQUAL(out_titles.size(), 1);
+
+    auto idx_best = filter.extract_best_title(out_titles);
+    RED_CHECK_EQUAL(idx_best, 0);
+    RED_CHECK_SMEM_AA(expected, filter.get_title());
+}

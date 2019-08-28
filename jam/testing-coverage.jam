@@ -104,6 +104,12 @@ lib libunit_test :
     <cxxflags>-O3
 ;
 
+local _TEST_DEPENDENCIES = ;
+if $(FAST_CHECK) = 1
+{
+    _TEST_DEPENDENCIES = <define>REDEMPTION_UNIT_TEST_FAST_CHECK=1 ;
+}
+
 constant TEST_DEPENDENCIES :
     <library>libunit_test
     <library>log_test.o
@@ -111,6 +117,7 @@ constant TEST_DEPENDENCIES :
     <define>BOOST_AUTO_TEST_MAIN
     <define>BOOST_TEST_DYN_LINK
     $(CXXFLAGS_TEST)
+    $(_TEST_DEPENDENCIES)
 ;
 
 rule test-run ( target : source : requirements * : )

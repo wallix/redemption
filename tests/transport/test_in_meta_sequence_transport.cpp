@@ -30,6 +30,10 @@
 
 #include "test_only/lcg_random.hpp"
 
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 constexpr auto is_encrypted = InCryptoTransport::EncryptionMode::Encrypted;
 constexpr auto is_not_encrypted = InCryptoTransport::EncryptionMode::NotEncrypted;
@@ -86,22 +90,22 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
         RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        RED_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
-        RED_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
-        RED_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
-        RED_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+        RED_CHECK(FIXTURES_PATH "/sample0.wrm"sv == mwrm_trans.path());
+        RED_CHECK(1352304810 == mwrm_trans.begin_chunk_time());
+        RED_CHECK(1352304870 == mwrm_trans.end_chunk_time());
+        RED_CHECK(1 == mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        RED_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
-        RED_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
-        RED_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
-        RED_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+        RED_CHECK(FIXTURES_PATH "/sample1.wrm"sv == mwrm_trans.path());
+        RED_CHECK(1352304870 == mwrm_trans.begin_chunk_time());
+        RED_CHECK(1352304930 == mwrm_trans.end_chunk_time());
+        RED_CHECK(2 == mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        RED_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
-        RED_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
-        RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
-        RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+        RED_CHECK(FIXTURES_PATH "/sample2.wrm"sv == mwrm_trans.path());
+        RED_CHECK(1352304930 == mwrm_trans.begin_chunk_time());
+        RED_CHECK(1352304990 == mwrm_trans.end_chunk_time());
+        RED_CHECK(3 == mwrm_trans.get_seqno());
 
         RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
     }
@@ -111,25 +115,25 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     CryptoContext cctx;
     InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", is_not_encrypted, fstat);
 
-    RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+    RED_CHECK(0 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample0.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304810 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304870 == mwrm_trans.end_chunk_time());
+    RED_CHECK(1 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample1.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304870 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304930 == mwrm_trans.end_chunk_time());
+    RED_CHECK(2 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample2.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304930 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304990 == mwrm_trans.end_chunk_time());
+    RED_CHECK(3 == mwrm_trans.get_seqno());
 }
 
 RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
@@ -145,25 +149,25 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
     Fstat fstat;
     CryptoContext cctx;
     InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/sample", ".mwrm", is_not_encrypted, fstat);
-    RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+    RED_CHECK(0 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample0.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304810 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304870 == mwrm_trans.end_chunk_time());
+    RED_CHECK(1 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample1.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304870 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304930 == mwrm_trans.end_chunk_time());
+    RED_CHECK(2 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample2.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304930 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304990 == mwrm_trans.end_chunk_time());
+    RED_CHECK(3 == mwrm_trans.get_seqno());
 
     RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -183,25 +187,25 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
         Fstat fstat;
         CryptoContext cctx;
         InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/moved_sample", ".mwrm", is_not_encrypted, fstat);
-        RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+        RED_CHECK(0 == mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        RED_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
-        RED_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
-        RED_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
-        RED_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+        RED_CHECK(FIXTURES_PATH "/sample0.wrm"sv == mwrm_trans.path());
+        RED_CHECK(1352304810 == mwrm_trans.begin_chunk_time());
+        RED_CHECK(1352304870 == mwrm_trans.end_chunk_time());
+        RED_CHECK(1 == mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        RED_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
-        RED_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
-        RED_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
-        RED_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+        RED_CHECK(FIXTURES_PATH "/sample1.wrm"sv == mwrm_trans.path());
+        RED_CHECK(1352304870 == mwrm_trans.begin_chunk_time());
+        RED_CHECK(1352304930 == mwrm_trans.end_chunk_time());
+        RED_CHECK(2 == mwrm_trans.get_seqno());
 
         mwrm_trans.next();
-        RED_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
-        RED_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
-        RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
-        RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+        RED_CHECK(FIXTURES_PATH "/sample2.wrm"sv == mwrm_trans.path());
+        RED_CHECK(1352304930 == mwrm_trans.begin_chunk_time());
+        RED_CHECK(1352304990 == mwrm_trans.end_chunk_time());
+        RED_CHECK(3 == mwrm_trans.get_seqno());
 
         RED_CHECK_EXCEPTION_ERROR_ID(mwrm_trans.next(), ERR_TRANSPORT_NO_MORE_DATA);
     }
@@ -211,25 +215,25 @@ RED_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM3)
     CryptoContext cctx;
     InMetaSequenceTransport mwrm_trans(cctx, FIXTURES_PATH "/moved_sample", ".mwrm", is_not_encrypted, fstat);
 
-    RED_CHECK_EQUAL(0, mwrm_trans.get_seqno());
+    RED_CHECK(0 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample0.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(1, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample0.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304810 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304870 == mwrm_trans.end_chunk_time());
+    RED_CHECK(1 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample1.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(2, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample1.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304870 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304930 == mwrm_trans.end_chunk_time());
+    RED_CHECK(2 == mwrm_trans.get_seqno());
 
     mwrm_trans.next();
-    RED_CHECK_EQUAL(FIXTURES_PATH "/sample2.wrm", mwrm_trans.path());
-    RED_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time());
-    RED_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time());
-    RED_CHECK_EQUAL(3, mwrm_trans.get_seqno());
+    RED_CHECK(FIXTURES_PATH "/sample2.wrm"sv == mwrm_trans.path());
+    RED_CHECK(1352304930 == mwrm_trans.begin_chunk_time());
+    RED_CHECK(1352304990 == mwrm_trans.end_chunk_time());
+    RED_CHECK(3 == mwrm_trans.get_seqno());
 }
 
 RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
@@ -301,7 +305,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         // internal: next()
         RED_CHECK_NO_THROW(crypto_trans.recv_boom(buffer + 5, 10));
 
-        RED_CHECK_EQUAL_RANGES(make_array_view(buffer), cstr_array_view("AAAAXBBBBXCCCCX"));
+        RED_CHECK_SMEM_AA(buffer, "AAAAXBBBBXCCCCX"_av);
     }
 }
 

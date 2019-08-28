@@ -32,6 +32,10 @@
 #include "test_only/core/font.hpp"
 
 #include <string>
+#include <string_view>
+
+using namespace std::string_view_literals;
+
 
 
 struct CopyPasteFront : FakeFront
@@ -165,7 +169,7 @@ RED_AUTO_TEST_CASE(TestPaste)
     #define edit_paste(s, sig) {                                   \
         keymap.push_kevent(Keymap2::KEVENT_PASTE);                 \
         copy_paste.paste(edit);                                    \
-        RED_CHECK_EQUAL(s, edit.get_text());                       \
+        RED_CHECK_EQUAL(s ""sv, edit.get_text());                  \
                                                                    \
         edit.rdp_input_invalidate(edit.get_rect());                \
                                                                    \

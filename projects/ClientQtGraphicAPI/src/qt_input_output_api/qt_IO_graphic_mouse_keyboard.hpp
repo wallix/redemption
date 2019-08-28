@@ -1375,6 +1375,7 @@ public:
     	this->painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
     }
 
+	using ClientRemoteAppGraphicAPI::draw;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
