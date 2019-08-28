@@ -441,7 +441,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
 
     StaticOutStream<65536> s;
 
-    auto r = emitTSCredentialsPassword(ts_cred);
+    auto r = emitTSCredentialsPassword(ts_cred.passCreds.domainName, ts_cred.passCreds.userName, ts_cred.passCreds.password);
     s.out_copy_bytes(r);
     RED_CHECK_EQUAL(s.get_offset(), *(s.get_data() + 1) + 2);
     RED_CHECK_EQUAL(s.get_offset(), r.size());

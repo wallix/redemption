@@ -745,7 +745,9 @@ private:
         return Res::Ok;
     }
 
-    void credssp_encode_ts_credentials() {
+    SEC_STATUS credssp_encrypt_ts_credentials() {
+
+        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::encrypt_ts_credentials");
         if (this->restricted_admin_mode) {
             LOG(LOG_INFO, "Restricted Admin Mode");
             this->ts_credentials.set_credentials_from_av({},{},{} );
@@ -755,16 +757,11 @@ private:
                                                          this->identity.get_user_utf16_av(),
                                                          this->identity.get_password_utf16_av());
         }
-    }
-
-    SEC_STATUS credssp_encrypt_ts_credentials() {
-        LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::encrypt_ts_credentials");
-        this->credssp_encode_ts_credentials();
 
         StaticOutStream<65536> ts_credentials_send;
         std::vector<uint8_t> result;
         if (this->ts_credentials.credType == 1){
-            result = emitTSCredentialsPassword(this->ts_credentials);
+            result = emitTSCredentialsPassword(this->ts_credentials.passCreds.domainName,this->ts_credentials.passCreds.userName,this->ts_credentials.passCreds.password);
         }
         else {
             result = emitTSCredentialsSmartCard(this->ts_credentials);

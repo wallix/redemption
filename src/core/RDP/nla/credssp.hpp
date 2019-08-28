@@ -1560,13 +1560,13 @@ struct TSCredentials
     }
 };
 
-inline std::vector<uint8_t> emitTSCredentialsPassword(const TSCredentials & self) 
+inline std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName, bytes_view userName, bytes_view password) 
 {
     // [0] credType (INTEGER) : 1 means password
     auto ber_credtype_field = BER::mkSmallIntegerField(1, 0);
 
     // [1] credentials (OCTET STRING)
-    std::vector<uint8_t> ber_credentials = emitTSPasswordCreds(self.passCreds.domainName, self.passCreds.userName, self.passCreds.password);
+    std::vector<uint8_t> ber_credentials = emitTSPasswordCreds(domainName, userName, password);
     auto ber_credentials_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
 
     // TSCredentials (SEQUENCE)

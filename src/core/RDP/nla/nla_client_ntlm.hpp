@@ -474,7 +474,7 @@ public:
                     StaticOutStream<65536> ts_credentials_send;
                     std::vector<uint8_t> result;
                     if (this->ts_credentials.credType == 1){
-                        result = emitTSCredentialsPassword(this->ts_credentials);
+                        result = emitTSCredentialsPassword(this->ts_credentials.passCreds.domainName,this->ts_credentials.passCreds.userName,this->ts_credentials.passCreds.password);
                     }
                     else {
                         result = emitTSCredentialsSmartCard(this->ts_credentials);
