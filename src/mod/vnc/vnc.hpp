@@ -2777,16 +2777,18 @@ private:
                             1                                           // Null character
                         );
 
-                    const size_t to_rdp_clipboard_data_length =
+                    auto to_rdp_clipboard_data =
                         ::linux_to_windows_newline_convert(
-                            ::char_ptr_cast(this->clipboard_data_ctx.clipboard_data().data()),
-                            this->clipboard_data_ctx.clipboard_data().size(),
-                            ::char_ptr_cast(out_stream.get_data() + RDPECLIP::CliprdrHeader::size()),
-                            out_stream.get_capacity() - RDPECLIP::CliprdrHeader::size() -
-                                1   // Null character
-                        ) +
-                        1;  // Null character
-                    *(out_stream.get_data() + RDPECLIP::CliprdrHeader::size() + to_rdp_clipboard_data_length - 1) = '\x0';  // Null character
+                            bytes_view(this->clipboard_data_ctx.clipboard_data()).as_chars(),
+                            out_stream.get_bytes().as_chars()
+                                .drop_front(RDPECLIP::CliprdrHeader::size())
+                                // Null character
+                                .drop_back(1)
+                        );
+                    const auto to_rdp_clipboard_data_length = to_rdp_clipboard_data.size()
+                        + 1; // Null character
+                    // Null character
+                    *to_rdp_clipboard_data.end() = '\x0';
 
                     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, to_rdp_clipboard_data_length);
                     const RDPECLIP::FormatDataResponsePDU format_data_response_pdu;

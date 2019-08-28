@@ -257,18 +257,18 @@ RED_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
     //
     // {
     //     char d[8];
-    //     RED_CHECK(linux_to_windows_newline_convert(nullptr, 0, d, sizeof(d)) == 0);
+    //     RED_CHECK(linux_to_windows_newline_convert(nullptr, 0, make_array_view(d)) == 0);
     // }
 
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("text", 0, d, sizeof(d)) == 0);
+        RED_CHECK_SMEM(linux_to_windows_newline_convert("text"_av.first(0), make_array_view(d)), ""sv);
     }
 
     {
         RED_CHECK_EXCEPTION_ERROR_ID(
-            linux_to_windows_newline_convert("text", 4, nullptr, 0),
+            linux_to_windows_newline_convert("text"sv, nullptr),
             ERR_STREAM_MEMORY_TOO_SMALL
         );
     }
@@ -276,50 +276,43 @@ RED_AUTO_TEST_CASE(TestLinuxToWindowsNewLineConverter)
     {
         char d[2];
         RED_CHECK_EXCEPTION_ERROR_ID(
-            linux_to_windows_newline_convert("text", 4, d, sizeof(d)),
+            linux_to_windows_newline_convert("text"sv, make_array_view(d)),
             ERR_STREAM_MEMORY_TOO_SMALL
         );
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("", 1, d, sizeof(d)) == 1);
-        RED_CHECK(!memcmp(d, "\0", 1));
+        RED_CHECK_SMEM(linux_to_windows_newline_convert("\0"sv, make_array_view(d)), "\0"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("toto", 4, d, sizeof(d)) == 4);
-        RED_CHECK(!memcmp(d, "toto", 4));
+        RED_CHECK_SMEM(linux_to_windows_newline_convert("toto"sv, make_array_view(d)), "toto"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("toto\n", 5, d, sizeof(d)) == 6);
-        RED_CHECK(!memcmp(d, "toto\r\n", 6));
+        RED_CHECK_SMEM(linux_to_windows_newline_convert("toto\n"sv, make_array_view(d)), "toto\r\n"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("toto\n", 6, d, sizeof(d)) == 7);
-        RED_CHECK(!memcmp(d, "toto\r\n", 7));
+        RED_CHECK_SMEM(linux_to_windows_newline_convert("toto\n\0"sv, make_array_view(d)), "toto\r\n\0"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("\ntoto", 5, d, sizeof(d)) == 6);
-        RED_CHECK(!memcmp(d, "\r\ntoto", 6));
+        RED_CHECK_SMEM(linux_to_windows_newline_convert("\ntoto"sv, make_array_view(d)), "\r\ntoto"sv);
     }
 
     {
         char d[8];
-        RED_CHECK(linux_to_windows_newline_convert("to\nto", 5, d, sizeof(d)) == 6);
-        RED_CHECK(!memcmp(d, "to\r\nto", 6));
+        RED_CHECK_SMEM(linux_to_windows_newline_convert("to\nto"sv, make_array_view(d)), "to\r\nto"sv);
     }
 
     {
         char d[12];
-        RED_CHECK(linux_to_windows_newline_convert("\nto\nto\n", 7, d, sizeof(d)) == 10);
-        RED_CHECK(!memcmp(d, "\r\nto\r\nto\r\n", 10));
+        RED_CHECK_SMEM(linux_to_windows_newline_convert("\nto\nto\n"sv, make_array_view(d)), "\r\nto\r\nto\r\n"sv);
     }
 }

@@ -158,7 +158,7 @@ struct array_view
     constexpr array_view from_offset(std::size_t offset) noexcept
     {
         assert(offset <= this->size());
-        return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
+        return {this->data() + offset, this->size() - offset};
     }
 
     [[nodiscard]]
@@ -168,11 +168,12 @@ struct array_view
         return {this->data() + offset, count};
     }
 
+    // TODO frop_front
     [[nodiscard]]
     constexpr array_view<T const> from_offset(std::size_t offset) const noexcept
     {
         assert(offset <= this->size());
-        return {this->data() + offset, static_cast<std::size_t>(this->size() - offset)};
+        return {this->data() + offset, this->size() - offset};
     }
 
     [[nodiscard]]
@@ -180,6 +181,34 @@ struct array_view
     {
         assert(offset <= this->size() && count <= this->size() - offset);
         return {this->data() + offset, count};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<T> drop_front(std::size_t count) noexcept
+    {
+        assert(count <= this->size());
+        return {this->data() + count, this->size() - count};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<T> drop_back(std::size_t count) noexcept
+    {
+        assert(count <= this->size());
+        return {this->data(), this->size() - count};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<T const> drop_front(std::size_t count) const noexcept
+    {
+        assert(count <= this->size());
+        return {this->data() + count, this->size() - count};
+    }
+
+    [[nodiscard]]
+    constexpr array_view<T const> drop_back(std::size_t count) const noexcept
+    {
+        assert(count <= this->size());
+        return {this->data(), this->size() - count};
     }
     //@}
 
