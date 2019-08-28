@@ -810,9 +810,9 @@ enum CredentialUse {
  *
  */
 
+static const int CLIENT_NONCE_LENGTH = 32;
 
 struct ClientNonce {
-    static const int CLIENT_NONCE_LENGTH = 32;
     bool initialized = false;
     uint8_t data[CLIENT_NONCE_LENGTH] = {};
 
@@ -827,23 +827,6 @@ struct ClientNonce {
         this->initialized = false;
     }
 
-    int ber_read(int version, int & length, InStream & stream)
-    {
-        if (version >= 5 && BER::read_contextual_tag(stream, 5, length)) {
-            // LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
-            if(!BER::read_octet_string_tag(stream, length)){
-                return -1;
-            }
-            this->initialized = true;
-            if (length != CLIENT_NONCE_LENGTH){
-                LOG(LOG_ERR, "Truncated client nonce");
-                return -1;
-            }
-            stream.in_copy_bytes(this->data, CLIENT_NONCE_LENGTH);
-            this->initialized = true;
-        }
-        return 0;
-    }
 };
 
 // 2.2.1 TSRequest
@@ -1095,8 +1078,17 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
         );
     }
     /* [5] clientNonce (OCTET STRING) */
-    if (self.clientNonce.ber_read(remote_version, length, stream) == -1){
-        throw Error(ERR_CREDSSP_TS_REQUEST);
+    if (remote_version >= 5 && BER::read_contextual_tag(stream, 5, length)) {
+        // LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
+        if(!BER::read_octet_string_tag(stream, length)){
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+        if (length != CLIENT_NONCE_LENGTH){
+            LOG(LOG_ERR, "Truncated client nonce");
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+        stream.in_copy_bytes(self.clientNonce.data, CLIENT_NONCE_LENGTH);
+        self.clientNonce.initialized = true;
     }
     // return 0;
     return self;
