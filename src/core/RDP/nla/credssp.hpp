@@ -1125,73 +1125,76 @@ struct TSCspDataDetail {
         , cspName(cspName.data(), cspName.data()+cspName.size())
     {
     }
-
-    int recv(InStream & stream) {
-        int length = 0;
-        /* TSCspDataDetail ::= SEQUENCE */
-        /* TSSmartCardCreds (SEQUENCE) */
-
-        BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TSCspDataDetail", ERR_CREDSSP_TS_REQUEST);
-
-        /* [0] keySpec (INTEGER) */
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TSCspDataDetail keySpec", ERR_CREDSSP_TS_REQUEST);
-        BER::read_integer(stream, this->keySpec);
-
-        /* [1] cardName (OCTET STRING OPTIONAL) */
-        if (BER::check_ber_ctxt_tag(stream, 1)) {
-            stream.in_skip_bytes(1);
-            length = BER::read_length(stream, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-
-            this->cardName.resize(length);
-            stream.in_copy_bytes(this->cardName);
-        }
-        /* [2] readerName (OCTET STRING OPTIONAL) */
-        if (BER::check_ber_ctxt_tag(stream, 2)) {
-            stream.in_skip_bytes(1);
-            length = BER::read_length(stream, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-
-            this->readerName.resize(length);
-            stream.in_copy_bytes(this->readerName);
-        }
-        /* [3] containerName (OCTET STRING OPTIONAL) */
-        if (BER::check_ber_ctxt_tag(stream, 3)) {
-            stream.in_skip_bytes(1);
-            length = BER::read_length(stream, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-
-            this->containerName.resize(length);
-            stream.in_copy_bytes(this->containerName);
-        }
-        /* [4] cspName (OCTET STRING OPTIONAL) */
-        if (BER::check_ber_ctxt_tag(stream, 4)) {
-            stream.in_skip_bytes(1);
-            length = BER::read_length(stream, "TSCspDataDetail cspName", ERR_CREDSSP_TS_REQUEST);
-            // LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cspName");
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-
-            this->cspName.resize(length);
-            stream.in_copy_bytes(this->cspName);
-        }
-        return 0;
-
-    }
 };
+
+
+inline TSCspDataDetail recvTSCspDataDetail(InStream & stream) 
+{
+    TSCspDataDetail self;
+    int length = 0;
+    /* TSCspDataDetail ::= SEQUENCE */
+    /* TSSmartCardCreds (SEQUENCE) */
+
+    BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TSCspDataDetail", ERR_CREDSSP_TS_REQUEST);
+
+    /* [0] keySpec (INTEGER) */
+    BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TSCspDataDetail keySpec", ERR_CREDSSP_TS_REQUEST);
+    BER::read_integer(stream, self.keySpec);
+
+    /* [1] cardName (OCTET STRING OPTIONAL) */
+    if (BER::check_ber_ctxt_tag(stream, 1)) {
+        stream.in_skip_bytes(1);
+        length = BER::read_length(stream, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
+        if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+           !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+
+        self.cardName.resize(length);
+        stream.in_copy_bytes(self.cardName);
+    }
+    /* [2] readerName (OCTET STRING OPTIONAL) */
+    if (BER::check_ber_ctxt_tag(stream, 2)) {
+        stream.in_skip_bytes(1);
+        length = BER::read_length(stream, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
+        if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+           !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+
+        self.readerName.resize(length);
+        stream.in_copy_bytes(self.readerName);
+    }
+    /* [3] containerName (OCTET STRING OPTIONAL) */
+    if (BER::check_ber_ctxt_tag(stream, 3)) {
+        stream.in_skip_bytes(1);
+        length = BER::read_length(stream, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
+        if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+           !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+
+        self.containerName.resize(length);
+        stream.in_copy_bytes(self.containerName);
+    }
+    /* [4] cspName (OCTET STRING OPTIONAL) */
+    if (BER::check_ber_ctxt_tag(stream, 4)) {
+        stream.in_skip_bytes(1);
+        length = BER::read_length(stream, "TSCspDataDetail cspName", ERR_CREDSSP_TS_REQUEST);
+        // LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cspName");
+        if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+           !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+
+        self.cspName.resize(length);
+        stream.in_copy_bytes(self.cspName);
+    }
+    return self;
+}
+
 
 inline std::vector<uint8_t> emitTSCspDataDetail(const TSCspDataDetail & self)
 {
@@ -1273,7 +1276,7 @@ struct TSSmartCardCreds {
         /* [1] cspData (TSCspDataDetail) */
         BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TS Request", ERR_CREDSSP_TS_REQUEST);
         length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        this->cspData.recv(stream);
+        this->cspData = recvTSCspDataDetail(stream);
 
         /* [2] userHint (OCTET STRING) */
         if (BER::read_contextual_tag(stream, 2, length)) {
