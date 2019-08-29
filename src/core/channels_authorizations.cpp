@@ -305,11 +305,12 @@ REDEMPTION_OSTREAM(out, ChannelsAuthorizations const & auth)
 void ChannelsAuthorizations::update_authorized_channels(
     std::string & allow, std::string & deny, const std::string & proxy_opt)
 {
-    auto remove = [] (std::string & str, const char * pattern) -> bool {
+    // TODO free function
+    auto remove = [](std::string & str, std::string_view pattern) -> bool {
         bool removed = false;
         size_t pos = 0;
         while ((pos = str.find(pattern, pos)) != std::string::npos) {
-            str.erase(pos, strlen(pattern));
+            str.erase(pos, pattern.size());
             removed = true;
         }
 
@@ -344,13 +345,13 @@ void ChannelsAuthorizations::update_authorized_channels(
         remove(s, "rdpdr,");
         remove(s, "rdpsnd,");
         for (auto str : ChannelsAuthorizations::cliprde_list()) {
-            remove(s, str.data());
+            remove(s, {str.data(), str.size()});
         }
         for (auto str : ChannelsAuthorizations::rdpdr_list()) {
-            remove(s, str.data());
+            remove(s, {str.data(), str.size()});
         }
         for (auto str : ChannelsAuthorizations::rdpsnd_list()) {
-            remove(s, str.data());
+            remove(s, {str.data(), str.size()});
         }
         if (!s.empty() && s.back() == ',') {
             s.pop_back();

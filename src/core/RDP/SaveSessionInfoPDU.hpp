@@ -258,22 +258,21 @@ struct LogonInfoVersion1_Recv {
 
 struct LogonInfoVersion1_Send
 {
-    // TODO std::string_view / array_view_const_char / writable_bytes_view
-    LogonInfoVersion1_Send(OutStream & stream, const uint8_t * Domain,
-        const uint8_t * UserName, uint32_t sessionId)
+    LogonInfoVersion1_Send(OutStream & stream, std::string_view Domain,
+        std::string_view UserName, uint32_t sessionId)
     {
         uint8_t utf16_Domain[52];
         uint8_t utf16_UserName[512];
 
         memset(utf16_Domain,   0, sizeof(utf16_Domain));
         uint32_t cbDomain   = UTF8toUTF16(
-            {Domain, strlen(char_ptr_cast(Domain))},
+            Domain,
             utf16_Domain, sizeof(utf16_Domain) - sizeof(uint16_t)
         ) + 2;
 
         memset(utf16_UserName, 0, sizeof(utf16_UserName));
         uint32_t cbUserName = UTF8toUTF16(
-            {UserName, char_ptr_cast(UserName)},
+            UserName,
             utf16_UserName,
             sizeof(utf16_UserName) - sizeof(uint16_t)
         ) + 2;

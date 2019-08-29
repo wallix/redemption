@@ -22,7 +22,8 @@ Author(s): Christophe Grosjean, Jonathan Poelen
 #include "utils/log.hpp"
 
 #include <cstdio> // std::sprintf
-#include <cstring> // strlen
+#include <cstring> // memcpy
+#include <string_view>
 
 namespace {
 
@@ -30,7 +31,7 @@ namespace {
 void hexdump_impl(
     const unsigned char * data, size_t size,
     char const * line_prefix, char const * sep_page_values,
-    char const * value_prefix, char const * value_suffix,
+    std::string_view value_prefix, std::string_view value_suffix,
     char const * sep_value_chars, char const * prefix_chars)
 {
     constexpr unsigned line_length = 16;
@@ -38,7 +39,7 @@ void hexdump_impl(
         "                                                                     "
         "                                                                     "_av;
     char buffer[2048];
-    size_t const sep_len = strlen(value_prefix) + strlen(value_suffix) + 2;
+    size_t const sep_len = value_prefix.size() + value_suffix.size() + 2;
     assert(sep_len * line_length < spaces.size());
     for (size_t j = 0; j < size; j += line_length){
         char * line = buffer;
@@ -49,7 +50,7 @@ void hexdump_impl(
 
         for (i = 0; i < line_length && j+i < size; i++){
             line += std::sprintf(line, "%s%.2x%s",
-                value_prefix, static_cast<unsigned>(data[j+i]), value_suffix);
+                value_prefix.data(), static_cast<unsigned>(data[j+i]), value_suffix.data());
         }
 
         line += std::sprintf(line, "%s", sep_value_chars);

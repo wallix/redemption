@@ -331,7 +331,7 @@ public:
 
                     this->file_system_drive_manager.enable_drive(
                         FileSystemDriveManager::DriveName(
-                            array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
+                            std::string_view{trimmed_range.begin(), trimmed_range.size()}),
                         this->proxy_managed_prefix, verbose);
                 }
             }
@@ -1132,13 +1132,12 @@ public:
         }
     }
 
-    static void replace(std::string & text_with_tags, char const* marker, char const* replacement){
+    // TODO free function
+    static void replace(std::string & text_with_tags, std::string_view marker, std::string_view replacement){
         size_t pos = 0;
-        auto const marker_len = strlen(marker);
-        auto const replacement_len = strlen(replacement);
         while ((pos = text_with_tags.find(marker, pos)) != std::string::npos) {
-            text_with_tags.replace(pos, marker_len, replacement);
-            pos += replacement_len;
+            text_with_tags.replace(pos, marker.size(), replacement.data());
+            pos += replacement.size();
         }
     }
 
@@ -1160,10 +1159,10 @@ public:
     }
 
     static void replace_probe_arguments(std::string & text_with_tags,
-                                        char const* marker1, char const* replacement1,
-                                        char const* marker2, char const* replacement2,
-                                        char const* marker3, char const* replacement3,
-                                        char const* marker4, char const* replacement4){
+                                        std::string_view marker1, std::string_view replacement1,
+                                        std::string_view marker2, std::string_view replacement2,
+                                        std::string_view marker3, std::string_view replacement3,
+                                        std::string_view marker4, std::string_view replacement4){
         mod_rdp_channels::replace(text_with_tags, marker1, replacement1);
         mod_rdp_channels::replace(text_with_tags, marker2, replacement2);
         mod_rdp_channels::replace(text_with_tags, marker3, replacement3);
@@ -1242,8 +1241,8 @@ public:
             this->remote_app.client_execute.arguments   = session_probe_params.arguments;
             mod_rdp_channels::replace_probe_arguments(this->remote_app.client_execute.arguments,
                 "${EXE_VAR}", exe_var_str,
-                "${TITLE_VAR} ", title_param.c_str(),
-                "/${COOKIE_VAR} ", cookie_param.c_str(),
+                "${TITLE_VAR} ", title_param,
+                "/${COOKIE_VAR} ", cookie_param,
                 "${CBSPL_VAR} ", "");
         }
     }
@@ -1338,7 +1337,7 @@ public:
         mod_rdp_channels::replace_probe_arguments(arguments,
             "${EXE_VAR}", exe_var_str,
             "${TITLE_VAR} ", "",
-            "/${COOKIE_VAR} ", cookie_param.c_str(),
+            "/${COOKIE_VAR} ", cookie_param,
             "${CBSPL_VAR} ", used_clipboard_based_launcher ? "CD %TMP%&" : ""
         );
 
@@ -5619,8 +5618,8 @@ private:
             uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->session_time_start.count();
             this->session_time_start = std::chrono::seconds::zero();
 
-            char duration_str[1024];
-            snprintf(duration_str, sizeof(duration_str), "%d:%02d:%02d",
+            char duration_str[128];
+            size_t len = snprintf(duration_str, sizeof(duration_str), "%d:%02d:%02d",
                 int(seconds / 3600),
                 int((seconds % 3600) / 60),
                 int(seconds % 60));
@@ -5628,7 +5627,7 @@ private:
             this->report_message.log6(
                 LogId::SESSION_DISCONNECTION,
                 this->session_reactor.get_current_time(), {
-                KVLog("duration"_av, {duration_str, strlen(duration_str)}),
+                KVLog("duration"_av, {duration_str, len}),
             });
 
             LOG_IF(enable_verbose, LOG_INFO,

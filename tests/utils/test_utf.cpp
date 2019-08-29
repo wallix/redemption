@@ -514,17 +514,8 @@ RED_AUTO_TEST_CASE(TestUTF8StrLenInChar)
 
     RED_CHECK_EQUAL(0u, UTF8StrLenInChar(byte_ptr_cast("")));
 
-    {
-        const char * str = "éric";
-        RED_CHECK_EQUAL(5u, strlen(str));
-        RED_CHECK_EQUAL(4u, UTF8StrLenInChar(byte_ptr_cast(str)));
-    }
-
-    {
-        const char * str = "€uro";
-        RED_CHECK_EQUAL(6u, strlen(str));
-        RED_CHECK_EQUAL(4u, UTF8StrLenInChar(byte_ptr_cast(str)));
-    }
+    RED_CHECK_EQUAL(4u, UTF8StrLenInChar("éric"));
+    RED_CHECK_EQUAL(4u, UTF8StrLenInChar("€uro"));
 }
 
 RED_AUTO_TEST_CASE(Testis_ASCII_string)

@@ -699,13 +699,13 @@ public:
             serpdu.log(LOG_INFO);
         }
 
-        std::vector<LaunchPendingApp>::iterator iter = std::find_if(
+        auto iter = std::find_if(
                 this->launch_pending_apps.begin(),
                 this->launch_pending_apps.end(),
                 [&serpdu](LaunchPendingApp& app) -> bool {
-                        return (!::strcmp(app.ExeOrFile(), serpdu.ExeOrFile()) &&
-                            (app.Flags() == serpdu.Flags()));
-                    }
+                    return app.ExeOrFile() == serpdu.ExeOrFile()
+                        && app.Flags() == serpdu.Flags();
+                }
             );
         if (this->launch_pending_apps.end() != iter) {
             LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,
@@ -735,7 +735,7 @@ public:
              || this->client_execute.exe_or_file != serpdu.ExeOrFile()
             ) {
                 this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, tvtime(), {
-                    KVLog("exe_or_file"_av, {serpdu.ExeOrFile(), strlen(serpdu.ExeOrFile())}),
+                    KVLog("exe_or_file"_av, serpdu.ExeOrFile()),
                 });
             }
         }
@@ -1310,26 +1310,21 @@ public:
         launch_pending_apps.emplace_back(LaunchPendingApp(original_exe_or_file, exe_or_file, flags));
 
         std::string arguments_(arguments);
-        {
-            const char * appid_marker = "${APPID}";
-            size_t pos = arguments_.find(appid_marker, 0);
+
+        // TODO free function
+        auto replace = [&arguments_](std::string_view marker, char const* replacement){
+            size_t pos = arguments_.find(marker);
             if (pos != std::string::npos) {
-                arguments_.replace(pos, strlen(appid_marker), original_exe_or_file);
+                arguments_.replace(pos, marker.size(), replacement);
             }
-        }
+        };
+
+        replace("${APPID}", original_exe_or_file);
         if (account && *account) {
-            const char * user_marker = "${USER}";
-            size_t pos = arguments_.find(user_marker, 0);
-            if (pos != std::string::npos) {
-                arguments_.replace(pos, strlen(user_marker), account);
-            }
+            replace("${USER}", account);
         }
         if (password && *password) {
-            const char * password_marker = "${PASSWORD}";
-            size_t pos = arguments_.find(password_marker, 0);
-            if (pos != std::string::npos) {
-                arguments_.replace(pos, strlen(password_marker), password);
-            }
+            replace("${PASSWORD}", password);
         }
 
         if (this->param_use_session_probe_to_launch_remote_program &&

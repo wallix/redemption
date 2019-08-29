@@ -112,6 +112,7 @@ public:
         if (font.replacements) {
             for (auto it = font.replacements; it->pattern; ++it) {
                 std::string::size_type pos = 0;
+                // TODO free function
                 while (pos != std::string::npos) {
                     const auto fpos = this->out.find(it->pattern, pos);
                     if (fpos != std::string::npos) {

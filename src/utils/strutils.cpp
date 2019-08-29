@@ -26,14 +26,16 @@
 namespace utils
 {
 
-bool ends_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len)
+bool ends_with(array_view_const_char str, array_view_const_char suffix) noexcept
 {
-    return ((str_len >= suffix_len) && (strcmp(str + str_len - suffix_len, suffix) == 0));
+    return str.size() >= suffix.size()
+        && strncmp(str.data() + str.size() - suffix.size(), suffix.data(), suffix.size()) == 0;
 }
 
-bool ends_case_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len)
+bool ends_case_with(array_view_const_char str, array_view_const_char suffix) noexcept
 {
-    return ((str_len >= suffix_len) && (strcasecmp(str + str_len - suffix_len, suffix) == 0));
+    return str.size() >= suffix.size()
+        && strncasecmp(str.data() + str.size() - suffix.size(), suffix.data(), suffix.size()) == 0;
 }
 
 

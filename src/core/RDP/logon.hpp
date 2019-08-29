@@ -659,9 +659,7 @@ struct ClientTimeZone {
     ClientTimeZone()
     {
         // standard Name
-//        memcpy(this->StandardName, "GMT Standard Time", strlen("GMT Standard Time")+1);
-    	std::string gmt = "GMT";
-        ::UTF8toUTF16(gmt, this->StandardName, sizeof(this->StandardName));
+        ::UTF8toUTF16("GMT"_av, this->StandardName, sizeof(this->StandardName));
         // standard date
         this->StandardDate.wYear            = 0;
         this->StandardDate.wMonth           = 10;
@@ -674,9 +672,7 @@ struct ClientTimeZone {
         // standard bias
         this->StandardBias = 0;
         // daylight name
-//        memcpy(this->DaylightName, "GMT Daylight Time", strlen("GMT Daylight Time")+1);
-        std::string gmt_summer = "GMT (heure d'été)";
-        ::UTF8toUTF16(gmt_summer, this->DaylightName, sizeof(this->DaylightName));
+        ::UTF8toUTF16("GMT (heure d'été)"_av, this->DaylightName, sizeof(this->DaylightName));
         // daylight date
         this->DaylightDate.wYear            = 0;
         this->DaylightDate.wMonth           = 3;

@@ -273,7 +273,7 @@ void SelectorMod::refresh_device()
         this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
 
         auto no_result = TR(trkeys::no_results, language(this->vars));
-        array_view_const_char const texts[] {{}, {no_result, strlen(no_result)}, {}};
+        array_view_const_char const texts[] {{}, no_result, {}};
         this->selector.add_device(texts);
     }
     else {

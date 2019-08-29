@@ -351,8 +351,6 @@ void ModuleManager::create_mod_rdp(
             rail_client_execute.reset(false);
         }
 
-        const char * target_user = ini.get<cfg::globals::target_user>().c_str();
-
         struct ModRDPWithMetrics : public DispatchReportMessage, mod_rdp
         {
             struct ModMetrics : Metrics
@@ -498,7 +496,7 @@ void ModuleManager::create_mod_rdp(
                     ini.get<cfg::globals::auth_user>(),
                     ini.get<cfg::metrics::sign_key>()),
                 hmac_account(
-                    {target_user, strlen(target_user)},
+                    ini.get<cfg::globals::target_user>(),
                     ini.get<cfg::metrics::sign_key>()),
                 hmac_device_service(
                     ini.get<cfg::globals::target_device>(),

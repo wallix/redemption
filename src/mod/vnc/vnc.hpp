@@ -3052,8 +3052,8 @@ public:
         uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->beginning;
         LOG(LOG_INFO, "Client disconnect from VNC module");
 
-        char duration_str[1024];
-        snprintf(duration_str, sizeof(duration_str), "%02d:%02d:%02d",
+        char duration_str[128];
+        size_t len = snprintf(duration_str, sizeof(duration_str), "%02d:%02d:%02d",
             int(seconds / 3600),
             int((seconds % 3600) / 60),
             int(seconds % 60));
@@ -3061,7 +3061,7 @@ public:
         this->report_message.log6(
             LogId::SESSION_DISCONNECTION,
             this->session_reactor.get_current_time(), {
-            KVLog("duration"_av, {duration_str, strlen(duration_str)}),
+            KVLog("duration"_av, {duration_str, len}),
         });
 
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
