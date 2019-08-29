@@ -107,14 +107,14 @@ RED_AUTO_TEST_CASE(TestBERInteger)
 RED_AUTO_TEST_CASE(TestBEROctetString)
 {
     StaticOutStream<2048> s;
-    int res;
-    int value;
-    const uint8_t oct_str[] =
-        { 1, 2, 3, 4, 5, 6 , 7 };
+    const uint8_t oct_str[] = {1, 2, 3, 4, 5, 6, 7};
 
-    BER::write_octet_string(s, oct_str, 7);
-    InStream in_s(s.get_bytes());
-    res = BER::read_octet_string_tag(in_s, value);
+    auto r = BER::mkOctetStringHeader(sizeof(oct_str));
+    r.insert(r.end(), oct_str, oct_str+sizeof(oct_str));
+
+    InStream in_s(r);
+    int value = 0;
+    int res = BER::read_octet_string_tag(in_s, value);
     RED_CHECK(res);
     RED_CHECK_EQUAL(value, 7);
 

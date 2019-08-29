@@ -107,7 +107,7 @@ namespace BER {
        v.push_back(CLASS_CTXT|PC_CONSTRUCT|tag);
     }
 
-    inline void backward_push_octet_string_field_header(std::vector<uint8_t> & v, uint32_t payload_size)
+    inline void backward_push_octet_string_header(std::vector<uint8_t> & v, uint32_t payload_size)
     {
        backward_push_ber_len(v, payload_size);
        v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING);
@@ -160,7 +160,7 @@ namespace BER {
         std::vector<uint8_t> head;
 
         if (payload_size > 0) {
-            backward_push_octet_string_field_header(head, payload_size);
+            backward_push_octet_string_header(head, payload_size);
             backward_push_tagged_field_header(head, payload_size + head.size(), 0);
             backward_push_sequence_tag_field_header(head, payload_size + head.size());
             backward_push_sequence_tag_field_header(head, payload_size + head.size());
@@ -178,10 +178,20 @@ namespace BER {
         return head;
     }
 
+
+    inline std::vector<uint8_t> mkOctetStringHeader(uint32_t payload_size)
+    {
+        std::vector<uint8_t> head;
+        backward_push_octet_string_header(head, payload_size);
+        std::reverse(head.begin(), head.end());
+        return head;
+    }
+
+
     inline std::vector<uint8_t> mkMandatoryOctetStringFieldHeader(uint32_t payload_size, uint8_t tag)
     {
         std::vector<uint8_t> head;
-        backward_push_octet_string_field_header(head, payload_size);
+        backward_push_octet_string_header(head, payload_size);
         backward_push_tagged_field_header(head, payload_size + head.size(), tag);
         std::reverse(head.begin(), head.end());
         return head;
@@ -320,76 +330,6 @@ namespace BER {
         return length;
     }
 
-    // ==========================
-    //   ENUMERATED
-    // ==========================
-    //bool read_enumerated(InStream & s, uint8_t & enumerated, uint8_t count) {
-    //    int length;
-    //    if (!read_universal_tag(s, TAG_ENUMERATED, false) ||
-    //        !read_length(s, length)) {
-    //        return false;
-    //    }
-    //    if (length != 1 || !s.in_check_rem(1)) {
-    //        return false;
-    //    }
-    //    enumerated = s.in_uint8();
-    //
-    //    if (enumerated + 1 > count) {
-    //        return false;
-    //    }
-    //    return true;
-    //}
-
-    //void write_enumerated(OutStream & s, uint8_t enumerated, uint8_t count) {
-    //    s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_ENUMERATED));
-    //    write_length(s, 1);
-    //    s.out_uint8(enumerated);
-    //}
-
-    // ==========================
-    //   BIT STRING
-    // ==========================
-    // bool read_bit_string(InStream & s, int & length, uint8_t & padding) {
-    //     if (!read_universal_tag(s, TAG_BIT_STRING, false) ||
-    //         !read_length(s, length)) {
-    //         return false;
-    //     }
-    //     if (!s.in_check_rem(1)) {
-    //         return false;
-    //     }
-    //     padding = s.in_uint8();
-    //     return true;
-    // }
-
-    // ==========================
-    //   OCTET STRING
-    // ==========================
-    inline int write_octet_string(OutStream & s, const uint8_t * oct_str, int length) {
-        int size = 0;
-        s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_OCTET_STRING));
-        size += 1;
-        switch (_ber_sizeof_length(length)){
-        case 1:
-            s.out_uint8(length);
-            size += 1;
-            break;
-        case 2:
-            s.out_uint8(0x81);
-            s.out_uint8(length);
-            size += 2;
-            break;
-        default:
-            s.out_uint8(0x82);
-            s.out_uint16_be(length);
-            size += 3;
-            break;
-        }
-        s.out_copy_bytes(oct_str, length);
-        size += length;
-        return size;
-    }
-
-
     inline bool read_octet_string_tag(InStream & s, int & length) {
         if (!s.in_check_rem(1)) {
             return false;
@@ -424,54 +364,6 @@ namespace BER {
     inline int sizeof_octet_string(int length) {
         return 1 + _ber_sizeof_length(length) + length;
     }
-
-    // ==========================
-    //   GENERAL STRING
-    // ==========================
-    //int write_general_string(OutStream & s, const uint8_t * oct_str, int length) {
-    //    int size = 0;
-    //    s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_GENERAL_STRING));
-    //    size += 1;
-    //    size += write_length(s, length);
-    //    s.out_copy_bytes(oct_str, length);
-    //    size += length;
-    //    return size;
-    //}
-    //bool read_general_string_tag(InStream & s, int & length) {
-    //    return read_universal_tag(s, TAG_GENERAL_STRING, false)
-    //        && read_length(s, length);
-    //}
-    //int write_general_string_tag(OutStream & s, int length) {
-    //    s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_GENERAL_STRING));
-    //    write_length(s, length);
-    //    return 1 + _ber_sizeof_length(length);
-    //}
-    //int sizeof_general_string(int length) {
-    //    return 1 + _ber_sizeof_length(length) + length;
-    //}
-    // ==========================
-    //   BOOL
-    // ==========================
-    //bool read_bool(InStream & s, bool & value) {
-    //    int length;
-    //    if (!read_universal_tag(s, TAG_BOOLEAN, false) ||
-    //        !read_length(s, length)) {
-    //        return false;
-    //    }
-    //
-    //    if (length != 1 || !s.in_check_rem(1)) {
-    //        return false;
-    //    }
-    //    uint8_t v = s.in_uint8();
-    //    value = (v ? true : false);
-    //    return true;
-    //}
-
-    //void write_bool(OutStream & s, bool value) {
-    //    s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_BOOLEAN));
-    //    write_length(s, 1);
-    //    s.out_uint8(value ? 0xFF : 0);
-    //}
 
     // ==========================
     //   INTEGER
