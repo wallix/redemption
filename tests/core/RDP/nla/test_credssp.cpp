@@ -88,11 +88,8 @@ RED_AUTO_TEST_CASE(TestBEROctetString)
 
     InStream in_s(r);
     int value = 0;
-    int res = BER::read_octet_string_tag(in_s, value);
-    RED_CHECK(res);
-    RED_CHECK_EQUAL(value, 7);
-
-    s.rewind();
+    int length = BER::read_tag_length(in_s, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TestOctetString", ERR_CREDSSP_TS_REQUEST);
+    RED_CHECK_EQUAL(length, 7);
 }
 
 
