@@ -22,6 +22,8 @@
 
 #include "utils/stream.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/utf.hpp"
+
 
 /// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(

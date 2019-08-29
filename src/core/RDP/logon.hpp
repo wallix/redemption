@@ -28,6 +28,7 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/stream.hpp"
+#include "utils/utf.hpp"
 #include "utils/get_printable_password.hpp"
 #include "utils/sugar/zstring_view.hpp"
 #include "core/stream_throw_helpers.hpp"

@@ -27,6 +27,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/utf.hpp"
 #include "core/ERREF/ntstatus.hpp"
 #include "core/stream_throw_helpers.hpp"
 
@@ -441,7 +442,7 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
     void receive(InStream & stream) {
         // ObjectId(16) + BirthVolumeId(16) + BirthObjectId(16) + DomainId(16)
         ::check_throw(stream, 4 * GUID_SIZE, "FileObjectBuffer_Type1", ERR_FSCC_DATA_TRUNCATED);
-        
+
         stream.in_copy_bytes(this->ObjectId, GUID_SIZE);
         stream.in_copy_bytes(this->BirthVolumeId, GUID_SIZE);
         stream.in_copy_bytes(this->BirthObjectId, GUID_SIZE);
@@ -1961,7 +1962,7 @@ public:
     }
 
     void receive(InStream & stream) {
-    
+
         // NextEntryOffset(4) + FileIndex(4) +
         //     CreationTime(8) + LastAccessTime(8) +
         //     LastWriteTime(8) + ChangeTime(8) +
@@ -2488,7 +2489,7 @@ public:
     }
 
     void receive(InStream & stream) {
-        // AllocationSize(8) + EndOfFile(8) + NumberOfLinks(4) 
+        // AllocationSize(8) + EndOfFile(8) + NumberOfLinks(4)
         //  + DeletePending(1) + Directory(1)
         ::check_throw(stream, 22, "FileStandardInformation (0)", ERR_FSCC_DATA_TRUNCATED);
 
@@ -2952,14 +2953,14 @@ public:
     }
 
     void receive(InStream & stream) {
-    
+
         // TotalAllocationUnits(8)
         //   + CallerAvailableAllocationUnits(8)
         //   + ActualAvailableAllocationUnits(8)
         //   + SectorsPerAllocationUnit(4)
         //   + BytesPerSector(4)
         ::check_throw(stream, 32, "FileFsFullSizeInformation", ERR_FSCC_DATA_TRUNCATED);
-    
+
         this->TotalAllocationUnits           = stream.in_sint64_le();
         this->CallerAvailableAllocationUnits = stream.in_sint64_le();
         this->ActualAvailableAllocationUnits = stream.in_sint64_le();

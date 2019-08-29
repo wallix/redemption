@@ -24,6 +24,7 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/utf.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 #include <cstring>

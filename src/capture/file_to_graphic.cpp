@@ -39,6 +39,7 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/utf.hpp"
 #include "utils/png.hpp"
 
 

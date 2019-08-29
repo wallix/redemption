@@ -26,6 +26,7 @@
 
 #include "utils/log.hpp"
 #include "core/error.hpp"
+#include "utils/utf.hpp"
 #include "utils/stream.hpp"
 #include "utils/redirection_info.hpp"
 #include "core/stream_throw_helpers.hpp"

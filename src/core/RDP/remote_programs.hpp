@@ -25,6 +25,7 @@
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "utils/stream.hpp"
+#include "utils/utf.hpp"
 #include "utils/sugar/cast.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"

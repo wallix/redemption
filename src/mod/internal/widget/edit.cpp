@@ -26,6 +26,7 @@
 #include "mod/internal/widget/edit.hpp"
 #include "utils/colors.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/utf.hpp"
 
 
 WidgetEdit::WidgetEdit(

@@ -25,7 +25,6 @@
 #pragma once
 
 #include "utils/bitfu.hpp"
-#include "utils/utf.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/buffer_view.hpp"
 #include "utils/sugar/cast.hpp"

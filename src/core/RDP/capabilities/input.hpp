@@ -29,6 +29,7 @@
 #include "core/RDP/capabilities/common.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/utf.hpp"
 
 //2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET)
 //=======================================================
@@ -97,7 +98,7 @@ struct InputCaps : public Capability {
     uint16_t imeFileName[32];
     InputCaps()
     : Capability(CAPSTYPE_INPUT, CAPLEN_INPUT)
-    
+
     {
         memset(this->imeFileName, 0, 64);
     }
