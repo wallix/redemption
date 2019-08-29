@@ -120,38 +120,54 @@ namespace BER {
     }
 
     // for values < 0x80
-    inline void backward_push_small_integer_field(std::vector<uint8_t> & v, uint8_t value)
+    inline void backward_push_small_integer(std::vector<uint8_t> & v, uint8_t value)
     {
         v.push_back(value);
         v.push_back(1); // length
         v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER);
     }
 
-    inline void backward_push_integer_field(std::vector<uint8_t> & v, uint32_t value)
+    inline void backward_push_15bits_integer(std::vector<uint8_t> & v, uint16_t value)
+    {
+        v.push_back(value);
+        v.push_back(value >> 8);
+        v.push_back(2); // length
+        v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER);
+    }
+
+    inline void backward_push_23bits_integer(std::vector<uint8_t> & v, uint32_t value)
+    {
+        v.push_back(value);
+        v.push_back(value >> 8);
+        v.push_back(value >> 16);
+        v.push_back(3); // length
+        v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER);
+    }
+
+    inline void backward_push_32bits_integer(std::vector<uint8_t> & v, uint32_t value)
+    {
+        v.push_back(value);
+        v.push_back(value >> 8);
+        v.push_back(value >> 16);
+        v.push_back(value >> 24);
+        v.push_back(4); // length
+        v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER);
+    }
+
+    inline void backward_push_integer(std::vector<uint8_t> & v, uint32_t value)
     {
         if (value < 0x80) {
-            v.push_back(value);
-            v.push_back(1); // length
+            backward_push_small_integer(v, uint8_t(value));
         }
         else if (value <  0x8000) {
-            v.push_back(value);
-            v.push_back(value >> 8);
-            v.push_back(2); // length
+            backward_push_15bits_integer(v, uint16_t(value));
         }
         else if (value <  0x800000) {
-            v.push_back(value);
-            v.push_back(value >> 8);
-            v.push_back(value >> 16);
-            v.push_back(3); // length
+            backward_push_23bits_integer(v, value);
         }
         else {
-            v.push_back(value);
-            v.push_back(value >> 8);
-            v.push_back(value >> 16);
-            v.push_back(value >> 24);
-            v.push_back(4); // length
+            backward_push_32bits_integer(v, value);
         }
-        v.push_back(CLASS_UNIV|PC_PRIMITIVE|TAG_INTEGER);
     }
 
 
@@ -205,19 +221,36 @@ namespace BER {
         return {};
     }
 
+    inline std::vector<uint8_t> mkSmallInteger(uint32_t value)
+    {
+        std::vector<uint8_t> field;
+        backward_push_small_integer(field, value);
+        std::reverse(field.begin(), field.end());
+        return field;
+    }
+
     inline std::vector<uint8_t> mkSmallIntegerField(uint8_t value, uint8_t tag)
     {
         std::vector<uint8_t> field;
-        backward_push_small_integer_field(field, value);
+        backward_push_small_integer(field, value);
         backward_push_tagged_field_header(field, field.size(), tag);
         std::reverse(field.begin(), field.end());
         return field;
     }
 
+    inline std::vector<uint8_t> mkInteger(uint32_t value)
+    {
+        std::vector<uint8_t> field;
+        backward_push_integer(field, value);
+        std::reverse(field.begin(), field.end());
+        return field;
+    }
+
+
     inline std::vector<uint8_t> mkIntegerField(uint32_t value, uint8_t tag)
     {
         std::vector<uint8_t> field;
-        backward_push_integer_field(field, value);
+        backward_push_integer(field, value);
         backward_push_tagged_field_header(field, field.size(), tag);
         std::reverse(field.begin(), field.end());
         return field;
@@ -432,32 +465,32 @@ namespace BER {
         return true;
     }
 
-    inline int write_integer(OutStream & s, uint32_t value)
-    {
-        s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_INTEGER));
-        if (value <  0x80) {
-            s.out_uint8(1); // length
-            s.out_uint8(value);
-            return 3;
-        }
-        if (value <  0x8000) {
-            s.out_uint8(2); // length
-            s.out_uint16_be(value);
-            return 4;
-        }
-        if (value <  0x800000) {
-            s.out_uint8(3); // length
-            s.out_uint8(value >> 16);
-            s.out_uint16_be(value & 0xFFFF);
-            return 5;
-        }
-        if (value <  0x80000000) {
-            s.out_uint8(4); // length
-            s.out_uint32_be(value);
-            return 6;
-        }
-        return 0;
-    }
+//    inline int write_integer(OutStream & s, uint32_t value)
+//    {
+//        s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_INTEGER));
+//        if (value <  0x80) {
+//            s.out_uint8(1); // length
+//            s.out_uint8(value);
+//            return 3;
+//        }
+//        if (value <  0x8000) {
+//            s.out_uint8(2); // length
+//            s.out_uint16_be(value);
+//            return 4;
+//        }
+//        if (value <  0x800000) {
+//            s.out_uint8(3); // length
+//            s.out_uint8(value >> 16);
+//            s.out_uint16_be(value & 0xFFFF);
+//            return 5;
+//        }
+//        if (value <  0x80000000) {
+//            s.out_uint8(4); // length
+//            s.out_uint32_be(value);
+//            return 6;
+//        }
+//        return 0;
+//    }
 
     inline int sizeof_integer(uint32_t value) {
         return (value < 0x80)?3:(value < 0x8000)?4:(value < 0x800000)?5:(value < 0x80000000)?6:0;
