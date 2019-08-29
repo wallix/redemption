@@ -816,7 +816,7 @@ private:
         }
 
         InStream decrypted_creds(Buffer);
-        this->ts_credentials.recv(decrypted_creds);
+        this->ts_credentials = recvTSCredentials(decrypted_creds);
 
         // hexdump(this->ts_credentials.passCreds.userName,
         //         this->ts_credentials.passCreds.userName_length);

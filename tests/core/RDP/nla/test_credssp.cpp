@@ -370,10 +370,10 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     auto r = emitTSCredentialsPassword(domain, user, pass);
     RED_CHECK_EQUAL(r.size(), r[1]+2);
 
-    TSCredentials ts_cred_received;
+    
 
     InStream in_s(r);
-    ts_cred_received.recv(in_s);
+    TSCredentials ts_cred_received = recvTSCredentials(in_s);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 1);
     RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName, domain);
@@ -404,16 +404,13 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     std::vector<uint8_t> cspName = {'w', 'h', 'a', 't', 0};
     uint32_t keySpec = 32;
 
-    TSCredentials ts_cred(pin, userHint, domainHint,
-                          keySpec, cardName, readerName, containerName, cspName);
+    TSCredentials ts_cred(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName);
 
     auto r = emitTSCredentialsSmartCard(ts_cred);
     RED_CHECK_EQUAL(r.size(), r[1]+2);
 
-    TSCredentials ts_cred_received;
-
     InStream in_s(r);
-    ts_cred_received.recv(in_s);
+    TSCredentials ts_cred_received = recvTSCredentials(in_s);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 2);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.pin, pin);

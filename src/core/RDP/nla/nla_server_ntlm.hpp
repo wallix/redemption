@@ -736,7 +736,7 @@ public:
                 }
 
                 InStream decrypted_creds(Buffer);
-                this->ts_credentials.recv(decrypted_creds);
+                this->ts_credentials = recvTSCredentials(decrypted_creds);
  
                 this->server_auth_data.state = ServerAuthenticateData::Start;
                 return credssp::State::Finish;

@@ -1378,32 +1378,36 @@ struct TSCredentials
     void set_credentials_from_av(bytes_view domain_av, bytes_view user_av, bytes_view password_av) {
         this->passCreds = TSPasswordCreds(domain_av, user_av, password_av);
     }
-
-    void recv(InStream & stream) {
-        // stream is decrypted and should be decrypted before calling recv
-        int creds_length;
-
-        /* TSCredentials (SEQUENCE) */
-        BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-
-        /* [0] credType (INTEGER) */
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_integer(stream, this->credType);
-
-        /* [1] credentials (OCTET STRING) */
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_octet_string_tag(stream, creds_length);
-
-        if (this->credType == 2) {
-            this->smartcardCreds = recvTSSmartCardCreds(stream);
-        } else {
-            this->passCreds = recvTSPasswordCreds(stream);
-        }
-    }
 };
+
+
+inline TSCredentials recvTSCredentials(InStream & stream) 
+{
+    TSCredentials self;
+    // stream is decrypted and should be decrypted before calling recv
+    int creds_length;
+
+    /* TSCredentials (SEQUENCE) */
+    BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+
+    /* [0] credType (INTEGER) */
+    BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_integer(stream, self.credType);
+
+    /* [1] credentials (OCTET STRING) */
+    BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_octet_string_tag(stream, creds_length);
+
+    if (self.credType == 2) {
+        self.smartcardCreds = recvTSSmartCardCreds(stream);
+    } else {
+        self.passCreds = recvTSPasswordCreds(stream);
+    }
+    return self;
+}
 
 inline std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName, bytes_view userName, bytes_view password) 
 {
