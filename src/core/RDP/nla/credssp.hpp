@@ -268,14 +268,14 @@ namespace BER {
         return 1 + _ber_sizeof_length(length);
     }
 
-    inline uint8_t peek_tag(InStream & s, const char * message, error_type eid)
+
+    inline bool check_ber_ctxt_tag(InStream & s, uint8_t tag)
     {
         if (!s.in_check_rem(1)) {
-            LOG(LOG_ERR, "%s: Ber data truncated", message);
-            throw Error(eid);
+            return false;
         }
         uint8_t tag_byte = s.peek_uint8();
-        return tag_byte;
+        return tag_byte == (CLASS_CTXT|PC_CONSTRUCT|tag);
     }
 
 
@@ -1033,7 +1033,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     LOG(LOG_INFO, "Credssp TSCredentials::recv() Negotiated version %u", self.use_version);
 
     // [1] negoTokens (NegoData) OPTIONAL
-    if ((BER::CLASS_CTXT|BER::PC_CONSTRUCT|1) == BER::peek_tag(stream, "TS Request", ERR_CREDSSP_TS_REQUEST)){
+    if (BER::check_ber_ctxt_tag(stream, 1)) {
         stream.in_skip_bytes(1);
         length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
         // LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS");
@@ -1056,7 +1056,9 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     }
 
     /* [2] authInfo (OCTET STRING) */
-    if (BER::read_contextual_tag(stream, 2, length)) {
+    if (BER::check_ber_ctxt_tag(stream, 2)) {
+        stream.in_skip_bytes(1);
+        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
         // LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
         if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
            !stream.in_check_rem(length)) {
@@ -1068,7 +1070,9 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     }
 
     /* [3] pubKeyAuth (OCTET STRING) */
-    if (BER::read_contextual_tag(stream, 3, length)) {
+    if (BER::check_ber_ctxt_tag(stream, 3)) {
+        stream.in_skip_bytes(1);
+        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
         // LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
         if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
            !stream.in_check_rem(length)) {
@@ -1078,32 +1082,38 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
         stream.in_copy_bytes(self.pubKeyAuth.data(), length);
     }
     /* [4] errorCode (INTEGER) */
-    if (remote_version >= 3
-        && remote_version != 5
-        && BER::read_contextual_tag(stream, 4, length)) {
-        LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
-        if (!BER::read_integer(stream, error_code)) {
-            throw Error(ERR_CREDSSP_TS_REQUEST);
+    if (remote_version >= 3 && remote_version != 5){
+        if (BER::check_ber_ctxt_tag(stream, 4)){
+            stream.in_skip_bytes(1);
+            length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
+            if (!BER::read_integer(stream, error_code)) {
+                throw Error(ERR_CREDSSP_TS_REQUEST);
+            }
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() "
+                "ErrorCode = %x, Facility = %x, Code = %x",
+                error_code,
+                (error_code >> 16) & 0x7FF,
+                (error_code & 0xFFFF)
+            );
         }
-        LOG(LOG_INFO, "Credssp TSCredentials::recv() "
-            "ErrorCode = %x, Facility = %x, Code = %x",
-            error_code,
-            (error_code >> 16) & 0x7FF,
-            (error_code & 0xFFFF)
-        );
     }
     /* [5] clientNonce (OCTET STRING) */
-    if (remote_version >= 5 && BER::read_contextual_tag(stream, 5, length)) {
-        // LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
-        if(!BER::read_octet_string_tag(stream, length)){
-            throw Error(ERR_CREDSSP_TS_REQUEST);
+    if (remote_version >= 5){
+        if (BER::check_ber_ctxt_tag(stream, 5)) {
+            stream.in_skip_bytes(1);
+            length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+            // LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
+            if(!BER::read_octet_string_tag(stream, length)){
+                throw Error(ERR_CREDSSP_TS_REQUEST);
+            }
+            if (length != CLIENT_NONCE_LENGTH){
+                LOG(LOG_ERR, "Truncated client nonce");
+                throw Error(ERR_CREDSSP_TS_REQUEST);
+            }
+            stream.in_copy_bytes(self.clientNonce.data, CLIENT_NONCE_LENGTH);
+            self.clientNonce.initialized = true;
         }
-        if (length != CLIENT_NONCE_LENGTH){
-            LOG(LOG_ERR, "Truncated client nonce");
-            throw Error(ERR_CREDSSP_TS_REQUEST);
-        }
-        stream.in_copy_bytes(self.clientNonce.data, CLIENT_NONCE_LENGTH);
-        self.clientNonce.initialized = true;
     }
     // return 0;
     return self;
