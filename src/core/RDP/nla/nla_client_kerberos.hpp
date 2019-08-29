@@ -734,23 +734,29 @@ private:
     SEC_STATUS credssp_encrypt_ts_credentials() {
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::encrypt_ts_credentials");
-        if (this->restricted_admin_mode) {
-            LOG(LOG_INFO, "Restricted Admin Mode");
-            this->ts_credentials.set_credentials_from_av({},{},{} );
-        }
-        else {
-            this->ts_credentials.set_credentials_from_av(this->identity.get_domain_utf16_av(),
-                                                         this->identity.get_user_utf16_av(),
-                                                         this->identity.get_password_utf16_av());
-        }
 
         StaticOutStream<65536> ts_credentials_send;
         std::vector<uint8_t> result;
         if (this->ts_credentials.credType == 1){
-            result = emitTSCredentialsPassword(this->ts_credentials.passCreds.domainName,this->ts_credentials.passCreds.userName,this->ts_credentials.passCreds.password);
+            if (this->restricted_admin_mode) {
+                LOG(LOG_INFO, "Restricted Admin Mode");
+                result = emitTSCredentialsPassword({},{}, {});
+            }
+            else {
+                result = emitTSCredentialsPassword(this->identity.get_domain_utf16_av(),this->identity.get_user_utf16_av(),this->identity.get_password_utf16_av());
+            }
         }
         else {
-            result = emitTSCredentialsSmartCard(this->ts_credentials);
+            // Card Reader Not Supported Yet
+            bytes_view pin;
+            bytes_view userHint;
+            bytes_view domainHint; 
+            uint32_t keySpec = 0;
+            bytes_view cardName;
+            bytes_view readerName;
+            bytes_view containerName;
+            bytes_view cspName;
+            result = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
         }
         ts_credentials_send.out_copy_bytes(result);
 

@@ -462,22 +462,30 @@ public:
 
                 /* Send encrypted credentials */
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_ts_credentials");
-                if (this->restricted_admin_mode) {
-                    LOG(LOG_INFO, "Restricted Admin Mode");
-                    this->ts_credentials.set_credentials_from_av({},{},{});
-                }
-                else {
-                    this->ts_credentials.set_credentials_from_av(this->identity_Domain, this->identity_User, this->identity_Password);
-                }
 
                 {
                     StaticOutStream<65536> ts_credentials_send;
                     std::vector<uint8_t> result;
                     if (this->ts_credentials.credType == 1){
-                        result = emitTSCredentialsPassword(this->ts_credentials.passCreds.domainName,this->ts_credentials.passCreds.userName,this->ts_credentials.passCreds.password);
+                        if (this->restricted_admin_mode) {
+                            LOG(LOG_INFO, "Restricted Admin Mode");
+                            result = emitTSCredentialsPassword({},{},{});
+                        }
+                        else {
+                            result = emitTSCredentialsPassword(this->identity_Domain,this->identity_User,this->identity_Password);
+                        }
                     }
                     else {
-                        result = emitTSCredentialsSmartCard(this->ts_credentials);
+                        // Card Reader Not Supported Yet
+                        bytes_view pin;
+                        bytes_view userHint;
+                        bytes_view domainHint; 
+                        uint32_t keySpec = 0;
+                        bytes_view cardName;
+                        bytes_view readerName;
+                        bytes_view containerName;
+                        bytes_view cspName;
+                        result = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
                     }
                     ts_credentials_send.out_copy_bytes(result);
                     array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};

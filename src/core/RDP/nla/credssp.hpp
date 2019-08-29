@@ -876,7 +876,6 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
     return result;
 }
 
-// TODO: use exceptions instead of error_code for returning errors
 inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t version = 6) 
 {
     InStream stream(data);
@@ -890,7 +889,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
 
     // version    [0] INTEGER,
     BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
-    length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TS Request [0] version", ERR_CREDSSP_TS_REQUEST);
     if(!BER::read_integer(stream, remote_version)) {
         throw Error(ERR_CREDSSP_TS_REQUEST);
     }
@@ -903,7 +902,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     // [1] negoTokens (NegoData) OPTIONAL
     if (BER::check_ber_ctxt_tag(stream, 1)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        length = BER::read_length(stream, "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
 
         // * NegoData ::= SEQUENCE OF NegoDataItem
         // *
@@ -912,16 +911,16 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
         // * }
 
         // NegoData ::= SEQUENCE OF NegoDataItem
-        BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData", ERR_CREDSSP_TS_REQUEST);
+        length = BER::read_length(stream, "TS Request [1] negoTokens NegoData", ERR_CREDSSP_TS_REQUEST);
 
         // NegoDataItem ::= SEQUENCE {
-        BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData NegoDataItem", ERR_CREDSSP_TS_REQUEST);
+        length = BER::read_length(stream, "TS Request [1] negoTokens NegoData NegoDataItem", ERR_CREDSSP_TS_REQUEST);
 
         // [0] negoToken OCTET STRING
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request [1] negoTokens NegoData NegoDataItem [0] negoToken", ERR_CREDSSP_TS_REQUEST);
+        length = BER::read_length(stream, "TS Request [1] negoTokens NegoData NegoDataItem [0] negoToken", ERR_CREDSSP_TS_REQUEST);
 
         if(!BER::read_octet_string_tag(stream, length)|| !stream.in_check_rem(length)) {
             throw Error(ERR_CREDSSP_TS_REQUEST);
@@ -933,7 +932,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     /* [2] authInfo (OCTET STRING) */
     if (BER::check_ber_ctxt_tag(stream, 2)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        length = BER::read_length(stream, "TS Request [2] authInfo", ERR_CREDSSP_TS_REQUEST);
         if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
            !stream.in_check_rem(length)) {
             throw Error(ERR_CREDSSP_TS_REQUEST);
@@ -946,7 +945,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     /* [3] pubKeyAuth (OCTET STRING) */
     if (BER::check_ber_ctxt_tag(stream, 3)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        length = BER::read_length(stream, "TS Request [3] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
         if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
            !stream.in_check_rem(length)) {
             throw Error(ERR_CREDSSP_TS_REQUEST);
@@ -958,7 +957,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     if (remote_version >= 3 && remote_version != 5){
         if (BER::check_ber_ctxt_tag(stream, 4)){
             stream.in_skip_bytes(1);
-            length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+            length = BER::read_length(stream, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
             LOG(LOG_INFO, "Credssp recvTSCredentials() ErrorCode");
             if (!BER::read_integer(stream, error_code)) {
                 throw Error(ERR_CREDSSP_TS_REQUEST);
@@ -988,7 +987,6 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
             self.clientNonce.initialized = true;
         }
     }
-    // return 0;
     return self;
 }
 
@@ -1003,15 +1001,6 @@ struct TSPasswordCreds {
     std::vector<uint8_t> domainName;
     std::vector<uint8_t> userName;
     std::vector<uint8_t> password;
-
-    TSPasswordCreds() = default;
-
-    TSPasswordCreds(bytes_view domain, bytes_view user, bytes_view pass)
-      : domainName(domain.data(), domain.data()+domain.size())
-      , userName(user.data(), user.data()+user.size())
-      , password(pass.data(), pass.data()+pass.size())
-    {
-    }
 };
 
 
@@ -1195,38 +1184,42 @@ inline TSCspDataDetail recvTSCspDataDetail(InStream & stream)
 }
 
 
-inline std::vector<uint8_t> emitTSCspDataDetail(const TSCspDataDetail & self)
+inline std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec, 
+                                                bytes_view cardName,
+                                                bytes_view readerName,
+                                                bytes_view containerName,
+                                                bytes_view cspName)
 {
     // [0] keySpec
-    auto ber_keySpec_Field = BER::mkIntegerField(self.keySpec, 0);
+    auto ber_keySpec_Field = BER::mkIntegerField(keySpec, 0);
 
     // [1] cardName (OCTET STRING OPTIONAL)
-    auto ber_cardName_Header = BER::mkOptionalOctetStringFieldHeader(self.cardName.size(), 1);
+    auto ber_cardName_Header = BER::mkOptionalOctetStringFieldHeader(cardName.size(), 1);
 
     // [2] readerName (OCTET STRING OPTIONAL)
-    auto ber_readerName_Header = BER::mkOptionalOctetStringFieldHeader(self.readerName.size(), 2);
+    auto ber_readerName_Header = BER::mkOptionalOctetStringFieldHeader(readerName.size(), 2);
 
     // [3] containerName (OCTET STRING OPTIONAL)
-    auto ber_containerName_Header = BER::mkOptionalOctetStringFieldHeader(self.containerName.size(), 3);
+    auto ber_containerName_Header = BER::mkOptionalOctetStringFieldHeader(containerName.size(), 3);
 
     // [4] cspName (OCTET STRING OPTIONAL)
-    auto ber_cspName_Header = BER::mkOptionalOctetStringFieldHeader(self.cspName.size(), 4);
+    auto ber_cspName_Header = BER::mkOptionalOctetStringFieldHeader(cspName.size(), 4);
 
     int innerSize = ber_keySpec_Field.size()
-                  + ber_cardName_Header.size() + self.cardName.size()
-                  + ber_readerName_Header.size() + self.readerName.size()
-                  + ber_containerName_Header.size() + self.containerName.size()
-                  + ber_cspName_Header.size() + self.cspName.size();
+                  + ber_cardName_Header.size() + cardName.size()
+                  + ber_readerName_Header.size() + readerName.size()
+                  + ber_containerName_Header.size() + containerName.size()
+                  + ber_cspName_Header.size() + cspName.size();
 
     // TSCspDataDetail (SEQUENCE)
     auto sequence_header = BER::mkSequenceHeader(innerSize);
 
     std::vector<uint8_t> result = std::move(sequence_header);
     result << ber_keySpec_Field
-           << ber_cardName_Header      << self.cardName 
-           << ber_readerName_Header    << self.readerName
-           << ber_containerName_Header << self.containerName
-           << ber_cspName_Header << self.cspName;
+           << ber_cardName_Header      << cardName 
+           << ber_readerName_Header    << readerName
+           << ber_containerName_Header << containerName
+           << ber_cspName_Header       << cspName;
 
     return result;
 }
@@ -1307,35 +1300,41 @@ inline TSSmartCardCreds recvTSSmartCardCreds(InStream & stream)
     return self;
 }
 
-inline std::vector<uint8_t> emitTSSmartCardCreds(const TSSmartCardCreds & self)
+inline std::vector<uint8_t> emitTSSmartCardCreds(
+                  buffer_view pin, buffer_view userHint, bytes_view domainHint,
+                  uint32_t keySpec, 
+                  bytes_view cardName,
+                  bytes_view readerName,
+                  bytes_view containerName,
+                  bytes_view cspName)
 {
     // [0] pin (OCTET STRING)
-    auto ber_pin_header = BER::mkMandatoryOctetStringFieldHeader(self.pin.size(), 0);
+    auto ber_pin_header = BER::mkMandatoryOctetStringFieldHeader(pin.size(), 0);
 
     // [1] cspData (TSCspDataDetail)
-    auto ber_TSCspDataDetail = emitTSCspDataDetail(self.cspData);
+    auto ber_TSCspDataDetail = emitTSCspDataDetail(keySpec, cardName, readerName, containerName, cspName);
     auto ber_CspDataDetail_header = BER::mkContextualFieldHeader(ber_TSCspDataDetail.size(), 1);
 
     /* [2] userHint (OCTET STRING OPTIONAL) */
-    auto ber_userHint_header = BER::mkOptionalOctetStringFieldHeader(self.userHint.size(), 2);
+    auto ber_userHint_header = BER::mkOptionalOctetStringFieldHeader(userHint.size(), 2);
 
     /* [3] domainHint (OCTET STRING OPTIONAL) */
-    auto ber_domainHint_header = BER::mkOptionalOctetStringFieldHeader(self.domainHint.size(), 3);
+    auto ber_domainHint_header = BER::mkOptionalOctetStringFieldHeader(domainHint.size(), 3);
 
     /* TSCredentials (SEQUENCE) */
-    int ts_smartcards_creds_length = ber_pin_header.size() + self.pin.size()
+    int ts_smartcards_creds_length = ber_pin_header.size() + pin.size()
                   + ber_CspDataDetail_header.size() + ber_TSCspDataDetail.size()
-                  + ber_userHint_header.size() + self.userHint.size()
-                  + ber_domainHint_header.size() + self.domainHint.size()
+                  + ber_userHint_header.size() + userHint.size()
+                  + ber_domainHint_header.size() + domainHint.size()
                   ;
 
     auto ber_ts_smartcards_creds_header = BER::mkSequenceHeader(ts_smartcards_creds_length);
     
     std::vector<uint8_t> result = std::move(ber_ts_smartcards_creds_header);
-    result << ber_pin_header           << self.pin
+    result << ber_pin_header           << pin
            << ber_CspDataDetail_header << ber_TSCspDataDetail
-           << ber_userHint_header      << self.userHint
-           << ber_domainHint_header    << self.domainHint;
+           << ber_userHint_header      << userHint
+           << ber_domainHint_header    << domainHint;
            
     return result;
 }
@@ -1352,31 +1351,7 @@ struct TSCredentials
     uint32_t credType{1};
     TSPasswordCreds passCreds;
     TSSmartCardCreds smartcardCreds;
-    // For now, TSCredentials can only contains TSPasswordCreds (not TSSmartCardCreds)
-
-    TSCredentials() = default;
-
-    TSCredentials(bytes_view domain, bytes_view user, bytes_view pass)
-        : credType(1)
-        , passCreds(domain, user, pass)
-    {
-
-    }
-
-    TSCredentials(buffer_view pin, buffer_view userHint, bytes_view domainHint,
-                  uint32_t keySpec, 
-                  bytes_view cardName,
-                  bytes_view readerName,
-                  bytes_view containerName,
-                  bytes_view cspName)
-        : credType(2)
-        , smartcardCreds(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName)
-    {
-    }
-
-    void set_credentials_from_av(bytes_view domain_av, bytes_view user_av, bytes_view password_av) {
-        this->passCreds = TSPasswordCreds(domain_av, user_av, password_av);
-    }
+    // For now, TSCredentials only contains TSPasswordCreds (not TSSmartCardCreds)
 };
 
 inline TSCredentials recvTSCredentials(InStream & stream) 
@@ -1426,13 +1401,19 @@ inline std::vector<uint8_t> emitTSCredentialsPassword(bytes_view domainName, byt
     return result;
 }
 
-inline std::vector<uint8_t> emitTSCredentialsSmartCard(const TSCredentials & self) 
+inline std::vector<uint8_t> emitTSCredentialsSmartCard(
+                  buffer_view pin, buffer_view userHint, bytes_view domainHint,
+                  uint32_t keySpec, 
+                  bytes_view cardName,
+                  bytes_view readerName,
+                  bytes_view containerName,
+                  bytes_view cspName) 
 {
     // [0] credType (INTEGER): 2 means SmartCard
     auto ber_credtype_field = BER::mkSmallIntegerField(2, 0);
 
     // [1] credentials (OCTET STRING)
-    std::vector<uint8_t> ber_credentials = emitTSSmartCardCreds(self.smartcardCreds);
+    std::vector<uint8_t> ber_credentials = emitTSSmartCardCreds(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName);
     auto ber_credentials_header = BER::mkMandatoryOctetStringFieldHeader(ber_credentials.size(), 1);
 
     // TSCredentials (SEQUENCE)
