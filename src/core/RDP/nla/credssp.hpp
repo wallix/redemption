@@ -265,13 +265,6 @@ namespace BER {
     }
 
     // ==========================
-    //   LENGTH
-    // ==========================
-    inline int _ber_sizeof_length(int length) {
-        return (length <= 0x7F)?1:(length <= 0xFF)?2:3;
-    }
-
-    // ==========================
     //   CONTEXTUAL TAG
     // ==========================
     inline bool read_contextual_tag(InStream & s, uint8_t tag, int & length) {
@@ -307,11 +300,6 @@ namespace BER {
         return true;
     }
 
-    inline int sizeof_contextual_tag(int length) {
-        return 1 + _ber_sizeof_length(length);
-    }
-
-
     inline bool check_ber_ctxt_tag(InStream & s, uint8_t tag)
     {
         if (!s.in_check_rem(1)) {
@@ -334,7 +322,6 @@ namespace BER {
             throw Error(eid);
         }
     }
-
 
     inline unsigned read_length(InStream & s, const char * message, error_type eid) {
         // read length
@@ -392,10 +379,6 @@ namespace BER {
         }
         length = byte;
         return true;
-    }
-
-    inline int sizeof_octet_string(int length) {
-        return 1 + _ber_sizeof_length(length) + length;
     }
 
     // ==========================
@@ -463,37 +446,6 @@ namespace BER {
             return false;
         }
         return true;
-    }
-
-//    inline int write_integer(OutStream & s, uint32_t value)
-//    {
-//        s.out_uint8(CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_INTEGER));
-//        if (value <  0x80) {
-//            s.out_uint8(1); // length
-//            s.out_uint8(value);
-//            return 3;
-//        }
-//        if (value <  0x8000) {
-//            s.out_uint8(2); // length
-//            s.out_uint16_be(value);
-//            return 4;
-//        }
-//        if (value <  0x800000) {
-//            s.out_uint8(3); // length
-//            s.out_uint8(value >> 16);
-//            s.out_uint16_be(value & 0xFFFF);
-//            return 5;
-//        }
-//        if (value <  0x80000000) {
-//            s.out_uint8(4); // length
-//            s.out_uint32_be(value);
-//            return 6;
-//        }
-//        return 0;
-//    }
-
-    inline int sizeof_integer(uint32_t value) {
-        return (value < 0x80)?3:(value < 0x8000)?4:(value < 0x800000)?5:(value < 0x80000000)?6:0;
     }
 } // namespace BER
 
