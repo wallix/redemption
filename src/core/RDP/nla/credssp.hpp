@@ -1259,53 +1259,54 @@ struct TSSmartCardCreds {
     {
     }
 
-    int recv(InStream & stream) {
-        int length = 0;
-        /* TSSmartCardCreds (SEQUENCE) */
-        BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-
-        /* [0] pin (OCTET STRING) */
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_octet_string_tag(stream, length);
-
-        this->pin.resize(length);
-        stream.in_copy_bytes(this->pin);
-
-        /* [1] cspData (TSCspDataDetail) */
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        this->cspData = recvTSCspDataDetail(stream);
-
-        /* [2] userHint (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 2, length)) {
-            // LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : userHint");
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-
-            this->userHint.resize(length);
-            stream.in_copy_bytes(this->userHint);
-        }
-
-        /* [3] domainHint (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 3, length)) {
-            // LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : domainHint");
-            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
-               !stream.in_check_rem(length)) {
-                return -1;
-            }
-
-            this->domainHint.resize(length);
-            stream.in_copy_bytes(this->domainHint);
-        }
-
-        return 0;
-    }
 };
 
+inline TSSmartCardCreds recvTSSmartCardCreds(InStream & stream) 
+{
+    TSSmartCardCreds self;
+    int length = 0;
+    /* TSSmartCardCreds (SEQUENCE) */
+    BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+
+    /* [0] pin (OCTET STRING) */
+    BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_octet_string_tag(stream, length);
+
+    self.pin.resize(length);
+    stream.in_copy_bytes(self.pin);
+
+    /* [1] cspData (TSCspDataDetail) */
+    BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    self.cspData = recvTSCspDataDetail(stream);
+
+    /* [2] userHint (OCTET STRING) */
+    if (BER::read_contextual_tag(stream, 2, length)) {
+        // LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : userHint");
+        if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+           !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+
+        self.userHint.resize(length);
+        stream.in_copy_bytes(self.userHint);
+    }
+
+    /* [3] domainHint (OCTET STRING) */
+    if (BER::read_contextual_tag(stream, 3, length)) {
+        // LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : domainHint");
+        if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+           !stream.in_check_rem(length)) {
+            throw Error(ERR_CREDSSP_TS_REQUEST);
+        }
+
+        self.domainHint.resize(length);
+        stream.in_copy_bytes(self.domainHint);
+    }
+    return self;
+}
 
 inline std::vector<uint8_t> emitTSSmartCardCreds(const TSSmartCardCreds & self)
 {
@@ -1397,7 +1398,7 @@ struct TSCredentials
         BER::read_octet_string_tag(stream, creds_length);
 
         if (this->credType == 2) {
-            this->smartcardCreds.recv(stream);
+            this->smartcardCreds = recvTSSmartCardCreds(stream);
         } else {
             this->passCreds.recv(stream);
         }
