@@ -29,43 +29,14 @@
 
 RED_AUTO_TEST_CASE(TestLogon)
 {
-    // TODO Really the test below is useless, we are testing assignment!
-    // TODO Infopacket should be replaced by some constructor with parameters and test fixed
-    InfoPacket infoPacket;
-
-    infoPacket.rdp5_support = 1;
-
-    size_t lg = strlen("Domain_Test");
-    memcpy(infoPacket.Domain, "Domain_Test", lg);
-    infoPacket.cbDomain = lg;
-
-    lg = strlen("UserName_Test");
-    memcpy(infoPacket.UserName, "UserName_Test", lg);
-    infoPacket.cbUserName = lg;
-
-    lg = strlen("Password_Test");
-    memcpy(infoPacket.Password, "Password_Test", lg);
-    infoPacket.cbPassword = lg;
-
-    lg = strlen("Program_Test");
-    memcpy(infoPacket.AlternateShell, "Program_Test", lg);
-    infoPacket.cbAlternateShell = lg;
-
-    lg = strlen("Directory_Test");
-    memcpy(infoPacket.WorkingDir, "Directory_Test", lg);
-    infoPacket.cbWorkingDir = lg;
-
-    infoPacket.flags  = INFO_MOUSE;
-    infoPacket.flags |= INFO_DISABLECTRLALTDEL;
-    infoPacket.flags |= INFO_UNICODE;
-    infoPacket.flags |= INFO_MAXIMIZESHELL;
-    infoPacket.flags |= INFO_ENABLEWINDOWSKEY;
-    infoPacket.flags |= INFO_LOGONNOTIFY;;
-    infoPacket.flags |= ((infoPacket.Password[0]|infoPacket.Password[1]) != 0) * INFO_AUTOLOGON;
-    infoPacket.flags |= (infoPacket.rdp5_support != 0) * (INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK);
-
-    infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER
-                                                   | 1 * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
+    InfoPacket infoPacket(
+        /*.rdp5_support = */1,
+        /*.cbDomain = */ "Domain_Test",
+        /*.cbUserName = */ "UserName_Test",
+        /*.cbPassword = */ "Password_Test",
+        /*cbAlternateShell = */ "Program_Test",
+        /*.cbWorkingDir = */ "Directory_Test",
+        /*.performanceFlags = */ PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
 
     RED_CHECK_EQUAL(infoPacket.rdp5_support, static_cast<uint32_t>(1));
     RED_CHECK_EQUAL(infoPacket.flags, static_cast<uint32_t>
@@ -77,13 +48,12 @@ RED_AUTO_TEST_CASE(TestLogon)
         |INFO_LOGONNOTIFY
         |INFO_AUTOLOGON
         |INFO_LOGONERRORS
-        |INFO_NOAUDIOPLAYBACK
         ));
-    RED_CHECK_MEM("Domain_Test"_av, infoPacket.av_domain());
-    RED_CHECK_MEM("UserName_Test"_av, infoPacket.av_user_anme());
-    RED_CHECK_MEM("Password_Test"_av, infoPacket.av_password());
-    RED_CHECK_MEM("Program_Test"_av, infoPacket.av_alternate_shell());
-    RED_CHECK_MEM("Directory_Test"_av, infoPacket.av_working_directory());
+    RED_CHECK_MEM("Domain_Test"_av, infoPacket.zDomain());
+    RED_CHECK_MEM("UserName_Test"_av, infoPacket.zUserName());
+    RED_CHECK_MEM("Password_Test"_av, infoPacket.zPassword());
+    RED_CHECK_MEM("Program_Test"_av, infoPacket.zAlternateShell());
+    RED_CHECK_MEM("Directory_Test"_av, infoPacket.zWorkingDirectory());
     RED_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags,
         (PERF_DISABLE_WALLPAPER|PERF_DISABLE_FULLWINDOWDRAG|PERF_DISABLE_MENUANIMATIONS));
 }

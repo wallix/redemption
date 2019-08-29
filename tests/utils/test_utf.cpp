@@ -232,31 +232,6 @@ RED_AUTO_TEST_CASE(TestUTF32toUTF8) {
     RED_REQUIRE_EQUAL('a', buf[0]);
 }
 
-RED_AUTO_TEST_CASE(TestUTF8ToUTF8LCopy)
-{
-    struct Data
-    {
-        std::size_t dest_len;
-        std::size_t byte_len;
-        std::size_t utf_len;
-    };
-    uint8_t   source[11] = "aÉ€𝄞"; // 0x61, |0xc3, 0x89, |0xe2, 0x82, 0xac,| 0xf0, 0x9d, 0x84, 0x9e,| 0x00
-    RED_TEST_CONTEXT_DATA(Data const& data, "dest_len: " << data.dest_len, {
-        Data{11, 10, 4},
-        Data{10, 6, 3},
-        Data{9, 6, 3},
-        Data{7, 6, 3},
-        Data{6, 3, 2},
-        Data{5, 3, 2},
-        Data{2, 1, 1},
-        Data{1, 0, 0}
-    }) {
-        uint8_t dest[11] = {};
-        RED_CHECK_EQUAL(data.utf_len, UTF8ToUTF8LCopy(dest, data.dest_len, source));
-        RED_CHECK_EQUAL(data.byte_len, strlen(char_ptr_cast(dest)));
-    }
-}
-
 RED_AUTO_TEST_CASE(TestUTF8toUnicodeIterator) {
     const char * s = "Ëa\nŒo";
     UTF8toUnicodeIterator u(s);

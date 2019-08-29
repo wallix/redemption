@@ -239,49 +239,6 @@ RED_AUTO_TEST_CASE(TestStream_out_Stream)
     RED_CHECK(s.tailroom());
 }
 
-RED_AUTO_TEST_CASE(TestStream_in_unistr)
-{
-    // test we can create a Stream object
-    StaticOutStream<256> stream;
-    uint8_t data[] = { 'r', 0, 'e', 0, 's', 0, 'u', 0, 'l', 0, 't', 0, 0, 0 };
-    stream.out_copy_bytes(data, sizeof(data));
-    stream.out_uint32_le(-1); // just to put a padding after usefull data
-
-    InStream in_stream(stream.get_bytes());
-    uint8_t result[256];
-    in_stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
-    RED_CHECK_EQUAL(14u, in_stream.get_offset());
-    RED_CHECK_EQUAL('r', result[0]);
-    RED_CHECK_EQUAL('e', result[1]);
-    RED_CHECK_EQUAL('s', result[2]);
-    RED_CHECK_EQUAL('u', result[3]);
-    RED_CHECK_EQUAL('l', result[4]);
-    RED_CHECK_EQUAL('t', result[5]);
-    RED_CHECK_EQUAL(0, result[6]);
-}
-
-RED_AUTO_TEST_CASE(TestStream_in_unistr_2)
-{
-    // test we can create a Stream object
-    StaticOutStream<256> stream;
-    uint8_t data[] = { 'r', 0, 0xE9, 0, 's', 0, 'u', 0, 'l', 0, 't', 0, 0, 0 };
-    stream.out_copy_bytes(data, sizeof(data));
-    stream.out_uint32_le(-1); // just to put a padding after usefull data
-
-    InStream in_stream(stream.get_bytes());
-    uint8_t result[256];
-    in_stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
-    RED_CHECK_EQUAL(14u, in_stream.get_offset());
-    RED_CHECK_EQUAL('r', result[0]);
-    RED_CHECK_EQUAL(0xC3, result[1]);
-    RED_CHECK_EQUAL(0xA9, result[2]);
-    RED_CHECK_EQUAL('s', result[3]);
-    RED_CHECK_EQUAL('u', result[4]);
-    RED_CHECK_EQUAL('l', result[5]);
-    RED_CHECK_EQUAL('t', result[6]);
-    RED_CHECK_EQUAL(0, result[7]);
-}
-
 RED_AUTO_TEST_CASE(TestStream_Stream_Compatibility)
 {
     StaticOutStream<512> stream;

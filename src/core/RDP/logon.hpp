@@ -29,10 +29,12 @@
 #include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "utils/get_printable_password.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 #include <cstdint>
-#include <string>
+#include <cstring>
+#include <algorithm> // std::min
 
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
@@ -716,9 +718,9 @@ struct ExtendedInfoPacket {
 
     uint16_t clientAddressFamily{2}; // numeric socket descriptor
     uint16_t cbClientAddress{0};     // size in bytes of variable size clientAdress attribute
-    uint8_t clientAddress[81] {};
+    uint8_t clientAddress[80] {};
     uint16_t cbClientDir{0};         // size in bytes of variable size clientDir attribute
-    uint8_t clientDir[257] {};
+    uint8_t clientDir[256] {};
     uint32_t clientSessionId{0};     // was added in RDP 5.1 and is currently (from what version on ??) ignored by the server. It SHOULD be set to 0.
     uint32_t performanceFlags{0};    // from a closed list of flags. It is used by RDP 5.1, 5.2, 6.0, 6.1, and 7.0 servers
     uint16_t cbAutoReconnectLen{0};  // size in bytes of variable size autoReconnectCookie attribute. is only read by RDP 5.2, 6.0, 6.1, and 7.0 servers.
@@ -749,41 +751,50 @@ struct InfoPacket {
                    | INFO_ENABLEWINDOWSKEY
                    | INFO_LOGONERRORS
                    | INFO_LOGONNOTIFY;
+
+private:
     uint16_t cbDomain{0};         // size in bytes of variable size Domain attribute
     uint16_t cbUserName{0};       // size in bytes of variable size UserName attribute
     uint16_t cbPassword{0};       // size in bytes of variable size Password attribute
     uint16_t cbAlternateShell{0}; // size in bytes of variable size AlternateShell attribute
     uint16_t cbWorkingDir{0};     // size in bytes of variable size WorkingDir attribute
-    uint8_t Domain[257]{};
-    uint8_t UserName[257]{};
-    uint8_t Password[257]{};
+    uint8_t Domain[256]{};
+    uint8_t UserName[256]{};
+    uint8_t Password[256]{};
     uint8_t AlternateShell[512]{};
     uint8_t WorkingDir[512]{};
+
+public:
     ExtendedInfoPacket extendedInfoPacket {}; // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
 
-    array_view_const_u8 av_domain() const noexcept
+    zstring_view zDomain() const noexcept
     {
-        return {this->Domain, this->cbDomain};
+        return zstring_view{zstring_view::is_zero_terminated{},
+            char_ptr_cast(this->Domain), this->cbDomain};
     }
 
-    array_view_const_u8 av_user_anme() const noexcept
+    zstring_view zUserName() const noexcept
     {
-        return {this->UserName, this->cbUserName};
+        return zstring_view{zstring_view::is_zero_terminated{},
+            char_ptr_cast(this->UserName), this->cbUserName};
     }
 
-    array_view_const_u8 av_password() const noexcept
+    zstring_view zPassword() const noexcept
     {
-        return {this->Password, this->cbPassword};
+        return zstring_view{zstring_view::is_zero_terminated{},
+            char_ptr_cast(this->Password), this->cbPassword};
     }
 
-    array_view_const_u8 av_working_directory() const noexcept
+    zstring_view zWorkingDirectory() const noexcept
     {
-        return {this->WorkingDir, this->cbWorkingDir};
+        return zstring_view{zstring_view::is_zero_terminated{},
+            char_ptr_cast(this->WorkingDir), this->cbWorkingDir};
     }
 
-    array_view_const_u8 av_alternate_shell() const noexcept
+    zstring_view zAlternateShell() const noexcept
     {
-        return {this->AlternateShell, this->cbAlternateShell};
+        return zstring_view{zstring_view::is_zero_terminated{},
+            char_ptr_cast(this->AlternateShell), this->cbAlternateShell};
     }
 
     InfoPacket() = default;
@@ -798,51 +809,60 @@ struct InfoPacket {
               , const char *clientAddr = nullptr)
     : rdp5_support(use_rdp5)
     {
-        this->cbDomain         = UTF8ToUTF8LCopy(this->Domain,
-            sizeof(this->Domain), byte_ptr_cast(domain)) * 2;
-        this->cbUserName       = UTF8ToUTF8LCopy(this->UserName,
-            sizeof(this->UserName), byte_ptr_cast(username)) * 2;
-        this->cbPassword       = UTF8ToUTF8LCopy(this->Password,
-            sizeof(this->Password), byte_ptr_cast(password)) * 2;
-        this->cbAlternateShell = UTF8ToUTF8LCopy(this->AlternateShell,
-            sizeof(this->AlternateShell), byte_ptr_cast(program)) * 2;
-        this->cbWorkingDir     = UTF8ToUTF8LCopy(this->WorkingDir,
-            sizeof(this->WorkingDir), byte_ptr_cast(directory)) * 2;
+        auto cpy = [](auto& arr, uint16_t& n, char const* s){
+            n = strnlen(s, std::size(arr)-1u);
+            memcpy(arr, s, n);
+            arr[n] = 0;
+        };
+        cpy(this->Domain, this->cbDomain, domain);
+        cpy(this->UserName, this->cbUserName, username);
+        cpy(this->Password, this->cbPassword, password);
+        cpy(this->AlternateShell, this->cbAlternateShell, program);
+        cpy(this->WorkingDir, this->cbWorkingDir, directory);
 
         if (performanceFlags) {
             this->extendedInfoPacket.performanceFlags = performanceFlags;
         }
 
         if (clientAddr){
-            this->extendedInfoPacket.cbClientAddress = (UTF8ToUTF8LCopy(this->extendedInfoPacket.clientAddress,
-                sizeof(this->extendedInfoPacket.clientAddress),
-                byte_ptr_cast(clientAddr)) + 1) * 2;
+            cpy(this->extendedInfoPacket.clientAddress, this->extendedInfoPacket.cbClientAddress, clientAddr);
         }
-    }
 
-    void emit(OutStream & stream) /* TODO const*/ {
         this->flags |= ((this->Password[1]|this->Password[0]) != 0) * INFO_AUTOLOGON;
         this->flags |= (this->rdp5_support != 0 ) * ( INFO_LOGONERRORS/* | INFO_NOAUDIOPLAYBACK*/ );
+    }
 
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->CodePage);
         stream.out_uint32_le(this->flags);
 
-        stream.out_uint16_le(this->cbDomain);
-        stream.out_uint16_le(this->cbUserName);
-        stream.out_uint16_le(this->cbPassword);
-        stream.out_uint16_le(this->cbAlternateShell);
-        stream.out_uint16_le(this->cbWorkingDir);
+        auto out_unistr = [&](uint8_t const* s, size_t n) mutable {
+            const size_t len = UTF8toUTF16({s, n}, stream.get_tail());
+            stream.out_skip_bytes(len);
+            stream.out_uint16_le(0);
+            return len;
+        };
 
-        stream.out_unistr(this->Domain);
-        stream.out_unistr(this->UserName);
+        auto cb_data = stream.out_skip_bytes(10);
+        std::array<uint16_t, 5> unicodeFieldSizes{};
+        auto* unicodeFieldSizesPos = unicodeFieldSizes.begin();
+
+        *unicodeFieldSizesPos++ = out_unistr(this->Domain, this->cbDomain);
+        *unicodeFieldSizesPos++ = out_unistr(this->UserName, this->cbUserName);
         if (flags & INFO_AUTOLOGON){
-            stream.out_unistr(this->Password);
+            *unicodeFieldSizesPos++ = out_unistr(this->Password, this->cbPassword);
         }
         else{
+            ++unicodeFieldSizesPos;
             stream.out_uint16_le(0);
         }
-        stream.out_unistr(this->AlternateShell);
-        stream.out_unistr(this->WorkingDir);
+        *unicodeFieldSizesPos++ = out_unistr(this->AlternateShell, this->cbAlternateShell);
+        *unicodeFieldSizesPos++ = out_unistr(this->WorkingDir, this->cbWorkingDir);
+
+        OutStream stream_cb(cb_data);
+        for (auto n : unicodeFieldSizes) {
+            stream_cb.out_uint16_le(n);
+        }
 
         LOG_IF(!this->rdp5_support, LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
         // EXTRA INFORMATIONS
@@ -850,18 +870,23 @@ struct InfoPacket {
             LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s", this->flags, this->Domain, this->UserName);
 
             stream.out_uint16_le(this->extendedInfoPacket.clientAddressFamily);
-            stream.out_uint16_le(this->extendedInfoPacket.cbClientAddress);
-            stream.out_unistr(this->extendedInfoPacket.clientAddress);
-//            stream.out_uint16_le(2*sizeof("0.0.0.0"));
-//            stream.out_unistr("0.0.0.0");
+            stream_cb = OutStream(stream.out_skip_bytes(2));
+            stream_cb.out_uint16_le(
+                out_unistr(
+                    this->extendedInfoPacket.clientAddress,
+                    this->extendedInfoPacket.cbClientAddress));
+            // stream.out_uint16_le(2*sizeof("0.0.0.0"));
+            // stream.out_unistr("0.0.0.0");
 
-            stream.out_uint16_le(this->extendedInfoPacket.cbClientDir);
-            stream.out_unistr(this->extendedInfoPacket.clientDir);
+            stream_cb = OutStream(stream.out_skip_bytes(2));
+            stream_cb.out_uint16_le(
+                out_unistr(
+                    this->extendedInfoPacket.clientDir,
+                    this->extendedInfoPacket.cbClientDir));
 
             // Client Time Zone (172 bytes)
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.Bias);
-            stream.out_date_name(
-                char_ptr_cast(this->extendedInfoPacket.clientTimeZone.StandardName), 64);
+            stream.out_copy_bytes(make_array_view(this->extendedInfoPacket.clientTimeZone.StandardName));
 
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
@@ -874,8 +899,7 @@ struct InfoPacket {
 
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.StandardBias);
 
-            stream.out_date_name(
-                char_ptr_cast(this->extendedInfoPacket.clientTimeZone.DaylightName), 64);
+            stream.out_copy_bytes(make_array_view(this->extendedInfoPacket.clientTimeZone.DaylightName));
 
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
@@ -908,7 +932,7 @@ struct InfoPacket {
     void recv(InStream & stream){
 
         /* CodePage(4) + flags(4) + cbDomain(2) + cbUserName(2) + cbPassword(2) + cbAlternateShell(2) + cbWorkingDir(2) */
-        ::check_throw(stream, 18, "client InfoPacke", ERR_MCS_INFOPACKET_TRUNCATED);
+        ::check_throw(stream, 18, "client InfoPacket", ERR_MCS_INFOPACKET_TRUNCATED);
 
         this->CodePage = stream.in_uint32_le();
         this->flags = stream.in_uint32_le();
@@ -927,20 +951,30 @@ struct InfoPacket {
             + this->cbWorkingDir
             ;
 
-        ::check_throw(stream, expected, "client client InfoPacket (data)", ERR_MCS_INFOPACKET_TRUNCATED);
+        // TODO duplication
+        auto in_uni_to_ascii_str = [&](auto& text, uint16_t& sz) {
+            auto utf8 = UTF16toUTF8_buf(
+                stream.remaining_bytes().first(sz),
+                make_array_view(text).drop_back(1));
+            stream.in_skip_bytes(sz);
+            sz = utf8.size();
+            text[sz] = 0;
+        };
 
-        stream.in_uni_to_ascii_str(this->Domain, this->cbDomain, sizeof(this->Domain));
-        stream.in_uni_to_ascii_str(this->UserName, this->cbUserName, sizeof(this->UserName));
+        ::check_throw(stream, expected, "client InfoPacket (data)", ERR_MCS_INFOPACKET_TRUNCATED);
+
+        in_uni_to_ascii_str(this->Domain, this->cbDomain);
+        in_uni_to_ascii_str(this->UserName, this->cbUserName);
 
         // Whether we have a password available or not
         if (flags & INFO_AUTOLOGON) {
-            stream.in_uni_to_ascii_str(this->Password, this->cbPassword, sizeof(this->Password));
+            in_uni_to_ascii_str(this->Password, this->cbPassword);
         }
         else {
             stream.in_skip_bytes(this->cbPassword);
         }
-        stream.in_uni_to_ascii_str(this->AlternateShell, this->cbAlternateShell, sizeof(this->AlternateShell));
-        stream.in_uni_to_ascii_str(this->WorkingDir, this->cbWorkingDir, sizeof(this->WorkingDir));
+        in_uni_to_ascii_str(this->AlternateShell, this->cbAlternateShell);
+        in_uni_to_ascii_str(this->WorkingDir, this->cbWorkingDir);
 
         // TODO Get extended data only if RDP is version 5 or above
         if (stream.get_current() < stream.get_data_end()) {
@@ -956,10 +990,8 @@ struct InfoPacket {
 
             ::check_throw(stream, this->extendedInfoPacket.cbClientAddress, "client extendedInfoPacket clientAddress (data)", ERR_MCS_INFOPACKET_TRUNCATED);
 
-
-            stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientAddress,
-                                        this->extendedInfoPacket.cbClientAddress,
-                                        sizeof(this->extendedInfoPacket.clientAddress));
+            in_uni_to_ascii_str(this->extendedInfoPacket.clientAddress,
+                                this->extendedInfoPacket.cbClientAddress);
 
             /* cbClientDir(2) */
             ::check_throw(stream, 2, "client extendedInfoPacket clientDir", ERR_MCS_INFOPACKET_TRUNCATED);
@@ -968,10 +1000,8 @@ struct InfoPacket {
 
             ::check_throw(stream, this->extendedInfoPacket.cbClientDir, "client extendedInfoPacket clientDir (data)", ERR_MCS_INFOPACKET_TRUNCATED);
 
-            stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientDir,
-                                        this->extendedInfoPacket.cbClientDir,
-                                        sizeof(this->extendedInfoPacket.clientDir)
-                                        );
+            in_uni_to_ascii_str(this->extendedInfoPacket.clientDir,
+                                this->extendedInfoPacket.cbClientDir);
 
             // Client Time Zone data (skipped)
             if (stream.get_current() + 172 > stream.get_data_end()){

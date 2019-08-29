@@ -82,9 +82,9 @@ struct ClientInfo
     char hostname[16] = {0};
     int build = 0;
     int keylayout = 0;
-    char username[sizeof(InfoPacket::UserName)] = {0};
-    char password[sizeof(InfoPacket::Password)] = {0};
-    char domain[sizeof(InfoPacket::Domain)] = {0};
+    char username[257] = {0};
+    char password[257] = {0};
+    char domain[257] = {0};
 
     int rdp_compression = 0;
     int rdp_compression_type = 0;
@@ -150,10 +150,16 @@ struct ClientInfo
             infoPacket.log("Receiving from client", password_printing_mode);
         }
 
-        memcpy(this->domain, infoPacket.Domain, sizeof(infoPacket.Domain));
-        memcpy(this->username, infoPacket.UserName, sizeof(infoPacket.UserName));
+        auto cpy = [](auto& arr, zstring_view zs){
+            assert(std::size(arr) >= zs.size());
+            memcpy(arr, zs.c_str(), zs.size());
+            memset(arr + zs.size(), 0, std::size(arr) - zs.size());
+        };
+
+        cpy(this->domain, infoPacket.zDomain());
+        cpy(this->username, infoPacket.zUserName());
         if (!ignore_logon_password){
-            memcpy(this->password, infoPacket.Password, sizeof(infoPacket.Password));
+            cpy(this->password, infoPacket.zPassword());
         }
         else{
             if (verbose){
@@ -202,10 +208,12 @@ struct ClientInfo
         this->remote_program          = (infoPacket.flags & INFO_RAIL);
         this->remote_program_enhanced = (infoPacket.flags & INFO_HIDEF_RAIL_SUPPORTED);
 
-        if (0 != ::strcasecmp(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP) &&
-            (::strcasestr(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP ":") != ::char_ptr_cast(infoPacket.AlternateShell))) {
-            snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.AlternateShell);
-            snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );
+        if (0 != ::strcasecmp(infoPacket.zAlternateShell().c_str(), DUMMY_REMOTEAPP)
+         && ::strcasestr(infoPacket.zAlternateShell().c_str(), DUMMY_REMOTEAPP ":")
+            != infoPacket.zAlternateShell().c_str()
+        ) {
+            snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.zAlternateShell().c_str());
+            snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.zWorkingDirectory().c_str());
         }
 
         this->client_time_zone = infoPacket.extendedInfoPacket.clientTimeZone;

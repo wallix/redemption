@@ -113,13 +113,6 @@ std::size_t UTF32toUTF8(const uint8_t * utf32_source, std::size_t utf32_len, uin
 // do not write trailing 0
 std::size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, std::size_t target_len) noexcept;
 
-// Copy as many characters from source to dest fitting in dest buffer.
-// Returns the number of UTF8 characters copied.
-// The destination string will always be 0 terminated (dest_size 0 is forbidden)
-// The buffer after final 0 is not padded.
-
-std::size_t UTF8ToUTF8LCopy(uint8_t * dest, std::size_t dest_size, const uint8_t * source) noexcept;
-
 size_t UTF8CharNbBytes(const uint8_t * source) noexcept;
 
 bool is_utf8_string(uint8_t const * s, int length = -1) noexcept;
