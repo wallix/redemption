@@ -199,12 +199,12 @@ namespace redemption_unit_test__
             auto* p = x.as_u8p();
             auto* end = p + x.size();
 
-            auto algo0 = [&](auto f0){
-                return [&](std::size_t n){
+            auto consume_char = [&](auto f0){
+                utf8_char_process(p, end-p, [&](std::size_t n){
                     if (n == 0) {
                         f0();
-                        ++p;
                         out << char(*p);
+                        ++p;
                     }
                     else if (n == 1) {
                         put_char(out, *p, newline);
@@ -214,22 +214,22 @@ namespace redemption_unit_test__
                         out.write(char_ptr_cast(p), n);
                         p += n;
                     }
-                };
+                });
             };
 
             while (p + 4 < end) {
-                utf8_char_process(p, end-p, algo0([]{}));
+                consume_char([]{});
             }
 
             bool is_marked = false;
 
             while (p != end) {
-                utf8_char_process(p, end-p, algo0([&]{
-                    if (is_markable && utf8_byte_size_table[*p >> 3] != 0) {
+                consume_char([&]{
+                    if (is_markable) {
                         out << "\x1b[31m";
                         is_marked = true;
                     }
-                }));
+                });
             }
 
             if (is_markable && !is_marked) {
