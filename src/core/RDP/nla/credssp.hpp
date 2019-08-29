@@ -894,12 +894,11 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     if(!BER::read_integer(stream, remote_version)) {
         throw Error(ERR_CREDSSP_TS_REQUEST);
     }
-    LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u", remote_version);
 
     if (remote_version < self.use_version) {
         self.use_version = remote_version;
     }
-    LOG(LOG_INFO, "Credssp TSCredentials::recv() Negotiated version %u", self.use_version);
+    LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u, Negotiated version %u", remote_version, self.use_version);
 
     // [1] negoTokens (NegoData) OPTIONAL
     if (BER::check_ber_ctxt_tag(stream, 1)) {
@@ -935,7 +934,6 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     if (BER::check_ber_ctxt_tag(stream, 2)) {
         stream.in_skip_bytes(1);
         length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        // LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
         if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
            !stream.in_check_rem(length)) {
             throw Error(ERR_CREDSSP_TS_REQUEST);
@@ -949,7 +947,6 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     if (BER::check_ber_ctxt_tag(stream, 3)) {
         stream.in_skip_bytes(1);
         length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        // LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
         if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
            !stream.in_check_rem(length)) {
             throw Error(ERR_CREDSSP_TS_REQUEST);
@@ -1015,40 +1012,43 @@ struct TSPasswordCreds {
       , password(pass.data(), pass.data()+pass.size())
     {
     }
-
-    void recv(InStream & stream) {
-        int length = 0;
-        /* TSPasswordCreds (SEQUENCE) */
-        BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-
-        /* [0] domainName (OCTET STRING) */
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_octet_string_tag(stream, length);
-
-        this->domainName.resize(length);
-        stream.in_copy_bytes(this->domainName.data(), this->domainName.size());
-
-        /* [1] userName (OCTET STRING) */
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_octet_string_tag(stream, length);
-
-        this->userName.resize(length);
-        stream.in_copy_bytes(this->userName.data(), this->userName.size());
-
-        /* [2] password (OCTET STRING) */
-        BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|2, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-        BER::read_octet_string_tag(stream, length);
-
-        this->password.resize(length);
-        stream.in_copy_bytes(this->password.data(), this->password.size());
-
-    }
 };
 
+
+inline TSPasswordCreds recvTSPasswordCreds(InStream & stream) 
+{
+    TSPasswordCreds self;
+    int length = 0;
+    /* TSPasswordCreds (SEQUENCE) */
+    BER::read_tag(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+
+    /* [0] domainName (OCTET STRING) */
+    BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_octet_string_tag(stream, length);
+
+    self.domainName.resize(length);
+    stream.in_copy_bytes(self.domainName.data(), self.domainName.size());
+
+    /* [1] userName (OCTET STRING) */
+    BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_octet_string_tag(stream, length);
+
+    self.userName.resize(length);
+    stream.in_copy_bytes(self.userName.data(), self.userName.size());
+
+    /* [2] password (OCTET STRING) */
+    BER::read_tag(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|2, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_octet_string_tag(stream, length);
+
+    self.password.resize(length);
+    stream.in_copy_bytes(self.password.data(), self.password.size());
+
+    return self;
+}
 
 inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view user, bytes_view password)
 {
@@ -1400,7 +1400,7 @@ struct TSCredentials
         if (this->credType == 2) {
             this->smartcardCreds = recvTSSmartCardCreds(stream);
         } else {
-            this->passCreds.recv(stream);
+            this->passCreds = recvTSPasswordCreds(stream);
         }
     }
 };
