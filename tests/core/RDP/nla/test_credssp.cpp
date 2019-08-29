@@ -99,17 +99,18 @@ RED_AUTO_TEST_CASE(TestBEROctetString)
 RED_AUTO_TEST_CASE(TestBERContextual)
 {
     StaticOutStream<2048> s;
-    int res;
-    int value;
     uint8_t tag = 0x06;
 
-    auto v = BER::mkContextualFieldHeader(3, tag);
-    s.out_copy_bytes(v);
+    const uint8_t data[] = {0, 1, 2};
 
-    InStream in_s(s.get_bytes());
-    res = BER::read_contextual_tag(in_s, tag, value);
-    RED_CHECK(res);
-    RED_CHECK_EQUAL(value, 3);
+    auto v = BER::mkContextualFieldHeader(sizeof(data), tag);
+    v.insert(v.end(), data, data+sizeof(data));
+
+    InStream in_s(v);
+    RED_CHECK_EQUAL(true, BER::check_ber_ctxt_tag(in_s, tag));
+    in_s.in_skip_bytes(1);
+    int length = BER::read_length(in_s, "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
+    RED_CHECK_EQUAL(length, sizeof(data));
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
