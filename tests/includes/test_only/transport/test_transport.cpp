@@ -284,7 +284,7 @@ void CheckTransport::do_send(const uint8_t * const data, size_t len)
         while (differs < available_len && data[differs] == this->data.get()[this->current+differs]) {
             ++differs;
         }
-        RED_CHECK_MEM(
+        RED_CHECK_HMEM(
             make_array_view(this->data.get() + this->current, available_len),
             make_array_view(data, len));
         // RED_CHECK_MESSAGE(false, "\n"
