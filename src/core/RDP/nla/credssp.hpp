@@ -320,14 +320,6 @@ namespace BER {
         return length;
     }
 
-    inline int sizeof_sequence(int length) {
-        return 1 + _ber_sizeof_length(length) + length;
-    }
-
-    inline int sizeof_sequence_tag(int length) {
-        return 1 + _ber_sizeof_length(length);
-    }
-
     // ==========================
     //   ENUMERATED
     // ==========================
