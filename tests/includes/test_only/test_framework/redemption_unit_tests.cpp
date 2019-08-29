@@ -87,7 +87,7 @@ namespace redemption_unit_test__
             switch (utf8_byte_size_table[v[0] >> 3]) {
                 case 0: return f(N0{});
                 case 1: return f(N1{});
-                case 2: return size >= 2 && (v[1] >> 6) == 0b10 ? f(N2{}) : f(N1{});
+                case 2: return size >= 2 && (v[1] >> 6) == 0b10 ? f(N2{}) : f(N0{});
                 case 3:
                     if (size < 3 || (v[2] >> 6) != 0b10) {
                         return f(N0{});
@@ -203,7 +203,7 @@ namespace redemption_unit_test__
                 utf8_char_process(p, end-p, [&](std::size_t n){
                     if (n == 0) {
                         f0();
-                        out << char(*p);
+                        put_char(out, *p, newline);
                         ++p;
                     }
                     else if (n == 1) {
