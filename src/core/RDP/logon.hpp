@@ -348,7 +348,7 @@ enum InfoPacketFlags {
 //    0x0017 AF_INET6 The clientAddress field contains an IPv6 address.
 
 // cbClientAddress (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-//    the character data in the clientAddress field. This size include " the length
+//    the character data in the clientAddress field. This size includes the length
 //    of the mandatory null terminator.
 
 // clientAddress (variable): Variable-length textual representation of the
@@ -837,7 +837,7 @@ public:
         stream.out_uint32_le(this->CodePage);
         stream.out_uint32_le(this->flags);
 
-        auto out_unistr = [&](uint8_t const* s, size_t n) mutable {
+        auto out_unistr = [](OutStream & stream, uint8_t const* s, size_t n) mutable {
             const size_t len = UTF8toUTF16({s, n}, stream.get_tail());
             stream.out_skip_bytes(len);
             stream.out_uint16_le(0);
@@ -848,17 +848,17 @@ public:
         std::array<uint16_t, 5> unicodeFieldSizes{};
         auto* unicodeFieldSizesPos = unicodeFieldSizes.begin();
 
-        *unicodeFieldSizesPos++ = out_unistr(this->Domain, this->cbDomain);
-        *unicodeFieldSizesPos++ = out_unistr(this->UserName, this->cbUserName);
+        *unicodeFieldSizesPos++ = out_unistr(stream, this->Domain, this->cbDomain);
+        *unicodeFieldSizesPos++ = out_unistr(stream, this->UserName, this->cbUserName);
         if (flags & INFO_AUTOLOGON){
-            *unicodeFieldSizesPos++ = out_unistr(this->Password, this->cbPassword);
+            *unicodeFieldSizesPos++ = out_unistr(stream, this->Password, this->cbPassword);
         }
         else{
             ++unicodeFieldSizesPos;
             stream.out_uint16_le(0);
         }
-        *unicodeFieldSizesPos++ = out_unistr(this->AlternateShell, this->cbAlternateShell);
-        *unicodeFieldSizesPos++ = out_unistr(this->WorkingDir, this->cbWorkingDir);
+        *unicodeFieldSizesPos++ = out_unistr(stream, this->AlternateShell, this->cbAlternateShell);
+        *unicodeFieldSizesPos++ = out_unistr(stream, this->WorkingDir, this->cbWorkingDir);
 
         OutStream stream_cb(cb_data);
         for (auto n : unicodeFieldSizes) {
@@ -871,19 +871,15 @@ public:
             LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s", this->flags, this->Domain, this->UserName);
 
             stream.out_uint16_le(this->extendedInfoPacket.clientAddressFamily);
-            stream_cb = OutStream(stream.out_skip_bytes(2));
-            stream_cb.out_uint16_le(
-                out_unistr(
-                    this->extendedInfoPacket.clientAddress,
-                    this->extendedInfoPacket.cbClientAddress));
+            OutStream stream_cbClientAddress(stream.out_skip_bytes(2));
+            uint16_t len_clientAddress = out_unistr(stream, this->extendedInfoPacket.clientAddress, this->extendedInfoPacket.cbClientAddress);
+            stream_cbClientAddress.out_uint16_le(len_clientAddress+2);
             // stream.out_uint16_le(2*sizeof("0.0.0.0"));
             // stream.out_unistr("0.0.0.0");
 
-            stream_cb = OutStream(stream.out_skip_bytes(2));
-            stream_cb.out_uint16_le(
-                out_unistr(
-                    this->extendedInfoPacket.clientDir,
-                    this->extendedInfoPacket.cbClientDir));
+            OutStream stream_cbClientDir(stream.out_skip_bytes(2));
+            uint16_t len_ClientDir = out_unistr(stream, this->extendedInfoPacket.clientDir, this->extendedInfoPacket.cbClientDir);
+            stream_cbClientDir.out_uint16_le(len_ClientDir+2);
 
             // Client Time Zone (172 bytes)
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.Bias);
@@ -988,6 +984,10 @@ public:
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
+            // TODO: add check and throw, this field should always be > 2, NULL mandatory terminator is included in size
+            if (this->extendedInfoPacket.cbClientAddress >= 2){
+                this->extendedInfoPacket.cbClientAddress -= 2;
+            }
 
             ::check_throw(stream, this->extendedInfoPacket.cbClientAddress, "client extendedInfoPacket clientAddress (data)", ERR_MCS_INFOPACKET_TRUNCATED);
 
@@ -998,6 +998,10 @@ public:
             ::check_throw(stream, 2, "client extendedInfoPacket clientDir", ERR_MCS_INFOPACKET_TRUNCATED);
 
             this->extendedInfoPacket.cbClientDir = stream.in_uint16_le();
+            // TODO: add check and throw, this field should always be > 2, NULL mandatory terminator is included in size
+            if (this->extendedInfoPacket.cbClientDir >= 2){
+                this->extendedInfoPacket.cbClientDir -= 2;
+            }
 
             ::check_throw(stream, this->extendedInfoPacket.cbClientDir, "client extendedInfoPacket clientDir (data)", ERR_MCS_INFOPACKET_TRUNCATED);
 
@@ -1114,9 +1118,9 @@ public:
         // Extended
         const ExtendedInfoPacket &extInfo = this->extendedInfoPacket;
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddressFamily %u", extInfo.clientAddressFamily);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientAddress %u", extInfo.cbClientAddress);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientAddress %u", extInfo.cbClientAddress+2u);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddress %s", extInfo.clientAddress);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientDir %u", extInfo.cbClientDir);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientDir %u", extInfo.cbClientDir+2u);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientDir %s", extInfo.clientDir);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientSessionId %u", extInfo.clientSessionId);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::performanceFlags 0x%x", extInfo.performanceFlags);
