@@ -830,23 +830,9 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
         stream.in_copy_bytes(self.negoTokens.data(), length);
     }
 
-    /* [2] authInfo (OCTET STRING) */
-    if (BER::check_ber_ctxt_tag(stream, 2)) {
-        stream.in_skip_bytes(1);
-        BER::read_length(stream, "TS Request [2] authInfo", ERR_CREDSSP_TS_REQUEST);
-        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [2] authInfo", ERR_CREDSSP_TS_REQUEST);
-        self.authInfo = std::vector<uint8_t>(length);
-        stream.in_copy_bytes(self.authInfo.data(), length);
-    }
+    self.authInfo   = BER::read_optional_octet_string(stream, 2, "TSRequest [2] authInfo", ERR_CREDSSP_TS_REQUEST);
+    self.pubKeyAuth   = BER::read_optional_octet_string(stream, 3, "TSRequest [2] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
 
-    /* [3] pubKeyAuth (OCTET STRING) */
-    if (BER::check_ber_ctxt_tag(stream, 3)) {
-        stream.in_skip_bytes(1);
-        BER::read_length(stream, "TS Request [3] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
-        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [3] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
-        self.pubKeyAuth = std::vector<uint8_t>(length);
-        stream.in_copy_bytes(self.pubKeyAuth.data(), length);
-    }
     /* [4] errorCode (INTEGER) */
     if (remote_version >= 3 && remote_version != 5){
         if (BER::check_ber_ctxt_tag(stream, 4)){
@@ -859,6 +845,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
             );
         }
     }
+
     /* [5] clientNonce (OCTET STRING) */
     if (remote_version >= 5){
         if (BER::check_ber_ctxt_tag(stream, 5)) {
