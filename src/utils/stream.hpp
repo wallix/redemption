@@ -25,7 +25,6 @@
 #pragma once
 
 #include "utils/bitfu.hpp"
-#include "utils/utf.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/buffer_view.hpp"
 #include "utils/sugar/cast.hpp"
@@ -384,13 +383,6 @@ public:
     {
         return this->p.in_utf16_sz(utf16, length);
     }
-
-    // sz utf16 bytes are translated to ascci, 00 terminated
-    void in_uni_to_ascii_str(uint8_t * text, size_t sz, size_t bufsz) noexcept
-    {
-        UTF16toUTF8(this->p.p, sz / 2, text, bufsz);
-        this->p.p += sz;
-    }
 };
 
 
@@ -724,34 +716,6 @@ public:
         this->p[2] = (v >> 16) & 0xFF;
         this->p[3] = (v >> 24) & 0xFF;
         this->p+=4;
-    }
-
-    void out_unistr(const uint8_t * text) noexcept
-    {
-        const size_t len = UTF8toUTF16({text, strlen(char_ptr_cast(text))}, this->p, this->tailroom());
-        this->p += len;
-        this->out_clear_bytes(2);
-    }
-
-    void out_unistr(const char* text) noexcept
-    {
-        out_unistr(byte_ptr_cast(text));
-    }
-
-    void out_date_name(const char* text, const size_t buflen) noexcept
-    {
-        size_t i = 0;
-        for (; i < (buflen/2) ; i++) {
-            if (!text[i]){
-                break;
-            }
-            this->out_uint8(text[i]);
-            this->out_uint8(0);
-        }
-        for (; i < (buflen/2) ; i++) {
-            this->out_uint8(0);
-            this->out_uint8(0);
-        }
     }
 
     void out_utf16(const uint16_t utf16[], size_t length) noexcept

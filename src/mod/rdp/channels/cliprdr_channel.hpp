@@ -726,7 +726,7 @@ private:
         file_data.sha256.final(digest);
 
         char digest_s[128];
-        snprintf(digest_s, sizeof(digest_s),
+        size_t digest_s_len = snprintf(digest_s, sizeof(digest_s),
             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
             digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
@@ -735,15 +735,15 @@ private:
             digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
 
         char file_size[128];
-        std::snprintf(file_size, std::size(file_size), "%lu", file_data.file_size);
+        size_t file_size_len = std::snprintf(file_size, std::size(file_size), "%lu", file_data.file_size);
 
         this->report_message.log6(from_remote_session
             ? LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION
             : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
             this->session_reactor.get_current_time(), {
             KVLog("file_name"_av, file_data.file_name),
-            KVLog("size"_av, {file_size, strlen(file_size)}),
-            KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
+            KVLog("size"_av, {file_size, file_size_len}),
+            KVLog("sha256"_av, {digest_s, digest_s_len}),
         });
 
         LOG_IF(!this->params.dont_log_data_into_syslog, LOG_INFO,

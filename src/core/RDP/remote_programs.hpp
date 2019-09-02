@@ -25,6 +25,7 @@
 #include "core/RDP/non_null_terminated_utf16_from_utf8.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "utils/stream.hpp"
+#include "utils/utf.hpp"
 #include "utils/sugar/cast.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
@@ -971,8 +972,7 @@ public:
 
     void RawResult(uint32_t RawResult_) { this->RawResult_ = RawResult_; }
 
-    // TODO std::string const&
-    const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
+    std::string const& ExeOrFile() const { return this->exe_or_file; }
 
     void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
 

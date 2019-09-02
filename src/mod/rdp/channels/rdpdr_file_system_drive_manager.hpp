@@ -1709,8 +1709,8 @@ public:
             }
         }
 
-        DriveName(char const* name, bool reserved = false) noexcept
-        : DriveName({name, strlen(name)}, reserved)
+        DriveName(std::string_view name, bool reserved = false) noexcept
+        : DriveName(array_view_const_char{name}, reserved)
         {}
 
         char const* upper_name() const noexcept

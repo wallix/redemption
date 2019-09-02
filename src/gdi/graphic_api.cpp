@@ -24,6 +24,7 @@
 #include "core/RDP/caches/glyphcache.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/splitter.hpp"
+#include "utils/utf.hpp"
 
 namespace
 {

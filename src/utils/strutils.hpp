@@ -25,8 +25,8 @@
 namespace utils
 {
 
-bool ends_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len);
-bool ends_case_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len);
+bool ends_with(array_view_const_char str, array_view_const_char suffix) noexcept;
+bool ends_case_with(array_view_const_char str, array_view_const_char suffix) noexcept;
 
 /**
  * \resume copies up to \c n - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.

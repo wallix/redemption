@@ -170,8 +170,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
             auto exportdir = wd.create_subdirectory("export");
             auto sharedir = wd.create_subdirectory("share");
 
-            file_system_drive_manager.enable_drive("export", wd.dirname(), verbose);
-            file_system_drive_manager.enable_drive("share", wd.dirname(), verbose);
+            file_system_drive_manager.enable_drive("export"_av, wd.dirname(), verbose);
+            file_system_drive_manager.enable_drive("share"_av, wd.dirname(), verbose);
         }
 
         TestTransport t(d.indata, d.outdata);

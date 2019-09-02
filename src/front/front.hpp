@@ -3449,10 +3449,8 @@ public:
         // Payload
         stream.get_data_stream().out_uint32_le(RDP::INFOTYPE_LOGON);
 
-        RDP::LogonInfoVersion1_Send sender(stream.get_data_stream(),
-                                      byte_ptr_cast(""),
-                                      byte_ptr_cast(ini.get<cfg::globals::auth_user>().c_str()),
-                                      getpid());
+        RDP::LogonInfoVersion1_Send sender(
+            stream.get_data_stream(), "", ini.get<cfg::globals::auth_user>(), getpid());
 
         const uint32_t log_condition = (128 | 1);
         ::send_share_data_ex( this->trans

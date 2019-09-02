@@ -75,8 +75,14 @@ inline array_view_char windows_to_linux_newline_convert(
     return {destination.data(), p};
 }
 
-inline static size_t linux_to_windows_newline_convert(char const * s,
-        size_t s_length, char * d, size_t max_d_length) {
+inline static array_view_char linux_to_windows_newline_convert(
+    array_view_const_char source, array_view_char destination)
+{
+    char const * s = source.data();
+    size_t s_length = source.size();
+    char * d = destination.data();
+    size_t max_d_length = destination.size();
+
     size_t d_length = 0;
 
     while (char const * p = static_cast<char const*>(memchr(s, '\n', s_length))) {
@@ -122,5 +128,5 @@ inline static size_t linux_to_windows_newline_convert(char const * s,
 
     memcpy(d, s, s_length);
 
-    return (d_length + s_length);
+    return destination.first(d_length + s_length);
 }

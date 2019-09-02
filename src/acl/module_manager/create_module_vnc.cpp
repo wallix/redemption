@@ -45,8 +45,6 @@ void ModuleManager::create_mod_vnc(
     try {
         const char * const name = "VNC Target";
 
-        const char * target_user = ini.get<cfg::globals::target_user>().c_str();
-
         struct ModVNCWithMetrics : public mod_vnc
         {
             struct ModMetrics : Metrics
@@ -74,7 +72,7 @@ void ModuleManager::create_mod_vnc(
                     ini.get<cfg::globals::auth_user>(),
                     ini.get<cfg::metrics::sign_key>()),
                 hmac_account(
-                    {target_user, strlen(target_user)},
+                    ini.get<cfg::globals::target_user>(),
                     ini.get<cfg::metrics::sign_key>()),
                 hmac_device_service(
                     ini.get<cfg::globals::target_device>(),

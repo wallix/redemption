@@ -54,6 +54,7 @@
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
+#include "utils/utf.hpp"
 #include "utils/timestamp_tracer.hpp"
 
 #include "transport/file_transport.hpp"

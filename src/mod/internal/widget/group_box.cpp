@@ -22,6 +22,8 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/utf.hpp"
+
 
 WidgetGroupBox::WidgetGroupBox(
     gdi::GraphicApi & drawable, Widget & parent,

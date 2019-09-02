@@ -2777,16 +2777,18 @@ private:
                             1                                           // Null character
                         );
 
-                    const size_t to_rdp_clipboard_data_length =
+                    auto to_rdp_clipboard_data =
                         ::linux_to_windows_newline_convert(
-                            ::char_ptr_cast(this->clipboard_data_ctx.clipboard_data().data()),
-                            this->clipboard_data_ctx.clipboard_data().size(),
-                            ::char_ptr_cast(out_stream.get_data() + RDPECLIP::CliprdrHeader::size()),
-                            out_stream.get_capacity() - RDPECLIP::CliprdrHeader::size() -
-                                1   // Null character
-                        ) +
-                        1;  // Null character
-                    *(out_stream.get_data() + RDPECLIP::CliprdrHeader::size() + to_rdp_clipboard_data_length - 1) = '\x0';  // Null character
+                            bytes_view(this->clipboard_data_ctx.clipboard_data()).as_chars(),
+                            out_stream.get_bytes().as_chars()
+                                .drop_front(RDPECLIP::CliprdrHeader::size())
+                                // Null character
+                                .drop_back(1)
+                        );
+                    const auto to_rdp_clipboard_data_length = to_rdp_clipboard_data.size()
+                        + 1; // Null character
+                    // Null character
+                    *to_rdp_clipboard_data.end() = '\x0';
 
                     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, to_rdp_clipboard_data_length);
                     const RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
@@ -3050,8 +3052,8 @@ public:
         uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->beginning;
         LOG(LOG_INFO, "Client disconnect from VNC module");
 
-        char duration_str[1024];
-        snprintf(duration_str, sizeof(duration_str), "%02d:%02d:%02d",
+        char duration_str[128];
+        size_t len = snprintf(duration_str, sizeof(duration_str), "%02d:%02d:%02d",
             int(seconds / 3600),
             int((seconds % 3600) / 60),
             int(seconds % 60));
@@ -3059,7 +3061,7 @@ public:
         this->report_message.log6(
             LogId::SESSION_DISCONNECTION,
             this->session_reactor.get_current_time(), {
-            KVLog("duration"_av, {duration_str, strlen(duration_str)}),
+            KVLog("duration"_av, {duration_str, len}),
         });
 
         LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,

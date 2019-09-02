@@ -25,6 +25,7 @@
 #include "core/RDP/slowpath.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/utf.hpp"
 #include "keyboard/keymap2.hpp"
 
 

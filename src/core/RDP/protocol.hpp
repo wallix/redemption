@@ -411,8 +411,7 @@ struct ConfirmActivePDU_Send {
     }
 
     void emit_begin(uint32_t shareId) {
-        const char * sourceDescriptor       = "MSTSC";
-        uint16_t     lengthSourceDescriptor = ::strlen(sourceDescriptor);
+        auto sourceDescriptor = "MSTSC"_av;
 
         // Payload
 
@@ -428,7 +427,7 @@ struct ConfirmActivePDU_Send {
 
         // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The
         //  size in bytes of the sourceDescriptor field.
-        payload.out_uint16_le(lengthSourceDescriptor);
+        payload.out_uint16_le(sourceDescriptor.size());
 
         // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer.
         //  The combined size in bytes of the numberCapabilities, pad2Octets
@@ -439,7 +438,7 @@ struct ConfirmActivePDU_Send {
         // sourceDescriptor (variable): A variable-length array of bytes
         //  containing a source descriptor (see [T128] section 8.4.1 for more
         //  information regarding source descriptors).
-        payload.out_copy_bytes(sourceDescriptor, lengthSourceDescriptor);
+        payload.out_copy_bytes(sourceDescriptor);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. Number of
         //  capability sets included in the Confirm Active PDU.

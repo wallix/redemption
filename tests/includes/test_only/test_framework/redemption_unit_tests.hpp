@@ -110,6 +110,7 @@ namespace redemption_unit_test__
 # define RED_CHECK_MEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_SMEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_RMEM(mem, memref) void(mem), void(memref)
+# define RED_CHECK_HMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// REQUIRE
@@ -135,6 +136,8 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 # define RED_REQUIRE_MEM(mem, memref) void(mem), void(memref)
 # define RED_REQUIRE_SMEM(mem, memref) void(mem), void(memref)
+# define RED_REQUIRE_RMEM(mem, memref) void(mem), void(memref)
+# define RED_REQUIRE_HMEM(mem, memref) void(mem), void(memref)
 //@}
 
 /// WARN
@@ -149,10 +152,12 @@ namespace redemption_unit_test__
 # define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'a')
 # define RED_CHECK_SMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'S')
 # define RED_CHECK_RMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'h')
+# define RED_CHECK_HMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'd')
 
 # define RED_REQUIRE_MEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'a')
 # define RED_REQUIRE_SMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'S')
 # define RED_REQUIRE_RMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'h')
+# define RED_REQUIRE_HMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'd')
 
 /// CHECK
 //@{

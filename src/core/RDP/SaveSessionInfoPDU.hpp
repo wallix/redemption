@@ -24,6 +24,7 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/utf.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 #include <cstring>
@@ -210,43 +211,61 @@ struct SaveSessionInfoPDUData_Send {
 //  5.1, 5.2, 6.0, 6.1, 7.0, 7.1, and 8.0 servers.
 
 struct LogonInfoVersion1_Recv {
-    uint32_t cbDomain;
+    // uint32_t cbDomain;
     uint8_t  Domain[256];
-    uint32_t cbUserName;
+    // uint32_t cbUserName;
     uint8_t  UserName[2048];
     uint32_t SessionId;
 
     explicit LogonInfoVersion1_Recv(InStream & stream) :
-    cbDomain(0),
-    cbUserName(0),
+    // cbDomain(0),
+    // cbUserName(0),
     SessionId(0) {
         memset(Domain,   0, sizeof(Domain));
         memset(UserName, 0, sizeof(UserName));
 
+        // TODO duplication
+        auto in_uni_to_ascii_str = [&](auto& text, uint32_t& sz) {
+            auto utf8 = UTF16toUTF8_buf(
+                stream.remaining_bytes().first(sz),
+                make_array_view(text).drop_back(1));
+            stream.in_skip_bytes(sz);
+            sz = utf8.size();
+            text[sz] = 0;
+        };
+
         // cbDomain(4)
         ::check_throw(stream, 4, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
 
-        this->cbDomain = stream.in_uint32_le();
+        uint32_t cbDomain = stream.in_uint32_le();
+
+        if (cbDomain > 52) {
+            LOG(LOG_ERR, "cbDomain=%zu too long: expected=%zu", size_t(cbDomain), size_t(cbDomain));
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
 
         // Domain(52) + cbUserName(4)
         ::check_throw(stream, 56, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
 
-        stream.in_uni_to_ascii_str(this->Domain, this->cbDomain,
-            sizeof(this->Domain));
+        in_uni_to_ascii_str(this->Domain, cbDomain);
 
         stream.in_skip_bytes(52 -  // Domain(52)
-            this->cbDomain);
+            cbDomain);
 
-        this->cbUserName = stream.in_uint32_le();
+        uint32_t cbUserName = stream.in_uint32_le();
 
         // UserName(512) + SessionId(4)
         ::check_throw(stream, 516, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
 
-        stream.in_uni_to_ascii_str(this->UserName, this->cbUserName,
-            sizeof(this->UserName));
+        in_uni_to_ascii_str(this->UserName, cbUserName);
 
         stream.in_skip_bytes(512 - // UserName(512)
-            this->cbUserName);
+            cbUserName);
+
+        if (cbUserName > 512) {
+            LOG(LOG_ERR, "cbUserName=%zu too long: expected=%zu", size_t(cbUserName), size_t(cbUserName));
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
 
         this->SessionId = stream.in_uint32_le();
 
@@ -258,22 +277,21 @@ struct LogonInfoVersion1_Recv {
 
 struct LogonInfoVersion1_Send
 {
-    // TODO std::string_view / array_view_const_char / writable_bytes_view
-    LogonInfoVersion1_Send(OutStream & stream, const uint8_t * Domain,
-        const uint8_t * UserName, uint32_t sessionId)
+    LogonInfoVersion1_Send(OutStream & stream, std::string_view Domain,
+        std::string_view UserName, uint32_t sessionId)
     {
         uint8_t utf16_Domain[52];
         uint8_t utf16_UserName[512];
 
         memset(utf16_Domain,   0, sizeof(utf16_Domain));
         uint32_t cbDomain   = UTF8toUTF16(
-            {Domain, strlen(char_ptr_cast(Domain))},
+            Domain,
             utf16_Domain, sizeof(utf16_Domain) - sizeof(uint16_t)
         ) + 2;
 
         memset(utf16_UserName, 0, sizeof(utf16_UserName));
         uint32_t cbUserName = UTF8toUTF16(
-            {UserName, char_ptr_cast(UserName)},
+            UserName,
             utf16_UserName,
             sizeof(utf16_UserName) - sizeof(uint16_t)
         ) + 2;
@@ -370,8 +388,8 @@ struct LogonInfoVersion2_Recv {
     uint16_t Version;
     uint32_t Size;
     uint32_t SessionId;
-    uint32_t cbDomain;
-    uint32_t cbUserName;
+    // uint32_t cbDomain;
+    // uint32_t cbUserName;
     uint8_t  Pad[558];
     uint8_t  Domain[512];
     uint8_t  UserName[4096];
@@ -379,12 +397,23 @@ struct LogonInfoVersion2_Recv {
     explicit LogonInfoVersion2_Recv(InStream & stream) :
     Version(0),
     Size(0),
-    SessionId(0),
-    cbDomain(0),
-    cbUserName(0) {
+    SessionId(0)
+    // cbDomain(0),
+    // cbUserName(0)
+    {
         memset(Pad,      0, sizeof(Pad));
         memset(Domain,   0, sizeof(Domain));
         memset(UserName, 0, sizeof(UserName));
+
+        // TODO duplication
+        auto in_uni_to_ascii_str = [&](auto& text, uint32_t& sz) {
+            auto utf8 = UTF16toUTF8_buf(
+                stream.remaining_bytes().first(sz),
+                make_array_view(text).drop_back(1));
+            stream.in_skip_bytes(sz);
+            sz = utf8.size();
+            text[sz] = 0;
+        };
 
         // Version(2) +  Size(4) + SessionId(4) + cbDomain(4) + cbUserName(4) + Pad(558)
         ::check_throw(stream, 576, "Logon Info Version 2", ERR_RDP_DATA_TRUNCATED);
@@ -392,17 +421,15 @@ struct LogonInfoVersion2_Recv {
         this->Version    = stream.in_uint16_le();
         this->Size       = stream.in_uint32_le();
         this->SessionId  = stream.in_uint32_le();
-        this->cbDomain   = stream.in_uint32_le();
-        this->cbUserName = stream.in_uint32_le();
+        uint32_t cbDomain   = stream.in_uint32_le();
+        uint32_t cbUserName = stream.in_uint32_le();
 
         stream.in_copy_bytes(this->Pad, sizeof(this->Pad));
 
-        ::check_throw(stream, this->cbDomain + this->cbUserName, "Logon Info Version 2", ERR_RDP_DATA_TRUNCATED);
+        ::check_throw(stream, cbDomain + cbUserName, "Logon Info Version 2", ERR_RDP_DATA_TRUNCATED);
 
-        stream.in_uni_to_ascii_str(this->Domain, this->cbDomain,
-            sizeof(this->Domain));
-        stream.in_uni_to_ascii_str(this->UserName, this->cbUserName,
-            sizeof(this->UserName));
+        in_uni_to_ascii_str(this->Domain, cbDomain);
+        in_uni_to_ascii_str(this->UserName, cbUserName);
 
         LOG(LOG_INFO,
             "Logon Info Version 2 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%u",

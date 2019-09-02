@@ -1513,12 +1513,7 @@ public:
                         (target_iter->for_reading != target_iter->for_writing)) {
                         auto const DESKTOP_INI_FILENAME = "/desktop.ini"_av;
                         if (target_iter->sequential_access_offset &&
-                            !::utils::ends_case_with(
-                                    file_path.data(),
-                                    file_path.size(),
-                                    DESKTOP_INI_FILENAME.data(),
-                                    DESKTOP_INI_FILENAME.size()
-                                )) {
+                            !::utils::ends_case_with(file_path, DESKTOP_INI_FILENAME)) {
                             if (target_iter->for_reading) {
                                 if (target_iter->sequential_access_offset == target_iter->end_of_file) {
                                     uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
@@ -1526,7 +1521,7 @@ public:
                                     target_iter->sha256.final(digest);
 
                                     char digest_s[128];
-                                    snprintf(digest_s, sizeof(digest_s),
+                                    size_t digest_s_len = snprintf(digest_s, sizeof(digest_s),
                                         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
                                         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
                                         digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
@@ -1545,7 +1540,7 @@ public:
                                         this->session_reactor.get_current_time(), {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
-                                        KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
+                                        KVLog("sha256"_av, {digest_s, digest_s_len}),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
@@ -1571,7 +1566,7 @@ public:
                                     target_iter->sha256.final(digest);
 
                                     char digest_s[128];
-                                    snprintf(digest_s, sizeof(digest_s),
+                                    size_t digest_s_len = snprintf(digest_s, sizeof(digest_s),
                                         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
                                         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
                                         digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
@@ -1586,7 +1581,7 @@ public:
                                         this->session_reactor.get_current_time(), {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
-                                        KVLog("sha256"_av, {digest_s, strlen(digest_s)}),
+                                        KVLog("sha256"_av, {digest_s, digest_s_len}),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
