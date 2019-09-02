@@ -34,7 +34,7 @@
 #include "core/stream_throw_helpers.hpp"
 
 #include <cstdint>
-#include <cstring>
+#include <cinttypes>
 #include <algorithm> // std::min
 
 
@@ -732,13 +732,13 @@ struct ExtendedInfoPacket {
 
     ExtendedInfoPacket()
     {
-        const char * defaultAddress = "0.0.0.0";
-        ::memcpy(this->clientAddress, defaultAddress, ::strlen(defaultAddress) + 1);
-        this->cbClientAddress = 2 * strlen(defaultAddress) + 2;
+        auto defaultAddress = "0.0.0.0"_zv;
+        ::memcpy(this->clientAddress, defaultAddress.data(), defaultAddress.size() + 1);
+        this->cbClientAddress = 2 * defaultAddress.size() + 2;
 
-        const char * defaultClientDir = "C:\\Windows\\System32\\mstscax.dll";
-        ::memcpy(this->clientDir, defaultClientDir, ::strlen(defaultClientDir) + 1);
-        this->cbClientDir = 2 * ::strlen(defaultClientDir) + 2;
+        auto defaultClientDir = "C:\\Windows\\System32\\mstscax.dll"_zv;
+        ::memcpy(this->clientDir, defaultClientDir.data(), defaultClientDir.size() + 1);
+        this->cbClientDir = 2 * defaultClientDir.size() + 2;
     } // END CONSTRUCTOR
 }; // END STRUCT : ExtendedInfoPacket
 
@@ -1100,17 +1100,17 @@ public:
         {
             array_view_const_char const av = ::get_printable_password({
                 char_ptr_cast(this->Password),
-                strlen(char_ptr_cast(this->Password))
+                this->cbPassword
             }, password_printing_mode);
-            LOG(LOG_INFO, "InfoPacket::Password %.*s", int(av.size()), av.data());
+            LOG(LOG_INFO, "InfoPacket::Password %s", av.data());
         }
 
         if (show_alternate_shell) {
             LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
         }
         else {
-            LOG(LOG_INFO, "InfoPacket::AlternateShell (%zu bytes)",
-                ::strlen(::char_ptr_cast(this->AlternateShell)));
+            LOG(LOG_INFO, "InfoPacket::AlternateShell (%" PRIu16 " bytes)",
+                this->cbAlternateShell);
         }
         LOG(LOG_INFO, "InfoPacket::WorkingDir %s", this->WorkingDir);
         if (!this->rdp5_support){ return; }
