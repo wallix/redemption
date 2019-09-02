@@ -444,7 +444,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                         size_t pxtmp = this->cursor_px_pos;
                         size_t ebpos = this->edit_buffer_pos;
                         this->decrement_edit_pos();
-                        UTF8RemoveOneAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 0);
+                        UTF8RemoveOne(make_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
                         this->buffer_size += this->edit_buffer_pos - ebpos;
                         Rect const rect(
                             this->x() + this->cursor_px_pos + this->label.x_text,
@@ -485,7 +485,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                         gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
                         this->h_text = tm.height;
                         this->label.buffer[this->edit_buffer_pos + len] = c;
-                        UTF8RemoveOneAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 0);
+                        UTF8RemoveOne(make_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
                         this->buffer_size -= len;
                         this->num_chars--;
                         Rect const rect(

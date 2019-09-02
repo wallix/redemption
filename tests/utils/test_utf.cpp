@@ -83,30 +83,14 @@ RED_AUTO_TEST_CASE(TestUTF8InsertUtf16)
     RED_CHECK_SMEM(make_array_view(source).first(9), "xabcedef\x00"_av);
 }
 
-struct Data
-{
-    std::size_t pos;
-    array_view_const_char expected;
-};
-
 RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos0)
 {
-    RED_TEST_CONTEXT_DATA(Data const& data, "insert at position " << data.pos, {
-        Data{0,  "bcedef\xC3\xA0\xC3\xA7\xC3\xA0@\0"_av},
-        Data{1,  "acedef\xC3\xA0\xC3\xA7\xC3\xA0@\0"_av},
-        Data{7,  "abcedef\xC3\xA7\xC3\xA0@\0"_av},
-        Data{8,  "abcedef\xC3\xA0\xC3\xA0@\0"_av},
-        Data{9,  "abcedef\xC3\xA0\xC3\xA7@\0"_av},
-        Data{10, "abcedef\xC3\xA0\xC3\xA7\xC3\xA0\0"_av},
-        Data{11, "abcedef\xC3\xA0\xC3\xA7\xC3\xA0@\0"_av},
-        Data{12, "abcedef\xC3\xA0\xC3\xA7\xC3\xA0@\0"_av}
-    }) {
-        uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-        UTF8RemoveOneAtPos(source, data.pos);
-
-        RED_CHECK_SMEM(array_view(source, data.expected.size()), data.expected);
-    }
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f'};
+    UTF8RemoveOne(make_array_view(source).first(8));
+    RED_CHECK_SMEM(make_array_view(source).first(8), "bcedef\x00\x00"_av);
+    source[7] = 'x';
+    UTF8RemoveOne(make_array_view(source).drop_front(6));
+    RED_CHECK_SMEM(make_array_view(source).first(9), "bcedef\x00x\00"_av);
 }
 
 RED_AUTO_TEST_CASE(TestUTF8_UTF16)

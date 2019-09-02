@@ -53,8 +53,8 @@ std::size_t UTF8GetPos(uint8_t const * source, std::size_t len) noexcept;
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
 std::size_t UTF8StringAdjustedNbBytes(const uint8_t * source, std::size_t max_len) noexcept;
 
-// UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before
-void UTF8RemoveOneAtPos(uint8_t * source, std::size_t len) noexcept;
+// UTF8RemoveOne assumes input is valid utf8, zero terminated, that has been checked before
+void UTF8RemoveOne(writable_bytes_view source) noexcept;
 
 // UTF8InsertUtf16 assumes input is valid utf8, zero terminated, that has been checked before
 // UTF8InsertUtf16 won't insert anything and return false if modified string buffer does not have enough space to insert

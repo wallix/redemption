@@ -139,21 +139,12 @@ size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len) noexcep
     return adjust_len;
 }
 
-// UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before
-void UTF8RemoveOneAtPos(uint8_t * source, size_t len) noexcept
+// UTF8RemoveOne assumes input is valid utf8, zero terminated, that has been checked before
+void UTF8RemoveOne(writable_bytes_view source) noexcept
 {
-    len += 1;
-    uint8_t c = 0;
-    size_t i = 0;
-    for (; 0 != (c = source[i]) ; i++){
-        len -= ((c >> 6) == 2)?0:1;
-        if (len == 0) {
-            size_t insertion_point = i;
-            size_t end_point = insertion_point + strlen(char_ptr_cast(source+i));
-            uint32_t char_len = UTF8CharNbBytes(source+i);
-            memmove(source + i, source + i + char_len, end_point - insertion_point + 1 - char_len);
-            break;
-        }
+    if (source.front()) {
+        size_t n = utf8_byte_size_table[(source.front() >> 3)];
+        memmove(source.data(), source.data() + n, source.size() - n);
     }
 }
 
