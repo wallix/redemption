@@ -83,14 +83,9 @@ public:
 
     void final(uint8_t (&out_data)[DigestLength])
     {
-        unsigned int len = 0;
-        int res = HMAC_Final(this->hmac, out_data, &len);
-        if (res == 0) {
-            throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
-        }
-        assert(len == DigestLength);
+        unchecked_final(+out_data);
     }
-    
+
     void unchecked_final(uint8_t * out_data)
     {
         unsigned int len = 0;
@@ -156,7 +151,7 @@ public:
         this->hmac.deinit();
         this->initialized = false;
     }
-    
+
     void unchecked_final(uint8_t * out_data)
     {
         if (!this->initialized){
@@ -170,7 +165,7 @@ public:
         assert(len == DigestLength);
         this->hmac.deinit();
         this->initialized = false;
-    }    
+    }
 };
 
 }  // namespace detail_
