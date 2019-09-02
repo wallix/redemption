@@ -1000,47 +1000,13 @@ inline TSCspDataDetail recvTSCspDataDetail(InStream & stream)
 {
     TSCspDataDetail self;
     // TSCspDataDetail ::= SEQUENCE
-    // TSSmartCardCreds (SEQUENCE)
-
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
 
-    // [0] keySpec (INTEGER)
-    self.keySpec = BER::read_integer_field(stream, 0,  "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
-
-    // [1] cardName (OCTET STRING OPTIONAL)
-    self.cardName = BER::read_optional_octet_string(stream, 1, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
-//    if (BER::check_ber_ctxt_tag(stream, 1)) {
-//        stream.in_skip_bytes(1);
-//        BER::read_length(stream, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
-//        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
-//        self.cardName.resize(length);
-//        stream.in_copy_bytes(self.cardName);
-//    }
-
-    // [2] readerName (OCTET STRING OPTIONAL)
-    if (BER::check_ber_ctxt_tag(stream, 2)) {
-        stream.in_skip_bytes(1);
-        BER::read_length(stream, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
-        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
-        self.readerName.resize(length);
-        stream.in_copy_bytes(self.readerName);
-    }
-    /* [3] containerName (OCTET STRING OPTIONAL) */
-    if (BER::check_ber_ctxt_tag(stream, 3)) {
-        stream.in_skip_bytes(1);
-        BER::read_length(stream, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
-        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
-        self.containerName.resize(length);
-        stream.in_copy_bytes(self.containerName);
-    }
-    /* [4] cspName (OCTET STRING OPTIONAL) */
-    if (BER::check_ber_ctxt_tag(stream, 4)) {
-        stream.in_skip_bytes(1);
-        BER::read_length(stream, "TSCspDataDetail [4] cspName", ERR_CREDSSP_TS_REQUEST);
-        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [4] cspName", ERR_CREDSSP_TS_REQUEST);
-        self.cspName.resize(length);
-        stream.in_copy_bytes(self.cspName);
-    }
+    self.keySpec       = BER::read_integer_field(        stream, 0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
+    self.cardName      = BER::read_optional_octet_string(stream, 1, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
+    self.readerName    = BER::read_optional_octet_string(stream, 2, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
+    self.containerName = BER::read_optional_octet_string(stream, 3, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
+    self.cspName       = BER::read_optional_octet_string(stream, 4, "TSCspDataDetail [4] cspName", ERR_CREDSSP_TS_REQUEST);
     return self;
 }
 
