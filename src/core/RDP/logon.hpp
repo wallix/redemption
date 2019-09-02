@@ -357,7 +357,7 @@ enum InfoPacketFlags {
 //    80 bytes for RDP 6.1 and 7.0.
 
 // cbClientDir (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
-//    character data in the clientDir field. This size include " the length of the
+//    character data in the clientDir field. This size include the length of the
 //    mandatory null terminator.
 
 // clientDir (variable): Variable-length directory that contains either (a) the
@@ -837,7 +837,7 @@ public:
         stream.out_uint32_le(this->CodePage);
         stream.out_uint32_le(this->flags);
 
-        auto out_unistr = [](OutStream & stream, uint8_t const* s, size_t n) mutable {
+        auto out_unistr = [](OutStream & stream, uint8_t const* s, size_t n) {
             const size_t len = UTF8toUTF16({s, n}, stream.get_tail());
             stream.out_skip_bytes(len);
             stream.out_uint16_le(0);

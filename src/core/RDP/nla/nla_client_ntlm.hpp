@@ -63,8 +63,6 @@ private:
 
     SslRC4 SendRc4Seal {};
 
-    uint32_t NegotiateFlags = 0;
-
     //int LmCompatibilityLevel;
     std::vector<uint8_t> Workstation;
 
@@ -78,8 +76,7 @@ private:
     std::vector<uint8_t> SavedChallengeMessage;
     std::vector<uint8_t> SavedAuthenticateMessage;
 
-    uint8_t Timestamp[8]{};
-    array_md5 SessionBaseKey; 
+    array_md5 SessionBaseKey;
     array_md5 ExportedSessionKey;
     array_md5 EncryptedRandomSessionKey;
     array_md5 sspi_context_ClientSigningKey;
@@ -102,7 +99,6 @@ private:
     // DECRYPT_MESSAGE DecryptMessage;
     bool restricted_admin_mode;
 
-    const char * target_host;
     const bool verbose;
 
     enum class Res : bool { Err, Ok };
@@ -141,7 +137,6 @@ public:
         , rand(rand)
         , Workstation(::UTF8toUTF16({hostname, strlen(char_ptr_cast(hostname))}))
         , restricted_admin_mode(restricted_admin_mode)
-        , target_host(target_host)
         , verbose(verbose)
     {
     }
@@ -150,7 +145,7 @@ public:
     credssp::State credssp_client_authenticate_start(StaticOutStream<65536> & ts_request_emit)
     {
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
-              
+
         /* receive server response and place in input buffer */
         LOG_IF(this->verbose, LOG_INFO, "NTLM Send Negotiate");
         auto NegotiateMessageVector = emitNTLMNegotiateMessage();
@@ -196,9 +191,9 @@ public:
                 this->SavedChallengeMessage = this->CHALLENGE_MESSAGE.raw_bytes;
 
                 this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
-                
+
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response from challenge");
-                
+
                 // ntlmv2_compute_response_from_challenge generates :
                 // - timestamp
                 // - client challenge
@@ -260,7 +255,7 @@ public:
                 //                                         Concat(ServerChallenge, ClientChallenge))
                 // LmChallengeResponse.ChallengeFromClient = ClientChallenge
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
-                
+
                 auto response = compute_LMv2_Response(ResponseKeyLM, ServerChallenge, ClientChallenge);
                 this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
                 push_back_array(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer, ClientChallenge);
@@ -294,11 +289,11 @@ public:
                         "session key to server-to-client sealing key magic constant\0"_av);
 
                 this->SendRc4Seal.set_key(this->ClientSealingKey);
-                
+
                 uint32_t flags = set_negotiate_flags(
-                                    this->NTLMv2, 
-                                    this->UseMIC, 
-                                    this->Workstation.size() != 0, 
+                                    this->NTLMv2,
+                                    this->UseMIC,
+                                    this->Workstation.size() != 0,
                                     this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
                 this->AUTHENTICATE_MESSAGE.negoFlags.flags = flags;
@@ -329,7 +324,7 @@ public:
 
                     this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
-                    array_md5 MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey, 
+                    array_md5 MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey,
                                                             this->SavedNegotiateMessage,
                                                             this->SavedChallengeMessage,
                                                             this->SavedAuthenticateMessage);
@@ -357,7 +352,7 @@ public:
                     this->rand.random(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH);
                     this->SavedClientNonce.initialized = true;
                     ts_request.clientNonce = this->SavedClientNonce;
-                    
+
                     LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
                     SslSha256 sha256;
                     uint8_t hash[SslSha256::DIGEST_LENGTH];
@@ -375,7 +370,7 @@ public:
                 std::vector<uint8_t> data_out(public_key.size() + cbMaxSignature);
                 std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                 array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, public_key);
-                
+
                 this->SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
                 this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
                 ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
@@ -410,7 +405,7 @@ public:
 
                 /* Verify Server Public Key Echo */
                 unsigned long MessageSeqNo = this->recv_seq_num++;
-                
+
                 // data_in [signature][data_buffer]
 
                 array_view_const_u8 pubkeyAuth_payload = {ts_request.pubKeyAuth.data()+cbMaxSignature, ts_request.pubKeyAuth.size()-cbMaxSignature};
@@ -420,7 +415,7 @@ public:
                 RecvRc4Seal.set_key(this->ServerSealingKey);
                 // decrypt message using RC4
                 auto pubkeyAuth_encrypted_payload = Rc4CryptVector(RecvRc4Seal, pubkeyAuth_payload);
-               
+
                 std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                 array_md5 digest = ::HmacMd5(this->sspi_context_ServerSigningKey, seqno, pubkeyAuth_encrypted_payload);
                 /* RC4-encrypt first 8 bytes of digest (digest is 16 bytes long)*/
@@ -479,7 +474,7 @@ public:
                         // Card Reader Not Supported Yet
                         bytes_view pin;
                         bytes_view userHint;
-                        bytes_view domainHint; 
+                        bytes_view domainHint;
                         uint32_t keySpec = 0;
                         bytes_view cardName;
                         bytes_view readerName;
@@ -498,14 +493,14 @@ public:
 
                     this->SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
                     this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
-                    
+
                     ts_request.negoTokens.clear();
                     ts_request.pubKeyAuth.clear();
                     ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
                     ts_request.clientNonce = this->SavedClientNonce;
                     auto v = emitTSRequest(ts_request, error_code);
                     ts_request_emit.out_copy_bytes(v);
-                    
+
                 }
                 this->client_auth_data_state = Start;
                 return credssp::State::Finish;
@@ -515,7 +510,7 @@ public:
         }
         return credssp::State::Err;
     }
-    
+
     uint32_t set_negotiate_flags(bool ntlmv2, bool use_mic, bool send_workstation_name, bool negotiate_key_exchange)
     {
         /*
