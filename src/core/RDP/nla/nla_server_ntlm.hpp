@@ -576,7 +576,7 @@ public:
                             this->SavedClientNonce = this->ts_request.clientNonce;
                         }
                         this->ClientServerHash = Sha256("CredSSP Client-To-Server Binding Hash\0"_av,
-                                                make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
+                                                make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH),
                                                 this->public_key);
                         this->public_key = this->ClientServerHash;
                     }
@@ -613,7 +613,7 @@ public:
                             this->SavedClientNonce = this->ts_request.clientNonce;
                         }
                         this->ServerClientHash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
-                                                    make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
+                                                    make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH),
                                                     this->public_key);
                         this->public_key = this->ServerClientHash;
                     }

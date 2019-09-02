@@ -588,7 +588,7 @@ class rdpCredsspServerKerberos final
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
         sha256.update(this->public_key);
         sha256.final(hash);
         SavedHash = std::vector<uint8_t>(sizeof(hash));
@@ -601,7 +601,7 @@ class rdpCredsspServerKerberos final
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
         sha256.update(this->public_key);
         sha256.final(hash);
         SavedHash = std::vector<uint8_t>(sizeof(hash));

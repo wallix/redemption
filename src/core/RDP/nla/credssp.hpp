@@ -610,9 +610,10 @@ static const int CLIENT_NONCE_LENGTH = 32;
 
 struct ClientNonce {
     bool initialized = false;
-    uint8_t data[CLIENT_NONCE_LENGTH] = {};
+    std::vector<uint8_t> clientNonce;
 
-    ClientNonce() {}
+    ClientNonce() : clientNonce{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+        {}
 
     bool isset() {
         return this->initialized;
@@ -741,7 +742,7 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
         ber_error_code_field = BER::mkIntegerField(error_code, 4);
     }
     // clientNonce[5] OCTET STRING OPTIONAL
-    auto ber_nonce_header = BER::mkOptionalOctetStringFieldHeader(sizeof(self.clientNonce.data), 5);
+    auto ber_nonce_header = BER::mkOptionalOctetStringFieldHeader(CLIENT_NONCE_LENGTH, 5);
 
     /* TSRequest */
     size_t ts_request_length = ber_version_field.size()
@@ -753,7 +754,7 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
           + self.pubKeyAuth.size()
           + ber_error_code_field.size()
           + (self.version >= 5 && self.clientNonce.initialized)
-            *(ber_nonce_header.size()+sizeof(self.clientNonce.data));
+            *(ber_nonce_header.size()+self.clientNonce.clientNonce.size());
 
     auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
 
@@ -765,7 +766,7 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
            << ber_error_code_field;
 
     if (self.version >= 5 && self.clientNonce.initialized){
-        result << ber_nonce_header << bytes_view({self.clientNonce.data, sizeof(self.clientNonce.data)});
+        result << ber_nonce_header << self.clientNonce.clientNonce;
     }
     
 //    LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
@@ -845,15 +846,8 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
 
     /* [5] clientNonce (OCTET STRING) */
     if (remote_version >= 5){
-        if (BER::check_ber_ctxt_tag(stream, 5)) {
-            stream.in_skip_bytes(1);
-            BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-            uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [5] clientNonce", ERR_CREDSSP_TS_REQUEST);
-            if (length != CLIENT_NONCE_LENGTH){
-                LOG(LOG_ERR, "Truncated client nonce");
-                throw Error(ERR_CREDSSP_TS_REQUEST);
-            }
-            stream.in_copy_bytes(self.clientNonce.data, CLIENT_NONCE_LENGTH);
+        self.clientNonce.clientNonce = BER::read_optional_octet_string(stream, 5, "TSRequest [5] clientNonce", ERR_CREDSSP_TS_REQUEST);
+        if (self.clientNonce.clientNonce.size() > 0){
             self.clientNonce.initialized = true;
         }
     }

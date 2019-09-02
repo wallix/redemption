@@ -498,7 +498,7 @@ private:
 
     void credssp_generate_client_nonce() {
         LOG(LOG_INFO, "rdpCredsspClientKerberos::credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH);
+        this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
         this->SavedClientNonce.initialized = true;
         this->credssp_set_client_nonce();
     }
@@ -521,7 +521,7 @@ private:
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
         
@@ -533,7 +533,7 @@ private:
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
         sha256.update("CredSSP Server-To-Client Binding Hash\0"_av);
-        sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+        sha256.update(make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
         sha256.update({this->PublicKey.data(),this->PublicKey.size()});
         sha256.final(hash);
         this->ServerClientHash.assign(hash, hash + sizeof(hash));

@@ -354,7 +354,7 @@ public:
                 array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
                 if (version >= 5) {
                     LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
-                    this->rand.random(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH);
+                    this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
                     this->SavedClientNonce.initialized = true;
                     ts_request.clientNonce = this->SavedClientNonce;
                     
@@ -362,7 +362,7 @@ public:
                     SslSha256 sha256;
                     uint8_t hash[SslSha256::DIGEST_LENGTH];
                     sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
-                    sha256.update(make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH));
+                    sha256.update(make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH));
 
                     sha256.update({this->PublicKey.data(),this->PublicKey.size()});
                     sha256.final(hash);
@@ -450,7 +450,7 @@ public:
                 }
                 else {
                     auto hash = Sha256("CredSSP Server-To-Client Binding Hash\0"_av,
-                           make_array_view(this->SavedClientNonce.data, CLIENT_NONCE_LENGTH),
+                           make_array_view(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH),
                            this->PublicKey);
                     if (!are_buffer_equal(hash, pubkeyAuth_encrypted_payload)){
                         LOG(LOG_ERR, "Server's public key echo signature verification failed");
