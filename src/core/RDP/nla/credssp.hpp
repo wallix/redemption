@@ -313,72 +313,42 @@ namespace BER {
         return read_length(s, message, eid);
     }
 
-    // ==========================
-    //   INTEGER
-    // ==========================
-    
-    inline bool read_integer(InStream & s, uint32_t & value) {
-        if (!s.in_check_rem(1)) {
-            return false;
-        }
-        uint8_t tag_byte = s.in_uint8();
-        if  (tag_byte != (CLASS_UNIV | PC_PRIMITIVE | (TAG_MASK & TAG_INTEGER))){
-            return false;
-        }
-        // read length of following value
-        if (!s.in_check_rem(1)) {
-            return false;
-        }
-        uint8_t byte = s.in_uint8();
-        switch (byte) {
-        case 0:
-            return false;
-        case 0x82:
-            if (!s.in_check_rem(2)) {
-                return false;
-            }
-            byte = s.in_uint16_be();
-            break;
-        case 0x81:
-            if (!s.in_check_rem(1)) {
-                return false;
-            }
-            byte = s.in_uint8();
-            break;
-        default:
-            break;
+    inline int read_integer(InStream & s, const char * message, error_type eid) 
+    {
+        uint8_t byte = read_tag_length(s, CLASS_UNIV | PC_PRIMITIVE | TAG_INTEGER, message, eid);
+        if (not (byte >= 1) && (byte <= 4)){
+            LOG(LOG_ERR, "%s: Ber unexpected integer length %u", message, byte);
+            throw Error(eid);
         }
         // Now bytes contains length of integer value
-        switch (byte) {
-        case 4:
-            if (!s.in_check_rem(4)) {
-                return false;
-            }
-            value = s.in_uint32_be();
-            break;
-        case 3:
-            if (!s.in_check_rem(3)) {
-                return false;
-            }
-            value = s.in_uint24_be();
-            break;
-        case 2:
-            if (!s.in_check_rem(2)) {
-                return false;
-            }
-            value = s.in_uint16_be();
-            break;
-        case 1:
-            if (!s.in_check_rem(1)) {
-                return false;
-            }
-            value = s.in_uint8();
-            break;
-        default:
-            return false;
+        if (!s.in_check_rem(byte)) {
+            LOG(LOG_ERR, "%s: Ber integer data truncated %u", message, byte);
+            throw Error(eid);
         }
-        return true;
+        switch (byte) {
+        default:
+            return s.in_uint32_be();
+        case 3:
+            return s.in_uint24_be();
+        case 2:
+            return s.in_uint16_be();
+        case 1:
+            return s.in_uint8();
+        }
     }
+
+    inline int read_integer_field(InStream & s, uint8_t tag, const char * message, error_type eid) 
+    {
+        size_t length = read_tag_length(s, CLASS_CTXT|PC_CONSTRUCT|tag, "TS Request", ERR_CREDSSP_TS_REQUEST);
+        if (!s.in_check_rem(length)) {
+            LOG(LOG_ERR, "%s: Ber tagged integer field truncated", message);
+            throw Error(eid);
+        }
+        return read_integer(s, message, eid);
+    }
+
+
+
 } // namespace BER
 
 
@@ -812,18 +782,13 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
 {
     InStream stream(data);
     TSRequest self(version);
-    int length;
-    uint32_t remote_version;
+    error_code = 0;
 
     /* TSRequest */
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
+    BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
 
     // version    [0] INTEGER,
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request", ERR_CREDSSP_TS_REQUEST);
-    if(!BER::read_integer(stream, remote_version)) {
-        throw Error(ERR_CREDSSP_TS_REQUEST);
-    }
-
+    uint32_t remote_version = BER::read_integer_field(stream, 0, "TS Request [0]", ERR_CREDSSP_TS_REQUEST);
     if (remote_version < self.use_version) {
         self.use_version = remote_version;
     }
@@ -832,7 +797,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     // [1] negoTokens (NegoData) OPTIONAL
     if (BER::check_ber_ctxt_tag(stream, 1)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
+        BER::read_length(stream, "TS Request [1] negoTokens", ERR_CREDSSP_TS_REQUEST);
 
         // * NegoData ::= SEQUENCE OF NegoDataItem
         // *
@@ -841,14 +806,14 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
         // * }
 
         // NegoData ::= SEQUENCE OF NegoDataItem
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData", ERR_CREDSSP_TS_REQUEST);
+        BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData", ERR_CREDSSP_TS_REQUEST);
 
         // NegoDataItem ::= SEQUENCE {
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData NegoDataItem", ERR_CREDSSP_TS_REQUEST);
+        BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request [1] negoTokens NegoData NegoDataItem", ERR_CREDSSP_TS_REQUEST);
 
         // [0] negoToken OCTET STRING
-        length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request [1] negoTokens NegoData NegoDataItem [0] negoToken", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [1] negoTokens NegoData NegoDataItem [0] negoToken", ERR_CREDSSP_TS_REQUEST);
+        BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TS Request [1] negoTokens NegoData NegoDataItem [0] negoToken", ERR_CREDSSP_TS_REQUEST);
+        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [1] negoTokens NegoData NegoDataItem [0] negoToken", ERR_CREDSSP_TS_REQUEST);
         self.negoTokens = std::vector<uint8_t>(length);
         stream.in_copy_bytes(self.negoTokens.data(), length);
     }
@@ -856,8 +821,8 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     /* [2] authInfo (OCTET STRING) */
     if (BER::check_ber_ctxt_tag(stream, 2)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TS Request [2] authInfo", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [2] authInfo", ERR_CREDSSP_TS_REQUEST);
+        BER::read_length(stream, "TS Request [2] authInfo", ERR_CREDSSP_TS_REQUEST);
+        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [2] authInfo", ERR_CREDSSP_TS_REQUEST);
         self.authInfo = std::vector<uint8_t>(length);
         stream.in_copy_bytes(self.authInfo.data(), length);
     }
@@ -865,20 +830,15 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     /* [3] pubKeyAuth (OCTET STRING) */
     if (BER::check_ber_ctxt_tag(stream, 3)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TS Request [3] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [3] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
+        BER::read_length(stream, "TS Request [3] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
+        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [3] pubKeyAuth", ERR_CREDSSP_TS_REQUEST);
         self.pubKeyAuth = std::vector<uint8_t>(length);
         stream.in_copy_bytes(self.pubKeyAuth.data(), length);
     }
     /* [4] errorCode (INTEGER) */
     if (remote_version >= 3 && remote_version != 5){
         if (BER::check_ber_ctxt_tag(stream, 4)){
-            stream.in_skip_bytes(1);
-            length = BER::read_length(stream, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
-            LOG(LOG_INFO, "Credssp recvTSCredentials() ErrorCode");
-            if (!BER::read_integer(stream, error_code)) {
-                throw Error(ERR_CREDSSP_TS_REQUEST);
-            }
+            error_code = BER::read_integer_field(stream, 4, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
             LOG(LOG_INFO, "Credssp recvTSCredentials() "
                 "ErrorCode = %x, Facility = %x, Code = %x",
                 error_code,
@@ -891,8 +851,8 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     if (remote_version >= 5){
         if (BER::check_ber_ctxt_tag(stream, 5)) {
             stream.in_skip_bytes(1);
-            length = BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
-            length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [5] clientNonce", ERR_CREDSSP_TS_REQUEST);
+            BER::read_length(stream, "TS Request", ERR_CREDSSP_TS_REQUEST);
+            uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TS Request [5] clientNonce", ERR_CREDSSP_TS_REQUEST);
             if (length != CLIENT_NONCE_LENGTH){
                 LOG(LOG_ERR, "Truncated client nonce");
                 throw Error(ERR_CREDSSP_TS_REQUEST);
@@ -1027,45 +987,43 @@ struct TSCspDataDetail {
 inline TSCspDataDetail recvTSCspDataDetail(InStream & stream) 
 {
     TSCspDataDetail self;
-    int length = 0;
     /* TSCspDataDetail ::= SEQUENCE */
     /* TSSmartCardCreds (SEQUENCE) */
 
-    length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
+    BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
 
     /* [0] keySpec (INTEGER) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
-    BER::read_integer(stream, self.keySpec);
+    self.keySpec = BER::read_integer_field(stream, 0,  "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
 
     /* [1] cardName (OCTET STRING OPTIONAL) */
     if (BER::check_ber_ctxt_tag(stream, 1)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
+        BER::read_length(stream, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
+        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
         self.cardName.resize(length);
         stream.in_copy_bytes(self.cardName);
     }
     /* [2] readerName (OCTET STRING OPTIONAL) */
     if (BER::check_ber_ctxt_tag(stream, 2)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
+        BER::read_length(stream, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
+        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
         self.readerName.resize(length);
         stream.in_copy_bytes(self.readerName);
     }
     /* [3] containerName (OCTET STRING OPTIONAL) */
     if (BER::check_ber_ctxt_tag(stream, 3)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
+        BER::read_length(stream, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
+        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [3] containerName", ERR_CREDSSP_TS_REQUEST);
         self.containerName.resize(length);
         stream.in_copy_bytes(self.containerName);
     }
     /* [4] cspName (OCTET STRING OPTIONAL) */
     if (BER::check_ber_ctxt_tag(stream, 4)) {
         stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TSCspDataDetail [4] cspName", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [4] cspName", ERR_CREDSSP_TS_REQUEST);
+        BER::read_length(stream, "TSCspDataDetail [4] cspName", ERR_CREDSSP_TS_REQUEST);
+        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [4] cspName", ERR_CREDSSP_TS_REQUEST);
         self.cspName.resize(length);
         stream.in_copy_bytes(self.cspName);
     }
@@ -1242,8 +1200,7 @@ inline TSCredentials recvTSCredentials(InStream & stream)
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
 
     // [0] credType (INTEGER)
-    BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
-    BER::read_integer(stream, self.credType);
+    self.credType = BER::read_integer_field(stream, 0, "TSCredentials [0] credType ", ERR_CREDSSP_TS_REQUEST);
 
     // [1] credentials (OCTET STRING)
     BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
