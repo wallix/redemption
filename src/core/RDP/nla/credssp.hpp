@@ -1097,23 +1097,8 @@ inline TSSmartCardCreds recvTSSmartCardCreds(InStream & stream)
     length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSSmartCardCreds [1] cspData", ERR_CREDSSP_TS_REQUEST);
     self.cspData = recvTSCspDataDetail(stream);
 
-    // [2] userHint OPTIONAL (OCTET STRING)
-    if (BER::check_ber_ctxt_tag(stream, 2)) {
-        stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TSSmartCardCreds [2] userHint", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [2] userHint", ERR_CREDSSP_TS_REQUEST);
-        self.userHint.resize(length);
-        stream.in_copy_bytes(self.userHint);
-    }
-
-    // [3] domainHint OPTIONAL (OCTET STRING)
-    if (BER::check_ber_ctxt_tag(stream, 3)) {
-        stream.in_skip_bytes(1);
-        length = BER::read_length(stream, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
-        length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
-        self.domainHint.resize(length);
-        stream.in_copy_bytes(self.domainHint);
-    }
+    self.userHint   = BER::read_optional_octet_string(stream, 2, "TSSmartCardCreds [2] userHint", ERR_CREDSSP_TS_REQUEST);
+    self.domainHint = BER::read_optional_octet_string(stream, 3, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
     return self;
 }
 
