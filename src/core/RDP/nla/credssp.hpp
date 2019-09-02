@@ -347,19 +347,21 @@ namespace BER {
         return read_integer(s, message, eid);
     }
 
-    inline std::vector<uint8_t> read_optional_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
+    inline std::vector<uint8_t> read_mandatory_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
     {
-        std::vector<uint8_t> result;
-        if (BER::check_ber_ctxt_tag(stream, tag)) {
-            stream.in_skip_bytes(1);
-            BER::read_length(stream, message, eid);
-            uint32_t length = BER::read_tag_length(stream, CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING, message, eid);
-            auto av = stream.in_skip_bytes(length);
-            result.assign(av.data(), av.data()+av.size());
-        }
-        return result;
+        BER::read_tag_length(stream, CLASS_CTXT|PC_CONSTRUCT|tag, message, eid);
+        uint32_t length = BER::read_tag_length(stream, CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING, message, eid);
+        auto av = stream.in_skip_bytes(length);
+        return {av.data(), av.data()+av.size()};
     }
 
+    inline std::vector<uint8_t> read_optional_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
+    {
+        if (BER::check_ber_ctxt_tag(stream, tag)) {
+            return read_mandatory_octet_string(stream, tag, message, eid);
+        }
+        return {};
+    }
 
 } // namespace BER
 
@@ -967,19 +969,6 @@ struct TSCspDataDetail {
     std::vector<uint8_t> readerName;
     std::vector<uint8_t> containerName;
     std::vector<uint8_t> cspName;
-
-    TSCspDataDetail()
-
-    = default;
-
-    TSCspDataDetail(uint32_t keySpec, bytes_view cardName, bytes_view readerName, bytes_view containerName, bytes_view cspName)
-        : keySpec(keySpec)
-        , cardName(cardName.data(), cardName.data()+cardName.size())
-        , readerName(readerName.data(), readerName.data()+readerName.size())
-        , containerName(containerName.data(), containerName.data()+containerName.size())
-        , cspName(cspName.data(), cspName.data()+cspName.size())
-    {
-    }
 };
 
 
@@ -1004,20 +993,11 @@ inline std::vector<uint8_t> emitTSCspDataDetail(uint32_t keySpec,
                                                 bytes_view containerName,
                                                 bytes_view cspName)
 {
-    // [0] keySpec
-    auto ber_keySpec_Field = BER::mkIntegerField(keySpec, 0);
-
-    // [1] cardName (OCTET STRING OPTIONAL)
-    auto ber_cardName_Header = BER::mkOptionalOctetStringFieldHeader(cardName.size(), 1);
-
-    // [2] readerName (OCTET STRING OPTIONAL)
-    auto ber_readerName_Header = BER::mkOptionalOctetStringFieldHeader(readerName.size(), 2);
-
-    // [3] containerName (OCTET STRING OPTIONAL)
+    auto ber_keySpec_Field        = BER::mkIntegerField(keySpec, 0);
+    auto ber_cardName_Header      = BER::mkOptionalOctetStringFieldHeader(cardName.size(), 1);
+    auto ber_readerName_Header    = BER::mkOptionalOctetStringFieldHeader(readerName.size(), 2);
     auto ber_containerName_Header = BER::mkOptionalOctetStringFieldHeader(containerName.size(), 3);
-
-    // [4] cspName (OCTET STRING OPTIONAL)
-    auto ber_cspName_Header = BER::mkOptionalOctetStringFieldHeader(cspName.size(), 4);
+    auto ber_cspName_Header       = BER::mkOptionalOctetStringFieldHeader(cspName.size(), 4);
 
     int innerSize = ber_keySpec_Field.size()
                   + ber_cardName_Header.size() + cardName.size()
@@ -1053,18 +1033,6 @@ struct TSSmartCardCreds {
     TSCspDataDetail cspData;
     std::vector<uint8_t> userHint;
     std::vector<uint8_t> domainHint;
-
-    TSSmartCardCreds() = default;
-
-    TSSmartCardCreds(bytes_view pin, bytes_view userHint, bytes_view domainHint, 
-                     uint32_t keySpec, bytes_view cardName, bytes_view readerName, bytes_view containerName, bytes_view cspName)
-        : pin(pin.data(), pin.data() + pin.size())
-        , cspData(keySpec, cardName, readerName, containerName, cspName)
-        , userHint(userHint.data(), userHint.data() + userHint.size())
-        , domainHint(domainHint.data(), domainHint.data() + domainHint.size())
-    {
-    }
-
 };
 
 inline TSSmartCardCreds recvTSSmartCardCreds(InStream & stream) 
