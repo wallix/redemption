@@ -93,7 +93,7 @@ private:
 
 
 // convert UTF16 input to UTF8 returns a new vector containing encoded data
-inline std::vector<uint8_t> encode_UTF16_to_UTF8(bytes_view utf16_source) noexcept
+inline std::vector<uint8_t> encode_UTF16_to_UTF8(bytes_view utf16_source)
 {
     // TODO: Fix that, it does not handle invalid UTF16 encodings.
     // TODO: Also, we should do something for multiwords UTF16 codes

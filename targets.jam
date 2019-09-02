@@ -4873,6 +4873,11 @@ test-run tests/utils/sugar/test_cast :
 :
   <covfile>src/utils/sugar/cast.hpp
 ;
+test-run tests/utils/sugar/test_checked_iterator :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_checked_iterator.cpp
+:
+  <covfile>src/utils/sugar/checked_iterator.hpp
+;
 test-run tests/utils/sugar/test_finally :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_finally.cpp
 :
@@ -4904,11 +4909,6 @@ test-run tests/utils/sugar/test_range :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_range.cpp
 :
   <covfile>src/utils/sugar/range.hpp
-;
-test-run tests/utils/sugar/test_safe_iterator :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_safe_iterator.cpp
-:
-  <covfile>src/utils/sugar/safe_iterator.hpp
 ;
 test-run tests/utils/sugar/test_splitter :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_splitter.cpp
@@ -5727,13 +5727,13 @@ alias test_buf_maker : tests/utils/sugar/test_buf_maker ;
 alias test_buffer_view : tests/utils/sugar/test_buffer_view ;
 alias test_bytes_view : tests/utils/sugar/test_bytes_view ;
 alias test_cast : tests/utils/sugar/test_cast ;
+alias test_checked_iterator : tests/utils/sugar/test_checked_iterator ;
 alias test_finally : tests/utils/sugar/test_finally ;
 alias test_iter : tests/utils/sugar/test_iter ;
 alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
 alias test_multisz : tests/utils/sugar/test_multisz ;
 alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
 alias test_range : tests/utils/sugar/test_range ;
-alias test_safe_iterator : tests/utils/sugar/test_safe_iterator ;
 alias test_splitter : tests/utils/sugar/test_splitter ;
 alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
@@ -6051,13 +6051,13 @@ alias test_buf_maker.coverage : tests/utils/sugar/test_buf_maker.coverage ;
 alias test_buffer_view.coverage : tests/utils/sugar/test_buffer_view.coverage ;
 alias test_bytes_view.coverage : tests/utils/sugar/test_bytes_view.coverage ;
 alias test_cast.coverage : tests/utils/sugar/test_cast.coverage ;
+alias test_checked_iterator.coverage : tests/utils/sugar/test_checked_iterator.coverage ;
 alias test_finally.coverage : tests/utils/sugar/test_finally.coverage ;
 alias test_iter.coverage : tests/utils/sugar/test_iter.coverage ;
 alias test_movable_noncopyable.coverage : tests/utils/sugar/test_movable_noncopyable.coverage ;
 alias test_multisz.coverage : tests/utils/sugar/test_multisz.coverage ;
 alias test_noncopyable.coverage : tests/utils/sugar/test_noncopyable.coverage ;
 alias test_range.coverage : tests/utils/sugar/test_range.coverage ;
-alias test_safe_iterator.coverage : tests/utils/sugar/test_safe_iterator.coverage ;
 alias test_splitter.coverage : tests/utils/sugar/test_splitter.coverage ;
 alias test_static_vector.coverage : tests/utils/sugar/test_static_vector.coverage ;
 alias test_unique_fd.coverage : tests/utils/sugar/test_unique_fd.coverage ;
@@ -6483,13 +6483,13 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_buffer_view
   tests/utils/sugar/test_bytes_view
   tests/utils/sugar/test_cast
+  tests/utils/sugar/test_checked_iterator
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_iter
   tests/utils/sugar/test_movable_noncopyable
   tests/utils/sugar/test_multisz
   tests/utils/sugar/test_noncopyable
   tests/utils/sugar/test_range
-  tests/utils/sugar/test_safe_iterator
   tests/utils/sugar/test_splitter
   tests/utils/sugar/test_static_vector
   tests/utils/sugar/test_unique_fd
