@@ -412,10 +412,10 @@ public:
                             this->SavedChallengeMessage,
                             this->AUTHENTICATE_MESSAGE.get_bytes());
 
-                        LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
+//                        LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
 
-                        hexdump_c(this->MessageIntegrityCheck.data(), 16);
-                        hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+//                        hexdump_c(this->MessageIntegrityCheck.data(), 16);
+//                        hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
 
                         if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                             LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
@@ -472,10 +472,10 @@ public:
                             this->SavedChallengeMessage,
                             this->AUTHENTICATE_MESSAGE.get_bytes());
 
-                        LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
+//                        LOG(LOG_INFO, "MESSAGE INTEGRITY CHECK");
 
-                        hexdump_c(this->MessageIntegrityCheck.data(), 16);
-                        hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
+//                        hexdump_c(this->MessageIntegrityCheck.data(), 16);
+//                        hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
 
                         if (0 != memcmp(this->MessageIntegrityCheck.data(), this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                             LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");

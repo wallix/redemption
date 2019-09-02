@@ -1204,16 +1204,8 @@ inline void logNtlmFlags(uint32_t flags)
     LOG(LOG_INFO, "}");
 }
 
-inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) {
-
-//    auto l = {
-//         &self.LmChallengeResponse,
-//         &self.NtChallengeResponse,
-//         &self.DomainName,
-//         &self.UserName,
-//         &self.Workstation,
-//         &self.EncryptedRandomSessionKey};
-
+inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) 
+{
     logNtlmField("LmChallengeResponse", self.LmChallengeResponse);
     logNtlmField("NtChallengeResponse", self.NtChallengeResponse);
     logNtlmField("DomainName", self.DomainName);
@@ -1280,14 +1272,13 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
         stream.out_copy_bytes(field->buffer);
     }
 
-    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Sent)");
-    hexdump_d(stream.get_bytes());
+//    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Sent)");
+//    hexdump_d(stream.get_bytes());
 }
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
-    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
-    hexdump_d(stream.remaining_bytes());
-
+//    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");
+//    hexdump_d(stream.remaining_bytes());
 
     uint8_t const * pBegin = stream.get_current();
     
@@ -1797,8 +1788,8 @@ inline void EmitNTLMChallengeMessage(OutStream & stream, NTLMChallengeMessage & 
         stream.out_copy_bytes(self.TargetName.buffer);
         stream.out_copy_bytes(self.TargetInfo.buffer);
         
-        LOG(LOG_INFO, "NTLM Message Challenge Dump (Sent)");
-        hexdump_d(stream.get_bytes());
+//        LOG(LOG_INFO, "NTLM Message Challenge Dump (Sent)");
+//        hexdump_d(stream.get_bytes());
 }
 
 
@@ -1808,8 +1799,8 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
     NTLMChallengeMessage self;
     self.raw_bytes.assign(av.begin(),av.end());
 
-    LOG(LOG_INFO, "NTLM Message Challenge Dump (Recv)");
-    hexdump_d(stream.remaining_bytes());
+//    LOG(LOG_INFO, "NTLM Message Challenge Dump (Recv)");
+//    hexdump_d(stream.remaining_bytes());
 
     uint8_t const * pBegin = stream.get_current();
 
@@ -2083,8 +2074,8 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
     stream.out_copy_bytes(DomainName);
     stream.out_copy_bytes(Workstation);
     
-    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Sent)");
-    hexdump_d(stream.get_bytes());
+//    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Sent)");
+//    hexdump_d(stream.get_bytes());
     
     return message;
 }
@@ -2094,8 +2085,8 @@ inline NTLMNegotiateMessage recvNTLMNegotiateMessage(bytes_view av)
     InStream stream(av);
     NTLMNegotiateMessage self;
     self.raw_bytes.assign(av.begin(),av.end());
-    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Recv)");
-    hexdump_c(stream.remaining_bytes());
+//    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Recv)");
+//    hexdump_c(stream.remaining_bytes());
     uint8_t const * pBegin = stream.get_current();
 
     auto signature = stream.view_bytes(sizeof(NTLM_MESSAGE_SIGNATURE));

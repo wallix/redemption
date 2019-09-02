@@ -784,27 +784,27 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
         result << ber_nonce_header << bytes_view({self.clientNonce.data, sizeof(self.clientNonce.data)});
     }
     
-    LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
-    LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
-    hexdump_c(ber_ts_request_header);
-    LOG(LOG_INFO, "TSRequest version_field ---------------------------");
-    hexdump_c(ber_version_field);
-    LOG(LOG_INFO, "TSRequest nego_tokens_header ----------------------");
-    hexdump_c(ber_nego_tokens_header);
-    LOG(LOG_INFO, "TSRequest auth_info_header ------------------------");
-    hexdump_c(ber_auth_info_header);
-    LOG(LOG_INFO, "TSRequest pub_key_auth_header ---------------------");
-    hexdump_c(ber_pub_key_auth_header);
-    LOG(LOG_INFO, "TSRequest error_code field ------------------------");
-    hexdump_c(ber_error_code_field);
-    LOG(LOG_INFO, "TSRequest nonce -----------------------------------");
-    if (self.version >= 5 && self.clientNonce.initialized){
-        hexdump_c(ber_nonce_header);
-    }
-    LOG(LOG_INFO, "TSRequest full dump--------------------------------");
-//    hexdump_c({begin, size_t(end-begin)});
-    hexdump_c(result);
-    LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
+//    LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
+//    LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
+//    hexdump_c(ber_ts_request_header);
+//    LOG(LOG_INFO, "TSRequest version_field ---------------------------");
+//    hexdump_c(ber_version_field);
+//    LOG(LOG_INFO, "TSRequest nego_tokens_header ----------------------");
+//    hexdump_c(ber_nego_tokens_header);
+//    LOG(LOG_INFO, "TSRequest auth_info_header ------------------------");
+//    hexdump_c(ber_auth_info_header);
+//    LOG(LOG_INFO, "TSRequest pub_key_auth_header ---------------------");
+//    hexdump_c(ber_pub_key_auth_header);
+//    LOG(LOG_INFO, "TSRequest error_code field ------------------------");
+//    hexdump_c(ber_error_code_field);
+//    LOG(LOG_INFO, "TSRequest nonce -----------------------------------");
+//    if (self.version >= 5 && self.clientNonce.initialized){
+//        hexdump_c(ber_nonce_header);
+//    }
+//    LOG(LOG_INFO, "TSRequest full dump--------------------------------");
+////    hexdump_c({begin, size_t(end-begin)});
+//    hexdump_c(result);
+//    LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
     return result;
 }
 
@@ -973,21 +973,21 @@ inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view us
 //    result.insert(result.end(), ber_password_header.begin(), ber_password_header.end());
 //    result.insert(result.end(), password.data(), password.data()+password.size());
 
-    LOG(LOG_INFO, "TSPasswordCreds hexdump ---------------------------");
-    LOG(LOG_INFO, "TSPasswordCreds ts_password_creds_header ----------");
-    hexdump_c(ber_ts_password_creds_header);
-    LOG(LOG_INFO, "TSPasswordCreds domain name header ----------------------");
-    hexdump_c(ber_domain_name_header);
-    hexdump_c(domain);
-    LOG(LOG_INFO, "TSPasswordCreds user name header ------------------------");
-    hexdump_c(ber_user_name_header);
-    hexdump_c(user);
-    LOG(LOG_INFO, "TSPasswordCreds password header -------------------------");
-    hexdump_c(ber_password_header);
-    hexdump_c(password);
-    LOG(LOG_INFO, "TSPasswordCreds full dump--------------------------------");
-    hexdump_c(result);
-    LOG(LOG_INFO, "TSPasswordCreds hexdump -DONE----------------------------");
+//    LOG(LOG_INFO, "TSPasswordCreds hexdump ---------------------------");
+//    LOG(LOG_INFO, "TSPasswordCreds ts_password_creds_header ----------");
+//    hexdump_c(ber_ts_password_creds_header);
+//    LOG(LOG_INFO, "TSPasswordCreds domain name header ----------------------");
+//    hexdump_c(ber_domain_name_header);
+//    hexdump_c(domain);
+//    LOG(LOG_INFO, "TSPasswordCreds user name header ------------------------");
+//    hexdump_c(ber_user_name_header);
+//    hexdump_c(user);
+//    LOG(LOG_INFO, "TSPasswordCreds password header -------------------------");
+//    hexdump_c(ber_password_header);
+//    hexdump_c(password);
+//    LOG(LOG_INFO, "TSPasswordCreds full dump--------------------------------");
+//    hexdump_c(result);
+//    LOG(LOG_INFO, "TSPasswordCreds hexdump -DONE----------------------------");
 
     return result;
 }
@@ -1239,15 +1239,15 @@ inline TSCredentials recvTSCredentials(InStream & stream)
     // stream is decrypted and should be decrypted before calling recv
 
     // TSCredentials (SEQUENCE)
-    int length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
+    BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
 
     // [0] credType (INTEGER)
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
+    BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|0, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
     BER::read_integer(stream, self.credType);
 
     // [1] credentials (OCTET STRING)
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
-    int creds_length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
+    BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
+    BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
 
     if (self.credType == 2) {
         self.smartcardCreds = recvTSSmartCardCreds(stream);
