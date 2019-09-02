@@ -18,12 +18,85 @@
  *   Author(s): Christophe Grosjean, Meng Tan
  */
 
+#include "configs/io.hpp"
 #include "utils/load_theme.hpp"
 #include "utils/theme.hpp"
 #include "utils/cfgloader.hpp"
-#include "utils/parse.hpp"
 #include "utils/fileutils.hpp"
 #include "core/app_path.hpp"
+
+#include <cstring> // strcasecmp
+
+
+// should be as sorted_log_id_string in agent_data_extractor
+static BGRColor color_from_cstr(const char * str)
+{
+    BGRColor bgr;
+
+    if (false) {}
+# define ELSE_COLOR(COLOR_NAME) else if (0 == strcasecmp(#COLOR_NAME, str)) { bgr = COLOR_NAME; }
+    ELSE_COLOR(BLACK)
+    ELSE_COLOR(GREY)
+    ELSE_COLOR(MEDIUM_GREY)
+    ELSE_COLOR(DARK_GREY)
+    ELSE_COLOR(ANTHRACITE)
+    ELSE_COLOR(WHITE)
+
+    ELSE_COLOR(BLUE)
+    ELSE_COLOR(DARK_BLUE)
+    ELSE_COLOR(CYAN)
+    ELSE_COLOR(DARK_BLUE_WIN)
+    ELSE_COLOR(DARK_BLUE_BIS)
+    ELSE_COLOR(MEDIUM_BLUE)
+    ELSE_COLOR(PALE_BLUE)
+    ELSE_COLOR(LIGHT_BLUE)
+    ELSE_COLOR(WINBLUE)
+
+    ELSE_COLOR(RED)
+    ELSE_COLOR(DARK_RED)
+    ELSE_COLOR(MEDIUM_RED)
+    ELSE_COLOR(PINK)
+
+    ELSE_COLOR(GREEN)
+    ELSE_COLOR(WABGREEN)
+    ELSE_COLOR(WABGREEN_BIS)
+    ELSE_COLOR(DARK_WABGREEN)
+    ELSE_COLOR(INV_DARK_WABGREEN)
+    ELSE_COLOR(DARK_GREEN)
+    ELSE_COLOR(INV_DARK_GREEN)
+    ELSE_COLOR(LIGHT_GREEN)
+    ELSE_COLOR(INV_LIGHT_GREEN)
+    ELSE_COLOR(PALE_GREEN)
+    ELSE_COLOR(INV_PALE_GREEN)
+    ELSE_COLOR(MEDIUM_GREEN)
+    ELSE_COLOR(INV_MEDIUM_GREEN)
+
+    ELSE_COLOR(YELLOW)
+    ELSE_COLOR(LIGHT_YELLOW)
+
+    ELSE_COLOR(ORANGE)
+    ELSE_COLOR(LIGHT_ORANGE)
+    ELSE_COLOR(PALE_ORANGE)
+    ELSE_COLOR(BROWN)
+#undef ELSE_COLOR
+    else if ((*str == '0') && (*(str + 1) == 'x')){
+        bgr = BGRasRGBColor(BGRColor(strtol(str + 2, nullptr, 16)));
+    }
+    else {
+        bgr = BGRasRGBColor(BGRColor(strtol(str, nullptr, 10)));
+    }
+
+    return bgr;
+}
+
+
+// 1, yes, on, true
+static bool bool_from_cstr(const char * value)
+{
+    bool val;
+    auto err = configs::parse(val, configs::spec_type<bool>(), array_view{value, strlen(value)});
+    return err ? false : val;
+}
 
 
 struct ThemeHolder final : public ConfigurationHolder
@@ -51,7 +124,7 @@ struct ThemeHolder final : public ConfigurationHolder
                 this->theme.global.error_color = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "logo")){
-                this->theme.global.logo = Parse(byte_ptr_cast(value)).bool_from_cstr();
+                this->theme.global.logo = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "edit")) {

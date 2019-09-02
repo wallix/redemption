@@ -48,6 +48,7 @@ namespace
         };
     }
 
+    // TODO constexpr with C++20
     inline auto const sorted_log_id_string = []() noexcept {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")

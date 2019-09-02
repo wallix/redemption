@@ -74,7 +74,8 @@ struct Entry
             return false;
         }
 
-        auto const value = Parse(byte_ptr_cast(str_value)).ulong_from_cstr();
+        auto const value = strtoul(str_value, nullptr,
+            (str_value[0] == '0' && str_value[1] == 'x') ? 16 : 10);
 
         switch (this->storage_type) {
             case StorageType::Byte:

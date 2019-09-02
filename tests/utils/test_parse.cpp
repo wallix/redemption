@@ -33,9 +33,3 @@ RED_AUTO_TEST_CASE(TestParse_0)
     RED_CHECK_EQUAL(0xFF, data.in_uint8());
     RED_CHECK_EQUAL(-1, data.in_sint8());
 }
-
-RED_AUTO_TEST_CASE(TestParse_1)
-{
-    RED_CHECK_EQUAL(Parse(byte_ptr_cast("2281701377")).ulong_from_cstr(), 0x88000001);
-}
-
