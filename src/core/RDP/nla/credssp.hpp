@@ -347,6 +347,18 @@ namespace BER {
         return read_integer(s, message, eid);
     }
 
+    inline std::vector<uint8_t> read_optional_octet_string(InStream & stream, uint8_t tag, const char * message, error_type eid)
+    {
+        std::vector<uint8_t> result;
+        if (BER::check_ber_ctxt_tag(stream, tag)) {
+            stream.in_skip_bytes(1);
+            BER::read_length(stream, message, eid);
+            uint32_t length = BER::read_tag_length(stream, CLASS_UNIV|PC_PRIMITIVE|TAG_OCTET_STRING, message, eid);
+            auto av = stream.in_skip_bytes(length);
+            result.assign(av.data(), av.data()+av.size());
+        }
+        return result;
+    }
 
 
 } // namespace BER
@@ -987,23 +999,25 @@ struct TSCspDataDetail {
 inline TSCspDataDetail recvTSCspDataDetail(InStream & stream) 
 {
     TSCspDataDetail self;
-    /* TSCspDataDetail ::= SEQUENCE */
-    /* TSSmartCardCreds (SEQUENCE) */
+    // TSCspDataDetail ::= SEQUENCE
+    // TSSmartCardCreds (SEQUENCE)
 
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
 
-    /* [0] keySpec (INTEGER) */
+    // [0] keySpec (INTEGER)
     self.keySpec = BER::read_integer_field(stream, 0,  "TSCspDataDetail [0] keySpec", ERR_CREDSSP_TS_REQUEST);
 
-    /* [1] cardName (OCTET STRING OPTIONAL) */
-    if (BER::check_ber_ctxt_tag(stream, 1)) {
-        stream.in_skip_bytes(1);
-        BER::read_length(stream, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
-        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
-        self.cardName.resize(length);
-        stream.in_copy_bytes(self.cardName);
-    }
-    /* [2] readerName (OCTET STRING OPTIONAL) */
+    // [1] cardName (OCTET STRING OPTIONAL)
+    self.cardName = BER::read_optional_octet_string(stream, 1, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
+//    if (BER::check_ber_ctxt_tag(stream, 1)) {
+//        stream.in_skip_bytes(1);
+//        BER::read_length(stream, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
+//        uint32_t length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSCspDataDetail [1] cardName", ERR_CREDSSP_TS_REQUEST);
+//        self.cardName.resize(length);
+//        stream.in_copy_bytes(self.cardName);
+//    }
+
+    // [2] readerName (OCTET STRING OPTIONAL)
     if (BER::check_ber_ctxt_tag(stream, 2)) {
         stream.in_skip_bytes(1);
         BER::read_length(stream, "TSCspDataDetail [2] readerName", ERR_CREDSSP_TS_REQUEST);
