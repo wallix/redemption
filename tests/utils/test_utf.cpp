@@ -74,18 +74,13 @@ RED_AUTO_TEST_CASE(TestUTF8LenChar)
     RED_CHECK_EQUAL(2u, UTF8Len(source));
 }
 
-RED_AUTO_TEST_CASE(TestUTF8InsertAtPos_0)
+RED_AUTO_TEST_CASE(TestUTF8InsertUtf16)
 {
-    uint8_t source[255] = { 0 };
-    uint8_t to_insert[] = { 0xC3, 0xA9, 0};
-
-    UTF8InsertAtPos(source, 3, to_insert, sizeof(source));
-
-    RED_CHECK_EQUAL(0xC3, source[0]);
-    RED_CHECK_EQUAL(0xA9, source[1]);
-    RED_CHECK_EQUAL(0, source[2]);
-
-    RED_CHECK_EQUAL(1u, UTF8Len(source));
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f'};
+    RED_CHECK(UTF8InsertUtf16(make_array_view(source), 8, 'x'));
+    RED_CHECK_SMEM(make_array_view(source).first(9), "xabcedef\x00"_av);
+    RED_CHECK(!UTF8InsertUtf16(make_array_view(source).first(9), 9, 'y'));
+    RED_CHECK_SMEM(make_array_view(source).first(9), "xabcedef\x00"_av);
 }
 
 struct Data
@@ -93,37 +88,6 @@ struct Data
     std::size_t pos;
     array_view_const_char expected;
 };
-
-RED_AUTO_TEST_CASE(TestUTF8InsertAtPos)
-{
-    RED_TEST_CONTEXT_DATA(Data const& data, "insert at position " << data.pos, {
-        Data{20, "abcedef\xC3\xA9\xC3\xA7\xC3\xA0@\xC3\xA9x\xC3\xA7\xC3\xA0yz\0"_av},
-        Data{0,  "\xC3\xA9x\xC3\xA7\xC3\xA0yzabcedef\xC3\xA9\xC3\xA7\xC3\xA0@\0"_av},
-        Data{1,  "a\xC3\xA9x\xC3\xA7\xC3\xA0yzbcedef\xC3\xA9\xC3\xA7\xC3\xA0@\0"_av},
-        Data{8,  "abcedef\xC3\xA9\xC3\xA9x\xC3\xA7\xC3\xA0yz\xC3\xA7\xC3\xA0@\0"_av}
-    }) {
-        uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-        uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
-
-        UTF8InsertAtPos(source, data.pos, to_insert, sizeof(source));
-
-        RED_CHECK_SMEM(array_view(source, data.expected.size()), data.expected);
-    }
-}
-
-RED_AUTO_TEST_CASE(TestUTF8InsertOneAtPos_at_8)
-{
-    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
-
-    UTF8InsertOneAtPos(source, 8, 0xE9, sizeof(source));
-
-    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0,
-                                 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
-    };
-
-    RED_CHECK_SMEM(array_view(source, sizeof(expected_result)), make_array_view(expected_result));
-    RED_CHECK_EQUAL(12u, UTF8Len(source));
-}
 
 RED_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos0)
 {

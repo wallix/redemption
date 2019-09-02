@@ -26,6 +26,7 @@
 #pragma once
 
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/only_type.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -49,20 +50,15 @@ void UTF16Upper(uint8_t * source, std::size_t max_len) noexcept;
 // It assumes input is valid utf8, zero terminated (that has been checked before).
 std::size_t UTF8GetPos(uint8_t const * source, std::size_t len) noexcept;
 
-
-// UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
-// UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
-bool UTF8InsertAtPos(uint8_t * source, std::size_t len, const uint8_t * to_insert, std::size_t max_source) noexcept;
-
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
 std::size_t UTF8StringAdjustedNbBytes(const uint8_t * source, std::size_t max_len) noexcept;
 
 // UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before
 void UTF8RemoveOneAtPos(uint8_t * source, std::size_t len) noexcept;
 
-// UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
-// UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
-bool UTF8InsertOneAtPos(uint8_t * source, std::size_t len, const uint32_t to_insert_char, std::size_t max_source) noexcept;
+// UTF8InsertUtf16 assumes input is valid utf8, zero terminated, that has been checked before
+// UTF8InsertUtf16 won't insert anything and return false if modified string buffer does not have enough space to insert
+bool UTF8InsertUtf16(writable_bytes_view source, std::size_t bytes_used, uint16_t unicode_char) noexcept;
 
 // UTF8toUTF16 never writes the trailing zero
 std::size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept;
@@ -136,6 +132,7 @@ std::size_t UTF16toUTF8(const uint8_t * utf16_source, std::size_t utf16_len, uin
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
 writable_bytes_view UTF16toUTF8_buf(bytes_view utf16_source, writable_bytes_view utf8_target) noexcept;
+writable_bytes_view UTF16toUTF8_buf(only_type<uint16_t> utf16_source, writable_bytes_view utf8_target) noexcept;
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
