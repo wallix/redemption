@@ -153,23 +153,13 @@ public:
               
         /* receive server response and place in input buffer */
         LOG_IF(this->verbose, LOG_INFO, "NTLM Send Negotiate");
-        auto NegotiateMessageVector = emitNTLMNegotiateMessage();
+        auto negoTokens = emitNTLMNegotiateMessage();
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
-        TSRequest ts_request(6);
-        ts_request.negoTokens = NegotiateMessageVector;
-        auto v = emitTSRequest(ts_request.version,
-                               ts_request.negoTokens,
-                               ts_request.authInfo,
-                               ts_request.pubKeyAuth,
-                               ts_request.error_code,
-                               ts_request.clientNonce.clientNonce,
-                               ts_request.clientNonce.initialized);
+        auto v = emitTSRequest(6, negoTokens, {}, {}, 0, {}, false);
         ts_request_emit.out_copy_bytes(v);
 
-
-        this->SavedNegotiateMessage = std::move(NegotiateMessageVector);
-
+        this->SavedNegotiateMessage = std::move(negoTokens);
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
         this->client_auth_data_state = Loop;
         return credssp::State::Cont;
