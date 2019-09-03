@@ -114,15 +114,15 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
         0x0f
     };
 
-    uint32_t error_code = 0;
-    TSRequest ts_req = recvTSRequest(make_array_view(packet), error_code, 3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req.error_code, 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
-    auto v = emitTSRequest(ts_req, error_code);
+    auto v = emitTSRequest(ts_req);
     RED_CHECK_EQUAL(v.size(), 0x37 + 2);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -152,15 +152,14 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
         0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
 
-    uint32_t error_code = 0;
-    TSRequest ts_req = recvTSRequest(make_array_view(packet), error_code, 3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x80);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
-    auto v = emitTSRequest(ts_req, error_code);
+    auto v = emitTSRequest(ts_req);
     RED_CHECK_EQUAL(v.size(), 0x94 + 3);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -245,15 +244,14 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_AUTH)
         0x34, 0x4a, 0xe0, 0x03, 0xe5
     };
 
-    uint32_t error_code = 0;
-    TSRequest ts_req = recvTSRequest(make_array_view(packet), error_code, 3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x102);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
 
-    auto v = emitTSRequest(ts_req, error_code);
+    auto v = emitTSRequest(ts_req);
     RED_CHECK_EQUAL(v.size(), 0x241 + 4);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -302,15 +300,14 @@ RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
         0xac, 0xc0, 0xfd, 0x1b, 0xb5, 0xa2, 0xd3
     };
 
-    uint32_t error_code = 0;
-    TSRequest ts_req = recvTSRequest(make_array_view(packet), error_code, 3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
 
-    auto v = emitTSRequest(ts_req, error_code);
+    auto v = emitTSRequest(ts_req);
     RED_CHECK_EQUAL(v.size(), 0x12b + 4);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -332,9 +329,7 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
         0x2a, 0x13, 0x52, 0xa6, 0x52, 0x75, 0x50, 0x8d,
         0x3e, 0xe9, 0x6b, 0x57
     };
-    uint32_t error_code = 0;
-
-    TSRequest ts_req = recvTSRequest(make_array_view(packet), error_code, 3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 
@@ -342,7 +337,7 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0x51);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
-    auto v = emitTSRequest(ts_req, error_code);
+    auto v = emitTSRequest(ts_req);
 
     RED_CHECK_EQUAL(v.size(), 0x5c);
     RED_CHECK_SIG_FROM(v, packet);

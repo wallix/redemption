@@ -485,7 +485,8 @@ private:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
         StaticOutStream<65536> ts_request_emit;
-        auto v = emitTSRequest(this->ts_request, this->error_code);
+        auto v = emitTSRequest(this->ts_request);
+        this->error_code = this->ts_request.error_code;
         ts_request_emit.out_copy_bytes(v);
         this->trans.send(ts_request_emit.get_bytes());
     }
@@ -698,7 +699,7 @@ private:
         /* Encrypted Public Key +1 */
         LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
 
-        this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+        this->ts_request = recvTSRequest(in_data);
 
         /* Verify Server Public Key Echo */
 
@@ -848,7 +849,9 @@ public:
                 return credssp::State::Err;
             case ClientAuthenticateData::Loop:
             
-                this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+                this->ts_request = recvTSRequest(in_data);
+                this->error_code = this->ts_request.error_code;
+
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
                 this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
             

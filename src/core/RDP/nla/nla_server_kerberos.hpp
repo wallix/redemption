@@ -834,7 +834,8 @@ private:
 
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
-            this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+            this->ts_request = recvTSRequest(in_data, 6);
+            this->error_code = this->ts_request.error_code;
         }
 
         if (this->ts_request.negoTokens.size() < 1) {
@@ -883,8 +884,8 @@ private:
             return Res::Err;
         }
 
-        uint32_t error_code = 0;
-        auto v = emitTSRequest(this->ts_request, error_code);
+        this->ts_request.error_code = 0;
+        auto v = emitTSRequest(this->ts_request);
         out_stream.out_copy_bytes(v);
 
         this->credssp_buffer_free();
@@ -904,7 +905,8 @@ private:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
         /* Receive encrypted credentials */
-        this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+        this->ts_request = recvTSRequest(in_data, 6);
+        this->error_code = this->ts_request.error_code;
 
         SEC_STATUS status = this->credssp_decrypt_ts_credentials();
 

@@ -715,18 +715,17 @@ struct TSRequest final {
     std::vector<uint8_t> pubKeyAuth;
     // BStream pubKeyAuth;
     /* [4] errorCode (INTEGER OPTIONAL) */
-//    uint32_t error_code{0};
+    uint32_t error_code{0};
     /* [5] clientNonce (OCTET STRING OPTIONAL) */
     ClientNonce clientNonce;
 
     TSRequest(uint32_t version = 6): version(version), use_version(this->version)
-//    , error_code(0)
     {
     }
 };
 
 
-inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
+inline std::vector<uint8_t> emitTSRequest(TSRequest & self)
 {
     // version    [0] INTEGER,
     auto ber_version_field = BER::mkSmallIntegerField(self.version, 0);
@@ -738,8 +737,8 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
     auto ber_pub_key_auth_header = BER::mkOptionalOctetStringFieldHeader(self.pubKeyAuth.size(), 3);
     // [4] errorCode (INTEGER) OPTIONAL
     std::vector<uint8_t> ber_error_code_field;
-    if ((self.version == 3 || self.version == 4 || self.version >= 6) && error_code != 0) {
-        ber_error_code_field = BER::mkIntegerField(error_code, 4);
+    if ((self.version == 3 || self.version == 4 || self.version >= 6) && self.error_code != 0) {
+        ber_error_code_field = BER::mkIntegerField(self.error_code, 4);
     }
     // clientNonce[5] OCTET STRING OPTIONAL
     auto ber_nonce_header = BER::mkOptionalOctetStringFieldHeader(CLIENT_NONCE_LENGTH, 5);
@@ -769,35 +768,37 @@ inline std::vector<uint8_t> emitTSRequest(TSRequest & self, uint32_t error_code)
         result << ber_nonce_header << self.clientNonce.clientNonce;
     }
     
-//    LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
-//    LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
-//    hexdump_c(ber_ts_request_header);
-//    LOG(LOG_INFO, "TSRequest version_field ---------------------------");
-//    hexdump_c(ber_version_field);
-//    LOG(LOG_INFO, "TSRequest nego_tokens_header ----------------------");
-//    hexdump_c(ber_nego_tokens_header);
-//    LOG(LOG_INFO, "TSRequest auth_info_header ------------------------");
-//    hexdump_c(ber_auth_info_header);
-//    LOG(LOG_INFO, "TSRequest pub_key_auth_header ---------------------");
-//    hexdump_c(ber_pub_key_auth_header);
-//    LOG(LOG_INFO, "TSRequest error_code field ------------------------");
-//    hexdump_c(ber_error_code_field);
-//    LOG(LOG_INFO, "TSRequest nonce -----------------------------------");
-//    if (self.version >= 5 && self.clientNonce.initialized){
-//        hexdump_c(ber_nonce_header);
-//    }
-//    LOG(LOG_INFO, "TSRequest full dump--------------------------------");
-////    hexdump_c({begin, size_t(end-begin)});
-//    hexdump_c(result);
-//    LOG(LOG_INFO, "TSRequest hexdump -DONE----------------------------");
+    LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
+    LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
+    hexdump_c(ber_ts_request_header);
+    LOG(LOG_INFO, "TSRequest version_field ---------------------------");
+    hexdump_c(ber_version_field);
+    LOG(LOG_INFO, "TSRequest nego_tokens_header ----------------------");
+    hexdump_c(ber_nego_tokens_header);
+    LOG(LOG_INFO, "TSRequest auth_info_header ------------------------");
+    hexdump_c(ber_auth_info_header);
+    LOG(LOG_INFO, "TSRequest pub_key_auth_header ---------------------");
+    hexdump_c(ber_pub_key_auth_header);
+    LOG(LOG_INFO, "TSRequest error_code field ------------------------");
+    hexdump_c(ber_error_code_field);
+    LOG(LOG_INFO, "TSRequest nonce -----------------------------------");
+    if (self.version >= 5 && self.clientNonce.initialized){
+        hexdump_c(ber_nonce_header);
+    }
+    LOG(LOG_INFO, "emit TSRequest full dump--------------------------------");
+    hexdump_c(result);
+    LOG(LOG_INFO, "emit TSRequest hexdump -DONE----------------------------");
     return result;
 }
 
-inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t version = 6) 
+inline TSRequest recvTSRequest(bytes_view data, uint32_t version = 6) 
 {
+    LOG(LOG_INFO, "recv TSRequest full dump--------------------------------");
+    hexdump_c(data);
+    LOG(LOG_INFO, "recv TSRequest hexdump - START PARSING DATA-------------");
+
     InStream stream(data);
     TSRequest self(version);
-    error_code = 0;
 
     /* TSRequest */
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TS Request", ERR_CREDSSP_TS_REQUEST);
@@ -834,12 +835,12 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t & error_code, uint32_t 
     /* [4] errorCode (INTEGER) */
     if (remote_version >= 3 && remote_version != 5){
         if (BER::check_ber_ctxt_tag(stream, 4)){
-            error_code = BER::read_integer_field(stream, 4, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
+            self.error_code = BER::read_integer_field(stream, 4, "TS Request [4] errorCode", ERR_CREDSSP_TS_REQUEST);
             LOG(LOG_INFO, "Credssp recvTSCredentials() "
                 "ErrorCode = %x, Facility = %x, Code = %x",
-                error_code,
-                (error_code >> 16) & 0x7FF,
-                (error_code & 0xFFFF)
+                self.error_code,
+                (self.error_code >> 16) & 0x7FF,
+                (self.error_code & 0xFFFF)
             );
         }
     }
@@ -1102,6 +1103,10 @@ struct TSCredentials
 
 inline TSCredentials recvTSCredentials(InStream & stream) 
 {
+//    LOG(LOG_INFO, "recv TSRequest full dump--------------------------------");
+//    hexdump_c(data);
+//    LOG(LOG_INFO, "recv TSRequest hexdump - START PARSING DATA-------------");
+
     TSCredentials self;
     // stream is decrypted and should be decrypted before calling recv
 

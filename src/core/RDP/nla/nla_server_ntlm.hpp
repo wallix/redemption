@@ -238,7 +238,8 @@ public:
 
                 if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
                     /* receive authentication token */
-                    this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+                    this->ts_request = recvTSRequest(in_data);
+                    this->error_code = this->ts_request.error_code;
                 }
 
                 if (this->ts_request.negoTokens.size() < 1) {
@@ -659,7 +660,8 @@ public:
                     return credssp::State::Err;
                 }
 
-                auto v = emitTSRequest(this->ts_request, this->error_code);
+                auto v = emitTSRequest(this->ts_request);
+                this->error_code = this->ts_request.error_code;
                 out_stream.out_copy_bytes(v);
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::buffer_free");
@@ -683,7 +685,9 @@ public:
             case ServerAuthenticateData::Final:
             {
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredsspServer::sm_credssp_server_authenticate_final");
-                this->ts_request = recvTSRequest(in_data, this->error_code, 6);
+                this->ts_request = recvTSRequest(in_data);
+                this->error_code = this->ts_request.error_code;
+
                 if (this->ts_request.authInfo.size() < 1) {
                     LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
                     LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", SEC_E_INVALID_TOKEN);

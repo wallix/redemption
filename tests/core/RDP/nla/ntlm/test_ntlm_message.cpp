@@ -265,20 +265,18 @@ RED_AUTO_TEST_CASE(TestChallenge)
         0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
 
-    uint32_t error_code = 0;
-    TSRequest ts_req2 = recvTSRequest(make_array_view(packet2), error_code, 3);
+    TSRequest ts_req2 = recvTSRequest(make_array_view(packet2), 3);
 
     RED_CHECK_EQUAL(ts_req2.version, 3);
-
     RED_CHECK_EQUAL(ts_req2.negoTokens.size(), 0x80);
     RED_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req2.error_code, 0);
     RED_CHECK_EQUAL(ts_req2.pubKeyAuth.size(), 0);
 
     StaticOutStream<65536> to_send2;
-    uint32_t error_code2= 0;
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0);
-    auto v = emitTSRequest(ts_req2, error_code2);
+    auto v = emitTSRequest(ts_req2);
     to_send2.out_copy_bytes(v);
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
@@ -358,19 +356,20 @@ RED_AUTO_TEST_CASE(TestNegotiate)
         0x0f
     };
 
-    uint32_t error_code = 0;
-    TSRequest ts_req = recvTSRequest(make_array_view(packet), error_code, 3);
+    TSRequest ts_req = recvTSRequest(make_array_view(packet), 3);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
+    RED_CHECK_EQUAL(ts_req.error_code, 0);
+
 
     StaticOutStream<65536> to_send;
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0);
-    auto v = emitTSRequest(ts_req, error_code);
+    auto v = emitTSRequest(ts_req);
     to_send.out_copy_bytes(v);
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
@@ -608,20 +607,17 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
         0x34, 0x4a, 0xe0, 0x03, 0xe5
     };
 
-    uint32_t error_code = 0;
-    TSRequest ts_req3 = recvTSRequest(make_array_view(packet3), error_code,3);
+    TSRequest ts_req3 = recvTSRequest(make_array_view(packet3),3);
 
     RED_CHECK_EQUAL(ts_req3.version, 3);
-
     RED_CHECK_EQUAL(ts_req3.negoTokens.size(), 0x102);
     RED_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
+    RED_CHECK_EQUAL(ts_req3.error_code, 0);
     RED_CHECK_EQUAL(ts_req3.pubKeyAuth.size(), 0x11e);
 
     StaticOutStream<65536> to_send3;
-    uint32_t error_code3= 0;
-
     RED_CHECK_EQUAL(to_send3.get_offset(), 0);
-    auto v = emitTSRequest(ts_req3, error_code3);
+    auto v = emitTSRequest(ts_req3);
     to_send3.out_copy_bytes(v);
 
 
