@@ -1136,7 +1136,7 @@ struct NTLMAuthenticateMessage {
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
     uint8_t MIC[16]{};                      /* 16 Bytes */
-    bool ignore_mic{false};
+//    bool ignore_mic{false};
     bool has_mic{true};
     uint32_t PayloadOffset;
     std::vector<uint8_t> message_bytes_dump;
@@ -1220,7 +1220,8 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self)
     hexdump_d(self.MIC, 16);
 }
 
-inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMessage & self)
+
+inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMessage & self, bool ignore_mic)
 {
     uint32_t payloadOffset = 12+8+8+8+8+8+8+4
                             +8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION)
@@ -1259,7 +1260,7 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
     }
 
     if (self.has_mic) {
-        if (self.ignore_mic) {
+        if (ignore_mic) {
             stream.out_clear_bytes(16);
         }
         else {
@@ -1275,6 +1276,7 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 //    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Sent)");
 //    hexdump_d(stream.get_bytes());
 }
+
 
 inline void recvNTLMAuthenticateMessage(InStream & stream, NTLMAuthenticateMessage & self) {
 //    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Recv)");

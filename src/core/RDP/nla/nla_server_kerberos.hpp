@@ -807,15 +807,14 @@ private:
             return SEC_E_INVALID_TOKEN;
         }
 
-        std::vector<uint8_t> Buffer;
+        std::vector<uint8_t> decrypted_creds;
 
-        const SEC_STATUS status = this->table.DecryptMessage(this->ts_request.authInfo, Buffer, this->recv_seq_num++);
+        const SEC_STATUS status = this->table.DecryptMessage(this->ts_request.authInfo, decrypted_creds, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
         }
 
-        InStream decrypted_creds(Buffer);
         this->ts_credentials = recvTSCredentials(decrypted_creds);
 
         // hexdump(this->ts_credentials.passCreds.userName,

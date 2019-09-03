@@ -711,7 +711,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     );
 
     StaticOutStream<65635> tosend;
-    emitNTLMAuthenticateMessage(tosend, AuthMsg);
+    emitNTLMAuthenticateMessage(tosend, AuthMsg, false);
 
     NTLMAuthenticateMessage AuthMsgDuplicate;
 
@@ -1666,9 +1666,7 @@ public:
                                              this->Workstation);
         StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
-            this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-            emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
-            this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+            emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, true);
 
             this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
             this->ntlm_compute_MIC();
@@ -1676,8 +1674,7 @@ public:
             // this->AUTHENTICATE_MESSAGE.has_mic = true;
         }
         out_stream.rewind();
-        this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-        emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
+        emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, false);
         output_buffer.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
         if (this->verbose) {
             logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
@@ -2379,7 +2376,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     // send AUTHENTICATE MESSAGE
     StaticOutStream<65535> out_client_to_server;
-    emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
+    emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE, false);
     InStream in_client_to_server(out_client_to_server.get_bytes());
     recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
 
@@ -2478,10 +2475,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     // send AUTHENTICATE MESSAGE
         uint8_t client_to_server_buf[65535];
         OutStream out_client_to_server(client_to_server_buf);
-    /*client_context.UseMIC*/ {
-        client_context.AUTHENTICATE_MESSAGE.ignore_mic = true;
-        emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
-        client_context.AUTHENTICATE_MESSAGE.ignore_mic = false;
+        /*client_context.UseMIC*/ {
+        emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE, true);
 
         client_context.SavedAuthenticateMessage = std::vector<uint8_t>(out_client_to_server.get_offset());
         memcpy(client_context.SavedAuthenticateMessage.data(), out_client_to_server.get_data(),
@@ -2490,7 +2485,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
         memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
     }
     out_client_to_server.rewind();
-    emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE);
+    emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE, false);
     in_client_to_server = InStream(out_client_to_server.get_bytes());
     recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
     if (server_context.AUTHENTICATE_MESSAGE.has_mic) {

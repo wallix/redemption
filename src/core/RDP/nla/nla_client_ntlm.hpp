@@ -322,9 +322,7 @@ public:
 
                 StaticOutStream<65535> out_stream;
                 if (this->UseMIC) {
-                    this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-                    emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
-                    this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+                    emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, true);
 
                     this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
@@ -336,8 +334,8 @@ public:
                     memcpy(this->AUTHENTICATE_MESSAGE.MIC, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
                 }
                 out_stream.rewind();
-                this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-                emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE);
+                emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, false);
+                
                 auto out_stream_bytes = out_stream.get_bytes();
                 ts_request.negoTokens.assign(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
                 if (this->verbose) {

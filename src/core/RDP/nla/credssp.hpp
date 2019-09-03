@@ -869,8 +869,13 @@ struct TSPasswordCreds {
 };
 
 
-inline TSPasswordCreds recvTSPasswordCreds(InStream & stream) 
+inline TSPasswordCreds recvTSPasswordCreds(bytes_view data) 
 {
+    LOG(LOG_INFO, "recvTSPasswordCreds full dump--------------------------------");
+    hexdump_c(data);
+    LOG(LOG_INFO, "recvTSPasswordCreds hexdump - START PARSING DATA-------------");
+
+    InStream stream(data); // check all is consumed
     TSPasswordCreds self;
     int length = 0;
     /* TSPasswordCreds (SEQUENCE) */
@@ -962,8 +967,9 @@ struct TSCspDataDetail {
 };
 
 
-inline TSCspDataDetail recvTSCspDataDetail(InStream & stream) 
+inline TSCspDataDetail recvTSCspDataDetail(bytes_view data) 
 {
+    InStream stream(data);
     TSCspDataDetail self;
     // TSCspDataDetail ::= SEQUENCE
     BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_CONSTRUCT| BER::TAG_SEQUENCE_OF, "TSCspDataDetail Sequence", ERR_CREDSSP_TS_REQUEST);
@@ -1025,8 +1031,13 @@ struct TSSmartCardCreds {
     std::vector<uint8_t> domainHint;
 };
 
-inline TSSmartCardCreds recvTSSmartCardCreds(InStream & stream) 
+inline TSSmartCardCreds recvTSSmartCardCreds(bytes_view data) 
 {
+    LOG(LOG_INFO, "recvTSSmartCardCreds full dump--------------------------------");
+    hexdump_c(data);
+    LOG(LOG_INFO, "recvTSSmartCardCreds hexdump - START PARSING DATA-------------");
+
+    InStream stream(data);
     TSSmartCardCreds self;
     int length = 0;
     /* TSSmartCardCreds (SEQUENCE) */
@@ -1039,8 +1050,11 @@ inline TSSmartCardCreds recvTSSmartCardCreds(InStream & stream)
     stream.in_copy_bytes(self.pin);
 
     /* [1] cspData (TSCspDataDetail) */
-    length = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSSmartCardCreds [1] cspData", ERR_CREDSSP_TS_REQUEST);
-    self.cspData = recvTSCspDataDetail(stream);
+    {
+        size_t tSCspDataDetailLength = BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSSmartCardCreds [1] cspData", ERR_CREDSSP_TS_REQUEST);
+        bytes_view data = stream.in_skip_bytes(tSCspDataDetailLength);
+        self.cspData = recvTSCspDataDetail(data);
+    }
 
     self.userHint   = BER::read_optional_octet_string(stream, 2, "TSSmartCardCreds [2] userHint", ERR_CREDSSP_TS_REQUEST);
     self.domainHint = BER::read_optional_octet_string(stream, 3, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
@@ -1101,12 +1115,13 @@ struct TSCredentials
     // For now, TSCredentials only contains TSPasswordCreds (not TSSmartCardCreds)
 };
 
-inline TSCredentials recvTSCredentials(InStream & stream) 
+inline TSCredentials recvTSCredentials(bytes_view data) 
 {
-//    LOG(LOG_INFO, "recv TSRequest full dump--------------------------------");
-//    hexdump_c(data);
-//    LOG(LOG_INFO, "recv TSRequest hexdump - START PARSING DATA-------------");
+    LOG(LOG_INFO, "recvTSCredentials full dump--------------------------------");
+    hexdump_c(data);
+    LOG(LOG_INFO, "recvTSCredentials hexdump - START PARSING DATA-------------");
 
+    InStream stream(data);
     TSCredentials self;
     // stream is decrypted and should be decrypted before calling recv
 
@@ -1118,12 +1133,14 @@ inline TSCredentials recvTSCredentials(InStream & stream)
 
     // [1] credentials (OCTET STRING)
     BER::read_tag_length(stream, BER::CLASS_CTXT|BER::PC_CONSTRUCT|1, "TSCredentials", ERR_CREDSSP_TS_REQUEST);
-    BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
+    size_t creds_length = BER::read_tag_length(stream, BER::CLASS_UNIV|BER::PC_PRIMITIVE|BER::TAG_OCTET_STRING, "TSSmartCardCreds [3] domainHint", ERR_CREDSSP_TS_REQUEST);
 
     if (self.credType == 2) {
-        self.smartcardCreds = recvTSSmartCardCreds(stream);
+        bytes_view data = stream.in_skip_bytes(creds_length);
+        self.smartcardCreds = recvTSSmartCardCreds(data);
     } else {
-        self.passCreds = recvTSPasswordCreds(stream);
+        bytes_view data = stream.in_skip_bytes(creds_length);
+        self.passCreds = recvTSPasswordCreds(data);
     }
     return self;
 }

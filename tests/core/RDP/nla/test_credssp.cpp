@@ -355,8 +355,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
 
     
 
-    InStream in_s(r);
-    TSCredentials ts_cred_received = recvTSCredentials(in_s);
+    TSCredentials ts_cred_received = recvTSCredentials(r);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 1);
     RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName, domain);
@@ -385,8 +384,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
     auto r = emitTSCredentialsSmartCard(pin, userHint, domainHint, keySpec, cardName, readerName, containerName, cspName);
     RED_CHECK_EQUAL(r.size(), r[1]+2);
 
-    InStream in_s(r);
-    TSCredentials ts_cred = recvTSCredentials(in_s);
+    TSCredentials ts_cred = recvTSCredentials(r);
 
     RED_CHECK_EQUAL(ts_cred.credType, 2);
     RED_CHECK_EQUAL(ts_cred.smartcardCreds.pin, pin);

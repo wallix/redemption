@@ -705,13 +705,13 @@ public:
                 // this->ts_request.authInfo [signature][data_buffer]
 
                 array_view_const_u8 data_buffer = {this->ts_request.authInfo.data()+cbMaxSignature, this->ts_request.authInfo.size()-cbMaxSignature};
-                auto Buffer = std::vector<uint8_t>(data_buffer.size());
+                auto decrypted_creds = std::vector<uint8_t>(data_buffer.size());
 
                 /* Decrypt message using with RC4, result overwrites original buffer */
                 // context->confidentiality == true
-                this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), Buffer.data());
+                this->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), decrypted_creds.data());
 
-                array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), Buffer);
+                array_md5 digest = HmacMd5(this->ClientSigningKey, out_uint32_le(MessageSeqNo), decrypted_creds);
 
                 uint8_t expected_signature[16] = {};
                 uint8_t * signature = expected_signature;
@@ -739,9 +739,7 @@ public:
                     return credssp::State::Err;
                 }
 
-                InStream decrypted_creds(Buffer);
                 this->ts_credentials = recvTSCredentials(decrypted_creds);
- 
                 this->server_auth_data.state = ServerAuthenticateData::Start;
                 return credssp::State::Finish;
             }
