@@ -452,7 +452,7 @@ public:
                      order.NumWindowIds());
             }
             else {
-                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Order bloacked.");
             }
         }
 
@@ -469,6 +469,7 @@ public:
                  && (DialogBoxType::NONE == this->dialog_box_type)
                  && this->has_previous_window
                 ) {
+                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
                     this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
                     this->waiting_screen_draw(0);
                 }
