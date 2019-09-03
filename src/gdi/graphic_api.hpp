@@ -294,6 +294,7 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPEllipseCB        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPNineGrid         const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
+    virtual void draw(RDPSetSurfaceCommand const & cmd) = 0;
     virtual void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) = 0;
 
     // NOTE maybe in an other interface
@@ -361,6 +362,7 @@ public:
 #endif
     void draw(RDPNineGrid         const & /*unused*/, Rect /*unused*/, ColorCtx /*unused*/, Bitmap const & /*unused*/) override {}
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & /*cmd*/) override {}

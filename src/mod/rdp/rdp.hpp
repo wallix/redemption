@@ -2517,6 +2517,7 @@ public:
 					setSurface.codec = RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX;
 
 					InStream remoteFxStream(bytes_view(stream.get_current(), setSurface.bitmapDataLength));
+					drawable.draw(setSurface);
 					this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
 				}
 				else {
