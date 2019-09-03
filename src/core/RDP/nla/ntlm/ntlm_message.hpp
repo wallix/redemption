@@ -2084,6 +2084,10 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
 
 inline NTLMNegotiateMessage recvNTLMNegotiateMessage(bytes_view av)
 {
+    LOG(LOG_INFO, "recvNTLMNegotiateMessage full dump--------------------------------");
+    hexdump_c(av);
+    LOG(LOG_INFO, "recvNTLMNegotiateMessage hexdump end - START PARSING DATA-------------");
+
     InStream stream(av);
     NTLMNegotiateMessage self;
     self.raw_bytes.assign(av.begin(),av.end());
