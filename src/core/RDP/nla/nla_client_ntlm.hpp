@@ -186,8 +186,8 @@ public:
                 //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Read Challenge");
-                NTLMChallengeMessage CHALLENGE_MESSAGE = recvNTLMChallengeMessage(ts_request.negoTokens);
-                this->SavedChallengeMessage = CHALLENGE_MESSAGE.raw_bytes;
+                NTLMChallengeMessage server_challenge = recvNTLMChallengeMessage(ts_request.negoTokens);
+                this->SavedChallengeMessage = server_challenge.raw_bytes;
 
                 this->sspi_context_state = NTLM_STATE_AUTHENTICATE;
                 
@@ -231,13 +231,13 @@ public:
                 this->rand.random(ClientChallenge.data(), 8);
                 push_back_array(temp, {ClientChallenge.data(), 8});
                 push_back_array(temp, out_uint32_le(0));
-                push_back_array(temp, CHALLENGE_MESSAGE.TargetInfo.buffer);
+                push_back_array(temp, server_challenge.TargetInfo.buffer);
                 push_back_array(temp, out_uint32_le(0));
                 // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain), Concat(ServerChallenge, temp))
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtProofStr");
 
-                array_challenge ServerChallenge =CHALLENGE_MESSAGE.serverChallenge;
+                array_challenge ServerChallenge = server_challenge.serverChallenge;
                 array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,temp);
 
 
@@ -293,7 +293,7 @@ public:
                                     this->NTLMv2, 
                                     this->UseMIC, 
                                     this->Workstation.size() != 0, 
-                                    CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
+                                    server_challenge.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
                 this->AUTHENTICATE_MESSAGE.negoFlags.flags = flags;
 
