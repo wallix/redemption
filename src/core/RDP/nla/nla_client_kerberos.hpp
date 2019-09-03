@@ -485,7 +485,13 @@ private:
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::send");
         StaticOutStream<65536> ts_request_emit;
-        auto v = emitTSRequest(this->ts_request);
+        auto v = emitTSRequest(this->ts_request.version,
+                               this->ts_request.negoTokens,
+                               this->ts_request.authInfo,
+                               this->ts_request.pubKeyAuth,
+                               this->ts_request.error_code,
+                               this->ts_request.clientNonce.clientNonce,
+                               this->ts_request.clientNonce.initialized);
         this->error_code = this->ts_request.error_code;
         ts_request_emit.out_copy_bytes(v);
         this->trans.send(ts_request_emit.get_bytes());

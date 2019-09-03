@@ -660,7 +660,13 @@ public:
                     return credssp::State::Err;
                 }
 
-                auto v = emitTSRequest(this->ts_request);
+                auto v = emitTSRequest(this->ts_request.version,
+                                       this->ts_request.negoTokens,
+                                       this->ts_request.authInfo,
+                                       this->ts_request.pubKeyAuth,
+                                       this->ts_request.error_code,
+                                       this->ts_request.clientNonce.clientNonce,
+                                       this->ts_request.clientNonce.initialized);
                 this->error_code = this->ts_request.error_code;
                 out_stream.out_copy_bytes(v);
 

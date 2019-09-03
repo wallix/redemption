@@ -122,7 +122,13 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
     RED_CHECK_EQUAL(ts_req.error_code, 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
-    auto v = emitTSRequest(ts_req);
+    auto v = emitTSRequest(ts_req.version,
+                           ts_req.negoTokens,
+                           ts_req.authInfo,
+                           ts_req.pubKeyAuth,
+                           ts_req.error_code,
+                           ts_req.clientNonce.clientNonce,
+                           ts_req.clientNonce.initialized);
     RED_CHECK_EQUAL(v.size(), 0x37 + 2);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -159,7 +165,13 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
-    auto v = emitTSRequest(ts_req);
+    auto v = emitTSRequest(ts_req.version,
+                           ts_req.negoTokens,
+                           ts_req.authInfo,
+                           ts_req.pubKeyAuth,
+                           ts_req.error_code,
+                           ts_req.clientNonce.clientNonce,
+                           ts_req.clientNonce.initialized);
     RED_CHECK_EQUAL(v.size(), 0x94 + 3);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -251,7 +263,13 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_AUTH)
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
 
-    auto v = emitTSRequest(ts_req);
+    auto v = emitTSRequest(ts_req.version,
+                           ts_req.negoTokens,
+                           ts_req.authInfo,
+                           ts_req.pubKeyAuth,
+                           ts_req.error_code,
+                           ts_req.clientNonce.clientNonce,
+                           ts_req.clientNonce.initialized);
     RED_CHECK_EQUAL(v.size(), 0x241 + 4);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -307,7 +325,13 @@ RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0x11e);
 
-    auto v = emitTSRequest(ts_req);
+    auto v = emitTSRequest(ts_req.version,
+                           ts_req.negoTokens,
+                           ts_req.authInfo,
+                           ts_req.pubKeyAuth,
+                           ts_req.error_code,
+                           ts_req.clientNonce.clientNonce,
+                           ts_req.clientNonce.initialized);
     RED_CHECK_EQUAL(v.size(), 0x12b + 4);
     RED_CHECK_SIG_FROM(v, packet);
 }
@@ -337,7 +361,13 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0x51);
     RED_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
 
-    auto v = emitTSRequest(ts_req);
+    auto v = emitTSRequest(ts_req.version,
+                           ts_req.negoTokens,
+                           ts_req.authInfo,
+                           ts_req.pubKeyAuth,
+                           ts_req.error_code,
+                           ts_req.clientNonce.clientNonce,
+                           ts_req.clientNonce.initialized);
 
     RED_CHECK_EQUAL(v.size(), 0x5c);
     RED_CHECK_SIG_FROM(v, packet);
@@ -601,5 +631,329 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
 // /* 0050 */ "\x69\x00\x6e\x00\x75\x00\x78\x00\x21\x00\x32\x00"                 // i.n.u.x.!.2.
 // TSPasswordCreds hexdump -DONE----------------------------
 
+
+
+
+
+
+RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
+{
+    //activating CREDSSP
+    //Credssp: NTLM Authentication
+    //NTLM Send Negotiate
+    //rdpCredssp - Client Authentication : Sending Authentication Token
+    //TSRequest hexdump ---------------------------------
+    //TSRequest ts_request_header -----------------------
+    //TSRequest version_field ---------------------------
+    ///* 0000 */ "\xa0\x03\x02\x01\x06"                                             // .....
+    //TSRequest nego_tokens_header ----------------------
+    ///* 0000 */ "\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04\x28"                         // .00.0,.*.(
+    //TSRequest auth_info_header ------------------------
+    //TSRequest pub_key_auth_header ---------------------
+    //TSRequest error_code field ------------------------
+    //TSRequest nonce -----------------------------------
+    //emit TSRequest full dump--------------------------------
+    ///* 0000 */ "\x30\x37\xa0\x03\x02\x01\x06\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" // 07......00.0,.*.
+    ///* 0010 */ "\x28\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08" // (NTLMSSP........
+    ///* 0020 */ "\xe2\x00\x00\x00\x00\x28\x00\x00\x00\x00\x00\x00\x00\x28\x00\x00" // .....(.......(..
+    ///* 0030 */ "\x00\x06\x01\xb1\x1d\x00\x00\x00\x0f"                             // .........
+    //emit TSRequest hexdump -DONE----------------------------
+    
+
+}
+
+//rdpproxy: [rdpproxy] psid="156751302831637" user="u" type="TARGET_CONNECTION" target="Christophe" host="10.10.44.101" port="3389"
+//connecting to 10.10.44.101:3389
+//connection to 10.10.44.101:3389 (10.10.44.101) succeeded : socket 7
+//SocketTransport: recv_timeout=1000
+//Remote RDP Server domain="" login="Christophe" host="cgrthc"
+//RdpNego: TLS=Enabled NLA=Enabled adminMode=Disabled
+//Server key layout is 409
+//ModuleManager::Creation of new mod 'RDP' suceeded
+//RdpNego::NEGO_STATE_INITIAL
+//RdpNego::send_x224_connection_request_pdu
+//Send cookie:
+///* 0000 */ "\x43\x6f\x6f\x6b\x69\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68" // Cookie: mstshash
+///* 0010 */ "\x3d\x43\x68\x72\x69\x73\x74\x6f\x70\x68\x65\x0d\x0a"             // =Christophe..
+//RdpNego::send_x224_connection_request_pdu done
+//RdpNego::recv_next_data::Negociate
+//nego->state=RdpNego::NEGO_STATE_NEGOCIATE
+//RdpNego::NEGO_STATE_NLA
+//RdpNego::recv_connection_confirm
+//NEG_RSP_TYPE=2 NEG_RSP_FLAGS=9 NEG_RSP_LENGTH=8 NEG_RSP_SELECTED_PROTOCOL=2
+//CC Recv: PROTOCOL HYBRID
+//activating TLS (HYBRID)
+//RdpNego::activate_ssl_hybrid
+//Client TLS start
+//SSL_connect()
+//RdpNego::recv_next_data::SslHybrid
+//RdpNego::activate_ssl_hybrid
+//RdpNego::recv_next_data::SslHybrid
+//RdpNego::activate_ssl_hybrid
+//SSL_get_peer_certificate()
+//certificate directory is: '/etc/rdpproxy/cert/0000'
+//certificate file is: '/etc/rdpproxy/cert/0000/rdp,10.10.44.101,3389,X509.pem'
+//nb1=692 nb2=692
+//TLS::X509 existing::issuer=CN = localhost
+//TLS::X509 existing::subject=CN = localhost
+//TLS::X509 existing::fingerprint=13:0c:f2:13:13:4f:08:60:67:e5:6b:78:80:c1:bb:ea:59:8d:e0:35
+//rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="10.10.43.12" target_ip="10.10.44.101" user="u" device="win2008rzh" service="rdp" account="Christophe" type="SERVER_CERTIFICATE_MATCH_SUCCESS" description="X.509 server certificate match"
+//rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="10.10.43.12" target_ip="10.10.44.101" user="u" device="win2008rzh" service="rdp" account="Christophe" type="CERTIFICATE_CHECK_SUCCESS" description="Connexion to server allowed"
+//TLS::X509::issuer=CN = localhost
+//TLS::X509::subject=CN = localhost
+//TLS::X509::fingerprint=13:0c:f2:13:13:4f:08:60:67:e5:6b:78:80:c1:bb:ea:59:8d:e0:35
+//TLSContext::X509_get_pubkey()
+//TLSContext::i2d_PublicKey()
+//Connected to target using TLS version TLSv1.2
+//SocketTransport::enable_client_tls() done
+
+
+
+
+//RdpNego::recv_next_data::Credssp
+//RdpNego::recv_credssp
+//recv TSRequest full dump--------------------------------
+///* 0000 */ "\x30\x82\x01\x02\xa0\x03\x02\x01\x05\xa1\x81\xfa\x30\x81\xf7\x30" // 0...........0..0
+///* 0010 */ "\x81\xf4\xa0\x81\xf1\x04\x81\xee\x4e\x54\x4c\x4d\x53\x53\x50\x00" // ........NTLMSSP.
+///* 0020 */ "\x02\x00\x00\x00\x1e\x00\x1e\x00\x38\x00\x00\x00\x35\x82\x8a\xe2" // ........8...5...
+///* 0030 */ "\x3e\xc6\x6f\xb0\x06\x1e\x8b\xb2\x00\x00\x00\x00\x00\x00\x00\x00" // >.o.............
+///* 0040 */ "\x98\x00\x98\x00\x56\x00\x00\x00\x06\x01\xb1\x1d\x00\x00\x00\x0f" // ....V...........
+///* 0050 */ "\x52\x00\x44\x00\x50\x00\x2d\x00\x57\x00\x49\x00\x4e\x00\x44\x00" // R.D.P.-.W.I.N.D.
+///* 0060 */ "\x4f\x00\x57\x00\x53\x00\x2d\x00\x44\x00\x45\x00\x56\x00\x02\x00" // O.W.S.-.D.E.V...
+///* 0070 */ "\x1e\x00\x52\x00\x44\x00\x50\x00\x2d\x00\x57\x00\x49\x00\x4e\x00" // ..R.D.P.-.W.I.N.
+///* 0080 */ "\x44\x00\x4f\x00\x57\x00\x53\x00\x2d\x00\x44\x00\x45\x00\x56\x00" // D.O.W.S.-.D.E.V.
+///* 0090 */ "\x01\x00\x1e\x00\x52\x00\x44\x00\x50\x00\x2d\x00\x57\x00\x49\x00" // ....R.D.P.-.W.I.
+///* 00a0 */ "\x4e\x00\x44\x00\x4f\x00\x57\x00\x53\x00\x2d\x00\x44\x00\x45\x00" // N.D.O.W.S.-.D.E.
+///* 00b0 */ "\x56\x00\x04\x00\x1e\x00\x72\x00\x64\x00\x70\x00\x2d\x00\x77\x00" // V.....r.d.p.-.w.
+///* 00c0 */ "\x69\x00\x6e\x00\x64\x00\x6f\x00\x77\x00\x73\x00\x2d\x00\x64\x00" // i.n.d.o.w.s.-.d.
+///* 00d0 */ "\x65\x00\x76\x00\x03\x00\x1e\x00\x72\x00\x64\x00\x70\x00\x2d\x00" // e.v.....r.d.p.-.
+///* 00e0 */ "\x77\x00\x69\x00\x6e\x00\x64\x00\x6f\x00\x77\x00\x73\x00\x2d\x00" // w.i.n.d.o.w.s.-.
+///* 00f0 */ "\x64\x00\x65\x00\x76\x00\x07\x00\x08\x00\x9b\xe0\x43\x90\x51\x62" // d.e.v.......C.Qb
+///* 0100 */ "\xd5\x01\x00\x00\x00\x00"                                         // ......
+//recv TSRequest hexdump - START PARSING DATA-------------
+//Credssp recvTSCredentials() Remote Version 5, Negotiated version 5
+//rdpCredssp - Client Authentication : Receiving Authentication Token
+//NTLMContextClient Read Challenge
+//NTLMContextClient Compute response from challenge
+//NTLMContextClient TimeStamp
+//NTLMContextClient Generate Client Challenge nonce(8)
+//using /dev/urandom as random source
+//NTLMContextClient Compute response: NtProofStr
+//NTLMContextClient Compute response: NtChallengeResponse
+//Compute response: NtChallengeResponse Ready
+//NTLMContextClient Compute response: LmChallengeResponse
+//NTLMContextClient Compute response: SessionBaseKey
+//NTLMContextClient Encrypt RandomSessionKey
+//NTLMContextClient Generate Exported Session Key
+//using /dev/urandom as random source
+//rdpproxy: DEBUG (31637/31637) -- Field LmChallengeResponse, len: 24, maxlen: 24, offset: 0
+///* 0000 */ 0x6c, 0xb2, 0x8c, 0xd0, 0x98, 0xad, 0x94, 0xb7, 0xf2, 0x0c, 0xa1, 0x70, 0x51, 0x62, 0xb6, 0x78,  // l..........pQb.x
+///* 0010 */ 0x5f, 0x61, 0x16, 0x68, 0xa3, 0x93, 0xe7, 0x44,                                                  // _a.h...D
+//rdpproxy: DEBUG (31637/31637) -- Field NtChallengeResponse, len: 200, maxlen: 200, offset: 0
+///* 0000 */ 0xf3, 0x6c, 0x31, 0x08, 0x86, 0x6d, 0xb8, 0x73, 0x2c, 0x3b, 0x00, 0x27, 0x3d, 0x4b, 0x6d, 0x30,  // .l1..m.s,;.'=Km0
+///* 0010 */ 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x22, 0x94, 0x0a, 0x00, 0xde, 0x59, 0x6e, 0x5d,  // ........"....Yn]
+///* 0020 */ 0x5f, 0x61, 0x16, 0x68, 0xa3, 0x93, 0xe7, 0x44, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x1e, 0x00,  // _a.h...D........
+///* 0030 */ 0x52, 0x00, 0x44, 0x00, 0x50, 0x00, 0x2d, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x44, 0x00,  // R.D.P.-.W.I.N.D.
+///* 0040 */ 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00, 0x2d, 0x00, 0x44, 0x00, 0x45, 0x00, 0x56, 0x00, 0x01, 0x00,  // O.W.S.-.D.E.V...
+///* 0050 */ 0x1e, 0x00, 0x52, 0x00, 0x44, 0x00, 0x50, 0x00, 0x2d, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00,  // ..R.D.P.-.W.I.N.
+///* 0060 */ 0x44, 0x00, 0x4f, 0x00, 0x57, 0x00, 0x53, 0x00, 0x2d, 0x00, 0x44, 0x00, 0x45, 0x00, 0x56, 0x00,  // D.O.W.S.-.D.E.V.
+///* 0070 */ 0x04, 0x00, 0x1e, 0x00, 0x72, 0x00, 0x64, 0x00, 0x70, 0x00, 0x2d, 0x00, 0x77, 0x00, 0x69, 0x00,  // ....r.d.p.-.w.i.
+///* 0080 */ 0x6e, 0x00, 0x64, 0x00, 0x6f, 0x00, 0x77, 0x00, 0x73, 0x00, 0x2d, 0x00, 0x64, 0x00, 0x65, 0x00,  // n.d.o.w.s.-.d.e.
+///* 0090 */ 0x76, 0x00, 0x03, 0x00, 0x1e, 0x00, 0x72, 0x00, 0x64, 0x00, 0x70, 0x00, 0x2d, 0x00, 0x77, 0x00,  // v.....r.d.p.-.w.
+///* 00a0 */ 0x69, 0x00, 0x6e, 0x00, 0x64, 0x00, 0x6f, 0x00, 0x77, 0x00, 0x73, 0x00, 0x2d, 0x00, 0x64, 0x00,  // i.n.d.o.w.s.-.d.
+///* 00b0 */ 0x65, 0x00, 0x76, 0x00, 0x07, 0x00, 0x08, 0x00, 0x9b, 0xe0, 0x43, 0x90, 0x51, 0x62, 0xd5, 0x01,  // e.v.......C.Qb..
+///* 00c0 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,                                                  // ........
+//rdpproxy: DEBUG (31637/31637) -- Field DomainName, len: 0, maxlen: 0, offset: 0
+//rdpproxy: DEBUG (31637/31637) -- Field UserName, len: 20, maxlen: 20, offset: 0
+///* 0000 */ 0x43, 0x00, 0x68, 0x00, 0x72, 0x00, 0x69, 0x00, 0x73, 0x00, 0x74, 0x00, 0x6f, 0x00, 0x70, 0x00,  // C.h.r.i.s.t.o.p.
+///* 0010 */ 0x68, 0x00, 0x65, 0x00,                                                                          // h.e.
+//rdpproxy: DEBUG (31637/31637) -- Field Workstation, len: 12, maxlen: 12, offset: 0
+///* 0000 */ 0x63, 0x00, 0x67, 0x00, 0x72, 0x00, 0x74, 0x00, 0x68, 0x00, 0x63, 0x00,                          // c.g.r.t.h.c.
+//rdpproxy: DEBUG (31637/31637) -- Field EncryptedRandomSessionKey, len: 16, maxlen: 16, offset: 0
+///* 0000 */ 0x20, 0x06, 0x82, 0x94, 0x77, 0x96, 0x0c, 0x77, 0x0c, 0x1d, 0x9c, 0xf5, 0x51, 0x47, 0x3f, 0x84,  //  ...w..w....QG?.
+//negotiateFlags "0xE288A235"{
+//	NTLMSSP_NEGOTIATE_56 (31),
+//	NTLMSSP_NEGOTIATE_KEY_EXCH (30),
+//	NTLMSSP_NEGOTIATE_128 (29),
+//	NTLMSSP_NEGOTIATE_VERSION (25),
+//	NTLMSSP_NEGOTIATE_TARGET_INFO (23),
+//	NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY (19),
+//	NTLMSSP_NEGOTIATE_ALWAYS_SIGN (15),
+//	NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED (13),
+//	NTLMSSP_NEGOTIATE_NTLM (9),
+//	NTLMSSP_NEGOTIATE_SEAL (5),
+//	NTLMSSP_NEGOTIATE_SIGN (4),
+//	NTLMSSP_REQUEST_TARGET (2),
+//	NTLMSSP_NEGOTIATE_UNICODE (0),
+//}
+//VERSION = {
+//	ProductMajorVersion: 6
+//	ProductMinorVersion: 1
+//	ProductBuild: 7601
+//	NTLMRevisionCurrent: 0x0F
+//}
+//rdpproxy: DEBUG (31637/31637) -- MIC
+///* 0000 */ 0x0d, 0x05, 0x25, 0xab, 0x57, 0x6d, 0xe3, 0x81, 0x14, 0xc1, 0x5c, 0x52, 0xb7, 0x7a, 0x53, 0xaf,  // ..%.Wm.....R.zS.
+//rdpCredsspClientNTLM::encrypt_public_key_echo
+//rdpCredsspClientNTLM::credssp generate client nonce
+//using /dev/urandom as random source
+//rdpCredsspClientNTLM::generate credssp public key hash (client->server)
+//rdpCredssp - Client Authentication : Sending Authentication Token
+//rdpCredsspClientNTLM::send
+//TSRequest hexdump ---------------------------------
+//TSRequest ts_request_header -----------------------
+//TSRequest version_field ---------------------------
+///* 0000 */ "\xa0\x03\x02\x01\x06"                                             // .....
+//TSRequest nego_tokens_header ----------------------
+///* 0000 */ "\xa1\x82\x01\x78\x30\x82\x01\x74\x30\x82\x01\x70\xa0\x82\x01\x6c" // ...x0..t0..p...l
+///* 0010 */ "\x04\x82\x01\x68"                                                 // ...h
+//TSRequest auth_info_header ------------------------
+//TSRequest pub_key_auth_header ---------------------
+///* 0000 */ "\xa3\x32\x04\x30"                                                 // .2.0
+//TSRequest error_code field ------------------------
+//TSRequest nonce -----------------------------------
+///* 0000 */ "\xa5\x22\x04\x20"                                                 // .". 
+//emit TSRequest full dump--------------------------------
+///* 0000 */ "\x30\x82\x01\xd9\xa0\x03\x02\x01\x06\xa1\x82\x01\x78\x30\x82\x01" // 0...........x0..
+///* 0010 */ "\x74\x30\x82\x01\x70\xa0\x82\x01\x6c\x04\x82\x01\x68\x4e\x54\x4c" // t0..p...l...hNTL
+///* 0020 */ "\x4d\x53\x53\x50\x00\x03\x00\x00\x00\x18\x00\x18\x00\x58\x00\x00" // MSSP.........X..
+///* 0030 */ "\x00\xc8\x00\xc8\x00\x70\x00\x00\x00\x00\x00\x00\x00\x38\x01\x00" // .....p.......8..
+///* 0040 */ "\x00\x14\x00\x14\x00\x38\x01\x00\x00\x0c\x00\x0c\x00\x4c\x01\x00" // .....8.......L..
+///* 0050 */ "\x00\x10\x00\x10\x00\x58\x01\x00\x00\x35\xa2\x88\xe2\x06\x01\xb1" // .....X...5......
+///* 0060 */ "\x1d\x00\x00\x00\x0f\x0d\x05\x25\xab\x57\x6d\xe3\x81\x14\xc1\x5c" // .......%.Wm.....
+///* 0070 */ "\x52\xb7\x7a\x53\xaf\x6c\xb2\x8c\xd0\x98\xad\x94\xb7\xf2\x0c\xa1" // R.zS.l..........
+///* 0080 */ "\x70\x51\x62\xb6\x78\x5f\x61\x16\x68\xa3\x93\xe7\x44\xf3\x6c\x31" // pQb.x_a.h...D.l1
+///* 0090 */ "\x08\x86\x6d\xb8\x73\x2c\x3b\x00\x27\x3d\x4b\x6d\x30\x01\x01\x00" // ..m.s,;.'=Km0...
+///* 00a0 */ "\x00\x00\x00\x00\x00\x22\x94\x0a\x00\xde\x59\x6e\x5d\x5f\x61\x16" // ....."....Yn]_a.
+///* 00b0 */ "\x68\xa3\x93\xe7\x44\x00\x00\x00\x00\x02\x00\x1e\x00\x52\x00\x44" // h...D........R.D
+///* 00c0 */ "\x00\x50\x00\x2d\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f\x00\x57" // .P.-.W.I.N.D.O.W
+///* 00d0 */ "\x00\x53\x00\x2d\x00\x44\x00\x45\x00\x56\x00\x01\x00\x1e\x00\x52" // .S.-.D.E.V.....R
+///* 00e0 */ "\x00\x44\x00\x50\x00\x2d\x00\x57\x00\x49\x00\x4e\x00\x44\x00\x4f" // .D.P.-.W.I.N.D.O
+///* 00f0 */ "\x00\x57\x00\x53\x00\x2d\x00\x44\x00\x45\x00\x56\x00\x04\x00\x1e" // .W.S.-.D.E.V....
+///* 0100 */ "\x00\x72\x00\x64\x00\x70\x00\x2d\x00\x77\x00\x69\x00\x6e\x00\x64" // .r.d.p.-.w.i.n.d
+///* 0110 */ "\x00\x6f\x00\x77\x00\x73\x00\x2d\x00\x64\x00\x65\x00\x76\x00\x03" // .o.w.s.-.d.e.v..
+///* 0120 */ "\x00\x1e\x00\x72\x00\x64\x00\x70\x00\x2d\x00\x77\x00\x69\x00\x6e" // ...r.d.p.-.w.i.n
+///* 0130 */ "\x00\x64\x00\x6f\x00\x77\x00\x73\x00\x2d\x00\x64\x00\x65\x00\x76" // .d.o.w.s.-.d.e.v
+///* 0140 */ "\x00\x07\x00\x08\x00\x9b\xe0\x43\x90\x51\x62\xd5\x01\x00\x00\x00" // .......C.Qb.....
+///* 0150 */ "\x00\x00\x00\x00\x00\x43\x00\x68\x00\x72\x00\x69\x00\x73\x00\x74" // .....C.h.r.i.s.t
+///* 0160 */ "\x00\x6f\x00\x70\x00\x68\x00\x65\x00\x63\x00\x67\x00\x72\x00\x74" // .o.p.h.e.c.g.r.t
+///* 0170 */ "\x00\x68\x00\x63\x00\x20\x06\x82\x94\x77\x96\x0c\x77\x0c\x1d\x9c" // .h.c. ...w..w...
+///* 0180 */ "\xf5\x51\x47\x3f\x84\xa3\x32\x04\x30\x01\x00\x00\x00\x40\xb2\xca" // .QG?..2.0....@..
+///* 0190 */ "\x75\xd3\xb8\x27\x64\x00\x00\x00\x00\x26\x36\x74\x9f\xea\x8a\xe1" // u..'d....&6t....
+///* 01a0 */ "\x10\xd0\x18\xb2\x85\xf5\x78\xf4\xe1\x65\x87\x57\x83\xe6\x26\x5b" // ......x..e.W..&[
+///* 01b0 */ "\x1b\xdd\xa0\x31\x0a\x16\x55\x8a\x5c\xa5\x22\x04\x20\x06\x10\xff" // ...1..U...". ...
+///* 01c0 */ "\xc4\x8f\xfb\x1c\x08\x76\x47\xf6\x5d\x62\xca\x60\x68\x63\x72\x55" // .....vG.]b.`hcrU
+///* 01d0 */ "\x17\x1a\xf7\x68\xae\x24\x6a\x42\x01\x9f\x0e\xab\x0e"             // ...h.$jB.....
+//emit TSRequest hexdump -DONE----------------------------
+//RdpNego::recv_next_data::Credssp
+//RdpNego::recv_credssp
+//rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1
+//recv TSRequest full dump--------------------------------
+///* 0000 */ "\x30\x39\xa0\x03\x02\x01\x05\xa3\x32\x04\x30\x01\x00\x00\x00\xe1" // 09......2.0.....
+///* 0010 */ "\x01\xea\xac\xa0\xc2\x9d\x6c\x00\x00\x00\x00\x96\xd0\x35\x03\x05" // ......l......5..
+///* 0020 */ "\x0c\xb8\x70\xc9\xad\x21\x39\x01\x1f\xaf\xd9\x21\xb6\xeb\xf2\xc7" // ..p..!9....!....
+///* 0030 */ "\xb1\x70\xed\x5e\xb5\x5c\xb1\xe5\xe8\x4a\x8c"                     // .p.^.....J.
+//recv TSRequest hexdump - START PARSING DATA-------------
+//Credssp recvTSCredentials() Remote Version 5, Negotiated version 5
+//rdpCredsspClientNTLM::encrypt_ts_credentials
+//TSRequest hexdump ---------------------------------
+//TSRequest ts_request_header -----------------------
+//TSRequest version_field ---------------------------
+///* 0000 */ "\xa0\x03\x02\x01\x06"                                             // .....
+//TSRequest nego_tokens_header ----------------------
+//TSRequest auth_info_header ------------------------
+///* 0000 */ "\xa2\x5b\x04\x59"                                                 // .[.Y
+//TSRequest pub_key_auth_header ---------------------
+//TSRequest error_code field ------------------------
+//TSRequest nonce -----------------------------------
+///* 0000 */ "\xa5\x22\x04\x20"                                                 // .". 
+//emit TSRequest full dump--------------------------------
+///* 0000 */ "\x30\x81\x86\xa0\x03\x02\x01\x06\xa2\x5b\x04\x59\x01\x00\x00\x00" // 0........[.Y....
+///* 0010 */ "\xa6\x0b\x7c\x3b\xe5\xc7\xc0\x87\x01\x00\x00\x00\xd1\xa5\xed\x58" // ..|;...........X
+///* 0020 */ "\x9f\x49\x90\xf9\x07\x2e\xec\x8d\xf2\x9c\xac\x51\x4d\x29\x35\x49" // .I.........QM)5I
+///* 0030 */ "\xc9\x1c\x71\xef\xe1\xdf\x02\x2e\x23\x30\x0b\x99\x23\x5c\xe3\x96" // ..q.....#0..#...
+///* 0040 */ "\xea\x29\xd5\x71\xd2\x60\x57\xfb\x29\xa3\x52\xfd\xef\xe4\xb8\x2e" // .).q.`W.).R.....
+///* 0050 */ "\xe3\x85\xa1\x37\xff\x2a\x41\x88\x9c\x26\x93\xb8\x0e\x47\xfe\xa8" // ...7.*A..&...G..
+///* 0060 */ "\x35\xf3\xdb\xc3\xf4\xa5\x22\x04\x20\x06\x10\xff\xc4\x8f\xfb\x1c" // 5.....". .......
+///* 0070 */ "\x08\x76\x47\xf6\x5d\x62\xca\x60\x68\x63\x72\x55\x17\x1a\xf7\x68" // .vG.]b.`hcrU...h
+///* 0080 */ "\xae\x24\x6a\x42\x01\x9f\x0e\xab\x0e"                             // .$jB.....
+//emit TSRequest hexdump -DONE----------------------------
+//CS_Cluster: Server Redirection Supported
+//GCC::UserData tag=0c01 length=12
+//GCC::UserData tag=0c03 length=16
+//GCC::UserData tag=0c02 length=12
+//=================== SC_SECURITY =============
+//No encryption
+//send extended login info (RDP5-style) 107fb :Christophe
+//recv_tls WANT READ
+//Rdp::Get license: username="Christophe"
+//RdpNegociation::get_license LIC::RecvFactory::flic.tag=1
+//Rdp::Get license: username="Christophe"
+//RdpNegociation::get_license LIC::RecvFactory::flic.tag=2
+//Rdp::Get license: username="Christophe"
+//RdpNegociation::get_license LIC::RecvFactory::flic.tag=255
+///* 0000 */ 0xff, 0x03, 0x10, 0x00, 0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,  // ................
+//use rdp5
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//Rdp::receiving the server-to-client Monitor Layout PDU MonitorLayoutPDU monitorCount=1 ((left=0, top=0, right=1023, bottom=767, primary=yes(0x1)))
+//Resizing to 1024x768x16
+//rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="10.10.43.12" target_ip="10.10.44.101" user="u" device="win2008rzh" service="rdp" account="Christophe" type="SESSION_ESTABLISHED_SUCCESSFULLY"
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//Front::can_be_start_capture: Capture is not necessary
+//Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x0
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x0
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x0
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//process error info pdu: code=0x00000000 error=?
+//Deactivate All PDU
+//use rdp5
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//Rdp::receiving the server-to-client Monitor Layout PDU MonitorLayoutPDU monitorCount=1 ((left=0, top=0, right=1023, bottom=767, primary=yes(0x1)))
+//Resizing to 1024x768x16
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//Front::can_be_start_capture: Capture is not necessary
+//Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x0
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x0
+//mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x0
+//process save session info : Logon long
+//Logon Info Version 2 (data): Domain="RDP-WINDOWS-DEV" UserName="Christophe" SessionId=6
+//process save session info : Logon extended info
+//process save session info : Auto-reconnect cookie
+//ServerAutoReconnectPacket: Version=1 LogonId=6
+//0000 de 55 e4 17 97 e7 e3 8b 89 4c 09 a3 6d 8d d8 8f  .U.......L..m...
+//got SIGPIPE(13) : ignoring
+//Failure in SSL library, error=6, Broken pipe [32]
+//partial_send_tls error:00000006:lib(0):func(0):EVP lib
+//rdpproxy: WARNING (31637/31637) -- SocketTransport::Send failed on RDP Client (5) errno=32 [Broken pipe]
+//mod_rdp::draw_event() state switch raised exception
+//===========> MODULE_NEXT
+//----------> ACL next_module <--------
+//===========> MODULE_CLOSE
+//----------> ACL invoke_close_box <--------
+//rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="10.10.43.12" target_ip="10.10.44.101" user="u" device="win2008rzh" service="rdp" account="Christophe" type="SESSION_DISCONNECTION" duration="0:00:09"
+//rdpproxy: [rdpproxy] psid="156751302831637" user="u" type="TARGET_DISCONNECTION" reason="End of connection"
+//RDP Target (-1): total_received=38346, total_sent=3943
+//----------> ACL new_mod <--------
+//target_module=MODULE_INTERNAL_CLOSE(5)
+//ModuleManager::Creation of new mod 'INTERNAL::Close'
+//Failure in SSL library, error=1, Success [0]
+//partial_send_tls error:00000001:lib(0):func(0):reason(1)
+//partial_send_tls error:1409E10F:SSL routines:ssl3_write_bytes:bad length
+//rdpproxy: WARNING (31637/31637) -- SocketTransport::Send failed on RDP Client (5) errno=0 [Success]
+//rdpproxy: ERR (31637/31637) -- Session::Session exception (2) = Exception ERR_TRANSPORT_WRITE_FAILED no: 1502
+//----------> ACL invoke_close_box <--------
+//----------> ACL new_mod <--------
+//target_module=MODULE_INTERNAL_CLOSE(5)
+//ModuleManager::Creation of new mod 'INTERNAL::Close'
+//Failure in SSL library, error=1, Success [0]
+//partial_send_tls error:00000001:lib(0):func(0):reason(1)
+//partial_send_tls error:1409E10F:SSL routines:ssl3_write_bytes:bad length
+//rdpproxy: WARNING (31637/31637) -- SocketTransport::Send failed on RDP Client (5) errno=0 [Success]
+//Session::Session Init exception = Exception ERR_TRANSPORT_WRITE_FAILED no: 1502!
+//Session::Client Session Disconnected
+//rdpproxy: [rdpproxy] psid="156751302831637" type="DISCONNECT" reason="Exception ERR_TRANSPORT_WRITE_FAILED no: 1502"
 
 

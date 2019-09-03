@@ -725,68 +725,81 @@ struct TSRequest final {
 };
 
 
-inline std::vector<uint8_t> emitTSRequest(TSRequest & self)
+inline std::vector<uint8_t> emitTSRequest(uint32_t version,
+                                          const std::vector<uint8_t> & negoTokens,
+                                          const std::vector<uint8_t> & authInfo,
+                                          const std::vector<uint8_t> & pubKeyAuth,
+                                          uint32_t error_code,
+                                          const std::vector<uint8_t> & clientNonce,
+                                          bool nonce_initialized)
 {
+    
+
     // version    [0] INTEGER,
-    auto ber_version_field = BER::mkSmallIntegerField(self.version, 0);
+    auto ber_version_field = BER::mkSmallIntegerField(version, 0);
     // negoTokens [1] NegoData OPTIONAL
-    auto ber_nego_tokens_header = BER::mkOptionalNegoTokensHeader(self.negoTokens.size());
+    auto ber_nego_tokens_header = BER::mkOptionalNegoTokensHeader(negoTokens.size());
     // authInfo   [2] OCTET STRING OPTIONAL
-    auto ber_auth_info_header = BER::mkOptionalOctetStringFieldHeader(self.authInfo.size(), 2);
+    auto ber_auth_info_header = BER::mkOptionalOctetStringFieldHeader(authInfo.size(), 2);
     // pubKeyAuth [3] OCTET STRING OPTIONAL
-    auto ber_pub_key_auth_header = BER::mkOptionalOctetStringFieldHeader(self.pubKeyAuth.size(), 3);
+    auto ber_pub_key_auth_header = BER::mkOptionalOctetStringFieldHeader(pubKeyAuth.size(), 3);
     // [4] errorCode (INTEGER) OPTIONAL
     std::vector<uint8_t> ber_error_code_field;
-    if ((self.version == 3 || self.version == 4 || self.version >= 6) && self.error_code != 0) {
-        ber_error_code_field = BER::mkIntegerField(self.error_code, 4);
+    if ((version == 3 || version == 4 || version >= 6) && error_code != 0) {
+        ber_error_code_field = BER::mkIntegerField(error_code, 4);
     }
     // clientNonce[5] OCTET STRING OPTIONAL
-    auto ber_nonce_header = BER::mkOptionalOctetStringFieldHeader(CLIENT_NONCE_LENGTH, 5);
+    auto ber_nonce_header = BER::mkOptionalOctetStringFieldHeader((version >= 5 && nonce_initialized)?CLIENT_NONCE_LENGTH:0,5);
 
     /* TSRequest */
     size_t ts_request_length = ber_version_field.size()
-          + ber_nego_tokens_header.size()
-          + self.negoTokens.size()
-          + ber_auth_info_header.size()
-          + self.authInfo.size()
-          + ber_pub_key_auth_header.size()
-          + self.pubKeyAuth.size()
-          + ber_error_code_field.size()
-          + (self.version >= 5 && self.clientNonce.initialized)
-            *(ber_nonce_header.size()+self.clientNonce.clientNonce.size());
+          + ber_nego_tokens_header.size()  + negoTokens.size()
+          + ber_auth_info_header.size()    + authInfo.size()
+          + ber_pub_key_auth_header.size() + pubKeyAuth.size()
+          + ber_error_code_field.size()    
+          + (version >= 5 && nonce_initialized)*(ber_nonce_header.size()+clientNonce.size());
 
     auto ber_ts_request_header = BER::mkSequenceHeader(ts_request_length);
 
     std::vector<uint8_t> result = std::move(ber_ts_request_header);
     result << ber_version_field 
-           << ber_nego_tokens_header << self.negoTokens
-           << ber_auth_info_header << self.authInfo
-           << ber_pub_key_auth_header << self.pubKeyAuth
+           << ber_nego_tokens_header << negoTokens
+           << ber_auth_info_header << authInfo
+           << ber_pub_key_auth_header << pubKeyAuth
            << ber_error_code_field;
+           
+    if (version >= 5 && nonce_initialized){
+       result << ber_nonce_header << clientNonce;
+    }
 
-    if (self.version >= 5 && self.clientNonce.initialized){
-        result << ber_nonce_header << self.clientNonce.clientNonce;
-    }
-    
     LOG(LOG_INFO, "TSRequest hexdump ---------------------------------");
+    LOG(LOG_INFO, "TSRequest version %u ------------------------------", version);
+    LOG(LOG_INFO, "TSRequest negoTokens ------------------------------");
+    hexdump_d(negoTokens);
+    LOG(LOG_INFO, "TSRequest authInfo --------------------------------");
+    hexdump_d(authInfo);
+    LOG(LOG_INFO, "TSRequest pubkeyAuth ------------------------------");
+    hexdump_d(pubKeyAuth);
+    LOG(LOG_INFO, "TSRequest error_code %u ---------------------------", error_code);
+    LOG(LOG_INFO, "TSRequest clientNonce -----------------------------");
+    hexdump_d(clientNonce);
+
     LOG(LOG_INFO, "TSRequest ts_request_header -----------------------");
-    hexdump_c(ber_ts_request_header);
+    hexdump_d(ber_ts_request_header);
     LOG(LOG_INFO, "TSRequest version_field ---------------------------");
-    hexdump_c(ber_version_field);
+    hexdump_d(ber_version_field);
     LOG(LOG_INFO, "TSRequest nego_tokens_header ----------------------");
-    hexdump_c(ber_nego_tokens_header);
+    hexdump_d(ber_nego_tokens_header);
     LOG(LOG_INFO, "TSRequest auth_info_header ------------------------");
-    hexdump_c(ber_auth_info_header);
+    hexdump_d(ber_auth_info_header);
     LOG(LOG_INFO, "TSRequest pub_key_auth_header ---------------------");
-    hexdump_c(ber_pub_key_auth_header);
+    hexdump_d(ber_pub_key_auth_header);
     LOG(LOG_INFO, "TSRequest error_code field ------------------------");
-    hexdump_c(ber_error_code_field);
+    hexdump_d(ber_error_code_field);
     LOG(LOG_INFO, "TSRequest nonce -----------------------------------");
-    if (self.version >= 5 && self.clientNonce.initialized){
-        hexdump_c(ber_nonce_header);
-    }
+    hexdump_d(ber_nonce_header);
     LOG(LOG_INFO, "emit TSRequest full dump--------------------------------");
-    hexdump_c(result);
+    hexdump_d(result);
     LOG(LOG_INFO, "emit TSRequest hexdump -DONE----------------------------");
     return result;
 }

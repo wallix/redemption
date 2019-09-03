@@ -884,7 +884,13 @@ private:
         }
 
         this->ts_request.error_code = 0;
-        auto v = emitTSRequest(this->ts_request);
+        auto v = emitTSRequest(this->ts_request.version,
+                               this->ts_request.negoTokens,
+                               this->ts_request.authInfo,
+                               this->ts_request.pubKeyAuth,
+                               this->ts_request.error_code,
+                               this->ts_request.clientNonce.clientNonce,
+                               this->ts_request.clientNonce.initialized);
         out_stream.out_copy_bytes(v);
 
         this->credssp_buffer_free();
