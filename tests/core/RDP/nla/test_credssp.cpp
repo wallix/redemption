@@ -498,8 +498,65 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
          /* 00d0 */ 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00, 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00, 0x07, 0x00,  // k.d.c...l.a.b...
          /* 00e0 */ 0x08, 0x00, 0xe5, 0xda, 0xa6, 0x1d, 0x5c, 0x62, 0xd5, 0x01, 0x00, 0x00, 0x00, 0x00,              // .......b......
     };
-    auto challenge_message = recvNTLMChallengeMessage(negoTokens);
+    NTLMChallengeMessage challenge_message = recvNTLMChallengeMessage(negoTokens);
+
     BOOST_CHECK_EQUAL(challenge_message.raw_bytes, negoTokens);
+
+    BOOST_CHECK_EQUAL(challenge_message.TargetName.bufferOffset, 56);
+    BOOST_CHECK_EQUAL(challenge_message.TargetName.buffer, 
+        std::vector<uint8_t>({
+        /* 0000 */ 0x50, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x58, 0x00, 0x59, 0x00, 0x4b, 0x00, 0x44, 0x00, 0x43, 0x00,  // P.R.O.X.Y.K.D.C.
+        })
+    );
+
+//    hexdump_d(challenge_message.serverChallenge);
+    array_challenge expected_server_challenge{0x01, 0x05, 0x03, 0x5c, 0x69, 0x17, 0x57, 0x89};
+    BOOST_CHECK(challenge_message.serverChallenge == expected_server_challenge);
+
+    logNtlmFlags(challenge_message.negoFlags.flags);
+
+//    negotiateFlags "0xE2898235"{
+//        NTLMSSP_NEGOTIATE_56 (31),
+//        NTLMSSP_NEGOTIATE_KEY_EXCH (30),
+//        NTLMSSP_NEGOTIATE_128 (29),
+//        NTLMSSP_NEGOTIATE_VERSION (25),
+//        NTLMSSP_NEGOTIATE_TARGET_INFO (23),
+//        NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY (19),
+//        NTLMSSP_TARGET_TYPE_DOMAIN (16),
+//        NTLMSSP_NEGOTIATE_ALWAYS_SIGN (15),
+//        NTLMSSP_NEGOTIATE_NTLM (9),
+//        NTLMSSP_NEGOTIATE_SEAL (5),
+//        NTLMSSP_NEGOTIATE_SIGN (4),
+//        NTLMSSP_REQUEST_TARGET (2),
+//        NTLMSSP_NEGOTIATE_UNICODE (0),
+//    }
+
+    RED_CHECK(challenge_message.negoFlags.flags == 
+            (NTLMSSP_NEGOTIATE_56|
+            NTLMSSP_NEGOTIATE_KEY_EXCH|
+            NTLMSSP_NEGOTIATE_128|
+            NTLMSSP_NEGOTIATE_VERSION|
+            NTLMSSP_NEGOTIATE_TARGET_INFO|
+            NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY|
+            NTLMSSP_TARGET_TYPE_DOMAIN|
+            NTLMSSP_NEGOTIATE_ALWAYS_SIGN|
+            NTLMSSP_NEGOTIATE_NTLM|
+            NTLMSSP_NEGOTIATE_SEAL|
+            NTLMSSP_NEGOTIATE_SIGN|
+            NTLMSSP_REQUEST_TARGET|
+            NTLMSSP_NEGOTIATE_UNICODE)
+    );
+
+//    BOOST_CHECK_EQUAL(challenge_message.TargetInfo.bufferOffset, 0);
+//    BOOST_CHECK_EQUAL(challenge_message.TargetInfo.buffer, std::vector<uint8_t>({}));
+
+//    BOOST_CHECK_EQUAL(challenge_message.version.ProductMajorVersion, 0);
+//    BOOST_CHECK_EQUAL(challenge_message.version.ProductMinorVersion, 0);
+//    BOOST_CHECK_EQUAL(challenge_message.version.ProductBuild, 0);
+//    BOOST_CHECK_EQUAL(challenge_message.version.NtlmRevisionCurrent, 0);
+
+//    // Vector of AvPair
+//    BOOST_CHECK_EQUAL(challenge_message.AvPairList.size(), 0);
 }
 
 

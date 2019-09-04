@@ -428,11 +428,11 @@ enum NTLMRevisionCurrent : uint8_t
 };
 
 struct NtlmVersion {
-    ::ProductMajorVersion ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
-    ::ProductMinorVersion ProductMinorVersion = WINDOWS_MINOR_VERSION_2;
+    uint8_t ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+    uint8_t ProductMinorVersion = WINDOWS_MINOR_VERSION_2;
     uint16_t ProductBuild = 0;
     /* 3 Bytes Reserved */
-    ::NTLMRevisionCurrent NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+    uint8_t NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
 //    bool ignore_version{true};
 };
@@ -1198,7 +1198,7 @@ inline void logNtlmFlags(uint32_t flags)
     for (int i = 0; i < 32; i++) {
         if ((flags >> (31-i)) & 1) {
             const char* str = NTLM_NEGOTIATE_STRINGS[i];
-            LOG(LOG_INFO, "\t%s (%d),", str, (31-i));
+            LOG(LOG_INFO, "    |%s, // (%d)", str, (31-i));
         }
     }
     LOG(LOG_INFO, "}");

@@ -760,7 +760,7 @@ class NTLMContext
 
     const bool server = false;
     const bool NTLMv2 = true;
-    bool UseMIC;
+    bool UseMIC{};
 public:
     NtlmState state = NTLM_STATE_INITIAL;
 
@@ -790,13 +790,13 @@ private:
 public:
     std::vector<uint8_t> Workstation;
     std::vector<uint8_t> ServicePrincipalName;
-    SEC_WINNT_AUTH_IDENTITY identity;
+    SEC_WINNT_AUTH_IDENTITY identity{};
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
-    NTLMNegotiateMessage NEGOTIATE_MESSAGE;
-    NTLMChallengeMessage CHALLENGE_MESSAGE;
-    NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
+    NTLMNegotiateMessage NEGOTIATE_MESSAGE{};
+    NTLMChallengeMessage CHALLENGE_MESSAGE{};
+    NTLMAuthenticateMessage AUTHENTICATE_MESSAGE{};
 
 private:
     NtlmVersion version;
@@ -809,11 +809,11 @@ public:
 private:
     uint8_t ChallengeTimestamp[8]{};
 public:
-    array_challenge ServerChallenge;
+    array_challenge ServerChallenge{};
 private:
-    array_challenge ClientChallenge;
+    array_challenge ClientChallenge{};
 public:
-    array_md5 SessionBaseKey;
+    array_md5 SessionBaseKey = {};
 private:
     //uint8_t KeyExchangeKey[16];
     //uint8_t RandomSessionKey[16];
@@ -901,27 +901,6 @@ public:
     /**
      * Generate RandomSessionKey (16-byte nonce).
      */
-    // client method
-    //void ntlm_generate_random_session_key()
-    //{
-    //    if (this->verbose) {
-    //        LOG(LOG_INFO, "NTLMContext Generate Random Session Key");
-    //    }
-    //    this->rand.random(this->RandomSessionKey, 16);
-    //}
-
-    // client method ??
-    void ntlm_generate_exported_session_key() {
-        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Exported Session Key");
-        this->rand.random(this->ExportedSessionKey, 16);
-    }
-
-    // client method
-    //void ntlm_generate_key_exchange_key()
-    //{
-    //    // /* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
-    //    memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
-    //}
 
     // all strings are in unicode utf16
     void NTOWFv2_FromHash(array_view_const_u8 hash,
@@ -1080,15 +1059,6 @@ public:
         this->SessionBaseKey = HmacMd5(make_array_view(ResponseKeyNT), {NtProofStr, sizeof(NtProofStr)});
     }
 
-    // static method for both client and server (encrypt and decrypt)
-    void ntlm_rc4k(uint8_t* key, int length, uint8_t* plaintext, uint8_t* ciphertext)
-    {
-        SslRC4 rc4;
-        // TODO check size
-        rc4.set_key({key, 16});
-        rc4.crypt(length, plaintext, ciphertext);
-    }
-
     // client method for authenticate message
     void ntlm_encrypt_random_session_key() {
         // EncryptedRandomSessionKey = RC4K(KeyExchangeKey, ExportedSessionKey)
@@ -1098,9 +1068,12 @@ public:
 
         // generate NONCE(16) exportedsessionkey
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Encrypt RandomSessionKey");
-        this->ntlm_generate_exported_session_key();
-        this->ntlm_rc4k(this->SessionBaseKey.data(), 16,
-                        this->ExportedSessionKey, this->EncryptedRandomSessionKey);
+        LOG_IF(this->verbose, LOG_INFO, "NTLMContext Generate Exported Session Key");
+        this->rand.random(this->ExportedSessionKey, 16);
+
+        SslRC4 rc4;
+        rc4.set_key({this->SessionBaseKey.data(), 16});
+        rc4.crypt(16, this->ExportedSessionKey, this->EncryptedRandomSessionKey);
 
         auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
         AuthEncryptedRSK.assign(this->EncryptedRandomSessionKey, this->EncryptedRandomSessionKey+16);
@@ -1112,8 +1085,10 @@ public:
         LOG_IF(this->verbose, LOG_INFO, "NTLMContext Decrypt RandomSessionKey");
         memcpy(this->EncryptedRandomSessionKey, AuthEncryptedRSK.data(),
                AuthEncryptedRSK.size());
-        this->ntlm_rc4k(this->SessionBaseKey.data(), 16,
-                        this->EncryptedRandomSessionKey, this->ExportedSessionKey);
+               
+        SslRC4 rc4;
+        rc4.set_key({this->SessionBaseKey.data(), 16});
+        rc4.crypt(16, this->EncryptedRandomSessionKey, this->ExportedSessionKey);
     }
 
     /**
@@ -1273,6 +1248,7 @@ public:
         hmac_md5resp.final(NtProofStr);
 
         return !memcmp(NtProofStr, NtProofStr_from_msg, 16);
+//        return true;
     }
 
     // Server check lm response
@@ -1694,9 +1670,6 @@ public:
         out_stream.rewind();
         emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, false);
         output_buffer.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
-        if (this->verbose) {
-            logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
-        }
         return SEC_I_COMPLETE_NEEDED;
     }
 
@@ -2267,6 +2240,10 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     NTLMContext client_context(false, rand, timeobj, true);
     NTLMContext server_context(true, rand, timeobj, true);
+    server_context.SessionBaseKey = {};
+    client_context.SessionBaseKey = {};
+
+
     const uint8_t password[] = {
         0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
         0x77, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00,
@@ -2362,6 +2339,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     client_context.ntlmv2_compute_response_from_challenge(make_array_view(password),
                                                           make_array_view(userName),
                                                           make_array_view(userDomain));
+
     client_context.ntlm_encrypt_random_session_key();
     client_context.ntlm_generate_client_signing_key();
     client_context.ntlm_generate_client_sealing_key();
