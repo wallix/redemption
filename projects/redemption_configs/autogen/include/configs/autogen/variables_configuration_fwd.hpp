@@ -307,6 +307,7 @@ namespace cfg {
         struct port;
         struct service_name;
         struct tls;
+        struct enable_x_context;
     };
 
     struct icap_server_down {
@@ -314,6 +315,7 @@ namespace cfg {
         struct port;
         struct service_name;
         struct tls;
+        struct enable_x_context;
     };
 
     struct context {

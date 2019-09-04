@@ -3577,7 +3577,7 @@ namespace cfg {
         type value{true};
     };
 
-    /// Ip or fqdn of ICAP service <br/>
+    /// Ip or fqdn of ICAP server <br/>
     /// type: std::string <br/>
     /// value{} <br/>
     struct icap_server_up::host {
@@ -3590,7 +3590,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Port of ICAP service <br/>
+    /// Port of ICAP server <br/>
     /// type: unsigned int <br/>
     /// value{} <br/>
     struct icap_server_up::port {
@@ -3603,9 +3603,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Service name of ICAP service <br/>
+    /// Service name on ICAP server <br/>
     /// type: std::string <br/>
-    /// value = "up" <br/>
+    /// value = "avscan" <br/>
     struct icap_server_up::service_name {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3614,9 +3614,9 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value = "up";
+        type value = "avscan";
     };
-    /// ICAP service use tls <br/>
+    /// ICAP server uses tls <br/>
     /// type: bool <br/>
     /// value{} <br/>
     struct icap_server_up::tls {
@@ -3629,8 +3629,21 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server <br/>
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct icap_server_up::enable_x_context {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "icap_server_up";
+        static constexpr char const * name = "enable_x_context";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
 
-    /// Ip or fqdn of ICAP service <br/>
+    /// Ip or fqdn of ICAP server <br/>
     /// type: std::string <br/>
     /// value{} <br/>
     struct icap_server_down::host {
@@ -3643,7 +3656,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Port of ICAP service <br/>
+    /// Port of ICAP server <br/>
     /// type: unsigned int <br/>
     /// value{} <br/>
     struct icap_server_down::port {
@@ -3656,9 +3669,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// Service name of ICAP service <br/>
+    /// Service name on ICAP server <br/>
     /// type: std::string <br/>
-    /// value = "down" <br/>
+    /// value = "avscan" <br/>
     struct icap_server_down::service_name {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3667,9 +3680,9 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value = "down";
+        type value = "avscan";
     };
-    /// ICAP service use tls <br/>
+    /// ICAP server uses tls <br/>
     /// type: bool <br/>
     /// value{} <br/>
     struct icap_server_down::tls {
@@ -3681,6 +3694,19 @@ namespace cfg {
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{};
+    };
+    /// Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server <br/>
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct icap_server_down::enable_x_context {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "icap_server_down";
+        static constexpr char const * name = "enable_x_context";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
     };
 
     /// Proxy session log id <br/>
@@ -5400,6 +5426,7 @@ struct icap_server_up
 , cfg::icap_server_up::service_name
 , cfg::icap_server_up::port
 , cfg::icap_server_up::tls
+, cfg::icap_server_up::enable_x_context
 { static constexpr bool is_section = true; };
 
 struct icap_server_down
@@ -5407,6 +5434,7 @@ struct icap_server_down
 , cfg::icap_server_down::service_name
 , cfg::icap_server_down::port
 , cfg::icap_server_down::tls
+, cfg::icap_server_down::enable_x_context
 { static constexpr bool is_section = true; };
 
 struct context

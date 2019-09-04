@@ -1011,30 +1011,38 @@ log_if_accepted = boolean(default=True)
 
 [icap_server_up]
 
-# Ip or fqdn of ICAP service
+# Ip or fqdn of ICAP server
 host = string(default='')
 
-# Port of ICAP service
+# Port of ICAP server
 port = integer(min=0, default=0)
 
-# Service name of ICAP service
-service_name = string(default='up')
+# Service name on ICAP server
+service_name = string(default='avscan')
 
-# ICAP service use tls
+# ICAP server uses tls
 tls = boolean(default=False)
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+#_advanced
+enable_x_context = boolean(default=True)
 
 [icap_server_down]
 
-# Ip or fqdn of ICAP service
+# Ip or fqdn of ICAP server
 host = string(default='')
 
-# Port of ICAP service
+# Port of ICAP server
 port = integer(min=0, default=0)
 
-# Service name of ICAP service
-service_name = string(default='down')
+# Service name on ICAP server
+service_name = string(default='avscan')
 
-# ICAP service use tls
+# ICAP server uses tls
 tls = boolean(default=False)
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+#_advanced
+enable_x_context = boolean(default=True)
 
 )gen_config_ini"
