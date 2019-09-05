@@ -792,7 +792,7 @@ namespace
     public:
         Reader(Transport & trans, Verbose verbose)
         : p(nullptr)
-    	, e(nullptr)
+        , e(nullptr)
         , trans(trans)
         , verbose(verbose)
         {

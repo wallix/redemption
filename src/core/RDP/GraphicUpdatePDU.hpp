@@ -140,7 +140,7 @@ enum ServerUpdateType {
     SERVER_UPDATE_GRAPHICS_BITMAP,
     SERVER_UPDATE_GRAPHICS_PALETTE,
     SERVER_UPDATE_GRAPHICS_SYNCHRONIZE,
-	SERVER_UPDATE_GRAPHICS_SURFCMDS,
+    SERVER_UPDATE_GRAPHICS_SURFCMDS,
     SERVER_UPDATE_POINTER_COLOR,
     SERVER_UPDATE_POINTER_CACHED,
     SERVER_UPDATE_POINTER_POSITION,
@@ -190,8 +190,8 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 break;
 
             case SERVER_UPDATE_GRAPHICS_SURFCMDS:
-            	updateCode = FastPath::UpdateType::SURFCMDS;
-            	break;
+                updateCode = FastPath::UpdateType::SURFCMDS;
+                break;
 
             case SERVER_UPDATE_POINTER_COLOR:
                 updateCode = FastPath::UpdateType::COLOR;
@@ -220,16 +220,16 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
         uint32_t startAt = 0;
 
         if (compression_support)
-        	fragmentMax = std::min(fragmentMax, mppc_enc->get_max_data_block_size() - 20);
+            fragmentMax = std::min(fragmentMax, mppc_enc->get_max_data_block_size() - 20);
 
         bytes_view fullPacket = data_common.get_packet();
         fragmentId = 0;
         do {
-        	uint8_t compressionFlags = 0;
-        	uint32_t remaining = fullPacket.size() - startAt;
-        	uint32_t fragmentSize = (remaining > fragmentMax) ? fragmentMax : remaining;
+            uint8_t compressionFlags = 0;
+            uint32_t remaining = fullPacket.size() - startAt;
+            uint32_t fragmentSize = (remaining > fragmentMax) ? fragmentMax : remaining;
 
-        	StaticOutReservedStreamHelper<1024, 65536-1024> data_common_compressed;
+            StaticOutReservedStreamHelper<1024, 65536-1024> data_common_compressed;
             std::reference_wrapper<StaticOutReservedStreamHelper<1024, 65536-1024> > data_common_(data_common);
 
             if (compression_support) {
@@ -253,9 +253,9 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             StaticOutStream<8> update_header;
             uint8_t fragFlags;
             if (fragmentId != 0)
-            	fragFlags = (startAt == fullPacket.size()) ? FastPath::FASTPATH_FRAGMENT_LAST : FastPath::FASTPATH_FRAGMENT_NEXT;
+                fragFlags = (startAt == fullPacket.size()) ? FastPath::FASTPATH_FRAGMENT_LAST : FastPath::FASTPATH_FRAGMENT_NEXT;
             else
-            	fragFlags = (startAt == fullPacket.size()) ? FastPath::FASTPATH_FRAGMENT_SINGLE : FastPath::FASTPATH_FRAGMENT_FIRST;
+                fragFlags = (startAt == fullPacket.size()) ? FastPath::FASTPATH_FRAGMENT_SINGLE : FastPath::FASTPATH_FRAGMENT_FIRST;
 
             // Fast-Path Update (TS_FP_UPDATE)
             FastPath::Update_Send Upd( update_header

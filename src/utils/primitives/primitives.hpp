@@ -29,60 +29,60 @@
  */
 class Primitives {
 public:
-	/** @brief primitive size */
-	struct prim_size_t {
-		uint32_t width;
-		uint32_t height;
-	};
+    /** @brief primitive size */
+    struct prim_size_t {
+        uint32_t width;
+        uint32_t height;
+    };
 
-	/** @brief result of a primitive execution */
-	enum pstatus_t {
-		SUCCESS,
-	};
+    /** @brief result of a primitive execution */
+    enum pstatus_t {
+        SUCCESS,
+    };
 
-	/** @brief the format of a pixel */
-	enum PixelFormat {
-		PIXEL_FORMAT_ARGB32,
-		PIXEL_FORMAT_XRGB32,
-		PIXEL_FORMAT_ABGR32,
-		PIXEL_FORMAT_XBGR32,
-		PIXEL_FORMAT_RGBA32,
-		PIXEL_FORMAT_RGBX32,
-		PIXEL_FORMAT_BGRA32,
-		PIXEL_FORMAT_BGRX32
-	};
+    /** @brief the format of a pixel */
+    enum PixelFormat {
+        PIXEL_FORMAT_ARGB32,
+        PIXEL_FORMAT_XRGB32,
+        PIXEL_FORMAT_ABGR32,
+        PIXEL_FORMAT_XBGR32,
+        PIXEL_FORMAT_RGBA32,
+        PIXEL_FORMAT_RGBX32,
+        PIXEL_FORMAT_BGRA32,
+        PIXEL_FORMAT_BGRX32
+    };
 
-	using _lShiftC_16s_t = pstatus_t (*)(const int16_t * pSrc, uint32_t val, int16_t * pSrcDst, uint32_t len);
+    using _lShiftC_16s_t = pstatus_t (*)(const int16_t * pSrc, uint32_t val, int16_t * pSrcDst, uint32_t len);
 
-	using _yCbCrToRGB_16s8u_P3AC4R_t = pstatus_t (*)(const int16_t * pSrc[3], uint32_t srcStep,
-	    uint8_t * pDst, uint32_t dstStep, PixelFormat DstFormat,
-	    const prim_size_t* roi);
-
-public:
-	/**
-	 *
-	 */
-	static Primitives *instance();
-
-	/**
-	 *
-	 */
-	static size_t pixelFormatSize(PixelFormat format);
-
-protected:
-	Primitives() noexcept;
-
-	/** @brief kind of acceleration */
-	enum {
-		ACCEL_GENERIC,
-		ACCEL_SSE,
-	} accel;
+    using _yCbCrToRGB_16s8u_P3AC4R_t = pstatus_t (*)(const int16_t * pSrc[3], uint32_t srcStep,
+        uint8_t * pDst, uint32_t dstStep, PixelFormat DstFormat,
+        const prim_size_t* roi);
 
 public:
-	_lShiftC_16s_t lShiftC_16s;
-	_yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
+    /**
+     *
+     */
+    static Primitives *instance();
+
+    /**
+     *
+     */
+    static size_t pixelFormatSize(PixelFormat format);
 
 protected:
-	static Primitives s_instance;
-	static Primitives s_genericInstance;
+    Primitives() noexcept;
+
+    /** @brief kind of acceleration */
+    enum {
+        ACCEL_GENERIC,
+        ACCEL_SSE,
+    } accel;
+
+public:
+    _lShiftC_16s_t lShiftC_16s;
+    _yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
+
+protected:
+    static Primitives s_instance;
+    static Primitives s_genericInstance;
 };

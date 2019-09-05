@@ -328,15 +328,15 @@ namespace
         {
             P dest = dimpl.first_pixel(rect);
             const int startY = (bmp.storage_type() == ConstImageDataView::Storage::BottomToTop)
-            		? bmp.height() - srcy - 1
-            		: srcy;
+                    ? bmp.height() - srcy - 1
+                    : srcy;
             cP src = bmp.data(srcx, startY);
             const size_t n = rect.cx * dimpl.nbbytes_color();
             const uint8_t bmp_bpp = safe_int(bmp.bits_per_pixel());
             const size_t bmp_line_size = bmp.line_size();
             const int bmp_line_delta = (bmp.storage_type() == ConstImageDataView::Storage::BottomToTop)
-                    	? -bmp_line_size
-                    	: bmp_line_size;
+                        ? -bmp_line_size
+                        : bmp_line_size;
 
             if (bmp_bpp == dimpl.bpp()) {
                 const size_t line_size = dimpl.rowsize();
@@ -345,7 +345,7 @@ namespace
                 }
             }
             else {
-            	bool upToBottom = (bmp.storage_type() == ConstImageDataView::Storage::TopToBottom);
+                bool upToBottom = (bmp.storage_type() == ConstImageDataView::Storage::TopToBottom);
                 switch (bmp_bpp) {
                     case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
                         safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor8{bmp.palette()}, c...); break;

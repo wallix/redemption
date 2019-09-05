@@ -58,11 +58,11 @@ struct Rect {
     }
 
     uint16_t width() const {
-    	return this->cx;
+        return this->cx;
     }
 
     uint16_t height() const {
-    	return this->cy;
+        return this->cy;
     }
 
     Rect() = default;

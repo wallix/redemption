@@ -385,7 +385,7 @@ public:
                 mod_rdp_params.enable_new_pointer              = true;
                 mod_rdp_params.enable_glyph_cache              = true;
 //                 mod_rdp_params.enable_ninegrid_bitmap          = true;
-                mod_rdp_params.enable_remotefx 				   = this->config.enable_remotefx;
+                mod_rdp_params.enable_remotefx                    = this->config.enable_remotefx;
                 mod_rdp_params.file_system_params.enable_rdpdr_data_analysis = false;
 
                 const bool is_remote_app = this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
@@ -1162,12 +1162,12 @@ public:
     {}
 
     void draw(RDPSetSurfaceCommand const & cmd) override {
-		//TODO: this->draw_impl(no_log{}, cmd);
-	}
+        //TODO: this->draw_impl(no_log{}, cmd);
+    }
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
-		this->draw_impl(no_log{}, cmd, content);
-	}
+        this->draw_impl(no_log{}, cmd, content);
+    }
 
     virtual ResizeResult server_resize(ScreenInfo screen_server) override
     {

@@ -1125,28 +1125,28 @@ public:
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientSessionId %u", extInfo.clientSessionId);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::performanceFlags 0x%x", extInfo.performanceFlags);
         if (extInfo.performanceFlags & PERF_DISABLE_WALLPAPER) {
-        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_WALLPAPER");
+            LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_WALLPAPER");
         }
         if (extInfo.performanceFlags & PERF_DISABLE_FULLWINDOWDRAG) {
-        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_FULLWINDOWDRAG");
+            LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_FULLWINDOWDRAG");
         }
         if (extInfo.performanceFlags & PERF_DISABLE_MENUANIMATIONS) {
-        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_MENUANIMATIONS");
+            LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_MENUANIMATIONS");
         }
         if (extInfo.performanceFlags & PERF_DISABLE_THEMING) {
-        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_THEMING");
+            LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_THEMING");
         }
         if (extInfo.performanceFlags & PERF_DISABLE_CURSOR_SHADOW) {
-        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_CURSOR_SHADOW");
+            LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_CURSOR_SHADOW");
         }
         if (extInfo.performanceFlags & PERF_DISABLE_CURSORSETTINGS) {
-        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_CURSORSETTINGS");
+            LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_DISABLE_CURSORSETTINGS");
         }
         if (extInfo.performanceFlags & PERF_ENABLE_FONT_SMOOTHING) {
-        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_ENABLE_FONT_SMOOTHING");
+            LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_ENABLE_FONT_SMOOTHING");
         }
         if (extInfo.performanceFlags & PERF_ENABLE_DESKTOP_COMPOSITION) {
-        	LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_ENABLE_DESKTOP_COMPOSITION");
+            LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::PERF_ENABLE_DESKTOP_COMPOSITION");
         }
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen %u", extInfo.cbAutoReconnectLen);
         //LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::autoReconnectCookie %s", this->extendedInfoPacket.autoReconnectCookie);
