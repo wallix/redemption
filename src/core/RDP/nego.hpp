@@ -29,7 +29,7 @@
 
 #include <memory>
 
-class rdpCredsspClientNTLM;
+class rdpClientNTLM;
 #ifndef __EMSCRIPTEN__
 class rdpCredsspClientKerberos;
 #endif
@@ -73,7 +73,7 @@ private:
     TimeObj & timeobj;
     char * lb_info;
 
-    std::unique_ptr<rdpCredsspClientNTLM> credsspNTLM;
+    std::unique_ptr<rdpClientNTLM> credsspNTLM;
     #ifndef __EMSCRIPTEN__
     std::unique_ptr<rdpCredsspClientKerberos> credsspKerberos;
     #endif

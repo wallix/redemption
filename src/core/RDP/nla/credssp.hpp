@@ -821,7 +821,7 @@ inline TSRequest recvTSRequest(bytes_view data, uint32_t version = 6)
     if (remote_version < self.use_version) {
         self.use_version = remote_version;
     }
-    LOG(LOG_INFO, "Credssp recvTSCredentials() Remote Version %u, Negotiated version %u", remote_version, self.use_version);
+    LOG(LOG_INFO, "Credssp recvTSRequest() Remote Version %u, Negotiated version %u", remote_version, self.use_version);
 
     // [1] negoTokens (NegoData) OPTIONAL
     if (BER::check_ber_ctxt_tag(stream, 1)) {

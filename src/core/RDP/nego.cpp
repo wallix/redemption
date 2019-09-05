@@ -411,7 +411,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
 
     if (!this->krb) {
         try {
-            this->credsspNTLM = std::make_unique<rdpCredsspClientNTLM>(
+            this->credsspNTLM = std::make_unique<rdpClientNTLM>(
                 this->user,
                 this->domain, this->current_password,
                 this->hostname, this->target_host,

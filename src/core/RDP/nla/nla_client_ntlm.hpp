@@ -36,7 +36,7 @@
 #include <vector>
 
 
-class rdpCredsspClientNTLM
+class rdpClientNTLM
 {
     static constexpr uint32_t cbMaxSignature = 16;
 private:
@@ -122,7 +122,7 @@ private:
     }
 
 public:
-    rdpCredsspClientNTLM(uint8_t * user,
+    rdpClientNTLM(uint8_t * user,
                uint8_t * domain,
                uint8_t * pass,
                uint8_t * hostname,
@@ -340,17 +340,17 @@ public:
 
                 // have_pub_key_auth = true;
 
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_public_key_echo");
+                LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_public_key_echo");
                 uint32_t version = ts_request.use_version;
 
                 array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
                 if (version >= 5) {
-                    LOG(LOG_INFO, "rdpCredsspClientNTLM::credssp generate client nonce");
+                    LOG(LOG_INFO, "rdpClientNTLM::credssp generate client nonce");
                     this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
                     this->SavedClientNonce.initialized = true;
                     ts_request.clientNonce = this->SavedClientNonce;
                     
-                    LOG(LOG_INFO, "rdpCredsspClientNTLM::generate credssp public key hash (client->server)");
+                    LOG(LOG_INFO, "rdpClientNTLM::generate credssp public key hash (client->server)");
                     SslSha256 sha256;
                     uint8_t hash[SslSha256::DIGEST_LENGTH];
                     sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
@@ -377,7 +377,7 @@ public:
                     LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
                 }
 
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::send");
+                LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::send");
                 ts_request.error_code = error_code;
                 auto v = emitTSRequest(ts_request.version,
                                        ts_request.negoTokens,
@@ -460,7 +460,7 @@ public:
                 }
 
                 /* Send encrypted credentials */
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientNTLM::encrypt_ts_credentials");
+                LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_ts_credentials");
 
                 {
                     StaticOutStream<65536> ts_credentials_send;

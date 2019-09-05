@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
-    rdpCredsspClientNTLM credssp(user, domain, pass, host, "107.0.0.1",
+    rdpClientNTLM credssp(user, domain, pass, host, "107.0.0.1",
                                 logtrans.get_public_key(),
                                 false, rand, timeobj);
     TpduBuffer buf;
