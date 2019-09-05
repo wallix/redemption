@@ -371,9 +371,12 @@ void RDPDrawable::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ct
     this->last_update_index++;
 }
 
+void RDPDrawable::draw(RDPSetSurfaceCommand const & /*cmd*/)
+{
+}
+
 void RDPDrawable::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
 {
-	// LOG(LOG_INFO, "RDPDrawable::draw: TODO");
 	ConstImageDataView constImg(content.data, content.width, content.rect.height(), content.stride,
 			BitsPerPixel{32}, ConstImageDataView::Storage::TopToBottom);
 

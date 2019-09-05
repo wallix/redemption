@@ -277,10 +277,6 @@ private:
                 }
             }
 
-            void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &/*content*/) override {
-            	GraphicsUpdatePDU::send_set_surface_command(cmd);
-            }
-
             void set_palette(const BGRPalette& /*unused*/) override {
             }
 
@@ -668,6 +664,7 @@ public:
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
+    void draw(RDPSetSurfaceCommand const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override { this->draw_impl(cmd, content); }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
@@ -4163,21 +4160,25 @@ protected:
         }
     }
 
-    void draw_impl(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & content) {
-#if 0 // no server-side remoteFx for now
-    	if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
-    		if (!content.encodedContent.empty()) {
-    			LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): should build a rfx frame");
-    			RDPSetSurfaceCommand newCmd = cmd;
-    			newCmd.codecId = this->client_info.bitmap_codec_caps.bitmapCodecArray[0].codecID;
-    			this->graphics_update->draw(newCmd, content);
-    		}
+    void draw_impl(RDPSetSurfaceCommand const & cmd) {
+    	if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec || (cmd.codec != RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) ||
+    			!cmd.bitmapData || !cmd.bitmapDataLength)
+			return;
 
+    	RDPSetSurfaceCommand newCmd = cmd;
+    	newCmd.codecId = this->client_info.bitmap_codec_caps.bitmapCodecArray[0].codecID;
+    	this->orders.graphics_update_pdu().send_set_surface_command(newCmd);
+    }
+
+    void draw_impl(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) {
+    	if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
+    		// only notifies capture callbacks, don't send anything to the front client, it has already been done by
+    		// a previous draw_impl(RDPSetSurfaceCommand const & cmd) call (with raw blob)
+    		this->graphics_update->draw(cmd, content);
     		return;
     	}
-#endif
 
-    	/* fallback, transcode to bitmapUpdates */
+    	/* no front remoteFx support, fallback and transcode to bitmapUpdates */
     	for (const Rect & rect1 : content.region.rects) {
     		Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
 
