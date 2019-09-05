@@ -500,10 +500,10 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
     };
     NTLMChallengeMessage challenge_message = recvNTLMChallengeMessage(negoTokens);
 
-    BOOST_CHECK_EQUAL(challenge_message.raw_bytes, negoTokens);
+    RED_CHECK_EQUAL(challenge_message.raw_bytes, negoTokens);
 
-    BOOST_CHECK_EQUAL(challenge_message.TargetName.bufferOffset, 56);
-    BOOST_CHECK_EQUAL(challenge_message.TargetName.buffer, 
+    RED_CHECK_EQUAL(challenge_message.TargetName.bufferOffset, 56);
+    RED_CHECK_EQUAL(challenge_message.TargetName.buffer, 
         std::vector<uint8_t>({
         /* 0000 */ 0x50, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x58, 0x00, 0x59, 0x00, 0x4b, 0x00, 0x44, 0x00, 0x43, 0x00,  // P.R.O.X.Y.K.D.C.
         })
@@ -547,16 +547,75 @@ RED_AUTO_TEST_CASE(TestNTLMMessagesChallenge)
             NTLMSSP_NEGOTIATE_UNICODE)
     );
 
-//    BOOST_CHECK_EQUAL(challenge_message.TargetInfo.bufferOffset, 0);
-//    BOOST_CHECK_EQUAL(challenge_message.TargetInfo.buffer, std::vector<uint8_t>({}));
+//    hexdump_d(challenge_message.TargetInfo.buffer);
+    RED_CHECK_EQUAL(challenge_message.TargetInfo.bufferOffset, 72);
+    RED_CHECK_EQUAL(challenge_message.TargetInfo.buffer, std::vector<uint8_t>({
+ /* 0000 */ 0x02, 0x00, 0x10, 0x00, 0x50, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x58, 0x00, 0x59, 0x00, 0x4b, 0x00,  // ....P.R.O.X.Y.K.
+ /* 0010 */ 0x44, 0x00, 0x43, 0x00, 0x01, 0x00, 0x14, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x4b, 0x00,  // D.C.....W.I.N.K.
+ /* 0020 */ 0x44, 0x00, 0x43, 0x00, 0x32, 0x00, 0x30, 0x00, 0x31, 0x00, 0x32, 0x00, 0x04, 0x00, 0x18, 0x00,  // D.C.2.0.1.2.....
+ /* 0030 */ 0x70, 0x00, 0x72, 0x00, 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00, 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00,  // p.r.o.x.y.k.d.c.
+ /* 0040 */ 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00, 0x03, 0x00, 0x2e, 0x00, 0x57, 0x00, 0x49, 0x00,  // ..l.a.b.....W.I.
+ /* 0050 */ 0x4e, 0x00, 0x4b, 0x00, 0x44, 0x00, 0x43, 0x00, 0x32, 0x00, 0x30, 0x00, 0x31, 0x00, 0x32, 0x00,  // N.K.D.C.2.0.1.2.
+ /* 0060 */ 0x2e, 0x00, 0x70, 0x00, 0x72, 0x00, 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00, 0x6b, 0x00, 0x64, 0x00,  // ..p.r.o.x.y.k.d.
+ /* 0070 */ 0x63, 0x00, 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00, 0x05, 0x00, 0x18, 0x00, 0x70, 0x00,  // c...l.a.b.....p.
+ /* 0080 */ 0x72, 0x00, 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00, 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00, 0x2e, 0x00,  // r.o.x.y.k.d.c...
+ /* 0090 */ 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00, 0x07, 0x00, 0x08, 0x00, 0xe5, 0xda, 0xa6, 0x1d, 0x5c, 0x62,  // l.a.b..........b
+ /* 00a0 */ 0xd5, 0x01, 0x00, 0x00, 0x00, 0x00,
+    }));
 
-//    BOOST_CHECK_EQUAL(challenge_message.version.ProductMajorVersion, 0);
-//    BOOST_CHECK_EQUAL(challenge_message.version.ProductMinorVersion, 0);
-//    BOOST_CHECK_EQUAL(challenge_message.version.ProductBuild, 0);
-//    BOOST_CHECK_EQUAL(challenge_message.version.NtlmRevisionCurrent, 0);
+    RED_CHECK_EQUAL(challenge_message.version.ProductMajorVersion, 6);
+    RED_CHECK_EQUAL(challenge_message.version.ProductMinorVersion, 3);
+    RED_CHECK_EQUAL(challenge_message.version.ProductBuild, 9600);
+    RED_CHECK_EQUAL(challenge_message.version.NtlmRevisionCurrent, 15);
 
 //    // Vector of AvPair
-//    BOOST_CHECK_EQUAL(challenge_message.AvPairList.size(), 0);
+    RED_CHECK_EQUAL(challenge_message.AvPairList.size(), 6);
+//    hexdump_d(challenge_message.AvPairList[0].data);
+    // MsvAvNbDomainName    = 0x02,
+    RED_CHECK_EQUAL(challenge_message.AvPairList[0].id, MsvAvNbDomainName);
+    RED_CHECK_EQUAL(challenge_message.AvPairList[0].data, std::vector<uint8_t>({
+        /* 0000 */ 0x50, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x58, 0x00, 0x59, 0x00, 0x4b, 0x00, 0x44, 0x00, 0x43, 0x00,  // P.R.O.X.Y.K.D.C.
+    }));
+//    hexdump_d(challenge_message.AvPairList[1].data);
+    // MsvAvNbComputerName  = 0x01,
+    RED_CHECK_EQUAL(challenge_message.AvPairList[1].id, MsvAvNbComputerName);
+    RED_CHECK_EQUAL(challenge_message.AvPairList[1].data, std::vector<uint8_t>({
+    /* 0000 */ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x4b, 0x00, 0x44, 0x00, 0x43, 0x00, 0x32, 0x00, 0x30, 0x00,  // W.I.N.K.D.C.2.0.
+    /* 0010 */ 0x31, 0x00, 0x32, 0x00,                                                                          // 1.2.
+    }));
+//    hexdump_d(challenge_message.AvPairList[2].data);
+    // MsvAvDnsDomainName   = 0x04,
+    RED_CHECK_EQUAL(challenge_message.AvPairList[2].id, MsvAvDnsDomainName);
+    RED_CHECK_EQUAL(challenge_message.AvPairList[2].data, std::vector<uint8_t>({
+    /* 0000 */ 0x70, 0x00, 0x72, 0x00, 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00, 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00,  // p.r.o.x.y.k.d.c.
+    /* 0010 */ 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00,                                                  // ..l.a.b.
+    }));
+//    hexdump_d(challenge_message.AvPairList[3].data);
+    // MsvAvDnsComputerName = 0x03,
+    RED_CHECK_EQUAL(challenge_message.AvPairList[3].id, MsvAvDnsComputerName);
+    RED_CHECK_EQUAL(challenge_message.AvPairList[3].data, std::vector<uint8_t>({
+    /* 0000 */ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x4b, 0x00, 0x44, 0x00, 0x43, 0x00, 0x32, 0x00, 0x30, 0x00,  // W.I.N.K.D.C.2.0.
+    /* 0010 */ 0x31, 0x00, 0x32, 0x00, 0x2e, 0x00, 0x70, 0x00, 0x72, 0x00, 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00,  // 1.2...p.r.o.x.y.
+    /* 0020 */ 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00, 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00,              // k.d.c...l.a.b.
+    }));
+//    hexdump_d(challenge_message.AvPairList[4].data);
+    // MsvAvDnsTreeName     = 0x05,
+    RED_CHECK_EQUAL(challenge_message.AvPairList[4].id, MsvAvDnsTreeName);
+    RED_CHECK_EQUAL(challenge_message.AvPairList[4].data, std::vector<uint8_t>({
+    /* 0000 */ 0x70, 0x00, 0x72, 0x00, 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00, 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00,  // p.r.o.x.y.k.d.c.
+    /* 0010 */ 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00,                                                  // ..l.a.b.
+    }));
+//    hexdump_d(challenge_message.AvPairList[5].data);
+    // MsvAvTimestamp       = 0x07,
+    auto tt = challenge_message.AvPairList[5].data;
+    uint64_t tstamp = (uint64_t(tt[7]) << 56) + (uint64_t(tt[6]) << 48) + (uint64_t(tt[5]) << 40) 
+                    + (uint64_t(tt[4]) << 32) + (uint64_t(tt[3]) << 24) + (uint64_t(tt[2]) << 16)
+                    + (uint64_t(tt[1]) << 8) + (uint64_t(tt[0]));
+    RED_CHECK_EQUAL(challenge_message.AvPairList[5].id, MsvAvTimestamp);
+    RED_CHECK_EQUAL(tstamp, 132119911851285221);
+    RED_CHECK_EQUAL(challenge_message.AvPairList[5].data, std::vector<uint8_t>({
+    /* 0000 */ 0xe5, 0xda, 0xa6, 0x1d, 0x5c, 0x62, 0xd5, 0x01,          
+    }));
 }
 
 
@@ -648,8 +707,7 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         RED_CHECK_EQUAL(0,                    ts_req.error_code);
         RED_CHECK_EQUAL(expected_clientNonce, ts_req.clientNonce.clientNonce);
 
-        // negoTokens contains Challnge Message
-
+        // negoTokens contains Challenge Message
     }
     
     
