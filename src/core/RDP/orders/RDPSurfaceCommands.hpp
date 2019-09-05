@@ -147,7 +147,7 @@ public:
 
 		::check_throw(stream, bitmapDataLength, "RDPSetSurfaceCommand::recv SetSurfaceBitsCommand bitmapDataLength", ERR_RDP_DATA_TRUNCATED);
 
-		bitmapData = stream.get_data();
+		bitmapData = stream.get_current();
 	}
 
 	void emit(OutStream & stream) const {

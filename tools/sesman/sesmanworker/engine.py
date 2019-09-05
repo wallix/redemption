@@ -1303,6 +1303,17 @@ class Engine(object):
             Logger().info("Engine update_session failed: (((%s)))" %
                           (traceback.format_exc()))
 
+    def shadow_response(self, errcode, errmsg, token, userdata):
+        try:
+            status = APPROVAL_ACCEPTED if errcode == '0' else APPROVAL_REJECTED
+            self.wabengine.make_session_shadowing_response(
+                status=status, errmsg=errmsg, token=token, userdata=userdata
+            )
+        except:
+            import traceback
+            Logger().info("Engine shadow_response failed: (((%s)))" %
+                          (traceback.format_exc()))
+
     def stop_session(self, title=u"End session"):
         try:
             if self.session_id:

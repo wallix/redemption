@@ -1837,7 +1837,6 @@ class Sesman():
                                     self.shared["rd_shadow_available"] = 'False'
 
                                 if self.shared.get("rd_shadow_invitation_error_code"):
-                                    update_args = {}
                                     shadow_token = {
                                         "shadow_id":
                                         self.shared.get("rd_shadow_invitation_id"),
@@ -1846,11 +1845,12 @@ class Sesman():
                                         "shadow_port":
                                         self.shared.get("rd_shadow_invitation_port"),
                                     }
-                                    update_args["shadow_userdata"] = self.shared.get("rd_shadow_userdata")
-                                    update_args["shadow_errcode"] = self.shared.get("rd_shadow_invitation_error_code")
-                                    update_args["shadow_errmsg"] = self.shared.get("rd_shadow_invitation_error_message")
-                                    update_args["shadow_token"] = shadow_token
-                                    self.engine.update_session(**update_args)
+                                    self.engine.shadow_response(
+                                        errcode=self.shared.get("rd_shadow_invitation_error_code"),
+                                        errmsg=self.shared.get("rd_shadow_invitation_error_message"),
+                                        token=shadow_token,
+                                        userdata=self.shared.get("rd_shadow_userdata")
+                                    )
                                     self.shared["rd_shadow_available"] = 'False'
 
                                     self.shared["rd_shadow_userdata"] = None

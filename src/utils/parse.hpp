@@ -28,7 +28,6 @@
 
 #include <cstdint> // for sized types
 #include <cstring> // for memcpy
-#include <cstdlib> // strto*
 
 class Parse {
 public:
@@ -148,60 +147,6 @@ public:
 
     void in_skip_bytes(unsigned int n) noexcept {
         this->p+=n;
-    }
-
-
-    // 10 = 10, 0x10 = 16
-    unsigned long ulong_from_cstr() noexcept
-    {
-        char* endptr = nullptr;
-        unsigned long res = ((this->p[0] == '0') && (this->p[1] == 'x'))
-            ? strtoul(char_ptr_cast(this->p), &endptr, 16)
-            : strtoul(char_ptr_cast(this->p), &endptr, 10);
-        this->p = byte_ptr_cast(endptr);
-        return res;
-    }
-
-    // 10 = 10, 0x10 = 16
-    long long_from_cstr() noexcept
-    {
-        char* endptr = nullptr;
-        long res = ((this->p[0] == '0') && (this->p[1] == 'x'))
-            ? strtol(char_ptr_cast(this->p), &endptr, 16)
-            : strtol(char_ptr_cast(this->p), &endptr, 10);
-        this->p = byte_ptr_cast(endptr);
-        return res;
-    }
-
-    // 1, yes, on, true
-    bool bool_from_cstr() noexcept
-    {
-        if (0 == strncasecmp("1", char_ptr_cast(this->p), 1))
-        {
-            this->p += 1;
-            return true;
-        }
-        if (0 == strncasecmp("yes", char_ptr_cast(this->p), 3))
-        {
-            this->p += 3;
-            return true;
-        }
-        if (0 == strncasecmp("on", char_ptr_cast(this->p), 2))
-        {
-            this->p += 2;
-            return true;
-        }
-        if (0 == strncasecmp("true", char_ptr_cast(this->p), 4))
-        {
-            this->p += 4;
-            return true;
-        }
-        return false;
-    }
-
-    bool bool_from_cstrz() noexcept
-    {
-        return this->bool_from_cstr() && this->p[0] == 0;
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding

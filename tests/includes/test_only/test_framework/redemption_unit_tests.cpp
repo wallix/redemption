@@ -332,7 +332,7 @@ namespace redemption_unit_test__
             CASE('C', put_ascii_bytes2);
             CASE('s', put_utf8_bytes);
             CASE('S', put_utf8_bytes2);
-            CASE('h', put_hex_bytes);
+            CASE('b', put_hex_bytes);
             CASE('d', put_dump_bytes);
             default:
             CASE('a', put_auto_bytes);

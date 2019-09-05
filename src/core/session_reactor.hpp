@@ -526,12 +526,6 @@ namespace jln
             return R::Ready;
         }
 
-        R ready_at(timeval tv) noexcept
-        {
-            timer.set_time(tv);
-            return R::Ready;
-        }
-
         Reactor& get_reactor() const noexcept;
 
         timeval get_current_time() const noexcept;

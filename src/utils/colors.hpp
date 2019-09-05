@@ -29,7 +29,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstddef>
-#include <cstring> // strcasecmp
 
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
@@ -299,68 +298,6 @@ inline BGRPalette make_bgr_palette_from_bgrx_array(uint8_t const (&a)[256 * 4]) 
     }
     return BGRPalette(bgr_array);
 }
-
-
-inline BGRColor color_from_cstr(const char * str)
-{
-    BGRColor bgr;
-
-    if (false) {}
-# define ELSE_COLOR(COLOR_NAME) else if (0 == strcasecmp(#COLOR_NAME, str)) { bgr = COLOR_NAME; }
-    ELSE_COLOR(BLACK)
-    ELSE_COLOR(GREY)
-    ELSE_COLOR(MEDIUM_GREY)
-    ELSE_COLOR(DARK_GREY)
-    ELSE_COLOR(ANTHRACITE)
-    ELSE_COLOR(WHITE)
-
-    ELSE_COLOR(BLUE)
-    ELSE_COLOR(DARK_BLUE)
-    ELSE_COLOR(CYAN)
-    ELSE_COLOR(DARK_BLUE_WIN)
-    ELSE_COLOR(DARK_BLUE_BIS)
-    ELSE_COLOR(MEDIUM_BLUE)
-    ELSE_COLOR(PALE_BLUE)
-    ELSE_COLOR(LIGHT_BLUE)
-    ELSE_COLOR(WINBLUE)
-
-    ELSE_COLOR(RED)
-    ELSE_COLOR(DARK_RED)
-    ELSE_COLOR(MEDIUM_RED)
-    ELSE_COLOR(PINK)
-
-    ELSE_COLOR(GREEN)
-    ELSE_COLOR(WABGREEN)
-    ELSE_COLOR(WABGREEN_BIS)
-    ELSE_COLOR(DARK_WABGREEN)
-    ELSE_COLOR(INV_DARK_WABGREEN)
-    ELSE_COLOR(DARK_GREEN)
-    ELSE_COLOR(INV_DARK_GREEN)
-    ELSE_COLOR(LIGHT_GREEN)
-    ELSE_COLOR(INV_LIGHT_GREEN)
-    ELSE_COLOR(PALE_GREEN)
-    ELSE_COLOR(INV_PALE_GREEN)
-    ELSE_COLOR(MEDIUM_GREEN)
-    ELSE_COLOR(INV_MEDIUM_GREEN)
-
-    ELSE_COLOR(YELLOW)
-    ELSE_COLOR(LIGHT_YELLOW)
-
-    ELSE_COLOR(ORANGE)
-    ELSE_COLOR(LIGHT_ORANGE)
-    ELSE_COLOR(PALE_ORANGE)
-    ELSE_COLOR(BROWN)
-#undef ELSE_COLOR
-    else if ((*str == '0') && (*(str + 1) == 'x')){
-        bgr = BGRasRGBColor(BGRColor(strtol(str + 2, nullptr, 16)));
-    }
-    else {
-        bgr = BGRasRGBColor(BGRColor(strtol(str, nullptr, 10)));
-    }
-
-    return bgr;
-}
-
 
 struct decode_color8
 {

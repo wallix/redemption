@@ -25,7 +25,7 @@ Author(s): Jonathan Poelen
 
 
 template<class Iterator>
-class safe_iterator
+class checked_iterator
 {
     using _iterator_traits = std::iterator_traits<Iterator>;
 
@@ -36,60 +36,60 @@ public:
     using pointer = typename _iterator_traits::pointer;
     using reference = typename _iterator_traits::reference;
 
-    safe_iterator() = default;
-    safe_iterator(safe_iterator &&) = default;
-    safe_iterator(safe_iterator const&) = default;
+    checked_iterator() = default;
+    checked_iterator(checked_iterator &&) = default;
+    checked_iterator(checked_iterator const&) = default;
 
-    safe_iterator& operator=(safe_iterator &&) = default;
-    safe_iterator& operator=(safe_iterator const&) = default;
+    checked_iterator& operator=(checked_iterator &&) = default;
+    checked_iterator& operator=(checked_iterator const&) = default;
 
 #ifdef NDEBUG
-    explicit safe_iterator(Iterator it, Iterator const&)
+    explicit checked_iterator(Iterator it, Iterator const&)
       : it(std::move(it))
     {}
 
-    explicit safe_iterator(Iterator it, std::size_t)
+    explicit checked_iterator(Iterator it, std::size_t)
       : it(std::move(it))
     {}
 
-    explicit safe_iterator(Iterator it, Iterator const&, Iterator const&)
+    explicit checked_iterator(Iterator it, Iterator const&, Iterator const&)
       : it(std::move(it))
     {}
 #else
-    explicit safe_iterator(Iterator it, Iterator end)
+    explicit checked_iterator(Iterator it, Iterator end)
       : it(std::move(it))
       , begin(it)
       , end(std::move(end))
     {}
 
-    explicit safe_iterator(Iterator it, std::size_t n)
+    explicit checked_iterator(Iterator it, std::size_t n)
       : it(std::move(it))
       , begin(it)
       , end(this->begin + n)
     {}
 
-    explicit safe_iterator(Iterator it, Iterator begin, Iterator end)
+    explicit checked_iterator(Iterator it, Iterator begin, Iterator end)
       : it(std::move(it))
       , begin(std::move(begin))
       , end(std::move(end))
     {}
 #endif
 
-    safe_iterator& operator++()
+    checked_iterator& operator++()
     {
         check_range(1);
         ++it;
         return *this;
     }
 
-    safe_iterator& operator--()
+    checked_iterator& operator--()
     {
         check_range(-1);
         --it;
         return *this;
     }
 
-    safe_iterator operator++(int)
+    checked_iterator operator++(int)
     {
         check_range(1);
         auto old = *this;
@@ -97,7 +97,7 @@ public:
         return old;
     }
 
-    safe_iterator operator--(int)
+    checked_iterator operator--(int)
     {
         check_range(-1);
         auto old = *this;
@@ -105,41 +105,41 @@ public:
         return old;
     }
 
-    safe_iterator& operator+=(difference_type n)
+    checked_iterator& operator+=(difference_type n)
     {
         check_range(n);
         it += n;
         return *this;
     }
 
-    safe_iterator& operator-=(difference_type n)
+    checked_iterator& operator-=(difference_type n)
     {
         check_range(-n);
         it -= n;
         return *this;
     }
 
-    safe_iterator operator+(difference_type n) const
+    checked_iterator operator+(difference_type n) const
     {
 #ifdef NDEBUG
-        return safe_iterator(it+n, it);
+        return checked_iterator(it+n, it);
 #else
         check_range(n);
-        return safe_iterator(it+n, begin, end);
+        return checked_iterator(it+n, begin, end);
 #endif
     }
 
-    safe_iterator operator-(difference_type n) const
+    checked_iterator operator-(difference_type n) const
     {
 #ifdef NDEBUG
-        return safe_iterator(it+n, it);
+        return checked_iterator(it+n, it);
 #else
         check_range(-n);
-        return safe_iterator(it-n, begin, end);
+        return checked_iterator(it-n, begin, end);
 #endif
     }
 
-    difference_type operator-(safe_iterator const& other) const
+    difference_type operator-(checked_iterator const& other) const
     {
         assert(it >= other.it);
         return it - other.it;
@@ -157,32 +157,32 @@ public:
         return it[i];
     }
 
-    bool operator==(safe_iterator const& other) const
+    bool operator==(checked_iterator const& other) const
     {
         return it == other.it;
     }
 
-    bool operator!=(safe_iterator const& other) const
+    bool operator!=(checked_iterator const& other) const
     {
         return it != other.it;
     }
 
-    bool operator<(safe_iterator const& other) const
+    bool operator<(checked_iterator const& other) const
     {
         return it < other.it;
     }
 
-    bool operator>(safe_iterator const& other) const
+    bool operator>(checked_iterator const& other) const
     {
         return it > other.it;
     }
 
-    bool operator<=(safe_iterator const& other) const
+    bool operator<=(checked_iterator const& other) const
     {
         return it <= other.it;
     }
 
-    bool operator>=(safe_iterator const& other) const
+    bool operator>=(checked_iterator const& other) const
     {
         return it >= other.it;
     }
@@ -229,17 +229,17 @@ private:
 
 
 template<class Iterator>
-safe_iterator<Iterator> operator+(
-    typename safe_iterator<Iterator>::difference_type n,
-    safe_iterator<Iterator> const& it)
+checked_iterator<Iterator> operator+(
+    typename checked_iterator<Iterator>::difference_type n,
+    checked_iterator<Iterator> const& it)
 {
     return it + n;
 }
 
 template<class Iterator>
-safe_iterator<Iterator> operator-(
-    typename safe_iterator<Iterator>::difference_type n,
-    safe_iterator<Iterator> const& it)
+checked_iterator<Iterator> operator-(
+    typename checked_iterator<Iterator>::difference_type n,
+    checked_iterator<Iterator> const& it)
 {
     return it - n;
 }

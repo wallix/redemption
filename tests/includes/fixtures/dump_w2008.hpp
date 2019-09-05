@@ -1,3 +1,6 @@
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wdocumentation")
+
 const char outdata[] = /* NOLINT */
 {
 // connecting to 10.10.47.16:3389 |
@@ -13437,3 +13440,4 @@ const char indata[] = /* NOLINT */
 // RDP W2008 Target (0): total_received=85734, total_sent=1942 |
 } /* end indata */;
 
+REDEMPTION_DIAGNOSTIC_POP

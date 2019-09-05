@@ -88,31 +88,6 @@ size_t UTF8GetPos(uint8_t const * source, size_t len) noexcept
     return i;
 }
 
-// UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
-// UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
-bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source) noexcept
-{
-    len += 1;
-    uint8_t c = 0;
-    size_t i = 0;
-    for (; 0 != (c = source[i]) ; i++){
-        len -= ((c >> 6) == 2)?0:1;
-        if (len == 0) { break; }
-    }
-
-
-    size_t insertion_point = i;
-    size_t end_point = insertion_point + strlen(char_ptr_cast(source+i));
-    size_t to_insert_nbbytes = strlen(char_ptr_cast(to_insert));
-    if (end_point + to_insert_nbbytes + 1 > max_source){
-        return false;
-    }
-
-    memmove(source + insertion_point + to_insert_nbbytes, source + insertion_point, end_point - insertion_point + 1);
-    memcpy(source + insertion_point, to_insert, to_insert_nbbytes);
-    return true;
-}
-
 namespace
 {
     constexpr uint8_t utf8_byte_size_table[] {
@@ -164,50 +139,33 @@ size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len) noexcep
     return adjust_len;
 }
 
-// UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before
-void UTF8RemoveOneAtPos(uint8_t * source, size_t len) noexcept
+// UTF8RemoveOne assumes input is valid utf8, zero terminated, that has been checked before
+void UTF8RemoveOne(writable_bytes_view source) noexcept
 {
-    len += 1;
-    uint8_t c = 0;
-    size_t i = 0;
-    for (; 0 != (c = source[i]) ; i++){
-        len -= ((c >> 6) == 2)?0:1;
-        if (len == 0) {
-            size_t insertion_point = i;
-            size_t end_point = insertion_point + strlen(char_ptr_cast(source+i));
-            uint32_t char_len = UTF8CharNbBytes(source+i);
-            memmove(source + i, source + i + char_len, end_point - insertion_point + 1 - char_len);
-            break;
-        }
+    if (source.front()) {
+        size_t n = utf8_byte_size_table[(source.front() >> 3)];
+        memmove(source.data(), source.data() + n, source.size() - n);
     }
 }
 
 // UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
 // UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
-bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_char, size_t max_source) noexcept
+bool UTF8InsertUtf16(writable_bytes_view source, std::size_t bytes_used, uint16_t unicode_char) noexcept
 {
-    uint8_t lo = to_insert_char & 0xFF;
-    uint8_t hi  = (to_insert_char >> 8) & 0xFF;
-    uint8_t to_insert[4];
+    assert(source.size() >= bytes_used);
 
-    if (hi & 0xF8){
-        // 3 bytes
-        to_insert[0] = 0xE0 | ((hi >> 4) & 0x0F);
-        to_insert[1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
-        to_insert[2] = 0x80 | (lo & 0x3F);
-        to_insert[3] = 0;
+    uint8_t utf8[4];
+    const auto utf8char = UTF16toUTF8_buf(unicode_char, make_array_view(utf8));
+
+    if (source.size() - bytes_used < utf8char.size()) {
+        return false;
     }
-    else if (hi || (lo & 0x80)) {
-        // 2 bytes
-        to_insert[0] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
-        to_insert[1] = 0x80 | (lo & 0x3F);
-        to_insert[2] = 0;
-    }
-    else {
-        to_insert[0] = lo;
-        to_insert[1] = 0;
-    }
-    return UTF8InsertAtPos(source, len, to_insert, max_source);
+
+    auto* p = source.data();
+    memmove(p + utf8char.size(), p, bytes_used);
+    memcpy(p, utf8char.data(), utf8char.size());
+
+    return true;
 }
 
 // TODO: this one truncate in case of UTF8 error, maybe should return error code ?
@@ -532,6 +490,41 @@ writable_bytes_view UTF16toUTF8_buf(bytes_view utf16_source, writable_bytes_view
             i_t++;
         }
     }
+    return utf8_target.first(i_t);
+}
+
+// Return number of UTF8 bytes used to encode UTF16 input
+// do not write trailing 0
+writable_bytes_view UTF16toUTF8_buf(only_type<uint16_t> utf16_source, writable_bytes_view utf8_target) noexcept
+{
+    size_t i_t = 0;
+    uint8_t lo = utf16_source.value() & 0xff;
+    uint8_t hi  = utf16_source.value() >> 8;
+
+    if (hi & 0xF8){
+        // 3 bytes
+        if (i_t + 3 <= utf8_target.size()) {
+            utf8_target[i_t] = 0xE0 | ((hi >> 4) & 0x0F);
+            utf8_target[i_t + 1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
+            utf8_target[i_t + 2] = 0x80 | (lo & 0x3F);
+            i_t += 3;
+        }
+    }
+    else if (hi || (lo & 0x80)) {
+        // 2 bytes
+        if (i_t + 2 <= utf8_target.size()) {
+            utf8_target[i_t] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
+            utf8_target[i_t + 1] = 0x80 | (lo & 0x3F);
+            i_t += 2;
+        }
+    }
+    else {
+        if (i_t + 1 <= utf8_target.size()) {
+            utf8_target[i_t] = lo;
+            i_t++;
+        }
+    }
+
     return utf8_target.first(i_t);
 }
 

@@ -36,6 +36,130 @@
 #include "utils/fileutils.hpp"
 #include "gdi/graphic_api.hpp"
 
+class ReplayMod::WindowingFilter : public gdi::GraphicApi
+{
+public:
+    WindowingFilter(gdi::GraphicApi & drawable) : drawable(drawable) {}
+
+    void set_palette(BGRPalette   const & palette) override {
+        this->drawable.set_palette(palette);
+    }
+
+
+    void draw(RDP::FrameMarker    const & cmd) override {
+        this->drawable.draw(cmd);
+    }
+    void draw(RDPDestBlt          const & cmd, Rect clip) override {
+        this->drawable.draw(cmd, clip);
+    }
+    void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {
+        this->drawable.draw(cmd, clip);
+    }
+    void draw(RDPScrBlt           const & cmd, Rect clip) override {
+        this->drawable.draw(cmd, clip);
+    }
+    void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override {
+        this->drawable.draw(cmd, clip);
+    }
+
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
+        this->drawable.draw(cmd, clip, bmp);
+    }
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+        this->drawable.draw(cmd, clip, color_ctx, bmp);
+    }
+
+    void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {
+       this->drawable.draw(cmd, bmp);
+    }
+
+    void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->drawable.draw(cmd, clip, color_ctx);
+    }
+    void draw(RDPNineGrid         const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+        this->drawable.draw(cmd, clip, color_ctx, bmp);
+    }
+    void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {
+        this->drawable.draw(cmd, clip, color_ctx, gly_cache);
+    }
+    void draw(RDPSetSurfaceCommand const & cmd) override {
+    	this->drawable.draw(cmd);
+    }
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
+        this->drawable.draw(cmd, content);
+    }
+
+
+    // NOTE maybe in an other interface
+    void draw(const RDP::RAIL::NewOrExistingWindow            & /*cmd*/) override {}
+    void draw(const RDP::RAIL::WindowIcon                     & /*cmd*/) override {}
+    void draw(const RDP::RAIL::CachedIcon                     & /*cmd*/) override {}
+    void draw(const RDP::RAIL::DeletedWindow                  & /*cmd*/) override {}
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*cmd*/) override {}
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & /*cmd*/) override {}
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*cmd*/) override {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & /*cmd*/) override {}
+
+    // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
+    void draw(RDPColCache   const & cache) override {
+        this->drawable.draw(cache);
+    }
+    void draw(RDPBrushCache const & cache) override {
+        this->drawable.draw(cache);
+    }
+
+    void begin_update() override {
+       this->drawable.begin_update();
+    }
+    void end_update() override {
+       this->drawable.end_update();
+    }
+
+    void sync() override {
+       this->drawable.sync();
+    }
+
+    /// \c cache_idx is ignored with \c SetPointerMode::Insert
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
+        this->drawable.set_pointer(cache_idx, cursor, mode);
+    }
+
+    // TODO berk, data within size
+    void set_row(std::size_t rownum, bytes_view data) override {
+        this->drawable.set_row(rownum, data);
+    }
+
+private:
+    gdi::GraphicApi & drawable;
+};
+
 struct ReplayMod::Reader
 {
     struct Path
@@ -136,7 +260,7 @@ struct ReplayMod::Reader
 
 ReplayMod::ReplayMod(
     SessionReactor& session_reactor
-  , gdi::GraphicApi & drawable
+  , gdi::GraphicApi & drawable_
   , FrontAPI & front
   , const char * replay_path
   , uint16_t width
@@ -150,9 +274,10 @@ ReplayMod::ReplayMod(
   , bool play_video_with_corrupted_bitmap
   , Verbose debug_capture)
 : auth_error_message(auth_error_message)
+, internal_windowing_filter(std::make_unique<WindowingFilter>(drawable_))
 , front_width(width)
 , front_height(height)
-, drawable(drawable)
+, drawable(*internal_windowing_filter)
 , front(front)
 , internal_reader(std::make_unique<Reader>(
     Reader::Path{replay_path}, begin_read, end_read, balise_time_frame, play_video_with_corrupted_bitmap, debug_capture))
@@ -172,7 +297,7 @@ ReplayMod::ReplayMod(
     .set_delay(std::chrono::seconds(0))
     .on_action([this](auto ctx, gdi::GraphicApi& gd){
         this->draw_event(gd);
-        return ctx.ready_at(ctx.get_current_time());
+        return ctx.ready();
     });
 }
 

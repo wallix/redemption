@@ -36,6 +36,9 @@ class ReplayMod : public mod_api
 {
     std::string& auth_error_message;
 
+    class WindowingFilter;
+    std::unique_ptr<WindowingFilter> internal_windowing_filter;
+
     uint16_t front_width;
     uint16_t front_height;
     gdi::GraphicApi & drawable;

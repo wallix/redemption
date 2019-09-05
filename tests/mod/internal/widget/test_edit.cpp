@@ -359,7 +359,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    // drawable.save_to_png("edit-e2-1.png");
+    // dump_png24("edit-e2-1.png", drawable, false);
     RED_CHECK_SIG(drawable, "\x45\x22\xa3\xef\x85\x3f\x81\xc2\xd3\x40\x23\x54\x95\x15\x3a\xca\x22\xfe\x93\x0b");
     RED_CHECK(notifier.sender == &wedit);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
@@ -370,7 +370,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    // drawable.save_to_png("edit-e2-2.png");
+    // dump_png24("edit-e2-2.png", drawable, false);
     RED_CHECK_SIG(drawable, "\xe1\x2c\x25\xf6\x93\x30\xf9\x46\x40\x9e\xe4\x6f\x11\x43\x3c\x6b\x15\x2d\x4f\xcb");
     RED_CHECK(notifier.sender == &wedit);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);

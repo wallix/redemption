@@ -309,6 +309,9 @@ public:
         (void) bmp;
     }
 
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
+    }
+
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
         LOG(LOG_INFO, "DEFAULT: RDPSetSurfaceCommand(x=%d y=%d width=%d(%d) height=%d(%d))", cmd.destRect.x, cmd.destRect.y,
                         cmd.width, content.width, cmd.height, cmd.height);

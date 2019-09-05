@@ -899,6 +899,7 @@ protected:
             "GraphicsUpdatePDU::set_pointer done");
     }   // void cached_pointer_update(int cache_idx)
 
+public:
     void send_set_surface_command(RDPSetSurfaceCommand const & cmd) {
         LOG_IF(bool(this->verbose & Verbose::surface_commands), LOG_INFO,
             "GraphicsUpdatePDU::send_surface_command");
@@ -913,7 +914,6 @@ protected:
                                     , 0, stream, underlying_cast(this->verbose));
     }
 
-public:
     using RDPSerializer::set_pointer;
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos)

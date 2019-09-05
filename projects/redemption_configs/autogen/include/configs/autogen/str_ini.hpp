@@ -1200,34 +1200,44 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [icap_server_up]
 
-# Ip or fqdn of ICAP service
+# Ip or fqdn of ICAP server
 #host = 
 
-# Port of ICAP service
+# Port of ICAP server
 # min = 0
 #port = 0
 
-# Service name of ICAP service
-#service_name = up
+# Service name on ICAP server
+#service_name = avscan
 
-# ICAP service use tls
+# ICAP server uses tls
 # value: 0 or 1
 #tls = 0
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+# value: 0 or 1
+#_advanced
+#enable_x_context = 1
 
 [icap_server_down]
 
-# Ip or fqdn of ICAP service
+# Ip or fqdn of ICAP server
 #host = 
 
-# Port of ICAP service
+# Port of ICAP server
 # min = 0
 #port = 0
 
-# Service name of ICAP service
-#service_name = down
+# Service name on ICAP server
+#service_name = avscan
 
-# ICAP service use tls
+# ICAP server uses tls
 # value: 0 or 1
 #tls = 0
+
+# Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server
+# value: 0 or 1
+#_advanced
+#enable_x_context = 1
 
 )gen_config_ini"

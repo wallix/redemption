@@ -22,7 +22,7 @@
 #pragma once
 
 #include <functional>
-    
+
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
@@ -128,7 +128,6 @@ private:
     uint8_t Timestamp[8]{};
     uint8_t ChallengeTimestamp[8]{};
     array_challenge ServerChallenge;
-    array_challenge ClientChallenge;
     array_md5 SessionBaseKey;
     array_md5 ExportedSessionKey;
 public:
@@ -287,7 +286,7 @@ public:
                     this->SavedNegotiateMessage = this->NEGOTIATE_MESSAGE.raw_bytes;
 
                     LOG_IF(this->verbose, LOG_INFO, "NTLMContextServer Write Challenge");
-                
+
                     rand.random(this->ServerChallenge.data(), this->ServerChallenge.size());
                     this->CHALLENGE_MESSAGE.serverChallenge = this->ServerChallenge;
 
@@ -306,7 +305,7 @@ public:
                     // NTLM: construct challenge target info
                     std::vector<uint8_t> win7{ 0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00 };
                     std::vector<uint8_t> upwin7{ 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x37, 0x00 };
-                     
+
                     auto & list = this->CHALLENGE_MESSAGE.AvPairList;
                     list.push_back(AvPair({MsvAvNbComputerName, upwin7}));
                     list.push_back(AvPair({MsvAvNbDomainName, upwin7}));
@@ -320,7 +319,7 @@ public:
                         this->CHALLENGE_MESSAGE.version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                         this->CHALLENGE_MESSAGE.version.ProductBuild        = 7601;
                         this->CHALLENGE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-                        
+
                     }
 
                     StaticOutStream<65535> out_stream;
@@ -348,7 +347,7 @@ public:
                         this->UseMIC = true;
                     }
 
-                    
+
                     auto & avuser = this->AUTHENTICATE_MESSAGE.UserName.buffer;
                     this->identity_User.assign(avuser.data(), avuser.data()+avuser.size());
                     auto & avdomain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
@@ -362,13 +361,13 @@ public:
                     }
 
                     auto res = (set_password_cb(this->identity_User, this->identity_Domain, this->identity_Password));
-                                           
+
                     if (res == PasswordCallback::Error){
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED (3)");
                         status = SEC_E_LOGON_DENIED;
                         break;
                     }
-                    
+
                     this->state = NTLM_STATE_WAIT_PASSWORD;
 
                     if (res == PasswordCallback::Wait) {
@@ -546,7 +545,7 @@ public:
                     std::vector<uint8_t> expected_signature;
                     uint32_t seal_version = 1;
                     /* Concatenate version, ciphertext and sequence number to build signature */
-                    
+
                     push_back_array(expected_signature, out_uint32_le(seal_version));
                     push_back_array(expected_signature, {checksum, 8});
                     push_back_array(expected_signature, out_uint32_le(MessageSeqNo));
@@ -650,7 +649,7 @@ public:
                         auto av_seqno = out_uint32_le(MessageSeqNo);
                         memcpy(signature.data()+12, av_seqno.data(), av_seqno.size());
                     }
-                    
+
                     this->ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
                 }
 

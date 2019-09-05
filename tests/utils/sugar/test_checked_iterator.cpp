@@ -22,9 +22,9 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "utils/sugar/safe_iterator.hpp"
+#include "utils/sugar/checked_iterator.hpp"
 
-using Iter = safe_iterator<char const*>;
+using Iter = checked_iterator<char const*>;
 
 RED_TEST_DONT_PRINT_LOG_VALUE(Iter)
 

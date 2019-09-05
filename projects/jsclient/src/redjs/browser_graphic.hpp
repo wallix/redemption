@@ -84,6 +84,7 @@ public:
 
     void set_palette(const BGRPalette& /*unused*/) override;
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) override;
+    void draw(RDPSetSurfaceCommand const & cmd) override;
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & /*content*/) override;
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;

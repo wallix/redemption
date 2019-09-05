@@ -444,7 +444,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                         size_t pxtmp = this->cursor_px_pos;
                         size_t ebpos = this->edit_buffer_pos;
                         this->decrement_edit_pos();
-                        UTF8RemoveOneAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 0);
+                        UTF8RemoveOne(make_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
                         this->buffer_size += this->edit_buffer_pos - ebpos;
                         Rect const rect(
                             this->x() + this->cursor_px_pos + this->label.x_text,
@@ -485,7 +485,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                         gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
                         this->h_text = tm.height;
                         this->label.buffer[this->edit_buffer_pos + len] = c;
-                        UTF8RemoveOneAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 0);
+                        UTF8RemoveOne(make_array_view(this->label.buffer).drop_front(this->edit_buffer_pos));
                         this->buffer_size -= len;
                         this->num_chars--;
                         Rect const rect(
@@ -539,21 +539,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                 break;
             case Keymap2::KEVENT_KEY:
                 if (this->num_chars < WidgetLabel::buffer_size - 5) {
-                    uint32_t c = keymap->get_char();
-                    UTF8InsertOneAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 0, c, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
-                    size_t tmp = this->edit_buffer_pos;
-                    size_t pxtmp = this->cursor_px_pos;
-                    this->increment_edit_pos();
-                    this->buffer_size += this->edit_buffer_pos - tmp;
-                    this->num_chars++;
-                    this->send_notify(NOTIFY_TEXT_CHANGED);
-                    this->w_text += this->cursor_px_pos - pxtmp;
-                    this->update_draw_cursor(Rect(
-                        this->x() + pxtmp + this->label.x_text + 1,
-                        this->y() + this->label.y_text + 1,
-                        this->w_text - pxtmp + 1,
-                        this->h_text
-                        ));
+                    this->insert_unicode_char(keymap->get_char());
                 }
                 else {
                     // No need to get_event if get_char has been called already
@@ -599,12 +585,16 @@ void WidgetEdit::rdp_input_unicode(uint16_t unicode, uint16_t flag)
         return;
     }
 
-    uint8_t utf8[8];
-    size_t utf8_length = UTF16toUTF8(&unicode, 1, utf8, sizeof(utf8) - 1);
-    utf8[utf8_length] = 0;
+    this->insert_unicode_char(unicode);
+}
 
-    UTF8InsertAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos),
-        0, utf8, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
+void WidgetEdit::insert_unicode_char(uint16_t unicode_char)
+{
+    auto buf = make_array_view(this->label.buffer).drop_front(this->edit_buffer_pos);
+    if (!UTF8InsertUtf16(buf, this->buffer_size - this->edit_buffer_pos + 1, unicode_char)) {
+        return ;
+    }
+
     size_t tmp = this->edit_buffer_pos;
     size_t pxtmp = this->cursor_px_pos;
     this->increment_edit_pos();

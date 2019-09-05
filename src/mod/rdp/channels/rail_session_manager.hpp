@@ -117,6 +117,9 @@ public:
     void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
+    	// TODO
+    }
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {
     	// TODO
     }
@@ -452,7 +455,7 @@ public:
                      order.NumWindowIds());
             }
             else {
-                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw_impl(DeletedNotificationIcons): Order bloacked.");
+                LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Order bloacked.");
             }
         }
 
@@ -469,6 +472,7 @@ public:
                  && (DialogBoxType::NONE == this->dialog_box_type)
                  && this->has_previous_window
                 ) {
+                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
                     this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
                     this->waiting_screen_draw(0);
                 }

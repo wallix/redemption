@@ -109,7 +109,7 @@ namespace redemption_unit_test__
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 # define RED_CHECK_MEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_SMEM(mem, memref) void(mem), void(memref)
-# define RED_CHECK_RMEM(mem, memref) void(mem), void(memref)
+# define RED_CHECK_BMEM(mem, memref) void(mem), void(memref)
 # define RED_CHECK_HMEM(mem, memref) void(mem), void(memref)
 //@}
 
@@ -151,13 +151,15 @@ namespace redemption_unit_test__
 
 # define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'a')
 # define RED_CHECK_SMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'S')
-# define RED_CHECK_RMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'h')
+# define RED_CHECK_BMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'b')
 # define RED_CHECK_HMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'd')
+# define RED_CHECK_CMEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref, 'C')
 
 # define RED_REQUIRE_MEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'a')
 # define RED_REQUIRE_SMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'S')
-# define RED_REQUIRE_RMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'h')
+# define RED_REQUIRE_RMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'b')
 # define RED_REQUIRE_HMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'd')
+# define RED_REQUIRE_CMEM(mem, memref) RED_TEST_MEM(REQUIRE, mem, memref, 'C')
 
 /// CHECK
 //@{
@@ -429,8 +431,8 @@ struct RED_TEST_PRINT_TYPE_STRUCT_NAME<redemption_unit_test__::int_variation>
 #define RED_CHECK_SMEM_AA(mem, memref) \
     RED_CHECK_SMEM(make_array_view(mem), make_array_view(memref))
 
-#define RED_CHECK_RMEM_AA(mem, memref) \
-    RED_CHECK_RMEM(make_array_view(mem), make_array_view(memref))
+#define RED_CHECK_BMEM_AA(mem, memref) \
+    RED_CHECK_BMEM(make_array_view(mem), make_array_view(memref))
 //@}
 
 /// REQUIRE
