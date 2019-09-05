@@ -171,10 +171,11 @@ public:
         {
             case Loop:
             {
-                TSRequest ts_request = recvTSRequest(in_data);
-                uint32_t error_code = ts_request.error_code;
-
                 LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Authentication Token");
+                TSRequest ts_request = recvTSRequest(in_data);
+                
+                // TODO: add error code management if server returns some error code at that point
+
                 /*
                  * from tspkg.dll: 0x00000132
                  * ISC_REQ_MUTUAL_AUTH
@@ -332,7 +333,9 @@ public:
                 emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, false);
                 
                 auto out_stream_bytes = out_stream.get_bytes();
-                ts_request.negoTokens.assign(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
+
+                TSRequest ts_request_anwer;
+                std::vector<uint8_t> answer_negoTokens(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
                 if (this->verbose) {
                     logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
                 }
@@ -343,12 +346,13 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_public_key_echo");
                 uint32_t version = ts_request.use_version;
 
+
                 array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
                 if (version >= 5) {
                     LOG(LOG_INFO, "rdpClientNTLM::generate client nonce");
                     this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
                     this->SavedClientNonce.initialized = true;
-                    ts_request.clientNonce = this->SavedClientNonce;
+                    ts_request_anwer.clientNonce = this->SavedClientNonce;
                     
                     LOG(LOG_INFO, "rdpClientNTLM::generate public key hash (client->server)");
                     SslSha256 sha256;
@@ -370,22 +374,22 @@ public:
                 
                 this->SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
                 this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
-                ts_request.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
+
+                ts_request_anwer.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
 
                 /* send authentication token to server */
-                if (ts_request.negoTokens.size() > 0){
+                if (answer_negoTokens.size() > 0){
                     LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Sending Authentication Token");
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::send");
-                ts_request.error_code = error_code;
-                auto v = emitTSRequest(ts_request.version,
-                                       ts_request.negoTokens,
-                                       ts_request.authInfo,
-                                       ts_request.pubKeyAuth,
-                                       ts_request.error_code,
-                                       ts_request.clientNonce.clientNonce,
-                                       ts_request.clientNonce.initialized);
+                auto v = emitTSRequest(ts_request_anwer.version,
+                                       answer_negoTokens,
+                                       ts_request_anwer.authInfo,
+                                       ts_request_anwer.pubKeyAuth,
+                                       ts_request_anwer.error_code,
+                                       ts_request_anwer.clientNonce.clientNonce,
+                                       ts_request_anwer.clientNonce.initialized);
                 ts_request_emit.out_copy_bytes(v);
 
                 this->client_auth_data_state = Final;

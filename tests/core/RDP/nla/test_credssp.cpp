@@ -677,6 +677,9 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         , 0xd5, 0x01, 0x00, 0x00, 0x00, 0x00                                                             // ......
     };
 
+
+    //Client Authentication : Receiving Authentication Token
+    // negoTokens contains Challenge Message
     auto ts_req = recvTSRequest(answerTSRequest);
     {
         std::vector<uint8_t> expected_negoTokens = {
@@ -707,11 +710,9 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         RED_CHECK_EQUAL(0,                    ts_req.error_code);
         RED_CHECK_EQUAL(expected_clientNonce, ts_req.clientNonce.clientNonce);
 
-        // negoTokens contains Challenge Message
+        //Credssp recvTSRequest() Remote Version 6, Negotiated version 6
     }
     
-    //Credssp recvTSRequest() Remote Version 6, Negotiated version 6
-    //rdpCredssp - Client Authentication : Receiving Authentication Token
 //NTLMContextClient Read Challenge
 //NTLMContextClient Compute response from challenge
 //NTLMContextClient TimeStamp
