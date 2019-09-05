@@ -146,7 +146,7 @@ public:
     }
 
 
-    credssp::State credssp_client_authenticate_start(StaticOutStream<65536> & ts_request_emit)
+    void client_authenticate_start(StaticOutStream<65536> & ts_request_emit)
     {
         LOG(LOG_INFO, "Credssp: NTLM Authentication");
               
@@ -161,11 +161,11 @@ public:
         this->SavedNegotiateMessage = std::move(negoTokens);
         this->sspi_context_state = NTLM_STATE_CHALLENGE;
         this->client_auth_data_state = Loop;
-        return credssp::State::Cont;
+        return;
     }
 
 
-    credssp::State credssp_client_authenticate_next(bytes_view in_data, StaticOutStream<65536> & ts_request_emit)
+    credssp::State client_authenticate_next(bytes_view in_data, StaticOutStream<65536> & ts_request_emit)
     {
         switch (this->client_auth_data_state)
         {
@@ -174,7 +174,7 @@ public:
                 TSRequest ts_request = recvTSRequest(in_data);
                 uint32_t error_code = ts_request.error_code;
 
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
+                LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Authentication Token");
                 /*
                  * from tspkg.dll: 0x00000132
                  * ISC_REQ_MUTUAL_AUTH
@@ -345,12 +345,12 @@ public:
 
                 array_view_u8 public_key = {this->PublicKey.data(),this->PublicKey.size()};
                 if (version >= 5) {
-                    LOG(LOG_INFO, "rdpClientNTLM::credssp generate client nonce");
+                    LOG(LOG_INFO, "rdpClientNTLM::generate client nonce");
                     this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
                     this->SavedClientNonce.initialized = true;
                     ts_request.clientNonce = this->SavedClientNonce;
                     
-                    LOG(LOG_INFO, "rdpClientNTLM::generate credssp public key hash (client->server)");
+                    LOG(LOG_INFO, "rdpClientNTLM::generate public key hash (client->server)");
                     SslSha256 sha256;
                     uint8_t hash[SslSha256::DIGEST_LENGTH];
                     sha256.update("CredSSP Client-To-Server Binding Hash\0"_av);
@@ -374,7 +374,7 @@ public:
 
                 /* send authentication token to server */
                 if (ts_request.negoTokens.size() > 0){
-                    LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
+                    LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Sending Authentication Token");
                 }
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::send");
@@ -394,7 +394,7 @@ public:
             case Final:
             {
                 /* Encrypted Public Key +1 */
-                LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1");
+                LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Encrypted PubKey + 1");
 
                 TSRequest ts_request = recvTSRequest(in_data);
                 uint32_t error_code = ts_request.error_code;

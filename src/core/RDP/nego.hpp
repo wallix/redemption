@@ -73,7 +73,7 @@ private:
     TimeObj & timeobj;
     char * lb_info;
 
-    std::unique_ptr<rdpClientNTLM> credsspNTLM;
+    std::unique_ptr<rdpClientNTLM> NTLM;
     #ifndef __EMSCRIPTEN__
     std::unique_ptr<rdpCredsspClientKerberos> credsspKerberos;
     #endif

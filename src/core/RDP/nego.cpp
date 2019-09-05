@@ -411,7 +411,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
 
     if (!this->krb) {
         try {
-            this->credsspNTLM = std::make_unique<rdpClientNTLM>(
+            this->NTLM = std::make_unique<rdpClientNTLM>(
                 this->user,
                 this->domain, this->current_password,
                 this->hostname, this->target_host,
@@ -421,7 +421,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 bool(this->verbose & Verbose::credssp)
             );
             StaticOutStream<65536> ts_request_emit;
-            this->credsspNTLM->credssp_client_authenticate_start(ts_request_emit);
+            this->NTLM->client_authenticate_start(ts_request_emit);
             trans.send(ts_request_emit.get_bytes());
         }
         catch (const Error &){
@@ -458,7 +458,7 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, bytes_view data)
     }
     else {
         StaticOutStream<65536> ts_request_emit;
-        switch (this->credsspNTLM->credssp_client_authenticate_next(data, ts_request_emit))
+        switch (this->NTLM->client_authenticate_next(data, ts_request_emit))
         {
             case credssp::State::Cont:
                 trans.send(ts_request_emit.get_bytes());
@@ -468,7 +468,7 @@ RdpNego::State RdpNego::recv_credssp(OutTransport trans, bytes_view data)
                 return this->fallback_to_tls(trans);
             case credssp::State::Finish:
                 trans.send(ts_request_emit.get_bytes());
-                this->credsspNTLM.reset();
+                this->NTLM.reset();
                 return State::Final;
         }
     }
