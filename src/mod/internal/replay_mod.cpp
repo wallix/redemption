@@ -109,6 +109,9 @@ public:
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {
         this->drawable.draw(cmd, clip, color_ctx, gly_cache);
     }
+    void draw(RDPSetSurfaceCommand const & cmd) override {
+    	this->drawable.draw(cmd);
+    }
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
         this->drawable.draw(cmd, content);
     }
