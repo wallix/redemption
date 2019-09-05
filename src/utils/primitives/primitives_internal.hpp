@@ -205,3 +205,10 @@ static inline uint8_t CLIP(int32_t X)
 	    } \
 	    return Primitives::SUCCESS; \
 	}
+
+
+Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const int16_t *pSrc[3], uint32_t srcStep,
+	        uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
+	        const Primitives::prim_size_t *roi);
+Primitives::pstatus_t general_lShiftC_16s(const int16_t * pSrc, uint32_t val, int16_t * pDst, uint32_t len);
+void init_sse(Primitives *prims);

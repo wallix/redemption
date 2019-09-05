@@ -34,6 +34,7 @@ disable_srcs = set((
 src_deps = dict((
     ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
     ('src/proxy_recorder/proxy_recorder.hpp', ['src/proxy_recorder/proxy_recorder.cpp']),
+    ('src/utils/primitives/primitives_internal.hpp', ['src/utils/primitives/primitives_sse2.cpp']),
 
 ))
 
