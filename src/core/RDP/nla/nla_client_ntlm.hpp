@@ -236,13 +236,10 @@ public:
                 array_challenge ServerChallenge = server_challenge.serverChallenge;
                 array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,temp);
 
-
                 // NtChallengeResponse = Concat(NtProofStr, temp)
-                LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: NtChallengeResponse");
-                auto & NtChallengeResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-                // BStream & NtChallengeResponse = this->BuffNtChallengeResponse;
-                NtChallengeResponse.assign(NtProofStr.data(), NtProofStr.data()+NtProofStr.size());
-                NtChallengeResponse.insert(std::end(NtChallengeResponse), temp.data(), temp.data() + temp.size());
+                auto NtChallengeResponse = std::vector<uint8_t>{} << NtProofStr << temp;
+
+                this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer = NtChallengeResponse;
 
                 LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
 
@@ -270,8 +267,12 @@ public:
                 this->rand.random(this->ExportedSessionKey.data(), SslMd5::DIGEST_LENGTH);
                 this->EncryptedRandomSessionKey = ::Rc4Key(this->SessionBaseKey, this->ExportedSessionKey);
 
-                auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-                AuthEncryptedRSK.assign(this->EncryptedRandomSessionKey.data(), this->EncryptedRandomSessionKey.data()+16);
+                auto AuthEncryptedRSK = std::vector<uint8_t>{} << this->EncryptedRandomSessionKey;
+
+//                auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
+//                AuthEncryptedRSK.assign(this->EncryptedRandomSessionKey.data(), this->EncryptedRandomSessionKey.data()+16);
+                
+                this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer = AuthEncryptedRSK;
 
                 // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
                 this->sspi_context_ClientSigningKey = ::Md5(this->ExportedSessionKey,

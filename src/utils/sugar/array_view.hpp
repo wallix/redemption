@@ -344,6 +344,11 @@ static inline std::pair<array_view_const_u8, array_view_const_u8> get_bytes_slic
 }
 
 
+static inline std::vector<uint8_t> && operator<<(std::vector<uint8_t>&& v, array_view_const_u8 a)
+{
+    v.insert(v.end(), a.begin(), a.end());
+    return std::move(v);
+}
 
 static inline std::vector<uint8_t> & operator<<(std::vector<uint8_t> & v, array_view_const_u8 a)
 {
