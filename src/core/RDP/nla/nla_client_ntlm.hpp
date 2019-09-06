@@ -68,7 +68,7 @@ private:
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
-    NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
+//    NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
     NtlmVersion version;
     std::vector<uint8_t> SavedNegotiateMessage;
@@ -239,7 +239,8 @@ public:
                 // NtChallengeResponse = Concat(NtProofStr, temp)
                 auto NtChallengeResponse = std::vector<uint8_t>{} << NtProofStr << temp;
 
-                this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer = NtChallengeResponse;
+                NTLMAuthenticateMessage AuthenticateMessage;
+                AuthenticateMessage.NtChallengeResponse.buffer = NtChallengeResponse;
 
                 LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
 
@@ -249,8 +250,8 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
 
                 auto response = compute_LMv2_Response(ResponseKeyLM, ServerChallenge, ClientChallenge);
-                this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
-                push_back_array(this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer, ClientChallenge);
+                AuthenticateMessage.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
+                push_back_array(AuthenticateMessage.LmChallengeResponse.buffer, ClientChallenge);
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
                 // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
@@ -269,10 +270,8 @@ public:
 
                 auto AuthEncryptedRSK = std::vector<uint8_t>{} << this->EncryptedRandomSessionKey;
 
-//                auto & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer;
-//                AuthEncryptedRSK.assign(this->EncryptedRandomSessionKey.data(), this->EncryptedRandomSessionKey.data()+16);
-                
-                this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer = AuthEncryptedRSK;
+               
+                AuthenticateMessage.EncryptedRandomSessionKey.buffer = AuthEncryptedRSK;
 
                 // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
                 this->sspi_context_ClientSigningKey = ::Md5(this->ExportedSessionKey,
@@ -292,38 +291,38 @@ public:
                                     this->Workstation.size() != 0, 
                                     server_challenge.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH);
 
-                this->AUTHENTICATE_MESSAGE.negoFlags.flags = flags;
+                AuthenticateMessage.negoFlags.flags = flags;
 
                 this->version.ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
                 this->version.ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
                 this->version.ProductBuild        = 7601;
                 this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-                this->AUTHENTICATE_MESSAGE.version = this->version;
+                AuthenticateMessage.version = this->version;
 
                 if (!(flags & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
                     // If flag is not set, encryted session key buffer is not send
-                    this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer.clear();
+                    AuthenticateMessage.EncryptedRandomSessionKey.buffer.clear();
                 }
                 if (flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
-                    this->AUTHENTICATE_MESSAGE.Workstation.buffer = this->Workstation;
+                    AuthenticateMessage.Workstation.buffer = this->Workstation;
                 }
 
                 //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
-                this->AUTHENTICATE_MESSAGE.DomainName.buffer = this->identity_Domain;
-                this->AUTHENTICATE_MESSAGE.UserName.buffer = this->identity_User;
+                AuthenticateMessage.DomainName.buffer = this->identity_Domain;
+                AuthenticateMessage.UserName.buffer = this->identity_User;
 
                 StaticOutStream<65535> out_stream;
                 if (this->UseMIC) {
                     emitNTLMAuthenticateMessage(out_stream, 
-                        this->AUTHENTICATE_MESSAGE.negoFlags.flags,
-                        this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
-                        this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
-                        this->AUTHENTICATE_MESSAGE.DomainName.buffer,
-                        this->AUTHENTICATE_MESSAGE.UserName.buffer,
-                        this->AUTHENTICATE_MESSAGE.Workstation.buffer,
-                        this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
-                        {this->AUTHENTICATE_MESSAGE.MIC, 16},
-                        this->AUTHENTICATE_MESSAGE.has_mic,
+                        AuthenticateMessage.negoFlags.flags,
+                        AuthenticateMessage.LmChallengeResponse.buffer,
+                        AuthenticateMessage.NtChallengeResponse.buffer,
+                        AuthenticateMessage.DomainName.buffer,
+                        AuthenticateMessage.UserName.buffer,
+                        AuthenticateMessage.Workstation.buffer,
+                        AuthenticateMessage.EncryptedRandomSessionKey.buffer,
+                        {AuthenticateMessage.MIC, 16},
+                        AuthenticateMessage.has_mic,
                         true);
 
                     this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
@@ -333,19 +332,19 @@ public:
                                                             this->SavedChallengeMessage,
                                                             this->SavedAuthenticateMessage);
 
-                    memcpy(this->AUTHENTICATE_MESSAGE.MIC, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
+                    memcpy(AuthenticateMessage.MIC, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
                 }
                 out_stream.rewind();
                 emitNTLMAuthenticateMessage(out_stream, 
-                    this->AUTHENTICATE_MESSAGE.negoFlags.flags,
-                    this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
-                    this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
-                    this->AUTHENTICATE_MESSAGE.DomainName.buffer,
-                    this->AUTHENTICATE_MESSAGE.UserName.buffer,
-                    this->AUTHENTICATE_MESSAGE.Workstation.buffer,
-                    this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
-                    {this->AUTHENTICATE_MESSAGE.MIC, 16},
-                    this->AUTHENTICATE_MESSAGE.has_mic,
+                    AuthenticateMessage.negoFlags.flags,
+                    AuthenticateMessage.LmChallengeResponse.buffer,
+                    AuthenticateMessage.NtChallengeResponse.buffer,
+                    AuthenticateMessage.DomainName.buffer,
+                    AuthenticateMessage.UserName.buffer,
+                    AuthenticateMessage.Workstation.buffer,
+                    AuthenticateMessage.EncryptedRandomSessionKey.buffer,
+                    {AuthenticateMessage.MIC, 16},
+                    AuthenticateMessage.has_mic,
                     false);
                 
                 auto out_stream_bytes = out_stream.get_bytes();
@@ -353,7 +352,7 @@ public:
                 TSRequest ts_request_anwer;
                 std::vector<uint8_t> answer_negoTokens(out_stream_bytes.data(),out_stream_bytes.data()+out_stream_bytes.size());
                 if (this->verbose) {
-                    logNTLMAuthenticateMessage(this->AUTHENTICATE_MESSAGE);
+                    logNTLMAuthenticateMessage(AuthenticateMessage);
                 }
                 this->sspi_context_state = NTLM_STATE_FINAL;
 
