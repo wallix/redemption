@@ -21,13 +21,6 @@
 #include <ostream>
 #include <vector>
 
-inline std::ostream& operator<<(std::ostream& os, const std::vector<uint8_t>& v){
-    os << '{';
-    for(auto p: v){os << p << ',';}
-    os << '}';
-    return os;
-}
-
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
@@ -713,7 +706,8 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         //Credssp recvTSRequest() Remote Version 6, Negotiated version 6
     }
     
-//NTLMContextClient Read Challenge
+    
+    
 //NTLMContextClient Compute response from challenge
 //NTLMContextClient TimeStamp
 //NTLMContextClient Generate Client Challenge nonce(8)

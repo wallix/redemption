@@ -347,7 +347,6 @@ public:
                     LOG(LOG_INFO, "rdpClientNTLM::generate client nonce");
                     this->rand.random(this->SavedClientNonce.clientNonce.data(), CLIENT_NONCE_LENGTH);
                     this->SavedClientNonce.initialized = true;
-                    ts_request_anwer.clientNonce = this->SavedClientNonce;
                     
                     LOG(LOG_INFO, "rdpClientNTLM::generate public key hash (client->server)");
                     SslSha256 sha256;
@@ -362,15 +361,12 @@ public:
                 }
 
                 unsigned long MessageSeqNo = this->send_seq_num++;
-                // data_out [signature][data_buffer]
-                std::vector<uint8_t> data_out(public_key.size() + cbMaxSignature);
+                // pubKeyAuth [signature][data_buffer]
+                std::vector<uint8_t> pubKeyAuth(public_key.size() + cbMaxSignature);
                 std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                 array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, public_key);
-
-                this->SendRc4Seal.crypt(public_key.size(), public_key.data(), data_out.data()+cbMaxSignature);
-                this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
-
-                ts_request_anwer.pubKeyAuth.assign(data_out.data(),data_out.data()+data_out.size());
+                this->SendRc4Seal.crypt(public_key.size(), public_key.data(), pubKeyAuth.data()+cbMaxSignature);
+                this->sspi_compute_signature(pubKeyAuth.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
 
                 /* send authentication token to server */
                 if (answer_negoTokens.size() > 0){
@@ -380,11 +376,11 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::send");
                 auto v = emitTSRequest(ts_request_anwer.version,
                                        answer_negoTokens,
-                                       ts_request_anwer.authInfo,
-                                       ts_request_anwer.pubKeyAuth,
-                                       ts_request_anwer.error_code,
-                                       ts_request_anwer.clientNonce.clientNonce,
-                                       ts_request_anwer.clientNonce.initialized);
+                                       {}, // authInfo,
+                                       pubKeyAuth,
+                                       0,
+                                       this->SavedClientNonce.clientNonce,
+                                       this->SavedClientNonce.initialized);
                 ts_request_emit.out_copy_bytes(v);
 
                 this->client_auth_data_state = Final;
@@ -485,30 +481,26 @@ public:
                         bytes_view cspName;
                         result = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
                     }
+                    
                     ts_credentials_send.out_copy_bytes(result);
                     array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
                     unsigned long MessageSeqNo = this->send_seq_num++;
 
-                    // data_out [signature][data_buffer]
-                    std::vector<uint8_t> data_out(data_in.size() + cbMaxSignature, 0);
+                    // authInfo [signature][data_buffer]
+                    std::vector<uint8_t> authInfo(data_in.size() + cbMaxSignature, 0);
                     std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                     array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, data_in);
 
-                    this->SendRc4Seal.crypt(data_in.size(), data_in.data(), data_out.data()+cbMaxSignature);
-                    this->sspi_compute_signature(data_out.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
+                    this->SendRc4Seal.crypt(data_in.size(), data_in.data(), authInfo.data()+cbMaxSignature);
+                    this->sspi_compute_signature(authInfo.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
 
-                    ts_request.negoTokens.clear();
-                    ts_request.pubKeyAuth.clear();
-                    ts_request.authInfo.assign(data_out.data(),data_out.data()+data_out.size());
-                    ts_request.clientNonce = this->SavedClientNonce;
-                    ts_request.error_code = error_code;
                     auto v = emitTSRequest(ts_request.version,
-                                           ts_request.negoTokens,
-                                           ts_request.authInfo,
-                                           ts_request.pubKeyAuth,
-                                           ts_request.error_code,
-                                           ts_request.clientNonce.clientNonce,
-                                           ts_request.clientNonce.initialized);
+                                           {}, // negoTokens
+                                           authInfo,
+                                           {}, // pubKeyAuth
+                                           error_code,
+                                           this->SavedClientNonce.clientNonce,
+                                           this->SavedClientNonce.initialized);
                     ts_request_emit.out_copy_bytes(v);
 
                 }
