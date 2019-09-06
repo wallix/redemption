@@ -13,6 +13,7 @@ for f in \
     src/core/RDP/caches/bmpcachepersister.hpp \
     src/mod/rdp/params/rdp_session_probe_params.hpp \
     src/utils/fileutils.hpp \
+    src/utils/primitives/primitives_sse2.cpp \
     src/transport/in_file_transport.hpp ;
 do
     disable_sources+=" --disable-src $f"
