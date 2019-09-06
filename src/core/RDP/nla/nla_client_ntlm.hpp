@@ -314,7 +314,17 @@ public:
 
                 StaticOutStream<65535> out_stream;
                 if (this->UseMIC) {
-                    emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, true);
+                    emitNTLMAuthenticateMessage(out_stream, 
+                        this->AUTHENTICATE_MESSAGE.negoFlags.flags,
+                        this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
+                        this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
+                        this->AUTHENTICATE_MESSAGE.DomainName.buffer,
+                        this->AUTHENTICATE_MESSAGE.UserName.buffer,
+                        this->AUTHENTICATE_MESSAGE.Workstation.buffer,
+                        this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
+                        {this->AUTHENTICATE_MESSAGE.MIC, 16},
+                        this->AUTHENTICATE_MESSAGE.has_mic,
+                        true);
 
                     this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
 
@@ -326,7 +336,17 @@ public:
                     memcpy(this->AUTHENTICATE_MESSAGE.MIC, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
                 }
                 out_stream.rewind();
-                emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, false);
+                emitNTLMAuthenticateMessage(out_stream, 
+                    this->AUTHENTICATE_MESSAGE.negoFlags.flags,
+                    this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
+                    this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
+                    this->AUTHENTICATE_MESSAGE.DomainName.buffer,
+                    this->AUTHENTICATE_MESSAGE.UserName.buffer,
+                    this->AUTHENTICATE_MESSAGE.Workstation.buffer,
+                    this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
+                    {this->AUTHENTICATE_MESSAGE.MIC, 16},
+                    this->AUTHENTICATE_MESSAGE.has_mic,
+                    false);
                 
                 auto out_stream_bytes = out_stream.get_bytes();
 

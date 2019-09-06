@@ -1221,28 +1221,42 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self)
 }
 
 
-inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMessage & self, bool ignore_mic)
+inline void emitNTLMAuthenticateMessage(OutStream & stream, uint32_t negoFlags, 
+                                        bytes_view LmChallengeResponse,
+                                        bytes_view NtChallengeResponse,
+                                        bytes_view DomainName,
+                                        bytes_view UserName,
+                                        bytes_view Workstation,
+                                        bytes_view EncryptedRandomSessionKey,
+                                        bytes_view MIC, bool has_mic, bool ignore_mic)
+//                                         NTLMAuthenticateMessage & self, bool ignore_mic)
 {
     uint32_t payloadOffset = 12+8+8+8+8+8+8+4
-                            +8*bool(self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION)
-                            +16*self.has_mic;
+                            +8*bool(negoFlags & NTLMSSP_NEGOTIATE_VERSION)
+                            +16*has_mic;
 
     stream.out_copy_bytes("NTLMSSP\0"_av);
     stream.out_uint32_le(NtlmAuthenticate);
 
-    auto l = {
-         &self.LmChallengeResponse,
-         &self.NtChallengeResponse,
-         &self.DomainName,
-         &self.UserName,
-         &self.Workstation,
-         &self.EncryptedRandomSessionKey};
+    struct TmpNtlmField {
+        uint16_t offset;
+        bytes_view f;
+    };
 
-    for (auto * field: l){
-        stream.out_uint16_le(field->buffer.size());
-        stream.out_uint16_le(field->buffer.size());
+    std::array<TmpNtlmField, 6> l{{
+         {0, LmChallengeResponse},
+         {0, NtChallengeResponse},
+         {0, DomainName},
+         {0, UserName},
+         {0, Workstation},
+         {0, EncryptedRandomSessionKey}}};
+
+    for (auto field: l){
+        stream.out_uint16_le(field.f.size());
+        stream.out_uint16_le(field.f.size());
         stream.out_uint32_le(payloadOffset);
-        payloadOffset += field->buffer.size();
+        payloadOffset += field.f.size();
+        field.offset = payloadOffset;
     }
 
 // Check that when reading buffer
@@ -1250,8 +1264,8 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
 //        // This is some message format error
 //    }
 
-    stream.out_uint32_le(self.negoFlags.flags);
-    if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+    stream.out_uint32_le(negoFlags);
+    if (negoFlags & NTLMSSP_NEGOTIATE_VERSION) {
         stream.out_uint8(WINDOWS_MAJOR_VERSION_6);
         stream.out_uint8(WINDOWS_MINOR_VERSION_1);
         stream.out_uint16_le(7601);
@@ -1259,18 +1273,18 @@ inline void emitNTLMAuthenticateMessage(OutStream & stream, NTLMAuthenticateMess
         stream.out_uint8(NTLMSSP_REVISION_W2K3);
     }
 
-    if (self.has_mic) {
+    if (has_mic) {
         if (ignore_mic) {
             stream.out_clear_bytes(16);
         }
         else {
-            stream.out_copy_bytes(self.MIC, 16);
+            stream.out_copy_bytes(MIC);
         }
     }
 
     // PAYLOAD
-    for (auto * field: l){
-        stream.out_copy_bytes(field->buffer);
+    for (auto field: l){
+        stream.out_copy_bytes(field.f);
     }
 
 //    LOG(LOG_INFO, "NTLM Message Authenticate Dump (Sent)");

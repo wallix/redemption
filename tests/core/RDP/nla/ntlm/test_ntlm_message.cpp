@@ -729,7 +729,17 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     );
 
     StaticOutStream<65635> tosend;
-    emitNTLMAuthenticateMessage(tosend, AuthMsg, false);
+    emitNTLMAuthenticateMessage(tosend,
+                        AuthMsg.negoFlags.flags,
+                        AuthMsg.LmChallengeResponse.buffer,
+                        AuthMsg.NtChallengeResponse.buffer,
+                        AuthMsg.DomainName.buffer,
+                        AuthMsg.UserName.buffer,
+                        AuthMsg.Workstation.buffer,
+                        AuthMsg.EncryptedRandomSessionKey.buffer,
+                        {AuthMsg.MIC, 16},
+                        AuthMsg.has_mic,
+                        false);
 
     NTLMAuthenticateMessage AuthMsgDuplicate;
 
@@ -1660,7 +1670,17 @@ public:
                                              this->Workstation);
         StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
-            emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, true);
+            emitNTLMAuthenticateMessage(out_stream, 
+                this->AUTHENTICATE_MESSAGE.negoFlags.flags,
+                this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
+                this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
+                this->AUTHENTICATE_MESSAGE.DomainName.buffer,
+                this->AUTHENTICATE_MESSAGE.UserName.buffer,
+                this->AUTHENTICATE_MESSAGE.Workstation.buffer,
+                this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
+                {this->AUTHENTICATE_MESSAGE.MIC, 16},
+                this->AUTHENTICATE_MESSAGE.has_mic,
+                true);
 
             this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
             this->ntlm_compute_MIC();
@@ -1668,7 +1688,17 @@ public:
             // this->AUTHENTICATE_MESSAGE.has_mic = true;
         }
         out_stream.rewind();
-        emitNTLMAuthenticateMessage(out_stream, this->AUTHENTICATE_MESSAGE, false);
+        emitNTLMAuthenticateMessage(out_stream, 
+            this->AUTHENTICATE_MESSAGE.negoFlags.flags,
+            this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
+            this->AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
+            this->AUTHENTICATE_MESSAGE.DomainName.buffer,
+            this->AUTHENTICATE_MESSAGE.UserName.buffer,
+            this->AUTHENTICATE_MESSAGE.Workstation.buffer,
+            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
+            {this->AUTHENTICATE_MESSAGE.MIC, 16},
+            this->AUTHENTICATE_MESSAGE.has_mic,
+            false);
         output_buffer.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
         return SEC_I_COMPLETE_NEEDED;
     }
@@ -2372,7 +2402,19 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     // send AUTHENTICATE MESSAGE
     StaticOutStream<65535> out_client_to_server;
-    emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE, false);
+    emitNTLMAuthenticateMessage(out_client_to_server,
+                        client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
+                        client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.DomainName.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.UserName.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.Workstation.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
+                        {client_context.AUTHENTICATE_MESSAGE.MIC, 16},
+                        client_context.AUTHENTICATE_MESSAGE.has_mic,
+                        false);
+
+    
     InStream in_client_to_server(out_client_to_server.get_bytes());
     recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
 
@@ -2472,7 +2514,17 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
         uint8_t client_to_server_buf[65535];
         OutStream out_client_to_server(client_to_server_buf);
         /*client_context.UseMIC*/ {
-        emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE, true);
+        emitNTLMAuthenticateMessage(out_client_to_server,
+                        client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
+                        client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.DomainName.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.UserName.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.Workstation.buffer,
+                        client_context.AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
+                        {client_context.AUTHENTICATE_MESSAGE.MIC, 16},
+                        client_context.AUTHENTICATE_MESSAGE.has_mic,
+                        true);
 
         client_context.SavedAuthenticateMessage = std::vector<uint8_t>(out_client_to_server.get_offset());
         memcpy(client_context.SavedAuthenticateMessage.data(), out_client_to_server.get_data(),
@@ -2481,7 +2533,18 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
         memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
     }
     out_client_to_server.rewind();
-    emitNTLMAuthenticateMessage(out_client_to_server, client_context.AUTHENTICATE_MESSAGE, false);
+    emitNTLMAuthenticateMessage(out_client_to_server,
+                    client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
+                    client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
+                    client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
+                    client_context.AUTHENTICATE_MESSAGE.DomainName.buffer,
+                    client_context.AUTHENTICATE_MESSAGE.UserName.buffer,
+                    client_context.AUTHENTICATE_MESSAGE.Workstation.buffer,
+                    client_context.AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
+                    {client_context.AUTHENTICATE_MESSAGE.MIC, 16},
+                    client_context.AUTHENTICATE_MESSAGE.has_mic,
+                    false);
+    
     in_client_to_server = InStream(out_client_to_server.get_bytes());
     recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
     if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
