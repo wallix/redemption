@@ -66,7 +66,7 @@ project redjs
     # <cxxflags>"-s FS_LOG=1"
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
 
-    <cxxflags>"-s FILESYSTEM=0"
+    <cxxflags>"-s FILESYSTEM=1" # TODO because ?
     <cxxflags>"-s USE_LIBPNG=0"
     <cxxflags>"-s USE_ZLIB=0"
 
