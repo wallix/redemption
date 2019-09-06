@@ -676,27 +676,27 @@ public:
     }
 
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &content) override {
-    	for (const Rect & rect1 : content.region.rects) {
-    		Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
+        for (const Rect & rect1 : content.region.rects) {
+            Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
 
-			Bitmap bitmap(content.data, content.stride, rect);
+            Bitmap bitmap(content.data, content.stride, rect);
 
-			LOG(LOG_DEBUG, "WrmCapture::draw(RDPSurfaceContent, content): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
-					rect1.left(), rect1.top(), rect1.width(), rect1.height(),
-					rect.left(), rect.top(), rect.width(), rect.height());
-			RDPBitmapData bitmap_data;
-			bitmap_data.dest_left = rect.left();
-			bitmap_data.dest_right = rect.right() - 1;
-			bitmap_data.dest_top = rect.top();
-			bitmap_data.dest_bottom = rect.bottom() - 1;
-			bitmap_data.width = rect.width();
-			bitmap_data.height = rect.height();
-			bitmap_data.bits_per_pixel = 32;
-			bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
-			bitmap_data.bitmap_length = bitmap.bmp_size();
+            LOG(LOG_DEBUG, "WrmCapture::draw(RDPSurfaceContent, content): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
+                    rect1.left(), rect1.top(), rect1.width(), rect1.height(),
+                    rect.left(), rect.top(), rect.width(), rect.height());
+            RDPBitmapData bitmap_data;
+            bitmap_data.dest_left = rect.left();
+            bitmap_data.dest_right = rect.right() - 1;
+            bitmap_data.dest_top = rect.top();
+            bitmap_data.dest_bottom = rect.bottom() - 1;
+            bitmap_data.width = rect.width();
+            bitmap_data.height = rect.height();
+            bitmap_data.bits_per_pixel = 32;
+            bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
+            bitmap_data.bitmap_length = bitmap.bmp_size();
 
-			this->draw(bitmap_data, bitmap);
-    	}
+            this->draw(bitmap_data, bitmap);
+        }
     }
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {

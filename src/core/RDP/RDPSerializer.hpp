@@ -169,7 +169,7 @@ public:
         primary_orders      = 32,
         secondary_orders    = 64,
         bitmap_update       = 128,
-		surface_commands	= 256,
+        surface_commands    = 256,
         bmp_cache           = 512,
         internal_buffer     = 1024
     };
@@ -385,21 +385,21 @@ public:
     }
 
     void draw(RDPSetSurfaceCommand const & cmd) override {
-    	this->reserve_order(19 + cmd.bitmapDataLength);
+        this->reserve_order(19 + cmd.bitmapDataLength);
 
-    	cmd.emit(this->stream_orders);
-    	if (bool(this->verbose & Verbose::surface_commands)) {
-    		// cmd.log(LOG_INFO, content);
-    	}
+        cmd.emit(this->stream_orders);
+        if (bool(this->verbose & Verbose::surface_commands)) {
+            // cmd.log(LOG_INFO, content);
+        }
     }
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
-    	this->reserve_order(19 + cmd.bitmapDataLength);
+        this->reserve_order(19 + cmd.bitmapDataLength);
 
-    	cmd.emit(this->stream_orders);
-    	if (bool(this->verbose & Verbose::surface_commands)) {
-    		cmd.log(LOG_INFO, content);
-    	}
+        cmd.emit(this->stream_orders);
+        if (bool(this->verbose & Verbose::surface_commands)) {
+            cmd.log(LOG_INFO, content);
+        }
     }
 
 

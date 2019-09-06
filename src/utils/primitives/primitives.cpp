@@ -225,14 +225,14 @@ Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
 #include <cpuid.h>
 
 static bool haveSSSE3() {
-	int a, b, c, d;
-	int nIds;
+    int a, b, c, d;
+    int nIds;
 
     __cpuid_count(0, 0, nIds, b, c, d);
 
     if (nIds >= 1) {
-    	__cpuid_count(0x1, 0, a, b, c, d);
-    	return c & (1 << 9);
+        __cpuid_count(0x1, 0, a, b, c, d);
+        return c & (1 << 9);
     }
     return false;
 }
@@ -248,9 +248,9 @@ Primitives::Primitives() noexcept
     , yCbCrToRGB_16s8u_P3AC4R(general_yCbCrToRGB_16s8u_P3AC4R)
 {
 #ifndef __EMSCRIPTEN__
-	if (haveSSSE3()) {
-		init_sse(this);
-	}
+    if (haveSSSE3()) {
+        init_sse(this);
+    }
 #endif
 }
 

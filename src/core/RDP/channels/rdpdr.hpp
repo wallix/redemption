@@ -1298,9 +1298,9 @@ public:
 
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-        		this->Path(),
-				Path_unicode_data,
-				sizeof(Path_unicode_data));
+                this->Path(),
+                Path_unicode_data,
+                sizeof(Path_unicode_data));
 
         assert(size_of_Path_unicode_data <= 65534);
 

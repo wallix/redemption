@@ -242,24 +242,24 @@ size_t UTF8toUTF16(bytes_view source, uint8_t * target, size_t t_len) noexcept
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
-            	if (i + 1 > source.size()){
-            		goto UTF8toUTF16_exit;
-            	}
+                if (i + 1 > source.size()){
+                    goto UTF8toUTF16_exit;
+                }
                 ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
                 i+=1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-            	if (i + 2 > source.size()){
-            		goto UTF8toUTF16_exit;
-            	}
+                if (i + 2 > source.size()){
+                    goto UTF8toUTF16_exit;
+                }
                 ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
-            	if (i + 3 > source.size()){
-            		goto UTF8toUTF16_exit;
-            	}
+                if (i + 3 > source.size()){
+                    goto UTF8toUTF16_exit;
+                }
 // TODO This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long
                 ucode = ((c & 0x07) << 18)|((s[i+1] & 0x3F) << 12)|((s[i+2] & 0x3F) << 6)|(s[i+3] & 0x3F);
                 i+=3;
@@ -287,9 +287,9 @@ size_t UTF8toUTF16(bytes_view source, writable_bytes_view target) noexcept
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, size_t t_len) noexcept
 {
-	const uint8_t * s = source.as_u8p();
+    const uint8_t * s = source.as_u8p();
 
-	size_t i_t = 0;
+    size_t i_t = 0;
     uint32_t ucode = 0;
     unsigned c = 0;
     for (size_t i = 0; i < source.size() && (ucode = c = s[i]) != 0 ; i++){
@@ -309,25 +309,25 @@ size_t UTF8toUTF16_CrLf(bytes_view source, uint8_t * target, size_t t_len) noexc
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
-            	if (i + 1 > source.size()){
-            		goto UTF8toUTF16_exit;
-            	}
+                if (i + 1 > source.size()){
+                    goto UTF8toUTF16_exit;
+                }
                 ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
                 i+=1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-            	if (i + 2 > source.size()){
-            		goto UTF8toUTF16_exit;
-            	}
-            	ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
+                if (i + 2 > source.size()){
+                    goto UTF8toUTF16_exit;
+                }
+                ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
-            	if (i + 3 > source.size()){
-            		goto UTF8toUTF16_exit;
-            	}
-            	ucode = ((c & 0x07) << 18)|((s[i] & 0x3F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
+                if (i + 3 > source.size()){
+                    goto UTF8toUTF16_exit;
+                }
+                ucode = ((c & 0x07) << 18)|((s[i] & 0x3F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=3;
             break;
             case 8: case 9: case 0x0A: case 0x0B:

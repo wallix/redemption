@@ -33,7 +33,7 @@ struct RDPSoundConfig {
     uint16_t wDGramPort = 0;
     uint16_t wNumberOfFormats = 1;
     uint16_t wVersion = 0x06;
-		
+        
 };
 
-	
+    

@@ -34,11 +34,11 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
         "\x00\x00\x00\x00" // flags. Unused. MUST be set to zero
         "\x01\x00\x00\x00" // TS_UD_CS_MONITOR::monitorCount
 
-        				   // TS_UD_CS_MONITOR::monitorDefArray
-		"\x00\x00\x00\x00" // | left
-		"\x00\x00\x00\x00" // | top
-		"\x64\x00\x00\x00" // | right
-		"\xC4\xFF\xFF\xFF" // | bottom
+                           // TS_UD_CS_MONITOR::monitorDefArray
+        "\x00\x00\x00\x00" // | left
+        "\x00\x00\x00\x00" // | top
+        "\x64\x00\x00\x00" // | right
+        "\xC4\xFF\xFF\xFF" // | bottom
         "\x00\x00\x00\x00" // | flags = TS_MONITOR_PRIMARY
         ""_av);
     GCC::UserData::CSMonitor cs_monitor;
@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor)
     RED_CHECK_EQUAL(0, cs_monitor.monitorDefArray[0].top);
     RED_CHECK_EQUAL(100, cs_monitor.monitorDefArray[0].right); //(right, bottom) = (100,-60)
     RED_CHECK_EQUAL(-60, cs_monitor.monitorDefArray[0].bottom);
-	RED_CHECK_EQUAL(0, (cs_monitor.monitorDefArray[0].flags & TS_MONITOR_PRIMARY) );
+    RED_CHECK_EQUAL(0, (cs_monitor.monitorDefArray[0].flags & TS_MONITOR_PRIMARY) );
 
     // cs_monitor.log("Client Received");
 }

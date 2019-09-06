@@ -1163,7 +1163,7 @@ namespace LIC
         uint8_t * signature;
 
         explicit NewLicenseRequest_Recv(InStream & stream) : license_size(0), license_data(nullptr),
-        		hwid(nullptr), signature(nullptr)
+                hwid(nullptr), signature(nullptr)
         {
             const unsigned expected =
                 /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
@@ -1800,7 +1800,7 @@ namespace LIC
         uint8_t * signature;
 
         explicit ClientLicenseInfo_Recv(InStream & stream) : license_size(0), license_data(nullptr),
-        		hwid(nullptr), signature(nullptr)
+                hwid(nullptr), signature(nullptr)
         {
             /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
              * client_random(SEC_RANDOM_SIZE) + wBlobType(2) + lenLicensingBlob(2)
@@ -3121,7 +3121,7 @@ namespace LIC
         ValidClientMessage validClientMessage;
 
         ErrorAlert_Send(OutStream & /*unused*/, uint8_t msgType, uint8_t version, ValidClientMessage & /*unused*/) :
-        	wMsgType(msgType), bVersion(version), wMsgSize(0)
+            wMsgType(msgType), bVersion(version), wMsgSize(0)
         {
         }
     };

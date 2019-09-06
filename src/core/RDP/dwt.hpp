@@ -29,9 +29,9 @@
  */
 class Dwt {
 public:
-	/**
-	 * @param buffer working buffer used as input and output
-	 * @param dwt_buffer working dwt buffer
-	 */
-	static void decode_2d(int16_t *buffer, int16_t *dwt_buffer);
+    /**
+     * @param buffer working buffer used as input and output
+     * @param dwt_buffer working dwt buffer
+     */
+    static void decode_2d(int16_t *buffer, int16_t *dwt_buffer);
 };

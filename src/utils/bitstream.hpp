@@ -33,116 +33,116 @@
  */
 class InBitStream {
 public:
-	/** Constructor
-	 *	@param array data
-	 *	@param size size of array
-	 *	@param offset an offset to start at
-	 */
-	explicit InBitStream(const uint8_t *array, std::size_t size, std::size_t offset = 0)
-	: end(array + size)
-	, p(array + offset)
-	, bitsLeft(8)
-	{
-	}
+    /** Constructor
+     *    @param array data
+     *    @param size size of array
+     *    @param offset an offset to start at
+     */
+    explicit InBitStream(const uint8_t *array, std::size_t size, std::size_t offset = 0)
+    : end(array + size)
+    , p(array + offset)
+    , bitsLeft(8)
+    {
+    }
 
-	/**
-	 * shifts the bitstream by nbits
-	 * @param nbits the size of the shift
-	 */
-	void shift(std::size_t nbits) {
-		if (!nbits) {
-			return;
+    /**
+     * shifts the bitstream by nbits
+     * @param nbits the size of the shift
+     */
+    void shift(std::size_t nbits) {
+        if (!nbits) {
+            return;
         }
 
-		while (p < end && nbits > 0) {
-			std::size_t const b = std::min(nbits, bitsLeft);
-			nbits -= b;
-			bitsLeft -= b;
-			if (bitsLeft == 0) {
-				p++;
-				bitsLeft = 8;
-			}
-		}
-
-		assert(nbits == 0);
-	}
-
-	/**
-	 * picks nbits in the bitstream
-	 *
-	 * @param nbits the number of bits to pick
-	 * @return nbits of the stream
-	 */
-	uint32_t getBits(std::size_t nbits) {
-		uint32_t ret = 0;
-
-		while (p < end && nbits > 0) {
-			std::size_t const b = std::min(nbits, bitsLeft);
-			if (ret) {
-				ret <<= b;
+        while (p < end && nbits > 0) {
+            std::size_t const b = std::min(nbits, bitsLeft);
+            nbits -= b;
+            bitsLeft -= b;
+            if (bitsLeft == 0) {
+                p++;
+                bitsLeft = 8;
             }
-			ret |= (*p >> (bitsLeft - b)) & ((1 << b) - 1);
-			bitsLeft -= b;
-			nbits -= b;
+        }
 
-			if (bitsLeft == 0) {
-				bitsLeft = 8;
-				p++;
-			}
-		}
+        assert(nbits == 0);
+    }
 
-		assert(nbits == 0); // if not that means that we ask for more bits than available
-		return ret;
-	}
+    /**
+     * picks nbits in the bitstream
+     *
+     * @param nbits the number of bits to pick
+     * @return nbits of the stream
+     */
+    uint32_t getBits(std::size_t nbits) {
+        uint32_t ret = 0;
 
-	/**
-	 * peeks nbits in the bitstream but without modifying the bitstream
-	 *
-	 * @param nbits the number of bits to pick
-	 * @return nbits of the stream
-	 */
-	uint32_t peekBits(std::size_t nbits) const {
-		uint32_t ret = 0;
-		const uint8_t *alias = p;
-		std::size_t localBitsLeft = bitsLeft;
-
-		while (alias < end && nbits > 0) {
-			std::size_t const b = std::min(nbits, localBitsLeft);
-			if (ret) {
-				ret <<= b;
+        while (p < end && nbits > 0) {
+            std::size_t const b = std::min(nbits, bitsLeft);
+            if (ret) {
+                ret <<= b;
             }
-			ret |= (*alias >> (localBitsLeft - b)) & ((1 << b) - 1);
-			localBitsLeft -= b;
-			nbits -= b;
+            ret |= (*p >> (bitsLeft - b)) & ((1 << b) - 1);
+            bitsLeft -= b;
+            nbits -= b;
 
-			if (localBitsLeft == 0) {
-				localBitsLeft = 8;
-				alias++;
-			}
-		}
+            if (bitsLeft == 0) {
+                bitsLeft = 8;
+                p++;
+            }
+        }
 
-		if (nbits != 0) {
-			ret <<= nbits; // do not assert here, as sometime the rlgr decoder read ahead too much bits and expect zeros
-		}
+        assert(nbits == 0); // if not that means that we ask for more bits than available
+        return ret;
+    }
 
-		return ret;
-	}
+    /**
+     * peeks nbits in the bitstream but without modifying the bitstream
+     *
+     * @param nbits the number of bits to pick
+     * @return nbits of the stream
+     */
+    uint32_t peekBits(std::size_t nbits) const {
+        uint32_t ret = 0;
+        const uint8_t *alias = p;
+        std::size_t localBitsLeft = bitsLeft;
 
-	/**
-	 * @return the remaining bits in the stream
-	 */
-	std::size_t getRemainingLength() const {
-		return bitsLeft + ((end - p) - 1) * 8;
-	}
+        while (alias < end && nbits > 0) {
+            std::size_t const b = std::min(nbits, localBitsLeft);
+            if (ret) {
+                ret <<= b;
+            }
+            ret |= (*alias >> (localBitsLeft - b)) & ((1 << b) - 1);
+            localBitsLeft -= b;
+            nbits -= b;
 
-	/**
-	 * @return if we're reached the end of stream
-	 */
-	bool isEos() const {
-		return (p == end);
-	}
+            if (localBitsLeft == 0) {
+                localBitsLeft = 8;
+                alias++;
+            }
+        }
+
+        if (nbits != 0) {
+            ret <<= nbits; // do not assert here, as sometime the rlgr decoder read ahead too much bits and expect zeros
+        }
+
+        return ret;
+    }
+
+    /**
+     * @return the remaining bits in the stream
+     */
+    std::size_t getRemainingLength() const {
+        return bitsLeft + ((end - p) - 1) * 8;
+    }
+
+    /**
+     * @return if we're reached the end of stream
+     */
+    bool isEos() const {
+        return (p == end);
+    }
 
 private:
-	const uint8_t *end, *p;
-	std::size_t bitsLeft;
+    const uint8_t *end, *p;
+    std::size_t bitsLeft;
 };

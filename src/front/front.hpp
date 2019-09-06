@@ -2813,7 +2813,7 @@ private:
 
                 VirtualChannelCaps virtual_channel_caps;
                 if (bool(this->verbose)) {
-                	virtual_channel_caps.log("Front::send_demand_active: Sending to client");
+                    virtual_channel_caps.log("Front::send_demand_active: Sending to client");
                 }
                 virtual_channel_caps.emit(stream);
                 caps_count++;
@@ -2882,11 +2882,11 @@ private:
                 }
 
                 if (this->ini.get<cfg::client::front_remotefx>() && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
-                	BitmapCodecCaps bitmap_codec_caps(false);
+                    BitmapCodecCaps bitmap_codec_caps(false);
 
-                	bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
-                	bitmap_codec_caps.emit(stream);
-                	caps_count++;
+                    bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
+                    bitmap_codec_caps.emit(stream);
+                    caps_count++;
                 }
 
                 if (send_multifrag_caps) {
@@ -3223,7 +3223,7 @@ private:
                     "Front::process_confirm_active: Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
-            	this->client_info.bitmap_codec_caps.recv(stream, capset_length);
+                this->client_info.bitmap_codec_caps.recv(stream, capset_length);
                 LOG_IF(bool(this->verbose), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSETTYPE_BITMAP_CODECS");
                 break;
@@ -4161,45 +4161,45 @@ protected:
     }
 
     void draw_impl(RDPSetSurfaceCommand const & cmd) {
-    	if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec || (cmd.codec != RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) ||
-    			!cmd.bitmapData || !cmd.bitmapDataLength)
-			return;
+        if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec || (cmd.codec != RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) ||
+                !cmd.bitmapData || !cmd.bitmapDataLength)
+            return;
 
-    	RDPSetSurfaceCommand newCmd = cmd;
-    	newCmd.codecId = this->client_info.bitmap_codec_caps.bitmapCodecArray[0].codecID;
-    	this->orders.graphics_update_pdu().send_set_surface_command(newCmd);
+        RDPSetSurfaceCommand newCmd = cmd;
+        newCmd.codecId = this->client_info.bitmap_codec_caps.bitmapCodecArray[0].codecID;
+        this->orders.graphics_update_pdu().send_set_surface_command(newCmd);
     }
 
     void draw_impl(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) {
-    	if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
-    		// only notifies capture callbacks, don't send anything to the front client, it has already been done by
-    		// a previous draw_impl(RDPSetSurfaceCommand const & cmd) call (with raw blob)
-    		this->graphics_update->draw(cmd, content);
-    		return;
-    	}
+        if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
+            // only notifies capture callbacks, don't send anything to the front client, it has already been done by
+            // a previous draw_impl(RDPSetSurfaceCommand const & cmd) call (with raw blob)
+            this->graphics_update->draw(cmd, content);
+            return;
+        }
 
-    	/* no front remoteFx support, fallback and transcode to bitmapUpdates */
-    	for (const Rect & rect1 : content.region.rects) {
-    		Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
+        /* no front remoteFx support, fallback and transcode to bitmapUpdates */
+        for (const Rect & rect1 : content.region.rects) {
+            Rect rect(rect1.x & ~3, rect1.y & ~3, align4(rect1.width()), align4(rect1.height()));
 
-			Bitmap bitmap(content.data, content.stride, rect);
+            Bitmap bitmap(content.data, content.stride, rect);
 
-			LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
-					rect1.left(), rect1.top(), rect1.width(), rect1.height(),
-					rect.left(), rect.top(), rect.width(), rect.height());
-			RDPBitmapData bitmap_data;
-			bitmap_data.dest_left = rect.left();
-			bitmap_data.dest_right = rect.right() - 1;
-			bitmap_data.dest_top = rect.top();
-			bitmap_data.dest_bottom = rect.bottom() - 1;
-			bitmap_data.width = rect.width();
-			bitmap_data.height = rect.height();
-			bitmap_data.bits_per_pixel = 32;
-			bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
-			bitmap_data.bitmap_length = bitmap.bmp_size();
+            LOG(LOG_DEBUG, "Front::draw(RDPSurfaceContent): (%d,%d)-%dx%d -> (%d,%d)-%dx%d",
+                    rect1.left(), rect1.top(), rect1.width(), rect1.height(),
+                    rect.left(), rect.top(), rect.width(), rect.height());
+            RDPBitmapData bitmap_data;
+            bitmap_data.dest_left = rect.left();
+            bitmap_data.dest_right = rect.right() - 1;
+            bitmap_data.dest_top = rect.top();
+            bitmap_data.dest_bottom = rect.bottom() - 1;
+            bitmap_data.width = rect.width();
+            bitmap_data.height = rect.height();
+            bitmap_data.bits_per_pixel = 32;
+            bitmap_data.flags = /*NO_BITMAP_COMPRESSION_HDR*/ 0;
+            bitmap_data.bitmap_length = bitmap.bmp_size();
 
-			this->draw_impl(bitmap_data, bitmap);
-    	}
+            this->draw_impl(bitmap_data, bitmap);
+        }
     }
 
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
