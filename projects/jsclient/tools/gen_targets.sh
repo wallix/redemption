@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 cd "$(dirname "$0")/../../.."
 d=projects/jsclient
 
@@ -13,8 +15,9 @@ for f in \
     src/core/RDP/caches/bmpcachepersister.hpp \
     src/mod/rdp/params/rdp_session_probe_params.hpp \
     src/utils/fileutils.hpp \
-    src/utils/primitives/primitives_sse2.cpp \
-    src/transport/in_file_transport.hpp ;
+    src/utils/cfgloader.hpp \
+    src/utils/primitives/primitives_sse2.hpp \
+    src/transport/file_transport.hpp ;
 do
     disable_sources+=" --disable-src $f"
 done
@@ -46,3 +49,4 @@ done
     s@ '$d'/@ @g
 '
 # s@^(objjs src/main/[^.]+\.bc : src/[^ ]+) ;$@\1 : <cxxflags>-fno-rtti\&\&-frtti ;@
+exit ${PIPESTATUS[0]}
