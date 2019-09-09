@@ -236,11 +236,11 @@ public:
                 array_challenge ServerChallenge = server_challenge.serverChallenge;
                 array_md5 NtProofStr = ::HmacMd5(make_array_view(ResponseKeyNT),ServerChallenge,temp);
 
+                NTLMAuthenticateMessage AuthenticateMessage;
+
                 // NtChallengeResponse = Concat(NtProofStr, temp)
                 auto NtChallengeResponse = std::vector<uint8_t>{} << NtProofStr << temp;
 
-                NTLMAuthenticateMessage AuthenticateMessage;
-                AuthenticateMessage.NtChallengeResponse.buffer = NtChallengeResponse;
 
                 LOG_IF(this->verbose, LOG_INFO, "Compute response: NtChallengeResponse Ready");
 
@@ -249,9 +249,9 @@ public:
                 // LmChallengeResponse.ChallengeFromClient = ClientChallenge
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: LmChallengeResponse");
 
-                auto response = compute_LMv2_Response(ResponseKeyLM, ServerChallenge, ClientChallenge);
-                AuthenticateMessage.LmChallengeResponse.buffer.assign(response.data(), response.data()+response.size());
-                push_back_array(AuthenticateMessage.LmChallengeResponse.buffer, ClientChallenge);
+                auto LmChallengeResponse = std::vector<uint8_t>{}
+                    << compute_LMv2_Response(ResponseKeyLM, ServerChallenge, ClientChallenge) 
+                    << ClientChallenge;
 
                 LOG_IF(this->verbose, LOG_INFO, "NTLMContextClient Compute response: SessionBaseKey");
                 // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
@@ -315,8 +315,8 @@ public:
                 if (this->UseMIC) {
                     emitNTLMAuthenticateMessage(out_stream, 
                         AuthenticateMessage.negoFlags.flags,
-                        AuthenticateMessage.LmChallengeResponse.buffer,
-                        AuthenticateMessage.NtChallengeResponse.buffer,
+                        LmChallengeResponse,
+                        NtChallengeResponse,
                         AuthenticateMessage.DomainName.buffer,
                         AuthenticateMessage.UserName.buffer,
                         AuthenticateMessage.Workstation.buffer,
@@ -337,8 +337,8 @@ public:
                 out_stream.rewind();
                 emitNTLMAuthenticateMessage(out_stream, 
                     AuthenticateMessage.negoFlags.flags,
-                    AuthenticateMessage.LmChallengeResponse.buffer,
-                    AuthenticateMessage.NtChallengeResponse.buffer,
+                    LmChallengeResponse,
+                    NtChallengeResponse,
                     AuthenticateMessage.DomainName.buffer,
                     AuthenticateMessage.UserName.buffer,
                     AuthenticateMessage.Workstation.buffer,

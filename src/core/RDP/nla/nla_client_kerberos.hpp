@@ -675,10 +675,6 @@ private:
         /* send authentication token to server */
 
         if (this->ts_request.negoTokens.size() > 0) {
-            // #ifdef WITH_DEBUG_CREDSSP
-            //             LOG(LOG_ERR, "Sending Authentication Token");
-            //             hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
-            // #endif
             LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
 
             this->credssp_send();
