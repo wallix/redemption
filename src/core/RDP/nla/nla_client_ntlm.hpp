@@ -78,7 +78,6 @@ private:
     array_md5 SessionBaseKey;
     array_md5 ExportedSessionKey;
     array_md5 EncryptedRandomSessionKey;
-    array_md5 sspi_context_ClientSigningKey;
     array_md5 ClientSealingKey;
     array_md5 sspi_context_ServerSigningKey;
     array_md5 ServerSealingKey;
@@ -104,16 +103,30 @@ private:
 
     enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
 
-    static inline std::array<uint8_t, 16> sspi_compute_signature(SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
+    auto CryptAndSign(SslRC4 & rc4, uint32_t mseqno, bytes_view payload) -> std::vector<uint8_t>
     {
+    
+        auto ClientSigningKey = ::Md5(this->ExportedSessionKey,
+            "session key to client-to-server signing key magic constant\0"_av);
+
+        std::array<uint8_t,4> seqno;
+        OutStream stream_sq(seqno);
+        stream_sq.out_uint32_le(mseqno);
+        
+        auto encrypted_pubkey = Rc4CryptVector(rc4, payload);
+        
         /* Concatenate version, ciphertext and sequence number to build signature */
         std::array<uint8_t, 16> signature;
         OutStream stream(signature);
         stream.out_uint32_le(1); // version
-        stream.out_copy_bytes(Rc4Crypt<8>(rc4, {digest, 8}));
-        stream.out_uint32_le(SeqNo);
-        return signature;
-    }
+        array_md5 digest = ::HmacMd5(ClientSigningKey, seqno, payload);
+        // We only keep half of MD5 for signature
+        stream.out_copy_bytes(Rc4Crypt<8>(rc4, {digest.data(), 8}));
+        stream.out_uint32_le(mseqno);
+        
+        return std::vector<uint8_t>{} << signature << encrypted_pubkey;
+    };
+
 
 public:
     rdpClientNTLM(uint8_t * user,
@@ -272,8 +285,6 @@ public:
                 AuthenticateMessage.EncryptedRandomSessionKey.buffer = AuthEncryptedRSK;
 
                 // NTLM Signing Key @msdn{cc236711} and Sealing Key @msdn{cc236712}
-                this->sspi_context_ClientSigningKey = ::Md5(this->ExportedSessionKey,
-                        "session key to client-to-server signing key magic constant\0"_av);
                 this->ClientSealingKey = ::Md5(this->ExportedSessionKey,
                         "session key to client-to-server sealing key magic constant\0"_av);
                 this->sspi_context_ServerSigningKey = ::Md5(this->ExportedSessionKey,
@@ -380,11 +391,8 @@ public:
 
                 unsigned long MessageSeqNo = this->send_seq_num++;
                 // pubKeyAuth [signature][data_buffer]
-                std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-                array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, public_key);
-                auto encrypted_pubkey = Rc4CryptVector(this->SendRc4Seal, public_key);
-                auto signature = this->sspi_compute_signature(this->SendRc4Seal, digest.data(), MessageSeqNo);
-                std::vector<uint8_t> pubKeyAuth = std::vector<uint8_t>{} << signature << encrypted_pubkey;
+                
+                std::vector<uint8_t> pubKeyAuth = CryptAndSign(this->SendRc4Seal, MessageSeqNo, public_key);
                 /* send authentication token to server */
                 if (answer_negoTokens.size() > 0){
                     LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Sending Authentication Token");
@@ -500,15 +508,7 @@ public:
                     unsigned long MessageSeqNo = this->send_seq_num++;
 
                     // authInfo [signature][data_buffer]
-                    std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-                    array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, ts_credentials);
-                    auto encrypted_ts_credentials = Rc4CryptVector(this->SendRc4Seal, ts_credentials);
-                    auto signature = this->sspi_compute_signature(this->SendRc4Seal, digest.data(), MessageSeqNo);
-
-                    std::vector<uint8_t> authInfo = std::vector<uint8_t>{} << signature << encrypted_ts_credentials;
-                    
-//                    (ts_credentials.size() + cbMaxSignature, 0);
-
+                    std::vector<uint8_t> authInfo = CryptAndSign(this->SendRc4Seal, MessageSeqNo, ts_credentials);
                     auto v = emitTSRequest(ts_request.version,
                                            {}, // negoTokens
                                            authInfo,
