@@ -1,3 +1,9 @@
+redemption (7.2.27%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Send uncompressed bitmap is the compression is less efficient.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 09 Sep 2019 15:57:06 +0200
+
 redemption (7.2.23%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * 22115: Add log in siem/session log if connection to validator server fail
