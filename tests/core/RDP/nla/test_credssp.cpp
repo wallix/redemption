@@ -884,16 +884,49 @@ RED_AUTO_TEST_CASE(TestCredssp_scenarized_nla_ntlm)
         RED_CHECK_EQUAL(expectedResult, result);
     }
     
+    
+    {
+        std::vector<uint8_t> answerTSRequest = {
+        // ber TSRequest header
+        0x30, 0x39, 
+        // ber Field version Integer 6
+        0xa0, 0x03, 0x02, 0x01, 0x06,
+        // ber pubKeyAuth header
+        0xa3, 0x32, 0x04, 0x30,
+        // pubKeyAuth
+        0x01, 0x00, 0x00, 0x00, 0x13, 0x36, 0x33, 0x44, 0x80, 0xf7, 0xe5, 0xe1, 0x00, 0x00, 0x00, 0x00,
+        0x5b, 0x1d, 0xb6, 0xba, 0xc8, 0xdb, 0xda, 0xc5, 0xb6, 0xca, 0xfe, 0x3b, 0x80, 0x51, 0x09, 0x7c,
+        0x3e, 0xc7, 0xa6, 0x52, 0xa7, 0x6a, 0xa4, 0xf6, 0x56, 0xb9, 0x45, 0x1c, 0x62, 0xdc, 0x8a, 0x80
+        };
 
-//RdpNego::recv_next_data::Credssp
-//RdpNego::recv_credssp
-//rdpCredssp - Client Authentication : Receiving Encrypted PubKey + 1
+        //Client Authentication : Receiving Authentication Token
+        // negoTokens contains Challenge Message
+        auto ts_req = recvTSRequest(answerTSRequest);
+        std::vector<uint8_t> expected_negoTokens = {};
+        std::vector<uint8_t> expected_authInfo = {};
+        std::vector<uint8_t> expected_pubKeyAuth = {
+        /* 0000 */ 0x01, 0x00, 0x00, 0x00, 0x13, 0x36, 0x33, 0x44, 0x80, 0xf7, 0xe5, 0xe1, 0x00, 0x00, 0x00, 0x00,  // .....63D........
+        /* 0010 */ 0x5b, 0x1d, 0xb6, 0xba, 0xc8, 0xdb, 0xda, 0xc5, 0xb6, 0xca, 0xfe, 0x3b, 0x80, 0x51, 0x09, 0x7c,  // [..........;.Q.|
+        /* 0020 */ 0x3e, 0xc7, 0xa6, 0x52, 0xa7, 0x6a, 0xa4, 0xf6, 0x56, 0xb9, 0x45, 0x1c, 0x62, 0xdc, 0x8a, 0x80,  // >..R.j..V.E.b...
+
+        };
+        std::vector<uint8_t> expected_clientNonce = {};
+
+        hexdump_d(ts_req.pubKeyAuth);
+
+        RED_CHECK_EQUAL(6,                    ts_req.version);
+        RED_CHECK_EQUAL(expected_negoTokens,ts_req.negoTokens);
+        RED_CHECK_EQUAL(expected_authInfo,    ts_req.authInfo);
+        RED_CHECK_EQUAL(expected_pubKeyAuth,  ts_req.pubKeyAuth);
+        RED_CHECK_EQUAL(0,                    ts_req.error_code);
+        RED_CHECK_EQUAL(expected_clientNonce, ts_req.clientNonce.clientNonce);
+    }
+
+// Client Authentication : Receiving Encrypted PubKey + 1
 //recv TSRequest full dump--------------------------------
-///* 0000 */ "\x30\x39\xa0\x03\x02\x01\x06\xa3\x32\x04\x30\x01\x00\x00\x00\x13" // 09......2.0.....
-///* 0010 */ "\x36\x33\x44\x80\xf7\xe5\xe1\x00\x00\x00\x00\x5b\x1d\xb6\xba\xc8" // 63D........[....
-///* 0020 */ "\xdb\xda\xc5\xb6\xca\xfe\x3b\x80\x51\x09\x7c\x3e\xc7\xa6\x52\xa7" // ......;.Q.|>..R.
-///* 0030 */ "\x6a\xa4\xf6\x56\xb9\x45\x1c\x62\xdc\x8a\x80"                     // j..V.E.b...
 //recv TSRequest hexdump - START PARSING DATA-------------
+
+
 //Credssp recvTSCredentials() Remote Version 6, Negotiated version 6
 //rdpCredsspClientNTLM::encrypt_ts_credentials
 //TSRequest hexdump ---------------------------------

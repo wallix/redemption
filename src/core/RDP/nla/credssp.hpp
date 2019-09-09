@@ -935,29 +935,6 @@ inline std::vector<uint8_t> emitTSPasswordCreds(bytes_view domain, bytes_view us
     result << ber_domain_name_header << domain 
            << ber_user_name_header << user
            << ber_password_header << password;
-//    result.insert(result.end(), ber_domain_name_header.begin(), ber_domain_name_header.end());
-//    result.insert(result.end(), domain.data(), domain.data()+domain.size());
-//    result.insert(result.end(), ber_user_name_header.begin(), ber_user_name_header.end());
-//    result.insert(result.end(), user.data(), user.data()+user.size());
-//    result.insert(result.end(), ber_password_header.begin(), ber_password_header.end());
-//    result.insert(result.end(), password.data(), password.data()+password.size());
-
-//    LOG(LOG_INFO, "TSPasswordCreds hexdump ---------------------------");
-//    LOG(LOG_INFO, "TSPasswordCreds ts_password_creds_header ----------");
-//    hexdump_c(ber_ts_password_creds_header);
-//    LOG(LOG_INFO, "TSPasswordCreds domain name header ----------------------");
-//    hexdump_c(ber_domain_name_header);
-//    hexdump_c(domain);
-//    LOG(LOG_INFO, "TSPasswordCreds user name header ------------------------");
-//    hexdump_c(ber_user_name_header);
-//    hexdump_c(user);
-//    LOG(LOG_INFO, "TSPasswordCreds password header -------------------------");
-//    hexdump_c(ber_password_header);
-//    hexdump_c(password);
-//    LOG(LOG_INFO, "TSPasswordCreds full dump--------------------------------");
-//    hexdump_c(result);
-//    LOG(LOG_INFO, "TSPasswordCreds hexdump -DONE----------------------------");
-
     return result;
 }
 
