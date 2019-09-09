@@ -104,17 +104,15 @@ private:
 
     enum : uint8_t { Start, Loop, Final } client_auth_data_state = Start;
 
-    static void sspi_compute_signature(uint8_t* signature, SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
+    static inline std::array<uint8_t, 16> sspi_compute_signature(SslRC4& rc4, uint8_t* digest, uint32_t SeqNo)
     {
-        uint8_t checksum[8];
-        /* RC4-encrypt first 8 bytes of digest */
-        rc4.crypt(8, digest, checksum);
-
-        uint32_t version = 1;
         /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(signature, &version, 4);
-        memcpy(&signature[4], checksum, 8);
-        memcpy(&signature[12], &SeqNo, 4);
+        std::array<uint8_t, 16> signature;
+        OutStream stream(signature);
+        stream.out_uint32_le(1); // version
+        stream.out_copy_bytes(Rc4Crypt<8>(rc4, {digest, 8}));
+        stream.out_uint32_le(SeqNo);
+        return signature;
     }
 
 public:
@@ -382,12 +380,11 @@ public:
 
                 unsigned long MessageSeqNo = this->send_seq_num++;
                 // pubKeyAuth [signature][data_buffer]
-                std::vector<uint8_t> pubKeyAuth(public_key.size() + cbMaxSignature);
                 std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
                 array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, public_key);
-                this->SendRc4Seal.crypt(public_key.size(), public_key.data(), pubKeyAuth.data()+cbMaxSignature);
-                this->sspi_compute_signature(pubKeyAuth.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
-
+                auto encrypted_pubkey = Rc4CryptVector(this->SendRc4Seal, public_key);
+                auto signature = this->sspi_compute_signature(this->SendRc4Seal, digest.data(), MessageSeqNo);
+                std::vector<uint8_t> pubKeyAuth = std::vector<uint8_t>{} << signature << encrypted_pubkey;
                 /* send authentication token to server */
                 if (answer_negoTokens.size() > 0){
                     LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Sending Authentication Token");
@@ -477,14 +474,14 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_ts_credentials");
 
                 {
-                    std::vector<uint8_t> result;
+                    std::vector<uint8_t> ts_credentials;
                     if (this->ts_credentials.credType == 1){
                         if (this->restricted_admin_mode) {
                             LOG(LOG_INFO, "Restricted Admin Mode");
-                            result = emitTSCredentialsPassword({},{},{});
+                            ts_credentials = emitTSCredentialsPassword({},{},{});
                         }
                         else {
-                            result = emitTSCredentialsPassword(this->identity_Domain,this->identity_User,this->identity_Password);
+                            ts_credentials = emitTSCredentialsPassword(this->identity_Domain,this->identity_User,this->identity_Password);
                         }
                     }
                     else {
@@ -497,21 +494,20 @@ public:
                         bytes_view readerName;
                         bytes_view containerName;
                         bytes_view cspName;
-                        result = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
+                        ts_credentials = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
                     }
                     
-                    StaticOutStream<65536> ts_credentials_send;
-                    ts_credentials_send.out_copy_bytes(result);
-                    array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
                     unsigned long MessageSeqNo = this->send_seq_num++;
 
                     // authInfo [signature][data_buffer]
-                    std::vector<uint8_t> authInfo(data_in.size() + cbMaxSignature, 0);
                     std::array<uint8_t,4> seqno{uint8_t(MessageSeqNo),uint8_t(MessageSeqNo>>8),uint8_t(MessageSeqNo>>16),uint8_t(MessageSeqNo>>24)};
-                    array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, data_in);
+                    array_md5 digest = ::HmacMd5(this->sspi_context_ClientSigningKey, seqno, ts_credentials);
+                    auto encrypted_ts_credentials = Rc4CryptVector(this->SendRc4Seal, ts_credentials);
+                    auto signature = this->sspi_compute_signature(this->SendRc4Seal, digest.data(), MessageSeqNo);
 
-                    this->SendRc4Seal.crypt(data_in.size(), data_in.data(), authInfo.data()+cbMaxSignature);
-                    this->sspi_compute_signature(authInfo.data(), this->SendRc4Seal, digest.data(), MessageSeqNo);
+                    std::vector<uint8_t> authInfo = std::vector<uint8_t>{} << signature << encrypted_ts_credentials;
+                    
+//                    (ts_credentials.size() + cbMaxSignature, 0);
 
                     auto v = emitTSRequest(ts_request.version,
                                            {}, // negoTokens
