@@ -312,23 +312,16 @@ public:
                     // If flag is not set, encryted session key buffer is not send
                     AuthenticateMessage.EncryptedRandomSessionKey.buffer.clear();
                 }
-                if (flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
-                    AuthenticateMessage.Workstation.buffer = this->Workstation;
-                }
-
                 //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
-                AuthenticateMessage.DomainName.buffer = this->identity_Domain;
-                AuthenticateMessage.UserName.buffer = this->identity_User;
-
                 StaticOutStream<65535> out_stream;
                 if (this->UseMIC) {
                     emitNTLMAuthenticateMessage(out_stream, 
                         AuthenticateMessage.negoFlags.flags,
                         LmChallengeResponse,
                         NtChallengeResponse,
-                        AuthenticateMessage.DomainName.buffer,
-                        AuthenticateMessage.UserName.buffer,
-                        AuthenticateMessage.Workstation.buffer,
+                        this->identity_Domain,
+                        this->identity_User,
+                        (flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?this->Workstation:bytes_view({}),
                         AuthenticateMessage.EncryptedRandomSessionKey.buffer,
                         {AuthenticateMessage.MIC, 16},
                         AuthenticateMessage.has_mic,
@@ -343,14 +336,15 @@ public:
 
                     memcpy(AuthenticateMessage.MIC, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
                 }
+                
                 out_stream.rewind();
                 emitNTLMAuthenticateMessage(out_stream, 
                     AuthenticateMessage.negoFlags.flags,
                     LmChallengeResponse,
                     NtChallengeResponse,
-                    AuthenticateMessage.DomainName.buffer,
-                    AuthenticateMessage.UserName.buffer,
-                    AuthenticateMessage.Workstation.buffer,
+                    this->identity_Domain,
+                    this->identity_User,
+                    (flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?this->Workstation:bytes_view({}),
                     AuthenticateMessage.EncryptedRandomSessionKey.buffer,
                     {AuthenticateMessage.MIC, 16},
                     AuthenticateMessage.has_mic,
