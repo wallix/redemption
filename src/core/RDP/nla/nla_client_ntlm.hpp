@@ -408,7 +408,6 @@ public:
             }
             case Final:
             {
-                /* Encrypted Public Key +1 */
                 LOG_IF(this->verbose, LOG_INFO, "Client Authentication : Receiving Encrypted PubKey + 1");
 
                 TSRequest ts_request = recvTSRequest(in_data);
@@ -478,7 +477,6 @@ public:
                 LOG_IF(this->verbose, LOG_INFO, "rdpClientNTLM::encrypt_ts_credentials");
 
                 {
-                    StaticOutStream<65536> ts_credentials_send;
                     std::vector<uint8_t> result;
                     if (this->ts_credentials.credType == 1){
                         if (this->restricted_admin_mode) {
@@ -502,6 +500,7 @@ public:
                         result = emitTSCredentialsSmartCard(pin,userHint,domainHint,keySpec,cardName,readerName,containerName, cspName);
                     }
                     
+                    StaticOutStream<65536> ts_credentials_send;
                     ts_credentials_send.out_copy_bytes(result);
                     array_view_const_u8 data_in = {ts_credentials_send.get_data(), ts_credentials_send.get_offset()};
                     unsigned long MessageSeqNo = this->send_seq_num++;
