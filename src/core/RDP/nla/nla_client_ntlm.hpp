@@ -73,7 +73,6 @@ private:
     NtlmVersion version;
     std::vector<uint8_t> SavedNegotiateMessage;
     std::vector<uint8_t> SavedChallengeMessage;
-    std::vector<uint8_t> SavedAuthenticateMessage;
 
     array_md5 SessionBaseKey;
     array_md5 ExportedSessionKey;
@@ -313,31 +312,29 @@ public:
                     AuthenticateMessage.EncryptedRandomSessionKey.buffer.clear();
                 }
                 //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
-                StaticOutStream<65535> out_stream;
                 if (this->UseMIC) {
-                    emitNTLMAuthenticateMessage(out_stream, 
-                        AuthenticateMessage.negoFlags.flags,
+                    size_t mic_offset = 0;
+                    std::array<uint8_t, 16> mic;
+                    auto result = emitNTLMAuthenticateMessageNew(AuthenticateMessage.negoFlags.flags,
                         LmChallengeResponse,
                         NtChallengeResponse,
                         this->identity_Domain,
                         this->identity_User,
                         (flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?this->Workstation:bytes_view({}),
                         AuthenticateMessage.EncryptedRandomSessionKey.buffer,
-                        {AuthenticateMessage.MIC, 16},
-                        AuthenticateMessage.has_mic,
-                        true);
-
-                    this->SavedAuthenticateMessage.assign(out_stream.get_bytes().data(),out_stream.get_bytes().data()+out_stream.get_offset());
-
+                        mic,
+                        true,
+                        mic_offset);
+                        
                     array_md5 MessageIntegrityCheck = ::HmacMd5(this->ExportedSessionKey,
                                                             this->SavedNegotiateMessage,
                                                             this->SavedChallengeMessage,
-                                                            this->SavedAuthenticateMessage);
+                                                            result);
 
                     memcpy(AuthenticateMessage.MIC, MessageIntegrityCheck.data(), MessageIntegrityCheck.size());
                 }
-                
-                out_stream.rewind();
+
+                StaticOutStream<65535> out_stream;
                 emitNTLMAuthenticateMessage(out_stream, 
                     AuthenticateMessage.negoFlags.flags,
                     LmChallengeResponse,
