@@ -307,19 +307,16 @@ public:
                 this->version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
                 AuthenticateMessage.version = this->version;
 
-                if (!(flags & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
-                    // If flag is not set, encryted session key buffer is not send
-                    AuthenticateMessage.EncryptedRandomSessionKey.buffer.clear();
-                }
                 //flag |= NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED;
                 
                 size_t mic_offset = 0;
-                auto auth_message = emitNTLMAuthenticateMessage(AuthenticateMessage.negoFlags.flags,
+                auto auth_message = emitNTLMAuthenticateMessage(
+                    AuthenticateMessage.negoFlags.flags,
                     LmChallengeResponse,
                     NtChallengeResponse,
                     this->identity_Domain,
                     this->identity_User,
-                    (flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?this->Workstation:bytes_view({}),
+                    this->Workstation,
                     AuthenticateMessage.EncryptedRandomSessionKey.buffer,
                     this->UseMIC,
                     mic_offset);

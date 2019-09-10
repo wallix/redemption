@@ -749,7 +749,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     recvNTLMAuthenticateMessage(in_tosend, AuthMsgDuplicate);
 
     RED_CHECK_EQUAL(AuthMsgDuplicate.negoFlags.flags, 0xE2888235);
-    // AuthMsgDuplicate.negoFlags.print();
+    logNtlmFlags(AuthMsgDuplicate.negoFlags.flags);
 
     RED_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.buffer.size(), 24);
     RED_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.bufferOffset, 72);
@@ -759,9 +759,10 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     RED_CHECK_EQUAL(AuthMsgDuplicate.DomainName.bufferOffset, 208);
     RED_CHECK_EQUAL(AuthMsgDuplicate.UserName.buffer.size(), 16);
     RED_CHECK_EQUAL(AuthMsgDuplicate.UserName.bufferOffset, 216);
-    RED_CHECK_EQUAL(AuthMsgDuplicate.Workstation.buffer.size(), 10);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.Workstation.buffer.size(), 0);
     RED_CHECK_EQUAL(AuthMsgDuplicate.Workstation.bufferOffset, 232);
     RED_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.buffer.size(), 16);
+    RED_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.bufferOffset, 232);
 }
 
 

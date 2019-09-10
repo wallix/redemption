@@ -1228,6 +1228,12 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
                                         bytes_view EncryptedRandomSessionKey,
                                         bool has_mic, size_t & mic_offset)
 {
+
+    bytes_view tmpWorkStation = {Workstation.data(), 
+                (negoFlags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?Workstation.size():0};
+    bytes_view tmpEncryptedRandomSessionKey = {EncryptedRandomSessionKey.data(),
+                (negoFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)?EncryptedRandomSessionKey.size():0};
+    
     uint32_t payloadOffset = 12+8+8+8+8+8+8+4
                             +8*bool(negoFlags & NTLMSSP_NEGOTIATE_VERSION)
                             +16*has_mic;
@@ -1237,8 +1243,8 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
                         + NtChallengeResponse.size()
                         + DomainName.size()
                         + UserName.size()
-                        + Workstation.size()
-                        + EncryptedRandomSessionKey.size()
+                        + tmpWorkStation.size()
+                        + tmpEncryptedRandomSessionKey.size()
                         ;
     if (has_mic) {
         mic_offset = payloadOffset-16;
@@ -1260,8 +1266,8 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
          {0, NtChallengeResponse},
          {0, DomainName},
          {0, UserName},
-         {0, Workstation},
-         {0, EncryptedRandomSessionKey}}};
+         {0, tmpWorkStation},
+         {0, tmpEncryptedRandomSessionKey}}};
 
     for (auto field: l){
         stream.out_uint16_le(field.f.size());
