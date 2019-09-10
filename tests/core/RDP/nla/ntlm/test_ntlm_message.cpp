@@ -2507,30 +2507,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
                                                   make_array_view(workstation));
 
     // send AUTHENTICATE MESSAGE
-        uint8_t client_to_server_buf[65535];
-        OutStream out_client_to_server(client_to_server_buf);
-        /*client_context.UseMIC*/ {
-        emitNTLMAuthenticateMessage(out_client_to_server,
-                        client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
-                        client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
-                        client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
-                        client_context.AUTHENTICATE_MESSAGE.DomainName.buffer,
-                        client_context.AUTHENTICATE_MESSAGE.UserName.buffer,
-                        client_context.AUTHENTICATE_MESSAGE.Workstation.buffer,
-                        client_context.AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
-                        {client_context.AUTHENTICATE_MESSAGE.MIC, 16},
-                        client_context.AUTHENTICATE_MESSAGE.has_mic,
-                        true);
-
-        client_context.SavedAuthenticateMessage = std::vector<uint8_t>(out_client_to_server.get_offset());
-        memcpy(client_context.SavedAuthenticateMessage.data(), out_client_to_server.get_data(),
-               out_client_to_server.get_offset());
-        client_context.ntlm_compute_MIC();
-        memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
-    }
-    out_client_to_server.rewind();
-    emitNTLMAuthenticateMessage(out_client_to_server,
-                    client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
+    uint8_t client_to_server_buf[65535];
+    size_t mic_offset = 0;
+    auto auth_message = emitNTLMAuthenticateMessageNew(client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
                     client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
                     client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
                     client_context.AUTHENTICATE_MESSAGE.DomainName.buffer,
@@ -2539,7 +2518,15 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
                     client_context.AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
                     {client_context.AUTHENTICATE_MESSAGE.MIC, 16},
                     client_context.AUTHENTICATE_MESSAGE.has_mic,
-                    false);
+                    mic_offset);
+
+    client_context.SavedAuthenticateMessage = auth_message;
+    client_context.ntlm_compute_MIC();
+    memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
+    memcpy(auth_message.data()+mic_offset, client_context.MessageIntegrityCheck, 16);
+
+    OutStream out_client_to_server(client_to_server_buf);
+    out_client_to_server.out_copy_bytes(auth_message);
     
     in_client_to_server = InStream(out_client_to_server.get_bytes());
     recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
