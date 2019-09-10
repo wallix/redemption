@@ -2392,9 +2392,12 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     client_context.AUTHENTICATE_MESSAGE.version.ProductBuild        = 7601;
     client_context.AUTHENTICATE_MESSAGE.version.NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
+
+    RED_CHECK_EQUAL(client_context.AUTHENTICATE_MESSAGE.has_mic, true);
     // send AUTHENTICATE MESSAGE
     StaticOutStream<65535> out_client_to_server;
-    emitNTLMAuthenticateMessage(out_client_to_server,
+    size_t mic_offset = 0;
+    auto auth_message = emitNTLMAuthenticateMessageNew(
                         client_context.AUTHENTICATE_MESSAGE.negoFlags.flags,
                         client_context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer,
                         client_context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer,
@@ -2404,10 +2407,11 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
                         client_context.AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.buffer,
                         {client_context.AUTHENTICATE_MESSAGE.MIC, 16},
                         client_context.AUTHENTICATE_MESSAGE.has_mic,
-                        false);
+                        mic_offset);
+    memcpy(auth_message.data()+mic_offset, client_context.AUTHENTICATE_MESSAGE.MIC, 16);
 
     
-    InStream in_client_to_server(out_client_to_server.get_bytes());
+    InStream in_client_to_server(auth_message);
     recvNTLMAuthenticateMessage(in_client_to_server, server_context.AUTHENTICATE_MESSAGE);
 
     // SERVER PROCEED RESPONSE CHECKING
